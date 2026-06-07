@@ -1,6 +1,14 @@
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { HydratedRouter } from "react-router/dom";
+import { setBaseUrl } from "@workspace/api-client-react";
+import { API_BASE } from "./lib/apiBase";
+
+// The generated API client emits paths already prefixed with `/api`.
+// Point its fetcher at the API origin (API_BASE minus the trailing
+// `/api`) so those calls hit the wellness-foods Cloud Run service —
+// not the Firebase host, which serves index.html and breaks JSON parsing.
+setBaseUrl(API_BASE.replace(/\/api$/, ""));
 
 startTransition(() => {
   hydrateRoot(
