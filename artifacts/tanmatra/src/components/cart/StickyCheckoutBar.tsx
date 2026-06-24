@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ShoppingCart, ArrowRight } from "@phosphor-icons/react";
-import { useCart } from "@/lib/cartContext";
+import { useCart, useCartTotals } from "@/lib/cartContext";
 import { formatCurrency } from "@/lib/utils";
 import { DURATION, EASE } from "@/lib/motion";
 
@@ -16,9 +17,26 @@ const HIDE_ON = [
 ];
 
 export default function StickyCheckoutBar() {
-  const { items, totalQuantity, subtotal } = useCart();
+  const { items, totalQuantity } = useCart();
+  const { subtotal, amountToFreeDelivery, freeDeliveryProgress, hasFreeDelivery } = useCartTotals();
   const { pathname } = useLocation();
   const prefersReducedMotion = useReducedMotion();
+
+  const [showProgress, setShowProgress] = useState(true);
+
+  useEffect(() => {
+    let t: NodeJS.Timeout | undefined;
+    if (hasFreeDelivery) {
+      t = setTimeout(() => {
+        setShowProgress(false);
+      }, 3000);
+    } else {
+      setShowProgress(true);
+    }
+    return () => {
+      if (t) clearTimeout(t);
+    };
+  }, [hasFreeDelivery]);
 
   const visible =
     items.length > 0 && !HIDE_ON.some((re) => re.test(pathname));
@@ -40,39 +58,63 @@ export default function StickyCheckoutBar() {
           className="fixed inset-x-0 z-30 px-3 sm:px-6 bottom-[calc(56px+env(safe-area-inset-bottom))] md:bottom-6 pointer-events-none"
         >
           <div className="mx-auto max-w-3xl pointer-events-auto">
-            <div className="flex items-center gap-3 rounded-2xl border border-clinical-gold/30 bg-clinical-surface-elevated/95 backdrop-blur-xl shadow-clinical px-4 py-3">
-              <div className="relative shrink-0 grid place-items-center w-10 h-10 rounded-full bg-clinical-gold/15 text-clinical-gold">
-                <ShoppingCart className="w-5 h-5" weight="fill" aria-hidden />
-                <span
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-clinical-gold text-[#050505] text-[10px] font-bold leading-none grid place-items-center"
-                  aria-label={`${totalQuantity} items in cart`}
+            <div className="flex flex-col rounded-2xl border border-border bg-surface/95 backdrop-blur-xl shadow-bar overflow-hidden">
+              
+              {/* Free Delivery Progress Bar (only if subtotal > 0 and not collapsed) */}
+              {subtotal > 0 && showProgress && (
+                <div className="h-7 bg-muted/50 border-b border-border flex items-center justify-between px-4 text-[11px] font-mono font-medium transition-all duration-300">
+                  {hasFreeDelivery ? (
+                    <span className="text-success flex items-center gap-1">
+                      ✓ FREE DELIVERY UNLOCKED
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-text-secondary">
+                        Add <span className="font-bold text-text-primary">{formatCurrency(amountToFreeDelivery)}</span> more for free delivery
+                      </span>
+                      <div className="w-24 h-1.5 rounded-full bg-border overflow-hidden relative">
+                        <div 
+                          className="h-full bg-sage-500 transition-all duration-300 ease-out" 
+                          style={{ width: `${freeDeliveryProgress}%` }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Main content row */}
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative shrink-0 grid place-items-center w-10 h-10 rounded-full bg-action/10 text-action">
+                    <ShoppingCart className="w-5 h-5" weight="fill" aria-hidden />
+                    <span
+                      className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-action text-action-text text-[10px] font-bold leading-none grid place-items-center"
+                      aria-label={`${totalQuantity} items in cart`}
+                    >
+                      {totalQuantity}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-mono text-micro tracking-wider text-text-secondary uppercase leading-none mb-1">
+                      {totalQuantity === 1 ? "1 item" : `${totalQuantity} items`} · ready to order
+                    </p>
+                    <p className="font-display text-price text-text-primary leading-tight">
+                      {formatCurrency(subtotal)}
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  to="/checkout"
+                  aria-label={`Checkout · ${formatCurrency(subtotal)} subtotal`}
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-action px-5 py-2.5 text-[13px] font-semibold text-action-text shadow hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
                 >
-                  {totalQuantity}
-                </span>
+                  Checkout
+                  <ArrowRight className="w-4 h-4" weight="bold" aria-hidden />
+                </Link>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-clinical-label text-clinical-zinc">
-                  {totalQuantity === 1 ? "1 item" : `${totalQuantity} items`} ·
-                  ready to order
-                </p>
-                <p className="text-body-sm text-white font-semibold leading-tight">
-                  <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                    {formatCurrency(subtotal)}
-                  </span>
-                  <span className="text-clinical-zinc font-normal">
-                    {" "}
-                    · subtotal
-                  </span>
-                </p>
-              </div>
-              <Link
-                to="/checkout"
-                aria-label={`Checkout · ${formatCurrency(subtotal)} subtotal`}
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-clinical-gold px-4 py-2.5 text-sm font-semibold text-[#050505] shadow transition-transform hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                Checkout
-                <ArrowRight className="w-4 h-4" weight="bold" aria-hidden />
-              </Link>
+
             </div>
           </div>
         </motion.div>

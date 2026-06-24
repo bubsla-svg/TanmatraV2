@@ -58,6 +58,7 @@ import {
   LIFESTYLE_LABELS,
   LIFESTYLE_TAGS,
   matchesLifestyle,
+  matchesDietaryFilter,
   type Lifestyle,
 } from "@/lib/dishEnrichment";
 import {
@@ -136,6 +137,18 @@ const LIFESTYLE_TABS: Array<{ value: Lifestyle; label: string; icon: typeof Hear
 ];
 type DietFilter = "all" | "veg" | "nonveg";
 
+const QUICK_FILTERS = [
+  { value: "high-protein", label: "High-Protein" },
+  { value: "veg", label: "Veg" },
+  { value: "keto", label: "Keto" },
+  { value: "vegan", label: "Vegan" },
+  { value: "gluten-free", label: "Gluten-Free" },
+  { value: "jain", label: "Jain" },
+  { value: "vata", label: "Vata Dosha" },
+  { value: "pitta", label: "Pitta Dosha" },
+  { value: "kapha", label: "Kapha Dosha" },
+];
+
 export default function Menu() {
   const { isPremium } = usePremiumStatus();
   const premiumSlugs = usePremiumSlugs();
@@ -144,6 +157,7 @@ export default function Menu() {
   const [category, setCategory] = useState<"all" | DishCategory>("all");
   const [diet, setDiet] = useState<DietFilter>("all");
   const [lifestyle, setLifestyle] = useState<Lifestyle>("all");
+  const [quickFilters, setQuickFilters] = useState<string[]>([]);
   // Collapse the four secondary filter rails behind a "More filters"
   // button on mobile. The Protocol chip-row above stays inline as the
   // primary IA axis. Per adoption audit P1 #19. Open by default on
@@ -272,7 +286,28 @@ export default function Menu() {
   // at the first page of the new filtered set.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [kitchen, category, diet, lifestyle, query, activeProtocol]);
+  }, [kitchen, category, diet, lifestyle, query, activeProtocol, quickFilters]);
+
+  // Real-time optimistic quick filter counts based on other active filters
+  const quickFilterCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const baseListForCounts = catalogDishes.filter((d) => {
+      if (kitchen !== "all" && d.kitchen !== kitchen) return false;
+      if (category !== "all" && d.category !== category) return false;
+      if (diet === "veg" && !d.isVeg) return false;
+      if (diet === "nonveg" && d.isVeg) return false;
+      if (!matchesLifestyle(d, lifestyle)) return false;
+      if (activeProtocol && !matchesProtocol(d, activeProtocol)) return false;
+      if (clinicalMode && dishMatchesDietOrder(d, dietOrderId) !== null) return false;
+      if (query && !d.name.toLowerCase().includes(query.toLowerCase()) && !d.description.toLowerCase().includes(query.toLowerCase())) return false;
+      return true;
+    });
+
+    for (const qf of QUICK_FILTERS) {
+      counts[qf.value] = baseListForCounts.filter(d => matchesDietaryFilter(d, qf.value)).length;
+    }
+    return counts;
+  }, [catalogDishes, kitchen, category, diet, lifestyle, activeProtocol, clinicalMode, dietOrderId, query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -292,11 +327,38 @@ export default function Menu() {
       }
       if (q && !d.name.toLowerCase().includes(q) && !d.description.toLowerCase().includes(q))
         return false;
+      
+      // Quick Filters logic (OR within axis, AND across axes)
+      if (quickFilters.length > 0) {
+        const nutritionFilters = quickFilters.filter(f => ["high-protein", "keto"].includes(f));
+        const dietFilters = quickFilters.filter(f => ["veg", "vegan", "gluten-free", "jain"].includes(f));
+        const doshaFilters = quickFilters.filter(f => ["vata", "pitta", "kapha"].includes(f));
+
+        let matchesNutrition = true;
+        if (nutritionFilters.length > 0) {
+          matchesNutrition = nutritionFilters.some(f => matchesDietaryFilter(d, f));
+        }
+
+        let matchesDiet = true;
+        if (dietFilters.length > 0) {
+          matchesDiet = dietFilters.some(f => matchesDietaryFilter(d, f));
+        }
+
+        let matchesDosha = true;
+        if (doshaFilters.length > 0) {
+          matchesDosha = doshaFilters.some(f => matchesDietaryFilter(d, f));
+        }
+
+        if (!matchesNutrition || !matchesDiet || !matchesDosha) {
+          return false;
+        }
+      }
+
       return true;
     });
     const ranked = rankDishesForPreferences(baseList, preferences);
     return hideBlocked ? ranked.filter((r) => !r.match.blocked) : ranked;
-  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, catalogDishes, activeProtocol, clinicalMode, dietOrderId]);
+  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters]);
 
   const blockedCount = useMemo(() => {
     if (!preferences) return 0;
@@ -802,6 +864,58 @@ export default function Menu() {
       </div>
       </div>{/* /secondary filter rails wrapper */}
 
+      {/* Advanced Quick Filters Scroll Row */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-text-secondary font-semibold">
+            Quick Filters
+          </p>
+          {quickFilters.length > 0 && (
+            <button
+              onClick={() => setQuickFilters([])}
+              className="text-[11px] uppercase tracking-[0.12em] text-action hover:underline font-semibold"
+            >
+              Clear quick filters
+            </button>
+          )}
+        </div>
+        <div
+          className="flex gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1"
+          role="group"
+          aria-label="Quick filters"
+        >
+          {QUICK_FILTERS.map((qf) => {
+            const active = quickFilters.includes(qf.value);
+            const count = quickFilterCounts[qf.value] ?? 0;
+            const disabled = count === 0 && !active;
+
+            return (
+              <button
+                key={qf.value}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  setQuickFilters(prev =>
+                    active ? prev.filter(v => v !== qf.value) : [...prev, qf.value]
+                  );
+                }}
+                className={`shrink-0 flex items-center gap-1.5 px-3.5 min-h-[44px] sm:min-h-[32px] rounded-full border text-[11px] uppercase tracking-[0.12em] font-semibold transition-all duration-150 ${
+                  active
+                    ? "border-saffron-700 bg-saffron-50 dark:bg-saffron-400/10 text-text-primary shadow-sm"
+                    : disabled
+                    ? "border-border opacity-40 cursor-not-allowed line-through"
+                    : "border-border text-text-secondary hover:border-border-strong hover:text-text-primary"
+                }`}
+              >
+                {active && <span className="text-action font-bold">✓ </span>}
+                <span>{qf.label}</span>
+                <span className="font-mono text-[9px] opacity-60">({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {preferences && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-clinical-gold/20 bg-clinical-gold/5 px-3 py-2">
           <SparklesIcon className="w-3.5 h-3.5 text-clinical-gold" />
@@ -887,6 +1001,17 @@ export default function Menu() {
               onClear: () => setQuery(""),
             });
           }
+          // Add quick filters to active filters display list
+          quickFilters.forEach((qfValue) => {
+            const qfInfo = QUICK_FILTERS.find(q => q.value === qfValue);
+            if (qfInfo) {
+              list.push({
+                id: `qf-${qfValue}`,
+                label: qfInfo.label,
+                onClear: () => setQuickFilters(prev => prev.filter(v => v !== qfValue)),
+              });
+            }
+          });
           return list;
         })()}
         onClearAll={() => {
@@ -895,6 +1020,7 @@ export default function Menu() {
           setDiet("all");
           setLifestyle("all");
           setQuery("");
+          setQuickFilters([]);
           if (activeProtocol) {
             const next = new URLSearchParams(searchParams);
             next.delete("protocol");

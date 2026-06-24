@@ -22,6 +22,7 @@ import type { DishMatchResult } from "@/lib/preferencesMatch";
 import { findSmartSwap } from "@/lib/preferencesMatch";
 import type { UserPreferences } from "@/lib/preferencesApi";
 import type { DishRationale } from "@/lib/dishRationaleApi";
+import { useCart } from "@/lib/cartContext";
 
 type MenuCardProps = {
   item: DishData;
@@ -48,6 +49,8 @@ export default function MenuCard({
   onQuickAdd,
   onPremiumGate,
 }: MenuCardProps) {
+  const { items, updateQty } = useCart();
+  const cartItem = items.find((it) => it.dishId === item.id);
   const isPremiumOnly = premiumSlugs.has(item.slug);
   const showPremiumGate = isPremiumOnly && !isPremium;
   const { enabled: clinicalMode } = useClinicalMode();
@@ -155,33 +158,43 @@ export default function MenuCard({
           {item.description}
         </p>
 
-        {/* Macro chips: scrollable row on mobile so they never wrap; wrapping on sm+ */}
-        <div
-          className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:gap-1.5"
-          role="group"
-          aria-label={`Nutrition for ${item.name}`}
-        >
-          <MacroChip
-            label="CAL"
-            value={`${item.macros.calories}`}
-            ariaLabel={`${item.macros.calories} kilocalories`}
-          />
-          <MacroChip
-            label="PRO"
-            value={`${item.macros.protein}g`}
-            ariaLabel={`${item.macros.protein} grams of protein`}
-          />
-          <MacroChip
-            label="C"
-            value={`${item.macros.carbs}g`}
-            ariaLabel={`${item.macros.carbs} grams of carbohydrates`}
-          />
-          <MacroChip
-            label="F"
-            value={`${item.macros.fat}g`}
-            ariaLabel={`${item.macros.fat} grams of fat`}
-          />
-        </div>
+        {/* Macro readout band (dashed top+bottom hairline) */}
+        {(() => {
+          const pGrams = item.macros.protein;
+          const cGrams = item.macros.carbs;
+          const fGrams = item.macros.fat;
+          const pCal = pGrams * 4;
+          const cCal = cGrams * 4;
+          const fCal = fGrams * 9;
+          const totalCal = pCal + cCal + fCal || 1;
+          const pPct = Math.round((pCal / totalCal) * 100);
+          const cPct = Math.round((cCal / totalCal) * 100);
+          const fPct = Math.round((fCal / totalCal) * 100);
+
+          return (
+            <div className="my-3.5 flex gap-4 border-y border-dashed border-border py-2.5 font-mono text-clinical-data text-text-primary">
+              <div className="flex flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
+                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Kcal</span>
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{pGrams}g</span>
+                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Prot {pPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${pPct}%` }} />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{cGrams}g</span>
+                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Carb {cPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${cPct}%` }} />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{fGrams}g</span>
+                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Fat {fPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fPct}%` }} />
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="hidden sm:block text-[10px] uppercase tracking-[0.12em] text-clinical-zinc font-semibold">
           {categoryLine}
@@ -250,7 +263,7 @@ export default function MenuCard({
             <Button
               variant="outline"
               size="sm"
-              className="w-full h-11 sm:h-10 border-clinical-border bg-transparent text-clinical-zinc hover:bg-clinical-surface hover:text-white hover:border-clinical-gold/40 text-[10px] sm:text-[11px] uppercase tracking-[0.12em] font-semibold"
+              className="w-full h-11 sm:h-10 border border-border bg-transparent text-text-secondary hover:bg-surface-raised hover:text-text-primary hover:border-border-strong text-[10px] sm:text-[11px] uppercase tracking-[0.12em] font-semibold"
             >
               Details
             </Button>
@@ -268,16 +281,47 @@ export default function MenuCard({
               <Crown className="w-3 h-3" />
               Upgrade to Premium
             </Button>
+          ) : cartItem ? (
+            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-btn border border-sage-300 dark:border-sage-700 bg-sage-100/60 dark:bg-sage-950/40 px-2 text-sage-800 dark:text-sage-300 font-sans text-[13px] font-semibold transition-all duration-200">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateQty(cartItem.lineId, -1);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-sage-200 dark:hover:bg-sage-900/60 active:scale-90 transition-all text-lg font-bold"
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <span className="font-mono tabular-nums text-sm font-bold">{cartItem.quantity}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateQty(cartItem.lineId, 1);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-sage-200 dark:hover:bg-sage-900/60 active:scale-90 transition-all text-lg font-bold"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
           ) : (
             <Button
               size="sm"
-              onClick={(e) => onQuickAdd(e, item)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickAdd(e, item);
+              }}
               disabled={!item.isAvailable || !isLive}
               title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
-              className="flex-1 h-11 sm:h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 disabled:opacity-50 disabled:pointer-events-none text-[10px] sm:text-[11px] uppercase tracking-[0.12em] font-bold gap-1 shadow-[0_0_15px_rgba(212,175,55,0.15)] hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+              className="flex-1 h-11 sm:h-10 border border-border bg-surface-raised px-3.5 py-2 font-sans text-[13px] font-semibold text-text-primary transition hover:border-saffron-700 hover:bg-saffron-50 dark:hover:bg-saffron-400/10 active:scale-95 active:bg-action active:text-action-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action shadow-sm"
             >
-              <Plus className="w-3 h-3" />
-              Add to Order
+              <span aria-hidden="true">+</span> Add
             </Button>
           )}
         </div>

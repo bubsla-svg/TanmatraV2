@@ -4125,6 +4125,205 @@ export interface DishCustomOption {
     "sugarPerServing": "8g (natural)",
     "customizations": [],
     "isAvailable": true
+  },
+  {
+    "id": 120,
+    "slug": "grilled-chicken-sauteed-veg-mash-potato",
+    "name": "Grilled Chicken With Sautéed Vegetable And Mash Potato High Protein",
+    "description": "Lean grilled chicken breast served with warm sautéed seasonal vegetables and creamy mashed potato. RD-formulated for high protein muscle recovery.",
+    "longDescription": "Grilled chicken breast – 150 g · Sautéed broccoli, zucchini, carrots – 80 g · Mashed potato – 80 g · Olive oil – 1 tbsp · Garlic herb seasoning.",
+    "image": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=800&q=80",
+    "price": 33300,
+    "kitchen": "continental",
+    "category": "mains",
+    "isVeg": false,
+    "rdVerified": true,
+    "prepTime": "15-20 min",
+    "macros": {
+      "protein": 42,
+      "carbs": 28,
+      "fat": 12,
+      "fiber": 6,
+      "calories": 388
+    },
+    "ingredients": [
+      "Grilled chicken breast – 150 g",
+      "Sautéed broccoli, zucchini, carrots – 80 g",
+      "Mashed potato – 80 g",
+      "Olive oil – 1 tbsp",
+      "Garlic herb seasoning"
+    ],
+    "allergens": ["Dairy"],
+    "glycaemicIndex": "low",
+    "sugarPerServing": "2g",
+    "customizations": [
+      {
+        "groupName": "Choose Sauce / Dressing",
+        "type": "single",
+        "options": [
+          { "name": "Cilantro Lime", "priceModifier": 0, "default": true },
+          { "name": "Barbeque Sauce", "priceModifier": 0 },
+          { "name": "Chipotle Sauce", "priceModifier": 0 }
+        ]
+      },
+      {
+        "groupName": "Extra Chicken",
+        "type": "single",
+        "options": [
+          { "name": "No Extra Chicken", "priceModifier": 0, "default": true },
+          { "name": "50gm Chicken", "priceModifier": 6000 },
+          { "name": "100 Gm Chicken", "priceModifier": 11000 }
+        ]
+      }
+    ],
+    "isAvailable": true
+  },
+  {
+    "id": 121,
+    "slug": "grilled-veggie-sandwich-ranch-yoghurt",
+    "name": "Grilled Veggie Sandwich With Ranch Yoghurt",
+    "description": "Crispy grilled seasonal vegetables sandwiched with high-fiber bread and a light ranch yogurt dressing.",
+    "longDescription": "High-fiber bread slices – 2 · Grilled bell peppers, zucchini, onions – 60 g · Lettuce – 20 g · Ranch yogurt dressing – 2 tbsp.",
+    "image": "https://images.unsplash.com/photo-1521390188846-e2a3a97453a0?w=800&q=80",
+    "price": 26000,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": true,
+    "rdVerified": true,
+    "prepTime": "10-12 min",
+    "macros": {
+      "protein": 11,
+      "carbs": 38,
+      "fat": 8,
+      "fiber": 7,
+      "calories": 268
+    },
+    "ingredients": [
+      "High-fiber bread slices – 2",
+      "Grilled bell peppers, zucchini, onions – 60 g",
+      "Lettuce – 20 g",
+      "Ranch yogurt dressing – 2 tbsp"
+    ],
+    "allergens": ["Dairy", "Gluten"],
+    "glycaemicIndex": "low",
+    "sugarPerServing": "3g",
+    "customizations": [
+      {
+        "groupName": "Choose Bread Type",
+        "type": "single",
+        "options": [
+          { "name": "Brown Bread", "priceModifier": 0, "default": true },
+          { "name": "Multigrain Bread", "priceModifier": 1500 }
+        ]
+      },
+      {
+        "groupName": "Add-ons",
+        "type": "multiple",
+        "options": [
+          { "name": "Hummus (70gm)", "priceModifier": 3000 },
+          { "name": "Hydrating Watermelon Juice", "priceModifier": 8000 },
+          { "name": "Zero Calorie Mint Mojito", "priceModifier": 7000 }
+        ]
+      }
+    ],
+    "isAvailable": true
+  },
+  {
+    "id": 122,
+    "slug": "grilled-chicken-breast-single-serve",
+    "name": "Grilled Chicken Breast [Single Serve]",
+    "description": "Juicy grilled chicken breast seasoned with herbs. High protein, zero carbs, perfect for keto and recovery.",
+    "longDescription": "Grilled chicken breast – 120 g · Olive oil – 1 tsp · Herb seasoning.",
+    "image": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80",
+    "price": 36000,
+    "kitchen": "continental",
+    "category": "mains",
+    "isVeg": false,
+    "rdVerified": true,
+    "prepTime": "12-15 min",
+    "macros": {
+      "protein": 31,
+      "carbs": 0,
+      "fat": 6,
+      "fiber": 0,
+      "calories": 180
+    },
+    "ingredients": [
+      "Grilled chicken breast – 120 g",
+      "Olive oil – 1 tsp",
+      "Herb seasoning"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "low",
+    "sugarPerServing": "0g",
+    "customizations": [
+      {
+        "groupName": "Choose Sauce / Dressing",
+        "type": "single",
+        "options": [
+          { "name": "Cilantro Lime", "priceModifier": 0, "default": true },
+          { "name": "Chipotle Sauce", "priceModifier": 0 },
+          { "name": "Barbeque Sauce", "priceModifier": 0 }
+        ]
+      },
+      {
+        "groupName": "Add-ons",
+        "type": "multiple",
+        "options": [
+          { "name": "brown Rice", "priceModifier": 2500 },
+          { "name": "Sauteed Veggies", "priceModifier": 4000 }
+        ]
+      }
+    ],
+    "isAvailable": true
+  },
+  {
+    "id": 123,
+    "slug": "boiled-chicken-breast-single-serve",
+    "name": "Boiled Chicken Breast [Single Serve]",
+    "description": "Tender boiled chicken breast served shredded or sliced. Pure lean protein for clinical protocols.",
+    "longDescription": "Chicken breast – 120 g (boiled) · Light salt.",
+    "image": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80",
+    "price": 27800,
+    "kitchen": "continental",
+    "category": "mains",
+    "isVeg": false,
+    "rdVerified": true,
+    "prepTime": "10-12 min",
+    "macros": {
+      "protein": 30,
+      "carbs": 0,
+      "fat": 3,
+      "fiber": 0,
+      "calories": 150
+    },
+    "ingredients": [
+      "Chicken breast – 120 g (boiled)",
+      "Light salt"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "low",
+    "sugarPerServing": "0g",
+    "customizations": [
+      {
+        "groupName": "Choose Portion size",
+        "type": "single",
+        "options": [
+          { "name": "100 Gm Chicken", "priceModifier": 0, "default": true },
+          { "name": "50gm Chicken", "priceModifier": -10000 }
+        ]
+      },
+      {
+        "groupName": "Add-ons",
+        "type": "multiple",
+        "options": [
+          { "name": "Hummus (70gm)", "priceModifier": 3000 },
+          { "name": "1 Pc Pita", "priceModifier": 1500 },
+          { "name": "Hummus (140gm)", "priceModifier": 5500 }
+        ]
+      }
+    ],
+    "isAvailable": true
   }
 ];
 

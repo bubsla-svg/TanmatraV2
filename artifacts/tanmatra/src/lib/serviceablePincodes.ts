@@ -1,14 +1,13 @@
-// Minimal serviceable-pincode lookup for the Bengaluru launch zone.
-// Each entry: pincode → { area, city }. Used by the Checkout new-
+// Minimal serviceable-pincode lookup for the Noida NCR launch zone.
+// Each entry: pincode → { area, city, state }. Used by the Checkout new-
 // address form for inline serviceability + city auto-fill.
 //
 // This is the SHIPPING-SIDE source of truth; the server is expected to
 // re-validate at order finalize. Edit this map when ops adds zones.
 //
-// To extend beyond Bengaluru, replace with a lazy fetch against the
+// To extend beyond Noida NCR, replace with a lazy fetch against the
 // India Post Pincode API (`api.postalpincode.in/pincode/{pin}`) and
-// cache responses — but for the current single-city footprint a
-// static map is faster and offline-safe.
+// cache responses.
 export interface PincodeInfo {
   area: string;
   city: string;
@@ -16,41 +15,25 @@ export interface PincodeInfo {
 }
 
 const SERVICEABLE: Record<string, PincodeInfo> = {
-  // Central Bengaluru
-  "560001": { area: "Bangalore GPO", city: "Bengaluru", state: "Karnataka" },
-  "560002": { area: "Chickpet", city: "Bengaluru", state: "Karnataka" },
-  "560003": { area: "Malleswaram", city: "Bengaluru", state: "Karnataka" },
-  "560004": { area: "Basavanagudi", city: "Bengaluru", state: "Karnataka" },
-  "560005": { area: "Frazer Town", city: "Bengaluru", state: "Karnataka" },
-  "560008": { area: "Indiranagar HAL", city: "Bengaluru", state: "Karnataka" },
-  "560011": { area: "Jayanagar", city: "Bengaluru", state: "Karnataka" },
-  "560017": { area: "Domlur", city: "Bengaluru", state: "Karnataka" },
-  "560020": { area: "Seshadripuram", city: "Bengaluru", state: "Karnataka" },
-  "560024": { area: "Sanjaynagar", city: "Bengaluru", state: "Karnataka" },
-  "560025": { area: "Richmond Town", city: "Bengaluru", state: "Karnataka" },
-  "560027": { area: "Shivajinagar", city: "Bengaluru", state: "Karnataka" },
-  "560029": { area: "Ejipura", city: "Bengaluru", state: "Karnataka" },
-  "560034": { area: "Koramangala", city: "Bengaluru", state: "Karnataka" },
-  "560038": { area: "Indiranagar", city: "Bengaluru", state: "Karnataka" },
-  "560042": { area: "Tasker Town", city: "Bengaluru", state: "Karnataka" },
-  "560043": { area: "HBR Layout", city: "Bengaluru", state: "Karnataka" },
-  "560047": { area: "Viveknagar", city: "Bengaluru", state: "Karnataka" },
-  "560048": { area: "Whitefield", city: "Bengaluru", state: "Karnataka" },
-  "560066": { area: "Bellandur / Whitefield", city: "Bengaluru", state: "Karnataka" },
-  "560068": { area: "BTM Layout", city: "Bengaluru", state: "Karnataka" },
-  "560071": { area: "Murugeshpalya", city: "Bengaluru", state: "Karnataka" },
-  "560076": { area: "Banashankari", city: "Bengaluru", state: "Karnataka" },
-  "560078": { area: "Padmanabhanagar", city: "Bengaluru", state: "Karnataka" },
-  "560083": { area: "BTM 2nd Stage", city: "Bengaluru", state: "Karnataka" },
-  "560085": { area: "JP Nagar", city: "Bengaluru", state: "Karnataka" },
-  "560093": { area: "Lingarajapuram", city: "Bengaluru", state: "Karnataka" },
-  "560094": { area: "RT Nagar", city: "Bengaluru", state: "Karnataka" },
-  "560095": { area: "Koramangala", city: "Bengaluru", state: "Karnataka" },
-  "560097": { area: "Yelahanka", city: "Bengaluru", state: "Karnataka" },
-  "560100": { area: "Electronic City", city: "Bengaluru", state: "Karnataka" },
-  "560102": { area: "HSR Layout", city: "Bengaluru", state: "Karnataka" },
-  "560103": { area: "Marathahalli", city: "Bengaluru", state: "Karnataka" },
-  "560111": { area: "Sarjapur Road", city: "Bengaluru", state: "Karnataka" },
+  // Noida Core
+  "201301": { area: "Noida Sector 1-11 / Harola", city: "Noida", state: "Uttar Pradesh" },
+  "201303": { area: "Noida Sector 62 / Shipra", city: "Noida", state: "Uttar Pradesh" },
+  "201304": { area: "Noida Sector 63-65 / Mamura", city: "Noida", state: "Uttar Pradesh" },
+  "201305": { area: "Noida Sector 82 / Phase II", city: "Noida", state: "Uttar Pradesh" },
+  "201306": { area: "Noida Sector 104 / Hazipur", city: "Noida", state: "Uttar Pradesh" },
+  "201307": { area: "Noida Sector 12-15 / Naya Bans", city: "Noida", state: "Uttar Pradesh" },
+  "201309": { area: "Noida Sector 137 / Expressway", city: "Noida", state: "Uttar Pradesh" },
+  "201318": { area: "Noida Sector 150 / Sports City", city: "Noida", state: "Uttar Pradesh" },
+
+  // Ghaziabad (bordering Noida)
+  "201010": { area: "Indirapuram", city: "Ghaziabad", state: "Uttar Pradesh" },
+  "201012": { area: "Vasundhara", city: "Ghaziabad", state: "Uttar Pradesh" },
+  "201014": { area: "Vaishali / Kaushambi", city: "Ghaziabad", state: "Uttar Pradesh" },
+
+  // Delhi East (bordering Noida)
+  "110091": { area: "Mayur Vihar Phase I", city: "Delhi", state: "Delhi" },
+  "110092": { area: "Laxmi Nagar / Anand Vihar", city: "Delhi", state: "Delhi" },
+  "110096": { area: "Mayur Vihar Phase III / Vasundhara Enclave", city: "Delhi", state: "Delhi" },
 };
 
 const PINCODE_RE = /^\d{6}$/;
