@@ -38,7 +38,8 @@ import {
 } from "@/lib/fulfillmentApi";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Check } from "lucide-react";
+import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Check, Flame, Lock } from "lucide-react";
+import { checkPincode, type PincodeCheckResult } from "@/lib/serviceablePincodes";
 import {
   Collapsible,
   CollapsibleContent,
@@ -209,6 +210,22 @@ export default function Checkout() {
   const [applyCredits, setApplyCredits] = useState(true);
   const [preorderTomorrow, setPreorderTomorrow] = useState(false);
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
+
+  // High-fidelity guest-checkout & slotting states
+  const [deliveryMode, setDeliveryMode] = useState<"now" | "schedule">("now");
+  const [showGuestAuthDialog, setShowGuestAuthDialog] = useState(false);
+  const [pincodeCheck, setPincodeCheck] = useState<PincodeCheckResult>({ state: "empty" });
+
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestCountryCode, setGuestCountryCode] = useState("+91");
+  const [guestOtpCode, setGuestOtpCode] = useState("");
+  const [guestAuthStep, setGuestAuthStep] = useState<"phone" | "code" | "welcome">("phone");
+  const [guestDevCode, setGuestDevCode] = useState<string | null>(null);
+  const [guestIsSending, setGuestIsSending] = useState(false);
+  const [guestIsVerifying, setGuestIsVerifying] = useState(false);
+  const [guestResendIn, setGuestResendIn] = useState(0);
+  const [guestFirstName, setGuestFirstName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [subsidy, setSubsidy] = useState<CompanySubsidy | null>(null);
   const [applySubsidy, setApplySubsidy] = useState(true);
   const [voucherCode, setVoucherCode] = useState("");
@@ -243,6 +260,178 @@ export default function Checkout() {
   const preorderDiscount = preorderTomorrow
     ? Math.floor((subtotal * PREORDER_BPS) / 10_000)
     : 0;
+
+  // 1. Automatic pincode serviceability & auto-fill city
+  useEffect(() => {
+    const pin = newAddr.pincode.trim();
+    if (pin.length === 6) {
+      const result = checkPincode(pin);
+      setPincodeCheck(result);
+      if (result.state === "serviceable") {
+        setNewAddr((prev) => ({ ...prev, city: result.info.city }));
+        setAddressErrors((prev) => {
+          const copy = { ...prev };
+          delete copy.city;
+          delete copy.pincode;
+          return copy;
+        });
+      } else if (result.state === "unserviceable") {
+        setAddressErrors((prev) => ({
+          ...prev,
+          pincode: `We don't deliver to ${pin} yet.`,
+        }));
+      }
+    } else {
+      setPincodeCheck({ state: "empty" });
+    }
+  }, [newAddr.pincode]);
+
+  // 2. Automatic preorder discount sync based on selected slot
+  const selectedSlot = slots.find((s) => s.id === selectedSlotId);
+  const isPreorderSlot = useMemo(() => {
+    if (!selectedSlot) return false;
+    const slotDate = new Date(selectedSlot.startsAt);
+    const today = new Date();
+    return (
+      slotDate.getDate() !== today.getDate() ||
+      slotDate.getMonth() !== today.getMonth()
+    );
+  }, [selectedSlot, slots]);
+
+  useEffect(() => {
+    if (deliveryMode === "schedule" && isPreorderSlot) {
+      setPreorderTomorrow(true);
+    } else {
+      setPreorderTomorrow(false);
+    }
+  }, [deliveryMode, isPreorderSlot]);
+
+  // 3. Guest Auth timer countdown
+  useEffect(() => {
+    if (guestResendIn <= 0) return;
+    const t = setInterval(() => setGuestResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [guestResendIn]);
+
+  // Intercept place order click for guest users
+  const handlePlaceOrderClick = () => {
+    if (!activeAddr) {
+      toast.error("Please enter or select a delivery address");
+      return;
+    }
+    if (addressAuthRequired) {
+      if (newAddr.phone.trim()) {
+        setGuestPhone(newAddr.phone.trim().replace(/^\+91/, ""));
+      }
+      setShowGuestAuthDialog(true);
+    } else {
+      setConfirmOpen(true);
+    }
+  };
+
+  const handleSendGuestOtp = async () => {
+    const digits = guestPhone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      toast.error("Enter a valid 10-digit phone number");
+      return;
+    }
+    setGuestIsSending(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/phone/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ countryCode: guestCountryCode, phone: guestPhone }),
+      });
+      const data = (await res.json().catch(() => ({}))) as SendOtpResponse;
+      if (!res.ok || !data.ok) {
+        toast.error(data.error ?? "Could not send verification code");
+        return;
+      }
+      setGuestDevCode(data.devCode ?? null);
+      setGuestAuthStep("code");
+      setGuestResendIn(30);
+      toast.success(`Verification code sent to ${guestCountryCode} ${guestPhone}`);
+    } catch {
+      toast.error("Network error — please try again");
+    } finally {
+      setGuestIsSending(false);
+    }
+  };
+
+  const handleVerifyGuestOtp = async () => {
+    if (guestOtpCode.replace(/\D/g, "").length < 4) {
+      toast.error("Enter the 4-digit verification code");
+      return;
+    }
+    setGuestIsVerifying(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/phone/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          countryCode: guestCountryCode,
+          phone: guestPhone,
+          code: guestOtpCode,
+          attribution: {
+            dpdpConsent: true,
+            tosVersion: "2026-05",
+          },
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as VerifyOtpResponse;
+      if (!res.ok || !data.ok || !data.user) {
+        toast.error(data.error ?? "Incorrect verification code");
+        return;
+      }
+
+      if (data.user.firstName === null) {
+        setGuestAuthStep("welcome");
+      } else {
+        await handleGuestAuthSuccess();
+      }
+    } catch {
+      toast.error("Network error — please try again");
+    } finally {
+      setGuestIsVerifying(false);
+    }
+  };
+
+  const handleGuestAuthSuccess = async () => {
+    try {
+      if (guestFirstName.trim()) {
+        await fetch(`${API_BASE}/auth/profile/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            firstName: guestFirstName.trim(),
+            email: guestEmail.trim() || undefined,
+          }),
+        });
+      }
+
+      const r = await addressesApi.create({
+        label: newAddr.label.trim() || "Home",
+        line1: newAddr.line1.trim(),
+        line2: newAddr.line2.trim() || undefined,
+        city: newAddr.city.trim(),
+        pincode: newAddr.pincode.trim(),
+        phone: guestPhone || newAddr.phone.trim(),
+      });
+
+      setSavedAddresses([r.address]);
+      setSelectedAddress(r.address.id);
+      setAddressAuthRequired(false);
+      setShowGuestAuthDialog(false);
+      setConfirmOpen(true);
+      toast.success("Phone number verified and address saved!");
+    } catch (err) {
+      console.error("Error syncing guest account details:", err);
+      toast.error("Could not save account details — please try again");
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -446,8 +635,14 @@ export default function Checkout() {
     if (!newAddr.label.trim()) errs.label = "Label is required";
     if (!newAddr.line1.trim()) errs.line1 = "Street address is required";
     if (!newAddr.city.trim()) errs.city = "City is required";
-    if (!/^\d{6}$/.test(newAddr.pincode.trim()))
+    if (!/^\d{6}$/.test(newAddr.pincode.trim())) {
       errs.pincode = "Enter a valid 6-digit pincode";
+    } else {
+      const pinCheck = checkPincode(newAddr.pincode.trim());
+      if (pinCheck.state === "unserviceable") {
+        errs.pincode = "This area is not serviceable yet";
+      }
+    }
     if (!/^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()))
       errs.phone = "Enter a valid phone number";
     if (Object.keys(errs).length > 0) {
@@ -1181,6 +1376,32 @@ export default function Checkout() {
                         {addressErrors.pincode}
                       </p>
                     )}
+                    {pincodeCheck.state === "unserviceable" && (
+                      <div className="rounded-lg border border-clinical-clay/30 bg-clinical-clay/5 p-3 space-y-2 mt-2 col-span-2 text-left">
+                        <p className="text-xs text-clinical-clay font-medium leading-relaxed">
+                          We don't deliver to your pincode ({pincodeCheck.pincode}) yet. We are expanding rapidly across Noida NCR!
+                        </p>
+                        <div className="flex gap-2">
+                          <Input
+                            type="email"
+                            placeholder="Enter email to get notified"
+                            className="h-8 text-[11px] bg-clinical-surface border-clinical-border flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                              toast.success("Thanks! We'll notify you as soon as we launch in your area.");
+                              setPincodeCheck({ state: "empty" });
+                              setNewAddr((prev) => ({ ...prev, pincode: "" }));
+                            }}
+                            className="h-8 px-3 bg-clinical-clay text-white hover:bg-clinical-clay/90 text-[11px]"
+                          >
+                            Notify Me
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -1283,76 +1504,135 @@ export default function Checkout() {
             </div>
 
             {fulfillmentType === "delivery" && (
-              <div className="space-y-2">
-                <p className="text-[10px] text-clinical-zinc uppercase tracking-wider">
-                  Pick a delivery slot
-                </p>
-                {slots.length === 0 ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
-                    <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
+              <div className="space-y-3">
+                {/* Now vs Schedule Segmented Tabs */}
+                <div className="grid grid-cols-2 p-1 bg-clinical-surface-elevated rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryMode("now");
+                      setSelectedSlotId(null);
+                    }}
+                    className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      deliveryMode === "now"
+                        ? "bg-clinical-surface text-white shadow-sm"
+                        : "text-clinical-zinc hover:text-white"
+                    }`}
+                  >
+                    Deliver Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryMode("schedule");
+                      if (slots.length > 0 && !selectedSlotId) {
+                        setSelectedSlotId(slots[0].id);
+                      }
+                    }}
+                    className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      deliveryMode === "schedule"
+                        ? "bg-clinical-surface text-white shadow-sm"
+                        : "text-clinical-zinc hover:text-white"
+                    }`}
+                  >
+                    Schedule Later
+                  </button>
+                </div>
+
+                {deliveryMode === "now" ? (
+                  /* Deliver ASAP live ETA Container */
+                  <div className="p-3.5 rounded-lg border border-clinical-sage/30 bg-clinical-sage/5 space-y-1.5 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-clinical-sage opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-clinical-sage"></span>
+                      </span>
+                      <span className="text-xs font-semibold text-white">Deliver ASAP</span>
+                      {etaMinutes != null && (
+                        <span className="ml-auto text-[11px] font-mono font-bold text-clinical-sage bg-clinical-sage/10 px-2 py-0.5 rounded-full border border-clinical-sage/20">
+                          ~{etaMinutes} MINS
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-clinical-zinc leading-relaxed">
+                      Your order goes straight into our active kitchen queue. Rider pre-allocation is active. Packaged in a double-insulated, tamper-evident bag.
+                    </p>
                   </div>
                 ) : (
-                  <div
-                    className={`grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1 ${
-                      slotErrorMsg ? "ring-1 alert-allergen-border rounded-md p-1" : ""
-                    }`}
-                    aria-invalid={slotErrorMsg ? true : undefined}
-                    aria-describedby={slotErrorMsg ? "slot-error" : undefined}
-                  >
-                    {slots.map((slot) => {
-                      const start = new Date(slot.startsAt);
-                      const end = new Date(slot.endsAt);
-                      const day = start.toLocaleDateString([], {
-                        weekday: "short",
-                      });
-                      const window = `${start.toLocaleTimeString([], {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })} – ${end.toLocaleTimeString([], {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}`;
-                      const selected = selectedSlotId === slot.id;
-                      return (
-                        <button
-                          key={slot.id}
-                          type="button"
-                          disabled={slot.full}
-                          onClick={() => {
-                            setSelectedSlotId(slot.id);
-                            // Any slot interaction clears the inline error
-                            // so the red outline doesn't linger after the
-                            // user has actively responded to it.
-                            if (slotErrorMsg) setSlotErrorMsg(null);
-                          }}
-                          className={`p-2 rounded-md border text-left text-[11px] transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                            selected
-                              ? "border-clinical-gold/60 bg-clinical-gold/10 text-white"
-                              : "border-clinical-border text-clinical-zinc hover:border-clinical-border"
-                          }`}
-                        >
-                          <div className="font-medium text-white">{day}</div>
-                          <div className="tabular-nums">{window}</div>
-                          <div className="text-[9px] mt-0.5">
-                            {slot.full
-                              ? "Full"
-                              : `${slot.remaining} left`}
-                          </div>
-                        </button>
-                      );
-                    })}
+                  /* Scheduled Slot Chips */
+                  <div className="space-y-2 text-left">
+                    <p className="text-[10px] text-clinical-zinc uppercase tracking-wider">
+                      Pick a delivery slot
+                    </p>
+                    {slots.length === 0 ? (
+                      <div className="space-y-2">
+                        <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
+                        <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
+                      </div>
+                    ) : (
+                      <div
+                        className={`grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1 ${
+                          slotErrorMsg ? "ring-1 alert-allergen-border rounded-md p-1" : ""
+                        }`}
+                        aria-invalid={slotErrorMsg ? true : undefined}
+                        aria-describedby={slotErrorMsg ? "slot-error" : undefined}
+                      >
+                        {slots.map((slot) => {
+                          const start = new Date(slot.startsAt);
+                          const end = new Date(slot.endsAt);
+                          const day = start.toLocaleDateString([], {
+                            weekday: "short",
+                          });
+                          const window = `${start.toLocaleTimeString([], {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })} – ${end.toLocaleTimeString([], {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}`;
+                          const selected = selectedSlotId === slot.id;
+                          return (
+                            <button
+                              key={slot.id}
+                              type="button"
+                              disabled={slot.full}
+                              onClick={() => {
+                                setSelectedSlotId(slot.id);
+                                if (slotErrorMsg) setSlotErrorMsg(null);
+                              }}
+                              className={`p-2 rounded-md border text-left text-[11px] transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                                selected
+                                  ? "border-clinical-gold/60 bg-clinical-gold/10 text-white"
+                                  : "border-clinical-border text-clinical-zinc hover:border-clinical-border"
+                              }`}
+                            >
+                              <div className="font-medium text-white">{day}</div>
+                              <div className="tabular-nums">{window}</div>
+                              <div className="text-[9px] mt-0.5">
+                                {slot.full ? "Full" : `${slot.remaining} left`}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {slotErrorMsg && (
+                      <p
+                        id="slot-error"
+                        role="alert"
+                        className="text-[10px] alert-allergen-text flex items-center gap-1"
+                      >
+                        <AlertTriangle className="w-2.5 h-2.5" />
+                        {slotErrorMsg}
+                      </p>
+                    )}
+                    {isPreorderSlot && (
+                      <p className="text-[10px] text-clinical-sage font-medium flex items-center gap-1 mt-1 bg-clinical-sage/5 border border-clinical-sage/20 rounded px-2.5 py-1.5">
+                        <Tag className="w-3.5 h-3.5" />
+                        <span>Pre-order discount active: 5% off meals applied!</span>
+                      </p>
+                    )}
                   </div>
-                )}
-                {slotErrorMsg && (
-                  <p
-                    id="slot-error"
-                    role="alert"
-                    className="text-[10px] alert-allergen-text flex items-center gap-1"
-                  >
-                    <AlertTriangle className="w-2.5 h-2.5" />
-                    {slotErrorMsg}
-                  </p>
                 )}
               </div>
             )}
@@ -1524,32 +1804,7 @@ export default function Checkout() {
                 </span>
               )}
             </div>
-            <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-clinical-gold/30 bg-clinical-gold/5">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-white">
-                  Pre-order for tomorrow
-                </p>
-                <p className="text-[10px] text-clinical-zinc">
-                  {preorderTomorrow
-                    ? `Scheduled for ${tomorrowSlot.toLocaleString([], {
-                        weekday: "short",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })} · 5% off your meals`
-                    : "Lock in tomorrow's lunch slot and save 5%"}
-                </p>
-              </div>
-              <Switch
-                checked={preorderTomorrow}
-                onCheckedChange={setPreorderTomorrow}
-              />
-            </div>
-            {preorderTomorrow && (
-              <p className="text-[10px] text-clinical-sage flex items-center gap-1">
-                <Tag className="w-3 h-3" />
-                You save {formatPrice(preorderDiscount)} on this order
-              </p>
-            )}
+            {/* Redundant Pre-order Tomorrow card removed; integrated directly into unified delivery slot picker */}
           </CardContent>
         </Card>
 
@@ -1891,7 +2146,7 @@ export default function Checkout() {
               </p>
             )}
             <Button
-              onClick={() => setConfirmOpen(true)}
+              onClick={handlePlaceOrderClick}
               disabled={checkoutBlocked}
               className="hidden lg:flex w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold h-11 shadow-clinical gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-clinical-surface-elevated disabled:text-clinical-zinc disabled:shadow-none"
               title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
@@ -1997,7 +2252,7 @@ export default function Checkout() {
                 </p>
               )}
               <Button
-                onClick={() => setConfirmOpen(true)}
+                onClick={handlePlaceOrderClick}
                 disabled={checkoutBlocked}
                 className="h-12 px-4 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-clinical-surface-elevated disabled:text-clinical-zinc"
                 title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
@@ -2009,6 +2264,146 @@ export default function Checkout() {
           </div>
         </div>
       </Collapsible>
+
+      {/* Guest Phone + OTP Verification Dialog */}
+      <Dialog open={showGuestAuthDialog} onOpenChange={(open) => !guestIsVerifying && setShowGuestAuthDialog(open)}>
+        <DialogContent className="bg-clinical-surface border-clinical-border max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white font-serif text-lg flex items-center gap-2">
+              <Phone className="w-5 h-5 text-clinical-gold" />
+              {guestAuthStep === "welcome" ? "Welcome to Tanmatra!" : "Verify Mobile"}
+            </DialogTitle>
+            <DialogDescription className="text-clinical-zinc text-xs">
+              {guestAuthStep === "phone" && "Enter your mobile number to get a verification code."}
+              {guestAuthStep === "code" && `We've sent a 4-digit code to ${guestCountryCode} ${guestPhone}.`}
+              {guestAuthStep === "welcome" && "We need a few details to personalize your clinical kitchen experience."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {guestAuthStep === "phone" && (
+            <div className="space-y-4 py-2 text-left">
+              <div className="space-y-2">
+                <Label htmlFor="guest-phone-input" className="text-xs text-white">Mobile Number</Label>
+                <div className="flex gap-2">
+                  <div className="w-16 h-9 rounded-md bg-clinical-surface-elevated border border-clinical-border flex items-center justify-center text-xs font-semibold text-white select-none">
+                    {guestCountryCode}
+                  </div>
+                  <Input
+                    id="guest-phone-input"
+                    placeholder="Enter 10-digit mobile number"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    inputMode="tel"
+                    autoComplete="tel-national"
+                    className="h-9 text-xs bg-clinical-surface border-clinical-border flex-1"
+                  />
+                </div>
+              </div>
+              <Button
+                onClick={handleSendGuestOtp}
+                disabled={guestIsSending || guestPhone.length < 10}
+                className="w-full h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs"
+              >
+                {guestIsSending ? "Sending code…" : "Send Verification Code"}
+              </Button>
+            </div>
+          )}
+
+          {guestAuthStep === "code" && (
+            <div className="space-y-4 py-2 text-left">
+              <div className="space-y-2">
+                <Label htmlFor="guest-otp-input" className="text-xs text-white">Verification Code</Label>
+                <Input
+                  id="guest-otp-input"
+                  placeholder="Enter 4-digit OTP"
+                  value={guestOtpCode}
+                  onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="one-time-code"
+                  maxLength={4}
+                  className="h-10 text-center text-sm tracking-[1.5em] pl-[1.5em] font-mono bg-clinical-surface border-clinical-border"
+                />
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-clinical-zinc">
+                <span>Didn't receive code?</span>
+                {guestResendIn > 0 ? (
+                  <span>Resend in {guestResendIn}s</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendGuestOtp}
+                    className="text-clinical-gold hover:underline font-semibold"
+                  >
+                    Resend code
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setGuestAuthStep("phone")}
+                  disabled={guestIsVerifying}
+                  className="h-10 border-clinical-border text-clinical-zinc text-xs"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleVerifyGuestOtp}
+                  disabled={guestIsVerifying || guestOtpCode.length < 4}
+                  className="h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs"
+                >
+                  {guestIsVerifying ? "Verifying…" : "Verify & Continue"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {guestAuthStep === "welcome" && (
+            <div className="space-y-4 py-2 text-left">
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="guest-name-input" className="text-xs text-white">First Name</Label>
+                  <Input
+                    id="guest-name-input"
+                    placeholder="Enter your first name"
+                    value={guestFirstName}
+                    onChange={(e) => setGuestFirstName(e.target.value)}
+                    className="h-9 text-xs bg-clinical-surface border-clinical-border"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="guest-email-input" className="text-xs text-white">Email Address (Optional)</Label>
+                  <Input
+                    id="guest-email-input"
+                    placeholder="Enter email for receipts"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    type="email"
+                    className="h-9 text-xs bg-clinical-surface border-clinical-border"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={handleGuestAuthSuccess}
+                  className="h-10 border-clinical-border text-clinical-zinc text-xs"
+                >
+                  Skip
+                </Button>
+                <Button
+                  onClick={handleGuestAuthSuccess}
+                  disabled={!guestFirstName.trim()}
+                  className="h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs"
+                >
+                  Let's Eat
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Payment confirmation dialog */}
       <Dialog open={confirmOpen} onOpenChange={(open) => !isProcessing && setConfirmOpen(open)}>
@@ -2044,6 +2439,24 @@ export default function Checkout() {
             <div className="flex justify-between font-semibold">
               <span className="text-white">Total</span>
               <span className="tabular-nums text-clinical-gold">{formatPrice(razorpayTotal)}</span>
+            </div>
+            
+            {/* High-Fidelity Trust Strip */}
+            <div className="text-[9px] uppercase tracking-[0.18em] text-clinical-zinc font-semibold flex items-center justify-center gap-4 py-2 border-t border-clinical-border/40 bg-clinical-surface-elevated/20 rounded-md mt-4 select-none">
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-clinical-sage" />
+                FSSAI Certified
+              </span>
+              <span className="opacity-40">·</span>
+              <span className="flex items-center gap-1">
+                <Flame className="w-3.5 h-3.5 text-clinical-gold" />
+                Insulated Bags
+              </span>
+              <span className="opacity-40">·</span>
+              <span className="flex items-center gap-1">
+                <Lock className="w-3.5 h-3.5 text-clinical-sage" />
+                Tamper Sealed
+              </span>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">

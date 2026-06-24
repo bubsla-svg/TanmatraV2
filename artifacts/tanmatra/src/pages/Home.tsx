@@ -50,43 +50,42 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
-/* ── Featured meals (each with unique image) ──────────────────────── */
 const FEATURED_MEALS = [
   {
-    id: 1, name: "Activated Charcoal Smoothie", slug: "activated-charcoal-smoothie",
-    description: "Activated charcoal powder, banana, almond milk, chia seeds. Detoxifying smoothie blended for daily gut and skin support.",
-    image: "https://images.unsplash.com/photo-1570696516188-ade861b84a49?w=800&q=80", price: 5000, kitchen: "continental", category: "beverages", rdVerified: true,
-    macros: { protein: 3, carbs: 22, fat: 4, fiber: 2, calories: 140 }, tags: ["antioxidant", "vegetarian"],
+    id: 120, name: "Grilled Chicken, Sautéed Veg & Mash", slug: "grilled-chicken-sauteed-veg-mash-potato",
+    description: "Lean grilled chicken breast served with warm sautéed seasonal vegetables and creamy mashed potato. High-protein recovery meal.",
+    image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=800&q=80", price: 33300, kitchen: "continental", category: "mains", rdVerified: true,
+    macros: { protein: 42, carbs: 28, fat: 12, fiber: 6, calories: 388 }, tags: ["high-protein", "muscle-gain"],
   },
   {
-    id: 3, name: "Aglio Olio (Chicken)", slug: "aglio-olio-chicken",
-    description: "Spaghetti tossed in olive oil and garlic with grilled chicken strips and chili flakes. Classic continental comfort.",
-    image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=800&q=80", price: 18000, kitchen: "continental", category: "pasta", rdVerified: true,
-    macros: { protein: 28, carbs: 65, fat: 22, fiber: 5, calories: 580 }, tags: ["high-protein", "comfort"],
+    id: 70, name: "Whole Wheat Chicken Tikka Wrap", slug: "healthy-whole-wheat-chicken-tikka-wrap",
+    description: "Tender grilled chicken tikka pieces wrapped in a high-fiber whole wheat tortilla with crisp onions and green chutney.",
+    image: "https://images.unsplash.com/photo-1550507992-eb63ffee0847?w=800&q=80", price: 15500, kitchen: "indian", category: "wraps", rdVerified: true,
+    macros: { protein: 26, carbs: 42, fat: 10, fiber: 6, calories: 362 }, tags: ["high-fiber", "popular"],
   },
   {
-    id: 102, name: "Signature Quinoa Salad", slug: "signature-quinoa-salad",
-    description: "Cooked quinoa with cucumber, tomato, pomegranate, and a light olive oil-lemon dressing. High-fiber, plant-based.",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80", price: 9000, kitchen: "continental", category: "salads", rdVerified: true,
-    macros: { protein: 12, carbs: 12, fat: 14, fiber: 6, calories: 220 }, tags: ["high-fiber", "vegetarian"],
+    id: 121, name: "Grilled Veggie Sandwich with Ranch", slug: "grilled-veggie-sandwich-ranch-yoghurt",
+    description: "Crispy grilled seasonal vegetables sandwiched between high-fiber bread slices with a light ranch yogurt dressing.",
+    image: "https://images.unsplash.com/photo-1521390188846-e2a3a97453a0?w=800&q=80", price: 26000, kitchen: "continental", category: "wraps", rdVerified: true,
+    macros: { protein: 11, carbs: 38, fat: 8, fiber: 7, calories: 268 }, tags: ["vegetarian", "low-cal"],
   },
   {
-    id: 107, name: "Tomato Basil Soup", slug: "tomato-basil-soup",
-    description: "Slow-simmered tomatoes with garlic, fresh basil, and olive oil. Light, low-calorie comfort in a bowl.",
-    image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80", price: 9500, kitchen: "continental", category: "soups", rdVerified: true,
-    macros: { protein: 6, carbs: 14, fat: 6, fiber: 3, calories: 140 }, tags: ["low-cal", "vegetarian"],
+    id: 85, name: "Moong Dal Chilla with Curd", slug: "moong-dal-chilla-with-curd",
+    description: "A high-protein, gluten-free breakfast classic made of ground green moong dal, served with fresh probiotic curd.",
+    image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&q=80", price: 8500, kitchen: "indian", category: "breakfast", rdVerified: true,
+    macros: { protein: 16, carbs: 32, fat: 5, fiber: 6, calories: 235 }, tags: ["gluten-free", "vegetarian"],
   },
   {
-    id: 97, name: "Power House Smoothie", slug: "power-house-smoothie",
-    description: "Banana, oats, almonds, peanut butter, and whey protein blended with almond milk. Built for muscle recovery.",
-    image: "https://images.unsplash.com/photo-1570696516188-ade861b84a49?w=800&q=80", price: 8000, kitchen: "continental", category: "beverages", rdVerified: true,
-    macros: { protein: 15, carbs: 22, fat: 4, fiber: 2, calories: 140 }, tags: ["high-protein", "vegetarian"],
+    id: 122, name: "Grilled Chicken Breast (Single Serve)", slug: "grilled-chicken-breast-single-serve",
+    description: "120g of pure juicy grilled chicken breast seasoned with herbs. High-protein, zero-carb, keto-friendly fuel.",
+    image: "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80", price: 36000, kitchen: "continental", category: "mains", rdVerified: true,
+    macros: { protein: 31, carbs: 0, fat: 6, fiber: 0, calories: 180 }, tags: ["high-protein", "keto-friendly"],
   },
   {
-    id: 92, name: "Peri Peri Paneer Fiesta Rice Bowl", slug: "peri-peri-paneer-fiesta-rice-bowl",
-    description: "Brown rice topped with peri peri grilled paneer and steamed seasonal vegetables. A bold, balanced bowl.",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80", price: 16500, kitchen: "indian", category: "bowls", rdVerified: true,
-    macros: { protein: 22, carbs: 60, fat: 18, fiber: 7, calories: 460 }, tags: ["high-protein", "vegetarian"],
+    id: 62, name: "Falafel Garden Salad", slug: "falafel-garden-salad",
+    description: "Crisp garden greens and vegetables topped with crumbled high-fiber falafels and a light olive oil dressing.",
+    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80", price: 11000, kitchen: "mediterranean", category: "salads", rdVerified: true,
+    macros: { protein: 12, carbs: 24, fat: 14, fiber: 7, calories: 270 }, tags: ["vegetarian", "high-fiber"],
   },
 ];
 

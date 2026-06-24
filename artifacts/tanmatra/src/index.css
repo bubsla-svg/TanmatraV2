@@ -283,3 +283,170 @@
     }
   }
 }
+
+/* ─── Tanmatra UX UI Phase 1 Configuration ─── */
+@theme {
+  --color-saffron-50: #FDF6EC;
+  --color-saffron-100: #FAE9CE;
+  --color-saffron-200: #F4D29C;
+  --color-saffron-300: #EEBB6B;
+  --color-saffron-400: #E9A847;
+  --color-saffron-500: #E0922B;
+  --color-saffron-600: #C67A1E;
+  --color-saffron-700: #A2611A;
+  --color-saffron-800: #7E4C18;
+  --color-saffron-900: #5A3712;
+  --color-saffron-on: #2A1B08;
+
+  --color-sage-50: #F0F4F0;
+  --color-sage-100: #DBE7DD;
+  --color-sage-200: #B9CFBE;
+  --color-sage-300: #93B59B;
+  --color-sage-400: #6E9A78;
+  --color-sage-500: #4F7D5A;
+  --color-sage-600: #3E6448;
+  --color-sage-700: #324F3A;
+  --color-sage-800: #283E2E;
+  --color-sage-900: #1E2E23;
+
+  --color-clay-100: #F5D8D0;
+  --color-clay-300: #DC8773;
+  --color-clay-500: #C2503A;
+  --color-clay-700: #7E3122;
+
+  --color-stone-0: #FFFFFF;
+  --color-stone-50: #FAF8F3;
+  --color-stone-100: #F2EFE8;
+  --color-stone-200: #DED9CC;
+  --color-stone-300: #C6C0B0;
+  --color-stone-400: #A39C8B;
+  --color-stone-500: #807A6B;
+  --color-stone-600: #57534A;
+  --color-stone-700: #44403A;
+  --color-stone-800: #2A2723;
+  --color-stone-900: #1A1714;
+
+  --color-ink-500: #33373E;
+  --color-ink-600: #262A30;
+  --color-ink-700: #1B1E22;
+  --color-ink-800: #141619;
+  --color-ink-900: #0B0C0E;
+
+  --color-bone: #F2F0E9;
+  --color-mute: #8B9099;
+  --color-faint: #5B616B;
+
+  --color-macro-protein: #6E8B74;
+  --color-macro-carbs: #B89A5E;
+  --color-macro-fat: #C28A6E;
+
+  --color-success: #3E6448;
+  --color-error: #C2503A;
+  --color-warning: #B5851F;
+  --color-info: #4A6B7A;
+
+  --color-bg: rgb(var(--theme-bg) / <alpha-value>);
+  --color-surface: rgb(var(--theme-surface) / <alpha-value>);
+  --color-surface-raised: rgb(var(--theme-surface-raised) / <alpha-value>);
+  --color-border: rgb(var(--theme-border) / <alpha-value>);
+  --color-border-strong: rgb(var(--theme-border-strong) / <alpha-value>);
+  --color-text-primary: rgb(var(--theme-text-primary) / <alpha-value>);
+  --color-text-secondary: rgb(var(--theme-text-secondary) / <alpha-value>);
+  --color-text-tertiary: rgb(var(--theme-text-tertiary) / <alpha-value>);
+  --color-action: rgb(var(--theme-action) / <alpha-value>);
+  --color-action-text: rgb(var(--theme-action-text) / <alpha-value>);
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-display: 3.25rem;
+  --text-display--line-height: 1.03;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 600;
+
+  --text-h2: 1.875rem;
+  --text-h2--line-height: 1.10;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.20;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 600;
+
+  --text-card-title: 1.0625rem;
+  --text-card-title--line-height: 1.20;
+  --text-card-title--letter-spacing: -0.01em;
+  --text-card-title--font-weight: 600;
+
+  --text-body-lg: 1.0625rem;
+  --text-body-lg--line-height: 1.55;
+
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.55;
+
+  --text-body-sm: 0.8125rem;
+  --text-body-sm--line-height: 1.45;
+
+  --text-price: 1.125rem;
+  --text-price--line-height: 1.10;
+  --text-price--letter-spacing: -0.02em;
+  --text-price--font-weight: 600;
+
+  --text-price-lg: 1.375rem;
+  --text-price-lg--line-height: 1.05;
+  --text-price-lg--letter-spacing: -0.02em;
+  --text-price-lg--font-weight: 600;
+
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.20;
+  --text-micro--letter-spacing: 0.04em;
+  --text-micro--font-weight: 500;
+
+  --text-overline: 0.6875rem;
+  --text-overline--line-height: 1.20;
+  --text-overline--letter-spacing: 0.18em;
+  --text-overline--font-weight: 400;
+
+  --spacing-card: 1rem;
+  --spacing-gutter: 1.375rem;
+  --spacing-safe-bottom: env(safe-area-inset-bottom);
+
+  --radius-btn: 12px;
+  --radius-card: 16px;
+  --radius-input: 11px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(26,23,20,0.04), 0 4px 12px rgba(26,23,20,0.05);
+  --shadow-card-hover: 0 2px 4px rgba(26,23,20,0.06), 0 12px 28px rgba(26,23,20,0.08);
+  --shadow-bar: 0 -4px 20px rgba(26,23,20,0.10);
+}
+
+@layer base {
+  :root {
+    --theme-bg: 250 248 243;
+    --theme-surface: 255 255 255;
+    --theme-surface-raised: 255 255 255;
+    --theme-border: 222 217 204;
+    --theme-border-strong: 198 192 176;
+    --theme-text-primary: 26 23 20;
+    --theme-text-secondary: 87 83 74;
+    --theme-text-tertiary: 163 156 139;
+    --theme-action: 224 146 43;
+    --theme-action-text: 42 27 8;
+  }
+  .dark {
+    --theme-bg: 11 12 14;
+    --theme-surface: 20 22 25;
+    --theme-surface-raised: 27 30 34;
+    --theme-border: 38 42 48;
+    --theme-border-strong: 51 55 62;
+    --theme-text-primary: 242 240 233;
+    --theme-text-secondary: 139 144 152;
+    --theme-text-tertiary: 91 97 107;
+    --theme-action: 233 168 71;
+    --theme-action-text: 42 27 8;
+  }
+}
+/* ─── End Tanmatra UX UI Phase 1 Configuration ─── */

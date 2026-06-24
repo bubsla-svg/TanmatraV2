@@ -339,3 +339,53 @@ export function stripIngredientAmount(line: string): string {
   const cleaned = line.split(/\s[–—-]\s/)[0];
   return cleaned.trim();
 }
+
+export function matchesDosha(dish: DishData, dosha: "vata" | "pitta" | "kapha"): boolean {
+  const desc = (dish.description || "").toLowerCase() + " " + (dish.name || "").toLowerCase();
+  const isSpicy = desc.includes("spicy") || desc.includes("chilli") || desc.includes("pepper") || desc.includes("curry");
+  
+  if (dosha === "vata") {
+    return ["bowls", "mains", "soups"].includes(dish.category) && dish.macros.fat >= 12 && !desc.includes("dry") && !desc.includes("crispy");
+  }
+  if (dosha === "pitta") {
+    const coolingIngs = ["mint", "cucumber", "coconut", "yogurt", "curd", "coriander", "melon", "blueberry"];
+    return !isSpicy && (coolingIngs.some(ing => desc.includes(ing)) || ["salads", "beverages"].includes(dish.category));
+  }
+  if (dosha === "kapha") {
+    const sugarNum = parseFloat(dish.sugarPerServing) || 0;
+    return dish.macros.fat <= 10 && sugarNum <= 6 && (dish.macros.fiber >= 3 || dish.macros.protein >= 15);
+  }
+  return true;
+}
+
+export function matchesDietaryFilter(dish: DishData, filter: string): boolean {
+  const f = filter.toLowerCase();
+  if (f === "high-protein") {
+    return dish.macros.protein >= 18;
+  }
+  if (f === "veg") {
+    return dish.isVeg;
+  }
+  if (f === "keto") {
+    return dish.macros.carbs <= 15;
+  }
+  if (f === "vegan") {
+    const allergens = (dish.allergens || []).map(a => a.toLowerCase());
+    return dish.isVeg && !allergens.includes("dairy") && !allergens.includes("egg");
+  }
+  if (f === "gluten-free") {
+    const allergens = (dish.allergens || []).map(a => a.toLowerCase());
+    const name = dish.name.toLowerCase();
+    return !allergens.includes("gluten") && !name.includes("wheat") && !name.includes("bread");
+  }
+  if (f === "jain") {
+    if (!dish.isVeg) return false;
+    const rootVegs = ["onion", "garlic", "potato", "aloo", "sweet potato", "carrot", "beetroot", "ginger"];
+    const desc = (dish.description || "").toLowerCase() + " " + (dish.name || "").toLowerCase();
+    return !rootVegs.some(root => desc.includes(root));
+  }
+  if (["vata", "pitta", "kapha"].includes(f)) {
+    return matchesDosha(dish, f as "vata" | "pitta" | "kapha");
+  }
+  return true;
+}

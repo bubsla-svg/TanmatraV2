@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cartContext";
 import { ThemeManager } from "@/lib/clinicalTheme";
+import { ThemeProvider } from "next-themes";
 import { OrdersProvider } from "@/lib/ordersContext";
 import { PreferencesProvider } from "@/lib/preferencesContext";
 import OnboardingQuizGate from "@/components/preferences/OnboardingQuizGate";
@@ -123,7 +124,7 @@ export default function Root() {
   const hideChrome = matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -179,32 +180,34 @@ export default function Root() {
           </div>
         </noscript>
 
-        <ErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <CartProvider>
-                <OrdersProvider>
-                  <PreferencesProvider>
-                    <ThemeManager />
-                    <ScrollToTop />
-                    <div className="min-h-screen flex flex-col bg-clinical-dark">
-                      {!hideChrome && <Header />}
-                      {!hideChrome && <OnboardingQuizGate />}
-                      <main className="flex-1 pb-20 md:pb-0">
-                        <Outlet />
-                      </main>
-                      {!hideChrome && <Footer />}
-                      {!hideChrome && <BottomNav />}
-                      {!hideChrome && <StickyCheckoutBar />}
-                      <CartDrawer />
-                    </div>
-                    <Toaster theme="dark" position="top-center" richColors offset={72} />
-                  </PreferencesProvider>
-                </OrdersProvider>
-              </CartProvider>
-            </TooltipProvider>
-          </QueryClientProvider>
-        </ErrorBoundary>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <ErrorBoundary>
+            <QueryClientProvider client={queryClient}>
+              <TooltipProvider>
+                <CartProvider>
+                  <OrdersProvider>
+                    <PreferencesProvider>
+                      <ThemeManager />
+                      <ScrollToTop />
+                      <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
+                        {!hideChrome && <Header />}
+                        {!hideChrome && <OnboardingQuizGate />}
+                        <main className="flex-1 pb-20 md:pb-0">
+                          <Outlet />
+                        </main>
+                        {!hideChrome && <Footer />}
+                        {!hideChrome && <BottomNav />}
+                        {!hideChrome && <StickyCheckoutBar />}
+                        <CartDrawer />
+                      </div>
+                      <Toaster theme="dark" position="top-center" richColors offset={72} />
+                    </PreferencesProvider>
+                  </OrdersProvider>
+                </CartProvider>
+              </TooltipProvider>
+            </QueryClientProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
         <ScrollRestoration />
         <script dangerouslySetInnerHTML={{ __html: LOADER_SCRIPT }} />
         <Scripts />
