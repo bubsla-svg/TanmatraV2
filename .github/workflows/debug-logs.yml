@@ -1,0 +1,32 @@
+name: Debug Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Revision name (optional)'
+        required: false
+        default: ''
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Fetch Cloud Run Logs
+        run: |
+          FILTER="resource.type=cloud_run_revision AND resource.labels.service_name=wellness-foods"
+          if [ -n "${{ github.event.inputs.revision }}" ]; then
+            FILTER="$FILTER AND resource.labels.revision_name=${{ github.event.inputs.revision }}"
+          fi
+          gcloud logging read "$FILTER" \
+            --project brand-tanmatra-tmg \
+            --limit 150 \
+            --format="value(textPayload)"
