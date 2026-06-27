@@ -24,17 +24,6 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Fetch Logs
+      - name: Enable Firebase Hosting API
         run: |
-          if [ -n "${{ github.event.inputs.build_id }}" ]; then
-            gcloud builds log "${{ github.event.inputs.build_id }}" --project brand-tanmatra-tmg
-          else
-            FILTER="resource.type=cloud_run_revision AND resource.labels.service_name=wellness-foods"
-            if [ -n "${{ github.event.inputs.revision }}" ]; then
-              FILTER="$FILTER AND resource.labels.revision_name=${{ github.event.inputs.revision }}"
-            fi
-            gcloud logging read "$FILTER" \
-              --project brand-tanmatra-tmg \
-              --limit 150 \
-              --format="value(textPayload)"
-          fi
+          gcloud services enable firebasehosting.googleapis.com --project brand-tanmatra-tmg
