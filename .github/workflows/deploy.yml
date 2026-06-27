@@ -96,6 +96,9 @@ jobs:
             --update-env-vars "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }},ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }},DISABLE_SCHEDULERS=true" \
             --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
+            --memory=1Gi \
+            --cpu=1 \
+            --cpu-boost \
             --quiet
 
       - name: Smoke-test /api/livez

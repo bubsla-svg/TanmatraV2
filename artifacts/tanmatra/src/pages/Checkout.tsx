@@ -80,6 +80,21 @@ import {
 import PatientContextStrip from "@/components/clinical/PatientContextStrip";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
 
+// Shapes of the phone-OTP auth responses used by the guest-checkout flow.
+// Mirrors the interfaces in Login.tsx (kept local rather than shared to
+// avoid coupling the two pages' ad-hoc fetch typing).
+interface SendOtpResponse {
+  ok: boolean;
+  devCode?: string;
+  error?: string;
+}
+
+interface VerifyOtpResponse {
+  ok: boolean;
+  user: { id: string; firstName: string | null } | null;
+  error?: string;
+}
+
 // Order matters — the first preset is what users see "first" and most
 // successful tip UIs lead with a positive amount instead of zero, so
 // "No tip" is moved to the end and styled less prominently. Per UX
@@ -260,6 +275,13 @@ export default function Checkout() {
   const preorderDiscount = preorderTomorrow
     ? Math.floor((subtotal * PREORDER_BPS) / 10_000)
     : 0;
+
+  // New-address form state. Declared before the effects below because the
+  // pincode-serviceability effect reads `newAddr.pincode` in its dependency
+  // array — that array is evaluated during render, so a later `useState`
+  // declaration would land it in the temporal dead zone and throw
+  // "Cannot access 'newAddr' before initialization", white-screening checkout.
+  const [newAddr, setNewAddr] = useState({ label: "", line1: "", line2: "", city: "", pincode: "", phone: "" });
 
   // 1. Automatic pincode serviceability & auto-fill city
   useEffect(() => {
@@ -525,8 +547,6 @@ export default function Checkout() {
       alive = false;
     };
   }, []);
-
-  const [newAddr, setNewAddr] = useState({ label: "", line1: "", line2: "", city: "", pincode: "", phone: "" });
 
   const effectiveTip = isCustomTip
     ? Math.round((parseFloat(customTip) || 0) * 100)
