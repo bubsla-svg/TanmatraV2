@@ -1,10 +1,18 @@
-// Tanmatra service worker — v1
+// Tanmatra service worker — v2
 // Strategy:
 //   - Static assets (JS/CSS/fonts/images): cache-first, 30-day TTL
 //   - Navigation (HTML): network-first with offline fallback
 //   - API calls (/api/*): network-only (never cache — data must be fresh)
+//
+// CACHE_NAME bump (v1 → v2): the `activate` handler prunes every cache whose
+// key !== CACHE_NAME, so bumping the version flushes stale precached HTML/
+// assets from the previous deploy on the next load. It also gives the
+// Firebase Hosting build a changed file (public/sw.js → build/client/sw.js),
+// which is required for `firebase deploy` to publish a new version when only
+// hosting *config* (rewrites) changed — Firebase dedupes byte-identical
+// content and refuses to re-release the current live version otherwise.
 
-const CACHE_NAME = "tanmatra-v1";
+const CACHE_NAME = "tanmatra-v2";
 
 const PRECACHE_URLS = [
   "/",
