@@ -28,6 +28,7 @@ jobs:
               - 'artifacts/api-server/**'
               - 'lib/**'
               - 'Dockerfile'
+              - 'Dockerfile.api'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
