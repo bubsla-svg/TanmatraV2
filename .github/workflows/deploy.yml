@@ -115,15 +115,18 @@ jobs:
           done
           echo "livez never returned 200"; exit 1
 
-  # Build the SPA and deploy to Firebase Hosting. Waits for cloud-run so
-  # the new admin login page never goes live before the new login API
-  # exists. If cloud-run was skipped (frontend-only push), we still run.
+  # Build the SPA and deploy to Firebase Hosting. The frontend talks to a
+  # STABLE Cloud Run URL (not a per-deploy URL), so a backend deploy that
+  # fails or crash-loops must NOT block shipping frontend fixes — otherwise
+  # a broken API takes the whole site's frontend hostage. We therefore run
+  # whenever web files changed, regardless of the cloud-run job's result
+  # (success / skipped / failure); only a cancelled run is treated as abort.
   firebase:
     needs: [changes, cloud-run]
     if: |
       always() &&
       needs.changes.outputs.web == 'true' &&
-      (needs.cloud-run.result == 'success' || needs.cloud-run.result == 'skipped')
+      needs.cloud-run.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
