@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: read
     env:
-      GCP_PROJECT: omnismtp
+      GCP_PROJECT: brand-tanmatra-tmg
       GCP_REGION: asia-south2
       SERVICE: wellness-foods
     steps:
@@ -67,7 +67,7 @@ jobs:
           # Submit async to avoid VPC-SC log-streaming errors from the
           # GitHub runner. Poll build status directly instead.
           BUILD_ID=$(gcloud builds submit \
-            --tag gcr.io/${GCP_PROJECT}/${SERVICE}:${{ github.sha }} \
+            --tag asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --project ${GCP_PROJECT} \
             --async \
             --format='value(id)')
@@ -89,10 +89,12 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${SERVICE} \
-            --image gcr.io/${GCP_PROJECT}/${SERVICE}:${{ github.sha }} \
+            --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }},ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }},ADMIN_SESSION_SECRET=${{ secrets.ADMIN_SESSION_SECRET }}" \
+            --update-env-vars "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }},ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }},DISABLE_SCHEDULERS=true" \
+            --set-secrets "ADMIN_SESSION_SECRET=brand-b-tanmatra-v14-admin-session-secret:latest,DATABASE_URL=brand-b-tanmatra-v14-database-url:latest,SESSION_SECRET=brand-b-tanmatra-v14-session-secret:latest" \
+            --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-b-tanmatra-v14-db" \
             --quiet
 
       - name: Smoke-test /api/healthz
@@ -136,13 +138,13 @@ jobs:
         run: pnpm --filter @workspace/tanmatra run build
         env:
           NODE_ENV: production
-          VITE_API_BASE: https://wellness-foods-1076775857511.asia-south2.run.app/api
+          VITE_API_BASE: https://wellness-foods-475157072474.asia-south2.run.app/api
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TANMATRA_1D763 }}
-          projectId: tanmatra-1d763
+          projectId: brand-tanmatra-tmg
           channelId: live
           entryPoint: artifacts/tanmatra
