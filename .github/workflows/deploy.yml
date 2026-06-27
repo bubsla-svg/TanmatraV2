@@ -93,8 +93,8 @@ jobs:
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
             --update-env-vars "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }},ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }},DISABLE_SCHEDULERS=true" \
-            --set-secrets "ADMIN_SESSION_SECRET=brand-b-tanmatra-v14-admin-session-secret:latest,DATABASE_URL=brand-b-tanmatra-v14-database-url:latest,SESSION_SECRET=brand-b-tanmatra-v14-session-secret:latest" \
-            --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-b-tanmatra-v14-db" \
+            --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest" \
+            --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --quiet
 
       - name: Smoke-test /api/healthz
