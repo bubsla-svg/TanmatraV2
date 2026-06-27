@@ -24,6 +24,6 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Enable Firebase Hosting API
+      - name: Create Firebase Hosting Site
         run: |
-          gcloud services enable firebasehosting.googleapis.com --project brand-tanmatra-tmg
+          npx firebase-tools hosting:sites:create brand-tanmatra-tmg --project brand-tanmatra-tmg
