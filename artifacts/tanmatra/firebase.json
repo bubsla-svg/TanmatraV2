@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "site": "brand-tanmatra-tmg-web",
     "public": "build/client",
     "ignore": [
       "firebase.json",
