@@ -36,7 +36,6 @@ jobs:
               - 'lib/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
-              - '.github/workflows/deploy.yml'
 
   # Build the api-server Docker image with Cloud Build, then roll the
   # `wellness-foods` Cloud Run service. Runs only when backend-relevant
