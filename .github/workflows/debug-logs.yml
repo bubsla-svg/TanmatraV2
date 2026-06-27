@@ -7,6 +7,10 @@ on:
         description: 'Revision name (optional)'
         required: false
         default: ''
+      build_id:
+        description: 'Cloud Build ID (optional)'
+        required: false
+        default: ''
 
 jobs:
   logs:
@@ -20,13 +24,17 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Fetch Cloud Run Logs
+      - name: Fetch Logs
         run: |
-          FILTER="resource.type=cloud_run_revision AND resource.labels.service_name=wellness-foods"
-          if [ -n "${{ github.event.inputs.revision }}" ]; then
-            FILTER="$FILTER AND resource.labels.revision_name=${{ github.event.inputs.revision }}"
+          if [ -n "${{ github.event.inputs.build_id }}" ]; then
+            gcloud builds log "${{ github.event.inputs.build_id }}" --project brand-tanmatra-tmg
+          else
+            FILTER="resource.type=cloud_run_revision AND resource.labels.service_name=wellness-foods"
+            if [ -n "${{ github.event.inputs.revision }}" ]; then
+              FILTER="$FILTER AND resource.labels.revision_name=${{ github.event.inputs.revision }}"
+            fi
+            gcloud logging read "$FILTER" \
+              --project brand-tanmatra-tmg \
+              --limit 150 \
+              --format="value(textPayload)"
           fi
-          gcloud logging read "$FILTER" \
-            --project brand-tanmatra-tmg \
-            --limit 150 \
-            --format="value(textPayload)"
