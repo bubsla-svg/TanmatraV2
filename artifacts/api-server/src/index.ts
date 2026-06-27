@@ -144,12 +144,12 @@ opsAuditOutboxTimer.unref();
 
 // --- Process-level safety nets ---------------------------------------------
 process.on("unhandledRejection", (reason) => {
+ console.error("Unhandled Rejection:", reason);
  logger.error({ reason }, "unhandledRejection");
 });
 process.on("uncaughtException", (err) => {
+ console.error("Uncaught Exception:", err);
  logger.fatal({ err }, "uncaughtException");
- // Exit so the orchestrator can restart us cleanly. We don't try to
- // continue — node's invariants are no longer guaranteed.
  process.exit(1);
 });
 
