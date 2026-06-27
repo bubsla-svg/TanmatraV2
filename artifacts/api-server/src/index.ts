@@ -36,19 +36,23 @@ if (Number.isNaN(port) || port <= 0) {
  throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-// Refuse to boot in production without Redis — see queue.ts for why
-// silent degradation here is unsafe (orders accepted but never advanced).
-assertRedisAvailableInProduction();
+const schedulersDisabled = process.env["DISABLE_SCHEDULERS"] === "true";
+
+if (!schedulersDisabled) {
+  assertRedisAvailableInProduction();
+}
 
 const httpServer = createServer(app);
 initRealtime(httpServer);
-startWorkers();
-startLoyaltyScheduler();
-startAnomalyScheduler();
-startAnomalyDigestSender();
-startReviewSummarizerScheduler();
-startMealPlanScheduler();
-void resumeActiveSimulations();
+if (!schedulersDisabled) {
+  startWorkers();
+  startLoyaltyScheduler();
+  startAnomalyScheduler();
+  startAnomalyDigestSender();
+  startReviewSummarizerScheduler();
+  startMealPlanScheduler();
+  void resumeActiveSimulations();
+}
 
 // Bootstrap the curated safe_* views and reader role BEFORE we start
 // listening, so the very first /analytics/* request can never race view

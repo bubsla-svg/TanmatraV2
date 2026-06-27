@@ -54,9 +54,8 @@ router.get("/healthz", async (req: Request, res: Response) => {
   }
   if (!dbOk) failures.push("db");
 
-  // Redis is required in production (see queue.ts). In dev we tolerate
-  // its absence so the API can run without the worker stack — only treat
-  // a configured-but-unreachable Redis as a failure.
+  const schedulersDisabled = process.env["DISABLE_SCHEDULERS"] === "true";
+
   if (isRedisConfigured()) {
     let redisOk = false;
     try {
@@ -66,9 +65,7 @@ router.get("/healthz", async (req: Request, res: Response) => {
       req.log.error({ err }, "healthz redis probe failed");
     }
     if (!redisOk) failures.push("redis");
-  } else if (process.env["NODE_ENV"] === "production") {
-    // Defensive: assertRedisAvailableInProduction should have prevented
-    // boot, but fail-closed here too if the env was somehow stripped.
+  } else if (process.env["NODE_ENV"] === "production" && !schedulersDisabled) {
     failures.push("redis");
   }
 

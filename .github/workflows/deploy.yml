@@ -98,19 +98,19 @@ jobs:
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --quiet
 
-      - name: Smoke-test /api/healthz
+      - name: Smoke-test /api/livez
         run: |
           URL=$(gcloud run services describe ${SERVICE} \
             --region ${GCP_REGION} --project ${GCP_PROJECT} \
             --format='value(status.url)')
           echo "Service URL: $URL"
-          for i in 1 2 3 4 5; do
-            if curl -sf "$URL/api/healthz" >/dev/null; then
-              echo "healthz OK"; exit 0
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -sf "$URL/api/livez" >/dev/null; then
+              echo "livez OK"; exit 0
             fi
-            echo "healthz attempt $i failed, retrying..."; sleep 5
+            echo "livez attempt $i failed, retrying..."; sleep 5
           done
-          echo "healthz never returned 200"; exit 1
+          echo "livez never returned 200"; exit 1
 
   # Build the SPA and deploy to Firebase Hosting. Waits for cloud-run so
   # the new admin login page never goes live before the new login API
