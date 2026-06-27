@@ -26,4 +26,13 @@ jobs:
 
       - name: Create Firebase Hosting Site
         run: |
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          curl -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            https://firebase.googleapis.com/v1beta1/projects/brand-tanmatra-tmg:addFirebase
+          
+          # Wait a few seconds for the async project creation to register
+          sleep 10
+          
           npx firebase-tools hosting:sites:create brand-tanmatra-tmg --project brand-tanmatra-tmg
