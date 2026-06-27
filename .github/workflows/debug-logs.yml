@@ -1,40 +1,53 @@
-name: Debug Logs
+name: Run Database Migrations
 
 on:
   workflow_dispatch:
-    inputs:
-      revision:
-        description: 'Revision name (optional)'
-        required: false
-        default: ''
-      build_id:
-        description: 'Cloud Build ID (optional)'
-        required: false
-        default: ''
 
 jobs:
-  logs:
+  migrate:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+          create_credentials_file: true
+          export_environment_variables: true
 
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Fetch Logs
+      - name: Run Migrations and Seeding via Cloud SQL Proxy
         run: |
-          if [ -n "${{ github.event.inputs.build_id }}" ]; then
-            gcloud builds log "${{ github.event.inputs.build_id }}" --project brand-tanmatra-tmg
-          else
-            FILTER="resource.type=cloud_run_revision AND resource.labels.service_name=wellness-foods"
-            if [ -n "${{ github.event.inputs.revision }}" ]; then
-              FILTER="$FILTER AND resource.labels.revision_name=${{ github.event.inputs.revision }}"
-            fi
-            gcloud logging read "$FILTER" \
-              --project brand-tanmatra-tmg \
-              --limit 150 \
-              --format="value(textPayload)"
-          fi
+          # Download Cloud SQL Proxy
+          curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.11.2/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          
+          # Start proxy in background using GHA authenticated credentials
+          ./cloud-sql-proxy brand-tanmatra-tmg:asia-south2:brand-tanmatra-db --port 5433 &
+          PROXY_PID=$!
+          
+          # Wait for proxy to start
+          sleep 5
+          
+          # Run Drizzle push
+          DATABASE_URL="postgresql://brand_tanmatra_user:a4bEozBP3nusjNRX@127.0.0.1:5433/brand_tanmatra" pnpm --filter @workspace/db run push
+          
+          # Seed menu and operations data
+          DATABASE_URL="postgresql://brand_tanmatra_user:a4bEozBP3nusjNRX@127.0.0.1:5433/brand_tanmatra" pnpm --filter scripts run seed-menu-items
+          DATABASE_URL="postgresql://brand_tanmatra_user:a4bEozBP3nusjNRX@127.0.0.1:5433/brand_tanmatra" pnpm --filter scripts run seed-ops-data
+          
+          # Stop proxy
+          kill $PROXY_PID
