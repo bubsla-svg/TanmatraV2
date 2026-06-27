@@ -38,6 +38,7 @@ async function main() {
       customizations:
         d.customizations.length > 0 ? d.customizations : null,
       pairingSlug: d.pairingSlug ?? null,
+      allergenReviewState: "reviewed",
     } as const;
 
     const result = await db
@@ -65,6 +66,7 @@ async function main() {
           customizations: sql`coalesce(${menuItemsTable.customizations}, excluded.customizations)`,
           pairingSlug: sql`coalesce(${menuItemsTable.pairingSlug}, excluded.pairing_slug)`,
           macros: sql`case when ${menuItemsTable.macros} is null then excluded.macros when (${menuItemsTable.macros} ? 'fiberG') then ${menuItemsTable.macros} else ${menuItemsTable.macros} || jsonb_build_object('fiberG', excluded.macros->'fiberG') end`,
+          allergenReviewState: sql`excluded.allergen_review_state`,
         },
       })
       .returning({ id: menuItemsTable.id, createdAt: menuItemsTable.createdAt });
