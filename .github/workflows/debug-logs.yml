@@ -24,15 +24,17 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Create Firebase Hosting Site
+      - name: Fetch Logs
         run: |
-          ACCESS_TOKEN=$(gcloud auth print-access-token)
-          curl -X POST \
-            -H "Authorization: Bearer $ACCESS_TOKEN" \
-            -H "Content-Type: application/json" \
-            https://firebase.googleapis.com/v1beta1/projects/brand-tanmatra-tmg:addFirebase
-          
-          # Wait a few seconds for the async project creation to register
-          sleep 10
-          
-          npx firebase-tools hosting:sites:create brand-tanmatra-tmg --project brand-tanmatra-tmg
+          if [ -n "${{ github.event.inputs.build_id }}" ]; then
+            gcloud builds log "${{ github.event.inputs.build_id }}" --project brand-tanmatra-tmg
+          else
+            FILTER="resource.type=cloud_run_revision AND resource.labels.service_name=wellness-foods"
+            if [ -n "${{ github.event.inputs.revision }}" ]; then
+              FILTER="$FILTER AND resource.labels.revision_name=${{ github.event.inputs.revision }}"
+            fi
+            gcloud logging read "$FILTER" \
+              --project brand-tanmatra-tmg \
+              --limit 150 \
+              --format="value(textPayload)"
+          fi
