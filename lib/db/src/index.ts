@@ -45,6 +45,25 @@ export const overridePool = new Pool({
 });
 export const overrideDb = drizzle(overridePool, { schema });
 
+// node-postgres emits an `error` event on the Pool when an *idle* client
+// in the pool errors out (e.g. the backend dropped the connection, a Cloud
+// SQL socket blip, or a failover). If nothing is listening, Node escalates
+// that EventEmitter `error` into an uncaughtException — which crashes the
+// whole process. On Cloud Run that turns a single dropped idle connection
+// into a crash loop: the container binds the port (passing the TCP startup
+// probe) and is then killed ~seconds later, so every request 503s. Attach a
+// no-throw listener so idle-connection failures are logged and the pool can
+// transparently re-establish on the next checkout instead of taking down
+// the server. (Per-query errors are still surfaced to their callers.)
+for (const [name, p] of [
+  ["pool", pool],
+  ["overridePool", overridePool],
+] as const) {
+  p.on("error", (err) => {
+    console.error(`[db] idle client error on ${name}:`, err);
+  });
+}
+
 /**
  * Concrete drizzle-pg type for both `db` and `overrideDb` so callers
  * can accept either pool. Inferred from the export to avoid drift if
