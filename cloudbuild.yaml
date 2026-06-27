@@ -27,12 +27,12 @@
 
 substitutions:
   _REGION: asia-south2
-  _PROJECT: omnismtp
+  _PROJECT: brand-tanmatra-tmg
   _REGISTRY: asia-south2-docker.pkg.dev
   _REPO: wellness
   _API_SERVICE: wellness-foods
   _FRONTEND_SERVICE: tanmatra
-  _API_URL: https://wellness-foods-1076775857511.asia-south2.run.app/api
+  _API_URL: https://wellness-foods-475157072474.asia-south2.run.app/api
   _FRONTEND_ORIGIN: https://tanmatra.food
 
 options:

@@ -6,7 +6,7 @@ const RAW = import.meta.env.VITE_API_BASE as string | undefined;
 // errors throughout the app).
 export const API_BASE: string = RAW
   ? RAW.replace(/\/+$/, "")
-  : "https://wellness-foods-1076775857511.asia-south2.run.app/api";
+  : "https://wellness-foods-475157072474.asia-south2.run.app/api";
 
 export function apiPath(path: string): string {
   return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
