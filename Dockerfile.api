@@ -43,7 +43,9 @@ WORKDIR /app
 # We no longer need pnpm or corepack in the runner stage! 
 # We just copy the isolated node_modules directly from the builder.
 
-COPY --from=builder /app/artifacts/api-server/dist ./dist
+RUN mkdir -p /app/artifacts/api-server
+COPY --from=builder /app/artifacts/api-server/dist /app/artifacts/api-server/dist
+RUN ln -s /app/artifacts/api-server/dist /app/dist
 COPY --from=builder /app/isolated/package.json ./package.json
 COPY --from=builder /app/isolated/node_modules ./node_modules
 
@@ -55,4 +57,4 @@ USER app
 
 EXPOSE 8080
 
-CMD ["node", "--enable-source-maps", "./dist/index.mjs"]
+CMD ["node", "--enable-source-maps", "/app/artifacts/api-server/dist/index.mjs"]
