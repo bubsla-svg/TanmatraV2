@@ -54,13 +54,6 @@ void resumeActiveSimulations();
 // listening, so the very first /analytics/* request can never race view
 // creation. We then start the scheduler and bind the port.
 async function start(): Promise<void> {
- try {
- await ensureSafeViews();
- } catch (err) {
- logger.error({ err }, "ensureSafeViews failed (continuing without safe layer)");
- }
- startAnalyticsScheduler();
-
  // Properly catch port-binding errors
  httpServer.on("error", (err: NodeJS.ErrnoException) => {
  logger.error({ err }, "Error listening on port");
@@ -70,6 +63,14 @@ async function start(): Promise<void> {
  // Explicitly bind to 0.0.0.0 for Cloud Run compatibility
  httpServer.listen(port, "0.0.0.0", () => {
  logger.info({ port }, "Server listening on 0.0.0.0");
+ ensureSafeViews()
+ .then(() => {
+ startAnalyticsScheduler();
+ })
+ .catch((err) => {
+ logger.error({ err }, "ensureSafeViews failed (continuing without safe layer)");
+ startAnalyticsScheduler();
+ });
  });
 }
 void start();
