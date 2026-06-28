@@ -22,5 +22,8 @@ jobs:
           # Install Firebase CLI
           npm install -g firebase-tools
           
+          # Create a dummy firebase.json
+          echo '{"hosting":{"public":"public"}}' > firebase.json
+          
           # Delete the unused site
           firebase hosting:sites:delete brand-tanmatra-tmg-web --project brand-tanmatra-tmg --force --token "${{ secrets.FIREBASE_TOKEN }}"
