@@ -1,10 +1,10 @@
-name: Cleanup and Verification
+name: Deprovision Unused Firebase Site
 
 on:
   workflow_dispatch:
 
 jobs:
-  cleanup:
+  deprovision:
     runs-on: ubuntu-latest
     steps:
       - name: Authenticate to Google Cloud
@@ -17,33 +17,10 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Verify Triggers and Redis in brand-tanmatra-tmg
-        run: |
-          echo "=== Cloud Build Triggers ==="
-          gcloud builds triggers list --project brand-tanmatra-tmg || true
-          
-          echo "=== Redis Instances ==="
-          gcloud redis instances list --project brand-tanmatra-tmg --region asia-south2 || true
-          gcloud redis instances list --project brand-tanmatra-tmg --region asia-south1 || true
-
-      - name: Verify Old Project omnismtp
-        run: |
-          echo "=== Project omnismtp Details ==="
-          gcloud projects describe omnismtp || echo "No access to omnismtp"
-          
-          echo "=== Cloud Run Services in omnismtp ==="
-          gcloud run services list --project omnismtp || true
-          
-          echo "=== Cloud SQL Instances in omnismtp ==="
-          gcloud sql instances list --project omnismtp || true
-
-      - name: Verify Firebase Hosting Sites
+      - name: Delete Firebase Hosting Site
         run: |
           # Install Firebase CLI
           npm install -g firebase-tools
           
-          echo "=== Firebase Projects ==="
-          firebase projects:list --token "${{ secrets.FIREBASE_TOKEN }}" || npx firebase-tools projects:list || true
-          
-          echo "=== Firebase Hosting Sites in brand-tanmatra-tmg ==="
-          firebase hosting:sites:list --project brand-tanmatra-tmg --token "${{ secrets.FIREBASE_TOKEN }}" || npx firebase-tools hosting:sites:list --project brand-tanmatra-tmg || true
+          # Delete the unused site
+          firebase hosting:sites:delete brand-tanmatra-tmg-web --project brand-tanmatra-tmg --force --token "${{ secrets.FIREBASE_TOKEN }}"
