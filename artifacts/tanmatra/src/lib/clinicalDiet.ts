@@ -190,31 +190,14 @@ export function dishMatchesDietOrder(
 
 const STORAGE_KEY = "tanmatra:clinical-mode:v1";
 
-export interface PatientContext {
-  name: string;
-  mrn: string;
-  // The patient's room/bed string is non-essential for the strip itself but
-  // useful in dispatch / nurse-tablet contexts; kept here so a single shape
-  // survives localStorage round-trips.
-  room?: string;
-}
-
 export interface ClinicalModeState {
   enabled: boolean;
   dietOrderId: DietOrderId;
-  patient: PatientContext;
 }
-
-const DEFAULT_PATIENT: PatientContext = {
-  name: "Demo Patient",
-  mrn: "MRN-000042",
-  room: "Ward 3 · Bed 12",
-};
 
 const DEFAULT_STATE: ClinicalModeState = {
   enabled: false,
   dietOrderId: "regular",
-  patient: DEFAULT_PATIENT,
 };
 
 function loadState(): ClinicalModeState {
@@ -229,10 +212,6 @@ function loadState(): ClinicalModeState {
         parsed.dietOrderId && DIET_ORDER_BY_ID.has(parsed.dietOrderId)
           ? parsed.dietOrderId
           : "regular",
-      patient: {
-        ...DEFAULT_PATIENT,
-        ...(parsed.patient ?? {}),
-      },
     };
   } catch {
     return DEFAULT_STATE;
@@ -276,9 +255,6 @@ export const clinicalModeStore = {
     if (currentState.dietOrderId === id) return;
     setState({ dietOrderId: id });
   },
-  setPatient(patient: PatientContext) {
-    setState({ patient });
-  },
   subscribe(fn: () => void) {
     listeners.add(fn);
     return () => listeners.delete(fn);
@@ -303,8 +279,8 @@ export function useEnableClinicalMode() {
 }
 
 // ---------------------------------------------------------------------------
-// derived patient-context helpers (read-only — the PatientContextStrip on
-// the ordering screens is a display surface; editing happens elsewhere)
+// derived clinical helpers (read-only) — allergen/diet-order alerts and
+// recent-meal summaries computed from the signed-in user's own data.
 // ---------------------------------------------------------------------------
 
 export interface MedicalAlert {

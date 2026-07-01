@@ -66,8 +66,8 @@ import {
   LIFESTYLE_EHR_LABEL,
   dishMatchesDietOrder,
   useClinicalMode,
+  clinicalModeStore,
 } from "@/lib/clinicalDiet";
-import PatientContextStrip from "@/components/clinical/PatientContextStrip";
 import {
   PROTOCOLS,
   PROTOCOL_LABELS,
@@ -444,14 +444,21 @@ export default function Menu() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-      <PatientContextStrip />
-
       {clinicalMode && dietOrder && (
         <div className="rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 px-3 py-2 text-[11px] text-clinical-zinc flex items-start gap-2">
           <span className="text-clinical-gold font-semibold uppercase tracking-[0.14em] text-[10px] shrink-0">
             {dietOrder.short}
           </span>
-          <span>{dietOrder.description}</span>
+          <span className="flex-1">{dietOrder.description}</span>
+          <button
+            type="button"
+            onClick={() => clinicalModeStore.disable()}
+            className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] text-clinical-zinc hover:text-white"
+            aria-label="Exit clinical mode"
+          >
+            <X className="w-3 h-3" />
+            Exit clinical mode
+          </button>
         </div>
       )}
 

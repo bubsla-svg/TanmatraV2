@@ -55,9 +55,9 @@ function lowestSugar(dishes: DishData[], limit: number): DishData[] {
 
 export default function Clinical() {
   // Visiting the Clinical surface flips the global clinical-mode flag on so
-  // that Menu / Cart / Checkout render the PatientContextStrip and enforce
-  // the diet-order + allergen confirm-block. Stays on until the user
-  // explicitly exits via the strip's affordance.
+  // that Menu / Cart / Checkout apply the diet-order filter + allergen
+  // confirm-block. Stays on until the user exits via the "Exit clinical
+  // mode" affordance on the Menu.
   useEnableClinicalMode();
   // Diet-order assignment lives on this clinician console (not on the
   // ordering screens, where editing the patient's Medical ID is explicitly

@@ -78,7 +78,6 @@ import {
   useClinicalMode,
   type ServerSafetyConflict,
 } from "@/lib/clinicalDiet";
-import PatientContextStrip from "@/components/clinical/PatientContextStrip";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
 
 // Shapes of the phone-OTP auth responses used by the guest-checkout flow.
@@ -1224,7 +1223,6 @@ export default function Checkout() {
   return (
     <div className="max-w-4xl mx-auto p-4 pb-40 lg:pb-4 grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in duration-150">
       <div className="lg:col-span-5 space-y-3">
-        <PatientContextStrip />
         <ConflictsPanel
           panelId="checkout-server-block"
           serverMessage={serverAllergenError}

@@ -125,12 +125,21 @@
   * { border-color: var(--color-border); }
   html {
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11", "cv02";
+    /* Inter char variants (ss01: alt digits/letters, cv11: single-storey a,
+       cv02: open 4) + contextual alternates & ligatures for polished text. */
+    font-feature-settings: "ss01", "cv11", "cv02", "calt" 1, "liga" 1;
+    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
   body { background-color: var(--color-clinical-dark); color: hsl(0 0% 98%); }
+
+  /* App-wide line-breaking polish: balance headings (even, no orphan word on
+     the last line) and prettify body copy (avoids single-word widows). Both
+     degrade gracefully where unsupported. */
+  h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+  p { text-wrap: pretty; }
 
   /* ─── Type scale (the canonical sizes for every screen) ─── */
   .text-display {
@@ -139,17 +148,19 @@
     font-weight: 400;
     letter-spacing: -0.02em;
     line-height: 1.02;
+    text-wrap: balance;
   }
-  .text-clinical-h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; font-family: var(--font-sans); }
-  .text-clinical-h2 { font-size: 1.875rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; font-family: var(--font-sans); }
-  .text-clinical-h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; font-family: var(--font-sans); }
-  .text-clinical-h4 { font-size: 1rem; font-weight: 600; letter-spacing: -0.005em; line-height: 1.35; font-family: var(--font-sans); }
-  .text-body-lg { font-size: 1rem; line-height: 1.6; font-family: var(--font-sans); }
-  .text-body { font-size: 0.875rem; line-height: 1.55; font-family: var(--font-sans); }
-  .text-body-sm { font-size: 0.8125rem; line-height: 1.5; font-family: var(--font-sans); }
-  .text-caption { font-size: 0.75rem; line-height: 1.4; font-family: var(--font-sans); }
+  /* Fluid h1 — scales smoothly from mobile to desktop instead of a fixed jump. */
+  .text-clinical-h1 { font-size: clamp(2rem, 1.15rem + 2.9vw, 2.75rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.08; font-family: var(--font-sans); text-wrap: balance; }
+  .text-clinical-h2 { font-size: clamp(1.5rem, 1.05rem + 1.6vw, 1.875rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; font-family: var(--font-sans); text-wrap: balance; }
+  .text-clinical-h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.011em; line-height: 1.3; font-family: var(--font-sans); text-wrap: balance; }
+  .text-clinical-h4 { font-size: 1rem; font-weight: 600; letter-spacing: -0.006em; line-height: 1.35; font-family: var(--font-sans); }
+  .text-body-lg { font-size: 1rem; line-height: 1.6; font-family: var(--font-sans); text-wrap: pretty; }
+  .text-body { font-size: 0.875rem; line-height: 1.55; font-family: var(--font-sans); text-wrap: pretty; }
+  .text-body-sm { font-size: 0.8125rem; line-height: 1.5; font-family: var(--font-sans); text-wrap: pretty; }
+  .text-caption { font-size: 0.75rem; line-height: 1.45; font-family: var(--font-sans); }
   .text-clinical-data { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.875rem; letter-spacing: -0.02em; }
-  .text-clinical-label { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-clinical-zinc); }
+  .text-clinical-label { font-size: 0.6875rem; font-weight: 500; line-height: 1.35; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-clinical-zinc); }
 
   .tabular-nums { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
 
@@ -177,7 +188,7 @@
   /* ─── Canonical alert utilities (clinical surfaces) ─── */
   /* Use these in place of bg-red-500/* / text-red-300 / bg-orange-500/*
      on Cart, Checkout, Orders, Track, Clinical, RdConsole, and the
-     ConflictsPanel / PatientContextStrip. */
+     ConflictsPanel. */
   .alert-allergen-bg { background-color: color-mix(in oklab, var(--color-alert-allergen) 12%, transparent); }
   .alert-allergen-bg-strong { background-color: color-mix(in oklab, var(--color-alert-allergen) 22%, transparent); }
   .alert-allergen-border { border-color: color-mix(in oklab, var(--color-alert-allergen) 50%, transparent); }
