@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { track } from "@/lib/analytics";
 import { useParams, Link, useNavigate, type MetaFunction } from "react-router";
 import { getDishBySlug } from "@/lib/menuData";
 
@@ -131,6 +132,16 @@ export default function Dish() {
   );
 
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (meal) {
+      track("view_product", {
+        dishId: meal.id,
+        name: meal.name,
+        price: meal.price,
+      });
+    }
+  }, [meal]);
   const [selections, setSelections] = useState<Record<number, string | string[]>>(() => {
     const init: Record<number, string | string[]> = {};
     customizations.forEach((group, idx) => {
@@ -244,6 +255,12 @@ export default function Dish() {
       rdVerified: meal.rdVerified,
       macros: meal.macros,
       customizations,
+    });
+    track("add_to_cart", {
+      dishId: meal.id,
+      name: meal.name,
+      price: calculatedUnitPrice,
+      quantity,
     });
     openCart();
     toast.success(`Added ${meal.name} to your order`, {
@@ -744,6 +761,12 @@ export default function Dish() {
                         kitchen: u.kitchen, isVeg: u.isVeg, rdVerified: u.rdVerified,
                         macros: u.macros, customizations: [],
                       });
+                      track("add_to_cart", {
+                        dishId: u.id,
+                        name: u.name,
+                        price: u.price,
+                        quantity: 1,
+                      });
                       openCart();
                     }}
                     className="shrink-0 w-10 h-10 rounded-md bg-clinical-gold text-[#050505] flex items-center justify-center hover:bg-clinical-gold/90 transition-colors"
@@ -809,7 +832,6 @@ export default function Dish() {
               )}
               <Button
                 onClick={handleAddToPlan}
-                disabled={!isLive}
                 className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 disabled:opacity-50 disabled:pointer-events-none font-semibold h-11 px-6 shadow-clinical-lg text-sm gap-2"
               >
                 <ShoppingCart className="w-4 h-4" />

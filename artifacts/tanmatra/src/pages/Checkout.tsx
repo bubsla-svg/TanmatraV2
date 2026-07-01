@@ -38,8 +38,9 @@ import {
 } from "@/lib/fulfillmentApi";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Check, Flame, Lock } from "lucide-react";
+import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Check, Flame, Lock, MessageSquare } from "lucide-react";
 import { checkPincode, type PincodeCheckResult } from "@/lib/serviceablePincodes";
+import { track } from "@/lib/analytics";
 import {
   Collapsible,
   CollapsibleContent,
@@ -108,6 +109,15 @@ export default function Checkout() {
   useEffect(() => {
     if (items.length === 0) navigate("/menu", { replace: true });
   }, [items.length, navigate]);
+  useEffect(() => {
+    if (items.length > 0) {
+      track("checkout_start", {
+        cartItemCount: items.length,
+        subtotal,
+      });
+    }
+  }, [items.length, subtotal]);
+
   const { addOrder } = useOrders();
   const { preferences } = usePreferences();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
@@ -251,6 +261,8 @@ export default function Checkout() {
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [fulfillmentType, setFulfillmentType] = useState<"delivery" | "pickup">("delivery");
   const [slots, setSlots] = useState<DeliverySlotOption[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(true);
+  const [slotsError, setSlotsError] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   // Inline error message rendered directly under the slot grid. Populated
   // when the server rejects checkout with "delivery slot full" or
@@ -336,14 +348,19 @@ export default function Checkout() {
   }, [guestResendIn]);
 
   // Intercept place order click for guest users
-  const handlePlaceOrderClick = () => {
-    if (!activeAddr) {
-      toast.error("Please enter or select a delivery address");
-      return;
+  const handlePlaceOrderClick = async () => {
+    let currentAddr = activeAddr;
+    if (showNewAddress || !currentAddr) {
+      const saved = await handleSaveNewAddress();
+      if (!saved) {
+        toast.error("Please enter or select a valid delivery address");
+        return;
+      }
+      currentAddr = saved;
     }
     if (addressAuthRequired) {
-      if (newAddr.phone.trim()) {
-        setGuestPhone(newAddr.phone.trim().replace(/^\+91/, ""));
+      if (currentAddr.phone.trim()) {
+        setGuestPhone(currentAddr.phone.trim().replace(/^\+91/, ""));
       }
       setShowGuestAuthDialog(true);
     } else {
@@ -455,15 +472,36 @@ export default function Checkout() {
     }
   };
 
+  const fetchSlots = async () => {
+    setLoadingSlots(true);
+    setSlotsError(false);
+    try {
+      const r = await fulfillmentApi.listSlots();
+      setSlots(r.slots);
+    } catch {
+      setSlots([]);
+      setSlotsError(true);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
   useEffect(() => {
     let alive = true;
     void fulfillmentApi
       .listSlots()
       .then((r) => {
-        if (alive) setSlots(r.slots);
+        if (alive) {
+          setSlots(r.slots);
+          setLoadingSlots(false);
+        }
       })
       .catch(() => {
-        if (alive) setSlots([]);
+        if (alive) {
+          setSlots([]);
+          setSlotsError(true);
+          setLoadingSlots(false);
+        }
       });
     void fulfillmentApi
       .listPickupLocations()
@@ -649,7 +687,7 @@ export default function Checkout() {
     return () => { cancelled = true; };
   }, [activeAddr?.id, items.length, fulfillmentType]);
 
-  const handleSaveNewAddress = async () => {
+  const handleSaveNewAddress = async (): Promise<UserAddress | null> => {
     setAddressErrors({});
     const errs: Record<string, string> = {};
     if (!newAddr.label.trim()) errs.label = "Label is required";
@@ -667,7 +705,7 @@ export default function Checkout() {
       errs.phone = "Enter a valid phone number";
     if (Object.keys(errs).length > 0) {
       setAddressErrors(errs);
-      return;
+      return null;
     }
     setAddressErrors({});
     setSavingAddress(true);
@@ -692,7 +730,7 @@ export default function Checkout() {
         setSelectedAddress("guest-addr");
         setShowNewAddress(false);
         setTouchedFields(new Set());
-        return;
+        return guestAddr;
       }
       const r = await addressesApi.create({
         label: newAddr.label.trim(),
@@ -715,6 +753,7 @@ export default function Checkout() {
       });
       setTouchedFields(new Set());
       toast.success("Address saved");
+      return r.address;
     } catch (e) {
       const msg = String((e as Error).message);
       // Server returns the zod issue message for 400s (e.g. "invalid pincode");
@@ -723,6 +762,7 @@ export default function Checkout() {
       // wrapper attaches.
       const cleaned = msg.replace(/^\d{3}:\s*/, "");
       setAddressErrors({ _form: cleaned || "Could not save address" });
+      return null;
     } finally {
       setSavingAddress(false);
     }
@@ -1150,6 +1190,14 @@ export default function Checkout() {
       },
     });
 
+    track("order_created", {
+      orderId,
+      total: finalTotal,
+      itemCount: items.length,
+      fulfillmentType,
+      appliedCredits: creditApplied,
+    });
+
     if (referralAwarded) {
       toast.success("Referral reward unlocked for your friend");
     }
@@ -1308,7 +1356,7 @@ export default function Checkout() {
                         }
                         onBlur={() => touchField("label")}
                         autoComplete="nickname"
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
                       />
                       {touchedFields.has("label") && newAddr.label.trim() && !addressErrors.label && (
                         <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
@@ -1336,7 +1384,7 @@ export default function Checkout() {
                         type="tel"
                         inputMode="tel"
                         autoComplete="tel"
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
                       />
                       {touchedFields.has("phone") && /^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()) && !addressErrors.phone && (
                         <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
@@ -1360,7 +1408,7 @@ export default function Checkout() {
                         }
                         onBlur={() => touchField("city")}
                         autoComplete="address-level2"
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
                       />
                       {touchedFields.has("city") && newAddr.city.trim() && !addressErrors.city && (
                         <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
@@ -1385,7 +1433,7 @@ export default function Checkout() {
                         pattern="[0-9]*"
                         autoComplete="postal-code"
                         maxLength={6}
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
                       />
                       {touchedFields.has("pincode") && /^\d{6}$/.test(newAddr.pincode.trim()) && !addressErrors.pincode && (
                         <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
@@ -1405,7 +1453,7 @@ export default function Checkout() {
                           <Input
                             type="email"
                             placeholder="Enter email to get notified"
-                            className="h-8 text-[11px] bg-clinical-surface border-clinical-border flex-1"
+                            className="h-8 bg-clinical-surface border-clinical-border flex-1"
                           />
                           <Button
                             size="sm"
@@ -1434,7 +1482,7 @@ export default function Checkout() {
                       }
                       onBlur={() => touchField("line1")}
                       autoComplete="street-address"
-                      className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
+                      className="h-9 bg-clinical-surface border-clinical-border pr-7"
                     />
                     {touchedFields.has("line1") && newAddr.line1.trim() && !addressErrors.line1 && (
                       <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
@@ -1454,7 +1502,7 @@ export default function Checkout() {
                       setNewAddr({ ...newAddr, line2: e.target.value })
                     }
                     autoComplete="address-line2"
-                    className="h-9 text-xs bg-clinical-surface border-clinical-border"
+                    className="h-9 bg-clinical-surface border-clinical-border"
                   />
                 </div>
                 {addressErrors._form && (
@@ -1505,7 +1553,11 @@ export default function Checkout() {
               </button>
               <button
                 type="button"
-                onClick={() => setFulfillmentType("pickup")}
+                onClick={() => {
+                  setFulfillmentType("pickup");
+                  setSelectedSlotId(null);
+                  setPreorderTomorrow(false);
+                }}
                 disabled={pickupLocations.length === 0}
                 className={`p-3 rounded-lg border text-left transition-all disabled:opacity-50 ${
                   fulfillmentType === "pickup"
@@ -1584,10 +1636,24 @@ export default function Checkout() {
                     <p className="text-[10px] text-clinical-zinc uppercase tracking-wider">
                       Pick a delivery slot
                     </p>
-                    {slots.length === 0 ? (
+                    {loadingSlots ? (
                       <div className="space-y-2">
                         <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
                         <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
+                      </div>
+                    ) : slotsError || slots.length === 0 ? (
+                      <div className="rounded-lg border border-clinical-border bg-clinical-surface-elevated/40 p-3 text-center space-y-2">
+                        <p className="text-[11px] text-clinical-zinc">
+                          {slotsError ? "Failed to load delivery slots." : "No slots available today."}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={fetchSlots}
+                          className="h-8 text-[11px] px-3 border-clinical-gold text-clinical-gold hover:bg-clinical-gold/10"
+                        >
+                          Retry loading slots
+                        </Button>
                       </div>
                     ) : (
                       <div
@@ -1794,7 +1860,7 @@ export default function Checkout() {
                     setCustomTip(cleaned);
                   }}
                   min="0"
-                  className="h-9 text-xs bg-clinical-surface border-clinical-border tabular-nums"
+                  className="h-9 bg-clinical-surface border-clinical-border tabular-nums"
                   autoFocus
                   aria-label="Custom tip amount in rupees"
                 />
@@ -2176,6 +2242,16 @@ export default function Checkout() {
                 ? "Blocked by patient safety"
                 : `Review & Pay ${formatPrice(razorpayTotal)}`}
             </Button>
+            <a
+              href="https://wa.me/918047019200"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_desktop_summary" })}
+              className="hidden lg:flex text-[10px] text-clinical-zinc hover:text-white mt-2 items-center justify-center gap-1.5"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-clinical-sage" />
+              Need checkout help? WhatsApp Support
+            </a>
 
             <p className="text-[9px] text-clinical-zinc text-center flex items-center justify-center gap-1">
               <ShieldCheck className="w-3 h-3 text-clinical-sage" />
@@ -2280,6 +2356,16 @@ export default function Checkout() {
                 <CreditCard className="w-4 h-4" />
                 {checkoutBlocked ? "Blocked" : "Review & Pay"}
               </Button>
+              <a
+                href="https://wa.me/918047019200"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_mobile_bar" })}
+                className="text-[10px] text-clinical-zinc hover:text-white mt-1.5 items-center justify-center gap-1.5 text-center flex"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-clinical-sage" />
+                Need help? WhatsApp Support
+              </a>
             </div>
           </div>
         </div>

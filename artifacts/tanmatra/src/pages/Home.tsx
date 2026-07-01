@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { track } from "@/lib/analytics";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -254,6 +255,10 @@ export default function Home() {
   const navigate = useNavigate();
   const { orders } = useOrders();
   const { addItem } = useCart();
+
+  useEffect(() => {
+    track("view_home");
+  }, []);
 
   const reorderRail = useMemo(() => orders.slice(0, 3), [orders]);
   const { data: challenges } = useChallenges();
