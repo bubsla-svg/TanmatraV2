@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { create } from "zustand";
+import { calculateCartTotals } from "./cartMath";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface CartItem {
@@ -17,6 +18,7 @@ export interface CartItem {
   rdVerified: boolean;
   macros: { protein: number; carbs: number; fat: number; fiber: number; calories: number };
   customizations: string[];
+  recipient?: string;
 }
 
 export type AddStatus = "idle" | "loading" | "success";
@@ -32,6 +34,7 @@ interface CartState {
   addStatus: Record<number, AddStatus>;
   addItem: (item: Omit<CartItem, "lineId">) => void;
   updateQty: (lineId: string, delta: number) => void;
+  updateRecipient: (lineId: string, recipient: string) => void;
   setQty: (lineId: string, quantity: number) => void;
   removeItem: (lineId: string) => void;
   addBundleSlug: (slug: string) => void;
@@ -57,7 +60,8 @@ export const useCartStore = create<CartState>()(
             (p) =>
               p.dishId === item.dishId &&
               JSON.stringify(p.customizations) === JSON.stringify(item.customizations) &&
-              p.unitPrice === item.unitPrice,
+              p.unitPrice === item.unitPrice &&
+              p.recipient === item.recipient,
           );
           if (existing) {
             return {
@@ -86,6 +90,12 @@ export const useCartStore = create<CartState>()(
             bundleSlugs: lostLine ? [] : state.bundleSlugs,
           };
         }),
+      updateRecipient: (lineId, recipient) =>
+        set((state) => ({
+          items: state.items.map((p) =>
+            p.lineId === lineId ? { ...p, recipient: recipient.trim() || undefined } : p,
+          ),
+        })),
       setQty: (lineId, quantity) =>
         set((state) => {
           const clamped = Math.max(0, Math.floor(quantity));
@@ -134,6 +144,7 @@ export function useCart() {
   const bundleSlugs = useCartStore((s) => s.bundleSlugs);
   const addItem = useCartStore((s) => s.addItem);
   const updateQty = useCartStore((s) => s.updateQty);
+  const updateRecipient = useCartStore((s) => s.updateRecipient);
   const setQty = useCartStore((s) => s.setQty);
   const removeItem = useCartStore((s) => s.removeItem);
   const addBundleSlug = useCartStore((s) => s.addBundleSlug);
@@ -145,6 +156,7 @@ export function useCart() {
     bundleSlugs,
     addItem,
     updateQty,
+    updateRecipient,
     setQty,
     removeItem,
     addBundleSlug,
@@ -154,8 +166,6 @@ export function useCart() {
   };
 }
 
-// GST on restaurant food in India = 5%. Stored as basis points to keep math integer-safe.
-export const GST_BPS = 500; // 5.00%
 export const FREE_DELIVERY_THRESHOLD = 50000; // ₹500 in paise
 export const DELIVERY_FEE = 5000; // ₹50 in paise
 
@@ -168,24 +178,13 @@ export const DELIVERY_FEE = 5000; // ₹50 in paise
 export function useCartTotals() {
   const items = useCartStore((s) => s.items);
   return useMemo(() => {
-    const subtotal = items.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
     const totalQuantity = items.reduce((t, it) => t + it.quantity, 0);
-    const deliveryFee = subtotal === 0 || subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-    const tax = Math.round((subtotal * GST_BPS) / 10000);
-    const total = subtotal + tax + deliveryFee;
-    const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
-    const freeDeliveryProgress = subtotal === 0
-      ? 0
-      : Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
+    const calcs = calculateCartTotals(
+      items.map((it) => ({ unitPrice: it.unitPrice, quantity: it.quantity }))
+    );
     return {
-      subtotal,
-      tax,
-      deliveryFee,
-      total,
+      ...calcs,
       totalQuantity,
-      amountToFreeDelivery,
-      freeDeliveryProgress,
-      hasFreeDelivery: deliveryFee === 0 && subtotal > 0,
     };
   }, [items]);
 }

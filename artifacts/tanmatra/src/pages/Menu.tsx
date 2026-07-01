@@ -78,6 +78,7 @@ import {
 } from "@/lib/protocols";
 import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
+import { addressesApi } from "@/lib/userAddressesApi";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { useNavigate } from "react-router";
 import { Crown } from "lucide-react";
@@ -144,6 +145,8 @@ const QUICK_FILTERS = [
   { value: "vegan", label: "Vegan" },
   { value: "gluten-free", label: "Gluten-Free" },
   { value: "jain", label: "Jain" },
+  { value: "carnivore", label: "Carnivore" },
+  { value: "low-fodmap", label: "Low-FODMAP" },
   { value: "vata", label: "Vata Dosha" },
   { value: "pitta", label: "Pitta Dosha" },
   { value: "kapha", label: "Kapha Dosha" },
@@ -165,13 +168,31 @@ export default function Menu() {
   const [showFilters, setShowFilters] = useState(false);
   const [query, setQuery] = useState("");
   const [hideBlocked, setHideBlocked] = useState(true);
+  const [simpleView, setSimpleView] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem("tanmatra:simple-macros") === "true"
+      : false
+  );
   // Pagination: start with 24 cards in the DOM. Loading all 113 at once
   // produced scroll jank on mid-range Android devices.
   const PAGE_SIZE = 24;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const { addItem, addBundleSlug } = useCart();
+  const { addItem, addBundleSlug, clear } = useCart();
   const { open: openCart } = useCartDrawer();
   const { preferences } = usePreferences();
+  const [hasSavedAddress, setHasSavedAddress] = useState(false);
+
+  useEffect(() => {
+    if (preferences) {
+      addressesApi
+        .list()
+        .then((r) => setHasSavedAddress(r.addresses.length > 0))
+        .catch(() => setHasSavedAddress(false));
+    } else {
+      setHasSavedAddress(false);
+    }
+  }, [preferences]);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const groupCode = searchParams.get("group");
   const protocolParam = searchParams.get("protocol");
@@ -226,6 +247,26 @@ export default function Menu() {
       description: "Tap View Cart to review and check out.",
       action: { label: "View Cart", onClick: openCart },
     });
+  };
+
+  const handleExpressBuy = (item: DishData) => {
+    if (!item.isAvailable) return;
+    clear(); // Reset cart so it's a single purchase
+    addItem({
+      dishId: item.id,
+      slug: item.slug,
+      name: item.name,
+      image: item.image,
+      basePrice: item.price,
+      unitPrice: item.price,
+      quantity: 1,
+      kitchen: item.kitchen,
+      isVeg: item.isVeg,
+      rdVerified: item.rdVerified,
+      macros: item.macros,
+      customizations: [],
+    });
+    navigate("/checkout");
   };
 
   const handleAddBundle = (
@@ -330,8 +371,8 @@ export default function Menu() {
       
       // Quick Filters logic (OR within axis, AND across axes)
       if (quickFilters.length > 0) {
-        const nutritionFilters = quickFilters.filter(f => ["high-protein", "keto"].includes(f));
-        const dietFilters = quickFilters.filter(f => ["veg", "vegan", "gluten-free", "jain"].includes(f));
+        const nutritionFilters = quickFilters.filter(f => ["high-protein", "keto", "carnivore"].includes(f));
+        const dietFilters = quickFilters.filter(f => ["veg", "vegan", "gluten-free", "jain", "low-fodmap"].includes(f));
         const doshaFilters = quickFilters.filter(f => ["vata", "pitta", "kapha"].includes(f));
 
         let matchesNutrition = true;
@@ -870,14 +911,30 @@ export default function Menu() {
           <p className="text-[10px] uppercase tracking-[0.18em] text-text-secondary font-semibold">
             Quick Filters
           </p>
-          {quickFilters.length > 0 && (
-            <button
-              onClick={() => setQuickFilters([])}
-              className="text-[11px] uppercase tracking-[0.12em] text-action hover:underline font-semibold"
-            >
-              Clear quick filters
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={simpleView}
+                onChange={(e) => {
+                  setSimpleView(e.target.checked);
+                  localStorage.setItem("tanmatra:simple-macros", String(e.target.checked));
+                }}
+                className="w-3.5 h-3.5 accent-clinical-gold rounded border-clinical-border bg-clinical-dark"
+              />
+              <span className="text-[10px] uppercase tracking-[0.12em] text-clinical-zinc hover:text-white font-semibold">
+                Simple view
+              </span>
+            </label>
+            {quickFilters.length > 0 && (
+              <button
+                onClick={() => setQuickFilters([])}
+                className="text-[11px] uppercase tracking-[0.12em] text-action hover:underline font-semibold"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
         <div
           className="flex gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1"
@@ -914,6 +971,23 @@ export default function Menu() {
             );
           })}
         </div>
+
+      {quickFilters.some((f) => ["vata", "pitta", "kapha"].includes(f)) && (
+        <div className="rounded-lg border border-clinical-border bg-clinical-dark p-3 text-xs leading-relaxed animate-in fade-in">
+          <p className="text-clinical-zinc">
+            💡 <strong className="text-white">Ayurvedic Tip:</strong> Doshas (Vata, Pitta, Kapha) refer to traditional Indian body types. 
+            If your doctor advised a standard heart or diabetic plan, you can ignore these and focus on the High-Protein, Low-FODMAP, or Keto tags.
+          </p>
+        </div>
+      )}
+
+      {quickFilters.includes("jain") && (
+        <div className="rounded-lg border border-clinical-sage/30 bg-clinical-sage/5 p-3 text-xs leading-relaxed animate-in fade-in">
+          <p className="text-clinical-zinc">
+            🛡️ <strong className="text-clinical-sage">Jain Preparation Guarantee:</strong> All Jain meals are prepared in our ISO 22000 certified kitchen using dedicated, root-vegetable-free surfaces and cooking utensils to strictly prevent cross-contamination.
+          </p>
+        </div>
+      )}
       </div>
 
       {preferences && (
@@ -1044,6 +1118,7 @@ export default function Menu() {
               setDiet("all");
               setLifestyle("all");
               setQuery("");
+              setQuickFilters([]);
               if (activeProtocol) {
                 const next = new URLSearchParams(searchParams);
                 next.delete("protocol");
@@ -1075,7 +1150,10 @@ export default function Menu() {
             preferences={preferences}
             lifestyleTag={lifestyleTag}
             rationale={rationalesById.get(item.id)}
+            simpleView={simpleView}
+            hasSavedAddress={hasSavedAddress}
             onQuickAdd={handleQuickAdd}
+            onExpressBuy={handleExpressBuy}
             onPremiumGate={() => navigate("/premium")}
           />
         ))}

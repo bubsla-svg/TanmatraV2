@@ -449,4 +449,50 @@
     --theme-action-text: 42 27 8;
   }
 }
+/* ─── Sonner Toast Clinical Palette Overrides ─── */
+[data-sonner-toast][data-theme="dark"] {
+  font-family: var(--font-sans) !important;
+}
+
+[data-sonner-toast][data-theme="dark"][data-type="success"] {
+  background-color: #081009 !important;
+  border: 1px solid rgba(125, 158, 126, 0.3) !important;
+  color: #a3cca8 !important;
+}
+[data-sonner-toast][data-theme="dark"][data-type="success"] [data-icon] {
+  color: #7d9e7e !important;
+}
+[data-sonner-toast][data-theme="dark"][data-type="success"] [data-description] {
+  color: #88a78d !important;
+}
+[data-sonner-toast][data-theme="dark"][data-type="success"] [data-button] {
+  background-color: #111114 !important;
+  border: 1px solid rgba(125, 158, 126, 0.25) !important;
+  color: #a3cca8 !important;
+  transition: background-color 150ms ease;
+}
+[data-sonner-toast][data-theme="dark"][data-type="success"] [data-button]:hover {
+  background-color: #16161c !important;
+}
+
+[data-sonner-toast][data-theme="dark"][data-type="error"] {
+  background-color: #140808 !important;
+  border: 1px solid rgba(255, 107, 107, 0.25) !important;
+  color: #ff9999 !important;
+}
+[data-sonner-toast][data-theme="dark"][data-type="error"] [data-icon] {
+  color: #ff6b6b !important;
+}
+[data-sonner-toast][data-theme="dark"][data-type="error"] [data-description] {
+  color: #e58888 !important;
+}
+[data-sonner-toast][data-theme="dark"][data-type="error"] [data-button] {
+  background-color: #111114 !important;
+  border: 1px solid rgba(255, 107, 107, 0.2) !important;
+  color: #ff9999 !important;
+  transition: background-color 150ms ease;
+}
+[data-sonner-toast][data-theme="dark"][data-type="error"] [data-button]:hover {
+  background-color: #16161c !important;
+}
 /* ─── End Tanmatra UX UI Phase 1 Configuration ─── */

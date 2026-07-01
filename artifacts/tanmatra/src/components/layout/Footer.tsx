@@ -6,6 +6,7 @@ const FOOTER_LINKS = {
   platform: [
     { label: "Home", href: "/" },
     { label: "Clinical Menu", href: "/menu" },
+    { label: "Corporate Plans", href: "/corporate" },
     { label: "Track Order", href: "/track" },
     { label: "Cart & Checkout", href: "/cart" },
   ],
@@ -26,7 +27,7 @@ const FOOTER_LINKS = {
 
 export default function Footer() {
   return (
-    <footer className="hidden md:block border-t border-clinical-border bg-clinical-surface">
+    <footer className="border-t border-clinical-border bg-clinical-surface">
       {/* Main footer */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -62,7 +63,7 @@ export default function Footer() {
           </div>
 
           {/* Links */}
-          <div className="space-y-3">
+          <div className="hidden sm:block space-y-3">
             <p className="text-clinical-label text-white">Platform</p>
             <div className="space-y-2">
               {FOOTER_LINKS.platform.map((link) => (
@@ -73,7 +74,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="hidden sm:block space-y-3">
             <p className="text-clinical-label text-white">Protocols</p>
             <div className="space-y-2">
               {FOOTER_LINKS.protocols.map((link) => (
@@ -84,7 +85,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="hidden sm:block space-y-3">
             <p className="text-clinical-label text-white">Clinical</p>
             <div className="space-y-2">
               {FOOTER_LINKS.clinical.map((link) => (
@@ -114,7 +115,7 @@ export default function Footer() {
 
       {/* Medical Disclaimer */}
       <div className="border-t border-clinical-border bg-clinical-dark">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="max-w-7xl mx-auto px-4 pt-3 pb-20 md:pb-3">
           <p className="text-[10px] text-white text-center leading-relaxed">
             <strong className="text-clinical-gold">Medical Disclaimer:</strong> Tanmatra meals are designed as adjuncts to medical treatment
             and should not replace prescribed therapies. Always consult your physician or registered dietitian

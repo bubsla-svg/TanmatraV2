@@ -61,6 +61,7 @@ interface WbrReport {
     avgOrderPaise: number;
     topDishes: Array<{ name: string; units: number }>;
     anomaliesFired: number;
+    netMarginPct?: number;
   };
   chartSpec: {
     revenueByDay: Array<{ day: string; revenuePaise: number }>;
@@ -283,6 +284,26 @@ function WbrTab() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [fuelIncrease, setFuelIncrease] = useState(10);
+  const [simulatedMargin, setSimulatedMargin] = useState<number | null>(null);
+  const [simulating, setSimulating] = useState(false);
+
+  const runSimulation = async () => {
+    setSimulating(true);
+    try {
+      const res = await api<{ netMarginPct: number; thresholdAlert: boolean }>("/analytics/wbr/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fuelIncreasePct: fuelIncrease }),
+      });
+      setSimulatedMargin(res.netMarginPct);
+    } catch {
+      // Ignored
+    } finally {
+      setSimulating(false);
+    }
+  };
+
   const load = () => {
     void api<{ reports: WbrReport[] }>("/analytics/wbr")
       .then((r) => { setReports(r.reports); if (!active && r.reports[0]) setActive(r.reports[0]); })
@@ -314,12 +335,62 @@ function WbrTab() {
         {err && <p className="text-xs text-red-600">{err}</p>}
         {active && k && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Orders</div><div className="text-xl font-bold">{k.orders}</div><div className={`text-xs ${ordersDelta?.positive ? "text-emerald-600" : "text-red-600"}`}>{ordersDelta?.text}</div></CardContent></Card>
               <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Revenue</div><div className="text-xl font-bold">{rupees(k.revenuePaise)}</div><div className={`text-xs ${revDelta?.positive ? "text-emerald-600" : "text-red-600"}`}>{revDelta?.text}</div></CardContent></Card>
               <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Active customers</div><div className="text-xl font-bold">{k.activeCustomers}</div><div className={`text-xs ${custDelta?.positive ? "text-emerald-600" : "text-red-600"}`}>{custDelta?.text}</div></CardContent></Card>
               <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">AOV</div><div className="text-xl font-bold">{rupees(k.avgOrderPaise)}</div><div className="text-xs text-muted-foreground">{k.anomaliesFired} anomalies</div></CardContent></Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-xs text-muted-foreground">Net Margin</div>
+                  <div className="text-xl font-bold">
+                    {k.netMarginPct !== undefined ? `${k.netMarginPct}%` : "—"}
+                  </div>
+                  <div className="mt-1">
+                    {k.netMarginPct !== undefined && (
+                      <Badge className={k.netMarginPct < 35.0 ? "bg-red-500 text-white border-0 text-[10px]" : "bg-emerald-500 text-white border-0 text-[10px]"}>
+                        {k.netMarginPct < 35.0 ? "Low (<35%)" : "Healthy"}
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            <Card className="bg-muted/10 border-dashed">
+              <CardHeader className="py-3"><CardTitle className="text-sm font-semibold">Predictive Unit Economics Simulator</CardTitle></CardHeader>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs text-muted-foreground block">Simulate Fuel/Logistics Cost Increase: <span className="font-bold text-white">{fuelIncrease}%</span></label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={fuelIncrease}
+                      onChange={(e) => setFuelIncrease(Number(e.target.value))}
+                      className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                  <Button size="sm" onClick={runSimulation} disabled={simulating}>
+                    {simulating ? "Simulating..." : "Calculate Margin"}
+                  </Button>
+                </div>
+                {simulatedMargin !== null && (
+                  <div className="p-3 rounded bg-muted/20 border flex justify-between items-center text-xs">
+                    <div>
+                      Estimated Net Margin: <span className={`font-bold ${simulatedMargin < 35.0 ? 'text-red-400' : 'text-emerald-400'}`}>{simulatedMargin}%</span>
+                    </div>
+                    {simulatedMargin < 35.0 ? (
+                      <Badge className="bg-red-500 text-white border-0 text-[10px]">⚠️ Margin Warning Alert</Badge>
+                    ) : (
+                      <Badge className="bg-emerald-500 text-white border-0 text-[10px]">Stable</Badge>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader><CardTitle>Commentary</CardTitle></CardHeader>
               <CardContent><p className="text-sm whitespace-pre-wrap">{active.commentary}</p>

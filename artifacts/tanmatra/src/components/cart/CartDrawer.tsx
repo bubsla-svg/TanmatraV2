@@ -42,7 +42,7 @@ const UPSELL_CATEGORIES = new Set<string>(["beverages", "soups", "snacks", "brea
  */
 export default function CartDrawer() {
   const { isOpen, close } = useCartDrawer();
-  const { items, addItem, updateQty, removeItem, clear } = useCart();
+  const { items, addItem, updateQty, updateRecipient, removeItem, clear } = useCart();
   const totals = useCartTotals();
   const { dishes } = useMenuCatalog();
   const navigate = useNavigate();
@@ -324,6 +324,7 @@ export default function CartDrawer() {
                   <CartLineList
                     items={items}
                     updateQty={updateQty}
+                    updateRecipient={updateRecipient}
                     removeItem={removeItem}
                     addItem={addItem}
                   />
@@ -552,11 +553,13 @@ function FreeDeliveryBar({
 function CartLineList({
   items,
   updateQty,
+  updateRecipient,
   removeItem,
   addItem,
 }: {
   items: CartItem[];
   updateQty: (lineId: string, delta: number) => void;
+  updateRecipient: (lineId: string, recipient: string) => void;
   removeItem: (lineId: string) => void;
   addItem: (item: Omit<CartItem, "lineId">) => void;
 }) {
@@ -569,6 +572,7 @@ function CartLineList({
           onInc={() => updateQty(item.lineId, +1)}
           onDec={() => updateQty(item.lineId, -1)}
           onRemove={() => removeItem(item.lineId)}
+          onUpdateRecipient={(val) => updateRecipient(item.lineId, val)}
           addItem={addItem}
         />
       ))}
@@ -581,12 +585,14 @@ function CartLine({
   onInc,
   onDec,
   onRemove,
+  onUpdateRecipient,
   addItem,
 }: {
   item: CartItem;
   onInc: () => void;
   onDec: () => void;
   onRemove: () => void;
+  onUpdateRecipient: (val: string) => void;
   addItem: (item: Omit<CartItem, "lineId">) => void;
 }) {
   const lineTotal = item.unitPrice * item.quantity;
@@ -628,7 +634,7 @@ function CartLine({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white leading-tight truncate">
+            <p className="text-sm font-medium text-white leading-tight line-clamp-2">
               {item.name}
             </p>
             <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-clinical-zinc">
@@ -650,6 +656,16 @@ function CartLine({
                 {item.customizations.join(" · ")}
               </p>
             )}
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
+              <input
+                type="text"
+                placeholder="e.g. Mom, Child"
+                value={item.recipient || ""}
+                onChange={(e) => onUpdateRecipient(e.target.value)}
+                className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
+              />
+            </div>
           </div>
           <button
             type="button"
@@ -787,13 +803,6 @@ function UpsellCard({
 
   const handleAdd = () => {
     if (status !== "idle") return;
-    // On touch: first tap shows ghost preview; second tap confirms add.
-    // On pointer: hover already triggered ghost, so always add immediately.
-    if (!ghostActive) {
-      setGhostActive(true);
-      onGhost(dish);
-      return;
-    }
     setGhostActive(false);
     onGhost(null);
     setStatus("loading");
@@ -841,7 +850,7 @@ function UpsellCard({
             type="button"
             onClick={handleAdd}
             disabled={status === "loading"}
-            aria-label={ghostActive ? `Confirm add ${dish.name}` : `Preview ${dish.name}`}
+            aria-label={`Add ${dish.name} to order`}
             className={cn(
               "h-11 px-2 text-[10px] font-semibold text-[#050505] rounded-md transition-colors uppercase tracking-[0.08em] shrink-0 inline-flex items-center gap-1",
               status === "success" ? "bg-clinical-sage" : "bg-clinical-gold hover:bg-clinical-gold/90",

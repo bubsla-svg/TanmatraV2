@@ -8,6 +8,8 @@ import {
   ordersTable,
   pricingSuggestionsTable,
   recipesTable,
+  recipeIngredientsTable,
+  inventoryItemsTable,
   type DishClassification,
   type DishRecommendation,
   type MenuEngineeringDishStat,
@@ -59,30 +61,69 @@ interface PricedItem {
   foodCostPaise: number | null;
 }
 
+function parseGrams(text: string): number {
+  const match = text.match(/(\d+)\s*g/i);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+export async function loadDynamicRecipeCosts(): Promise<Map<string, number>> {
+  const recipes = await db.select().from(recipesTable);
+  const ingredients = await db.select().from(recipeIngredientsTable);
+  const inventory = await db.select().from(inventoryItemsTable);
+
+  const recipeCostMap = new Map<string, number>();
+
+  for (const recipe of recipes) {
+    const recipeIngs = ingredients.filter((ing) => ing.recipeId === recipe.id);
+    let totalCostPaise = 0;
+
+    for (const ing of recipeIngs) {
+      const ingNameLower = ing.ingredient.toLowerCase();
+      const match = inventory.find(
+        (inv) =>
+          inv.product.toLowerCase().includes(ingNameLower) ||
+          ingNameLower.includes(inv.product.toLowerCase())
+      );
+
+      if (match) {
+        const grams = parseGrams(ing.quantityText || ing.rawText);
+        const perKgCost = match.perKgUnitPaise ?? match.buyingPricePaise ?? 0;
+        const ingCost = Math.round((grams / 1000) * perKgCost);
+        totalCostPaise += ingCost;
+      }
+    }
+
+    recipeCostMap.set(recipe.slug, totalCostPaise > 0 ? totalCostPaise : (recipe.foodCostPaise ?? 0));
+  }
+
+  return recipeCostMap;
+}
+
 async function loadPricedItems(): Promise<Map<string, PricedItem>> {
+  const dynamicCosts = await loadDynamicRecipeCosts();
   const items = await db
     .select({
       slug: menuItemsTable.slug,
       name: menuItemsTable.name,
       pricePaise: menuItemsTable.pricePaise,
-      foodCostPaise: recipesTable.foodCostPaise,
     })
-    .from(menuItemsTable)
-    .leftJoin(recipesTable, eq(recipesTable.slug, menuItemsTable.slug));
+    .from(menuItemsTable);
+
   const out = new Map<string, PricedItem>();
   for (const row of items) {
+    const cost = dynamicCosts.get(row.slug) ?? null;
     out.set(row.slug, {
       slug: row.slug,
       name: row.name,
       pricePaise: row.pricePaise,
-      foodCostPaise: row.foodCostPaise ?? null,
+      foodCostPaise: cost,
     });
     // Allow lookups by name too — order items historically only carry name.
     out.set(`name:${row.name.toLowerCase()}`, {
       slug: row.slug,
       name: row.name,
       pricePaise: row.pricePaise,
-      foodCostPaise: row.foodCostPaise ?? null,
+      foodCostPaise: cost,
     });
   }
   return out;

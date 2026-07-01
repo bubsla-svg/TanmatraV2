@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cartContext";
+import { cn } from "@/lib/utils";
+import { usePreferences } from "@/lib/preferencesContext";
 
 interface NavItem {
   to: string;
@@ -284,14 +286,35 @@ function MoreSheet({
 export default function BottomNav() {
   const { pathname } = useLocation();
   const { totalQuantity } = useCart();
+  const { unauthorized, loading } = usePreferences();
+  const isLoggedIn = !unauthorized && !loading;
+
+  const navItems = [
+    ...PRIMARY.filter(
+      (item) => item.to !== "/orders" && item.to !== "/account"
+    ),
+    ...(isLoggedIn
+      ? [
+          PRIMARY.find((item) => item.to === "/orders")!,
+          PRIMARY.find((item) => item.to === "/account")!,
+        ]
+      : [
+          {
+            to: "/login",
+            label: "Sign In",
+            icon: UserCircle,
+            match: (p: string) => p === "/login",
+          },
+        ]),
+  ];
 
   return (
     <nav
       aria-label="Primary"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-[#050505]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="grid grid-cols-5">
-        {PRIMARY.map((item) => {
+      <ul className={cn("grid", isLoggedIn ? "grid-cols-5" : "grid-cols-4")}>
+        {navItems.map((item) => {
           const active = item.match
             ? item.match(pathname)
             : pathname === item.to;

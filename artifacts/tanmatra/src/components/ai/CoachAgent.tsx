@@ -463,14 +463,19 @@ export default function CoachAgentWidget({
   if (inline) {
     if (!isOpen) {
       return (
-        <Button
-          variant="outline"
-          className="w-full border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10"
-          onClick={() => setIsOpen(true)}
-        >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Ask the coach about this dish
-        </Button>
+        <div className="space-y-1.5 text-center">
+          <Button
+            variant="outline"
+            className="w-full border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10"
+            onClick={() => setIsOpen(true)}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Ask the coach about this dish
+          </Button>
+          <p className="text-[10px] text-clinical-zinc">
+            Ask about protein modifications, metabolic impacts, or allergen alternatives.
+          </p>
+        </div>
       );
     }
     return chatSurface;

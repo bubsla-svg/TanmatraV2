@@ -654,8 +654,9 @@ export default function Dish() {
                               className="border-clinical-border"
                             />
                             <span className="text-xs text-white">{opt.name}</span>
+                            {" "}
                             {opt.default && (
-                              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none">
+                              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none ml-2">
                                 Chef's pick
                               </span>
                             )}
@@ -697,8 +698,9 @@ export default function Dish() {
                                 className="border-clinical-border"
                               />
                               <span className="text-xs text-white">{opt.name}</span>
+                              {" "}
                               {opt.default && (
-                                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none">
+                                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none ml-2">
                                   Recommended
                                 </span>
                               )}
@@ -781,65 +783,69 @@ export default function Dish() {
       </div>
 
       <div className="fixed left-0 right-0 z-50 bg-[#050505]/95 backdrop-blur-xl border-t border-clinical-border bottom-[calc(56px+env(safe-area-inset-bottom))] md:bottom-0">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-clinical-surface rounded-lg border border-clinical-border p-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-clinical-zinc hover:text-white"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                aria-label="Decrease quantity"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </Button>
-              <span className="tabular-nums text-sm font-semibold text-white w-6 text-center">
-                {quantity}
-              </span>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-clinical-zinc hover:text-white"
-                onClick={() => setQuantity((q) => q + 1)}
-                aria-label="Increase quantity"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-
-            <div className="hidden sm:block">
-              <p className="text-clinical-label">Total</p>
-              <p className="tabular-nums text-lg font-bold text-clinical-gold">
-                {formatPrice(calculatedTotal)}
-              </p>
-            </div>
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-3 sm:gap-4">
+          {/* Left: Total Price (Always visible) */}
+          <div className="shrink-0">
+            <p className="text-[10px] uppercase tracking-wider text-clinical-zinc-muted font-semibold">Total Price</p>
+            <p className="tabular-nums text-base sm:text-lg font-bold text-clinical-gold">
+              {formatPrice(calculatedTotal)}
+            </p>
           </div>
 
-          {isPremiumOnly && !isPremium ? (
-            <Button
-              onClick={() => navigate("/premium")}
-              className="flex-1 sm:flex-initial bg-transparent border border-clinical-gold/50 text-clinical-gold hover:bg-clinical-gold/10 font-semibold h-11 px-6 text-sm gap-2"
-            >
-              <Crown className="w-4 h-4" />
-              Premium Only — See Membership
-            </Button>
-          ) : (
-            <div className="flex-1 sm:flex-initial flex flex-col items-stretch gap-1">
-              {!isLive && (
-                <p className="text-[11px] text-amber-400/70 text-center">
-                  Live menu unavailable — prices may differ
-                </p>
-              )}
+          {/* Right: Quantity Selector and Primary CTA grouped together */}
+          <div className="flex items-center gap-2 sm:gap-3 justify-end flex-1 sm:flex-initial min-w-0">
+            {!(isPremiumOnly && !isPremium) && (
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-clinical-surface rounded-lg border border-clinical-border p-1 shrink-0">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-clinical-zinc hover:text-white"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+                <span className="tabular-nums text-xs sm:text-sm font-semibold text-white w-5 sm:w-6 text-center">
+                  {quantity}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-clinical-zinc hover:text-white"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+
+            {isPremiumOnly && !isPremium ? (
               <Button
-                onClick={handleAddToPlan}
-                className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 disabled:opacity-50 disabled:pointer-events-none font-semibold h-11 px-6 shadow-clinical-lg text-sm gap-2"
+                onClick={() => navigate("/premium")}
+                className="flex-1 sm:flex-initial bg-transparent border border-clinical-gold/50 text-clinical-gold hover:bg-clinical-gold/10 font-semibold h-11 px-4 sm:px-6 text-xs sm:text-sm gap-2"
               >
-                <ShoppingCart className="w-4 h-4" />
-                Add to Order
-                <span className="tabular-nums">— {formatPrice(calculatedTotal)}</span>
+                <Crown className="w-4 h-4 shrink-0" />
+                <span className="hidden xs:inline">Premium Only — See Membership</span>
+                <span className="xs:hidden">Premium Only</span>
               </Button>
-            </div>
-          )}
+            ) : (
+              <div className="flex-1 sm:flex-initial flex flex-col items-stretch gap-1 min-w-0">
+                <Button
+                  onClick={handleAddToPlan}
+                  className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 disabled:opacity-50 disabled:pointer-events-none font-semibold h-11 px-4 sm:px-6 shadow-clinical-lg text-xs sm:text-sm gap-1.5 sm:gap-2"
+                >
+                  <ShoppingCart className="w-4 h-4 shrink-0" />
+                  <span>Add to Order</span>
+                </Button>
+                {!isLive && (
+                  <p className="text-[9px] text-amber-400/70 text-center leading-none mt-0.5 whitespace-nowrap">
+                    Offline mode — displaying cached prices
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

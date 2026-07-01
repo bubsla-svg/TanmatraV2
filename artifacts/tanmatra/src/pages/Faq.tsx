@@ -41,6 +41,10 @@ const FAQS = [
     q: "Are the meals suitable for vegans / vegetarians?",
     a: "The menu is clearly tagged: Vegan, Vegetarian, Egg, Poultry, Seafood, and Meat. You can filter by dietary preference on the Menu page. All vegan and vegetarian items are prepared on dedicated equipment to avoid cross-contact.",
   },
+  {
+    q: "What scientific references back Tanmatra's dietary protocols?",
+    a: "Our protocols are informed by peer-reviewed clinical guidelines: The Diabetes Protocol aligns with the American Diabetes Association (ADA) Carbohydrate & Glycemic Index recommendations (low-GI < 55). Saturated fat and sodium restrictions align with the American Heart Association (AHA) guidelines for prevention. Our Sports Recovery guidelines are built on the International Society of Sports Nutrition (ISSN) recommendations for post-exercise glycogen and protein synthesis.",
+  },
 ];
 
 export const meta: MetaFunction = () => [

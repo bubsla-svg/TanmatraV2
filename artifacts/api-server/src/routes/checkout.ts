@@ -3,6 +3,7 @@ import { db, ordersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
+import { calculateCartTotals } from "../lib/cartMath";
 
 const router: IRouter = Router();
 
@@ -68,10 +69,10 @@ router.post("/orders", async (req: Request, res: Response) => {
   }
 
   // Server-side price computation.
-  const subtotalPaise = validatedItems.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const gst = Math.round((subtotalPaise * 500) / 10000);
-  const deliveryFee = subtotalPaise >= 50000 ? 0 : 5000;
-  const totalPaise = subtotalPaise + gst + deliveryFee;
+  const totals = calculateCartTotals(
+    validatedItems.map((i) => ({ unitPrice: i.price, quantity: i.qty }))
+  );
+  const totalPaise = totals.total;
 
   let row: { id: number };
   try {

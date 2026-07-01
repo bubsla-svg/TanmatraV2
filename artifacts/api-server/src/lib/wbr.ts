@@ -1,8 +1,9 @@
 import { generateText } from "ai";
-import { desc, eq, sql } from "drizzle-orm";
-import { db, wbrReportsTable, type WbrReport } from "@workspace/db";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { db, wbrReportsTable, ordersTable, packagingItemsTable, type WbrReport } from "@workspace/db";
 import { DEFAULT_MODEL_ID, getModel } from "./ai/model";
 import { logger } from "./logger";
+import { loadDynamicRecipeCosts } from "./menuEngineering";
 
 // All read paths in this file go through the curated `safe_*` views (see
 // safeSql.ts / ensureSafeViews). The views expose only the non-PII columns
@@ -134,6 +135,69 @@ async function aiCommentary(kpis: WbrReport["kpis"]): Promise<{ text: string; mo
   return { text: templateCommentary(kpis), modelId: "template" };
 }
 
+export async function calculateWeeklyMargins(
+  start: Date,
+  end: Date,
+  fuelFactor = 1.0,
+): Promise<{ marginPct: number; totalCostPaise: number }> {
+  const foodCostMap = await loadDynamicRecipeCosts();
+  const packaging = await db.select().from(packagingItemsTable);
+  const avgPackCostPaise =
+    packaging.length > 0
+      ? Math.round(
+          packaging.reduce(
+            (sum, item) => sum + (item.pricePerPiecePaise ?? 0),
+            0,
+          ) / packaging.length,
+        )
+      : 1500;
+
+  const orders = await db
+    .select({
+      id: ordersTable.id,
+      totalPaise: ordersTable.totalPaise,
+      items: ordersTable.items,
+    })
+    .from(ordersTable)
+    .where(
+      and(
+        gte(ordersTable.createdAt, start),
+        sql`${ordersTable.createdAt} < ${end}`,
+      ),
+    );
+
+  let grossRevenuePaise = 0;
+  let totalCostPaise = 0;
+
+  for (const order of orders) {
+    grossRevenuePaise += order.totalPaise;
+
+    let orderFoodCostPaise = 0;
+    let orderPackCostPaise = 0;
+    if (Array.isArray(order.items)) {
+      for (const it of order.items) {
+        if (!it || typeof it !== "object") continue;
+        const name = String(it.name ?? "").toLowerCase();
+        const qty = Math.max(1, Math.round(Number(it.qty ?? 1)));
+        const recipeCost = foodCostMap.get(name) ?? 0;
+        orderFoodCostPaise += recipeCost * qty;
+        orderPackCostPaise += avgPackCostPaise * qty;
+      }
+    }
+
+    const orderDeliveryCostPaise = Math.round(4500 * fuelFactor);
+    totalCostPaise +=
+      orderFoodCostPaise + orderPackCostPaise + orderDeliveryCostPaise;
+  }
+
+  const netMarginPct =
+    grossRevenuePaise > 0
+      ? Math.round(((grossRevenuePaise - totalCostPaise) / grossRevenuePaise) * 1000) / 10
+      : 0;
+
+  return { marginPct: netMarginPct, totalCostPaise };
+}
+
 export async function generateWbr(input?: Partial<WbrInput>): Promise<WbrReport> {
   const { weekStart, weekEnd } = {
     ...lastFullWeek(),
@@ -143,12 +207,13 @@ export async function generateWbr(input?: Partial<WbrInput>): Promise<WbrReport>
   prevStart.setUTCDate(prevStart.getUTCDate() - 7);
   const prevEnd = new Date(weekStart);
 
-  const [curr, prev, byDay, top, fired] = await Promise.all([
+  const [curr, prev, byDay, top, fired, marginDetails] = await Promise.all([
     aggregateWindow(weekStart, weekEnd),
     aggregateWindow(prevStart, prevEnd),
     ordersByDay(weekStart, weekEnd),
     topDishes(weekStart, weekEnd),
     anomaliesFired(weekStart, weekEnd),
+    calculateWeeklyMargins(weekStart, weekEnd),
   ]);
 
   const kpis: WbrReport["kpis"] = {
@@ -161,6 +226,7 @@ export async function generateWbr(input?: Partial<WbrInput>): Promise<WbrReport>
     avgOrderPaise: curr.orders > 0 ? Math.round(curr.revenuePaise / curr.orders) : 0,
     topDishes: top,
     anomaliesFired: fired,
+    netMarginPct: marginDetails.marginPct,
   };
   const chartSpec = {
     revenueByDay: byDay.map((d) => ({ day: d.day, revenuePaise: d.revenuePaise })),

@@ -1,12 +1,15 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { logger } from "../lib/logger";
 import {
   db,
   inventoryItemsTable,
   packagingItemsTable,
   recipesTable,
   recipeIngredientsTable,
+  ordersTable,
+  kitchenStockTable,
 } from "@workspace/db";
-import { asc, eq, ilike, or } from "drizzle-orm";
+import { asc, eq, ilike, or, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   ackAlert,
@@ -195,6 +198,131 @@ router.get("/recipes/:slug", async (req: Request, res: Response) => {
     .where(eq(recipeIngredientsTable.recipeId, recipe.id))
     .orderBy(asc(recipeIngredientsTable.position));
   res.json({ recipe, ingredients });
+});
+
+router.get("/kds/orders", async (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
+  const rows = await db
+    .select({
+      id: ordersTable.id,
+      externalOrderId: ordersTable.externalOrderId,
+      status: ordersTable.status,
+      items: ordersTable.items,
+      createdAt: ordersTable.createdAt,
+    })
+    .from(ordersTable)
+    .where(inArray(ordersTable.status, ["placed", "preparing"]))
+    .orderBy(asc(ordersTable.createdAt));
+  res.json({ orders: rows });
+});
+
+router.post("/kds/orders/:id/ready", async (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
+  const orderId = parseInt(String(req.params.id ?? ""), 10);
+  await db
+    .update(ordersTable)
+    .set({ status: "ready" })
+    .where(eq(ordersTable.id, orderId));
+  res.json({ ok: true });
+});
+
+const deliveryBatchSchema = z.object({
+  product: z.string().min(1),
+  farmOrigin: z.string().min(1),
+  harvestDate: z.string().min(1),
+  batchCode: z.string().min(1),
+  quantity: z.number().positive(),
+});
+
+router.post("/supplier/deliver", async (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
+  const parsed = deliveryBatchSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload", issues: parsed.error.issues });
+    return;
+  }
+  const { product, farmOrigin, harvestDate, batchCode, quantity } = parsed.data;
+  // Generate a simulated scannable barcode token
+  const barcodeToken = `BARCODE-${product.toUpperCase().slice(0, 3)}-${Date.now()}`;
+  res.json({
+    ok: true,
+    barcodeToken,
+    product,
+    farmOrigin,
+    harvestDate,
+    batchCode,
+    quantity,
+  });
+});
+
+router.post("/supplier/intake", async (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
+  const { product, quantity } = req.body;
+  if (!product || !quantity) {
+    res.status(400).json({ error: "missing product or quantity" });
+    return;
+  }
+
+  // Find inventory item matching this product (e.g. Spinach)
+  const items = await db
+    .select()
+    .from(inventoryItemsTable)
+    .where(ilike(inventoryItemsTable.product, `%${product}%`))
+    .limit(1);
+  
+  if (items.length === 0) {
+    res.status(404).json({ error: `inventory item not found: ${product}` });
+    return;
+  }
+
+  const item = items[0];
+
+  // Update kitchen stock balance
+  const stocks = await db
+    .select()
+    .from(kitchenStockTable)
+    .where(eq(kitchenStockTable.inventoryItemId, item.id))
+    .limit(1);
+
+  if (stocks.length === 0) {
+    // If no stock record exists yet, insert a default one
+    await db.insert(kitchenStockTable).values({
+      inventoryItemId: item.id,
+      onHandQty: quantity,
+      zone: "default",
+      unit: "kg",
+      parLevel: 10,
+      reorderQty: 20,
+    });
+  } else {
+    // Update existing stock
+    await db
+      .update(kitchenStockTable)
+      .set({
+        onHandQty: stocks[0].onHandQty + quantity,
+      })
+      .where(eq(kitchenStockTable.id, stocks[0].id));
+  }
+
+  res.json({ ok: true, product, added: quantity });
+});
+
+router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
+  const orderId = parseInt(String(req.params.id ?? ""), 10);
+  
+  // Set createdAt to 25 minutes ago
+  const delayedTime = new Date(Date.now() - 25 * 60_000);
+  
+  await db
+    .update(ordersTable)
+    .set({ createdAt: delayedTime })
+    .where(eq(ordersTable.id, orderId));
+
+  // Log CRM SMS notification to console
+  logger.info(`[CRM SMS SENT] Delay Alert for Order #${orderId}: Your Tanmatra wrap is taking a bit longer to prepare due to peak demand. Rest assured, our kitchen is crafting it now!`);
+
+  res.json({ ok: true, smsSent: true, newCreatedAt: delayedTime });
 });
 
 export default router;

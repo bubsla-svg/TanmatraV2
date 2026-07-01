@@ -594,11 +594,11 @@ export default function Checkout() {
       ? pickupLocations.find((p) => p.id === selectedPickupId) ?? null
       : null;
   const pickupDiscount = selectedPickup?.discountPaise ?? 0;
+  const discountedSubtotal = Math.max(0, subtotal - preorderDiscount - pickupDiscount);
   // Pickup orders skip delivery fee entirely; otherwise the existing free-over-threshold rule.
   const deliveryFee =
-    fulfillmentType === "pickup" ? 0 : subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-  const discountedSubtotal = Math.max(0, subtotal - preorderDiscount - pickupDiscount);
-  const gst = Math.round((discountedSubtotal * 500) / 10000); // 5% GST
+    fulfillmentType === "pickup" ? 0 : discountedSubtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+  const gst = Math.round(discountedSubtotal * 0.18); // 18% GST
   const grossTotal = discountedSubtotal + gst + deliveryFee + effectiveTip + addonTotal;
   // Server only redeems against the (discounted) meal subtotal; cap here too
   // so the UI total matches the server final total exactly.
@@ -850,7 +850,7 @@ export default function Checkout() {
         orderId,
         items: items.map((it) => ({
           id: it.dishId,
-          name: it.name,
+          name: it.recipient ? `${it.name} (For ${it.recipient})` : it.name,
           qty: it.quantity,
           price: it.unitPrice,
         })),
@@ -1345,7 +1345,7 @@ export default function Checkout() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <div className="relative">
                       <Input
@@ -1397,7 +1397,7 @@ export default function Checkout() {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <div className="relative">
                       <Input
@@ -1533,7 +1533,7 @@ export default function Checkout() {
               <Truck className="w-4 h-4 text-clinical-gold" />
               <h2 className="text-sm font-semibold text-white">Get it your way</h2>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setFulfillmentType("delivery")}
@@ -1961,7 +1961,14 @@ export default function Checkout() {
                 <div key={item.lineId} className="flex items-start gap-3">
                   <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover border border-clinical-border shrink-0" loading="lazy" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{item.name}</p>
+                    <p className="text-xs font-medium text-white line-clamp-2">
+                      {item.name}
+                      {item.recipient && (
+                        <span className="text-[10px] text-clinical-gold ml-1 font-semibold">
+                          (For {item.recipient})
+                        </span>
+                      )}
+                    </p>
                     <p className="text-[10px] text-clinical-zinc">Qty: {item.quantity}</p>
                     {item.customizations.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -2327,12 +2334,12 @@ export default function Checkout() {
                 className="min-w-0 flex-1 text-left group"
                 aria-label="Toggle order breakdown"
               >
-                <p className="text-[10px] text-clinical-zinc leading-none truncate flex items-center gap-1">
-                  <span>
+                <p className="text-[10px] text-clinical-zinc leading-none flex items-center gap-1 min-w-0">
+                  <span className="truncate min-w-0">
                     {fulfillmentType === "pickup" ? "Self-collect" : deliveryFee === 0 ? "FREE delivery" : `+ ${formatPrice(deliveryFee)} delivery`}
                   </span>
                   <ChevronDown className="w-3 h-3 text-clinical-zinc transition-transform group-data-[state=open]:rotate-180 shrink-0" />
-                  <span className="text-clinical-zinc-muted truncate">
+                  <span className="text-clinical-zinc-muted truncate min-w-0">
                     See breakdown
                   </span>
                 </p>

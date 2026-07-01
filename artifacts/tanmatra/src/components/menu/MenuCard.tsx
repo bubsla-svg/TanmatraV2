@@ -23,6 +23,7 @@ import { findSmartSwap } from "@/lib/preferencesMatch";
 import type { UserPreferences } from "@/lib/preferencesApi";
 import type { DishRationale } from "@/lib/dishRationaleApi";
 import { useCart } from "@/lib/cartContext";
+import { cn } from "@/lib/utils";
 
 type MenuCardProps = {
   item: DishData;
@@ -33,7 +34,10 @@ type MenuCardProps = {
   preferences: UserPreferences | null;
   lifestyleTag: string | null;
   rationale: DishRationale | undefined;
+  simpleView?: boolean;
+  hasSavedAddress?: boolean;
   onQuickAdd: (e: React.MouseEvent, item: DishData) => void;
+  onExpressBuy?: (item: DishData) => void;
   onPremiumGate: () => void;
 };
 
@@ -46,7 +50,10 @@ export default function MenuCard({
   preferences,
   lifestyleTag,
   rationale,
+  simpleView = false,
+  hasSavedAddress = false,
   onQuickAdd,
+  onExpressBuy,
   onPremiumGate,
 }: MenuCardProps) {
   const { items, updateQty } = useCart();
@@ -111,7 +118,7 @@ export default function MenuCard({
           </span>
           {item.rdVerified && (
             <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-sage/40 text-clinical-sage bg-clinical-sage/10 backdrop-blur-sm font-semibold tracking-wider uppercase">
-              RD
+              RD Verified
             </span>
           )}
           {isPremiumOnly && (
@@ -159,45 +166,91 @@ export default function MenuCard({
         </p>
 
         {/* Macro readout band (dashed top+bottom hairline) */}
-        {(() => {
-          const pGrams = item.macros.protein;
-          const cGrams = item.macros.carbs;
-          const fGrams = item.macros.fat;
-          const pCal = pGrams * 4;
-          const cCal = cGrams * 4;
-          const fCal = fGrams * 9;
-          const totalCal = pCal + cCal + fCal || 1;
-          const pPct = Math.round((pCal / totalCal) * 100);
-          const cPct = Math.round((cCal / totalCal) * 100);
-          const fPct = Math.round((fCal / totalCal) * 100);
+        {simpleView ? (
+          <div className="my-3.5 flex flex-wrap gap-1.5 py-1 text-xs">
+            <span className="px-2 py-0.5 rounded bg-clinical-surface text-white border border-clinical-border font-medium">
+              {item.macros.calories} Kcal
+            </span>
+            {item.macros.protein >= 20 && (
+              <span className="px-2 py-0.5 rounded bg-clinical-sage/10 text-clinical-sage border border-clinical-sage/20 font-semibold uppercase text-[9px] tracking-wide">
+                High Protein
+              </span>
+            )}
+            {item.macros.carbs <= 20 && (
+              <span className="px-2 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-semibold uppercase text-[9px] tracking-wide">
+                Low Carb
+              </span>
+            )}
+            {item.macros.fat <= 12 && (
+              <span className="px-2 py-0.5 rounded bg-clinical-blue/15 text-clinical-blue border border-clinical-blue/30 font-semibold uppercase text-[9px] tracking-wide">
+                Low Fat
+              </span>
+            )}
+            {(() => {
+              const net = Math.max(0, item.macros.carbs - (item.macros.fiber || 0));
+              return (
+                net <= 15 && (
+                  <span className="px-2 py-0.5 rounded bg-clinical-sage/10 text-clinical-sage border border-clinical-sage/20 font-semibold uppercase text-[9px] tracking-wide">
+                    Net Carb: {net}g
+                  </span>
+                )
+              );
+            })()}
+          </div>
+        ) : (
+          (() => {
+            const pGrams = item.macros.protein;
+            const cGrams = item.macros.carbs;
+            const fGrams = item.macros.fat;
+            const pCal = pGrams * 4;
+            const cCal = cGrams * 4;
+            const fCal = fGrams * 9;
+            const totalCal = pCal + cCal + fCal || 1;
+            const pPct = Math.round((pCal / totalCal) * 100);
+            const cPct = Math.round((cCal / totalCal) * 100);
+            const fPct = Math.round((fCal / totalCal) * 100);
+            const netCarb = Math.max(0, cGrams - (item.macros.fiber || 0));
 
-          return (
-            <div className="my-3.5 flex gap-4 border-y border-dashed border-border py-2.5 font-mono text-clinical-data text-text-primary">
-              <div className="flex flex-col">
-                <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Kcal</span>
+            return (
+              <div className="my-3.5 flex gap-4 border-y border-dashed border-border py-2.5 font-mono text-clinical-data text-text-primary">
+                <div className="flex flex-col">
+                  <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
+                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Kcal</span>
+                </div>
+                <div className="flex flex-1 flex-col">
+                  <span className="text-[12.5px] font-semibold">{pGrams}g</span>
+                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Prot {pPct}%</span>
+                  <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${pPct}%` }} />
+                </div>
+                <div className="flex flex-1 flex-col">
+                  <span className="text-[12.5px] font-semibold flex items-baseline gap-0.5">
+                    {cGrams}g
+                    <span className="text-[8.5px] text-clinical-zinc font-normal normal-case">({netCarb}n)</span>
+                  </span>
+                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Carb {cPct}%</span>
+                  <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${cPct}%` }} />
+                </div>
+                <div className="flex flex-1 flex-col">
+                  <span className="text-[12.5px] font-semibold">{fGrams}g</span>
+                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Fat {fPct}%</span>
+                  <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fPct}%` }} />
+                </div>
               </div>
-              <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{pGrams}g</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Prot {pPct}%</span>
-                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${pPct}%` }} />
-              </div>
-              <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{cGrams}g</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Carb {cPct}%</span>
-                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${cPct}%` }} />
-              </div>
-              <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{fGrams}g</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Fat {fPct}%</span>
-                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fPct}%` }} />
-              </div>
-            </div>
-          );
-        })()}
+            );
+          })()
+        )}
 
-        <div className="hidden sm:block text-[10px] uppercase tracking-[0.12em] text-clinical-zinc font-semibold">
-          {categoryLine}
+        <div className="hidden sm:flex text-[10px] uppercase tracking-[0.12em] text-clinical-zinc font-semibold items-center gap-1.5 flex-wrap">
+          <span>{categoryLine}</span>
+          <span>·</span>
+          <span className={cn(
+            "font-bold",
+            item.glycaemicIndex === "low" && "text-clinical-sage",
+            item.glycaemicIndex === "medium" && "text-amber-400",
+            item.glycaemicIndex === "high" && "text-red-400"
+          )}>
+            GI: {item.glycaemicIndex.toUpperCase()}
+          </span>
         </div>
 
         {preferences &&
@@ -310,19 +363,34 @@ export default function MenuCard({
               </button>
             </div>
           ) : (
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onQuickAdd(e, item);
-              }}
-              disabled={!item.isAvailable || !isLive}
-              title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
-              className="flex-1 h-11 sm:h-10 border border-border bg-surface-raised px-3.5 py-2 font-sans text-[13px] font-semibold text-text-primary transition hover:border-saffron-700 hover:bg-saffron-50 dark:hover:bg-saffron-400/10 active:scale-95 active:bg-action active:text-action-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action shadow-sm"
-            >
-              <span aria-hidden="true">+</span> Add
-            </Button>
+            <div className="flex-1 flex gap-1 min-w-0">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onQuickAdd(e, item);
+                }}
+                disabled={!item.isAvailable || !isLive}
+                title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
+                className="flex-1 h-11 sm:h-10 border border-border bg-surface-raised px-2 py-2 font-sans text-xs font-semibold text-text-primary transition hover:border-saffron-700 hover:bg-saffron-50 dark:hover:bg-saffron-400/10 active:scale-95 active:bg-action active:text-action-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action shadow-sm truncate"
+              >
+                <span aria-hidden="true">+</span> Add
+              </Button>
+              {hasSavedAddress && preferences && (
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onExpressBuy?.(item);
+                  }}
+                  className="flex-1 h-11 sm:h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-bold px-2 truncate"
+                >
+                  Buy Now
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>

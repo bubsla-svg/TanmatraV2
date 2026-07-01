@@ -307,16 +307,33 @@ export function getRdNoteForDish(dish: DishData): string {
   return dish.rdNote ?? RD_NOTE_FALLBACKS[dish.category];
 }
 
+function isClinicallyCompatible(candidate: DishData, source: DishData): boolean {
+  if (source.glycaemicIndex === "low") {
+    if (candidate.glycaemicIndex === "high") return false;
+    if (["salads", "soups"].includes(source.category)) {
+      if (candidate.macros.calories > 300) return false;
+      if (["pasta", "mains"].includes(candidate.category)) return false;
+    }
+  }
+  return true;
+}
+
 export function getUpsellsForDish(dish: DishData, count = 3): DishData[] {
   const sameKitchen = DISHES.filter(
-    (d) => d.id !== dish.id && d.kitchen === dish.kitchen && d.category !== dish.category && d.isAvailable,
+    (d) =>
+      d.id !== dish.id &&
+      d.kitchen === dish.kitchen &&
+      d.category !== dish.category &&
+      d.isAvailable &&
+      isClinicallyCompatible(d, dish),
   );
   const crossKitchen = DISHES.filter(
     (d) =>
       d.id !== dish.id &&
       d.kitchen !== dish.kitchen &&
       d.category !== dish.category &&
-      d.isAvailable,
+      d.isAvailable &&
+      isClinicallyCompatible(d, dish),
   );
   const seed = dish.id;
   const pick = (pool: DishData[], n: number): DishData[] => {
@@ -377,6 +394,17 @@ export function matchesDietaryFilter(dish: DishData, filter: string): boolean {
     const allergens = (dish.allergens || []).map(a => a.toLowerCase());
     const name = dish.name.toLowerCase();
     return !allergens.includes("gluten") && !name.includes("wheat") && !name.includes("bread");
+  }
+  if (f === "carnivore") {
+    return !dish.isVeg && dish.macros.carbs <= 5;
+  }
+  if (f === "low-fodmap") {
+    const highFodmaps = [
+      "onion", "garlic", "wheat", "paneer", "cheese", "milk",
+      "broccoli", "beans", "chickpea", "lentil", "cabbage", "cauliflower"
+    ];
+    const text = (dish.description + " " + dish.name + " " + dish.ingredients.join(" ")).toLowerCase();
+    return !highFodmaps.some((x) => text.includes(x));
   }
   if (f === "jain") {
     if (!dish.isVeg) return false;
