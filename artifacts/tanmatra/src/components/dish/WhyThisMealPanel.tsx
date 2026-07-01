@@ -2,6 +2,7 @@ import { Sparkles, ShieldAlert } from "lucide-react";
 import type { DishData } from "@workspace/menu-catalog";
 import type { UserPreferences } from "@/lib/preferencesApi";
 import type { DishMatchResult } from "@/lib/preferencesMatch";
+import { matchesDosha } from "@/lib/dishEnrichment";
 
 interface Props {
   dish: DishData;
@@ -89,6 +90,10 @@ export default function WhyThisMealPanel({ dish, preferences, match }: Props) {
 
   const narrative = buildNarrative(dish, preferences);
 
+  const balancedDoshas = (["vata", "pitta", "kapha"] as const).filter((d) =>
+    matchesDosha(dish, d),
+  );
+
   return (
     <div className="rounded-xl p-4 border bg-clinical-sage/5 border-clinical-sage/30 space-y-2.5">
       <div className="flex items-center gap-2">
@@ -104,6 +109,19 @@ export default function WhyThisMealPanel({ dish, preferences, match }: Props) {
             <li key={r}>• {r}</li>
           ))}
         </ul>
+      )}
+      {balancedDoshas.length > 0 && (
+        <div className="text-[10px] text-clinical-zinc flex items-center gap-1.5 mt-2 pt-2 border-t border-clinical-border/40 flex-wrap">
+          <span>Ayurvedic balance:</span>
+          {balancedDoshas.map((d) => (
+            <span
+              key={d}
+              className="px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-semibold capitalize text-[9px] tracking-wide"
+            >
+              {d} Dosha
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );

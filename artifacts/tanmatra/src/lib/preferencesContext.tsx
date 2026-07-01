@@ -36,8 +36,21 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       setPreferences(out.preferences);
       setUnauthorized(false);
     } catch (e) {
-      if (String(e).includes("401")) setUnauthorized(true);
-      setPreferences(null);
+      if (String(e).includes("401")) {
+        setUnauthorized(true);
+        try {
+          const raw = localStorage.getItem("tanmatra:guest-preferences");
+          if (raw) {
+            setPreferences(JSON.parse(raw));
+          } else {
+            setPreferences(null);
+          }
+        } catch {
+          setPreferences(null);
+        }
+      } else {
+        setPreferences(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -54,7 +67,24 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       setUnauthorized(false);
       return out.preferences;
     } catch (e) {
-      if (String(e).includes("401")) setUnauthorized(true);
+      if (String(e).includes("401")) {
+        setUnauthorized(true);
+        try {
+          const raw = localStorage.getItem("tanmatra:guest-preferences") ?? "{}";
+          const current = JSON.parse(raw);
+          const nextPrefs = {
+            ...current,
+            ...patch,
+            updatedAt: new Date().toISOString(),
+            quizCompletedAt: patch.markQuizComplete ? new Date().toISOString() : (current.quizCompletedAt || null),
+          };
+          localStorage.setItem("tanmatra:guest-preferences", JSON.stringify(nextPrefs));
+          setPreferences(nextPrefs as UserPreferences);
+          return nextPrefs as UserPreferences;
+        } catch {
+          return null;
+        }
+      }
       return null;
     }
   }, []);
@@ -65,7 +95,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       loading,
       unauthorized,
       needsQuiz:
-        !unauthorized && !loading && (preferences?.quizCompletedAt ?? null) === null,
+        !loading && (preferences?.quizCompletedAt ?? null) === null,
       refresh,
       update,
     }),

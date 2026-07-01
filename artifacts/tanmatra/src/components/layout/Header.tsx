@@ -13,12 +13,15 @@ import { useCart, useCartDrawer } from "@/lib/cartContext";
 import Logo from "./Logo";
 import CommandPalette, { useCommandPaletteHotkey } from "@/components/CommandPalette";
 import { MoreSheetTrigger } from "@/components/layout/BottomNav";
+import { usePreferences } from "@/lib/preferencesContext";
 
 export default function Header() {
   const location = useLocation();
   const { totalQuantity } = useCart();
   const { open: openCart } = useCartDrawer();
   const palette = useCommandPaletteHotkey();
+  const { unauthorized, loading } = usePreferences();
+  const isLoggedIn = !unauthorized && !loading;
 
   const isActive = (path: string) =>
     path === "/"
@@ -29,9 +32,16 @@ export default function Header() {
   const navItems = [
     { path: "/menu", label: "Eat", icon: ForkKnife, match: ["/menu", "/dish", "/marketplace", "/recipes"] },
     { path: "/meal-planner", label: "Plan", icon: Calendar, match: ["/meal-planner", "/subscriptions", "/plans", "/rd", "/appointments", "/subscribe"] },
-    { path: "/orders", label: "Orders", icon: Package, match: ["/orders", "/track"] },
-    { path: "/challenges", label: "Community", icon: UsersThree, match: ["/challenges", "/wellness", "/performance", "/clinical", "/corporate", "/team"] },
-    { path: "/account", label: "Account", icon: UserCircle, match: ["/account", "/preferences", "/rewards", "/vouchers", "/premium", "/login"] },
+    ...(isLoggedIn
+      ? [
+          { path: "/orders", label: "Orders", icon: Package, match: ["/orders", "/track"] },
+          { path: "/challenges", label: "Community", icon: UsersThree, match: ["/challenges", "/wellness", "/performance", "/clinical", "/corporate", "/team"] },
+          { path: "/account", label: "Account", icon: UserCircle, match: ["/account", "/preferences", "/rewards", "/vouchers", "/premium", "/login"] },
+        ]
+      : [
+          { path: "/challenges", label: "Community", icon: UsersThree, match: ["/challenges", "/wellness", "/performance", "/clinical", "/corporate", "/team"] },
+          { path: "/login", label: "Sign In", icon: UserCircle, match: ["/login"] },
+        ]),
   ];
 
   const isGroupActive = (matchPaths: string[]) =>

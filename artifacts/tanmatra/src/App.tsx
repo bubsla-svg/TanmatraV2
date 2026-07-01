@@ -96,6 +96,8 @@ const OfficeLunch = lazy(() => import("@/pages/OfficeLunch"));
 const CorporateLunchPlanner = lazy(() => import("@/pages/CorporateLunchPlanner"));
 const AdminSalesConsole = lazy(() => import("@/pages/AdminSalesConsole"));
 const AdminSalesAccount = lazy(() => import("@/pages/AdminSalesAccount"));
+const AdminKds = lazy(() => import("@/pages/AdminKds"));
+const AdminSupplier = lazy(() => import("@/pages/AdminSupplier"));
 const Vouchers = lazy(() => import("@/pages/Vouchers"));
 const Premium = lazy(() => import("@/pages/Premium"));
 const Marketplace = lazy(() => import("@/pages/Marketplace"));
@@ -370,6 +372,22 @@ export default function App() {
                       element={
                         <AdminGate>
                           <AdminSalesAccount />
+                        </AdminGate>
+                      }
+                    />
+                    <Route
+                      path="/admin/kds"
+                      element={
+                        <AdminGate>
+                          <AdminKds />
+                        </AdminGate>
+                      }
+                    />
+                    <Route
+                      path="/admin/supplier"
+                      element={
+                        <AdminGate>
+                          <AdminSupplier />
                         </AdminGate>
                       }
                     />

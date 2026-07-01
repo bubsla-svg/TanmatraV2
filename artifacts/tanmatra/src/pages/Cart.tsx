@@ -16,7 +16,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { formatPrice } from "@/lib/api/adapter";
-import { useCart, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
+import { useCart, useCartTotals, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
 import { groupOrdersApi } from "@/lib/queries";
 import { Users } from "lucide-react";
 import { useState } from "react";
@@ -36,6 +36,7 @@ import {
 } from "@/lib/clinicalDiet";
 import PatientContextStrip from "@/components/clinical/PatientContextStrip";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
+import ErrorBoundary from "@/components/layout/ErrorBoundary";
 
 export const meta: MetaFunction = () => [
   { title: "Cart | Tanmatra" },
@@ -44,7 +45,7 @@ export const meta: MetaFunction = () => [
 
 export default function Cart() {
   const navigate = useNavigate();
-  const { items, updateQty, removeItem, subtotal, totalQuantity } = useCart();
+  const { items, updateQty, updateRecipient, removeItem, totalQuantity } = useCart();
   const { preferences } = usePreferences();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
   // Hydrate the runtime menu cache so getDishById reflects CMS edits.
@@ -129,10 +130,7 @@ export default function Cart() {
         ? `${dietConflictCount} item${dietConflictCount === 1 ? "" : "s"} conflict with the active diet order — remove to continue.`
         : null;
 
-  const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-  const total = subtotal + deliveryFee;
-  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
-  const freeDeliveryProgress = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
+  const { subtotal, tax, deliveryFee, total, amountToFreeDelivery, freeDeliveryProgress } = useCartTotals();
 
   if (items.length === 0) {
     return (
@@ -165,7 +163,8 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 pb-40 lg:pb-4 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
+    <ErrorBoundary>
+      <div className="max-w-5xl mx-auto p-4 pb-40 lg:pb-4 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
       <div className="lg:col-span-3 space-y-3">
         <PatientContextStrip />
         <ConflictsPanel />
@@ -260,9 +259,9 @@ export default function Cart() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <Link to={`/dish/${item.slug}`}>
-                          <h3 className="text-sm font-semibold text-white hover:text-clinical-gold transition-colors truncate flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-white hover:text-clinical-gold transition-colors flex items-start gap-2 min-w-0">
                             <span
-                              className={`inline-flex items-center justify-center w-3 h-3 rounded-sm border ${
+                              className={`inline-flex items-center justify-center w-3 h-3 rounded-sm border shrink-0 mt-1 ${
                                 item.isVeg ? "alert-safe-border" : "alert-allergen-border"
                               }`}
                               aria-label={item.isVeg ? "Vegetarian" : "Non-vegetarian"}
@@ -278,7 +277,9 @@ export default function Cart() {
                                 }}
                               />
                             </span>
-                            {item.name}
+                            <span className="line-clamp-2 flex-1 min-w-0">
+                              {item.name}
+                            </span>
                           </h3>
                         </Link>
                         <p className="text-[10px] text-clinical-zinc capitalize mt-0.5">
@@ -327,6 +328,16 @@ export default function Cart() {
                         ))}
                       </div>
                     )}
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
+                      <input
+                        type="text"
+                        placeholder="e.g. Mom, Child"
+                        value={item.recipient || ""}
+                        onChange={(e) => updateRecipient(item.lineId, e.target.value)}
+                        className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
+                      />
+                    </div>
 
                     <div className="flex items-end justify-between gap-3">
                       <MacroOverlay macros={item.macros} rdVerified={item.rdVerified} compact />
@@ -449,6 +460,12 @@ export default function Cart() {
                 <span className="text-clinical-zinc">Subtotal ({totalQuantity} items)</span>
                 <span className="tabular-nums text-white font-medium">{formatPrice(subtotal)}</span>
               </div>
+              {tax > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-clinical-zinc">GST (18%)</span>
+                  <span className="tabular-nums text-white font-medium">{formatPrice(tax)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-xs">
                 <span className="text-clinical-zinc flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
@@ -458,7 +475,7 @@ export default function Cart() {
                   {deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
                 </span>
               </div>
-              {deliveryFee === 0 && (
+              {deliveryFee === 0 && subtotal > 0 && (
                 <p className="text-[10px] text-clinical-sage">Free delivery on orders above Rs.500</p>
               )}
             </div>
@@ -550,6 +567,7 @@ export default function Cart() {
         </div>
       </div>
     </div>
+  </ErrorBoundary>
   );
 }
 

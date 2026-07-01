@@ -57,6 +57,7 @@ export const wbrReportsTable = pgTable(
         avgOrderPaise: number;
         topDishes: Array<{ name: string; units: number }>;
         anomaliesFired: number;
+        netMarginPct?: number;
       }>(),
     chartSpec: jsonb("chart_spec").$type<{
       revenueByDay: Array<{ day: string; revenuePaise: number }>;

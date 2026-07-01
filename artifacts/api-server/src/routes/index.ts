@@ -43,6 +43,7 @@ import ordersRouter from "./orders";
 import checkoutRouter from "./checkout";
 import paymentsRouter from "./payments";
 import vitalsRouter from "./vitals";
+import complianceRouter from "./compliance";
 
 const router: IRouter = Router();
 
@@ -90,5 +91,6 @@ router.use(ordersRouter);
 router.use(checkoutRouter);
 router.use(paymentsRouter);
 router.use(vitalsRouter);
+router.use(complianceRouter);
 
 export default router;

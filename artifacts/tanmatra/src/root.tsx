@@ -20,6 +20,11 @@ import CartDrawer from "@/components/cart/CartDrawer";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import "./index.css";
 
+import "@fontsource-variable/inter";
+import "@fontsource-variable/jetbrains-mono";
+import "@fontsource/instrument-serif";
+import interFontUrl from "@fontsource-variable/inter/files/inter-latin-standard-normal.woff2?url";
+
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://images.unsplash.com" },
   // LCP image — tell the browser to fetch this before the JS bundle evaluates.
@@ -30,7 +35,7 @@ export const links: LinksFunction = () => [
     rel: "preload",
     as: "font",
     type: "font/woff2",
-    href: "/@fontsource-variable/inter/files/inter-latin-standard-normal.woff2",
+    href: interFontUrl,
     crossOrigin: "anonymous",
   },
   // PWA manifest — enables "Add to Home Screen" prompt on Android Chrome.
@@ -101,11 +106,11 @@ const LOADER_SCRIPT = `
     var t = setTimeout(function(){
       var r = document.getElementById('__tl-retry');
       if(r) r.style.display='block';
-    }, 7000);
+    }, 3000);
     var autoDismiss = setTimeout(function(){
       var el = document.getElementById('__tanmatra-loader');
       if(el){ el.classList.add('hidden'); setTimeout(function(){ el.remove(); }, 300); }
-    }, 15000);
+    }, 5000);
     window.__clearTanmatraLoader = function(){
       clearTimeout(t);
       clearTimeout(autoDismiss);

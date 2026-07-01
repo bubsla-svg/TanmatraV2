@@ -20,7 +20,7 @@ COPY artifacts/api-server artifacts/api-server
 # registry on every build. This avoids ERR_PNPM_MISSING_TIME failures from
 # transitive packages whose registry metadata is missing the `time` field
 # (resolution-mode=highest in .npmrc only affects direct deps).
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile
 
 # Build the api-server bundle (esbuild → dist/index.mjs)
 RUN pnpm --filter @workspace/api-server run build
@@ -32,7 +32,7 @@ RUN pnpm --filter @workspace/api-server run build
 # --ignore-scripts bypasses the workspace's `preinstall` check which
 # enforces pnpm by reading $npm_config_user_agent — pnpm-from-corepack
 # sets this correctly so it'd pass anyway, but explicit is safer.
-RUN pnpm deploy --filter @workspace/api-server --prod /app/isolated --ignore-scripts
+RUN pnpm deploy --filter @workspace/api-server --prod /app/isolated
 
 # ---- runner ---------------------------------------------------------------
 FROM node:24-slim AS runner

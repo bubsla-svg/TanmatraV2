@@ -578,7 +578,7 @@ export default function Subscribe() {
       </Card>
 
       {/* Summary */}
-      <Card className="bg-gradient-to-br from-clinical-gold/10 to-transparent border-clinical-gold/30 sticky bottom-4">
+      <Card className="bg-gradient-to-br from-clinical-gold/10 to-transparent border-clinical-gold/30 sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 z-20">
         <CardContent className="p-5 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">

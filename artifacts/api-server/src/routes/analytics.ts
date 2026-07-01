@@ -12,6 +12,7 @@ import {
   getWbrReport,
   lastFullWeek,
   listWbrReports,
+  calculateWeeklyMargins,
 } from "../lib/wbr";
 import { extractWeeklyVoc, listVocThemes } from "../lib/voc";
 import { publishWbr } from "../lib/wbrPublisher";
@@ -210,6 +211,24 @@ router.post("/analytics/wbr/:id/publish", async (req: Request, res: Response) =>
     }
     const result = await publishWbr(report);
     res.json({ result });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+router.post("/analytics/wbr/simulate", async (req: Request, res: Response) => {
+  if (!requireCatalog(req, res)) return;
+  const fuelIncreasePct = Number(req.body?.fuelIncreasePct ?? 0);
+  const fuelFactor = 1.0 + (fuelIncreasePct / 100);
+  try {
+    const { weekStart, weekEnd } = lastFullWeek();
+    const sim = await calculateWeeklyMargins(weekStart, weekEnd, fuelFactor);
+    res.json({
+      ok: true,
+      fuelFactor,
+      netMarginPct: sim.marginPct,
+      thresholdAlert: sim.marginPct < 35.0,
+    });
   } catch (err) {
     sendError(res, err);
   }

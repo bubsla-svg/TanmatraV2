@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { API_BASE } from "@/lib/apiBase";
 
 interface Props {
   children: ReactNode;
@@ -10,7 +11,7 @@ interface State {
   message: string;
 }
 
-const REPORT_ENDPOINT = `${import.meta.env.BASE_URL}api/error-report`;
+const REPORT_ENDPOINT = `${API_BASE}/error-report`;
 
 function postReport(payload: {
   message: string;
