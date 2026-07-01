@@ -309,24 +309,43 @@ export default function Home() {
       <SegmentToggle />
 
       {/* ═══════════════ HERO SECTION ═══════════════ */}
-      <section className="relative min-h-[360px] md:h-[70vh] md:min-h-[480px] overflow-hidden flex items-center">
+      <section className="relative min-h-[420px] md:h-[78vh] md:min-h-[560px] overflow-hidden flex items-center">
         <div className="absolute inset-0">
-          <img src="/hero-bg.jpg" alt="Clinical-grade food preparation" className="w-full h-full object-cover" loading="eager" fetchPriority="high" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/98 via-[#050505]/85 to-[#050505]/55 md:from-[#050505]/95 md:via-[#050505]/70 md:to-[#050505]/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-[#050505]/30 md:via-transparent" />
+          <img src="/collections/wellness-collection.jpg" alt="Nutritionist-designed meals — buddha bowl, berry smoothie bowl and salmon salad" className="w-full h-full object-cover object-center" loading="eager" fetchPriority="high" />
+          {/* cinematic left→right darkening keeps copy legible over the photo */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/88 to-[#050505]/45 md:from-[#050505]/96 md:via-[#050505]/72 md:to-[#050505]/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/45 to-transparent" />
+          {/* warm gold key-light behind the headline for depth (echoes the logomark) */}
+          <div className="absolute -left-24 top-1/4 h-[420px] w-[420px] rounded-full bg-clinical-gold/20 blur-[120px] pointer-events-none" />
+          {/* fine clinical grid texture */}
+          <div
+            className="absolute inset-0 opacity-[0.05] pointer-events-none"
+            style={{
+              backgroundImage:
+                "linear-gradient(#D4AF37 1px, transparent 1px), linear-gradient(90deg, #D4AF37 1px, transparent 1px)",
+              backgroundSize: "44px 44px",
+            }}
+          />
+          {/* gold hairline framing the top of the band */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-clinical-gold/40 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full">
           <div className="max-w-2xl space-y-6 animate-fade-in-up">
-            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 hover:bg-clinical-gold/20 text-[10px] tracking-widest uppercase h-6">
-              <FlaskConical className="w-3 h-3 mr-1" />
+            <Badge className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/30 hover:bg-clinical-gold/15 text-[10px] tracking-[0.18em] uppercase h-7 pl-2 pr-3 gap-1.5 rounded-full">
+              <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-clinical-gold opacity-60" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-clinical-gold" />
+              </span>
               Clinical-Grade Precision Nutrition
             </Badge>
 
-            <h1 className="text-clinical-h1 text-white">
+            <h1 className="text-clinical-h1 text-white tracking-[-0.02em]">
               Precision Nutrition,
               <br />
-              <span className="text-clinical-gold">Engineered by Science</span>
+              <span className="bg-gradient-to-r from-clinical-gold via-[#E7C766] to-clinical-sage bg-clip-text text-transparent">
+                Engineered by Science
+              </span>
             </h1>
 
             <p className="text-base text-clinical-zinc leading-relaxed max-w-lg">
