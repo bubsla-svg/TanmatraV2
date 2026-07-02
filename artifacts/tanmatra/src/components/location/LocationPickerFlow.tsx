@@ -8,6 +8,7 @@ import { MapPin, Target, MagnifyingGlass, House, Buildings, Notepad, ArrowLeft, 
 import { toast } from "sonner";
 import { API_BASE } from "@/lib/apiBase";
 import { checkPincode } from "@/lib/serviceablePincodes";
+import { cn } from "@/lib/utils";
 
 interface LocationPickerFlowProps {
   open: boolean;
@@ -77,6 +78,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
           zoom: 15,
           disableDefaultUI: true,
           zoomControl: false,
+          gestureHandling: "greedy",
         });
 
         // Trigger geocode on drag end
@@ -242,7 +244,10 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 bg-clinical-surface border-clinical-border max-w-lg h-[90vh] sm:h-[80vh] flex flex-col overflow-hidden">
+      <DialogContent className={cn(
+        "p-0 bg-clinical-surface border-0 sm:border border-clinical-border w-full max-w-none sm:max-w-lg h-[100dvh] sm:h-[80vh] sm:rounded-lg flex flex-col overflow-hidden",
+        step !== "prompt" && "[&>button]:hidden"
+      )}>
         
         {/* STEP 1: Initial Prompt */}
         {step === "prompt" && (
@@ -341,7 +346,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setStep("map")}
+                onClick={() => onOpenChange(false)}
                 className="h-8 w-8 text-clinical-zinc hover:text-white"
               >
                 <X className="w-5 h-5" />
@@ -413,7 +418,6 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               <div className="space-y-1">
                 <Label className="text-[11px] text-clinical-zinc">Flat / House no / Building name *</Label>
                 <Input
-                  placeholder="e.g. Flat 403, Block B, Silver Oak Apartments"
                   value={flatNo}
                   onChange={(e) => setFlatNo(e.target.value)}
                   className="h-9 text-xs bg-clinical-dark border-clinical-border"
@@ -424,7 +428,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               <div className="space-y-1">
                 <Label className="text-[11px] text-clinical-zinc">Floor (optional)</Label>
                 <Input
-                  placeholder="e.g. 4th floor"
+                  placeholder="Floor (optional)"
                   value={floor}
                   onChange={(e) => setFloor(e.target.value)}
                   className="h-9 text-xs bg-clinical-dark border-clinical-border"
@@ -452,7 +456,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               <div className="space-y-1">
                 <Label className="text-[11px] text-clinical-zinc">Nearby landmark (optional)</Label>
                 <Input
-                  placeholder="e.g. Near Mother Dairy booth"
+                  placeholder="Nearby landmark (optional)"
                   value={landmark}
                   onChange={(e) => setLandmark(e.target.value)}
                   className="h-9 text-xs bg-clinical-dark border-clinical-border"
