@@ -1523,136 +1523,10 @@ export default function Checkout() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="Label (e.g., Home)"
-                        value={newAddr.label}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, label: e.target.value })
-                        }
-                        onBlur={() => touchField("label")}
-                        autoComplete="nickname"
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("label") && newAddr.label.trim() && !addressErrors.label && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.label && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.label}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="Phone (rider will call this)"
-                        value={newAddr.phone}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                          const formatted = digits.length > 5
-                            ? `${digits.slice(0, 5)} ${digits.slice(5)}`
-                            : digits;
-                          setNewAddr({ ...newAddr, phone: formatted });
-                        }}
-                        onBlur={() => touchField("phone")}
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("phone") && /^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()) && !addressErrors.phone && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.phone && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="City"
-                        value={newAddr.city}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, city: e.target.value })
-                        }
-                        onBlur={() => touchField("city")}
-                        autoComplete="address-level2"
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("city") && newAddr.city.trim() && !addressErrors.city && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.city && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.city}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="Pincode"
-                        value={newAddr.pincode}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, pincode: e.target.value })
-                        }
-                        onBlur={() => touchField("pincode")}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        autoComplete="postal-code"
-                        maxLength={6}
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("pincode") && /^\d{6}$/.test(newAddr.pincode.trim()) && !addressErrors.pincode && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.pincode && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.pincode}
-                      </p>
-                    )}
-                    {pincodeCheck.state === "unserviceable" && (
-                      <div className="rounded-lg border border-clinical-clay/30 bg-clinical-clay/5 p-3 space-y-2 mt-2 col-span-2 text-left">
-                        <p className="text-xs text-clinical-clay font-medium leading-relaxed">
-                          We don't deliver to your pincode ({pincodeCheck.pincode}) yet. We are expanding rapidly across Noida NCR!
-                        </p>
-                        <div className="flex gap-2">
-                          <Input
-                            type="email"
-                            placeholder="Enter email to get notified"
-                            className="h-8 bg-clinical-surface border-clinical-border flex-1"
-                          />
-                          <Button
-                            size="sm"
-                            type="button"
-                            onClick={() => {
-                              toast.success("Thanks! We'll notify you as soon as we launch in your area.");
-                              setPincodeCheck({ state: "empty" });
-                              setNewAddr((prev) => ({ ...prev, pincode: "" }));
-                            }}
-                            className="h-8 px-3 bg-clinical-clay text-white hover:bg-clinical-clay/90 text-[11px]"
-                          >
-                            Notify Me
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {/* Address Line 1 */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-center mb-1">
-                    <Label className="text-[11px] text-clinical-zinc">Address line 1</Label>
+                    <Label className="text-[11px] text-clinical-zinc">Address Line 1</Label>
                     <button
                       type="button"
                       onClick={checkoutHandleUseCurrentLocation}
@@ -1665,14 +1539,14 @@ export default function Checkout() {
                   <div className="relative">
                     <Input
                       ref={checkoutInputRefCallback}
-                      placeholder="Address line 1 (street, building)"
+                      placeholder="Street, building, company name"
                       value={newAddr.line1}
                       onChange={(e) =>
                         setNewAddr({ ...newAddr, line1: e.target.value })
                       }
                       onBlur={() => touchField("line1")}
                       autoComplete="street-address"
-                      className="h-9 bg-clinical-surface border-clinical-border pr-7"
+                      className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
                     />
                     {touchedFields.has("line1") && newAddr.line1.trim() && !addressErrors.line1 && (
                       <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
@@ -1684,17 +1558,157 @@ export default function Checkout() {
                     </p>
                   )}
                 </div>
+
+                {/* Address Line 2 */}
                 <div className="space-y-1">
+                  <Label className="text-[11px] text-clinical-zinc">Address Line 2 (optional)</Label>
                   <Input
-                    placeholder="Address line 2 (apt, floor — optional)"
+                    placeholder="Apt, floor, suite, unit"
                     value={newAddr.line2}
                     onChange={(e) =>
                       setNewAddr({ ...newAddr, line2: e.target.value })
                     }
                     autoComplete="address-line2"
-                    className="h-9 bg-clinical-surface border-clinical-border"
+                    className="h-9 bg-clinical-surface border-clinical-border text-xs text-white"
                   />
                 </div>
+
+                {/* City & Pincode Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-clinical-zinc">City</Label>
+                    <div className="relative">
+                      <Input
+                        placeholder="City"
+                        value={newAddr.city}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, city: e.target.value })
+                        }
+                        onBlur={() => touchField("city")}
+                        autoComplete="address-level2"
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
+                      />
+                      {touchedFields.has("city") && newAddr.city.trim() && !addressErrors.city && (
+                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
+                      )}
+                    </div>
+                    {addressErrors.city && (
+                      <p className="text-[10px] text-alert-allergen-text -mt-1">
+                        {addressErrors.city}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-clinical-zinc">Pincode</Label>
+                    <div className="relative">
+                      <Input
+                        placeholder="6-digit Pincode"
+                        value={newAddr.pincode}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, pincode: e.target.value })
+                        }
+                        onBlur={() => touchField("pincode")}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="postal-code"
+                        maxLength={6}
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
+                      />
+                      {touchedFields.has("pincode") && /^\d{6}$/.test(newAddr.pincode.trim()) && !addressErrors.pincode && (
+                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
+                      )}
+                    </div>
+                    {addressErrors.pincode && (
+                      <p className="text-[10px] text-alert-allergen-text -mt-1">
+                        {addressErrors.pincode}
+                      </p>
+                    )}
+                  </div>
+
+                  {pincodeCheck.state === "unserviceable" && (
+                    <div className="rounded-lg border border-clinical-clay/30 bg-clinical-clay/5 p-3 space-y-2 mt-2 col-span-1 sm:col-span-2 text-left">
+                      <p className="text-xs text-clinical-clay font-medium leading-relaxed">
+                        We don't deliver to your pincode ({pincodeCheck.pincode}) yet. We are expanding rapidly across Noida NCR!
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="Enter email to get notified"
+                          className="h-8 bg-clinical-surface border-clinical-border flex-1 text-xs text-white"
+                        />
+                        <Button
+                          size="sm"
+                          type="button"
+                          onClick={() => {
+                            toast.success("Thanks! We'll notify you as soon as we launch in your area.");
+                            setPincodeCheck({ state: "empty" });
+                            setNewAddr((prev) => ({ ...prev, pincode: "" }));
+                          }}
+                          className="h-8 px-3 bg-clinical-clay text-white hover:bg-clinical-clay/90 text-[11px]"
+                        >
+                          Notify Me
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Label & Phone Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-clinical-zinc">Address Label</Label>
+                    <div className="relative">
+                      <Input
+                        placeholder="e.g. Home, Office"
+                        value={newAddr.label}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, label: e.target.value })
+                        }
+                        onBlur={() => touchField("label")}
+                        autoComplete="nickname"
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
+                      />
+                      {touchedFields.has("label") && newAddr.label.trim() && !addressErrors.label && (
+                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
+                      )}
+                    </div>
+                    {addressErrors.label && (
+                      <p className="text-[10px] text-alert-allergen-text -mt-1">
+                        {addressErrors.label}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-clinical-zinc">Phone Number</Label>
+                    <div className="relative">
+                      <Input
+                        placeholder="Rider will call this"
+                        value={newAddr.phone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                          const formatted = digits.length > 5
+                            ? `${digits.slice(0, 5)} ${digits.slice(5)}`
+                            : digits;
+                          setNewAddr({ ...newAddr, phone: formatted });
+                        }}
+                        onBlur={() => touchField("phone")}
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
+                      />
+                      {touchedFields.has("phone") && /^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()) && !addressErrors.phone && (
+                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
+                      )}
+                    </div>
+                    {addressErrors.phone && (
+                      <p className="text-[10px] text-alert-allergen-text -mt-1">
+                        {addressErrors.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 {addressErrors._form && (
                   <p className="text-[11px] text-alert-allergen-text" role="alert">
                     {addressErrors._form}
