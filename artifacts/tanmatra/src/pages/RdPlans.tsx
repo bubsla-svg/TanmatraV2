@@ -30,6 +30,8 @@ const GOAL_FILTERS: Array<{ value: "all" | PlanGoal; label: string }> = [
   { value: "diabetic_friendly", label: "Diabetic" },
   { value: "senior_vitality", label: "Senior" },
   { value: "low_fodmap", label: "Gut / IBS" },
+  { value: "healthy_everyday", label: "Everyday" },
+  { value: "three_day_trial", label: "Trial Pack" },
 ];
 
 const CALORIE_BUCKETS: Array<{ value: "all" | "low" | "mid" | "high"; label: string }> = [

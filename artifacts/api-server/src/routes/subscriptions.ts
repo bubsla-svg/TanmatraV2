@@ -212,10 +212,16 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     res.status(400).json({ error: "startDate must be today or later" });
     return;
   }
-  const pricePerDeliveryPaise = computeDeliveryPricePaise(
+  let pricePerDeliveryPaise = computeDeliveryPricePaise(
     data.cadence,
     data.mealsPerDelivery,
   );
+  let generateCount = 4;
+
+  if (data.notes === "RD Plan: 3-Day Trial Pack") {
+    pricePerDeliveryPaise = 210000; // Fixed trial price: ₹2,100
+    generateCount = 1; // Only generate 1 delivery for the trial
+  }
 
   const [sub] = await db
     .insert(subscriptionsTable)
@@ -251,13 +257,13 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   }
 
   const deliveries = await generateDeliveriesForSubscription(
-    sub.id,
-    data.cadence,
-    startDate,
-    4,
-    data.deliveryWindow,
-    data.defaultItems,
-  );
+      sub.id,
+      data.cadence,
+      startDate,
+      generateCount,
+      data.deliveryWindow,
+      data.defaultItems,
+    );
 
   invalidateUserBrief(userId);
   res.status(201).json({ subscription: sub, deliveries });
@@ -706,6 +712,12 @@ router.post(
     const sub = await loadSubscriptionForUser(subId, userId);
     if (!sub) {
       res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (sub.notes === "RD Plan: 3-Day Trial Pack") {
+      res
+        .status(400)
+        .json({ error: "cannot generate more deliveries for a trial pack subscription" });
       return;
     }
     if (sub.status !== "active") {

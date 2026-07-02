@@ -10,7 +10,9 @@ export type PlanGoal =
   | "pcos_balance"
   | "diabetic_friendly"
   | "senior_vitality"
-  | "low_fodmap";
+  | "low_fodmap"
+  | "healthy_everyday"
+  | "three_day_trial";
 
 export interface PlanDay {
   label: string;
@@ -52,6 +54,8 @@ export const PLAN_GOAL_LABEL: Record<PlanGoal, string> = {
   diabetic_friendly: "Diabetic-friendly",
   senior_vitality: "Senior vitality",
   low_fodmap: "Low FODMAP / Gut reset",
+  healthy_everyday: "Healthy Everyday",
+  three_day_trial: "3-Day Trial Pack",
 };
 
 export const RD_PLANS: RdPlan[] = [
@@ -235,6 +239,60 @@ export const RD_PLANS: RdPlan[] = [
       { weekNumber: 1, title: "Strict elimination", body: "First two weeks are strict — no garlic/onion/dairy. Symptoms typically calm by day 10." },
       { weekNumber: 2, title: "Stress + gut", body: "Gut-brain axis is real. 5 min of slow breathing before meals improves digestion measurably." },
       { weekNumber: 3, title: "Re-introduction starts", body: "Week 5 — we re-introduce one FODMAP category at a time. Your tolerance map is yours alone." },
+    ],
+  },
+  {
+    slug: "healthy-everyday-plan",
+    name: "Healthy Everyday Meal Plan",
+    tagline: "Nutritious & balanced everyday meals for active professionals.",
+    description:
+      "A calorie-controlled rotation designed to maintain energy, gut health, and metabolic balance. Features low-sodium, high-fiber, and lean protein dishes to keep you powered throughout your busy week.",
+    goal: "healthy_everyday",
+    rdAuthorSlug: "rd-anjali-nair",
+    calorieTargetPerDay: 1800,
+    proteinTargetGrams: 80,
+    carbsTargetGrams: 200,
+    fatTargetGrams: 60,
+    dietaryStyles: ["omnivore", "vegetarian"],
+    pricePerWeekPaise: 549000,
+    badges: ["Balanced Nutrition", "Low Sodium", "High Fiber"],
+    matchesGoals: ["general_wellness", "maintain"],
+    week: [
+      { label: "Mon", breakfastSlug: "avocado-toast", lunchSlug: "signature-quinoa-salad", dinnerSlug: "tomato-basil-soup" },
+      { label: "Tue", breakfastSlug: "moong-dal-chilla-with-curd", lunchSlug: "broccoli-lemon-chicken-salad", dinnerSlug: "quinoa-khichdi" },
+      { label: "Wed", breakfastSlug: "amaranth-porridge-with-blueberry-sauce", lunchSlug: "chickpea-peanut-tabbouleh-salad", dinnerSlug: "broccoli-almond-soup" },
+      { label: "Thu", breakfastSlug: "quinoa-upma", lunchSlug: "lebanese-hummus-salad", dinnerSlug: "quinoa-khichdi" },
+      { label: "Fri", breakfastSlug: "spinach-mushroom-omelette", lunchSlug: "broccoli-babycorn-tomato-salad", dinnerSlug: "tomato-basil-soup" },
+      { label: "Sat", breakfastSlug: "exotic-amaranth-blueberry-yogurt", lunchSlug: "signature-quinoa-salad", dinnerSlug: "broccoli-almond-soup" },
+      { label: "Sun", breakfastSlug: "moong-dal-chilla-with-curd", lunchSlug: "chickpea-peanut-tabbouleh-salad", dinnerSlug: "quinoa-khichdi" },
+    ],
+    weeklyNotes: [
+      { weekNumber: 1, title: "Rhythm established", body: "Focus on eating within consistent 1-hour windows to stabilize blood glucose and hormone cycles." },
+    ],
+  },
+  {
+    slug: "three-day-trial-pack",
+    name: "3-Day Trial Pack",
+    tagline: "Sample our meals for 3 days before subscribing.",
+    description:
+      "Try Tanmatra's premium dietitian-designed menu. Includes 3 days of calorie-controlled breakfast, lunch, and dinner, giving you a full taste of our customization and convenience.",
+    goal: "three_day_trial",
+    rdAuthorSlug: "rd-anjali-nair",
+    calorieTargetPerDay: 1600,
+    proteinTargetGrams: 85,
+    carbsTargetGrams: 180,
+    fatTargetGrams: 55,
+    dietaryStyles: ["omnivore", "vegetarian"],
+    pricePerWeekPaise: 210000,
+    badges: ["3-Day Pack", "High Value Trial"],
+    matchesGoals: ["general_wellness"],
+    week: [
+      { label: "Mon", breakfastSlug: "avocado-toast", lunchSlug: "signature-quinoa-salad", dinnerSlug: "tomato-basil-soup" },
+      { label: "Tue", breakfastSlug: "moong-dal-chilla-with-curd", lunchSlug: "broccoli-lemon-chicken-salad", dinnerSlug: "quinoa-khichdi" },
+      { label: "Wed", breakfastSlug: "amaranth-porridge-with-blueberry-sauce", lunchSlug: "chickpea-peanut-tabbouleh-salad", dinnerSlug: "broccoli-almond-soup" },
+    ],
+    weeklyNotes: [
+      { weekNumber: 1, title: "Trial Start", body: "Discover your flavor profiles and note any customized requests to prepare for your full subscription." },
     ],
   },
 ];

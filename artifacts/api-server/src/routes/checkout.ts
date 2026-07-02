@@ -35,6 +35,17 @@ const placeOrderSchema = z.object({
  * price computation and returns a stable ETA. The client-supplied
  * `externalOrderId` acts as the idempotency key.
  */
+const SERVICEABLE_PINCODES = new Set([
+  "201301", "201303", "201304", "201305", "201306", "201307", "201309", "201318",
+  "201010", "201012", "201014",
+  "110091", "110092", "110096"
+]);
+
+function isServiceablePincode(pincode: string | null | undefined): boolean {
+  if (!pincode) return false;
+  return SERVICEABLE_PINCODES.has(pincode.trim());
+}
+
 router.post("/orders", async (req: Request, res: Response) => {
   const parsed = placeOrderSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -43,6 +54,11 @@ router.post("/orders", async (req: Request, res: Response) => {
   }
 
   const { externalOrderId, items, phone, address } = parsed.data;
+
+  if (!isServiceablePincode(address.pincode)) {
+    res.status(422).json({ error: "we do not deliver to this pincode yet", code: "unserviceable_pincode" });
+    return;
+  }
 
   let resolver: Awaited<ReturnType<typeof makeBatchDishResolver>>;
   try {
