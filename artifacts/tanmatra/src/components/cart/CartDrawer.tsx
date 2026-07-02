@@ -596,6 +596,7 @@ function CartLine({
   addItem: (item: Omit<CartItem, "lineId">) => void;
 }) {
   const lineTotal = item.unitPrice * item.quantity;
+  const [showTagInput, setShowTagInput] = useState(false);
 
   const handleRemove = () => {
     onRemove();
@@ -656,16 +657,30 @@ function CartLine({
                 {item.customizations.join(" · ")}
               </p>
             )}
-            <div className="mt-1.5 flex items-center gap-1.5">
-              <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
-              <input
-                type="text"
-                placeholder="e.g. Mom, Child"
-                value={item.recipient || ""}
-                onChange={(e) => onUpdateRecipient(e.target.value)}
-                className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
-              />
-            </div>
+            {item.recipient || showTagInput ? (
+              <div className="mt-1.5 flex items-center gap-1.5 animate-in fade-in duration-100">
+                <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
+                <input
+                  type="text"
+                  placeholder="e.g. Mom, Child"
+                  autoFocus={showTagInput}
+                  value={item.recipient || ""}
+                  onChange={(e) => onUpdateRecipient(e.target.value)}
+                  onBlur={() => {
+                    if (!item.recipient) setShowTagInput(false);
+                  }}
+                  className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowTagInput(true)}
+                className="text-[10px] text-clinical-gold hover:underline mt-1.5 text-left font-medium block animate-in fade-in duration-100"
+              >
+                + Add name tag
+              </button>
+            )}
           </div>
           <button
             type="button"

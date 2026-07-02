@@ -54,6 +54,7 @@ export default function Cart() {
   // fulfillment commitment BEFORE checkout instead of discovering it at
   // payment time. Per UX audit Journey-B finding 1.
   const [nextSlot, setNextSlot] = useState<DeliverySlotOption | null>(null);
+  const [showTagInput, setShowTagInput] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
     void fulfillmentApi
@@ -326,19 +327,35 @@ export default function Cart() {
                         ))}
                       </div>
                     )}
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
-                      <input
-                        type="text"
-                        placeholder="e.g. Mom, Child"
-                        value={item.recipient || ""}
-                        onChange={(e) => updateRecipient(item.lineId, e.target.value)}
-                        className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
-                      />
-                    </div>
+                    {item.recipient || showTagInput === item.lineId ? (
+                      <div className="flex items-center gap-1.5 mt-1.5 animate-in fade-in duration-100">
+                        <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
+                        <input
+                          type="text"
+                          placeholder="e.g. Mom, Child"
+                          autoFocus={showTagInput === item.lineId}
+                          value={item.recipient || ""}
+                          onChange={(e) => updateRecipient(item.lineId, e.target.value)}
+                          onBlur={() => {
+                            if (!item.recipient) setShowTagInput(null);
+                          }}
+                          className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowTagInput(item.lineId)}
+                        className="text-[10px] text-clinical-gold hover:underline mt-1.5 text-left font-medium block"
+                      >
+                        + Add name tag
+                      </button>
+                    )}
 
-                    <div className="flex items-end justify-between gap-3">
-                      <MacroOverlay macros={item.macros} rdVerified={item.rdVerified} compact />
+                    <div className="flex items-end justify-between gap-3 pt-1">
+                      <div className="text-xs text-clinical-zinc font-medium">
+                        {item.macros.calories} Kcal
+                      </div>
 
                       <div className="flex items-center gap-1 shrink-0 rounded-md border border-clinical-border bg-clinical-dark/40">
                         <Button

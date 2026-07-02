@@ -13,12 +13,8 @@ import { useCart } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { TEAM } from "@/lib/teamData";
 import { useChallenges } from "@/lib/contentApi";
-import { usePreferences } from "@/lib/preferencesContext";
-import {
-  useDishRationales,
-  type DishRationale,
-} from "@/lib/dishRationaleApi";
-import { Sparkles as SparklesIcon } from "lucide-react";
+
+
 import { toast } from "sonner";
 import {
   ShieldCheck,
@@ -135,16 +131,6 @@ function DaypartGrid({
   dishes: DishData[];
   onQuickAdd: (e: React.MouseEvent, item: DishData) => void;
 }) {
-  const { preferences } = usePreferences();
-  const visibleIds = useMemo(() => dishes.map((d) => d.id), [dishes]);
-  const briefFingerprint = preferences
-    ? `${preferences.userId}:${preferences.updatedAt}`
-    : "anon";
-  const { byId: rationalesById } = useDishRationales(
-    visibleIds,
-    Boolean(preferences),
-    briefFingerprint,
-  );
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       {dishes.map((d) => (
@@ -183,34 +169,11 @@ function DaypartGrid({
               <p className="text-[10px] text-clinical-gold tabular-nums">
                 {formatPrice(d.price)}
               </p>
-              <DaypartWhyRow rationale={rationalesById.get(d.id)} />
             </div>
           </Card>
         </Link>
       ))}
     </div>
-  );
-}
-
-function DaypartWhyRow({ rationale }: { rationale: DishRationale | undefined }) {
-  const [open, setOpen] = useState(false);
-  if (!rationale) return null;
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setOpen((v) => !v);
-      }}
-      className="w-full flex items-start gap-1 text-left mt-1"
-      aria-expanded={open}
-    >
-      <SparklesIcon className="w-2.5 h-2.5 mt-0.5 text-clinical-gold shrink-0" />
-      <span className="text-[9px] leading-snug text-clinical-zinc line-clamp-2">
-        {open ? rationale.expanded : rationale.rationale}
-      </span>
-    </button>
   );
 }
 

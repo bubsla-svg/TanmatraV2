@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import { Link } from "react-router";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { motion } from "framer-motion";
@@ -6,9 +6,7 @@ import { Sparkle } from "@phosphor-icons/react";
 import {
   AlertTriangle,
   Crown,
-  Plus,
   ShieldAlert,
-  Sparkles as SparklesIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/api/adapter";
@@ -19,9 +17,7 @@ import {
 } from "@/lib/menuData";
 import { clinicalCategoryLabel, useClinicalMode } from "@/lib/clinicalDiet";
 import type { DishMatchResult } from "@/lib/preferencesMatch";
-import { findSmartSwap } from "@/lib/preferencesMatch";
 import type { UserPreferences } from "@/lib/preferencesApi";
-import type { DishRationale } from "@/lib/dishRationaleApi";
 import { useCart } from "@/lib/cartContext";
 import { cn } from "@/lib/utils";
 
@@ -33,8 +29,6 @@ type MenuCardProps = {
   premiumSlugs: Set<string>;
   preferences: UserPreferences | null;
   lifestyleTag: string | null;
-  rationale: DishRationale | undefined;
-  simpleView?: boolean;
   hasSavedAddress?: boolean;
   onQuickAdd: (e: React.MouseEvent, item: DishData) => void;
   onExpressBuy?: (item: DishData) => void;
@@ -49,8 +43,6 @@ export default function MenuCard({
   premiumSlugs,
   preferences,
   lifestyleTag,
-  rationale,
-  simpleView = false,
   hasSavedAddress = false,
   onQuickAdd,
   onExpressBuy,
@@ -126,6 +118,11 @@ export default function MenuCard({
               <Crown className="w-2.5 h-2.5" /> Premium
             </span>
           )}
+          {match.warnings.length > 0 && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-orange-500/50 text-orange-400 bg-[#050505]/85 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
+              <ShieldAlert className="w-3.5 h-3.5" /> Warning
+            </span>
+          )}
         </div>
 
         {/* Lifestyle tag (only when no premium overlay would conflict) */}
@@ -168,79 +165,15 @@ export default function MenuCard({
         </p>
 
         {/* Macro readout band (dashed top+bottom hairline) */}
-        {simpleView ? (
-          <div className="my-3.5 flex flex-wrap gap-1.5 py-1 text-xs">
-            <span className="px-2 py-0.5 rounded bg-clinical-surface text-white border border-clinical-border font-medium">
-              {item.macros.calories} Kcal
-            </span>
-            {item.macros.protein >= 20 && (
-              <span className="px-2 py-0.5 rounded bg-clinical-sage/10 text-clinical-sage border border-clinical-sage/20 font-semibold uppercase text-[9px] tracking-wide">
-                High Protein
-              </span>
-            )}
-            {item.macros.carbs <= 20 && (
-              <span className="px-2 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-semibold uppercase text-[9px] tracking-wide">
-                Low Carb
-              </span>
-            )}
-            {item.macros.fat <= 12 && (
-              <span className="px-2 py-0.5 rounded bg-clinical-blue/15 text-clinical-blue border border-clinical-blue/30 font-semibold uppercase text-[9px] tracking-wide">
-                Low Fat
-              </span>
-            )}
-            {(() => {
-              const net = Math.max(0, item.macros.carbs - (item.macros.fiber || 0));
-              return (
-                net <= 15 && (
-                  <span className="px-2 py-0.5 rounded bg-clinical-sage/10 text-clinical-sage border border-clinical-sage/20 font-semibold uppercase text-[9px] tracking-wide">
-                    Net Carb: {net}g
-                  </span>
-                )
-              );
-            })()}
-          </div>
-        ) : (
-          (() => {
-            const pGrams = item.macros.protein;
-            const cGrams = item.macros.carbs;
-            const fGrams = item.macros.fat;
-            const pCal = pGrams * 4;
-            const cCal = cGrams * 4;
-            const fCal = fGrams * 9;
-            const totalCal = pCal + cCal + fCal || 1;
-            const pPct = Math.round((pCal / totalCal) * 100);
-            const cPct = Math.round((cCal / totalCal) * 100);
-            const fPct = Math.round((fCal / totalCal) * 100);
-            const netCarb = Math.max(0, cGrams - (item.macros.fiber || 0));
-
-            return (
-              <div className="my-2 sm:my-3 flex gap-4 border-y border-dashed border-border py-1.5 sm:py-2 font-mono text-clinical-data text-text-primary">
-                <div className="flex flex-col">
-                  <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
-                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Kcal</span>
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <span className="text-[12.5px] font-semibold">{pGrams}g</span>
-                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Prot {pPct}%</span>
-                  <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${pPct}%` }} />
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <span className="text-[12.5px] font-semibold flex items-baseline gap-0.5">
-                    {cGrams}g
-                    <span className="text-[8.5px] text-clinical-zinc font-normal normal-case">({netCarb}n)</span>
-                  </span>
-                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Carb {cPct}%</span>
-                  <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${cPct}%` }} />
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <span className="text-[12.5px] font-semibold">{fGrams}g</span>
-                  <span className="text-[9px] tracking-wider text-text-secondary uppercase">Fat {fPct}%</span>
-                  <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fPct}%` }} />
-                </div>
-              </div>
-            );
-          })()
-        )}
+        <div className="my-1.5 flex gap-3 border-y border-dashed border-clinical-border/40 py-1.5 font-mono text-[11px] text-clinical-zinc">
+          <span className="font-semibold text-white">{item.macros.calories} Kcal</span>
+          <span>·</span>
+          <span>{item.macros.protein}g P</span>
+          <span>·</span>
+          <span>{item.macros.carbs}g C</span>
+          <span>·</span>
+          <span>{item.macros.fat}g F</span>
+        </div>
 
         <div className="hidden sm:flex text-[9px] uppercase tracking-[0.12em] text-clinical-zinc/60 font-semibold items-center gap-1.5 flex-wrap">
           <span>{categoryLine}</span>
@@ -253,64 +186,6 @@ export default function MenuCard({
           )}>
             GI: {item.glycaemicIndex.toUpperCase()}
           </span>
-        </div>
-
-        {preferences &&
-          (preferences.calorieTarget || preferences.proteinTargetGrams) && (
-            <div className="hidden sm:flex flex-wrap gap-1.5 text-[10px]">
-              {preferences.calorieTarget && (
-                <span className="px-1.5 py-0.5 rounded bg-clinical-surface-elevated text-clinical-zinc">
-                  {Math.round(
-                    (item.macros.calories / preferences.calorieTarget) * 100,
-                  )}
-                  % of daily kcal
-                </span>
-              )}
-              {preferences.proteinTargetGrams && (
-                <span className="px-1.5 py-0.5 rounded bg-clinical-surface-elevated text-clinical-zinc">
-                  {Math.round(
-                    (item.macros.protein / preferences.proteinTargetGrams) *
-                      100,
-                  )}
-                  % of daily protein
-                </span>
-              )}
-            </div>
-          )}
-
-        {match.warnings.length > 0 && (
-          <div className="hidden sm:block space-y-1.5">
-            <div className="flex items-start gap-1.5 text-[11px] text-orange-400">
-              <ShieldAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              <span className="leading-tight">{match.warnings[0]}</span>
-            </div>
-            {(() => {
-              const swap = findSmartSwap(item, preferences);
-              if (!swap) return null;
-              return (
-                <Link
-                  to={`/dish/${swap.slug}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1.5 text-[11px] text-clinical-gold hover:underline"
-                >
-                  <SparklesIcon className="w-3 h-3" />
-                  Smart swap: {swap.name} →
-                </Link>
-              );
-            })()}
-          </div>
-        )}
-        {match.warnings.length === 0 && match.reasons.length > 0 && (
-          <div className="hidden sm:flex items-start gap-1.5 text-[11px] text-clinical-sage">
-            <SparklesIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <span className="leading-tight">
-              Why this for you: {match.reasons[0]}
-            </span>
-          </div>
-        )}
-
-        <div className="hidden sm:block">
-          <WhyThisMealRow rationale={rationale} />
         </div>
 
         <div className="mt-auto pt-1 sm:pt-2 flex gap-1.5 sm:gap-2">
@@ -409,35 +284,7 @@ export default function MenuCard({
   );
 }
 
-function WhyThisMealRow({ rationale }: { rationale: DishRationale | undefined }) {
-  const [open, setOpen] = useState(false);
-  if (!rationale) return null;
-  return (
-    <div className="rounded-md border border-clinical-gold/20 bg-clinical-gold/[0.04] px-2.5 py-1.5">
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        className="w-full flex items-start gap-1.5 text-left"
-        aria-expanded={open}
-      >
-        <SparklesIcon className="w-3 h-3 mt-0.5 text-clinical-gold shrink-0" />
-        <span className="flex-1 text-[11px] leading-snug text-clinical-zinc">
-          <span className="text-clinical-gold font-semibold uppercase tracking-[0.1em] text-[9px] mr-1">
-            Why this meal
-          </span>
-          {open ? rationale.expanded : rationale.rationale}
-        </span>
-        <span className="text-[10px] text-clinical-zinc-muted shrink-0">
-          {open ? "Less" : "More"}
-        </span>
-      </button>
-    </div>
-  );
-}
+
 
 function StarRating({ value }: { value: number }) {
   const full = Math.floor(value);
@@ -462,33 +309,4 @@ function StarRating({ value }: { value: number }) {
   );
 }
 
-function MacroChip({
-  label,
-  value,
-  ariaLabel,
-}: {
-  label: string;
-  value: string;
-  ariaLabel?: string;
-}) {
-  return (
-    <div
-      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-clinical-surface border border-clinical-border"
-      aria-label={ariaLabel ?? `${label} ${value}`}
-      role="group"
-    >
-      <span
-        className="text-[9px] uppercase tracking-[0.12em] text-clinical-zinc font-semibold"
-        aria-hidden="true"
-      >
-        {label}
-      </span>
-      <span
-        className="text-[11px] tabular-nums text-clinical-gold font-medium"
-        aria-hidden="true"
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
+

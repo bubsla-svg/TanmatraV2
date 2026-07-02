@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useDishRationales, type DishRationale } from "@/lib/dishRationaleApi";
+
 import { useSearchParams, type MetaFunction } from "react-router";
 import { DISHES as STATIC_DISHES } from "@/lib/menuData";
 
@@ -169,11 +169,6 @@ export default function Menu() {
   const [showFilters, setShowFilters] = useState(false);
   const [query, setQuery] = useState("");
   const [hideBlocked, setHideBlocked] = useState(true);
-  const [simpleView, setSimpleView] = useState(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem("tanmatra:simple-macros") === "true"
-      : false
-  );
   // Pagination: start with 24 cards in the DOM. Loading all 113 at once
   // produced scroll jank on mid-range Android devices.
   const PAGE_SIZE = 24;
@@ -423,29 +418,7 @@ export default function Menu() {
     return LIFESTYLE_EHR_LABEL[lifestyle as string] ?? consumer;
   })();
 
-  // Lazy "why this meal" rationales for the visible dishes. Only enabled
-  // when the user has a saved taste profile (otherwise the rationale has
-  // little to tie to). The hook silently no-ops on 401.
-  const visibleDishIds = useMemo(
-    () => filtered.slice(0, 12).map((r) => r.dish.id),
-    [filtered],
-  );
-  // Fingerprint the user's brief so the rationale cache is dropped when
-  // preferences change (server's brief-hash invalidation already handles
-  // freshness on the wire — this just stops the client from showing a
-  // stale cached value while the new one is fetched).
-  const briefFingerprint = useMemo(
-    () =>
-      preferences
-        ? `${preferences.userId}:${preferences.updatedAt}`
-        : "anon",
-    [preferences],
-  );
-  const { byId: rationalesById } = useDishRationales(
-    visibleDishIds,
-    Boolean(preferences),
-    briefFingerprint,
-  );
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 pt-6 pb-44 md:pb-8 space-y-8">
@@ -924,20 +897,6 @@ export default function Menu() {
             Quick Filters
           </p>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={simpleView}
-                onChange={(e) => {
-                  setSimpleView(e.target.checked);
-                  localStorage.setItem("tanmatra:simple-macros", String(e.target.checked));
-                }}
-                className="w-3.5 h-3.5 accent-clinical-gold rounded border-clinical-border bg-clinical-dark"
-              />
-              <span className="text-[10px] uppercase tracking-[0.12em] text-clinical-zinc hover:text-white font-semibold">
-                Simple view
-              </span>
-            </label>
             {quickFilters.length > 0 && (
               <button
                 onClick={() => setQuickFilters([])}
@@ -1161,8 +1120,6 @@ export default function Menu() {
             premiumSlugs={premiumSlugs}
             preferences={preferences}
             lifestyleTag={lifestyleTag}
-            rationale={rationalesById.get(item.id)}
-            simpleView={simpleView}
             hasSavedAddress={hasSavedAddress}
             onQuickAdd={handleQuickAdd}
             onExpressBuy={handleExpressBuy}
