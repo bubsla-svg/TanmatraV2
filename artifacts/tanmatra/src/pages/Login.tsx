@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 
 import { API_BASE as API_BASE } from "@/lib/apiBase";
+import { auth } from "../lib/firebase";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { captureAttribution, getAttribution } from "@/lib/attribution";
 import { WelcomeModal } from "@/components/auth/WelcomeModal";
 
@@ -81,6 +83,8 @@ export default function Login() {
   const [devCode, setDevCode] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const recaptchaVerifierRef = useRef<any>(null);
   // SMS marketing consent. Default false — DPDP Act 2023 requires explicit
   // opt-in (no pre-checked boxes for marketing communication).
   const [smsConsent, setSmsConsent] = useState(false);
@@ -134,62 +138,62 @@ export default function Login() {
       toast.error(`Enter a valid ${countryCode} phone number`);
       return;
     }
+    if (!auth) {
+      toast.error("Authentication setup missing (Firebase config missing)");
+      return;
+    }
     setIsSending(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/phone/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ countryCode, phone }),
-      });
-      const data = (await res.json().catch(() => ({}))) as SendOtpResponse & {
-        error?: string;
-      };
-      if (!res.ok || !data.ok) {
-        toast.error(data.error ?? "Could not send code");
-        return;
+      if (!recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+        });
       }
-      setDevCode(data.devCode ?? null);
+      const phoneNumberE164 = `${countryCode}${digits}`;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumberE164, recaptchaVerifierRef.current);
+      setConfirmationResult(confirmation);
       setStep("code");
       setResendIn(RESEND_COOLDOWN_SECS);
-      toast.success(`Code sent to ${countryCode} ${phone}`);
-    } catch {
-      toast.error("Network error — please try again");
+      toast.success(`Verification code sent to ${countryCode} ${phone}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not send verification code: " + (err as Error).message);
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
+      }
     } finally {
       setIsSending(false);
     }
   };
 
   const verifyOtp = async () => {
-    if (code.replace(/\D/g, "").length < 4) {
-      toast.error("Enter the verification code");
+    if (code.replace(/\D/g, "").length < 6) {
+      toast.error("Enter the 6-digit verification code");
+      return;
+    }
+    if (!confirmationResult) {
+      toast.error("No verification in progress");
       return;
     }
     setIsVerifying(true);
     try {
-      // Send the persisted first-touch attribution + the user's explicit
-      // consent choices. The server stamps attribution only on first user
-      // creation; consent flags update on every sign-in.
+      const userCredential = await confirmationResult.confirm(code);
+      const idToken = await userCredential.user.getIdToken();
+
       const attr = getAttribution();
       const res = await fetch(`${API_BASE}/auth/phone/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          countryCode,
-          phone,
-          code,
+          idToken,
           attribution: {
             ...(attr ?? {}),
-            // Continuing past the login form *is* the DPDP consent moment
-            // — we display the Terms/Privacy footer right above the Send
-            // Code button, so by the time they verify they've had the
-            // notice in front of them.
             dpdpConsent: true,
             tosVersion: TOS_VERSION,
-            // Explicit consents. Backend treats unknown fields as
-            // no-ops, so adding a new consent here is safe pre-
-            // schema-migration.
             marketingSmsConsent: smsConsent,
             marketingWhatsAppConsent: whatsAppConsent,
           },
@@ -202,16 +206,15 @@ export default function Login() {
         toast.error(data.error ?? "Incorrect code");
         return;
       }
-      // Brand-new account → ask for name+email before navigating away.
-      // Returning user with firstName already set → straight to next.
       if (data.user.firstName === null) {
         setShowWelcome(true);
         return;
       }
       toast.success("Signed in");
       navigate(next, { replace: true });
-    } catch {
-      toast.error("Network error — please try again");
+    } catch (err) {
+      console.error(err);
+      toast.error("Verification failed: " + (err as Error).message);
     } finally {
       setIsVerifying(false);
     }
@@ -414,9 +417,11 @@ export default function Login() {
             </>
           )}
 
+          <div id="recaptcha-container" className="hidden"></div>
+
           <p className="text-[10px] text-clinical-zinc flex items-center justify-center gap-1">
             <ShieldCheck className="w-3 h-3 text-clinical-sage" weight="bold" />
-            Secured by Twilio Verify
+            Secured by Firebase
           </p>
 
           {adminShortcutVisible && (

@@ -70,13 +70,125 @@ export default function Addresses() {
   const [error, setError] = useState<string | null>(null);
 
   const autocompleteRef = useRef<any>(null);
+  const mapRef = useRef<any>(null);
+
+  const mapInitCallback = (el: HTMLDivElement | null) => {
+    if (el) {
+      if (mapRef.current) return;
+      if (typeof window !== "undefined" && (window as any).google?.maps) {
+        const defaultCenter = { lat: 19.0760, lng: 72.8777 }; // Mumbai
+        const map = new (window as any).google.maps.Map(el, {
+          center: defaultCenter,
+          zoom: 12,
+          disableDefaultUI: true,
+          zoomControl: true,
+        });
+        const marker = new (window as any).google.maps.Marker({
+          position: defaultCenter,
+          map: map,
+          draggable: true,
+        });
+
+        marker.addListener("dragend", () => {
+          const pos = marker.getPosition();
+          if (pos) {
+            updateAddressFromCoords(pos.lat(), pos.lng());
+          }
+        });
+
+        mapRef.current = { map, marker };
+        
+        // If we are editing, geocode the address now
+        if (form.line1) {
+          const fullAddress = `${form.line1}, ${form.city} - ${form.pincode}`;
+          geocodeAddress(fullAddress);
+        }
+      }
+    } else {
+      mapRef.current = null;
+    }
+  };
+
+  const geocodeAddress = (addressStr: string) => {
+    if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      geocoder.geocode({ address: addressStr }, (results: any, status: any) => {
+        if (status === "OK" && results[0]?.geometry?.location) {
+          const loc = results[0].geometry.location;
+          if (mapRef.current) {
+            mapRef.current.map.setCenter(loc);
+            mapRef.current.map.setZoom(16);
+            mapRef.current.marker.setPosition(loc);
+          }
+        }
+      });
+    }
+  };
+
+  const updateAddressFromCoords = (lat: number, lng: number) => {
+    if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+        if (status === "OK" && results[0]) {
+          const place = results[0];
+          let line1 = "";
+          let city = "";
+          let pincode = "";
+          for (const component of place.address_components) {
+            const types = component.types;
+            if (types.includes("street_number")) {
+              line1 = component.long_name + " " + line1;
+            } else if (types.includes("route")) {
+              line1 += component.long_name;
+            } else if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
+              line1 += (line1 ? ", " : "") + component.long_name;
+            } else if (types.includes("locality")) {
+              city = component.long_name;
+            } else if (types.includes("postal_code")) {
+              pincode = component.long_name;
+            }
+          }
+          setForm((prev) => ({
+            ...prev,
+            line1: line1.trim() || prev.line1,
+            city: city.trim() || prev.city,
+            pincode: pincode.trim() || prev.pincode,
+          }));
+        }
+      });
+    }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (mapRef.current) {
+          const pos = { lat: latitude, lng: longitude };
+          mapRef.current.map.setCenter(pos);
+          mapRef.current.map.setZoom(16);
+          mapRef.current.marker.setPosition(pos);
+        }
+        updateAddressFromCoords(latitude, longitude);
+      },
+      (error) => {
+        console.error(error);
+        toast.error("Could not get current location: " + error.message);
+      }
+    );
+  };
+
   const inputRefCallback = (el: HTMLInputElement | null) => {
     if (el) {
       if (autocompleteRef.current) return;
       if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
         const autocomplete = new (window as any).google.maps.places.Autocomplete(el, {
           componentRestrictions: { country: "in" },
-          fields: ["address_components"],
+          fields: ["address_components", "geometry"],
           types: ["address"],
         });
         autocomplete.addListener("place_changed", () => {
@@ -105,6 +217,13 @@ export default function Addresses() {
             city: city.trim() || prev.city,
             pincode: pincode.trim() || prev.pincode,
           }));
+
+          if (place.geometry?.location && mapRef.current) {
+            const loc = place.geometry.location;
+            mapRef.current.map.setCenter(loc);
+            mapRef.current.map.setZoom(16);
+            mapRef.current.marker.setPosition(loc);
+          }
         });
         autocompleteRef.current = autocomplete;
       }
@@ -376,20 +495,30 @@ export default function Addresses() {
                 </select>
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-[11px] text-clinical-zinc">
-                Address line 1
-              </Label>
-              <Input
-                ref={inputRefCallback}
-                placeholder="Street, building"
-                value={form.line1}
-                onChange={(e) =>
-                  setForm({ ...form, line1: e.target.value })
-                }
-                className="h-9 text-xs bg-clinical-dark border-clinical-border"
-              />
-            </div>
+             <div className="space-y-1">
+               <div className="flex justify-between items-center">
+                 <Label className="text-[11px] text-clinical-zinc">
+                   Address line 1
+                 </Label>
+                 <button
+                   type="button"
+                   onClick={handleUseCurrentLocation}
+                   className="text-[10px] text-clinical-gold hover:underline flex items-center gap-1 font-semibold"
+                 >
+                   <MapPin className="w-3 h-3" />
+                   Use Current Location
+                 </button>
+               </div>
+               <Input
+                 ref={inputRefCallback}
+                 placeholder="Street, building"
+                 value={form.line1}
+                 onChange={(e) =>
+                   setForm({ ...form, line1: e.target.value })
+                 }
+                 className="h-9 text-xs bg-clinical-dark border-clinical-border"
+               />
+             </div>
             <div className="space-y-1">
               <Label className="text-[11px] text-clinical-zinc">
                 Address line 2 (optional)
@@ -444,6 +573,11 @@ export default function Addresses() {
                 className="h-9 text-xs bg-clinical-dark border-clinical-border"
               />
             </div>
+            <div
+              ref={mapInitCallback}
+              style={{ height: "160px", width: "100%", borderRadius: "6px" }}
+              className="mt-2 bg-clinical-dark border border-clinical-border"
+            ></div>
             {error && (
               <p className="text-[11px] text-red-400" role="alert">
                 {error}

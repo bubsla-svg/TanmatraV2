@@ -299,13 +299,124 @@ export default function Checkout() {
   const [newAddr, setNewAddr] = useState({ label: "", line1: "", line2: "", city: "", pincode: "", phone: "" });
 
   const checkoutAutocompleteRef = useRef<any>(null);
+  const checkoutMapRef = useRef<any>(null);
+
+  const checkoutMapInitCallback = (el: HTMLDivElement | null) => {
+    if (el) {
+      if (checkoutMapRef.current) return;
+      if (typeof window !== "undefined" && (window as any).google?.maps) {
+        const defaultCenter = { lat: 19.0760, lng: 72.8777 }; // Mumbai
+        const map = new (window as any).google.maps.Map(el, {
+          center: defaultCenter,
+          zoom: 12,
+          disableDefaultUI: true,
+          zoomControl: true,
+        });
+        const marker = new (window as any).google.maps.Marker({
+          position: defaultCenter,
+          map: map,
+          draggable: true,
+        });
+
+        marker.addListener("dragend", () => {
+          const pos = marker.getPosition();
+          if (pos) {
+            checkoutUpdateAddressFromCoords(pos.lat(), pos.lng());
+          }
+        });
+
+        checkoutMapRef.current = { map, marker };
+        
+        if (newAddr.line1) {
+          const fullAddress = `${newAddr.line1}, ${newAddr.city} - ${newAddr.pincode}`;
+          checkoutGeocodeAddress(fullAddress);
+        }
+      }
+    } else {
+      checkoutMapRef.current = null;
+    }
+  };
+
+  const checkoutGeocodeAddress = (addressStr: string) => {
+    if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      geocoder.geocode({ address: addressStr }, (results: any, status: any) => {
+        if (status === "OK" && results[0]?.geometry?.location) {
+          const loc = results[0].geometry.location;
+          if (checkoutMapRef.current) {
+            checkoutMapRef.current.map.setCenter(loc);
+            checkoutMapRef.current.map.setZoom(16);
+            checkoutMapRef.current.marker.setPosition(loc);
+          }
+        }
+      });
+    }
+  };
+
+  const checkoutUpdateAddressFromCoords = (lat: number, lng: number) => {
+    if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+        if (status === "OK" && results[0]) {
+          const place = results[0];
+          let line1 = "";
+          let city = "";
+          let pincode = "";
+          for (const component of place.address_components) {
+            const types = component.types;
+            if (types.includes("street_number")) {
+              line1 = component.long_name + " " + line1;
+            } else if (types.includes("route")) {
+              line1 += component.long_name;
+            } else if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
+              line1 += (line1 ? ", " : "") + component.long_name;
+            } else if (types.includes("locality")) {
+              city = component.long_name;
+            } else if (types.includes("postal_code")) {
+              pincode = component.long_name;
+            }
+          }
+          setNewAddr((prev) => ({
+            ...prev,
+            line1: line1.trim() || prev.line1,
+            city: city.trim() || prev.city,
+            pincode: pincode.trim() || prev.pincode,
+          }));
+        }
+      });
+    }
+  };
+
+  const checkoutHandleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (checkoutMapRef.current) {
+          const pos = { lat: latitude, lng: longitude };
+          checkoutMapRef.current.map.setCenter(pos);
+          checkoutMapRef.current.map.setZoom(16);
+          checkoutMapRef.current.marker.setPosition(pos);
+        }
+        checkoutUpdateAddressFromCoords(latitude, longitude);
+      },
+      (error) => {
+        console.error(error);
+        toast.error("Could not get current location: " + error.message);
+      }
+    );
+  };
+
   const checkoutInputRefCallback = (el: HTMLInputElement | null) => {
     if (el) {
       if (checkoutAutocompleteRef.current) return;
       if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
         const autocomplete = new (window as any).google.maps.places.Autocomplete(el, {
           componentRestrictions: { country: "in" },
-          fields: ["address_components"],
+          fields: ["address_components", "geometry"],
           types: ["address"],
         });
         autocomplete.addListener("place_changed", () => {
@@ -334,6 +445,13 @@ export default function Checkout() {
             city: city.trim() || prev.city,
             pincode: pincode.trim() || prev.pincode,
           }));
+
+          if (place.geometry?.location && checkoutMapRef.current) {
+            const loc = place.geometry.location;
+            checkoutMapRef.current.map.setCenter(loc);
+            checkoutMapRef.current.map.setZoom(16);
+            checkoutMapRef.current.marker.setPosition(loc);
+          }
         });
         checkoutAutocompleteRef.current = autocomplete;
       }
@@ -1533,6 +1651,17 @@ export default function Checkout() {
                   </div>
                 </div>
                 <div className="space-y-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <Label className="text-[11px] text-clinical-zinc">Address line 1</Label>
+                    <button
+                      type="button"
+                      onClick={checkoutHandleUseCurrentLocation}
+                      className="text-[10px] text-clinical-gold hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <MapPin className="w-3 h-3" />
+                      Use Current Location
+                    </button>
+                  </div>
                   <div className="relative">
                     <Input
                       ref={checkoutInputRefCallback}
@@ -1571,6 +1700,11 @@ export default function Checkout() {
                     {addressErrors._form}
                   </p>
                 )}
+                <div
+                  ref={checkoutMapInitCallback}
+                  style={{ height: "140px", width: "100%", borderRadius: "6px" }}
+                  className="mt-2 mb-3 bg-clinical-surface border border-clinical-border"
+                ></div>
                 <Button
                   type="button"
                   size="sm"

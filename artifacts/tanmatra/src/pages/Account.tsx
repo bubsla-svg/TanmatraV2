@@ -385,7 +385,7 @@ export default function Account() {
                   className="w-3 h-3 text-clinical-sage"
                   aria-hidden
                 />
-                Secured by Twilio Verify · ISO 22000 · FSSAI Lic. 22725926001018
+                Secured by Firebase · ISO 22000 · FSSAI Lic. 22725926001018
               </p>
             </>
           ) : (
@@ -394,7 +394,7 @@ export default function Account() {
                 className="w-3 h-3 text-clinical-sage"
                 aria-hidden
               />
-              Secured by Twilio Verify · ISO 22000 · FSSAI Lic. 22725926001018
+              Secured by Firebase · ISO 22000 · FSSAI Lic. 22725926001018
             </p>
           )}
         </CardContent>
