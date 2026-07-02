@@ -34,8 +34,24 @@ COPY artifacts/tanmatra artifacts/tanmatra
 # VITE_API_BASE is baked into the JS bundle at build time. Pass it as a build
 # arg so CI can set the correct wellness-foods Cloud Run URL.
 ARG VITE_API_BASE
+ARG VITE_GOOGLE_MAPS_API_KEY
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_STORAGE_BUCKET
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID
+ARG VITE_FIREBASE_APP_ID
+
 # SPA mode (ssr:false) — produces build/client/ only (no build/server/).
-RUN VITE_API_BASE="${VITE_API_BASE}" pnpm --filter @workspace/tanmatra run build
+RUN VITE_API_BASE="${VITE_API_BASE}" \
+    VITE_GOOGLE_MAPS_API_KEY="${VITE_GOOGLE_MAPS_API_KEY}" \
+    VITE_FIREBASE_API_KEY="${VITE_FIREBASE_API_KEY}" \
+    VITE_FIREBASE_AUTH_DOMAIN="${VITE_FIREBASE_AUTH_DOMAIN}" \
+    VITE_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID}" \
+    VITE_FIREBASE_STORAGE_BUCKET="${VITE_FIREBASE_STORAGE_BUCKET}" \
+    VITE_FIREBASE_MESSAGING_SENDER_ID="${VITE_FIREBASE_MESSAGING_SENDER_ID}" \
+    VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID}" \
+    pnpm --filter @workspace/tanmatra run build
 
 # ── runner ────────────────────────────────────────────────────────────────────
 # Serve the static SPA with a minimal Node http server; no SSR bundle needed.
