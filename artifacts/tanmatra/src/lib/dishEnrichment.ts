@@ -425,7 +425,7 @@ export interface DishVariantOption {
   label: string;
 }
 
-const VARIANT_FAMILIES: Record<string, string[]> = {
+export const VARIANT_FAMILIES: Record<string, string[]> = {
   // Chipotle Burrito Wrap
   "chilli-chipotle-paneer-burrito-wrap": ["chilli-chipotle-paneer-burrito-wrap", "chipotle-chicken-burrito-wrap"],
   "chipotle-chicken-burrito-wrap": ["chilli-chipotle-paneer-burrito-wrap", "chipotle-chicken-burrito-wrap"],
@@ -447,8 +447,9 @@ const VARIANT_FAMILIES: Record<string, string[]> = {
   "boiled-chicken-breast-single-serve": ["grilled-chicken-breast-single-serve", "boiled-chicken-breast-single-serve"],
 
   // Avocado Toast
-  "avocado-toast": ["avocado-toast", "avocado-toast-with-sunny-side-up"],
-  "avocado-toast-with-sunny-side-up": ["avocado-toast", "avocado-toast-with-sunny-side-up"],
+  "avocado-toast": ["avocado-toast", "avocado-toast-with-sunny-side-up", "avocado-toast-with-poached-boiled-egg"],
+  "avocado-toast-with-sunny-side-up": ["avocado-toast", "avocado-toast-with-sunny-side-up", "avocado-toast-with-poached-boiled-egg"],
+  "avocado-toast-with-poached-boiled-egg": ["avocado-toast", "avocado-toast-with-sunny-side-up", "avocado-toast-with-poached-boiled-egg"],
 
   // Aglio Olio (Static)
   "aglio-olio-veg": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
@@ -456,13 +457,48 @@ const VARIANT_FAMILIES: Record<string, string[]> = {
   "aglio-olio-prawns": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
 
   // Alfredo (Static)
-  "alfredo-pasta-veg": ["alfredo-pasta-veg", "alfredo-pasta-chicken"],
-  "alfredo-pasta-chicken": ["alfredo-pasta-veg", "alfredo-pasta-chicken"],
+  "alfredo-pasta-veg": ["alfredo-pasta-veg", "alfredo-pasta-chicken", "alfredo-pasta-prawns"],
+  "alfredo-pasta-chicken": ["alfredo-pasta-veg", "alfredo-pasta-chicken", "alfredo-pasta-prawns"],
+  "alfredo-pasta-prawns": ["alfredo-pasta-veg", "alfredo-pasta-chicken", "alfredo-pasta-prawns"],
 
   // Pesto (Static)
   "pesto-pasta-veg": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
   "pesto-pasta-chicken": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
   "pesto-pasta-prawns": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
+
+  // Arrabbiata (Static)
+  "arrabbiata-veg": ["arrabbiata-veg", "arrabbiata-chicken", "arrabbiata-prawns"],
+  "arrabbiata-chicken": ["arrabbiata-veg", "arrabbiata-chicken", "arrabbiata-prawns"],
+  "arrabbiata-prawns": ["arrabbiata-veg", "arrabbiata-chicken", "arrabbiata-prawns"],
+
+  // Hot n Sour Soup
+  "hot-n-sour-soup-veg": ["hot-n-sour-soup-veg", "hot-n-sour-soup-chicken"],
+  "hot-n-sour-soup-chicken": ["hot-n-sour-soup-veg", "hot-n-sour-soup-chicken"],
+
+  // Manchow Soup
+  "manchow-soup-veg": ["manchow-soup-veg", "manchow-soup-chicken"],
+  "manchow-soup-chicken": ["manchow-soup-veg", "manchow-soup-chicken"],
+
+  // Nutella Toast
+  "nutella-toast-white-bread": ["nutella-toast-white-bread", "nutella-toast-brown-bread"],
+  "nutella-toast-brown-bread": ["nutella-toast-white-bread", "nutella-toast-brown-bread"],
+
+  // Greek Roman Salad
+  "greek-roman-veg-salad": ["greek-roman-veg-salad", "greek-roman-chicken-salad"],
+  "greek-roman-chicken-salad": ["greek-roman-veg-salad", "greek-roman-chicken-salad"],
+
+  // Healthy Whole Wheat Wrap
+  "healthy-whole-wheat-tofu-wrap": ["healthy-whole-wheat-tofu-wrap", "healthy-whole-wheat-paneer-wrap", "healthy-whole-wheat-chicken-tikka-wrap"],
+  "healthy-whole-wheat-paneer-wrap": ["healthy-whole-wheat-tofu-wrap", "healthy-whole-wheat-paneer-wrap", "healthy-whole-wheat-chicken-tikka-wrap"],
+  "healthy-whole-wheat-chicken-tikka-wrap": ["healthy-whole-wheat-tofu-wrap", "healthy-whole-wheat-paneer-wrap", "healthy-whole-wheat-chicken-tikka-wrap"],
+
+  // Hummus Pita
+  "hummus-pita-classic": ["hummus-pita-classic", "hummus-pita-with-falafel"],
+  "hummus-pita-with-falafel": ["hummus-pita-classic", "hummus-pita-with-falafel"],
+
+  // Crispy Mushroom Burrito Wrap
+  "crispy-mushroom-burrito-wrap": ["crispy-mushroom-burrito-wrap", "crispy-peri-peri-mushroom-burrito-wrap"],
+  "crispy-peri-peri-mushroom-burrito-wrap": ["crispy-mushroom-burrito-wrap", "crispy-peri-peri-mushroom-burrito-wrap"]
 };
 
 const SECONDARY_VARIANTS = new Set([
@@ -472,12 +508,24 @@ const SECONDARY_VARIANTS = new Set([
   "barbeque-grilled-chicken-rice-bowl",
   "boiled-chicken-breast-single-serve",
   "avocado-toast-with-sunny-side-up",
+  "avocado-toast-with-poached-boiled-egg",
+  "greek-roman-chicken-salad",
+  "healthy-whole-wheat-paneer-wrap",
+  "healthy-whole-wheat-chicken-tikka-wrap",
+  "hummus-pita-with-falafel",
+  "crispy-peri-peri-mushroom-burrito-wrap",
   // Static ones
   "aglio-olio-chicken",
   "aglio-olio-prawns",
   "alfredo-pasta-chicken",
+  "alfredo-pasta-prawns",
   "pesto-pasta-chicken",
-  "pesto-pasta-prawns"
+  "pesto-pasta-prawns",
+  "arrabbiata-chicken",
+  "arrabbiata-prawns",
+  "hot-n-sour-soup-chicken",
+  "manchow-soup-chicken",
+  "nutella-toast-brown-bread"
 ]);
 
 export function isSecondaryVariant(slug: string): boolean {
@@ -500,14 +548,22 @@ export function getDishVariants(currentSlug: string, allDishes: DishData[]): Dis
         label = "Prawns";
       } else if (slug.includes("paneer") || dish.name.toLowerCase().includes("paneer")) {
         label = "Paneer";
+      } else if (slug.includes("tofu") || dish.name.toLowerCase().includes("tofu")) {
+        label = "Tofu";
+      } else if (slug.includes("falafel") || dish.name.toLowerCase().includes("falafel")) {
+        label = "With Falafel";
+      } else if (slug.includes("white") || dish.name.toLowerCase().includes("white")) {
+        label = "White Bread";
+      } else if (slug.includes("brown") || dish.name.toLowerCase().includes("brown")) {
+        label = "Brown Bread";
+      } else if (slug.includes("poached") || slug.includes("sunny") || dish.name.toLowerCase().includes("egg")) {
+        label = "With Egg";
       } else if (slug.includes("peri-peri") || dish.name.toLowerCase().includes("peri peri")) {
         label = "Peri Peri";
       } else if (slug.includes("boiled") && dish.name.toLowerCase().includes("boiled")) {
         label = "Boiled";
       } else if (slug.includes("grilled") && dish.name.toLowerCase().includes("grilled")) {
         label = "Grilled";
-      } else if (slug.includes("sunny-side-up") || dish.name.toLowerCase().includes("sunny side up")) {
-        label = "With Egg";
       } else if (slug.includes("veg") || dish.name.toLowerCase().includes("veg")) {
         label = "Veg";
       } else {

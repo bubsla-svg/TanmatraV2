@@ -374,7 +374,6 @@ export default function Menu() {
   const quickFilterCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     const baseListForCounts = catalogDishes.filter((d) => {
-      if (isSecondaryVariant(d.slug)) return false;
       if (!d.isAvailable) return false;
       if (kitchen !== "all" && d.kitchen !== kitchen) return false;
       if (category !== "all" && d.category !== category) return false;
@@ -396,7 +395,6 @@ export default function Menu() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const baseList = catalogDishes.filter((d) => {
-      if (isSecondaryVariant(d.slug)) return false;
       if (!d.isAvailable) return false;
       if (kitchen !== "all" && d.kitchen !== kitchen) return false;
       if (category !== "all" && d.category !== category) return false;
