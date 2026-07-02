@@ -80,7 +80,7 @@ export default function MenuCard({
       } ${match.blocked ? "ring-1 ring-orange-500/40" : ""}`}
     >
       {/* Image — square thumbnail on mobile, 4:3 full-width on sm+ */}
-      <div className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-[4/3] overflow-hidden">
+      <Link to={`/dish/${item.slug}`} className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-[4/3] overflow-hidden block">
         <img
           src={item.image}
           srcSet={unsplashSrcset(item.image)}
@@ -136,14 +136,16 @@ export default function MenuCard({
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Content — compact on mobile (horizontal card), full on sm+ (vertical card) */}
-      <div className="relative z-20 sm:-mt-10 flex-1 flex flex-col p-3 sm:p-5 gap-2 sm:gap-3 min-w-0">
+      <div className="relative z-20 sm:-mt-10 flex-1 flex flex-col p-3 sm:p-5 gap-1.5 sm:gap-2.5 min-w-0">
         <div className="flex justify-between items-start gap-2">
-          <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white">
-            {item.name}
-          </h3>
+          <Link to={`/dish/${item.slug}`} className="hover:underline flex-1 min-w-0">
+            <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white hover:text-clinical-gold transition-colors">
+              {item.name}
+            </h3>
+          </Link>
           <div className="flex flex-col items-end shrink-0">
             <span className="font-serif text-sm sm:text-lg font-medium text-clinical-gold tabular-nums">
               {formatPrice(item.price)}
@@ -161,7 +163,7 @@ export default function MenuCard({
             </span>
           </div>
         )}
-        <p className="text-xs text-clinical-zinc line-clamp-1 sm:line-clamp-2 leading-relaxed">
+        <p className="text-[11px] sm:text-xs text-clinical-zinc/80 line-clamp-1 sm:line-clamp-2 leading-relaxed">
           {item.description}
         </p>
 
@@ -212,7 +214,7 @@ export default function MenuCard({
             const netCarb = Math.max(0, cGrams - (item.macros.fiber || 0));
 
             return (
-              <div className="my-3.5 flex gap-4 border-y border-dashed border-border py-2.5 font-mono text-clinical-data text-text-primary">
+              <div className="my-2 sm:my-3 flex gap-4 border-y border-dashed border-border py-1.5 sm:py-2 font-mono text-clinical-data text-text-primary">
                 <div className="flex flex-col">
                   <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
                   <span className="text-[9px] tracking-wider text-text-secondary uppercase">Kcal</span>
@@ -240,7 +242,7 @@ export default function MenuCard({
           })()
         )}
 
-        <div className="hidden sm:flex text-[10px] uppercase tracking-[0.12em] text-clinical-zinc font-semibold items-center gap-1.5 flex-wrap">
+        <div className="hidden sm:flex text-[9px] uppercase tracking-[0.12em] text-clinical-zinc/60 font-semibold items-center gap-1.5 flex-wrap">
           <span>{categoryLine}</span>
           <span>·</span>
           <span className={cn(
