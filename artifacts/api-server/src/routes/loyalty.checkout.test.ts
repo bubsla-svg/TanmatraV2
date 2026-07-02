@@ -100,6 +100,17 @@ async function makeUser(label: string): Promise<TestUser> {
     firstName: label,
   });
   CREATED_USER_IDS.push(id);
+  // Seed one delivered order so the first-order offer (25% up to ₹80)
+  // never fires here — these tests lock in premium/slot behavior. The
+  // offer itself is covered in loyaltyEngine.checkout.test.ts.
+  await db.insert(ordersTable).values({
+    userId: id,
+    externalOrderId: `prior-${randomUUID()}`,
+    status: "delivered",
+    totalPaise: 10_000,
+    items: [{ id: 1, name: "Prior Meal", qty: 1, price: 10_000 }],
+    fulfillmentType: "delivery",
+  });
   const user: TestUser = {
     id,
     firstName: label,
@@ -281,12 +292,19 @@ test("POST /orders/finalize returns 403 when a non-premium user has a premium di
   assert.equal(r.status, 403, `expected 403, got ${r.status}: ${JSON.stringify(r.json)}`);
   assert.match(String(r.json.error), /premium/i);
 
-  // No order or claim row may have been written.
+  // No order or claim row may have been written. makeUser seeds one
+  // `prior-*` order (first-order-offer neutraliser), so exclude it.
   const orders = await db
-    .select({ id: ordersTable.id })
+    .select({
+      id: ordersTable.id,
+      externalOrderId: ordersTable.externalOrderId,
+    })
     .from(ordersTable)
     .where(eq(ordersTable.userId, user.id));
-  assert.equal(orders.length, 0, "premium-gated order must not be persisted");
+  const nonSeeded = orders.filter(
+    (o) => !String(o.externalOrderId ?? "").startsWith("prior-"),
+  );
+  assert.equal(nonSeeded.length, 0, "premium-gated order must not be persisted");
 });
 
 test("POST /orders/finalize lets a premium user complete an order with premium dishes", async () => {

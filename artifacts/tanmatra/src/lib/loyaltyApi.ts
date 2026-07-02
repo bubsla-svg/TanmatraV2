@@ -103,6 +103,10 @@ export const loyaltyApi = {
     request<{ entries: CreditLedgerEntry[]; balancePaise: number }>(
       "/credit-ledger",
     ),
+  getFirstOrderOffer: () =>
+    request<{ eligible: boolean; percentBps: number; capPaise: number }>(
+      "/orders/first-order-offer",
+    ),
   redeemCredit: (paise: number, refId?: string, note?: string) =>
     request<{ redeemedPaise: number; balancePaise: number }>(
       "/credit-ledger/redeem",
@@ -145,6 +149,7 @@ export const loyaltyApi = {
       bundleDiscountPaise: number;
       pickupDiscountPaise: number;
       preorderDiscountPaise: number;
+      firstOrderDiscountPaise: number;
       redeemedPaise: number;
       finalPaise: number;
       balancePaise: number;

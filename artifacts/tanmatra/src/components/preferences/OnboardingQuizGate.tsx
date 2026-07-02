@@ -24,6 +24,24 @@ export default function OnboardingQuizGate() {
   const location = useLocation();
   const [bannerVisible, setBannerVisible] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
+  // Get out of the way while the user reads: hide while scrolling down,
+  // re-surface on scroll-up. The pill was covering hero stats and menu
+  // content at every scroll position, especially on mobile.
+  const [scrollHidden, setScrollHidden] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - lastY) > 8) {
+        setScrollHidden(y > lastY && y > 320);
+        lastY = y;
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!needsQuiz) {
@@ -57,8 +75,13 @@ export default function OnboardingQuizGate() {
   return (
     <>
       {bannerVisible && (
-        <div className="fixed inset-x-0 bottom-16 md:bottom-4 z-30 px-3 md:px-4 pointer-events-none">
-          <div className="max-w-2xl mx-auto pointer-events-auto bg-clinical-surface border border-clinical-gold/30 shadow-clinical-lg rounded-xl px-4 py-3 flex items-center gap-3">
+        <div
+          className={`fixed inset-x-0 bottom-16 md:bottom-4 z-30 px-3 md:px-4 pointer-events-none transition-all duration-300 ${
+            scrollHidden ? "translate-y-4 opacity-0" : "translate-y-0 opacity-100"
+          }`}
+          aria-hidden={scrollHidden || undefined}
+        >
+          <div className={`max-w-2xl mx-auto ${scrollHidden ? "pointer-events-none" : "pointer-events-auto"} bg-clinical-surface border border-clinical-gold/30 shadow-clinical-lg rounded-xl px-4 py-3 flex items-center gap-3`}>
             <div className="w-8 h-8 rounded-lg bg-clinical-gold/15 border border-clinical-gold/30 flex items-center justify-center shrink-0">
               <Sparkles className="w-4 h-4 text-clinical-gold" />
             </div>

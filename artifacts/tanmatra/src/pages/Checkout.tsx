@@ -230,6 +230,11 @@ export default function Checkout() {
     null,
   );
   const [creditBalance, setCreditBalance] = useState(0);
+  const [firstOrderOffer, setFirstOrderOffer] = useState<{
+    eligible: boolean;
+    percentBps: number;
+    capPaise: number;
+  } | null>(null);
   const [applyCredits, setApplyCredits] = useState(true);
   const [preorderTomorrow, setPreorderTomorrow] = useState(false);
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
@@ -584,6 +589,16 @@ export default function Checkout() {
       .catch(() => {
         if (alive) setCreditBalance(0);
       });
+    // First-order offer eligibility is server-truth; when the call fails
+    // we show no discount (finalize would not have applied one either).
+    loyaltyApi
+      .getFirstOrderOffer()
+      .then((r) => {
+        if (alive) setFirstOrderOffer(r);
+      })
+      .catch(() => {
+        if (alive) setFirstOrderOffer(null);
+      });
     return () => {
       alive = false;
     };
@@ -597,7 +612,17 @@ export default function Checkout() {
       ? pickupLocations.find((p) => p.id === selectedPickupId) ?? null
       : null;
   const pickupDiscount = selectedPickup?.discountPaise ?? 0;
-  const discountedSubtotal = Math.max(0, subtotal - preorderDiscount - pickupDiscount);
+  // First-order offer — mirrors the server pipeline exactly (applied after
+  // pickup/preorder discounts, before credits); the finalize response is
+  // reconciled against this estimate before charging.
+  const preFirstOrderSubtotal = Math.max(0, subtotal - preorderDiscount - pickupDiscount);
+  const firstOrderDiscount = firstOrderOffer?.eligible
+    ? Math.min(
+        Math.floor((preFirstOrderSubtotal * firstOrderOffer.percentBps) / 10_000),
+        firstOrderOffer.capPaise,
+      )
+    : 0;
+  const discountedSubtotal = Math.max(0, preFirstOrderSubtotal - firstOrderDiscount);
   // Pickup orders skip delivery fee entirely; otherwise the existing free-over-threshold rule.
   const deliveryFee =
     fulfillmentType === "pickup" ? 0 : discountedSubtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
@@ -765,6 +790,7 @@ export default function Checkout() {
     let finalTotal = grossTotal;
     let referralAwarded = false;
     let serverOrderIdFromFinalize: number | undefined;
+    let firstOrderDiscountApplied = 0;
     try {
       const out = await loyaltyApi.finalizeOrder({
         // Same key for every retry of THIS submit attempt; the server
@@ -822,6 +848,15 @@ export default function Checkout() {
       const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID as
         | string
         | undefined;
+      // Reconcile the charge against the server's first-order decision: if
+      // the server applied a different discount than our estimate (e.g.
+      // the user's first order raced in from another device), shift the
+      // charge by the delta so the amount always matches the stored order.
+      firstOrderDiscountApplied = out.firstOrderDiscountPaise ?? 0;
+      const chargeTotal = Math.max(
+        0,
+        razorpayTotal - (firstOrderDiscountApplied - firstOrderDiscount),
+      );
       if (RAZORPAY_KEY_ID) {
         try {
           // 1. Ask the server to create a Razorpay order.
@@ -833,7 +868,7 @@ export default function Checkout() {
               credentials: "include",
               body: JSON.stringify({
                 orderId,
-                amount: razorpayTotal,
+                amount: chargeTotal,
                 currency: "INR",
               }),
             },
@@ -868,7 +903,7 @@ export default function Checkout() {
               }
               const rzp = new Razorpay({
                 key: RAZORPAY_KEY_ID,
-                amount: razorpayTotal,
+                amount: chargeTotal,
                 currency: "INR",
                 order_id: razorpayOrderId,
                 name: "Tanmatra",
@@ -1121,6 +1156,12 @@ export default function Checkout() {
       fulfillmentType,
       appliedCredits: creditApplied,
     });
+    if (firstOrderDiscountApplied > 0) {
+      track("first_order_offer_applied", {
+        orderId,
+        amountPaise: firstOrderDiscountApplied,
+      });
+    }
 
     if (referralAwarded) {
       toast.success("Referral reward unlocked for your friend");
@@ -1755,6 +1796,16 @@ export default function Checkout() {
                   </span>
                 </div>
               )}
+              {firstOrderDiscount > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-clinical-gold flex items-center gap-1">
+                    <Gift className="w-3 h-3" /> First-order offer (25% up to ₹80)
+                  </span>
+                  <span className="tabular-nums text-clinical-gold">
+                    -{formatPrice(firstOrderDiscount)}
+                  </span>
+                </div>
+              )}
               {pickupDiscount > 0 && (
                 <div className="flex justify-between text-xs">
                   <span className="text-clinical-sage flex items-center gap-1">
@@ -1900,6 +1951,7 @@ export default function Checkout() {
             {(() => {
               const totalSavings =
                 preorderDiscount +
+                firstOrderDiscount +
                 pickupDiscount +
                 creditApplied +
                 subsidyAvailable;
@@ -1921,6 +1973,14 @@ export default function Checkout() {
                         <span>Pre-order discount (5%)</span>
                         <span className="tabular-nums text-clinical-sage">
                           -{formatPrice(preorderDiscount)}
+                        </span>
+                      </div>
+                    )}
+                    {firstOrderDiscount > 0 && (
+                      <div className="flex justify-between">
+                        <span>First-order offer (25% up to ₹80)</span>
+                        <span className="tabular-nums text-clinical-gold">
+                          -{formatPrice(firstOrderDiscount)}
                         </span>
                       </div>
                     )}
@@ -2036,6 +2096,9 @@ export default function Checkout() {
             </div>
             {preorderDiscount > 0 && (
               <div className="flex justify-between"><span className="text-clinical-zinc">Pre-order discount</span><span className="tabular-nums text-clinical-sage">-{formatPrice(preorderDiscount)}</span></div>
+            )}
+            {firstOrderDiscount > 0 && (
+              <div className="flex justify-between"><span className="text-clinical-zinc">First-order offer</span><span className="tabular-nums text-clinical-gold">-{formatPrice(firstOrderDiscount)}</span></div>
             )}
             {pickupDiscount > 0 && (
               <div className="flex justify-between"><span className="text-clinical-zinc">Pickup discount</span><span className="tabular-nums text-clinical-sage">-{formatPrice(pickupDiscount)}</span></div>

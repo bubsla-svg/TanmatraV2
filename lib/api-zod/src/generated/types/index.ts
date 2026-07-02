@@ -29,6 +29,7 @@ export * from "./dishReviewInput";
 export * from "./finalizeOrderRequest";
 export * from "./finalizeOrderRequestFulfillmentType";
 export * from "./finalizeOrderRequestItemsItem";
+export * from "./firstOrderOffer";
 export * from "./generateMealPlan201";
 export * from "./getChallenge200";
 export * from "./getMealPlan200";

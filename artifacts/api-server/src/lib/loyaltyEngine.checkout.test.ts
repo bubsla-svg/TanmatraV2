@@ -67,6 +67,20 @@ async function makeUser(): Promise<string> {
   return id;
 }
 
+// Neutralise the first-order offer for tests that assert legacy pricing:
+// a user with any prior non-cancelled order is ineligible, so seeding one
+// delivered order restores the pre-offer math those tests lock in.
+async function seedPriorOrder(userId: string): Promise<void> {
+  await db.insert(ordersTable).values({
+    userId,
+    externalOrderId: `prior-${randomUUID()}`,
+    status: "delivered",
+    totalPaise: 10_000,
+    items: [{ id: 1, name: "Prior Meal", qty: 1, price: 10_000 }],
+    fulfillmentType: "delivery",
+  });
+}
+
 async function makePickupLocation(discountPaise: number): Promise<number> {
   const [loc] = await db
     .insert(pickupLocationsTable)
@@ -112,6 +126,7 @@ after(async () => {
 
 test("finalizeOrder ignores client-supplied price and re-prices from the catalog", async () => {
   const userId = await makeUser();
+  await seedPriorOrder(userId);
   const pickupLocationId = await makePickupLocation(0);
   const [a, b] = pickAvailableDishes(2);
   const expectedGross = a!.price * 2 + b!.price * 1;
@@ -167,6 +182,7 @@ test("finalizeOrder ignores client-supplied price and re-prices from the catalog
 
 test("finalizeOrder uses pickup_locations.discount_paise and caps it so total never goes negative", async () => {
   const userId = await makeUser();
+  await seedPriorOrder(userId);
   const [a] = pickAvailableDishes(1);
   // Pickup location offers a discount that is FAR larger than the
   // subtotal. The cap inside finalizeOrder must clamp pickupDiscountPaise
@@ -217,6 +233,7 @@ test("finalizeOrder takes the pickup discount from the DB row, ignoring any requ
   // in here that finalizeOrder reads the discount from the DB row of the
   // chosen pickup location rather than any caller-controlled value.
   const userId = await makeUser();
+  await seedPriorOrder(userId);
   const [a, b] = pickAvailableDishes(2);
   const subtotal = a!.price + b!.price;
   const dbDiscount = Math.floor(subtotal / 4); // 25% off, well within bounds
@@ -245,4 +262,82 @@ test("finalizeOrder takes the pickup discount from the DB row, ignoring any requ
     "subtotal recovered from response must equal catalog subtotal",
   );
   assert.equal(out.finalPaise, subtotal - dbDiscount);
+});
+
+test("first-order offer: 25% off capped at Rs.80, first order only, retry-safe", async (t) => {
+  const [a] = pickAvailableDishes(1);
+  // Zero-discount pickup avoids delivery-slot fixtures while keeping the
+  // pricing pipeline identical (pickup discount of 0 is a no-op).
+  const zeroPickupId = await makePickupLocation(0);
+
+  await t.test("applies 25% (or the Rs.80 cap) to a user's first order", async () => {
+    const userId = await makeUser();
+    const orderId = `ord-${randomUUID()}`;
+    const out = await finalizeOrder({
+      userId,
+      orderId,
+      fulfillmentType: "pickup",
+      pickupLocationId: zeroPickupId,
+      items: [{ id: a!.id, name: a!.name, qty: 1, price: a!.price }],
+    });
+    const expected = Math.min(Math.floor((a!.price * 2500) / 10_000), 8_000);
+    assert.equal(
+      out.firstOrderDiscountPaise,
+      expected,
+      "first order must get 25% off, capped at 8000 paise",
+    );
+    assert.equal(out.finalPaise, a!.price - expected);
+
+    // Idempotent retry of the SAME first order must report the same
+    // discount, not zero (the order's own row must not disqualify it).
+    const retry = await finalizeOrder({
+      userId,
+      orderId,
+      fulfillmentType: "pickup",
+      pickupLocationId: zeroPickupId,
+      items: [{ id: a!.id, name: a!.name, qty: 1, price: a!.price }],
+    });
+    assert.equal(retry.duplicate, true);
+    assert.equal(
+      retry.firstOrderDiscountPaise,
+      expected,
+      "duplicate replay must carry the same first-order discount",
+    );
+  });
+
+  await t.test("does not apply to a second order", async () => {
+    const userId = await makeUser();
+    await finalizeOrder({
+      userId,
+      orderId: `ord-${randomUUID()}`,
+      fulfillmentType: "pickup",
+      pickupLocationId: zeroPickupId,
+      items: [{ id: a!.id, name: a!.name, qty: 1, price: a!.price }],
+    });
+    const second = await finalizeOrder({
+      userId,
+      orderId: `ord-${randomUUID()}`,
+      fulfillmentType: "pickup",
+      pickupLocationId: zeroPickupId,
+      items: [{ id: a!.id, name: a!.name, qty: 1, price: a!.price }],
+    });
+    assert.equal(second.firstOrderDiscountPaise, 0, "second order gets no first-order discount");
+    assert.equal(second.finalPaise, a!.price);
+  });
+
+  await t.test("hard cap at Rs.80 for large first orders", async () => {
+    const userId = await makeUser();
+    // qty chosen so 25% of the subtotal comfortably exceeds the cap.
+    const qty = Math.max(1, Math.ceil(33_000 / a!.price));
+    const subtotal = a!.price * qty;
+    const out = await finalizeOrder({
+      userId,
+      orderId: `ord-${randomUUID()}`,
+      fulfillmentType: "pickup",
+      pickupLocationId: zeroPickupId,
+      items: [{ id: a!.id, name: a!.name, qty, price: a!.price }],
+    });
+    assert.equal(out.firstOrderDiscountPaise, 8_000, "discount must clamp at 8000 paise");
+    assert.equal(out.finalPaise, subtotal - 8_000);
+  });
 });

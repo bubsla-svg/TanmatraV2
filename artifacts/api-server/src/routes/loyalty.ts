@@ -15,6 +15,8 @@ import {
 import { getPremiumSlugSet, userIsPremium } from "./premium";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import {
+  FIRST_ORDER_DISCOUNT_BPS,
+  FIRST_ORDER_DISCOUNT_CAP_PAISE,
   finalizeOrder,
   getCreditBalancePaise,
   getLoyaltyConstantsSnapshot,
@@ -22,6 +24,7 @@ import {
   listNotifications,
   redeemCreditAtomic,
   runLoyaltyEngineForUser,
+  userIsFirstOrderEligible,
 } from "../lib/loyaltyEngine";
 import {
   defaultChannelForKind,
@@ -276,6 +279,24 @@ function isServiceablePincode(pincode: string | null | undefined): boolean {
   if (!pincode) return false;
   return SERVICEABLE_PINCODES.has(pincode.trim());
 }
+
+/**
+ * GET /orders/first-order-offer
+ *
+ * First-order offer eligibility for the signed-in user. The checkout UI
+ * uses this to show the projected discount; finalizeOrder re-checks
+ * server-side, so this is display-only truth, not the charging decision.
+ */
+router.get("/orders/first-order-offer", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const eligible = await userIsFirstOrderEligible(userId);
+  res.json({
+    eligible,
+    percentBps: FIRST_ORDER_DISCOUNT_BPS,
+    capPaise: FIRST_ORDER_DISCOUNT_CAP_PAISE,
+  });
+});
 
 router.post("/orders/finalize", idempotencyMiddleware, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);

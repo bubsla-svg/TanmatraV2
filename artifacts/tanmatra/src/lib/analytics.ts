@@ -4,6 +4,7 @@
 
 type EventName =
   | "view_home"
+  | "view_menu"
   | "view_product"
   | "add_to_cart"
   | "cart_open"
@@ -14,6 +15,8 @@ type EventName =
   | "order_created"
   | "upi_intent_initiated"
   | "upi_intent_completed"
+  | "first_order_offer_shown"
+  | "first_order_offer_applied"
   | "support_click";
 
 export function track(event: EventName, props?: Record<string, unknown>): void {

@@ -83,6 +83,7 @@ import { addressesApi } from "@/lib/userAddressesApi";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { useNavigate } from "react-router";
 import { Crown } from "lucide-react";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import MenuCard from "@/components/menu/MenuCard";
 import { groupCatalogDishes, type ConsolidatedDish, type ConsolidatedVariant } from "@/lib/menuVariants";
@@ -159,6 +160,10 @@ export default function Menu() {
   const { isPremium } = usePremiumStatus();
   const premiumSlugs = usePremiumSlugs();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    track("view_menu");
+  }, []);
   const [kitchen, setKitchen] = useState<"all" | DishKitchen>("all");
   const [category, setCategory] = useState<"all" | DishCategory>("all");
   const [diet, setDiet] = useState<DietFilter>("all");

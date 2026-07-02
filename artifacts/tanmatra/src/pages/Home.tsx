@@ -46,6 +46,7 @@ import {
   ClipboardList,
   Bike,
   BadgeCheck,
+  Gift,
 } from "lucide-react";
 
 const FEATURED_MEALS = [
@@ -323,8 +324,8 @@ export default function Home() {
             </h1>
 
             <p className="text-base md:text-lg text-zinc-200 leading-relaxed max-w-lg drop-shadow-[0_1px_10px_rgba(0,0,0,0.5)]">
-              Every meal is clinically formulated by registered dietitians, macro-calibrated to
-              your metabolic profile, and prepared in ISO-certified kitchens.
+              Chef-made meals, designed and approved by registered dietitians and
+              matched to your goals — cooked fresh in ISO-certified kitchens.
             </p>
 
             {/* Concrete price + delivery promise visible above the fold —
@@ -334,15 +335,24 @@ export default function Home() {
             <p className="text-sm text-zinc-300 flex flex-wrap items-center gap-x-3 gap-y-1 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
               <span className="text-white font-semibold">Meals from ₹140</span>
               <span className="opacity-50">·</span>
+              <span>Fresh in 25–40 min</span>
+              <span className="opacity-50">·</span>
               <span>Free delivery over ₹500</span>
               <span className="opacity-50">·</span>
               <span>Bengaluru-wide</span>
             </p>
 
+            {/* First-order offer — mirrors the server-side auto-applied
+                discount (loyaltyEngine FIRST_ORDER_DISCOUNT_*). */}
+            <p className="text-sm font-semibold text-clinical-gold flex items-center gap-2 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              <Gift className="w-4 h-4 shrink-0" aria-hidden />
+              Flat 25% off your first order (up to ₹80) — auto-applied at checkout
+            </p>
+
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link to="/preferences" className="flex-1 sm:flex-none">
                 <Button className="w-full sm:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 h-12 sm:h-11 px-6 shadow-clinical-lg">
-                  Take metabolic assessment <ArrowRight className="w-4 h-4" />
+                  Get my meal plan <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
               {/* Equal-weight ghost button — assessment remains the primary
