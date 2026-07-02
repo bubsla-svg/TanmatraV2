@@ -21,7 +21,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   const [step, setStep] = useState<"prompt" | "map" | "details">("prompt");
   
   // Geolocation / Geocoding states
-  const [coords, setCoords] = useState<{ lat: number; lng: number }>({ lat: 19.0760, lng: 72.8777 }); // Mumbai
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>({ lat: 28.5708, lng: 77.3260 }); // Noida Sector 18
   const [locality, setLocality] = useState("");
   const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
@@ -258,7 +258,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
             <div className="space-y-2">
               <h3 className="text-lg font-serif font-semibold text-white">Where should we deliver?</h3>
               <p className="text-xs text-clinical-zinc">
-                We deliver Bengaluru-wide — pick your location or type the address.
+                We deliver across Noida & Delhi NCR — pick your location or type the address.
               </p>
             </div>
             <div className="w-full space-y-3">

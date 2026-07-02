@@ -1263,7 +1263,7 @@ export default function Checkout() {
                       Add your delivery address
                     </p>
                     <p className="text-[10px] text-clinical-zinc">
-                      Bengaluru-wide · fresh in 25–40 min
+                      Noida & Delhi NCR · fresh in 25–40 min
                     </p>
                   </button>
                 ) : (

@@ -58,7 +58,7 @@ export default function Footer() {
             </div>
             <div className="flex items-center gap-1.5 text-white">
               <MapPin className="w-3 h-3 text-clinical-gold" />
-              <span className="text-xs">Bengaluru, Karnataka, India</span>
+              <span className="text-xs">Noida, Uttar Pradesh, India</span>
             </div>
           </div>
 

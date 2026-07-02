@@ -309,7 +309,7 @@ export default function SubscriptionPlansLanding() {
               },
               {
                 q: "Where do you deliver?",
-                a: "Across Bengaluru, with more of the city being added continuously. Enter your pincode at checkout to confirm.",
+                a: "Across Noida, Greater Noida, and select Delhi NCR routes. Enter your pincode at checkout to confirm.",
               },
             ].map((faq, i) => (
               <div

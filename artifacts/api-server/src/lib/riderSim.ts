@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { emitRiderPosition, emitDeliveryEta, emitDeliveryEvent } from "./realtime";
 import { logger } from "./logger";
 
-const KITCHEN = { lat: 12.9716, lng: 77.5946 } as const;
+const KITCHEN = { lat: 28.5708, lng: 77.326 } as const; // Noida Sector 18 kitchen
 
 const TICK_MS = 2000;
 const AVG_SPEED_KMH = 28;

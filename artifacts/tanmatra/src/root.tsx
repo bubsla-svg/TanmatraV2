@@ -159,8 +159,8 @@ export default function Root() {
               "priceRange": "₹₹",
               "address": {
                 "@type": "PostalAddress",
-                "addressLocality": "Bengaluru",
-                "addressRegion": "Karnataka",
+                "addressLocality": "Noida",
+                "addressRegion": "Uttar Pradesh",
                 "addressCountry": "IN"
               },
               "contactPoint": {

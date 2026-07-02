@@ -141,8 +141,8 @@ export default function RiderMap({ orderId, initial, destination }: Props) {
     if (position) return [position.lat, position.lng];
     if (initial) return [initial.lat, initial.lng];
     if (destination) return [destination.lat, destination.lng];
-    // Fallback: Bangalore-ish centroid for the demo data.
-    return [12.9716, 77.5946];
+    // Fallback: Noida centroid for the demo data.
+    return [28.5708, 77.326];
   }, [position, initial, destination]);
 
   return (

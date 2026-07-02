@@ -538,7 +538,7 @@ function StepPractice({
             value={draft.cityRegion}
             onChange={(e) => update({ cityRegion: e.target.value })}
             className="bg-[#050505] border-clinical-border text-sm"
-            placeholder="Bengaluru, KA"
+            placeholder="Noida, UP"
           />
         </Field>
         <Field label="Practice setting">

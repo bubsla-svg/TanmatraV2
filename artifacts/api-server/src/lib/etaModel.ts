@@ -64,7 +64,7 @@ const ACTIVE_STATUSES = [
 ];
 
 const PINCODE_ZONE_PREFIX: Record<string, string> = {
-  "560": "BLR-Central",
+  "201": "NOIDA-Central",
   "110": "DEL-Central",
   "400": "MUM-Central",
   "600": "CHE-Central",
@@ -72,8 +72,8 @@ const PINCODE_ZONE_PREFIX: Record<string, string> = {
 };
 
 const CITY_ZONE: Record<string, string> = {
-  bengaluru: "BLR-Central",
-  bangalore: "BLR-Central",
+  noida: "NOIDA-Central",
+  "greater noida": "NOIDA-Central",
   delhi: "DEL-Central",
   mumbai: "MUM-Central",
   chennai: "CHE-Central",

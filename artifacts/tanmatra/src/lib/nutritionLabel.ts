@@ -149,7 +149,7 @@ const KITCHEN_SOURCING: Record<DishKitchen, SourcingNote[]> = {
     { area: "Grains", detail: "Single-origin jasmine and brown rice; soaked the night before to lower the glycaemic load." },
   ],
   indian: [
-    { area: "Spices", detail: "Whole spices ground weekly at our Bengaluru spice room — no pre-mixed masalas." },
+    { area: "Spices", detail: "Whole spices ground weekly at our Noida spice room — no pre-mixed masalas." },
     { area: "Dals & legumes", detail: "Single-origin moong, masoor, and chana from a Vidarbha farmer collective; sorted and re-cleaned in-house." },
     { area: "Dairy", detail: "Paneer set fresh daily from A2 milk; ghee made in small batches from cultured cream." },
   ],
