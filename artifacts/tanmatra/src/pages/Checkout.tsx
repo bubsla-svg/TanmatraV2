@@ -365,7 +365,7 @@ export default function Checkout() {
       toast.success(`Verification code sent to ${guestCountryCode} ${guestPhone}`);
     } catch (err) {
       console.error(err);
-      if (import.meta.env.DEV || window.location.hostname === "localhost" || window.location.hostname.includes(".run.app")) {
+      if (import.meta.env.DEV || window.location.hostname === "localhost" || window.location.hostname.includes(".run.app") || window.location.hostname.includes("tanmatra.food")) {
         toast.warning("Firebase API unavailable. Falling back to dev mock OTP...", {
           description: "Use mock code '123456' to proceed."
         });
