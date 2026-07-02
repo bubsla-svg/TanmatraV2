@@ -273,7 +273,16 @@ function MoreSheet({
               <ShieldCheck className="w-3 h-3 text-clinical-sage" />
               ISO 22000 · FSSAI Lic. 22725926001018
             </div>
-            <p className="pt-2 text-[10px] text-clinical-zinc-muted">
+            <div className="flex items-center gap-3 pt-1 text-[10px] text-clinical-zinc-muted">
+              <Link to="/privacy" onClick={() => onOpenChange(false)} className="hover:text-clinical-gold">
+                Privacy
+              </Link>
+              <span>&middot;</span>
+              <Link to="/terms" onClick={() => onOpenChange(false)} className="hover:text-clinical-gold">
+                Terms
+              </Link>
+            </div>
+            <p className="pt-1 text-[10px] text-clinical-zinc-muted">
               © {new Date().getFullYear()} Tanmatra Health Technologies
             </p>
           </div>

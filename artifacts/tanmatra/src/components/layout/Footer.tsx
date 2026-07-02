@@ -107,9 +107,19 @@ export default function Footer() {
             <ShieldCheck className="w-3 h-3 text-clinical-sage" />
             <span className="text-[10px] text-white">ISO 22000 Certified Kitchens &middot; FSSAI Lic. No.: 22725926001018</span>
           </div>
-          <p className="text-[10px] text-white">
-            © 2024 Tanmatra Health Technologies Pvt. Ltd.
-          </p>
+          <div className="flex items-center gap-4 text-[10px] text-white">
+            <Link to="/privacy" className="hover:text-clinical-gold transition-colors">
+              Privacy Policy
+            </Link>
+            <span>&middot;</span>
+            <Link to="/terms" className="hover:text-clinical-gold transition-colors">
+              Terms of Service
+            </Link>
+            <span>&middot;</span>
+            <span>
+              © 2024 Tanmatra Health Technologies Pvt. Ltd.
+            </span>
+          </div>
         </div>
       </div>
 
