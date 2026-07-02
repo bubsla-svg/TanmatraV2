@@ -41,6 +41,9 @@ const createSubscriptionSchema = z.object({
   mealsPerDelivery: z.number().int().positive().max(50),
   deliveryWindow: z.string().min(3).max(32),
   startDate: z.string().or(z.date()),
+  // "trial" = one-off 3-day sampler at 25% off list; does not recur.
+  // "standard" = the recurring plan priced by cadence.
+  planType: z.enum(["standard", "trial"]).default("standard"),
   addressLabel: z.string().max(64).optional(),
   addressLine: z.string().max(256).optional(),
   city: z.string().max(64).optional(),
@@ -73,11 +76,29 @@ const CADENCE_DISCOUNT: Record<SubscriptionCadence, number> = {
   monthly: 0.85,
 };
 
+// First-order 3-day sampler: 25% off list (no cadence discount stacked).
+const TRIAL_DISCOUNT = 0.75;
+// Canonical marker persisted in `notes` so downstream logic (block
+// recurring extension) can recognise a trial without a schema change.
+// The API accepts `planType: "trial"`; this string is an internal detail.
+const TRIAL_NOTE = "Trial: 3-Day Pack (25% off)";
+// Legacy marker from the RD-plan trial flow — still recognised so old
+// links and existing rows keep behaving as trials.
+const LEGACY_TRIAL_NOTE = "RD Plan: 3-Day Trial Pack";
+
+function isTrialSubscription(sub: { notes: string | null }): boolean {
+  return sub.notes === TRIAL_NOTE || sub.notes === LEGACY_TRIAL_NOTE;
+}
+
 function computeDeliveryPricePaise(
   cadence: SubscriptionCadence,
   meals: number,
 ): number {
   return Math.round(meals * PER_MEAL_PAISE * CADENCE_DISCOUNT[cadence]);
+}
+
+function computeTrialPricePaise(meals: number): number {
+  return Math.round(meals * PER_MEAL_PAISE * TRIAL_DISCOUNT);
 }
 
 function addDays(date: Date, days: number): Date {
@@ -212,15 +233,29 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     res.status(400).json({ error: "startDate must be today or later" });
     return;
   }
+  // A trial is any request that asks for planType:"trial" OR carries a
+  // recognised trial marker in notes (keeps old RD-plan trial links working).
+  const isTrial =
+    data.planType === "trial" || isTrialSubscription({ notes: data.notes ?? null });
+
   let pricePerDeliveryPaise = computeDeliveryPricePaise(
     data.cadence,
     data.mealsPerDelivery,
   );
   let generateCount = 4;
+  // Normalise the persisted note so downstream trial detection is stable
+  // regardless of which entry point created it.
+  let notes = data.notes;
 
-  if (data.notes === "RD Plan: 3-Day Trial Pack") {
-    pricePerDeliveryPaise = 210000; // Fixed trial price: ₹2,100
-    generateCount = 1; // Only generate 1 delivery for the trial
+  if (isTrial) {
+    pricePerDeliveryPaise = computeTrialPricePaise(data.mealsPerDelivery);
+    generateCount = 1; // one-off 3-day sampler — does not recur
+    notes = notes && notes !== LEGACY_TRIAL_NOTE ? notes : TRIAL_NOTE;
+    if (notes !== TRIAL_NOTE && notes !== LEGACY_TRIAL_NOTE) {
+      // Caller sent custom notes; append the canonical marker so the
+      // trial is still recognisable later.
+      notes = `${TRIAL_NOTE} — ${notes}`.slice(0, 512);
+    }
   }
 
   const [sub] = await db
@@ -239,7 +274,7 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       city: data.city,
       pincode: data.pincode,
       phone: data.phone,
-      notes: data.notes,
+      notes,
     })
     .returning();
 
@@ -714,7 +749,7 @@ router.post(
       res.status(404).json({ error: "not found" });
       return;
     }
-    if (sub.notes === "RD Plan: 3-Day Trial Pack") {
+    if (isTrialSubscription(sub)) {
       res
         .status(400)
         .json({ error: "cannot generate more deliveries for a trial pack subscription" });

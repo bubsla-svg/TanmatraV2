@@ -60,6 +60,8 @@ const NAV_ROUTES: RouteEntry[] = [
   { label: "Cart", to: "/cart", icon: ShoppingCart, group: "Eat" },
   { label: "Checkout", to: "/checkout", icon: ShoppingCart, group: "Eat" },
 
+  { label: "Meal plans", to: "/subscription-plans", icon: Calendar, group: "Plan", keywords: "subscription pricing plans" },
+  { label: "Start 3-day trial (25% off)", to: "/subscribe?trial=1", icon: Sparkle, group: "Plan", keywords: "trial sampler discount try" },
   { label: "Weekly meal planner", to: "/meal-planner", icon: Sparkle, group: "Plan", keywords: "ai 7 day" },
   { label: "My subscriptions", to: "/subscriptions", icon: Calendar, group: "Plan" },
   { label: "Therapeutic plans", to: "/plans", icon: Stethoscope, group: "Plan", keywords: "rd protocols" },

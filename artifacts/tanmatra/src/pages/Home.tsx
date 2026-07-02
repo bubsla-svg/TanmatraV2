@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import MacroOverlay from "@/components/dish/MacroOverlay";
 import { WeeklySummaryCard } from "@/pages/Wellness";
-import SegmentToggle from "@/components/layout/SegmentToggle";
 import { useOrders } from "@/lib/ordersContext";
 import { useCart } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
@@ -274,9 +273,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-clinical-dark">
-      <SegmentToggle />
-
-      {/* ═══════════════ HERO SECTION ═══════════════ */}
+      {/* HERO SECTION — the D2C default: no forced clinical "protocol" band.
+          Wellness/Performance/Clinical remain reachable as deliberate
+          destinations (nav + the clinical entry lower down), not the
+          ambient frame every first-time visitor lands inside. */}
       <section className="relative min-h-[420px] md:h-[78vh] md:min-h-[560px] overflow-hidden flex items-center">
         <div className="absolute inset-0">
           <img src="/collections/wellness-collection.jpg" alt="Nutritionist-designed meals — buddha bowl, berry smoothie bowl and salmon salad" className="w-full h-full object-cover object-center" loading="eager" fetchPriority="high" />
@@ -499,12 +499,22 @@ export default function Home() {
       {/* ═══════════════ SUBSCRIPTION MEAL PLANS ═══════════════ */}
       <section className="py-12 border-b border-clinical-border bg-clinical-surface/20">
         <div className="max-w-7xl mx-auto px-4 space-y-8">
-          <div className="text-center space-y-2">
-            <p className="text-[10px] uppercase tracking-widest text-clinical-gold font-semibold">Nutrition on Autopilot</p>
-            <h2 className="text-2xl font-serif text-white">Subscribe to a Clinical Meal Plan</h2>
+          <div className="text-center space-y-3">
+            <p className="text-[10px] uppercase tracking-widest text-clinical-gold font-semibold">Meals on Autopilot</p>
+            <h2 className="text-clinical-h2 text-white">Never plan lunch again</h2>
             <p className="text-xs text-clinical-zinc max-w-lg mx-auto">
-              Select a dietitian-curated weekly rotation designed around specific health goals. Customize your meals, select delivery slots, and pause or resume anytime.
+              Chef-made, dietitian-approved meals delivered on your schedule. Swap dishes, pick delivery slots, pause anytime.
             </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <Link to="/subscribe?trial=1">
+                <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs h-9 gap-1.5">
+                  Start 3-day trial — 25% off <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+              <Link to="/subscription-plans" className="text-xs font-semibold text-clinical-gold hover:text-white inline-flex items-center gap-1">
+                See all plans <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -94,6 +94,10 @@ export default function Subscribe() {
   const [searchParams] = useSearchParams();
   const planSlug = searchParams.get("plan");
   const rdPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
+  // Trial mode: either the D2C `?trial=1` entry or the legacy RD trial slug.
+  const isTrial =
+    searchParams.get("trial") === "1" ||
+    rdPlan?.slug === "three-day-trial-pack";
   const rdAuthor = rdPlan ? getRdAuthor(rdPlan) : undefined;
   const { preferences } = usePreferences();
   const planItemsResult = useMemo<{ items: SubscriptionItem[]; swappedCount: number; droppedCount: number }>(() => {
@@ -137,14 +141,25 @@ export default function Subscribe() {
     return { items: items.slice(0, 14), swappedCount, droppedCount };
   }, [rdPlan, preferences]);
   const planWeekItems = planItemsResult.items;
-  const [cadence, setCadence] = useState<SubscriptionCadence>("weekly");
+  const cadenceParam = searchParams.get("cadence");
+  const initialCadence: SubscriptionCadence =
+    cadenceParam === "weekly" ||
+    cadenceParam === "fortnightly" ||
+    cadenceParam === "monthly"
+      ? cadenceParam
+      : "weekly";
+  const [cadence, setCadence] = useState<SubscriptionCadence>(initialCadence);
   const [meals, setMeals] = useState(10);
   useEffect(() => {
     if (rdPlan) {
       setCadence("weekly");
       setMeals(Math.min(planWeekItems.length || 10, 14));
+    } else if (isTrial) {
+      // D2C 3-day sampler defaults to 3 days × 3 meals.
+      setCadence("weekly");
+      setMeals(9);
     }
-  }, [rdPlan, planWeekItems.length]);
+  }, [rdPlan, planWeekItems.length, isTrial]);
   const [window, setWindow] = useState(TIME_WINDOWS[1]);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -163,9 +178,12 @@ export default function Subscribe() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  const total = rdPlan?.slug === "three-day-trial-pack"
-    ? 210000 // Fixed ₹2,100 for trial pack
+  // Trial = one-off 3-day sampler at 25% off list (mirrors the server's
+  // computeTrialPricePaise). Standard = cadence-discounted recurring price.
+  const total = isTrial
+    ? Math.round(meals * 26000 * 0.75)
     : basePrice(cadence, meals);
+  const trialListPrice = Math.round(meals * 26000);
 
   const updateMember = (idx: number, patch: Partial<MemberDraft>) => {
     setMembers((prev) =>
@@ -206,6 +224,7 @@ export default function Subscribe() {
         mealsPerDelivery: meals,
         deliveryWindow: window,
         startDate: new Date(startDate).toISOString(),
+        planType: isTrial ? "trial" : "standard",
         addressLabel: address.label,
         addressLine: address.line,
         city: address.city,
@@ -241,24 +260,24 @@ export default function Subscribe() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
       <Link
-        to="/plans"
+        to={rdPlan ? "/plans" : "/subscription-plans"}
         className="inline-flex items-center gap-1.5 min-h-[36px] py-2 -ml-1 px-1 text-xs text-clinical-zinc hover:text-clinical-gold transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        Back to RD Plans
+        {rdPlan ? "Back to RD Plans" : "Back to plans"}
       </Link>
 
       <header className="space-y-2 text-center">
         <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
-          Tanmatra Plans
+          {isTrial ? "3-Day Trial" : "Tanmatra Plans"}
         </Badge>
-        <h1 className="text-3xl md:text-4xl font-serif text-white">
-          Build your nourishment subscription
+        <h1 className="text-clinical-h1 md:text-[clamp(1.9rem,1.3rem+1.8vw,2.5rem)] text-white">
+          {isTrial ? "Start your 3-day trial" : "Build your meal plan"}
         </h1>
         <p className="text-sm text-clinical-zinc max-w-xl mx-auto">
-          Choose your rhythm. We materialize the next four deliveries instantly,
-          locked into the same time window. Skip any week — your meals roll over
-          as credits.
+          {isTrial
+            ? "Nine meals over three days at 25% off — one-off, no commitment. Set your window and address below."
+            : "Choose your rhythm. We schedule the next few deliveries instantly, locked into the same time window. Skip any delivery — your meals roll over as credits."}
         </p>
       </header>
 
@@ -315,7 +334,7 @@ export default function Subscribe() {
       )}
 
       {/* Cadence */}
-      {rdPlan?.slug === "three-day-trial-pack" ? (
+      {isTrial ? (
         <Card className="bg-clinical-surface border-clinical-border opacity-85">
           <CardContent className="p-5 space-y-2">
             <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
@@ -376,7 +395,7 @@ export default function Subscribe() {
           <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
             <Sparkles className="w-4 h-4 text-clinical-gold" /> Step 2 — Volume & Window
           </div>
-          {rdPlan?.slug !== "three-day-trial-pack" ? (
+          {!isTrial ? (
             <div className="space-y-2">
               <Label className="text-xs text-clinical-zinc">Meals per delivery</Label>
               <div className="flex flex-wrap gap-2">
@@ -398,7 +417,9 @@ export default function Subscribe() {
           ) : (
             <div className="space-y-1">
               <Label className="text-xs text-clinical-zinc">Meals per delivery</Label>
-              <p className="text-sm font-semibold text-white">6 meals (Lunch & Dinner for 3 days)</p>
+              <p className="text-sm font-semibold text-white">
+                {meals} meals over 3 days
+              </p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -610,19 +631,41 @@ export default function Subscribe() {
         <CardContent className="p-5 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
-              {CADENCE_LABEL[cadence]} · {meals} meals · {members.length} member{members.length === 1 ? "" : "s"}
+              {isTrial
+                ? `3-day sampler · ${meals} meals · ${members.length} member${members.length === 1 ? "" : "s"}`
+                : `${CADENCE_LABEL[cadence]} · ${meals} meals · ${members.length} member${members.length === 1 ? "" : "s"}`}
             </p>
-            <p className="text-2xl font-bold text-clinical-gold tabular-nums">
+            <p className="text-2xl font-bold text-clinical-gold tabular-nums flex items-baseline gap-2">
               ₹{(total / 100).toFixed(0)}
-              <span className="text-sm text-clinical-zinc font-normal"> / delivery</span>
+              {isTrial ? (
+                <>
+                  <span className="text-sm text-clinical-zinc font-normal line-through tabular-nums">
+                    ₹{(trialListPrice / 100).toFixed(0)}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-clinical-sage font-semibold not-italic">
+                    25% off
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm text-clinical-zinc font-normal"> / delivery</span>
+              )}
             </p>
+            {isTrial && (
+              <p className="text-[10px] text-clinical-zinc">One-off — does not auto-renew.</p>
+            )}
           </div>
           <Button
             onClick={submit}
             disabled={submitting}
             className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 px-6"
           >
-            {submitting ? "Activating…" : "Activate Subscription"}
+            {submitting
+              ? isTrial
+                ? "Starting…"
+                : "Activating…"
+              : isTrial
+                ? "Start 3-day trial"
+                : "Activate Subscription"}
             <ChevronRight className="w-4 h-4" />
           </Button>
         </CardContent>

@@ -102,6 +102,8 @@ export interface CreateSubscriptionInput {
   mealsPerDelivery: number;
   deliveryWindow: string;
   startDate: string;
+  /** "trial" = one-off 3-day sampler at 25% off; "standard" = recurring. */
+  planType?: "standard" | "trial";
   addressLabel?: string;
   addressLine?: string;
   city?: string;
