@@ -2369,7 +2369,7 @@ export default function Checkout() {
                 className="text-[10px] text-clinical-zinc hover:text-white mt-1.5 items-center justify-center gap-1.5 text-center flex"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-clinical-sage" />
-                Need help? WhatsApp Support
+                WhatsApp Support
               </a>
             </div>
           </div>

@@ -175,7 +175,7 @@ export default function ChallengeDetail() {
             alt={challenge.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 to-transparent keep-gradient" />
           {challenge.featured > 0 && (
             <Badge className="absolute top-3 left-3 bg-clinical-gold/90 text-[#050505] border-0 gap-1 text-[10px]">
               <Sparkles className="w-3 h-3" />

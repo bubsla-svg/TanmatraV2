@@ -163,7 +163,9 @@ export default function Subscribe() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  const total = basePrice(cadence, meals);
+  const total = rdPlan?.slug === "three-day-trial-pack"
+    ? 210000 // Fixed ₹2,100 for trial pack
+    : basePrice(cadence, meals);
 
   const updateMember = (idx: number, patch: Partial<MemberDraft>) => {
     setMembers((prev) =>
@@ -313,41 +315,60 @@ export default function Subscribe() {
       )}
 
       {/* Cadence */}
-      <Card className="bg-clinical-surface border-clinical-border">
-        <CardContent className="p-5 space-y-4">
-          <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
-            <CalendarDays className="w-4 h-4 text-clinical-gold" /> Step 1 — Cadence
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {CADENCES.map((c) => {
-              const active = cadence === c.value;
-              return (
-                <button
-                  key={c.value}
-                  onClick={() => setCadence(c.value)}
-                  className={`text-left rounded-lg border p-4 transition-all ${
-                    active
-                      ? "border-clinical-gold bg-clinical-gold/10"
-                      : "border-clinical-border hover:border-clinical-gold/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-white font-semibold">
-                      {CADENCE_LABEL[c.value]}
+      {rdPlan?.slug === "three-day-trial-pack" ? (
+        <Card className="bg-clinical-surface border-clinical-border opacity-85">
+          <CardContent className="p-5 space-y-2">
+            <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
+              <CalendarDays className="w-4 h-4 text-clinical-gold" /> Step 1 — Cadence
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-white font-semibold text-sm">3-Day One-off Trial Pack</p>
+              <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 text-[10px] uppercase">
+                Fixed Duration
+              </Badge>
+            </div>
+            <p className="text-[11px] text-clinical-zinc">
+              This pack delivers a single set of 3 days of meals. Does not auto-renew.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-clinical-surface border-clinical-border">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
+              <CalendarDays className="w-4 h-4 text-clinical-gold" /> Step 1 — Cadence
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {CADENCES.map((c) => {
+                const active = cadence === c.value;
+                return (
+                  <button
+                    key={c.value}
+                    onClick={() => setCadence(c.value)}
+                    className={`text-left rounded-lg border p-4 transition-all ${
+                      active
+                        ? "border-clinical-gold bg-clinical-gold/10"
+                        : "border-clinical-border hover:border-clinical-gold/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-white font-semibold">
+                        {CADENCE_LABEL[c.value]}
+                      </p>
+                      <Badge className="bg-clinical-sage/15 text-clinical-sage border-clinical-sage/30 text-[10px]">
+                        {c.saving}
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-clinical-zinc mt-1">
+                      {c.description}
                     </p>
-                    <Badge className="bg-clinical-sage/15 text-clinical-sage border-clinical-sage/30 text-[10px]">
-                      {c.saving}
-                    </Badge>
-                  </div>
-                  <p className="text-[11px] text-clinical-zinc mt-1">
-                    {c.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Meals + window */}
       <Card className="bg-clinical-surface border-clinical-border">
@@ -355,24 +376,31 @@ export default function Subscribe() {
           <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
             <Sparkles className="w-4 h-4 text-clinical-gold" /> Step 2 — Volume & Window
           </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-clinical-zinc">Meals per delivery</Label>
-            <div className="flex flex-wrap gap-2">
-              {MEAL_COUNTS.map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMeals(m)}
-                  className={`px-4 py-2 rounded-md border text-sm transition-all ${
-                    meals === m
-                      ? "border-clinical-gold bg-clinical-gold/10 text-clinical-gold"
-                      : "border-clinical-border text-clinical-zinc hover:text-white"
-                  }`}
-                >
-                  {m} meals
-                </button>
-              ))}
+          {rdPlan?.slug !== "three-day-trial-pack" ? (
+            <div className="space-y-2">
+              <Label className="text-xs text-clinical-zinc">Meals per delivery</Label>
+              <div className="flex flex-wrap gap-2">
+                {MEAL_COUNTS.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMeals(m)}
+                    className={`px-4 py-2 rounded-md border text-sm transition-all ${
+                      meals === m
+                        ? "border-clinical-gold bg-clinical-gold/10 text-clinical-gold"
+                        : "border-clinical-border text-clinical-zinc hover:text-white"
+                    }`}
+                  >
+                    {m} meals
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-1">
+              <Label className="text-xs text-clinical-zinc">Meals per delivery</Label>
+              <p className="text-sm font-semibold text-white">6 meals (Lunch & Dinner for 3 days)</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-xs text-clinical-zinc flex items-center gap-1.5">

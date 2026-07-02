@@ -40,6 +40,7 @@ import {
   premiumMealsTable,
   slotReservationsTable,
   usersTable,
+  menuItemsTable,
 } from "@workspace/db";
 import { TEST_DISHES as DISHES } from "../test-fixtures/dishes.js";
 
@@ -166,6 +167,7 @@ async function api(
     headers: {
       "content-type": "application/json",
       "x-test-user-id": user.id,
+      "idempotency-key": randomUUID(),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -206,6 +208,11 @@ before(async () => {
       .insert(premiumMealsTable)
       .values({ dishSlug: slug, reason: "test seed" })
       .onConflictDoNothing({ target: premiumMealsTable.dishSlug });
+
+    await db
+      .update(menuItemsTable)
+      .set({ allergenReviewState: "reviewed" })
+      .where(eq(menuItemsTable.slug, slug));
   }
 
   const app = makeApp();
@@ -329,8 +336,8 @@ test("POST /orders/finalize honors slot capacity under concurrent finalize calls
           address: {
             label: "Home",
             line: "1 Test Lane",
-            city: "Bengaluru",
-            pincode: "560001",
+            city: "Noida",
+            pincode: "201301",
           },
           items: [
             { id: dish!.id, name: dish!.name, qty: 1, price: dish!.price },

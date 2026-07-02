@@ -551,7 +551,7 @@ export default function Menu() {
                             className="w-full h-full object-cover"
                           />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-transparent to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-transparent to-transparent keep-gradient" />
                         {b.badge && (
                           <Badge className="absolute top-2 left-2 bg-clinical-gold/90 text-[#050505] border-0 text-[9px] tracking-widest">
                             {b.badge}
