@@ -13,6 +13,7 @@ import { useCart } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { TEAM } from "@/lib/teamData";
 import { useChallenges } from "@/lib/contentApi";
+import { isSecondaryVariant } from "@/lib/dishEnrichment";
 
 
 import { toast } from "sonner";
@@ -240,7 +241,10 @@ export default function Home() {
   const daypartDishes = useMemo(() => {
     return catalogDishes
       .filter(
-        (d) => d.isAvailable && daypartMeta.categories.includes(d.category),
+        (d) =>
+          d.isAvailable &&
+          daypartMeta.categories.includes(d.category) &&
+          !isSecondaryVariant(d.slug),
       )
       .slice(0, 6);
   }, [daypartMeta, catalogDishes]);

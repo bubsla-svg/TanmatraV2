@@ -83,7 +83,9 @@ import { addressesApi } from "@/lib/userAddressesApi";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { useNavigate } from "react-router";
 import { Crown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import MenuCard from "@/components/menu/MenuCard";
+import { groupCatalogDishes, type ConsolidatedDish, type ConsolidatedVariant } from "@/lib/menuVariants";
 import ActiveFilters, { type ActiveFilter } from "@/components/menu/ActiveFilters";
 import {
   evaluateDishForPreferences,
@@ -173,6 +175,8 @@ export default function Menu() {
   // produced scroll jank on mid-range Android devices.
   const PAGE_SIZE = 24;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [customizingDish, setCustomizingDish] = useState<ConsolidatedDish | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { addItem, addBundleSlug, clear } = useCart();
   const { open: openCart } = useCartDrawer();
   const { preferences } = usePreferences();
@@ -244,6 +248,42 @@ export default function Menu() {
       action: { label: "View Cart", onClick: openCart },
     });
   };
+
+  const handleQuickAddClick = (e: React.MouseEvent, parent: ConsolidatedDish) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (parent.optionGroups.length > 0) {
+      setCustomizingDish(parent);
+    } else {
+      const originalDish = catalogDishes.find((d) => d.id === parent.id);
+      if (originalDish) {
+        handleQuickAdd(e, originalDish);
+      }
+    }
+  };
+
+  // Initialize with first option chosen by default
+  useEffect(() => {
+    if (customizingDish) {
+      const initialOptions: Record<string, string> = {};
+      customizingDish.optionGroups.forEach((group) => {
+        if (group.options.length > 0) {
+          initialOptions[group.name] = group.options[0].name;
+        }
+      });
+      setSelectedOptions(initialOptions);
+    }
+  }, [customizingDish]);
+
+  const activeVariant = useMemo(() => {
+    if (!customizingDish) return null;
+    const selectedNames = Object.values(selectedOptions);
+    return (
+      customizingDish.variants.find((variant) =>
+        variant.optionNames.every((name) => selectedNames.includes(name)),
+      ) || customizingDish.variants[0]
+    );
+  }, [customizingDish, selectedOptions]);
 
   const handleExpressBuy = (item: DishData) => {
     if (!item.isAvailable) return;
@@ -400,6 +440,19 @@ export default function Menu() {
     const ranked = rankDishesForPreferences(baseList, preferences);
     return hideBlocked ? ranked.filter((r) => !r.match.blocked) : ranked;
   }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters]);
+
+  const consolidatedDishes = useMemo(() => {
+    const flatDishes = filtered.map((f) => f.dish);
+    const grouped = groupCatalogDishes(flatDishes);
+    return grouped.map((parent) => {
+      const rep = filtered.find((f) => f.dish.id === parent.id)!;
+      return {
+        parent,
+        match: rep.match,
+        hasVariants: parent.optionGroups.length > 0,
+      };
+    });
+  }, [filtered]);
 
   const blockedCount = useMemo(() => {
     if (!preferences) return 0;
@@ -1075,10 +1128,10 @@ export default function Menu() {
       />
 
       <div className="text-xs text-clinical-zinc tabular-nums">
-        {filtered.length} {filtered.length === 1 ? "dish" : "dishes"}
+        {consolidatedDishes.length} {consolidatedDishes.length === 1 ? "dish" : "dishes"}
       </div>
 
-      {filtered.length === 0 && (
+      {consolidatedDishes.length === 0 && (
         <div className="text-center py-12 space-y-3">
           <AlertTriangle className="w-8 h-8 text-clinical-gold mx-auto" />
           <p className="text-sm text-clinical-zinc">No dishes match your filters.</p>
@@ -1110,37 +1163,196 @@ export default function Menu() {
           filter rails — a known browse-friction point flagged in the
           adoption audit (P1 #19). */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-        {filtered.slice(0, visibleCount).map(({ dish: item, match }, idx) => (
-          <MenuCard
-            key={item.id}
-            item={item}
-            match={match}
-            index={idx}
-            isPremium={isPremium}
-            premiumSlugs={premiumSlugs}
-            preferences={preferences}
-            lifestyleTag={lifestyleTag}
-            hasSavedAddress={hasSavedAddress}
-            onQuickAdd={handleQuickAdd}
-            onExpressBuy={handleExpressBuy}
-            onPremiumGate={() => navigate("/premium")}
-          />
-        ))}
+        {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }, idx) => {
+          const repDish: DishData = {
+            ...filtered.find((f) => f.dish.id === parent.id)!.dish,
+            name: parent.name,
+            price: parent.variants[0].price,
+          };
+          return (
+            <MenuCard
+              key={parent.id}
+              item={repDish}
+              match={match}
+              index={idx}
+              isPremium={isPremium}
+              premiumSlugs={premiumSlugs}
+              preferences={preferences}
+              lifestyleTag={lifestyleTag}
+              hasSavedAddress={hasSavedAddress}
+              hasVariants={hasVariants}
+              onQuickAdd={(e) => handleQuickAddClick(e, parent)}
+              onExpressBuy={hasVariants ? undefined : handleExpressBuy}
+              onPremiumGate={() => navigate("/premium")}
+            />
+          );
+        })}
       </div>
 
-      {visibleCount < filtered.length && (
+      {visibleCount < consolidatedDishes.length && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"
             onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
             className="min-h-11 border-clinical-gold/40 bg-transparent text-clinical-gold hover:bg-clinical-gold/10 hover:text-clinical-gold px-6 text-[11px] uppercase tracking-[0.12em] font-semibold"
           >
-            Load {Math.min(PAGE_SIZE, filtered.length - visibleCount)} more
+            Load {Math.min(PAGE_SIZE, consolidatedDishes.length - visibleCount)} more
             <span className="ml-2 text-clinical-zinc tabular-nums">
-              ({visibleCount} / {filtered.length})
+              ({visibleCount} / {consolidatedDishes.length})
             </span>
           </Button>
         </div>
+      )}
+
+      {customizingDish && activeVariant && (
+        <Dialog
+          open={Boolean(customizingDish)}
+          onOpenChange={(open) => !open && setCustomizingDish(null)}
+        >
+          <DialogContent className="bg-clinical-surface border-clinical-border text-white sm:max-w-[440px]">
+            <DialogHeader>
+              <DialogTitle className="font-serif text-xl text-white">
+                Customize {customizingDish.name}
+              </DialogTitle>
+              <DialogDescription className="text-clinical-zinc text-xs">
+                {customizingDish.description}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 py-2">
+              {/* Option Groups */}
+              {customizingDish.optionGroups.map((group) => (
+                <div key={group.name} className="space-y-2.5">
+                  <h4 className="text-xs uppercase tracking-[0.12em] text-clinical-zinc-muted font-bold">
+                    {group.name}
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    {group.options.map((option) => {
+                      const isSelected = selectedOptions[group.name] === option.name;
+                      const optDish = catalogDishes.find((d) => d.id === option.dishId);
+                      const priceDiff = optDish ? optDish.price - customizingDish.variants[0].price : 0;
+                      return (
+                        <label
+                          key={option.name}
+                          className={cn(
+                            "flex items-center justify-between p-3 rounded-lg border text-sm cursor-pointer transition-colors",
+                            isSelected
+                              ? "bg-clinical-gold/5 border-clinical-gold text-white"
+                              : "bg-clinical-surface-elevated border-clinical-border text-clinical-zinc hover:border-clinical-gold/30 hover:text-white"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name={`group-${group.name}`}
+                              checked={isSelected}
+                              onChange={() =>
+                                setSelectedOptions((prev) => ({
+                                  ...prev,
+                                  [group.name]: option.name,
+                                }))
+                              }
+                              className="accent-clinical-gold"
+                            />
+                            <span className="font-medium">{option.name}</span>
+                          </div>
+                          {priceDiff > 0 && (
+                            <span className="text-xs text-clinical-gold tabular-nums font-medium">
+                              +{formatPrice(priceDiff)}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {/* Dynamic Macro & Price Display */}
+              <div className="rounded-xl border border-clinical-border bg-clinical-surface-elevated p-4 space-y-2">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-clinical-zinc text-xs">Calibrated Price</span>
+                  <span className="text-lg font-serif font-bold text-clinical-gold tabular-nums">
+                    {formatPrice(activeVariant.price)}
+                  </span>
+                </div>
+                
+                <div className="border-t border-dashed border-clinical-border/40 my-2 pt-2 flex gap-2.5 font-mono text-[11px] text-clinical-zinc justify-between">
+                  <span className="font-semibold text-white">
+                    {activeVariant.macros.calories} Kcal
+                  </span>
+                  <span>·</span>
+                  <span>{activeVariant.macros.protein}g P</span>
+                  <span>·</span>
+                  <span>{activeVariant.macros.carbs}g C</span>
+                  <span>·</span>
+                  <span>{activeVariant.macros.fat}g F</span>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.1em] pt-1">
+                  <span className="text-clinical-zinc-muted">Glycemic Status</span>
+                  <span className={cn(
+                    "font-bold",
+                    activeVariant.glycaemicIndex === "low" && "text-clinical-sage",
+                    activeVariant.glycaemicIndex === "medium" && "text-amber-400",
+                    activeVariant.glycaemicIndex === "high" && "text-red-400"
+                  )}>
+                    {activeVariant.glycaemicIndex.toUpperCase()} GI
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex flex-row gap-2 sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setCustomizingDish(null)}
+                className="flex-1 sm:flex-initial h-11 border-clinical-border bg-transparent text-clinical-zinc hover:bg-white/5 hover:text-white text-xs uppercase tracking-[0.12em] font-semibold"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  const originalDish = catalogDishes.find((d) => d.id === activeVariant.id);
+                  if (originalDish) {
+                    if (premiumSlugs.has(originalDish.slug) && !isPremium) {
+                      toast.error(`${originalDish.name} is a Premium-only dish`, {
+                        description: "Join Tanmatra Premium to unlock chef-table dishes.",
+                        action: { label: "See Premium", onClick: () => navigate("/premium") },
+                      });
+                      return;
+                    }
+                    addItem({
+                      dishId: originalDish.id,
+                      slug: originalDish.slug,
+                      name: originalDish.name,
+                      image: originalDish.image,
+                      basePrice: originalDish.price,
+                      unitPrice: originalDish.price,
+                      quantity: 1,
+                      kitchen: originalDish.kitchen,
+                      isVeg: originalDish.isVeg,
+                      rdVerified: originalDish.rdVerified,
+                      macros: originalDish.macros,
+                      customizations: [],
+                    });
+                    setCustomizingDish(null);
+                    openCart();
+                    toast.success(`Added ${originalDish.name} to your order`, {
+                      description: "Tap View Cart to review and check out.",
+                      action: { label: "View Cart", onClick: openCart },
+                    });
+                  }
+                }}
+                className="flex-1 sm:flex-initial h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs font-bold uppercase tracking-[0.12em]"
+              >
+                {premiumSlugs.has(activeVariant.slug) && !isPremium
+                  ? "Upgrade to Premium"
+                  : "Add to Order"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

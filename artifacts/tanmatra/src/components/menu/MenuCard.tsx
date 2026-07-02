@@ -1,4 +1,4 @@
-
+import { useMemo } from "react";
 import { Link } from "react-router";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { motion } from "framer-motion";
@@ -30,6 +30,7 @@ type MenuCardProps = {
   preferences: UserPreferences | null;
   lifestyleTag: string | null;
   hasSavedAddress?: boolean;
+  hasVariants?: boolean;
   onQuickAdd: (e: React.MouseEvent, item: DishData) => void;
   onExpressBuy?: (item: DishData) => void;
   onPremiumGate: () => void;
@@ -44,12 +45,21 @@ export default function MenuCard({
   preferences,
   lifestyleTag,
   hasSavedAddress = false,
+  hasVariants = false,
   onQuickAdd,
   onExpressBuy,
   onPremiumGate,
 }: MenuCardProps) {
   const { items, updateQty } = useCart();
   const cartItem = items.find((it) => it.dishId === item.id);
+
+  const familyCartCount = useMemo(() => {
+    if (!hasVariants) return 0;
+    const baseSlug = item.slug.replace(/-(veg|chicken|prawns|white-bread|brown-bread)$/, "");
+    return items
+      .filter((it) => it.slug.startsWith(baseSlug))
+      .reduce((sum, it) => sum + it.quantity, 0);
+  }, [items, item.slug, hasVariants]);
   const isPremiumOnly = premiumSlugs.has(item.slug);
   const showPremiumGate = isPremiumOnly && !isPremium;
   const { enabled: clinicalMode } = useClinicalMode();
@@ -145,7 +155,7 @@ export default function MenuCard({
           </Link>
           <div className="flex flex-col items-end shrink-0">
             <span className="font-serif text-sm sm:text-lg font-medium text-clinical-gold tabular-nums">
-              {formatPrice(item.price)}
+              {hasVariants ? "from " : ""}{formatPrice(item.price)}
             </span>
             {!isLive && (
               <span className="text-[9px] text-amber-400/70">Price may vary</span>
@@ -211,7 +221,7 @@ export default function MenuCard({
               <Crown className="w-3 h-3" />
               Upgrade to Premium
             </Button>
-          ) : cartItem ? (
+          ) : cartItem && !hasVariants ? (
             <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-btn border border-sage-300 dark:border-sage-700 bg-sage-100/60 dark:bg-sage-950/40 px-2 text-sage-800 dark:text-sage-300 font-sans text-[13px] font-semibold transition-all duration-200">
               <button
                 type="button"
@@ -252,9 +262,9 @@ export default function MenuCard({
                 title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
                 className="flex-1 h-11 sm:h-10 border border-border bg-surface-raised px-2 py-2 font-sans text-xs font-semibold text-text-primary transition hover:border-saffron-700 hover:bg-saffron-50 dark:hover:bg-saffron-400/10 active:scale-95 active:bg-action active:text-action-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action shadow-sm truncate"
               >
-                <span aria-hidden="true">+</span> Add
+                <span aria-hidden="true">+</span> Add{familyCartCount > 0 ? ` (${familyCartCount})` : ""}
               </Button>
-              {hasSavedAddress && preferences && (
+              {hasSavedAddress && preferences && !hasVariants && (
                 <Button
                   size="sm"
                   onClick={(e) => {
