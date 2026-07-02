@@ -417,3 +417,109 @@ export function matchesDietaryFilter(dish: DishData, filter: string): boolean {
   }
   return true;
 }
+
+export interface DishVariantOption {
+  slug: string;
+  name: string;
+  isVeg: boolean;
+  label: string;
+}
+
+const VARIANT_FAMILIES: Record<string, string[]> = {
+  // Chipotle Burrito Wrap
+  "chilli-chipotle-paneer-burrito-wrap": ["chilli-chipotle-paneer-burrito-wrap", "chipotle-chicken-burrito-wrap"],
+  "chipotle-chicken-burrito-wrap": ["chilli-chipotle-paneer-burrito-wrap", "chipotle-chicken-burrito-wrap"],
+
+  // Chipotle Rice Bowl
+  "chilli-chipotle-paneer-rice-bowl": ["chilli-chipotle-paneer-rice-bowl", "chipotle-grilled-chicken-rice-bowl"],
+  "chipotle-grilled-chicken-rice-bowl": ["chilli-chipotle-paneer-rice-bowl", "chipotle-grilled-chicken-rice-bowl"],
+
+  // Crispy Mushroom Rice Bowl
+  "crispy-mushroom-rice-bowl": ["crispy-mushroom-rice-bowl", "crispy-peri-peri-mushroom-rice-bowl"],
+  "crispy-peri-peri-mushroom-rice-bowl": ["crispy-mushroom-rice-bowl", "crispy-peri-peri-mushroom-rice-bowl"],
+
+  // Barbeque Rice Bowl
+  "barbeque-paneer-rice-bowl": ["barbeque-paneer-rice-bowl", "barbeque-grilled-chicken-rice-bowl"],
+  "barbeque-grilled-chicken-rice-bowl": ["barbeque-paneer-rice-bowl", "barbeque-grilled-chicken-rice-bowl"],
+
+  // Chicken Breast
+  "grilled-chicken-breast-single-serve": ["grilled-chicken-breast-single-serve", "boiled-chicken-breast-single-serve"],
+  "boiled-chicken-breast-single-serve": ["grilled-chicken-breast-single-serve", "boiled-chicken-breast-single-serve"],
+
+  // Avocado Toast
+  "avocado-toast": ["avocado-toast", "avocado-toast-with-sunny-side-up"],
+  "avocado-toast-with-sunny-side-up": ["avocado-toast", "avocado-toast-with-sunny-side-up"],
+
+  // Aglio Olio (Static)
+  "aglio-olio-veg": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
+  "aglio-olio-chicken": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
+  "aglio-olio-prawns": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
+
+  // Alfredo (Static)
+  "alfredo-pasta-veg": ["alfredo-pasta-veg", "alfredo-pasta-chicken"],
+  "alfredo-pasta-chicken": ["alfredo-pasta-veg", "alfredo-pasta-chicken"],
+
+  // Pesto (Static)
+  "pesto-pasta-veg": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
+  "pesto-pasta-chicken": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
+  "pesto-pasta-prawns": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
+};
+
+const SECONDARY_VARIANTS = new Set([
+  "chipotle-chicken-burrito-wrap",
+  "chipotle-grilled-chicken-rice-bowl",
+  "crispy-peri-peri-mushroom-rice-bowl",
+  "barbeque-grilled-chicken-rice-bowl",
+  "boiled-chicken-breast-single-serve",
+  "avocado-toast-with-sunny-side-up",
+  // Static ones
+  "aglio-olio-chicken",
+  "aglio-olio-prawns",
+  "alfredo-pasta-chicken",
+  "pesto-pasta-chicken",
+  "pesto-pasta-prawns"
+]);
+
+export function isSecondaryVariant(slug: string): boolean {
+  return SECONDARY_VARIANTS.has(slug);
+}
+
+export function getDishVariants(currentSlug: string, allDishes: DishData[]): DishVariantOption[] {
+  const familySlugs = VARIANT_FAMILIES[currentSlug];
+  if (!familySlugs) return [];
+
+  return familySlugs
+    .map((slug) => {
+      const dish = allDishes.find((d) => d.slug === slug);
+      if (!dish) return null;
+      
+      let label = "Veg";
+      if (slug.includes("chicken") || dish.name.toLowerCase().includes("chicken")) {
+        label = "Chicken";
+      } else if (slug.includes("prawn") || dish.name.toLowerCase().includes("prawn")) {
+        label = "Prawns";
+      } else if (slug.includes("paneer") || dish.name.toLowerCase().includes("paneer")) {
+        label = "Paneer";
+      } else if (slug.includes("peri-peri") || dish.name.toLowerCase().includes("peri peri")) {
+        label = "Peri Peri";
+      } else if (slug.includes("boiled") && dish.name.toLowerCase().includes("boiled")) {
+        label = "Boiled";
+      } else if (slug.includes("grilled") && dish.name.toLowerCase().includes("grilled")) {
+        label = "Grilled";
+      } else if (slug.includes("sunny-side-up") || dish.name.toLowerCase().includes("sunny side up")) {
+        label = "With Egg";
+      } else if (slug.includes("veg") || dish.name.toLowerCase().includes("veg")) {
+        label = "Veg";
+      } else {
+        label = "Classic";
+      }
+
+      return {
+        slug: dish.slug,
+        name: dish.name,
+        isVeg: dish.isVeg,
+        label,
+      };
+    })
+    .filter(Boolean) as DishVariantOption[];
+}

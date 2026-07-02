@@ -59,6 +59,7 @@ import {
   LIFESTYLE_TAGS,
   matchesLifestyle,
   matchesDietaryFilter,
+  isSecondaryVariant,
   type Lifestyle,
 } from "@/lib/dishEnrichment";
 import {
@@ -333,6 +334,7 @@ export default function Menu() {
   const quickFilterCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     const baseListForCounts = catalogDishes.filter((d) => {
+      if (isSecondaryVariant(d.slug)) return false;
       if (!d.isAvailable) return false;
       if (kitchen !== "all" && d.kitchen !== kitchen) return false;
       if (category !== "all" && d.category !== category) return false;
@@ -354,6 +356,7 @@ export default function Menu() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const baseList = catalogDishes.filter((d) => {
+      if (isSecondaryVariant(d.slug)) return false;
       if (!d.isAvailable) return false;
       if (kitchen !== "all" && d.kitchen !== kitchen) return false;
       if (category !== "all" && d.category !== category) return false;
@@ -445,7 +448,7 @@ export default function Menu() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 pt-6 pb-44 md:pb-8 space-y-8">
       {clinicalMode && dietOrder && (
         <div className="rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 px-3 py-2 text-[11px] text-clinical-zinc flex items-start gap-2">
           <span className="text-clinical-gold font-semibold uppercase tracking-[0.14em] text-[10px] shrink-0">

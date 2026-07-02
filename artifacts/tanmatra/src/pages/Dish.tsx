@@ -76,6 +76,7 @@ import {
   getRdNoteForDish,
   getUpsellsForDish,
   stripIngredientAmount,
+  getDishVariants,
 } from "@/lib/dishEnrichment";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
@@ -130,6 +131,11 @@ export default function Dish() {
     () => (meal ? getCustomizationsForDish(meal) : []),
     [meal],
   );
+
+  const variants = useMemo(() => {
+    if (!meal) return [];
+    return getDishVariants(meal.slug, catalogDishes);
+  }, [meal, catalogDishes]);
 
   const [quantity, setQuantity] = useState(1);
 
@@ -398,6 +404,37 @@ export default function Dish() {
               </span>
               <span className="text-xs text-clinical-zinc-muted">per serving</span>
             </div>
+            {variants.length > 1 && (
+              <div className="space-y-2 pt-1 pb-2">
+                <p className="text-clinical-label">Option</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {variants.map((v) => {
+                    const active = v.slug === meal.slug;
+                    return (
+                      <Link key={v.slug} to={`/dish/${v.slug}`}>
+                        <Button
+                          variant={active ? "default" : "outline"}
+                          size="sm"
+                          className={
+                            active
+                              ? "bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs h-9 px-3"
+                              : "border-clinical-border text-clinical-zinc hover:text-white text-xs h-9 px-3"
+                          }
+                        >
+                          <span
+                            role="img"
+                            className={`w-1.5 h-1.5 rounded-full mr-2 ${
+                              v.isVeg ? "bg-green-500" : "bg-red-500"
+                            }`}
+                          />
+                          {v.label}
+                        </Button>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <p className="text-sm text-clinical-zinc leading-relaxed">{meal.description}</p>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
