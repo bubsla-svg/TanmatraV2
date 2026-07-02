@@ -312,8 +312,8 @@ export default function Home() {
       <section className="relative min-h-[360px] md:h-[70vh] md:min-h-[480px] overflow-hidden flex items-center">
         <div className="absolute inset-0">
           <img src="/hero-bg.jpg" alt="Clinical-grade food preparation" className="w-full h-full object-cover" loading="eager" fetchPriority="high" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/98 via-[#050505]/85 to-[#050505]/55 md:from-[#050505]/95 md:via-[#050505]/70 md:to-[#050505]/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-[#050505]/30 md:via-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/98 via-[#050505]/85 to-[#050505]/55 md:from-[#050505]/95 md:via-[#050505]/70 md:to-[#050505]/40 keep-gradient" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-[#050505]/30 md:via-transparent keep-gradient" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full">

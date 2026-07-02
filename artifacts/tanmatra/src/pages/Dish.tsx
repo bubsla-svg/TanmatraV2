@@ -303,7 +303,7 @@ export default function Dish() {
               loading="eager"
               fetchPriority="high"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/60 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/60 via-transparent to-transparent keep-gradient" />
 
             <div className="absolute top-4 left-4 flex gap-2 items-center">
               <span

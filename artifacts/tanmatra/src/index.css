@@ -225,8 +225,8 @@
     transition-duration: 150ms !important;
   }
   .theme-clinical .theme-clinical-no-gradient,
-  .theme-clinical [class*="bg-gradient-"],
-  .theme-clinical [class*="from-clinical-gold/"][class*="bg-gradient-"] {
+  .theme-clinical [class*="bg-gradient-"]:not(.keep-gradient),
+  .theme-clinical [class*="from-clinical-gold/"][class*="bg-gradient-"]:not(.keep-gradient) {
     background-image: none !important;
   }
 

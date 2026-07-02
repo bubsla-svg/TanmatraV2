@@ -70,7 +70,7 @@ export default function Challenges() {
               {c.image && (
                 <div className="relative aspect-[16/9] overflow-hidden">
                   <img src={c.image} alt={c.title} className="w-full h-full object-cover" loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-transparent to-transparent keep-gradient" />
                   {c.featured > 0 && (
                     <Badge className="absolute top-2 left-2 bg-clinical-gold/90 text-[#050505] border-0 text-[9px] gap-1">
                       <Sparkles className="w-2.5 h-2.5" />
