@@ -22,8 +22,17 @@ import {
   Plus,
   X,
   ChevronRight,
+  ChevronDown,
   MapPin,
+  Check,
+  ShieldCheck,
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { addressesApi } from "@/lib/userAddressesApi";
 import {
   subscriptionsApi,
   CADENCE_LABEL,
@@ -85,11 +94,33 @@ const blankMember = (): MemberDraft => ({
   spiceLevel: "medium",
 });
 
+const PER_MEAL_PAISE = 26000;
+const CADENCE_DISCOUNT_PCT: Record<SubscriptionCadence, number> = {
+  weekly: 5,
+  fortnightly: 10,
+  monthly: 15,
+};
+
 function basePrice(cadence: SubscriptionCadence, meals: number): number {
-  const perMeal = 26000;
-  const discount = cadence === "weekly" ? 0.95 : cadence === "fortnightly" ? 0.9 : 0.85;
-  return Math.round(meals * perMeal * discount);
+  return Math.round(
+    meals * PER_MEAL_PAISE * (1 - CADENCE_DISCOUNT_PCT[cadence] / 100),
+  );
 }
+
+// Landing-card entries (?protocol=…) preset the configurator to what the
+// card advertised.
+const PROTOCOL_PRESETS = {
+  wellness: {
+    name: "Everyday Balanced",
+    blurb: "Clean, calorie-smart meals for busy weekdays — 5 lunches a week.",
+    meals: 5,
+  },
+  performance: {
+    name: "High-Protein",
+    blurb: "Protein-forward meals for training days — 6 meals a week.",
+    meals: 6,
+  },
+} as const;
 
 export default function Subscribe() {
   const navigate = useNavigate();
@@ -143,6 +174,11 @@ export default function Subscribe() {
     return { items: items.slice(0, 14), swappedCount, droppedCount };
   }, [rdPlan, preferences]);
   const planWeekItems = planItemsResult.items;
+  // Resolved 7-day rotation for the inline preview (dish objects per day).
+  const resolvedWeek = useMemo(
+    () => (rdPlan ? resolvePlanWeek(rdPlan) : []),
+    [rdPlan],
+  );
   const cadenceParam = searchParams.get("cadence");
   const initialCadence: SubscriptionCadence =
     cadenceParam === "weekly" ||
@@ -152,6 +188,14 @@ export default function Subscribe() {
       : "weekly";
   const [cadence, setCadence] = useState<SubscriptionCadence>(initialCadence);
   const [meals, setMeals] = useState(10);
+  // Landing-page protocol entries preset sensible defaults so the page
+  // opens configured to what the card advertised (Everyday Balanced =
+  // 5 meals/wk, High-Protein = 6) instead of a generic 10.
+  const protocolParam = searchParams.get("protocol");
+  const protocolPreset =
+    !rdPlan && !isTrial && protocolParam && protocolParam in PROTOCOL_PRESETS
+      ? PROTOCOL_PRESETS[protocolParam as keyof typeof PROTOCOL_PRESETS]
+      : null;
   useEffect(() => {
     if (rdPlan) {
       setCadence("weekly");
@@ -160,8 +204,11 @@ export default function Subscribe() {
       // D2C 3-day sampler defaults to 3 days × 3 meals.
       setCadence("weekly");
       setMeals(9);
+    } else if (protocolPreset) {
+      setMeals(protocolPreset.meals);
     }
-  }, [rdPlan, planWeekItems.length, isTrial]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rdPlan, planWeekItems.length, isTrial, protocolParam]);
   const [window, setWindow] = useState(TIME_WINDOWS[1]);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -178,7 +225,37 @@ export default function Subscribe() {
     pincode: "",
     phone: "",
   });
+  const [addressPrefilled, setAddressPrefilled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Returning customers shouldn't retype an address they've already saved —
+  // prefill from the default saved address once, leaving edits untouched.
+  useEffect(() => {
+    let alive = true;
+    addressesApi
+      .list()
+      .then((r) => {
+        if (!alive || r.addresses.length === 0) return;
+        const def = r.addresses.find((a) => a.isDefault) ?? r.addresses[0];
+        setAddress((prev) => {
+          if (prev.line.trim()) return prev; // user already typed something
+          return {
+            label: def.label || "Home",
+            line: [def.line1, def.line2].filter(Boolean).join(", "),
+            city: def.city ?? "",
+            pincode: def.pincode ?? "",
+            phone: def.phone ?? "",
+          };
+        });
+        setAddressPrefilled(true);
+      })
+      .catch(() => {
+        // guest / unauthenticated — they'll type it in
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Trial = one-off 3-day sampler at 25% off list (mirrors the server's
   // computeTrialPricePaise). Standard = cadence-discounted recurring price.
@@ -210,13 +287,24 @@ export default function Subscribe() {
   const removeMember = (idx: number) =>
     setMembers((p) => p.filter((_, i) => i !== idx));
 
+  // Bring the offending card into view instead of leaving the user at a
+  // sticky summary with only a toast to explain the failed click.
+  const scrollToCard = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const addressComplete = Boolean(address.line.trim() && address.phone.trim());
+  const eatersComplete = members.every((m) => m.name.trim());
+
   const submit = async () => {
-    if (members.some((m) => !m.name.trim())) {
-      toast.error("Please name every family member");
+    if (!eatersComplete) {
+      toast.error("Please name every eater");
+      scrollToCard("sub-eaters");
       return;
     }
-    if (!address.line.trim() || !address.phone.trim()) {
+    if (!addressComplete) {
       toast.error("Address line and phone are required");
+      scrollToCard("sub-address");
       return;
     }
     setSubmitting(true);
@@ -323,52 +411,99 @@ export default function Subscribe() {
 
       {rdPlan && (
         <Card className="bg-gradient-to-br from-clinical-gold/10 to-transparent border-clinical-gold/40">
-          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-clinical-gold/15 ring-1 ring-clinical-gold/30 flex items-center justify-center shrink-0">
-              <Stethoscope className="w-5 h-5 text-clinical-gold" />
-            </div>
-            <div className="flex-1 space-y-1">
-              <p className="text-[10px] uppercase tracking-widest text-clinical-gold">
-                Subscribing to RD Plan
-              </p>
-              <h2 className="font-serif text-xl text-white">{rdPlan.name}</h2>
-              <p className="text-xs text-clinical-zinc">
-                We've pre-loaded {planWeekItems.length} curated meals
-                {planItemsResult.swappedCount > 0 && (
-                  <>
-                    {" "}— <span className="text-clinical-sage">{planItemsResult.swappedCount} auto-swapped</span> for your allergens & dislikes
-                  </>
-                )}
-                {planItemsResult.droppedCount > 0 && (
-                  <>
-                    {" "}({planItemsResult.droppedCount} skipped — no safe match in catalog)
-                  </>
-                )}
-                . Update{" "}
-                <Link to="/preferences" className="text-clinical-gold underline">
-                  Preferences
-                </Link>{" "}
-                any time to re-curate.
-                {rdAuthor && (
-                  <>
-                    {" "}Curated by{" "}
-                    <Link
-                      to={`/team/${rdAuthor.slug}`}
-                      className={`underline ${ACCENT_CLASSES[rdAuthor.accent].text}`}
+          <CardContent className="p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-clinical-gold/15 ring-1 ring-clinical-gold/30 flex items-center justify-center shrink-0">
+                <Stethoscope className="w-5 h-5 text-clinical-gold" />
+              </div>
+              <div className="flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-serif text-xl text-white">{rdPlan.name}</h2>
+                  {rdPlan.badges.slice(0, 2).map((b) => (
+                    <Badge
+                      key={b}
+                      className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/25 text-[9px] tracking-wider"
                     >
-                      {rdAuthor.name}
-                    </Link>
-                    .
-                  </>
-                )}
-              </p>
+                      {b}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-[11px] font-mono tabular-nums text-clinical-gold">
+                  {rdPlan.calorieTargetPerDay} kcal/day · {rdPlan.proteinTargetGrams}g protein · {rdPlan.carbsTargetGrams}g carbs
+                </p>
+                <p className="text-xs text-clinical-zinc">
+                  {planWeekItems.length} curated meals pre-loaded
+                  {planItemsResult.swappedCount > 0 && (
+                    <>
+                      {" "}— <span className="text-clinical-sage">{planItemsResult.swappedCount} auto-swapped</span> for your allergens & dislikes
+                    </>
+                  )}
+                  {planItemsResult.droppedCount > 0 && (
+                    <> ({planItemsResult.droppedCount} skipped — no safe match)</>
+                  )}
+                  .
+                  {rdAuthor && (
+                    <>
+                      {" "}Designed by{" "}
+                      <Link
+                        to={`/team/${rdAuthor.slug}`}
+                        className={`underline ${ACCENT_CLASSES[rdAuthor.accent].text}`}
+                      >
+                        {rdAuthor.name}, RD
+                      </Link>
+                      .
+                    </>
+                  )}
+                </p>
+              </div>
             </div>
-            <Link
-              to={`/plans/${rdPlan.slug}`}
-              className="text-[11px] uppercase tracking-wider text-clinical-gold hover:underline shrink-0"
-            >
-              View week →
-            </Link>
+
+            {/* Inline week preview — the old "View week →" link navigated
+                AWAY from the configurator (a conversion leak). Same info,
+                zero exits. */}
+            {resolvedWeek.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger className="w-full flex items-center justify-between rounded-lg border border-clinical-gold/25 bg-clinical-gold/5 px-3 py-2 text-left group">
+                  <span className="text-xs font-medium text-clinical-gold">
+                    Preview your week ({resolvedWeek.length} days)
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-clinical-gold transition-transform group-data-[state=open]:rotate-180" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {resolvedWeek.map((day) => (
+                      <div
+                        key={day.label}
+                        className="flex gap-2.5 rounded-md border border-clinical-border bg-clinical-surface/60 px-3 py-2"
+                      >
+                        <span className="text-[10px] uppercase tracking-wider text-clinical-gold font-semibold w-8 shrink-0 pt-0.5">
+                          {day.label}
+                        </span>
+                        <span className="text-[11px] text-clinical-zinc leading-relaxed">
+                          {[day.lunch?.name, day.dinner?.name]
+                            .filter(Boolean)
+                            .join(" · ") || "Chef's choice"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {protocolPreset && (
+        <Card className="bg-gradient-to-br from-clinical-gold/10 to-transparent border-clinical-gold/40">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-clinical-gold/15 ring-1 ring-clinical-gold/30 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-clinical-gold" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-white">{protocolPreset.name}</p>
+              <p className="text-[11px] text-clinical-zinc">{protocolPreset.blurb} Adjust anything below.</p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -439,7 +574,9 @@ export default function Subscribe() {
             <div className="space-y-2">
               <Label className="text-xs text-clinical-zinc">Meals per delivery</Label>
               <div className="flex flex-wrap gap-2">
-                {MEAL_COUNTS.map((m) => (
+                {Array.from(new Set([...MEAL_COUNTS, meals]))
+                  .sort((a, b) => a - b)
+                  .map((m) => (
                   <button
                     key={m}
                     onClick={() => setMeals(m)}
@@ -498,11 +635,11 @@ export default function Subscribe() {
       </Card>
 
       {/* Members */}
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card id="sub-eaters" className="bg-clinical-surface border-clinical-border">
         <CardContent className="p-5 space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
-              <Users className="w-4 h-4 text-clinical-gold" /> Step 3 — Family Members
+              <Users className="w-4 h-4 text-clinical-gold" /> Step 3 — Who's eating?
             </div>
             <Button
               size="sm"
@@ -615,11 +752,18 @@ export default function Subscribe() {
       </Card>
 
       {/* Address */}
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card id="sub-address" className="bg-clinical-surface border-clinical-border">
         <CardContent className="p-5 space-y-4">
-          <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
-            <MapPin className="w-3.5 h-3.5 text-clinical-gold" />
-            Step 4 — Delivery Address
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-clinical-zinc text-xs uppercase tracking-widest">
+              <MapPin className="w-3.5 h-3.5 text-clinical-gold" />
+              Step 4 — Delivery Address
+            </div>
+            {addressPrefilled && (
+              <span className="text-[10px] text-clinical-sage flex items-center gap-1">
+                <Check className="w-3 h-3" /> Filled from your saved address
+              </span>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -667,47 +811,74 @@ export default function Subscribe() {
       </Card>
 
       {/* Summary */}
-      <Card className="bg-gradient-to-br from-clinical-gold/10 to-transparent border-clinical-gold/30 sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 z-20">
-        <CardContent className="p-5 flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
-              {isTrial
-                ? `3-day sampler · ${meals} meals · ${members.length} member${members.length === 1 ? "" : "s"}`
-                : `${CADENCE_LABEL[cadence]} · ${meals} meals · ${members.length} member${members.length === 1 ? "" : "s"}`}
-            </p>
-            <p className="text-2xl font-bold text-clinical-gold tabular-nums flex items-baseline gap-2">
-              ₹{(total / 100).toFixed(0)}
-              {isTrial ? (
-                <>
-                  <span className="text-sm text-clinical-zinc font-normal line-through tabular-nums">
-                    ₹{(trialListPrice / 100).toFixed(0)}
-                  </span>
-                  <span className="text-[10px] uppercase tracking-wider text-clinical-sage font-semibold not-italic">
-                    25% off
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm text-clinical-zinc font-normal"> / delivery</span>
+      <Card className="bg-gradient-to-br from-clinical-gold/10 to-transparent border-clinical-gold/30 sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 z-20 backdrop-blur-sm">
+        <CardContent className="p-5 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+                {isTrial
+                  ? `3-day sampler · ${meals} meals · ${members.length} eater${members.length === 1 ? "" : "s"}`
+                  : `${CADENCE_LABEL[cadence]} · ${meals} meals · ${members.length} eater${members.length === 1 ? "" : "s"}`}
+              </p>
+              <p className="text-2xl font-bold text-clinical-gold tabular-nums flex items-baseline gap-2">
+                ₹{(total / 100).toFixed(0)}
+                {isTrial ? (
+                  <>
+                    <span className="text-sm text-clinical-zinc font-normal line-through tabular-nums">
+                      ₹{(trialListPrice / 100).toFixed(0)}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider text-clinical-sage font-semibold not-italic">
+                      25% off
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-sm text-clinical-zinc font-normal"> / delivery</span>
+                )}
+              </p>
+              {/* Price math — no surprises at the payment modal. */}
+              <p className="text-[10px] text-clinical-zinc tabular-nums">
+                {isTrial
+                  ? `${meals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
+                  : `${meals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% ${CADENCE_LABEL[cadence].toLowerCase()} saving`}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
+              <Button
+                onClick={submit}
+                disabled={submitting}
+                className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 px-6 h-11"
+              >
+                {submitting
+                  ? isTrial
+                    ? "Starting…"
+                    : "Activating…"
+                  : isTrial
+                    ? "Start 3-day trial"
+                    : "Activate Subscription"}
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              {!addressComplete && (
+                <button
+                  type="button"
+                  onClick={() => scrollToCard("sub-address")}
+                  className="text-[10px] text-clinical-zinc hover:text-clinical-gold underline decoration-dotted"
+                >
+                  1 step left — add your delivery address
+                </button>
               )}
-            </p>
-            {isTrial && (
-              <p className="text-[10px] text-clinical-zinc">One-off — does not auto-renew.</p>
-            )}
+            </div>
           </div>
-          <Button
-            onClick={submit}
-            disabled={submitting}
-            className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 px-6"
-          >
-            {submitting
-              ? isTrial
-                ? "Starting…"
-                : "Activating…"
-              : isTrial
-                ? "Start 3-day trial"
-                : "Activate Subscription"}
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 border-t border-clinical-gold/15 text-[10px] text-clinical-zinc">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-clinical-gold" /> Secured by Razorpay
+            </span>
+            <span className="flex items-center gap-1">
+              <Check className="w-3 h-3 text-clinical-sage" /> Pause or cancel anytime
+            </span>
+            <span className="flex items-center gap-1">
+              <Check className="w-3 h-3 text-clinical-sage" /> Swap any dish before it's cooked
+            </span>
+          </div>
         </CardContent>
       </Card>
     </div>
