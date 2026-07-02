@@ -58,41 +58,89 @@ export default function Corporate() {
 
   if (unauthorized) {
     return (
-      <div className="max-w-2xl mx-auto p-6 sm:p-10 space-y-8">
-        <div className="text-center space-y-3">
-          <Building2 className="w-10 h-10 mx-auto text-clinical-gold" />
-          <h1 className="text-3xl font-bold text-white">Corporate Plans</h1>
-          <p className="text-sm text-clinical-zinc max-w-md mx-auto">
-            Subsidize meals for your team, run office lunch programs, and gift wellness vouchers — all on a single monthly invoice.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { title: "Per-employee budgets", desc: "Set a monthly meal allowance employees redeem at checkout." },
-            { title: "Office lunch programs", desc: "Schedule recurring team meals with one-click reorder." },
-            { title: "Wellness vouchers", desc: "Gift one-off meals and RD consults for milestones or hires." },
-          ].map((b) => (
-            <div key={b.title} className="rounded-lg border border-clinical-border bg-clinical-surface p-4 space-y-1">
-              <p className="text-sm font-semibold text-white">{b.title}</p>
-              <p className="text-[11px] text-clinical-zinc">{b.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-white">Sign in to get started</p>
-            <p className="text-xs text-clinical-zinc mt-1">
-              Already an HR admin? Sign in to create your company workspace, invite teammates, and configure subsidies.
+      <div className="bg-[#050505] text-white min-h-screen pb-16">
+        {/* Main Pitch Hero */}
+        <div className="max-w-6xl mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 items-center">
+          <div className="space-y-6">
+            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px] px-3 py-1">
+              TANMATRA FOR BUSINESS
+            </Badge>
+            <h1 className="font-serif text-4xl sm:text-5xl leading-tight">
+              Fuel your team with <span className="text-clinical-gold">clinical nutrition.</span>
+            </h1>
+            <p className="text-sm sm:text-base text-clinical-zinc leading-relaxed">
+              Ditch the office junk food. Set monthly wellness budgets, schedule recurring catered lunches, and provide dietitian consulting to reduce sick leaves and elevate collective focus.
             </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              {[
+                { title: "Budget Stipends", desc: "Set monthly meal allowances redeemed at checkout." },
+                { title: "Team Lunch Cater", desc: "Insulated, bulk drops for recurring office meals." },
+                { title: "Dietitian Access", desc: "Bundle direct consultations with registered dietitians." },
+              ].map((b) => (
+                <div key={b.title} className="rounded-lg border border-clinical-border bg-clinical-surface p-4 space-y-1">
+                  <p className="text-xs font-semibold text-white">{b.title}</p>
+                  <p className="text-[10px] text-clinical-zinc">{b.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-lg border border-clinical-gold/20 bg-clinical-gold/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold text-white">Already registered as an HR admin?</p>
+                <p className="text-[11px] text-clinical-zinc mt-0.5">Sign in to manage employees, view invoices, and manage credit lines.</p>
+              </div>
+              <Button
+                onClick={() => nav("/login?next=/corporate")}
+                className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs shrink-0 h-9"
+              >
+                Sign in to Console
+              </Button>
+            </div>
           </div>
-          <Button
-            onClick={() => nav("/login?next=/corporate")}
-            className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 shrink-0"
-          >
-            Sign in
-          </Button>
+
+          {/* Lead capture form */}
+          <Card className="bg-clinical-surface border-clinical-border">
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white">Request Corporate Proposal</h3>
+                <p className="text-xs text-clinical-zinc">Fill in details and our enterprise specialist will share customized plan tiers.</p>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                toast.success("Lead registered! Our enterprise team will email your proposal shortly.");
+              }} className="space-y-3 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-clinical-zinc text-[11px]">Contact Name</Label>
+                    <Input placeholder="HR Manager / Admin" className="bg-clinical-dark border-clinical-border text-white text-xs h-9" required />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-clinical-zinc text-[11px]">Company Name</Label>
+                    <Input placeholder="e.g. Acme Corp" className="bg-clinical-dark border-clinical-border text-white text-xs h-9" required />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-clinical-zinc text-[11px]">Work Email</Label>
+                    <Input type="email" placeholder="hr@acme.com" className="bg-clinical-dark border-clinical-border text-white text-xs h-9" required />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-clinical-zinc text-[11px]">Estimated Headcount</Label>
+                    <select className="w-full bg-clinical-dark border border-clinical-border rounded-md px-3 text-white text-xs h-9 focus:outline-none">
+                      <option>10 - 50 employees</option>
+                      <option>50 - 200 employees</option>
+                      <option>200 - 1000 employees</option>
+                      <option>1000+ employees</option>
+                    </select>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs h-9 font-medium mt-2">
+                  Request Proposals
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
