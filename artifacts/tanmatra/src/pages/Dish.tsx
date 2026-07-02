@@ -392,6 +392,12 @@ export default function Dish() {
         <div className="space-y-6">
           <div className="space-y-3">
             <h1 className="text-clinical-h1 text-white">{meal.name}</h1>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-clinical-gold tabular-nums">
+                {formatPrice(meal.price)}
+              </span>
+              <span className="text-xs text-clinical-zinc-muted">per serving</span>
+            </div>
             <p className="text-sm text-clinical-zinc leading-relaxed">{meal.description}</p>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
