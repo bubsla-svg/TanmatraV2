@@ -493,6 +493,95 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* ═══════════════ SUBSCRIPTION MEAL PLANS ═══════════════ */}
+      <section className="py-12 border-b border-clinical-border bg-clinical-surface/20">
+        <div className="max-w-7xl mx-auto px-4 space-y-8">
+          <div className="text-center space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-clinical-gold font-semibold">Nutrition on Autopilot</p>
+            <h2 className="text-2xl font-serif text-white">Subscribe to a Clinical Meal Plan</h2>
+            <p className="text-xs text-clinical-zinc max-w-lg mx-auto">
+              Select a dietitian-curated weekly rotation designed around specific health goals. Customize your meals, select delivery slots, and pause or resume anytime.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                slug: "weight-loss-jumpstart",
+                name: "Weight-Loss Jumpstart",
+                desc: "1500 kcal, low-GI, fibre-forward. Sustainably lose weight without constant hunger spikes.",
+                price: "₹5,490 / week",
+                details: "1500 kcal · 90g protein · 25g+ fiber",
+                badge: "Weight Loss",
+              },
+              {
+                slug: "lean-muscle-builder",
+                name: "Lean Muscle Builder",
+                desc: "2400 kcal, 160g protein. Fuel muscle growth and accelerate post-workout recovery.",
+                price: "₹7,490 / week",
+                details: "2400 kcal · 160g protein · recovery-focused",
+                badge: "Lean Muscle",
+              },
+              {
+                slug: "pcos-balance",
+                name: "PCOS Hormone Balance",
+                desc: "Anti-inflammatory, low-GI, omega-3 forward. Formulated to manage insulin resistance.",
+                price: "₹5,990 / week",
+                details: "1700 kcal · 100g protein · Hormone balance",
+                badge: "Hormone Health",
+              },
+            ].map((plan) => (
+              <Card
+                key={plan.slug}
+                className="bg-clinical-surface border-clinical-border hover:border-clinical-gold/30 transition-all flex flex-col justify-between"
+              >
+                <CardContent className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Badge className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/25 text-[9px] h-5">
+                        {plan.badge}
+                      </Badge>
+                      <span className="text-xs text-clinical-zinc-muted font-mono">{plan.price}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-white mt-1">
+                      {plan.name}
+                    </h3>
+                    <p className="text-[11px] text-clinical-zinc leading-relaxed">
+                      {plan.desc}
+                    </p>
+                    <p className="text-[10px] text-clinical-gold font-mono pt-1">
+                      {plan.details}
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <Link to={`/subscribe?plan=${plan.slug}`}>
+                      <Button className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs h-9">
+                        Subscribe &amp; Save
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="bg-clinical-surface border border-clinical-border rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+              <p className="text-xs font-semibold text-white">Flexibility Built-In</p>
+              <p className="text-[10px] text-clinical-zinc mt-0.5">
+                Pause, skip deliveries, or swap dishes to match your taste. Free delivery included.
+              </p>
+            </div>
+            <div className="flex gap-2 text-[10px] font-semibold text-clinical-gold bg-clinical-gold/5 border border-clinical-gold/20 px-3 py-1.5 rounded-lg">
+              <span>Weekly (Save 5%)</span>
+              <span className="opacity-40">|</span>
+              <span>Fortnightly (Save 10%)</span>
+              <span className="opacity-40">|</span>
+              <span>Monthly (Save 15%)</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ═══════════════ COHORT CHALLENGE CTA ═══════════════ */}
       {featuredChallenge && (
