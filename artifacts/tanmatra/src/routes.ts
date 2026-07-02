@@ -11,9 +11,9 @@ export default [
     ]),
     route("track", "pages/Track.tsx"),
     route("subscribe", "pages/Subscribe.tsx"),
-    route("meal-planner", "pages/WeeklyPlanner.tsx"),
-    route("preferences", "pages/Preferences.tsx"),
     layout("routes/UserAuthLayout.tsx", [
+      route("meal-planner", "pages/WeeklyPlanner.tsx"),
+      route("preferences", "pages/Preferences.tsx"),
       route("orders", "pages/Orders.tsx"),
       route("subscriptions", "pages/Subscriptions.tsx"),
       route("rewards", "pages/Rewards.tsx"),
