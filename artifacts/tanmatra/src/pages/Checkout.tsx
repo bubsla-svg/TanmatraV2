@@ -547,9 +547,12 @@ export default function Checkout() {
       .then((r) => {
         if (!alive) return;
         setSavedAddresses(r.addresses);
-        if (r.addresses.length === 0) {
-          setShowNewAddressFlow(true);
-        } else {
+        // No auto-modal when the list is empty: a blocking interstitial on
+        // checkout entry (before the user even sees their order) is a
+        // conversion killer. The Delivery Address card carries the
+        // "Add New Address" CTA, and the submit path opens the flow
+        // just-in-time if they try to pay without one.
+        if (r.addresses.length > 0) {
           const def = r.addresses.find((a) => a.isDefault) ?? r.addresses[0];
           setSelectedAddress(def.id);
         }
@@ -559,11 +562,10 @@ export default function Checkout() {
         setSavedAddresses([]);
         // 401 from list() means the session expired or the user landed on
         // checkout without signing in. Surface a sign-in CTA instead of
-        // baiting them into the new-address form (architect P1).
+        // baiting them into the new-address form (architect P1). Same
+        // no-interstitial rule as above — the guest sees the page first.
         if (String(err.message).startsWith("401")) {
           setAddressAuthRequired(true);
-          // Guest path: trigger picker modal flow
-          setShowNewAddressFlow(true);
         }
       });
     return () => {
@@ -1247,16 +1249,35 @@ export default function Checkout() {
                   </Label>
                 ))}
 
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-2 text-xs text-clinical-gold hover:bg-clinical-gold/10 h-10"
-                  onClick={() => {
-                    setShowNewAddressFlow(true);
-                  }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  {addressAuthRequired ? "Enter delivery address" : "Add New Address"}
-                </Button>
+                {savedAddresses.length === 0 ? (
+                  // Prominent inline empty-state target — replaces the old
+                  // auto-opening modal. The user stays on the page, sees
+                  // their order, and adds the address on their own terms.
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAddressFlow(true)}
+                    className="w-full rounded-lg border border-dashed border-clinical-gold/45 bg-clinical-gold/5 hover:bg-clinical-gold/10 transition-colors p-4 text-left space-y-1"
+                  >
+                    <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      <Plus className="w-3.5 h-3.5 text-clinical-gold" />
+                      Add your delivery address
+                    </p>
+                    <p className="text-[10px] text-clinical-zinc">
+                      Bengaluru-wide · fresh in 25–40 min
+                    </p>
+                  </button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-xs text-clinical-gold hover:bg-clinical-gold/10 h-10"
+                    onClick={() => {
+                      setShowNewAddressFlow(true);
+                    }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add New Address
+                  </Button>
+                )}
               </div>
             </RadioGroup>
 
@@ -1339,7 +1360,7 @@ export default function Checkout() {
                   <span className="text-xs font-medium text-white">Partner pickup</span>
                 </div>
                 <p className="text-[10px] text-clinical-sage mt-1">
-                  Save up to Rs.{Math.max(0, ...pickupLocations.map((p) => p.discountPaise)) / 100 || 30}
+                  Save up to ₹{Math.max(0, ...pickupLocations.map((p) => p.discountPaise)) / 100 || 30}
                 </p>
               </button>
             </div>
@@ -1520,7 +1541,7 @@ export default function Checkout() {
                             variant="outline"
                             className="ml-auto text-[9px] h-4 px-1 border-clinical-sage/40 text-clinical-sage"
                           >
-                            -Rs.{(loc.discountPaise / 100).toFixed(0)}
+                            -₹{(loc.discountPaise / 100).toFixed(0)}
                           </Badge>
                         </div>
                         <p className="text-[10px] text-clinical-zinc mt-1">
@@ -1547,7 +1568,7 @@ export default function Checkout() {
                       Reusable eco packaging
                     </p>
                     <p className="text-[10px] text-clinical-zinc">
-                      Return clean containers on your next order to earn Rs.20 credit
+                      Return clean containers on your next order to earn ₹20 credit
                     </p>
                   </div>
                 </div>
@@ -1587,7 +1608,7 @@ export default function Checkout() {
                       setIsCustomTip(false);
                     }}
                   >
-                    {tip === 0 ? "No Tip" : `+Rs.${(tip / 100).toFixed(0)}`}
+                    {tip === 0 ? "No Tip" : `+₹${(tip / 100).toFixed(0)}`}
                   </Button>
                 );
               })}
@@ -1639,7 +1660,7 @@ export default function Checkout() {
             {effectiveTip > 0 && (
               <p className="text-[10px] text-clinical-sage flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
-                Your rider will receive Rs.{(effectiveTip / 100).toFixed(0)} extra
+                Your rider will receive ₹{(effectiveTip / 100).toFixed(0)} extra
               </p>
             )}
           </CardContent>
@@ -1782,7 +1803,7 @@ export default function Checkout() {
               </div>
               {gst > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-clinical-zinc">GST (5%)</span>
+                  <span className="text-clinical-zinc">GST (18%)</span>
                   <span className="tabular-nums text-white">{formatPrice(gst)}</span>
                 </div>
               )}
@@ -2076,7 +2097,7 @@ export default function Checkout() {
             </div>
             {gst > 0 && (
               <div className="flex justify-between text-clinical-zinc">
-                <span>GST (5%)</span>
+                <span>GST (18%)</span>
                 <span className="tabular-nums text-white">{formatPrice(gst)}</span>
               </div>
             )}

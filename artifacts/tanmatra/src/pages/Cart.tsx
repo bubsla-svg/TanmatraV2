@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { formatPrice } from "@/lib/api/adapter";
 import { useCart, useCartTotals, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
+import { useOrders } from "@/lib/ordersContext";
 import { groupOrdersApi } from "@/lib/queries";
 import { Users } from "lucide-react";
 import { useState } from "react";
@@ -131,6 +132,15 @@ export default function Cart() {
         : null;
 
   const { subtotal, tax, deliveryFee, total, amountToFreeDelivery, freeDeliveryProgress } = useCartTotals();
+  // First-order offer preview: same display heuristic as the top banner
+  // (no order history yet). Server-authoritative at finalize; this row
+  // exists so the summary total doesn't look worse than what the customer
+  // will actually pay at the moment they decide to proceed.
+  const { orders } = useOrders();
+  const projectedFirstOrderDiscount =
+    orders.length === 0 && subtotal > 0
+      ? Math.min(Math.floor(subtotal * 0.25), 8000)
+      : 0;
 
   if (items.length === 0) {
     return (
@@ -173,7 +183,7 @@ export default function Cart() {
           <div>
             <h1 className="text-clinical-h2 text-white">Your Order</h1>
             <p className="text-xs text-clinical-zinc mt-1">
-              {totalQuantity} item{totalQuantity === 1 ? "" : "s"} · Clinical-grade precision meals
+              {totalQuantity} item{totalQuantity === 1 ? "" : "s"} · Fresh, dietitian-approved meals
             </p>
           </div>
           <Link to="/menu" className="text-xs text-clinical-gold hover:underline flex items-center gap-1">
@@ -491,7 +501,15 @@ export default function Cart() {
                 </span>
               </div>
               {deliveryFee === 0 && subtotal > 0 && (
-                <p className="text-[10px] text-clinical-sage">Free delivery on orders above Rs.500</p>
+                <p className="text-[10px] text-clinical-sage">Free delivery on orders above ₹500</p>
+              )}
+              {projectedFirstOrderDiscount > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-clinical-gold">First-order offer (25% up to ₹80)</span>
+                  <span className="tabular-nums text-clinical-gold">
+                    -{formatPrice(projectedFirstOrderDiscount)}
+                  </span>
+                </div>
               )}
             </div>
 
@@ -499,8 +517,15 @@ export default function Cart() {
 
             <div className="flex justify-between">
               <span className="text-sm font-semibold text-white">Total</span>
-              <span className="tabular-nums text-lg font-bold text-clinical-gold">{formatPrice(total)}</span>
+              <span className="tabular-nums text-lg font-bold text-clinical-gold">
+                {formatPrice(Math.max(0, total - projectedFirstOrderDiscount))}
+              </span>
             </div>
+            {projectedFirstOrderDiscount > 0 && (
+              <p className="text-[10px] text-clinical-zinc -mt-2">
+                Offer applied automatically at checkout.
+              </p>
+            )}
 
             {nextSlot && (
               <div className="flex items-center justify-between gap-2 rounded-md border border-clinical-border bg-clinical-surface-elevated/50 px-3 py-2 text-[11px]">

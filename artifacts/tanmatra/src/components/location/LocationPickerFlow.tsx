@@ -256,23 +256,25 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               <MapPin className="w-12 h-12 text-clinical-gold" weight="fill" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-serif font-semibold text-white">Where do you want us to deliver this order?</h3>
-              <p className="text-xs text-clinical-zinc">This will help us find the nearest store for you</p>
+              <h3 className="text-lg font-serif font-semibold text-white">Where should we deliver?</h3>
+              <p className="text-xs text-clinical-zinc">
+                We deliver Bengaluru-wide — pick your location or type the address.
+              </p>
             </div>
             <div className="w-full space-y-3">
-              <Button
-                variant="outline"
-                onClick={() => setStep("map")}
-                className="w-full h-11 border-clinical-border text-white hover:bg-white/5 font-semibold text-sm"
-              >
-                Away from my location
-              </Button>
               <Button
                 onClick={handleUseCurrentLocation}
                 className="w-full h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-sm gap-2"
               >
                 <Target className="w-4 h-4" weight="bold" />
-                Use current location
+                Use my current location
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setStep("map")}
+                className="w-full h-11 border-clinical-border text-white hover:bg-white/5 font-semibold text-sm"
+              >
+                Enter address manually
               </Button>
             </div>
           </div>

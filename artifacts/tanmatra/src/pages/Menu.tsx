@@ -505,7 +505,7 @@ export default function Menu() {
         <p className="text-xs uppercase tracking-[0.18em] text-clinical-zinc font-medium">
           {activeProtocol
             ? `Filtered by ${PROTOCOL_LABELS[activeProtocol]} criteria · ${filtered.length} ${filtered.length === 1 ? "dish" : "dishes"}`
-            : "Kitchen-synced · Inventory-aware · RD-verified"}
+            : "Cooked fresh daily · Dietitian-approved · Live availability"}
         </p>
       </div>
 
