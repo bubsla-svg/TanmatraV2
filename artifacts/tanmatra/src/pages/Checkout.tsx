@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/collapsible";
 import AddOnRail from "@/components/checkout/AddOnRail";
 import CheckoutStepper, { type CheckoutStep } from "@/components/checkout/CheckoutStepper";
+import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";
 import {
   MapPin,
   CreditCard,
@@ -172,11 +173,7 @@ export default function Checkout() {
     : null;
   const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>("");
-  const [savingAddress, setSavingAddress] = useState(false);
-  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
-  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
-  const touchField = (name: string) =>
-    setTouchedFields((prev) => new Set([...prev, name]));
+
   // Distinguishes "logged in but has no saved addresses yet" from
   // "not signed in at all" — the inline new-address form would otherwise
   // tease an unauth user into filling fields that fail on submit.
@@ -212,7 +209,7 @@ export default function Checkout() {
       return sum + (a ? a.pricePaise * qty : 0);
     }, 0);
   }, [selectedAddons, addonsQuery.data]);
-  const [showNewAddress, setShowNewAddress] = useState(false);
+  const [showNewAddressFlow, setShowNewAddressFlow] = useState(false);
   const [tipAmount, setTipAmount] = useState(0);
   const [customTip, setCustomTip] = useState("");
   // Replaces the old `tipAmount === -1` sentinel — that pattern was
@@ -240,7 +237,7 @@ export default function Checkout() {
   // High-fidelity guest-checkout & slotting states
   const [deliveryMode, setDeliveryMode] = useState<"now" | "schedule">("now");
   const [showGuestAuthDialog, setShowGuestAuthDialog] = useState(false);
-  const [pincodeCheck, setPincodeCheck] = useState<PincodeCheckResult>({ state: "empty" });
+
 
   const [guestPhone, setGuestPhone] = useState("");
   const [guestCountryCode, setGuestCountryCode] = useState("+91");
@@ -291,200 +288,7 @@ export default function Checkout() {
     ? Math.floor((subtotal * PREORDER_BPS) / 10_000)
     : 0;
 
-  // New-address form state. Declared before the effects below because the
-  // pincode-serviceability effect reads `newAddr.pincode` in its dependency
-  // array — that array is evaluated during render, so a later `useState`
-  // declaration would land it in the temporal dead zone and throw
-  // "Cannot access 'newAddr' before initialization", white-screening checkout.
-  const [newAddr, setNewAddr] = useState({ label: "", line1: "", line2: "", city: "", pincode: "", phone: "" });
 
-  const checkoutAutocompleteRef = useRef<any>(null);
-  const checkoutMapRef = useRef<any>(null);
-
-  const checkoutMapInitCallback = (el: HTMLDivElement | null) => {
-    if (el) {
-      if (checkoutMapRef.current) return;
-      if (typeof window !== "undefined" && (window as any).google?.maps) {
-        const defaultCenter = { lat: 19.0760, lng: 72.8777 }; // Mumbai
-        const map = new (window as any).google.maps.Map(el, {
-          center: defaultCenter,
-          zoom: 12,
-          disableDefaultUI: true,
-          zoomControl: true,
-        });
-        const marker = new (window as any).google.maps.Marker({
-          position: defaultCenter,
-          map: map,
-          draggable: true,
-        });
-
-        marker.addListener("dragend", () => {
-          const pos = marker.getPosition();
-          if (pos) {
-            checkoutUpdateAddressFromCoords(pos.lat(), pos.lng());
-          }
-        });
-
-        checkoutMapRef.current = { map, marker };
-        
-        if (newAddr.line1) {
-          const fullAddress = `${newAddr.line1}, ${newAddr.city} - ${newAddr.pincode}`;
-          checkoutGeocodeAddress(fullAddress);
-        }
-      }
-    } else {
-      checkoutMapRef.current = null;
-    }
-  };
-
-  const checkoutGeocodeAddress = (addressStr: string) => {
-    if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
-      const geocoder = new (window as any).google.maps.Geocoder();
-      geocoder.geocode({ address: addressStr }, (results: any, status: any) => {
-        if (status === "OK" && results[0]?.geometry?.location) {
-          const loc = results[0].geometry.location;
-          if (checkoutMapRef.current) {
-            checkoutMapRef.current.map.setCenter(loc);
-            checkoutMapRef.current.map.setZoom(16);
-            checkoutMapRef.current.marker.setPosition(loc);
-          }
-        }
-      });
-    }
-  };
-
-  const checkoutUpdateAddressFromCoords = (lat: number, lng: number) => {
-    if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
-      const geocoder = new (window as any).google.maps.Geocoder();
-      geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
-        if (status === "OK" && results[0]) {
-          const place = results[0];
-          let line1 = "";
-          let city = "";
-          let pincode = "";
-          for (const component of place.address_components) {
-            const types = component.types;
-            if (types.includes("street_number")) {
-              line1 = component.long_name + " " + line1;
-            } else if (types.includes("route")) {
-              line1 += component.long_name;
-            } else if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
-              line1 += (line1 ? ", " : "") + component.long_name;
-            } else if (types.includes("locality")) {
-              city = component.long_name;
-            } else if (types.includes("postal_code")) {
-              pincode = component.long_name;
-            }
-          }
-          setNewAddr((prev) => ({
-            ...prev,
-            line1: line1.trim() || prev.line1,
-            city: city.trim() || prev.city,
-            pincode: pincode.trim() || prev.pincode,
-          }));
-        }
-      });
-    }
-  };
-
-  const checkoutHandleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        if (checkoutMapRef.current) {
-          const pos = { lat: latitude, lng: longitude };
-          checkoutMapRef.current.map.setCenter(pos);
-          checkoutMapRef.current.map.setZoom(16);
-          checkoutMapRef.current.marker.setPosition(pos);
-        }
-        checkoutUpdateAddressFromCoords(latitude, longitude);
-      },
-      (error) => {
-        console.error(error);
-        toast.error("Could not get current location: " + error.message);
-      }
-    );
-  };
-
-  const checkoutInputRefCallback = (el: HTMLInputElement | null) => {
-    if (el) {
-      if (checkoutAutocompleteRef.current) return;
-      if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
-        const autocomplete = new (window as any).google.maps.places.Autocomplete(el, {
-          componentRestrictions: { country: "in" },
-          fields: ["address_components", "geometry"],
-          types: ["address"],
-        });
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          if (!place.address_components) return;
-          let line1 = "";
-          let city = "";
-          let pincode = "";
-          for (const component of place.address_components) {
-            const types = component.types;
-            if (types.includes("street_number")) {
-              line1 = component.long_name + " " + line1;
-            } else if (types.includes("route")) {
-              line1 += component.long_name;
-            } else if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
-              line1 += (line1 ? ", " : "") + component.long_name;
-            } else if (types.includes("locality")) {
-              city = component.long_name;
-            } else if (types.includes("postal_code")) {
-              pincode = component.long_name;
-            }
-          }
-          setNewAddr((prev) => ({
-            ...prev,
-            line1: line1.trim() || prev.line1,
-            city: city.trim() || prev.city,
-            pincode: pincode.trim() || prev.pincode,
-          }));
-
-          if (place.geometry?.location && checkoutMapRef.current) {
-            const loc = place.geometry.location;
-            checkoutMapRef.current.map.setCenter(loc);
-            checkoutMapRef.current.map.setZoom(16);
-            checkoutMapRef.current.marker.setPosition(loc);
-          }
-        });
-        checkoutAutocompleteRef.current = autocomplete;
-      }
-    } else {
-      checkoutAutocompleteRef.current = null;
-    }
-  };
-
-
-  // 1. Automatic pincode serviceability & auto-fill city
-  useEffect(() => {
-    const pin = newAddr.pincode.trim();
-    if (pin.length === 6) {
-      const result = checkPincode(pin);
-      setPincodeCheck(result);
-      if (result.state === "serviceable") {
-        setNewAddr((prev) => ({ ...prev, city: result.info.city }));
-        setAddressErrors((prev) => {
-          const copy = { ...prev };
-          delete copy.city;
-          delete copy.pincode;
-          return copy;
-        });
-      } else if (result.state === "unserviceable") {
-        setAddressErrors((prev) => ({
-          ...prev,
-          pincode: `We don't deliver to ${pin} yet.`,
-        }));
-      }
-    } else {
-      setPincodeCheck({ state: "empty" });
-    }
-  }, [newAddr.pincode]);
 
   // 2. Automatic preorder discount sync based on selected slot
   const selectedSlot = slots.find((s) => s.id === selectedSlotId);
@@ -516,13 +320,10 @@ export default function Checkout() {
   // Intercept place order click for guest users
   const handlePlaceOrderClick = async () => {
     let currentAddr = activeAddr;
-    if (showNewAddress || !currentAddr) {
-      const saved = await handleSaveNewAddress();
-      if (!saved) {
-        toast.error("Please enter or select a valid delivery address");
-        return;
-      }
-      currentAddr = saved;
+    if (!currentAddr) {
+      toast.error("Please enter or select a valid delivery address");
+      setShowNewAddressFlow(true);
+      return;
     }
     if (addressAuthRequired) {
       if (currentAddr.phone.trim()) {
@@ -630,13 +431,18 @@ export default function Checkout() {
         });
       }
 
+      const guestAddr = savedAddresses.find((a) => a.id === "guest-addr");
+      if (!guestAddr) {
+        throw new Error("No guest address found to sync");
+      }
+
       const r = await addressesApi.create({
-        label: newAddr.label.trim() || "Home",
-        line1: newAddr.line1.trim(),
-        line2: newAddr.line2.trim() || undefined,
-        city: newAddr.city.trim(),
-        pincode: newAddr.pincode.trim(),
-        phone: guestPhone || newAddr.phone.trim(),
+        label: guestAddr.label || "Home",
+        line1: guestAddr.line1,
+        line2: guestAddr.line2 || undefined,
+        city: guestAddr.city,
+        pincode: guestAddr.pincode,
+        phone: guestPhone || guestAddr.phone,
       });
 
       setSavedAddresses([r.address]);
@@ -717,8 +523,7 @@ export default function Checkout() {
         if (!alive) return;
         setSavedAddresses(r.addresses);
         if (r.addresses.length === 0) {
-          setShowNewAddress(true);
-          setSelectedAddress("new");
+          setShowNewAddressFlow(true);
         } else {
           const def = r.addresses.find((a) => a.isDefault) ?? r.addresses[0];
           setSelectedAddress(def.id);
@@ -732,9 +537,8 @@ export default function Checkout() {
         // baiting them into the new-address form (architect P1).
         if (String(err.message).startsWith("401")) {
           setAddressAuthRequired(true);
-          // Guest path: open the inline form so they can still checkout
-          setShowNewAddress(true);
-          setSelectedAddress("new");
+          // Guest path: trigger picker modal flow
+          setShowNewAddressFlow(true);
         }
       });
     return () => {
@@ -866,86 +670,7 @@ export default function Checkout() {
     return () => { cancelled = true; };
   }, [activeAddr?.id, items.length, fulfillmentType]);
 
-  const handleSaveNewAddress = async (): Promise<UserAddress | null> => {
-    setAddressErrors({});
-    const errs: Record<string, string> = {};
-    if (!newAddr.label.trim()) errs.label = "Label is required";
-    if (!newAddr.line1.trim()) errs.line1 = "Street address is required";
-    if (!newAddr.city.trim()) errs.city = "City is required";
-    if (!/^\d{6}$/.test(newAddr.pincode.trim())) {
-      errs.pincode = "Enter a valid 6-digit pincode";
-    } else {
-      const pinCheck = checkPincode(newAddr.pincode.trim());
-      if (pinCheck.state === "unserviceable") {
-        errs.pincode = "This area is not serviceable yet";
-      }
-    }
-    if (!/^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()))
-      errs.phone = "Enter a valid phone number";
-    if (Object.keys(errs).length > 0) {
-      setAddressErrors(errs);
-      return null;
-    }
-    setAddressErrors({});
-    setSavingAddress(true);
-    try {
-      if (addressAuthRequired) {
-        // Guest path: build a local-only address (no API call) so the
-        // rest of the checkout flow has a valid activeAddr to work with.
-        const guestAddr: UserAddress = {
-          id: "guest-addr",
-          label: newAddr.label.trim() || "Delivery address",
-          type: "home",
-          line1: newAddr.line1.trim(),
-          line2: newAddr.line2.trim(),
-          city: newAddr.city.trim(),
-          pincode: newAddr.pincode.trim(),
-          phone: newAddr.phone.trim(),
-          isDefault: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setSavedAddresses([guestAddr]);
-        setSelectedAddress("guest-addr");
-        setShowNewAddress(false);
-        setTouchedFields(new Set());
-        return guestAddr;
-      }
-      const r = await addressesApi.create({
-        label: newAddr.label.trim(),
-        line1: newAddr.line1.trim(),
-        line2: newAddr.line2.trim() || undefined,
-        city: newAddr.city.trim(),
-        pincode: newAddr.pincode.trim(),
-        phone: newAddr.phone.trim(),
-      });
-      setSavedAddresses((prev) => [r.address, ...prev]);
-      setSelectedAddress(r.address.id);
-      setShowNewAddress(false);
-      setNewAddr({
-        label: "",
-        line1: "",
-        line2: "",
-        city: "",
-        pincode: "",
-        phone: "",
-      });
-      setTouchedFields(new Set());
-      toast.success("Address saved");
-      return r.address;
-    } catch (e) {
-      const msg = String((e as Error).message);
-      // Server returns the zod issue message for 400s (e.g. "invalid pincode");
-      // surface it inline so the user can correct the offending field instead
-      // of a generic "could not save". Strip the "400: " prefix our request
-      // wrapper attaches.
-      const cleaned = msg.replace(/^\d{3}:\s*/, "");
-      setAddressErrors({ _form: cleaned || "Could not save address" });
-      return null;
-    } finally {
-      setSavingAddress(false);
-    }
-  };
+
 
   if (items.length === 0) {
     return (
@@ -1426,7 +1151,6 @@ export default function Checkout() {
               value={selectedAddress}
               onValueChange={(v) => {
                 setSelectedAddress(v);
-                setShowNewAddress(false);
               }}
             >
               <div className="space-y-2">
@@ -1462,19 +1186,16 @@ export default function Checkout() {
                   </Label>
                 ))}
 
-                {!showNewAddress && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-xs text-clinical-gold hover:bg-clinical-gold/10 h-10"
-                    onClick={() => {
-                      setShowNewAddress(true);
-                      setSelectedAddress("new");
-                    }}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    {addressAuthRequired ? "Enter delivery address" : "Add New Address"}
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 text-xs text-clinical-gold hover:bg-clinical-gold/10 h-10"
+                  onClick={() => {
+                    setShowNewAddressFlow(true);
+                  }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  {addressAuthRequired ? "Enter delivery address" : "Add New Address"}
+                </Button>
               </div>
             </RadioGroup>
 
@@ -1507,229 +1228,7 @@ export default function Checkout() {
               </p>
             </div>
 
-            {showNewAddress && (
-              <div className="space-y-3 p-3 rounded-lg bg-clinical-dark border border-clinical-border">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-white">
-                    {addressAuthRequired ? "Delivery address" : "New Address"}
-                  </p>
-                  {addressAuthRequired && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/login?next=${encodeURIComponent("/checkout")}`)}
-                      className="text-[10px] text-clinical-gold hover:underline"
-                    >
-                      Sign in to save for next time →
-                    </button>
-                  )}
-                </div>
-                {/* Address Line 1 */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <Label className="text-[11px] text-clinical-zinc">Address Line 1</Label>
-                    <button
-                      type="button"
-                      onClick={checkoutHandleUseCurrentLocation}
-                      className="text-[10px] text-clinical-gold hover:underline flex items-center gap-1 font-semibold"
-                    >
-                      <MapPin className="w-3 h-3" />
-                      Use Current Location
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      ref={checkoutInputRefCallback}
-                      placeholder="Street, building, company name"
-                      value={newAddr.line1}
-                      onChange={(e) =>
-                        setNewAddr({ ...newAddr, line1: e.target.value })
-                      }
-                      onBlur={() => touchField("line1")}
-                      autoComplete="street-address"
-                      className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
-                    />
-                    {touchedFields.has("line1") && newAddr.line1.trim() && !addressErrors.line1 && (
-                      <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                    )}
-                  </div>
-                  {addressErrors.line1 && (
-                    <p className="text-[10px] text-alert-allergen-text -mt-1">
-                      {addressErrors.line1}
-                    </p>
-                  )}
-                </div>
 
-                {/* Address Line 2 */}
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-clinical-zinc">Address Line 2 (optional)</Label>
-                  <Input
-                    placeholder="Apt, floor, suite, unit"
-                    value={newAddr.line2}
-                    onChange={(e) =>
-                      setNewAddr({ ...newAddr, line2: e.target.value })
-                    }
-                    autoComplete="address-line2"
-                    className="h-9 bg-clinical-surface border-clinical-border text-xs text-white"
-                  />
-                </div>
-
-                {/* City & Pincode Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-clinical-zinc">City</Label>
-                    <div className="relative">
-                      <Input
-                        placeholder="City"
-                        value={newAddr.city}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, city: e.target.value })
-                        }
-                        onBlur={() => touchField("city")}
-                        autoComplete="address-level2"
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
-                      />
-                      {touchedFields.has("city") && newAddr.city.trim() && !addressErrors.city && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.city && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.city}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-clinical-zinc">Pincode</Label>
-                    <div className="relative">
-                      <Input
-                        placeholder="6-digit Pincode"
-                        value={newAddr.pincode}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, pincode: e.target.value })
-                        }
-                        onBlur={() => touchField("pincode")}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        autoComplete="postal-code"
-                        maxLength={6}
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
-                      />
-                      {touchedFields.has("pincode") && /^\d{6}$/.test(newAddr.pincode.trim()) && !addressErrors.pincode && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.pincode && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.pincode}
-                      </p>
-                    )}
-                  </div>
-
-                  {pincodeCheck.state === "unserviceable" && (
-                    <div className="rounded-lg border border-clinical-clay/30 bg-clinical-clay/5 p-3 space-y-2 mt-2 col-span-1 sm:col-span-2 text-left">
-                      <p className="text-xs text-clinical-clay font-medium leading-relaxed">
-                        We don't deliver to your pincode ({pincodeCheck.pincode}) yet. We are expanding rapidly across Noida NCR!
-                      </p>
-                      <div className="flex gap-2">
-                        <Input
-                          type="email"
-                          placeholder="Enter email to get notified"
-                          className="h-8 bg-clinical-surface border-clinical-border flex-1 text-xs text-white"
-                        />
-                        <Button
-                          size="sm"
-                          type="button"
-                          onClick={() => {
-                            toast.success("Thanks! We'll notify you as soon as we launch in your area.");
-                            setPincodeCheck({ state: "empty" });
-                            setNewAddr((prev) => ({ ...prev, pincode: "" }));
-                          }}
-                          className="h-8 px-3 bg-clinical-clay text-white hover:bg-clinical-clay/90 text-[11px]"
-                        >
-                          Notify Me
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Label & Phone Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-clinical-zinc">Address Label</Label>
-                    <div className="relative">
-                      <Input
-                        placeholder="e.g. Home, Office"
-                        value={newAddr.label}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, label: e.target.value })
-                        }
-                        onBlur={() => touchField("label")}
-                        autoComplete="nickname"
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
-                      />
-                      {touchedFields.has("label") && newAddr.label.trim() && !addressErrors.label && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.label && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.label}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-clinical-zinc">Phone Number</Label>
-                    <div className="relative">
-                      <Input
-                        placeholder="Rider will call this"
-                        value={newAddr.phone}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                          const formatted = digits.length > 5
-                            ? `${digits.slice(0, 5)} ${digits.slice(5)}`
-                            : digits;
-                          setNewAddr({ ...newAddr, phone: formatted });
-                        }}
-                        onBlur={() => touchField("phone")}
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        className="h-9 bg-clinical-surface border-clinical-border pr-7 text-xs text-white"
-                      />
-                      {touchedFields.has("phone") && /^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()) && !addressErrors.phone && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.phone && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {addressErrors._form && (
-                  <p className="text-[11px] text-alert-allergen-text" role="alert">
-                    {addressErrors._form}
-                  </p>
-                )}
-                <div
-                  ref={checkoutMapInitCallback}
-                  style={{ height: "140px", width: "100%", borderRadius: "6px" }}
-                  className="mt-2 mb-3 bg-clinical-surface border border-clinical-border"
-                ></div>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleSaveNewAddress}
-                  disabled={savingAddress}
-                  className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold w-full h-9 text-xs"
-                >
-                  {savingAddress ? "Saving…" : addressAuthRequired ? "Use this address" : "Save address"}
-                </Button>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -2808,6 +2307,34 @@ export default function Checkout() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LocationPickerFlow
+        open={showNewAddressFlow}
+        onOpenChange={setShowNewAddressFlow}
+        onSave={async (addressData) => {
+          if (addressAuthRequired) {
+            const guestAddr: UserAddress = {
+              id: "guest-addr",
+              label: addressData.label,
+              type: "home",
+              line1: addressData.line1,
+              line2: addressData.line2 || "",
+              city: addressData.city,
+              pincode: addressData.pincode,
+              phone: addressData.phone,
+              isDefault: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            setSavedAddresses([guestAddr]);
+            setSelectedAddress("guest-addr");
+          } else {
+            const r = await addressesApi.create(addressData);
+            setSavedAddresses((prev) => [r.address, ...prev]);
+            setSelectedAddress(r.address.id);
+          }
+        }}
+      />
     </div>
   );
 }
