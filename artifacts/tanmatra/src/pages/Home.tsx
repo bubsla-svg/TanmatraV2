@@ -279,8 +279,12 @@ export default function Home() {
       <section className="relative min-h-[420px] md:h-[78vh] md:min-h-[560px] overflow-hidden flex items-center">
         <div className="absolute inset-0">
           <img src="/collections/wellness-collection.jpg" alt="Nutritionist-designed meals — buddha bowl, berry smoothie bowl and salmon salad" className="w-full h-full object-cover object-center" loading="eager" fetchPriority="high" />
-          {/* cinematic left→right darkening keeps copy legible over the photo */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/88 to-[#050505]/45 md:from-[#050505]/96 md:via-[#050505]/72 md:to-[#050505]/25" />
+          {/* cinematic left→right darkening keeps copy legible over the photo.
+              The copy column occupies the left ~55% of the band on desktop, so
+              the scrim stays near-opaque through the 50% mark and only then
+              releases the photo — the previous 72%→25% ramp let the bright
+              smoothie/avocado bowls wash out the headline and body copy. */}
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,5,5,0.96)_0%,rgba(5,5,5,0.9)_45%,rgba(5,5,5,0.62)_100%)] md:bg-[linear-gradient(90deg,rgba(5,5,5,0.97)_0%,rgba(5,5,5,0.92)_34%,rgba(5,5,5,0.78)_52%,rgba(5,5,5,0.28)_74%,rgba(5,5,5,0.06)_100%)]" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/45 to-transparent" />
           {/* warm gold key-light behind the headline for depth (echoes the logomark) */}
           <div className="absolute -left-24 top-1/4 h-[420px] w-[420px] rounded-full bg-clinical-gold/20 blur-[120px] pointer-events-none" />
@@ -307,15 +311,18 @@ export default function Home() {
               Clinical-Grade Precision Nutrition
             </Badge>
 
-            <h1 className="text-clinical-h1 text-white tracking-[-0.02em]">
+            {/* drop-shadow (a filter, so it works with bg-clip-text) lifts the
+                headline off the photo; the gradient ends on gold rather than
+                sage — sage vanished into the avocado/greens in the image. */}
+            <h1 className="text-clinical-h1 md:text-[clamp(2.5rem,1.4rem+2.9vw,3.5rem)] md:leading-[1.06] text-white tracking-[-0.02em] drop-shadow-[0_2px_18px_rgba(0,0,0,0.6)]">
               Precision Nutrition,
               <br />
-              <span className="bg-gradient-to-r from-clinical-gold via-[#E7C766] to-clinical-sage bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#E7C766] to-clinical-gold bg-clip-text text-transparent">
                 Engineered by Science
               </span>
             </h1>
 
-            <p className="text-base text-clinical-zinc leading-relaxed max-w-lg">
+            <p className="text-base md:text-lg text-zinc-200 leading-relaxed max-w-lg drop-shadow-[0_1px_10px_rgba(0,0,0,0.5)]">
               Every meal is clinically formulated by registered dietitians, macro-calibrated to
               your metabolic profile, and prepared in ISO-certified kitchens.
             </p>
@@ -324,7 +331,7 @@ export default function Home() {
                 Indian first-time visitors decide on price/delivery before
                 committing to an assessment. Don't let the metabolic
                 assessment CTA be the only signal in the hero. */}
-            <p className="text-sm text-clinical-zinc-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="text-sm text-zinc-300 flex flex-wrap items-center gap-x-3 gap-y-1 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
               <span className="text-white font-semibold">Meals from ₹140</span>
               <span className="opacity-50">·</span>
               <span>Free delivery over ₹500</span>
@@ -345,7 +352,7 @@ export default function Home() {
               <Link to="/menu" className="flex-1 sm:flex-none">
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto bg-transparent border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 hover:text-clinical-gold font-semibold gap-2 h-12 sm:h-11 px-6"
+                  className="w-full sm:w-auto bg-[#050505]/45 backdrop-blur-md border-clinical-gold/50 text-clinical-gold hover:bg-clinical-gold/10 hover:text-clinical-gold font-semibold gap-2 h-12 sm:h-11 px-6"
                 >
                   Browse the menu <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -360,18 +367,18 @@ export default function Home() {
                 stays honest as the team grows. */}
             <div className="grid grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:items-start sm:gap-x-5 sm:gap-y-3 pt-4">
               <div className="min-w-0">
-                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white">{TEAM.filter((m) => m.role === "rd").length}</p>
-                <p className="text-clinical-label mt-0.5 leading-tight">Registered Dietitians</p>
+                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">{TEAM.filter((m) => m.role === "rd").length}</p>
+                <p className="text-clinical-label text-zinc-300 mt-0.5 leading-tight drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">Registered Dietitians</p>
               </div>
-              <div className="hidden sm:block w-px self-stretch bg-clinical-surface-elevated" />
+              <div className="hidden sm:block w-px self-stretch bg-white/15" />
               <div className="min-w-0">
-                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white">100%</p>
-                <p className="text-clinical-label mt-0.5 leading-tight">Macros &amp; allergens disclosed</p>
+                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">100%</p>
+                <p className="text-clinical-label text-zinc-300 mt-0.5 leading-tight drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">Macros &amp; allergens disclosed</p>
               </div>
-              <div className="hidden sm:block w-px self-stretch bg-clinical-surface-elevated" />
+              <div className="hidden sm:block w-px self-stretch bg-white/15" />
               <div className="min-w-0">
-                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white">FSSAI</p>
-                <p className="text-clinical-label mt-0.5 leading-tight">Licensed · ISO 22000</p>
+                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">FSSAI</p>
+                <p className="text-clinical-label text-zinc-300 mt-0.5 leading-tight drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">Licensed · ISO 22000</p>
               </div>
             </div>
           </div>
