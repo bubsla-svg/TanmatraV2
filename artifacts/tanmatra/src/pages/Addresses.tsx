@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, type MetaFunction } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,51 @@ export default function Addresses() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const autocompleteRef = useRef<any>(null);
+  const inputRefCallback = (el: HTMLInputElement | null) => {
+    if (el) {
+      if (autocompleteRef.current) return;
+      if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
+        const autocomplete = new (window as any).google.maps.places.Autocomplete(el, {
+          componentRestrictions: { country: "in" },
+          fields: ["address_components"],
+          types: ["address"],
+        });
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place.address_components) return;
+          let line1 = "";
+          let city = "";
+          let pincode = "";
+          for (const component of place.address_components) {
+            const types = component.types;
+            if (types.includes("street_number")) {
+              line1 = component.long_name + " " + line1;
+            } else if (types.includes("route")) {
+              line1 += component.long_name;
+            } else if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
+              line1 += (line1 ? ", " : "") + component.long_name;
+            } else if (types.includes("locality")) {
+              city = component.long_name;
+            } else if (types.includes("postal_code")) {
+              pincode = component.long_name;
+            }
+          }
+          setForm((prev) => ({
+            ...prev,
+            line1: line1.trim() || prev.line1,
+            city: city.trim() || prev.city,
+            pincode: pincode.trim() || prev.pincode,
+          }));
+        });
+        autocompleteRef.current = autocomplete;
+      }
+    } else {
+      autocompleteRef.current = null;
+    }
+  };
+
 
   const reload = async () => {
     try {
@@ -336,6 +381,7 @@ export default function Addresses() {
                 Address line 1
               </Label>
               <Input
+                ref={inputRefCallback}
                 placeholder="Street, building"
                 value={form.line1}
                 onChange={(e) =>

@@ -69,6 +69,8 @@ import {
 } from "lucide-react";
 
 import { addressesApi, type UserAddress } from "@/lib/userAddressesApi";
+import { auth } from "../lib/firebase";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { getDishById } from "@/lib/menuData";
@@ -250,6 +252,8 @@ export default function Checkout() {
   const [guestResendIn, setGuestResendIn] = useState(0);
   const [guestFirstName, setGuestFirstName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const recaptchaVerifierRef = useRef<any>(null);
   const [subsidy, setSubsidy] = useState<CompanySubsidy | null>(null);
   const [applySubsidy, setApplySubsidy] = useState(true);
   const [voucherCode, setVoucherCode] = useState("");
@@ -293,6 +297,51 @@ export default function Checkout() {
   // declaration would land it in the temporal dead zone and throw
   // "Cannot access 'newAddr' before initialization", white-screening checkout.
   const [newAddr, setNewAddr] = useState({ label: "", line1: "", line2: "", city: "", pincode: "", phone: "" });
+
+  const checkoutAutocompleteRef = useRef<any>(null);
+  const checkoutInputRefCallback = (el: HTMLInputElement | null) => {
+    if (el) {
+      if (checkoutAutocompleteRef.current) return;
+      if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
+        const autocomplete = new (window as any).google.maps.places.Autocomplete(el, {
+          componentRestrictions: { country: "in" },
+          fields: ["address_components"],
+          types: ["address"],
+        });
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place.address_components) return;
+          let line1 = "";
+          let city = "";
+          let pincode = "";
+          for (const component of place.address_components) {
+            const types = component.types;
+            if (types.includes("street_number")) {
+              line1 = component.long_name + " " + line1;
+            } else if (types.includes("route")) {
+              line1 += component.long_name;
+            } else if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
+              line1 += (line1 ? ", " : "") + component.long_name;
+            } else if (types.includes("locality")) {
+              city = component.long_name;
+            } else if (types.includes("postal_code")) {
+              pincode = component.long_name;
+            }
+          }
+          setNewAddr((prev) => ({
+            ...prev,
+            line1: line1.trim() || prev.line1,
+            city: city.trim() || prev.city,
+            pincode: pincode.trim() || prev.pincode,
+          }));
+        });
+        checkoutAutocompleteRef.current = autocomplete;
+      }
+    } else {
+      checkoutAutocompleteRef.current = null;
+    }
+  };
+
 
   // 1. Automatic pincode serviceability & auto-fill city
   useEffect(() => {
@@ -373,45 +422,57 @@ export default function Checkout() {
       toast.error("Enter a valid 10-digit phone number");
       return;
     }
+    if (!auth) {
+      toast.error("Authentication setup missing (Firebase config missing)");
+      return;
+    }
     setGuestIsSending(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/phone/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ countryCode: guestCountryCode, phone: guestPhone }),
-      });
-      const data = (await res.json().catch(() => ({}))) as SendOtpResponse;
-      if (!res.ok || !data.ok) {
-        toast.error(data.error ?? "Could not send verification code");
-        return;
+      if (!recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+        });
       }
-      setGuestDevCode(data.devCode ?? null);
+      const phoneNumberE164 = `${guestCountryCode}${digits}`;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumberE164, recaptchaVerifierRef.current);
+      setConfirmationResult(confirmation);
       setGuestAuthStep("code");
       setGuestResendIn(30);
       toast.success(`Verification code sent to ${guestCountryCode} ${guestPhone}`);
-    } catch {
-      toast.error("Network error — please try again");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not send verification code: " + (err as Error).message);
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
+      }
     } finally {
       setGuestIsSending(false);
     }
   };
 
   const handleVerifyGuestOtp = async () => {
-    if (guestOtpCode.replace(/\D/g, "").length < 4) {
-      toast.error("Enter the 4-digit verification code");
+    if (guestOtpCode.replace(/\D/g, "").length < 6) {
+      toast.error("Enter the 6-digit verification code");
+      return;
+    }
+    if (!confirmationResult) {
+      toast.error("No verification in progress");
       return;
     }
     setGuestIsVerifying(true);
     try {
+      const userCredential = await confirmationResult.confirm(guestOtpCode);
+      const idToken = await userCredential.user.getIdToken();
+      
       const res = await fetch(`${API_BASE}/auth/phone/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          countryCode: guestCountryCode,
-          phone: guestPhone,
-          code: guestOtpCode,
+          idToken,
           attribution: {
             dpdpConsent: true,
             tosVersion: "2026-05",
@@ -429,8 +490,9 @@ export default function Checkout() {
       } else {
         await handleGuestAuthSuccess();
       }
-    } catch {
-      toast.error("Network error — please try again");
+    } catch (err) {
+      console.error(err);
+      toast.error("Verification failed: " + (err as Error).message);
     } finally {
       setGuestIsVerifying(false);
     }
@@ -1473,6 +1535,7 @@ export default function Checkout() {
                 <div className="space-y-1">
                   <div className="relative">
                     <Input
+                      ref={checkoutInputRefCallback}
                       placeholder="Address line 1 (street, building)"
                       value={newAddr.line1}
                       onChange={(e) =>
@@ -2386,7 +2449,7 @@ export default function Checkout() {
             </DialogTitle>
             <DialogDescription className="text-clinical-zinc text-xs">
               {guestAuthStep === "phone" && "Enter your mobile number to get a verification code."}
-              {guestAuthStep === "code" && `We've sent a 4-digit code to ${guestCountryCode} ${guestPhone}.`}
+              {guestAuthStep === "code" && `We've sent a 6-digit code to ${guestCountryCode} ${guestPhone}.`}
               {guestAuthStep === "welcome" && "We need a few details to personalize your clinical kitchen experience."}
             </DialogDescription>
           </DialogHeader>
@@ -2426,13 +2489,13 @@ export default function Checkout() {
                 <Label htmlFor="guest-otp-input" className="text-xs text-white">Verification Code</Label>
                 <Input
                   id="guest-otp-input"
-                  placeholder="Enter 4-digit OTP"
+                  placeholder="Enter 6-digit OTP"
                   value={guestOtpCode}
-                  onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   inputMode="numeric"
                   pattern="[0-9]*"
                   autoComplete="one-time-code"
-                  maxLength={4}
+                  maxLength={6}
                   className="h-10 text-center text-sm tracking-[1.5em] pl-[1.5em] font-mono bg-clinical-surface border-clinical-border"
                 />
               </div>
@@ -2513,6 +2576,7 @@ export default function Checkout() {
               </div>
             </div>
           )}
+          <div id="recaptcha-container" className="hidden"></div>
         </DialogContent>
       </Dialog>
 
