@@ -868,10 +868,13 @@ export default function Checkout() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
+              // Server contract is { amountPaise, receipt } — the previous
+              // { orderId, amount, currency } payload failed schema
+              // validation (400) and silently pushed every live payment
+              // onto the "placed but not charged" fallback.
               body: JSON.stringify({
-                orderId,
-                amount: chargeTotal,
-                currency: "INR",
+                amountPaise: chargeTotal,
+                receipt: orderId.slice(0, 40),
               }),
             },
           );
@@ -2059,7 +2062,7 @@ export default function Checkout() {
                 : `Review & Pay ${formatPrice(razorpayTotal)}`}
             </Button>
             <a
-              href="https://wa.me/918047019200"
+              href="https://wa.me/919289213115"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_desktop_summary" })}
@@ -2176,7 +2179,7 @@ export default function Checkout() {
                 {checkoutBlocked ? "Blocked" : "Review & Pay"}
               </Button>
               <a
-                href="https://wa.me/918047019200"
+                href="https://wa.me/919289213115"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_mobile_bar" })}

@@ -54,6 +54,7 @@ import {
 } from "@/lib/subscriptionsApi";
 import { loyaltyApi } from "@/lib/loyaltyApi";
 import { useMenuCatalog } from "@/lib/menuData";
+import { whatsappLink } from "@/lib/support";
 import type { DishData } from "@/lib/menuData";
 
 interface LoyaltyProgress {
@@ -130,7 +131,13 @@ function formatPrice(paise: number): string {
 }
 
 function planTitle(s: Subscription): string {
-  return isTrialSub(s) ? "3-Day Trial Pack" : `${CADENCE_LABEL[s.cadence]} Plan`;
+  if (isTrialSub(s)) return "3-Day Trial Pack";
+  // RD-plan subscriptions carry "RD Plan: <name>" in notes — surface the
+  // actual plan name (e.g. "Weight-Loss Jumpstart") instead of the generic
+  // cadence label so the dashboard reads like the thing the customer bought.
+  const rdMatch = /^RD Plan:\s*(.+)$/.exec(s.notes ?? "");
+  if (rdMatch) return rdMatch[1];
+  return `${CADENCE_LABEL[s.cadence]} Plan`;
 }
 
 function daysUntil(iso: string): number {
@@ -295,6 +302,15 @@ export default function Subscriptions() {
           <p className="text-xs text-clinical-zinc mt-0.5">
             {subs.length} plan{subs.length === 1 ? "" : "s"} · {credits.balance} meal
             credit{credits.balance === 1 ? "" : "s"} in your wallet
+            {" · "}
+            <a
+              href={whatsappLink("Hi! I need help with my Tanmatra subscription.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-clinical-gold hover:underline"
+            >
+              Need help? WhatsApp us
+            </a>
           </p>
         </div>
         <div className="flex items-center gap-2">

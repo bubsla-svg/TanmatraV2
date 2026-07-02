@@ -167,7 +167,7 @@ export default function Root() {
                 "@type": "ContactPoint",
                 "contactType": "customer service",
                 "email": "care@tanmatra.health",
-                "telephone": "+918047019200"
+                "telephone": "+919289213115"
               }
             })
           }}
@@ -187,7 +187,8 @@ export default function Root() {
           <div style={{ position:"fixed", inset:0, background:"#050505", color:"#fff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
             <strong style={{ color:"#D4AF37", fontSize:"1.25rem" }}>Tanmatra</strong>
             <p style={{ color:"#A1A1AA", fontSize:"0.875rem", maxWidth:"300px" }}>
-              This site requires JavaScript. To order, please WhatsApp us or email
+              This site requires JavaScript. To order, please WhatsApp us at
+              <a href="https://wa.me/919289213115" style={{ color:"#D4AF37", marginLeft:"4px" }}>+91 92892 13115</a> or email
               <a href="mailto:care@tanmatra.health" style={{ color:"#D4AF37", marginLeft:"4px" }}>care@tanmatra.health</a>
             </p>
           </div>

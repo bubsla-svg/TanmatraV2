@@ -41,6 +41,7 @@ ARG VITE_FIREBASE_PROJECT_ID
 ARG VITE_FIREBASE_STORAGE_BUCKET
 ARG VITE_FIREBASE_MESSAGING_SENDER_ID
 ARG VITE_FIREBASE_APP_ID
+ARG VITE_RAZORPAY_KEY_ID
 
 # SPA mode (ssr:false) — produces build/client/ only (no build/server/).
 RUN VITE_API_BASE="${VITE_API_BASE}" \
@@ -51,6 +52,7 @@ RUN VITE_API_BASE="${VITE_API_BASE}" \
     VITE_FIREBASE_STORAGE_BUCKET="${VITE_FIREBASE_STORAGE_BUCKET}" \
     VITE_FIREBASE_MESSAGING_SENDER_ID="${VITE_FIREBASE_MESSAGING_SENDER_ID}" \
     VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID}" \
+    VITE_RAZORPAY_KEY_ID="${VITE_RAZORPAY_KEY_ID}" \
     pnpm --filter @workspace/tanmatra run build
 
 # ── runner ────────────────────────────────────────────────────────────────────

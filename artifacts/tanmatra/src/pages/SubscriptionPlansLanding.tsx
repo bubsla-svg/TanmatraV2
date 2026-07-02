@@ -24,6 +24,11 @@ export const meta: MetaFunction = () => [
   },
 ];
 
+import { RD_PLANS } from "@/lib/rdPlans";
+
+// Full curated catalog minus the trial (it has its own hero section above).
+const GOAL_PLANS = RD_PLANS.filter((p) => p.slug !== "three-day-trial-pack");
+
 // Per-meal list price mirrors the server (PER_MEAL_PAISE ₹260). Cadence
 // discounts match subscriptions.ts CADENCE_DISCOUNT.
 const PER_MEAL = 260;
@@ -232,6 +237,64 @@ export default function SubscriptionPlansLanding() {
             </Card>
           );
         })}
+      </section>
+
+      {/* Goal-based RD plans — the full curated catalog. Each links straight
+          into the configurator preloaded with the plan's weekly rotation. */}
+      <section className="border-t border-clinical-border py-14 px-4">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-clinical-gold font-semibold">
+              Designed by registered dietitians
+            </p>
+            <h2 className="text-clinical-h2 text-white">Plans built around your goal</h2>
+            <p className="text-sm text-clinical-zinc max-w-lg mx-auto">
+              Weekly rotations with calorie and protein targets already dialled
+              in — pick the goal, we handle the food.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {GOAL_PLANS.map((p) => (
+              <Card
+                key={p.slug}
+                className="bg-clinical-surface border-clinical-border hover:border-clinical-gold/40 transition-colors flex flex-col"
+              >
+                <CardContent className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {p.badges.slice(0, 2).map((b) => (
+                        <Badge
+                          key={b}
+                          className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/20 text-[9px] tracking-wider"
+                        >
+                          {b}
+                        </Badge>
+                      ))}
+                    </div>
+                    <h3 className="text-base font-bold text-white">{p.name}</h3>
+                    <p className="text-[11px] text-clinical-zinc leading-relaxed">
+                      {p.tagline}
+                    </p>
+                    <p className="text-[10px] text-clinical-gold font-mono tabular-nums pt-1">
+                      {p.calorieTargetPerDay} kcal/day · {p.proteinTargetGrams}g protein
+                    </p>
+                  </div>
+                  <div className="space-y-2.5 pt-1">
+                    <p className="text-sm text-white font-semibold tabular-nums">
+                      ₹{Math.round(p.pricePerWeekPaise / 100).toLocaleString("en-IN")}
+                      <span className="text-[11px] text-clinical-zinc font-normal"> / week</span>
+                    </p>
+                    <Link to={`/subscribe?plan=${p.slug}`} className="block">
+                      <Button className="w-full h-9 text-xs bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold">
+                        Start this plan
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* How it works */}

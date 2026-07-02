@@ -267,7 +267,7 @@ function MoreSheet({
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-3 h-3 text-clinical-gold" />
-              +91 80 4701 9200
+              +91 92892 13115
             </div>
             <div className="flex items-center gap-2 pt-1">
               <ShieldCheck className="w-3 h-3 text-clinical-sage" />

@@ -5,6 +5,8 @@ import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { usePreferences } from "@/lib/preferencesContext";
 import { ACCENT_CLASSES } from "@/lib/teamData";
 import type { SubscriptionItem } from "@/lib/subscriptionsApi";
+import { payWithRazorpay, razorpayConfigured } from "@/lib/razorpayClient";
+import { track } from "@/lib/analytics";
 import { Stethoscope, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -240,7 +242,45 @@ export default function Subscribe() {
         })),
         defaultItems: planWeekItems,
       });
-      toast.success("Subscription activated", {
+
+      // Collect payment for the first delivery (or the one-off trial pack)
+      // before celebrating. The subscription row already exists so we can
+      // roll it back cleanly if the customer dismisses the modal — no
+      // half-activated unpaid plans. When the gateway isn't configured
+      // (local/dev builds) we keep today's activate-now behaviour.
+      const amountDue = result.subscription.pricePerDeliveryPaise;
+      if (razorpayConfigured() && amountDue > 0) {
+        const outcome = await payWithRazorpay({
+          amountPaise: amountDue,
+          receipt: `sub-${result.subscription.id}`,
+          description: isTrial
+            ? "Tanmatra 3-Day Trial Pack"
+            : `Tanmatra ${CADENCE_LABEL[cadence]} plan — first delivery`,
+          contact: address.phone,
+        });
+        if (outcome === "cancelled") {
+          await subscriptionsApi
+            .cancel(result.subscription.id)
+            .catch(() => undefined);
+          toast.info("Payment not completed — plan not activated", {
+            description: "Your details are saved on this page. Try again whenever you're ready.",
+          });
+          setSubmitting(false);
+          return;
+        }
+        if (outcome === "unavailable") {
+          toast.warning(
+            "Payment gateway unavailable — plan activated, payment will be collected on delivery.",
+          );
+        }
+      }
+
+      track("subscription_activated", {
+        planType: isTrial ? "trial" : "standard",
+        cadence,
+        amountPaise: amountDue,
+      });
+      toast.success(isTrial ? "Trial started" : "Subscription activated", {
         description: `Next delivery: ${new Date(result.subscription.nextDeliveryAt).toLocaleDateString()}`,
       });
       navigate("/subscriptions");

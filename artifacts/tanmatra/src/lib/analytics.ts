@@ -17,6 +17,7 @@ type EventName =
   | "upi_intent_completed"
   | "first_order_offer_shown"
   | "first_order_offer_applied"
+  | "subscription_activated"
   | "support_click";
 
 export function track(event: EventName, props?: Record<string, unknown>): void {
