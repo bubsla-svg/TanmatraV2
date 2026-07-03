@@ -49,6 +49,7 @@ import {
 import AddOnRail from "@/components/checkout/AddOnRail";
 import CheckoutStepper, { type CheckoutStep } from "@/components/checkout/CheckoutStepper";
 import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";
+import { cn } from "@/lib/utils";
 import {
   MapPin,
   CreditCard,
@@ -67,6 +68,7 @@ import {
   Gift,
   Ticket,
   Timer,
+  Zap,
 } from "lucide-react";
 
 import { addressesApi, type UserAddress } from "@/lib/userAddressesApi";
@@ -628,6 +630,9 @@ export default function Checkout() {
   // Pickup orders skip delivery fee entirely; otherwise the existing free-over-threshold rule.
   const deliveryFee =
     fulfillmentType === "pickup" ? 0 : discountedSubtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - discountedSubtotal);
+  const freeDeliveryProgress = discountedSubtotal === 0 ? 0 : Math.min(100, (discountedSubtotal / FREE_DELIVERY_THRESHOLD) * 100);
+  const hasFreeDelivery = fulfillmentType === "pickup" || deliveryFee === 0;
   const gst = Math.round(discountedSubtotal * 0.18); // 18% GST
   const grossTotal = discountedSubtotal + gst + deliveryFee + effectiveTip + addonTotal;
   // Server only redeems against the (discounted) meal subtotal; cap here too
@@ -1742,6 +1747,45 @@ export default function Checkout() {
           selected={selectedAddons}
           onChange={setSelectedAddons}
         />
+
+        {/* Dynamic Threshold Progress Tracker (CRO AOV Booster) */}
+        {fulfillmentType !== "pickup" && (
+          <div className={`rounded-xl px-4 py-3 border transition-all duration-300 shadow-md ${
+            hasFreeDelivery ? "border-emerald-500/40 bg-emerald-950/20" : "border-[#D4AF37]/40 bg-[#050505]"
+          }`}>
+            <div className="flex items-center justify-between mb-2 font-sans">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-zinc-400 flex items-center gap-1.5">
+                {hasFreeDelivery ? <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" /> : <Zap className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37] shrink-0" />}
+                Free Delivery Tracker
+              </span>
+              <span
+                className={cn(
+                  "text-xs font-bold tabular-nums",
+                  hasFreeDelivery ? "text-emerald-400" : "text-white"
+                )}
+              >
+                {hasFreeDelivery
+                  ? "Free Delivery Unlocked!"
+                  : `Add ₹${Math.ceil(amountToFreeDelivery / 100)} more for free delivery`}
+              </span>
+            </div>
+            <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className={cn(
+                  "absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out",
+                  hasFreeDelivery ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]" : "bg-gradient-to-r from-amber-500 to-[#D4AF37]"
+                )}
+                style={{ width: `${freeDeliveryProgress}%` }}
+              />
+            </div>
+            {!hasFreeDelivery && (
+              <p className="text-[10px] text-zinc-400 mt-1.5">
+                💡 Tip: Add an RD-curated drink or snack above to reach ₹500 and save ₹50 on delivery!
+              </p>
+            )}
+          </div>
+        )}
+
         <Card className="bg-clinical-surface border-clinical-border sticky top-20">
           <CardContent className="p-5 space-y-4">
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">

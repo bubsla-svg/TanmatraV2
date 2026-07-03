@@ -112,53 +112,50 @@ export default function Premium() {
         </p>
       </header>
 
-      <Card className="bg-gradient-to-br from-clinical-gold/10 via-clinical-surface to-clinical-surface border-clinical-gold/40">
-        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-center">
-          <div className="space-y-3">
+      <Card className="bg-[#050505] border border-[#D4AF37]/50 shadow-[0_12px_40px_rgba(212,175,55,0.15)] rounded-2xl overflow-hidden">
+        <CardContent className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-center">
+          <div className="space-y-3.5">
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-serif text-clinical-gold tabular-nums">
+              <span className="text-4xl sm:text-5xl font-display font-extrabold text-[#D4AF37] tabular-nums">
                 {formatPrice(pricePaise)}
               </span>
-              <span className="text-xs text-clinical-zinc">/ month</span>
+              <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">/ month</span>
             </div>
             {isPremium && membership ? (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-clinical-sage text-sm">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
                   <CheckCircle2 className="w-4 h-4" />
-                  Active —{" "}
-                  {membership.status === "cancelled"
-                    ? "ends"
-                    : "renews"}{" "}
-                  on{" "}
-                  {new Date(membership.currentPeriodEnd).toLocaleDateString(
-                    undefined,
-                    { day: "numeric", month: "short", year: "numeric" },
-                  )}
+                  Active Membership —{" "}
+                  {membership.status === "cancelled" ? "ends" : "renews"} on{" "}
+                  {new Date(membership.currentPeriodEnd).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
                 </div>
-                <p className="text-[12px] text-clinical-zinc">
-                  RD consults this period:{" "}
-                  <span className="text-white">
-                    {membership.rdConsultsUsedThisPeriod} /{" "}
-                    {membership.rdConsultsPerPeriod}
+                <p className="text-xs text-zinc-400 font-mono">
+                  RD consults used this period:{" "}
+                  <span className="text-white font-bold">
+                    {membership.rdConsultsUsedThisPeriod} / {membership.rdConsultsPerPeriod}
                   </span>
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-clinical-zinc">
-                Cancel anytime · No long-term commitment · Refund within 7 days
+              <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                ✓ Delivered fresh in 25–40 min priority wave · Cancel anytime with 1 click · Refund within 7 days
               </p>
             )}
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5 min-w-[220px]">
             {isPremium ? (
               <>
-                <Button asChild className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90">
-                  <Link to="/rd">Book my free RD consult</Link>
+                <Button asChild className="h-12 bg-[#D4AF37] text-[#050505] hover:bg-[#e6c148] font-extrabold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                  <Link to="/rd">Book free RD consult</Link>
                 </Button>
                 {membership?.status !== "cancelled" && (
                   <Button
                     variant="outline"
-                    className="border-clinical-border text-clinical-zinc hover:text-white"
+                    className="h-10 border-white/15 bg-transparent text-zinc-400 hover:text-white hover:border-white/30 text-xs"
                     onClick={() => cancel.mutate()}
                     disabled={cancel.isPending}
                   >
@@ -167,13 +164,15 @@ export default function Premium() {
                 )}
               </>
             ) : (
-              <Button
-                className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 px-8"
+              <button
+                type="button"
                 onClick={() => subscribe.mutate()}
                 disabled={subscribe.isPending}
+                className="w-full h-13 rounded-xl bg-[#D4AF37] text-[#050505] hover:bg-[#e6c148] font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(212,175,55,0.4)] active:scale-97 transition-all flex items-center justify-center gap-2"
               >
-                {subscribe.isPending ? "Activating…" : "Become a member"}
-              </Button>
+                <Crown className="w-4 h-4 fill-[#050505]" />
+                {subscribe.isPending ? "Activating Membership…" : "Join Tanmatra Premium"}
+              </button>
             )}
           </div>
         </CardContent>

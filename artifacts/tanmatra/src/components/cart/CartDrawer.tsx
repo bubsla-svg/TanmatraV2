@@ -477,7 +477,7 @@ function FreeDeliveryBar({
   // Copy logic
   let label: string;
   if (hasFreeDelivery) {
-    label = "Free delivery unlocked ✓";
+    label = "Free Delivery Unlocked!";
   } else if (ghostUnlocksDelivery) {
     label = "→ Unlocks free delivery";
   } else if (ghostItem !== null) {
@@ -487,18 +487,21 @@ function FreeDeliveryBar({
   }
 
   return (
-    <div className="rounded-lg px-3 pt-3 pb-2 border border-clinical-zinc/10 bg-clinical-dark/60">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-clinical-zinc">
+    <div className={`rounded-xl px-3.5 pt-3 pb-2.5 border transition-all duration-300 ${
+      hasFreeDelivery ? "border-emerald-500/40 bg-emerald-950/20" : "border-[#D4AF37]/30 bg-[#050505]"
+    }`}>
+      <div className="flex items-center justify-between mb-1.5 font-sans">
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-zinc-400 flex items-center gap-1">
+          {hasFreeDelivery ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> : <Zap className="w-3.5 h-3.5 text-[#D4AF37] fill-[#D4AF37]" />}
           Free Delivery
         </span>
         <span
           className={cn(
-            "text-[11px] tabular-nums transition-colors duration-200",
+            "text-xs font-bold tabular-nums transition-colors duration-200",
             hasFreeDelivery
-              ? "text-clinical-sage"
+              ? "text-emerald-400"
               : ghostUnlocksDelivery
-              ? "text-matcha"
+              ? "text-emerald-300"
               : "text-white",
           )}
         >
@@ -507,10 +510,13 @@ function FreeDeliveryBar({
       </div>
 
       {/* Progress track */}
-      <div className="relative h-1.5 rounded-full bg-clinical-zinc/15 overflow-hidden">
+      <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
         {/* Filled (real) track */}
         <div
-          className="absolute inset-y-0 left-0 bg-clinical-gold rounded-full transition-all duration-300"
+          className={cn(
+            "absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out",
+            hasFreeDelivery ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]" : "bg-gradient-to-r from-amber-500 to-[#D4AF37]"
+          )}
           style={{ width: `${currentFill * 100}%` }}
         />
 

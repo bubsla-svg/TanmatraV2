@@ -104,23 +104,24 @@ export default function MenuCard({
           <Sparkle weight="fill" className="w-3.5 h-3.5 text-clinical-gold drop-shadow-[0_0_6px_rgba(212,175,55,0.6)]" />
         </motion.div>
 
-        {/* Top-left: veg dot + RD + premium */}
-        <div className="absolute top-3 left-3 z-20 flex gap-1.5 items-center">
+        {/* Top-left: sophisticated modern pill-badges + RD + premium */}
+        <div className="absolute top-3 left-3 z-20 flex gap-1.5 items-center flex-wrap">
           <span
-            className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center bg-[#050505]/80 ${
-              item.isVeg ? "border-green-500" : "border-red-500"
+            className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider bg-[#050505]/90 backdrop-blur-md shadow-sm ${
+              item.isVeg ? "border-emerald-500/60 text-emerald-400" : "border-rose-500/60 text-rose-400"
             }`}
-            title={item.isVeg ? "Vegetarian" : "Non-vegetarian"}
+            title={item.isVeg ? "100% Vegetarian" : "Non-vegetarian"}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                item.isVeg ? "bg-green-500" : "bg-red-500"
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                item.isVeg ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" : "bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)]"
               }`}
             />
+            {item.isVeg ? "VEG" : "NON-VEG"}
           </span>
           {item.rdVerified && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-sage/40 text-clinical-sage bg-clinical-sage/10 backdrop-blur-sm font-semibold tracking-wider uppercase">
-              RD Verified
+            <span className="text-[9px] px-2 py-0.5 rounded-full border border-emerald-400/50 text-emerald-300 bg-[#050505]/90 backdrop-blur-md font-extrabold tracking-wider uppercase shadow-sm">
+              ★ RD Verified
             </span>
           )}
           {isPremiumOnly && (
@@ -222,7 +223,7 @@ export default function MenuCard({
               Upgrade to Premium
             </Button>
           ) : cartItem && !hasVariants ? (
-            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-btn border border-sage-300 dark:border-sage-700 bg-sage-100/60 dark:bg-sage-950/40 px-2 text-sage-800 dark:text-sage-300 font-sans text-[13px] font-semibold transition-all duration-200">
+            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-[#D4AF37] bg-[#D4AF37] px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(212,175,55,0.35)] transition-all duration-200">
               <button
                 type="button"
                 onClick={(e) => {
@@ -230,12 +231,12 @@ export default function MenuCard({
                   e.stopPropagation();
                   updateQty(cartItem.lineId, -1);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-sage-200 dark:hover:bg-sage-900/60 active:scale-90 transition-all text-lg font-bold"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/15 active:scale-90 transition-all text-base font-black"
                 aria-label="Decrease quantity"
               >
                 −
               </button>
-              <span className="font-mono tabular-nums text-sm font-bold">{cartItem.quantity}</span>
+              <span className="font-mono tabular-nums text-sm font-black">{cartItem.quantity}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -243,16 +244,16 @@ export default function MenuCard({
                   e.stopPropagation();
                   updateQty(cartItem.lineId, 1);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-sage-200 dark:hover:bg-sage-900/60 active:scale-90 transition-all text-lg font-bold"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/15 active:scale-90 transition-all text-base font-black"
                 aria-label="Increase quantity"
               >
                 +
               </button>
             </div>
           ) : (
-            <div className="flex-1 flex gap-1 min-w-0">
-              <Button
-                size="sm"
+            <div className="flex-1 flex gap-1.5 min-w-0">
+              <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -260,22 +261,22 @@ export default function MenuCard({
                 }}
                 disabled={!item.isAvailable || !isLive}
                 title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
-                className="flex-1 h-11 sm:h-10 border border-border bg-surface-raised px-2 py-2 font-sans text-xs font-semibold text-text-primary transition hover:border-saffron-700 hover:bg-saffron-50 dark:hover:bg-saffron-400/10 active:scale-95 active:bg-action active:text-action-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action shadow-sm truncate"
+                className="flex-1 h-11 sm:h-10 rounded-xl border border-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/25 text-[#D4AF37] px-3 py-2 font-sans text-xs font-extrabold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(212,175,55,0.15)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed truncate flex items-center justify-center gap-1"
               >
-                <span aria-hidden="true">+</span> Add{familyCartCount > 0 ? ` (${familyCartCount})` : ""}
-              </Button>
+                <span className="text-sm font-black leading-none" aria-hidden="true">+</span> ADD{familyCartCount > 0 ? ` (${familyCartCount})` : ""}
+              </button>
               {hasSavedAddress && preferences && !hasVariants && (
-                <Button
-                  size="sm"
+                <button
+                  type="button"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     onExpressBuy?.(item);
                   }}
-                  className="flex-1 h-11 sm:h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-bold px-2 truncate"
+                  className="flex-1 h-11 sm:h-10 rounded-xl bg-[#D4AF37] text-[#050505] hover:bg-[#e6c148] text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(212,175,55,0.3)] active:scale-95 transition-all truncate"
                 >
                   Buy Now
-                </Button>
+                </button>
               )}
             </div>
           )}

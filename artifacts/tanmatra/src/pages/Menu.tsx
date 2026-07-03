@@ -79,6 +79,7 @@ import {
 } from "@/lib/protocols";
 import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
+import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { useNavigate } from "react-router";
@@ -110,6 +111,7 @@ import {
   Package,
   Users,
   PlusCircle,
+  Zap,
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -208,6 +210,35 @@ export default function Menu() {
   const { dishes: catalogDishes } = useMenuCatalog();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
   const dietOrder = DIET_ORDER_BY_ID.get(dietOrderId);
+  const { orders } = useOrders();
+
+  const repeatMeals = useMemo(() => {
+    if (!preferences && orders.length === 0) return [];
+    const orderedIds = new Set<number>();
+    const list: DishData[] = [];
+    orders.forEach((o) => {
+      o.items.forEach((item) => {
+        if (!orderedIds.has(item.dishId)) {
+          orderedIds.add(item.dishId);
+          const dish = catalogDishes.find((d) => d.id === item.dishId);
+          if (dish && dish.isAvailable && !isSecondaryVariant(dish.slug)) {
+            list.push(dish);
+          }
+        }
+      });
+    });
+    if (list.length < 6 && preferences) {
+      catalogDishes.forEach((d) => {
+        if (!orderedIds.has(d.id) && d.isAvailable && !isSecondaryVariant(d.slug)) {
+          if (!evaluateDishForPreferences(d, preferences).blocked) {
+            orderedIds.add(d.id);
+            list.push(d);
+          }
+        }
+      });
+    }
+    return list.slice(0, 8);
+  }, [orders, preferences, catalogDishes]);
 
   const handleQuickAdd = (e: React.MouseEvent, item: DishData) => {
     e.preventDefault();
@@ -508,6 +539,81 @@ export default function Menu() {
             : "Cooked fresh daily · Dietitian-approved · Live availability"}
         </p>
       </div>
+
+      {/* CUJ 1: The 15-Second Re-Order Horizontal Carousel */}
+      {repeatMeals.length > 0 && !groupCode && (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+                <Zap className="w-4 h-4 fill-[#D4AF37]" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#D4AF37] font-extrabold leading-none">
+                  15-Second Re-Order
+                </p>
+                <h2 className="text-base sm:text-lg font-serif font-bold text-white mt-0.5">
+                  Your Most Ordered &amp; Recommended Meals
+                </h2>
+              </div>
+            </div>
+            <span className="text-[11px] text-zinc-400 font-mono hidden sm:inline">2-click instant re-order</span>
+          </div>
+          <div className="flex gap-3.5 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {repeatMeals.map((dish) => (
+              <div
+                key={dish.id}
+                className="w-64 shrink-0 rounded-2xl border border-white/10 bg-[#0b0b0b] hover:border-[#D4AF37]/50 hover:shadow-[0_8px_25px_rgba(212,175,55,0.15)] transition-all overflow-hidden flex flex-col group"
+              >
+                <div className="relative h-32 overflow-hidden bg-zinc-900">
+                  <img
+                    src={dish.image}
+                    alt={dish.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0b] via-transparent to-transparent" />
+                  <div className="absolute top-2 left-2 flex gap-1 items-center">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-[#050505]/90 backdrop-blur-md border ${
+                      dish.isVeg ? "border-emerald-500/60 text-emerald-400" : "border-rose-500/60 text-rose-400"
+                    }`}>
+                      {dish.isVeg ? "VEG" : "NON-VEG"}
+                    </span>
+                    {dish.rdVerified && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-[#050505]/90 backdrop-blur-md border border-emerald-400/50 text-emerald-300">
+                        ★ RD
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="p-3.5 flex-1 flex flex-col justify-between gap-2.5">
+                  <div>
+                    <h3 className="text-sm font-bold text-white leading-tight line-clamp-1 group-hover:text-[#D4AF37] transition-colors">
+                      {dish.name}
+                    </h3>
+                    <p className="text-[10px] text-zinc-400 font-mono mt-1">
+                      {dish.macros.calories} kcal · {dish.macros.protein}g protein
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                    <span className="font-display font-extrabold text-base text-white tabular-nums">
+                      {formatPrice(dish.price)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleQuickAdd(e, dish)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#D4AF37] bg-[#D4AF37] px-3.5 py-1.5 text-xs font-black text-[#050505] shadow-[0_0_15px_rgba(212,175,55,0.25)] hover:bg-[#e6c148] active:scale-95 transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Re-order</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {activeProtocol && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-clinical-gold/30 bg-clinical-gold/5 px-4 py-3">
