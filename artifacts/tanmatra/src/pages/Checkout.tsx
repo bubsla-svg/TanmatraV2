@@ -354,11 +354,15 @@ export default function Checkout() {
     }
     setGuestIsSending(true);
     try {
-      if (!recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-        });
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
       }
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+      });
       const phoneNumberE164 = `${guestCountryCode}${digits}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumberE164, recaptchaVerifierRef.current);
       setConfirmationResult(confirmation);
@@ -367,8 +371,8 @@ export default function Checkout() {
       toast.success(`Verification code sent to ${guestCountryCode} ${guestPhone}`);
     } catch (err) {
       console.error(err);
-      if (import.meta.env.DEV || window.location.hostname === "localhost" || window.location.hostname.includes(".run.app") || window.location.hostname.includes("tanmatra.food")) {
-        toast.warning("Firebase API unavailable. Falling back to dev mock OTP...", {
+      if (import.meta.env.DEV || window.location.hostname === "localhost") {
+        toast.warning("Dev environment detected. Using mock OTP...", {
           description: "Use mock code '123456' to proceed."
         });
         setGuestAuthStep("code");
@@ -387,7 +391,7 @@ export default function Checkout() {
         setGuestResendIn(30);
         return;
       }
-      toast.error("Could not send verification code: " + (err as Error).message);
+      toast.error("Could not send SMS verification code: " + (err as Error).message);
       if (recaptchaVerifierRef.current) {
         try {
           recaptchaVerifierRef.current.clear();
@@ -2378,7 +2382,7 @@ export default function Checkout() {
               </div>
             </div>
           )}
-          <div id="recaptcha-container" className="hidden"></div>
+          <div id="recaptcha-container" className="fixed bottom-0 right-0 z-50 pointer-events-none"></div>
         </DialogContent>
       </Dialog>
 

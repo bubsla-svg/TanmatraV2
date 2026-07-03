@@ -144,11 +144,15 @@ export default function Login() {
     }
     setIsSending(true);
     try {
-      if (!recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-        });
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
       }
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+      });
       const phoneNumberE164 = `${countryCode}${digits}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumberE164, recaptchaVerifierRef.current);
       setConfirmationResult(confirmation);
@@ -157,8 +161,8 @@ export default function Login() {
       toast.success(`Verification code sent to ${countryCode} ${phone}`);
     } catch (err) {
       console.error(err);
-      if (import.meta.env.DEV || window.location.hostname === "localhost" || window.location.hostname.includes(".run.app") || window.location.hostname.includes("tanmatra.food")) {
-        toast.warning("Firebase API unavailable. Falling back to dev mock OTP...", {
+      if (import.meta.env.DEV || window.location.hostname === "localhost") {
+        toast.warning("Dev environment detected. Using mock OTP...", {
           description: "Use mock code '123456' to proceed."
         });
         setStep("code");
@@ -177,7 +181,7 @@ export default function Login() {
         setResendIn(RESEND_COOLDOWN_SECS);
         return;
       }
-      toast.error("Could not send verification code: " + (err as Error).message);
+      toast.error("Could not send SMS verification code: " + (err as Error).message);
       if (recaptchaVerifierRef.current) {
         try {
           recaptchaVerifierRef.current.clear();
@@ -437,7 +441,7 @@ export default function Login() {
             </>
           )}
 
-          <div id="recaptcha-container" className="hidden"></div>
+          <div id="recaptcha-container" className="fixed bottom-0 right-0 z-50 pointer-events-none"></div>
 
           <p className="text-[10px] text-clinical-zinc flex items-center justify-center gap-1">
             <ShieldCheck className="w-3 h-3 text-clinical-sage" weight="bold" />
