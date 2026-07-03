@@ -28,6 +28,14 @@ interface LocationPickerFlowProps {
 const MAPS_API_KEY =
   (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) ?? "";
 
+// Warn in development so misconfigurations are caught early.
+if (import.meta.env.DEV && !MAPS_API_KEY) {
+  console.warn(
+    "[LocationPickerFlow] VITE_GOOGLE_MAPS_API_KEY is not set — " +
+      "the map picker will fall back to manual address entry.",
+  );
+}
+
 const ECL_SRC =
   "https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js";
 
@@ -46,23 +54,30 @@ function loadECLScript(): Promise<void> {
   if (_eclLoadPromise) return _eclLoadPromise;
 
   _eclLoadPromise = new Promise<void>((resolve, reject) => {
+    const onDefined = () =>
+      customElements
+        .whenDefined("gmpx-api-loader")
+        .then(() => resolve())
+        .catch((err: unknown) =>
+          reject(
+            new Error(
+              `ECL custom element registration failed: ${String(err)}`,
+            ),
+          ),
+        );
+
     // Script tag may already be in DOM (from root.tsx) — just wait for it.
     const existing = document.querySelector<HTMLScriptElement>(
       `script[src="${ECL_SRC}"]`,
     );
     if (existing) {
-      customElements.whenDefined("gmpx-api-loader").then(() => resolve()).catch(reject);
+      onDefined();
       return;
     }
     const script = document.createElement("script");
     script.type = "module";
     script.src = ECL_SRC;
-    script.addEventListener("load", () =>
-      customElements
-        .whenDefined("gmpx-api-loader")
-        .then(() => resolve())
-        .catch(reject),
-    );
+    script.addEventListener("load", onDefined);
     script.addEventListener("error", () => {
       _eclLoadPromise = null; // allow a future retry
       reject(new Error("Google Maps Extended Component Library failed to load"));
@@ -94,6 +109,9 @@ function ensureMapsAPILoader(apiKey: string): void {
  *
  * Unlike the old passive `waitForGoogleMaps`, this function is the single
  * point that drives loading, so the component is self-sufficient.
+ *
+ * Timeout budget is split: 40% allocated to ECL loading, the remainder
+ * reserved for Maps JS API polling, so each stage has adequate time.
  */
 async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
   if (!MAPS_API_KEY) return false;
@@ -106,6 +124,11 @@ async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
     return true;
   }
 
+  // Allocate 40% of the budget to ECL script loading; the full deadline
+  // remains available for Maps JS API polling in step 3.
+  const eclBudgetMs = Math.round(timeoutMs * 0.4);
+  const mapsDeadline = Date.now() + timeoutMs;
+
   // Step 1 — load ECL module (registers all gmp-* / gmpx-* custom elements).
   try {
     await Promise.race<void>([
@@ -113,7 +136,7 @@ async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
       new Promise<never>((_, reject) =>
         setTimeout(
           () => reject(new Error("ECL load timed out")),
-          timeoutMs,
+          eclBudgetMs,
         ),
       ),
     ]);
@@ -127,8 +150,7 @@ async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
   }
 
   // Step 3 — poll until Maps JS API (Geocoder) is ready.
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
+  while (Date.now() < mapsDeadline) {
     if ((window as any).google?.maps?.Geocoder) return true;
     await new Promise<void>((r) => setTimeout(r, 200));
   }
