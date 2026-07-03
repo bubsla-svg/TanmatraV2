@@ -38,6 +38,7 @@ import {
   CADENCE_LABEL,
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
+import { checkPincode } from "@/lib/serviceablePincodes";
 
 const CADENCES: Array<{
   value: SubscriptionCadence;
@@ -308,7 +309,21 @@ export default function Subscribe() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const addressComplete = Boolean(address.line.trim() && address.phone.trim());
+  const pincodeCheck = useMemo(() => checkPincode(address.pincode), [address.pincode]);
+
+  useEffect(() => {
+    if (pincodeCheck.state === "serviceable" && !address.city.trim()) {
+      setAddress((prev) => ({ ...prev, city: pincodeCheck.info.city }));
+    }
+  }, [pincodeCheck, address.city]);
+
+  const isPincodeValid = pincodeCheck.state === "serviceable" || (address.pincode.trim().length === 6 && pincodeCheck.state !== "unserviceable");
+  const addressComplete = Boolean(
+    address.line.trim() &&
+    address.phone.trim() &&
+    address.pincode.trim() &&
+    isPincodeValid
+  );
   const eatersComplete = members.every((m) => m.name.trim());
 
   const submit = async () => {
@@ -317,8 +332,15 @@ export default function Subscribe() {
       scrollToCard("sub-eaters");
       return;
     }
-    if (!addressComplete) {
-      toast.error("Address line and phone are required");
+    if (!address.line.trim() || !address.phone.trim() || !address.pincode.trim()) {
+      toast.error("Delivery address line, phone, and PIN code are required");
+      scrollToCard("sub-address");
+      return;
+    }
+    if (pincodeCheck.state === "unserviceable") {
+      toast.error("PIN code currently unserviceable", {
+        description: `We do not currently serve PIN code ${address.pincode} for subscription delivery.`,
+      });
       scrollToCard("sub-address");
       return;
     }
@@ -676,9 +698,20 @@ export default function Subscribe() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs text-clinical-zinc flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> Delivery window (locked-in)
-              </Label>
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <Label className="text-xs text-clinical-zinc flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" /> Delivery window (locked-in)
+                </Label>
+                {pincodeCheck.state === "serviceable" ? (
+                  <span className="text-[10px] text-emerald-400 font-semibold">
+                    ✓ Slot guaranteed in {pincodeCheck.info.city}
+                  </span>
+                ) : pincodeCheck.state === "unserviceable" ? (
+                  <span className="text-[10px] text-red-400 font-semibold">
+                    ⚠️ Slot restricted for PIN {address.pincode}
+                  </span>
+                ) : null}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {TIME_WINDOWS.map((w) => (
                   <button
@@ -874,12 +907,32 @@ export default function Subscribe() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-clinical-zinc">PIN code</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-clinical-zinc">PIN code</Label>
+                {pincodeCheck.state === "serviceable" && (
+                  <span className="text-[10px] text-emerald-400 font-medium">
+                    ✓ {pincodeCheck.info.area}
+                  </span>
+                )}
+              </div>
               <Input
                 value={address.pincode}
                 onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
-                className="bg-clinical-dark border-clinical-border text-white"
+                placeholder="201301"
+                maxLength={6}
+                className={`bg-clinical-dark text-white ${
+                  pincodeCheck.state === "unserviceable"
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : pincodeCheck.state === "serviceable"
+                    ? "border-emerald-500/60 focus-visible:ring-emerald-500"
+                    : "border-clinical-border"
+                }`}
               />
+              {pincodeCheck.state === "unserviceable" && (
+                <p className="text-[11px] text-red-400 font-medium leading-tight">
+                  ⚠️ PIN code unserviceable for subscription delivery. Currently serving Noida NCR & East Delhi.
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -938,7 +991,11 @@ export default function Subscribe() {
                   onClick={() => scrollToCard("sub-address")}
                   className="text-[10px] text-clinical-zinc hover:text-clinical-gold underline decoration-dotted"
                 >
-                  1 step left — add your delivery address
+                  {pincodeCheck.state === "unserviceable"
+                    ? "⚠️ PIN code unserviceable — update delivery PIN"
+                    : !address.pincode.trim() || !address.line.trim() || !address.phone.trim()
+                    ? "1 step left — complete delivery address & PIN code"
+                    : "1 step left — verify delivery details"}
                 </button>
               )}
             </div>
