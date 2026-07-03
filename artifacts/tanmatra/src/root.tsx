@@ -136,13 +136,14 @@ export default function Root() {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <Meta />
         <Links />
-        {import.meta.env.VITE_GOOGLE_MAPS_API_KEY && (
-          <script
-            src={`https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`}
-            async
-            defer
-          />
-        )}
+        <script
+          type="module"
+          src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js"
+        />
+        <gmpx-api-loader
+          key={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
+          solution-channel="GMP_GE_mapsandplacesautocomplete_v2"
+        ></gmpx-api-loader>
         {/* Inline loader styles so they apply before any stylesheet downloads */}
         <style dangerouslySetInnerHTML={{ __html: LOADER_STYLE }} />
         <script

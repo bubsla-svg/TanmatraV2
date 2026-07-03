@@ -17,16 +17,16 @@ interface LocationPickerFlowProps {
 }
 
 // ── Google Maps readiness ──────────────────────────────────────────────
-// The maps <script> loads async in root.tsx. If the user opens the picker
-// before it arrives, the old code rendered a permanently blank map with a
-// dead search box (the init effect never re-ran). Poll until ready, and
-// surface an explicit manual-entry fallback if it never comes (missing
-// key, blocked network).
 function waitForGoogleMaps(timeoutMs: number): Promise<boolean> {
   return new Promise((resolve) => {
     const started = Date.now();
     const tick = () => {
-      if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
+      if (
+        typeof window !== "undefined" &&
+        window.customElements &&
+        customElements.get("gmp-map") &&
+        (window as any).google?.maps?.Geocoder
+      ) {
         resolve(true);
         return;
       }
@@ -52,10 +52,6 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   const [mapsFailed, setMapsFailed] = useState(false);
   const [locating, setLocating] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
-  // Places Autocomplete is unavailable on Google Maps keys created after
-  // March 2025 (its constructor THROWS "not available to new customers").
-  // When that happens we fall back to Enter-to-search via the Geocoder,
-  // which every key supports.
   const [plainSearch, setPlainSearch] = useState(false);
 
   // Form details states
@@ -71,12 +67,8 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   const [saving, setSaving] = useState(false);
 
   // Map refs
-  const mapDivRef = useRef<HTMLDivElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const mapRef = useRef<any>(null);
   const autocompleteRef = useRef<any>(null);
-  // Last coords we reverse-geocoded — dedupes idle events (zoom, tiny pans,
-  // programmatic recenters after a search already handled elsewhere).
   const lastGeocodedRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // Initialize values if editing
@@ -122,8 +114,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     };
   }, [open]);
 
-  // Wait for the maps script as soon as the dialog opens so the map step
-  // is instant by the time the user reaches it.
+  // Wait for the extended component library and Maps JS API as soon as the dialog opens
   useEffect(() => {
     if (!open || mapsReady || mapsFailed) return;
     let cancelled = false;
@@ -136,97 +127,6 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       cancelled = true;
     };
   }, [open, mapsReady, mapsFailed]);
-
-  // Map + autocomplete initializer — runs when the map step is visible AND
-  // the script is ready (fixes the blank-map race).
-  useEffect(() => {
-    if (step !== "map" || !mapsReady) {
-      if (step !== "map") {
-        mapRef.current = null;
-        autocompleteRef.current = null;
-      }
-      return;
-    }
-    if (!mapDivRef.current || mapRef.current) return;
-
-    const g = (window as any).google;
-    // NOTHING in here may throw uncaught — an effect throw unmounts the
-    // whole page into the root ErrorBoundary ("Something went wrong").
-    try {
-      const map = new g.maps.Map(mapDivRef.current, {
-        center: coords,
-        zoom: 15,
-        disableDefaultUI: true,
-        zoomControl: false,
-        gestureHandling: "greedy",
-      });
-
-      // Re-geocode on ANY settled movement (drag, pinch-zoom, double-tap —
-      // the old dragstart-gated version left a stale address after zooms).
-      map.addListener("idle", () => {
-        try {
-          const center = map.getCenter();
-          if (!center) return;
-          const next = { lat: center.lat(), lng: center.lng() };
-          const last = lastGeocodedRef.current;
-          const moved =
-            !last ||
-            Math.abs(next.lat - last.lat) > 1e-5 ||
-            Math.abs(next.lng - last.lng) > 1e-5;
-          if (!moved) return;
-          setCoords(next);
-          reverseGeocode(next.lat, next.lng);
-        } catch {
-          // never let a map event take down the page
-        }
-      });
-
-      mapRef.current = map;
-      reverseGeocode(coords.lat, coords.lng);
-    } catch (err) {
-      console.error("[address-picker] map init failed", err);
-      setMapsReady(false);
-      setMapsFailed(true);
-      return;
-    }
-
-    // Autocomplete binds here (not in a ref callback) so it works even
-    // when the input mounted before the script finished loading. Its
-    // constructor THROWS on keys created after Mar 2025 ("not available
-    // to new customers") — degrade to Enter-to-search, never crash.
-    if (searchInputRef.current && !autocompleteRef.current && g.maps.places) {
-      try {
-        const autocomplete = new g.maps.places.Autocomplete(searchInputRef.current, {
-          componentRestrictions: { country: "in" },
-          fields: ["geometry", "formatted_address", "address_components"],
-        });
-        autocomplete.addListener("place_changed", () => {
-          try {
-            const place = autocomplete.getPlace();
-            if (place.geometry?.location && mapRef.current) {
-              const loc = place.geometry.location;
-              const next = { lat: loc.lat(), lng: loc.lng() };
-              lastGeocodedRef.current = next;
-              mapRef.current.setCenter(loc);
-              mapRef.current.setZoom(16);
-              setCoords(next);
-              parseAddressComponents(place.address_components || []);
-              setLocality(place.formatted_address || "");
-            }
-          } catch {
-            // ignore malformed place payloads
-          }
-        });
-        autocompleteRef.current = autocomplete;
-      } catch (err) {
-        console.warn("[address-picker] Places Autocomplete unavailable — using Enter-to-search", err);
-        setPlainSearch(true);
-      }
-    } else if (!g.maps.places) {
-      setPlainSearch(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, mapsReady]);
 
   const reverseGeocode = (lat: number, lng: number) => {
     const g = (window as any).google;
@@ -432,42 +332,62 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
         {/* STEP 2: Map Selector */}
         {step === "map" && (
           <div className="flex-1 flex flex-col relative">
-            <div className="absolute top-4 inset-x-4 z-10 flex gap-2">
+            <div className="absolute top-4 inset-x-4 z-10 flex gap-2 items-center">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setStep("prompt")}
-                className="h-10 w-10 bg-clinical-surface/85 backdrop-blur-sm border border-clinical-border rounded-lg text-white hover:bg-clinical-surface"
+                className="h-10 w-10 shrink-0 bg-clinical-surface/90 backdrop-blur-md border border-clinical-border rounded-lg text-white hover:bg-clinical-surface"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <div className="relative flex-1">
-                <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-zinc" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder={plainSearch ? "Type your area and press Enter…" : "Search area, sector, locality…"}
-                  onKeyDown={(e) => {
-                    if (plainSearch && e.key === "Enter") {
-                      e.preventDefault();
-                      handlePlainSearch((e.target as HTMLInputElement).value);
+              <div className="flex-1 min-w-0 bg-clinical-surface/95 backdrop-blur-md rounded-lg border border-clinical-border overflow-hidden shadow-lg p-0.5">
+                <gmpx-place-picker
+                  ref={(picker: any) => {
+                    if (picker && !autocompleteRef.current) {
+                      autocompleteRef.current = picker;
+                      picker.addEventListener("gmpx-placechange", () => {
+                        try {
+                          const place = picker.value;
+                          if (!place || !place.location) return;
+                          const loc = place.location;
+                          const next = {
+                            lat: typeof loc.lat === "function" ? loc.lat() : loc.lat,
+                            lng: typeof loc.lng === "function" ? loc.lng() : loc.lng,
+                          };
+                          lastGeocodedRef.current = next;
+                          setCoords(next);
+                          if (mapRef.current) {
+                            if (place.viewport && mapRef.current.innerMap) {
+                              mapRef.current.innerMap.fitBounds(place.viewport);
+                            } else {
+                              mapRef.current.center = `${next.lat},${next.lng}`;
+                              mapRef.current.zoom = 17;
+                            }
+                          }
+                          const marker = document.querySelector("gmp-advanced-marker") as any;
+                          if (marker) marker.position = `${next.lat},${next.lng}`;
+                          if (place.formattedAddress) setLocality(place.formattedAddress);
+                          if (place.addressComponents) parseAddressComponents(place.addressComponents);
+                          else reverseGeocode(next.lat, next.lng);
+                        } catch {}
+                      });
                     }
                   }}
-                  disabled={!mapsReady}
-                  className="w-full h-10 pl-9 pr-4 rounded-lg bg-clinical-surface/85 backdrop-blur-sm border border-clinical-border text-white text-xs placeholder:text-clinical-zinc focus:outline-none focus:ring-2 focus:ring-clinical-gold/50 disabled:opacity-60"
-                />
+                  placeholder="Enter or search an address…"
+                  style={{ width: "100%", display: "block" }}
+                ></gmpx-place-picker>
               </div>
             </div>
 
-            {/* Google Map Container */}
-            <div ref={mapDivRef} className="flex-1 w-full bg-clinical-dark relative">
-              {/* Script still loading / failed states */}
+            {/* Google Map Container with Extended Components */}
+            <div className="flex-1 w-full bg-clinical-dark relative">
               {!mapsReady && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-clinical-dark">
                   {!mapsFailed ? (
                     <>
                       <CircleNotch className="w-7 h-7 text-clinical-gold animate-spin" />
-                      <p className="text-xs text-clinical-zinc">Loading map…</p>
+                      <p className="text-xs text-clinical-zinc">Loading map components…</p>
                     </>
                   ) : (
                     <>
@@ -487,7 +407,6 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                 </div>
               )}
 
-              {/* Locating chip while GPS resolves — the map stays usable. */}
               {locating && mapsReady && (
                 <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/80 border border-clinical-border rounded-full px-3 py-1.5">
                   <CircleNotch className="w-3.5 h-3.5 text-clinical-gold animate-spin" />
@@ -495,15 +414,45 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                 </div>
               )}
 
-              {/* Fixed Center Pin */}
               {mapsReady && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[100%] z-10 pointer-events-none flex flex-col items-center">
-                  <div className="bg-black/80 text-[10px] text-white px-2 py-1 rounded shadow-md mb-2 border border-clinical-border font-semibold">
-                    Move the map to position the pin
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-clinical-gold/25 flex items-center justify-center border border-clinical-gold/50 animate-pulse absolute -bottom-1"></div>
-                  <MapPin className="w-10 h-10 text-clinical-gold relative z-20 drop-shadow-lg" weight="fill" />
-                </div>
+                <gmp-map
+                  ref={(node: any) => {
+                    if (node && !mapRef.current) {
+                      mapRef.current = node;
+                      customElements.whenDefined("gmp-map").then(() => {
+                        if (node.innerMap) {
+                          node.innerMap.setOptions({
+                            mapTypeControl: false,
+                            gestureHandling: "greedy",
+                          });
+                          node.innerMap.addListener("idle", () => {
+                            try {
+                              const center = node.innerMap.getCenter();
+                              if (!center) return;
+                              const next = { lat: center.lat(), lng: center.lng() };
+                              const last = lastGeocodedRef.current;
+                              const moved =
+                                !last ||
+                                Math.abs(next.lat - last.lat) > 1e-5 ||
+                                Math.abs(next.lng - last.lng) > 1e-5;
+                              if (!moved) return;
+                              setCoords(next);
+                              reverseGeocode(next.lat, next.lng);
+                              const marker = node.querySelector("gmp-advanced-marker") as any;
+                              if (marker) marker.position = `${next.lat},${next.lng}`;
+                            } catch {}
+                          });
+                        }
+                      });
+                    }
+                  }}
+                  center={`${coords.lat},${coords.lng}`}
+                  zoom="15"
+                  map-id="DEMO_MAP_ID"
+                  style={{ width: "100%", height: "100%", display: "block" }}
+                >
+                  <gmp-advanced-marker position={`${coords.lat},${coords.lng}`}></gmp-advanced-marker>
+                </gmp-map>
               )}
             </div>
 
