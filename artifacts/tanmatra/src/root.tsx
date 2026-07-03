@@ -141,7 +141,7 @@ export default function Root() {
           src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js"
         />
         <gmpx-api-loader
-          key={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
+          apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
           solution-channel="GMP_GE_mapsandplacesautocomplete_v2"
         ></gmpx-api-loader>
         {/* Inline loader styles so they apply before any stylesheet downloads */}
