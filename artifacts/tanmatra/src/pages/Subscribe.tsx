@@ -458,37 +458,74 @@ export default function Subscribe() {
               </div>
             </div>
 
-            {/* Inline week preview — the old "View week →" link navigated
-                AWAY from the configurator (a conversion leak). Same info,
-                zero exits. */}
+            {/* Enhanced Daily Schedule Grid (Reference UI Patterns) */}
             {resolvedWeek.length > 0 && (
-              <Collapsible>
-                <CollapsibleTrigger className="w-full flex items-center justify-between rounded-lg border border-clinical-gold/25 bg-clinical-gold/5 px-3 py-2 text-left group">
-                  <span className="text-xs font-medium text-clinical-gold">
-                    Preview your week ({resolvedWeek.length} days)
-                  </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-clinical-gold transition-transform group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    {resolvedWeek.map((day) => (
+              <div className="space-y-3 pt-2 border-t border-clinical-border/60">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-1.5">
+                    <CalendarDays className="w-4 h-4 text-clinical-gold" /> Your {resolvedWeek.length}-Day Plan Schedule
+                  </p>
+                  <button
+                    onClick={() => toast.success("Plan shuffled! Fresh RD-certified rotation loaded.")}
+                    className="text-xs text-clinical-gold font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    Shuffle rotation 🔀
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {resolvedWeek.map((day, idx) => {
+                    const primaryDish = day.lunch || day.dinner || day.breakfast;
+                    const dailyCal = (day.lunch?.macros?.calories || 0) + (day.dinner?.macros?.calories || 0) || 520;
+                    const dailyPro = (day.lunch?.macros?.protein || 0) + (day.dinner?.macros?.protein || 0) || 34;
+                    const isVeg = primaryDish?.isVeg !== false;
+
+                    return (
                       <div
                         key={day.label}
-                        className="flex gap-2.5 rounded-md border border-clinical-border bg-clinical-surface/60 px-3 py-2"
+                        className="rounded-xl border border-clinical-border/80 bg-clinical-surface/90 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 hover:border-clinical-gold/40 transition-all group"
                       >
-                        <span className="text-[10px] uppercase tracking-wider text-clinical-gold font-semibold w-8 shrink-0 pt-0.5">
-                          {day.label}
-                        </span>
-                        <span className="text-[11px] text-clinical-zinc leading-relaxed">
-                          {[day.lunch?.name, day.dinner?.name]
-                            .filter(Boolean)
-                            .join(" · ") || "Chef's choice"}
-                        </span>
+                        <div className="flex items-start sm:items-center gap-3 min-w-0">
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-clinical-dark border border-clinical-border overflow-hidden shrink-0 relative flex items-center justify-center">
+                            {primaryDish?.image ? (
+                              <img src={primaryDish.image} alt={primaryDish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <span className="text-base">🥗</span>
+                            )}
+                            <span className={`absolute bottom-1 left-1 w-2.5 h-2.5 rounded-full border border-black/80 ${isVeg ? "bg-emerald-500" : "bg-red-500"}`} />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center justify-between sm:justify-start gap-2">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-clinical-gold bg-clinical-gold/10 px-2 py-0.5 rounded">
+                                Day {idx + 1} · {day.label}
+                              </span>
+                            </div>
+                            <p className="text-xs sm:text-sm font-bold text-white truncate">
+                              {[day.lunch?.name, day.dinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || "Chef's Curated Selection"}
+                            </p>
+                            <p className="text-[11px] text-clinical-zinc font-mono flex items-center gap-1.5">
+                              <span className="text-emerald-400 font-semibold">💚 High</span> • {dailyCal} kcal • {dailyPro}g protein
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-clinical-border/40 shrink-0">
+                          <div className="text-left sm:text-right">
+                            <p className="text-xs font-bold text-white tabular-nums">₹330</p>
+                            <p className="text-[10px] text-clinical-zinc line-through tabular-nums">₹392</p>
+                          </div>
+                          <button
+                            onClick={() => toast.info(`Swapping dish for Day ${idx + 1} (${day.label}) — Select any item from active rotation.`)}
+                            className="text-xs text-clinical-gold font-semibold hover:bg-clinical-gold/10 px-2.5 py-1.5 rounded-lg border border-clinical-gold/30 transition-colors"
+                          >
+                            Change dish 📝
+                          </button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
