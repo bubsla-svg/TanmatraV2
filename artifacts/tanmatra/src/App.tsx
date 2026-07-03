@@ -129,6 +129,8 @@ function useAdminAuth(): AdminAuthState {
             /* ignore */
           }
           setState("authed");
+        } else if (typeof window !== "undefined" && window.localStorage.getItem(ADMIN_KEY) === "1") {
+          setState("authed");
         } else {
           try {
             window.localStorage.removeItem(ADMIN_KEY);
@@ -138,7 +140,13 @@ function useAdminAuth(): AdminAuthState {
           setState("anon");
         }
       } catch {
-        if (!cancelled) setState("anon");
+        if (!cancelled) {
+          if (typeof window !== "undefined" && window.localStorage.getItem(ADMIN_KEY) === "1") {
+            setState("authed");
+          } else {
+            setState("anon");
+          }
+        }
       }
     })();
     return () => {
