@@ -36,6 +36,7 @@ if (import.meta.env.DEV && !MAPS_API_KEY) {
   );
 }
 
+// ECL version is pinned in ECL_SRC; update there when bumping.
 const ECL_SRC =
   "https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js";
 
@@ -152,7 +153,7 @@ async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
   // Step 3 — poll until Maps JS API (Geocoder) is ready.
   while (Date.now() < mapsDeadline) {
     if ((window as any).google?.maps?.Geocoder) return true;
-    await new Promise<void>((r) => setTimeout(r, 200));
+    await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }
   return false;
 }
