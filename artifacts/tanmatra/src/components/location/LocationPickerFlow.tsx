@@ -106,6 +106,22 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     }
   }, [open, initialData]);
 
+  // Google invokes the global gm_authFailure when the Maps JS API rejects
+  // the key (API not enabled, billing off, bad referer). Without this hook
+  // the map just renders a dead dark canvas — route it into the same
+  // manual-entry fallback as a missing script.
+  useEffect(() => {
+    if (!open) return;
+    (window as unknown as { gm_authFailure?: () => void }).gm_authFailure = () => {
+      console.error("[address-picker] Google Maps auth failure — check key/API enablement");
+      setMapsReady(false);
+      setMapsFailed(true);
+    };
+    return () => {
+      delete (window as unknown as { gm_authFailure?: () => void }).gm_authFailure;
+    };
+  }, [open]);
+
   // Wait for the maps script as soon as the dialog opens so the map step
   // is instant by the time the user reaches it.
   useEffect(() => {

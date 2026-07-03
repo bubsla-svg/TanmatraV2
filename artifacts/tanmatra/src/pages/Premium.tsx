@@ -112,18 +112,18 @@ export default function Premium() {
         </p>
       </header>
 
-      <Card className="bg-[#050505] border border-[#D4AF37]/50 shadow-[0_12px_40px_rgba(212,175,55,0.15)] rounded-2xl overflow-hidden">
+      <Card className="bg-[#050505] border border-clinical-gold/50 shadow-[0_12px_40px_rgba(212,175,55,0.15)] rounded-2xl overflow-hidden">
         <CardContent className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-center">
           <div className="space-y-3.5">
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl sm:text-5xl font-display font-extrabold text-[#D4AF37] tabular-nums">
+              <span className="text-4xl sm:text-5xl font-display font-extrabold text-clinical-gold tabular-nums">
                 {formatPrice(pricePaise)}
               </span>
-              <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">/ month</span>
+              <span className="text-xs font-mono uppercase tracking-wider text-clinical-zinc">/ month</span>
             </div>
             {isPremium && membership ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                <div className="flex items-center gap-2 alert-safe-text font-bold text-sm">
                   <CheckCircle2 className="w-4 h-4" />
                   Active Membership —{" "}
                   {membership.status === "cancelled" ? "ends" : "renews"} on{" "}
@@ -133,7 +133,7 @@ export default function Premium() {
                     year: "numeric",
                   })}
                 </div>
-                <p className="text-xs text-zinc-400 font-mono">
+                <p className="text-xs text-clinical-zinc font-mono">
                   RD consults used this period:{" "}
                   <span className="text-white font-bold">
                     {membership.rdConsultsUsedThisPeriod} / {membership.rdConsultsPerPeriod}
@@ -149,13 +149,13 @@ export default function Premium() {
           <div className="flex flex-col gap-2.5 min-w-[220px]">
             {isPremium ? (
               <>
-                <Button asChild className="h-12 bg-[#D4AF37] text-[#050505] hover:bg-[#e6c148] font-extrabold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                <Button asChild className="h-12 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-extrabold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.3)]">
                   <Link to="/rd">Book free RD consult</Link>
                 </Button>
                 {membership?.status !== "cancelled" && (
                   <Button
                     variant="outline"
-                    className="h-10 border-white/15 bg-transparent text-zinc-400 hover:text-white hover:border-white/30 text-xs"
+                    className="h-10 border-white/15 bg-transparent text-clinical-zinc hover:text-white hover:border-white/30 text-xs"
                     onClick={() => cancel.mutate()}
                     disabled={cancel.isPending}
                   >
@@ -168,7 +168,7 @@ export default function Premium() {
                 type="button"
                 onClick={() => subscribe.mutate()}
                 disabled={subscribe.isPending}
-                className="w-full h-13 rounded-xl bg-[#D4AF37] text-[#050505] hover:bg-[#e6c148] font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(212,175,55,0.4)] active:scale-97 transition-all flex items-center justify-center gap-2"
+                className="w-full h-13 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(212,175,55,0.4)] active:scale-97 transition-all flex items-center justify-center gap-2"
               >
                 <Crown className="w-4 h-4 fill-[#050505]" />
                 {subscribe.isPending ? "Activating Membership…" : "Join Tanmatra Premium"}

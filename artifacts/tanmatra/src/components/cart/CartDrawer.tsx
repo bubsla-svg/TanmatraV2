@@ -488,20 +488,20 @@ function FreeDeliveryBar({
 
   return (
     <div className={`rounded-xl px-3.5 pt-3 pb-2.5 border transition-all duration-300 ${
-      hasFreeDelivery ? "border-emerald-500/40 bg-emerald-950/20" : "border-[#D4AF37]/30 bg-[#050505]"
+      hasFreeDelivery ? "alert-safe-border alert-safe-bg" : "border-clinical-gold/30 bg-[#050505]"
     }`}>
       <div className="flex items-center justify-between mb-1.5 font-sans">
-        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-zinc-400 flex items-center gap-1">
-          {hasFreeDelivery ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> : <Zap className="w-3.5 h-3.5 text-[#D4AF37] fill-[#D4AF37]" />}
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-clinical-zinc flex items-center gap-1">
+          {hasFreeDelivery ? <ShieldCheck className="w-3.5 h-3.5 alert-safe-text" /> : <Zap className="w-3.5 h-3.5 text-clinical-gold fill-clinical-gold" />}
           Free Delivery
         </span>
         <span
           className={cn(
             "text-xs font-bold tabular-nums transition-colors duration-200",
             hasFreeDelivery
-              ? "text-emerald-400"
+              ? "alert-safe-text"
               : ghostUnlocksDelivery
-              ? "text-emerald-300"
+              ? "alert-safe-text"
               : "text-white",
           )}
         >
@@ -515,7 +515,7 @@ function FreeDeliveryBar({
         <div
           className={cn(
             "absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out",
-            hasFreeDelivery ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]" : "bg-gradient-to-r from-amber-500 to-[#D4AF37]"
+            hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_10px_rgba(74,222,128,0.85)]" : "bg-gradient-to-r from-[#E7C766] to-clinical-gold"
           )}
           style={{ width: `${currentFill * 100}%` }}
         />
@@ -924,7 +924,7 @@ function FooterTotals({
     <div className="border-t border-clinical-zinc/15 bg-clinical-dark/95 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 shrink-0">
       <dl className="space-y-1.5 text-xs">
         <TotalsRow label="Subtotal" value={formatPrice(totals.subtotal)} />
-        <TotalsRow label="GST 5%" value={formatPrice(totals.tax)} muted />
+        <TotalsRow label="GST (18%)" value={formatPrice(totals.tax)} muted />
         <TotalsRow
           label="Delivery"
           value={totals.hasFreeDelivery ? "FREE" : formatPrice(totals.deliveryFee)}

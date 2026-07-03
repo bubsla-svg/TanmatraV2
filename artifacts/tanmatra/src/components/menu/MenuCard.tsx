@@ -107,20 +107,20 @@ export default function MenuCard({
         {/* Top-left: sophisticated modern pill-badges + RD + premium */}
         <div className="absolute top-3 left-3 z-20 flex gap-1.5 items-center flex-wrap">
           <span
-            className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider bg-[#050505]/90 backdrop-blur-md shadow-sm ${
-              item.isVeg ? "border-emerald-500/60 text-emerald-400" : "border-rose-500/60 text-rose-400"
+            className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider bg-clinical-dark/90 backdrop-blur-md shadow-sm ${
+              item.isVeg ? "alert-safe-border alert-safe-text" : "alert-allergen-border alert-allergen-text"
             }`}
             title={item.isVeg ? "100% Vegetarian" : "Non-vegetarian"}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                item.isVeg ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" : "bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)]"
+                item.isVeg ? "bg-[var(--color-alert-safe)] shadow-[0_0_6px_rgba(74,222,128,0.8)]" : "bg-[var(--color-alert-allergen)] shadow-[0_0_6px_rgba(255,107,107,0.8)]"
               }`}
             />
             {item.isVeg ? "VEG" : "NON-VEG"}
           </span>
           {item.rdVerified && (
-            <span className="text-[9px] px-2 py-0.5 rounded-full border border-emerald-400/50 text-emerald-300 bg-[#050505]/90 backdrop-blur-md font-extrabold tracking-wider uppercase shadow-sm">
+            <span className="text-[9px] px-2 py-0.5 rounded-full border alert-safe-border alert-safe-text bg-clinical-dark/90 backdrop-blur-md font-extrabold tracking-wider uppercase shadow-sm">
               ★ RD Verified
             </span>
           )}
@@ -223,7 +223,7 @@ export default function MenuCard({
               Upgrade to Premium
             </Button>
           ) : cartItem && !hasVariants ? (
-            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-[#D4AF37] bg-[#D4AF37] px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(212,175,55,0.35)] transition-all duration-200">
+            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(212,175,55,0.35)] transition-all duration-200">
               <button
                 type="button"
                 onClick={(e) => {
@@ -261,7 +261,7 @@ export default function MenuCard({
                 }}
                 disabled={!item.isAvailable || !isLive}
                 title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
-                className="flex-1 h-11 sm:h-10 rounded-xl border border-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/25 text-[#D4AF37] px-3 py-2 font-sans text-xs font-extrabold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(212,175,55,0.15)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed truncate flex items-center justify-center gap-1"
+                className="flex-1 h-11 sm:h-10 rounded-xl border border-clinical-gold bg-clinical-gold/10 hover:bg-clinical-gold/25 text-clinical-gold px-3 py-2 font-sans text-xs font-extrabold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(212,175,55,0.15)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed truncate flex items-center justify-center gap-1"
               >
                 <span className="text-sm font-black leading-none" aria-hidden="true">+</span> ADD{familyCartCount > 0 ? ` (${familyCartCount})` : ""}
               </button>
@@ -273,7 +273,7 @@ export default function MenuCard({
                     e.stopPropagation();
                     onExpressBuy?.(item);
                   }}
-                  className="flex-1 h-11 sm:h-10 rounded-xl bg-[#D4AF37] text-[#050505] hover:bg-[#e6c148] text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(212,175,55,0.3)] active:scale-95 transition-all truncate"
+                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(212,175,55,0.3)] active:scale-95 transition-all truncate"
                 >
                   Buy Now
                 </button>

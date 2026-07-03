@@ -211,6 +211,7 @@ export default function Menu() {
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
   const dietOrder = DIET_ORDER_BY_ID.get(dietOrderId);
   const { orders } = useOrders();
+  const hasOrderHistory = orders.length > 0;
 
   const repeatMeals = useMemo(() => {
     if (!preferences && orders.length === 0) return [];
@@ -540,30 +541,39 @@ export default function Menu() {
         </p>
       </div>
 
-      {/* CUJ 1: The 15-Second Re-Order Horizontal Carousel */}
+      {/* Delivery-promise banner — quick-commerce urgency, clinical tone. */}
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-clinical-gold/25 bg-clinical-gold/5 px-4 py-2.5 text-xs sm:text-[13px] text-zinc-200">
+        <Zap className="w-4 h-4 text-clinical-gold fill-clinical-gold shrink-0" aria-hidden />
+        <span>
+          Delivered fresh to your doorstep in{" "}
+          <span className="text-clinical-gold font-semibold whitespace-nowrap">25–40 minutes</span>
+        </span>
+      </div>
+
+      {/* Re-order / recommendation carousel */}
       {repeatMeals.length > 0 && !groupCode && (
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.2)]">
-                <Zap className="w-4 h-4 fill-[#D4AF37]" />
+              <div className="w-7 h-7 rounded-xl bg-clinical-gold/20 border border-clinical-gold/40 flex items-center justify-center text-clinical-gold shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+                <Zap className="w-4 h-4 fill-clinical-gold" />
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#D4AF37] font-extrabold leading-none">
-                  15-Second Re-Order
+                <p className="text-[10px] uppercase tracking-[0.18em] text-clinical-gold font-extrabold leading-none">
+                  {hasOrderHistory ? "Order again" : "Picked for you"}
                 </p>
                 <h2 className="text-base sm:text-lg font-serif font-bold text-white mt-0.5">
-                  Your Most Ordered &amp; Recommended Meals
+                  {hasOrderHistory ? "Your usual meals" : "Matched to your goals"}
                 </h2>
               </div>
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono hidden sm:inline">2-click instant re-order</span>
+            <span className="text-[11px] text-clinical-zinc font-mono hidden sm:inline">tap + to add instantly</span>
           </div>
           <div className="flex gap-3.5 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {repeatMeals.map((dish) => (
               <div
                 key={dish.id}
-                className="w-64 shrink-0 rounded-2xl border border-white/10 bg-[#0b0b0b] hover:border-[#D4AF37]/50 hover:shadow-[0_8px_25px_rgba(212,175,55,0.15)] transition-all overflow-hidden flex flex-col group"
+                className="w-64 shrink-0 rounded-2xl border border-white/10 bg-clinical-surface hover:border-clinical-gold/50 hover:shadow-[0_8px_25px_rgba(212,175,55,0.15)] transition-all overflow-hidden flex flex-col group"
               >
                 <div className="relative h-32 overflow-hidden bg-zinc-900">
                   <img
@@ -572,15 +582,15 @@ export default function Menu() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0b] via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-clinical-surface via-transparent to-transparent" />
                   <div className="absolute top-2 left-2 flex gap-1 items-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-[#050505]/90 backdrop-blur-md border ${
-                      dish.isVeg ? "border-emerald-500/60 text-emerald-400" : "border-rose-500/60 text-rose-400"
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-clinical-dark/90 backdrop-blur-md border ${
+                      dish.isVeg ? "alert-safe-border alert-safe-text" : "alert-allergen-border alert-allergen-text"
                     }`}>
                       {dish.isVeg ? "VEG" : "NON-VEG"}
                     </span>
                     {dish.rdVerified && (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-[#050505]/90 backdrop-blur-md border border-emerald-400/50 text-emerald-300">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-clinical-dark/90 backdrop-blur-md border alert-safe-border alert-safe-text">
                         ★ RD
                       </span>
                     )}
@@ -588,10 +598,10 @@ export default function Menu() {
                 </div>
                 <div className="p-3.5 flex-1 flex flex-col justify-between gap-2.5">
                   <div>
-                    <h3 className="text-sm font-bold text-white leading-tight line-clamp-1 group-hover:text-[#D4AF37] transition-colors">
+                    <h3 className="text-sm font-bold text-white leading-tight line-clamp-1 group-hover:text-clinical-gold transition-colors">
                       {dish.name}
                     </h3>
-                    <p className="text-[10px] text-zinc-400 font-mono mt-1">
+                    <p className="text-[10px] text-clinical-zinc font-mono mt-1">
                       {dish.macros.calories} kcal · {dish.macros.protein}g protein
                     </p>
                   </div>
@@ -602,10 +612,10 @@ export default function Menu() {
                     <button
                       type="button"
                       onClick={(e) => handleQuickAdd(e, dish)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#D4AF37] bg-[#D4AF37] px-3.5 py-1.5 text-xs font-black text-[#050505] shadow-[0_0_15px_rgba(212,175,55,0.25)] hover:bg-[#e6c148] active:scale-95 transition-all"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-clinical-gold bg-clinical-gold px-3.5 py-1.5 text-xs font-black text-[#050505] shadow-[0_0_15px_rgba(212,175,55,0.25)] hover:bg-clinical-gold/90 active:scale-95 transition-all"
                     >
                       <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>Re-order</span>
+                      <span>Add</span>
                     </button>
                   </div>
                 </div>
@@ -844,9 +854,10 @@ export default function Menu() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-zinc-muted" />
+      {/* Search — sticky under the header on desktop so faceting stays
+          one glance away no matter how deep the user scrolls. */}
+      <div className="relative md:sticky md:top-16 md:z-30 md:-mx-2 md:px-2 md:py-2 md:bg-clinical-dark/95 md:backdrop-blur-xl md:rounded-xl">
+        <Search className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-zinc-muted" />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -1271,7 +1282,7 @@ export default function Menu() {
           showed roughly 1.5 dishes above the fold on mobile after the
           filter rails — a known browse-friction point flagged in the
           adoption audit (P1 #19). */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 [&>*]:[content-visibility:auto] [&>*]:[contain-intrinsic-size:auto_420px]">
         {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }, idx) => {
           const repDish: DishData = {
             ...filtered.find((f) => f.dish.id === parent.id)!.dish,
