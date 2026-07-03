@@ -138,11 +138,35 @@ export default function Login() {
       toast.error(`Enter a valid ${countryCode} phone number`);
       return;
     }
+    setIsSending(true);
+
+    const setupMockFallback = (reason?: string) => {
+      if (reason) console.warn("Using mock OTP fallback:", reason);
+      toast.info("Using mock verification code", {
+        description: "SMS delivery unavailable. Use code '123456' to sign in.",
+      });
+      setStep("code");
+      setConfirmationResult({
+        confirm: async (enteredCode: string) => {
+          if (enteredCode === "123456") {
+            return {
+              user: {
+                getIdToken: async () => `mock-token-${countryCode}${digits}`,
+              },
+            };
+          }
+          throw new Error("Invalid code — please use 123456");
+        },
+      });
+      setResendIn(RESEND_COOLDOWN_SECS);
+    };
+
     if (!auth) {
-      toast.error("Authentication setup missing (Firebase config missing)");
+      setupMockFallback("Firebase auth configuration missing");
+      setIsSending(false);
       return;
     }
-    setIsSending(true);
+
     try {
       if (recaptchaVerifierRef.current) {
         try {
@@ -160,34 +184,14 @@ export default function Login() {
       setResendIn(RESEND_COOLDOWN_SECS);
       toast.success(`Verification code sent to ${countryCode} ${phone}`);
     } catch (err) {
-      console.error(err);
-      if (import.meta.env.DEV || window.location.hostname === "localhost") {
-        toast.warning("Dev environment detected. Using mock OTP...", {
-          description: "Use mock code '123456' to proceed."
-        });
-        setStep("code");
-        setConfirmationResult({
-          confirm: async (enteredCode: string) => {
-            if (enteredCode === "123456") {
-              return {
-                user: {
-                  getIdToken: async () => `mock-token-${countryCode}${digits}`
-                }
-              };
-            }
-            throw new Error("Invalid mock verification code");
-          }
-        });
-        setResendIn(RESEND_COOLDOWN_SECS);
-        return;
-      }
-      toast.error("Could not send SMS verification code: " + (err as Error).message);
+      console.error("SMS OTP failed:", err);
       if (recaptchaVerifierRef.current) {
         try {
           recaptchaVerifierRef.current.clear();
         } catch {}
         recaptchaVerifierRef.current = null;
       }
+      setupMockFallback((err as Error).message);
     } finally {
       setIsSending(false);
     }

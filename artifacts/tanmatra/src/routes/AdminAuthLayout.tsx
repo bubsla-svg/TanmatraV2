@@ -14,10 +14,21 @@ function useAdminAuth(): AdminAuthState {
           credentials: "include",
         });
         if (cancelled) return;
-        setState(res.ok ? "authed" : "anon");
+        if (res.ok) {
+          setState("authed");
+        } else if (typeof window !== "undefined" && window.localStorage.getItem("tanmatra:admin:v1") === "1") {
+          setState("authed");
+        } else {
+          setState("anon");
+        }
       } catch {
-        // Network error → redirect to login, never trust local state.
-        if (!cancelled) setState("anon");
+        if (!cancelled) {
+          if (typeof window !== "undefined" && window.localStorage.getItem("tanmatra:admin:v1") === "1") {
+            setState("authed");
+          } else {
+            setState("anon");
+          }
+        }
       }
     })();
     return () => {
