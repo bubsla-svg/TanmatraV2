@@ -13,6 +13,10 @@ const HIDE_ON = [
   /^\/track(\/.*)?$/,
   /^\/admin(\/.*)?$/,
   /^\/rd-console(\/.*)?$/,
+  /^\/subscribe(\/.*)?$/,
+  /^\/subscriptions(\/.*)?$/,
+  /^\/subscription-plans(\/.*)?$/,
+  /^\/plans(\/.*)?$/,
   // Dish and marketplace detail pages carry their own fixed bottom CTA at
   // the same offset — stacking two bars buries the primary action.
   /^\/dish\/.+/,

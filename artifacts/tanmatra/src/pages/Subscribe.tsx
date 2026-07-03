@@ -32,6 +32,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
 import {
   subscriptionsApi,
@@ -126,6 +134,9 @@ const PROTOCOL_PRESETS = {
 export default function Subscribe() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { orders } = useOrders();
+  const isFirstOrder = orders.length === 0;
+  const [policyModal, setPolicyModal] = useState<"pause" | "swap" | null>(null);
   const planSlug = searchParams.get("plan");
   const rdPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
   // Trial mode: either the D2C `?trial=1` entry or the legacy RD trial slug.
@@ -964,11 +975,21 @@ export default function Subscribe() {
                 )}
               </p>
               {/* Price math — no surprises at the payment modal. */}
-              <p className="text-[10px] text-clinical-zinc tabular-nums">
-                {isTrial
-                  ? `${meals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
-                  : `${meals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% ${CADENCE_LABEL[cadence].toLowerCase()} saving`}
-              </p>
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-clinical-zinc tabular-nums">
+                  {isTrial
+                    ? `${meals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
+                    : `${meals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% ${CADENCE_LABEL[cadence].toLowerCase()} saving`}
+                </p>
+                {isFirstOrder && !isTrial && (
+                  <p className="text-[10px] text-emerald-400 font-semibold">
+                    🎁 First order welcome offer: flat 25% off (capped at ₹80) applied automatically at payment
+                  </p>
+                )}
+                <p className="text-[10px] text-clinical-sage font-medium">
+                  🚚 Delivery fee: FREE (included on all subscription plans)
+                </p>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-1.5">
               <Button
@@ -1004,15 +1025,54 @@ export default function Subscribe() {
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-clinical-gold" /> Secured by Razorpay
             </span>
-            <span className="flex items-center gap-1">
-              <Check className="w-3 h-3 text-clinical-sage" /> Pause or cancel anytime
-            </span>
-            <span className="flex items-center gap-1">
-              <Check className="w-3 h-3 text-clinical-sage" /> Swap any dish before it's cooked
-            </span>
+            <button
+              type="button"
+              onClick={() => setPolicyModal("pause")}
+              className="flex items-center gap-1 hover:text-clinical-gold underline decoration-dotted transition-colors cursor-pointer"
+            >
+              <Check className="w-3 h-3 text-clinical-sage" /> Pause or cancel anytime ℹ️
+            </button>
+            <button
+              type="button"
+              onClick={() => setPolicyModal("swap")}
+              className="flex items-center gap-1 hover:text-clinical-gold underline decoration-dotted transition-colors cursor-pointer"
+            >
+              <Check className="w-3 h-3 text-clinical-sage" /> Swap any dish before it's cooked ℹ️
+            </button>
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={policyModal !== null} onOpenChange={(open) => !open && setPolicyModal(null)}>
+        <DialogContent className="bg-clinical-surface border-clinical-border max-w-md text-white">
+          <DialogHeader>
+            <DialogTitle className="text-clinical-gold flex items-center gap-2">
+              {policyModal === "pause" ? "⏸️ Pause & Cancellation Policy" : "🔀 Flexible Dish Swap Guarantee"}
+            </DialogTitle>
+            <DialogDescription className="text-clinical-zinc text-xs space-y-2 pt-2">
+              {policyModal === "pause" ? (
+                <>
+                  <p className="text-zinc-200">
+                    <strong>Pause up to 8 weeks:</strong> Need to skip a delivery or going on a trip? You can pause your plan directly from the <em>My Plans</em> dashboard up to 24 hours before any scheduled delivery window. Your delivery schedule and remaining credits are frozen instantly.
+                  </p>
+                  <p className="text-zinc-200">
+                    <strong>Cancel anytime:</strong> If you cancel mid-cycle, any remaining unfulfilled full weeks are refunded within 7 business days or kept as wallet credit for future one-off orders.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-zinc-200">
+                    <strong>Swap before kitchen cutoff:</strong> Don't fancy tomorrow's recipe? Up to 24 hours before your scheduled slot, click <em>Change dish</em> on any upcoming delivery day to select any alternative RD-certified meal on our active rotation at zero extra charge.
+                  </p>
+                  <p className="text-zinc-200">
+                    <strong>Allergen auto-filtering:</strong> Our kitchen automatically excludes your saved allergens and preferences every week so your menu is 100% safe by default.
+                  </p>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
