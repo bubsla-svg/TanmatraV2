@@ -185,6 +185,36 @@
 
   ::selection { background: var(--color-clinical-gold-light); color: var(--color-clinical-gold); }
 
+  /* ─── Google Places autocomplete dropdown (address picker) ─── */
+  /* The default .pac-container is a white card that clashes with the dark
+     dialog and can stack under the Radix modal. Theme it to the Clinical
+     Dark surface and float it above everything. */
+  .pac-container {
+    z-index: 10000 !important;
+    background: var(--color-clinical-surface);
+    border: 1px solid var(--color-clinical-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+    font-family: var(--font-sans);
+    margin-top: 4px;
+  }
+  .pac-item {
+    background: transparent;
+    border-top: 1px solid color-mix(in oklab, var(--color-clinical-border) 40%, transparent);
+    color: var(--color-clinical-zinc);
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .pac-item:first-child { border-top: none; }
+  .pac-item:hover,
+  .pac-item-selected {
+    background: color-mix(in oklab, var(--color-clinical-gold) 10%, transparent);
+  }
+  .pac-item-query { color: #fff; font-size: 0.8125rem; }
+  .pac-matched { color: var(--color-clinical-gold); }
+  .pac-icon { filter: invert(0.7) sepia(0.3) saturate(2) hue-rotate(10deg); }
+
   /* ─── Canonical alert utilities (clinical surfaces) ─── */
   /* Use these in place of bg-red-500/* / text-red-300 / bg-orange-500/*
      on Cart, Checkout, Orders, Track, Clinical, RdConsole, and the
