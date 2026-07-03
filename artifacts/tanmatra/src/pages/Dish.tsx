@@ -247,6 +247,10 @@ export default function Dish() {
       });
       return;
     }
+    if (match?.blocked === true) {
+      toast.error("Cannot add dish: Allergen/Contraindication conflict");
+      return;
+    }
     const customizations = collectCustomizationsForCart();
     addItem({
       dishId: meal.id,

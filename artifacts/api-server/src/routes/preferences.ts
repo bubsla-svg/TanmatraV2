@@ -39,6 +39,7 @@ const stringList = z
 const preferencesSchema = z.object({
   allergens: stringList.optional(),
   dislikedIngredients: stringList.optional(),
+  medicalConditions: stringList.optional(),
   cuisines: stringList.optional(),
   spiceLevel: spiceLevel.optional(),
   dietaryStyle: dietaryStyle.optional(),
@@ -72,6 +73,7 @@ async function upsertPreferences(
     userId,
     allergens: patch.allergens ?? [],
     dislikedIngredients: patch.dislikedIngredients ?? [],
+    medicalConditions: patch.medicalConditions ?? [],
     cuisines: patch.cuisines ?? [],
     spiceLevel: patch.spiceLevel ?? "medium",
     dietaryStyle: patch.dietaryStyle ?? "omnivore",
@@ -87,6 +89,8 @@ async function upsertPreferences(
   if (patch.allergens !== undefined) updateSet["allergens"] = patch.allergens;
   if (patch.dislikedIngredients !== undefined)
     updateSet["dislikedIngredients"] = patch.dislikedIngredients;
+  if (patch.medicalConditions !== undefined)
+    updateSet["medicalConditions"] = patch.medicalConditions;
   if (patch.cuisines !== undefined) updateSet["cuisines"] = patch.cuisines;
   if (patch.spiceLevel !== undefined)
     updateSet["spiceLevel"] = patch.spiceLevel;

@@ -9,7 +9,6 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { usersTable } from "./auth";
 
 /**
  * Server-managed `Idempotency-Key` cache. The order-create middleware
@@ -30,9 +29,7 @@ import { usersTable } from "./auth";
 export const idempotencyKeysTable = pgTable(
   "idempotency_keys",
   {
-    userId: varchar("user_id")
-      .notNull()
-      .references(() => usersTable.id, { onDelete: "cascade" }),
+    userId: varchar("user_id").notNull(),
     key: varchar("key", { length: 128 }).notNull(),
     requestHash: varchar("request_hash", { length: 64 }).notNull(),
     statusCode: integer("status_code"),

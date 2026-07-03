@@ -13,6 +13,7 @@
 
 import { generateText } from "ai";
 import { DISHES, type DishData } from "@workspace/menu-catalog";
+import { evaluateDishForPreferences, type PreferencesForMatch } from "@workspace/preferences-match";
 import {
   type MealPlanConstraints,
   type MealPlanDay,
@@ -69,6 +70,14 @@ export function defaultConstraintsFromBrief(
     allergens:
       overrides.allergens ??
       [...(r.preferences?.allergens ?? [])].map((s) => s.toLowerCase()),
+    medicalConditions:
+      overrides.medicalConditions ??
+      [
+        ...(r.preferences?.medicalConditions ??
+          brief.preferences?.medicalConditions ??
+          (brief as any).medicalConditions ??
+          []),
+      ].map((s) => s.toLowerCase()),
     dietaryStyle: overrides.dietaryStyle ?? r.preferences?.dietaryStyle ?? null,
     spiceLevel: overrides.spiceLevel ?? r.preferences?.spiceLevel ?? null,
     goal: overrides.goal ?? r.preferences?.goal ?? null,
@@ -116,13 +125,14 @@ export function isAllergenSafe(
   allergens: readonly string[],
 ): boolean {
   if (allergens.length === 0) return true;
-  const dishAllergens = new Set(
-    dish.allergens.map((a) => a.toLowerCase().trim()),
-  );
-  for (const a of allergens) {
-    if (dishAllergens.has(a.toLowerCase().trim())) return false;
-  }
-  return true;
+  const prefs: PreferencesForMatch = {
+    allergens: [...allergens],
+    dislikedIngredients: [],
+    cuisines: [],
+    dietaryStyle: "omnivore",
+  };
+  const match = evaluateDishForPreferences(dish, prefs, { strict: true });
+  return !match.blockReasons.some((r) => r.code === "allergen_block" || r.code === "contraindication_block");
 }
 
 /** True when the dish satisfies the user's dietary style. */
@@ -131,25 +141,14 @@ export function matchesDiet(
   dietaryStyle: string | null,
 ): boolean {
   if (!dietaryStyle) return true;
-  switch (dietaryStyle) {
-    case "vegan":
-      // We don't track vegan-vs-vegetarian on dishes; require veg + no
-      // dairy/egg allergens to approximate vegan-safety.
-      if (!dish.isVeg) return false;
-      return !dish.allergens.some((a) => /dairy|egg/i.test(a));
-    case "vegetarian":
-      return dish.isVeg;
-    case "pescatarian":
-      // Allow veg + anything fish-flagged. Fall through to true (no
-      // ground-truth meat type field on dishes).
-      return true;
-    case "keto":
-      // Approximate: low/medium GI and carbs <= 30g per serving.
-      return dish.glycaemicIndex !== "high" && dish.macros.carbs <= 30;
-    case "omnivore":
-    default:
-      return true;
-  }
+  const prefs: PreferencesForMatch = {
+    allergens: [],
+    dislikedIngredients: [],
+    cuisines: [],
+    dietaryStyle: (dietaryStyle as any) ?? "omnivore",
+  };
+  const match = evaluateDishForPreferences(dish, prefs, { strict: true });
+  return !match.blockReasons.some((r) => r.code === "diet_block" || r.code === "keto_block");
 }
 
 export function buildCandidatePool(
@@ -160,12 +159,18 @@ export function buildCandidatePool(
     lunch: [],
     dinner: [],
   };
-  const eligible = DISHES.filter(
-    (d) =>
-      d.isAvailable &&
-      isAllergenSafe(d, constraints.allergens) &&
-      matchesDiet(d, constraints.dietaryStyle),
-  );
+  const eligible = DISHES.filter((d) => {
+    if (!d.isAvailable) return false;
+    const prefs: PreferencesForMatch = {
+      allergens: constraints.allergens,
+      dislikedIngredients: [],
+      cuisines: [],
+      dietaryStyle: (constraints.dietaryStyle as any) ?? "omnivore",
+      medicalConditions: constraints.medicalConditions ?? [],
+    };
+    const match = evaluateDishForPreferences(d, prefs, { strict: true });
+    return !match.blocked;
+  });
 
   for (const slot of MEAL_SLOTS) {
     const buckets = SLOT_CATEGORY_BUCKETS[slot];
@@ -305,19 +310,36 @@ export function validatePlan(
         });
         continue;
       }
-      if (!isAllergenSafe(dish, constraints.allergens)) {
-        violations.push({
-          kind: "allergen",
-          message: `${dish.name} contains a flagged allergen`,
-          dishId: dish.id,
-        });
-      }
-      if (!matchesDiet(dish, constraints.dietaryStyle)) {
-        violations.push({
-          kind: "diet",
-          message: `${dish.name} does not match diet ${constraints.dietaryStyle}`,
-          dishId: dish.id,
-        });
+      const prefs: PreferencesForMatch = {
+        allergens: constraints.allergens,
+        dislikedIngredients: [],
+        cuisines: [],
+        dietaryStyle: (constraints.dietaryStyle as any) ?? "omnivore",
+        medicalConditions: constraints.medicalConditions ?? [],
+      };
+      const match = evaluateDishForPreferences(dish, prefs, { strict: true });
+      if (match.blocked) {
+        for (const reason of match.blockReasons) {
+          if (reason.code === "allergen_block") {
+            violations.push({
+              kind: "allergen",
+              message: `${dish.name} contains a flagged allergen`,
+              dishId: dish.id,
+            });
+          } else if (reason.code === "diet_block" || reason.code === "keto_block") {
+            violations.push({
+              kind: "diet",
+              message: `${dish.name} does not match diet ${constraints.dietaryStyle}`,
+              dishId: dish.id,
+            });
+          } else if (reason.code === "contraindication_block") {
+            violations.push({
+              kind: "allergen",
+              message: `${dish.name} violates clinical contraindication (${reason.conditions.join(", ")})`,
+              dishId: dish.id,
+            });
+          }
+        }
       }
       counts.set(dish.id, (counts.get(dish.id) ?? 0) + 1);
       total += entry.pricePaise;

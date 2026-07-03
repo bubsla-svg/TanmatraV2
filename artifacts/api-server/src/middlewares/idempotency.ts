@@ -29,6 +29,7 @@ import { db, idempotencyKeysTable } from "@workspace/db";
 
 const KEY_RE = /^[A-Za-z0-9._\-:]{8,128}$/;
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 h
+const IN_FLIGHT_TIMEOUT_MS = 60_000; // 60s max in-flight duration before crash recovery
 const POLL_INTERVAL_MS = 50;
 const POLL_TIMEOUT_MS = 5_000;
 
@@ -52,6 +53,40 @@ function hashRequestBody(body: unknown): string {
 
 function isExpired(row: { expiresAt: Date }): boolean {
   return row.expiresAt.getTime() <= Date.now();
+}
+
+function extractChunkAndEncoding(args: unknown[]): {
+  chunk: unknown;
+  encoding?: BufferEncoding;
+} {
+  let chunk: unknown = undefined;
+  let encoding: BufferEncoding | undefined = undefined;
+  for (const arg of args) {
+    if (typeof arg === "function") {
+      continue;
+    }
+    if (chunk === undefined) {
+      chunk = arg;
+    } else if (typeof arg === "string" && encoding === undefined) {
+      encoding = arg as BufferEncoding;
+    }
+  }
+  return { chunk, encoding };
+}
+
+function appendToChunks(
+  chunks: Buffer[],
+  chunk: unknown,
+  encoding?: BufferEncoding,
+): void {
+  if (chunk === undefined || chunk === null) return;
+  if (typeof chunk === "string") {
+    chunks.push(Buffer.from(chunk, encoding || "utf8"));
+  } else if (Buffer.isBuffer(chunk) || chunk instanceof Uint8Array) {
+    chunks.push(Buffer.from(chunk));
+  } else {
+    chunks.push(Buffer.from(String(chunk), encoding || "utf8"));
+  }
 }
 
 /**
@@ -114,13 +149,12 @@ async function runIdempotency(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  if (!req.isAuthenticated()) {
-    // Defer auth response to the route's own requireAuth — but we
-    // cannot scope the cache without a user, so just pass through.
-    next();
-    return;
-  }
-  const userId = req.user.id;
+  const userId =
+    req.user?.id ||
+    req.header("X-Guest-ID") ||
+    req.header("X-Device-ID") ||
+    `guest:${req.ip || req.socket?.remoteAddress || "anonymous"}`;
+
   const rawKey = req.header("Idempotency-Key");
   if (!rawKey) {
     res.status(400).json({
@@ -163,8 +197,8 @@ async function runIdempotency(
 
   if (inserted.length === 0) {
     // Someone else owns this key. Either it's a true replay (already
-    // stamped), an in-flight duplicate (poll), or an expired stale row
-    // we should overwrite.
+    // stamped), an in-flight duplicate (poll), or an expired/crashed row
+    // we should recover or overwrite.
     const existing = await loadRow(userId, key);
     if (!existing) {
       // Winner deleted/expired between conflict and our SELECT —
@@ -174,16 +208,36 @@ async function runIdempotency(
       return;
     }
     if (isExpired(existing)) {
-      // Stale: clear it and recurse-once. Cleanest path for a 25 h
-      // delayed retry.
-      await db
+      // Stale: atomically delete ONLY if still expired under contention.
+      const deleted = await db
         .delete(idempotencyKeysTable)
         .where(
           and(
             eq(idempotencyKeysTable.userId, userId),
             eq(idempotencyKeysTable.key, key),
+            lt(idempotencyKeysTable.expiresAt, new Date()),
           ),
-        );
+        )
+        .returning();
+      if (deleted.length > 0) {
+        return runIdempotency(req, res, next);
+      }
+      const refreshed = await loadRow(userId, key);
+      if (!refreshed) {
+        return runIdempotency(req, res, next);
+      }
+      if (refreshed.statusCode != null) {
+        if (refreshed.requestHash !== requestHash) {
+          res.status(409).json({
+            error: "idempotency_key_mismatch",
+            message:
+              "Idempotency-Key reused with a different request body. Generate a new key for a new request.",
+          });
+          return;
+        }
+        replay(res, refreshed);
+        return;
+      }
       return runIdempotency(req, res, next);
     }
     if (existing.requestHash !== requestHash) {
@@ -195,8 +249,50 @@ async function runIdempotency(
       return;
     }
     if (existing.statusCode == null) {
+      // Check for crash lock exhaustion: if the row has been in flight longer than IN_FLIGHT_TIMEOUT_MS,
+      // recover it atomically rather than locking callers out with 409.
+      if (Date.now() - existing.createdAt.getTime() >= IN_FLIGHT_TIMEOUT_MS) {
+        const recovered = await db
+          .delete(idempotencyKeysTable)
+          .where(
+            and(
+              eq(idempotencyKeysTable.userId, userId),
+              eq(idempotencyKeysTable.key, key),
+              sql`${idempotencyKeysTable.statusCode} is null`,
+              lt(
+                idempotencyKeysTable.createdAt,
+                new Date(Date.now() - IN_FLIGHT_TIMEOUT_MS),
+              ),
+            ),
+          )
+          .returning();
+        if (recovered.length > 0) {
+          return runIdempotency(req, res, next);
+        }
+      }
+
       const completed = await waitForCompletion(userId, key);
       if (!completed) {
+        const current = await loadRow(userId, key);
+        if (
+          current &&
+          current.statusCode == null &&
+          Date.now() - current.createdAt.getTime() >= IN_FLIGHT_TIMEOUT_MS
+        ) {
+          const recovered = await db
+            .delete(idempotencyKeysTable)
+            .where(
+              and(
+                eq(idempotencyKeysTable.userId, userId),
+                eq(idempotencyKeysTable.key, key),
+                sql`${idempotencyKeysTable.statusCode} is null`,
+              ),
+            )
+            .returning();
+          if (recovered.length > 0) {
+            return runIdempotency(req, res, next);
+          }
+        }
         res.status(409).json({
           error: "idempotency_in_flight",
           message:
@@ -211,68 +307,94 @@ async function runIdempotency(
     return;
   }
 
-  // We own the row. Capture the response so we can persist it BEFORE
-  // it is flushed to the wire (so a concurrent loser polling the row
-  // never sees the response on the network before it sees the cached
-  // copy in the DB).
+  // We own the row. Capture response completion so we await db.update BEFORE
+  // flushing bytes to the wire.
   const originalJson = res.json.bind(res);
+  const originalSend = res.send.bind(res);
+  const originalWrite = res.write.bind(res);
+  const originalEnd = res.end.bind(res);
   let captured = false;
-  res.json = (body: unknown) => {
-    if (captured) return res; // shouldn't happen, but be safe
+  const chunks: Buffer[] = [];
+
+  const persistAndFinish = async (
+    status: number,
+    serialized: string,
+    onDone: () => void,
+  ) => {
+    if (captured) return;
     captured = true;
+    try {
+      await db
+        .update(idempotencyKeysTable)
+        .set({ statusCode: status, responseBody: serialized })
+        .where(
+          and(
+            eq(idempotencyKeysTable.userId, userId),
+            eq(idempotencyKeysTable.key, key),
+          ),
+        );
+    } catch (err) {
+      req.log?.error?.({ err, key }, "idempotency persist failed");
+    }
+    onDone();
+  };
+
+  res.json = (body: unknown) => {
+    if (captured) {
+      originalJson(body);
+      return res;
+    }
     const status = res.statusCode || 200;
-    // Serialize ONCE here so the bytes we cache are identical to the
-    // bytes we ultimately send on the wire (and that any retry will
-    // get back). Re-serializing inside replay() via res.json could
-    // reorder keys after a jsonb roundtrip.
     const serialized = JSON.stringify(body);
-    // Schedule persist-then-send. We deliberately do not await inside
-    // the synchronous res.json shim; we kick off the async work and
-    // return res to satisfy the express signature, then send the real
-    // response only after the persist resolves.
-    void (async () => {
-      try {
-        await db
-          .update(idempotencyKeysTable)
-          .set({ statusCode: status, responseBody: serialized })
-          .where(
-            and(
-              eq(idempotencyKeysTable.userId, userId),
-              eq(idempotencyKeysTable.key, key),
-            ),
-          );
-      } catch (err) {
-        req.log?.error?.({ err, key }, "idempotency persist failed");
-      }
-      // Send the same string we cached so winner + losers see the
-      // same bytes byte-for-byte.
-      res.type("application/json").send(serialized);
-      void originalJson; // kept for the signature reference; not used
-    })();
+    void persistAndFinish(status, serialized, () => {
+      res.type("application/json");
+      originalSend(serialized);
+    });
     return res;
   };
 
-  // CRITICAL: do NOT clear the placeholder on `close`. `close` also
-  // fires when the client disconnects/aborts mid-flight while the
-  // handler is still executing server-side (and may still go on to
-  // create the order, charge the card, etc.). Removing the row here
-  // would let a same-key retry insert a fresh row and execute the
-  // handler a second time → duplicate order. Instead:
-  //
-  //   * If the handler completes via res.json, our shim captures,
-  //     persists and sends. Aborted clients still get the row
-  //     persisted, so a retry replays correctly.
-  //   * If the handler completes via res.end / res.send WITHOUT
-  //     going through res.json (e.g. a 204 or an error handler),
-  //     we stamp the row on `finish` with the actual status and an
-  //     empty body so a retry replays a deterministic answer
-  //     instead of polling for 5s and getting `idempotency_in_flight`.
-  //   * If the handler crashes WITHOUT ever flushing a response,
-  //     the row stays in-flight. Retries within 5s poll → 409
-  //     `idempotency_in_flight`; later retries (within 24 h TTL)
-  //     hit the same in-flight row and likewise get 409. The hourly
-  //     sweeper + TTL prevent permanent leakage. This is the safer
-  //     failure mode than risking a duplicate charge.
+  res.send = (body?: unknown) => {
+    if (captured) {
+      originalSend(body);
+      return res;
+    }
+    const status = res.statusCode || 200;
+    let serialized = "";
+    if (body !== undefined && body !== null) {
+      serialized =
+        typeof body === "object" && !Buffer.isBuffer(body)
+          ? JSON.stringify(body)
+          : body.toString();
+    }
+    void persistAndFinish(status, serialized, () => {
+      originalSend(body);
+    });
+    return res;
+  };
+
+  res.write = ((...args: unknown[]) => {
+    if (captured) {
+      return (originalWrite as (...a: unknown[]) => unknown)(...args);
+    }
+    const { chunk, encoding } = extractChunkAndEncoding(args);
+    appendToChunks(chunks, chunk, encoding);
+    return (originalWrite as (...a: unknown[]) => unknown)(...args);
+  }) as unknown as typeof res.write;
+
+  res.end = ((...args: unknown[]) => {
+    if (captured) {
+      return (originalEnd as (...a: unknown[]) => unknown)(...args);
+    }
+    const { chunk, encoding } = extractChunkAndEncoding(args);
+    appendToChunks(chunks, chunk, encoding);
+    const status = res.statusCode || 200;
+    const serialized = Buffer.concat(chunks).toString("utf8");
+    void persistAndFinish(status, serialized, () => {
+      (originalEnd as (...a: unknown[]) => unknown)(...args);
+    });
+    return res;
+  }) as unknown as typeof res.end;
+
   res.on("finish", () => {
     if (captured) return;
     const status = res.statusCode || 200;

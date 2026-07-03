@@ -38,6 +38,7 @@ export const menuItemsTable = pgTable(
     imageUrl: text("image_url"),
     longDescription: text("long_description"),
     allergens: jsonb("allergens").$type<string[]>(),
+    contraindications: jsonb("contraindications").$type<string[]>().default([]),
     cuisineTags: jsonb("cuisine_tags").$type<string[]>(),
     vibeTags: jsonb("vibe_tags").$type<string[]>(),
     seoTitle: varchar("seo_title", { length: 200 }),

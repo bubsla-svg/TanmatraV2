@@ -39,6 +39,7 @@ export interface BriefPreferences {
     | null;
   allergens: string[];
   dislikedIngredients: string[];
+  medicalConditions: string[];
   cuisines: string[];
   spiceLevel: "none" | "mild" | "medium" | "hot" | null;
   goal:

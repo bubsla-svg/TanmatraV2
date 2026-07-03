@@ -536,6 +536,7 @@ export async function finalizeOrder(args: {
     ? {
         allergens: prefRow.allergens ?? [],
         dislikedIngredients: prefRow.dislikedIngredients ?? [],
+        medicalConditions: prefRow.medicalConditions ?? [],
         cuisines: prefRow.cuisines ?? [],
         dietaryStyle: prefRow.dietaryStyle,
         goal: prefRow.goal,
@@ -766,6 +767,7 @@ export async function finalizeOrder(args: {
       ? {
           allergens: txPrefRow.allergens ?? [],
           dislikedIngredients: txPrefRow.dislikedIngredients ?? [],
+          medicalConditions: txPrefRow.medicalConditions ?? [],
           cuisines: txPrefRow.cuisines ?? [],
           dietaryStyle: txPrefRow.dietaryStyle,
           goal: txPrefRow.goal,

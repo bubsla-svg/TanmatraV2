@@ -92,11 +92,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function mintIdempotencyKey(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export const loyaltyApi = {
   getReferral: () => request<ReferralResponse>("/referral/me"),
-  redeemReferral: (code: string) =>
+  redeemReferral: (code: string, idempotencyKey?: string) =>
     request<{ awardedPaise: number }>("/referral/redeem", {
       method: "POST",
+      headers: { "Idempotency-Key": idempotencyKey || mintIdempotencyKey() },
       body: JSON.stringify({ code }),
     }),
   getCreditLedger: () =>
@@ -107,22 +114,16 @@ export const loyaltyApi = {
     request<{ eligible: boolean; percentBps: number; capPaise: number }>(
       "/orders/first-order-offer",
     ),
-  redeemCredit: (paise: number, refId?: string, note?: string) =>
+  redeemCredit: (paise: number, refId?: string, note?: string, idempotencyKey?: string) =>
     request<{ redeemedPaise: number; balancePaise: number }>(
       "/credit-ledger/redeem",
       {
         method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey || mintIdempotencyKey() },
         body: JSON.stringify({ paise, refId, note }),
       },
     ),
   finalizeOrder: (args: {
-    /** Server-managed idempotency key. The caller mints ONE UUID per
-     * submit attempt (one "Place order" click) and reuses the same
-     * value across any retry of THAT in-flight request (transient
-     * 5xx, fetch timeout). The server caches the first response per
-     * (user, key) for 24h and replays it on retries, so the customer
-     * is never double-charged. A subsequent click is a new intent
-     * and must mint a new key. */
     idempotencyKey: string;
     orderId: string;
     items: Array<{ id: number; name: string; qty: number; price: number }>;
@@ -166,7 +167,7 @@ export const loyaltyApi = {
           };
     }>("/orders/finalize", {
       method: "POST",
-      headers: { "Idempotency-Key": args.idempotencyKey },
+      headers: { "Idempotency-Key": args.idempotencyKey || mintIdempotencyKey() },
       body: JSON.stringify(args),
     }),
   getNotifications: () =>

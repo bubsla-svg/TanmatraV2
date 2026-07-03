@@ -53,6 +53,7 @@ export interface MealPlanConstraints {
   weeklyBudgetPaise: number | null;
   maxRepetitionsPerDish: number;
   allergens: string[];
+  medicalConditions?: string[];
   dietaryStyle: string | null;
   spiceLevel: string | null;
   goal: string | null;

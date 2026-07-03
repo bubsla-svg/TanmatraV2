@@ -31,6 +31,7 @@ export const PROMPT_ALLOWLIST = {
     "dietaryStyle",
     "allergens",
     "dislikedIngredients",
+    "medicalConditions",
     "cuisines",
     "spiceLevel",
     "goal",

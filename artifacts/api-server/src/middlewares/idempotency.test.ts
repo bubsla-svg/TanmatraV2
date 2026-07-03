@@ -74,7 +74,10 @@ function makeApp(): Express {
     "/orders/finalize",
     idempotencyMiddleware,
     async (req: Request, res: Response) => {
-      const userId = (req as unknown as { user: TestUser }).user.id;
+      const userId =
+        (req as unknown as { user?: TestUser }).user?.id ||
+        req.header("X-Guest-ID") ||
+        "anon-guest";
       const key = req.header("Idempotency-Key") ?? "";
       const tag = `${userId}:${key}`;
       handlerCalls.set(tag, (handlerCalls.get(tag) ?? 0) + 1);
@@ -88,6 +91,25 @@ function makeApp(): Express {
         serverOrderId: `srv-${randomUUID()}`,
         echoed: req.body,
       });
+    },
+  );
+  app.post(
+    "/orders/finalize-stream",
+    idempotencyMiddleware,
+    async (req: Request, res: Response) => {
+      const userId =
+        (req as unknown as { user?: TestUser }).user?.id ||
+        req.header("X-Guest-ID") ||
+        "anon-guest";
+      const key = req.header("Idempotency-Key") ?? "";
+      const tag = `${userId}:${key}`;
+      handlerCalls.set(tag, (handlerCalls.get(tag) ?? 0) + 1);
+
+      res.status(201);
+      res.write('{"ok":true,"streamed":');
+      res.write('"yes","echoed":');
+      res.write(JSON.stringify(req.body));
+      res.end("}");
     },
   );
   return app;
@@ -115,13 +137,15 @@ interface ApiResponse<T = unknown> {
 async function api<T = unknown>(
   path: string,
   body: unknown,
-  user: TestUser,
+  user: TestUser | null,
   key: string | null,
+  extraHeaders: Record<string, string> = {},
 ): Promise<ApiResponse<T>> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
-    "x-test-user-id": user.id,
+    ...extraHeaders,
   };
+  if (user) headers["x-test-user-id"] = user.id;
   if (key) headers["Idempotency-Key"] = key;
   const r = await fetch(`${baseUrl}${path}`, {
     method: "POST",
@@ -367,3 +391,129 @@ test("invalid Idempotency-Key format is rejected with 400", async () => {
     "idempotency_key_invalid",
   );
 });
+
+test("guest caller without auth but with Idempotency-Key is locked and replayed correctly", async () => {
+  const guestId = `guest-${randomUUID()}`;
+  const key = `idem-${randomUUID()}`;
+  const first = await api<{ ok: boolean; serverOrderId: string }>(
+    "/orders/finalize",
+    { item: "chai", qty: 2 },
+    null,
+    key,
+    { "X-Guest-ID": guestId },
+  );
+  assert.equal(first.status, 201);
+  assert.equal(first.headers["idempotent-replay"], undefined);
+
+  const second = await api<{ ok: boolean; serverOrderId: string }>(
+    "/orders/finalize",
+    { item: "chai", qty: 2 },
+    null,
+    key,
+    { "X-Guest-ID": guestId },
+  );
+  assert.equal(second.status, 201);
+  assert.equal(second.headers["idempotent-replay"], "true");
+  assert.deepEqual(second.json, first.json);
+  assert.equal(handlerCalls.get(`${guestId}:${key}`), 1);
+});
+
+test("crashed in-flight lock older than 60s is atomically recovered and processed", async () => {
+  const u = await makeUser();
+  const key = `idem-${randomUUID()}`;
+  CREATED_USER_IDS.push(u.id); // for cleanup just in case
+  // Insert a crashed row 65 seconds in the past with null statusCode
+  const crashedAt = new Date(Date.now() - 65_000);
+  await db.insert(idempotencyKeysTable).values({
+    userId: u.id,
+    key,
+    requestHash: "crashedhash",
+    statusCode: null,
+    responseBody: null,
+    createdAt: crashedAt,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
+
+  const r = await api<{ ok: boolean; serverOrderId: string }>(
+    "/orders/finalize",
+    { item: "matcha", qty: 1 },
+    u,
+    key,
+  );
+  assert.equal(r.status, 201);
+  assert.equal(r.headers["idempotent-replay"], undefined);
+  assert.equal(handlerCalls.get(`${u.id}:${key}`), 1);
+});
+
+test("expired key is atomically recycled under contention", async () => {
+  const u = await makeUser();
+  const key = `idem-${randomUUID()}`;
+  // Insert an expired row 1 hour in the past
+  const expiredAt = new Date(Date.now() - 3600_000);
+  await db.insert(idempotencyKeysTable).values({
+    userId: u.id,
+    key,
+    requestHash: "oldhash",
+    statusCode: 201,
+    responseBody: JSON.stringify({ ok: true, old: true }),
+    createdAt: new Date(Date.now() - 25 * 3600_000),
+    expiresAt: expiredAt,
+  });
+
+  const r = await api<{ ok: boolean; serverOrderId: string }>(
+    "/orders/finalize",
+    { item: "new-item", qty: 5 },
+    u,
+    key,
+  );
+  assert.equal(r.status, 201);
+  assert.equal(r.headers["idempotent-replay"], undefined);
+  assert.equal(handlerCalls.get(`${u.id}:${key}`), 1);
+});
+
+test("streaming res.write chunks are accumulated and cached byte-for-byte on replay", async () => {
+  const u = await makeUser();
+  const key = `idem-${randomUUID()}`;
+  const body = { item: "kombucha", qty: 4 };
+
+  const first = await api<{ ok: boolean; streamed: string; echoed: unknown }>(
+    "/orders/finalize-stream",
+    body,
+    u,
+    key,
+  );
+  assert.equal(first.status, 201);
+  assert.equal(first.json.ok, true);
+  assert.equal(first.json.streamed, "yes");
+  assert.deepEqual(first.json.echoed, body);
+  assert.equal(first.headers["idempotent-replay"], undefined);
+  assert.equal(handlerCalls.get(`${u.id}:${key}`), 1);
+
+  // DB row stamped with accumulated chunks.
+  const [row] = await db
+    .select()
+    .from(idempotencyKeysTable)
+    .where(
+      and(
+        eq(idempotencyKeysTable.userId, u.id),
+        eq(idempotencyKeysTable.key, key),
+      ),
+    );
+  assert.ok(row);
+  assert.equal(row!.statusCode, 201);
+  const parsedRow = JSON.parse(row!.responseBody as string);
+  assert.deepEqual(parsedRow, first.json);
+
+  // Second call with same key + body must replay exact streamed body without running handler.
+  const second = await api<{ ok: boolean; streamed: string; echoed: unknown }>(
+    "/orders/finalize-stream",
+    body,
+    u,
+    key,
+  );
+  assert.equal(second.status, 201);
+  assert.deepEqual(second.json, first.json);
+  assert.equal(second.headers["idempotent-replay"], "true");
+  assert.equal(handlerCalls.get(`${u.id}:${key}`), 1);
+});
+
