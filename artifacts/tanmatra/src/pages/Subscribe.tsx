@@ -132,7 +132,7 @@ export default function Subscribe() {
     searchParams.get("trial") === "1" ||
     rdPlan?.slug === "three-day-trial-pack";
   const rdAuthor = rdPlan ? getRdAuthor(rdPlan) : undefined;
-  const { preferences } = usePreferences();
+  const { preferences, update } = usePreferences();
   const planItemsResult = useMemo<{ items: SubscriptionItem[]; swappedCount: number; droppedCount: number }>(() => {
     if (!rdPlan) return { items: [], swappedCount: 0, droppedCount: 0 };
     const week = resolvePlanWeek(rdPlan);
@@ -264,6 +264,17 @@ export default function Subscribe() {
     : basePrice(cadence, meals);
   const trialListPrice = Math.round(meals * 26000);
 
+  useEffect(() => {
+    if (preferences?.allergens && preferences.allergens.length > 0) {
+      setMembers((prev) => {
+        const first = prev[0] || blankMember();
+        const merged = Array.from(new Set([...first.allergens, ...preferences.allergens]));
+        if (merged.length === first.allergens.length) return prev;
+        return [{ ...first, allergens: merged }, ...prev.slice(1)];
+      });
+    }
+  }, [preferences?.allergens]);
+
   const updateMember = (idx: number, patch: Partial<MemberDraft>) => {
     setMembers((prev) =>
       prev.map((m, i) => (i === idx ? { ...m, ...patch } : m)),
@@ -274,11 +285,15 @@ export default function Subscribe() {
       prev.map((m, i) => {
         if (i !== idx) return m;
         const has = m.allergens.includes(allergen);
+        const nextAllergens = has
+          ? m.allergens.filter((a) => a !== allergen)
+          : [...m.allergens, allergen];
+        if (i === 0) {
+          void update({ allergens: nextAllergens });
+        }
         return {
           ...m,
-          allergens: has
-            ? m.allergens.filter((a) => a !== allergen)
-            : [...m.allergens, allergen],
+          allergens: nextAllergens,
         };
       }),
     );
@@ -475,10 +490,28 @@ export default function Subscribe() {
 
                 <div className="space-y-3">
                   {resolvedWeek.map((day, idx) => {
-                    const primaryDish = day.lunch || day.dinner || day.breakfast;
-                    const dailyCal = (day.lunch?.macros?.calories || 0) + (day.dinner?.macros?.calories || 0) || 520;
-                    const dailyPro = (day.lunch?.macros?.protein || 0) + (day.dinner?.macros?.protein || 0) || 34;
-                    const isVeg = primaryDish?.isVeg !== false;
+                    let primaryDish = day.lunch || day.dinner || day.breakfast;
+                    let dailyCal = (day.lunch?.macros?.calories || 0) + (day.dinner?.macros?.calories || 0) || 520;
+                    let dailyPro = (day.lunch?.macros?.protein || 0) + (day.dinner?.macros?.protein || 0) || 34;
+                    let isVeg = primaryDish?.isVeg !== false;
+                    let dishName = [day.lunch?.name, day.dinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || "Chef's Curated Selection";
+                    let isAutoSwapped = false;
+
+                    if (preferences && rdPlan) {
+                      const lunchEval = day.lunch ? evaluateDishForPreferences(day.lunch, preferences) : null;
+                      const dinnerEval = day.dinner ? evaluateDishForPreferences(day.dinner, preferences) : null;
+                      if ((lunchEval && (lunchEval.blocked || lunchEval.matchedAllergens.length > 0)) ||
+                          (dinnerEval && (dinnerEval.blocked || dinnerEval.matchedAllergens.length > 0))) {
+                        isAutoSwapped = true;
+                        const safeLunch = day.lunch ? (findPlanSafeSwap(rdPlan, day.lunch, preferences) || day.lunch) : null;
+                        const safeDinner = day.dinner ? (findPlanSafeSwap(rdPlan, day.dinner, preferences) || day.dinner) : null;
+                        primaryDish = safeLunch || safeDinner || primaryDish;
+                        dishName = [safeLunch?.name, safeDinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || dishName;
+                        dailyCal = (safeLunch?.macros?.calories || 0) + (safeDinner?.macros?.calories || 0) || dailyCal;
+                        dailyPro = (safeLunch?.macros?.protein || 0) + (safeDinner?.macros?.protein || 0) || dailyPro;
+                        isVeg = primaryDish?.isVeg !== false;
+                      }
+                    }
 
                     return (
                       <div
@@ -495,13 +528,18 @@ export default function Subscribe() {
                             <span className={`absolute bottom-1 left-1 w-2.5 h-2.5 rounded-full border border-black/80 ${isVeg ? "bg-emerald-500" : "bg-red-500"}`} />
                           </div>
                           <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex items-center justify-between sm:justify-start gap-2">
+                            <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
                               <span className="text-[10px] font-extrabold uppercase tracking-wider text-clinical-gold bg-clinical-gold/10 px-2 py-0.5 rounded">
                                 Day {idx + 1} · {day.label}
                               </span>
+                              {isAutoSwapped && (
+                                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                                  🛡️ Auto-swapped: 100% allergen safe
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs sm:text-sm font-bold text-white truncate">
-                              {[day.lunch?.name, day.dinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || "Chef's Curated Selection"}
+                              {dishName}
                             </p>
                             <p className="text-[11px] text-clinical-zinc font-mono flex items-center gap-1.5">
                               <span className="text-emerald-400 font-semibold">💚 High</span> • {dailyCal} kcal • {dailyPro}g protein
