@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Check, AlertCircle, Sparkles, ArrowRight, Stethoscope } from "lucide-react";
 import {
@@ -72,6 +72,15 @@ function clampNum(v: string, lo: number, hi: number): number | null {
 
 const STEPS = ["Diet", "Goals", "Cuisine & Spice", "Allergens", "Targets"] as const;
 
+const QUIZ_DRAFT_KEY = "tanmatra:quiz-draft:v1";
+const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days TTL
+
+interface QuizDraft {
+  state: QuizState;
+  step: number;
+  updatedAt: number;
+}
+
 function suggestedTargets(goal: WellnessGoal, activity: ActivityLevel) {
   const baseCal: Record<ActivityLevel, number> = {
     sedentary: 1700,
@@ -117,6 +126,7 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
   const [state, setState] = useState<QuizState>(() => initialState(preferences));
   const [saving, setSaving] = useState(false);
   const [showManualTargets, setShowManualTargets] = useState(false);
+  const hydratedSessionRef = useRef(false);
   // Stable ids so each Label can be aria-labelledby for its corresponding
   // radiogroup / group, instead of relying on visual proximity alone.
   const dietId = useId();
@@ -128,31 +138,90 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
   const targetsHintId = useId();
 
   useEffect(() => {
-    if (open) {
-      // Restore the user's most-advanced answered step on reopen so they
-      // resume where they left off — paired with the per-step
-      // `update()` call below, no answers are silently lost when the
-      // user closes the dialog mid-quiz.
-      const initial = initialState(preferences);
-      setState(initial);
-      let resumeAt = 0;
-      if (preferences?.dietaryStyle) resumeAt = 1;
-      if (preferences?.goal && preferences?.activityLevel) resumeAt = 2;
-      if (preferences?.cuisines?.length || preferences?.spiceLevel) resumeAt = 3;
-      if (preferences?.allergens?.length) resumeAt = 4;
-      // Cap at last form step — the results step is only entered after a
-      // successful save in onNext.
-      setStep(Math.min(resumeAt, STEPS.length - 1));
-      setShowManualTargets(
-        Boolean(
-          preferences?.calorieTarget ||
-            preferences?.proteinTargetGrams ||
-            preferences?.carbsTargetGrams ||
-            preferences?.fatTargetGrams,
-        ),
-      );
+    if (!open) {
+      hydratedSessionRef.current = false;
+      return;
     }
+
+    if (hydratedSessionRef.current) {
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem(QUIZ_DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw) as Partial<QuizDraft>;
+        const now = Date.now();
+        const isExpired = !draft || typeof draft.updatedAt !== "number" || (now - draft.updatedAt) >= DRAFT_TTL_MS;
+        if (isExpired) {
+          localStorage.removeItem(QUIZ_DRAFT_KEY);
+        } else if (draft.state && typeof draft.step === "number") {
+          const mergedState: QuizState = {
+            ...initialState(preferences),
+            ...draft.state,
+          };
+          const restoredStep = Math.min(Math.max(0, draft.step), STEPS.length - 1);
+          setState(mergedState);
+          setStep(restoredStep);
+          setShowManualTargets(
+            Boolean(
+              mergedState.calorieTarget ||
+                mergedState.proteinTargetGrams ||
+                mergedState.carbsTargetGrams ||
+                mergedState.fatTargetGrams,
+            ),
+          );
+          hydratedSessionRef.current = true;
+          return;
+        }
+      }
+    } catch {
+      // Ignore localStorage errors or corrupted JSON; fall back to server preferences
+      try {
+        localStorage.removeItem(QUIZ_DRAFT_KEY);
+      } catch {
+        // Ignore removal errors
+      }
+    }
+
+    // Restore the user's most-advanced answered step on reopen so they
+    // resume where they left off — paired with the per-step
+    // `update()` call below, no answers are silently lost when the
+    // user closes the dialog mid-quiz.
+    const initial = initialState(preferences);
+    setState(initial);
+    let resumeAt = 0;
+    if (preferences?.dietaryStyle) resumeAt = 1;
+    if (preferences?.goal && preferences?.activityLevel) resumeAt = 2;
+    if (preferences?.cuisines?.length || preferences?.spiceLevel) resumeAt = 3;
+    if (preferences?.allergens?.length) resumeAt = 4;
+    // Cap at last form step — the results step is only entered after a
+    // successful save in onNext.
+    setStep(Math.min(resumeAt, STEPS.length - 1));
+    setShowManualTargets(
+      Boolean(
+        preferences?.calorieTarget ||
+          preferences?.proteinTargetGrams ||
+          preferences?.carbsTargetGrams ||
+          preferences?.fatTargetGrams,
+      ),
+    );
+    hydratedSessionRef.current = true;
   }, [open, preferences]);
+
+  useEffect(() => {
+    if (!open || step === RESULTS_STEP) return;
+    try {
+      const draft: QuizDraft = {
+        state,
+        step,
+        updatedAt: Date.now(),
+      };
+      localStorage.setItem(QUIZ_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // Ignore storage quota / security exceptions
+    }
+  }, [state, step, open]);
 
   /** Build a partial-progress patch from the current state, WITHOUT
    *  marking the quiz complete. Called between steps so progress
@@ -209,6 +278,11 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
     if (!out) {
       toast.error("Could not save preferences");
       return;
+    }
+    try {
+      localStorage.removeItem(QUIZ_DRAFT_KEY);
+    } catch {
+      // Ignore storage exceptions
     }
     if (markComplete) {
       // Stay in the dialog and reveal the results step rather than

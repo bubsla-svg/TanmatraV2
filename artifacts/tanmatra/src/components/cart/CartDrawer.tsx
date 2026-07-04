@@ -28,6 +28,7 @@ import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { usePremiumStatus } from "@/lib/usePremium";
+import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Suppress unused-import warning — DELIVERY_FEE is used in the comment context only,
 // the actual constant is pulled from cartContext which re-exports it.
@@ -154,6 +155,13 @@ export default function CartDrawer() {
 
       // 4. Open modal
       const localOrderId = `TAN-${Date.now()}`;
+      savePendingTransaction({
+        orderId: localOrderId,
+        idempotencyKey: `idem-express-${localOrderId}`,
+        initiatedAt: Date.now(),
+        amount: totals.total,
+        provider: "razorpay",
+      });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const RazorpayClass = (window as any).Razorpay;
       if (!RazorpayClass) { navigate("/checkout"); return; }
@@ -183,13 +191,17 @@ export default function CartDrawer() {
                 razorpaySignature: response.razorpay_signature,
               }),
             });
+            removePendingTransaction(localOrderId);
           } catch { /* non-fatal; order recorded server-side */ }
           clear();
           close();
           navigate(`/track/${localOrderId}`);
         },
         modal: {
-          ondismiss: () => setExpressLoading(false),
+          ondismiss: () => {
+            setExpressLoading(false);
+            // Keep pending transaction in localStorage briefly so visibilitychange auto-polling can recover if app switched
+          },
         },
       });
       rzp.open();
@@ -237,6 +249,19 @@ export default function CartDrawer() {
   // (e.g., user navigates away while the order-creation request is pending).
   const expressAbortRef = useRef<AbortController | null>(null);
   useEffect(() => () => { expressAbortRef.current?.abort(); }, []);
+
+  useEffect(() => {
+    return subscribeUpiRecovery({
+      onRecovered: (event) => {
+        if (isOpen && event.tx.orderId.startsWith("TAN-")) {
+          toast.success(`Payment recovered for order ${event.tx.orderId}!`);
+          clear();
+          close();
+          navigate(`/track/${event.tx.orderId}`);
+        }
+      },
+    });
+  }, [isOpen, clear, close, navigate]);
 
   // Focus the close button when drawer opens
   useEffect(() => {

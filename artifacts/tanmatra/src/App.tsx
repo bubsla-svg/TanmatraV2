@@ -15,18 +15,18 @@ import BottomNav from "@/components/layout/BottomNav";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import StickyCheckoutBar from "@/components/cart/StickyCheckoutBar";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
-// Eager imports: pages on the critical purchase path. Anything a
-// first-time visitor hits during the discover → cart → checkout flow
-// must render without a network round-trip for its bundle.
+// Eager import: Home is on the critical landing path and must render immediately.
 import Home from "@/pages/Home";
-import Menu from "@/pages/Menu";
-import Dish from "@/pages/Dish";
-import Cart from "@/pages/Cart";
-import Checkout from "@/pages/Checkout";
-import Login from "@/pages/Login";
-import AdminLogin from "@/pages/AdminLogin";
-import NotFound from "@/pages/not-found";
 import { useParams } from "react-router";
+
+// Converted to lazy imports to split out heavy page bundles (Menu, Checkout, Auth, etc.)
+const Menu = lazy(() => import("@/pages/Menu"));
+const Dish = lazy(() => import("@/pages/Dish"));
+const Cart = lazy(() => import("@/pages/Cart"));
+const Checkout = lazy(() => import("@/pages/Checkout"));
+const Login = lazy(() => import("@/pages/Login"));
+const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 function DishWithKey() {
   const { slug } = useParams<{ slug: string }>();

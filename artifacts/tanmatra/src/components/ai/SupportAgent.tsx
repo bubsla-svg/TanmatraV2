@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router";
+import { useCart } from "@/lib/cartContext";
 import { streamSupportAgentChat } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +19,18 @@ interface ChatMessage {
 }
 
 export default function SupportAgentWidget() {
+  const { items } = useCart();
+  const { pathname } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+
+  const hasSecondaryCheckoutBar = /^\/(dish|marketplace)\/.+/.test(pathname) || /^\/(cart|checkout|track)\/?/.test(pathname);
+  const hasStickyCheckoutBar = items.length > 0 && !hasSecondaryCheckoutBar && !/^\/(admin|rd-console|subscribe|subscriptions|subscription-plans|plans)(\/.*)?$/.test(pathname);
+
+  const triggerPositionClass = hasStickyCheckoutBar
+    ? "bottom-[calc(var(--bottom-nav-height)+136px+var(--safe-bottom))] md:bottom-6 max-[359px]:hidden"
+    : hasSecondaryCheckoutBar
+      ? "bottom-[calc(var(--bottom-nav-height)+var(--bottom-cta-height)+16px+var(--safe-bottom))] md:bottom-6 hidden sm:inline-flex"
+      : "bottom-[calc(var(--bottom-nav-height)+var(--bottom-cta-height)+16px+var(--safe-bottom))] md:bottom-6";
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -129,15 +142,15 @@ export default function SupportAgentWidget() {
     <>
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-6 right-4 md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg"
+        className={`fixed ${triggerPositionClass} right-3 sm:right-4 md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-clinical-surface border border-clinical-gold/40 text-white hover:bg-white/10`}
         aria-label={isOpen ? "Close support chat" : "Open support chat"}
         title={isOpen ? "Close support chat" : "Need help? Chat with our support agent"}
       >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6 text-clinical-gold" />}
       </Button>
 
       {isOpen && (
-        <Card className="fixed bottom-[calc(132px+env(safe-area-inset-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-[#D4AF37]/30">
+        <Card className="fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-[#D4AF37]/30 bg-[#050505]">
           <CardHeader className="shrink-0 py-3 px-4 border-b bg-[#050505]">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">

@@ -37,15 +37,17 @@ import {
 import { useMenuCatalog } from "@/lib/menuData";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileSearchSheet from "./MobileSearchSheet";
 
-interface CommandPaletteContextValue {
+export interface CommandPaletteContextValue {
   open: boolean;
   setOpen: (next: boolean) => void;
 }
 
-type RouteGroup = "Eat" | "Plan" | "Track" | "Community" | "Account";
+export type RouteGroup = "Eat" | "Plan" | "Track" | "Community" | "Account";
 
-interface RouteEntry {
+export interface RouteEntry {
   label: string;
   to: string;
   icon: Icon;
@@ -117,6 +119,7 @@ export default function CommandPalette({
   const { dishes } = useMenuCatalog();
   const { preferences } = usePreferences();
   const isDev = import.meta.env.DEV;
+  const isMobile = useIsMobile();
 
   const dishItems = useMemo(
     () =>
@@ -148,6 +151,18 @@ export default function CommandPalette({
     setOpen(false);
     navigate(to);
   };
+
+  if (isMobile) {
+    return (
+      <MobileSearchSheet
+        open={open}
+        setOpen={setOpen}
+        dishes={dishes}
+        preferences={preferences}
+        groupedRoutes={groupedRoutes}
+      />
+    );
+  }
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>

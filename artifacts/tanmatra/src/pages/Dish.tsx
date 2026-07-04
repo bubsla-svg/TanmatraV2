@@ -829,7 +829,7 @@ export default function Dish() {
         </div>
       </div>
 
-      <div className="fixed left-0 right-0 z-50 bg-[#050505]/95 backdrop-blur-xl border-t border-clinical-border bottom-[calc(56px+env(safe-area-inset-bottom))] md:bottom-0">
+      <div className="fixed left-0 right-0 z-45 bg-[#050505]/95 backdrop-blur-xl border-t border-clinical-border bottom-[calc(var(--bottom-nav-height)+var(--safe-bottom))] md:bottom-0 min-h-[var(--bottom-cta-height)]">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-3 sm:gap-4">
           {/* Left: Total Price (Always visible) */}
           <div className="shrink-0">

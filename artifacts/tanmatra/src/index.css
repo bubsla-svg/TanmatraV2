@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  --bottom-nav-height: 58px;
+  --bottom-cta-height: 68px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 @theme {
   /* ─── Clinical Dark palette (preserved 1:1) ─── */
   --color-background: hsl(0 0% 2%);

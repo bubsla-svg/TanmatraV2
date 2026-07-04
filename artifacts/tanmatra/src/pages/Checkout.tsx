@@ -84,6 +84,7 @@ import {
   type ServerSafetyConflict,
 } from "@/lib/clinicalDiet";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
+import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Shapes of the phone-OTP auth responses used by the guest-checkout flow.
 // Mirrors the interfaces in Login.tsx (kept local rather than shared to
@@ -240,6 +241,26 @@ export default function Checkout() {
   const [applyCredits, setApplyCredits] = useState(true);
   const [preorderTomorrow, setPreorderTomorrow] = useState(false);
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
+
+  // Auto-polling recovery listener when returning from GPay/PhonePe/Paytm
+  useEffect(() => {
+    return subscribeUpiRecovery({
+      onPollingStart: () => {
+        setIsProcessing(true);
+      },
+      onRecovered: (event) => {
+        setIsProcessing(false);
+        setConfirmOpen(false);
+        clear();
+        submitAttemptRef.current = null;
+        toast.success(`Payment confirmed upon return from UPI app! Order ${event.tx.orderId} placed.`);
+        navigate(`/track?orderId=${encodeURIComponent(event.tx.orderId)}`);
+      },
+      onPollingEnd: () => {
+        setIsProcessing(false);
+      },
+    });
+  }, [clear, navigate]);
 
   // High-fidelity guest-checkout & slotting states
   const [deliveryMode, setDeliveryMode] = useState<"now" | "schedule">("now");
@@ -941,6 +962,7 @@ export default function Checkout() {
                 }) => {
                   // 3. Verify payment server-side before accepting the order.
                   try {
+                    removePendingTransaction(orderId);
                     await fetch(`${API_BASE}/payments/razorpay/verify`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -960,6 +982,13 @@ export default function Checkout() {
                 modal: {
                   ondismiss: () => reject(new Error("payment_cancelled")),
                 },
+              });
+              savePendingTransaction({
+                orderId,
+                idempotencyKey: submitAttemptRef.current?.key ?? orderId,
+                initiatedAt: Date.now(),
+                amount: chargeTotal,
+                provider: "razorpay",
               });
               rzp.open();
             }

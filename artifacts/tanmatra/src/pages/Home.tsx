@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import MacroOverlay from "@/components/dish/MacroOverlay";
-import { WeeklySummaryCard } from "@/pages/Wellness";
+import { WeeklySummaryCard } from "@/components/wellness/WeeklySummaryCard";
 import { useOrders } from "@/lib/ordersContext";
 import { useCart } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
