@@ -113,8 +113,8 @@ export default function SubscriptionPlansLanding() {
           <div className="flex items-center gap-2.5 bg-clinical-surface border border-clinical-border/80 rounded-full px-3.5 py-1.5 cursor-pointer hover:border-clinical-gold/50 transition-colors max-w-sm sm:max-w-md min-w-0">
             <MapPin className="w-4 h-4 text-clinical-gold shrink-0" />
             <div className="min-w-0 text-left">
-              <p className="text-[10px] uppercase font-bold tracking-wider text-clinical-zinc leading-none">Delivery at</p>
-              <p className="text-xs font-medium text-white truncate mt-0.5">DLF Phase 3, Sector 24, Gurugram · Delhi NCR</p>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-clinical-zinc leading-none">Service area</p>
+              <p className="text-xs font-medium text-white truncate mt-0.5">Delivering across Noida · Delhi · Gurgaon</p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-clinical-zinc shrink-0 ml-1" />
           </div>
@@ -547,7 +547,7 @@ export default function SubscriptionPlansLanding() {
               },
               {
                 q: "Where do you deliver?",
-                a: "Across Noida, Greater Noida, and select Delhi NCR routes. Enter your pincode at checkout to confirm.",
+                a: "Across Across Noida, Delhi, and Gurgaon. Enter your pincode at checkout to confirm.",
               },
             ].map((faq, i) => (
               <div

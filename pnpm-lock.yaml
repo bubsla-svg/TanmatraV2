@@ -980,6 +980,10 @@ importers:
       p-retry:
         specifier: ^7.1.1
         version: 7.1.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.20.0
 
   lib/menu-catalog: {}
 
@@ -991,12 +995,18 @@ importers:
 
   scripts:
     dependencies:
+      '@workspace/api-server':
+        specifier: workspace:*
+        version: link:../artifacts/api-server
       '@workspace/db':
         specifier: workspace:*
         version: link:../lib/db
       '@workspace/menu-catalog':
         specifier: workspace:*
         version: link:../lib/menu-catalog
+      '@workspace/preferences-match':
+        specifier: workspace:*
+        version: link:../lib/preferences-match
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.18.0)(pg@8.20.0)
@@ -3003,6 +3013,9 @@ packages:
 
   '@types/node@20.19.43':
     resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
+
+  '@types/node@22.20.0':
+    resolution: {integrity: sha512-QWlFW2wf3nTjC13/DqRnBpR4ZO36VJH/JVBkA/vcnmbTBNQIlnObqyqZE1tUR7+Ni23Lda8R1BxMfbXRpCUx5g==}
 
   '@types/node@25.3.5':
     resolution: {integrity: sha512-oX8xrhvpiyRCQkG1MFchB09f+cXftgIXb3a7UUa4Y3wpmZPw5tyZGTLWhlESOLq1Rq6oDlc8npVU2/9xiCuXMA==}
@@ -8548,6 +8561,10 @@ snapshots:
       '@types/node': 20.19.43
 
   '@types/node@20.19.43':
+    dependencies:
+      undici-types: 6.21.0
+
+  '@types/node@22.20.0':
     dependencies:
       undici-types: 6.21.0
 

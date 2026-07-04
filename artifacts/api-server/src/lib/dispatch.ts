@@ -30,6 +30,7 @@ export type OrderPriority = "routine" | "urgent" | "stat";
 
 const METRO_CENTERS: Record<string, { lat: number; lng: number }> = {
   "201": { lat: 28.5355, lng: 77.391 }, // Noida / Greater Noida (service area)
+  "122": { lat: 28.4595, lng: 77.0266 }, // Gurgaon (service area)
   "110": { lat: 28.6139, lng: 77.209 }, // Delhi
   "400": { lat: 19.076, lng: 72.8777 }, // Mumbai
   "600": { lat: 13.0827, lng: 80.2707 }, // Chennai

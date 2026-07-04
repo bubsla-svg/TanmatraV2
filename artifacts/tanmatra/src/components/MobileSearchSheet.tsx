@@ -16,7 +16,7 @@ import {
   Stethoscope,
 } from "@phosphor-icons/react";
 import { type DishData } from "@/lib/menuData";
-import { type UserPreferences } from "@/lib/preferencesContext";
+import { type UserPreferences } from "@/lib/preferencesApi";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import {
   PROTOCOLS,
@@ -78,10 +78,10 @@ export default function MobileSearchSheet({
         inputRef.current?.focus();
       }, 80);
       return () => clearTimeout(timer);
-    } else {
-      setQuery("");
-      setSelectedProtocol(null);
     }
+    setQuery("");
+    setSelectedProtocol(null);
+    return undefined;
   }, [open]);
 
   const saveRecentSearch = (item: string) => {

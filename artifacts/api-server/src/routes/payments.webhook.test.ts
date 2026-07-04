@@ -83,7 +83,7 @@ async function postWebhook(payloadObj: unknown, eventId?: string) {
     headers,
     body: rawString,
   });
-  const json = await res.json();
+  const json = (await res.json()) as any;
   return { status: res.status, json };
 }
 

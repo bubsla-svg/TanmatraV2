@@ -1312,7 +1312,7 @@ export default function Checkout() {
                       Add your delivery address
                     </p>
                     <p className="text-[10px] text-clinical-zinc">
-                      Noida & Delhi NCR · fresh in 25–40 min
+                      Noida · Delhi · Gurgaon · fresh in 25–40 min
                     </p>
                   </button>
                 ) : (

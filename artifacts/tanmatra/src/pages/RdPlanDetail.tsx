@@ -311,7 +311,7 @@ export default function RdPlanDetail() {
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-clinical-sage shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-white">Serviceable Noida NCR Delivery</p>
+                <p className="text-sm font-semibold text-white">Serviceable Noida, Delhi & Gurgaon Delivery</p>
                 <p className="text-xs text-clinical-zinc">Locked-in morning and evening slots delivered via temperature-controlled logistics.</p>
               </div>
             </div>
