@@ -506,15 +506,16 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
     setSaving(true);
     try {
+      const recipientPrefix = orderingFor === "someone" && recipientName.trim()
+        ? `For: ${recipientName.trim()}`
+        : null;
       const finalLine1 = flatNo.trim();
-      const finalLine2 = [floor.trim(), landmark.trim(), locality.trim()].filter(Boolean).join(", ");
+      const finalLine2 = [recipientPrefix, floor.trim(), landmark.trim(), locality.trim()].filter(Boolean).join(", ");
 
       const finalLabel = addressType === "other" ? (otherLabel.trim() || "Other") : addressType.charAt(0).toUpperCase() + addressType.slice(1);
       const finalType = addressType === "hotel" ? "other" : addressType;
 
-      const finalPhone = orderingFor === "someone"
-        ? `${recipientPhone} (${recipientName})`
-        : recipientPhone;
+      const finalPhone = recipientPhone.trim();
 
       await onSave({
         label: finalLabel,

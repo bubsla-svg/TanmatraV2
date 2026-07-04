@@ -16,6 +16,7 @@ import {
   paymentRateLimit,
   addressRateLimit,
 } from "./middlewares/rateLimitMiddleware";
+import { idempotencyMiddleware } from "./middlewares/idempotency";
 
 const app: Express = express();
 
@@ -136,7 +137,7 @@ app.use("/api/ops-agent", aiRateLimit);
 app.use("/api/support-agent", aiRateLimit);
 app.use("/api/dish-rationales", rationaleRateLimit);
 app.use("/api/payments", paymentRateLimit);
-app.use("/api/user-addresses", addressRateLimit);
+app.use("/api/addresses", addressRateLimit);
 
 // Surface body-parser failures as a clean 413 / 400 instead of a 500.
 app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
@@ -168,6 +169,11 @@ app.use(adminSessionShim);
 // sibling middleware on the aggregate router. Auth + adminSessionShim
 // already ran above; the handler still enforces the ops scope.
 app.use(overrideRouter);
+
+app.post("/api/orders", idempotencyMiddleware);
+app.post("/api/payments/upi/intent", idempotencyMiddleware);
+app.post("/api/referral/redeem", idempotencyMiddleware);
+app.post("/api/credit-ledger/redeem", idempotencyMiddleware);
 
 app.use("/api", router);
 

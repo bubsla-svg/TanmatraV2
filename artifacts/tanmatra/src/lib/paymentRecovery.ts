@@ -171,7 +171,7 @@ export async function pollPendingTransactions(forceImmediate = false): Promise<v
     for (const tx of currentList) {
       try {
         const res = await ordersApi.getOrderStatus(tx.orderId);
-        const isSuccess = ["confirmed", "prep", "out_for_delivery", "delivered", "placed", "preparing", "ready"].includes(res.status as string);
+        const isSuccess = ["confirmed", "prep", "out_for_delivery", "delivered", "preparing", "ready"].includes(res.status as string);
         const isTerminalFailure = ["cancelled", "failed"].includes(res.status as string);
 
         if (isSuccess) {
