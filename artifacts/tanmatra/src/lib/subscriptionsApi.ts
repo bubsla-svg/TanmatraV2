@@ -120,6 +120,12 @@ export interface CreateSubscriptionInput {
   defaultItems: SubscriptionItem[];
 }
 
+function mintIdempotencyKey(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export const subscriptionsApi = {
   list: () =>
     request<{ subscriptions: Subscription[] }>("/subscriptions"),
@@ -129,10 +135,14 @@ export const subscriptionsApi = {
       members: SubscriptionMember[];
       deliveries: SubscriptionDelivery[];
     }>(`/subscriptions/${id}`),
-  create: (input: CreateSubscriptionInput) =>
+  create: (input: CreateSubscriptionInput, idempotencyKey?: string) =>
     request<{ subscription: Subscription; deliveries: SubscriptionDelivery[] }>(
       "/subscriptions",
-      { method: "POST", body: JSON.stringify(input) },
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey || mintIdempotencyKey() },
+        body: JSON.stringify(input),
+      },
     ),
   pause: (id: number) =>
     request<{ subscription: Subscription }>(`/subscriptions/${id}/pause`, {

@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { API_BASE as API_BASE } from "@/lib/apiBase";
-import { auth } from "../lib/firebase";
+import { auth, friendlyFirebaseError } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { captureAttribution, getAttribution } from "@/lib/attribution";
 import { WelcomeModal } from "@/components/auth/WelcomeModal";
@@ -140,29 +140,11 @@ export default function Login() {
     }
     setIsSending(true);
 
-    const setupMockFallback = (reason?: string) => {
-      if (reason) console.warn("Using mock OTP fallback:", reason);
-      toast.info("Using mock verification code", {
-        description: "SMS delivery unavailable. Use code '123456' to sign in.",
-      });
-      setStep("code");
-      setConfirmationResult({
-        confirm: async (enteredCode: string) => {
-          if (enteredCode === "123456") {
-            return {
-              user: {
-                getIdToken: async () => `mock-token-${countryCode}${digits}`,
-              },
-            };
-          }
-          throw new Error("Invalid code — please use 123456");
-        },
-      });
-      setResendIn(RESEND_COOLDOWN_SECS);
-    };
-
     if (!auth) {
-      setupMockFallback("Firebase auth configuration missing");
+      toast.error("Sign-in is temporarily unavailable", {
+        description:
+          "Verification service is not configured. Please try again shortly.",
+      });
       setIsSending(false);
       return;
     }
@@ -191,7 +173,9 @@ export default function Login() {
         } catch {}
         recaptchaVerifierRef.current = null;
       }
-      setupMockFallback((err as Error).message);
+      toast.error("Couldn't send verification code", {
+        description: friendlyFirebaseError(err),
+      });
     } finally {
       setIsSending(false);
     }

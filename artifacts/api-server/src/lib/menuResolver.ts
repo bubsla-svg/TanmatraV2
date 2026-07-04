@@ -88,6 +88,7 @@ export async function getMergedCatalog(
         ? (row.kitchenLocation as DishKitchen)
         : stat.kitchen,
       allergens: row.allergens ?? stat.allergens,
+      contraindications: row.contraindications ?? stat.contraindications ?? [],
       macros: row.macros
         ? {
             calories: row.macros.kcal,
@@ -146,6 +147,7 @@ export async function getMergedCatalog(
         : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
       ingredients: row.ingredients ?? [],
       allergens: row.allergens ?? [],
+      contraindications: row.contraindications ?? [],
       glycaemicIndex: gi ?? "medium",
       sugarPerServing: row.sugarPerServing ?? "—",
       customizations:

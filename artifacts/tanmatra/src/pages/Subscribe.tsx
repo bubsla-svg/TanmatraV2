@@ -941,7 +941,7 @@ export default function Subscribe() {
               />
               {pincodeCheck.state === "unserviceable" && (
                 <p className="text-[11px] text-red-400 font-medium leading-tight">
-                  ⚠️ PIN code unserviceable for subscription delivery. Currently serving Noida NCR & East Delhi.
+                  ⚠️ PIN code unserviceable for subscription delivery. Currently serving Noida, Delhi & Gurgaon & East Delhi.
                 </p>
               )}
             </div>

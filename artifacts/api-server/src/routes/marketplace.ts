@@ -4,6 +4,7 @@ import {
   marketplaceItemsTable,
   marketplaceOrdersTable,
   ordersTable,
+  userPreferencesTable,
   type MarketplaceItem,
   type MarketplaceOrderLine,
 } from "@workspace/db";
@@ -11,6 +12,7 @@ import { idempotencyMiddleware } from "../middlewares/idempotency";
 import { incMarketplaceCheckoutRollback } from "../lib/saga-metrics";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod/v4";
+import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const router: IRouter = Router();
 
@@ -196,6 +198,12 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
   const data = parsed.data;
   const userId = req.user.id;
 
+  const [prefRow] = await db
+    .select()
+    .from(userPreferencesTable)
+    .where(eq(userPreferencesTable.userId, userId))
+    .limit(1);
+
   // Reserve-and-create saga (Task #6). All stock decrements and the
   // order row insert happen inside a single Postgres transaction so a
   // mid-flow connection drop can never leave stock consumed without a
@@ -222,6 +230,102 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
         const item = itemMap.get(it.itemId);
         if (!item || !item.isActive) {
           throw new MarketplaceCheckoutError(400, `item ${it.itemId} unavailable`);
+        }
+        if (prefRow) {
+          const itemText = `${item.name} ${item.description} ${item.longDescription} ${item.category} ${(item.badges ?? []).join(" ")}`.toLowerCase();
+
+          const isHighSugarOrGi =
+            (item.category === "pantry" && itemText.includes("honey")) ||
+            itemText.includes("sugar") ||
+            itemText.includes("sweet") ||
+            itemText.includes("honey") ||
+            itemText.includes("jaggery") ||
+            itemText.includes("syrup") ||
+            itemText.includes("caramel") ||
+            itemText.includes("high gi") ||
+            itemText.includes("high glycaemic");
+
+          const glycaemicIndex = isHighSugarOrGi ? "high" : "low";
+          const sugarPerServing = isHighSugarOrGi ? "20g" : "2g";
+
+          const isHighSodium =
+            item.category === "sauces" ||
+            itemText.includes("salt") ||
+            itemText.includes("sodium") ||
+            itemText.includes("soy sauce") ||
+            itemText.includes("tamari") ||
+            itemText.includes("schezwan") ||
+            itemText.includes("pickle") ||
+            itemText.includes("high sodium");
+
+          const sodiumMg = isHighSodium ? 850 : 100;
+
+          const contraindications: string[] = [];
+          if (isHighSugarOrGi) {
+            contraindications.push("diabetes");
+          }
+          if (isHighSodium) {
+            contraindications.push("hypertension", "high_blood_pressure", "kidney_disease");
+          }
+          if (itemText.includes("gluten") || itemText.includes("wheat") || itemText.includes("flour") || itemText.includes("barley")) {
+            contraindications.push("celiac");
+          }
+          for (const c of prefRow.medicalConditions ?? []) {
+            const lowerC = c.toLowerCase();
+            if (itemText.includes(lowerC) && !contraindications.includes(lowerC)) {
+              contraindications.push(lowerC);
+            }
+          }
+
+          const allergens: string[] = [];
+          for (const a of prefRow.allergens ?? []) {
+            const lowerA = a.toLowerCase();
+            if (itemText.includes(lowerA)) {
+              allergens.push(a);
+            } else if (lowerA === "dairy" && (itemText.includes("milk") || itemText.includes("butter") || itemText.includes("cheese") || itemText.includes("ghee") || itemText.includes("cream") || itemText.includes("whey"))) {
+              allergens.push(a);
+            } else if ((lowerA === "tree nut" || lowerA === "tree nuts" || lowerA === "nuts") && (itemText.includes("almond") || itemText.includes("cashew") || itemText.includes("walnut") || itemText.includes("pistachio") || itemText.includes("pecan") || itemText.includes("nut"))) {
+              allergens.push(a);
+            } else if (lowerA === "soy" && (itemText.includes("soy") || itemText.includes("tamari") || itemText.includes("tofu") || itemText.includes("edamame"))) {
+              allergens.push(a);
+            } else if (lowerA === "gluten" && (itemText.includes("wheat") || itemText.includes("barley") || itemText.includes("rye") || itemText.includes("flour") || (!itemText.includes("tamari") && itemText.includes("soy sauce")))) {
+              allergens.push(a);
+            }
+          }
+
+          const syntheticDish: any = {
+            id: item.id,
+            slug: item.slug,
+            name: item.name,
+            category: item.category as any,
+            price: item.pricePaise,
+            image: item.image ?? "",
+            description: item.description,
+            isAvailable: item.isActive,
+            glycaemicIndex,
+            sugarPerServing,
+            sodiumMg,
+            allergens,
+            ingredients: [item.name, item.description, item.longDescription, item.category, ...(item.badges ?? [])],
+            contraindications,
+            rdReviewState: item.rdVerified ? "reviewed" : "unreviewed",
+            macros: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+          };
+          const prefsMatchObj: any = {
+            allergens: prefRow.allergens ?? [],
+            dislikedIngredients: prefRow.dislikedIngredients ?? [],
+            medicalConditions: prefRow.medicalConditions ?? [],
+            cuisines: [],
+            dietaryStyle: "omnivore",
+          };
+          const match = evaluateDishForPreferences(syntheticDish, prefsMatchObj, { strict: true });
+          if (match.blocked) {
+            throw new MarketplaceCheckoutError(
+              422,
+              `Safety block: ${item.name} conflicts with your dietary or allergen profile`,
+              { code: "safety_block", blocked: true, reasons: match.blockReasons },
+            );
+          }
         }
         lines.push({
           itemId: item.id,
@@ -303,7 +407,13 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
       // Counts every saga rollback (out-of-stock, bundle target missing,
       // item inactive). Useful for spotting catalog/seed bugs.
       incMarketplaceCheckoutRollback();
-      res.status(err.status).json({ error: err.message });
+      res
+        .status(err.status)
+        .json(
+          err.payload
+            ? { error: err.message, ...err.payload }
+            : { error: err.message },
+        );
       return;
     }
     incMarketplaceCheckoutRollback();
@@ -312,7 +422,11 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
 });
 
 class MarketplaceCheckoutError extends Error {
-  constructor(public status: number, msg: string) {
+  constructor(
+    public status: number,
+    msg: string,
+    public payload?: any,
+  ) {
     super(msg);
   }
 }

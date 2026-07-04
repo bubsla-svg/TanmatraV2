@@ -129,11 +129,15 @@ export default function MenuCard({
               <Crown className="w-2.5 h-2.5" /> Premium
             </span>
           )}
-          {match.warnings.length > 0 && (
+          {match.blocked ? (
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-red-500 text-red-400 bg-[#050505]/95 backdrop-blur-sm font-extrabold tracking-wider uppercase flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+              <ShieldAlert className="w-3.5 h-3.5 text-red-400" /> Blocked
+            </span>
+          ) : match.warnings.length > 0 ? (
             <span className="text-[9px] px-1.5 py-0.5 rounded border border-orange-500/50 text-orange-400 bg-[#050505]/85 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
               <ShieldAlert className="w-3.5 h-3.5" /> Warning
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Lifestyle tag (only when no premium overlay would conflict) */}
@@ -176,15 +180,39 @@ export default function MenuCard({
         </p>
 
         {/* Macro readout band (dashed top+bottom hairline) */}
-        <div className="my-1.5 flex gap-3 border-y border-dashed border-clinical-border/40 py-1.5 font-mono text-[11px] text-clinical-zinc">
-          <span className="font-semibold text-white">{item.macros.calories} Kcal</span>
-          <span>·</span>
-          <span>{item.macros.protein}g P</span>
-          <span>·</span>
-          <span>{item.macros.carbs}g C</span>
-          <span>·</span>
-          <span>{item.macros.fat}g F</span>
-        </div>
+        {(() => {
+          const proteinCalories = item.macros.protein * 4;
+          const carbsCalories = item.macros.carbs * 4;
+          const fatCalories = item.macros.fat * 9;
+          const totalMacroCalories = proteinCalories + carbsCalories + fatCalories || 1;
+          const proteinPct = Math.round((proteinCalories / totalMacroCalories) * 100);
+          const carbsPct = Math.round((carbsCalories / totalMacroCalories) * 100);
+          const fatPct = Math.round((fatCalories / totalMacroCalories) * 100);
+
+          return (
+            <div className="my-3.5 flex gap-4 border-y border-dashed border-clinical-border/40 py-2.5 font-mono text-clinical-data text-white">
+              <div className="flex flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Kcal</span>
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.protein}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Prot {proteinPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${proteinPct}%` }} />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.carbs}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Carb {carbsPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${carbsPct}%` }} />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.fat}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Fat {fatPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fatPct}%` }} />
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="hidden sm:flex text-[9px] uppercase tracking-[0.12em] text-clinical-zinc/60 font-semibold items-center gap-1.5 flex-wrap">
           <span>{categoryLine}</span>
@@ -259,8 +287,8 @@ export default function MenuCard({
                   e.stopPropagation();
                   onQuickAdd(e, item);
                 }}
-                disabled={!item.isAvailable || !isLive}
-                title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
+                disabled={!item.isAvailable || !isLive || match.blocked}
+                title={match.blocked ? "Cannot add dish: Allergen/Contraindication conflict" : !isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
                 className="flex-1 h-11 sm:h-10 rounded-xl border border-clinical-gold bg-clinical-gold/10 hover:bg-clinical-gold/25 text-clinical-gold px-3 py-2 font-sans text-xs font-extrabold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(212,175,55,0.15)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed truncate flex items-center justify-center gap-1"
               >
                 <span className="text-sm font-black leading-none" aria-hidden="true">+</span> ADD{familyCartCount > 0 ? ` (${familyCartCount})` : ""}
@@ -268,12 +296,13 @@ export default function MenuCard({
               {hasSavedAddress && preferences && !hasVariants && (
                 <button
                   type="button"
+                  disabled={!item.isAvailable || !isLive || match.blocked}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     onExpressBuy?.(item);
                   }}
-                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(212,175,55,0.3)] active:scale-95 transition-all truncate"
+                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(212,175,55,0.3)] active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Buy Now
                 </button>
@@ -319,5 +348,4 @@ function StarRating({ value }: { value: number }) {
     </div>
   );
 }
-
 

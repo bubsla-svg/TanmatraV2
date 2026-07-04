@@ -56,6 +56,8 @@ import { loyaltyApi } from "@/lib/loyaltyApi";
 import { useMenuCatalog } from "@/lib/menuData";
 import { whatsappLink } from "@/lib/support";
 import type { DishData } from "@/lib/menuData";
+import { usePreferences } from "@/lib/preferencesContext";
+import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 
 interface LoyaltyProgress {
   subscriptionId: number;
@@ -977,6 +979,7 @@ function SwapDialog({
   onConfirm: (items: SubscriptionItem[]) => void | Promise<void>;
 }) {
   const { dishes } = useMenuCatalog();
+  const { preferences } = usePreferences();
   const [query, setQuery] = useState("");
   // slug -> quantity
   const [selected, setSelected] = useState<Record<string, number>>({});
@@ -1067,10 +1070,12 @@ function SwapDialog({
           <div className="max-h-[46vh] overflow-y-auto space-y-1.5 pr-1">
             {filtered.map((d: DishData) => {
               const qty = selected[d.slug] ?? 0;
+              const match = evaluateDishForPreferences(d, preferences);
+              const blocked = match.blocked;
               return (
                 <div
                   key={d.slug}
-                  className={`flex items-center gap-3 rounded-lg border p-2 ${qty > 0 ? "border-clinical-gold/40 bg-clinical-gold/5" : "border-clinical-border"}`}
+                  className={`flex items-center gap-3 rounded-lg border p-2 ${blocked ? "border-red-500/50 bg-red-950/20 opacity-60" : qty > 0 ? "border-clinical-gold/40 bg-clinical-gold/5" : "border-clinical-border"}`}
                 >
                   {d.image ? (
                     <img
@@ -1083,12 +1088,23 @@ function SwapDialog({
                     <div className="w-10 h-10 rounded-md bg-clinical-dark shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{d.name}</p>
+                    <p className="text-xs font-medium text-white truncate flex items-center gap-1.5">
+                      {d.name}
+                      {blocked && (
+                        <span className="text-[9px] font-extrabold text-red-400 border border-red-500/50 px-1.5 py-0.5 rounded bg-red-950/80">
+                          BLOCKED
+                        </span>
+                      )}
+                    </p>
                     <p className="text-[10px] text-clinical-zinc tabular-nums">
                       {formatPrice(d.price)} · {d.macros.protein}g protein
                     </p>
                   </div>
-                  {qty === 0 ? (
+                  {blocked ? (
+                    <span className="text-[10px] text-red-400 font-semibold px-2 py-1">
+                      Unavailable
+                    </span>
+                  ) : qty === 0 ? (
                     <Button
                       size="sm"
                       variant="outline"

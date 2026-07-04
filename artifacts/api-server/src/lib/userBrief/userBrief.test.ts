@@ -33,6 +33,7 @@ function fixtureBrief(): UserBrief {
     } as unknown as UserBrief["identity"],
     preferences: {
       dietaryStyle: "vegetarian",
+    medicalConditions: [],
       allergens: ["peanuts"],
       dislikedIngredients: ["okra"],
       cuisines: ["south_indian"],

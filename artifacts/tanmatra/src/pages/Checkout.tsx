@@ -72,7 +72,7 @@ import {
 } from "lucide-react";
 
 import { addressesApi, type UserAddress } from "@/lib/userAddressesApi";
-import { auth } from "../lib/firebase";
+import { auth, friendlyFirebaseError } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
@@ -84,6 +84,7 @@ import {
   type ServerSafetyConflict,
 } from "@/lib/clinicalDiet";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
+import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Shapes of the phone-OTP auth responses used by the guest-checkout flow.
 // Mirrors the interfaces in Login.tsx (kept local rather than shared to
@@ -241,6 +242,26 @@ export default function Checkout() {
   const [preorderTomorrow, setPreorderTomorrow] = useState(false);
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
 
+  // Auto-polling recovery listener when returning from GPay/PhonePe/Paytm
+  useEffect(() => {
+    return subscribeUpiRecovery({
+      onPollingStart: () => {
+        setIsProcessing(true);
+      },
+      onRecovered: (event) => {
+        setIsProcessing(false);
+        setConfirmOpen(false);
+        clear();
+        submitAttemptRef.current = null;
+        toast.success(`Payment confirmed upon return from UPI app! Order ${event.tx.orderId} placed.`);
+        navigate(`/track?orderId=${encodeURIComponent(event.tx.orderId)}`);
+      },
+      onPollingEnd: () => {
+        setIsProcessing(false);
+      },
+    });
+  }, [clear, navigate]);
+
   // High-fidelity guest-checkout & slotting states
   const [deliveryMode, setDeliveryMode] = useState<"now" | "schedule">("now");
   const [showGuestAuthDialog, setShowGuestAuthDialog] = useState(false);
@@ -350,29 +371,11 @@ export default function Checkout() {
     }
     setGuestIsSending(true);
 
-    const setupGuestMockFallback = (reason?: string) => {
-      if (reason) console.warn("Using guest mock OTP fallback:", reason);
-      toast.info("Using mock verification code", {
-        description: "SMS delivery unavailable. Use code '123456' to proceed.",
-      });
-      setGuestAuthStep("code");
-      setConfirmationResult({
-        confirm: async (enteredCode: string) => {
-          if (enteredCode === "123456") {
-            return {
-              user: {
-                getIdToken: async () => `mock-token-${guestCountryCode}${digits}`,
-              },
-            };
-          }
-          throw new Error("Invalid code — please use 123456");
-        },
-      });
-      setGuestResendIn(30);
-    };
-
     if (!auth) {
-      setupGuestMockFallback("Firebase auth configuration missing");
+      toast.error("Verification is temporarily unavailable", {
+        description:
+          "Verification service is not configured. Please try again shortly.",
+      });
       setGuestIsSending(false);
       return;
     }
@@ -401,7 +404,9 @@ export default function Checkout() {
         } catch {}
         recaptchaVerifierRef.current = null;
       }
-      setupGuestMockFallback((err as Error).message);
+      toast.error("Couldn't send verification code", {
+        description: friendlyFirebaseError(err),
+      });
     } finally {
       setGuestIsSending(false);
     }
@@ -941,6 +946,7 @@ export default function Checkout() {
                 }) => {
                   // 3. Verify payment server-side before accepting the order.
                   try {
+                    removePendingTransaction(orderId);
                     await fetch(`${API_BASE}/payments/razorpay/verify`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -960,6 +966,13 @@ export default function Checkout() {
                 modal: {
                   ondismiss: () => reject(new Error("payment_cancelled")),
                 },
+              });
+              savePendingTransaction({
+                orderId,
+                idempotencyKey: submitAttemptRef.current?.key ?? orderId,
+                initiatedAt: Date.now(),
+                amount: chargeTotal,
+                provider: "razorpay",
               });
               rzp.open();
             }
@@ -1283,7 +1296,7 @@ export default function Checkout() {
                       Add your delivery address
                     </p>
                     <p className="text-[10px] text-clinical-zinc">
-                      Noida & Delhi NCR · fresh in 25–40 min
+                      Noida · Delhi · Gurgaon · fresh in 25–40 min
                     </p>
                   </button>
                 ) : (

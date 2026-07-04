@@ -120,6 +120,7 @@ async function loadPreferences(userId: string): Promise<BriefPreferences | null>
     dietaryStyle: row.dietaryStyle,
     allergens: row.allergens ?? [],
     dislikedIngredients: row.dislikedIngredients ?? [],
+    medicalConditions: row.medicalConditions ?? [],
     cuisines: row.cuisines ?? [],
     spiceLevel: row.spiceLevel,
     goal: row.goal,

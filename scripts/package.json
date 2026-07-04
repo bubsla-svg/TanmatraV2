@@ -8,11 +8,17 @@
     "seed-ops-data": "tsx ./src/seed-ops-data.ts",
     "seed-menu-items": "tsx ./src/seed-menu-items.ts",
     "backfill-order-coords": "tsx ./src/backfill-order-coords.ts",
+    "verify-ledger": "tsx ./src/verify-ledger.ts",
+    "verify-dpdpa": "tsx ./src/verify-dpdpa-kms.ts",
+    "verify-allergen-gate": "tsx ./src/verify-allergen-gate.ts",
+    "stress-test-ledger": "tsx ./src/stress-test-ledger.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@workspace/api-server": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/menu-catalog": "workspace:*",
+    "@workspace/preferences-match": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {

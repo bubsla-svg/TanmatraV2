@@ -54,6 +54,7 @@ export interface DishCustomOption {
     isAvailable: boolean;
     averageRating?: number | null;
     reviewCount?: number;
+    contraindications?: string[];
     /**
      * RD (registered dietitian) safety review gate. Absent on legacy
      * curated entries (treated as "reviewed" by the safety evaluator).

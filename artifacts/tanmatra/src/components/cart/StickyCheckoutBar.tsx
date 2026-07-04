@@ -38,14 +38,14 @@ export default function StickyCheckoutBar() {
     if (hasFreeDelivery) {
       t = setTimeout(() => {
         setShowProgress(false);
-      }, 4000);
+      }, 3000);
     } else {
       setShowProgress(true);
     }
     return () => {
       if (t) clearTimeout(t);
     };
-  }, [hasFreeDelivery, subtotal]);
+  }, [hasFreeDelivery]);
 
   const visible =
     items.length > 0 && !HIDE_ON.some((re) => re.test(pathname));
@@ -66,7 +66,7 @@ export default function StickyCheckoutBar() {
           }}
           role="region"
           aria-label="Cart summary and free delivery tracker"
-          className="fixed inset-x-0 z-30 px-3 sm:px-6 bottom-[calc(58px+env(safe-area-inset-bottom))] md:bottom-6 pointer-events-none"
+          className="fixed inset-x-0 z-45 px-3 sm:px-6 bottom-[calc(var(--bottom-nav-height)+var(--safe-bottom))] md:bottom-6 pointer-events-none"
         >
           <div className="mx-auto max-w-3xl pointer-events-auto">
             <div className="flex flex-col rounded-2xl border border-clinical-gold/40 bg-clinical-dark/95 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(212,175,55,0.15)] overflow-hidden">

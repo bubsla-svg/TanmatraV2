@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import MacroOverlay from "@/components/dish/MacroOverlay";
-import { WeeklySummaryCard } from "@/pages/Wellness";
+import { WeeklySummaryCard } from "@/components/wellness/WeeklySummaryCard";
 import { useOrders } from "@/lib/ordersContext";
 import { useCart } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
@@ -339,7 +339,7 @@ export default function Home() {
               <span className="opacity-50">·</span>
               <span>Free delivery over ₹500</span>
               <span className="opacity-50">·</span>
-              <span>Noida &amp; Delhi NCR</span>
+              <span>Noida · Delhi · Gurgaon</span>
             </p>
 
             {/* First-order offer — mirrors the server-side auto-applied
@@ -469,7 +469,7 @@ export default function Home() {
                 icon: Bike,
                 step: "03",
                 title: "Delivered fresh in 25–40 min",
-                desc: "Prepared to order in ISO 22000 kitchens and dispatched the moment your order is confirmed. Same-day, across Noida & NCR.",
+                desc: "Prepared to order in ISO 22000 kitchens and dispatched the moment your order is confirmed. Same-day, across Noida, Delhi & Gurgaon.",
               },
             ].map((s) => (
               <div key={s.step} className="flex gap-4 p-4 rounded-xl border border-clinical-border bg-clinical-surface">

@@ -72,3 +72,4 @@ for (const [name, p] of [
 export type DrizzleDb = typeof db;
 
 export * from "./schema";
+export * from "./crypto";
