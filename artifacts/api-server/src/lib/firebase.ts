@@ -18,13 +18,6 @@ export function getFirebaseAdmin(): App {
 }
 
 export async function verifyFirebaseIdToken(idToken: string): Promise<string> {
-  if ((process.env["NODE_ENV"] ?? "development") !== "production") {
-    if (idToken.startsWith("mock-token-")) {
-      const ph = idToken.slice("mock-token-".length);
-      logger.info({ e164: ph }, "auth.firebase.mock_bypass");
-      return ph;
-    }
-  }
   const adminApp = getFirebaseAdmin();
   const auth = getAuth(adminApp);
   const decodedToken = await auth.verifyIdToken(idToken);

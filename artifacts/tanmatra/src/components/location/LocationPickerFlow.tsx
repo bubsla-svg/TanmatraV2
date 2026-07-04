@@ -146,16 +146,42 @@ async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
   }
 
   // Step 2 — ensure a <gmpx-api-loader> element exists to bootstrap Maps JS.
-  if (!(window as any).google?.maps?.Geocoder) {
+  if (!(window as any).google?.maps?.importLibrary) {
     ensureMapsAPILoader(MAPS_API_KEY);
   }
 
-  // Step 3 — poll until Maps JS API (Geocoder) is ready.
+  // Step 3 — wait for the Maps JS bootstrap (`google.maps.importLibrary`),
+  // then explicitly import the libraries we use. Under the modern dynamic
+  // loader, classes like `google.maps.Geocoder` are LAZY — they only exist
+  // after `importLibrary("geocoding")` resolves, so passively polling for
+  // them would time out forever even with the API enabled.
   while (Date.now() < mapsDeadline) {
-    if ((window as any).google?.maps?.Geocoder) return true;
+    if ((window as any).google?.maps?.importLibrary) break;
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }
-  return false;
+  const gmaps = (window as any).google?.maps;
+  if (!gmaps?.importLibrary) return false;
+
+  try {
+    const remaining = Math.max(1_000, mapsDeadline - Date.now());
+    await Promise.race([
+      Promise.all([
+        gmaps.importLibrary("maps"),
+        gmaps.importLibrary("geocoding"),
+        gmaps.importLibrary("marker"),
+        customElements.whenDefined("gmp-map"),
+      ]),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Maps libraries timed out")),
+          remaining,
+        ),
+      ),
+    ]);
+  } catch {
+    return false;
+  }
+  return !!(window as any).google?.maps?.Geocoder;
 }
 
 export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: LocationPickerFlowProps) {
@@ -172,6 +198,13 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   const [geocoding, setGeocoding] = useState(false);
   const [plainSearch, setPlainSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  // Places (New) REST suggestions — independent of Maps JS, so search works
+  // even when the map canvas can't boot (e.g. Maps JavaScript API disabled
+  // on the key while Places API (New) is enabled — verified server-side).
+  const [suggestions, setSuggestions] = useState<
+    Array<{ id: string; main: string; secondary: string }>
+  >([]);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Form details states
   const [orderingFor, setOrderingFor] = useState<"myself" | "someone">("myself");
@@ -330,6 +363,87 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     } catch {
       setGeocoding(false);
     }
+  };
+
+  // ── Places (New) REST search — key-capability-proof search path ──
+  const queryPlacesRest = async (input: string) => {
+    if (!MAPS_API_KEY || input.trim().length < 3) return;
+    try {
+      const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Goog-Api-Key": MAPS_API_KEY },
+        body: JSON.stringify({
+          input: input.trim(),
+          includedRegionCodes: ["in"],
+          locationBias: { circle: { center: { latitude: 28.55, longitude: 77.25 }, radius: 50000 } },
+        }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as any;
+      setSuggestions(
+        (data.suggestions ?? [])
+          .map((sg: any) => sg.placePrediction)
+          .filter(Boolean)
+          .slice(0, 6)
+          .map((pp: any) => ({
+            id: pp.placeId as string,
+            main: pp.structuredFormat?.mainText?.text ?? pp.text?.text ?? "",
+            secondary: pp.structuredFormat?.secondaryText?.text ?? "",
+          })),
+      );
+    } catch {
+      // network/deny — Enter-to-geocode fallback still available
+    }
+  };
+
+  const choosePlace = async (placeId: string, label: string) => {
+    setSuggestions([]);
+    setSearchQuery(label);
+    if (!MAPS_API_KEY) return;
+    setGeocoding(true);
+    try {
+      const res = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+        headers: {
+          "X-Goog-Api-Key": MAPS_API_KEY,
+          "X-Goog-FieldMask": "location,formattedAddress,addressComponents",
+        },
+      });
+      if (!res.ok) return;
+      const place = (await res.json()) as any;
+      const next = { lat: place.location?.latitude, lng: place.location?.longitude };
+      if (typeof next.lat === "number" && typeof next.lng === "number") {
+        lastGeocodedRef.current = next;
+        setCoords(next);
+        if (mapRef.current) {
+          mapRef.current.center = `${next.lat},${next.lng}`;
+          mapRef.current.zoom = 17;
+          const marker = document.querySelector("gmp-advanced-marker") as any;
+          if (marker) marker.position = `${next.lat},${next.lng}`;
+        }
+      }
+      if (place.formattedAddress) setLocality(place.formattedAddress);
+      let cityStr = "", pinStr = "";
+      for (const c of place.addressComponents ?? []) {
+        if (c.types?.includes("locality")) cityStr = c.longText;
+        if (c.types?.includes("postal_code")) pinStr = c.longText;
+      }
+      if (cityStr) setCity(cityStr);
+      if (pinStr) setPincode(pinStr);
+    } catch {
+      // leave whatever we had
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  const onSearchChange = (v: string) => {
+    setSearchQuery(v);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (v.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    searchDebounceRef.current = setTimeout(() => queryPlacesRest(v), 300);
   };
 
   const handleUseCurrentLocation = () => {
@@ -528,7 +642,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                     <MagnifyingGlass className="w-4 h-4 text-clinical-zinc shrink-0" />
                     <Input
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => onSearchChange(e.target.value)}
                       placeholder="Search area, sector or landmark…"
                       className="h-8 border-0 bg-transparent text-xs text-white focus-visible:ring-0 px-1"
                     />
@@ -554,6 +668,29 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               </div>
             </div>
 
+            {/* Live suggestions (Places REST) — floats under the search bar
+                and works even when the map canvas failed to boot. */}
+            {suggestions.length > 0 && (
+              <div className="absolute top-16 inset-x-4 z-20 mt-1 rounded-lg border border-clinical-border bg-clinical-surface/98 backdrop-blur-md shadow-clinical-lg overflow-hidden">
+                {suggestions.map((sg) => (
+                  <button
+                    key={sg.id}
+                    type="button"
+                    onClick={() => choosePlace(sg.id, sg.main)}
+                    className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-clinical-gold/10 border-b border-clinical-border/40 last:border-b-0"
+                  >
+                    <MapPin className="w-4 h-4 text-clinical-gold shrink-0 mt-0.5" />
+                    <span className="min-w-0">
+                      <span className="block text-xs font-medium text-white truncate">{sg.main}</span>
+                      {sg.secondary && (
+                        <span className="block text-[10px] text-clinical-zinc truncate">{sg.secondary}</span>
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Google Map Container with Extended Components */}
             <div className="flex-1 w-full bg-clinical-dark relative">
               {!mapsReady && (
@@ -567,7 +704,8 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                     <>
                       <Warning className="w-7 h-7 text-orange-400" />
                       <p className="text-xs text-clinical-zinc text-center px-8">
-                        The map couldn't load. You can still enter your address manually.
+                        Map tiles couldn't load — search your area above, or enter
+                        the address manually.
                       </p>
                       <Button
                         size="sm"
