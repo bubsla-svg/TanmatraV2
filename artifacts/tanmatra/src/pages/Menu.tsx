@@ -1116,22 +1116,22 @@ export default function Menu() {
           })}
         </div>
 
-      {quickFilters.some((f) => ["vata", "pitta", "kapha"].includes(f)) && (
-        <div className="rounded-lg border border-clinical-border bg-clinical-dark p-3 text-xs leading-relaxed animate-in fade-in">
-          <p className="text-clinical-zinc">
-            💡 <strong className="text-white">Ayurvedic Tip:</strong> Doshas (Vata, Pitta, Kapha) refer to traditional Indian body types. 
-            If your doctor advised a standard heart or diabetic plan, you can ignore these and focus on the High-Protein, Low-FODMAP, or Keto tags.
-          </p>
-        </div>
-      )}
+        {quickFilters.some((f) => ["vata", "pitta", "kapha"].includes(f)) && (
+          <div className="rounded-lg border border-clinical-border bg-clinical-dark p-3 text-xs leading-relaxed animate-in fade-in">
+            <p className="text-clinical-zinc">
+              💡 <strong className="text-white">Ayurvedic Tip:</strong> Doshas (Vata, Pitta, Kapha) refer to traditional Indian body types.
+              If your doctor advised a standard heart or diabetic plan, you can ignore these and focus on the High-Protein, Low-FODMAP, or Keto tags.
+            </p>
+          </div>
+        )}
 
-      {quickFilters.includes("jain") && (
-        <div className="rounded-lg border border-clinical-sage/30 bg-clinical-sage/5 p-3 text-xs leading-relaxed animate-in fade-in">
-          <p className="text-clinical-zinc">
-            🛡️ <strong className="text-clinical-sage">Jain Preparation Guarantee:</strong> All Jain meals are prepared in our ISO 22000 certified kitchen using dedicated, root-vegetable-free surfaces and cooking utensils to strictly prevent cross-contamination.
-          </p>
-        </div>
-      )}
+        {quickFilters.includes("jain") && (
+          <div className="rounded-lg border border-clinical-sage/30 bg-clinical-sage/5 p-3 text-xs leading-relaxed animate-in fade-in">
+            <p className="text-clinical-zinc">
+              🛡️ <strong className="text-clinical-sage">Jain Preparation Guarantee:</strong> All Jain meals are prepared in our ISO 22000 certified kitchen using dedicated, root-vegetable-free surfaces and cooking utensils to strictly prevent cross-contamination.
+            </p>
+          </div>
+        )}
       </div>
 
       {preferences && (

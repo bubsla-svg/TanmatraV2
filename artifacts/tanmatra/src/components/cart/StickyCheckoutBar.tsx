@@ -38,14 +38,14 @@ export default function StickyCheckoutBar() {
     if (hasFreeDelivery) {
       t = setTimeout(() => {
         setShowProgress(false);
-      }, 4000);
+      }, 3000);
     } else {
       setShowProgress(true);
     }
     return () => {
       if (t) clearTimeout(t);
     };
-  }, [hasFreeDelivery, subtotal]);
+  }, [hasFreeDelivery]);
 
   const visible =
     items.length > 0 && !HIDE_ON.some((re) => re.test(pathname));

@@ -180,15 +180,39 @@ export default function MenuCard({
         </p>
 
         {/* Macro readout band (dashed top+bottom hairline) */}
-        <div className="my-1.5 flex gap-3 border-y border-dashed border-clinical-border/40 py-1.5 font-mono text-[11px] text-clinical-zinc">
-          <span className="font-semibold text-white">{item.macros.calories} Kcal</span>
-          <span>·</span>
-          <span>{item.macros.protein}g P</span>
-          <span>·</span>
-          <span>{item.macros.carbs}g C</span>
-          <span>·</span>
-          <span>{item.macros.fat}g F</span>
-        </div>
+        {(() => {
+          const proteinCalories = item.macros.protein * 4;
+          const carbsCalories = item.macros.carbs * 4;
+          const fatCalories = item.macros.fat * 9;
+          const totalMacroCalories = proteinCalories + carbsCalories + fatCalories || 1;
+          const proteinPct = Math.round((proteinCalories / totalMacroCalories) * 100);
+          const carbsPct = Math.round((carbsCalories / totalMacroCalories) * 100);
+          const fatPct = Math.round((fatCalories / totalMacroCalories) * 100);
+
+          return (
+            <div className="my-3.5 flex gap-4 border-y border-dashed border-clinical-border/40 py-2.5 font-mono text-clinical-data text-white">
+              <div className="flex flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Kcal</span>
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.protein}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Prot {proteinPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${proteinPct}%` }} />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.carbs}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Carb {carbsPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${carbsPct}%` }} />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12.5px] font-semibold">{item.macros.fat}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Fat {fatPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fatPct}%` }} />
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="hidden sm:flex text-[9px] uppercase tracking-[0.12em] text-clinical-zinc/60 font-semibold items-center gap-1.5 flex-wrap">
           <span>{categoryLine}</span>
@@ -324,5 +348,4 @@ function StarRating({ value }: { value: number }) {
     </div>
   );
 }
-
 

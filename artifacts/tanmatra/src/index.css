@@ -3,34 +3,194 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── Dynamic Dual-Theme Semantic Tokens ─── */
 :root {
   --bottom-nav-height: 58px;
   --bottom-cta-height: 68px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #FAF8F3;            /* stone-50: warm cream background */
+  --surface: #FFFFFF;       /* stone-0: elevated card background */
+  --surface-raised: #FFFFFF;
+  --border: #DED9CC;        /* stone-200: hairline dividers */
+  --border-strong: #C6C0B0; /* stone-300: active borders */
+  --text-primary: #1A1714;  /* stone-900: primary readability */
+  --text-secondary: #57534A;/* stone-600: secondary descriptive */
+  --text-tertiary: #A39C8B; /* stone-400: muted captions */
+  --action: #E0922B;        /* saffron-500: transactional primary */
+  --action-text: #2A1B08;   /* saffron-on: contrast text on saffron */
+  
+  --color-macro-protein-theme: #6E8B74; /* moss */
+  --color-macro-carbs-theme: #B89A5E;    /* oat */
+  --color-macro-fat-theme: #C28A6E;      /* soft terracotta */
+
+  /* Semantic alert states (Light) */
+  --color-success-theme: #3E6448;
+  --color-error-theme: #C2503A;
+  --color-warning-theme: #B5851F;
+  --color-info-theme: #4A6B7A;
+
+  /* HSL mappings for shadcn/ui legacy classes */
+  --background: 43 24% 97%;      /* stone-50 HSL */
+  --foreground: 24 13% 10%;      /* stone-900 HSL */
+  --card: 0 0% 100%;             /* stone-0 HSL */
+  --card-foreground: 24 13% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 24 13% 10%;
+  --primary: 35 77% 52%;         /* saffron-500 HSL */
+  --primary-foreground: 33 58% 10%; /* saffron-on HSL */
+  --secondary: 43 9% 31%;        /* stone-600 HSL */
+  --secondary-foreground: 24 13% 10%;
+  --muted: 40 18% 93%;           /* stone-100 HSL */
+  --muted-foreground: 43 9% 59%; /* stone-400 HSL */
+  --accent: 35 77% 52%;
+  --accent-foreground: 33 58% 10%;
+  --destructive: 9 54% 49%;      /* clay-500 HSL */
+  --destructive-foreground: 0 0% 100%;
+  --border: 43 17% 83%;          /* stone-200 HSL */
+  --input: 43 17% 83%;
+  --ring: 35 77% 52%;
+}
+
+.dark {
+  --bg: #0B0C0E;            /* ink-900: near-black canvas */
+  --surface: #141619;       /* ink-800: card container */
+  --surface-raised: #1B1E22;/* ink-700: elevated modal */
+  --border: #262A30;        /* ink-600: border boundaries */
+  --border-strong: #33373E; /* ink-500: hover border */
+  --text-primary: #F2F0E9;  /* bone: readable soft-white */
+  --text-secondary: #8B9099;/* mute: secondary zinc-gray */
+  --text-tertiary: #5B616B; /* faint: tertiary divider gray */
+  --action: #E9A847;        /* saffron-400: dark CTA fill */
+  --action-text: #2A1B08;   /* saffron-on: dark action text */
+  
+  --color-macro-protein-theme: #8FB996;
+  --color-macro-carbs-theme: #CBB07A;
+  --color-macro-fat-theme: #D9A488;
+
+  /* Semantic alert states (Dark) */
+  --color-success-theme: #93B59B;
+  --color-error-theme: #DC8773;
+  --color-warning-theme: #D8B45E;
+  --color-info-theme: #7FA3B3;
+
+  /* HSL mappings for shadcn/ui legacy classes */
+  --background: 220 13% 5%;      /* ink-900 HSL */
+  --foreground: 45 20% 93%;      /* bone HSL */
+  --card: 220 11% 9%;            /* ink-800 HSL */
+  --card-foreground: 45 20% 93%;
+  --popover: 220 11% 9%;
+  --popover-foreground: 45 20% 93%;
+  --primary: 36 78% 60%;         /* saffron-400 HSL */
+  --primary-foreground: 33 58% 10%;
+  --secondary: 220 5% 57%;       /* mute HSL */
+  --secondary-foreground: 45 20% 93%;
+  --muted: 220 10% 13%;          /* ink-700 HSL */
+  --muted-foreground: 220 5% 57%;
+  --accent: 36 78% 60%;
+  --accent-foreground: 33 58% 10%;
+  --destructive: 11 63% 66%;     /* clay-300 HSL */
+  --destructive-foreground: 220 13% 5%;
+  --border: 220 12% 14%;         /* ink-600 HSL */
+  --input: 220 12% 14%;
+  --ring: 36 78% 60%;
 }
 
 @theme {
-  /* ─── Clinical Dark palette (preserved 1:1) ─── */
-  --color-background: hsl(0 0% 2%);
-  --color-foreground: hsl(0 0% 98%);
-  --color-card: hsl(0 0% 4%);
-  --color-card-foreground: hsl(0 0% 98%);
-  --color-popover: hsl(0 0% 4%);
-  --color-popover-foreground: hsl(0 0% 98%);
-  --color-primary: hsl(43 65% 52%);
-  --color-primary-foreground: hsl(0 0% 2%);
-  --color-secondary: hsl(220 9% 46%);
-  --color-secondary-foreground: hsl(0 0% 98%);
-  --color-muted: hsl(220 9% 15%);
-  --color-muted-foreground: hsl(220 5% 65%);
-  --color-accent: hsl(43 65% 52%);
-  --color-accent-foreground: hsl(0 0% 2%);
-  --color-destructive: hsl(0 72% 51%);
-  --color-destructive-foreground: hsl(0 0% 98%);
-  --color-border: hsl(220 9% 18%);
-  --color-input: hsl(220 9% 18%);
-  --color-ring: hsl(43 65% 52%);
+  /* ─── Shadcn/UI Core Theme Mappings (auto-synchronized) ─── */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
 
+  /* ─── Brand Theme Colors (Direct variables) ─── */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border-theme: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-action: var(--action);
+  --color-action-text: var(--action-text);
+
+  /* ─── Raw Scales (surfaced as utility classes) ─── */
+  --color-saffron-50: #FDF6EC;
+  --color-saffron-100: #FAE9CE;
+  --color-saffron-200: #F4D29C;
+  --color-saffron-300: #EEBB6B;
+  --color-saffron-400: #E9A847;
+  --color-saffron-500: #E0922B;
+  --color-saffron-600: #C67A1E;
+  --color-saffron-700: #A2611A;
+  --color-saffron-800: #7E4C18;
+  --color-saffron-900: #5A3712;
+  --color-saffron-on: #2A1B08;
+
+  --color-sage-50: #F0F4F0;
+  --color-sage-100: #DBE7DD;
+  --color-sage-200: #B9CFBE;
+  --color-sage-300: #93B59B;
+  --color-sage-400: #6E9A78;
+  --color-sage-500: #4F7D5A;
+  --color-sage-600: #3E6448;
+  --color-sage-700: #324F3A;
+  --color-sage-800: #283E2E;
+  --color-sage-900: #1E2E23;
+
+  --color-clay-100: #F5D8D0;
+  --color-clay-300: #DC8773;
+  --color-clay-500: #C2503A;
+  --color-clay-700: #7E3122;
+
+  --color-stone-0: #FFFFFF;
+  --color-stone-50: #FAF8F3;
+  --color-stone-100: #F2EFE8;
+  --color-stone-200: #DED9CC;
+  --color-stone-300: #C6C0B0;
+  --color-stone-400: #A39C8B;
+  --color-stone-500: #807A6B;
+  --color-stone-600: #57534A;
+  --color-stone-700: #44403A;
+  --color-stone-800: #2A2723;
+  --color-stone-900: #1A1714;
+
+  --color-ink-500: #33373E;
+  --color-ink-600: #262A30;
+  --color-ink-700: #1B1E22;
+  --color-ink-800: #141619;
+  --color-ink-900: #0B0C0E;
+
+  --color-bone: #F2F0E9;
+  --color-mute: #8B9099;
+  --color-faint: #5B616B;
+
+  /* ─── Macro-conscious Badge Colors ─── */
+  --color-macro-protein: var(--color-macro-protein-theme);
+  --color-macro-carbs: var(--color-macro-carbs-theme);
+  --color-macro-fat: var(--color-macro-fat-theme);
+
+  /* ─── Semantic Alert Colors ─── */
+  --color-success: var(--color-success-theme);
+  --color-error: var(--color-error-theme);
+  --color-warning: var(--color-warning-theme);
+  --color-info: var(--color-info-theme);
+
+  /* ─── Legacy Clinical Overrides (mapped to new variables) ─── */
   --color-clinical-gold: #D4AF37;
   --color-clinical-gold-light: rgba(212, 175, 55, 0.12);
   --color-clinical-blue: #6BA3C8;
@@ -40,49 +200,22 @@
   --color-clinical-slate: #334155;
   --color-clinical-zinc: #A1A1AA;
   --color-clinical-zinc-muted: #828289;
-  --color-clinical-border: #556277;
-  --color-clinical-dark: #050505;
-  --color-clinical-surface: #0A0A0C;
-  --color-clinical-surface-elevated: #111114;
+  
+  --color-clinical-border: var(--border);
+  --color-clinical-dark: var(--bg);
+  --color-clinical-surface: var(--surface);
+  --color-clinical-surface-elevated: var(--surface-raised);
 
-  /* ─── Cart & checkout interaction tokens ─── */
-  --color-matcha: #4E7A5C;
-  --color-matcha-light: rgba(78, 122, 92, 0.12);
-  --color-lotus-pink: #C4708A;
-  --color-lotus-pink-light: rgba(196, 112, 138, 0.12);
-  --color-upsell-accent: #1E1A2E;
+  /* ─── Refined Radii Scale ─── */
+  --radius-btn: 12px;
+  --radius-card: 16px;
+  --radius-input: 11px;
+  --radius-pill: 999px;
 
-  /* ─── Canonical alert palette (WCAG AAA on #050505 — see Styleguide) ─── */
-  /* Each alert has a `*-text` variant tuned for ≥7:1 contrast on the
-     clinical-dark background, and an unsuffixed accent for chip
-     backgrounds / borders. Replace ad-hoc red-500 / orange-500 /
-     green-500 / blue-500 across the clinical surfaces with these. */
-  --color-alert-allergen: #FF6B6B;
-  --color-alert-allergen-text: #FF9999;
-  --color-alert-stat: #F59E0B;
-  --color-alert-stat-text: #FCD34D;
-  --color-alert-safe: #4ADE80;
-  --color-alert-safe-text: #86EFAC;
-  --color-alert-info: #60A5FA;
-  --color-alert-info-text: #93C5FD;
-
-  /* ─── Radii (refined scale) ─── */
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.125rem;
-  --radius-2xl: 1.5rem;
-
-  /* ─── Type stack (variable fonts) ─── */
-  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
-  --font-serif: 'Instrument Serif', 'Noto Serif', ui-serif, Georgia, 'Times New Roman', serif;
-
-  /* ─── Shadows ─── */
-  --shadow-clinical: 0 4px 24px -4px rgba(212, 175, 55, 0.08);
-  --shadow-clinical-lg: 0 8px 40px -8px rgba(212, 175, 55, 0.12);
-  --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.15);
+  /* ─── Typography Visual Pairing ─── */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* ─── Motion tokens (mirrored in lib/motion.ts) ─── */
   --duration-instant: 80ms;
@@ -131,21 +264,12 @@
   * { border-color: var(--color-border); }
   html {
     font-family: var(--font-sans);
-    /* Inter char variants (ss01: alt digits/letters, cv11: single-storey a,
-       cv02: open 4) + contextual alternates & ligatures for polished text. */
-    font-feature-settings: "ss01", "cv11", "cv02", "calt" 1, "liga" 1;
-    font-optical-sizing: auto;
+    font-feature-settings: "ss01", "cv11", "cv02";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
   body { background-color: var(--color-clinical-dark); color: hsl(0 0% 98%); }
-
-  /* App-wide line-breaking polish: balance headings (even, no orphan word on
-     the last line) and prettify body copy (avoids single-word widows). Both
-     degrade gracefully where unsupported. */
-  h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
-  p { text-wrap: pretty; }
 
   /* ─── Type scale (the canonical sizes for every screen) ─── */
   .text-display {
@@ -154,19 +278,17 @@
     font-weight: 400;
     letter-spacing: -0.02em;
     line-height: 1.02;
-    text-wrap: balance;
   }
-  /* Fluid h1 — scales smoothly from mobile to desktop instead of a fixed jump. */
-  .text-clinical-h1 { font-size: clamp(2rem, 1.15rem + 2.9vw, 2.75rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.08; font-family: var(--font-sans); text-wrap: balance; }
-  .text-clinical-h2 { font-size: clamp(1.5rem, 1.05rem + 1.6vw, 1.875rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; font-family: var(--font-sans); text-wrap: balance; }
-  .text-clinical-h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.011em; line-height: 1.3; font-family: var(--font-sans); text-wrap: balance; }
-  .text-clinical-h4 { font-size: 1rem; font-weight: 600; letter-spacing: -0.006em; line-height: 1.35; font-family: var(--font-sans); }
-  .text-body-lg { font-size: 1rem; line-height: 1.6; font-family: var(--font-sans); text-wrap: pretty; }
-  .text-body { font-size: 0.875rem; line-height: 1.55; font-family: var(--font-sans); text-wrap: pretty; }
-  .text-body-sm { font-size: 0.8125rem; line-height: 1.5; font-family: var(--font-sans); text-wrap: pretty; }
-  .text-caption { font-size: 0.75rem; line-height: 1.45; font-family: var(--font-sans); }
+  .text-clinical-h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; font-family: var(--font-sans); }
+  .text-clinical-h2 { font-size: 1.875rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; font-family: var(--font-sans); }
+  .text-clinical-h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; font-family: var(--font-sans); }
+  .text-clinical-h4 { font-size: 1rem; font-weight: 600; letter-spacing: -0.005em; line-height: 1.35; font-family: var(--font-sans); }
+  .text-body-lg { font-size: 1rem; line-height: 1.6; font-family: var(--font-sans); }
+  .text-body { font-size: 0.875rem; line-height: 1.55; font-family: var(--font-sans); }
+  .text-body-sm { font-size: 0.8125rem; line-height: 1.5; font-family: var(--font-sans); }
+  .text-caption { font-size: 0.75rem; line-height: 1.4; font-family: var(--font-sans); }
   .text-clinical-data { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.875rem; letter-spacing: -0.02em; }
-  .text-clinical-label { font-size: 0.6875rem; font-weight: 500; line-height: 1.35; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-clinical-zinc); }
+  .text-clinical-label { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-clinical-zinc); }
 
   .tabular-nums { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
 
@@ -191,40 +313,10 @@
 
   ::selection { background: var(--color-clinical-gold-light); color: var(--color-clinical-gold); }
 
-  /* ─── Google Places autocomplete dropdown (address picker) ─── */
-  /* The default .pac-container is a white card that clashes with the dark
-     dialog and can stack under the Radix modal. Theme it to the Clinical
-     Dark surface and float it above everything. */
-  .pac-container {
-    z-index: 10000 !important;
-    background: var(--color-clinical-surface);
-    border: 1px solid var(--color-clinical-border);
-    border-radius: var(--radius-md);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
-    font-family: var(--font-sans);
-    margin-top: 4px;
-  }
-  .pac-item {
-    background: transparent;
-    border-top: 1px solid color-mix(in oklab, var(--color-clinical-border) 40%, transparent);
-    color: var(--color-clinical-zinc);
-    font-size: 0.75rem;
-    padding: 8px 12px;
-    cursor: pointer;
-  }
-  .pac-item:first-child { border-top: none; }
-  .pac-item:hover,
-  .pac-item-selected {
-    background: color-mix(in oklab, var(--color-clinical-gold) 10%, transparent);
-  }
-  .pac-item-query { color: #fff; font-size: 0.8125rem; }
-  .pac-matched { color: var(--color-clinical-gold); }
-  .pac-icon { filter: invert(0.7) sepia(0.3) saturate(2) hue-rotate(10deg); }
-
   /* ─── Canonical alert utilities (clinical surfaces) ─── */
   /* Use these in place of bg-red-500/* / text-red-300 / bg-orange-500/*
      on Cart, Checkout, Orders, Track, Clinical, RdConsole, and the
-     ConflictsPanel. */
+     ConflictsPanel / PatientContextStrip. */
   .alert-allergen-bg { background-color: color-mix(in oklab, var(--color-alert-allergen) 12%, transparent); }
   .alert-allergen-bg-strong { background-color: color-mix(in oklab, var(--color-alert-allergen) 22%, transparent); }
   .alert-allergen-border { border-color: color-mix(in oklab, var(--color-alert-allergen) 50%, transparent); }
@@ -272,8 +364,8 @@
     transition-duration: 150ms !important;
   }
   .theme-clinical .theme-clinical-no-gradient,
-  .theme-clinical [class*="bg-gradient-"]:not(.keep-gradient),
-  .theme-clinical [class*="from-clinical-gold/"][class*="bg-gradient-"]:not(.keep-gradient) {
+  .theme-clinical [class*="bg-gradient-"],
+  .theme-clinical [class*="from-clinical-gold/"][class*="bg-gradient-"] {
     background-image: none !important;
   }
 
@@ -330,216 +422,3 @@
     }
   }
 }
-
-/* ─── Tanmatra UX UI Phase 1 Configuration ─── */
-@theme {
-  --color-saffron-50: #FDF6EC;
-  --color-saffron-100: #FAE9CE;
-  --color-saffron-200: #F4D29C;
-  --color-saffron-300: #EEBB6B;
-  --color-saffron-400: #E9A847;
-  --color-saffron-500: #E0922B;
-  --color-saffron-600: #C67A1E;
-  --color-saffron-700: #A2611A;
-  --color-saffron-800: #7E4C18;
-  --color-saffron-900: #5A3712;
-  --color-saffron-on: #2A1B08;
-
-  --color-sage-50: #F0F4F0;
-  --color-sage-100: #DBE7DD;
-  --color-sage-200: #B9CFBE;
-  --color-sage-300: #93B59B;
-  --color-sage-400: #6E9A78;
-  --color-sage-500: #4F7D5A;
-  --color-sage-600: #3E6448;
-  --color-sage-700: #324F3A;
-  --color-sage-800: #283E2E;
-  --color-sage-900: #1E2E23;
-
-  --color-clay-100: #F5D8D0;
-  --color-clay-300: #DC8773;
-  --color-clay-500: #C2503A;
-  --color-clay-700: #7E3122;
-
-  --color-stone-0: #FFFFFF;
-  --color-stone-50: #FAF8F3;
-  --color-stone-100: #F2EFE8;
-  --color-stone-200: #DED9CC;
-  --color-stone-300: #C6C0B0;
-  --color-stone-400: #A39C8B;
-  --color-stone-500: #807A6B;
-  --color-stone-600: #57534A;
-  --color-stone-700: #44403A;
-  --color-stone-800: #2A2723;
-  --color-stone-900: #1A1714;
-
-  --color-ink-500: #33373E;
-  --color-ink-600: #262A30;
-  --color-ink-700: #1B1E22;
-  --color-ink-800: #141619;
-  --color-ink-900: #0B0C0E;
-
-  --color-bone: #F2F0E9;
-  --color-mute: #8B9099;
-  --color-faint: #5B616B;
-
-  --color-macro-protein: #6E8B74;
-  --color-macro-carbs: #B89A5E;
-  --color-macro-fat: #C28A6E;
-
-  --color-success: #3E6448;
-  --color-error: #C2503A;
-  --color-warning: #B5851F;
-  --color-info: #4A6B7A;
-
-  --color-bg: rgb(var(--theme-bg) / <alpha-value>);
-  --color-surface: rgb(var(--theme-surface) / <alpha-value>);
-  --color-surface-raised: rgb(var(--theme-surface-raised) / <alpha-value>);
-  --color-border: rgb(var(--theme-border) / <alpha-value>);
-  --color-border-strong: rgb(var(--theme-border-strong) / <alpha-value>);
-  --color-text-primary: rgb(var(--theme-text-primary) / <alpha-value>);
-  --color-text-secondary: rgb(var(--theme-text-secondary) / <alpha-value>);
-  --color-text-tertiary: rgb(var(--theme-text-tertiary) / <alpha-value>);
-  --color-action: rgb(var(--theme-action) / <alpha-value>);
-  --color-action-text: rgb(var(--theme-action-text) / <alpha-value>);
-
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-
-  --text-display: 3.25rem;
-  --text-display--line-height: 1.03;
-  --text-display--letter-spacing: -0.03em;
-  --text-display--font-weight: 600;
-
-  --text-h2: 1.875rem;
-  --text-h2--line-height: 1.10;
-  --text-h2--letter-spacing: -0.02em;
-  --text-h2--font-weight: 600;
-
-  --text-h3: 1.375rem;
-  --text-h3--line-height: 1.20;
-  --text-h3--letter-spacing: -0.01em;
-  --text-h3--font-weight: 600;
-
-  --text-card-title: 1.0625rem;
-  --text-card-title--line-height: 1.20;
-  --text-card-title--letter-spacing: -0.01em;
-  --text-card-title--font-weight: 600;
-
-  --text-body-lg: 1.0625rem;
-  --text-body-lg--line-height: 1.55;
-
-  --text-body: 0.9375rem;
-  --text-body--line-height: 1.55;
-
-  --text-body-sm: 0.8125rem;
-  --text-body-sm--line-height: 1.45;
-
-  --text-price: 1.125rem;
-  --text-price--line-height: 1.10;
-  --text-price--letter-spacing: -0.02em;
-  --text-price--font-weight: 600;
-
-  --text-price-lg: 1.375rem;
-  --text-price-lg--line-height: 1.05;
-  --text-price-lg--letter-spacing: -0.02em;
-  --text-price-lg--font-weight: 600;
-
-  --text-micro: 0.6875rem;
-  --text-micro--line-height: 1.20;
-  --text-micro--letter-spacing: 0.04em;
-  --text-micro--font-weight: 500;
-
-  --text-overline: 0.6875rem;
-  --text-overline--line-height: 1.20;
-  --text-overline--letter-spacing: 0.18em;
-  --text-overline--font-weight: 400;
-
-  --spacing-card: 1rem;
-  --spacing-gutter: 1.375rem;
-  --spacing-safe-bottom: env(safe-area-inset-bottom);
-
-  --radius-btn: 12px;
-  --radius-card: 16px;
-  --radius-input: 11px;
-  --radius-pill: 999px;
-
-  --shadow-card: 0 1px 2px rgba(26,23,20,0.04), 0 4px 12px rgba(26,23,20,0.05);
-  --shadow-card-hover: 0 2px 4px rgba(26,23,20,0.06), 0 12px 28px rgba(26,23,20,0.08);
-  --shadow-bar: 0 -4px 20px rgba(26,23,20,0.10);
-}
-
-@layer base {
-  :root {
-    --theme-bg: 250 248 243;
-    --theme-surface: 255 255 255;
-    --theme-surface-raised: 255 255 255;
-    --theme-border: 222 217 204;
-    --theme-border-strong: 198 192 176;
-    --theme-text-primary: 26 23 20;
-    --theme-text-secondary: 87 83 74;
-    --theme-text-tertiary: 163 156 139;
-    --theme-action: 224 146 43;
-    --theme-action-text: 42 27 8;
-  }
-  .dark {
-    --theme-bg: 11 12 14;
-    --theme-surface: 20 22 25;
-    --theme-surface-raised: 27 30 34;
-    --theme-border: 38 42 48;
-    --theme-border-strong: 51 55 62;
-    --theme-text-primary: 242 240 233;
-    --theme-text-secondary: 139 144 152;
-    --theme-text-tertiary: 91 97 107;
-    --theme-action: 233 168 71;
-    --theme-action-text: 42 27 8;
-  }
-}
-/* ─── Sonner Toast Clinical Palette Overrides ─── */
-[data-sonner-toast][data-theme="dark"] {
-  font-family: var(--font-sans) !important;
-}
-
-[data-sonner-toast][data-theme="dark"][data-type="success"] {
-  background-color: #081009 !important;
-  border: 1px solid rgba(125, 158, 126, 0.3) !important;
-  color: #a3cca8 !important;
-}
-[data-sonner-toast][data-theme="dark"][data-type="success"] [data-icon] {
-  color: #7d9e7e !important;
-}
-[data-sonner-toast][data-theme="dark"][data-type="success"] [data-description] {
-  color: #88a78d !important;
-}
-[data-sonner-toast][data-theme="dark"][data-type="success"] [data-button] {
-  background-color: #111114 !important;
-  border: 1px solid rgba(125, 158, 126, 0.25) !important;
-  color: #a3cca8 !important;
-  transition: background-color 150ms ease;
-}
-[data-sonner-toast][data-theme="dark"][data-type="success"] [data-button]:hover {
-  background-color: #16161c !important;
-}
-
-[data-sonner-toast][data-theme="dark"][data-type="error"] {
-  background-color: #140808 !important;
-  border: 1px solid rgba(255, 107, 107, 0.25) !important;
-  color: #ff9999 !important;
-}
-[data-sonner-toast][data-theme="dark"][data-type="error"] [data-icon] {
-  color: #ff6b6b !important;
-}
-[data-sonner-toast][data-theme="dark"][data-type="error"] [data-description] {
-  color: #e58888 !important;
-}
-[data-sonner-toast][data-theme="dark"][data-type="error"] [data-button] {
-  background-color: #111114 !important;
-  border: 1px solid rgba(255, 107, 107, 0.2) !important;
-  color: #ff9999 !important;
-  transition: background-color 150ms ease;
-}
-[data-sonner-toast][data-theme="dark"][data-type="error"] [data-button]:hover {
-  background-color: #16161c !important;
-}
-/* ─── End Tanmatra UX UI Phase 1 Configuration ─── */
