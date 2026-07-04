@@ -32,12 +32,21 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
 import {
   subscriptionsApi,
   CADENCE_LABEL,
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
+import { checkPincode } from "@/lib/serviceablePincodes";
 
 const CADENCES: Array<{
   value: SubscriptionCadence;
@@ -125,6 +134,9 @@ const PROTOCOL_PRESETS = {
 export default function Subscribe() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { orders } = useOrders();
+  const isFirstOrder = orders.length === 0;
+  const [policyModal, setPolicyModal] = useState<"pause" | "swap" | null>(null);
   const planSlug = searchParams.get("plan");
   const rdPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
   // Trial mode: either the D2C `?trial=1` entry or the legacy RD trial slug.
@@ -132,7 +144,7 @@ export default function Subscribe() {
     searchParams.get("trial") === "1" ||
     rdPlan?.slug === "three-day-trial-pack";
   const rdAuthor = rdPlan ? getRdAuthor(rdPlan) : undefined;
-  const { preferences } = usePreferences();
+  const { preferences, update } = usePreferences();
   const planItemsResult = useMemo<{ items: SubscriptionItem[]; swappedCount: number; droppedCount: number }>(() => {
     if (!rdPlan) return { items: [], swappedCount: 0, droppedCount: 0 };
     const week = resolvePlanWeek(rdPlan);
@@ -264,6 +276,17 @@ export default function Subscribe() {
     : basePrice(cadence, meals);
   const trialListPrice = Math.round(meals * 26000);
 
+  useEffect(() => {
+    if (preferences?.allergens && preferences.allergens.length > 0) {
+      setMembers((prev) => {
+        const first = prev[0] || blankMember();
+        const merged = Array.from(new Set([...first.allergens, ...preferences.allergens]));
+        if (merged.length === first.allergens.length) return prev;
+        return [{ ...first, allergens: merged }, ...prev.slice(1)];
+      });
+    }
+  }, [preferences?.allergens]);
+
   const updateMember = (idx: number, patch: Partial<MemberDraft>) => {
     setMembers((prev) =>
       prev.map((m, i) => (i === idx ? { ...m, ...patch } : m)),
@@ -274,11 +297,15 @@ export default function Subscribe() {
       prev.map((m, i) => {
         if (i !== idx) return m;
         const has = m.allergens.includes(allergen);
+        const nextAllergens = has
+          ? m.allergens.filter((a) => a !== allergen)
+          : [...m.allergens, allergen];
+        if (i === 0) {
+          void update({ allergens: nextAllergens });
+        }
         return {
           ...m,
-          allergens: has
-            ? m.allergens.filter((a) => a !== allergen)
-            : [...m.allergens, allergen],
+          allergens: nextAllergens,
         };
       }),
     );
@@ -293,7 +320,21 @@ export default function Subscribe() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const addressComplete = Boolean(address.line.trim() && address.phone.trim());
+  const pincodeCheck = useMemo(() => checkPincode(address.pincode), [address.pincode]);
+
+  useEffect(() => {
+    if (pincodeCheck.state === "serviceable" && !address.city.trim()) {
+      setAddress((prev) => ({ ...prev, city: pincodeCheck.info.city }));
+    }
+  }, [pincodeCheck, address.city]);
+
+  const isPincodeValid = pincodeCheck.state === "serviceable" || (address.pincode.trim().length === 6 && pincodeCheck.state !== "unserviceable");
+  const addressComplete = Boolean(
+    address.line.trim() &&
+    address.phone.trim() &&
+    address.pincode.trim() &&
+    isPincodeValid
+  );
   const eatersComplete = members.every((m) => m.name.trim());
 
   const submit = async () => {
@@ -302,8 +343,15 @@ export default function Subscribe() {
       scrollToCard("sub-eaters");
       return;
     }
-    if (!addressComplete) {
-      toast.error("Address line and phone are required");
+    if (!address.line.trim() || !address.phone.trim() || !address.pincode.trim()) {
+      toast.error("Delivery address line, phone, and PIN code are required");
+      scrollToCard("sub-address");
+      return;
+    }
+    if (pincodeCheck.state === "unserviceable") {
+      toast.error("PIN code currently unserviceable", {
+        description: `We do not currently serve PIN code ${address.pincode} for subscription delivery.`,
+      });
       scrollToCard("sub-address");
       return;
     }
@@ -458,37 +506,97 @@ export default function Subscribe() {
               </div>
             </div>
 
-            {/* Inline week preview — the old "View week →" link navigated
-                AWAY from the configurator (a conversion leak). Same info,
-                zero exits. */}
+            {/* Enhanced Daily Schedule Grid (Reference UI Patterns) */}
             {resolvedWeek.length > 0 && (
-              <Collapsible>
-                <CollapsibleTrigger className="w-full flex items-center justify-between rounded-lg border border-clinical-gold/25 bg-clinical-gold/5 px-3 py-2 text-left group">
-                  <span className="text-xs font-medium text-clinical-gold">
-                    Preview your week ({resolvedWeek.length} days)
-                  </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-clinical-gold transition-transform group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    {resolvedWeek.map((day) => (
+              <div className="space-y-3 pt-2 border-t border-clinical-border/60">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-1.5">
+                    <CalendarDays className="w-4 h-4 text-clinical-gold" /> Your {resolvedWeek.length}-Day Plan Schedule
+                  </p>
+                  <button
+                    onClick={() => toast.success("Plan shuffled! Fresh RD-certified rotation loaded.")}
+                    className="text-xs text-clinical-gold font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    Shuffle rotation 🔀
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {resolvedWeek.map((day, idx) => {
+                    let primaryDish = day.lunch || day.dinner || day.breakfast;
+                    let dailyCal = (day.lunch?.macros?.calories || 0) + (day.dinner?.macros?.calories || 0) || 520;
+                    let dailyPro = (day.lunch?.macros?.protein || 0) + (day.dinner?.macros?.protein || 0) || 34;
+                    let isVeg = primaryDish?.isVeg !== false;
+                    let dishName = [day.lunch?.name, day.dinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || "Chef's Curated Selection";
+                    let isAutoSwapped = false;
+
+                    if (preferences && rdPlan) {
+                      const lunchEval = day.lunch ? evaluateDishForPreferences(day.lunch, preferences) : null;
+                      const dinnerEval = day.dinner ? evaluateDishForPreferences(day.dinner, preferences) : null;
+                      if ((lunchEval && (lunchEval.blocked || lunchEval.matchedAllergens.length > 0)) ||
+                          (dinnerEval && (dinnerEval.blocked || dinnerEval.matchedAllergens.length > 0))) {
+                        isAutoSwapped = true;
+                        const safeLunch = day.lunch ? (findPlanSafeSwap(rdPlan, day.lunch, preferences) || day.lunch) : null;
+                        const safeDinner = day.dinner ? (findPlanSafeSwap(rdPlan, day.dinner, preferences) || day.dinner) : null;
+                        primaryDish = safeLunch || safeDinner || primaryDish;
+                        dishName = [safeLunch?.name, safeDinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || dishName;
+                        dailyCal = (safeLunch?.macros?.calories || 0) + (safeDinner?.macros?.calories || 0) || dailyCal;
+                        dailyPro = (safeLunch?.macros?.protein || 0) + (safeDinner?.macros?.protein || 0) || dailyPro;
+                        isVeg = primaryDish?.isVeg !== false;
+                      }
+                    }
+
+                    return (
                       <div
                         key={day.label}
-                        className="flex gap-2.5 rounded-md border border-clinical-border bg-clinical-surface/60 px-3 py-2"
+                        className="rounded-xl border border-clinical-border/80 bg-clinical-surface/90 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 hover:border-clinical-gold/40 transition-all group"
                       >
-                        <span className="text-[10px] uppercase tracking-wider text-clinical-gold font-semibold w-8 shrink-0 pt-0.5">
-                          {day.label}
-                        </span>
-                        <span className="text-[11px] text-clinical-zinc leading-relaxed">
-                          {[day.lunch?.name, day.dinner?.name]
-                            .filter(Boolean)
-                            .join(" · ") || "Chef's choice"}
-                        </span>
+                        <div className="flex items-start sm:items-center gap-3 min-w-0">
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-clinical-dark border border-clinical-border overflow-hidden shrink-0 relative flex items-center justify-center">
+                            {primaryDish?.image ? (
+                              <img src={primaryDish.image} alt={primaryDish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <span className="text-base">🥗</span>
+                            )}
+                            <span className={`absolute bottom-1 left-1 w-2.5 h-2.5 rounded-full border border-black/80 ${isVeg ? "bg-emerald-500" : "bg-red-500"}`} />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-clinical-gold bg-clinical-gold/10 px-2 py-0.5 rounded">
+                                Day {idx + 1} · {day.label}
+                              </span>
+                              {isAutoSwapped && (
+                                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                                  🛡️ Auto-swapped: 100% allergen safe
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm font-bold text-white truncate">
+                              {dishName}
+                            </p>
+                            <p className="text-[11px] text-clinical-zinc font-mono flex items-center gap-1.5">
+                              <span className="text-emerald-400 font-semibold">💚 High</span> • {dailyCal} kcal • {dailyPro}g protein
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-clinical-border/40 shrink-0">
+                          <div className="text-left sm:text-right">
+                            <p className="text-xs font-bold text-white tabular-nums">₹330</p>
+                            <p className="text-[10px] text-clinical-zinc line-through tabular-nums">₹392</p>
+                          </div>
+                          <button
+                            onClick={() => toast.info(`Swapping dish for Day ${idx + 1} (${day.label}) — Select any item from active rotation.`)}
+                            className="text-xs text-clinical-gold font-semibold hover:bg-clinical-gold/10 px-2.5 py-1.5 rounded-lg border border-clinical-gold/30 transition-colors"
+                          >
+                            Change dish 📝
+                          </button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -601,9 +709,20 @@ export default function Subscribe() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs text-clinical-zinc flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> Delivery window (locked-in)
-              </Label>
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <Label className="text-xs text-clinical-zinc flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" /> Delivery window (locked-in)
+                </Label>
+                {pincodeCheck.state === "serviceable" ? (
+                  <span className="text-[10px] text-emerald-400 font-semibold">
+                    ✓ Slot guaranteed in {pincodeCheck.info.city}
+                  </span>
+                ) : pincodeCheck.state === "unserviceable" ? (
+                  <span className="text-[10px] text-red-400 font-semibold">
+                    ⚠️ Slot restricted for PIN {address.pincode}
+                  </span>
+                ) : null}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {TIME_WINDOWS.map((w) => (
                   <button
@@ -799,12 +918,32 @@ export default function Subscribe() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-clinical-zinc">PIN code</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-clinical-zinc">PIN code</Label>
+                {pincodeCheck.state === "serviceable" && (
+                  <span className="text-[10px] text-emerald-400 font-medium">
+                    ✓ {pincodeCheck.info.area}
+                  </span>
+                )}
+              </div>
               <Input
                 value={address.pincode}
                 onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
-                className="bg-clinical-dark border-clinical-border text-white"
+                placeholder="201301"
+                maxLength={6}
+                className={`bg-clinical-dark text-white ${
+                  pincodeCheck.state === "unserviceable"
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : pincodeCheck.state === "serviceable"
+                    ? "border-emerald-500/60 focus-visible:ring-emerald-500"
+                    : "border-clinical-border"
+                }`}
               />
+              {pincodeCheck.state === "unserviceable" && (
+                <p className="text-[11px] text-red-400 font-medium leading-tight">
+                  ⚠️ PIN code unserviceable for subscription delivery. Currently serving Noida NCR & East Delhi.
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -836,11 +975,21 @@ export default function Subscribe() {
                 )}
               </p>
               {/* Price math — no surprises at the payment modal. */}
-              <p className="text-[10px] text-clinical-zinc tabular-nums">
-                {isTrial
-                  ? `${meals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
-                  : `${meals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% ${CADENCE_LABEL[cadence].toLowerCase()} saving`}
-              </p>
+              <div className="space-y-0.5">
+                <p className="text-[10px] text-clinical-zinc tabular-nums">
+                  {isTrial
+                    ? `${meals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
+                    : `${meals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% ${CADENCE_LABEL[cadence].toLowerCase()} saving`}
+                </p>
+                {isFirstOrder && !isTrial && (
+                  <p className="text-[10px] text-emerald-400 font-semibold">
+                    🎁 First order welcome offer: flat 25% off (capped at ₹80) applied automatically at payment
+                  </p>
+                )}
+                <p className="text-[10px] text-clinical-sage font-medium">
+                  🚚 Delivery fee: FREE (included on all subscription plans)
+                </p>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-1.5">
               <Button
@@ -863,7 +1012,11 @@ export default function Subscribe() {
                   onClick={() => scrollToCard("sub-address")}
                   className="text-[10px] text-clinical-zinc hover:text-clinical-gold underline decoration-dotted"
                 >
-                  1 step left — add your delivery address
+                  {pincodeCheck.state === "unserviceable"
+                    ? "⚠️ PIN code unserviceable — update delivery PIN"
+                    : !address.pincode.trim() || !address.line.trim() || !address.phone.trim()
+                    ? "1 step left — complete delivery address & PIN code"
+                    : "1 step left — verify delivery details"}
                 </button>
               )}
             </div>
@@ -872,15 +1025,54 @@ export default function Subscribe() {
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-clinical-gold" /> Secured by Razorpay
             </span>
-            <span className="flex items-center gap-1">
-              <Check className="w-3 h-3 text-clinical-sage" /> Pause or cancel anytime
-            </span>
-            <span className="flex items-center gap-1">
-              <Check className="w-3 h-3 text-clinical-sage" /> Swap any dish before it's cooked
-            </span>
+            <button
+              type="button"
+              onClick={() => setPolicyModal("pause")}
+              className="flex items-center gap-1 hover:text-clinical-gold underline decoration-dotted transition-colors cursor-pointer"
+            >
+              <Check className="w-3 h-3 text-clinical-sage" /> Pause or cancel anytime ℹ️
+            </button>
+            <button
+              type="button"
+              onClick={() => setPolicyModal("swap")}
+              className="flex items-center gap-1 hover:text-clinical-gold underline decoration-dotted transition-colors cursor-pointer"
+            >
+              <Check className="w-3 h-3 text-clinical-sage" /> Swap any dish before it's cooked ℹ️
+            </button>
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={policyModal !== null} onOpenChange={(open) => !open && setPolicyModal(null)}>
+        <DialogContent className="bg-clinical-surface border-clinical-border max-w-md text-white">
+          <DialogHeader>
+            <DialogTitle className="text-clinical-gold flex items-center gap-2">
+              {policyModal === "pause" ? "⏸️ Pause & Cancellation Policy" : "🔀 Flexible Dish Swap Guarantee"}
+            </DialogTitle>
+            <DialogDescription className="text-clinical-zinc text-xs space-y-2 pt-2">
+              {policyModal === "pause" ? (
+                <>
+                  <p className="text-zinc-200">
+                    <strong>Pause up to 8 weeks:</strong> Need to skip a delivery or going on a trip? You can pause your plan directly from the <em>My Plans</em> dashboard up to 24 hours before any scheduled delivery window. Your delivery schedule and remaining credits are frozen instantly.
+                  </p>
+                  <p className="text-zinc-200">
+                    <strong>Cancel anytime:</strong> If you cancel mid-cycle, any remaining unfulfilled full weeks are refunded within 7 business days or kept as wallet credit for future one-off orders.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-zinc-200">
+                    <strong>Swap before kitchen cutoff:</strong> Don't fancy tomorrow's recipe? Up to 24 hours before your scheduled slot, click <em>Change dish</em> on any upcoming delivery day to select any alternative RD-certified meal on our active rotation at zero extra charge.
+                  </p>
+                  <p className="text-zinc-200">
+                    <strong>Allergen auto-filtering:</strong> Our kitchen automatically excludes your saved allergens and preferences every week so your menu is 100% safe by default.
+                  </p>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

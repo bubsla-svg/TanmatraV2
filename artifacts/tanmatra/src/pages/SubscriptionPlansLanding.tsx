@@ -13,7 +13,15 @@ import {
   Pause,
   RefreshCw,
   Clock,
+  MapPin,
+  ChevronDown,
+  Star,
+  SlidersHorizontal,
+  CalendarDays,
+  Flame,
+  ShieldCheck,
 } from "lucide-react";
+import { getDishBySlug } from "@/lib/menuData";
 
 export const meta: MetaFunction = () => [
   { title: "Meal Plans | Tanmatra" },
@@ -74,6 +82,9 @@ const PLANS = [
 
 export default function SubscriptionPlansLanding() {
   const [cadence, setCadence] = useState<Cadence>("weekly");
+  const [sortBy, setSortBy] = useState<"popular" | "protein" | "calories" | "price">("popular");
+  const [mealtimeFilter, setMealtimeFilter] = useState<"all" | "lunch_dinner" | "dinner">("all");
+  const [vegOnly, setVegOnly] = useState(false);
 
   const priceFor = (mealsPerWeek: number) => {
     const perDelivery = Math.round(mealsPerWeek * PER_MEAL * CADENCE_DISCOUNT[cadence]);
@@ -82,32 +93,113 @@ export default function SubscriptionPlansLanding() {
     return { perDelivery, perMonth: perDelivery * deliveriesPerMonth };
   };
 
+  const filteredGoalPlans = GOAL_PLANS.filter((p) => {
+    if (vegOnly && !p.dietaryStyles.some((d) => d === "vegetarian" || d === "vegan")) {
+      return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    if (sortBy === "protein") return b.proteinTargetGrams - a.proteinTargetGrams;
+    if (sortBy === "calories") return a.calorieTargetPerDay - b.calorieTargetPerDay;
+    if (sortBy === "price") return a.pricePerWeekPaise - b.pricePerWeekPaise;
+    return 0;
+  });
+
   return (
-    <div className="bg-[#050505] text-white min-h-screen">
+    <div className="bg-[#050505] text-white min-h-screen pb-16">
+      {/* Sticky Location Discovery Header */}
+      <div className="sticky top-0 z-40 bg-[#050505]/95 backdrop-blur-md border-b border-clinical-border px-4 py-3">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 bg-clinical-surface border border-clinical-border/80 rounded-full px-3.5 py-1.5 cursor-pointer hover:border-clinical-gold/50 transition-colors max-w-sm sm:max-w-md min-w-0">
+            <MapPin className="w-4 h-4 text-clinical-gold shrink-0" />
+            <div className="min-w-0 text-left">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-clinical-zinc leading-none">Delivery at</p>
+              <p className="text-xs font-medium text-white truncate mt-0.5">DLF Phase 3, Sector 24, Gurugram · Delhi NCR</p>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-clinical-zinc shrink-0 ml-1" />
+          </div>
+          <Link to="/subscribe?trial=1">
+            <Button size="sm" className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs font-semibold h-8 px-3.5 rounded-full">
+              3-Day Trial
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* Hero */}
-      <section className="py-16 md:py-20 px-4 text-center space-y-5 max-w-4xl mx-auto">
+      <section className="py-12 md:py-16 px-4 text-center space-y-4 max-w-4xl mx-auto">
         <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px] px-3 py-1">
-          Tanmatra Meal Plans
+          Healthy Subscriptions
         </Badge>
-        <h1 className="text-clinical-h1 md:text-[clamp(2.25rem,1.4rem+2.6vw,3.25rem)] md:leading-[1.06] tracking-tight text-white">
-          Good food, handled.{" "}
+        <h1 className="text-clinical-h1 md:text-[clamp(2.25rem,1.4rem+2.6vw,3.25rem)] md:leading-[1.06] tracking-tight text-white font-extrabold">
+          Healthy meals{" "}
           <span className="bg-gradient-to-r from-[#E7C766] to-clinical-gold bg-clip-text text-transparent">
-            On autopilot.
+            delivered daily.
           </span>
         </h1>
-        <p className="text-base sm:text-lg text-clinical-zinc max-w-xl mx-auto leading-relaxed">
-          Skip the daily checkout. Chef-made, dietitian-approved meals delivered
-          on your schedule — pause, skip, or swap anytime.
+        <p className="text-sm sm:text-base text-clinical-zinc max-w-lg mx-auto leading-relaxed">
+          Chef-made, clinical dietitian-approved meals on autopilot. Pause, skip, or swap anytime up to 4 PM the day before.
         </p>
+        <div className="pt-2 flex justify-center">
+          <a href="#all-kitchens">
+            <Button className="bg-white text-[#050505] hover:bg-white/90 font-bold text-sm h-11 px-8 rounded-xl shadow-lg transition-transform hover:scale-[1.02] gap-2">
+              Explore plans <ArrowRight className="w-4 h-4" />
+            </Button>
+          </a>
+        </div>
+      </section>
+
+      {/* Plan Benefits Visual Showcase (Reference CRO Patterns) */}
+      <section className="max-w-5xl mx-auto px-4 pb-12">
+        <p className="text-xs uppercase tracking-[0.2em] font-extrabold text-clinical-gold mb-4 text-left">
+          PLAN BENEFITS
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-clinical-surface via-clinical-surface to-[#0a151b] border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all">
+            <CardContent className="p-5 flex flex-col justify-between h-48 sm:h-52">
+              <div>
+                <h3 className="text-lg font-extrabold text-white leading-snug">Flexibility to suit your daily mood</h3>
+                <p className="text-xs text-clinical-zinc mt-1.5">Swap any dish in your schedule or pause deliveries with 1-click.</p>
+              </div>
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-clinical-border/50 text-xs text-clinical-gold font-semibold">
+                <CalendarDays className="w-4 h-4" /> No lock-in contracts
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-clinical-surface via-clinical-surface to-[#0d1a12] border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all">
+            <CardContent className="p-5 flex flex-col justify-between h-48 sm:h-52">
+              <div>
+                <h3 className="text-lg font-extrabold text-white leading-snug">High protein clinical meals</h3>
+                <p className="text-xs text-clinical-zinc mt-1.5">Every meal signed off by clinical RDs to hit your exact macro goals.</p>
+              </div>
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-clinical-border/50 text-xs text-clinical-sage font-semibold">
+                <ShieldCheck className="w-4 h-4" /> FSSAI & ISO 22000 Certified
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-clinical-surface via-clinical-surface to-[#1a160b] border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all">
+            <CardContent className="p-5 flex flex-col justify-between h-48 sm:h-52">
+              <div>
+                <h3 className="text-lg font-extrabold text-white leading-snug">From top kitchens & RD partners</h3>
+                <p className="text-xs text-clinical-zinc mt-1.5">Prepared fresh daily in temperature-controlled specialty kitchens.</p>
+              </div>
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-clinical-border/50 text-xs text-clinical-gold font-semibold">
+                <Star className="w-4 h-4 fill-clinical-gold" /> 4.9★ Avg Partner Rating
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       {/* Trial — the hero entry */}
-      <section className="max-w-4xl mx-auto px-4 pb-12">
-        <Card className="relative overflow-hidden border-clinical-gold/40 bg-gradient-to-br from-clinical-gold/12 via-clinical-gold/5 to-transparent">
+      <section className="max-w-5xl mx-auto px-4 pb-12">
+        <Card className="relative overflow-hidden border-clinical-gold/40 bg-gradient-to-br from-clinical-gold/12 via-clinical-gold/5 to-transparent rounded-2xl shadow-xl">
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-clinical-gold/50 to-transparent" />
           <CardContent className="p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1 space-y-3">
-              <Badge className="bg-clinical-gold text-[#050505] text-[10px] uppercase font-bold tracking-widest">
+              <Badge className="bg-clinical-gold text-[#050505] text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5">
                 Start here
               </Badge>
               <h2 className="text-2xl md:text-3xl font-bold text-white">
@@ -115,8 +207,7 @@ export default function SubscriptionPlansLanding() {
                 <span className="text-clinical-gold">25% off</span>
               </h2>
               <p className="text-sm text-clinical-zinc max-w-md leading-relaxed">
-                Nine meals over three days, matched to your goals. One-off, no
-                commitment — see if Tanmatra fits your week before you subscribe.
+                Nine meals over three days, matched to your goals. One-off, no commitment — see if Tanmatra fits your week before you subscribe.
               </p>
               <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-clinical-zinc pt-1">
                 <li className="flex items-center gap-1.5">
@@ -137,7 +228,7 @@ export default function SubscriptionPlansLanding() {
                 </span>
               </div>
               <Link to="/subscribe?trial=1" className="block">
-                <Button className="w-full md:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 h-11 px-6">
+                <Button className="w-full md:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 h-11 px-6 rounded-xl">
                   Start 3-day trial <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
@@ -146,154 +237,238 @@ export default function SubscriptionPlansLanding() {
         </Card>
       </section>
 
-      {/* Recurring plans */}
-      <section className="max-w-5xl mx-auto px-4 pb-6 text-center space-y-4">
-        <h2 className="text-clinical-h2 text-white">Or subscribe & save</h2>
-        <p className="text-sm text-clinical-zinc max-w-lg mx-auto">
-          Longer cadences save more. Every plan is fully swappable and you can
-          pause any delivery before 4 PM the day before.
-        </p>
-        <div className="flex justify-center pt-2">
-          <div className="bg-clinical-surface border border-clinical-border rounded-lg p-1 flex gap-1">
-            {(["weekly", "fortnightly", "monthly"] as const).map((c) => (
-              <Button
-                key={c}
-                onClick={() => setCadence(c)}
-                variant={cadence === c ? "default" : "ghost"}
-                className={`text-xs capitalize h-8 px-4 ${cadence === c ? "bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90" : "text-clinical-zinc hover:text-white"}`}
+      {/* Faceted Filter & Kitchen Discovery Section (Reference UI) */}
+      <section id="all-kitchens" className="max-w-5xl mx-auto px-4 pt-4 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-clinical-border pb-5">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-clinical-gold font-semibold">
+              CURATED MEAL ROTATIONS
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-0.5">
+              Pick your nutrition plan
+            </h2>
+          </div>
+
+          {/* Reference Faceted Filter Bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="appearance-none bg-clinical-surface border border-clinical-border hover:border-clinical-gold/40 text-xs font-semibold text-white rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-clinical-gold cursor-pointer"
               >
-                {c}
-                {c !== "weekly" && (
-                  <span className="ml-1 text-[9px] opacity-80">
-                    save {c === "monthly" ? "15%" : "10%"}
-                  </span>
-                )}
-              </Button>
-            ))}
+                <option value="popular">Sort: Popular</option>
+                <option value="protein">Sort: High Protein</option>
+                <option value="calories">Sort: Calorie Target</option>
+                <option value="price">Sort: Price Low-High</option>
+              </select>
+              <SlidersHorizontal className="w-3.5 h-3.5 text-clinical-zinc absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={mealtimeFilter}
+                onChange={(e) => setMealtimeFilter(e.target.value as any)}
+                className="appearance-none bg-clinical-surface border border-clinical-border hover:border-clinical-gold/40 text-xs font-semibold text-white rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-clinical-gold cursor-pointer capitalize"
+              >
+                <option value="all">Mealtime: All Meals</option>
+                <option value="lunch_dinner">Lunch & Dinner</option>
+                <option value="dinner">Dinner Only</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-clinical-zinc absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            <button
+              onClick={() => setVegOnly(!vegOnly)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                vegOnly
+                  ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-400"
+                  : "bg-clinical-surface border-clinical-border text-white hover:border-clinical-gold/40"
+              }`}
+            >
+              <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block border border-emerald-300" />
+              Veg Plans
+            </button>
           </div>
         </div>
-      </section>
 
-      <section className="max-w-4xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {PLANS.map((p) => {
-          const Icon = p.icon;
-          const { perDelivery, perMonth } = priceFor(p.mealsPerWeek);
-          return (
-            <Card
-              key={p.id}
-              className={`bg-clinical-surface border-clinical-border relative ${p.popular ? "border-clinical-gold/50 shadow-[0_0_20px_rgba(212,175,55,0.08)]" : ""}`}
-            >
-              {p.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-clinical-gold text-[#050505] text-[9px] uppercase font-bold tracking-widest px-3 py-1 rounded-full">
-                  Most Popular
-                </div>
-              )}
-              <CardContent className="p-6 space-y-5">
-                <div className="space-y-2">
-                  <Badge className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/20 text-[9px] tracking-wider">
-                    {p.badge}
-                  </Badge>
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-5 h-5 text-clinical-gold" />
-                    <h3 className="text-xl font-bold text-white">{p.name}</h3>
-                  </div>
-                  <p className="text-xs text-clinical-zinc leading-relaxed min-h-8">
-                    {p.desc}
-                  </p>
-                </div>
+        <p className="text-xs uppercase tracking-[0.16em] font-bold text-clinical-zinc">
+          ALL KITCHENS & RD ROTATIONS ({filteredGoalPlans.length + PLANS.length})
+        </p>
 
-                <div className="border-t border-b border-clinical-border py-4 space-y-0.5">
-                  <div>
-                    <span className="text-3xl font-bold text-white tabular-nums">
-                      ₹{perDelivery.toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-xs text-clinical-zinc"> / delivery</span>
-                  </div>
-                  <p className="text-[11px] text-clinical-zinc">
-                    ≈ ₹{perMonth.toLocaleString("en-IN")}/month · {p.mealsPerWeek} meals/week
-                  </p>
-                </div>
-
-                <ul className="space-y-3 text-xs text-clinical-zinc">
-                  {p.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <Check className="w-3.5 h-3.5 text-clinical-gold shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to={`/subscribe?protocol=${p.protocol}&cadence=${cadence}`}
-                  className="block"
-                >
-                  <Button
-                    className={`w-full text-xs h-10 ${p.popular ? "bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90" : "bg-transparent border border-clinical-border text-white hover:bg-clinical-surface-elevated"}`}
-                  >
-                    Choose {p.name}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
-
-      {/* Goal-based RD plans — the full curated catalog. Each links straight
-          into the configurator preloaded with the plan's weekly rotation. */}
-      <section className="border-t border-clinical-border py-14 px-4">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <div className="text-center space-y-2">
-            <p className="text-[10px] uppercase tracking-widest text-clinical-gold font-semibold">
-              Designed by registered dietitians
-            </p>
-            <h2 className="text-clinical-h2 text-white">Plans built around your goal</h2>
-            <p className="text-sm text-clinical-zinc max-w-lg mx-auto">
-              Weekly rotations with calorie and protein targets already dialled
-              in — pick the goal, we handle the food.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {GOAL_PLANS.map((p) => (
+        {/* D2C Everyday / High-Protein Cards with Preview Carousels */}
+        <div className="space-y-6">
+          {PLANS.map((p) => {
+            const Icon = p.icon;
+            const { perDelivery } = priceFor(p.mealsPerWeek);
+            return (
               <Card
-                key={p.slug}
-                className="bg-clinical-surface border-clinical-border hover:border-clinical-gold/40 transition-colors flex flex-col"
+                key={p.id}
+                className="bg-clinical-surface border-clinical-border rounded-2xl overflow-hidden hover:border-clinical-gold/40 transition-all shadow-md"
               >
-                <CardContent className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-1.5">
-                      {p.badges.slice(0, 2).map((b) => (
-                        <Badge
-                          key={b}
-                          className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/20 text-[9px] tracking-wider"
-                        >
-                          {b}
-                        </Badge>
+                <CardContent className="p-6 space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2.5">
+                        <h3 className="text-xl font-extrabold text-white tracking-tight">{p.name}</h3>
+                        {p.popular && (
+                          <Badge className="bg-clinical-gold text-[#050505] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">
+                            Most Popular
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-clinical-zinc">
+                        <span className="flex items-center gap-1 text-white font-medium">
+                          <Icon className="w-3.5 h-3.5 text-clinical-gold" /> Tanmatra Central Kitchen
+                        </span>
+                        <span>•</span>
+                        <span>☀ Lunch | ☾ Dinner</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 px-2.5 py-1 rounded-lg text-xs font-bold self-start">
+                      <Star className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" /> 4.9
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-clinical-zinc leading-relaxed max-w-2xl">{p.desc}</p>
+
+                  {/* Horizontal Available Dishes Preview Carousel */}
+                  <div className="space-y-2 pt-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-clinical-zinc">Available dishes in rotation</p>
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                      {[
+                        { name: p.id === "everyday" ? "Signature Quinoa Salad" : "Broccoli Lemon Chicken Salad", cal: p.id === "everyday" ? 342 : 526, pro: p.id === "everyday" ? 25 : 34, veg: p.id === "everyday", img: p.id === "everyday" ? "/menu/quinoa-salad.jpg" : "/menu/chicken-salad.jpg" },
+                        { name: p.id === "everyday" ? "Moong Dal Chilla with Curd" : "Peri Peri Chicken Bowl", cal: p.id === "everyday" ? 380 : 560, pro: p.id === "everyday" ? 22 : 41, veg: p.id === "everyday", img: p.id === "everyday" ? "/menu/chilla.jpg" : "/menu/peri-peri.jpg" },
+                        { name: p.id === "everyday" ? "Palak Paneer & Multigrain Roti" : "Grilled Paneer & Veg Quinoa", cal: 445, pro: 28, veg: true, img: "/menu/paneer-bowl.jpg" },
+                      ].map((sample, idx) => (
+                        <div key={idx} className="shrink-0 w-44 sm:w-52 rounded-xl bg-clinical-dark border border-clinical-border/80 overflow-hidden flex flex-col justify-between group">
+                          <div className="h-28 bg-clinical-surface-elevated relative overflow-hidden flex items-center justify-center">
+                            <div className="absolute top-2 left-2 z-10 bg-black/75 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10 text-[9px] font-bold flex items-center gap-1">
+                              <span className={`w-2 h-2 rounded-full ${sample.veg ? "bg-emerald-500" : "bg-red-500"}`} />
+                              {sample.veg ? "VEG" : "HIGH PRO"}
+                            </div>
+                            <Flame className="w-8 h-8 text-clinical-gold/30 group-hover:scale-110 transition-transform" />
+                          </div>
+                          <div className="p-2.5 space-y-1">
+                            <p className="text-xs font-bold text-white truncate">{sample.name}</p>
+                            <p className="text-[10px] text-clinical-zinc font-mono">{sample.cal}kcal • {sample.pro}g protein</p>
+                          </div>
+                        </div>
                       ))}
                     </div>
-                    <h3 className="text-base font-bold text-white">{p.name}</h3>
-                    <p className="text-[11px] text-clinical-zinc leading-relaxed">
-                      {p.tagline}
-                    </p>
-                    <p className="text-[10px] text-clinical-gold font-mono tabular-nums pt-1">
-                      {p.calorieTargetPerDay} kcal/day · {p.proteinTargetGrams}g protein
-                    </p>
                   </div>
-                  <div className="space-y-2.5 pt-1">
-                    <p className="text-sm text-white font-semibold tabular-nums">
-                      ₹{Math.round(p.pricePerWeekPaise / 100).toLocaleString("en-IN")}
-                      <span className="text-[11px] text-clinical-zinc font-normal"> / week</span>
-                    </p>
-                    <Link to={`/subscribe?plan=${p.slug}`} className="block">
-                      <Button className="w-full h-9 text-xs bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold">
-                        Start this plan
+
+                  {/* Pricing and Action Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-clinical-border/60">
+                    <div>
+                      <p className="text-[11px] text-clinical-zinc">Plans starting at</p>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-extrabold text-white tabular-nums">₹{perDelivery.toLocaleString("en-IN")}</span>
+                        <span className="text-xs text-clinical-zinc line-through tabular-nums">₹{(perDelivery + 50).toLocaleString("en-IN")}</span>
+                        <span className="text-xs text-clinical-gold font-medium">for {p.mealsPerWeek} meals/wk</span>
+                      </div>
+                    </div>
+
+                    <Link to={`/subscribe?protocol=${p.protocol}&cadence=${cadence}`} className="shrink-0">
+                      <Button className="w-full sm:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-bold text-xs h-10 px-6 rounded-xl shadow-md">
+                        View plans
                       </Button>
                     </Link>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            );
+          })}
+
+          {/* Curated RD Goal Plan Cards with Preview Carousels */}
+          {filteredGoalPlans.map((p) => {
+            const sampleSlugs = p.week.slice(0, 3).map((d) => d.lunchSlug || d.dinnerSlug);
+            const sampleDishes = sampleSlugs.map((s) => getDishBySlug(s)).filter(Boolean);
+            const perDayPrice = Math.round(p.pricePerWeekPaise / 700);
+
+            return (
+              <Card
+                key={p.slug}
+                className="bg-clinical-surface border-clinical-border rounded-2xl overflow-hidden hover:border-clinical-gold/40 transition-all shadow-md"
+              >
+                <CardContent className="p-6 space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <h3 className="text-xl font-extrabold text-white tracking-tight">{p.name}</h3>
+                        <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">
+                          RD Clinical Plan
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-clinical-zinc">
+                        <span className="flex items-center gap-1 text-white font-medium">
+                          <Stethoscope className="w-3.5 h-3.5 text-clinical-gold" /> {p.rdAuthorSlug.replace("rd-", "").replace("-", " ").toUpperCase()}
+                        </span>
+                        <span>•</span>
+                        <span>☀ Lunch | ☾ Dinner</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 px-2.5 py-1 rounded-lg text-xs font-bold self-start">
+                      <Star className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" /> 4.9
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-clinical-zinc leading-relaxed max-w-2xl">{p.description || p.tagline}</p>
+
+                  {/* Horizontal Available Dishes Preview Carousel */}
+                  <div className="space-y-2 pt-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-clinical-zinc">Available dishes in rotation</p>
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                      {(sampleDishes.length > 0 ? sampleDishes : [
+                        { name: p.name + " Signature Bowl", macros: { calories: p.calorieTargetPerDay / 3, protein: Math.round(p.proteinTargetGrams / 3) }, isVeg: true },
+                        { name: "Clinical RD Super salad", macros: { calories: Math.round(p.calorieTargetPerDay / 3.2), protein: Math.round(p.proteinTargetGrams / 3) }, isVeg: true },
+                      ]).map((sample: any, idx: number) => (
+                        <div key={idx} className="shrink-0 w-44 sm:w-52 rounded-xl bg-clinical-dark border border-clinical-border/80 overflow-hidden flex flex-col justify-between group">
+                          <div className="h-28 bg-clinical-surface-elevated relative overflow-hidden flex items-center justify-center">
+                            {sample.image ? (
+                              <img src={sample.image} alt={sample.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <Flame className="w-8 h-8 text-clinical-gold/30 group-hover:scale-110 transition-transform" />
+                            )}
+                            <div className="absolute top-2 left-2 z-10 bg-black/75 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10 text-[9px] font-bold flex items-center gap-1">
+                              <span className={`w-2 h-2 rounded-full ${sample.isVeg !== false ? "bg-emerald-500" : "bg-red-500"}`} />
+                              {sample.isVeg !== false ? "VEG" : "NON-VEG"}
+                            </div>
+                          </div>
+                          <div className="p-2.5 space-y-1">
+                            <p className="text-xs font-bold text-white truncate">{sample.name}</p>
+                            <p className="text-[10px] text-clinical-zinc font-mono">
+                              {Math.round(sample.macros?.calories || 450)}kcal • {Math.round(sample.macros?.protein || 25)}g protein
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Pricing and Action Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-clinical-border/60">
+                    <div>
+                      <p className="text-[11px] text-clinical-zinc">Plans starting at</p>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-extrabold text-white tabular-nums">₹{perDayPrice.toLocaleString("en-IN")}</span>
+                        <span className="text-xs text-clinical-zinc line-through tabular-nums">₹{Math.round(perDayPrice * 1.2).toLocaleString("en-IN")}</span>
+                        <span className="text-xs text-clinical-gold font-medium">/ day · ₹{Math.round(p.pricePerWeekPaise / 100).toLocaleString("en-IN")} for 7 days</span>
+                      </div>
+                    </div>
+
+                    <Link to={`/subscribe?plan=${p.slug}`} className="shrink-0">
+                      <Button className="w-full sm:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-bold text-xs h-10 px-6 rounded-xl shadow-md">
+                        View plans
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </section>
 

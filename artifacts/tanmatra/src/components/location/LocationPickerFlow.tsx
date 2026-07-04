@@ -171,6 +171,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   const [locating, setLocating] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [plainSearch, setPlainSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Form details states
   const [orderingFor, setOrderingFor] = useState<"myself" | "someone">("myself");
@@ -239,6 +240,12 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   // a globally injected script that may never arrive.
   useEffect(() => {
     if (!open || mapsReady || mapsFailed) return;
+    if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+      console.warn("[address-picker] VITE_GOOGLE_MAPS_API_KEY not set. Using manual entry mode.");
+      setMapsReady(false);
+      setMapsFailed(true);
+      return;
+    }
     let cancelled = false;
     ensureGoogleMapsLoaded(12_000).then((ok) => {
       if (cancelled) return;
@@ -442,8 +449,16 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setStep(mapsFailed ? "details" : "map")}
-                className="w-full h-11 border-clinical-border text-white hover:bg-white/5 font-semibold text-sm"
+                onClick={() => setStep("map")}
+                className="w-full h-11 border-clinical-border text-white hover:bg-white/5 font-semibold text-sm gap-2"
+              >
+                <MapPin className="w-4 h-4 text-clinical-gold" />
+                Select location on map
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setStep("details")}
+                className="w-full h-10 text-clinical-zinc hover:text-white font-medium text-xs"
               >
                 Enter address manually
               </Button>
@@ -463,42 +478,79 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <div className="flex-1 min-w-0 bg-clinical-surface/95 backdrop-blur-md rounded-lg border border-clinical-border overflow-hidden shadow-lg p-0.5">
-                <gmpx-place-picker
-                  ref={(picker: any) => {
-                    if (picker && !autocompleteRef.current) {
-                      autocompleteRef.current = picker;
-                      picker.addEventListener("gmpx-placechange", () => {
-                        try {
-                          const place = picker.value;
-                          if (!place || !place.location) return;
-                          const loc = place.location;
-                          const next = {
-                            lat: typeof loc.lat === "function" ? loc.lat() : loc.lat,
-                            lng: typeof loc.lng === "function" ? loc.lng() : loc.lng,
-                          };
-                          lastGeocodedRef.current = next;
-                          setCoords(next);
-                          if (mapRef.current) {
-                            if (place.viewport && mapRef.current.innerMap) {
-                              mapRef.current.innerMap.fitBounds(place.viewport);
-                            } else {
-                              mapRef.current.center = `${next.lat},${next.lng}`;
-                              mapRef.current.zoom = 17;
-                            }
-                          }
-                          const marker = document.querySelector("gmp-advanced-marker") as any;
-                          if (marker) marker.position = `${next.lat},${next.lng}`;
-                          if (place.formattedAddress) setLocality(place.formattedAddress);
-                          if (place.addressComponents) parseAddressComponents(place.addressComponents);
-                          else reverseGeocode(next.lat, next.lng);
-                        } catch {}
-                      });
-                    }
-                  }}
-                  placeholder="Enter or search an address…"
-                  style={{ width: "100%", display: "block" }}
-                ></gmpx-place-picker>
+              <div className="flex-1 min-w-0 bg-clinical-surface/95 backdrop-blur-md rounded-lg border border-clinical-border overflow-hidden shadow-lg p-1 flex items-center gap-1">
+                {mapsReady && !plainSearch ? (
+                  <div className="flex-1 w-full relative">
+                    <gmpx-place-picker
+                      ref={(picker: any) => {
+                        if (picker && !autocompleteRef.current) {
+                          autocompleteRef.current = picker;
+                          picker.addEventListener("gmpx-placechange", () => {
+                            try {
+                              const place = picker.value;
+                              if (!place || !place.location) return;
+                              const loc = place.location;
+                              const next = {
+                                lat: typeof loc.lat === "function" ? loc.lat() : loc.lat,
+                                lng: typeof loc.lng === "function" ? loc.lng() : loc.lng,
+                              };
+                              lastGeocodedRef.current = next;
+                              setCoords(next);
+                              if (mapRef.current) {
+                                if (place.viewport && mapRef.current.innerMap) {
+                                  mapRef.current.innerMap.fitBounds(place.viewport);
+                                } else {
+                                  mapRef.current.center = `${next.lat},${next.lng}`;
+                                  mapRef.current.zoom = 17;
+                                }
+                              }
+                              const marker = document.querySelector("gmp-advanced-marker") as any;
+                              if (marker) marker.position = `${next.lat},${next.lng}`;
+                              if (place.formattedAddress) setLocality(place.formattedAddress);
+                              if (place.addressComponents) parseAddressComponents(place.addressComponents);
+                              else reverseGeocode(next.lat, next.lng);
+                            } catch {}
+                          });
+                        }
+                      }}
+                      placeholder="Enter or search an address…"
+                      style={{ width: "100%", display: "block" }}
+                    ></gmpx-place-picker>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handlePlainSearch(searchQuery);
+                    }}
+                    className="flex-1 flex items-center gap-1 px-2"
+                  >
+                    <MagnifyingGlass className="w-4 h-4 text-clinical-zinc shrink-0" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search area, sector or landmark…"
+                      className="h-8 border-0 bg-transparent text-xs text-white focus-visible:ring-0 px-1"
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="h-7 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs px-2.5 font-semibold"
+                    >
+                      Search
+                    </Button>
+                  </form>
+                )}
+                {mapsReady && (
+                  <button
+                    type="button"
+                    onClick={() => setPlainSearch(!plainSearch)}
+                    className="text-[10px] text-clinical-gold hover:underline shrink-0 px-2 font-medium"
+                    title={plainSearch ? "Use Google Place Picker" : "Use standard text search"}
+                  >
+                    {plainSearch ? "Place Picker" : "Text Search"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -721,30 +773,23 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
               {/* Area / Sector / Locality */}
               <div className="space-y-1">
-                <Label className="text-[11px] text-clinical-zinc">Area / Sector / Locality *</Label>
-                {mapsFailed ? (
-                  // Manual fallback when the map never loaded — an editable
-                  // field instead of a read-only dead end.
-                  <Input
-                    placeholder="e.g. Sector 62, Noida"
-                    value={locality}
-                    onChange={(e) => setLocality(e.target.value)}
-                    className="h-9 text-xs bg-clinical-dark border-clinical-border"
-                  />
-                ) : (
-                  <div className="flex gap-2 p-3 bg-clinical-dark rounded-lg border border-clinical-border">
-                    <div className="flex-1 text-xs text-white truncate pr-2">
-                      {locality || "No location selected"}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setStep("map")}
-                      className="text-xs text-clinical-gold hover:underline font-semibold"
-                    >
-                      Change
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] text-clinical-zinc">Area / Sector / Locality *</Label>
+                  <button
+                    type="button"
+                    onClick={() => setStep("map")}
+                    className="text-[11px] text-clinical-gold hover:underline flex items-center gap-1 font-medium"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    Pick on Map
+                  </button>
+                </div>
+                <Input
+                  placeholder="e.g. Sector 62, Noida"
+                  value={locality}
+                  onChange={(e) => setLocality(e.target.value)}
+                  className="h-9 text-xs bg-clinical-dark border-clinical-border text-white"
+                />
               </div>
 
               {/* City + PIN — editable so a failed geocode is never a dead

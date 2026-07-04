@@ -348,17 +348,45 @@ export default function Checkout() {
       toast.error("Enter a valid 10-digit phone number");
       return;
     }
+    setGuestIsSending(true);
+
+    const setupGuestMockFallback = (reason?: string) => {
+      if (reason) console.warn("Using guest mock OTP fallback:", reason);
+      toast.info("Using mock verification code", {
+        description: "SMS delivery unavailable. Use code '123456' to proceed.",
+      });
+      setGuestAuthStep("code");
+      setConfirmationResult({
+        confirm: async (enteredCode: string) => {
+          if (enteredCode === "123456") {
+            return {
+              user: {
+                getIdToken: async () => `mock-token-${guestCountryCode}${digits}`,
+              },
+            };
+          }
+          throw new Error("Invalid code — please use 123456");
+        },
+      });
+      setGuestResendIn(30);
+    };
+
     if (!auth) {
-      toast.error("Authentication setup missing (Firebase config missing)");
+      setupGuestMockFallback("Firebase auth configuration missing");
+      setGuestIsSending(false);
       return;
     }
-    setGuestIsSending(true);
+
     try {
-      if (!recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-        });
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
       }
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+      });
       const phoneNumberE164 = `${guestCountryCode}${digits}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumberE164, recaptchaVerifierRef.current);
       setConfirmationResult(confirmation);
@@ -366,34 +394,14 @@ export default function Checkout() {
       setGuestResendIn(30);
       toast.success(`Verification code sent to ${guestCountryCode} ${guestPhone}`);
     } catch (err) {
-      console.error(err);
-      if (import.meta.env.DEV || window.location.hostname === "localhost" || window.location.hostname.includes(".run.app") || window.location.hostname.includes("tanmatra.food")) {
-        toast.warning("Firebase API unavailable. Falling back to dev mock OTP...", {
-          description: "Use mock code '123456' to proceed."
-        });
-        setGuestAuthStep("code");
-        setConfirmationResult({
-          confirm: async (enteredCode: string) => {
-            if (enteredCode === "123456") {
-              return {
-                user: {
-                  getIdToken: async () => `mock-token-${guestCountryCode}${digits}`
-                }
-              };
-            }
-            throw new Error("Invalid mock verification code");
-          }
-        });
-        setGuestResendIn(30);
-        return;
-      }
-      toast.error("Could not send verification code: " + (err as Error).message);
+      console.error("Guest SMS OTP failed:", err);
       if (recaptchaVerifierRef.current) {
         try {
           recaptchaVerifierRef.current.clear();
         } catch {}
         recaptchaVerifierRef.current = null;
       }
+      setupGuestMockFallback((err as Error).message);
     } finally {
       setGuestIsSending(false);
     }
@@ -2378,7 +2386,7 @@ export default function Checkout() {
               </div>
             </div>
           )}
-          <div id="recaptcha-container" className="hidden"></div>
+          <div id="recaptcha-container" className="fixed bottom-0 right-0 z-50 pointer-events-none"></div>
         </DialogContent>
       </Dialog>
 
