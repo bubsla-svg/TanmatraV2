@@ -92,7 +92,7 @@ jobs:
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
+            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
             --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --memory=1Gi \
