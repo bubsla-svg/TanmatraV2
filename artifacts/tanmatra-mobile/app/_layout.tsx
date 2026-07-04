@@ -4,25 +4,25 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
   useFonts,
-} from "@expo-google-fonts/inter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+} from '@expo-google-fonts/inter';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {Stack} from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import {StatusBar} from 'expo-status-bar';
+import React, {useEffect} from 'react';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {KeyboardProvider} from 'react-native-keyboard-controller';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
-import {
-  setBaseUrl,
-  setAuthTokenGetter,
-} from "@workspace/api-client-react";
+import {setAuthTokenGetter, setBaseUrl} from '@workspace/api-client-react';
 
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { loadToken, getTokenSync } from "@/lib/auth";
+import {ErrorBoundary} from '@/components/ErrorBoundary';
+import {getTokenSync, loadToken} from '@/lib/auth';
 
-SplashScreen.preventAutoHideAsync();
+// Harden startup: don't fail app boot if splash API errors
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  // no-op
+});
 
 const domain = process.env.EXPO_PUBLIC_DOMAIN;
 if (domain) {
@@ -49,9 +49,8 @@ function RootLayoutNav() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: "#050505" },
-      }}
-    >
+        contentStyle: {backgroundColor: '#050505'},
+      }}>
       <Stack.Screen name="index" />
     </Stack>
   );
@@ -67,7 +66,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
+      void SplashScreen.hideAsync().catch(() => {
+        // no-op
+      });
     }
   }, [fontsLoaded, fontError]);
 
@@ -77,7 +78,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#050505" }}>
+          <GestureHandlerRootView style={{flex: 1, backgroundColor: '#050505'}}>
             <KeyboardProvider>
               <StatusBar style="light" />
               <RootLayoutNav />
