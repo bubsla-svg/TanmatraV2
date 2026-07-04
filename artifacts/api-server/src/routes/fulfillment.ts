@@ -75,9 +75,20 @@ async function ensureSlots(zone = "default"): Promise<void> {
 let pickupSeeded = false;
 async function ensurePickupLocations(): Promise<void> {
   if (pickupSeeded) return;
+  // One-time self-heal: earlier builds seeded Bengaluru demo locations,
+  // but Tanmatra services Noida / Delhi NCR only. Deactivate any legacy
+  // rows so they stop appearing as pickup options, then reseed if no
+  // active locations remain.
+  await db
+    .update(pickupLocationsTable)
+    .set({ active: false })
+    .where(
+      sql`${pickupLocationsTable.city} in ('Bengaluru', 'Bangalore') and ${pickupLocationsTable.active} = true`,
+    );
   const [{ n }] = await db
     .select({ n: sql<number>`count(*)::int` })
-    .from(pickupLocationsTable);
+    .from(pickupLocationsTable)
+    .where(sql`${pickupLocationsTable.active} = true`);
   if (Number(n) > 0) {
     pickupSeeded = true;
     return;
@@ -86,46 +97,46 @@ async function ensurePickupLocations(): Promise<void> {
     .insert(pickupLocationsTable)
     .values([
       {
-        name: "Tanmatra Café — Koramangala",
+        name: "Tanmatra Café — Sector 18",
         partnerName: "Tanmatra",
-        addressLine: "1st Block, 80 Feet Road",
-        city: "Bengaluru",
-        pincode: "560034",
-        lat: 12.9352,
-        lng: 77.6245,
+        addressLine: "Atta Market, Sector 18",
+        city: "Noida",
+        pincode: "201301",
+        lat: 28.5708,
+        lng: 77.326,
         hours: "10:00 — 22:00",
         discountPaise: 4000,
       },
       {
-        name: "Bloom Bakery — Indiranagar",
+        name: "Bloom Bakery — Sector 62",
         partnerName: "Bloom",
-        addressLine: "12th Main, HAL 2nd Stage",
-        city: "Bengaluru",
-        pincode: "560008",
-        lat: 12.9719,
-        lng: 77.6412,
+        addressLine: "Tower B Plaza, Sector 62",
+        city: "Noida",
+        pincode: "201309",
+        lat: 28.627,
+        lng: 77.3649,
         hours: "08:00 — 21:00",
         discountPaise: 3500,
       },
       {
-        name: "Atlas Coffee — MG Road",
+        name: "Atlas Coffee — Sector 104",
         partnerName: "Atlas",
-        addressLine: "Brigade Road Junction",
-        city: "Bengaluru",
-        pincode: "560001",
-        lat: 12.9745,
-        lng: 77.6093,
+        addressLine: "Hajipur Market, Sector 104",
+        city: "Noida",
+        pincode: "201304",
+        lat: 28.545,
+        lng: 77.348,
         hours: "07:30 — 22:00",
         discountPaise: 3000,
       },
       {
-        name: "Greenleaf Kitchen — HSR Layout",
+        name: "Greenleaf Kitchen — Greater Noida West",
         partnerName: "Greenleaf",
-        addressLine: "27th Main, Sector 1",
-        city: "Bengaluru",
-        pincode: "560102",
-        lat: 12.9116,
-        lng: 77.6473,
+        addressLine: "Gaur City 1 Road",
+        city: "Greater Noida",
+        pincode: "201306",
+        lat: 28.596,
+        lng: 77.43,
         hours: "11:00 — 22:30",
         discountPaise: 3000,
       },

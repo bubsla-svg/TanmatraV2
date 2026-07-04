@@ -55,9 +55,9 @@ function lowestSugar(dishes: DishData[], limit: number): DishData[] {
 
 export default function Clinical() {
   // Visiting the Clinical surface flips the global clinical-mode flag on so
-  // that Menu / Cart / Checkout render the PatientContextStrip and enforce
-  // the diet-order + allergen confirm-block. Stays on until the user
-  // explicitly exits via the strip's affordance.
+  // that Menu / Cart / Checkout apply the diet-order filter + allergen
+  // confirm-block. Stays on until the user exits via the "Exit clinical
+  // mode" affordance on the Menu.
   useEnableClinicalMode();
   // Diet-order assignment lives on this clinician console (not on the
   // ordering screens, where editing the patient's Medical ID is explicitly
@@ -251,7 +251,7 @@ export default function Clinical() {
                   <Card className="bg-clinical-surface border-clinical-border hover:border-clinical-gold/40 transition-all overflow-hidden group h-full">
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <img src={meal.image} alt={meal.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-150" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-transparent to-transparent keep-gradient" />
                       <div className="absolute top-3 left-3 flex gap-1.5">
                         {meal.rdVerified && <Badge className="bg-clinical-sage/80 text-white border-0 text-[9px]"><ShieldCheck className="w-2.5 h-2.5 mr-0.5" />RD</Badge>}
                       </div>

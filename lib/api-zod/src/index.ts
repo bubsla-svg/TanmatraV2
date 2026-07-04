@@ -52,9 +52,7 @@ export const VerifyOtpAttribution = z.object({
 export type VerifyOtpAttribution = z.infer<typeof VerifyOtpAttribution>;
 
 export const PhoneVerifyOtpBody = z.object({
-  countryCode: z.string().min(2).max(5),
-  phone: z.string().min(6).max(20),
-  code: z.string().min(4).max(10),
+  idToken: z.string().min(1),
   attribution: VerifyOtpAttribution.optional(),
 });
 export type PhoneVerifyOtpBody = z.infer<typeof PhoneVerifyOtpBody>;

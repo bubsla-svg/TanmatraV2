@@ -47,3 +47,7 @@ export * from "./rdCopilot";
 export * from "./communityCohorts";
 export * from "./b2bPlanner";
 export * from "./auditLog";
+export * from "./compliance";
+export * from "./ledger";
+export * from "./userConsents";
+export * from "./webhookInbox";

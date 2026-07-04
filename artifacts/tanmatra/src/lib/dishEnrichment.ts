@@ -307,16 +307,33 @@ export function getRdNoteForDish(dish: DishData): string {
   return dish.rdNote ?? RD_NOTE_FALLBACKS[dish.category];
 }
 
+function isClinicallyCompatible(candidate: DishData, source: DishData): boolean {
+  if (source.glycaemicIndex === "low") {
+    if (candidate.glycaemicIndex === "high") return false;
+    if (["salads", "soups"].includes(source.category)) {
+      if (candidate.macros.calories > 300) return false;
+      if (["pasta", "mains"].includes(candidate.category)) return false;
+    }
+  }
+  return true;
+}
+
 export function getUpsellsForDish(dish: DishData, count = 3): DishData[] {
   const sameKitchen = DISHES.filter(
-    (d) => d.id !== dish.id && d.kitchen === dish.kitchen && d.category !== dish.category && d.isAvailable,
+    (d) =>
+      d.id !== dish.id &&
+      d.kitchen === dish.kitchen &&
+      d.category !== dish.category &&
+      d.isAvailable &&
+      isClinicallyCompatible(d, dish),
   );
   const crossKitchen = DISHES.filter(
     (d) =>
       d.id !== dish.id &&
       d.kitchen !== dish.kitchen &&
       d.category !== dish.category &&
-      d.isAvailable,
+      d.isAvailable &&
+      isClinicallyCompatible(d, dish),
   );
   const seed = dish.id;
   const pick = (pool: DishData[], n: number): DishData[] => {
@@ -378,6 +395,17 @@ export function matchesDietaryFilter(dish: DishData, filter: string): boolean {
     const name = dish.name.toLowerCase();
     return !allergens.includes("gluten") && !name.includes("wheat") && !name.includes("bread");
   }
+  if (f === "carnivore") {
+    return !dish.isVeg && dish.macros.carbs <= 5;
+  }
+  if (f === "low-fodmap") {
+    const highFodmaps = [
+      "onion", "garlic", "wheat", "paneer", "cheese", "milk",
+      "broccoli", "beans", "chickpea", "lentil", "cabbage", "cauliflower"
+    ];
+    const text = (dish.description + " " + dish.name + " " + dish.ingredients.join(" ")).toLowerCase();
+    return !highFodmaps.some((x) => text.includes(x));
+  }
   if (f === "jain") {
     if (!dish.isVeg) return false;
     const rootVegs = ["onion", "garlic", "potato", "aloo", "sweet potato", "carrot", "beetroot", "ginger"];
@@ -388,4 +416,166 @@ export function matchesDietaryFilter(dish: DishData, filter: string): boolean {
     return matchesDosha(dish, f as "vata" | "pitta" | "kapha");
   }
   return true;
+}
+
+export interface DishVariantOption {
+  slug: string;
+  name: string;
+  isVeg: boolean;
+  label: string;
+}
+
+export const VARIANT_FAMILIES: Record<string, string[]> = {
+  // Chipotle Burrito Wrap
+  "chilli-chipotle-paneer-burrito-wrap": ["chilli-chipotle-paneer-burrito-wrap", "chipotle-chicken-burrito-wrap"],
+  "chipotle-chicken-burrito-wrap": ["chilli-chipotle-paneer-burrito-wrap", "chipotle-chicken-burrito-wrap"],
+
+  // Chipotle Rice Bowl
+  "chilli-chipotle-paneer-rice-bowl": ["chilli-chipotle-paneer-rice-bowl", "chipotle-grilled-chicken-rice-bowl"],
+  "chipotle-grilled-chicken-rice-bowl": ["chilli-chipotle-paneer-rice-bowl", "chipotle-grilled-chicken-rice-bowl"],
+
+  // Crispy Mushroom Rice Bowl
+  "crispy-mushroom-rice-bowl": ["crispy-mushroom-rice-bowl", "crispy-peri-peri-mushroom-rice-bowl"],
+  "crispy-peri-peri-mushroom-rice-bowl": ["crispy-mushroom-rice-bowl", "crispy-peri-peri-mushroom-rice-bowl"],
+
+  // Barbeque Rice Bowl
+  "barbeque-paneer-rice-bowl": ["barbeque-paneer-rice-bowl", "barbeque-grilled-chicken-rice-bowl"],
+  "barbeque-grilled-chicken-rice-bowl": ["barbeque-paneer-rice-bowl", "barbeque-grilled-chicken-rice-bowl"],
+
+  // Chicken Breast
+  "grilled-chicken-breast-single-serve": ["grilled-chicken-breast-single-serve", "boiled-chicken-breast-single-serve"],
+  "boiled-chicken-breast-single-serve": ["grilled-chicken-breast-single-serve", "boiled-chicken-breast-single-serve"],
+
+  // Avocado Toast
+  "avocado-toast": ["avocado-toast", "avocado-toast-with-sunny-side-up", "avocado-toast-with-poached-boiled-egg"],
+  "avocado-toast-with-sunny-side-up": ["avocado-toast", "avocado-toast-with-sunny-side-up", "avocado-toast-with-poached-boiled-egg"],
+  "avocado-toast-with-poached-boiled-egg": ["avocado-toast", "avocado-toast-with-sunny-side-up", "avocado-toast-with-poached-boiled-egg"],
+
+  // Aglio Olio (Static)
+  "aglio-olio-veg": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
+  "aglio-olio-chicken": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
+  "aglio-olio-prawns": ["aglio-olio-veg", "aglio-olio-chicken", "aglio-olio-prawns"],
+
+  // Alfredo (Static)
+  "alfredo-pasta-veg": ["alfredo-pasta-veg", "alfredo-pasta-chicken", "alfredo-pasta-prawns"],
+  "alfredo-pasta-chicken": ["alfredo-pasta-veg", "alfredo-pasta-chicken", "alfredo-pasta-prawns"],
+  "alfredo-pasta-prawns": ["alfredo-pasta-veg", "alfredo-pasta-chicken", "alfredo-pasta-prawns"],
+
+  // Pesto (Static)
+  "pesto-pasta-veg": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
+  "pesto-pasta-chicken": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
+  "pesto-pasta-prawns": ["pesto-pasta-veg", "pesto-pasta-chicken", "pesto-pasta-prawns"],
+
+  // Arrabbiata (Static)
+  "arrabbiata-veg": ["arrabbiata-veg", "arrabbiata-chicken", "arrabbiata-prawns"],
+  "arrabbiata-chicken": ["arrabbiata-veg", "arrabbiata-chicken", "arrabbiata-prawns"],
+  "arrabbiata-prawns": ["arrabbiata-veg", "arrabbiata-chicken", "arrabbiata-prawns"],
+
+  // Hot n Sour Soup
+  "hot-n-sour-soup-veg": ["hot-n-sour-soup-veg", "hot-n-sour-soup-chicken"],
+  "hot-n-sour-soup-chicken": ["hot-n-sour-soup-veg", "hot-n-sour-soup-chicken"],
+
+  // Manchow Soup
+  "manchow-soup-veg": ["manchow-soup-veg", "manchow-soup-chicken"],
+  "manchow-soup-chicken": ["manchow-soup-veg", "manchow-soup-chicken"],
+
+  // Nutella Toast
+  "nutella-toast-white-bread": ["nutella-toast-white-bread", "nutella-toast-brown-bread"],
+  "nutella-toast-brown-bread": ["nutella-toast-white-bread", "nutella-toast-brown-bread"],
+
+  // Greek Roman Salad
+  "greek-roman-veg-salad": ["greek-roman-veg-salad", "greek-roman-chicken-salad"],
+  "greek-roman-chicken-salad": ["greek-roman-veg-salad", "greek-roman-chicken-salad"],
+
+  // Healthy Whole Wheat Wrap
+  "healthy-whole-wheat-tofu-wrap": ["healthy-whole-wheat-tofu-wrap", "healthy-whole-wheat-paneer-wrap", "healthy-whole-wheat-chicken-tikka-wrap"],
+  "healthy-whole-wheat-paneer-wrap": ["healthy-whole-wheat-tofu-wrap", "healthy-whole-wheat-paneer-wrap", "healthy-whole-wheat-chicken-tikka-wrap"],
+  "healthy-whole-wheat-chicken-tikka-wrap": ["healthy-whole-wheat-tofu-wrap", "healthy-whole-wheat-paneer-wrap", "healthy-whole-wheat-chicken-tikka-wrap"],
+
+  // Hummus Pita
+  "hummus-pita-classic": ["hummus-pita-classic", "hummus-pita-with-falafel"],
+  "hummus-pita-with-falafel": ["hummus-pita-classic", "hummus-pita-with-falafel"],
+
+  // Crispy Mushroom Burrito Wrap
+  "crispy-mushroom-burrito-wrap": ["crispy-mushroom-burrito-wrap", "crispy-peri-peri-mushroom-burrito-wrap"],
+  "crispy-peri-peri-mushroom-burrito-wrap": ["crispy-mushroom-burrito-wrap", "crispy-peri-peri-mushroom-burrito-wrap"]
+};
+
+const SECONDARY_VARIANTS = new Set([
+  "chipotle-chicken-burrito-wrap",
+  "chipotle-grilled-chicken-rice-bowl",
+  "crispy-peri-peri-mushroom-rice-bowl",
+  "barbeque-grilled-chicken-rice-bowl",
+  "boiled-chicken-breast-single-serve",
+  "avocado-toast-with-sunny-side-up",
+  "avocado-toast-with-poached-boiled-egg",
+  "greek-roman-chicken-salad",
+  "healthy-whole-wheat-paneer-wrap",
+  "healthy-whole-wheat-chicken-tikka-wrap",
+  "hummus-pita-with-falafel",
+  "crispy-peri-peri-mushroom-burrito-wrap",
+  // Static ones
+  "aglio-olio-chicken",
+  "aglio-olio-prawns",
+  "alfredo-pasta-chicken",
+  "alfredo-pasta-prawns",
+  "pesto-pasta-chicken",
+  "pesto-pasta-prawns",
+  "arrabbiata-chicken",
+  "arrabbiata-prawns",
+  "hot-n-sour-soup-chicken",
+  "manchow-soup-chicken",
+  "nutella-toast-brown-bread"
+]);
+
+export function isSecondaryVariant(slug: string): boolean {
+  return SECONDARY_VARIANTS.has(slug);
+}
+
+export function getDishVariants(currentSlug: string, allDishes: DishData[]): DishVariantOption[] {
+  const familySlugs = VARIANT_FAMILIES[currentSlug];
+  if (!familySlugs) return [];
+
+  return familySlugs
+    .map((slug) => {
+      const dish = allDishes.find((d) => d.slug === slug);
+      if (!dish) return null;
+      
+      let label = "Veg";
+      if (slug.includes("chicken") || dish.name.toLowerCase().includes("chicken")) {
+        label = "Chicken";
+      } else if (slug.includes("prawn") || dish.name.toLowerCase().includes("prawn")) {
+        label = "Prawns";
+      } else if (slug.includes("paneer") || dish.name.toLowerCase().includes("paneer")) {
+        label = "Paneer";
+      } else if (slug.includes("tofu") || dish.name.toLowerCase().includes("tofu")) {
+        label = "Tofu";
+      } else if (slug.includes("falafel") || dish.name.toLowerCase().includes("falafel")) {
+        label = "With Falafel";
+      } else if (slug.includes("white") || dish.name.toLowerCase().includes("white")) {
+        label = "White Bread";
+      } else if (slug.includes("brown") || dish.name.toLowerCase().includes("brown")) {
+        label = "Brown Bread";
+      } else if (slug.includes("poached") || slug.includes("sunny") || dish.name.toLowerCase().includes("egg")) {
+        label = "With Egg";
+      } else if (slug.includes("peri-peri") || dish.name.toLowerCase().includes("peri peri")) {
+        label = "Peri Peri";
+      } else if (slug.includes("boiled") && dish.name.toLowerCase().includes("boiled")) {
+        label = "Boiled";
+      } else if (slug.includes("grilled") && dish.name.toLowerCase().includes("grilled")) {
+        label = "Grilled";
+      } else if (slug.includes("veg") || dish.name.toLowerCase().includes("veg")) {
+        label = "Veg";
+      } else {
+        label = "Classic";
+      }
+
+      return {
+        slug: dish.slug,
+        name: dish.name,
+        isVeg: dish.isVeg,
+        label,
+      };
+    })
+    .filter(Boolean) as DishVariantOption[];
 }

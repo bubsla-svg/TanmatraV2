@@ -3,14 +3,22 @@
 // swapping the implementation here — the call sites don't need to change.
 
 type EventName =
+  | "view_home"
+  | "view_menu"
+  | "view_product"
+  | "add_to_cart"
   | "cart_open"
   | "upsell_focus"
   | "upsell_add"
   | "free_delivery_unlocked"
   | "checkout_start"
+  | "order_created"
   | "upi_intent_initiated"
   | "upi_intent_completed"
-  | "order_created";
+  | "first_order_offer_shown"
+  | "first_order_offer_applied"
+  | "subscription_activated"
+  | "support_click";
 
 export function track(event: EventName, props?: Record<string, unknown>): void {
   if (import.meta.env.DEV) {

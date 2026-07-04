@@ -42,8 +42,17 @@ export interface OrderFinalizeResult {
   serverOrderId?: number;
   finalTotalPaise?: number;
   creditsRedeemedPaise?: number;
+  firstOrderDiscountPaise?: number;
   referralAwarded?: boolean;
   [key: string]: unknown;
+}
+
+export interface FirstOrderOffer {
+  eligible: boolean;
+  /** Discount in basis points (2500 = 25%) */
+  percentBps: number;
+  /** Maximum discount in paise (8000 = Rs.80) */
+  capPaise: number;
 }
 
 export type MarketplaceCheckoutRequestItemsItem = {

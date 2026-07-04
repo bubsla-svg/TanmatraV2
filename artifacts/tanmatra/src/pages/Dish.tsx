@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { track } from "@/lib/analytics";
 import { useParams, Link, useNavigate, type MetaFunction } from "react-router";
 import { getDishBySlug } from "@/lib/menuData";
 
@@ -75,6 +76,7 @@ import {
   getRdNoteForDish,
   getUpsellsForDish,
   stripIngredientAmount,
+  getDishVariants,
 } from "@/lib/dishEnrichment";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
@@ -130,7 +132,22 @@ export default function Dish() {
     [meal],
   );
 
+  const variants = useMemo(() => {
+    if (!meal) return [];
+    return getDishVariants(meal.slug, catalogDishes);
+  }, [meal, catalogDishes]);
+
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (meal) {
+      track("view_product", {
+        dishId: meal.id,
+        name: meal.name,
+        price: meal.price,
+      });
+    }
+  }, [meal]);
   const [selections, setSelections] = useState<Record<number, string | string[]>>(() => {
     const init: Record<number, string | string[]> = {};
     customizations.forEach((group, idx) => {
@@ -230,6 +247,10 @@ export default function Dish() {
       });
       return;
     }
+    if (match?.blocked === true) {
+      toast.error("Cannot add dish: Allergen/Contraindication conflict");
+      return;
+    }
     const customizations = collectCustomizationsForCart();
     addItem({
       dishId: meal.id,
@@ -244,6 +265,12 @@ export default function Dish() {
       rdVerified: meal.rdVerified,
       macros: meal.macros,
       customizations,
+    });
+    track("add_to_cart", {
+      dishId: meal.id,
+      name: meal.name,
+      price: calculatedUnitPrice,
+      quantity,
     });
     openCart();
     toast.success(`Added ${meal.name} to your order`, {
@@ -286,7 +313,7 @@ export default function Dish() {
               loading="eager"
               fetchPriority="high"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/60 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/60 via-transparent to-transparent keep-gradient" />
 
             <div className="absolute top-4 left-4 flex gap-2 items-center">
               <span
@@ -375,6 +402,43 @@ export default function Dish() {
         <div className="space-y-6">
           <div className="space-y-3">
             <h1 className="text-clinical-h1 text-white">{meal.name}</h1>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-clinical-gold tabular-nums">
+                {formatPrice(meal.price)}
+              </span>
+              <span className="text-xs text-clinical-zinc-muted">per serving</span>
+            </div>
+            {variants.length > 1 && (
+              <div className="space-y-2 pt-1 pb-2">
+                <p className="text-clinical-label">Option</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {variants.map((v) => {
+                    const active = v.slug === meal.slug;
+                    return (
+                      <Link key={v.slug} to={`/dish/${v.slug}`}>
+                        <Button
+                          variant={active ? "default" : "outline"}
+                          size="sm"
+                          className={
+                            active
+                              ? "bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs h-9 px-3"
+                              : "border-clinical-border text-clinical-zinc hover:text-white text-xs h-9 px-3"
+                          }
+                        >
+                          <span
+                            role="img"
+                            className={`w-1.5 h-1.5 rounded-full mr-2 ${
+                              v.isVeg ? "bg-green-500" : "bg-red-500"
+                            }`}
+                          />
+                          {v.label}
+                        </Button>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <p className="text-sm text-clinical-zinc leading-relaxed">{meal.description}</p>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -637,8 +701,9 @@ export default function Dish() {
                               className="border-clinical-border"
                             />
                             <span className="text-xs text-white">{opt.name}</span>
+                            {" "}
                             {opt.default && (
-                              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none">
+                              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none ml-2">
                                 Chef's pick
                               </span>
                             )}
@@ -680,8 +745,9 @@ export default function Dish() {
                                 className="border-clinical-border"
                               />
                               <span className="text-xs text-white">{opt.name}</span>
+                              {" "}
                               {opt.default && (
-                                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none">
+                                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 font-bold leading-none ml-2">
                                   Recommended
                                 </span>
                               )}
@@ -744,6 +810,12 @@ export default function Dish() {
                         kitchen: u.kitchen, isVeg: u.isVeg, rdVerified: u.rdVerified,
                         macros: u.macros, customizations: [],
                       });
+                      track("add_to_cart", {
+                        dishId: u.id,
+                        name: u.name,
+                        price: u.price,
+                        quantity: 1,
+                      });
                       openCart();
                     }}
                     className="shrink-0 w-10 h-10 rounded-md bg-clinical-gold text-[#050505] flex items-center justify-center hover:bg-clinical-gold/90 transition-colors"
@@ -757,67 +829,70 @@ export default function Dish() {
         </div>
       </div>
 
-      <div className="fixed left-0 right-0 z-50 bg-[#050505]/95 backdrop-blur-xl border-t border-clinical-border bottom-[calc(56px+env(safe-area-inset-bottom))] md:bottom-0">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-clinical-surface rounded-lg border border-clinical-border p-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-clinical-zinc hover:text-white"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                aria-label="Decrease quantity"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </Button>
-              <span className="tabular-nums text-sm font-semibold text-white w-6 text-center">
-                {quantity}
-              </span>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-clinical-zinc hover:text-white"
-                onClick={() => setQuantity((q) => q + 1)}
-                aria-label="Increase quantity"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-
-            <div className="hidden sm:block">
-              <p className="text-clinical-label">Total</p>
-              <p className="tabular-nums text-lg font-bold text-clinical-gold">
-                {formatPrice(calculatedTotal)}
-              </p>
-            </div>
+      <div className="fixed left-0 right-0 z-45 bg-[#050505]/95 backdrop-blur-xl border-t border-clinical-border bottom-[calc(var(--bottom-nav-height)+var(--safe-bottom))] md:bottom-0 min-h-[var(--bottom-cta-height)]">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-3 sm:gap-4">
+          {/* Left: Total Price (Always visible) */}
+          <div className="shrink-0">
+            <p className="text-[10px] uppercase tracking-wider text-clinical-zinc-muted font-semibold">Total Price</p>
+            <p className="tabular-nums text-base sm:text-lg font-bold text-clinical-gold">
+              {formatPrice(calculatedTotal)}
+            </p>
           </div>
 
-          {isPremiumOnly && !isPremium ? (
-            <Button
-              onClick={() => navigate("/premium")}
-              className="flex-1 sm:flex-initial bg-transparent border border-clinical-gold/50 text-clinical-gold hover:bg-clinical-gold/10 font-semibold h-11 px-6 text-sm gap-2"
-            >
-              <Crown className="w-4 h-4" />
-              Premium Only — See Membership
-            </Button>
-          ) : (
-            <div className="flex-1 sm:flex-initial flex flex-col items-stretch gap-1">
-              {!isLive && (
-                <p className="text-[11px] text-amber-400/70 text-center">
-                  Live menu unavailable — prices may differ
-                </p>
-              )}
+          {/* Right: Quantity Selector and Primary CTA grouped together */}
+          <div className="flex items-center gap-2 sm:gap-3 justify-end flex-1 sm:flex-initial min-w-0">
+            {!(isPremiumOnly && !isPremium) && (
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-clinical-surface rounded-lg border border-clinical-border p-1 shrink-0">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-clinical-zinc hover:text-white"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+                <span className="tabular-nums text-xs sm:text-sm font-semibold text-white w-5 sm:w-6 text-center">
+                  {quantity}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-clinical-zinc hover:text-white"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+
+            {isPremiumOnly && !isPremium ? (
               <Button
-                onClick={handleAddToPlan}
-                disabled={!isLive}
-                className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 disabled:opacity-50 disabled:pointer-events-none font-semibold h-11 px-6 shadow-clinical-lg text-sm gap-2"
+                onClick={() => navigate("/premium")}
+                className="flex-1 sm:flex-initial bg-transparent border border-clinical-gold/50 text-clinical-gold hover:bg-clinical-gold/10 font-semibold h-11 px-4 sm:px-6 text-xs sm:text-sm gap-2"
               >
-                <ShoppingCart className="w-4 h-4" />
-                Add to Order
-                <span className="tabular-nums">— {formatPrice(calculatedTotal)}</span>
+                <Crown className="w-4 h-4 shrink-0" />
+                <span className="hidden xs:inline">Premium Only — See Membership</span>
+                <span className="xs:hidden">Premium Only</span>
               </Button>
-            </div>
-          )}
+            ) : (
+              <div className="flex-1 sm:flex-initial flex flex-col items-stretch gap-1 min-w-0">
+                <Button
+                  onClick={handleAddToPlan}
+                  className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 disabled:opacity-50 disabled:pointer-events-none font-semibold h-11 px-4 sm:px-6 shadow-clinical-lg text-xs sm:text-sm gap-1.5 sm:gap-2"
+                >
+                  <ShoppingCart className="w-4 h-4 shrink-0" />
+                  <span>Add to Order</span>
+                </Button>
+                {!isLive && (
+                  <p className="text-[9px] text-amber-400/70 text-center leading-none mt-0.5 whitespace-nowrap">
+                    Offline mode — displaying cached prices
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

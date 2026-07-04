@@ -5,6 +5,18 @@ import { and, eq, desc } from "drizzle-orm";
 import { requireAuthUser } from "../middlewares/requireAuth";
 import { logger } from "../lib/logger";
 
+const SERVICEABLE_PINCODES = new Set([
+  "110001", "110016", "110017", "110019", "110020", "110024", "110025", "110048", "110049", "110065", "122001", "122002", "122003", "122004", "122009", "122011", "122015", "122016", "122017", "122018",
+  "201301", "201303", "201304", "201305", "201306", "201307", "201309", "201318",
+  "201010", "201012", "201014",
+  "110091", "110092", "110096"
+]);
+
+function isServiceablePincode(pincode: string | null | undefined): boolean {
+  if (!pincode) return false;
+  return SERVICEABLE_PINCODES.has(pincode.trim());
+}
+
 const router: IRouter = Router();
 
 const addressBody = z.object({
@@ -62,6 +74,10 @@ router.post("/addresses", async (req: Request, res: Response) => {
     return;
   }
   const data = parsed.data;
+  if (!isServiceablePincode(data.pincode)) {
+    res.status(422).json({ error: "we do not deliver to this pincode yet", code: "unserviceable_pincode" });
+    return;
+  }
   try {
     const result = await db.transaction(async (tx) => {
       // If this is the first address for the user, force default=true so
@@ -117,6 +133,10 @@ router.patch("/addresses/:id", async (req: Request, res: Response) => {
     return;
   }
   const data = parsed.data;
+  if (data.pincode !== undefined && !isServiceablePincode(data.pincode)) {
+    res.status(422).json({ error: "we do not deliver to this pincode yet", code: "unserviceable_pincode" });
+    return;
+  }
   try {
     const updated = await db.transaction(async (tx) => {
       if (data.isDefault === true) {

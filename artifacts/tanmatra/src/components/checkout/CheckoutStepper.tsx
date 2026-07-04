@@ -34,8 +34,8 @@ export default function CheckoutStepper({
           const active = step.id === current;
           const done = completion[step.id] && !active;
           return (
-            <div key={step.id} className="flex items-center gap-3 flex-1">
-              <div className="flex items-center gap-2.5 min-w-0">
+            <div key={step.id} className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
                 <motion.div
                   initial={false}
                   animate={{

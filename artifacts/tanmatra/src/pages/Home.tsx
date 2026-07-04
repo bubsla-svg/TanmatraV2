@@ -1,23 +1,20 @@
 import { Link, useNavigate } from "react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { track } from "@/lib/analytics";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import MacroOverlay from "@/components/dish/MacroOverlay";
-import { WeeklySummaryCard } from "@/pages/Wellness";
-import SegmentToggle from "@/components/layout/SegmentToggle";
+import { WeeklySummaryCard } from "@/components/wellness/WeeklySummaryCard";
 import { useOrders } from "@/lib/ordersContext";
 import { useCart } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { TEAM } from "@/lib/teamData";
 import { useChallenges } from "@/lib/contentApi";
-import { usePreferences } from "@/lib/preferencesContext";
-import {
-  useDishRationales,
-  type DishRationale,
-} from "@/lib/dishRationaleApi";
-import { Sparkles as SparklesIcon } from "lucide-react";
+import { isSecondaryVariant } from "@/lib/dishEnrichment";
+
+
 import { toast } from "sonner";
 import {
   ShieldCheck,
@@ -48,6 +45,7 @@ import {
   ClipboardList,
   Bike,
   BadgeCheck,
+  Gift,
 } from "lucide-react";
 
 const FEATURED_MEALS = [
@@ -134,16 +132,6 @@ function DaypartGrid({
   dishes: DishData[];
   onQuickAdd: (e: React.MouseEvent, item: DishData) => void;
 }) {
-  const { preferences } = usePreferences();
-  const visibleIds = useMemo(() => dishes.map((d) => d.id), [dishes]);
-  const briefFingerprint = preferences
-    ? `${preferences.userId}:${preferences.updatedAt}`
-    : "anon";
-  const { byId: rationalesById } = useDishRationales(
-    visibleIds,
-    Boolean(preferences),
-    briefFingerprint,
-  );
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       {dishes.map((d) => (
@@ -182,34 +170,11 @@ function DaypartGrid({
               <p className="text-[10px] text-clinical-gold tabular-nums">
                 {formatPrice(d.price)}
               </p>
-              <DaypartWhyRow rationale={rationalesById.get(d.id)} />
             </div>
           </Card>
         </Link>
       ))}
     </div>
-  );
-}
-
-function DaypartWhyRow({ rationale }: { rationale: DishRationale | undefined }) {
-  const [open, setOpen] = useState(false);
-  if (!rationale) return null;
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setOpen((v) => !v);
-      }}
-      className="w-full flex items-start gap-1 text-left mt-1"
-      aria-expanded={open}
-    >
-      <SparklesIcon className="w-2.5 h-2.5 mt-0.5 text-clinical-gold shrink-0" />
-      <span className="text-[9px] leading-snug text-clinical-zinc line-clamp-2">
-        {open ? rationale.expanded : rationale.rationale}
-      </span>
-    </button>
   );
 }
 
@@ -255,6 +220,10 @@ export default function Home() {
   const { orders } = useOrders();
   const { addItem } = useCart();
 
+  useEffect(() => {
+    track("view_home");
+  }, []);
+
   const reorderRail = useMemo(() => orders.slice(0, 3), [orders]);
   const { data: challenges } = useChallenges();
   const featuredChallenge = useMemo(() => {
@@ -272,7 +241,10 @@ export default function Home() {
   const daypartDishes = useMemo(() => {
     return catalogDishes
       .filter(
-        (d) => d.isAvailable && daypartMeta.categories.includes(d.category),
+        (d) =>
+          d.isAvailable &&
+          daypartMeta.categories.includes(d.category) &&
+          !isSecondaryVariant(d.slug),
       )
       .slice(0, 6);
   }, [daypartMeta, catalogDishes]);
@@ -301,50 +273,86 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-clinical-dark">
-      <SegmentToggle />
-
-      {/* ═══════════════ HERO SECTION ═══════════════ */}
-      <section className="relative min-h-[360px] md:h-[70vh] md:min-h-[480px] overflow-hidden flex items-center">
+      {/* HERO SECTION — the D2C default: no forced clinical "protocol" band.
+          Wellness/Performance/Clinical remain reachable as deliberate
+          destinations (nav + the clinical entry lower down), not the
+          ambient frame every first-time visitor lands inside. */}
+      <section className="relative min-h-[420px] md:h-[78vh] md:min-h-[560px] overflow-hidden flex items-center">
         <div className="absolute inset-0">
-          <img src="/hero-bg.jpg" alt="Clinical-grade food preparation" className="w-full h-full object-cover" loading="eager" fetchPriority="high" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/98 via-[#050505]/85 to-[#050505]/55 md:from-[#050505]/95 md:via-[#050505]/70 md:to-[#050505]/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-[#050505]/30 md:via-transparent" />
+          <img src="/collections/wellness-collection.jpg" alt="Nutritionist-designed meals — buddha bowl, berry smoothie bowl and salmon salad" className="w-full h-full object-cover object-center" loading="eager" fetchPriority="high" />
+          {/* cinematic left→right darkening keeps copy legible over the photo.
+              The copy column occupies the left ~55% of the band on desktop, so
+              the scrim stays near-opaque through the 50% mark and only then
+              releases the photo — the previous 72%→25% ramp let the bright
+              smoothie/avocado bowls wash out the headline and body copy. */}
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,5,5,0.96)_0%,rgba(5,5,5,0.9)_45%,rgba(5,5,5,0.62)_100%)] md:bg-[linear-gradient(90deg,rgba(5,5,5,0.97)_0%,rgba(5,5,5,0.92)_34%,rgba(5,5,5,0.78)_52%,rgba(5,5,5,0.28)_74%,rgba(5,5,5,0.06)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/45 to-transparent" />
+          {/* warm gold key-light behind the headline for depth (echoes the logomark) */}
+          <div className="absolute -left-24 top-1/4 h-[420px] w-[420px] rounded-full bg-clinical-gold/20 blur-[120px] pointer-events-none" />
+          {/* fine clinical grid texture */}
+          <div
+            className="absolute inset-0 opacity-[0.05] pointer-events-none"
+            style={{
+              backgroundImage:
+                "linear-gradient(#D4AF37 1px, transparent 1px), linear-gradient(90deg, #D4AF37 1px, transparent 1px)",
+              backgroundSize: "44px 44px",
+            }}
+          />
+          {/* gold hairline framing the top of the band */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-clinical-gold/40 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full">
           <div className="max-w-2xl space-y-6 animate-fade-in-up">
-            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 hover:bg-clinical-gold/20 text-[10px] tracking-widest uppercase h-6">
-              <FlaskConical className="w-3 h-3 mr-1" />
+            <Badge className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/30 hover:bg-clinical-gold/15 text-[10px] tracking-[0.18em] uppercase h-7 pl-2 pr-3 gap-1.5 rounded-full">
+              <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-clinical-gold opacity-60" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-clinical-gold" />
+              </span>
               Clinical-Grade Precision Nutrition
             </Badge>
 
-            <h1 className="text-clinical-h1 text-white">
+            {/* drop-shadow (a filter, so it works with bg-clip-text) lifts the
+                headline off the photo; the gradient ends on gold rather than
+                sage — sage vanished into the avocado/greens in the image. */}
+            <h1 className="text-clinical-h1 md:text-[clamp(2.5rem,1.4rem+2.9vw,3.5rem)] md:leading-[1.06] text-white tracking-[-0.02em] drop-shadow-[0_2px_18px_rgba(0,0,0,0.6)]">
               Precision Nutrition,
               <br />
-              <span className="text-clinical-gold">Engineered by Science</span>
+              <span className="bg-gradient-to-r from-[#E7C766] to-clinical-gold bg-clip-text text-transparent">
+                Engineered by Science
+              </span>
             </h1>
 
-            <p className="text-base text-clinical-zinc leading-relaxed max-w-lg">
-              Every meal is clinically formulated by registered dietitians, macro-calibrated to
-              your metabolic profile, and prepared in ISO-certified kitchens.
+            <p className="text-base md:text-lg text-zinc-200 leading-relaxed max-w-lg drop-shadow-[0_1px_10px_rgba(0,0,0,0.5)]">
+              Chef-made meals, designed and approved by registered dietitians and
+              matched to your goals — cooked fresh in ISO-certified kitchens.
             </p>
 
             {/* Concrete price + delivery promise visible above the fold —
                 Indian first-time visitors decide on price/delivery before
                 committing to an assessment. Don't let the metabolic
                 assessment CTA be the only signal in the hero. */}
-            <p className="text-sm text-clinical-zinc-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="text-sm text-zinc-300 flex flex-wrap items-center gap-x-3 gap-y-1 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
               <span className="text-white font-semibold">Meals from ₹140</span>
+              <span className="opacity-50">·</span>
+              <span>Fresh in 25–40 min</span>
               <span className="opacity-50">·</span>
               <span>Free delivery over ₹500</span>
               <span className="opacity-50">·</span>
-              <span>Bengaluru-wide</span>
+              <span>Noida · Delhi · Gurgaon</span>
+            </p>
+
+            {/* First-order offer — mirrors the server-side auto-applied
+                discount (loyaltyEngine FIRST_ORDER_DISCOUNT_*). */}
+            <p className="text-sm font-semibold text-clinical-gold flex items-center gap-2 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              <Gift className="w-4 h-4 shrink-0" aria-hidden />
+              Flat 25% off your first order (up to ₹80) — auto-applied at checkout
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link to="/preferences" className="flex-1 sm:flex-none">
                 <Button className="w-full sm:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 h-12 sm:h-11 px-6 shadow-clinical-lg">
-                  Take metabolic assessment <ArrowRight className="w-4 h-4" />
+                  Get my meal plan <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
               {/* Equal-weight ghost button — assessment remains the primary
@@ -354,7 +362,7 @@ export default function Home() {
               <Link to="/menu" className="flex-1 sm:flex-none">
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto bg-transparent border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 hover:text-clinical-gold font-semibold gap-2 h-12 sm:h-11 px-6"
+                  className="w-full sm:w-auto bg-[#050505]/45 backdrop-blur-md border-clinical-gold/50 text-clinical-gold hover:bg-clinical-gold/10 hover:text-clinical-gold font-semibold gap-2 h-12 sm:h-11 px-6"
                 >
                   Browse the menu <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -369,18 +377,18 @@ export default function Home() {
                 stays honest as the team grows. */}
             <div className="grid grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:items-start sm:gap-x-5 sm:gap-y-3 pt-4">
               <div className="min-w-0">
-                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white">{TEAM.filter((m) => m.role === "rd").length}</p>
-                <p className="text-clinical-label mt-0.5 leading-tight">Registered Dietitians</p>
+                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">{TEAM.filter((m) => m.role === "rd").length}</p>
+                <p className="text-clinical-label text-zinc-300 mt-0.5 leading-tight drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">Registered Dietitians</p>
               </div>
-              <div className="hidden sm:block w-px self-stretch bg-clinical-surface-elevated" />
+              <div className="hidden sm:block w-px self-stretch bg-white/15" />
               <div className="min-w-0">
-                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white">100%</p>
-                <p className="text-clinical-label mt-0.5 leading-tight">Macros &amp; allergens disclosed</p>
+                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">100%</p>
+                <p className="text-clinical-label text-zinc-300 mt-0.5 leading-tight drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">Macros &amp; allergens disclosed</p>
               </div>
-              <div className="hidden sm:block w-px self-stretch bg-clinical-surface-elevated" />
+              <div className="hidden sm:block w-px self-stretch bg-white/15" />
               <div className="min-w-0">
-                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white">FSSAI</p>
-                <p className="text-clinical-label mt-0.5 leading-tight">Licensed · ISO 22000</p>
+                <p className="tabular-nums text-xl sm:text-2xl font-bold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">FSSAI</p>
+                <p className="text-clinical-label text-zinc-300 mt-0.5 leading-tight drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">Licensed · ISO 22000</p>
               </div>
             </div>
           </div>
@@ -461,7 +469,7 @@ export default function Home() {
                 icon: Bike,
                 step: "03",
                 title: "Delivered fresh in 25–40 min",
-                desc: "Prepared to order in ISO 22000 kitchens and dispatched the moment your order is confirmed. Same-day, across Bengaluru.",
+                desc: "Prepared to order in ISO 22000 kitchens and dispatched the moment your order is confirmed. Same-day, across Noida, Delhi & Gurgaon.",
               },
             ].map((s) => (
               <div key={s.step} className="flex gap-4 p-4 rounded-xl border border-clinical-border bg-clinical-surface">
@@ -485,6 +493,105 @@ export default function Home() {
             >
               See our clinical protocols <ArrowRight className="w-3 h-3" />
             </Link>
+          </div>
+        </div>
+      </section>
+      {/* ═══════════════ SUBSCRIPTION MEAL PLANS ═══════════════ */}
+      <section className="py-12 border-b border-clinical-border bg-clinical-surface/20">
+        <div className="max-w-7xl mx-auto px-4 space-y-8">
+          <div className="text-center space-y-3">
+            <p className="text-[10px] uppercase tracking-widest text-clinical-gold font-semibold">Meals on Autopilot</p>
+            <h2 className="text-clinical-h2 text-white">Never plan lunch again</h2>
+            <p className="text-xs text-clinical-zinc max-w-lg mx-auto">
+              Chef-made, dietitian-approved meals delivered on your schedule. Swap dishes, pick delivery slots, pause anytime.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <Link to="/subscribe?trial=1">
+                <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs h-9 gap-1.5">
+                  Start 3-day trial — 25% off <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+              <Link to="/subscription-plans" className="text-xs font-semibold text-clinical-gold hover:text-white inline-flex items-center gap-1">
+                See all plans <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                slug: "weight-loss-jumpstart",
+                name: "Weight-Loss Jumpstart",
+                desc: "1500 kcal, low-GI, fibre-forward. Sustainably lose weight without constant hunger spikes.",
+                price: "₹5,490 / week",
+                details: "1500 kcal · 90g protein · 25g+ fiber",
+                badge: "Weight Loss",
+              },
+              {
+                slug: "lean-muscle-builder",
+                name: "Lean Muscle Builder",
+                desc: "2400 kcal, 160g protein. Fuel muscle growth and accelerate post-workout recovery.",
+                price: "₹7,490 / week",
+                details: "2400 kcal · 160g protein · recovery-focused",
+                badge: "Lean Muscle",
+              },
+              {
+                slug: "pcos-balance",
+                name: "PCOS Hormone Balance",
+                desc: "Anti-inflammatory, low-GI, omega-3 forward. Formulated to manage insulin resistance.",
+                price: "₹5,990 / week",
+                details: "1700 kcal · 100g protein · Hormone balance",
+                badge: "Hormone Health",
+              },
+            ].map((plan) => (
+              <Card
+                key={plan.slug}
+                className="bg-clinical-surface border-clinical-border hover:border-clinical-gold/30 transition-all flex flex-col justify-between"
+              >
+                <CardContent className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Badge className="bg-clinical-gold/10 text-clinical-gold border-clinical-gold/25 text-[9px] h-5">
+                        {plan.badge}
+                      </Badge>
+                      <span className="text-xs text-clinical-zinc-muted font-mono">{plan.price}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-white mt-1">
+                      {plan.name}
+                    </h3>
+                    <p className="text-[11px] text-clinical-zinc leading-relaxed">
+                      {plan.desc}
+                    </p>
+                    <p className="text-[10px] text-clinical-gold font-mono pt-1">
+                      {plan.details}
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <Link to={`/subscribe?plan=${plan.slug}`}>
+                      <Button className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs h-9">
+                        Subscribe &amp; Save
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="bg-clinical-surface border border-clinical-border rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+              <p className="text-xs font-semibold text-white">Flexibility Built-In</p>
+              <p className="text-[10px] text-clinical-zinc mt-0.5">
+                Pause, skip deliveries, or swap dishes to match your taste. Free delivery included.
+              </p>
+            </div>
+            <div className="flex gap-2 text-[10px] font-semibold text-clinical-gold bg-clinical-gold/5 border border-clinical-gold/20 px-3 py-1.5 rounded-lg">
+              <span>Weekly (Save 5%)</span>
+              <span className="opacity-40">|</span>
+              <span>Fortnightly (Save 10%)</span>
+              <span className="opacity-40">|</span>
+              <span>Monthly (Save 15%)</span>
+            </div>
           </div>
         </div>
       </section>

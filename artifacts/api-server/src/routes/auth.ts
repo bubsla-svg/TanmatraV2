@@ -22,6 +22,7 @@ import {
   SESSION_TTL,
 } from "../lib/auth";
 import { normalisePhone, sendSmsOtp, verifySmsOtp } from "../lib/sms";
+import { verifyFirebaseIdToken } from "../lib/firebase";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -138,43 +139,23 @@ router.post(
       res.status(400).json({ error: "invalid input" });
       return;
     }
-    const num = normalisePhone(parsed.data.countryCode, parsed.data.phone);
-    if (!num) {
-      res.status(400).json({ error: "invalid phone" });
-      return;
-    }
 
     if (!(await rateLimit(`auth:verify:ip:${clientIp(req)}`, 60 * 60_000, 30))) {
       res.status(429).json({ error: "too many requests" });
       return;
     }
-    // Per-phone throttle so a leaked IP can't grind 30 attempts at one
-    // number's 6-digit code (Twilio Verify also throttles, but defence
-    // in depth is cheap).
-    if (!(await rateLimit(`auth:verify:ph:${num.e164}`, 15 * 60_000, 6))) {
-      res.status(429).json({ error: "too many requests" });
-      return;
-    }
 
-    const result = await verifySmsOtp(num, parsed.data.code);
-    if (!result.ok) {
-      // Always return a single canonical message so attackers can't
-      // distinguish "phone not enrolled" from "wrong code". The detailed
-      // reason is already logged inside verifySmsOtp.
-      res.status(401).json({ error: "incorrect code" });
+    let phoneE164: string;
+    try {
+      phoneE164 = await verifyFirebaseIdToken(parsed.data.idToken);
+    } catch (err) {
+      logger.warn({ err: (err as Error).message }, "auth.phone.firebase_verify_failed");
+      res.status(401).json({ error: "invalid token" });
       return;
     }
 
     // Upsert the user by their verified phone. We let the DB generate the
     // user id on first sign-in (gen_random_uuid()).
-    //
-    // Attribution semantics: utm_*, signup_source, referral_code are
-    // first-touch — set ONLY on initial user creation, never overwritten on
-    // subsequent sign-ins. Otherwise a returning user clicking a re-targeted
-    // ad would clobber their original acquisition channel, which is the
-    // signal we actually want for channel-mix analysis. Consent timestamps,
-    // by contrast, ARE updated on every sign-in (so a user who opts in later
-    // gets their flag flipped without us needing a separate mutation).
     const now = new Date();
     const attr = parsed.data.attribution;
     const consentUpdates: Record<string, Date | string> = {
@@ -193,7 +174,7 @@ router.post(
     const [user] = await db
       .insert(usersTable)
       .values({
-        phoneE164: num.e164,
+        phoneE164: phoneE164,
         phoneVerifiedAt: now,
         signupSource: attr?.signupSource,
         utmSource: attr?.utmSource,
@@ -212,7 +193,7 @@ router.post(
       .returning();
 
     if (!user) {
-      logger.error({ e164: num.e164 }, "auth.phone.upsert_failed");
+      logger.error({ e164: phoneE164 }, "auth.phone.upsert_failed");
       res.status(500).json({ error: "could not create session" });
       return;
     }
@@ -234,7 +215,7 @@ router.post(
     setSessionCookie(res, sid);
 
     logger.info(
-      { userId: user.id, e164: num.e164 },
+      { userId: user.id, e164: phoneE164 },
       "auth.phone.session_created",
     );
 

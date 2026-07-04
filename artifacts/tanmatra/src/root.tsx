@@ -12,6 +12,7 @@ import { OrdersProvider } from "@/lib/ordersContext";
 import { PreferencesProvider } from "@/lib/preferencesContext";
 import OnboardingQuizGate from "@/components/preferences/OnboardingQuizGate";
 import Header from "@/components/layout/Header";
+import WelcomeOfferBanner from "@/components/marketing/WelcomeOfferBanner";
 import Footer from "@/components/layout/Footer";
 import BottomNav from "@/components/layout/BottomNav";
 import ScrollToTop from "@/components/layout/ScrollToTop";
@@ -191,6 +192,7 @@ export default function Root() {
                       <ScrollToTop />
                       <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
                         {!hideChrome && <Header />}
+                        {!hideChrome && <WelcomeOfferBanner />}
                         {!hideChrome && <OnboardingQuizGate />}
                         <main className="flex-1 pb-20 md:pb-0">
                           <Outlet />

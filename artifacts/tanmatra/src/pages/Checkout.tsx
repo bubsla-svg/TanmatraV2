@@ -38,8 +38,9 @@ import {
 } from "@/lib/fulfillmentApi";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Check, Flame, Lock } from "lucide-react";
+import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Check, Flame, Lock, MessageSquare } from "lucide-react";
 import { checkPincode, type PincodeCheckResult } from "@/lib/serviceablePincodes";
+import { track } from "@/lib/analytics";
 import {
   Collapsible,
   CollapsibleContent,
@@ -47,6 +48,8 @@ import {
 } from "@/components/ui/collapsible";
 import AddOnRail from "@/components/checkout/AddOnRail";
 import CheckoutStepper, { type CheckoutStep } from "@/components/checkout/CheckoutStepper";
+import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";
+import { cn } from "@/lib/utils";
 import {
   MapPin,
   CreditCard,
@@ -65,9 +68,12 @@ import {
   Gift,
   Ticket,
   Timer,
+  Zap,
 } from "lucide-react";
 
 import { addressesApi, type UserAddress } from "@/lib/userAddressesApi";
+import { auth, friendlyFirebaseError } from "../lib/firebase";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { getDishById } from "@/lib/menuData";
@@ -77,8 +83,23 @@ import {
   useClinicalMode,
   type ServerSafetyConflict,
 } from "@/lib/clinicalDiet";
-import PatientContextStrip from "@/components/clinical/PatientContextStrip";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
+import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
+
+// Shapes of the phone-OTP auth responses used by the guest-checkout flow.
+// Mirrors the interfaces in Login.tsx (kept local rather than shared to
+// avoid coupling the two pages' ad-hoc fetch typing).
+interface SendOtpResponse {
+  ok: boolean;
+  devCode?: string;
+  error?: string;
+}
+
+interface VerifyOtpResponse {
+  ok: boolean;
+  user: { id: string; firstName: string | null } | null;
+  error?: string;
+}
 
 // Order matters — the first preset is what users see "first" and most
 // successful tip UIs lead with a positive amount instead of zero, so
@@ -93,6 +114,15 @@ export default function Checkout() {
   useEffect(() => {
     if (items.length === 0) navigate("/menu", { replace: true });
   }, [items.length, navigate]);
+  useEffect(() => {
+    if (items.length > 0) {
+      track("checkout_start", {
+        cartItemCount: items.length,
+        subtotal,
+      });
+    }
+  }, [items.length, subtotal]);
+
   const { addOrder } = useOrders();
   const { preferences } = usePreferences();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
@@ -146,11 +176,7 @@ export default function Checkout() {
     : null;
   const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>("");
-  const [savingAddress, setSavingAddress] = useState(false);
-  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
-  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
-  const touchField = (name: string) =>
-    setTouchedFields((prev) => new Set([...prev, name]));
+
   // Distinguishes "logged in but has no saved addresses yet" from
   // "not signed in at all" — the inline new-address form would otherwise
   // tease an unauth user into filling fields that fail on submit.
@@ -186,7 +212,7 @@ export default function Checkout() {
       return sum + (a ? a.pricePaise * qty : 0);
     }, 0);
   }, [selectedAddons, addonsQuery.data]);
-  const [showNewAddress, setShowNewAddress] = useState(false);
+  const [showNewAddressFlow, setShowNewAddressFlow] = useState(false);
   const [tipAmount, setTipAmount] = useState(0);
   const [customTip, setCustomTip] = useState("");
   // Replaces the old `tipAmount === -1` sentinel — that pattern was
@@ -207,14 +233,39 @@ export default function Checkout() {
     null,
   );
   const [creditBalance, setCreditBalance] = useState(0);
+  const [firstOrderOffer, setFirstOrderOffer] = useState<{
+    eligible: boolean;
+    percentBps: number;
+    capPaise: number;
+  } | null>(null);
   const [applyCredits, setApplyCredits] = useState(true);
   const [preorderTomorrow, setPreorderTomorrow] = useState(false);
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
 
+  // Auto-polling recovery listener when returning from GPay/PhonePe/Paytm
+  useEffect(() => {
+    return subscribeUpiRecovery({
+      onPollingStart: () => {
+        setIsProcessing(true);
+      },
+      onRecovered: (event) => {
+        setIsProcessing(false);
+        setConfirmOpen(false);
+        clear();
+        submitAttemptRef.current = null;
+        toast.success(`Payment confirmed upon return from UPI app! Order ${event.tx.orderId} placed.`);
+        navigate(`/track?orderId=${encodeURIComponent(event.tx.orderId)}`);
+      },
+      onPollingEnd: () => {
+        setIsProcessing(false);
+      },
+    });
+  }, [clear, navigate]);
+
   // High-fidelity guest-checkout & slotting states
   const [deliveryMode, setDeliveryMode] = useState<"now" | "schedule">("now");
   const [showGuestAuthDialog, setShowGuestAuthDialog] = useState(false);
-  const [pincodeCheck, setPincodeCheck] = useState<PincodeCheckResult>({ state: "empty" });
+
 
   const [guestPhone, setGuestPhone] = useState("");
   const [guestCountryCode, setGuestCountryCode] = useState("+91");
@@ -226,6 +277,8 @@ export default function Checkout() {
   const [guestResendIn, setGuestResendIn] = useState(0);
   const [guestFirstName, setGuestFirstName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const recaptchaVerifierRef = useRef<any>(null);
   const [subsidy, setSubsidy] = useState<CompanySubsidy | null>(null);
   const [applySubsidy, setApplySubsidy] = useState(true);
   const [voucherCode, setVoucherCode] = useState("");
@@ -236,6 +289,8 @@ export default function Checkout() {
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [fulfillmentType, setFulfillmentType] = useState<"delivery" | "pickup">("delivery");
   const [slots, setSlots] = useState<DeliverySlotOption[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(true);
+  const [slotsError, setSlotsError] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   // Inline error message rendered directly under the slot grid. Populated
   // when the server rejects checkout with "delivery slot full" or
@@ -261,30 +316,7 @@ export default function Checkout() {
     ? Math.floor((subtotal * PREORDER_BPS) / 10_000)
     : 0;
 
-  // 1. Automatic pincode serviceability & auto-fill city
-  useEffect(() => {
-    const pin = newAddr.pincode.trim();
-    if (pin.length === 6) {
-      const result = checkPincode(pin);
-      setPincodeCheck(result);
-      if (result.state === "serviceable") {
-        setNewAddr((prev) => ({ ...prev, city: result.info.city }));
-        setAddressErrors((prev) => {
-          const copy = { ...prev };
-          delete copy.city;
-          delete copy.pincode;
-          return copy;
-        });
-      } else if (result.state === "unserviceable") {
-        setAddressErrors((prev) => ({
-          ...prev,
-          pincode: `We don't deliver to ${pin} yet.`,
-        }));
-      }
-    } else {
-      setPincodeCheck({ state: "empty" });
-    }
-  }, [newAddr.pincode]);
+
 
   // 2. Automatic preorder discount sync based on selected slot
   const selectedSlot = slots.find((s) => s.id === selectedSlotId);
@@ -314,14 +346,16 @@ export default function Checkout() {
   }, [guestResendIn]);
 
   // Intercept place order click for guest users
-  const handlePlaceOrderClick = () => {
-    if (!activeAddr) {
-      toast.error("Please enter or select a delivery address");
+  const handlePlaceOrderClick = async () => {
+    let currentAddr = activeAddr;
+    if (!currentAddr) {
+      toast.error("Please enter or select a valid delivery address");
+      setShowNewAddressFlow(true);
       return;
     }
     if (addressAuthRequired) {
-      if (newAddr.phone.trim()) {
-        setGuestPhone(newAddr.phone.trim().replace(/^\+91/, ""));
+      if (currentAddr.phone.trim()) {
+        setGuestPhone(currentAddr.phone.trim().replace(/^\+91/, ""));
       }
       setShowGuestAuthDialog(true);
     } else {
@@ -336,44 +370,68 @@ export default function Checkout() {
       return;
     }
     setGuestIsSending(true);
-    try {
-      const res = await fetch(`${API_BASE}/auth/phone/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ countryCode: guestCountryCode, phone: guestPhone }),
+
+    if (!auth) {
+      toast.error("Verification is temporarily unavailable", {
+        description:
+          "Verification service is not configured. Please try again shortly.",
       });
-      const data = (await res.json().catch(() => ({}))) as SendOtpResponse;
-      if (!res.ok || !data.ok) {
-        toast.error(data.error ?? "Could not send verification code");
-        return;
+      setGuestIsSending(false);
+      return;
+    }
+
+    try {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
       }
-      setGuestDevCode(data.devCode ?? null);
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+      });
+      const phoneNumberE164 = `${guestCountryCode}${digits}`;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumberE164, recaptchaVerifierRef.current);
+      setConfirmationResult(confirmation);
       setGuestAuthStep("code");
       setGuestResendIn(30);
       toast.success(`Verification code sent to ${guestCountryCode} ${guestPhone}`);
-    } catch {
-      toast.error("Network error — please try again");
+    } catch (err) {
+      console.error("Guest SMS OTP failed:", err);
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
+      }
+      toast.error("Couldn't send verification code", {
+        description: friendlyFirebaseError(err),
+      });
     } finally {
       setGuestIsSending(false);
     }
   };
 
   const handleVerifyGuestOtp = async () => {
-    if (guestOtpCode.replace(/\D/g, "").length < 4) {
-      toast.error("Enter the 4-digit verification code");
+    if (guestOtpCode.replace(/\D/g, "").length < 6) {
+      toast.error("Enter the 6-digit verification code");
+      return;
+    }
+    if (!confirmationResult) {
+      toast.error("No verification in progress");
       return;
     }
     setGuestIsVerifying(true);
     try {
+      const userCredential = await confirmationResult.confirm(guestOtpCode);
+      const idToken = await userCredential.user.getIdToken();
+      
       const res = await fetch(`${API_BASE}/auth/phone/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          countryCode: guestCountryCode,
-          phone: guestPhone,
-          code: guestOtpCode,
+          idToken,
           attribution: {
             dpdpConsent: true,
             tosVersion: "2026-05",
@@ -391,8 +449,9 @@ export default function Checkout() {
       } else {
         await handleGuestAuthSuccess();
       }
-    } catch {
-      toast.error("Network error — please try again");
+    } catch (err) {
+      console.error(err);
+      toast.error("Verification failed: " + (err as Error).message);
     } finally {
       setGuestIsVerifying(false);
     }
@@ -412,13 +471,18 @@ export default function Checkout() {
         });
       }
 
+      const guestAddr = savedAddresses.find((a) => a.id === "guest-addr");
+      if (!guestAddr) {
+        throw new Error("No guest address found to sync");
+      }
+
       const r = await addressesApi.create({
-        label: newAddr.label.trim() || "Home",
-        line1: newAddr.line1.trim(),
-        line2: newAddr.line2.trim() || undefined,
-        city: newAddr.city.trim(),
-        pincode: newAddr.pincode.trim(),
-        phone: guestPhone || newAddr.phone.trim(),
+        label: guestAddr.label || "Home",
+        line1: guestAddr.line1,
+        line2: guestAddr.line2 || undefined,
+        city: guestAddr.city,
+        pincode: guestAddr.pincode,
+        phone: guestPhone || guestAddr.phone,
       });
 
       setSavedAddresses([r.address]);
@@ -433,15 +497,36 @@ export default function Checkout() {
     }
   };
 
+  const fetchSlots = async () => {
+    setLoadingSlots(true);
+    setSlotsError(false);
+    try {
+      const r = await fulfillmentApi.listSlots();
+      setSlots(r.slots);
+    } catch {
+      setSlots([]);
+      setSlotsError(true);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
   useEffect(() => {
     let alive = true;
     void fulfillmentApi
       .listSlots()
       .then((r) => {
-        if (alive) setSlots(r.slots);
+        if (alive) {
+          setSlots(r.slots);
+          setLoadingSlots(false);
+        }
       })
       .catch(() => {
-        if (alive) setSlots([]);
+        if (alive) {
+          setSlots([]);
+          setSlotsError(true);
+          setLoadingSlots(false);
+        }
       });
     void fulfillmentApi
       .listPickupLocations()
@@ -477,10 +562,12 @@ export default function Checkout() {
       .then((r) => {
         if (!alive) return;
         setSavedAddresses(r.addresses);
-        if (r.addresses.length === 0) {
-          setShowNewAddress(true);
-          setSelectedAddress("new");
-        } else {
+        // No auto-modal when the list is empty: a blocking interstitial on
+        // checkout entry (before the user even sees their order) is a
+        // conversion killer. The Delivery Address card carries the
+        // "Add New Address" CTA, and the submit path opens the flow
+        // just-in-time if they try to pay without one.
+        if (r.addresses.length > 0) {
           const def = r.addresses.find((a) => a.isDefault) ?? r.addresses[0];
           setSelectedAddress(def.id);
         }
@@ -490,12 +577,10 @@ export default function Checkout() {
         setSavedAddresses([]);
         // 401 from list() means the session expired or the user landed on
         // checkout without signing in. Surface a sign-in CTA instead of
-        // baiting them into the new-address form (architect P1).
+        // baiting them into the new-address form (architect P1). Same
+        // no-interstitial rule as above — the guest sees the page first.
         if (String(err.message).startsWith("401")) {
           setAddressAuthRequired(true);
-          // Guest path: open the inline form so they can still checkout
-          setShowNewAddress(true);
-          setSelectedAddress("new");
         }
       });
     return () => {
@@ -521,12 +606,20 @@ export default function Checkout() {
       .catch(() => {
         if (alive) setCreditBalance(0);
       });
+    // First-order offer eligibility is server-truth; when the call fails
+    // we show no discount (finalize would not have applied one either).
+    loyaltyApi
+      .getFirstOrderOffer()
+      .then((r) => {
+        if (alive) setFirstOrderOffer(r);
+      })
+      .catch(() => {
+        if (alive) setFirstOrderOffer(null);
+      });
     return () => {
       alive = false;
     };
   }, []);
-
-  const [newAddr, setNewAddr] = useState({ label: "", line1: "", line2: "", city: "", pincode: "", phone: "" });
 
   const effectiveTip = isCustomTip
     ? Math.round((parseFloat(customTip) || 0) * 100)
@@ -536,11 +629,28 @@ export default function Checkout() {
       ? pickupLocations.find((p) => p.id === selectedPickupId) ?? null
       : null;
   const pickupDiscount = selectedPickup?.discountPaise ?? 0;
+  // First-order offer — mirrors the server pipeline exactly (applied after
+  // pickup/preorder discounts, before credits); the finalize response is
+  // reconciled against this estimate before charging.
+  const preFirstOrderSubtotal = Math.max(0, subtotal - preorderDiscount - pickupDiscount);
+  const firstOrderDiscount = firstOrderOffer?.eligible
+    ? Math.min(
+        Math.floor((preFirstOrderSubtotal * firstOrderOffer.percentBps) / 10_000),
+        firstOrderOffer.capPaise,
+      )
+    : 0;
+  const discountedSubtotal = Math.max(0, preFirstOrderSubtotal - firstOrderDiscount);
   // Pickup orders skip delivery fee entirely; otherwise the existing free-over-threshold rule.
+  // Free-delivery threshold is judged on the RAW meal subtotal — the same
+  // basis the cart page and sticky bar use — so an applied offer (e.g. the
+  // first-order discount) can never *revoke* free delivery the customer
+  // already unlocked while browsing. Customer-favorable and consistent.
   const deliveryFee =
     fulfillmentType === "pickup" ? 0 : subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-  const discountedSubtotal = Math.max(0, subtotal - preorderDiscount - pickupDiscount);
-  const gst = Math.round((discountedSubtotal * 500) / 10000); // 5% GST
+  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
+  const freeDeliveryProgress = subtotal === 0 ? 0 : Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
+  const hasFreeDelivery = fulfillmentType === "pickup" || deliveryFee === 0;
+  const gst = Math.round(discountedSubtotal * 0.18); // 18% GST
   const grossTotal = discountedSubtotal + gst + deliveryFee + effectiveTip + addonTotal;
   // Server only redeems against the (discounted) meal subtotal; cap here too
   // so the UI total matches the server final total exactly.
@@ -629,84 +739,7 @@ export default function Checkout() {
     return () => { cancelled = true; };
   }, [activeAddr?.id, items.length, fulfillmentType]);
 
-  const handleSaveNewAddress = async () => {
-    setAddressErrors({});
-    const errs: Record<string, string> = {};
-    if (!newAddr.label.trim()) errs.label = "Label is required";
-    if (!newAddr.line1.trim()) errs.line1 = "Street address is required";
-    if (!newAddr.city.trim()) errs.city = "City is required";
-    if (!/^\d{6}$/.test(newAddr.pincode.trim())) {
-      errs.pincode = "Enter a valid 6-digit pincode";
-    } else {
-      const pinCheck = checkPincode(newAddr.pincode.trim());
-      if (pinCheck.state === "unserviceable") {
-        errs.pincode = "This area is not serviceable yet";
-      }
-    }
-    if (!/^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()))
-      errs.phone = "Enter a valid phone number";
-    if (Object.keys(errs).length > 0) {
-      setAddressErrors(errs);
-      return;
-    }
-    setAddressErrors({});
-    setSavingAddress(true);
-    try {
-      if (addressAuthRequired) {
-        // Guest path: build a local-only address (no API call) so the
-        // rest of the checkout flow has a valid activeAddr to work with.
-        const guestAddr: UserAddress = {
-          id: "guest-addr",
-          label: newAddr.label.trim() || "Delivery address",
-          type: "home",
-          line1: newAddr.line1.trim(),
-          line2: newAddr.line2.trim(),
-          city: newAddr.city.trim(),
-          pincode: newAddr.pincode.trim(),
-          phone: newAddr.phone.trim(),
-          isDefault: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setSavedAddresses([guestAddr]);
-        setSelectedAddress("guest-addr");
-        setShowNewAddress(false);
-        setTouchedFields(new Set());
-        return;
-      }
-      const r = await addressesApi.create({
-        label: newAddr.label.trim(),
-        line1: newAddr.line1.trim(),
-        line2: newAddr.line2.trim() || undefined,
-        city: newAddr.city.trim(),
-        pincode: newAddr.pincode.trim(),
-        phone: newAddr.phone.trim(),
-      });
-      setSavedAddresses((prev) => [r.address, ...prev]);
-      setSelectedAddress(r.address.id);
-      setShowNewAddress(false);
-      setNewAddr({
-        label: "",
-        line1: "",
-        line2: "",
-        city: "",
-        pincode: "",
-        phone: "",
-      });
-      setTouchedFields(new Set());
-      toast.success("Address saved");
-    } catch (e) {
-      const msg = String((e as Error).message);
-      // Server returns the zod issue message for 400s (e.g. "invalid pincode");
-      // surface it inline so the user can correct the offending field instead
-      // of a generic "could not save". Strip the "400: " prefix our request
-      // wrapper attaches.
-      const cleaned = msg.replace(/^\d{3}:\s*/, "");
-      setAddressErrors({ _form: cleaned || "Could not save address" });
-    } finally {
-      setSavingAddress(false);
-    }
-  };
+
 
   if (items.length === 0) {
     return (
@@ -781,6 +814,7 @@ export default function Checkout() {
     let finalTotal = grossTotal;
     let referralAwarded = false;
     let serverOrderIdFromFinalize: number | undefined;
+    let firstOrderDiscountApplied = 0;
     try {
       const out = await loyaltyApi.finalizeOrder({
         // Same key for every retry of THIS submit attempt; the server
@@ -790,7 +824,7 @@ export default function Checkout() {
         orderId,
         items: items.map((it) => ({
           id: it.dishId,
-          name: it.name,
+          name: it.recipient ? `${it.name} (For ${it.recipient})` : it.name,
           qty: it.quantity,
           price: it.unitPrice,
         })),
@@ -838,6 +872,15 @@ export default function Checkout() {
       const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID as
         | string
         | undefined;
+      // Reconcile the charge against the server's first-order decision: if
+      // the server applied a different discount than our estimate (e.g.
+      // the user's first order raced in from another device), shift the
+      // charge by the delta so the amount always matches the stored order.
+      firstOrderDiscountApplied = out.firstOrderDiscountPaise ?? 0;
+      const chargeTotal = Math.max(
+        0,
+        razorpayTotal - (firstOrderDiscountApplied - firstOrderDiscount),
+      );
       if (RAZORPAY_KEY_ID) {
         try {
           // 1. Ask the server to create a Razorpay order.
@@ -847,10 +890,13 @@ export default function Checkout() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
+              // Server contract is { amountPaise, receipt } — the previous
+              // { orderId, amount, currency } payload failed schema
+              // validation (400) and silently pushed every live payment
+              // onto the "placed but not charged" fallback.
               body: JSON.stringify({
-                orderId,
-                amount: razorpayTotal,
-                currency: "INR",
+                amountPaise: chargeTotal,
+                receipt: orderId.slice(0, 40),
               }),
             },
           );
@@ -884,7 +930,7 @@ export default function Checkout() {
               }
               const rzp = new Razorpay({
                 key: RAZORPAY_KEY_ID,
-                amount: razorpayTotal,
+                amount: chargeTotal,
                 currency: "INR",
                 order_id: razorpayOrderId,
                 name: "Tanmatra",
@@ -900,6 +946,7 @@ export default function Checkout() {
                 }) => {
                   // 3. Verify payment server-side before accepting the order.
                   try {
+                    removePendingTransaction(orderId);
                     await fetch(`${API_BASE}/payments/razorpay/verify`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -919,6 +966,13 @@ export default function Checkout() {
                 modal: {
                   ondismiss: () => reject(new Error("payment_cancelled")),
                 },
+              });
+              savePendingTransaction({
+                orderId,
+                idempotencyKey: submitAttemptRef.current?.key ?? orderId,
+                initiatedAt: Date.now(),
+                amount: chargeTotal,
+                provider: "razorpay",
               });
               rzp.open();
             }
@@ -1130,6 +1184,20 @@ export default function Checkout() {
       },
     });
 
+    track("order_created", {
+      orderId,
+      total: finalTotal,
+      itemCount: items.length,
+      fulfillmentType,
+      appliedCredits: creditApplied,
+    });
+    if (firstOrderDiscountApplied > 0) {
+      track("first_order_offer_applied", {
+        orderId,
+        amountPaise: firstOrderDiscountApplied,
+      });
+    }
+
     if (referralAwarded) {
       toast.success("Referral reward unlocked for your friend");
     }
@@ -1156,7 +1224,6 @@ export default function Checkout() {
   return (
     <div className="max-w-4xl mx-auto p-4 pb-40 lg:pb-4 grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in duration-150">
       <div className="lg:col-span-5 space-y-3">
-        <PatientContextStrip />
         <ConflictsPanel
           panelId="checkout-server-block"
           serverMessage={serverAllergenError}
@@ -1180,7 +1247,6 @@ export default function Checkout() {
               value={selectedAddress}
               onValueChange={(v) => {
                 setSelectedAddress(v);
-                setShowNewAddress(false);
               }}
             >
               <div className="space-y-2">
@@ -1216,17 +1282,33 @@ export default function Checkout() {
                   </Label>
                 ))}
 
-                {!showNewAddress && (
+                {savedAddresses.length === 0 ? (
+                  // Prominent inline empty-state target — replaces the old
+                  // auto-opening modal. The user stays on the page, sees
+                  // their order, and adds the address on their own terms.
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAddressFlow(true)}
+                    className="w-full rounded-lg border border-dashed border-clinical-gold/45 bg-clinical-gold/5 hover:bg-clinical-gold/10 transition-colors p-4 text-left space-y-1"
+                  >
+                    <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      <Plus className="w-3.5 h-3.5 text-clinical-gold" />
+                      Add your delivery address
+                    </p>
+                    <p className="text-[10px] text-clinical-zinc">
+                      Noida · Delhi · Gurgaon · fresh in 25–40 min
+                    </p>
+                  </button>
+                ) : (
                   <Button
                     variant="ghost"
                     className="w-full justify-start gap-2 text-xs text-clinical-gold hover:bg-clinical-gold/10 h-10"
                     onClick={() => {
-                      setShowNewAddress(true);
-                      setSelectedAddress("new");
+                      setShowNewAddressFlow(true);
                     }}
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    {addressAuthRequired ? "Enter delivery address" : "Add New Address"}
+                    Add New Address
                   </Button>
                 )}
               </div>
@@ -1261,198 +1343,7 @@ export default function Checkout() {
               </p>
             </div>
 
-            {showNewAddress && (
-              <div className="space-y-3 p-3 rounded-lg bg-clinical-dark border border-clinical-border">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-white">
-                    {addressAuthRequired ? "Delivery address" : "New Address"}
-                  </p>
-                  {addressAuthRequired && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/login?next=${encodeURIComponent("/checkout")}`)}
-                      className="text-[10px] text-clinical-gold hover:underline"
-                    >
-                      Sign in to save for next time →
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="Label (e.g., Home)"
-                        value={newAddr.label}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, label: e.target.value })
-                        }
-                        onBlur={() => touchField("label")}
-                        autoComplete="nickname"
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("label") && newAddr.label.trim() && !addressErrors.label && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.label && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.label}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="Phone (rider will call this)"
-                        value={newAddr.phone}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                          const formatted = digits.length > 5
-                            ? `${digits.slice(0, 5)} ${digits.slice(5)}`
-                            : digits;
-                          setNewAddr({ ...newAddr, phone: formatted });
-                        }}
-                        onBlur={() => touchField("phone")}
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("phone") && /^[+\d][\d\s\-]{8,14}$/.test(newAddr.phone.trim()) && !addressErrors.phone && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.phone && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="City"
-                        value={newAddr.city}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, city: e.target.value })
-                        }
-                        onBlur={() => touchField("city")}
-                        autoComplete="address-level2"
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("city") && newAddr.city.trim() && !addressErrors.city && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.city && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.city}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <Input
-                        placeholder="Pincode"
-                        value={newAddr.pincode}
-                        onChange={(e) =>
-                          setNewAddr({ ...newAddr, pincode: e.target.value })
-                        }
-                        onBlur={() => touchField("pincode")}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        autoComplete="postal-code"
-                        maxLength={6}
-                        className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
-                      />
-                      {touchedFields.has("pincode") && /^\d{6}$/.test(newAddr.pincode.trim()) && !addressErrors.pincode && (
-                        <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                      )}
-                    </div>
-                    {addressErrors.pincode && (
-                      <p className="text-[10px] text-alert-allergen-text -mt-1">
-                        {addressErrors.pincode}
-                      </p>
-                    )}
-                    {pincodeCheck.state === "unserviceable" && (
-                      <div className="rounded-lg border border-clinical-clay/30 bg-clinical-clay/5 p-3 space-y-2 mt-2 col-span-2 text-left">
-                        <p className="text-xs text-clinical-clay font-medium leading-relaxed">
-                          We don't deliver to your pincode ({pincodeCheck.pincode}) yet. We are expanding rapidly across Noida NCR!
-                        </p>
-                        <div className="flex gap-2">
-                          <Input
-                            type="email"
-                            placeholder="Enter email to get notified"
-                            className="h-8 text-[11px] bg-clinical-surface border-clinical-border flex-1"
-                          />
-                          <Button
-                            size="sm"
-                            type="button"
-                            onClick={() => {
-                              toast.success("Thanks! We'll notify you as soon as we launch in your area.");
-                              setPincodeCheck({ state: "empty" });
-                              setNewAddr((prev) => ({ ...prev, pincode: "" }));
-                            }}
-                            className="h-8 px-3 bg-clinical-clay text-white hover:bg-clinical-clay/90 text-[11px]"
-                          >
-                            Notify Me
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="relative">
-                    <Input
-                      placeholder="Address line 1 (street, building)"
-                      value={newAddr.line1}
-                      onChange={(e) =>
-                        setNewAddr({ ...newAddr, line1: e.target.value })
-                      }
-                      onBlur={() => touchField("line1")}
-                      autoComplete="street-address"
-                      className="h-9 text-xs bg-clinical-surface border-clinical-border pr-7"
-                    />
-                    {touchedFields.has("line1") && newAddr.line1.trim() && !addressErrors.line1 && (
-                      <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-matcha pointer-events-none" />
-                    )}
-                  </div>
-                  {addressErrors.line1 && (
-                    <p className="text-[10px] text-alert-allergen-text -mt-1">
-                      {addressErrors.line1}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <Input
-                    placeholder="Address line 2 (apt, floor — optional)"
-                    value={newAddr.line2}
-                    onChange={(e) =>
-                      setNewAddr({ ...newAddr, line2: e.target.value })
-                    }
-                    autoComplete="address-line2"
-                    className="h-9 text-xs bg-clinical-surface border-clinical-border"
-                  />
-                </div>
-                {addressErrors._form && (
-                  <p className="text-[11px] text-alert-allergen-text" role="alert">
-                    {addressErrors._form}
-                  </p>
-                )}
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleSaveNewAddress}
-                  disabled={savingAddress}
-                  className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold w-full h-9 text-xs"
-                >
-                  {savingAddress ? "Saving…" : addressAuthRequired ? "Use this address" : "Save address"}
-                </Button>
-              </div>
-            )}
+
           </CardContent>
         </Card>
 
@@ -1465,7 +1356,7 @@ export default function Checkout() {
               <Truck className="w-4 h-4 text-clinical-gold" />
               <h2 className="text-sm font-semibold text-white">Get it your way</h2>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setFulfillmentType("delivery")}
@@ -1485,7 +1376,11 @@ export default function Checkout() {
               </button>
               <button
                 type="button"
-                onClick={() => setFulfillmentType("pickup")}
+                onClick={() => {
+                  setFulfillmentType("pickup");
+                  setSelectedSlotId(null);
+                  setPreorderTomorrow(false);
+                }}
                 disabled={pickupLocations.length === 0}
                 className={`p-3 rounded-lg border text-left transition-all disabled:opacity-50 ${
                   fulfillmentType === "pickup"
@@ -1498,7 +1393,7 @@ export default function Checkout() {
                   <span className="text-xs font-medium text-white">Partner pickup</span>
                 </div>
                 <p className="text-[10px] text-clinical-sage mt-1">
-                  Save up to Rs.{Math.max(0, ...pickupLocations.map((p) => p.discountPaise)) / 100 || 30}
+                  Save up to ₹{Math.max(0, ...pickupLocations.map((p) => p.discountPaise)) / 100 || 30}
                 </p>
               </button>
             </div>
@@ -1564,10 +1459,24 @@ export default function Checkout() {
                     <p className="text-[10px] text-clinical-zinc uppercase tracking-wider">
                       Pick a delivery slot
                     </p>
-                    {slots.length === 0 ? (
+                    {loadingSlots ? (
                       <div className="space-y-2">
                         <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
                         <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
+                      </div>
+                    ) : slotsError || slots.length === 0 ? (
+                      <div className="rounded-lg border border-clinical-border bg-clinical-surface-elevated/40 p-3 text-center space-y-2">
+                        <p className="text-[11px] text-clinical-zinc">
+                          {slotsError ? "Failed to load delivery slots." : "No slots available today."}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={fetchSlots}
+                          className="h-8 text-[11px] px-3 border-clinical-gold text-clinical-gold hover:bg-clinical-gold/10"
+                        >
+                          Retry loading slots
+                        </Button>
                       </div>
                     ) : (
                       <div
@@ -1665,7 +1574,7 @@ export default function Checkout() {
                             variant="outline"
                             className="ml-auto text-[9px] h-4 px-1 border-clinical-sage/40 text-clinical-sage"
                           >
-                            -Rs.{(loc.discountPaise / 100).toFixed(0)}
+                            -₹{(loc.discountPaise / 100).toFixed(0)}
                           </Badge>
                         </div>
                         <p className="text-[10px] text-clinical-zinc mt-1">
@@ -1692,7 +1601,7 @@ export default function Checkout() {
                       Reusable eco packaging
                     </p>
                     <p className="text-[10px] text-clinical-zinc">
-                      Return clean containers on your next order to earn Rs.20 credit
+                      Return clean containers on your next order to earn ₹20 credit
                     </p>
                   </div>
                 </div>
@@ -1732,7 +1641,7 @@ export default function Checkout() {
                       setIsCustomTip(false);
                     }}
                   >
-                    {tip === 0 ? "No Tip" : `+Rs.${(tip / 100).toFixed(0)}`}
+                    {tip === 0 ? "No Tip" : `+₹${(tip / 100).toFixed(0)}`}
                   </Button>
                 );
               })}
@@ -1774,7 +1683,7 @@ export default function Checkout() {
                     setCustomTip(cleaned);
                   }}
                   min="0"
-                  className="h-9 text-xs bg-clinical-surface border-clinical-border tabular-nums"
+                  className="h-9 bg-clinical-surface border-clinical-border tabular-nums"
                   autoFocus
                   aria-label="Custom tip amount in rupees"
                 />
@@ -1784,7 +1693,7 @@ export default function Checkout() {
             {effectiveTip > 0 && (
               <p className="text-[10px] text-clinical-sage flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
-                Your rider will receive Rs.{(effectiveTip / 100).toFixed(0)} extra
+                Your rider will receive ₹{(effectiveTip / 100).toFixed(0)} extra
               </p>
             )}
           </CardContent>
@@ -1863,6 +1772,45 @@ export default function Checkout() {
           selected={selectedAddons}
           onChange={setSelectedAddons}
         />
+
+        {/* Dynamic Threshold Progress Tracker (CRO AOV Booster) */}
+        {fulfillmentType !== "pickup" && (
+          <div className={`rounded-xl px-4 py-3 border transition-all duration-300 shadow-md ${
+            hasFreeDelivery ? "alert-safe-border alert-safe-bg" : "border-clinical-gold/40 bg-[#050505]"
+          }`}>
+            <div className="flex items-center justify-between mb-2 font-sans">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-clinical-zinc flex items-center gap-1.5">
+                {hasFreeDelivery ? <ShieldCheck className="w-4 h-4 alert-safe-text shrink-0" /> : <Zap className="w-4 h-4 text-clinical-gold fill-clinical-gold shrink-0" />}
+                Free Delivery Tracker
+              </span>
+              <span
+                className={cn(
+                  "text-xs font-bold tabular-nums",
+                  hasFreeDelivery ? "alert-safe-text" : "text-white"
+                )}
+              >
+                {hasFreeDelivery
+                  ? "Free Delivery Unlocked!"
+                  : `Add ₹${Math.ceil(amountToFreeDelivery / 100)} more for free delivery`}
+              </span>
+            </div>
+            <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className={cn(
+                  "absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out",
+                  hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_10px_rgba(74,222,128,0.85)]" : "bg-gradient-to-r from-[#E7C766] to-clinical-gold"
+                )}
+                style={{ width: `${freeDeliveryProgress}%` }}
+              />
+            </div>
+            {!hasFreeDelivery && (
+              <p className="text-[10px] text-clinical-zinc mt-1.5">
+                💡 Tip: Add an RD-curated drink or snack above to reach ₹500 and save ₹50 on delivery!
+              </p>
+            )}
+          </div>
+        )}
+
         <Card className="bg-clinical-surface border-clinical-border sticky top-20">
           <CardContent className="p-5 space-y-4">
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -1875,7 +1823,14 @@ export default function Checkout() {
                 <div key={item.lineId} className="flex items-start gap-3">
                   <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover border border-clinical-border shrink-0" loading="lazy" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{item.name}</p>
+                    <p className="text-xs font-medium text-white line-clamp-2">
+                      {item.name}
+                      {item.recipient && (
+                        <span className="text-[10px] text-clinical-gold ml-1 font-semibold">
+                          (For {item.recipient})
+                        </span>
+                      )}
+                    </p>
                     <p className="text-[10px] text-clinical-zinc">Qty: {item.quantity}</p>
                     {item.customizations.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -1920,7 +1875,7 @@ export default function Checkout() {
               </div>
               {gst > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-clinical-zinc">GST (5%)</span>
+                  <span className="text-clinical-zinc">GST (18%)</span>
                   <span className="tabular-nums text-white">{formatPrice(gst)}</span>
                 </div>
               )}
@@ -1931,6 +1886,16 @@ export default function Checkout() {
                   </span>
                   <span className="tabular-nums text-clinical-sage">
                     -{formatPrice(preorderDiscount)}
+                  </span>
+                </div>
+              )}
+              {firstOrderDiscount > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-clinical-gold flex items-center gap-1">
+                    <Gift className="w-3 h-3" /> First-order offer (25% up to ₹80)
+                  </span>
+                  <span className="tabular-nums text-clinical-gold">
+                    -{formatPrice(firstOrderDiscount)}
                   </span>
                 </div>
               )}
@@ -2079,6 +2044,7 @@ export default function Checkout() {
             {(() => {
               const totalSavings =
                 preorderDiscount +
+                firstOrderDiscount +
                 pickupDiscount +
                 creditApplied +
                 subsidyAvailable;
@@ -2100,6 +2066,14 @@ export default function Checkout() {
                         <span>Pre-order discount (5%)</span>
                         <span className="tabular-nums text-clinical-sage">
                           -{formatPrice(preorderDiscount)}
+                        </span>
+                      </div>
+                    )}
+                    {firstOrderDiscount > 0 && (
+                      <div className="flex justify-between">
+                        <span>First-order offer (25% up to ₹80)</span>
+                        <span className="tabular-nums text-clinical-gold">
+                          -{formatPrice(firstOrderDiscount)}
                         </span>
                       </div>
                     )}
@@ -2156,6 +2130,16 @@ export default function Checkout() {
                 ? "Blocked by patient safety"
                 : `Review & Pay ${formatPrice(razorpayTotal)}`}
             </Button>
+            <a
+              href="https://wa.me/919289213115"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_desktop_summary" })}
+              className="hidden lg:flex text-[10px] text-clinical-zinc hover:text-white mt-2 items-center justify-center gap-1.5"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-clinical-sage" />
+              Need checkout help? WhatsApp Support
+            </a>
 
             <p className="text-[9px] text-clinical-zinc text-center flex items-center justify-center gap-1">
               <ShieldCheck className="w-3 h-3 text-clinical-sage" />
@@ -2185,7 +2169,7 @@ export default function Checkout() {
             </div>
             {gst > 0 && (
               <div className="flex justify-between text-clinical-zinc">
-                <span>GST (5%)</span>
+                <span>GST (18%)</span>
                 <span className="tabular-nums text-white">{formatPrice(gst)}</span>
               </div>
             )}
@@ -2205,6 +2189,9 @@ export default function Checkout() {
             </div>
             {preorderDiscount > 0 && (
               <div className="flex justify-between"><span className="text-clinical-zinc">Pre-order discount</span><span className="tabular-nums text-clinical-sage">-{formatPrice(preorderDiscount)}</span></div>
+            )}
+            {firstOrderDiscount > 0 && (
+              <div className="flex justify-between"><span className="text-clinical-zinc">First-order offer</span><span className="tabular-nums text-clinical-gold">-{formatPrice(firstOrderDiscount)}</span></div>
             )}
             {pickupDiscount > 0 && (
               <div className="flex justify-between"><span className="text-clinical-zinc">Pickup discount</span><span className="tabular-nums text-clinical-sage">-{formatPrice(pickupDiscount)}</span></div>
@@ -2231,12 +2218,12 @@ export default function Checkout() {
                 className="min-w-0 flex-1 text-left group"
                 aria-label="Toggle order breakdown"
               >
-                <p className="text-[10px] text-clinical-zinc leading-none truncate flex items-center gap-1">
-                  <span>
+                <p className="text-[10px] text-clinical-zinc leading-none flex items-center gap-1 min-w-0">
+                  <span className="truncate min-w-0">
                     {fulfillmentType === "pickup" ? "Self-collect" : deliveryFee === 0 ? "FREE delivery" : `+ ${formatPrice(deliveryFee)} delivery`}
                   </span>
                   <ChevronDown className="w-3 h-3 text-clinical-zinc transition-transform group-data-[state=open]:rotate-180 shrink-0" />
-                  <span className="text-clinical-zinc-muted truncate">
+                  <span className="text-clinical-zinc-muted truncate min-w-0">
                     See breakdown
                   </span>
                 </p>
@@ -2260,6 +2247,16 @@ export default function Checkout() {
                 <CreditCard className="w-4 h-4" />
                 {checkoutBlocked ? "Blocked" : "Review & Pay"}
               </Button>
+              <a
+                href="https://wa.me/919289213115"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_mobile_bar" })}
+                className="text-[10px] text-clinical-zinc hover:text-white mt-1.5 items-center justify-center gap-1.5 text-center flex"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-clinical-sage" />
+                WhatsApp Support
+              </a>
             </div>
           </div>
         </div>
@@ -2275,7 +2272,7 @@ export default function Checkout() {
             </DialogTitle>
             <DialogDescription className="text-clinical-zinc text-xs">
               {guestAuthStep === "phone" && "Enter your mobile number to get a verification code."}
-              {guestAuthStep === "code" && `We've sent a 4-digit code to ${guestCountryCode} ${guestPhone}.`}
+              {guestAuthStep === "code" && `We've sent a 6-digit code to ${guestCountryCode} ${guestPhone}.`}
               {guestAuthStep === "welcome" && "We need a few details to personalize your clinical kitchen experience."}
             </DialogDescription>
           </DialogHeader>
@@ -2315,13 +2312,13 @@ export default function Checkout() {
                 <Label htmlFor="guest-otp-input" className="text-xs text-white">Verification Code</Label>
                 <Input
                   id="guest-otp-input"
-                  placeholder="Enter 4-digit OTP"
+                  placeholder="Enter 6-digit OTP"
                   value={guestOtpCode}
-                  onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   inputMode="numeric"
                   pattern="[0-9]*"
                   autoComplete="one-time-code"
-                  maxLength={4}
+                  maxLength={6}
                   className="h-10 text-center text-sm tracking-[1.5em] pl-[1.5em] font-mono bg-clinical-surface border-clinical-border"
                 />
               </div>
@@ -2402,6 +2399,7 @@ export default function Checkout() {
               </div>
             </div>
           )}
+          <div id="recaptcha-container" className="fixed bottom-0 right-0 z-50 pointer-events-none"></div>
         </DialogContent>
       </Dialog>
 
@@ -2485,6 +2483,34 @@ export default function Checkout() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LocationPickerFlow
+        open={showNewAddressFlow}
+        onOpenChange={setShowNewAddressFlow}
+        onSave={async (addressData) => {
+          if (addressAuthRequired) {
+            const guestAddr: UserAddress = {
+              id: "guest-addr",
+              label: addressData.label,
+              type: "home",
+              line1: addressData.line1,
+              line2: addressData.line2 || "",
+              city: addressData.city,
+              pincode: addressData.pincode,
+              phone: addressData.phone,
+              isDefault: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            setSavedAddresses([guestAddr]);
+            setSelectedAddress("guest-addr");
+          } else {
+            const r = await addressesApi.create(addressData);
+            setSavedAddresses((prev) => [r.address, ...prev]);
+            setSelectedAddress(r.address.id);
+          }
+        }}
+      />
     </div>
   );
 }

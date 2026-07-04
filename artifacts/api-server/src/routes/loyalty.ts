@@ -15,6 +15,8 @@ import {
 import { getPremiumSlugSet, userIsPremium } from "./premium";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import {
+  FIRST_ORDER_DISCOUNT_BPS,
+  FIRST_ORDER_DISCOUNT_CAP_PAISE,
   finalizeOrder,
   getCreditBalancePaise,
   getLoyaltyConstantsSnapshot,
@@ -22,6 +24,7 @@ import {
   listNotifications,
   redeemCreditAtomic,
   runLoyaltyEngineForUser,
+  userIsFirstOrderEligible,
 } from "../lib/loyaltyEngine";
 import {
   defaultChannelForKind,
@@ -266,12 +269,47 @@ const finalizeOrderSchema = z.object({
   deliveryInstructions: z.string().max(512).nullable().optional(),
 });
 
+const SERVICEABLE_PINCODES = new Set([
+  "110001", "110016", "110017", "110019", "110020", "110024", "110025", "110048", "110049", "110065", "122001", "122002", "122003", "122004", "122009", "122011", "122015", "122016", "122017", "122018",
+  "201301", "201303", "201304", "201305", "201306", "201307", "201309", "201318",
+  "201010", "201012", "201014",
+  "110091", "110092", "110096"
+]);
+
+function isServiceablePincode(pincode: string | null | undefined): boolean {
+  if (!pincode) return false;
+  return SERVICEABLE_PINCODES.has(pincode.trim());
+}
+
+/**
+ * GET /orders/first-order-offer
+ *
+ * First-order offer eligibility for the signed-in user. The checkout UI
+ * uses this to show the projected discount; finalizeOrder re-checks
+ * server-side, so this is display-only truth, not the charging decision.
+ */
+router.get("/orders/first-order-offer", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const eligible = await userIsFirstOrderEligible(userId);
+  res.json({
+    eligible,
+    percentBps: FIRST_ORDER_DISCOUNT_BPS,
+    capPaise: FIRST_ORDER_DISCOUNT_CAP_PAISE,
+  });
+});
+
 router.post("/orders/finalize", idempotencyMiddleware, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   const parsed = finalizeOrderSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+
+  if (parsed.data.address?.pincode && !isServiceablePincode(parsed.data.address.pincode)) {
+    res.status(422).json({ error: "we do not deliver to this pincode yet", code: "unserviceable_pincode" });
     return;
   }
   // Server-side premium-meal gating: if the cart contains any dish whose

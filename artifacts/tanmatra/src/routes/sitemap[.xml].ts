@@ -58,7 +58,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // are reflected immediately without a rebuild.
   const apiBase =
     process.env["VITE_API_BASE"] ??
-    "https://wellness-foods-1076775857511.asia-south2.run.app/api";
+    "https://wellness-foods-475157072474.asia-south2.run.app/api";
 
   let dishes: Array<{ slug: string; updatedAt: string }> = [];
   try {

@@ -6,6 +6,7 @@ const FOOTER_LINKS = {
   platform: [
     { label: "Home", href: "/" },
     { label: "Clinical Menu", href: "/menu" },
+    { label: "Corporate Plans", href: "/corporate" },
     { label: "Track Order", href: "/track" },
     { label: "Cart & Checkout", href: "/cart" },
   ],
@@ -53,16 +54,16 @@ export default function Footer() {
             </div>
             <div className="flex items-center gap-1.5 text-white">
               <Phone className="w-3 h-3 text-clinical-gold" />
-              <span className="text-xs">+91 80 4701 9200</span>
+              <span className="text-xs">+91 92892 13115</span>
             </div>
             <div className="flex items-center gap-1.5 text-white">
               <MapPin className="w-3 h-3 text-clinical-gold" />
-              <span className="text-xs">Bengaluru, Karnataka, India</span>
+              <span className="text-xs">Noida, Uttar Pradesh, India</span>
             </div>
           </div>
 
           {/* Links */}
-          <div className="space-y-3">
+          <div className="hidden sm:block space-y-3">
             <p className="text-clinical-label text-white">Platform</p>
             <div className="space-y-2">
               {FOOTER_LINKS.platform.map((link) => (
@@ -73,7 +74,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="hidden sm:block space-y-3">
             <p className="text-clinical-label text-white">Protocols</p>
             <div className="space-y-2">
               {FOOTER_LINKS.protocols.map((link) => (
@@ -84,7 +85,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="hidden sm:block space-y-3">
             <p className="text-clinical-label text-white">Clinical</p>
             <div className="space-y-2">
               {FOOTER_LINKS.clinical.map((link) => (
@@ -106,15 +107,25 @@ export default function Footer() {
             <ShieldCheck className="w-3 h-3 text-clinical-sage" />
             <span className="text-[10px] text-white">ISO 22000 Certified Kitchens &middot; FSSAI Lic. No.: 22725926001018</span>
           </div>
-          <p className="text-[10px] text-white">
-            © 2024 Tanmatra Health Technologies Pvt. Ltd.
-          </p>
+          <div className="flex items-center gap-4 text-[10px] text-white">
+            <Link to="/privacy" className="hover:text-clinical-gold transition-colors">
+              Privacy Policy
+            </Link>
+            <span>&middot;</span>
+            <Link to="/terms" className="hover:text-clinical-gold transition-colors">
+              Terms of Service
+            </Link>
+            <span>&middot;</span>
+            <span>
+              © 2024 Tanmatra Health Technologies Pvt. Ltd.
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Medical Disclaimer */}
       <div className="border-t border-clinical-border bg-clinical-dark">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="max-w-7xl mx-auto px-4 pt-3 pb-20 md:pb-3">
           <p className="text-[10px] text-white text-center leading-relaxed">
             <strong className="text-clinical-gold">Medical Disclaimer:</strong> Tanmatra meals are designed as adjuncts to medical treatment
             and should not replace prescribed therapies. Always consult your physician or registered dietitian

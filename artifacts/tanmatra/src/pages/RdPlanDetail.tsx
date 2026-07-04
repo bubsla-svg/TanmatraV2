@@ -12,6 +12,7 @@ import {
   PLAN_GOAL_LABEL,
 } from "@/lib/rdPlans";
 import { usePreferences } from "@/lib/preferencesContext";
+import type { DishData } from "@workspace/menu-catalog";
 import { ACCENT_CLASSES } from "@/lib/teamData";
 import {
   ShieldCheck,
@@ -19,6 +20,8 @@ import {
   ArrowRight,
   Sparkles,
   ChevronRight,
+  Heart,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function RdPlanDetail() {
@@ -234,6 +237,110 @@ export default function RdPlanDetail() {
           ))}
         </div>
       </section>
+
+      {/* What's Included */}
+      <section className="space-y-4 border-t border-clinical-border/40 pt-8">
+        <h2 className="font-serif text-2xl text-white">What's Included in your Daily Plan</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-clinical-surface border-clinical-border">
+            <CardContent className="p-5 space-y-3">
+              <div className="w-8 h-8 rounded-full bg-clinical-gold/10 flex items-center justify-center text-clinical-gold font-bold text-sm">
+                01
+              </div>
+              <h3 className="text-sm font-semibold text-white">Clinical Calorie Mapping</h3>
+              <p className="text-[11px] text-clinical-zinc leading-relaxed">
+                Every meal is weighed and measured to match your daily calorie and macro goals exactly. No guesswork.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-clinical-surface border-clinical-border">
+            <CardContent className="p-5 space-y-3">
+              <div className="w-8 h-8 rounded-full bg-clinical-gold/10 flex items-center justify-center text-clinical-gold font-bold text-sm">
+                02
+              </div>
+              <h3 className="text-sm font-semibold text-white">RD-Curated Swaps</h3>
+              <p className="text-[11px] text-clinical-zinc leading-relaxed">
+                Our dietitians map swaps automatically if any selected dish conflicts with your declared allergens.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-clinical-surface border-clinical-border">
+            <CardContent className="p-5 space-y-3">
+              <div className="w-8 h-8 rounded-full bg-clinical-gold/10 flex items-center justify-center text-clinical-gold font-bold text-sm">
+                03
+              </div>
+              <h3 className="text-sm font-semibold text-white">Premium Protein Sources</h3>
+              <p className="text-[11px] text-clinical-zinc leading-relaxed">
+                High-quality lean meats, fish, paneer, and plant-based protein blends to match recovery targets.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-clinical-surface border-clinical-border">
+            <CardContent className="p-5 space-y-3">
+              <div className="w-8 h-8 rounded-full bg-clinical-gold/10 flex items-center justify-center text-clinical-gold font-bold text-sm">
+                04
+              </div>
+              <h3 className="text-sm font-semibold text-white">Fresh Prep SLA</h3>
+              <p className="text-[11px] text-clinical-zinc leading-relaxed">
+                Prepared in clean, isolated kitchen lanes under strict temperature and packaging controls.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Benefits checklist */}
+      <section className="space-y-4 border-t border-clinical-border/40 pt-8">
+        <h2 className="font-serif text-2xl text-white">Why Subscribe with Tanmatra</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-clinical-sage shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-white">Dietitian Consult Included</p>
+                <p className="text-xs text-clinical-zinc">Get direct feedback and adjustments from your registered dietitian every week.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-clinical-sage shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-white">Zero Binding Contracts</p>
+                <p className="text-xs text-clinical-zinc">Pause, resume, or cancel your deliveries at any time from your subscription dashboard.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-clinical-sage shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-white">Serviceable Noida, Delhi & Gurgaon Delivery</p>
+                <p className="text-xs text-clinical-zinc">Locked-in morning and evening slots delivered via temperature-controlled logistics.</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-clinical-sage shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-white">100% Clean Ingredients</p>
+                <p className="text-xs text-clinical-zinc">No artificial preservatives, no refined sugar, and zero hidden seed oils.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-clinical-sage shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-white">Allergen Safety Automated</p>
+                <p className="text-xs text-clinical-zinc">Our backend filters out unreviewed dishes and swaps allergens to protect your health.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-clinical-sage shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-white">Fresh Cooking Protocols</p>
+                <p className="text-xs text-clinical-zinc">Never frozen. Cooked from scratch using organic ingredients daily.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
@@ -243,29 +350,44 @@ function MealRow({
   dish,
 }: {
   label: string;
-  dish: { name: string; slug: string; macros: { calories: number; protein: number } } | undefined;
+  dish: DishData | undefined;
 }) {
   if (!dish) {
     return (
-      <div className="space-y-0.5">
-        <p className="text-[10px] uppercase tracking-widest text-clinical-zinc-muted">
-          {label}
-        </p>
-        <p className="text-xs text-clinical-zinc-muted italic">Curator's choice</p>
+      <div className="flex gap-3 py-2 border-b border-clinical-border/40 last:border-0 opacity-55">
+        <div className="w-10 h-10 rounded bg-clinical-border/30 shrink-0 flex items-center justify-center text-[10px] text-clinical-zinc">
+          N/A
+        </div>
+        <div className="space-y-0.5 flex-1 min-w-0">
+          <p className="text-[9px] uppercase tracking-widest text-clinical-zinc-muted">
+            {label}
+          </p>
+          <p className="text-xs text-clinical-zinc-muted italic">Curator's choice</p>
+        </div>
       </div>
     );
   }
   return (
-    <Link to={`/dish/${dish.slug}`} className="block space-y-0.5 group">
-      <p className="text-[10px] uppercase tracking-widest text-clinical-zinc-muted">
-        {label}
-      </p>
-      <p className="text-xs text-white group-hover:text-clinical-gold transition-colors">
-        {dish.name}
-      </p>
-      <p className="text-[10px] text-clinical-zinc-muted tabular-nums">
-        {dish.macros.calories} kcal · {dish.macros.protein}g protein
-      </p>
+    <Link
+      to={`/dish/${dish.slug}`}
+      className="flex gap-3 py-2 border-b border-clinical-border/40 last:border-0 group hover:bg-clinical-surface-elevated/20 px-1 rounded transition-colors"
+    >
+      <img
+        src={dish.image}
+        alt={dish.name}
+        className="w-10 h-10 rounded object-cover shrink-0 border border-clinical-border/30"
+      />
+      <div className="space-y-0.5 flex-1 min-w-0">
+        <p className="text-[9px] uppercase tracking-widest text-clinical-zinc-muted">
+          {label}
+        </p>
+        <p className="text-xs text-white group-hover:text-clinical-gold transition-colors font-medium truncate">
+          {dish.name}
+        </p>
+        <p className="text-[10px] text-clinical-zinc-muted tabular-nums">
+          {dish.macros.calories} kcal · {dish.macros.protein}g protein
+        </p>
+      </div>
     </Link>
   );
 }

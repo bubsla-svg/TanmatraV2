@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cartContext";
+import { cn } from "@/lib/utils";
+import { usePreferences } from "@/lib/preferencesContext";
 
 interface NavItem {
   to: string;
@@ -265,13 +267,22 @@ function MoreSheet({
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-3 h-3 text-clinical-gold" />
-              +91 80 4701 9200
+              +91 92892 13115
             </div>
             <div className="flex items-center gap-2 pt-1">
               <ShieldCheck className="w-3 h-3 text-clinical-sage" />
               ISO 22000 · FSSAI Lic. 22725926001018
             </div>
-            <p className="pt-2 text-[10px] text-clinical-zinc-muted">
+            <div className="flex items-center gap-3 pt-1 text-[10px] text-clinical-zinc-muted">
+              <Link to="/privacy" onClick={() => onOpenChange(false)} className="hover:text-clinical-gold">
+                Privacy
+              </Link>
+              <span>&middot;</span>
+              <Link to="/terms" onClick={() => onOpenChange(false)} className="hover:text-clinical-gold">
+                Terms
+              </Link>
+            </div>
+            <p className="pt-1 text-[10px] text-clinical-zinc-muted">
               © {new Date().getFullYear()} Tanmatra Health Technologies
             </p>
           </div>
@@ -284,14 +295,35 @@ function MoreSheet({
 export default function BottomNav() {
   const { pathname } = useLocation();
   const { totalQuantity } = useCart();
+  const { unauthorized, loading } = usePreferences();
+  const isLoggedIn = !unauthorized && !loading;
+
+  const navItems = [
+    ...PRIMARY.filter(
+      (item) => item.to !== "/orders" && item.to !== "/account"
+    ),
+    ...(isLoggedIn
+      ? [
+          PRIMARY.find((item) => item.to === "/orders")!,
+          PRIMARY.find((item) => item.to === "/account")!,
+        ]
+      : [
+          {
+            to: "/login",
+            label: "Sign In",
+            icon: UserCircle,
+            match: (p: string) => p === "/login",
+          },
+        ]),
+  ];
 
   return (
     <nav
       aria-label="Primary"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-[#050505]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-[#050505]/95 backdrop-blur-xl pb-[var(--safe-bottom)] min-h-[var(--bottom-nav-height)]"
     >
-      <ul className="grid grid-cols-5">
-        {PRIMARY.map((item) => {
+      <ul className={cn("grid", isLoggedIn ? "grid-cols-5" : "grid-cols-4")}>
+        {navItems.map((item) => {
           const active = item.match
             ? item.match(pathname)
             : pathname === item.to;

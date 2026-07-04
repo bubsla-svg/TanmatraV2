@@ -35,15 +35,19 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import { useMenuCatalog } from "@/lib/menuData";
+import { usePreferences } from "@/lib/preferencesContext";
+import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileSearchSheet from "./MobileSearchSheet";
 
-interface CommandPaletteContextValue {
+export interface CommandPaletteContextValue {
   open: boolean;
   setOpen: (next: boolean) => void;
 }
 
-type RouteGroup = "Eat" | "Plan" | "Track" | "Community" | "Account";
+export type RouteGroup = "Eat" | "Plan" | "Track" | "Community" | "Account";
 
-interface RouteEntry {
+export interface RouteEntry {
   label: string;
   to: string;
   icon: Icon;
@@ -60,6 +64,8 @@ const NAV_ROUTES: RouteEntry[] = [
   { label: "Cart", to: "/cart", icon: ShoppingCart, group: "Eat" },
   { label: "Checkout", to: "/checkout", icon: ShoppingCart, group: "Eat" },
 
+  { label: "Meal plans", to: "/subscription-plans", icon: Calendar, group: "Plan", keywords: "subscription pricing plans" },
+  { label: "Start 3-day trial (25% off)", to: "/subscribe?trial=1", icon: Sparkle, group: "Plan", keywords: "trial sampler discount try" },
   { label: "Weekly meal planner", to: "/meal-planner", icon: Sparkle, group: "Plan", keywords: "ai 7 day" },
   { label: "My subscriptions", to: "/subscriptions", icon: Calendar, group: "Plan" },
   { label: "Therapeutic plans", to: "/plans", icon: Stethoscope, group: "Plan", keywords: "rd protocols" },
@@ -111,14 +117,24 @@ export default function CommandPalette({
 }: CommandPaletteContextValue) {
   const navigate = useNavigate();
   const { dishes } = useMenuCatalog();
+  const { preferences } = usePreferences();
   const isDev = import.meta.env.DEV;
+  const isMobile = useIsMobile();
 
   const dishItems = useMemo(
     () =>
       (dishes ?? [])
         .slice(0, 60)
-        .map((d) => ({ slug: d.slug, name: d.name, kitchen: d.kitchen })),
-    [dishes],
+        .map((d) => {
+          const match = evaluateDishForPreferences(d, preferences);
+          return {
+            slug: d.slug,
+            name: d.name,
+            kitchen: d.kitchen,
+            blocked: match.blocked,
+          };
+        }),
+    [dishes, preferences],
   );
 
   const groupedRoutes = useMemo(() => {
@@ -136,6 +152,18 @@ export default function CommandPalette({
     navigate(to);
   };
 
+  if (isMobile) {
+    return (
+      <MobileSearchSheet
+        open={open}
+        setOpen={setOpen}
+        dishes={dishes}
+        preferences={preferences}
+        groupedRoutes={groupedRoutes}
+      />
+    );
+  }
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Search dishes, pages, or actions…" />
@@ -149,11 +177,22 @@ export default function CommandPalette({
                 <CommandItem
                   key={d.slug}
                   value={`${d.name} ${d.kitchen} dish`}
-                  onSelect={() => go(`/dish/${d.slug}`)}
+                  onSelect={() => {
+                    if (d.blocked) return;
+                    go(`/dish/${d.slug}`);
+                  }}
+                  disabled={d.blocked}
+                  className={d.blocked ? "opacity-50 cursor-not-allowed" : ""}
                 >
                   <ForkKnife />
                   <span>{d.name}</span>
-                  <CommandShortcut className="capitalize">{d.kitchen}</CommandShortcut>
+                  {d.blocked ? (
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-wider bg-red-950/80 text-red-400 border border-red-500/50 px-1.5 py-0.5 rounded">
+                      [BLOCKED]
+                    </span>
+                  ) : (
+                    <CommandShortcut className="capitalize">{d.kitchen}</CommandShortcut>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>

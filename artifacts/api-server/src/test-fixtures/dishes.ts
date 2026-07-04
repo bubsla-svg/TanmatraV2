@@ -44,6 +44,7 @@ function makeDish(
     sugarPerServing: "0g",
     customizations: [],
     isAvailable: true,
+    rdReviewState: "reviewed",
   };
 }
 
@@ -74,6 +75,9 @@ export const TEST_DISHES: DishData[] = [
 // menuEngineering, mealPlanner, coach, dishRationale) can find them
 // during tests. The production catalog ships empty; tests opt-in by
 // importing this module.
-if (DISHES.length === 0) {
-  DISHES.push(...TEST_DISHES);
+const existingIds = new Set(DISHES.map((d) => d.id));
+for (const td of TEST_DISHES) {
+  if (!existingIds.has(td.id)) {
+    DISHES.push(td);
+  }
 }

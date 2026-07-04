@@ -64,7 +64,7 @@ export default function Refunds() {
               <p className="text-white font-medium">How to raise an issue</p>
               <p className="text-xs">
                 Use the <Link to="/track" className="text-clinical-gold hover:underline">Track</Link> page within 4 hours of delivery, or
-                WhatsApp us at <a href="https://wa.me/918047019200" className="text-clinical-gold hover:underline" target="_blank" rel="noopener noreferrer">+91 80 4701 9200</a>. Refunds are processed
+                WhatsApp us at <a href="https://wa.me/919289213115" className="text-clinical-gold hover:underline" target="_blank" rel="noopener noreferrer">+91 92892 13115</a>. Refunds are processed
                 in 3-5 business days to the original payment method.
               </p>
             </div>
@@ -141,8 +141,8 @@ export default function Refunds() {
               <p className="text-white font-medium">Tanmatra Health Technologies Pvt. Ltd.</p>
               <p>Grievance Officer · Care Operations</p>
               <p className="flex items-center gap-2"><Mail className="w-3 h-3 text-clinical-gold" /> <a href="mailto:grievance@tanmatra.food" className="hover:text-white">grievance@tanmatra.food</a></p>
-              <p className="flex items-center gap-2"><Phone className="w-3 h-3 text-clinical-gold" /> <a href="tel:+918047019200" className="hover:text-white">+91 80 4701 9200</a> (Mon-Sat 09:00-19:00 IST)</p>
-              <p className="flex items-center gap-2"><MessageCircle className="w-3 h-3 text-clinical-sage" /> <a href="https://wa.me/918047019200" target="_blank" rel="noopener noreferrer" className="hover:text-white">WhatsApp +91 80 4701 9200</a></p>
+              <p className="flex items-center gap-2"><Phone className="w-3 h-3 text-clinical-gold" /> <a href="tel:+919289213115" className="hover:text-white">+91 92892 13115</a> (Mon-Sat 09:00-19:00 IST)</p>
+              <p className="flex items-center gap-2"><MessageCircle className="w-3 h-3 text-clinical-sage" /> <a href="https://wa.me/919289213115" target="_blank" rel="noopener noreferrer" className="hover:text-white">WhatsApp +91 92892 13115</a></p>
             </div>
             <p className="text-clinical-zinc-muted">
               We acknowledge complaints within 24 hours and aim to resolve them

@@ -5,6 +5,7 @@ import {
   integer,
   timestamp,
   jsonb,
+  text,
   index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -85,6 +86,8 @@ export const subscriptionMembersTable = pgTable(
     name: varchar("name", { length: 64 }).notNull(),
     diet: varchar("diet", { length: 16 }).notNull().default("any"),
     allergens: jsonb("allergens").$type<string[]>().notNull().default([]),
+    medicalConditions: text("medical_conditions").array().notNull().default([]),
+    dislikedIngredients: text("disliked_ingredients").array().notNull().default([]),
     lifestyle: varchar("lifestyle", { length: 32 }),
     spiceLevel: varchar("spice_level", { length: 16 }).default("medium"),
     createdAt: timestamp("created_at", { withTimezone: true })

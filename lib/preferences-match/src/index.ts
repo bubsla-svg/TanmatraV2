@@ -25,6 +25,7 @@ export interface PreferencesForMatch {
   dietaryStyle: DietaryStyle;
   goal?: WellnessGoal | null;
   calorieTarget?: number | null;
+  medicalConditions?: string[];
 }
 
 export interface DishMatchResult {
@@ -35,12 +36,14 @@ export interface DishMatchResult {
   reasons: string[];
   matchedAllergens: string[];
   matchedDislikes: string[];
+  matchedContraindications: string[];
   cuisineMatch: boolean;
 }
 
 /** Discriminator for server-side 422 responses + audit logs. */
 export type BlockReason =
   | { code: "allergen_block"; allergens: string[] }
+  | { code: "contraindication_block"; conditions: string[]; detail: string }
   | { code: "diet_block"; style: DietaryStyle; detail: string }
   | { code: "ingredient_block"; ingredients: string[] }
   | { code: "keto_block"; carbs: number }
@@ -63,12 +66,66 @@ export interface EvaluateOptions {
 
 const norm = (s: string) => s.trim().toLowerCase();
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Tokenized / word-boundary matching helper that matches `term` (with optional
+ * plural `s`/`es` suffixes) against `text` without false positives like
+ * "eggplant" or "veggie" matching "egg".
+ */
+export function matchIngredientTerm(text: string, term: string): boolean {
+  if (!text || !term) return false;
+  const cleaned = norm(term);
+  if (!cleaned) return false;
+
+  let base = cleaned;
+  if (
+    base.length > 3 &&
+    base.endsWith("s") &&
+    !base.endsWith("ss") &&
+    !base.endsWith("us") &&
+    !base.endsWith("is")
+  ) {
+    base = base.slice(0, -1);
+  }
+
+  const pattern = new RegExp(`\\b${escapeRegExp(base)}(?:s|es)?\\b`, "i");
+  return pattern.test(text);
+}
+
 function dishAllergens(d: DishData): string[] {
   return d.allergens.map(norm);
 }
 
 function dishIngredientText(d: DishData): string {
   return d.ingredients.map(norm).join(" | ");
+}
+
+export const ALLERGEN_CLUSTERS: string[][] = [
+  ["dairy", "milk", "lactose", "butter", "cheese", "cream", "ghee", "curd", "paneer", "yogurt", "whey", "casein"],
+  ["tree nuts", "tree nut", "tree_nuts", "tree_nut", "tree-nuts", "tree-nut", "peanuts", "peanut", "nuts", "nut", "almond", "almonds", "cashew", "cashews", "walnut", "walnuts", "pistachio", "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "macadamia", "macadamias", "pine nut", "pine nuts"],
+  ["shellfish", "shell fish", "shell_fish", "seafood", "crustaceans", "crustacean", "shrimp", "shrimps", "prawn", "prawns", "crab", "crabs", "lobster", "lobsters", "mussels", "mussel", "clams", "clam", "oyster", "oysters", "squid", "calamari"],
+  ["eggs", "egg"],
+  ["gluten", "wheat", "barley", "rye", "oats"],
+  ["soy", "soya", "soybean", "soybeans", "soy bean", "soy beans", "tofu", "edamame"],
+  ["fish", "seafood", "salmon", "tuna", "cod", "trout", "anchovy", "anchovies"],
+  ["sesame", "tahini"],
+  ["mustard"],
+];
+
+export function getEquivalentTerms(term: string): string[] {
+  const t = norm(term).replace(/[-_]/g, " ");
+  const terms = new Set<string>([norm(term), t]);
+  for (const cluster of ALLERGEN_CLUSTERS) {
+    if (cluster.includes(norm(term)) || cluster.includes(t)) {
+      for (const c of cluster) {
+        terms.add(c);
+      }
+    }
+  }
+  return Array.from(terms);
 }
 
 const NON_VEG_HINTS = [
@@ -114,6 +171,7 @@ export function evaluateDishForPreferences(
     reasons: [],
     matchedAllergens: [],
     matchedDislikes: [],
+    matchedContraindications: [],
     cuisineMatch: true,
   };
   // RD-review gate (strict only): a dish whose review state is anything
@@ -131,11 +189,157 @@ export function evaluateDishForPreferences(
 
   if (!prefs) return result;
 
-  const allergens = dishAllergens(dish);
-  const userAllergens = prefs.allergens.map(norm);
-  for (const a of userAllergens) {
-    if (allergens.includes(a)) result.matchedAllergens.push(a);
+  const ingText = dishIngredientText(dish);
+  const dishNameNorm = dish.name.toLowerCase();
+
+  if (prefs.medicalConditions && prefs.medicalConditions.length > 0) {
+    const userConditions = prefs.medicalConditions.map(norm).filter(Boolean);
+    const dishContra = (dish.contraindications ?? []).map(norm);
+    const matchedConds = new Set<string>();
+    const details: string[] = [];
+
+    for (const cond of userConditions) {
+      if (dishContra.includes(cond)) {
+        matchedConds.add(cond);
+        details.push(`Direct contraindication for ${cond}`);
+      }
+      if (cond === "diabetes") {
+        if (dish.glycaemicIndex === "high") {
+          matchedConds.add(cond);
+          details.push("High glycaemic index dish is contraindicated for diabetes");
+        } else if (dish.sugarPerServing && (
+          norm(dish.sugarPerServing).includes("high") ||
+          parseInt(dish.sugarPerServing, 10) >= 15
+        )) {
+          matchedConds.add(cond);
+          details.push(`High sugar per serving (${dish.sugarPerServing}) is contraindicated for diabetes`);
+        }
+      }
+      if (
+        cond === "hypertension" ||
+        cond === "high_blood_pressure" ||
+        cond === "high blood pressure" ||
+        cond === "high-blood-pressure"
+      ) {
+        const sodiumTerms = [
+          "salt",
+          "salted",
+          "soy sauce",
+          "msg",
+          "bacon",
+          "cured",
+          "sodium",
+          "high sodium",
+          "extra salt",
+        ];
+        const hasSodiumContra =
+          dishContra.includes("hypertension") ||
+          dishContra.includes("high_blood_pressure") ||
+          dishContra.includes("high blood pressure") ||
+          dishContra.includes("high_sodium") ||
+          dishContra.includes("high sodium");
+        const hasSodiumIng = sodiumTerms.some(
+          (t) =>
+            matchIngredientTerm(ingText, t) || matchIngredientTerm(dishNameNorm, t)
+        );
+
+        if (hasSodiumContra || hasSodiumIng) {
+          matchedConds.add(cond);
+          if (cond !== "hypertension") matchedConds.add("hypertension");
+          details.push("High sodium content is contraindicated for hypertension");
+        }
+      }
+      if (cond === "gerd") {
+        if (
+          dishContra.includes("gerd") ||
+          ["chili", "hot pepper", "jalapeno"].some(
+            (t) =>
+              matchIngredientTerm(ingText, t) || matchIngredientTerm(dishNameNorm, t)
+          )
+        ) {
+          matchedConds.add("gerd");
+          details.push("Spicy/trigger ingredients are contraindicated for GERD");
+        }
+      }
+      if (cond === "kidney_disease" || cond === "renal") {
+        if (dishContra.includes("kidney_disease") || dishContra.includes("renal")) {
+          matchedConds.add(cond);
+          details.push("Dish is contraindicated for kidney disease / renal diet");
+        }
+      }
+      if (cond === "celiac") {
+        const celiacTerms = [
+          "gluten",
+          "wheat",
+          "barley",
+          "rye",
+          "oats",
+          "flour",
+          "bread",
+          "pasta",
+        ];
+        const hasGlutenAllergen = dishAllergens(dish).some((a) =>
+          celiacTerms.some((t) => matchIngredientTerm(a, t) || a === t)
+        );
+        const hasGlutenIng = celiacTerms.some(
+          (t) =>
+            matchIngredientTerm(ingText, t) || matchIngredientTerm(dishNameNorm, t)
+        );
+        if (
+          dishContra.includes("celiac") ||
+          dishContra.includes("gluten") ||
+          hasGlutenAllergen ||
+          hasGlutenIng
+        ) {
+          matchedConds.add("celiac");
+          details.push("Gluten content is contraindicated for celiac disease");
+        }
+      }
+      if (cond === "pregnancy") {
+        if (dishContra.includes("pregnancy")) {
+          matchedConds.add("pregnancy");
+          details.push("Dish is contraindicated during pregnancy");
+        }
+      }
+    }
+
+    if (matchedConds.size > 0) {
+      const condList = Array.from(matchedConds);
+      result.matchedContraindications.push(...condList);
+      result.blocked = true;
+      const detailStr = details.join("; ");
+      result.blockReasons.push({
+        code: "contraindication_block",
+        conditions: condList,
+        detail: detailStr,
+      });
+      result.warnings.push(
+        `Contraindication conflict (${condList.join(", ")}): ${detailStr}`
+      );
+    }
   }
+
+  const allergens = dishAllergens(dish);
+  const userAllergens = prefs.allergens.map(norm).filter(Boolean);
+
+  for (const a of userAllergens) {
+    const equivs = getEquivalentTerms(a);
+    const matchedInAllergens = allergens.some((da) => equivs.includes(da));
+    if (matchedInAllergens) {
+      result.matchedAllergens.push(a);
+      continue;
+    }
+    const matchedInIngredients = equivs.some((eq) => {
+      if (!eq) return false;
+      return (
+        matchIngredientTerm(ingText, eq) || matchIngredientTerm(dishNameNorm, eq)
+      );
+    });
+    if (matchedInIngredients) {
+      result.matchedAllergens.push(a);
+    }
+  }
+
   if (result.matchedAllergens.length > 0) {
     result.blocked = true;
     result.blockReasons.push({
@@ -147,13 +351,25 @@ export function evaluateDishForPreferences(
     );
   }
 
-  const ingText = dishIngredientText(dish);
-  for (const dis of prefs.dislikedIngredients.map(norm)) {
-    if (!dis) continue;
-    if (ingText.includes(dis) || dish.name.toLowerCase().includes(dis)) {
+  const userDislikes = prefs.dislikedIngredients.map(norm).filter(Boolean);
+  for (const dis of userDislikes) {
+    const equivs = getEquivalentTerms(dis);
+    const matchedInAllergens = allergens.some((da) => equivs.includes(da));
+    if (matchedInAllergens) {
+      result.matchedDislikes.push(dis);
+      continue;
+    }
+    const matchedInIngredients = equivs.some((eq) => {
+      if (!eq) return false;
+      return (
+        matchIngredientTerm(ingText, eq) || matchIngredientTerm(dishNameNorm, eq)
+      );
+    });
+    if (matchedInIngredients) {
       result.matchedDislikes.push(dis);
     }
   }
+
   if (result.matchedDislikes.length > 0) {
     if (strict) {
       result.blocked = true;
@@ -180,7 +396,7 @@ export function evaluateDishForPreferences(
       }
       break;
     case "vegan": {
-      const animal = ANIMAL_HINTS.find((h) => ingText.includes(h));
+      const animal = ANIMAL_HINTS.find((h) => matchIngredientTerm(ingText, h));
       if (!dish.isVeg || animal) {
         result.blocked = true;
         result.blockReasons.push({
@@ -196,7 +412,7 @@ export function evaluateDishForPreferences(
     }
     case "pescatarian": {
       if (!dish.isVeg) {
-        const fishy = FISH_OK_HINTS.some((h) => ingText.includes(h));
+        const fishy = FISH_OK_HINTS.some((h) => matchIngredientTerm(ingText, h));
         if (!fishy) {
           result.blocked = true;
           result.blockReasons.push({

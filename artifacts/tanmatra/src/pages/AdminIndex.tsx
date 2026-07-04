@@ -34,6 +34,12 @@ const ADMIN_LINKS: Array<{ section: string; items: AdminLink[] }> = [
         icon: Activity,
       },
       {
+        path: "/admin/compliance",
+        title: "Compliance & Audits",
+        description: "Daily ISO 22000 hygiene statements, cold storage, and supplier origins.",
+        icon: ClipboardList,
+      },
+      {
         path: "/admin/forecasting",
         title: "Demand Forecasting",
         description: "Predicted volumes per dish, kitchen, and slot.",

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useDishRationales, type DishRationale } from "@/lib/dishRationaleApi";
+
 import { useSearchParams, type MetaFunction } from "react-router";
 import { DISHES as STATIC_DISHES } from "@/lib/menuData";
 
@@ -59,6 +59,7 @@ import {
   LIFESTYLE_TAGS,
   matchesLifestyle,
   matchesDietaryFilter,
+  isSecondaryVariant,
   type Lifestyle,
 } from "@/lib/dishEnrichment";
 import {
@@ -66,8 +67,8 @@ import {
   LIFESTYLE_EHR_LABEL,
   dishMatchesDietOrder,
   useClinicalMode,
+  clinicalModeStore,
 } from "@/lib/clinicalDiet";
-import PatientContextStrip from "@/components/clinical/PatientContextStrip";
 import {
   PROTOCOLS,
   PROTOCOL_LABELS,
@@ -78,10 +79,15 @@ import {
 } from "@/lib/protocols";
 import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
+import { useOrders } from "@/lib/ordersContext";
+import { addressesApi } from "@/lib/userAddressesApi";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { useNavigate } from "react-router";
 import { Crown } from "lucide-react";
+import { track } from "@/lib/analytics";
+import { cn } from "@/lib/utils";
 import MenuCard from "@/components/menu/MenuCard";
+import { groupCatalogDishes, type ConsolidatedDish, type ConsolidatedVariant } from "@/lib/menuVariants";
 import ActiveFilters, { type ActiveFilter } from "@/components/menu/ActiveFilters";
 import {
   evaluateDishForPreferences,
@@ -105,6 +111,7 @@ import {
   Package,
   Users,
   PlusCircle,
+  Zap,
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -144,6 +151,8 @@ const QUICK_FILTERS = [
   { value: "vegan", label: "Vegan" },
   { value: "gluten-free", label: "Gluten-Free" },
   { value: "jain", label: "Jain" },
+  { value: "carnivore", label: "Carnivore" },
+  { value: "low-fodmap", label: "Low-FODMAP" },
   { value: "vata", label: "Vata Dosha" },
   { value: "pitta", label: "Pitta Dosha" },
   { value: "kapha", label: "Kapha Dosha" },
@@ -153,6 +162,10 @@ export default function Menu() {
   const { isPremium } = usePremiumStatus();
   const premiumSlugs = usePremiumSlugs();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    track("view_menu");
+  }, []);
   const [kitchen, setKitchen] = useState<"all" | DishKitchen>("all");
   const [category, setCategory] = useState<"all" | DishCategory>("all");
   const [diet, setDiet] = useState<DietFilter>("all");
@@ -169,9 +182,24 @@ export default function Menu() {
   // produced scroll jank on mid-range Android devices.
   const PAGE_SIZE = 24;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const { addItem, addBundleSlug } = useCart();
+  const [customizingDish, setCustomizingDish] = useState<ConsolidatedDish | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const { addItem, addBundleSlug, clear } = useCart();
   const { open: openCart } = useCartDrawer();
   const { preferences } = usePreferences();
+  const [hasSavedAddress, setHasSavedAddress] = useState(false);
+
+  useEffect(() => {
+    if (preferences) {
+      addressesApi
+        .list()
+        .then((r) => setHasSavedAddress(r.addresses.length > 0))
+        .catch(() => setHasSavedAddress(false));
+    } else {
+      setHasSavedAddress(false);
+    }
+  }, [preferences]);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const groupCode = searchParams.get("group");
   const protocolParam = searchParams.get("protocol");
@@ -182,6 +210,36 @@ export default function Menu() {
   const { dishes: catalogDishes } = useMenuCatalog();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
   const dietOrder = DIET_ORDER_BY_ID.get(dietOrderId);
+  const { orders } = useOrders();
+  const hasOrderHistory = orders.length > 0;
+
+  const repeatMeals = useMemo(() => {
+    if (!preferences && orders.length === 0) return [];
+    const orderedIds = new Set<number>();
+    const list: DishData[] = [];
+    orders.forEach((o) => {
+      o.items.forEach((item) => {
+        if (!orderedIds.has(item.dishId)) {
+          orderedIds.add(item.dishId);
+          const dish = catalogDishes.find((d) => d.id === item.dishId);
+          if (dish && dish.isAvailable && !isSecondaryVariant(dish.slug)) {
+            list.push(dish);
+          }
+        }
+      });
+    });
+    if (list.length < 6 && preferences) {
+      catalogDishes.forEach((d) => {
+        if (!orderedIds.has(d.id) && d.isAvailable && !isSecondaryVariant(d.slug)) {
+          if (!evaluateDishForPreferences(d, preferences).blocked) {
+            orderedIds.add(d.id);
+            list.push(d);
+          }
+        }
+      });
+    }
+    return list.slice(0, 8);
+  }, [orders, preferences, catalogDishes]);
 
   const handleQuickAdd = (e: React.MouseEvent, item: DishData) => {
     e.preventDefault();
@@ -226,6 +284,62 @@ export default function Menu() {
       description: "Tap View Cart to review and check out.",
       action: { label: "View Cart", onClick: openCart },
     });
+  };
+
+  const handleQuickAddClick = (e: React.MouseEvent, parent: ConsolidatedDish) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (parent.optionGroups.length > 0) {
+      setCustomizingDish(parent);
+    } else {
+      const originalDish = catalogDishes.find((d) => d.id === parent.id);
+      if (originalDish) {
+        handleQuickAdd(e, originalDish);
+      }
+    }
+  };
+
+  // Initialize with first option chosen by default
+  useEffect(() => {
+    if (customizingDish) {
+      const initialOptions: Record<string, string> = {};
+      customizingDish.optionGroups.forEach((group) => {
+        if (group.options.length > 0) {
+          initialOptions[group.name] = group.options[0].name;
+        }
+      });
+      setSelectedOptions(initialOptions);
+    }
+  }, [customizingDish]);
+
+  const activeVariant = useMemo(() => {
+    if (!customizingDish) return null;
+    const selectedNames = Object.values(selectedOptions);
+    return (
+      customizingDish.variants.find((variant) =>
+        variant.optionNames.every((name) => selectedNames.includes(name)),
+      ) || customizingDish.variants[0]
+    );
+  }, [customizingDish, selectedOptions]);
+
+  const handleExpressBuy = (item: DishData) => {
+    if (!item.isAvailable) return;
+    clear(); // Reset cart so it's a single purchase
+    addItem({
+      dishId: item.id,
+      slug: item.slug,
+      name: item.name,
+      image: item.image,
+      basePrice: item.price,
+      unitPrice: item.price,
+      quantity: 1,
+      kitchen: item.kitchen,
+      isVeg: item.isVeg,
+      rdVerified: item.rdVerified,
+      macros: item.macros,
+      customizations: [],
+    });
+    navigate("/checkout");
   };
 
   const handleAddBundle = (
@@ -292,6 +406,7 @@ export default function Menu() {
   const quickFilterCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     const baseListForCounts = catalogDishes.filter((d) => {
+      if (!d.isAvailable) return false;
       if (kitchen !== "all" && d.kitchen !== kitchen) return false;
       if (category !== "all" && d.category !== category) return false;
       if (diet === "veg" && !d.isVeg) return false;
@@ -312,6 +427,7 @@ export default function Menu() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const baseList = catalogDishes.filter((d) => {
+      if (!d.isAvailable) return false;
       if (kitchen !== "all" && d.kitchen !== kitchen) return false;
       if (category !== "all" && d.category !== category) return false;
       if (diet === "veg" && !d.isVeg) return false;
@@ -330,8 +446,8 @@ export default function Menu() {
       
       // Quick Filters logic (OR within axis, AND across axes)
       if (quickFilters.length > 0) {
-        const nutritionFilters = quickFilters.filter(f => ["high-protein", "keto"].includes(f));
-        const dietFilters = quickFilters.filter(f => ["veg", "vegan", "gluten-free", "jain"].includes(f));
+        const nutritionFilters = quickFilters.filter(f => ["high-protein", "keto", "carnivore"].includes(f));
+        const dietFilters = quickFilters.filter(f => ["veg", "vegan", "gluten-free", "jain", "low-fodmap"].includes(f));
         const doshaFilters = quickFilters.filter(f => ["vata", "pitta", "kapha"].includes(f));
 
         let matchesNutrition = true;
@@ -360,6 +476,19 @@ export default function Menu() {
     return hideBlocked ? ranked.filter((r) => !r.match.blocked) : ranked;
   }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters]);
 
+  const consolidatedDishes = useMemo(() => {
+    const flatDishes = filtered.map((f) => f.dish);
+    const grouped = groupCatalogDishes(flatDishes);
+    return grouped.map((parent) => {
+      const rep = filtered.find((f) => f.dish.id === parent.id)!;
+      return {
+        parent,
+        match: rep.match,
+        hasVariants: parent.optionGroups.length > 0,
+      };
+    });
+  }, [filtered]);
+
   const blockedCount = useMemo(() => {
     if (!preferences) return 0;
     return catalogDishes.filter(
@@ -377,40 +506,25 @@ export default function Menu() {
     return LIFESTYLE_EHR_LABEL[lifestyle as string] ?? consumer;
   })();
 
-  // Lazy "why this meal" rationales for the visible dishes. Only enabled
-  // when the user has a saved taste profile (otherwise the rationale has
-  // little to tie to). The hook silently no-ops on 401.
-  const visibleDishIds = useMemo(
-    () => filtered.slice(0, 12).map((r) => r.dish.id),
-    [filtered],
-  );
-  // Fingerprint the user's brief so the rationale cache is dropped when
-  // preferences change (server's brief-hash invalidation already handles
-  // freshness on the wire — this just stops the client from showing a
-  // stale cached value while the new one is fetched).
-  const briefFingerprint = useMemo(
-    () =>
-      preferences
-        ? `${preferences.userId}:${preferences.updatedAt}`
-        : "anon",
-    [preferences],
-  );
-  const { byId: rationalesById } = useDishRationales(
-    visibleDishIds,
-    Boolean(preferences),
-    briefFingerprint,
-  );
+
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-      <PatientContextStrip />
-
+    <div className="max-w-7xl mx-auto px-4 pt-6 pb-44 md:pb-8 space-y-8">
       {clinicalMode && dietOrder && (
         <div className="rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 px-3 py-2 text-[11px] text-clinical-zinc flex items-start gap-2">
           <span className="text-clinical-gold font-semibold uppercase tracking-[0.14em] text-[10px] shrink-0">
             {dietOrder.short}
           </span>
-          <span>{dietOrder.description}</span>
+          <span className="flex-1">{dietOrder.description}</span>
+          <button
+            type="button"
+            onClick={() => clinicalModeStore.disable()}
+            className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] text-clinical-zinc hover:text-white"
+            aria-label="Exit clinical mode"
+          >
+            <X className="w-3 h-3" />
+            Exit clinical mode
+          </button>
         </div>
       )}
 
@@ -423,9 +537,93 @@ export default function Menu() {
         <p className="text-xs uppercase tracking-[0.18em] text-clinical-zinc font-medium">
           {activeProtocol
             ? `Filtered by ${PROTOCOL_LABELS[activeProtocol]} criteria · ${filtered.length} ${filtered.length === 1 ? "dish" : "dishes"}`
-            : "Kitchen-synced · Inventory-aware · RD-verified"}
+            : "Cooked fresh daily · Dietitian-approved · Live availability"}
         </p>
       </div>
+
+      {/* Delivery-promise banner — quick-commerce urgency, clinical tone. */}
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-clinical-gold/25 bg-clinical-gold/5 px-4 py-2.5 text-xs sm:text-[13px] text-zinc-200">
+        <Zap className="w-4 h-4 text-clinical-gold fill-clinical-gold shrink-0" aria-hidden />
+        <span>
+          Delivered fresh to your doorstep in{" "}
+          <span className="text-clinical-gold font-semibold whitespace-nowrap">25–40 minutes</span>
+        </span>
+      </div>
+
+      {/* Re-order / recommendation carousel */}
+      {repeatMeals.length > 0 && !groupCode && (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-xl bg-clinical-gold/20 border border-clinical-gold/40 flex items-center justify-center text-clinical-gold shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+                <Zap className="w-4 h-4 fill-clinical-gold" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-clinical-gold font-extrabold leading-none">
+                  {hasOrderHistory ? "Order again" : "Picked for you"}
+                </p>
+                <h2 className="text-base sm:text-lg font-serif font-bold text-white mt-0.5">
+                  {hasOrderHistory ? "Your usual meals" : "Matched to your goals"}
+                </h2>
+              </div>
+            </div>
+            <span className="text-[11px] text-clinical-zinc font-mono hidden sm:inline">tap + to add instantly</span>
+          </div>
+          <div className="flex gap-3.5 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {repeatMeals.map((dish) => (
+              <div
+                key={dish.id}
+                className="w-64 shrink-0 rounded-2xl border border-white/10 bg-clinical-surface hover:border-clinical-gold/50 hover:shadow-[0_8px_25px_rgba(212,175,55,0.15)] transition-all overflow-hidden flex flex-col group"
+              >
+                <div className="relative h-32 overflow-hidden bg-zinc-900">
+                  <img
+                    src={dish.image}
+                    alt={dish.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-clinical-surface via-transparent to-transparent" />
+                  <div className="absolute top-2 left-2 flex gap-1 items-center">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-clinical-dark/90 backdrop-blur-md border ${
+                      dish.isVeg ? "alert-safe-border alert-safe-text" : "alert-allergen-border alert-allergen-text"
+                    }`}>
+                      {dish.isVeg ? "VEG" : "NON-VEG"}
+                    </span>
+                    {dish.rdVerified && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-clinical-dark/90 backdrop-blur-md border alert-safe-border alert-safe-text">
+                        ★ RD
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="p-3.5 flex-1 flex flex-col justify-between gap-2.5">
+                  <div>
+                    <h3 className="text-sm font-bold text-white leading-tight line-clamp-1 group-hover:text-clinical-gold transition-colors">
+                      {dish.name}
+                    </h3>
+                    <p className="text-[10px] text-clinical-zinc font-mono mt-1">
+                      {dish.macros.calories} kcal · {dish.macros.protein}g protein
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                    <span className="font-display font-extrabold text-base text-white tabular-nums">
+                      {formatPrice(dish.price)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleQuickAdd(e, dish)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-clinical-gold bg-clinical-gold px-3.5 py-1.5 text-xs font-black text-[#050505] shadow-[0_0_15px_rgba(212,175,55,0.25)] hover:bg-clinical-gold/90 active:scale-95 transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {activeProtocol && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-clinical-gold/30 bg-clinical-gold/5 px-4 py-3">
@@ -503,7 +701,7 @@ export default function Menu() {
                             className="w-full h-full object-cover"
                           />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-transparent to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-transparent to-transparent keep-gradient" />
                         {b.badge && (
                           <Badge className="absolute top-2 left-2 bg-clinical-gold/90 text-[#050505] border-0 text-[9px] tracking-widest">
                             {b.badge}
@@ -656,9 +854,10 @@ export default function Menu() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-zinc-muted" />
+      {/* Search — sticky under the header on desktop so faceting stays
+          one glance away no matter how deep the user scrolls. */}
+      <div className="relative md:sticky md:top-16 md:z-30 md:-mx-2 md:px-2 md:py-2 md:bg-clinical-dark/95 md:backdrop-blur-xl md:rounded-xl">
+        <Search className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-zinc-muted" />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -870,14 +1069,16 @@ export default function Menu() {
           <p className="text-[10px] uppercase tracking-[0.18em] text-text-secondary font-semibold">
             Quick Filters
           </p>
-          {quickFilters.length > 0 && (
-            <button
-              onClick={() => setQuickFilters([])}
-              className="text-[11px] uppercase tracking-[0.12em] text-action hover:underline font-semibold"
-            >
-              Clear quick filters
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {quickFilters.length > 0 && (
+              <button
+                onClick={() => setQuickFilters([])}
+                className="text-[11px] uppercase tracking-[0.12em] text-action hover:underline font-semibold"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
         <div
           className="flex gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1"
@@ -914,6 +1115,23 @@ export default function Menu() {
             );
           })}
         </div>
+
+        {quickFilters.some((f) => ["vata", "pitta", "kapha"].includes(f)) && (
+          <div className="rounded-lg border border-clinical-border bg-clinical-dark p-3 text-xs leading-relaxed animate-in fade-in">
+            <p className="text-clinical-zinc">
+              💡 <strong className="text-white">Ayurvedic Tip:</strong> Doshas (Vata, Pitta, Kapha) refer to traditional Indian body types.
+              If your doctor advised a standard heart or diabetic plan, you can ignore these and focus on the High-Protein, Low-FODMAP, or Keto tags.
+            </p>
+          </div>
+        )}
+
+        {quickFilters.includes("jain") && (
+          <div className="rounded-lg border border-clinical-sage/30 bg-clinical-sage/5 p-3 text-xs leading-relaxed animate-in fade-in">
+            <p className="text-clinical-zinc">
+              🛡️ <strong className="text-clinical-sage">Jain Preparation Guarantee:</strong> All Jain meals are prepared in our ISO 22000 certified kitchen using dedicated, root-vegetable-free surfaces and cooking utensils to strictly prevent cross-contamination.
+            </p>
+          </div>
+        )}
       </div>
 
       {preferences && (
@@ -1030,10 +1248,10 @@ export default function Menu() {
       />
 
       <div className="text-xs text-clinical-zinc tabular-nums">
-        {filtered.length} {filtered.length === 1 ? "dish" : "dishes"}
+        {consolidatedDishes.length} {consolidatedDishes.length === 1 ? "dish" : "dishes"}
       </div>
 
-      {filtered.length === 0 && (
+      {consolidatedDishes.length === 0 && (
         <div className="text-center py-12 space-y-3">
           <AlertTriangle className="w-8 h-8 text-clinical-gold mx-auto" />
           <p className="text-sm text-clinical-zinc">No dishes match your filters.</p>
@@ -1044,6 +1262,7 @@ export default function Menu() {
               setDiet("all");
               setLifestyle("all");
               setQuery("");
+              setQuickFilters([]);
               if (activeProtocol) {
                 const next = new URLSearchParams(searchParams);
                 next.delete("protocol");
@@ -1063,37 +1282,197 @@ export default function Menu() {
           showed roughly 1.5 dishes above the fold on mobile after the
           filter rails — a known browse-friction point flagged in the
           adoption audit (P1 #19). */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-        {filtered.slice(0, visibleCount).map(({ dish: item, match }, idx) => (
-          <MenuCard
-            key={item.id}
-            item={item}
-            match={match}
-            index={idx}
-            isPremium={isPremium}
-            premiumSlugs={premiumSlugs}
-            preferences={preferences}
-            lifestyleTag={lifestyleTag}
-            rationale={rationalesById.get(item.id)}
-            onQuickAdd={handleQuickAdd}
-            onPremiumGate={() => navigate("/premium")}
-          />
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 [&>*]:[content-visibility:auto] [&>*]:[contain-intrinsic-size:auto_420px]">
+        {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }, idx) => {
+          const repDish: DishData = {
+            ...filtered.find((f) => f.dish.id === parent.id)!.dish,
+            name: parent.name,
+            price: parent.variants[0].price,
+          };
+          return (
+            <MenuCard
+              key={parent.id}
+              item={repDish}
+              match={match}
+              index={idx}
+              isPremium={isPremium}
+              premiumSlugs={premiumSlugs}
+              preferences={preferences}
+              lifestyleTag={lifestyleTag}
+              hasSavedAddress={hasSavedAddress}
+              hasVariants={hasVariants}
+              onQuickAdd={(e) => handleQuickAddClick(e, parent)}
+              onExpressBuy={hasVariants ? undefined : handleExpressBuy}
+              onPremiumGate={() => navigate("/premium")}
+            />
+          );
+        })}
       </div>
 
-      {visibleCount < filtered.length && (
+      {visibleCount < consolidatedDishes.length && (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"
             onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
             className="min-h-11 border-clinical-gold/40 bg-transparent text-clinical-gold hover:bg-clinical-gold/10 hover:text-clinical-gold px-6 text-[11px] uppercase tracking-[0.12em] font-semibold"
           >
-            Load {Math.min(PAGE_SIZE, filtered.length - visibleCount)} more
+            Load {Math.min(PAGE_SIZE, consolidatedDishes.length - visibleCount)} more
             <span className="ml-2 text-clinical-zinc tabular-nums">
-              ({visibleCount} / {filtered.length})
+              ({visibleCount} / {consolidatedDishes.length})
             </span>
           </Button>
         </div>
+      )}
+
+      {customizingDish && activeVariant && (
+        <Dialog
+          open={Boolean(customizingDish)}
+          onOpenChange={(open) => !open && setCustomizingDish(null)}
+        >
+          <DialogContent className="bg-clinical-surface border-clinical-border text-white sm:max-w-[440px]">
+            <DialogHeader>
+              <DialogTitle className="font-serif text-xl text-white">
+                Customize {customizingDish.name}
+              </DialogTitle>
+              <DialogDescription className="text-clinical-zinc text-xs">
+                {customizingDish.description}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 py-2">
+              {/* Option Groups */}
+              {customizingDish.optionGroups.map((group) => (
+                <div key={group.name} className="space-y-2.5">
+                  <h4 className="text-xs uppercase tracking-[0.12em] text-clinical-zinc-muted font-bold">
+                    {group.name}
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    {group.options.map((option) => {
+                      const isSelected = selectedOptions[group.name] === option.name;
+                      const optDish = catalogDishes.find((d) => d.id === option.dishId);
+                      const priceDiff = optDish ? optDish.price - customizingDish.variants[0].price : 0;
+                      return (
+                        <label
+                          key={option.name}
+                          className={cn(
+                            "flex items-center justify-between p-3 rounded-lg border text-sm cursor-pointer transition-colors",
+                            isSelected
+                              ? "bg-clinical-gold/5 border-clinical-gold text-white"
+                              : "bg-clinical-surface-elevated border-clinical-border text-clinical-zinc hover:border-clinical-gold/30 hover:text-white"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name={`group-${group.name}`}
+                              checked={isSelected}
+                              onChange={() =>
+                                setSelectedOptions((prev) => ({
+                                  ...prev,
+                                  [group.name]: option.name,
+                                }))
+                              }
+                              className="accent-clinical-gold"
+                            />
+                            <span className="font-medium">{option.name}</span>
+                          </div>
+                          {priceDiff > 0 && (
+                            <span className="text-xs text-clinical-gold tabular-nums font-medium">
+                              +{formatPrice(priceDiff)}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {/* Dynamic Macro & Price Display */}
+              <div className="rounded-xl border border-clinical-border bg-clinical-surface-elevated p-4 space-y-2">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-clinical-zinc text-xs">Calibrated Price</span>
+                  <span className="text-lg font-serif font-bold text-clinical-gold tabular-nums">
+                    {formatPrice(activeVariant.price)}
+                  </span>
+                </div>
+                
+                <div className="border-t border-dashed border-clinical-border/40 my-2 pt-2 flex gap-2.5 font-mono text-[11px] text-clinical-zinc justify-between">
+                  <span className="font-semibold text-white">
+                    {activeVariant.macros.calories} Kcal
+                  </span>
+                  <span>·</span>
+                  <span>{activeVariant.macros.protein}g P</span>
+                  <span>·</span>
+                  <span>{activeVariant.macros.carbs}g C</span>
+                  <span>·</span>
+                  <span>{activeVariant.macros.fat}g F</span>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.1em] pt-1">
+                  <span className="text-clinical-zinc-muted">Glycemic Status</span>
+                  <span className={cn(
+                    "font-bold",
+                    activeVariant.glycaemicIndex === "low" && "text-clinical-sage",
+                    activeVariant.glycaemicIndex === "medium" && "text-amber-400",
+                    activeVariant.glycaemicIndex === "high" && "text-red-400"
+                  )}>
+                    {activeVariant.glycaemicIndex.toUpperCase()} GI
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex flex-row gap-2 sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setCustomizingDish(null)}
+                className="flex-1 sm:flex-initial h-11 border-clinical-border bg-transparent text-clinical-zinc hover:bg-white/5 hover:text-white text-xs uppercase tracking-[0.12em] font-semibold"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  const originalDish = catalogDishes.find((d) => d.id === activeVariant.id);
+                  if (originalDish) {
+                    if (premiumSlugs.has(originalDish.slug) && !isPremium) {
+                      toast.error(`${originalDish.name} is a Premium-only dish`, {
+                        description: "Join Tanmatra Premium to unlock chef-table dishes.",
+                        action: { label: "See Premium", onClick: () => navigate("/premium") },
+                      });
+                      return;
+                    }
+                    addItem({
+                      dishId: originalDish.id,
+                      slug: originalDish.slug,
+                      name: originalDish.name,
+                      image: originalDish.image,
+                      basePrice: originalDish.price,
+                      unitPrice: originalDish.price,
+                      quantity: 1,
+                      kitchen: originalDish.kitchen,
+                      isVeg: originalDish.isVeg,
+                      rdVerified: originalDish.rdVerified,
+                      macros: originalDish.macros,
+                      customizations: [],
+                    });
+                    setCustomizingDish(null);
+                    openCart();
+                    toast.success(`Added ${originalDish.name} to your order`, {
+                      description: "Tap View Cart to review and check out.",
+                      action: { label: "View Cart", onClick: openCart },
+                    });
+                  }
+                }}
+                className="flex-1 sm:flex-initial h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs font-bold uppercase tracking-[0.12em]"
+              >
+                {premiumSlugs.has(activeVariant.slug) && !isPremium
+                  ? "Upgrade to Premium"
+                  : "Add to Order"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

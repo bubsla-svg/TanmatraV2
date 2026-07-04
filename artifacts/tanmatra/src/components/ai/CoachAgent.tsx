@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import {
   streamCoachAgentChat,
   type CoachAction,
@@ -152,7 +152,17 @@ export default function CoachAgentWidget({
   const [streaming, setStreaming] = useState(false);
   const streamingIndexRef = useRef<number | null>(null);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { items: cartItems, addItem, removeItem } = useCart();
+
+  const hasSecondaryCheckoutBar = /^\/(dish|marketplace)\/.+/.test(pathname) || /^\/(cart|checkout|track)\/?/.test(pathname);
+  const hasStickyCheckoutBar = cartItems.length > 0 && !hasSecondaryCheckoutBar && !/^\/(admin|rd-console|subscribe|subscriptions|subscription-plans|plans)(\/.*)?$/.test(pathname);
+
+  const triggerPositionClass = hasStickyCheckoutBar
+    ? "bottom-[calc(var(--bottom-nav-height)+136px+var(--safe-bottom))] md:bottom-24 max-[359px]:hidden"
+    : hasSecondaryCheckoutBar
+      ? "bottom-[calc(var(--bottom-nav-height)+var(--bottom-cta-height)+16px+var(--safe-bottom))] md:bottom-24 hidden sm:inline-flex"
+      : "bottom-[calc(var(--bottom-nav-height)+var(--bottom-cta-height)+16px+var(--safe-bottom))] md:bottom-24";
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -345,7 +355,7 @@ export default function CoachAgentWidget({
       className={
         inline
           ? "w-full flex flex-col shadow-md border border-[#D4AF37]/30 max-h-[520px]"
-          : "fixed bottom-[calc(132px+env(safe-area-inset-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-[#D4AF37]/30"
+          : "fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-[#D4AF37]/30 bg-[#050505]"
       }
     >
       <CardHeader className="shrink-0 py-3 px-4 border-b bg-[#050505]">
@@ -463,14 +473,19 @@ export default function CoachAgentWidget({
   if (inline) {
     if (!isOpen) {
       return (
-        <Button
-          variant="outline"
-          className="w-full border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10"
-          onClick={() => setIsOpen(true)}
-        >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Ask the coach about this dish
-        </Button>
+        <div className="space-y-1.5 text-center">
+          <Button
+            variant="outline"
+            className="w-full border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10"
+            onClick={() => setIsOpen(true)}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Ask the coach about this dish
+          </Button>
+          <p className="text-[10px] text-clinical-zinc">
+            Ask about protein modifications, metabolic impacts, or allergen alternatives.
+          </p>
+        </div>
       );
     }
     return chatSurface;
@@ -489,7 +504,7 @@ export default function CoachAgentWidget({
       ) : (
         <Button
           onClick={() => setIsOpen(!isOpen)}
-          className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-4 md:left-auto md:bottom-24 md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-[#D4AF37] text-[#050505] hover:bg-[#D4AF37]/90"
+          className={`fixed ${triggerPositionClass} left-3 sm:left-4 md:left-auto md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-[#D4AF37] text-[#050505] hover:bg-[#D4AF37]/90`}
           aria-label={isOpen ? "Close nutrition coach" : "Open nutrition coach"}
         >
           {isOpen ? <X className="w-6 h-6" /> : <Apple className="w-6 h-6" />}

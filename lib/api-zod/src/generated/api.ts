@@ -8,6 +8,18 @@
 import * as zod from "zod";
 
 /**
+ * @summary First-order offer eligibility for the signed-in user (flat 25%
+off, capped at Rs.80, auto-applied at finalize). Display-only —
+finalizeOrder re-checks eligibility server-side.
+
+ */
+export const GetFirstOrderOfferResponse = zod.object({
+  eligible: zod.boolean(),
+  percentBps: zod.number().describe("Discount in basis points (2500 = 25%)"),
+  capPaise: zod.number().describe("Maximum discount in paise (8000 = Rs.80)"),
+});
+
+/**
  * @summary Atomically persist an order, redeem credits, and award referrals
 in one transaction. Server-managed idempotency is REQUIRED — see
 the `Idempotency-Key` header.
@@ -51,6 +63,7 @@ export const FinalizeOrderResponse = zod.object({
   serverOrderId: zod.number().optional(),
   finalTotalPaise: zod.number().optional(),
   creditsRedeemedPaise: zod.number().optional(),
+  firstOrderDiscountPaise: zod.number().optional(),
   referralAwarded: zod.boolean().optional(),
 });
 

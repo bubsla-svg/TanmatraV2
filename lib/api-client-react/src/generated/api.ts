@@ -27,6 +27,7 @@ import type {
   DishRationaleRequest,
   DishReviewInput,
   FinalizeOrderRequest,
+  FirstOrderOffer,
   GenerateMealPlan201,
   GetChallenge200,
   GetMealPlan200,
@@ -81,6 +82,87 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary First-order offer eligibility for the signed-in user (flat 25%
+off, capped at Rs.80, auto-applied at finalize). Display-only —
+finalizeOrder re-checks eligibility server-side.
+
+ */
+export const getGetFirstOrderOfferUrl = () => {
+  return `/api/orders/first-order-offer`;
+};
+
+export const getFirstOrderOffer = async (
+  options?: RequestInit,
+): Promise<FirstOrderOffer> => {
+  return customFetch<FirstOrderOffer>(getGetFirstOrderOfferUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetFirstOrderOfferQueryKey = () => {
+  return [`/api/orders/first-order-offer`] as const;
+};
+
+export const getGetFirstOrderOfferQueryOptions = <
+  TData = Awaited<ReturnType<typeof getFirstOrderOffer>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getFirstOrderOffer>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetFirstOrderOfferQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getFirstOrderOffer>>
+  > = ({ signal }) => getFirstOrderOffer({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getFirstOrderOffer>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetFirstOrderOfferQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getFirstOrderOffer>>
+>;
+export type GetFirstOrderOfferQueryError = ErrorType<void>;
+
+/**
+ * @summary First-order offer eligibility for the signed-in user (flat 25%
+off, capped at Rs.80, auto-applied at finalize). Display-only —
+finalizeOrder re-checks eligibility server-side.
+
+ */
+
+export function useGetFirstOrderOffer<
+  TData = Awaited<ReturnType<typeof getFirstOrderOffer>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getFirstOrderOffer>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetFirstOrderOfferQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Atomically persist an order, redeem credits, and award referrals

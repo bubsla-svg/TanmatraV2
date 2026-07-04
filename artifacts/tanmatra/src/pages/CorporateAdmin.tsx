@@ -42,7 +42,7 @@ export default function CorporateAdmin() {
   const [ooTitle, setOoTitle] = useState("Team lunch");
   const [ooBudget, setOoBudget] = useState("400");
   const [ooLine, setOoLine] = useState("");
-  const [ooCity, setOoCity] = useState("Bengaluru");
+  const [ooCity, setOoCity] = useState("Noida");
   const [ooPincode, setOoPincode] = useState("");
 
   const refresh = async () => {

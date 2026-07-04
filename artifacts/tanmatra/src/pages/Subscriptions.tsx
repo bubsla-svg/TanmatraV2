@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, type MetaFunction } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,11 @@ import {
   Wallet,
   PlusCircle,
   RefreshCw,
+  MapPin,
+  ArrowRight,
+  Check,
+  Search,
+  Gift,
 } from "lucide-react";
 import {
   subscriptionsApi,
@@ -44,9 +49,15 @@ import {
   type Subscription,
   type SubscriptionDelivery,
   type SubscriptionMember,
+  type SubscriptionItem,
   type MealCredit,
 } from "@/lib/subscriptionsApi";
 import { loyaltyApi } from "@/lib/loyaltyApi";
+import { useMenuCatalog } from "@/lib/menuData";
+import { whatsappLink } from "@/lib/support";
+import type { DishData } from "@/lib/menuData";
+import { usePreferences } from "@/lib/preferencesContext";
+import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 
 interface LoyaltyProgress {
   subscriptionId: number;
@@ -110,6 +121,43 @@ const TIME_WINDOWS = [
   "20:00 - 21:00",
 ];
 
+// A trial subscription is one-off (see subscriptions.ts). Detect it from the
+// canonical / legacy notes markers the server writes so the dashboard shows
+// trial-appropriate controls (no "add more", plus a convert-to-plan CTA).
+function isTrialSub(s: Subscription): boolean {
+  return !!s.notes && /3-day (trial )?pack/i.test(s.notes);
+}
+
+function formatPrice(paise: number): string {
+  return `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
+}
+
+function planTitle(s: Subscription): string {
+  if (isTrialSub(s)) return "3-Day Trial Pack";
+  // RD-plan subscriptions carry "RD Plan: <name>" in notes — surface the
+  // actual plan name (e.g. "Weight-Loss Jumpstart") instead of the generic
+  // cadence label so the dashboard reads like the thing the customer bought.
+  const rdMatch = /^RD Plan:\s*(.+)$/.exec(s.notes ?? "");
+  if (rdMatch) return rdMatch[1];
+  return `${CADENCE_LABEL[s.cadence]} Plan`;
+}
+
+function daysUntil(iso: string): number {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(iso);
+  target.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - now.getTime()) / 86_400_000);
+}
+
+function relativeDay(iso: string): string {
+  const d = daysUntil(iso);
+  if (d < 0) return "Past due";
+  if (d === 0) return "Today";
+  if (d === 1) return "Tomorrow";
+  return `In ${d} days`;
+}
+
 export const meta: MetaFunction = () => [
   { title: "My Subscriptions | Tanmatra" },
   { name: "robots", content: "noindex, nofollow" },
@@ -132,6 +180,7 @@ export default function Subscriptions() {
   const [reschedWindow, setReschedWindow] = useState(TIME_WINDOWS[1]);
   const [windowEditOpen, setWindowEditOpen] = useState(false);
   const [pendingWindow, setPendingWindow] = useState(TIME_WINDOWS[1]);
+  const [swapDelivery, setSwapDelivery] = useState<SubscriptionDelivery | null>(null);
 
   const refreshList = useCallback(async () => {
     try {
@@ -189,8 +238,6 @@ export default function Subscriptions() {
   };
 
   // ---------- Destructive-action safeguards ----------
-  // Cancel and Skip were previously one-click and irreversible. Both now
-  // gate behind a confirmation dialog. (audit dim 4.3)
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [skipConfirm, setSkipConfirm] = useState<{ deliveryId: number; date: string } | null>(null);
 
@@ -198,7 +245,7 @@ export default function Subscriptions() {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center space-y-4">
         <CalendarClock className="w-10 h-10 text-clinical-gold mx-auto" />
-        <h1 className="text-2xl font-bold text-white">Sign in to manage plans</h1>
+        <h1 className="text-clinical-h2 text-white">Sign in to manage plans</h1>
         <p className="text-sm text-clinical-zinc">
           Subscriptions are tied to your Tanmatra account.
         </p>
@@ -221,208 +268,157 @@ export default function Subscriptions() {
 
   if (subs.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto p-8 text-center space-y-4 animate-in fade-in">
+      <div className="max-w-2xl mx-auto p-8 text-center space-y-5 animate-in fade-in">
         <Sparkles className="w-10 h-10 text-clinical-gold mx-auto" />
-        <h1 className="text-2xl font-bold text-white">No active plans yet</h1>
-        <p className="text-sm text-clinical-zinc">
-          Set up a recurring plan to lock in your delivery window and earn cadence
-          discounts.
+        <h1 className="text-clinical-h2 text-white">No active plans yet</h1>
+        <p className="text-sm text-clinical-zinc max-w-sm mx-auto">
+          Start with a 3-day trial at 25% off, or set up a recurring plan to lock
+          in your delivery window and earn cadence discounts.
         </p>
-        <Link to="/subscribe">
-          <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 gap-2">
-            <PlusCircle className="w-4 h-4" />
-            Build a Plan
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link to="/subscribe?trial=1">
+            <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 gap-2">
+              <Gift className="w-4 h-4" /> Start 3-day trial
+            </Button>
+          </Link>
+          <Link to="/subscription-plans">
+            <Button
+              variant="outline"
+              className="border-clinical-border text-white hover:bg-clinical-surface-elevated gap-2"
+            >
+              See all plans
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
+  const activeProgress = activeId !== null ? progress[activeId] : undefined;
+
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Your Subscriptions</h1>
-          <p className="text-xs text-clinical-zinc">
+          <h1 className="text-clinical-h2 text-white">Your subscriptions</h1>
+          <p className="text-xs text-clinical-zinc mt-0.5">
             {subs.length} plan{subs.length === 1 ? "" : "s"} · {credits.balance} meal
-            credit{credits.balance === 1 ? "" : "s"} available
+            credit{credits.balance === 1 ? "" : "s"} in your wallet
+            {" · "}
+            <a
+              href={whatsappLink("Hi! I need help with my Tanmatra subscription.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-clinical-gold hover:underline"
+            >
+              Need help? WhatsApp us
+            </a>
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Card className="bg-clinical-surface border-clinical-gold/30">
-            <CardContent className="px-3 py-2 flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-clinical-gold" />
-              <div>
-                <p className="text-[9px] uppercase tracking-widest text-clinical-zinc">
-                  Credit Balance
-                </p>
-                <p className="text-sm font-bold text-clinical-gold tabular-nums">
-                  {credits.balance} meals
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Link to="/subscribe">
+          <div className="flex items-center gap-2 rounded-lg border border-clinical-gold/30 bg-clinical-surface px-3 py-2">
+            <Wallet className="w-4 h-4 text-clinical-gold" />
+            <div>
+              <p className="text-[9px] uppercase tracking-widest text-clinical-zinc leading-none">
+                Wallet
+              </p>
+              <p className="text-sm font-bold text-clinical-gold tabular-nums leading-tight">
+                {credits.balance} meals
+              </p>
+            </div>
+          </div>
+          <Link to="/subscription-plans">
             <Button
               size="sm"
               className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 gap-1.5"
             >
-              <PlusCircle className="w-4 h-4" /> New Plan
+              <PlusCircle className="w-4 h-4" /> New plan
             </Button>
           </Link>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-clinical-border pb-2">
-        {subs.map((s) => {
-          const active = s.id === activeId;
-          return (
-            <button
-              key={s.id}
-              onClick={() => setActiveId(s.id)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                active
-                  ? "bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30"
-                  : "text-clinical-zinc hover:text-white"
-              }`}
-            >
-              {CADENCE_LABEL[s.cadence]} · {s.mealsPerDelivery} meals
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Loyalty progress per subscription */}
-      {subs.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Plan switcher (only when more than one) */}
+      {subs.length > 1 && (
+        <div className="flex flex-wrap gap-2 border-b border-clinical-border pb-2">
           {subs.map((s) => {
-            const pr = progress[s.id];
-            if (!pr) return null;
-            const cycleDone = pr.freeEveryN - pr.deliveriesUntilFree;
-            const cyclePct = Math.min(100, (cycleDone / pr.freeEveryN) * 100);
-            const premPct = Math.min(
-              100,
-              (pr.deliveredCount / pr.premiumUnlockAt) * 100,
-            );
+            const active = s.id === activeId;
+            const st = STATUS_BADGE[s.status];
             return (
-              <Card
+              <button
                 key={s.id}
-                className="bg-clinical-surface border-clinical-border"
+                onClick={() => setActiveId(s.id)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                  active
+                    ? "bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30"
+                    : "text-clinical-zinc hover:text-white border border-transparent"
+                }`}
               >
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-white">
-                      {CADENCE_LABEL[s.cadence]} plan · loyalty
-                    </p>
-                    {pr.premiumUnlocked && (
-                      <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/40 text-[10px]">
-                        Chef's tier unlocked
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-clinical-zinc uppercase tracking-wide">
-                      <span>Next free meal</span>
-                      <span>
-                        {cycleDone}/{pr.freeEveryN}
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-clinical-dark overflow-hidden">
-                      <div
-                        className="h-full bg-clinical-gold transition-all"
-                        style={{ width: `${cyclePct}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-clinical-sage">
-                      {pr.deliveriesUntilFree} more deliver
-                      {pr.deliveriesUntilFree === 1 ? "y" : "ies"} to your next free
-                      meal
-                    </p>
-                  </div>
-                  {!pr.premiumUnlocked && (
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] text-clinical-zinc uppercase tracking-wide">
-                        <span>Chef's tier</span>
-                        <span>
-                          {pr.deliveredCount}/{pr.premiumUnlockAt}
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-clinical-dark overflow-hidden">
-                        <div
-                          className="h-full bg-clinical-sage transition-all"
-                          style={{ width: `${premPct}%` }}
-                        />
-                      </div>
-                      <p className="text-[10px] text-clinical-zinc">
-                        {pr.deliveriesUntilPremium} deliveries to unlock chef
-                        specials
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                {planTitle(s)}
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${s.status === "active" ? "bg-clinical-sage" : s.status === "paused" ? "bg-orange-400" : "bg-red-400"}`}
+                  title={st.label}
+                />
+              </button>
             );
           })}
         </div>
       )}
 
-      {detail && <DetailView
-        detail={detail}
-        onPause={() =>
-          wrap(subscriptionsApi.pause(detail.subscription.id), "Subscription paused")
-        }
-        onResume={() =>
-          wrap(subscriptionsApi.resume(detail.subscription.id), "Subscription resumed")
-        }
-        onCancel={() => setCancelConfirmOpen(true)}
-        onEditWindow={() => {
-          setPendingWindow(detail.subscription.deliveryWindow);
-          setWindowEditOpen(true);
-        }}
-        onGenerateMore={() =>
-          wrap(
-            subscriptionsApi.generateNext(detail.subscription.id),
-            "Added 4 more deliveries",
-          )
-        }
-        onSkip={(d) =>
-          setSkipConfirm({ deliveryId: d.id, date: d.scheduledFor })
-        }
-        onSwap={(d) => {
-          const next = [...d.items];
-          if (next.length === 0) {
-            next.push({
-              slug: "house-special",
-              name: "Chef's House Special",
-              image: "",
-              quantity: detail.subscription.mealsPerDelivery,
-              unitPricePaise: 26000,
-            });
-          } else {
-            next[0] = {
-              ...next[0],
-              name:
-                next[0].name === "Chef's House Special"
-                  ? "RD Curated Box"
-                  : "Chef's House Special",
-            };
+      {detail && (
+        <DetailView
+          detail={detail}
+          progress={!isTrialSub(detail.subscription) ? activeProgress : undefined}
+          onPause={() =>
+            wrap(subscriptionsApi.pause(detail.subscription.id), "Subscription paused")
           }
-          return wrap(subscriptionsApi.swap(d.id, next), "Delivery contents updated");
-        }}
-        onReschedule={(d) => {
-          setReschedDelivery(d);
-          setReschedDate(new Date(d.scheduledFor).toISOString().slice(0, 10));
-          setReschedWindow(d.deliveryWindow);
-        }}
-      />}
+          onResume={() =>
+            wrap(subscriptionsApi.resume(detail.subscription.id), "Subscription resumed")
+          }
+          onCancel={() => setCancelConfirmOpen(true)}
+          onEditWindow={() => {
+            setPendingWindow(detail.subscription.deliveryWindow);
+            setWindowEditOpen(true);
+          }}
+          onGenerateMore={() =>
+            wrap(
+              subscriptionsApi.generateNext(detail.subscription.id),
+              "Added 4 more deliveries",
+            )
+          }
+          onSkip={(d) => setSkipConfirm({ deliveryId: d.id, date: d.scheduledFor })}
+          onSwap={(d) => setSwapDelivery(d)}
+          onReschedule={(d) => {
+            setReschedDelivery(d);
+            setReschedDate(new Date(d.scheduledFor).toISOString().slice(0, 10));
+            setReschedWindow(d.deliveryWindow);
+          }}
+        />
+      )}
+
+      {/* Swap dish picker */}
+      {detail && (
+        <SwapDialog
+          delivery={swapDelivery}
+          mealsPerDelivery={detail.subscription.mealsPerDelivery}
+          onClose={() => setSwapDelivery(null)}
+          onConfirm={async (items) => {
+            if (!swapDelivery) return;
+            await wrap(
+              subscriptionsApi.swap(swapDelivery.id, items),
+              "Delivery updated",
+            );
+            setSwapDelivery(null);
+          }}
+        />
+      )}
 
       <Dialog open={windowEditOpen} onOpenChange={setWindowEditOpen}>
         <DialogContent className="bg-clinical-surface border-clinical-border">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Clock className="w-4 h-4 text-clinical-gold" />
-              Update locked delivery window
+              Update delivery window
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
@@ -549,9 +545,9 @@ export default function Subscriptions() {
             </AlertDialogTitle>
             <AlertDialogDescription className="text-clinical-zinc text-xs">
               All upcoming deliveries will be cancelled. Any prepaid credits
-              remain on your account and can be used for one-off orders.
-              You can re-subscribe at any time, but you'll lose your current
-              delivery window. This action cannot be undone.
+              remain on your account and can be used for one-off orders. You can
+              re-subscribe at any time, but you'll lose your current delivery
+              window. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -619,8 +615,47 @@ export default function Subscriptions() {
   );
 }
 
+function LoyaltyStrip({ pr }: { pr: LoyaltyProgress }) {
+  const cycleDone = pr.freeEveryN - pr.deliveriesUntilFree;
+  const cyclePct = Math.min(100, (cycleDone / pr.freeEveryN) * 100);
+  const premPct = Math.min(100, (pr.deliveredCount / pr.premiumUnlockAt) * 100);
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="rounded-lg border border-clinical-border bg-clinical-surface p-3 space-y-1.5">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-clinical-zinc">
+          <span>Next free meal</span>
+          <span className="tabular-nums">{cycleDone}/{pr.freeEveryN}</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-clinical-dark overflow-hidden">
+          <div className="h-full bg-clinical-gold transition-all" style={{ width: `${cyclePct}%` }} />
+        </div>
+        <p className="text-[10px] text-clinical-sage">
+          {pr.deliveriesUntilFree} more deliver{pr.deliveriesUntilFree === 1 ? "y" : "ies"} to a free meal
+        </p>
+      </div>
+      <div className="rounded-lg border border-clinical-border bg-clinical-surface p-3 space-y-1.5">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-clinical-zinc">
+          <span>Chef's tier</span>
+          <span className="tabular-nums">
+            {pr.premiumUnlocked ? "Unlocked" : `${pr.deliveredCount}/${pr.premiumUnlockAt}`}
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full bg-clinical-dark overflow-hidden">
+          <div className="h-full bg-clinical-sage transition-all" style={{ width: `${pr.premiumUnlocked ? 100 : premPct}%` }} />
+        </div>
+        <p className="text-[10px] text-clinical-zinc">
+          {pr.premiumUnlocked
+            ? "Chef specials unlocked on this plan"
+            : `${pr.deliveriesUntilPremium} deliveries to unlock chef specials`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function DetailView({
   detail,
+  progress,
   onPause,
   onResume,
   onCancel,
@@ -631,6 +666,7 @@ function DetailView({
   onReschedule,
 }: {
   detail: Detail;
+  progress?: LoyaltyProgress;
   onPause: () => void;
   onResume: () => void;
   onCancel: () => void;
@@ -642,28 +678,43 @@ function DetailView({
 }) {
   const { subscription: s, members, deliveries } = detail;
   const badge = STATUS_BADGE[s.status];
+  const trial = isTrialSub(s);
+  const upcoming = deliveries.filter((d) => d.status === "upcoming");
+  const nextDelivery = upcoming[0];
+  const laterDeliveries = deliveries.filter((d) => d.id !== nextDelivery?.id);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Plan summary + economics */}
       <Card className="bg-clinical-surface border-clinical-border">
         <CardContent className="p-5 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white">
-                  {CADENCE_LABEL[s.cadence]} Plan
-                </h2>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-clinical-h3 text-white">{planTitle(s)}</h2>
                 <Badge variant="outline" className={`text-[10px] ${badge.cls}`}>
                   {badge.label}
                 </Badge>
+                {trial && (
+                  <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 text-[10px]">
+                    One-off
+                  </Badge>
+                )}
               </div>
-              <p className="text-xs text-clinical-zinc">
-                {s.mealsPerDelivery} meals · Window locked at {s.deliveryWindow} ·
-                Next on {formatScheduledDate(s.nextDeliveryAt)}
-              </p>
-              <p className="text-[10px] text-clinical-zinc">
-                Delivers to {s.addressLabel ?? "Home"} · {s.city ?? ""}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-clinical-zinc">
+                <span className="text-white font-semibold tabular-nums">
+                  {formatPrice(s.pricePerDeliveryPaise)}
+                  <span className="text-clinical-zinc font-normal"> / delivery</span>
+                </span>
+                <span>{s.mealsPerDelivery} meals</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> {s.deliveryWindow}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> {s.addressLabel ?? "Home"}
+                  {s.city ? ` · ${s.city}` : ""}
+                </span>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {s.status === "active" && (
@@ -686,39 +737,49 @@ function DetailView({
                   <Play className="w-3.5 h-3.5" /> Resume
                 </Button>
               )}
+              {!trial && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onEditWindow}
+                  className="border-clinical-border text-clinical-zinc hover:text-white gap-1.5 text-xs"
+                >
+                  <Clock className="w-3.5 h-3.5" /> Edit window
+                </Button>
+              )}
+              {!trial && s.status === "active" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onGenerateMore}
+                  className="border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 gap-1.5 text-xs"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Add 4 more
+                </Button>
+              )}
               {s.status !== "cancelled" && (
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={onCancel}
-                  aria-label="Cancel this subscription (free up to 24h before next delivery)"
+                  aria-label="Cancel this subscription"
                   className="min-h-9 text-clinical-zinc hover:text-red-400 gap-1.5 text-xs"
                 >
                   <XCircle className="w-3.5 h-3.5" /> Cancel
                 </Button>
               )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onEditWindow}
-                className="border-clinical-border text-clinical-zinc hover:text-white gap-1.5 text-xs"
-              >
-                <Clock className="w-3.5 h-3.5" /> Edit window
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onGenerateMore}
-                className="border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 gap-1.5 text-xs"
-              >
-                <RefreshCw className="w-3.5 h-3.5" /> Add 4 more
-              </Button>
             </div>
           </div>
 
+          {s.status === "paused" && (
+            <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 px-3 py-2 text-[11px] text-orange-200">
+              This plan is paused — no deliveries or charges until you resume.
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-clinical-border">
             <Users className="w-3.5 h-3.5 text-clinical-zinc" />
-            <span className="text-[11px] text-clinical-zinc">Family:</span>
+            <span className="text-[11px] text-clinical-zinc">Eaters:</span>
             {members.map((m) => (
               <Badge
                 key={m.id}
@@ -734,81 +795,381 @@ function DetailView({
         </CardContent>
       </Card>
 
-      <div className="space-y-3">
-        <h3 className="text-xs uppercase tracking-widest text-clinical-zinc px-1">
-          Upcoming deliveries
-        </h3>
-        {deliveries.map((d) => {
-          const db = DELIVERY_BADGE[d.status];
-          const isUpcoming = d.status === "upcoming";
-          return (
-            <Card key={d.id} className="bg-clinical-surface border-clinical-border">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="text-center">
-                      <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
-                        {new Date(d.scheduledFor).toLocaleString("en-IN", {
-                          weekday: "short",
-                        })}
-                      </p>
-                      <p className="text-lg font-bold text-clinical-gold leading-none">
-                        {new Date(d.scheduledFor).getDate()}
-                      </p>
-                      <p className="text-[10px] text-clinical-zinc">
-                        {new Date(d.scheduledFor).toLocaleString("en-IN", {
-                          month: "short",
-                        })}
-                      </p>
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-sm text-white">
-                        {d.items.length === 0
-                          ? "Chef's curated box"
-                          : `${d.items.length} item${d.items.length === 1 ? "" : "s"} curated`}
-                      </p>
-                      <p className="text-[10px] text-clinical-zinc flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {d.deliveryWindow}
-                      </p>
-                    </div>
+      {/* Trial → recurring conversion (the revenue moment) */}
+      {trial && s.status !== "cancelled" && (
+        <Card className="bg-gradient-to-br from-clinical-gold/12 to-transparent border-clinical-gold/40">
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-semibold text-white">Enjoying your trial?</p>
+              <p className="text-xs text-clinical-zinc leading-relaxed">
+                Turn it into a recurring plan to lock your delivery window, save up
+                to 15%, and earn a free meal every few deliveries.
+              </p>
+            </div>
+            <Link to="/subscription-plans" className="shrink-0">
+              <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 h-10 px-5">
+                Start a recurring plan <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loyalty (recurring only) */}
+      {progress && <LoyaltyStrip pr={progress} />}
+
+      {/* Next delivery — hero */}
+      {nextDelivery && (
+        <div className="space-y-2">
+          <h3 className="text-xs uppercase tracking-widest text-clinical-zinc px-1">
+            Next delivery
+          </h3>
+          <Card className="bg-gradient-to-br from-clinical-surface to-clinical-surface-elevated border-clinical-gold/30">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="text-center rounded-lg bg-clinical-gold/10 border border-clinical-gold/25 px-3 py-2 min-w-[3.5rem]">
+                    <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+                      {new Date(nextDelivery.scheduledFor).toLocaleString("en-IN", { weekday: "short" })}
+                    </p>
+                    <p className="text-2xl font-bold text-clinical-gold leading-none tabular-nums">
+                      {new Date(nextDelivery.scheduledFor).getDate()}
+                    </p>
+                    <p className="text-[10px] text-clinical-zinc">
+                      {new Date(nextDelivery.scheduledFor).toLocaleString("en-IN", { month: "short" })}
+                    </p>
                   </div>
-                  <Badge variant="outline" className={`text-[10px] ${db.cls}`}>
-                    {db.label}
-                  </Badge>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-white">
+                      {relativeDay(nextDelivery.scheduledFor)}
+                    </p>
+                    <p className="text-xs text-clinical-zinc flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {nextDelivery.deliveryWindow}
+                    </p>
+                    <p className="text-[11px] text-clinical-zinc">
+                      {nextDelivery.items.length === 0
+                        ? "Chef's curated box"
+                        : nextDelivery.items.map((i) => i.name).slice(0, 3).join(", ") +
+                          (nextDelivery.items.length > 3 ? ` +${nextDelivery.items.length - 3} more` : "")}
+                    </p>
+                  </div>
                 </div>
-                {isUpcoming && (
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-clinical-border">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onSkip(d)}
-                      className="border-orange-400/40 text-orange-300 hover:bg-orange-500/10 gap-1.5 text-xs"
-                    >
-                      <SkipForward className="w-3.5 h-3.5" /> Skip
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onSwap(d)}
-                      className="border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 gap-1.5 text-xs"
-                    >
-                      <Replace className="w-3.5 h-3.5" /> Swap
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onReschedule(d)}
-                      className="border-clinical-border text-clinical-zinc hover:text-white gap-1.5 text-xs"
-                    >
-                      <Clock className="w-3.5 h-3.5" /> Reschedule
-                    </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-clinical-border">
+                <Button
+                  size="sm"
+                  onClick={() => onSwap(nextDelivery)}
+                  className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 gap-1.5 text-xs"
+                >
+                  <Replace className="w-3.5 h-3.5" /> Swap dishes
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onReschedule(nextDelivery)}
+                  className="border-clinical-border text-clinical-zinc hover:text-white gap-1.5 text-xs"
+                >
+                  <Clock className="w-3.5 h-3.5" /> Reschedule
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onSkip(nextDelivery)}
+                  className="border-orange-400/40 text-orange-300 hover:bg-orange-500/10 gap-1.5 text-xs"
+                >
+                  <SkipForward className="w-3.5 h-3.5" /> Skip (credit wallet)
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Later / past deliveries */}
+      {laterDeliveries.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs uppercase tracking-widest text-clinical-zinc px-1">
+            {nextDelivery ? "Later deliveries" : "Deliveries"}
+          </h3>
+          {laterDeliveries.map((d) => {
+            const db = DELIVERY_BADGE[d.status];
+            const isUpcoming = d.status === "upcoming";
+            return (
+              <Card key={d.id} className="bg-clinical-surface border-clinical-border">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="text-center min-w-[2.75rem]">
+                        <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+                          {new Date(d.scheduledFor).toLocaleString("en-IN", { weekday: "short" })}
+                        </p>
+                        <p className="text-lg font-bold text-clinical-gold leading-none tabular-nums">
+                          {new Date(d.scheduledFor).getDate()}
+                        </p>
+                        <p className="text-[10px] text-clinical-zinc">
+                          {new Date(d.scheduledFor).toLocaleString("en-IN", { month: "short" })}
+                        </p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-sm text-white">
+                          {d.items.length === 0
+                            ? "Chef's curated box"
+                            : `${d.items.length} item${d.items.length === 1 ? "" : "s"} curated`}
+                        </p>
+                        <p className="text-[10px] text-clinical-zinc flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {d.deliveryWindow}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={`text-[10px] ${db.cls}`}>
+                      {db.label}
+                    </Badge>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  {isUpcoming && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-clinical-border">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onSkip(d)}
+                        className="border-orange-400/40 text-orange-300 hover:bg-orange-500/10 gap-1.5 text-xs"
+                      >
+                        <SkipForward className="w-3.5 h-3.5" /> Skip
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onSwap(d)}
+                        className="border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 gap-1.5 text-xs"
+                      >
+                        <Replace className="w-3.5 h-3.5" /> Swap
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onReschedule(d)}
+                        className="border-clinical-border text-clinical-zinc hover:text-white gap-1.5 text-xs"
+                      >
+                        <Clock className="w-3.5 h-3.5" /> Reschedule
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
+  );
+}
+
+// ── Real dish-picker swap dialog ────────────────────────────────────────
+// Replaces the previous placeholder that just toggled a label. Lets the
+// member choose exactly which dishes go in this delivery, up to the plan's
+// meals-per-delivery count, and persists via the swap endpoint.
+function SwapDialog({
+  delivery,
+  mealsPerDelivery,
+  onClose,
+  onConfirm,
+}: {
+  delivery: SubscriptionDelivery | null;
+  mealsPerDelivery: number;
+  onClose: () => void;
+  onConfirm: (items: SubscriptionItem[]) => void | Promise<void>;
+}) {
+  const { dishes } = useMenuCatalog();
+  const { preferences } = usePreferences();
+  const [query, setQuery] = useState("");
+  // slug -> quantity
+  const [selected, setSelected] = useState<Record<string, number>>({});
+  const [saving, setSaving] = useState(false);
+
+  // Seed from the delivery's current contents each time it opens.
+  useEffect(() => {
+    if (delivery) {
+      setSelected(
+        Object.fromEntries(delivery.items.map((i) => [i.slug, i.quantity])),
+      );
+      setQuery("");
+    }
+  }, [delivery]);
+
+  const bySlug = useMemo(
+    () => new Map(dishes.map((d) => [d.slug, d])),
+    [dishes],
+  );
+
+  const totalSelected = Object.values(selected).reduce((a, b) => a + b, 0);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const pool = dishes.filter((d) => d.isAvailable);
+    if (!q) return pool.slice(0, 40);
+    return pool
+      .filter(
+        (d) =>
+          d.name.toLowerCase().includes(q) ||
+          d.category.toLowerCase().includes(q),
+      )
+      .slice(0, 40);
+  }, [dishes, query]);
+
+  const setQty = (slug: string, qty: number) => {
+    setSelected((prev) => {
+      const next = { ...prev };
+      if (qty <= 0) delete next[slug];
+      else next[slug] = qty;
+      return next;
+    });
+  };
+
+  const buildItems = (): SubscriptionItem[] =>
+    Object.entries(selected)
+      .map(([slug, quantity]) => {
+        const d = bySlug.get(slug);
+        if (!d) return null;
+        return {
+          slug: d.slug,
+          name: d.name,
+          image: d.image,
+          quantity,
+          unitPricePaise: d.price,
+        } satisfies SubscriptionItem;
+      })
+      .filter((x): x is SubscriptionItem => x !== null);
+
+  return (
+    <Dialog open={delivery !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="bg-clinical-surface border-clinical-border max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <Replace className="w-4 h-4 text-clinical-gold" />
+            Choose dishes for this delivery
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-clinical-zinc absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search dishes…"
+                className="pl-8 h-9 bg-clinical-dark border-clinical-border text-white text-sm"
+              />
+            </div>
+            <span
+              className={`ml-3 text-xs tabular-nums shrink-0 ${totalSelected === mealsPerDelivery ? "text-clinical-sage" : "text-clinical-zinc"}`}
+            >
+              {totalSelected}/{mealsPerDelivery} meals
+            </span>
+          </div>
+
+          <div className="max-h-[46vh] overflow-y-auto space-y-1.5 pr-1">
+            {filtered.map((d: DishData) => {
+              const qty = selected[d.slug] ?? 0;
+              const match = evaluateDishForPreferences(d, preferences);
+              const blocked = match.blocked;
+              return (
+                <div
+                  key={d.slug}
+                  className={`flex items-center gap-3 rounded-lg border p-2 ${blocked ? "border-red-500/50 bg-red-950/20 opacity-60" : qty > 0 ? "border-clinical-gold/40 bg-clinical-gold/5" : "border-clinical-border"}`}
+                >
+                  {d.image ? (
+                    <img
+                      src={d.image}
+                      alt=""
+                      className="w-10 h-10 rounded-md object-cover shrink-0"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-md bg-clinical-dark shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-white truncate flex items-center gap-1.5">
+                      {d.name}
+                      {blocked && (
+                        <span className="text-[9px] font-extrabold text-red-400 border border-red-500/50 px-1.5 py-0.5 rounded bg-red-950/80">
+                          BLOCKED
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-[10px] text-clinical-zinc tabular-nums">
+                      {formatPrice(d.price)} · {d.macros.protein}g protein
+                    </p>
+                  </div>
+                  {blocked ? (
+                    <span className="text-[10px] text-red-400 font-semibold px-2 py-1">
+                      Unavailable
+                    </span>
+                  ) : qty === 0 ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setQty(d.slug, 1)}
+                      className="h-8 border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 text-xs"
+                    >
+                      Add
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setQty(d.slug, qty - 1)}
+                        className="h-7 w-7 border-clinical-border text-clinical-zinc"
+                      >
+                        −
+                      </Button>
+                      <span className="text-xs text-white tabular-nums w-4 text-center">{qty}</span>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setQty(d.slug, qty + 1)}
+                        className="h-7 w-7 border-clinical-border text-clinical-zinc"
+                      >
+                        +
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="text-xs text-clinical-zinc text-center py-6">
+                No dishes match “{query}”.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            className="border-clinical-border text-clinical-zinc"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 gap-1.5"
+            disabled={totalSelected === 0 || saving}
+            onClick={async () => {
+              setSaving(true);
+              try {
+                await onConfirm(buildItems());
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            <Check className="w-4 h-4" />
+            {saving ? "Saving…" : "Save delivery"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

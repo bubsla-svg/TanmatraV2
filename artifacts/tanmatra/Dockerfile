@@ -34,8 +34,26 @@ COPY artifacts/tanmatra artifacts/tanmatra
 # VITE_API_BASE is baked into the JS bundle at build time. Pass it as a build
 # arg so CI can set the correct wellness-foods Cloud Run URL.
 ARG VITE_API_BASE
+ARG VITE_GOOGLE_MAPS_API_KEY
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_STORAGE_BUCKET
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID
+ARG VITE_FIREBASE_APP_ID
+ARG VITE_RAZORPAY_KEY_ID
+
 # SPA mode (ssr:false) — produces build/client/ only (no build/server/).
-RUN VITE_API_BASE="${VITE_API_BASE}" pnpm --filter @workspace/tanmatra run build
+RUN VITE_API_BASE="${VITE_API_BASE}" \
+    VITE_GOOGLE_MAPS_API_KEY="${VITE_GOOGLE_MAPS_API_KEY}" \
+    VITE_FIREBASE_API_KEY="${VITE_FIREBASE_API_KEY}" \
+    VITE_FIREBASE_AUTH_DOMAIN="${VITE_FIREBASE_AUTH_DOMAIN}" \
+    VITE_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID}" \
+    VITE_FIREBASE_STORAGE_BUCKET="${VITE_FIREBASE_STORAGE_BUCKET}" \
+    VITE_FIREBASE_MESSAGING_SENDER_ID="${VITE_FIREBASE_MESSAGING_SENDER_ID}" \
+    VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID}" \
+    VITE_RAZORPAY_KEY_ID="${VITE_RAZORPAY_KEY_ID}" \
+    pnpm --filter @workspace/tanmatra run build
 
 # ── runner ────────────────────────────────────────────────────────────────────
 # Serve the static SPA with a minimal Node http server; no SSR bundle needed.
@@ -47,14 +65,22 @@ WORKDIR /app
 
 COPY --from=builder /app/artifacts/tanmatra/build/client ./public
 
-# Inline static server — serves SPA fallback (index.html) for all non-asset paths.
+# Inline static server. Serve real files (incl. prerendered <route>/index.html)
+# when they exist, and the route-AGNOSTIC SPA shell (__spa-fallback.html) for all
+# other (client-only) routes. Falling back to the prerendered HOME index.html for
+# routes like /checkout made the browser hydrate the "/" route's embedded
+# react-router server context at the wrong URL -> React #418 hydration mismatch
+# -> the app's "Something went wrong" error boundary. __spa-fallback.html carries
+# no route-specific context, so it hydrates cleanly at any URL.
 RUN printf '%s\n' \
   "const http=require('http'),fs=require('fs'),path=require('path');" \
   "const root=path.join(__dirname,'public');" \
+  "const spa=path.join(root,'__spa-fallback.html');" \
   "http.createServer((req,res)=>{" \
   "  const u=req.url.split('?')[0];" \
   "  let f=path.join(root,u==='/'?'/index.html':u);" \
-  "  if(!fs.existsSync(f)||fs.statSync(f).isDirectory())f=path.join(root,'index.html');" \
+  "  if(fs.existsSync(f)&&fs.statSync(f).isDirectory()){const i=path.join(f,'index.html');f=fs.existsSync(i)?i:spa;}" \
+  "  else if(!fs.existsSync(f))f=spa;" \
   "  const ext=path.extname(f);" \
   "  const ct={'html':'text/html','js':'application/javascript','css':'text/css','json':'application/json','svg':'image/svg+xml','png':'image/png','ico':'image/x-icon','webmanifest':'application/manifest+json'}[ext.slice(1)]||'application/octet-stream';" \
   "  res.writeHead(200,{'Content-Type':ct,'Cache-Control':ext==='.html'?'no-cache':'public,max-age=31536000,immutable'});" \

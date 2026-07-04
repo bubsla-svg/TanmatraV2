@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { motion } from "framer-motion";
@@ -6,9 +6,7 @@ import { Sparkle } from "@phosphor-icons/react";
 import {
   AlertTriangle,
   Crown,
-  Plus,
   ShieldAlert,
-  Sparkles as SparklesIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/api/adapter";
@@ -19,10 +17,9 @@ import {
 } from "@/lib/menuData";
 import { clinicalCategoryLabel, useClinicalMode } from "@/lib/clinicalDiet";
 import type { DishMatchResult } from "@/lib/preferencesMatch";
-import { findSmartSwap } from "@/lib/preferencesMatch";
 import type { UserPreferences } from "@/lib/preferencesApi";
-import type { DishRationale } from "@/lib/dishRationaleApi";
 import { useCart } from "@/lib/cartContext";
+import { cn } from "@/lib/utils";
 
 type MenuCardProps = {
   item: DishData;
@@ -32,8 +29,10 @@ type MenuCardProps = {
   premiumSlugs: Set<string>;
   preferences: UserPreferences | null;
   lifestyleTag: string | null;
-  rationale: DishRationale | undefined;
+  hasSavedAddress?: boolean;
+  hasVariants?: boolean;
   onQuickAdd: (e: React.MouseEvent, item: DishData) => void;
+  onExpressBuy?: (item: DishData) => void;
   onPremiumGate: () => void;
 };
 
@@ -45,12 +44,22 @@ export default function MenuCard({
   premiumSlugs,
   preferences,
   lifestyleTag,
-  rationale,
+  hasSavedAddress = false,
+  hasVariants = false,
   onQuickAdd,
+  onExpressBuy,
   onPremiumGate,
 }: MenuCardProps) {
   const { items, updateQty } = useCart();
   const cartItem = items.find((it) => it.dishId === item.id);
+
+  const familyCartCount = useMemo(() => {
+    if (!hasVariants) return 0;
+    const baseSlug = item.slug.replace(/-(veg|chicken|prawns|white-bread|brown-bread)$/, "");
+    return items
+      .filter((it) => it.slug.startsWith(baseSlug))
+      .reduce((sum, it) => sum + it.quantity, 0);
+  }, [items, item.slug, hasVariants]);
   const isPremiumOnly = premiumSlugs.has(item.slug);
   const showPremiumGate = isPremiumOnly && !isPremium;
   const { enabled: clinicalMode } = useClinicalMode();
@@ -73,7 +82,7 @@ export default function MenuCard({
       } ${match.blocked ? "ring-1 ring-orange-500/40" : ""}`}
     >
       {/* Image — square thumbnail on mobile, 4:3 full-width on sm+ */}
-      <div className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-[4/3] overflow-hidden">
+      <Link to={`/dish/${item.slug}`} className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-[4/3] overflow-hidden block">
         <img
           src={item.image}
           srcSet={unsplashSrcset(item.image)}
@@ -95,23 +104,24 @@ export default function MenuCard({
           <Sparkle weight="fill" className="w-3.5 h-3.5 text-clinical-gold drop-shadow-[0_0_6px_rgba(212,175,55,0.6)]" />
         </motion.div>
 
-        {/* Top-left: veg dot + RD + premium */}
-        <div className="absolute top-3 left-3 z-20 flex gap-1.5 items-center">
+        {/* Top-left: sophisticated modern pill-badges + RD + premium */}
+        <div className="absolute top-3 left-3 z-20 flex gap-1.5 items-center flex-wrap">
           <span
-            className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center bg-[#050505]/80 ${
-              item.isVeg ? "border-green-500" : "border-red-500"
+            className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider bg-clinical-dark/90 backdrop-blur-md shadow-sm ${
+              item.isVeg ? "alert-safe-border alert-safe-text" : "alert-allergen-border alert-allergen-text"
             }`}
-            title={item.isVeg ? "Vegetarian" : "Non-vegetarian"}
+            title={item.isVeg ? "100% Vegetarian" : "Non-vegetarian"}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                item.isVeg ? "bg-green-500" : "bg-red-500"
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                item.isVeg ? "bg-[var(--color-alert-safe)] shadow-[0_0_6px_rgba(74,222,128,0.8)]" : "bg-[var(--color-alert-allergen)] shadow-[0_0_6px_rgba(255,107,107,0.8)]"
               }`}
             />
+            {item.isVeg ? "VEG" : "NON-VEG"}
           </span>
           {item.rdVerified && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-sage/40 text-clinical-sage bg-clinical-sage/10 backdrop-blur-sm font-semibold tracking-wider uppercase">
-              RD
+            <span className="text-[9px] px-2 py-0.5 rounded-full border alert-safe-border alert-safe-text bg-clinical-dark/90 backdrop-blur-md font-extrabold tracking-wider uppercase shadow-sm">
+              ★ RD Verified
             </span>
           )}
           {isPremiumOnly && (
@@ -119,6 +129,15 @@ export default function MenuCard({
               <Crown className="w-2.5 h-2.5" /> Premium
             </span>
           )}
+          {match.blocked ? (
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-red-500 text-red-400 bg-[#050505]/95 backdrop-blur-sm font-extrabold tracking-wider uppercase flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+              <ShieldAlert className="w-3.5 h-3.5 text-red-400" /> Blocked
+            </span>
+          ) : match.warnings.length > 0 ? (
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-orange-500/50 text-orange-400 bg-[#050505]/85 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
+              <ShieldAlert className="w-3.5 h-3.5" /> Warning
+            </span>
+          ) : null}
         </div>
 
         {/* Lifestyle tag (only when no premium overlay would conflict) */}
@@ -129,17 +148,19 @@ export default function MenuCard({
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Content — compact on mobile (horizontal card), full on sm+ (vertical card) */}
-      <div className="relative z-20 sm:-mt-10 flex-1 flex flex-col p-3 sm:p-5 gap-2 sm:gap-3 min-w-0">
+      <div className="relative z-20 sm:-mt-10 flex-1 flex flex-col p-3 sm:p-5 gap-1.5 sm:gap-2.5 min-w-0">
         <div className="flex justify-between items-start gap-2">
-          <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white">
-            {item.name}
-          </h3>
+          <Link to={`/dish/${item.slug}`} className="hover:underline flex-1 min-w-0">
+            <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white hover:text-clinical-gold transition-colors">
+              {item.name}
+            </h3>
+          </Link>
           <div className="flex flex-col items-end shrink-0">
             <span className="font-serif text-sm sm:text-lg font-medium text-clinical-gold tabular-nums">
-              {formatPrice(item.price)}
+              {hasVariants ? "from " : ""}{formatPrice(item.price)}
             </span>
             {!isLive && (
               <span className="text-[9px] text-amber-400/70">Price may vary</span>
@@ -154,108 +175,56 @@ export default function MenuCard({
             </span>
           </div>
         )}
-        <p className="text-xs text-clinical-zinc line-clamp-1 sm:line-clamp-2 leading-relaxed">
+        <p className="text-[11px] sm:text-xs text-clinical-zinc/80 line-clamp-1 sm:line-clamp-2 leading-relaxed">
           {item.description}
         </p>
 
         {/* Macro readout band (dashed top+bottom hairline) */}
         {(() => {
-          const pGrams = item.macros.protein;
-          const cGrams = item.macros.carbs;
-          const fGrams = item.macros.fat;
-          const pCal = pGrams * 4;
-          const cCal = cGrams * 4;
-          const fCal = fGrams * 9;
-          const totalCal = pCal + cCal + fCal || 1;
-          const pPct = Math.round((pCal / totalCal) * 100);
-          const cPct = Math.round((cCal / totalCal) * 100);
-          const fPct = Math.round((fCal / totalCal) * 100);
+          const proteinCalories = item.macros.protein * 4;
+          const carbsCalories = item.macros.carbs * 4;
+          const fatCalories = item.macros.fat * 9;
+          const totalMacroCalories = proteinCalories + carbsCalories + fatCalories || 1;
+          const proteinPct = Math.round((proteinCalories / totalMacroCalories) * 100);
+          const carbsPct = Math.round((carbsCalories / totalMacroCalories) * 100);
+          const fatPct = Math.round((fatCalories / totalMacroCalories) * 100);
 
           return (
-            <div className="my-3.5 flex gap-4 border-y border-dashed border-border py-2.5 font-mono text-clinical-data text-text-primary">
+            <div className="my-3.5 flex gap-4 border-y border-dashed border-clinical-border/40 py-2.5 font-mono text-clinical-data text-white">
               <div className="flex flex-col">
                 <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Kcal</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Kcal</span>
               </div>
               <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{pGrams}g</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Prot {pPct}%</span>
-                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${pPct}%` }} />
+                <span className="text-[12.5px] font-semibold">{item.macros.protein}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Prot {proteinPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${proteinPct}%` }} />
               </div>
               <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{cGrams}g</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Carb {cPct}%</span>
-                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${cPct}%` }} />
+                <span className="text-[12.5px] font-semibold">{item.macros.carbs}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Carb {carbsPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${carbsPct}%` }} />
               </div>
               <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{fGrams}g</span>
-                <span className="text-[9px] tracking-wider text-text-secondary uppercase">Fat {fPct}%</span>
-                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fPct}%` }} />
+                <span className="text-[12.5px] font-semibold">{item.macros.fat}g</span>
+                <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Fat {fatPct}%</span>
+                <span className="mt-0.5 h-[3px] rounded-sm bg-macro-fat" style={{ width: `${fatPct}%` }} />
               </div>
             </div>
           );
         })()}
 
-        <div className="hidden sm:block text-[10px] uppercase tracking-[0.12em] text-clinical-zinc font-semibold">
-          {categoryLine}
-        </div>
-
-        {preferences &&
-          (preferences.calorieTarget || preferences.proteinTargetGrams) && (
-            <div className="hidden sm:flex flex-wrap gap-1.5 text-[10px]">
-              {preferences.calorieTarget && (
-                <span className="px-1.5 py-0.5 rounded bg-clinical-surface-elevated text-clinical-zinc">
-                  {Math.round(
-                    (item.macros.calories / preferences.calorieTarget) * 100,
-                  )}
-                  % of daily kcal
-                </span>
-              )}
-              {preferences.proteinTargetGrams && (
-                <span className="px-1.5 py-0.5 rounded bg-clinical-surface-elevated text-clinical-zinc">
-                  {Math.round(
-                    (item.macros.protein / preferences.proteinTargetGrams) *
-                      100,
-                  )}
-                  % of daily protein
-                </span>
-              )}
-            </div>
-          )}
-
-        {match.warnings.length > 0 && (
-          <div className="hidden sm:block space-y-1.5">
-            <div className="flex items-start gap-1.5 text-[11px] text-orange-400">
-              <ShieldAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              <span className="leading-tight">{match.warnings[0]}</span>
-            </div>
-            {(() => {
-              const swap = findSmartSwap(item, preferences);
-              if (!swap) return null;
-              return (
-                <Link
-                  to={`/dish/${swap.slug}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1.5 text-[11px] text-clinical-gold hover:underline"
-                >
-                  <SparklesIcon className="w-3 h-3" />
-                  Smart swap: {swap.name} →
-                </Link>
-              );
-            })()}
-          </div>
-        )}
-        {match.warnings.length === 0 && match.reasons.length > 0 && (
-          <div className="hidden sm:flex items-start gap-1.5 text-[11px] text-clinical-sage">
-            <SparklesIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <span className="leading-tight">
-              Why this for you: {match.reasons[0]}
-            </span>
-          </div>
-        )}
-
-        <div className="hidden sm:block">
-          <WhyThisMealRow rationale={rationale} />
+        <div className="hidden sm:flex text-[9px] uppercase tracking-[0.12em] text-clinical-zinc/60 font-semibold items-center gap-1.5 flex-wrap">
+          <span>{categoryLine}</span>
+          <span>·</span>
+          <span className={cn(
+            "font-bold",
+            item.glycaemicIndex === "low" && "text-clinical-sage",
+            item.glycaemicIndex === "medium" && "text-amber-400",
+            item.glycaemicIndex === "high" && "text-red-400"
+          )}>
+            GI: {item.glycaemicIndex.toUpperCase()}
+          </span>
         </div>
 
         <div className="mt-auto pt-1 sm:pt-2 flex gap-1.5 sm:gap-2">
@@ -281,8 +250,8 @@ export default function MenuCard({
               <Crown className="w-3 h-3" />
               Upgrade to Premium
             </Button>
-          ) : cartItem ? (
-            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-btn border border-sage-300 dark:border-sage-700 bg-sage-100/60 dark:bg-sage-950/40 px-2 text-sage-800 dark:text-sage-300 font-sans text-[13px] font-semibold transition-all duration-200">
+          ) : cartItem && !hasVariants ? (
+            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(212,175,55,0.35)] transition-all duration-200">
               <button
                 type="button"
                 onClick={(e) => {
@@ -290,12 +259,12 @@ export default function MenuCard({
                   e.stopPropagation();
                   updateQty(cartItem.lineId, -1);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-sage-200 dark:hover:bg-sage-900/60 active:scale-90 transition-all text-lg font-bold"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/15 active:scale-90 transition-all text-base font-black"
                 aria-label="Decrease quantity"
               >
                 −
               </button>
-              <span className="font-mono tabular-nums text-sm font-bold">{cartItem.quantity}</span>
+              <span className="font-mono tabular-nums text-sm font-black">{cartItem.quantity}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -303,26 +272,42 @@ export default function MenuCard({
                   e.stopPropagation();
                   updateQty(cartItem.lineId, 1);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-sage-200 dark:hover:bg-sage-900/60 active:scale-90 transition-all text-lg font-bold"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/15 active:scale-90 transition-all text-base font-black"
                 aria-label="Increase quantity"
               >
                 +
               </button>
             </div>
           ) : (
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onQuickAdd(e, item);
-              }}
-              disabled={!item.isAvailable || !isLive}
-              title={!isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
-              className="flex-1 h-11 sm:h-10 border border-border bg-surface-raised px-3.5 py-2 font-sans text-[13px] font-semibold text-text-primary transition hover:border-saffron-700 hover:bg-saffron-50 dark:hover:bg-saffron-400/10 active:scale-95 active:bg-action active:text-action-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action shadow-sm"
-            >
-              <span aria-hidden="true">+</span> Add
-            </Button>
+            <div className="flex-1 flex gap-1.5 min-w-0">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onQuickAdd(e, item);
+                }}
+                disabled={!item.isAvailable || !isLive || match.blocked}
+                title={match.blocked ? "Cannot add dish: Allergen/Contraindication conflict" : !isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
+                className="flex-1 h-11 sm:h-10 rounded-xl border border-clinical-gold bg-clinical-gold/10 hover:bg-clinical-gold/25 text-clinical-gold px-3 py-2 font-sans text-xs font-extrabold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(212,175,55,0.15)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed truncate flex items-center justify-center gap-1"
+              >
+                <span className="text-sm font-black leading-none" aria-hidden="true">+</span> ADD{familyCartCount > 0 ? ` (${familyCartCount})` : ""}
+              </button>
+              {hasSavedAddress && preferences && !hasVariants && (
+                <button
+                  type="button"
+                  disabled={!item.isAvailable || !isLive || match.blocked}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onExpressBuy?.(item);
+                  }}
+                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(212,175,55,0.3)] active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Buy Now
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -339,35 +324,7 @@ export default function MenuCard({
   );
 }
 
-function WhyThisMealRow({ rationale }: { rationale: DishRationale | undefined }) {
-  const [open, setOpen] = useState(false);
-  if (!rationale) return null;
-  return (
-    <div className="rounded-md border border-clinical-gold/20 bg-clinical-gold/[0.04] px-2.5 py-1.5">
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        className="w-full flex items-start gap-1.5 text-left"
-        aria-expanded={open}
-      >
-        <SparklesIcon className="w-3 h-3 mt-0.5 text-clinical-gold shrink-0" />
-        <span className="flex-1 text-[11px] leading-snug text-clinical-zinc">
-          <span className="text-clinical-gold font-semibold uppercase tracking-[0.1em] text-[9px] mr-1">
-            Why this meal
-          </span>
-          {open ? rationale.expanded : rationale.rationale}
-        </span>
-        <span className="text-[10px] text-clinical-zinc-muted shrink-0">
-          {open ? "Less" : "More"}
-        </span>
-      </button>
-    </div>
-  );
-}
+
 
 function StarRating({ value }: { value: number }) {
   const full = Math.floor(value);
@@ -392,33 +349,3 @@ function StarRating({ value }: { value: number }) {
   );
 }
 
-function MacroChip({
-  label,
-  value,
-  ariaLabel,
-}: {
-  label: string;
-  value: string;
-  ariaLabel?: string;
-}) {
-  return (
-    <div
-      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-clinical-surface border border-clinical-border"
-      aria-label={ariaLabel ?? `${label} ${value}`}
-      role="group"
-    >
-      <span
-        className="text-[9px] uppercase tracking-[0.12em] text-clinical-zinc font-semibold"
-        aria-hidden="true"
-      >
-        {label}
-      </span>
-      <span
-        className="text-[11px] tabular-nums text-clinical-gold font-medium"
-        aria-hidden="true"
-      >
-        {value}
-      </span>
-    </div>
-  );
-}

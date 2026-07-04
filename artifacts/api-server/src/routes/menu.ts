@@ -78,6 +78,7 @@ const createSchema = z.object({
   tags: z.array(z.string().max(64)).optional(),
   imageUrl: z.string().url().optional(),
   slug: z.string().max(128).optional(),
+  glycaemicIndex: z.enum(["low", "medium", "high"]).nullable().optional(),
   allergenReviewState: z
     .enum(["pending_review", "reviewed", "blocked"])
     .optional(),
@@ -90,6 +91,22 @@ router.post("/menu/items", async (req: Request, res: Response) => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+
+  // Clinical protocol safeguard check
+  const finalGI = parsed.data.glycaemicIndex;
+  const finalTags = parsed.data.tags;
+  if (finalGI === "high" && finalTags && Array.isArray(finalTags)) {
+    const forbiddenTags = ["diabetes-management", "heart-healthy"];
+    const hasForbiddenTag = finalTags.some(tag => forbiddenTags.includes(tag.toLowerCase()));
+    if (hasForbiddenTag) {
+      res.status(422).json({
+        error: "Clinical Safety Violation: Dishes with high glycemic index cannot carry the 'diabetes-management' or 'heart-healthy' protocol tags.",
+        code: "clinical_safeguard_violation"
+      });
+      return;
+    }
+  }
+
   try {
     const item = await createMenuItem(parsed.data);
     await recordOpsAction({
@@ -160,6 +177,23 @@ router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
     res.status(404).json({ error: "not found" });
     return;
   }
+
+  // Clinical protocol safeguard check
+  const finalGI = bp.data.glycaemicIndex !== undefined ? bp.data.glycaemicIndex : before.glycaemicIndex;
+  const finalTags = bp.data.tags !== undefined ? bp.data.tags : before.tags;
+
+  if (finalGI === "high" && finalTags && Array.isArray(finalTags)) {
+    const forbiddenTags = ["diabetes-management", "heart-healthy"];
+    const hasForbiddenTag = finalTags.some(tag => forbiddenTags.includes(tag.toLowerCase()));
+    if (hasForbiddenTag) {
+      res.status(422).json({
+        error: "Clinical Safety Violation: Dishes with high glycemic index cannot carry the 'diabetes-management' or 'heart-healthy' protocol tags.",
+        code: "clinical_safeguard_violation"
+      });
+      return;
+    }
+  }
+
   const item = await updateItem(sp.data.slug, bp.data);
   await recordOpsAction({
     operatorId: req.user?.id ?? null,

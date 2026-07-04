@@ -6,6 +6,7 @@ import {
   subscriptionMembersTable,
   subscriptionDeliveriesTable,
   mealCreditsTable,
+  userPreferencesTable,
   type SubscriptionCadence,
   type SubscriptionItem,
   type SubscriptionDelivery,
@@ -13,6 +14,8 @@ import {
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
+import { resolveDishBySlug } from "../lib/menuResolver";
+import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const router: IRouter = Router();
 
@@ -23,6 +26,8 @@ const memberInputSchema = z.object({
   name: z.string().min(1).max(64),
   diet: dietSchema.default("any"),
   allergens: z.array(z.string()).default([]),
+  medicalConditions: z.array(z.string()).default([]),
+  dislikedIngredients: z.array(z.string()).default([]),
   lifestyle: z.string().max(32).optional(),
   spiceLevel: z.enum(["mild", "medium", "hot"]).default("medium"),
 });
@@ -41,6 +46,9 @@ const createSubscriptionSchema = z.object({
   mealsPerDelivery: z.number().int().positive().max(50),
   deliveryWindow: z.string().min(3).max(32),
   startDate: z.string().or(z.date()),
+  // "trial" = one-off 3-day sampler at 25% off list; does not recur.
+  // "standard" = the recurring plan priced by cadence.
+  planType: z.enum(["standard", "trial"]).default("standard"),
   addressLabel: z.string().max(64).optional(),
   addressLine: z.string().max(256).optional(),
   city: z.string().max(64).optional(),
@@ -73,11 +81,29 @@ const CADENCE_DISCOUNT: Record<SubscriptionCadence, number> = {
   monthly: 0.85,
 };
 
+// First-order 3-day sampler: 25% off list (no cadence discount stacked).
+const TRIAL_DISCOUNT = 0.75;
+// Canonical marker persisted in `notes` so downstream logic (block
+// recurring extension) can recognise a trial without a schema change.
+// The API accepts `planType: "trial"`; this string is an internal detail.
+const TRIAL_NOTE = "Trial: 3-Day Pack (25% off)";
+// Legacy marker from the RD-plan trial flow — still recognised so old
+// links and existing rows keep behaving as trials.
+const LEGACY_TRIAL_NOTE = "RD Plan: 3-Day Trial Pack";
+
+function isTrialSubscription(sub: { notes: string | null }): boolean {
+  return sub.notes === TRIAL_NOTE || sub.notes === LEGACY_TRIAL_NOTE;
+}
+
 function computeDeliveryPricePaise(
   cadence: SubscriptionCadence,
   meals: number,
 ): number {
   return Math.round(meals * PER_MEAL_PAISE * CADENCE_DISCOUNT[cadence]);
+}
+
+function computeTrialPricePaise(meals: number): number {
+  return Math.round(meals * PER_MEAL_PAISE * TRIAL_DISCOUNT);
 }
 
 function addDays(date: Date, days: number): Date {
@@ -192,6 +218,77 @@ async function generateDeliveriesForSubscription(
   return db.insert(subscriptionDeliveriesTable).values(rows).returning();
 }
 
+async function validateDishForSubscription(
+  dish: any,
+  userId: string,
+  subscriptionId?: number | null,
+  newMembers?: Array<{
+    diet: string;
+    allergens: string[];
+    medicalConditions?: string[];
+    dislikedIngredients?: string[];
+  }>,
+  targetMemberId?: number | null,
+): Promise<{ blocked: boolean; reasons: any[] }> {
+  const [prefsRow] = await db
+    .select()
+    .from(userPreferencesTable)
+    .where(eq(userPreferencesTable.userId, userId));
+  const primaryMatch = evaluateDishForPreferences(dish, prefsRow ?? null, { strict: true });
+  if (primaryMatch.blocked) return { blocked: true, reasons: primaryMatch.blockReasons };
+
+  const subProfiles: Array<{
+    diet: string;
+    allergens: string[];
+    medicalConditions?: string[];
+    dislikedIngredients?: string[];
+    id?: number;
+  }> = [];
+  if (newMembers && newMembers.length > 0) {
+    subProfiles.push(...newMembers);
+  } else if (subscriptionId != null) {
+    const members = await db
+      .select()
+      .from(subscriptionMembersTable)
+      .where(eq(subscriptionMembersTable.subscriptionId, subscriptionId));
+    subProfiles.push(
+      ...members.map((m) => ({
+        id: m.id,
+        diet: m.diet,
+        allergens: m.allergens ?? [],
+        medicalConditions: m.medicalConditions ?? [],
+        dislikedIngredients: m.dislikedIngredients ?? [],
+      })),
+    );
+  }
+
+  if (targetMemberId != null && !subProfiles.some((m) => m.id === targetMemberId)) {
+    return {
+      blocked: true,
+      reasons: [
+        {
+          code: "invalid_member_id",
+          message: "Target member ID does not belong to this subscription",
+        },
+      ],
+    };
+  }
+
+  for (const member of subProfiles) {
+    if (targetMemberId != null && member.id != null && member.id !== targetMemberId) continue;
+    const memberPrefs = {
+      allergens: member.allergens ?? [],
+      dislikedIngredients: member.dislikedIngredients ?? [],
+      medicalConditions: member.medicalConditions ?? [],
+      cuisines: [],
+      dietaryStyle: (member.diet === "veg" ? "vegetarian" : member.diet === "nonveg" ? "omnivore" : "omnivore") as any,
+    };
+    const mMatch = evaluateDishForPreferences(dish, memberPrefs, { strict: true });
+    if (mMatch.blocked) return { blocked: true, reasons: mMatch.blockReasons };
+  }
+  return { blocked: false, reasons: [] };
+}
+
 router.post("/subscriptions", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
@@ -201,6 +298,29 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     return;
   }
   const data = parsed.data;
+  if (data.defaultItems.length > 0) {
+    for (const item of data.defaultItems) {
+      const dish = await resolveDishBySlug(item.slug);
+      if (dish) {
+        const match = await validateDishForSubscription(
+          dish,
+          userId,
+          null,
+          data.members,
+          item.memberId,
+        );
+        if (match.blocked) {
+          res.status(422).json({
+            error: "Safety block",
+            code: "safety_block",
+            blocked: true,
+            reasons: match.reasons,
+          });
+          return;
+        }
+      }
+    }
+  }
   const startDate = new Date(data.startDate);
   if (Number.isNaN(startDate.getTime())) {
     res.status(400).json({ error: "invalid startDate" });
@@ -212,10 +332,30 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     res.status(400).json({ error: "startDate must be today or later" });
     return;
   }
-  const pricePerDeliveryPaise = computeDeliveryPricePaise(
+  // A trial is any request that asks for planType:"trial" OR carries a
+  // recognised trial marker in notes (keeps old RD-plan trial links working).
+  const isTrial =
+    data.planType === "trial" || isTrialSubscription({ notes: data.notes ?? null });
+
+  let pricePerDeliveryPaise = computeDeliveryPricePaise(
     data.cadence,
     data.mealsPerDelivery,
   );
+  let generateCount = 4;
+  // Normalise the persisted note so downstream trial detection is stable
+  // regardless of which entry point created it.
+  let notes = data.notes;
+
+  if (isTrial) {
+    pricePerDeliveryPaise = computeTrialPricePaise(data.mealsPerDelivery);
+    generateCount = 1; // one-off 3-day sampler — does not recur
+    notes = notes && notes !== LEGACY_TRIAL_NOTE ? notes : TRIAL_NOTE;
+    if (notes !== TRIAL_NOTE && notes !== LEGACY_TRIAL_NOTE) {
+      // Caller sent custom notes; append the canonical marker so the
+      // trial is still recognisable later.
+      notes = `${TRIAL_NOTE} — ${notes}`.slice(0, 512);
+    }
+  }
 
   const [sub] = await db
     .insert(subscriptionsTable)
@@ -233,7 +373,7 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       city: data.city,
       pincode: data.pincode,
       phone: data.phone,
-      notes: data.notes,
+      notes,
     })
     .returning();
 
@@ -244,6 +384,8 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
         name: m.name,
         diet: m.diet,
         allergens: m.allergens,
+        medicalConditions: m.medicalConditions,
+        dislikedIngredients: m.dislikedIngredients,
         lifestyle: m.lifestyle,
         spiceLevel: m.spiceLevel,
       })),
@@ -251,13 +393,13 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   }
 
   const deliveries = await generateDeliveriesForSubscription(
-    sub.id,
-    data.cadence,
-    startDate,
-    4,
-    data.deliveryWindow,
-    data.defaultItems,
-  );
+      sub.id,
+      data.cadence,
+      startDate,
+      generateCount,
+      data.deliveryWindow,
+      data.defaultItems,
+    );
 
   invalidateUserBrief(userId);
   res.status(201).json({ subscription: sub, deliveries });
@@ -532,6 +674,25 @@ router.post(
       res.status(409).json({ error: "no_upcoming_delivery" });
       return;
     }
+    const dish = await resolveDishBySlug(parsed.data.slug);
+    if (dish) {
+      const match = await validateDishForSubscription(
+        dish,
+        userId,
+        next.subscription.id,
+        undefined,
+        parsed.data.memberId,
+      );
+      if (match.blocked) {
+        res.status(422).json({
+          error: "Safety block",
+          code: "safety_block",
+          blocked: true,
+          reasons: match.reasons,
+        });
+        return;
+      }
+    }
     const items = [...next.delivery.items];
     const existing = items.findIndex(
       (it) => it.slug === parsed.data.slug && (it.memberId ?? null) === (parsed.data.memberId ?? null),
@@ -572,6 +733,27 @@ router.post(
     if (!parsed.success) {
       res.status(400).json({ error: "invalid payload" });
       return;
+    }
+    for (const item of parsed.data.items) {
+      const dish = await resolveDishBySlug(item.slug);
+      if (dish) {
+        const match = await validateDishForSubscription(
+          dish,
+          userId,
+          found.subscription.id,
+          undefined,
+          item.memberId,
+        );
+        if (match.blocked) {
+          res.status(422).json({
+            error: "Safety block",
+            code: "safety_block",
+            blocked: true,
+            reasons: match.reasons,
+          });
+          return;
+        }
+      }
     }
     const [updated] = await db
       .update(subscriptionDeliveriesTable)
@@ -706,6 +888,12 @@ router.post(
     const sub = await loadSubscriptionForUser(subId, userId);
     if (!sub) {
       res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (isTrialSubscription(sub)) {
+      res
+        .status(400)
+        .json({ error: "cannot generate more deliveries for a trial pack subscription" });
       return;
     }
     if (sub.status !== "active") {

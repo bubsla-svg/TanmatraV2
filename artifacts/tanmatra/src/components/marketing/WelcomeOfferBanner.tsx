@@ -2,38 +2,23 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Gift, X, ArrowRight } from "lucide-react";
 import { useOrders } from "@/lib/ordersContext";
+import { track } from "@/lib/analytics";
 
 /**
  * First-order welcome banner.
  *
- * Surfaces a flat-amount discount on the first order to anonymous /
- * never-purchased visitors. Indian D2C food competitors lead with a
- * 30-50% first-order coupon — having zero is a known top-of-funnel
- * conversion killer (audit P0 #11).
- *
- * The visible UX ships here. Backend voucher needs:
- *   1. Create a voucher with code `WELCOME150` (or whatever the ops
- *      team picks below) in the loyalty engine, with constraints:
- *        - first-order-only (server-side check on userId.orderCount)
- *        - min cart subtotal e.g. ₹600
- *        - ₹150 flat off, capped to subtotal
- *        - no expiry / 90d expiry
- *   2. Optionally auto-apply via Checkout: read a deep-link param
- *      `?promo=WELCOME150` and pass to `corporateApi.redeemVoucher`.
- *
- * Today this component just shows the offer + the deep-link. If the
- * voucher doesn't exist server-side, Checkout's existing voucher input
- * surfaces a "Voucher not found" toast — no harder failure mode.
+ * Surfaces the first-order offer (flat 25% off, capped at ₹80) to
+ * visitors with no order history. No code to type: the discount is
+ * auto-applied server-side by loyaltyEngine.finalizeOrder, which is
+ * the single source of truth for eligibility and the amount. This
+ * banner is display-only.
  */
 
 const DISMISS_KEY = "tanmatra:welcome-banner-dismissed-at:v1";
 const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Single source of truth for the offer copy + code. Update both when
-// ops creates a different voucher.
-const WELCOME_CODE = "WELCOME150";
-const WELCOME_AMOUNT_LABEL = "₹150 off";
-const WELCOME_MIN_LABEL = "min order ₹600";
+// Keep in sync with FIRST_ORDER_DISCOUNT_BPS / _CAP_PAISE on the server.
+const WELCOME_AMOUNT_LABEL = "flat 25% off (up to ₹80)";
 
 function isDismissed(): boolean {
   if (typeof window === "undefined") return false;
@@ -52,7 +37,9 @@ export default function WelcomeOfferBanner() {
       setVisible(false);
       return;
     }
-    setVisible(!isDismissed());
+    const show = !isDismissed();
+    setVisible(show);
+    if (show) track("first_order_offer_shown");
   }, [orders.length]);
 
   if (!visible) return null;
@@ -70,13 +57,11 @@ export default function WelcomeOfferBanner() {
         <Gift className="w-4 h-4 text-clinical-gold shrink-0" aria-hidden />
         <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="font-semibold text-white">
-            First order? {WELCOME_AMOUNT_LABEL} with code{" "}
-            <span className="font-mono tracking-wider text-clinical-gold">
-              {WELCOME_CODE}
-            </span>
+            First order?{" "}
+            <span className="text-clinical-gold">{WELCOME_AMOUNT_LABEL}</span>
           </span>
           <span className="text-clinical-zinc hidden sm:inline">
-            · {WELCOME_MIN_LABEL} · auto-applied at checkout
+            · auto-applied at checkout, no code needed
           </span>
         </div>
         <Link

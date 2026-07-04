@@ -66,7 +66,10 @@ const MOCK_STATUS_PROGRESSION: OrderStatus[] = [
 // Module-level mock state (not persisted — resets on reload).
 const mockOrders = new Map<string, { status: OrderStatus; createdAt: number; etaMinutes: number }>();
 
-async function mockCreateOrder(payload: CreateOrderPayload): Promise<CreateOrderResponse> {
+async function mockCreateOrder(
+  payload: CreateOrderPayload,
+  _idempotencyKey?: string,
+): Promise<CreateOrderResponse> {
   await delay(600);
   const orderId = `MOCK-${Date.now().toString(36).toUpperCase()}`;
   mockOrders.set(orderId, { status: "confirmed", createdAt: Date.now(), etaMinutes: 20 });
@@ -74,7 +77,10 @@ async function mockCreateOrder(payload: CreateOrderPayload): Promise<CreateOrder
   return { orderId, status: "confirmed", etaMinutes: 20, total: 0 };
 }
 
-async function mockCreateUpiIntent(payload: UpiIntentPayload): Promise<UpiIntentResponse> {
+async function mockCreateUpiIntent(
+  payload: UpiIntentPayload,
+  _idempotencyKey?: string,
+): Promise<UpiIntentResponse> {
   await delay(800);
   const intentId = `INT-${Date.now().toString(36).toUpperCase()}`;
   // Simulate auto-completion after 6 s.
@@ -117,10 +123,22 @@ async function mockGetOrderStatus(orderId: string): Promise<OrderStatusResponse>
 
 // ── Real adapter ──────────────────────────────────────────────────────────────
 
-async function realCreateOrder(payload: CreateOrderPayload): Promise<CreateOrderResponse> {
+function mintIdempotencyKey(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function realCreateOrder(
+  payload: CreateOrderPayload,
+  idempotencyKey?: string,
+): Promise<CreateOrderResponse> {
   const res = await fetch(`${API_BASE}/orders`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey || mintIdempotencyKey(),
+    },
     credentials: "include",
     body: JSON.stringify(payload),
   });
@@ -128,10 +146,16 @@ async function realCreateOrder(payload: CreateOrderPayload): Promise<CreateOrder
   return res.json() as Promise<CreateOrderResponse>;
 }
 
-async function realCreateUpiIntent(payload: UpiIntentPayload): Promise<UpiIntentResponse> {
+async function realCreateUpiIntent(
+  payload: UpiIntentPayload,
+  idempotencyKey?: string,
+): Promise<UpiIntentResponse> {
   const res = await fetch(`${API_BASE}/payments/upi/intent`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey || mintIdempotencyKey(),
+    },
     credentials: "include",
     body: JSON.stringify(payload),
   });

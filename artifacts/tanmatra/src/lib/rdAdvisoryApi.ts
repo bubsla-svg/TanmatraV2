@@ -94,6 +94,12 @@ export interface LabInput {
   note?: string;
 }
 
+function mintIdempotencyKey(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export const rdAdvisoryApi = {
   myAppointments: () =>
     request<{ appointments: RdAppointment[] }>("/rd/appointments"),
@@ -101,9 +107,10 @@ export const rdAdvisoryApi = {
     request<{ taken: Array<{ startAt: string; endAt: string }> }>(
       `/rd/availability?rdSlug=${encodeURIComponent(rdSlug)}`,
     ),
-  book: (input: BookInput) =>
+  book: (input: BookInput, idempotencyKey?: string) =>
     request<{ appointment: RdAppointment }>("/rd/appointments", {
       method: "POST",
+      headers: { "Idempotency-Key": idempotencyKey || mintIdempotencyKey() },
       body: JSON.stringify(input),
     }),
   cancel: (id: number) =>

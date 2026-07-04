@@ -29,7 +29,8 @@ export type OrderPriority = "routine" | "urgent" | "stat";
 // ─── Geo helpers ───────────────────────────────────────────────────────────
 
 const METRO_CENTERS: Record<string, { lat: number; lng: number }> = {
-  "560": { lat: 12.9716, lng: 77.5946 }, // Bengaluru
+  "201": { lat: 28.5355, lng: 77.391 }, // Noida / Greater Noida (service area)
+  "122": { lat: 28.4595, lng: 77.0266 }, // Gurgaon (service area)
   "110": { lat: 28.6139, lng: 77.209 }, // Delhi
   "400": { lat: 19.076, lng: 72.8777 }, // Mumbai
   "600": { lat: 13.0827, lng: 80.2707 }, // Chennai
@@ -52,7 +53,7 @@ export function addressLatLng(addr: {
   line?: string | null;
 }): { lat: number; lng: number } {
   const pin = (addr.pincode ?? "").trim();
-  const center = METRO_CENTERS[pin.slice(0, 3)] ?? { lat: 12.97, lng: 77.59 };
+  const center = METRO_CENTERS[pin.slice(0, 3)] ?? { lat: 28.5355, lng: 77.391 };
   const seed = `${pin}|${addr.line ?? ""}|${addr.city ?? ""}`;
   const h = hash(seed);
   const dLat = (((h >>> 0) % 1200) - 600) / 10000; // ±0.06
@@ -84,7 +85,7 @@ function riderLatLng(rider: Rider): { lat: number; lng: number } {
   // Riders are kept short-lived in dev/test, so this is mostly a safety net.
   const seed = `${rider.zone}|${rider.id}`;
   const h = hash(seed);
-  const center = { lat: 12.97, lng: 77.59 };
+  const center = { lat: 28.5355, lng: 77.391 };
   return {
     lat: center.lat + (((h % 800) - 400) / 10000),
     lng: center.lng + ((((h >>> 8) % 800) - 400) / 10000),

@@ -35,6 +35,21 @@ tags:
   - name: meal-plans
     description: Smart weekly meal planner — generate, edit, and accept 7-day plans
 paths:
+  /orders/first-order-offer:
+    get:
+      operationId: getFirstOrderOffer
+      tags: [orders]
+      summary: |
+        First-order offer eligibility for the signed-in user (flat 25%
+        off, capped at Rs.80, auto-applied at finalize). Display-only —
+        finalizeOrder re-checks eligibility server-side.
+      responses:
+        "200":
+          description: Eligibility and offer parameters.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FirstOrderOffer" }
+        "401": { description: Unauthorized }
   /orders/finalize:
     post:
       operationId: finalizeOrder
@@ -1032,7 +1047,15 @@ components:
         serverOrderId: { type: integer }
         finalTotalPaise: { type: integer }
         creditsRedeemedPaise: { type: integer }
+        firstOrderDiscountPaise: { type: integer }
         referralAwarded: { type: boolean }
+    FirstOrderOffer:
+      type: object
+      required: [eligible, percentBps, capPaise]
+      properties:
+        eligible: { type: boolean }
+        percentBps: { type: integer, description: "Discount in basis points (2500 = 25%)" }
+        capPaise: { type: integer, description: "Maximum discount in paise (8000 = Rs.80)" }
     MarketplaceCheckoutRequest:
       type: object
       required: [items, deliveryMode]

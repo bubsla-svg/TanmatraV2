@@ -16,7 +16,8 @@ import {
   Utensils,
 } from "lucide-react";
 import { formatPrice } from "@/lib/api/adapter";
-import { useCart, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
+import { useCart, useCartTotals, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
+import { useOrders } from "@/lib/ordersContext";
 import { groupOrdersApi } from "@/lib/queries";
 import { Users } from "lucide-react";
 import { useState } from "react";
@@ -34,8 +35,8 @@ import {
   dishMatchesDietOrder,
   useClinicalMode,
 } from "@/lib/clinicalDiet";
-import PatientContextStrip from "@/components/clinical/PatientContextStrip";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
+import ErrorBoundary from "@/components/layout/ErrorBoundary";
 
 export const meta: MetaFunction = () => [
   { title: "Cart | Tanmatra" },
@@ -44,7 +45,7 @@ export const meta: MetaFunction = () => [
 
 export default function Cart() {
   const navigate = useNavigate();
-  const { items, updateQty, removeItem, subtotal, totalQuantity } = useCart();
+  const { items, updateQty, updateRecipient, removeItem, totalQuantity } = useCart();
   const { preferences } = usePreferences();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
   // Hydrate the runtime menu cache so getDishById reflects CMS edits.
@@ -54,6 +55,7 @@ export default function Cart() {
   // fulfillment commitment BEFORE checkout instead of discovering it at
   // payment time. Per UX audit Journey-B finding 1.
   const [nextSlot, setNextSlot] = useState<DeliverySlotOption | null>(null);
+  const [showTagInput, setShowTagInput] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
     void fulfillmentApi
@@ -129,10 +131,16 @@ export default function Cart() {
         ? `${dietConflictCount} item${dietConflictCount === 1 ? "" : "s"} conflict with the active diet order — remove to continue.`
         : null;
 
-  const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-  const total = subtotal + deliveryFee;
-  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
-  const freeDeliveryProgress = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
+  const { subtotal, tax, deliveryFee, total, amountToFreeDelivery, freeDeliveryProgress } = useCartTotals();
+  // First-order offer preview: same display heuristic as the top banner
+  // (no order history yet). Server-authoritative at finalize; this row
+  // exists so the summary total doesn't look worse than what the customer
+  // will actually pay at the moment they decide to proceed.
+  const { orders } = useOrders();
+  const projectedFirstOrderDiscount =
+    orders.length === 0 && subtotal > 0
+      ? Math.min(Math.floor(subtotal * 0.25), 8000)
+      : 0;
 
   if (items.length === 0) {
     return (
@@ -165,9 +173,9 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 pb-40 lg:pb-4 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
+    <ErrorBoundary>
+      <div className="max-w-5xl mx-auto p-4 pb-40 lg:pb-4 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
       <div className="lg:col-span-3 space-y-3">
-        <PatientContextStrip />
         <ConflictsPanel />
       </div>
       <div className="lg:col-span-2 space-y-4">
@@ -175,7 +183,7 @@ export default function Cart() {
           <div>
             <h1 className="text-clinical-h2 text-white">Your Order</h1>
             <p className="text-xs text-clinical-zinc mt-1">
-              {totalQuantity} item{totalQuantity === 1 ? "" : "s"} · Clinical-grade precision meals
+              {totalQuantity} item{totalQuantity === 1 ? "" : "s"} · Fresh, dietitian-approved meals
             </p>
           </div>
           <Link to="/menu" className="text-xs text-clinical-gold hover:underline flex items-center gap-1">
@@ -260,9 +268,9 @@ export default function Cart() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <Link to={`/dish/${item.slug}`}>
-                          <h3 className="text-sm font-semibold text-white hover:text-clinical-gold transition-colors truncate flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-white hover:text-clinical-gold transition-colors flex items-start gap-2 min-w-0">
                             <span
-                              className={`inline-flex items-center justify-center w-3 h-3 rounded-sm border ${
+                              className={`inline-flex items-center justify-center w-3 h-3 rounded-sm border shrink-0 mt-1 ${
                                 item.isVeg ? "alert-safe-border" : "alert-allergen-border"
                               }`}
                               aria-label={item.isVeg ? "Vegetarian" : "Non-vegetarian"}
@@ -278,7 +286,9 @@ export default function Cart() {
                                 }}
                               />
                             </span>
-                            {item.name}
+                            <span className="line-clamp-2 flex-1 min-w-0">
+                              {item.name}
+                            </span>
                           </h3>
                         </Link>
                         <p className="text-[10px] text-clinical-zinc capitalize mt-0.5">
@@ -327,9 +337,35 @@ export default function Cart() {
                         ))}
                       </div>
                     )}
+                    {item.recipient || showTagInput === item.lineId ? (
+                      <div className="flex items-center gap-1.5 mt-1.5 animate-in fade-in duration-100">
+                        <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
+                        <input
+                          type="text"
+                          placeholder="e.g. Mom, Child"
+                          autoFocus={showTagInput === item.lineId}
+                          value={item.recipient || ""}
+                          onChange={(e) => updateRecipient(item.lineId, e.target.value)}
+                          onBlur={() => {
+                            if (!item.recipient) setShowTagInput(null);
+                          }}
+                          className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowTagInput(item.lineId)}
+                        className="text-[10px] text-clinical-gold hover:underline mt-1.5 text-left font-medium block"
+                      >
+                        + Add name tag
+                      </button>
+                    )}
 
-                    <div className="flex items-end justify-between gap-3">
-                      <MacroOverlay macros={item.macros} rdVerified={item.rdVerified} compact />
+                    <div className="flex items-end justify-between gap-3 pt-1">
+                      <div className="text-xs text-clinical-zinc font-medium">
+                        {item.macros.calories} Kcal
+                      </div>
 
                       <div className="flex items-center gap-1 shrink-0 rounded-md border border-clinical-border bg-clinical-dark/40">
                         <Button
@@ -449,6 +485,12 @@ export default function Cart() {
                 <span className="text-clinical-zinc">Subtotal ({totalQuantity} items)</span>
                 <span className="tabular-nums text-white font-medium">{formatPrice(subtotal)}</span>
               </div>
+              {tax > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-clinical-zinc">GST (18%)</span>
+                  <span className="tabular-nums text-white font-medium">{formatPrice(tax)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-xs">
                 <span className="text-clinical-zinc flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
@@ -458,8 +500,16 @@ export default function Cart() {
                   {deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
                 </span>
               </div>
-              {deliveryFee === 0 && (
-                <p className="text-[10px] text-clinical-sage">Free delivery on orders above Rs.500</p>
+              {deliveryFee === 0 && subtotal > 0 && (
+                <p className="text-[10px] text-clinical-sage">Free delivery on orders above ₹500</p>
+              )}
+              {projectedFirstOrderDiscount > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-clinical-gold">First-order offer (25% up to ₹80)</span>
+                  <span className="tabular-nums text-clinical-gold">
+                    -{formatPrice(projectedFirstOrderDiscount)}
+                  </span>
+                </div>
               )}
             </div>
 
@@ -467,8 +517,15 @@ export default function Cart() {
 
             <div className="flex justify-between">
               <span className="text-sm font-semibold text-white">Total</span>
-              <span className="tabular-nums text-lg font-bold text-clinical-gold">{formatPrice(total)}</span>
+              <span className="tabular-nums text-lg font-bold text-clinical-gold">
+                {formatPrice(Math.max(0, total - projectedFirstOrderDiscount))}
+              </span>
             </div>
+            {projectedFirstOrderDiscount > 0 && (
+              <p className="text-[10px] text-clinical-zinc -mt-2">
+                Offer applied automatically at checkout.
+              </p>
+            )}
 
             {nextSlot && (
               <div className="flex items-center justify-between gap-2 rounded-md border border-clinical-border bg-clinical-surface-elevated/50 px-3 py-2 text-[11px]">
@@ -550,6 +607,7 @@ export default function Cart() {
         </div>
       </div>
     </div>
+  </ErrorBoundary>
   );
 }
 

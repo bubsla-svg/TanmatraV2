@@ -17,7 +17,7 @@ import { eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { dispatchOrder, haversineKm } from "./dispatch";
 
-const CENTER = { lat: 12.9716, lng: 77.5946 }; // BLR
+const CENTER = { lat: 28.5355, lng: 77.391 }; // Noida
 const INSIDE_RADIUS_KM = 1.0; // safely inside BATCH_MAX_DETOUR_KM (1.5)
 const OUTSIDE_RADIUS_KM = 5.0; // well outside
 
@@ -60,7 +60,7 @@ export async function runSpatialHarness(opts: {
     .values({
       name: "stress-rider",
       phone: `+91${Math.floor(Math.random() * 1e10)}`,
-      zone: "BLR-Central",
+      zone: "NOIDA-Central",
       status: "online",
       lat: CENTER.lat,
       lng: CENTER.lng,
@@ -81,7 +81,7 @@ export async function runSpatialHarness(opts: {
           riderId: rider!.id,
           totalPaise: 30000,
           items: [{ id: 1, name: "rice", qty: 1, price: 30000 }],
-          city: "Bengaluru",
+          city: "Noida",
           pincode: "560001",
           addressLine: `outside-${i}`,
           dropLat: p.lat,
@@ -104,7 +104,7 @@ export async function runSpatialHarness(opts: {
           riderId: rider!.id,
           totalPaise: 30000,
           items: [{ id: 1, name: "rice", qty: 1, price: 30000 }],
-          city: "Bengaluru",
+          city: "Noida",
           pincode: "560001",
           addressLine: `inside-${i}`,
           dropLat: p.lat,
@@ -127,7 +127,7 @@ export async function runSpatialHarness(opts: {
           status: "ready",
           totalPaise: 30000,
           items: [{ id: 1, name: "rice", qty: 1, price: 30000 }],
-          city: "Bengaluru",
+          city: "Noida",
           pincode: "560001",
           addressLine: `target-${i}`,
           dropLat: CENTER.lat,

@@ -14,6 +14,7 @@ import { startReviewSummarizerScheduler } from "./lib/menuEngineeringScheduler";
 import { startMealPlanScheduler } from "./lib/mealPlanScheduler";
 import { startAnalyticsScheduler } from "./lib/analyticsScheduler";
 import { ensureSafeViews } from "./lib/safeSql";
+import { seedComplianceLogsIfEmpty } from "./lib/complianceSeeder";
 import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
 import { purgeExpiredSessions } from "./lib/auth";
@@ -23,44 +24,46 @@ import { drainOpsAuditOutbox } from "./lib/opsAudit";
 import { pool, overridePool } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
+let port = 8080;
 
 if (!rawPort) {
- throw new Error(
- "PORT environment variable is required but was not provided.",
- );
+  if (process.env["NODE_ENV"] === "production") {
+    logger.fatal("PORT environment variable is required in production but was not provided. Exiting.");
+    process.exit(1);
+  } else {
+    logger.info("PORT environment variable not provided. Defaulting to 8080.");
+  }
+} else {
+  const parsed = Number(rawPort);
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    logger.fatal({ rawPort }, "Invalid PORT environment variable provided. Exiting.");
+    process.exit(1);
+  }
+  port = parsed;
 }
 
-const port = Number(rawPort);
+const schedulersDisabled = process.env["DISABLE_SCHEDULERS"] === "true";
 
-if (Number.isNaN(port) || port <= 0) {
- throw new Error(`Invalid PORT value: "${rawPort}"`);
+if (!schedulersDisabled) {
+  assertRedisAvailableInProduction();
 }
-
-// Refuse to boot in production without Redis — see queue.ts for why
-// silent degradation here is unsafe (orders accepted but never advanced).
-assertRedisAvailableInProduction();
 
 const httpServer = createServer(app);
 initRealtime(httpServer);
-startWorkers();
-startLoyaltyScheduler();
-startAnomalyScheduler();
-startAnomalyDigestSender();
-startReviewSummarizerScheduler();
-startMealPlanScheduler();
-void resumeActiveSimulations();
+if (!schedulersDisabled) {
+  startWorkers();
+  startLoyaltyScheduler();
+  startAnomalyScheduler();
+  startAnomalyDigestSender();
+  startReviewSummarizerScheduler();
+  startMealPlanScheduler();
+  void resumeActiveSimulations();
+}
 
 // Bootstrap the curated safe_* views and reader role BEFORE we start
 // listening, so the very first /analytics/* request can never race view
 // creation. We then start the scheduler and bind the port.
 async function start(): Promise<void> {
- try {
- await ensureSafeViews();
- } catch (err) {
- logger.error({ err }, "ensureSafeViews failed (continuing without safe layer)");
- }
- startAnalyticsScheduler();
-
  // Properly catch port-binding errors
  httpServer.on("error", (err: NodeJS.ErrnoException) => {
  logger.error({ err }, "Error listening on port");
@@ -70,6 +73,16 @@ async function start(): Promise<void> {
  // Explicitly bind to 0.0.0.0 for Cloud Run compatibility
  httpServer.listen(port, "0.0.0.0", () => {
  logger.info({ port }, "Server listening on 0.0.0.0");
+ ensureSafeViews()
+ .then(async () => {
+   await seedComplianceLogsIfEmpty();
+   startAnalyticsScheduler();
+ })
+ .catch(async (err) => {
+   logger.error({ err }, "ensureSafeViews failed (continuing without safe layer)");
+   await seedComplianceLogsIfEmpty();
+   startAnalyticsScheduler();
+ });
  });
 }
 void start();
@@ -107,8 +120,8 @@ purgeTimer.unref();
 // reclaimed within ~SLOT_RECLAIM_INTERVAL_MS + graceMs (≈90s with the
 // defaults below), not the hourly hygiene window. This bounds the worst-
 // case capacity-starvation latency under load.
-const SLOT_RECLAIM_INTERVAL_MS = 30_000;
-const SLOT_RECLAIM_GRACE_MS = 60_000;
+const SLOT_RECLAIM_INTERVAL_MS = Number(process.env["SLOT_RECLAIM_INTERVAL_MS"] ?? "30000");
+const SLOT_RECLAIM_GRACE_MS = Number(process.env["SLOT_RECLAIM_GRACE_MS"] ?? "60000");
 const slotReclaimTimer = setInterval(() => {
  sweepOrphanSlotReservations({ graceMs: SLOT_RECLAIM_GRACE_MS })
  .then((n) => {
@@ -125,8 +138,8 @@ slotReclaimTimer.unref();
 // of seconds even though they were committed off the critical path.
 // SKIP LOCKED inside the drainer means a second pod is safe; failures
 // per-row are caught and recorded inside the worker.
-const OPS_AUDIT_DRAIN_INTERVAL_MS = 500;
-const OPS_AUDIT_DRAIN_BATCH = 50;
+const OPS_AUDIT_DRAIN_INTERVAL_MS = Number(process.env["OPS_AUDIT_DRAIN_INTERVAL_MS"] ?? "2000");
+const OPS_AUDIT_DRAIN_BATCH = Number(process.env["OPS_AUDIT_DRAIN_BATCH"] ?? "50");
 let opsAuditDrainInFlight = false;
 const opsAuditOutboxTimer = setInterval(() => {
  if (opsAuditDrainInFlight) return;
@@ -143,12 +156,12 @@ opsAuditOutboxTimer.unref();
 
 // --- Process-level safety nets ---------------------------------------------
 process.on("unhandledRejection", (reason) => {
+ console.error("Unhandled Rejection:", reason);
  logger.error({ reason }, "unhandledRejection");
 });
 process.on("uncaughtException", (err) => {
+ console.error("Uncaught Exception:", err);
  logger.fatal({ err }, "uncaughtException");
- // Exit so the orchestrator can restart us cleanly. We don't try to
- // continue — node's invariants are no longer guaranteed.
  process.exit(1);
 });
 
@@ -163,7 +176,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  logger.info({ signal }, "shutdown initiated");
  // Give the load balancer ~10 s to notice the readiness flip before
  // we slam the connection. Tunable per environment.
- const HARD_DEADLINE_MS = 15_000;
+  const HARD_DEADLINE_MS = Number(process.env["HARD_DEADLINE_MS"] ?? "15000");
  const killer = setTimeout(() => {
  logger.error("hard shutdown deadline reached — exiting");
  process.exit(1);

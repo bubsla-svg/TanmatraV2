@@ -408,6 +408,37 @@ export interface FinalizeOrderAddress {
 
 export const PREORDER_DISCOUNT_BPS = 500; // 5% off scheduled orders
 
+// First-order offer: flat 25% off the meal subtotal, capped at ₹80.
+// Applied after bundle/pickup/preorder discounts, before credit
+// redemption. Eligibility = authenticated user has no prior
+// non-cancelled order.
+export const FIRST_ORDER_DISCOUNT_BPS = 2500;
+export const FIRST_ORDER_DISCOUNT_CAP_PAISE = 8_000;
+
+export async function userIsFirstOrderEligible(
+  userId: string,
+  // Exclude the order being finalized so an idempotent retry of the
+  // user's first order still counts as eligible (its own row from the
+  // first attempt must not disqualify the replayed response).
+  excludeExternalOrderId?: string,
+): Promise<boolean> {
+  const conditions = [
+    eq(ordersTable.userId, userId),
+    sql`${ordersTable.status} <> 'cancelled'`,
+  ];
+  if (excludeExternalOrderId) {
+    conditions.push(
+      sql`${ordersTable.externalOrderId} is distinct from ${excludeExternalOrderId}`,
+    );
+  }
+  const [prior] = await db
+    .select({ id: ordersTable.id })
+    .from(ordersTable)
+    .where(and(...conditions))
+    .limit(1);
+  return !prior;
+}
+
 export async function finalizeOrder(args: {
   userId: string;
   orderId: string;
@@ -428,6 +459,7 @@ export async function finalizeOrder(args: {
   bundleDiscountPaise: number;
   pickupDiscountPaise: number;
   preorderDiscountPaise: number;
+  firstOrderDiscountPaise: number;
   redeemedPaise: number;
   finalPaise: number;
   balancePaise: number;
@@ -504,6 +536,7 @@ export async function finalizeOrder(args: {
     ? {
         allergens: prefRow.allergens ?? [],
         dislikedIngredients: prefRow.dislikedIngredients ?? [],
+        medicalConditions: prefRow.medicalConditions ?? [],
         cuisines: prefRow.cuisines ?? [],
         dietaryStyle: prefRow.dietaryStyle,
         goal: prefRow.goal,
@@ -689,7 +722,21 @@ export async function finalizeOrder(args: {
   const preorderDiscountPaise = isScheduled
     ? Math.floor((grossAfterBundles * PREORDER_DISCOUNT_BPS) / 10_000)
     : 0;
-  const discountedGross = grossAfterBundles - preorderDiscountPaise;
+  const grossAfterPreorder = grossAfterBundles - preorderDiscountPaise;
+  // First-order offer (25% up to ₹80) — server-authoritative; the client
+  // mirrors the same math for display and reconciles the charge against
+  // the value returned from here.
+  let firstOrderDiscountPaise = 0;
+  if (
+    grossAfterPreorder > 0 &&
+    (await userIsFirstOrderEligible(args.userId, args.orderId))
+  ) {
+    firstOrderDiscountPaise = Math.min(
+      Math.floor((grossAfterPreorder * FIRST_ORDER_DISCOUNT_BPS) / 10_000),
+      FIRST_ORDER_DISCOUNT_CAP_PAISE,
+    );
+  }
+  const discountedGross = grossAfterPreorder - firstOrderDiscountPaise;
   const requested = Math.max(0, Math.floor(args.applyCreditsPaise ?? 0));
   const pendingDispatches: Notification[] = [];
   const txPromise = db.transaction(async (tx) => {
@@ -720,6 +767,7 @@ export async function finalizeOrder(args: {
       ? {
           allergens: txPrefRow.allergens ?? [],
           dislikedIngredients: txPrefRow.dislikedIngredients ?? [],
+          medicalConditions: txPrefRow.medicalConditions ?? [],
           cuisines: txPrefRow.cuisines ?? [],
           dietaryStyle: txPrefRow.dietaryStyle,
           goal: txPrefRow.goal,
@@ -827,6 +875,7 @@ export async function finalizeOrder(args: {
         bundleDiscountPaise,
         pickupDiscountPaise,
         preorderDiscountPaise,
+        firstOrderDiscountPaise,
         redeemedPaise: existing?.redeemedPaise ?? 0,
         finalPaise: existing?.finalPaise ?? discountedGross,
         balancePaise: balance,
@@ -941,6 +990,7 @@ export async function finalizeOrder(args: {
       bundleDiscountPaise,
       pickupDiscountPaise,
       preorderDiscountPaise,
+      firstOrderDiscountPaise,
       redeemedPaise: redeemed,
       finalPaise,
       balancePaise,

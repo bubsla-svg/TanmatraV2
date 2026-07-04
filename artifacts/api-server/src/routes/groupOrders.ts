@@ -5,10 +5,12 @@ import { z } from "zod/v4";
 import {
   db,
   groupOrdersTable,
+  userPreferencesTable,
   type GroupOrderLine,
 } from "@workspace/db";
 import { resolveDishById } from "../lib/menuResolver";
 import { rateLimit } from "../lib/rateLimit";
+import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const MAX_LINES_PER_GROUP = 50;
 
@@ -150,6 +152,14 @@ router.post("/group-orders/:code/items", async (req: Request, res: Response) => 
       if ((existing.items?.length ?? 0) >= MAX_LINES_PER_GROUP) {
         return { error: "full" as const };
       }
+      const [prefsRow] = await tx
+        .select()
+        .from(userPreferencesTable)
+        .where(eq(userPreferencesTable.userId, auth.id));
+      const match = evaluateDishForPreferences(dish, prefsRow ?? null, { strict: true });
+      if (match.blocked) {
+        return { error: "safety_block" as const, reasons: match.blockReasons };
+      }
       const line: GroupOrderLine = {
         lineId: `gline-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         dishId: dish.id,
@@ -175,6 +185,15 @@ router.post("/group-orders/:code/items", async (req: Request, res: Response) => 
       return { group: updated };
     });
     if ("error" in out) {
+      if (out.error === "safety_block") {
+        res.status(422).json({
+          error: "Safety block",
+          code: "safety_block",
+          blocked: true,
+          reasons: out.reasons,
+        });
+        return;
+      }
       const status =
         out.error === "not_found" ? 404 : out.error === "closed" ? 409 : 422;
       const msg =

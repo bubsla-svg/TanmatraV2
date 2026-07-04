@@ -11,6 +11,7 @@ export interface OrderFinalizeResult {
   serverOrderId?: number;
   finalTotalPaise?: number;
   creditsRedeemedPaise?: number;
+  firstOrderDiscountPaise?: number;
   referralAwarded?: boolean;
   [key: string]: unknown;
 }

@@ -61,6 +61,17 @@ async function makeUser(): Promise<string> {
     lastName: "Tester",
   });
   CREATED_USER_IDS.push(id);
+  // Seed one delivered order so the first-order offer (25% up to ₹80)
+  // never fires here — these tests lock in bundle math specifically.
+  // The offer itself is covered in loyaltyEngine.checkout.test.ts.
+  await db.insert(ordersTable).values({
+    userId: id,
+    externalOrderId: `prior-${randomUUID()}`,
+    status: "delivered",
+    totalPaise: 10_000,
+    items: [{ id: 1, name: "Prior Meal", qty: 1, price: 10_000 }],
+    fulfillmentType: "delivery",
+  });
   return id;
 }
 

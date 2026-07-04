@@ -5,6 +5,9 @@
 
 /* ─── Dynamic Dual-Theme Semantic Tokens ─── */
 :root {
+  --bottom-nav-height: 58px;
+  --bottom-cta-height: 68px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   --bg: #FAF8F3;            /* stone-50: warm cream background */
   --surface: #FFFFFF;       /* stone-0: elevated card background */
   --surface-raised: #FFFFFF;

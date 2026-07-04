@@ -129,7 +129,7 @@ export default function Recipes() {
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-transparent to-transparent keep-gradient" />
                   <Badge className="absolute top-3 left-3 bg-clinical-sage/80 text-white border-0 gap-0.5 text-[9px] h-5">
                     <ShieldCheck className="w-2.5 h-2.5" />
                     {r.authorRole}

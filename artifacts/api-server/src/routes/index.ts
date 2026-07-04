@@ -13,6 +13,7 @@ import opsRouter from "./ops";
 import subscriptionsRouter from "./subscriptions";
 import loyaltyRouter from "./loyalty";
 import preferencesRouter from "./preferences";
+import userConsentsRouter from "./userConsents";
 import rdAdvisoryRouter from "./rdAdvisory";
 import bundlesRouter from "./bundles";
 import groupOrdersRouter from "./groupOrders";
@@ -43,6 +44,7 @@ import ordersRouter from "./orders";
 import checkoutRouter from "./checkout";
 import paymentsRouter from "./payments";
 import vitalsRouter from "./vitals";
+import complianceRouter from "./compliance";
 
 const router: IRouter = Router();
 
@@ -60,6 +62,7 @@ router.use("/ops", opsRouter);
 router.use(subscriptionsRouter);
 router.use(loyaltyRouter);
 router.use(preferencesRouter);
+router.use(userConsentsRouter);
 router.use(rdAdvisoryRouter);
 router.use(bundlesRouter);
 router.use(groupOrdersRouter);
@@ -90,5 +93,6 @@ router.use(ordersRouter);
 router.use(checkoutRouter);
 router.use(paymentsRouter);
 router.use(vitalsRouter);
+router.use(complianceRouter);
 
 export default router;

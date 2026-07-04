@@ -5,7 +5,7 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
-# Don't let two pushes to main race each other into Cloud Run / Firebase.
+# Don't let two pushes to main race each other into the Cloud Run services.
 concurrency:
   group: deploy-main
   cancel-in-progress: false
@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: read
     env:
-      GCP_PROJECT: omnismtp
+      GCP_PROJECT: brand-tanmatra-tmg
       GCP_REGION: asia-south2
       SERVICE: wellness-foods
     steps:
@@ -67,7 +67,7 @@ jobs:
           # Submit async to avoid VPC-SC log-streaming errors from the
           # GitHub runner. Poll build status directly instead.
           BUILD_ID=$(gcloud builds submit \
-            --tag gcr.io/${GCP_PROJECT}/${SERVICE}:${{ github.sha }} \
+            --tag asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --project ${GCP_PROJECT} \
             --async \
             --format='value(id)')
@@ -89,60 +89,151 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${SERVICE} \
-            --image gcr.io/${GCP_PROJECT}/${SERVICE}:${{ github.sha }} \
+            --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }},ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }},ADMIN_SESSION_SECRET=${{ secrets.ADMIN_SESSION_SECRET }}" \
+            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
+            --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest" \
+            --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
+            --memory=1Gi \
+            --cpu=1 \
+            --cpu-boost \
             --quiet
 
-      - name: Smoke-test /api/healthz
+      - name: Smoke-test /api/livez
         run: |
           URL=$(gcloud run services describe ${SERVICE} \
             --region ${GCP_REGION} --project ${GCP_PROJECT} \
             --format='value(status.url)')
           echo "Service URL: $URL"
-          for i in 1 2 3 4 5; do
-            if curl -sf "$URL/api/healthz" >/dev/null; then
-              echo "healthz OK"; exit 0
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -sf "$URL/api/livez" >/dev/null; then
+              echo "livez OK"; exit 0
             fi
-            echo "healthz attempt $i failed, retrying..."; sleep 5
+            echo "livez attempt $i failed, retrying..."; sleep 5
           done
-          echo "healthz never returned 200"; exit 1
+          echo "livez never returned 200"; exit 1
 
-  # Build the SPA and deploy to Firebase Hosting. Waits for cloud-run so
-  # the new admin login page never goes live before the new login API
-  # exists. If cloud-run was skipped (frontend-only push), we still run.
-  firebase:
+  # Build the SPA image and roll the `tanmatra` Cloud Run service — the
+  # service the production domain (tanmatra.food) actually serves. This
+  # replaces the old Firebase Hosting deploy: tanmatra.food is a Cloud Run
+  # domain mapping (server: Google Frontend), NOT Firebase, so the Firebase
+  # deploys never reached the live site. Deploying here, in the same pipeline
+  # that runs on every push to main, makes frontend rollouts reliable instead
+  # of depending on a separate Cloud Build trigger.
+  #
+  # Runs whenever web files changed, regardless of the cloud-run job's result
+  # (the frontend targets a STABLE API URL, so a backend blip must not block
+  # frontend fixes); only a cancelled run aborts it.
+  frontend-cloud-run:
     needs: [changes, cloud-run]
     if: |
       always() &&
       needs.changes.outputs.web == 'true' &&
-      (needs.cloud-run.result == 'success' || needs.cloud-run.result == 'skipped')
+      needs.cloud-run.result != 'cancelled'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      GCP_REGION: asia-south2
+      SERVICE: tanmatra
+      API_URL: https://wellness-foods-475157072474.asia-south2.run.app/api
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          node-version: 24
-          cache: pnpm
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Build tanmatra
-        run: pnpm --filter @workspace/tanmatra run build
-        env:
-          NODE_ENV: production
-          VITE_API_BASE: https://wellness-foods-1076775857511.asia-south2.run.app/api
+      - name: Build image with Cloud Build
+        run: |
+          IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          # Custom Dockerfile + build-arg (VITE_API_BASE is baked into the
+          # bundle), so we submit an inline build config rather than --tag.
+          # Async + CLOUD_LOGGING_ONLY avoids VPC-SC log-streaming errors.
+          cat > /tmp/frontend-cloudbuild.yaml <<EOF
+          steps:
+            - name: gcr.io/cloud-builders/docker
+              args:
+                - build
+                - --build-arg
+                - VITE_API_BASE=${API_URL}
+                - --build-arg
+                - VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+                - --build-arg
+                - VITE_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+                - --build-arg
+                - VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+                - --build-arg
+                - VITE_FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+                - --build-arg
+                - VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+                - --build-arg
+                - VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+                - --build-arg
+                - VITE_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
+                - --build-arg
+                - VITE_RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}
+                - -t
+                - ${IMAGE}
+                - -f
+                - artifacts/tanmatra/Dockerfile
+                - .
+          images:
+            - ${IMAGE}
+          options:
+            logging: CLOUD_LOGGING_ONLY
+            machineType: E2_HIGHCPU_8
+          EOF
+          BUILD_ID=$(gcloud builds submit \
+            --config /tmp/frontend-cloudbuild.yaml \
+            --project ${GCP_PROJECT} \
+            --async \
+            --format='value(id)' .)
+          echo "Cloud Build ID: $BUILD_ID"
+          for i in $(seq 1 50); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" \
+              --project ${GCP_PROJECT} --format='value(status)')
+            echo "[$i/50] Build status: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then exit 0; fi
+            if [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "TIMEOUT" ]; then
+              echo "Build failed with status: $STATUS"; exit 1
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for Cloud Build"; exit 1
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TANMATRA_1D763 }}
-          projectId: tanmatra-1d763
-          channelId: live
-          entryPoint: artifacts/tanmatra
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${SERVICE} \
+            --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --quiet
+
+      - name: Smoke-test /checkout serves the SPA shell
+        run: |
+          URL=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.url)')
+          echo "Service URL: $URL"
+          # A client-only route must now return the small __spa-fallback.html
+          # shell, not the large prerendered home document (the hydration-crash
+          # bug). Treat a sub-20KB response as the fixed SPA shell.
+          for i in 1 2 3 4 5 6; do
+            BYTES=$(curl -s "$URL/checkout" | wc -c)
+            echo "[$i/6] /checkout bytes: $BYTES"
+            if [ "$BYTES" -gt 0 ] && [ "$BYTES" -lt 20000 ]; then
+              echo "checkout serves SPA shell — OK"; exit 0
+            fi
+            sleep 5
+          done
+          echo "checkout still not serving the SPA shell"; exit 1

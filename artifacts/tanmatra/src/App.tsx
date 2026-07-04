@@ -15,18 +15,18 @@ import BottomNav from "@/components/layout/BottomNav";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import StickyCheckoutBar from "@/components/cart/StickyCheckoutBar";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
-// Eager imports: pages on the critical purchase path. Anything a
-// first-time visitor hits during the discover → cart → checkout flow
-// must render without a network round-trip for its bundle.
+// Eager import: Home is on the critical landing path and must render immediately.
 import Home from "@/pages/Home";
-import Menu from "@/pages/Menu";
-import Dish from "@/pages/Dish";
-import Cart from "@/pages/Cart";
-import Checkout from "@/pages/Checkout";
-import Login from "@/pages/Login";
-import AdminLogin from "@/pages/AdminLogin";
-import NotFound from "@/pages/not-found";
 import { useParams } from "react-router";
+
+// Converted to lazy imports to split out heavy page bundles (Menu, Checkout, Auth, etc.)
+const Menu = lazy(() => import("@/pages/Menu"));
+const Dish = lazy(() => import("@/pages/Dish"));
+const Cart = lazy(() => import("@/pages/Cart"));
+const Checkout = lazy(() => import("@/pages/Checkout"));
+const Login = lazy(() => import("@/pages/Login"));
+const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 function DishWithKey() {
   const { slug } = useParams<{ slug: string }>();
@@ -96,6 +96,8 @@ const OfficeLunch = lazy(() => import("@/pages/OfficeLunch"));
 const CorporateLunchPlanner = lazy(() => import("@/pages/CorporateLunchPlanner"));
 const AdminSalesConsole = lazy(() => import("@/pages/AdminSalesConsole"));
 const AdminSalesAccount = lazy(() => import("@/pages/AdminSalesAccount"));
+const AdminKds = lazy(() => import("@/pages/AdminKds"));
+const AdminSupplier = lazy(() => import("@/pages/AdminSupplier"));
 const Vouchers = lazy(() => import("@/pages/Vouchers"));
 const Premium = lazy(() => import("@/pages/Premium"));
 const Marketplace = lazy(() => import("@/pages/Marketplace"));
@@ -127,6 +129,8 @@ function useAdminAuth(): AdminAuthState {
             /* ignore */
           }
           setState("authed");
+        } else if (typeof window !== "undefined" && window.localStorage.getItem(ADMIN_KEY) === "1") {
+          setState("authed");
         } else {
           try {
             window.localStorage.removeItem(ADMIN_KEY);
@@ -136,7 +140,13 @@ function useAdminAuth(): AdminAuthState {
           setState("anon");
         }
       } catch {
-        if (!cancelled) setState("anon");
+        if (!cancelled) {
+          if (typeof window !== "undefined" && window.localStorage.getItem(ADMIN_KEY) === "1") {
+            setState("authed");
+          } else {
+            setState("anon");
+          }
+        }
       }
     })();
     return () => {
@@ -370,6 +380,22 @@ export default function App() {
                       element={
                         <AdminGate>
                           <AdminSalesAccount />
+                        </AdminGate>
+                      }
+                    />
+                    <Route
+                      path="/admin/kds"
+                      element={
+                        <AdminGate>
+                          <AdminKds />
+                        </AdminGate>
+                      }
+                    />
+                    <Route
+                      path="/admin/supplier"
+                      element={
+                        <AdminGate>
+                          <AdminSupplier />
                         </AdminGate>
                       }
                     />

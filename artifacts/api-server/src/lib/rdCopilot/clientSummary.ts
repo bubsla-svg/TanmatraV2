@@ -17,6 +17,7 @@ import {
   db,
   rdLabUploadsTable,
   rdProgressLogsTable,
+  userConsentsTable,
 } from "@workspace/db";
 import { getUserBrief, briefToRedacted } from "../userBrief";
 import { getModel, DEFAULT_MODEL_ID } from "../ai/model";
@@ -92,6 +93,42 @@ export async function generateClientSummary(
   input: ClientSummaryInput,
 ): Promise<ClientSummaryResult> {
   const { userId, rdSlug } = input;
+
+  const [consent] = await db
+    .select()
+    .from(userConsentsTable)
+    .where(eq(userConsentsTable.userId, userId))
+    .orderBy(desc(userConsentsTable.grantedAt))
+    .limit(1)
+    .catch(() => [undefined]);
+
+  if (
+    !consent ||
+    consent.status !== "granted" ||
+    !consent.purposeAiPersonalization ||
+    !consent.purposeClinicalDelivery
+  ) {
+    logger.info(
+      { userId, rdSlug },
+      "rd-copilot: DPDPA consent revoked or missing for AI personalization, blocking external transmission",
+    );
+    const sanitizedSources: Record<string, unknown> = {
+      dpdpaConsent: "missing_or_revoked",
+      preferences: null,
+      profile: null,
+      wellness: null,
+      recentOrders: [],
+      progress: [],
+      sharedLabsCount: 0,
+    };
+    return {
+      summary:
+        "DPDPA Consent for AI Personalization is missing or revoked. Clinical and personal data processing by external AI models is blocked.",
+      model: "dpdpa-blocked",
+      sources: sanitizedSources,
+      usedFallback: true,
+    };
+  }
 
   const brief = await getUserBrief(userId, {
     include: ["preferences", "profile", "recentOrders", "wellness", "premium"],

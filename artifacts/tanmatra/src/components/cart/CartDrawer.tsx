@@ -28,6 +28,7 @@ import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { usePremiumStatus } from "@/lib/usePremium";
+import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Suppress unused-import warning — DELIVERY_FEE is used in the comment context only,
 // the actual constant is pulled from cartContext which re-exports it.
@@ -42,7 +43,7 @@ const UPSELL_CATEGORIES = new Set<string>(["beverages", "soups", "snacks", "brea
  */
 export default function CartDrawer() {
   const { isOpen, close } = useCartDrawer();
-  const { items, addItem, updateQty, removeItem, clear } = useCart();
+  const { items, addItem, updateQty, updateRecipient, removeItem, clear } = useCart();
   const totals = useCartTotals();
   const { dishes } = useMenuCatalog();
   const navigate = useNavigate();
@@ -154,6 +155,13 @@ export default function CartDrawer() {
 
       // 4. Open modal
       const localOrderId = `TAN-${Date.now()}`;
+      savePendingTransaction({
+        orderId: localOrderId,
+        idempotencyKey: `idem-express-${localOrderId}`,
+        initiatedAt: Date.now(),
+        amount: totals.total,
+        provider: "razorpay",
+      });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const RazorpayClass = (window as any).Razorpay;
       if (!RazorpayClass) { navigate("/checkout"); return; }
@@ -183,13 +191,17 @@ export default function CartDrawer() {
                 razorpaySignature: response.razorpay_signature,
               }),
             });
+            removePendingTransaction(localOrderId);
           } catch { /* non-fatal; order recorded server-side */ }
           clear();
           close();
           navigate(`/track/${localOrderId}`);
         },
         modal: {
-          ondismiss: () => setExpressLoading(false),
+          ondismiss: () => {
+            setExpressLoading(false);
+            // Keep pending transaction in localStorage briefly so visibilitychange auto-polling can recover if app switched
+          },
         },
       });
       rzp.open();
@@ -237,6 +249,19 @@ export default function CartDrawer() {
   // (e.g., user navigates away while the order-creation request is pending).
   const expressAbortRef = useRef<AbortController | null>(null);
   useEffect(() => () => { expressAbortRef.current?.abort(); }, []);
+
+  useEffect(() => {
+    return subscribeUpiRecovery({
+      onRecovered: (event) => {
+        if (isOpen && event.tx.orderId.startsWith("TAN-")) {
+          toast.success(`Payment recovered for order ${event.tx.orderId}!`);
+          clear();
+          close();
+          navigate(`/track/${event.tx.orderId}`);
+        }
+      },
+    });
+  }, [isOpen, clear, close, navigate]);
 
   // Focus the close button when drawer opens
   useEffect(() => {
@@ -324,6 +349,7 @@ export default function CartDrawer() {
                   <CartLineList
                     items={items}
                     updateQty={updateQty}
+                    updateRecipient={updateRecipient}
                     removeItem={removeItem}
                     addItem={addItem}
                   />
@@ -476,7 +502,7 @@ function FreeDeliveryBar({
   // Copy logic
   let label: string;
   if (hasFreeDelivery) {
-    label = "Free delivery unlocked ✓";
+    label = "Free Delivery Unlocked!";
   } else if (ghostUnlocksDelivery) {
     label = "→ Unlocks free delivery";
   } else if (ghostItem !== null) {
@@ -486,18 +512,21 @@ function FreeDeliveryBar({
   }
 
   return (
-    <div className="rounded-lg px-3 pt-3 pb-2 border border-clinical-zinc/10 bg-clinical-dark/60">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-clinical-zinc">
+    <div className={`rounded-xl px-3.5 pt-3 pb-2.5 border transition-all duration-300 ${
+      hasFreeDelivery ? "alert-safe-border alert-safe-bg" : "border-clinical-gold/30 bg-[#050505]"
+    }`}>
+      <div className="flex items-center justify-between mb-1.5 font-sans">
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-clinical-zinc flex items-center gap-1">
+          {hasFreeDelivery ? <ShieldCheck className="w-3.5 h-3.5 alert-safe-text" /> : <Zap className="w-3.5 h-3.5 text-clinical-gold fill-clinical-gold" />}
           Free Delivery
         </span>
         <span
           className={cn(
-            "text-[11px] tabular-nums transition-colors duration-200",
+            "text-xs font-bold tabular-nums transition-colors duration-200",
             hasFreeDelivery
-              ? "text-clinical-sage"
+              ? "alert-safe-text"
               : ghostUnlocksDelivery
-              ? "text-matcha"
+              ? "alert-safe-text"
               : "text-white",
           )}
         >
@@ -506,10 +535,13 @@ function FreeDeliveryBar({
       </div>
 
       {/* Progress track */}
-      <div className="relative h-1.5 rounded-full bg-clinical-zinc/15 overflow-hidden">
+      <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
         {/* Filled (real) track */}
         <div
-          className="absolute inset-y-0 left-0 bg-clinical-gold rounded-full transition-all duration-300"
+          className={cn(
+            "absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out",
+            hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_10px_rgba(74,222,128,0.85)]" : "bg-gradient-to-r from-[#E7C766] to-clinical-gold"
+          )}
           style={{ width: `${currentFill * 100}%` }}
         />
 
@@ -552,11 +584,13 @@ function FreeDeliveryBar({
 function CartLineList({
   items,
   updateQty,
+  updateRecipient,
   removeItem,
   addItem,
 }: {
   items: CartItem[];
   updateQty: (lineId: string, delta: number) => void;
+  updateRecipient: (lineId: string, recipient: string) => void;
   removeItem: (lineId: string) => void;
   addItem: (item: Omit<CartItem, "lineId">) => void;
 }) {
@@ -569,6 +603,7 @@ function CartLineList({
           onInc={() => updateQty(item.lineId, +1)}
           onDec={() => updateQty(item.lineId, -1)}
           onRemove={() => removeItem(item.lineId)}
+          onUpdateRecipient={(val) => updateRecipient(item.lineId, val)}
           addItem={addItem}
         />
       ))}
@@ -581,15 +616,18 @@ function CartLine({
   onInc,
   onDec,
   onRemove,
+  onUpdateRecipient,
   addItem,
 }: {
   item: CartItem;
   onInc: () => void;
   onDec: () => void;
   onRemove: () => void;
+  onUpdateRecipient: (val: string) => void;
   addItem: (item: Omit<CartItem, "lineId">) => void;
 }) {
   const lineTotal = item.unitPrice * item.quantity;
+  const [showTagInput, setShowTagInput] = useState(false);
 
   const handleRemove = () => {
     onRemove();
@@ -628,7 +666,7 @@ function CartLine({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white leading-tight truncate">
+            <p className="text-sm font-medium text-white leading-tight line-clamp-2">
               {item.name}
             </p>
             <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-clinical-zinc">
@@ -649,6 +687,30 @@ function CartLine({
               <p className="text-[10px] text-clinical-zinc/80 mt-1 line-clamp-1">
                 {item.customizations.join(" · ")}
               </p>
+            )}
+            {item.recipient || showTagInput ? (
+              <div className="mt-1.5 flex items-center gap-1.5 animate-in fade-in duration-100">
+                <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
+                <input
+                  type="text"
+                  placeholder="e.g. Mom, Child"
+                  autoFocus={showTagInput}
+                  value={item.recipient || ""}
+                  onChange={(e) => onUpdateRecipient(e.target.value)}
+                  onBlur={() => {
+                    if (!item.recipient) setShowTagInput(false);
+                  }}
+                  className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowTagInput(true)}
+                className="text-[10px] text-clinical-gold hover:underline mt-1.5 text-left font-medium block animate-in fade-in duration-100"
+              >
+                + Add name tag
+              </button>
             )}
           </div>
           <button
@@ -787,13 +849,6 @@ function UpsellCard({
 
   const handleAdd = () => {
     if (status !== "idle") return;
-    // On touch: first tap shows ghost preview; second tap confirms add.
-    // On pointer: hover already triggered ghost, so always add immediately.
-    if (!ghostActive) {
-      setGhostActive(true);
-      onGhost(dish);
-      return;
-    }
     setGhostActive(false);
     onGhost(null);
     setStatus("loading");
@@ -841,7 +896,7 @@ function UpsellCard({
             type="button"
             onClick={handleAdd}
             disabled={status === "loading"}
-            aria-label={ghostActive ? `Confirm add ${dish.name}` : `Preview ${dish.name}`}
+            aria-label={`Add ${dish.name} to order`}
             className={cn(
               "h-11 px-2 text-[10px] font-semibold text-[#050505] rounded-md transition-colors uppercase tracking-[0.08em] shrink-0 inline-flex items-center gap-1",
               status === "success" ? "bg-clinical-sage" : "bg-clinical-gold hover:bg-clinical-gold/90",
@@ -894,7 +949,7 @@ function FooterTotals({
     <div className="border-t border-clinical-zinc/15 bg-clinical-dark/95 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 shrink-0">
       <dl className="space-y-1.5 text-xs">
         <TotalsRow label="Subtotal" value={formatPrice(totals.subtotal)} />
-        <TotalsRow label="GST 5%" value={formatPrice(totals.tax)} muted />
+        <TotalsRow label="GST (18%)" value={formatPrice(totals.tax)} muted />
         <TotalsRow
           label="Delivery"
           value={totals.hasFreeDelivery ? "FREE" : formatPrice(totals.deliveryFee)}
