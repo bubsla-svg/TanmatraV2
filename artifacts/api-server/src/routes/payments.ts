@@ -1,7 +1,7 @@
 import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, ordersTable, webhookInboxTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 
 const router: IRouter = Router();
@@ -282,7 +282,7 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     return;
   }
 
-  let event: { event?: string; payload?: { payment?: { entity?: { order_id?: string; id?: string } } } };
+  let event: { id?: string; event?: string; payload?: { payment?: { entity?: { order_id?: string; id?: string } } } };
   try {
     event = JSON.parse(rawBody.toString("utf8"));
   } catch {
@@ -290,30 +290,92 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     return;
   }
 
-  // Handle known event types. Razorpay expects a fast 200 ACK — defer
-  // heavy processing to a background job queue.
-  const eventType = event.event ?? "";
+  const eventType = event.event ?? "unknown";
   const paymentEntity = event.payload?.payment?.entity;
+  const headerId = typeof req.headers["x-razorpay-event-id"] === "string" ? req.headers["x-razorpay-event-id"] : null;
+  const eventId = headerId || event.id || `rp-${paymentEntity?.id || paymentEntity?.order_id || crypto.createHash("sha256").update(rawBody).digest("hex").slice(0, 32)}`;
 
-  if (eventType === "payment.captured") {
-    const razorpayOrderId = paymentEntity?.order_id ?? "";
-    const razorpayPaymentId = paymentEntity?.id ?? "";
-    if (razorpayOrderId) {
-      try {
+  // Store-and-forward ingestion into webhook_inbox.
+  // INSERT ... ON CONFLICT DO NOTHING ensures strict deduplication.
+  const inserted = await db
+    .insert(webhookInboxTable)
+    .values({
+      eventId,
+      source: "razorpay",
+      eventType,
+      signature: receivedSig,
+      payload: rawBody.toString("utf8"),
+      status: "pending",
+    })
+    .onConflictDoNothing({
+      target: [webhookInboxTable.source, webhookInboxTable.eventId],
+    })
+    .returning();
+
+  let attemptsCount = 1;
+
+  if (inserted.length === 0) {
+    const [existing] = await db
+      .select()
+      .from(webhookInboxTable)
+      .where(
+        and(
+          eq(webhookInboxTable.source, "razorpay"),
+          eq(webhookInboxTable.eventId, eventId),
+        ),
+      );
+
+    if (existing && existing.status === "processed") {
+      req.log.info({ source: "razorpay", eventId }, "webhook deduplicated via inbox");
+      res.status(200).json({ ok: true, deduplicated: true, eventId });
+      return;
+    }
+
+    if (existing) {
+      attemptsCount = (existing.attempts ?? 0) + 1;
+      req.log.info(
+        { source: "razorpay", eventId, status: existing.status, attemptsCount },
+        "re-attempting webhook processing after previous failure/pending",
+      );
+    }
+  }
+
+  // Process business logic and update inbox status.
+  let processError: Error | null = null;
+  try {
+    if (eventType === "payment.captured") {
+      const razorpayOrderId = paymentEntity?.order_id ?? "";
+      const razorpayPaymentId = paymentEntity?.id ?? "";
+      if (razorpayOrderId) {
         await db
           .update(ordersTable)
           .set({ status: "preparing" })
           .where(eq(ordersTable.externalOrderId, razorpayOrderId));
-      } catch (err) {
-        req.log.error({ err, razorpayOrderId, razorpayPaymentId }, "webhook: order status update failed");
       }
+    } else if (eventType === "payment.failed") {
+      req.log.warn({ razorpayOrderId: paymentEntity?.order_id }, "webhook: payment failed");
     }
-  } else if (eventType === "payment.failed") {
-    req.log.warn({ razorpayOrderId: paymentEntity?.order_id }, "webhook: payment failed");
+
+    await db
+      .update(webhookInboxTable)
+      .set({ status: "processed", processedAt: new Date(), error: null, attempts: attemptsCount })
+      .where(and(eq(webhookInboxTable.source, "razorpay"), eq(webhookInboxTable.eventId, eventId)));
+  } catch (err) {
+    processError = err instanceof Error ? err : new Error(String(err));
+    req.log.error({ err, eventId, eventType }, "webhook inbox business logic failed");
+    await db
+      .update(webhookInboxTable)
+      .set({ status: "failed", error: processError.message, attempts: attemptsCount })
+      .where(and(eq(webhookInboxTable.source, "razorpay"), eq(webhookInboxTable.eventId, eventId)))
+      .catch(() => {});
   }
 
-  // Always ACK quickly — Razorpay retries on non-2xx.
-  res.json({ ok: true });
+  if (processError) {
+    res.status(500).json({ error: "webhook business logic failed", eventId, processed: false });
+    return;
+  }
+
+  res.status(200).json({ ok: true, eventId, processed: true });
 });
 
 export default router;

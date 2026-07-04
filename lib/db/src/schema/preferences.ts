@@ -29,12 +29,21 @@ export type WellnessGoal =
   | "gain_muscle"
   | "general_wellness";
 
+export type ClinicalContraindication =
+  | "hypertension"
+  | "diabetes"
+  | "gerd"
+  | "kidney_disease"
+  | "celiac"
+  | "pregnancy";
+
 export const userPreferencesTable = pgTable("user_preferences", {
   userId: varchar("user_id")
     .primaryKey()
     .references(() => usersTable.id, { onDelete: "cascade" }),
   allergens: text("allergens").array().notNull().default([]),
   dislikedIngredients: text("disliked_ingredients").array().notNull().default([]),
+  medicalConditions: text("medical_conditions").array().notNull().default([]),
   cuisines: text("cuisines").array().notNull().default([]),
   spiceLevel: varchar("spice_level", { length: 16 })
     .$type<SpiceLevel>()

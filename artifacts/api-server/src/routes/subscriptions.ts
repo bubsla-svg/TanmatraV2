@@ -6,6 +6,7 @@ import {
   subscriptionMembersTable,
   subscriptionDeliveriesTable,
   mealCreditsTable,
+  userPreferencesTable,
   type SubscriptionCadence,
   type SubscriptionItem,
   type SubscriptionDelivery,
@@ -13,6 +14,8 @@ import {
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
+import { resolveDishBySlug } from "../lib/menuResolver";
+import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const router: IRouter = Router();
 
@@ -23,6 +26,8 @@ const memberInputSchema = z.object({
   name: z.string().min(1).max(64),
   diet: dietSchema.default("any"),
   allergens: z.array(z.string()).default([]),
+  medicalConditions: z.array(z.string()).default([]),
+  dislikedIngredients: z.array(z.string()).default([]),
   lifestyle: z.string().max(32).optional(),
   spiceLevel: z.enum(["mild", "medium", "hot"]).default("medium"),
 });
@@ -213,6 +218,77 @@ async function generateDeliveriesForSubscription(
   return db.insert(subscriptionDeliveriesTable).values(rows).returning();
 }
 
+async function validateDishForSubscription(
+  dish: any,
+  userId: string,
+  subscriptionId?: number | null,
+  newMembers?: Array<{
+    diet: string;
+    allergens: string[];
+    medicalConditions?: string[];
+    dislikedIngredients?: string[];
+  }>,
+  targetMemberId?: number | null,
+): Promise<{ blocked: boolean; reasons: any[] }> {
+  const [prefsRow] = await db
+    .select()
+    .from(userPreferencesTable)
+    .where(eq(userPreferencesTable.userId, userId));
+  const primaryMatch = evaluateDishForPreferences(dish, prefsRow ?? null, { strict: true });
+  if (primaryMatch.blocked) return { blocked: true, reasons: primaryMatch.blockReasons };
+
+  const subProfiles: Array<{
+    diet: string;
+    allergens: string[];
+    medicalConditions?: string[];
+    dislikedIngredients?: string[];
+    id?: number;
+  }> = [];
+  if (newMembers && newMembers.length > 0) {
+    subProfiles.push(...newMembers);
+  } else if (subscriptionId != null) {
+    const members = await db
+      .select()
+      .from(subscriptionMembersTable)
+      .where(eq(subscriptionMembersTable.subscriptionId, subscriptionId));
+    subProfiles.push(
+      ...members.map((m) => ({
+        id: m.id,
+        diet: m.diet,
+        allergens: m.allergens ?? [],
+        medicalConditions: m.medicalConditions ?? [],
+        dislikedIngredients: m.dislikedIngredients ?? [],
+      })),
+    );
+  }
+
+  if (targetMemberId != null && !subProfiles.some((m) => m.id === targetMemberId)) {
+    return {
+      blocked: true,
+      reasons: [
+        {
+          code: "invalid_member_id",
+          message: "Target member ID does not belong to this subscription",
+        },
+      ],
+    };
+  }
+
+  for (const member of subProfiles) {
+    if (targetMemberId != null && member.id != null && member.id !== targetMemberId) continue;
+    const memberPrefs = {
+      allergens: member.allergens ?? [],
+      dislikedIngredients: member.dislikedIngredients ?? [],
+      medicalConditions: member.medicalConditions ?? [],
+      cuisines: [],
+      dietaryStyle: (member.diet === "veg" ? "vegetarian" : member.diet === "nonveg" ? "omnivore" : "omnivore") as any,
+    };
+    const mMatch = evaluateDishForPreferences(dish, memberPrefs, { strict: true });
+    if (mMatch.blocked) return { blocked: true, reasons: mMatch.blockReasons };
+  }
+  return { blocked: false, reasons: [] };
+}
+
 router.post("/subscriptions", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
@@ -222,6 +298,29 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     return;
   }
   const data = parsed.data;
+  if (data.defaultItems.length > 0) {
+    for (const item of data.defaultItems) {
+      const dish = await resolveDishBySlug(item.slug);
+      if (dish) {
+        const match = await validateDishForSubscription(
+          dish,
+          userId,
+          null,
+          data.members,
+          item.memberId,
+        );
+        if (match.blocked) {
+          res.status(422).json({
+            error: "Safety block",
+            code: "safety_block",
+            blocked: true,
+            reasons: match.reasons,
+          });
+          return;
+        }
+      }
+    }
+  }
   const startDate = new Date(data.startDate);
   if (Number.isNaN(startDate.getTime())) {
     res.status(400).json({ error: "invalid startDate" });
@@ -285,6 +384,8 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
         name: m.name,
         diet: m.diet,
         allergens: m.allergens,
+        medicalConditions: m.medicalConditions,
+        dislikedIngredients: m.dislikedIngredients,
         lifestyle: m.lifestyle,
         spiceLevel: m.spiceLevel,
       })),
@@ -573,6 +674,25 @@ router.post(
       res.status(409).json({ error: "no_upcoming_delivery" });
       return;
     }
+    const dish = await resolveDishBySlug(parsed.data.slug);
+    if (dish) {
+      const match = await validateDishForSubscription(
+        dish,
+        userId,
+        next.subscription.id,
+        undefined,
+        parsed.data.memberId,
+      );
+      if (match.blocked) {
+        res.status(422).json({
+          error: "Safety block",
+          code: "safety_block",
+          blocked: true,
+          reasons: match.reasons,
+        });
+        return;
+      }
+    }
     const items = [...next.delivery.items];
     const existing = items.findIndex(
       (it) => it.slug === parsed.data.slug && (it.memberId ?? null) === (parsed.data.memberId ?? null),
@@ -613,6 +733,27 @@ router.post(
     if (!parsed.success) {
       res.status(400).json({ error: "invalid payload" });
       return;
+    }
+    for (const item of parsed.data.items) {
+      const dish = await resolveDishBySlug(item.slug);
+      if (dish) {
+        const match = await validateDishForSubscription(
+          dish,
+          userId,
+          found.subscription.id,
+          undefined,
+          item.memberId,
+        );
+        if (match.blocked) {
+          res.status(422).json({
+            error: "Safety block",
+            code: "safety_block",
+            blocked: true,
+            reasons: match.reasons,
+          });
+          return;
+        }
+      }
     }
     const [updated] = await db
       .update(subscriptionDeliveriesTable)

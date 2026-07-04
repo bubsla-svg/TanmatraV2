@@ -24,6 +24,7 @@ export interface UserPreferences {
   userId: string;
   allergens: string[];
   dislikedIngredients: string[];
+  medicalConditions: string[];
   cuisines: string[];
   spiceLevel: SpiceLevel;
   dietaryStyle: DietaryStyle;
@@ -41,6 +42,7 @@ export interface UserPreferences {
 export interface PreferencesPatch {
   allergens?: string[];
   dislikedIngredients?: string[];
+  medicalConditions?: string[];
   cuisines?: string[];
   spiceLevel?: SpiceLevel;
   dietaryStyle?: DietaryStyle;
@@ -125,4 +127,30 @@ export const SPICE_LABEL: Record<SpiceLevel, string> = {
   mild: "Mild",
   medium: "Medium",
   hot: "Hot",
+};
+
+export type ClinicalContraindication =
+  | "hypertension"
+  | "diabetes"
+  | "gerd"
+  | "kidney_disease"
+  | "celiac"
+  | "pregnancy";
+
+export const MEDICAL_CONDITION_OPTIONS = [
+  "hypertension",
+  "diabetes",
+  "gerd",
+  "kidney_disease",
+  "celiac",
+  "pregnancy",
+] as const;
+
+export const MEDICAL_CONDITION_LABEL: Record<ClinicalContraindication, string> = {
+  hypertension: "Hypertension (High BP)",
+  diabetes: "Diabetes / Blood Sugar",
+  gerd: "GERD / Acid Reflux",
+  kidney_disease: "Kidney Disease / Renal",
+  celiac: "Celiac Disease",
+  pregnancy: "Pregnancy",
 };

@@ -1,9 +1,10 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable } from "@workspace/db";
+import { db, ordersTable, userPreferencesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import { calculateCartTotals } from "../lib/cartMath";
+import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const router: IRouter = Router();
 
@@ -69,6 +70,21 @@ router.post("/orders", async (req: Request, res: Response) => {
     return;
   }
 
+  const authUserId = (req as any).user?.id ?? null;
+  let authPrefs = null;
+  if (authUserId) {
+    const [pRow] = await db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, authUserId)).limit(1);
+    if (pRow) {
+      authPrefs = {
+        allergens: pRow.allergens ?? [],
+        dislikedIngredients: pRow.dislikedIngredients ?? [],
+        medicalConditions: pRow.medicalConditions ?? [],
+        cuisines: pRow.cuisines ?? [],
+        dietaryStyle: pRow.dietaryStyle,
+      };
+    }
+  }
+
   // Validate every item and build the server-authoritative cart.
   const validatedItems: Array<{ id: number; name: string; qty: number; price: number }> = [];
   for (const item of items) {
@@ -80,6 +96,18 @@ router.post("/orders", async (req: Request, res: Response) => {
     if (!dish.isAvailable) {
       res.status(422).json({ error: `dish unavailable: ${dish.name}`, code: "dish_unavailable" });
       return;
+    }
+    if (authPrefs) {
+      const match = evaluateDishForPreferences(dish, authPrefs, { strict: true });
+      if (match.blocked) {
+        res.status(422).json({
+          error: "Safety block",
+          code: "safety_block",
+          blocked: true,
+          reasons: match.blockReasons,
+        });
+        return;
+      }
     }
     validatedItems.push({ id: dish.id, name: dish.name, qty: item.qty, price: dish.price });
   }
@@ -95,7 +123,7 @@ router.post("/orders", async (req: Request, res: Response) => {
     const inserted = await db
       .insert(ordersTable)
       .values({
-        userId: null,
+        userId: authUserId,
         externalOrderId,
         status: "placed",
         totalPaise,

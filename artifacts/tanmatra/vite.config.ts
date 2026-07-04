@@ -29,12 +29,24 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Keep heavy visualisation libs in their own async chunk so they
-          // only load on the routes that actually use them.
+          // Ensure only third-party vendor code in node_modules is chunked,
+          // preventing circular dependencies between application chunks and vendor chunks.
+          if (!id.includes("node_modules")) return;
+
+          // Visualisation, charts, and mapping
           if (id.includes("recharts") || id.includes("d3-")) return "charts";
           if (id.includes("leaflet")) return "maps";
           if (id.includes("framer-motion")) return "motion";
           if (id.includes("socket.io")) return "socket";
+
+          // Heavy UI primitive frameworks & carousels
+          if (id.includes("@radix-ui")) return "radix-ui";
+          if (id.includes("embla-carousel")) return "carousel";
+
+          // Icon libraries split by vendor so routes only fetch needed icons
+          if (id.includes("lucide-react")) return "icons-lucide";
+          if (id.includes("@phosphor-icons")) return "icons-phosphor";
+          if (id.includes("react-icons")) return "icons-react";
         },
       },
     },

@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./rdCopilot": "./src/lib/rdCopilot/index.ts",
+    "./rdCopilot/clientSummary": "./src/lib/rdCopilot/clientSummary.ts"
+  },
   "scripts": {
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "evals": "tsx ./src/evals.ts",

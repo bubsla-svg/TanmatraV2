@@ -20,10 +20,13 @@ import {
   GOAL_LABEL,
   ACTIVITY_LABEL,
   SPICE_LABEL,
+  MEDICAL_CONDITION_OPTIONS,
+  MEDICAL_CONDITION_LABEL,
   type DietaryStyle,
   type SpiceLevel,
   type ActivityLevel,
   type WellnessGoal,
+  type ClinicalContraindication,
 } from "@/lib/preferencesApi";
 import { usePreferences } from "@/lib/preferencesContext";
 import { Sparkles, Save, Stethoscope, ChevronRight } from "lucide-react";
@@ -32,6 +35,8 @@ import {
   recommendPlansForPreferences,
   PLAN_GOAL_LABEL,
 } from "@/lib/rdPlans";
+import DpdpaConsentCapture, { type DpdpaConsentState } from "@/components/DpdpaConsentCapture";
+import { userConsentsApi } from "@/lib/userConsentsApi";
 
 export default function Preferences() {
   const { preferences, loading, unauthorized, update, refresh } =
@@ -43,12 +48,56 @@ export default function Preferences() {
   const [spiceLevel, setSpiceLevel] = useState<SpiceLevel>("medium");
   const [cuisines, setCuisines] = useState<string[]>([]);
   const [allergens, setAllergens] = useState<string[]>([]);
+  const [medicalConditions, setMedicalConditions] = useState<string[]>([]);
   const [dislikes, setDislikes] = useState("");
   const [calorieTarget, setCalorieTarget] = useState("");
   const [proteinTargetGrams, setProteinTargetGrams] = useState("");
   const [carbsTargetGrams, setCarbsTargetGrams] = useState("");
   const [fatTargetGrams, setFatTargetGrams] = useState("");
   const [saving, setSaving] = useState(false);
+  const [consentState, setConsentState] = useState<Partial<DpdpaConsentState>>({
+    purposeClinicalDelivery: true,
+    purposeMarketing: false,
+    purposeAiPersonalization: false,
+    consentVersion: "2023_DPDPA_v1",
+  });
+  const [consentLoading, setConsentLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    userConsentsApi
+      .get()
+      .then((res) => {
+        if (res.consent) {
+          setConsentState({
+            purposeClinicalDelivery: res.consent.purposeClinicalDelivery,
+            purposeMarketing: res.consent.purposeMarketing,
+            purposeAiPersonalization: res.consent.purposeAiPersonalization,
+            consentVersion: res.consent.consentVersion,
+            grantedAt: res.consent.grantedAt ?? undefined,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setConsentLoading(false));
+  }, []);
+
+  const handleConsentSubmit = async (state: DpdpaConsentState) => {
+    try {
+      const res = await userConsentsApi.update(state);
+      if (res.consent) {
+        setConsentState({
+          purposeClinicalDelivery: res.consent.purposeClinicalDelivery,
+          purposeMarketing: res.consent.purposeMarketing,
+          purposeAiPersonalization: res.consent.purposeAiPersonalization,
+          consentVersion: res.consent.consentVersion,
+          grantedAt: res.consent.grantedAt ?? undefined,
+        });
+      }
+      toast.success("DPDPA consent preferences saved");
+    } catch (err) {
+      toast.error("Could not save consent preferences");
+    }
+  };
 
   useEffect(() => {
     if (!preferences) return;
@@ -58,6 +107,7 @@ export default function Preferences() {
     setSpiceLevel(preferences.spiceLevel);
     setCuisines(preferences.cuisines);
     setAllergens(preferences.allergens);
+    setMedicalConditions(preferences.medicalConditions ?? []);
     setDislikes(preferences.dislikedIngredients.join(", "));
     setCalorieTarget(
       preferences.calorieTarget ? String(preferences.calorieTarget) : "",
@@ -101,6 +151,7 @@ export default function Preferences() {
       spiceLevel,
       cuisines,
       allergens,
+      medicalConditions,
       dislikedIngredients: dislikes
         .split(",")
         .map((s) => s.trim())
@@ -203,6 +254,12 @@ export default function Preferences() {
         </Card>
       )}
 
+      <DpdpaConsentCapture
+        initialState={consentState}
+        onSubmit={handleConsentSubmit}
+        isLoading={consentLoading}
+      />
+
       <Card className="bg-clinical-surface border-clinical-border">
         <CardContent className="p-6 space-y-6">
           <Section title="Dietary style">
@@ -271,6 +328,23 @@ export default function Preferences() {
                   onClick={() => setSpiceLevel(s)}
                 >
                   {SPICE_LABEL[s]}
+                </Pill>
+              ))}
+            </div>
+          </Section>
+
+          <Separator className="bg-clinical-surface-elevated" />
+
+          <Section title="Clinical contraindications & medical conditions">
+            <div className="flex flex-wrap gap-2">
+              {MEDICAL_CONDITION_OPTIONS.map((c) => (
+                <Pill
+                  key={c}
+                  active={medicalConditions.includes(c)}
+                  onClick={() => toggle(setMedicalConditions, medicalConditions, c)}
+                  variant="warning"
+                >
+                  {MEDICAL_CONDITION_LABEL[c as ClinicalContraindication]}
                 </Pill>
               ))}
             </div>

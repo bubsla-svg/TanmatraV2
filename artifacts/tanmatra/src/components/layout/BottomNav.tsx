@@ -320,7 +320,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-[#050505]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-[#050505]/95 backdrop-blur-xl pb-[var(--safe-bottom)] min-h-[var(--bottom-nav-height)]"
     >
       <ul className={cn("grid", isLoggedIn ? "grid-cols-5" : "grid-cols-4")}>
         {navItems.map((item) => {
