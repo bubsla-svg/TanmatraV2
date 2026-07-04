@@ -4,6 +4,7 @@ import { getRdPlanBySlug, getRdAuthor, resolvePlanWeek, findPlanSafeSwap } from 
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { usePreferences } from "@/lib/preferencesContext";
 import { ACCENT_CLASSES } from "@/lib/teamData";
+import { useCartStore } from "@/lib/cartContext";
 import type { SubscriptionItem } from "@/lib/subscriptionsApi";
 import { payWithRazorpay, razorpayConfigured } from "@/lib/razorpayClient";
 import { track } from "@/lib/analytics";
@@ -145,7 +146,19 @@ export default function Subscribe() {
     rdPlan?.slug === "three-day-trial-pack";
   const rdAuthor = rdPlan ? getRdAuthor(rdPlan) : undefined;
   const { preferences, update } = usePreferences();
+  const fromCart = searchParams.get("fromCart") === "1";
+  const cartItems = useCartStore((s) => s.items);
   const planItemsResult = useMemo<{ items: SubscriptionItem[]; swappedCount: number; droppedCount: number }>(() => {
+    if (fromCart && !rdPlan) {
+      const items: SubscriptionItem[] = cartItems.map((ci) => ({
+        slug: ci.slug,
+        name: ci.name,
+        image: ci.image,
+        quantity: ci.quantity,
+        unitPricePaise: ci.unitPrice,
+      }));
+      return { items, swappedCount: 0, droppedCount: 0 };
+    }
     if (!rdPlan) return { items: [], swappedCount: 0, droppedCount: 0 };
     const week = resolvePlanWeek(rdPlan);
     const items: SubscriptionItem[] = [];
@@ -184,7 +197,7 @@ export default function Subscribe() {
       }
     }
     return { items: items.slice(0, 14), swappedCount, droppedCount };
-  }, [rdPlan, preferences]);
+  }, [rdPlan, preferences, fromCart, cartItems]);
   const planWeekItems = planItemsResult.items;
   // Resolved 7-day rotation for the inline preview (dish objects per day).
   const resolvedWeek = useMemo(
@@ -216,11 +229,14 @@ export default function Subscribe() {
       // D2C 3-day sampler defaults to 3 days × 3 meals.
       setCadence("weekly");
       setMeals(9);
+    } else if (fromCart && planWeekItems.length > 0) {
+      const totalCartQty = planWeekItems.reduce((sum, item) => sum + item.quantity, 0);
+      setMeals(totalCartQty || planWeekItems.length || 10);
     } else if (protocolPreset) {
       setMeals(protocolPreset.meals);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rdPlan, planWeekItems.length, isTrial, protocolParam]);
+  }, [rdPlan, planWeekItems.length, isTrial, protocolParam, fromCart]);
   const [window, setWindow] = useState(TIME_WINDOWS[1]);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -409,6 +425,10 @@ export default function Subscribe() {
             "Payment gateway unavailable — plan activated, payment will be collected on delivery.",
           );
         }
+      }
+
+      if (fromCart) {
+        useCartStore.getState().clear();
       }
 
       track("subscription_activated", {

@@ -24,7 +24,8 @@ function razorpayBasicAuth(keyId: string, keySecret: string): string {
 
 const createRazorpayOrderSchema = z.object({
   amountPaise: z.number().int().positive().max(10_000_000),
-  receipt: z.string().max(40).optional(),
+  receipt: z.string().max(64).optional(),
+  orderId: z.string().max(64).optional(),
 });
 
 const verifyPaymentSchema = z.object({
@@ -92,6 +93,18 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
 
   const rp = (await rpRes.json()) as { id: string; amount: number; currency: string };
 
+  const targetOrderId = parsed.data.orderId ?? parsed.data.receipt;
+  if (targetOrderId) {
+    try {
+      await db
+        .update(ordersTable)
+        .set({ razorpayOrderId: rp.id })
+        .where(eq(ordersTable.externalOrderId, targetOrderId));
+    } catch (err) {
+      req.log.error({ err, targetOrderId, razorpayOrderId: rp.id }, "failed to store razorpayOrderId on order");
+    }
+  }
+
   res.json({
     razorpayOrderId: rp.id,
     amount: rp.amount,
@@ -152,7 +165,7 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
   try {
     await db
       .update(ordersTable)
-      .set({ status: "preparing" })
+      .set({ status: "preparing", razorpayOrderId })
       .where(eq(ordersTable.externalOrderId, orderId));
   } catch (err) {
     // Payment is confirmed by Razorpay — do not fail the response. The ops
@@ -350,7 +363,7 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
         await db
           .update(ordersTable)
           .set({ status: "preparing" })
-          .where(eq(ordersTable.externalOrderId, razorpayOrderId));
+          .where(eq(ordersTable.razorpayOrderId, razorpayOrderId));
       }
     } else if (eventType === "payment.failed") {
       req.log.warn({ razorpayOrderId: paymentEntity?.order_id }, "webhook: payment failed");

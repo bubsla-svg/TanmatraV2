@@ -13,6 +13,7 @@ export const ordersTable = pgTable(
     id: serial("id").primaryKey(),
     userId: varchar("user_id").references(() => usersTable.id),
     externalOrderId: varchar("external_order_id", { length: 64 }),
+    razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
     status: varchar("status", { length: 32 }).notNull().default("placed"),
     totalPaise: integer("total_paise").notNull(),
     addressLabel: varchar("address_label", { length: 64 }),
@@ -62,6 +63,7 @@ export const ordersTable = pgTable(
     index("idx_orders_user_created").on(table.userId, table.createdAt.desc()),
     index("idx_orders_status_created").on(table.status, table.createdAt.desc()),
     index("idx_orders_rider").on(table.riderId),
+    index("idx_orders_razorpay_order_id").on(table.razorpayOrderId),
     // Partial index that backs the STAT-first dispatch query. Tiny
     // because `stat` is the rare exception (~<1% of order volume), so
     // the dispatcher reads only a handful of rows even at peak.

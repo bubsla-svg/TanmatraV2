@@ -980,6 +980,15 @@ export default function Checkout() {
         } catch (rpErr) {
           const rpMsg = String((rpErr as Error).message);
           if (rpMsg === "payment_cancelled") {
+            removePendingTransaction(orderId);
+            submitAttemptRef.current = null;
+            void fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/cancel`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ reason: "Payment cancelled by user" }),
+            }).catch((err) => console.error("Failed to cancel orphaned order:", err));
+
             toast.info("Payment cancelled — your cart is safe");
             setIsProcessing(false);
             setConfirmOpen(false);
