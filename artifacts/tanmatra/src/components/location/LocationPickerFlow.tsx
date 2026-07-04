@@ -16,28 +16,146 @@ interface LocationPickerFlowProps {
   initialData?: any;
 }
 
-// ── Google Maps readiness ──────────────────────────────────────────────
-function waitForGoogleMaps(timeoutMs: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const started = Date.now();
-    const tick = () => {
-      if (
-        typeof window !== "undefined" &&
-        window.customElements &&
-        customElements.get("gmp-map") &&
-        (window as any).google?.maps?.Geocoder
-      ) {
-        resolve(true);
-        return;
-      }
-      if (Date.now() - started > timeoutMs) {
-        resolve(false);
-        return;
-      }
-      setTimeout(tick, 250);
-    };
-    tick();
+// ── Google Maps bootstrap (component-local, idempotent) ─────────────────
+//
+// Root problem: root.tsx injects the ECL <script> and <gmpx-api-loader>
+// globally, but those are async — if the script hasn't resolved by the time
+// this dialog opens the old passive poll just times out and fails.
+//
+// Fix: this module actively loads ECL + triggers Maps JS API loading when the
+// dialog opens, so the picker never depends on an externally managed sequence.
+
+const MAPS_API_KEY =
+  (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) ?? "";
+
+// Warn in development so misconfigurations are caught early.
+if (import.meta.env.DEV && !MAPS_API_KEY) {
+  console.warn(
+    "[LocationPickerFlow] VITE_GOOGLE_MAPS_API_KEY is not set — " +
+      "the map picker will fall back to manual address entry.",
+  );
+}
+
+// ECL version is pinned in ECL_SRC; update there when bumping.
+const ECL_SRC =
+  "https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js";
+
+/** Module-level promise so concurrent callers never double-inject the script. */
+let _eclLoadPromise: Promise<void> | null = null;
+
+/**
+ * Ensures the Extended Component Library module is loaded (registers gmp-map,
+ * gmpx-place-picker, gmpx-api-loader, etc.). Idempotent: if ECL is already
+ * loaded this resolves immediately.
+ */
+function loadECLScript(): Promise<void> {
+  // Already registered — nothing to do.
+  if (customElements.get("gmpx-api-loader")) return Promise.resolve();
+  // In-flight — reuse the same promise.
+  if (_eclLoadPromise) return _eclLoadPromise;
+
+  _eclLoadPromise = new Promise<void>((resolve, reject) => {
+    const onDefined = () =>
+      customElements
+        .whenDefined("gmpx-api-loader")
+        .then(() => resolve())
+        .catch((err: unknown) =>
+          reject(
+            new Error(
+              `ECL custom element registration failed: ${String(err)}`,
+            ),
+          ),
+        );
+
+    // Script tag may already be in DOM (from root.tsx) — just wait for it.
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${ECL_SRC}"]`,
+    );
+    if (existing) {
+      onDefined();
+      return;
+    }
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src = ECL_SRC;
+    script.addEventListener("load", onDefined);
+    script.addEventListener("error", () => {
+      _eclLoadPromise = null; // allow a future retry
+      reject(new Error("Google Maps Extended Component Library failed to load"));
+    });
+    document.head.appendChild(script);
   });
+  return _eclLoadPromise;
+}
+
+/**
+ * Ensures a <gmpx-api-loader> element is present in the DOM so the Maps JS
+ * API (including Geocoder) gets bootstrapped. The element is idempotent — ECL
+ * only fires the Maps bootstrap once regardless of how many elements exist.
+ */
+function ensureMapsAPILoader(apiKey: string): void {
+  if (document.querySelector("gmpx-api-loader")) return;
+  const el = document.createElement("gmpx-api-loader");
+  el.setAttribute("apiKey", apiKey);
+  el.setAttribute(
+    "solution-channel",
+    "GMP_GE_mapsandplacesautocomplete_v2",
+  );
+  document.head.appendChild(el);
+}
+
+/**
+ * Active loader — loads ECL, kicks off Maps JS API bootstrap if needed, then
+ * polls until `window.google.maps.Geocoder` is available (or timeout).
+ *
+ * Unlike the old passive `waitForGoogleMaps`, this function is the single
+ * point that drives loading, so the component is self-sufficient.
+ *
+ * Timeout budget is split: 40% allocated to ECL loading, the remainder
+ * reserved for Maps JS API polling, so each stage has adequate time.
+ */
+async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
+  if (!MAPS_API_KEY) return false;
+
+  // Fast path: already fully loaded (e.g., root.tsx bootstrap already ran).
+  if (
+    customElements.get("gmp-map") &&
+    (window as any).google?.maps?.Geocoder
+  ) {
+    return true;
+  }
+
+  // Allocate 40% of the budget to ECL script loading; the full deadline
+  // remains available for Maps JS API polling in step 3.
+  const eclBudgetMs = Math.round(timeoutMs * 0.4);
+  const mapsDeadline = Date.now() + timeoutMs;
+
+  // Step 1 — load ECL module (registers all gmp-* / gmpx-* custom elements).
+  try {
+    await Promise.race<void>([
+      loadECLScript(),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("ECL load timed out")),
+          eclBudgetMs,
+        ),
+      ),
+    ]);
+  } catch {
+    return false;
+  }
+
+  // Step 2 — ensure a <gmpx-api-loader> element exists to bootstrap Maps JS.
+  if (!(window as any).google?.maps?.Geocoder) {
+    ensureMapsAPILoader(MAPS_API_KEY);
+  }
+
+  // Step 3 — poll until Maps JS API (Geocoder) is ready.
+  while (Date.now() < mapsDeadline) {
+    if ((window as any).google?.maps?.Geocoder) return true;
+    await new Promise<void>((resolve) => setTimeout(resolve, 200));
+  }
+  return false;
 }
 
 export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: LocationPickerFlowProps) {
@@ -96,6 +214,9 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     }
     if (!open) {
       setLocating(false);
+      // Allow the loading sequence to retry on the next open if it failed
+      // (e.g., transient network error, API key fixed, CSP updated).
+      setMapsFailed(false);
     }
   }, [open, initialData]);
 
@@ -115,7 +236,8 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     };
   }, [open]);
 
-  // Wait for the extended component library and Maps JS API as soon as the dialog opens
+  // Actively load Maps when the dialog opens instead of passively polling for
+  // a globally injected script that may never arrive.
   useEffect(() => {
     if (!open || mapsReady || mapsFailed) return;
     if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
@@ -125,7 +247,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       return;
     }
     let cancelled = false;
-    waitForGoogleMaps(8000).then((ok) => {
+    ensureGoogleMapsLoaded(12_000).then((ok) => {
       if (cancelled) return;
       setMapsReady(ok);
       setMapsFailed(!ok);
