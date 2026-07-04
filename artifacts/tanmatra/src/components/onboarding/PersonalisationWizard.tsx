@@ -52,6 +52,7 @@ export function PersonalisationWizard() {
       }, 1500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [hasCompletedOnboarding, setOnboardingOpen]);
 
   const handleNext = () => {

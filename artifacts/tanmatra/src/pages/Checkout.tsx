@@ -72,7 +72,7 @@ import {
 } from "lucide-react";
 
 import { addressesApi, type UserAddress } from "@/lib/userAddressesApi";
-import { auth } from "../lib/firebase";
+import { auth, friendlyFirebaseError } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
@@ -371,29 +371,11 @@ export default function Checkout() {
     }
     setGuestIsSending(true);
 
-    const setupGuestMockFallback = (reason?: string) => {
-      if (reason) console.warn("Using guest mock OTP fallback:", reason);
-      toast.info("Using mock verification code", {
-        description: "SMS delivery unavailable. Use code '123456' to proceed.",
-      });
-      setGuestAuthStep("code");
-      setConfirmationResult({
-        confirm: async (enteredCode: string) => {
-          if (enteredCode === "123456") {
-            return {
-              user: {
-                getIdToken: async () => `mock-token-${guestCountryCode}${digits}`,
-              },
-            };
-          }
-          throw new Error("Invalid code — please use 123456");
-        },
-      });
-      setGuestResendIn(30);
-    };
-
     if (!auth) {
-      setupGuestMockFallback("Firebase auth configuration missing");
+      toast.error("Verification is temporarily unavailable", {
+        description:
+          "Verification service is not configured. Please try again shortly.",
+      });
       setGuestIsSending(false);
       return;
     }
@@ -422,7 +404,9 @@ export default function Checkout() {
         } catch {}
         recaptchaVerifierRef.current = null;
       }
-      setupGuestMockFallback((err as Error).message);
+      toast.error("Couldn't send verification code", {
+        description: friendlyFirebaseError(err),
+      });
     } finally {
       setGuestIsSending(false);
     }

@@ -146,16 +146,42 @@ async function ensureGoogleMapsLoaded(timeoutMs: number): Promise<boolean> {
   }
 
   // Step 2 — ensure a <gmpx-api-loader> element exists to bootstrap Maps JS.
-  if (!(window as any).google?.maps?.Geocoder) {
+  if (!(window as any).google?.maps?.importLibrary) {
     ensureMapsAPILoader(MAPS_API_KEY);
   }
 
-  // Step 3 — poll until Maps JS API (Geocoder) is ready.
+  // Step 3 — wait for the Maps JS bootstrap (`google.maps.importLibrary`),
+  // then explicitly import the libraries we use. Under the modern dynamic
+  // loader, classes like `google.maps.Geocoder` are LAZY — they only exist
+  // after `importLibrary("geocoding")` resolves, so passively polling for
+  // them would time out forever even with the API enabled.
   while (Date.now() < mapsDeadline) {
-    if ((window as any).google?.maps?.Geocoder) return true;
+    if ((window as any).google?.maps?.importLibrary) break;
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }
-  return false;
+  const gmaps = (window as any).google?.maps;
+  if (!gmaps?.importLibrary) return false;
+
+  try {
+    const remaining = Math.max(1_000, mapsDeadline - Date.now());
+    await Promise.race([
+      Promise.all([
+        gmaps.importLibrary("maps"),
+        gmaps.importLibrary("geocoding"),
+        gmaps.importLibrary("marker"),
+        customElements.whenDefined("gmp-map"),
+      ]),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Maps libraries timed out")),
+          remaining,
+        ),
+      ),
+    ]);
+  } catch {
+    return false;
+  }
+  return !!(window as any).google?.maps?.Geocoder;
 }
 
 export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: LocationPickerFlowProps) {
