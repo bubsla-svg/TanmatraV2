@@ -1,4 +1,5 @@
 import {createBaseEvent, trackEvent} from '@/lib/analytics/track';
+import {readTodayActivity, API_BASE} from '@/lib/activity';
 import * as Haptics from 'expo-haptics';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
@@ -107,12 +108,6 @@ function relativeTime(isoString?: string): string {
   return '2 mins ago';
 }
 
-async function readTodayActivity(): Promise<{
-  steps: number;
-  activityKcal: number;
-} | null> {
-  return {steps: 8500, activityKcal: 420};
-}
 
 export default function HomeScreen() {
   const [token, setTokenState] = useState<string | null>(null);
@@ -175,21 +170,47 @@ export default function HomeScreen() {
   const connect = useMemo(
     () => ({
       mutateAsync: async (args: {data: {provider: string}}) => {
+        if (!token) throw new Error('Not authenticated');
+        const res = await fetch(`${API_BASE}/wellness/wearable/connect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(args.data),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(`Connect failed (${res.status}): ${text || res.statusText}`);
+        }
         setIsConnected(true);
-        return {status: 'connected'};
+        return res.json();
       },
     }),
-    [],
+    [token],
   );
 
   const disconnect = useMemo(
     () => ({
       mutateAsync: async (args: {data: {provider: string}}) => {
+        if (!token) throw new Error('Not authenticated');
+        const res = await fetch(`${API_BASE}/wellness/wearable/disconnect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(args.data),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(`Disconnect failed (${res.status}): ${text || res.statusText}`);
+        }
         setIsConnected(false);
-        return {status: 'disconnected'};
+        return res.json();
       },
     }),
-    [],
+    [token],
   );
 
   const sync = useMemo(
@@ -197,10 +218,23 @@ export default function HomeScreen() {
       mutateAsync: async (args: {
         data: {provider: string; activityKcal: number; steps: number};
       }) => {
-        return {status: 'synced'};
+        if (!token) throw new Error('Not authenticated');
+        const res = await fetch(`${API_BASE}/wellness/wearable/sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(args.data),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(`Sync failed (${res.status}): ${text || res.statusText}`);
+        }
+        return res.json();
       },
     }),
-    [],
+    [token],
   );
 
   const handleSaveToken = useCallback(async () => {

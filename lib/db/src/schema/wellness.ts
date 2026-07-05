@@ -71,7 +71,7 @@ export const dailyTargetsTable = pgTable("daily_targets", {
 
 export type DailyTargets = typeof dailyTargetsTable.$inferSelect;
 
-export type WearableProvider = "apple_health" | "google_fit";
+export type WearableProvider = "apple_health" | "google_fit" | "health_connect";
 
 export const wearableLinksTable = pgTable(
   "wearable_links",

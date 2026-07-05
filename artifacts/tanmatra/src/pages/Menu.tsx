@@ -1252,28 +1252,35 @@ export default function Menu() {
       </div>
 
       {consolidatedDishes.length === 0 && (
-        <div className="text-center py-12 space-y-3">
-          <AlertTriangle className="w-8 h-8 text-clinical-gold mx-auto" />
-          <p className="text-sm text-clinical-zinc">No dishes match your filters.</p>
-          <button
-            onClick={() => {
-              setKitchen("all");
-              setCategory("all");
-              setDiet("all");
-              setLifestyle("all");
-              setQuery("");
-              setQuickFilters([]);
-              if (activeProtocol) {
-                const next = new URLSearchParams(searchParams);
-                next.delete("protocol");
-                setSearchParams(next, { replace: true });
-              }
-            }}
-            className="text-xs text-clinical-gold hover:underline"
-          >
-            Clear all filters
-          </button>
-        </div>
+        <Card className="max-w-md mx-auto bg-clinical-surface border-clinical-border text-center py-12 px-6 space-y-4 shadow-lg">
+          <AlertTriangle className="w-10 h-10 text-clinical-gold mx-auto" />
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg font-bold text-white">No clinical dishes match your filters</h3>
+            <p className="text-xs text-clinical-zinc leading-relaxed">
+              No clinical dishes match your current filter combination.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Button
+              onClick={() => {
+                setKitchen("all");
+                setCategory("all");
+                setDiet("all");
+                setLifestyle("all");
+                setQuery("");
+                setQuickFilters([]);
+                if (activeProtocol) {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete("protocol");
+                  setSearchParams(next, { replace: true });
+                }
+              }}
+              className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-bold uppercase tracking-[0.12em] text-xs px-6"
+            >
+              Reset Filters
+            </Button>
+          </div>
+        </Card>
       )}
 
       {/* Dish grid — dark luxury cards */}
