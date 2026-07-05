@@ -261,11 +261,11 @@ const targetsPatchSchema = z.object({
 });
 
 const wearableConnectSchema = z.object({
-  provider: z.enum(["apple_health", "google_fit"]),
+  provider: z.enum(["apple_health", "google_fit", "health_connect"]),
 });
 
 const wearableSyncSchema = z.object({
-  provider: z.enum(["apple_health", "google_fit"]),
+  provider: z.enum(["apple_health", "google_fit", "health_connect"]),
   activityKcal: z.number().int().min(0).max(3000),
   steps: z.number().int().min(0).max(60000).optional(),
 });
@@ -494,6 +494,28 @@ router.post("/wellness/wearable/sync", async (req: Request, res: Response) => {
     })
     .where(eq(wearableLinksTable.id, link.id))
     .returning();
+  const today = todayStr();
+  await db
+    .delete(nutritionLogsTable)
+    .where(
+      and(
+        eq(nutritionLogsTable.userId, userId),
+        eq(nutritionLogsTable.loggedFor, today),
+        eq(nutritionLogsTable.source, "wearable_adjust"),
+      ),
+    );
+  if (parsed.data.activityKcal > 0) {
+    await db
+      .insert(nutritionLogsTable)
+      .values({
+        userId,
+        loggedFor: today,
+        source: "wearable_adjust",
+        label: `Wearable Activity Adjustment (+${parsed.data.activityKcal} kcal)`,
+        calories: parsed.data.activityKcal,
+      });
+  }
+  await recomputeStreaks(userId);
   res.json({ link: updated });
 });
 

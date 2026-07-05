@@ -118,7 +118,7 @@ export function usePublicMenu(category?: string) {
     queryKey: ["menu", "public", category ?? "all"],
     queryFn: async () => {
       try {
-        return await api<MenuComboWithAvailability[]>(`/menu${category ? `?category=${encodeURIComponent(category)}` : ""}`);
+        return await api<MenuComboWithAvailability[]>(`/menu/public${category && category !== "all" ? `?category=${encodeURIComponent(category)}` : ""}`);
       } catch {
         return [];
       }

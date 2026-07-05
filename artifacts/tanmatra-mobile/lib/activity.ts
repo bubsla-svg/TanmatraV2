@@ -1,12 +1,14 @@
 import { Platform } from "react-native";
 import type { WearableProvider } from "@workspace/api-client-react";
 
+export const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? "https://wellness-foods-475157072474.asia-south2.run.app/api";
+
 export function defaultProvider(): WearableProvider {
-  return Platform.OS === "android" ? "google_fit" : "apple_health";
+  return Platform.OS === "android" ? "health_connect" : "apple_health";
 }
 
-export function providerLabel(p: WearableProvider): string {
-  return p === "apple_health" ? "Apple Health" : "Google Fit / Health Connect";
+export function providerLabel(p: WearableProvider | string): string {
+  return p === "apple_health" ? "Apple Health" : "Health Connect / Google Fit";
 }
 
 export interface DailyActivity {
