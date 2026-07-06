@@ -20,9 +20,14 @@ import StickyCheckoutBar from "@/components/cart/StickyCheckoutBar";
 import CartDrawer from "@/components/cart/CartDrawer";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import "./index.css";
+import "./tanmatra-v2/theme.css";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://images.unsplash.com" },
+  // Phosphor icon weights for the v2 screens (self-hosted under /public).
+  { rel: "stylesheet", href: "/phosphor/regular/style.css" },
+  { rel: "stylesheet", href: "/phosphor/fill/style.css" },
+  { rel: "stylesheet", href: "/phosphor/bold/style.css" },
   // LCP image — tell the browser to fetch this before the JS bundle evaluates.
   { rel: "preload", as: "image", href: "/hero-bg.jpg" },
   // Critical font — Inter Variable latin subset is the first face the browser
