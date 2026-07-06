@@ -6,6 +6,8 @@ export const meta: MetaFunction = () => [
   { name: "robots", content: "noindex, nofollow" },
 ];
 
+export const handle = { chrome: false };
+
 export default function Cart() {
   return <V2Cart />;
 }

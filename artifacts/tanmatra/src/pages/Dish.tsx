@@ -52,6 +52,8 @@ export const meta: MetaFunction = ({ params }) => {
   ];
 };
 
+export const handle = { chrome: false };
+
 export default function Dish() {
   return <V2Dish />;
 }

@@ -31,6 +31,8 @@ export const meta: MetaFunction = () => [
   },
 ];
 
+export const handle = { chrome: false };
+
 export default function Menu() {
   return <V2Menu />;
 }
