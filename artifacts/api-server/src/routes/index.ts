@@ -45,6 +45,7 @@ import checkoutRouter from "./checkout";
 import paymentsRouter from "./payments";
 import vitalsRouter from "./vitals";
 import complianceRouter from "./compliance";
+import petpoojaRouter from "./petpooja";
 
 const router: IRouter = Router();
 
@@ -94,5 +95,6 @@ router.use(checkoutRouter);
 router.use(paymentsRouter);
 router.use(vitalsRouter);
 router.use(complianceRouter);
+router.use(petpoojaRouter);
 
 export default router;
