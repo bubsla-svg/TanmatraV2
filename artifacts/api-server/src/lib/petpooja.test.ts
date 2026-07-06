@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mapPetpoojaItem, slugify, serializeMenuToPetpooja } from "./petpooja";
+import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb } from "./petpooja";
+import { usersTable, menuItemsTable } from "@workspace/db/schema";
 
 test("slugify helper", () => {
   assert.equal(slugify("Veg Loaded Pizza"), "veg-loaded-pizza");
@@ -206,4 +207,91 @@ test("serializeMenuToPetpooja serializes database items to Petpooja schema", () 
   assert.equal(payload.addongroups[0].addongroupitems.length, 1);
   assert.equal(payload.addongroups[0].addongroupitems[0].addonitem_name, "Egg");
   assert.equal(payload.addongroups[0].addongroupitems[0].addonitem_price, "20");
+});
+
+test("mapPetpoojaOrderToDb maps order payload to database order structure", async () => {
+  const payload = {
+    app_key: "key",
+    app_secret: "secret",
+    access_token: "token",
+    orderinfo: {
+      OrderInfo: {
+        Restaurant: {
+          details: { res_name: "Lounge", address: "Mall", contact_information: "123", restID: "rest12" },
+        },
+        Customer: {
+          details: {
+            email: "user@example.com",
+            name: "John",
+            address: "Amin Society",
+            phone: "9090909090",
+            latitude: "23.01",
+            longitude: "72.02",
+          },
+        },
+        Order: {
+          details: {
+            orderID: "A-1",
+            preorder_date: "2022-01-01",
+            preorder_time: "15:50:00",
+            delivery_charges: "50",
+            packing_charges: "20",
+            order_type: "H",
+            payment_type: "COD",
+            total: "560",
+            tax_total: "65.52",
+            discount_total: "45",
+            urgent_order: true,
+            description: "No onions",
+            created_on: "2022-01-01 15:49:00",
+          },
+        },
+        OrderItem: {
+          details: [
+            {
+              id: "118829149",
+              name: "Veg Loaded Pizza",
+              price: "110.00",
+              final_price: "110.00",
+              quantity: "2",
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  const mockDbClient = {
+    select: () => ({
+      from: (table: any) => ({
+        where: (condition: any) => ({
+          limit: (n: number) => {
+            if (table === usersTable) {
+              return Promise.resolve([{ id: "usr_abc123" }]);
+            }
+            if (table === menuItemsTable) {
+              return Promise.resolve([{ id: 401, name: "Veg Loaded Pizza" }]);
+            }
+            return Promise.resolve([]);
+          },
+        }),
+      }),
+    }),
+  };
+
+  const order = await mapPetpoojaOrderToDb(payload as any, mockDbClient);
+
+  assert.equal(order.userId, "usr_abc123");
+  assert.equal(order.externalOrderId, "A-1");
+  assert.equal(order.totalPaise, 56000);
+  assert.equal(order.fulfillmentType, "delivery");
+  assert.equal(order.dropLat, 23.01);
+  assert.equal(order.dropLng, 72.02);
+  assert.equal(order.priority, "urgent");
+  assert.equal(order.deliveryInstructions, "No onions");
+  assert.equal(order.items.length, 1);
+  assert.equal(order.items[0].id, 401);
+  assert.equal(order.items[0].name, "Veg Loaded Pizza");
+  assert.equal(order.items[0].qty, 2);
+  assert.equal(order.items[0].price, 11000);
 });

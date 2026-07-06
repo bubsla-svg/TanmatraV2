@@ -1,4 +1,5 @@
-import { type InsertMenuItem, type MenuItem } from "@workspace/db/schema";
+import { sql, eq } from "drizzle-orm";
+import { type InsertMenuItem, type MenuItem, type InsertOrder, usersTable, menuItemsTable } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
@@ -84,6 +85,70 @@ export interface PetpoojaPushMenuPayload {
   attributes: PetpoojaAttribute[];
 }
 
+export interface PetpoojaSaveOrderPayload {
+  app_key: string;
+  app_secret: string;
+  access_token: string;
+  orderinfo: {
+    OrderInfo: {
+      Restaurant: {
+        details: {
+          res_name: string;
+          address: string;
+          contact_information: string;
+          restID: string;
+        };
+      };
+      Customer: {
+        details: {
+          email: string;
+          name: string;
+          address: string;
+          phone: string;
+          latitude?: string;
+          longitude?: string;
+        };
+      };
+      Order: {
+        details: {
+          orderID: string;
+          preorder_date: string;
+          preorder_time: string;
+          delivery_charges: string;
+          packing_charges: string;
+          order_type: string;
+          payment_type: string;
+          total: string;
+          tax_total: string;
+          discount_total: string;
+          urgent_order?: boolean;
+          description?: string;
+          created_on: string;
+        };
+      };
+      OrderItem: {
+        details: Array<{
+          id: string;
+          name: string;
+          price: string;
+          final_price: string;
+          quantity: string;
+          variation_id?: string;
+          variation_name?: string;
+          AddonItem?: {
+            details: Array<{
+              id: string;
+              name: string;
+              price: string;
+              quantity: string;
+            }>;
+          };
+        }>;
+      };
+    };
+  };
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -99,23 +164,18 @@ export function mapPetpoojaItem(
 ): Omit<InsertMenuItem, "contraindications"> & { contraindications?: string[] } {
   const slug = slugify(item.itemname);
 
-  // 1. Resolve Category Name
   const cat = categories.find((c) => c.categoryid === item.item_categoryid);
   const category = cat ? cat.categoryname : "uncategorized";
 
-  // 2. Resolve Veg Status
   const attr = attributes.find((a) => a.attributeid === item.item_attributeid);
   const isVeg = attr ? attr.attribute === "veg" : true;
 
-  // 3. Resolve Availability
   const isAvailable =
     item.active === "1" &&
     (item.in_stock === "1" || item.in_stock === "2" || item.in_stock === "true");
 
-  // 4. Base Price in Paise
   const pricePaise = Math.round(parseFloat(item.price || "0") * 100);
 
-  // 5. Parse Macros & Allergens
   const allergens =
     item.nutrition?.allergens?.map((a) => a.allergen) ?? [];
 
@@ -129,7 +189,6 @@ export function mapPetpoojaItem(
       }
     : null;
 
-  // 6. Map Customizations (Addons & Variations)
   const customizations: Array<{
     groupName: string;
     type: "single" | "multiple";
@@ -140,7 +199,6 @@ export function mapPetpoojaItem(
     }>;
   }> = [];
 
-  // 6a. Map Variations
   if (item.variation && item.variation.length > 0) {
     const varGroupName =
       item.variation_groupname ||
@@ -169,7 +227,6 @@ export function mapPetpoojaItem(
     }
   }
 
-  // 6b. Map Addons
   if (item.addon && item.addon.length > 0) {
     for (const addonRef of item.addon) {
       const group = addonGroups.find(
@@ -223,8 +280,8 @@ export function extractPetpoojaId(tags: string[] | null): string | null {
 }
 
 export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPayload {
-  const categoriesMap = new Map<string, string>(); // name -> id
-  const addonGroupsMap = new Map<string, PetpoojaAddonGroup>(); // name -> group
+  const categoriesMap = new Map<string, string>();
+  const addonGroupsMap = new Map<string, PetpoojaAddonGroup>();
   const variationsList: Array<{ variationid: string; name: string; groupname: string; status: string }> = [];
 
   let nextCategoryId = 500000;
@@ -235,17 +292,14 @@ export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPa
   const items: PetpoojaItem[] = dbItems.map((dbItem) => {
     const itemid = extractPetpoojaId(dbItem.tags) || dbItem.id.toString();
 
-    // Resolve category id
     let categoryid = categoriesMap.get(dbItem.category);
     if (!categoryid) {
       categoryid = (nextCategoryId++).toString();
       categoriesMap.set(dbItem.category, categoryid);
     }
 
-    // Resolve attribute status
     const item_attributeid = dbItem.isVeg ? "1" : "2";
 
-    // Parse customizations
     const itemAddons: Array<{ addon_group_id: string; addon_item_selection_min: string; addon_item_selection_max: string }> = [];
     const itemVariations: Array<{
       id: string;
@@ -281,7 +335,6 @@ export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPa
             });
           }
         } else {
-          // Addon group
           let addonGroup = addonGroupsMap.get(cust.groupName);
           if (!addonGroup) {
             const addongroupid = (nextAddonGroupId++).toString();
@@ -308,7 +361,6 @@ export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPa
       }
     }
 
-    // Map nutrition
     const nutrition: any = {};
     if (dbItem.macros) {
       nutrition.calories = { amount: dbItem.macros.kcal, unit: "kcal" };
@@ -384,4 +436,71 @@ export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPa
     attributes,
     variations: variationsList,
   } as any;
+}
+
+export async function mapPetpoojaOrderToDb(
+  payload: PetpoojaSaveOrderPayload,
+  dbClient: any
+): Promise<InsertOrder> {
+  const { Customer, Order, OrderItem } = payload.orderinfo.OrderInfo;
+
+  let userId: string | null = null;
+  if (Customer.details.email) {
+    const [user] = await dbClient
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, Customer.details.email))
+      .limit(1);
+    if (user) {
+      userId = user.id;
+    }
+  }
+
+  const mappedItems: Array<{ id: number; name: string; qty: number; price: number }> = [];
+  for (const item of OrderItem.details) {
+    const [dbItem] = await dbClient
+      .select()
+      .from(menuItemsTable)
+      .where(
+        sql`${menuItemsTable.tags} @> ${JSON.stringify([`petpooja:${item.id}`])}::jsonb`
+      )
+      .limit(1);
+
+    const localId = dbItem ? dbItem.id : parseInt(item.id) || 0;
+    mappedItems.push({
+      id: localId,
+      name: item.name,
+      qty: parseInt(item.quantity || "1"),
+      price: Math.round(parseFloat(item.price || "0") * 100),
+    });
+  }
+
+  const totalPaise = Math.round(parseFloat(Order.details.total || "0") * 100);
+
+  let fulfillmentType = "delivery";
+  if (Order.details.order_type === "P") {
+    fulfillmentType = "pickup";
+  } else if (Order.details.order_type === "D") {
+    fulfillmentType = "dinein";
+  }
+
+  const dropLat = Customer.details.latitude ? parseFloat(Customer.details.latitude) : null;
+  const dropLng = Customer.details.longitude ? parseFloat(Customer.details.longitude) : null;
+
+  return {
+    userId,
+    externalOrderId: Order.details.orderID,
+    status: "placed",
+    totalPaise,
+    addressLabel: "Delivery Address",
+    addressLine: Customer.details.address || "",
+    phone: Customer.details.phone || "",
+    dropLat,
+    dropLng,
+    items: mappedItems,
+    fulfillmentType,
+    priority: Order.details.urgent_order ? "urgent" : "routine",
+    ecoPackagingOptIn: 0,
+    deliveryInstructions: Order.details.description || "",
+  };
 }

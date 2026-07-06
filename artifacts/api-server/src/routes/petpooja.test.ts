@@ -3,6 +3,7 @@ import { test, before, after } from "node:test";
 import http from "node:http";
 import { type AddressInfo } from "node:net";
 import express, { type Express } from "express";
+import { usersTable, menuItemsTable, ordersTable } from "@workspace/db/schema";
 
 // Set a dummy DATABASE_URL before importing the DB library so it doesn't throw
 process.env.DATABASE_URL = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
@@ -142,4 +143,119 @@ test("POST /integrations/petpooja/fetchmenu returns serialized menu payload", as
   assert.equal(json.items[0].itemid, "7765809");
   assert.equal(json.items[0].itemname, "Garlic Bread");
   assert.equal(json.items[0].price, "140");
+});
+
+test("POST /integrations/petpooja/saveorder parses payload, inserts order, and returns 200", async (t) => {
+  // Mock db.select and db.insert
+  t.mock.method(db, "select", () => {
+    const mockSelectResult = {
+      from: (table: any) => ({
+        where: (condition: any) => ({
+          limit: (n: number) => {
+            if (table === usersTable) {
+              return Promise.resolve([{ id: "usr_abc123" }]);
+            }
+            if (table === menuItemsTable) {
+              return Promise.resolve([{ id: 401, name: "Veg Loaded Pizza" }]);
+            }
+            return Promise.resolve([]);
+          },
+        }),
+      }),
+    };
+    return mockSelectResult;
+  });
+
+  t.mock.method(db, "insert", (table: any) => {
+    assert.equal(table, ordersTable);
+    const mockInsertBuilder = {
+      values: (values: any) => {
+        assert.equal(values.externalOrderId, "A-1");
+        assert.equal(values.totalPaise, 56000);
+        assert.equal(values.userId, "usr_abc123");
+        const mockValuesBuilder = {
+          returning: () => Promise.resolve([{ id: 26 }]),
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockInsertBuilder;
+  });
+
+  const payload = {
+    app_key: "key",
+    app_secret: "secret",
+    access_token: "token",
+    orderinfo: {
+      OrderInfo: {
+        Restaurant: {
+          details: {
+            res_name: "Dynamite Lounge",
+            address: "Reliance Mall",
+            contact_information: "9427846660",
+            restID: "rest123",
+          },
+        },
+        Customer: {
+          details: {
+            email: "xxx@yahoo.com",
+            name: "Advait",
+            address: "Amin Society",
+            phone: "9090909090",
+            latitude: "34.11",
+            longitude: "74.72",
+          },
+        },
+        Order: {
+          details: {
+            orderID: "A-1",
+            preorder_date: "2022-01-01",
+            preorder_time: "15:50:00",
+            delivery_charges: "50",
+            packing_charges: "20",
+            order_type: "H",
+            payment_type: "COD",
+            total: "560",
+            tax_total: "65.52",
+            discount_total: "45",
+            urgent_order: false,
+            description: "",
+            created_on: "2022-01-01 15:49:00",
+            service_charge: "0",
+            sc_tax_amount: "0",
+            dc_tax_percentage: "5",
+            dc_tax_amount: "2.5",
+            pc_tax_amount: "1",
+            pc_tax_percentage: "5",
+          },
+        },
+        OrderItem: {
+          details: [
+            {
+              id: "118829149",
+              name: "Veg Loaded Pizza",
+              price: "110.00",
+              final_price: "110.00",
+              quantity: "1",
+            },
+          ],
+        },
+      },
+    },
+    device_type: "Web",
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/saveorder`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.success, "1");
+  assert.equal(json.message, "Your order is saved.");
+  assert.equal(json.restID, "rest123");
+  assert.equal(json.clientOrderID, "A-1");
+  assert.equal(json.orderID, "26");
 });
