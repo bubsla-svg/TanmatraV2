@@ -102,3 +102,44 @@ test("POST /integrations/petpooja/push-menu processes valid payload and returns 
   assert.equal(json.success, "1");
   assert.equal(json.message, "Menu synchronized successfully");
 });
+
+test("POST /integrations/petpooja/fetchmenu returns serialized menu payload", async (t) => {
+  // Mock db.select to return dummy items
+  t.mock.method(db, "select", () => {
+    const mockSelectResult = {
+      from: () => Promise.resolve([
+        {
+          id: 101,
+          slug: "garlic-bread",
+          name: "Garlic Bread",
+          description: "Garlic bread sticks",
+          pricePaise: 14000,
+          category: "Sides",
+          kitchenLocation: "default",
+          isVeg: true,
+          isAvailable: true,
+          tags: ["petpooja:7765809"],
+          allergens: [],
+          cuisineTags: [],
+          macros: null,
+          customizations: null,
+        },
+      ]),
+    };
+    return mockSelectResult;
+  });
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/fetchmenu`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ restID: "rest123" }),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.success, "1");
+  assert.equal(json.items.length, 1);
+  assert.equal(json.items[0].itemid, "7765809");
+  assert.equal(json.items[0].itemname, "Garlic Bread");
+  assert.equal(json.items[0].price, "140");
+});

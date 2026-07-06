@@ -1,14 +1,25 @@
-import { type InsertMenuItem } from "@workspace/db/schema";
+import { type InsertMenuItem, type MenuItem } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
+  itemallowvariation: string;
+  itemrank: string;
+  item_categoryid: string;
+  item_ordertype: string;
+  item_tags?: string[];
+  item_packingcharges?: string;
+  itemallowaddon: string;
+  itemaddonbasedon: string;
+  item_favorite: string;
+  ignore_taxes: string;
+  ignore_discounts: string;
+  in_stock: string;
   itemname: string;
-  itemdescription?: string;
+  item_attributeid: string;
+  itemdescription: string;
+  minimumpreparationtime?: string;
   price: string;
   active: string;
-  in_stock: string;
-  item_categoryid: string;
-  item_attributeid: string;
   item_image_url?: string;
   cuisine?: string[];
   variation?: Array<{
@@ -200,7 +211,177 @@ export function mapPetpoojaItem(
     macros,
     macrosAreEstimate: true,
     rdVerified: false,
-    allergenReviewState: "reviewed", // Webhook menu updates default to reviewed to be visible
+    allergenReviewState: "reviewed",
     customizations: customizations.length > 0 ? customizations : null,
   };
+}
+
+export function extractPetpoojaId(tags: string[] | null): string | null {
+  if (!tags) return null;
+  const tag = tags.find((t) => t.startsWith("petpooja:"));
+  return tag ? tag.split(":")[1] : null;
+}
+
+export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPayload {
+  const categoriesMap = new Map<string, string>(); // name -> id
+  const addonGroupsMap = new Map<string, PetpoojaAddonGroup>(); // name -> group
+  const variationsList: Array<{ variationid: string; name: string; groupname: string; status: string }> = [];
+
+  let nextCategoryId = 500000;
+  let nextAddonGroupId = 130000;
+  let nextAddonItemId = 1100000;
+  let nextVariationId = 80000;
+
+  const items: PetpoojaItem[] = dbItems.map((dbItem) => {
+    const itemid = extractPetpoojaId(dbItem.tags) || dbItem.id.toString();
+
+    // Resolve category id
+    let categoryid = categoriesMap.get(dbItem.category);
+    if (!categoryid) {
+      categoryid = (nextCategoryId++).toString();
+      categoriesMap.set(dbItem.category, categoryid);
+    }
+
+    // Resolve attribute status
+    const item_attributeid = dbItem.isVeg ? "1" : "2";
+
+    // Parse customizations
+    const itemAddons: Array<{ addon_group_id: string; addon_item_selection_min: string; addon_item_selection_max: string }> = [];
+    const itemVariations: Array<{
+      id: string;
+      variationid: string;
+      name: string;
+      groupname: string;
+      price: string;
+      active: string;
+    }> = [];
+
+    const basePrice = dbItem.pricePaise / 100;
+
+    if (dbItem.customizations && Array.isArray(dbItem.customizations)) {
+      for (const cust of dbItem.customizations) {
+        if (cust.groupName.toLowerCase() === "quantity" || cust.groupName.toLowerCase() === "size") {
+          for (const opt of cust.options) {
+            const variationid = (nextVariationId++).toString();
+            variationsList.push({
+              variationid,
+              name: opt.name,
+              groupname: cust.groupName,
+              status: "1",
+            });
+
+            const optPrice = basePrice + (opt.priceModifier / 100);
+            itemVariations.push({
+              id: (nextVariationId * 2).toString(),
+              variationid,
+              name: opt.name,
+              groupname: cust.groupName,
+              price: optPrice.toString(),
+              active: "1",
+            });
+          }
+        } else {
+          // Addon group
+          let addonGroup = addonGroupsMap.get(cust.groupName);
+          if (!addonGroup) {
+            const addongroupid = (nextAddonGroupId++).toString();
+            addonGroup = {
+              addongroupid,
+              addongroup_name: cust.groupName,
+              active: "1",
+              addongroupitems: cust.options.map((opt) => ({
+                addonitemid: (nextAddonItemId++).toString(),
+                addonitem_name: opt.name,
+                addonitem_price: (opt.priceModifier / 100).toString(),
+                active: "1",
+              })),
+            };
+            addonGroupsMap.set(cust.groupName, addonGroup);
+          }
+
+          itemAddons.push({
+            addon_group_id: addonGroup.addongroupid,
+            addon_item_selection_min: "0",
+            addon_item_selection_max: cust.type === "multiple" ? "4" : "1",
+          });
+        }
+      }
+    }
+
+    // Map nutrition
+    const nutrition: any = {};
+    if (dbItem.macros) {
+      nutrition.calories = { amount: dbItem.macros.kcal, unit: "kcal" };
+      nutrition.protien = { amount: dbItem.macros.proteinG, unit: "g" };
+      nutrition.carbohydrate = { amount: dbItem.macros.carbsG, unit: "g" };
+      nutrition.totalFat = { amount: dbItem.macros.fatG, unit: "g" };
+      if (dbItem.macros.fiberG) {
+        nutrition.fiber = { amount: dbItem.macros.fiberG, unit: "g" };
+      }
+      if (dbItem.allergens && dbItem.allergens.length > 0) {
+        nutrition.allergens = dbItem.allergens.map((a) => ({
+          allergen: a,
+          allergenDesc: a,
+        }));
+      }
+    }
+
+    return {
+      itemid,
+      itemallowvariation: itemVariations.length > 0 ? "1" : "0",
+      itemrank: "50",
+      item_categoryid: categoryid,
+      item_ordertype: "1,2,3",
+      item_tags: dbItem.tags || [],
+      item_packingcharges: "",
+      itemallowaddon: itemAddons.length > 0 ? "1" : "0",
+      itemaddonbasedon: "0",
+      item_favorite: "0",
+      ignore_taxes: "0",
+      ignore_discounts: "0",
+      in_stock: dbItem.isAvailable ? "2" : "0",
+      variation_groupname: itemVariations.length > 0 ? itemVariations[0].groupname : "",
+      variation: itemVariations,
+      addon: itemAddons,
+      itemname: dbItem.name,
+      item_attributeid,
+      itemdescription: dbItem.description,
+      minimumpreparationtime: dbItem.prepTime || "",
+      price: basePrice.toString(),
+      active: dbItem.isAvailable ? "1" : "0",
+      item_image_url: dbItem.imageUrl || "",
+      nutrition: Object.keys(nutrition).length > 0 ? nutrition : undefined,
+    } as any;
+  });
+
+  const categories: PetpoojaCategory[] = Array.from(categoriesMap.entries()).map(([name, id]) => ({
+    categoryid: id,
+    categoryname: name,
+    active: "1",
+  }));
+
+  const addonGroups: PetpoojaAddonGroup[] = Array.from(addonGroupsMap.values());
+
+  const attributes: PetpoojaAttribute[] = [
+    { attributeid: "1", attribute: "veg", active: "1" },
+    { attributeid: "2", attribute: "non-veg", active: "1" },
+    { attributeid: "24", attribute: "egg", active: "1" },
+  ];
+
+  return {
+    success: "1",
+    restaurants: [
+      {
+        restaurantid: "default",
+        details: {
+          restaurantname: "Wellness Foods",
+        },
+      },
+    ],
+    categories,
+    items,
+    addongroups: addonGroups,
+    attributes,
+    variations: variationsList,
+  } as any;
 }

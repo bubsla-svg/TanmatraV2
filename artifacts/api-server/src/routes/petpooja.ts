@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import { menuItemsTable } from "@workspace/db/schema";
-import { mapPetpoojaItem, type PetpoojaPushMenuPayload } from "../lib/petpooja";
+import { mapPetpoojaItem, serializeMenuToPetpooja, type PetpoojaPushMenuPayload } from "../lib/petpooja";
 
 const router = Router();
 
@@ -60,6 +60,27 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
   } catch (err: any) {
     req.log?.error({ err }, "failed to sync petpooja menu");
     res.status(500).json({ success: "0", message: `sync failed: ${err.message}` });
+  }
+});
+
+router.post("/integrations/petpooja/fetchmenu", async (req: Request, res: Response) => {
+  const { restID } = req.body;
+
+  if (!restID) {
+    res.status(400).json({ success: "0", message: "restID is required" });
+    return;
+  }
+
+  try {
+    req.log?.info({ restID }, "starting petpooja fetchmenu serialization");
+
+    const dbItems = await db.select().from(menuItemsTable);
+    const payload = serializeMenuToPetpooja(dbItems);
+
+    res.status(200).json(payload);
+  } catch (err: any) {
+    req.log?.error({ err }, "failed to fetch and serialize petpooja menu");
+    res.status(500).json({ success: "0", message: `fetch failed: ${err.message}` });
   }
 });
 

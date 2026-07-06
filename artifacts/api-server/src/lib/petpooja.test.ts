@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mapPetpoojaItem, slugify } from "./petpooja";
+import { mapPetpoojaItem, slugify, serializeMenuToPetpooja } from "./petpooja";
 
 test("slugify helper", () => {
   assert.equal(slugify("Veg Loaded Pizza"), "veg-loaded-pizza");
@@ -151,4 +151,59 @@ test("mapPetpoojaItem maps addons to customizations multiple selection groups", 
     { name: "Egg", priceModifier: 2000 },
     { name: "Jalapenos", priceModifier: 2000 },
   ]);
+});
+
+test("serializeMenuToPetpooja serializes database items to Petpooja schema", () => {
+  const dbItems = [
+    {
+      id: 101,
+      slug: "veg-loaded-pizza",
+      name: "Veg Loaded Pizza",
+      description: "Delicious pizza with veggies",
+      pricePaise: 10000,
+      category: "Pizza",
+      kitchenLocation: "default",
+      isVeg: true,
+      isAvailable: true,
+      tags: ["petpooja:118829149"],
+      allergens: ["gluten"],
+      cuisineTags: ["Italian"],
+      macros: {
+        kcal: 250,
+        proteinG: 12,
+        carbsG: 35,
+        fatG: 8,
+        fiberG: 3,
+      },
+      imageUrl: "https://example.com/pizza.jpg",
+      customizations: [
+        {
+          groupName: "Extra Toppings",
+          type: "multiple",
+          options: [
+            { name: "Egg", priceModifier: 2000 },
+          ],
+        },
+      ],
+    },
+  ];
+
+  const payload = serializeMenuToPetpooja(dbItems as any);
+
+  assert.equal(payload.success, "1");
+  assert.equal(payload.items.length, 1);
+
+  const item = payload.items[0];
+  assert.equal(item.itemid, "118829149");
+  assert.equal(item.itemname, "Veg Loaded Pizza");
+  assert.equal(item.price, "100");
+  assert.equal(item.item_attributeid, "1"); // veg
+  assert.equal(item.item_image_url, "https://example.com/pizza.jpg");
+  assert.deepEqual(item.nutrition?.calories, { amount: 250, unit: "kcal" });
+
+  assert.equal(payload.addongroups.length, 1);
+  assert.equal(payload.addongroups[0].addongroup_name, "Extra Toppings");
+  assert.equal(payload.addongroups[0].addongroupitems.length, 1);
+  assert.equal(payload.addongroups[0].addongroupitems[0].addonitem_name, "Egg");
+  assert.equal(payload.addongroups[0].addongroupitems[0].addonitem_price, "20");
 });
