@@ -1,0 +1,12 @@
+{
+  "buildCommand": "pnpm --filter @workspace/tanmatra run build",
+  "outputDirectory": "artifacts/tanmatra/build/client",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/__spa-fallback.html"
+    }
+  ]
+}
