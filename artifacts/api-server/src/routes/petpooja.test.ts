@@ -520,3 +520,47 @@ test("POST /integrations/petpooja/item_stock updates availability status of item
   assert.equal(json.message, "Stock status updated successfully");
   assert.equal(updateCallsCount, 2);
 });
+
+test("POST /integrations/petpooja/item_stock_off marks items as out of stock", async (t) => {
+  let updateCallsCount = 0;
+
+  // Mock db.update for menuItemsTable
+  t.mock.method(db, "update", (table: any) => {
+    assert.equal(table, menuItemsTable);
+    const mockUpdateBuilder = {
+      set: (values: any) => {
+        assert.equal(values.isAvailable, false);
+        const mockValuesBuilder = {
+          where: (condition: any) => {
+            updateCallsCount++;
+            return Promise.resolve();
+          },
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockUpdateBuilder;
+  });
+
+  const payload = {
+    restID: "rest123",
+    type: "item",
+    inStock: false,
+    itemID: ["7532306", "7865402"],
+    autoTurnOnTime: "custom",
+    customTurnOnTime: "2020-02-24 18:00",
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/item_stock_off`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.code, 200);
+  assert.equal(json.status, "success");
+  assert.equal(json.message, "Stock status updated successfully");
+  assert.equal(updateCallsCount, 2);
+});
