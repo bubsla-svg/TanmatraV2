@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
-import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload } from "../lib/petpooja";
+import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload } from "../lib/petpooja";
 
 const router = Router();
 
@@ -199,6 +199,81 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
   } catch (err: any) {
     req.log?.error({ err }, "failed to process status callback");
     res.status(500).json({ success: "0", message: `callback processing failed: ${err.message}` });
+  }
+});
+
+router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Response) => {
+  const payload = req.body as PetpoojaUpdateOrderStatusPayload;
+
+  if (!payload || !payload.clientorderID || !payload.status) {
+    res.status(400).json({ success: "0", message: "clientorderID and status are required" });
+    return;
+  }
+
+  try {
+    req.log?.info(
+      { clientorderID: payload.clientorderID, status: payload.status },
+      "received petpooja order status update request"
+    );
+
+    // Look up the order in database. First by local orderID if provided, otherwise by clientorderID (externalOrderId)
+    let order: any = null;
+    if (payload.orderID && payload.orderID.trim() !== "") {
+      const orderIdInt = parseInt(payload.orderID);
+      if (!isNaN(orderIdInt)) {
+        [order] = await db
+          .select()
+          .from(ordersTable)
+          .where(eq(ordersTable.id, orderIdInt))
+          .limit(1);
+      }
+    }
+
+    if (!order) {
+      [order] = await db
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.externalOrderId, payload.clientorderID))
+        .limit(1);
+    }
+
+    if (!order) {
+      res.status(404).json({ success: "0", message: `order with external ID ${payload.clientorderID} not found` });
+      return;
+    }
+
+    const mappedStatus = mapPetpoojaStatus(payload.status);
+    const updateFields: any = {
+      status: mappedStatus,
+      updatedAt: new Date(),
+    };
+
+    // If cancelReason is provided, prepend it to deliveryInstructions or log it.
+    if (payload.cancelReason && mappedStatus === "cancelled") {
+      const currentInstructions = order.deliveryInstructions || "";
+      updateFields.deliveryInstructions = `[Cancelled: ${payload.cancelReason}] ${currentInstructions}`.substring(0, 512);
+    }
+
+    await db
+      .update(ordersTable)
+      .set(updateFields)
+      .where(eq(ordersTable.id, order.id));
+
+    req.log?.info(
+      { orderID: order.id, clientorderID: payload.clientorderID, status: mappedStatus },
+      "order status updated successfully"
+    );
+
+    res.status(200).json({
+      success: "1",
+      message: "Order status updated successfully.",
+      restID: payload.restID,
+      orderID: order.id.toString(),
+      status: payload.status,
+    });
+  } catch (err: any) {
+    req.log?.error({ err }, "failed to update order status");
+    res.status(500).json({ success: "0", message: `status update failed: ${err.message}` });
   }
 });
 

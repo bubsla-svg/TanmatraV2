@@ -339,3 +339,62 @@ test("POST /integrations/petpooja/callback updates order status and rider info",
   assert.equal(json.success, "1");
   assert.equal(json.message, "Callback processed successfully");
 });
+
+test("POST /integrations/petpooja/orderstatus cancels order and saves cancelReason", async (t) => {
+  // Mock db.select
+  t.mock.method(db, "select", () => {
+    const mockSelectResult = {
+      from: (table: any) => ({
+        where: (condition: any) => ({
+          limit: (n: number) => {
+            if (table === ordersTable) {
+              return Promise.resolve([{ id: 26, externalOrderId: "A-1", status: "placed", deliveryInstructions: "Ring bell" }]);
+            }
+            return Promise.resolve([]);
+          },
+        }),
+      }),
+    };
+    return mockSelectResult;
+  });
+
+  // Mock db.update
+  t.mock.method(db, "update", (table: any) => {
+    assert.equal(table, ordersTable);
+    const mockUpdateBuilder = {
+      set: (values: any) => {
+        assert.equal(values.status, "cancelled");
+        assert.ok(values.deliveryInstructions.includes("Please cancel my order."));
+        const mockValuesBuilder = {
+          where: (condition: any) => Promise.resolve(),
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockUpdateBuilder;
+  });
+
+  const payload = {
+    app_key: "key",
+    app_secret: "secret",
+    access_token: "token",
+    restID: "rest123",
+    orderID: "26",
+    clientorderID: "A-1",
+    cancelReason: "Please cancel my order.",
+    status: "-1", // cancel status
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/orderstatus`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.success, "1");
+  assert.equal(json.message, "Order status updated successfully.");
+  assert.equal(json.orderID, "26");
+  assert.equal(json.status, "-1");
+});

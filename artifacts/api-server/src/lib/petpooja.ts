@@ -161,6 +161,17 @@ export interface PetpoojaCallbackPayload {
   is_modified?: string;
 }
 
+export interface PetpoojaUpdateOrderStatusPayload {
+  app_key: string;
+  app_secret: string;
+  access_token: string;
+  restID: string;
+  orderID?: string;
+  clientorderID: string;
+  cancelReason: string;
+  status: string;
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -521,6 +532,7 @@ export function mapPetpoojaStatus(petpoojaStatus: string): string {
   switch (petpoojaStatus) {
     case "1":
       return "confirmed";
+    case "-1":
     case "2":
       return "cancelled";
     case "5":
