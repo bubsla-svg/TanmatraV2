@@ -454,4 +454,22 @@ router.post("/integrations/petpooja/item_stock_off", async (req: Request, res: R
   }
 });
 
+router.post("/integrations/petpooja/get_store_status", async (req: Request, res: Response) => {
+  const { restID } = req.body;
+
+  if (!restID) {
+    res.status(400).json({ http_code: 400, status: "fail", message: "restID is required" });
+    return;
+  }
+
+  req.log?.info({ restID }, "received petpooja get_store_status request");
+
+  res.status(200).json({
+    http_code: 200,
+    status: "success",
+    store_status: "1",
+    message: "Store Delivery Status fetched successfully",
+  });
+});
+
 export default router;

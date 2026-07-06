@@ -564,3 +564,22 @@ test("POST /integrations/petpooja/item_stock_off marks items as out of stock", a
   assert.equal(json.message, "Stock status updated successfully");
   assert.equal(updateCallsCount, 2);
 });
+
+test("POST /integrations/petpooja/get_store_status returns store operational status", async (t) => {
+  const payload = {
+    restID: "rest123",
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/get_store_status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.http_code, 200);
+  assert.equal(json.status, "success");
+  assert.equal(json.store_status, "1");
+  assert.equal(json.message, "Store Delivery Status fetched successfully");
+});
