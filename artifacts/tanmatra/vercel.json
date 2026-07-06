@@ -1,5 +1,5 @@
 {
-  "outputDirectory": "build/client",
+  "outputDirectory": "client",
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
