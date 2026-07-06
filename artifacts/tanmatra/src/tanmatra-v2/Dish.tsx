@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
-import { getDishBySlug, toView } from "./data";
+import { useCart } from "@/lib/cartContext";
+import { getDishBySlug, toView, toCartItem, F } from "./data";
 
 export default function V2Dish() {
   const { slug } = useParams();
@@ -19,6 +20,9 @@ export default function V2Dish() {
   }
 
   const v = toView(raw);
+  const { items, addItem, updateQty, subtotal } = useCart();
+  const line = items.find((it: any) => it.slug === v.slug);
+  const qty = line ? line.quantity : 0;
   const pair = v.pairingSlug ? getDishBySlug(v.pairingSlug) : undefined;
   const pairV = pair ? toView(pair) : undefined;
   const tAcc = (k: string) => () => setAcc((a) => (a === k ? null : k));
@@ -83,7 +87,18 @@ export default function V2Dish() {
           </div>
         </div>
         <div className="dock">
-          <Link className="btn btn-p btn-lg btn-blk" to="/cart">Add to cart — {v.priceStr}</Link>
+          {qty === 0 ? (
+            <button className="btn btn-p btn-lg btn-blk" onClick={() => addItem(toCartItem(raw))}>Add to cart — {v.priceStr}</button>
+          ) : (
+            <div className="fx ac gap12">
+              <div className="fx ac gap10">
+                <button className="qbtn" onClick={() => updateQty(line!.lineId, -1)} aria-label="Decrease"><i className="ph-bold ph-minus" /></button>
+                <span className="mono" style={{ fontSize: 16, fontWeight: 600, width: 20, textAlign: "center" }}>{qty}</span>
+                <button className="qbtn" onClick={() => updateQty(line!.lineId, 1)} aria-label="Increase"><i className="ph-bold ph-plus" /></button>
+              </div>
+              <Link className="btn btn-p btn-lg f1" to="/cart">Go to cart — {F(subtotal)}</Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

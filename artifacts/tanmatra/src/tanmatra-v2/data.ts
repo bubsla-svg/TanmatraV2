@@ -65,3 +65,26 @@ function prettyCategory(c: string): string {
   if (!c) return "";
   return c.charAt(0).toUpperCase() + c.slice(1).replace(/-/g, " ");
 }
+
+/** Build the real cart-store payload (Omit<CartItem,"lineId">) from a DishData. */
+export function toCartItem(d: any) {
+  const m = d.macros || {};
+  return {
+    dishId: d.id,
+    slug: d.slug,
+    name: d.name,
+    image: d.image,
+    basePrice: d.price,
+    unitPrice: d.price,
+    quantity: 1,
+    kitchen: d.kitchen || "",
+    isVeg: !!d.isVeg,
+    rdVerified: !!d.rdVerified,
+    macros: {
+      protein: m.protein || 0, carbs: m.carbs || 0, fat: m.fat || 0,
+      fiber: m.fiber || 0, calories: m.calories || 0,
+    },
+    customizations: [] as string[],
+  };
+}
+

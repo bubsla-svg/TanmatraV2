@@ -5,9 +5,8 @@
  */
 
 /* ---- reset ---- */
-*{box-sizing:border-box;margin:0;padding:0}
-{min-height:100%}
-{background:#0A0B0C}
+.tnm2, .tnm2 *{box-sizing:border-box}
+.tnm2 h1,.tnm2 h2,.tnm2 h3,.tnm2 p,.tnm2 ul,.tnm2 li,.tnm2 figure{margin:0;padding:0}
 .tnm2 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
 .tnm2 input{font:inherit;color:inherit;background:none;border:none;outline:none;min-width:0}
 .tnm2 i[class^="ph"],.tnm2 i[class*=" ph"]{display:inline-flex;line-height:1}
