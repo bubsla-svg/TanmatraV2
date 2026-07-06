@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
 import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload, type PetpoojaRiderInfoPayload } from "../lib/petpooja";
@@ -364,6 +364,48 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
   } catch (err: any) {
     req.log?.error({ err }, "failed to process rider status webhook");
     res.status(500).json({ success: "fail", message: `rider status update failed: ${err.message}` });
+  }
+});
+
+router.post("/integrations/petpooja/item_stock", async (req: Request, res: Response) => {
+  const { type, inStock, itemID, restID } = req.body;
+
+  if (type === undefined || inStock === undefined || !itemID || !Array.isArray(itemID)) {
+    res.status(400).json({ code: 400, status: "fail", message: "type, inStock, and itemID array are required" });
+    return;
+  }
+
+  try {
+    req.log?.info(
+      { type, inStock, itemID, restID },
+      "received petpooja item stock status update webhook"
+    );
+
+    if (type === "item") {
+      for (const id of itemID) {
+        await db
+          .update(menuItemsTable)
+          .set({ isAvailable: inStock, updatedAt: new Date() })
+          .where(
+            sql`${menuItemsTable.tags} @> ${JSON.stringify([`petpooja:${id}`])}::jsonb`
+          );
+      }
+      req.log?.info({ itemID, inStock }, "successfully updated item stock status");
+    } else {
+      req.log?.warn(
+        { type, itemID },
+        "received stock update for unsupported type (addon option updates are ignored)"
+      );
+    }
+
+    res.status(200).json({
+      code: 200,
+      status: "success",
+      message: "Stock status updated successfully",
+    });
+  } catch (err: any) {
+    req.log?.error({ err }, "failed to update item stock status");
+    res.status(500).json({ code: 500, status: "error", message: `failed to update stock: ${err.message}` });
   }
 });
 

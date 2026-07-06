@@ -478,3 +478,45 @@ test("POST /integrations/petpooja/rider-info resolves order and registers/assign
   assert.equal(json.message, "Rider status saved successfully.");
   assert.equal(json.success, "success");
 });
+
+test("POST /integrations/petpooja/item_stock updates availability status of items", async (t) => {
+  let updateCallsCount = 0;
+
+  // Mock db.update for menuItemsTable
+  t.mock.method(db, "update", (table: any) => {
+    assert.equal(table, menuItemsTable);
+    const mockUpdateBuilder = {
+      set: (values: any) => {
+        assert.equal(values.isAvailable, true);
+        const mockValuesBuilder = {
+          where: (condition: any) => {
+            updateCallsCount++;
+            return Promise.resolve();
+          },
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockUpdateBuilder;
+  });
+
+  const payload = {
+    restID: "rest123",
+    type: "item",
+    inStock: true,
+    itemID: ["7778660", "7778659"],
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/item_stock`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.code, 200);
+  assert.equal(json.status, "success");
+  assert.equal(json.message, "Stock status updated successfully");
+  assert.equal(updateCallsCount, 2);
+});
