@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "buildCommand": "pnpm --filter @workspace/tanmatra run build",
   "outputDirectory": "artifacts/tanmatra/build/client",
   "cleanUrls": true,
