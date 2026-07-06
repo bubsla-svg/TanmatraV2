@@ -398,3 +398,83 @@ test("POST /integrations/petpooja/orderstatus cancels order and saves cancelReas
   assert.equal(json.orderID, "26");
   assert.equal(json.status, "-1");
 });
+
+test("POST /integrations/petpooja/rider-info resolves order and registers/assigns rider", async (t) => {
+  // Mock db.select
+  t.mock.method(db, "select", () => {
+    const mockSelectResult = {
+      from: (table: any) => ({
+        where: (condition: any) => ({
+          limit: (n: number) => {
+            if (table === ordersTable) {
+              return Promise.resolve([{ id: 105, externalOrderId: "101010527", status: "confirmed" }]);
+            }
+            if (table === ridersTable) {
+              return Promise.resolve([]);
+            }
+            return Promise.resolve([]);
+          },
+        }),
+      }),
+    };
+    return mockSelectResult;
+  });
+
+  // Mock db.insert for ridersTable
+  t.mock.method(db, "insert", (table: any) => {
+    assert.equal(table, ridersTable);
+    const mockInsertBuilder = {
+      values: (values: any) => {
+        assert.equal(values.name, "RIDER");
+        assert.equal(values.phone, "9999999999");
+        const mockValuesBuilder = {
+          returning: () => Promise.resolve([{ id: 909 }]),
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockInsertBuilder;
+  });
+
+  // Mock db.update for ordersTable
+  t.mock.method(db, "update", (table: any) => {
+    assert.equal(table, ordersTable);
+    const mockUpdateBuilder = {
+      set: (values: any) => {
+        assert.equal(values.status, "dispatched");
+        assert.equal(values.riderId, 909);
+        const mockValuesBuilder = {
+          where: (condition: any) => Promise.resolve(),
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockUpdateBuilder;
+  });
+
+  const payload = {
+    app_key: "key",
+    app_secret: "secret",
+    access_token: "token",
+    order_id: 101010527,
+    outlet_id: "outlet123",
+    status: "rider-assigned",
+    rider_data: {
+      rider_name: "RIDER",
+      rider_phone_number: "9999999999",
+    },
+    external_order_id: "",
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/rider-info`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.code, "200");
+  assert.equal(json.message, "Rider status saved successfully.");
+  assert.equal(json.success, "success");
+});

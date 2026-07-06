@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
-import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload } from "../lib/petpooja";
+import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload, type PetpoojaRiderInfoPayload } from "../lib/petpooja";
 
 const router = Router();
 
@@ -274,6 +274,96 @@ router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Resp
   } catch (err: any) {
     req.log?.error({ err }, "failed to update order status");
     res.status(500).json({ success: "0", message: `status update failed: ${err.message}` });
+  }
+});
+
+router.post("/integrations/petpooja/rider-info", async (req: Request, res: Response) => {
+  const payload = req.body as PetpoojaRiderInfoPayload;
+
+  if (!payload || !payload.order_id || !payload.status) {
+    res.status(400).json({ success: "fail", message: "order_id and status are required" });
+    return;
+  }
+
+  try {
+    req.log?.info(
+      { order_id: payload.order_id, status: payload.status, rider_data: payload.rider_data },
+      "received petpooja rider status webhook"
+    );
+
+    let order: any = null;
+    const orderIdStr = payload.order_id.toString();
+    const orderIdInt = parseInt(orderIdStr);
+
+    if (!isNaN(orderIdInt)) {
+      [order] = await db
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.id, orderIdInt))
+        .limit(1);
+    }
+
+    if (!order) {
+      [order] = await db
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.externalOrderId, orderIdStr))
+        .limit(1);
+    }
+
+    if (!order) {
+      res.status(404).json({ success: "fail", message: `order with ID ${orderIdStr} not found` });
+      return;
+    }
+
+    const mappedStatus = mapPetpoojaRiderStatus(payload.status);
+    const updateFields: any = {
+      status: mappedStatus,
+      updatedAt: new Date(),
+    };
+
+    if (payload.rider_data && payload.rider_data.rider_name && payload.rider_data.rider_phone_number) {
+      let [rider] = await db
+        .select()
+        .from(ridersTable)
+        .where(eq(ridersTable.phone, payload.rider_data.rider_phone_number))
+        .limit(1);
+
+      if (!rider) {
+        [rider] = await db
+          .insert(ridersTable)
+          .values({
+            name: payload.rider_data.rider_name,
+            phone: payload.rider_data.rider_phone_number,
+            zone: "default",
+            status: "active",
+          })
+          .returning({ id: ridersTable.id });
+      }
+
+      if (rider) {
+        updateFields.riderId = rider.id;
+      }
+    }
+
+    await db
+      .update(ordersTable)
+      .set(updateFields)
+      .where(eq(ordersTable.id, order.id));
+
+    req.log?.info(
+      { orderID: order.id, status: mappedStatus, riderId: updateFields.riderId },
+      "rider webhook status processed successfully"
+    );
+
+    res.status(200).json({
+      code: "200",
+      message: "Rider status saved successfully.",
+      success: "success",
+    });
+  } catch (err: any) {
+    req.log?.error({ err }, "failed to process rider status webhook");
+    res.status(500).json({ success: "fail", message: `rider status update failed: ${err.message}` });
   }
 });
 

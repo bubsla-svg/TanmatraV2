@@ -172,6 +172,20 @@ export interface PetpoojaUpdateOrderStatusPayload {
   status: string;
 }
 
+export interface PetpoojaRiderInfoPayload {
+  app_key: string;
+  app_secret: string;
+  access_token: string;
+  order_id: string | number;
+  outlet_id: string;
+  status: string;
+  rider_data?: {
+    rider_name: string;
+    rider_phone_number: string;
+  };
+  external_order_id?: string;
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -542,4 +556,11 @@ export function mapPetpoojaStatus(petpoojaStatus: string): string {
     default:
       return "placed";
   }
+}
+
+export function mapPetpoojaRiderStatus(status: string): string {
+  if (status.toLowerCase() === "delivered") {
+    return "delivered";
+  }
+  return "dispatched"; // rider-assigned, rider-arrived, pickedup map to dispatched
 }

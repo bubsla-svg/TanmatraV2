@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus } from "./petpooja";
+import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus } from "./petpooja";
 import { usersTable, menuItemsTable } from "@workspace/db/schema";
 
 test("slugify helper", () => {
@@ -302,4 +302,12 @@ test("mapPetpoojaStatus maps status codes to database statuses", () => {
   assert.equal(mapPetpoojaStatus("5"), "dispatched");
   assert.equal(mapPetpoojaStatus("6"), "delivered");
   assert.equal(mapPetpoojaStatus("9"), "placed");
+});
+
+test("mapPetpoojaRiderStatus maps status string to database status", () => {
+  assert.equal(mapPetpoojaRiderStatus("rider-assigned"), "dispatched");
+  assert.equal(mapPetpoojaRiderStatus("rider-arrived"), "dispatched");
+  assert.equal(mapPetpoojaRiderStatus("pickedup"), "dispatched");
+  assert.equal(mapPetpoojaRiderStatus("delivered"), "delivered");
+  assert.equal(mapPetpoojaRiderStatus("other"), "dispatched");
 });
