@@ -583,3 +583,24 @@ test("POST /integrations/petpooja/get_store_status returns store operational sta
   assert.equal(json.store_status, "1");
   assert.equal(json.message, "Store Delivery Status fetched successfully");
 });
+
+test("POST /integrations/petpooja/update_store_status updates operational status", async (t) => {
+  const payload = {
+    restID: "rest123",
+    store_status: 0,
+    turn_on_time: "2023-02-17 00:00:00",
+    reason: "maintenance",
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/update_store_status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.equal(json.http_code, 200);
+  assert.equal(json.status, "success");
+  assert.equal(json.message, "Store Status updated successfully for store rest123");
+});

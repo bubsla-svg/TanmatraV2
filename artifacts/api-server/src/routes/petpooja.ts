@@ -472,4 +472,29 @@ router.post("/integrations/petpooja/get_store_status", async (req: Request, res:
   });
 });
 
+router.post("/integrations/petpooja/update_store_status", async (req: Request, res: Response) => {
+  const { restID, store_status, turn_on_time, reason } = req.body;
+
+  if (!restID || store_status === undefined || !turn_on_time) {
+    res.status(400).json({ http_code: 400, status: "fail", message: "restID, store_status, and turn_on_time are required" });
+    return;
+  }
+
+  try {
+    req.log?.info(
+      { restID, store_status, turn_on_time, reason },
+      "received petpooja update_store_status webhook request"
+    );
+
+    res.status(200).json({
+      http_code: 200,
+      status: "success",
+      message: `Store Status updated successfully for store ${restID}`,
+    });
+  } catch (err: any) {
+    req.log?.error({ err }, "failed to process update_store_status webhook");
+    res.status(500).json({ http_code: 500, status: "error", message: `update failed: ${err.message}` });
+  }
+});
+
 export default router;
