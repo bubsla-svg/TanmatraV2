@@ -1,5 +1,5 @@
 import { sql, eq } from "drizzle-orm";
-import { type InsertMenuItem, type MenuItem, type InsertOrder, usersTable, menuItemsTable } from "@workspace/db/schema";
+import { type InsertMenuItem, type MenuItem, type InsertOrder, usersTable, menuItemsTable, ridersTable, ordersTable } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
@@ -147,6 +147,18 @@ export interface PetpoojaSaveOrderPayload {
       };
     };
   };
+}
+
+export interface PetpoojaCallbackPayload {
+  restID: string;
+  orderID: string;
+  status: string;
+  cancel_reason?: string;
+  minimum_prep_time?: number;
+  minimum_delivery_time?: string;
+  rider_name?: string;
+  rider_phone_number?: string;
+  is_modified?: string;
 }
 
 export function slugify(text: string): string {
@@ -503,4 +515,19 @@ export async function mapPetpoojaOrderToDb(
     ecoPackagingOptIn: 0,
     deliveryInstructions: Order.details.description || "",
   };
+}
+
+export function mapPetpoojaStatus(petpoojaStatus: string): string {
+  switch (petpoojaStatus) {
+    case "1":
+      return "confirmed";
+    case "2":
+      return "cancelled";
+    case "5":
+      return "dispatched";
+    case "6":
+      return "delivered";
+    default:
+      return "placed";
+  }
 }

@@ -3,7 +3,7 @@ import { test, before, after } from "node:test";
 import http from "node:http";
 import { type AddressInfo } from "node:net";
 import express, { type Express } from "express";
-import { usersTable, menuItemsTable, ordersTable } from "@workspace/db/schema";
+import { usersTable, menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
 
 // Set a dummy DATABASE_URL before importing the DB library so it doesn't throw
 process.env.DATABASE_URL = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
@@ -258,4 +258,84 @@ test("POST /integrations/petpooja/saveorder parses payload, inserts order, and r
   assert.equal(json.restID, "rest123");
   assert.equal(json.clientOrderID, "A-1");
   assert.equal(json.orderID, "26");
+});
+
+test("POST /integrations/petpooja/callback updates order status and rider info", async (t) => {
+  // Mock db.select
+  t.mock.method(db, "select", () => {
+    const mockSelectResult = {
+      from: (table: any) => ({
+        where: (condition: any) => ({
+          limit: (n: number) => {
+            if (table === ordersTable) {
+              return Promise.resolve([{ id: 99, externalOrderId: "A-1", status: "placed" }]);
+            }
+            if (table === ridersTable) {
+              return Promise.resolve([]); // no rider exists yet
+            }
+            return Promise.resolve([]);
+          },
+        }),
+      }),
+    };
+    return mockSelectResult;
+  });
+
+  // Mock db.insert for ridersTable
+  t.mock.method(db, "insert", (table: any) => {
+    assert.equal(table, ridersTable);
+    const mockInsertBuilder = {
+      values: (values: any) => {
+        assert.equal(values.name, "Rider Joe");
+        assert.equal(values.phone, "9876543210");
+        const mockValuesBuilder = {
+          returning: () => Promise.resolve([{ id: 808 }]),
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockInsertBuilder;
+  });
+
+  // Mock db.update for ordersTable
+  t.mock.method(db, "update", (table: any) => {
+    assert.equal(table, ordersTable);
+    const mockUpdateBuilder = {
+      set: (values: any) => {
+        assert.equal(values.status, "confirmed");
+        assert.equal(values.riderId, 808);
+        const mockValuesBuilder = {
+          where: (condition: any) => Promise.resolve(),
+        };
+        return mockValuesBuilder;
+      },
+    };
+    return mockUpdateBuilder;
+  });
+
+  const payload = {
+    restID: "rest123",
+    orderID: "A-1",
+    status: "1", // Accepted -> confirmed
+    cancel_reason: "",
+    minimum_prep_time: 20,
+    minimum_delivery_time: "",
+    rider_name: "Rider Joe",
+    rider_phone_number: "9876543210",
+    is_modified: "No",
+  };
+
+  const res = await fetch(`${baseUrl}/integrations/petpooja/callback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await res.json();
+  if (res.status !== 200) {
+    console.error("FAILED CALLBACK RESPONSE:", json);
+  }
+  assert.equal(res.status, 200);
+  assert.equal(json.success, "1");
+  assert.equal(json.message, "Callback processed successfully");
 });

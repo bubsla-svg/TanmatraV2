@@ -1,7 +1,8 @@
 import { Router, type Request, type Response } from "express";
+import { eq } from "drizzle-orm";
 import { db } from "@workspace/db";
-import { menuItemsTable, ordersTable } from "@workspace/db/schema";
-import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload } from "../lib/petpooja";
+import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
+import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload } from "../lib/petpooja";
 
 const router = Router();
 
@@ -125,6 +126,79 @@ router.post("/integrations/petpooja/saveorder", async (req: Request, res: Respon
   } catch (err: any) {
     req.log?.error({ err }, "failed to save petpooja order");
     res.status(500).json({ success: "0", message: `save failed: ${err.message}` });
+  }
+});
+
+router.post("/integrations/petpooja/callback", async (req: Request, res: Response) => {
+  const payload = req.body as PetpoojaCallbackPayload;
+
+  if (!payload || !payload.orderID || !payload.status) {
+    res.status(400).json({ success: "0", message: "invalid status callback payload" });
+    return;
+  }
+
+  try {
+    req.log?.info(
+      { externalOrderId: payload.orderID, petpoojaStatus: payload.status },
+      "received petpooja status callback"
+    );
+
+    // Find the order by its externalOrderId
+    const [order] = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.externalOrderId, payload.orderID))
+      .limit(1);
+
+    if (!order) {
+      res.status(404).json({ success: "0", message: `order with external ID ${payload.orderID} not found` });
+      return;
+    }
+
+    const mappedStatus = mapPetpoojaStatus(payload.status);
+    const updateFields: any = {
+      status: mappedStatus,
+      updatedAt: new Date(),
+    };
+
+    if (payload.rider_phone_number && payload.rider_name) {
+      let [rider] = await db
+        .select()
+        .from(ridersTable)
+        .where(eq(ridersTable.phone, payload.rider_phone_number))
+        .limit(1);
+
+      if (!rider) {
+        [rider] = await db
+          .insert(ridersTable)
+          .values({
+            name: payload.rider_name,
+            phone: payload.rider_phone_number,
+            zone: "default",
+            status: "active",
+          })
+          .returning({ id: ridersTable.id });
+      }
+
+      if (rider) {
+        updateFields.riderId = rider.id;
+      }
+    }
+
+    await db
+      .update(ordersTable)
+      .set(updateFields)
+      .where(eq(ordersTable.id, order.id));
+
+    req.log?.info(
+      { orderID: order.id, externalOrderId: payload.orderID, status: mappedStatus },
+      "petpooja status callback processed successfully"
+    );
+
+    res.status(200).json({ success: "1", message: "Callback processed successfully" });
+  } catch (err: any) {
+    req.log?.error({ err }, "failed to process status callback");
+    res.status(500).json({ success: "0", message: `callback processing failed: ${err.message}` });
   }
 });
 

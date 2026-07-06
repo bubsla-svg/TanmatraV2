@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb } from "./petpooja";
+import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus } from "./petpooja";
 import { usersTable, menuItemsTable } from "@workspace/db/schema";
 
 test("slugify helper", () => {
@@ -294,4 +294,12 @@ test("mapPetpoojaOrderToDb maps order payload to database order structure", asyn
   assert.equal(order.items[0].name, "Veg Loaded Pizza");
   assert.equal(order.items[0].qty, 2);
   assert.equal(order.items[0].price, 11000);
+});
+
+test("mapPetpoojaStatus maps status codes to database statuses", () => {
+  assert.equal(mapPetpoojaStatus("1"), "confirmed");
+  assert.equal(mapPetpoojaStatus("2"), "cancelled");
+  assert.equal(mapPetpoojaStatus("5"), "dispatched");
+  assert.equal(mapPetpoojaStatus("6"), "delivered");
+  assert.equal(mapPetpoojaStatus("9"), "placed");
 });
