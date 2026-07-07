@@ -197,3 +197,66 @@
 .tnm2 .fx{display:flex}.col{display:flex;flex-direction:column}.grid{display:grid}.ac{align-items:center}.jc{justify-content:center}.jb{justify-content:space-between}.f1{flex:1}.noshrink{flex-shrink:0}.wrap{flex-wrap:wrap}.fw5{font-weight:500}.fw6{font-weight:600}.fw7{font-weight:700}.fw8{font-weight:800}.fs11{font-size:11px}.fs12{font-size:12px}.fs13{font-size:13px}.fs14{font-size:14px}.fs15{font-size:15px}.fs16{font-size:16px}.fs20{font-size:20px}.fs22{font-size:22px}.upper{text-transform:uppercase}.tc{text-align:center}.nowrap{white-space:nowrap}.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}.gap16{gap:16px}.gap24{gap:24px}.m0{margin:0}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.posrel{position:relative}.posabs{position:absolute}.round{border-radius:50%}.ohide{overflow:hidden}.bbox{box-sizing:border-box}.w100{width:100%}.b0{border:none}
 .tnm2 .clamp1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tnm2 .tl{text-align:right}
+
+/* ---- V2 persistent bottom navigation dock (BottomDock.tsx) --------------
+ * Fixed thumb-zone bar. Rendered outside a page's `.tnm2` wrapper, so the
+ * element carries `.tnm2` itself to resolve the design tokens. Uses a unique
+ * `.bdock` namespace to avoid colliding with the in-device `.dock` class. */
+.tnm2.bdock{position:fixed;bottom:0;left:0;right:0;z-index:60;min-height:0;height:auto;background:rgba(10,12,13,.82);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border-top:1px solid var(--ln);padding-bottom:var(--safe-bottom,0px)}
+.tnm2 .bdock-list{display:grid;grid-template-columns:repeat(4,1fr);margin:0;padding:0;list-style:none}
+.tnm2 .bdock-item{display:flex}
+.tnm2 .bdock-link{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;min-height:60px;padding:8px 4px;color:var(--mut);text-decoration:none;transition:color 150ms var(--e)}
+.tnm2 .bdock-link:active{color:var(--tx)}
+.tnm2 .bdock-link.on{color:var(--safb)}
+.tnm2 .bdock-icon{font-size:22px;line-height:1}
+.tnm2 .bdock-label{font-size:10.5px;font-weight:600;letter-spacing:.01em;line-height:1}
+@media (prefers-reduced-motion:reduce){.tnm2 .bdock-link{transition:none}}
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Home conversion funnel (Zomato-style). All interactive tiles use fixed /
+ * reserved heights so nothing reflows as data (address, images) loads → CLS 0.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/* Viewport 1 — Trust header */
+.tnm2 .trusthead{padding-top:12px}
+.tnm2 .vegtgl{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:20px;border:1px solid var(--sage);background:var(--saged);color:var(--sage);font-size:12px;font-weight:700;letter-spacing:.02em;flex:none;white-space:nowrap}
+.tnm2 .vegtgl .vd{width:10px;height:10px}
+
+/* Viewport 2 — Hero offer carousel */
+.tnm2 .herocar-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;gap:0;-webkit-overflow-scrolling:touch}
+.tnm2 .herocar-track::-webkit-scrollbar{display:none}
+.tnm2 .herocar-slide{flex:0 0 100%;scroll-snap-align:center;min-height:186px;border-radius:16px;padding:18px;background:linear-gradient(135deg,#20262A 0%,#141719 60%,#0F1113 100%);border:1px solid var(--ln2);display:flex;flex-direction:column;align-items:flex-start}
+.tnm2 .herocar-track>.herocar-slide+.herocar-slide{margin-left:12px}
+.tnm2 .herocar-h{font-size:21px;font-weight:800;line-height:1.1;letter-spacing:-.01em;color:var(--tx)}
+.tnm2 .cdots{display:flex;justify-content:center;gap:6px;margin-top:10px;height:8px}
+.tnm2 .cdot{width:7px;height:7px;border-radius:50%;background:var(--s3);border:1px solid var(--ln2);padding:0}
+.tnm2 .cdot.on{background:var(--safb);border-color:var(--saf);width:18px;border-radius:4px}
+
+/* Viewport 3 — Circular category badges */
+.tnm2 .catrow{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 6px;scrollbar-width:none}
+.tnm2 .catrow::-webkit-scrollbar{display:none}
+.tnm2 .catbadge{flex:none;width:76px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.tnm2 .catcirc{width:62px;height:62px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--safb);background:radial-gradient(120% 120% at 30% 20%,#22282C,#14181A);border:1px solid var(--ln2)}
+.tnm2 .catlbl{font-size:11.5px;font-weight:600;line-height:1.2;color:var(--tx)}
+
+/* Viewport 4 — Assessment nudge */
+.tnm2 .assess{background:var(--s1);border:1px solid var(--ln2);border-radius:14px;padding:16px}
+.tnm2 .assess-2nd{display:flex;align-items:center;justify-content:space-between;gap:10px;height:44px;padding:0 12px;border-radius:10px;border:1px dashed var(--ln2);background:var(--s2);font-size:13px;font-weight:600;color:var(--tx)}
+
+/* Viewport 5 — Zomato-style meta cards */
+.tnm2 .mcard{background:var(--s1);border:1px solid var(--ln);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.tnm2 .mcard-media{position:relative;display:block;height:158px;width:100%}
+.tnm2 .mcard-img{position:absolute;inset:0}
+.tnm2 .mcard-vd{position:absolute;top:10px;left:10px;z-index:2;width:16px;height:16px;border-radius:4px;background:var(--sage);border:2px solid var(--bg);box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.tnm2 .mcard-vd.nv{background:var(--dgr)}
+.tnm2 .mcard-rd{position:absolute;top:10px;right:10px;z-index:2;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:7px;background:rgba(10,12,13,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(136,170,132,.6);color:var(--sage);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:.02em}
+.tnm2 .mcard-body{padding:12px 14px 14px}
+.tnm2 .mcard-name{display:block;font-size:15.5px;font-weight:700;line-height:1.3;color:var(--tx)}
+.tnm2 .mcard-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:11.5px;color:var(--mut)}
+.tnm2 .mcard-meta i{font-size:13px;color:var(--fnt)}
+.tnm2 .mcard-dot{color:var(--fnt)}
+.tnm2 .macrobar{margin-top:7px;min-height:18px;font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:11.5px;color:var(--mut);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.tnm2 .macrobar b{color:var(--tx);font-weight:600}
+.tnm2 .macro-prov{display:inline-flex;align-items:center;gap:5px;color:var(--fnt);font-family:Inter,system-ui,sans-serif;font-style:italic}
+.tnm2 .mcard-add{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 16px;border-radius:9px;background:var(--saf);color:var(--onsaf);font-size:13px;font-weight:800;letter-spacing:.04em;flex:none}
+.tnm2 .mcard-add:active{background:var(--safb);transform:scale(.98)}
