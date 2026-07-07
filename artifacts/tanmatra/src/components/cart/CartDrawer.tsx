@@ -1009,6 +1009,10 @@ function FooterTotals({
   );
 
   const hasExpressUPI = Boolean(import.meta.env.VITE_RAZORPAY_KEY_ID);
+  // Collapsed by default so the tall bill breakdown doesn't push the upsell rail
+  // + Premium banner (above, in the scroll area) below the fold. Full breakdown
+  // is always available on the checkout page; here it's one tap away.
+  const [showBill, setShowBill] = useState(false);
 
   return (
     <div
@@ -1022,16 +1026,40 @@ function FooterTotals({
         flex: "none",
       }}
     >
-      <dl style={{ margin: 0 }}>
-        <TotalsRow label="Subtotal" value={formatPrice(totals.subtotal)} />
-        <TotalsRow label="GST (18%)" value={formatPrice(totals.tax)} muted />
-        <TotalsRow
-          label="Delivery"
-          value={totals.hasFreeDelivery ? "FREE" : formatPrice(totals.deliveryFee)}
-          valueClass={totals.hasFreeDelivery ? "sagec" : undefined}
-        />
-        <TotalsRow label="Total" value={formatPrice(totals.total)} large />
-      </dl>
+      {/* Bill breakdown — collapsed by default (revealed on tapping Total). */}
+      {showBill && (
+        <dl style={{ margin: 0 }}>
+          <TotalsRow label="Subtotal" value={formatPrice(totals.subtotal)} />
+          <TotalsRow label="GST (18%)" value={formatPrice(totals.tax)} muted />
+          <TotalsRow
+            label="Delivery"
+            value={totals.hasFreeDelivery ? "FREE" : formatPrice(totals.deliveryFee)}
+            valueClass={totals.hasFreeDelivery ? "sagec" : undefined}
+          />
+          <p className="fine" style={{ fontSize: 10, marginTop: 4 }}>
+            Discounts &amp; credits applied at checkout
+          </p>
+        </dl>
+      )}
+
+      {/* Total doubles as the breakdown toggle — keeps the footer compact. */}
+      <button
+        type="button"
+        onClick={() => setShowBill((v) => !v)}
+        aria-expanded={showBill}
+        aria-label={showBill ? "Hide bill breakdown" : "Show bill breakdown"}
+        className="fx ac jb"
+        style={{ width: "100%", background: "transparent", border: "none", padding: 0, cursor: "pointer", color: "var(--tx)" }}
+      >
+        <span className="fx ac" style={{ gap: 6 }}>
+          <span style={{ textTransform: "uppercase", letterSpacing: ".12em", fontSize: 11 }}>Total</span>
+          <span className="fine" style={{ fontSize: 10, color: "var(--mut)" }}>
+            {showBill ? "hide" : "incl. GST · details"}
+          </span>
+          <i className={`ph-bold ph-caret-${showBill ? "up" : "down"}`} style={{ fontSize: 11, color: "var(--mut)" }} />
+        </span>
+        <span className="price" style={{ fontSize: 16 }}>{formatPrice(totals.total)}</span>
+      </button>
 
       {/* Aggregated cart macros — clinical differentiator */}
       <div className="fx ac jb mono" style={{ fontSize: 10, color: "var(--mut)", padding: "6px 8px", borderRadius: 10, background: "var(--s2)" }}>
@@ -1043,10 +1071,6 @@ function FooterTotals({
         <span className="fntc">·</span>
         <span><span style={{ color: "var(--tx)" }}>{cartMacros.fat}g</span> fat</span>
       </div>
-
-      <p className="fine tc" style={{ fontSize: 10 }}>
-        Discounts &amp; credits applied at checkout
-      </p>
 
       {/* Express UPI — bypasses checkout entirely when Razorpay key is set */}
       {hasExpressUPI && (
