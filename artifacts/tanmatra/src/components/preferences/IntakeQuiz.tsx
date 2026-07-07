@@ -121,10 +121,15 @@ interface IntakeQuizProps {
 const RESULTS_STEP = STEPS.length;
 
 export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
-  const { preferences, update } = usePreferences();
+  const { preferences, update, unauthorized } = usePreferences();
   const [step, setStep] = useState(0);
   const [state, setState] = useState<QuizState>(() => initialState(preferences));
   const [saving, setSaving] = useState(false);
+  // Once the assessment saves for a guest (unauthenticated) user, nudge them to
+  // create an account so their plan survives a device change. Non-blocking:
+  // the results screen stays put and the personalization already applies
+  // locally; this is dismissible.
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [showManualTargets, setShowManualTargets] = useState(false);
   const hydratedSessionRef = useRef(false);
   // Stable ids so each Label can be aria-labelledby for its corresponding
@@ -140,6 +145,7 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
   useEffect(() => {
     if (!open) {
       hydratedSessionRef.current = false;
+      setNudgeDismissed(false);
       return;
     }
 
@@ -303,7 +309,11 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
     } else void handleSave(true);
   };
 
+  const showAccountNudge =
+    open && step === RESULTS_STEP && unauthorized && !nudgeDismissed;
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] max-h-[92vh] overflow-y-auto bg-clinical-surface border-clinical-border sm:w-full">
         <DialogHeader>
@@ -773,6 +783,69 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Save-your-plan nudge — v2 (.tnm2) bottom-sheet idiom: fixed overlay +
+        surface card. Non-blocking; the results screen stays behind it. */}
+    {showAccountNudge && (
+      <div
+        className="tnm2"
+        role="dialog"
+        aria-label="Create an account to keep your plan"
+        onClick={() => setNudgeDismissed(true)}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 120,
+          background: "rgba(0,0,0,.6)",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: 480,
+            width: "100%",
+            background: "var(--s1)",
+            borderRadius: "20px 20px 0 0",
+            borderTop: "1px solid var(--ln2)",
+            padding: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <i
+              className="ph-fill ph-floppy-disk"
+              style={{ color: "var(--safb)", fontSize: 22, flex: "none", marginTop: 2 }}
+            />
+            <div style={{ flex: 1 }}>
+              <div className="h2" style={{ fontSize: 18 }}>Create an account to keep your plan</div>
+              <div className="fine" style={{ marginTop: 6 }}>
+                Your assessment is saved on this device only. Create a free account so
+                your personalized plan follows you to any device — nothing is lost.
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/login"
+            onClick={() => onOpenChange(false)}
+            className="btn btn-p btn-blk btn-lg"
+            style={{ marginTop: 16, textDecoration: "none" }}
+          >
+            <i className="ph-bold ph-user-plus" /> Create my account
+          </Link>
+          <button
+            type="button"
+            onClick={() => setNudgeDismissed(true)}
+            className="btn btn-g btn-blk"
+            style={{ marginTop: 10 }}
+          >
+            Maybe later
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

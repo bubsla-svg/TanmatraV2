@@ -78,7 +78,7 @@ export default function AdminCompliance() {
         message: data.message || data.error || "Blocked",
       });
       if (res.status === 403) {
-        toast.success("Immutability Verified: System blocked manual update!");
+        toast.success("Write-protected: API rejected the manual update (403).");
       }
     } catch (e) {
       toast.error("Failed to execute edit tamper simulation");
@@ -101,7 +101,7 @@ export default function AdminCompliance() {
         message: data.message || data.error || "Blocked",
       });
       if (res.status === 403) {
-        toast.success("Immutability Verified: System blocked manual delete!");
+        toast.success("Write-protected: API rejected the manual delete (403).");
       }
     } catch (e) {
       toast.error("Failed to execute delete tamper simulation");
@@ -114,26 +114,47 @@ export default function AdminCompliance() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 print:p-0 print:max-w-full">
-      {/* Header section (styled as an official audit certificate banner) */}
+      {/* Prominent honesty banner: this screen shows demonstration data, not a certified HACCP capture */}
+      <div className="border border-amber-500/60 bg-amber-950/30 p-4 rounded-xl flex items-start gap-3 print:border print:border-black print:bg-amber-50 print:text-black">
+        <AlertOctagon className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 print:text-black" />
+        <div className="text-xs leading-relaxed">
+          <div className="font-semibold text-amber-300 uppercase tracking-wide print:text-black">
+            Sample data — demonstration only, not a certified HACCP capture
+          </div>
+          <p className="text-amber-200/80 mt-1 print:text-black">
+            The logs below are illustrative sample records, not live sensor readings or verified hygiene check-ins.
+            This console is a UI demonstration and is not an audit-ready ISO 22000 / FSSAI certificate.
+          </p>
+        </div>
+      </div>
+
+      {/* Header section */}
       <div className="border border-clinical-gold/40 bg-clinical-dark p-6 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:border-0 print:bg-white print:text-black">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <ShieldCheck className="w-6 h-6 text-clinical-gold print:text-black" />
             <h1 className="text-2xl font-serif font-semibold text-white print:text-black">
-              ISO 22000 Compliance &amp; Food Safety Audit Console
+              ISO 22000 Compliance &amp; Food Safety Console
             </h1>
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/50 text-[10px] uppercase print:bg-amber-100 print:text-black">
+              Sample data
+            </Badge>
           </div>
           <p className="text-xs text-clinical-zinc leading-relaxed print:text-black">
             FSSAI Licensed Facility &middot; <span className="font-semibold text-white print:text-black">Lic. No.: 22725926001018</span>
             <br />
-            Standard operating procedures verified against the Codex Alimentarius principles for HACCP.
+            Demonstration of standard operating procedures modelled on the Codex Alimentarius principles for HACCP.
+            On-screen logs are illustrative sample data, not live sensor capture.
           </p>
         </div>
         <div className="flex gap-2 print:hidden">
-          <Button onClick={handlePrint} variant="outline" className="text-xs">
-            <FileText className="w-4 h-4 mr-2" />
-            Print / Export PDF
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button onClick={handlePrint} variant="outline" className="text-xs">
+              <FileText className="w-4 h-4 mr-2" />
+              Print / Export PDF (sample)
+            </Button>
+            <span className="text-[10px] text-amber-400/80">Prints sample data via browser print</span>
+          </div>
           <Button onClick={loadLogs} variant="ghost" className="text-xs">
             Refresh Logs
           </Button>
@@ -145,13 +166,14 @@ export default function AdminCompliance() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2 text-red-400">
             <AlertOctagon className="w-4 h-4" />
-            Food Safety Inspector Sandbox: Immutability Verification
+            Write-Protection Sandbox: API Edit/Delete Blocking
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-clinical-zinc leading-relaxed">
-            Government food safety inspectors can audit the immutability safety layer. By attempting manual modifications
-            to the compliance log database directly from the console, you can confirm that historical logs are write-blocked.
+            These buttons demonstrate that the compliance log endpoints are write-protected by the API: edit and delete
+            requests are rejected with an HTTP 403. This is server-side write protection at the route level — not a
+            tamper-proof or cryptographically verifiable audit ledger.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="destructive" onClick={attemptTamperEdit} disabled={logs.length === 0} className="bg-red-800 hover:bg-red-700">
@@ -165,7 +187,7 @@ export default function AdminCompliance() {
           </div>
           {tamperResult && (
             <div className="p-3 rounded bg-black/40 border border-red-900/40 font-mono text-xs text-red-300">
-              <div className="font-semibold text-red-400 mb-1">Audit Safeguard Active:</div>
+              <div className="font-semibold text-red-400 mb-1">API Write-Protection Active:</div>
               <div>Action: {tamperResult.action}</div>
               <div>HTTP Status: <span className="font-bold text-white">{tamperResult.status} Forbidden</span></div>
               <div>Server Response: "{tamperResult.message}"</div>
@@ -177,7 +199,16 @@ export default function AdminCompliance() {
       {/* Main compliance log list */}
       <Card className="print:border-0 print:shadow-none">
         <CardHeader className="print:px-0">
-          <CardTitle className="text-lg font-serif">Daily Operational Hygiene Sheets (Last 30 Days)</CardTitle>
+          <CardTitle className="text-lg font-serif flex items-center gap-2 flex-wrap">
+            Daily Operational Hygiene Sheets (Last 30 Days)
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/50 text-[10px] uppercase print:bg-amber-100 print:text-black">
+              Sample data
+            </Badge>
+          </CardTitle>
+          <p className="text-xs text-clinical-zinc print:text-black">
+            Illustrative sample records for demonstration. Temperatures, hygiene check-ins and batch traceability shown
+            here are synthetic and are not captured from live sensors or field devices.
+          </p>
         </CardHeader>
         <CardContent className="print:px-0">
           {loading ? (
@@ -205,7 +236,7 @@ export default function AdminCompliance() {
                       </td>
                       <td className="p-3">
                         <Badge className="bg-emerald-600/20 text-emerald-400 border-emerald-600/40 text-[10px] uppercase print:bg-emerald-100 print:text-emerald-800">
-                          <CheckCircle2 className="w-3 h-3 mr-1 inline" /> Verified
+                          <CheckCircle2 className="w-3 h-3 mr-1 inline" /> Sample: Verified
                         </Badge>
                       </td>
                       <td className="p-3">
