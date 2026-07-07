@@ -8,6 +8,7 @@ import {
   uniqueIndex,
   index,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { usersTable } from "./auth";
@@ -71,7 +72,27 @@ export const dailyTargetsTable = pgTable("daily_targets", {
 
 export type DailyTargets = typeof dailyTargetsTable.$inferSelect;
 
-export type WearableProvider = "apple_health" | "google_fit" | "health_connect";
+// Providers. The original web-preview stubs are the device-side sources
+// (apple_health/google_fit/health_connect). INCREMENT 1 adds cloud aggregators
+// (terra/vital) plus "mock" for tests. Kept as a widened varchar union — no
+// Postgres enum — so adding a provider never requires a destructive migration
+// and existing rows/queries are untouched.
+export type WearableProvider =
+  | "apple_health"
+  | "google_fit"
+  | "health_connect"
+  | "terra"
+  | "vital"
+  | "mock";
+
+// Lifecycle of an aggregator link. "pending" = consent captured, widget/auth
+// session created, waiting for the user to finish the aggregator flow (and for
+// the first webhook to arrive). "connected" = receiving data.
+export type WearableLinkStatus =
+  | "pending"
+  | "connected"
+  | "disconnected"
+  | "error";
 
 export const wearableLinksTable = pgTable(
   "wearable_links",
@@ -87,6 +108,19 @@ export const wearableLinksTable = pgTable(
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
     lastActivityKcal: integer("last_activity_kcal"),
     lastSteps: integer("last_steps"),
+    // ── Cloud-aggregator (Terra/Vital) columns (INCREMENT 1) ──
+    // All nullable so existing device-preview rows are unaffected. The
+    // aggregator identifies a user by its OWN id; we map it back to our
+    // internal userId when a webhook arrives.
+    providerUserId: varchar("provider_user_id", { length: 128 }),
+    status: varchar("status", { length: 24 })
+      .$type<WearableLinkStatus>()
+      .notNull()
+      .default("connected"),
+    // Granted data scopes as reported by the aggregator (e.g. ["activity"]).
+    scopes: jsonb("scopes").$type<string[]>(),
+    // DPDPA: when the user consented to sharing wearable data with us.
+    consentAt: timestamp("consent_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -95,6 +129,11 @@ export const wearableLinksTable = pgTable(
     uniqueIndex("uniq_wearable_links_user_provider").on(
       table.userId,
       table.provider,
+    ),
+    // Reverse lookup: aggregator webhook carries providerUserId → our userId.
+    index("idx_wearable_links_provider_user").on(
+      table.provider,
+      table.providerUserId,
     ),
   ],
 );
