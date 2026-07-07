@@ -7,6 +7,7 @@ import {
 export {
   CATEGORY_LABELS,
   KITCHEN_LABELS,
+  macrosAreProvisional,
   type DishCategory,
   type DishKitchen,
   type DishData,

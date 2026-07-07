@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { getDishBySlug, F } from "./data";
-import { useMenuCatalog } from "@/lib/menuData";
+import { useMenuCatalog, macrosAreProvisional } from "@/lib/menuData";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
@@ -149,6 +149,11 @@ export default function V2Dish() {
   const giCls = gi === "low" ? "gi gi-low" : "gi gi-med";
   const giLabel = gi === "low" ? "GI LOW" : gi === "high" ? "GI HIGH" : "GI MED";
   const isPremiumOnly = premiumSlugs.has(meal.slug);
+  // Data-integrity guard: many catalog entries share copy-pasted placeholder
+  // macro blocks. When detected we hold back the confident numbers rather than
+  // present a duplicated fake (see macrosAreProvisional). Allergens and the
+  // ingredient list are never suppressed — they are safety-critical.
+  const macrosProvisional = macrosAreProvisional(meal);
   const label = buildNutritionLabel(meal);
   const kitchenNote = getKitchenNoteForDish(meal);
   const rdNote = getRdNoteForDish(meal);
@@ -296,28 +301,48 @@ export default function V2Dish() {
 
             <p className="small mut mt10" style={{ lineHeight: 1.5 }}>{meal.description}</p>
 
-            {/* Macro ribbon */}
-            <div className="ribbon mt14" role="group" aria-label={`Nutrition: ${meal.macros.calories} kcal, ${meal.macros.protein}g protein, ${meal.macros.carbs}g carbs, ${meal.macros.fat}g fat`}>
-              <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{meal.macros.calories}</span></div>
-              <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{meal.macros.protein}<i className="ru">g</i></span></div>
-              <div className="rc"><span className="rl">CARBS</span><span className="rv">{meal.macros.carbs}<i className="ru">g</i></span></div>
-              <div className="rc"><span className="rl">FAT</span><span className="rv">{meal.macros.fat}<i className="ru">g</i></span></div>
-            </div>
-            <div className="fine mt6">
-              Fibre <span className="mono">{meal.macros.fiber} g</span> · sodium{" "}
-              <span className="mono">{label.macros.sodiumMg} mg</span>{" "}
-              ({Math.round((label.macros.sodiumMg / 2300) * 100)}% DV) · sat fat{" "}
-              <span className="mono">{label.macros.saturatedFat} g</span>
-            </div>
-
-            {/* Nutrition-fact claims + full facts toggle */}
-            {label.containsClaims.length > 0 && (
-              <div className="fx ac g6 wrap mt10">
-                {label.containsClaims.map((c: string) => (
-                  <span key={c} className="pill sg"><i className="ph-fill ph-check" />{c}</span>
-                ))}
+            {/* Macro ribbon — suppressed when the macro block is a duplicated
+                placeholder, in favour of an honest "being verified" state. */}
+            {macrosProvisional ? (
+              <div className="note mt14">
+                <i className="ph-fill ph-flask" />
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Macros being verified</div>
+                  <div style={{ color: "var(--mut)" }}>
+                    We're confirming this dish's exact nutrition with our RD team and are
+                    holding back the numbers rather than show an unverified estimate.
+                    Full nutrition is available on request.
+                  </div>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="ribbon mt14" role="group" aria-label={`Nutrition: ${meal.macros.calories} kcal, ${meal.macros.protein}g protein, ${meal.macros.carbs}g carbs, ${meal.macros.fat}g fat`}>
+                  <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{meal.macros.calories}</span></div>
+                  <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{meal.macros.protein}<i className="ru">g</i></span></div>
+                  <div className="rc"><span className="rl">CARBS</span><span className="rv">{meal.macros.carbs}<i className="ru">g</i></span></div>
+                  <div className="rc"><span className="rl">FAT</span><span className="rv">{meal.macros.fat}<i className="ru">g</i></span></div>
+                </div>
+                <div className="fine mt6">
+                  Fibre <span className="mono">{meal.macros.fiber} g</span> · sodium{" "}
+                  <span className="mono">{label.macros.sodiumMg} mg</span>{" "}
+                  ({Math.round((label.macros.sodiumMg / 2300) * 100)}% DV) · sat fat{" "}
+                  <span className="mono">{label.macros.saturatedFat} g</span>
+                </div>
+
+                {/* Nutrition-fact claims — derived from macros, so only shown
+                    when the macros are verified. */}
+                {label.containsClaims.length > 0 && (
+                  <div className="fx ac g6 wrap mt10">
+                    {label.containsClaims.map((c: string) => (
+                      <span key={c} className="pill sg"><i className="ph-fill ph-check" />{c}</span>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
+            {/* Full facts — allergen row is safety-critical and always shown;
+                macro-derived rows (sugar) are gated behind verification. */}
             <div className="acc mt10" style={{ borderTop: "none" }}>
               <button className={showFacts ? "arow on" : "arow"} onClick={() => setShowFacts((s) => !s)}>
                 Full nutrition facts<i className="ph-bold ph-caret-down" />
@@ -325,18 +350,24 @@ export default function V2Dish() {
               {showFacts && (
                 <div className="abody">
                   <div className="fine">Serving: {label.servingSize}</div>
-                  {label.freeFromClaims?.length > 0 && (
+                  {!macrosProvisional && label.freeFromClaims?.length > 0 && (
                     <div className="mt6">{label.freeFromClaims.map((c: string) => `• ${c}`).join("  ")}</div>
                   )}
-                  <div className="mt6">Sugar <span className="mono">{label.macros.sugar} g</span></div>
+                  {!macrosProvisional && (
+                    <div className="mt6">Sugar <span className="mono">{label.macros.sugar} g</span></div>
+                  )}
+                  {macrosProvisional && (
+                    <div className="fine mt6">Macros (kcal, protein, carbs, fat, sugar) are being verified for this dish.</div>
+                  )}
                   <div className="mt6">Allergens: {meal.allergens?.length ? meal.allergens.join(", ") : "None declared"}</div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Targets vs daily */}
-          {preferences && (preferences.calorieTarget || preferences.proteinTargetGrams) && (
+          {/* Targets vs daily — comparison relies on the dish macros, so it is
+              hidden while those macros are unverified. */}
+          {!macrosProvisional && preferences && (preferences.calorieTarget || preferences.proteinTargetGrams) && (
             <div className="padx mt16">
               <div className="card">
                 <div className="lab mb10">Vs. your daily targets</div>
@@ -446,11 +477,19 @@ export default function V2Dish() {
           {/* Ingredients */}
           <div className="padx mt16">
             <div className="lab mb10"><i className="ph-bold ph-carrot" /> Ingredients</div>
-            <div className="fx ac g6 wrap">
-              {meal.ingredients.map((ing: string, i: number) => (
-                <span key={i} className="pill" style={{ textTransform: "capitalize" }}>{stripIngredientAmount(ing)}</span>
-              ))}
-            </div>
+            {/* Safety-critical: render the COMPLETE ingredient list (Jain /
+                allergen / diabetic users must verify every item). No slice, no
+                truncation. Fall back to an honest message only when a dish
+                genuinely carries no ingredient data. */}
+            {meal.ingredients?.length ? (
+              <div className="fx ac g6 wrap">
+                {meal.ingredients.map((ing: string, i: number) => (
+                  <span key={i} className="pill" style={{ textTransform: "capitalize" }}>{stripIngredientAmount(ing)}</span>
+                ))}
+              </div>
+            ) : (
+              <div className="fine">Full ingredients available on request.</div>
+            )}
           </div>
 
           {/* Customize your order */}

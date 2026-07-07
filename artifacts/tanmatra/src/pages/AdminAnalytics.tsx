@@ -358,11 +358,18 @@ function WbrTab() {
             </div>
 
             <Card className="bg-muted/10 border-dashed">
-              <CardHeader className="py-3"><CardTitle className="text-sm font-semibold">Predictive Unit Economics Simulator</CardTitle></CardHeader>
+              <CardHeader className="py-3 space-y-1">
+                <CardTitle className="text-sm font-semibold">What-if margin simulator (aggregate)</CardTitle>
+                <p className="text-xs text-muted-foreground font-normal">
+                  Manual scenario tool. Drag the slider to model a hypothetical fuel/logistics cost increase against the
+                  aggregate net margin. This is not a live ingredient-cost feed and does not reflect real vendor price
+                  changes or flag specific products.
+                </p>
+              </CardHeader>
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 space-y-1">
-                    <label className="text-xs text-muted-foreground block">Simulate Fuel/Logistics Cost Increase: <span className="font-bold text-white">{fuelIncrease}%</span></label>
+                    <label className="text-xs text-muted-foreground block">Hypothetical Fuel/Logistics Cost Increase: <span className="font-bold text-white">{fuelIncrease}%</span></label>
                     <input
                       type="range"
                       min="0"
@@ -373,18 +380,18 @@ function WbrTab() {
                     />
                   </div>
                   <Button size="sm" onClick={runSimulation} disabled={simulating}>
-                    {simulating ? "Simulating..." : "Calculate Margin"}
+                    {simulating ? "Simulating..." : "Run scenario"}
                   </Button>
                 </div>
                 {simulatedMargin !== null && (
                   <div className="p-3 rounded bg-muted/20 border flex justify-between items-center text-xs">
                     <div>
-                      Estimated Net Margin: <span className={`font-bold ${simulatedMargin < 35.0 ? 'text-red-400' : 'text-emerald-400'}`}>{simulatedMargin}%</span>
+                      Simulated aggregate net margin: <span className={`font-bold ${simulatedMargin < 35.0 ? 'text-red-400' : 'text-emerald-400'}`}>{simulatedMargin}%</span>
                     </div>
                     {simulatedMargin < 35.0 ? (
-                      <Badge className="bg-red-500 text-white border-0 text-[10px]">⚠️ Margin Warning Alert</Badge>
+                      <Badge className="bg-red-500 text-white border-0 text-[10px]">Below 35% in this scenario</Badge>
                     ) : (
-                      <Badge className="bg-emerald-500 text-white border-0 text-[10px]">Stable</Badge>
+                      <Badge className="bg-emerald-500 text-white border-0 text-[10px]">Above 35% in this scenario</Badge>
                     )}
                   </div>
                 )}

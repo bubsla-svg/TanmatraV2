@@ -4340,4 +4340,38 @@ export interface DishCustomOption {
     const d = getDishBySlug(slug);
     return d ? d.allergens : null;
   }
-  
+
+  // ---------------------------------------------------------------------------
+  // Macro data-integrity guard.
+  //
+  // A large share of the seeded catalog carries copy-pasted placeholder macro
+  // "buckets": e.g. every beverage (including Diet Coke and a "Zero Calorie"
+  // mojito) shares 3P/22C/4F/140kcal, and Aglio Olio == Alfredo Pasta at
+  // 480kcal. Presenting those as confident per-dish nutrition is a data-
+  // integrity bug. We deliberately do NOT fabricate replacement numbers; we
+  // only DETECT the duplication so the UI can show an honest "macros being
+  // verified" state instead of a duplicated fake.
+  // ---------------------------------------------------------------------------
+  function _macroKey(m: DishMacros): string {
+    return `${m.protein}|${m.carbs}|${m.fat}|${m.fiber}|${m.calories}`;
+  }
+
+  const _macroBucketCounts: Map<string, number> = (() => {
+    const counts = new Map<string, number>();
+    for (const d of DISHES) {
+      const k = _macroKey(d.macros);
+      counts.set(k, (counts.get(k) ?? 0) + 1);
+    }
+    return counts;
+  })();
+
+  /**
+   * True when this dish's macro block is shared verbatim by at least one other
+   * distinct dish in the catalog — i.e. a placeholder bucket rather than a
+   * measured, per-dish value. Such macros are provisional and must not be
+   * presented as confident nutrition. This never invents numbers; it only
+   * reports whether the block is a duplicated placeholder.
+   */
+  export function macrosAreProvisional(dish: Pick<DishData, "macros">): boolean {
+    return (_macroBucketCounts.get(_macroKey(dish.macros)) ?? 0) > 1;
+  }
