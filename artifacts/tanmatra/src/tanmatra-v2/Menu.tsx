@@ -161,14 +161,38 @@ export default function V2Menu() {
 
   useEffect(() => { track("view_menu"); }, []);
 
+  // ── One-time initial-state hydration from URL params ──────────────────────
+  // Home's trust-header search, category badges, veg toggle and "Healthy Mode"
+  // deep-link into the menu; read those params on load and seed the existing
+  // internal filter state. All existing menu behaviour is unchanged after this.
+  const initialParams = useMemo(
+    () => new URLSearchParams(typeof window !== "undefined" ? window.location.search : ""),
+    [],
+  );
+  const initialQuery = initialParams.get("q")?.trim() ?? "";
+  const dietParam = initialParams.get("diet");
+  const initialDiet: DietFilter = dietParam === "veg" || dietParam === "nonveg" ? dietParam : "all";
+  const categoryParam = initialParams.get("category");
+  const initialCategory: "all" | DishCategory =
+    categoryParam && (CATEGORY_TABS as string[]).includes(categoryParam)
+      ? (categoryParam as DishCategory)
+      : "all";
+  const quickParam = initialParams.get("quick");
+  const initialQuick: string[] =
+    quickParam && QUICK_FILTERS.some((q) => q.value === quickParam) ? [quickParam] : [];
+  const initialHealthy = initialParams.get("healthy") === "1";
+
   const [kitchen, setKitchen] = useState<"all" | DishKitchen>("all");
-  const [category, setCategory] = useState<"all" | DishCategory>("all");
-  const [diet, setDiet] = useState<DietFilter>("all");
+  const [category, setCategory] = useState<"all" | DishCategory>(initialCategory);
+  const [diet, setDiet] = useState<DietFilter>(initialDiet);
   const [lifestyle, setLifestyle] = useState<Lifestyle>("all");
-  const [quickFilters, setQuickFilters] = useState<string[]>([]);
+  const [quickFilters, setQuickFilters] = useState<string[]>(initialQuick);
   const [showFilters, setShowFilters] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [query, setQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(initialQuery.length > 0);
+  const [query, setQuery] = useState(initialQuery);
+  // Healthy Mode: a profile/goal filter (NOT wearable data). It applies the
+  // existing preference-based ranking + hard-hides off-plan dishes.
+  const [healthyMode, setHealthyMode] = useState(initialHealthy);
   const [hideBlocked, setHideBlocked] = useState(true);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [customizingDish, setCustomizingDish] = useState<ConsolidatedDish | null>(null);
@@ -347,8 +371,10 @@ export default function V2Menu() {
       return true;
     });
     const ranked = rankDishesForPreferences(base, preferences);
-    return hideBlocked ? ranked.filter((r: any) => !r.match.blocked) : ranked;
-  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters]);
+    // Healthy Mode forces off-plan (blocked) dishes to stay hidden even if the
+    // user un-hid conflicts — a pure goal/profile filter over existing ranking.
+    return hideBlocked || healthyMode ? ranked.filter((r: any) => !r.match.blocked) : ranked;
+  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, healthyMode, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters]);
 
   const consolidatedDishes = useMemo(() => {
     const grouped = groupCatalogDishes(filtered.map((f: any) => f.dish));
@@ -390,7 +416,7 @@ export default function V2Menu() {
     setSearchParams(next, { replace: true });
   }
   function resetAll() {
-    setKitchen("all"); setCategory("all"); setDiet("all"); setLifestyle("all"); setQuery(""); setQuickFilters([]);
+    setKitchen("all"); setCategory("all"); setDiet("all"); setLifestyle("all"); setQuery(""); setQuickFilters([]); setHealthyMode(false);
     if (activeProtocol) clearProtocol();
   }
 
@@ -456,6 +482,18 @@ export default function V2Menu() {
               <span className="lab" style={{ color: "var(--safb)" }}>{dietOrder.short}</span>
               <span className="fine f1">{dietOrder.description}</span>
               <button onClick={() => clinicalModeStore.disable()} className="fine" aria-label="Exit clinical mode"><i className="ph-bold ph-x" /> Exit</button>
+            </div>
+          )}
+
+          {/* Healthy Mode — goal/profile filter (NOT wearable data) */}
+          {healthyMode && (
+            <div className="banner mb10 fx ac gap8">
+              <i className="ph-fill ph-heartbeat" style={{ color: "var(--safb)" }} />
+              <span className="fine f1">
+                <b style={{ color: "var(--tx)" }}>Healthy Mode</b> — ranked for your {preferences ? "profile & goal" : "goals"} and off-plan dishes hidden.
+                {!preferences && <> <Link to="/preferences" style={{ color: "var(--safb)" }}>Set your goal →</Link></>}
+              </span>
+              <button className="fine" style={{ color: "var(--safb)" }} onClick={() => setHealthyMode(false)} aria-label="Turn off Healthy Mode">Turn off</button>
             </div>
           )}
 

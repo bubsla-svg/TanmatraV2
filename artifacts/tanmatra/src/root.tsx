@@ -16,6 +16,7 @@ import Header from "@/components/layout/Header";
 import WelcomeOfferBanner from "@/components/marketing/WelcomeOfferBanner";
 import Footer from "@/components/layout/Footer";
 import BottomNav from "@/components/layout/BottomNav";
+import BottomDock from "@/components/layout/BottomDock";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import StickyCheckoutBar from "@/components/cart/StickyCheckoutBar";
 import CartDrawer from "@/components/cart/CartDrawer";
@@ -136,6 +137,19 @@ export default function Root() {
   const currentPath = useLocation().pathname;
   const softGateRoute = currentPath === "/" || currentPath === "/menu";
 
+  // V2 persistent bottom dock — mirrors the SoftGate route-conditional mount.
+  // It rides only on the primary BROWSE/dashboard routes and must never collide
+  // with a transaction screen's own sticky pay/action bar. Deny-list guards the
+  // transaction/auth/admin surfaces (checkout/cart/track/login/admin); the
+  // allow-list keeps unknown deep transaction paths hidden by default.
+  const dockHidden = ["/checkout", "/cart", "/track", "/login", "/admin"].some(
+    (deny) => currentPath === deny || currentPath.startsWith(deny + "/"),
+  );
+  const dockShown = ["/menu", "/wellness", "/subscriptions", "/orders", "/account", "/recipes", "/challenges"].some(
+    (root) => currentPath === root || currentPath.startsWith(root + "/"),
+  );
+  const showDock = !dockHidden && (currentPath === "/" || dockShown);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -218,12 +232,20 @@ export default function Root() {
                         {/* On chrome-less v2 routes the bottom nav is hidden, so drop
                             its pb-20 spacer — otherwise it paints a light band below
                             the dark .tnm2 content. */}
-                        <main className={hideChrome ? "flex-1" : "flex-1 pb-20 md:pb-0"}>
+                        <main
+                          className={hideChrome ? "flex-1" : "flex-1 pb-20 md:pb-0"}
+                          // Reserve clearance so the fixed V2 dock never covers the
+                          // last row. Static per-route value → no layout shift (CLS-safe).
+                          style={showDock ? { paddingBottom: "calc(60px + var(--safe-bottom, 0px))" } : undefined}
+                        >
                           <Outlet />
                         </main>
                         {!hideChrome && <Footer />}
                         {!hideChrome && <BottomNav />}
                         {!hideChrome && <StickyCheckoutBar />}
+                        {/* V2 persistent bottom navigation dock — fixed overlay,
+                            shown only on primary browse/dashboard routes. */}
+                        {showDock && <BottomDock />}
                         <CartDrawer />
                       </div>
                       <Toaster theme="dark" position="top-center" richColors offset={72} />

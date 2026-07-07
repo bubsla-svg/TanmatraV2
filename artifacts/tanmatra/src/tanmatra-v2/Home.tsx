@@ -1,14 +1,20 @@
 import { Link, useNavigate } from "react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics";
 import { F } from "./data";
 import { useOrders } from "@/lib/ordersContext";
-import { useCart } from "@/lib/cartContext";
+import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { TEAM } from "@/lib/teamData";
 import { useChallenges } from "@/lib/contentApi";
 import { isSecondaryVariant } from "@/lib/dishEnrichment";
 import { WeeklySummaryCard } from "@/components/wellness/WeeklySummaryCard";
+import IntakeQuiz from "@/components/preferences/IntakeQuiz";
+import TrustHeader from "@/components/home/TrustHeader";
+import HeroCarousel from "@/components/home/HeroCarousel";
+import CategoryBadges from "@/components/home/CategoryBadges";
+import AssessmentNudge from "@/components/home/AssessmentNudge";
+import MetaDishCard from "@/components/home/MetaDishCard";
 import { toast } from "sonner";
 
 /* Full-parity re-port of the System-A Home (git 2507084, 955 lines) into v2. */
@@ -62,6 +68,8 @@ export default function V2Home() {
   const navigate = useNavigate();
   const { orders } = useOrders();
   const { addItem } = useCart();
+  const { open: openCart } = useCartDrawer();
+  const [quizOpen, setQuizOpen] = useState(false);
 
   useEffect(() => { track("view_home"); }, []);
 
@@ -93,6 +101,7 @@ export default function V2Home() {
       kitchen: item.kitchen, isVeg: item.isVeg, rdVerified: item.rdVerified,
       macros: item.macros, customizations: [],
     });
+    openCart();
     toast.success(`Added ${item.name} to your order`, { action: { label: "View cart", onClick: () => navigate("/cart") } });
   };
 
@@ -101,21 +110,33 @@ export default function V2Home() {
   return (
     <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
-        {/* Hero */}
-        <div className="plc" style={{ minHeight: 340, backgroundImage: "url(/collections/wellness-collection.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}>
-          <div className="herograd" />
-          <div className="posrel padx" style={{ zIndex: 2, paddingTop: 80, paddingBottom: 20 }}>
-            <span className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}><i className="ph-fill ph-circle" style={{ fontSize: 8 }} /> Clinical-grade precision nutrition</span>
-            <div className="disp mt10" style={{ fontSize: 30 }}>Precision nutrition,<br /><span style={{ color: "var(--safb)" }}>engineered by science</span></div>
-            <div className="small mut mt10" style={{ maxWidth: 300 }}>Chef-made meals, designed and approved by registered dietitians and matched to your goals.</div>
-            <div className="fine mt10 fx ac g6 wrap"><b style={{ color: "var(--tx)" }}>Meals from ₹140</b> · Fresh in 25–40 min · Free delivery over ₹500 · Delhi NCR</div>
-            <div className="pill sg mt10"><i className="ph-fill ph-gift" /> Flat 25% off your first order (up to ₹80)</div>
-            <div className="fx ac gap12 mt14">
-              <Link className="btn btn-p f1" to="/preferences">Get my meal plan <i className="ph-bold ph-arrow-right" /></Link>
-              <Link className="btn btn-g f1" to="/menu">Browse menu</Link>
+        {/* ── Zomato-style conversion funnel ─────────────────────────────── */}
+
+        {/* Viewport 1 — Trust header (location · search · veg-only) */}
+        <TrustHeader />
+
+        {/* Viewport 2 — Hero offer carousel (real 25% first-order offer) */}
+        <div className="mt14"><HeroCarousel /></div>
+
+        {/* Viewport 3 — Circular category badges → real Menu deep-links */}
+        <div className="mt16"><CategoryBadges /></div>
+
+        {/* Viewport 4 — Ambient assessment nudge (opens the real IntakeQuiz) */}
+        <div className="mt16"><AssessmentNudge onStart={() => setQuizOpen(true)} /></div>
+
+        {/* Viewport 5 — Zomato-style meta cards (featured RD-verified dishes) */}
+        {featured.length > 0 && (
+          <>
+            <div className="secrow"><span className="sh">Fresh picks near you</span><Link to="/menu" className="fine" style={{ color: "var(--safb)" }}>Full menu →</Link></div>
+            <div className="padx">
+              {featured.map((d: any) => (
+                <MetaDishCard key={d.id} dish={d} onAdd={quickAdd} />
+              ))}
             </div>
-          </div>
-        </div>
+          </>
+        )}
+
+        {/* ── Deeper CUJ sections (preserved) ────────────────────────────── */}
 
         {/* Trust stats */}
         <div className="padx mt16">
@@ -246,33 +267,6 @@ export default function V2Home() {
           </>
         )}
 
-        {/* Featured meals */}
-        {featured.length > 0 && (
-          <>
-            <div className="secrow"><span className="sh">Featured offerings</span><Link to="/menu" className="fine" style={{ color: "var(--safb)" }}>Full menu →</Link></div>
-            <div className="padx">
-              {featured.map((d: any) => (
-                <Link key={d.id} to={`/dish/${d.slug}`} className="dcard" style={{ display: "block" }}>
-                  <div className="fx gap12">
-                    <div className="f1" style={{ minWidth: 0 }}>
-                      <div className="fx ac g6"><span className={d.isVeg ? "vd" : "vd nv"} /><span className="vtag">{d.isVeg ? "VEG" : "NON-VEG"}</span>{d.rdVerified && <span className="pill sg" style={{ marginLeft: "auto" }}><i className="ph-fill ph-seal-check" />RD</span>}</div>
-                      <div className="dtitle">{d.name}</div>
-                      <div className="fine"><span className="price" style={{ color: "var(--safb)" }}>{F(d.price)}</span> · <span style={{ textTransform: "capitalize" }}>{d.category}</span></div>
-                    </div>
-                    <div className="dimg" style={{ backgroundImage: `url(${d.image})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-                  </div>
-                  <div className="ribbon cmp mt10">
-                    <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{d.macros.calories}</span></div>
-                    <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{d.macros.protein}<i className="ru">g</i></span></div>
-                    <div className="rc"><span className="rl">CARBS</span><span className="rv">{d.macros.carbs}<i className="ru">g</i></span></div>
-                    <div className="rc"><span className="rl">FAT</span><span className="rv">{d.macros.fat}<i className="ru">g</i></span></div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </>
-        )}
-
         {/* Protocols */}
         <div className="secrow"><span className="sh">Clinical nutrition programs</span></div>
         <div className="padx">
@@ -294,9 +288,12 @@ export default function V2Home() {
         <div className="padx mt16 mb20 tc">
           <div className="h2">Ready to begin your <span style={{ color: "var(--safb)" }}>clinical nutrition journey</span>?</div>
           <div className="fine mt6" style={{ maxWidth: 320, margin: "6px auto 0" }}>Take the 60-second metabolic assessment for a plan calibrated to your BMR, TDEE and goals.</div>
-          <Link to="/preferences" className="btn btn-p mt14"><i className="ph-bold ph-activity" /> Start assessment</Link>
+          <button className="btn btn-p mt14" onClick={() => setQuizOpen(true)}><i className="ph-bold ph-activity" /> Start assessment</button>
         </div>
       </div>
+
+      {/* The real 60-second metabolic assessment — re-ranks the menu by goal + macros. */}
+      <IntakeQuiz open={quizOpen} onOpenChange={setQuizOpen} />
     </div>
   );
 }
