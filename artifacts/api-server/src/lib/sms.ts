@@ -148,6 +148,36 @@ export async function sendSmsOtp(number: PhoneE164): Promise<SendOtpResult> {
   }
 }
 
+export interface DeliveryDelaySmsResult {
+  /** True only when a real transactional SMS was actually dispatched. */
+  sent: boolean;
+  /** Populated when `sent` is false, explaining why. */
+  reason?: string;
+}
+
+/**
+ * Proactive, transactional (non-OTP) customer SMS — e.g. an "your order is
+ * running late" delay alert. This is DELIBERATELY a no-op today.
+ *
+ * The Twilio integration above is Verify-only (OTP); it cannot send arbitrary
+ * transactional copy. The only transactional provider referenced anywhere is
+ * MSG91 (see .env.example: MSG91_AUTH_KEY / MSG91_SENDER_ID / MSG91_TEMPLATE_ID)
+ * and no client for it has been implemented. Rather than log a fabricated
+ * "[CRM SMS SENT]" line and claim success it never earned, this returns
+ * `{ sent: false }` so the call site reports the truth.
+ *
+ * To wire a real provider: implement the dispatch here and return
+ * `{ sent: true }` only on a confirmed send. The call sites already reflect
+ * whatever this returns, so they need no changes.
+ */
+export async function sendDeliveryDelaySms(_params: {
+  orderId: number;
+  phone?: string | null;
+  message: string;
+}): Promise<DeliveryDelaySmsResult> {
+  return { sent: false, reason: "no transactional SMS provider configured" };
+}
+
 export interface VerifyOtpResult {
   ok: boolean;
   error?: string;

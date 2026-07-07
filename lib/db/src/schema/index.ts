@@ -23,6 +23,7 @@ export * from "./wellness";
 export * from "./wearable";
 export * from "./aiRuns";
 export * from "./ops";
+export * from "./supplierBatches";
 export * from "./forecasting";
 export * from "./eta";
 export * from "./dispatch";
