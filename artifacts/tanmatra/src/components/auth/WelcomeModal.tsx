@@ -1,15 +1,4 @@
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Sparkle } from "@phosphor-icons/react";
 
@@ -77,83 +66,99 @@ export function WelcomeModal({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog
-      open={open}
+    <div
+      className="tnm2"
       // Block dismiss-by-overlay-click while we're posting; otherwise allow
-      // it (treated as "skip"). The X button is also handled this way
-      // because radix calls onOpenChange(false) for both.
-      onOpenChange={(o) => {
-        if (!o && !submitting) onSkip();
+      // it (treated as "skip").
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.6)",
+        zIndex: 60,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+      onClick={() => {
+        if (!submitting) onSkip();
       }}
     >
-      <DialogContent className="bg-clinical-surface border-clinical-border sm:max-w-sm">
-        <DialogHeader className="space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-clinical-gold/15 flex items-center justify-center border border-clinical-gold/25">
-            <Sparkle className="w-5 h-5 text-clinical-gold" weight="bold" />
+      <div
+        className="card"
+        style={{ maxWidth: 384, width: "100%" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-2">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: "var(--safd)", border: "1px solid var(--saf)" }}
+          >
+            <Sparkle className="w-5 h-5" style={{ color: "var(--safb)" }} weight="bold" />
           </div>
-          <DialogTitle className="text-white">
+          <div className="tt" style={{ color: "var(--tx)" }}>
             What should we call you?
-          </DialogTitle>
-          <DialogDescription className="text-clinical-zinc text-xs">
+          </div>
+          <p className="fine">
             Helps your rider greet you correctly and personalises your menu.
             Email is optional — only used for receipts.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3 pt-2">
+          </p>
+        </div>
+        <div className="space-y-3 pt-2 mt12">
           <div className="space-y-1.5">
-            <Label htmlFor="welcome-fn" className="text-xs text-clinical-zinc">
+            <label htmlFor="welcome-fn" className="lab">
               First name
-            </Label>
-            <Input
+            </label>
+            <input
               id="welcome-fn"
+              className="inp"
               autoFocus
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="Priya"
-              className="bg-clinical-bg border-clinical-border text-white"
               maxLength={64}
               autoComplete="given-name"
             />
           </div>
           <div className="space-y-1.5">
-            <Label
-              htmlFor="welcome-email"
-              className="text-xs text-clinical-zinc"
-            >
-              Email <span className="text-clinical-zinc-muted">(optional)</span>
-            </Label>
-            <Input
+            <label htmlFor="welcome-email" className="lab">
+              Email <span style={{ color: "var(--fnt)" }}>(optional)</span>
+            </label>
+            <input
               id="welcome-email"
+              className="inp"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="priya@example.com"
-              className="bg-clinical-bg border-clinical-border text-white"
               maxLength={254}
               autoComplete="email"
               inputMode="email"
             />
           </div>
         </div>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="ghost"
+        <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            className={`btn btn-g ${submitting ? "dis" : ""}`}
             onClick={onSkip}
             disabled={submitting}
-            className="text-clinical-zinc hover:text-white"
           >
             Skip for now
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
+            className={`btn btn-p ${submitting || !firstName.trim() ? "dis" : ""}`}
             onClick={submit}
             disabled={submitting || !firstName.trim()}
-            className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold"
           >
             {submitting ? "Saving…" : "Save & continue"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

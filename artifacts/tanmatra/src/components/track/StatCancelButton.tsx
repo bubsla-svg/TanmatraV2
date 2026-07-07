@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { ShieldAlert } from "lucide-react";
 import StatCancelDialog from "./StatCancelDialog";
 import { useOrders } from "@/lib/ordersContext";
@@ -40,23 +39,27 @@ export function StatCancelButton({
   const order = getOrder(orderId);
   const resolvedPatient = patientName ?? order?.patientName;
 
-  const base =
-    variant === "solid"
-      ? "bg-red-500 text-white hover:bg-red-600 border-red-500"
-      : "border-red-500/60 text-red-300 hover:bg-red-500/10";
+  const solid = variant === "solid";
 
   return (
     <>
-      <Button
+      <button
         type="button"
-        size={size}
         onClick={() => setOpen(true)}
-        className={`${base} font-semibold gap-1.5 ${fullWidth ? "w-full" : ""} ${className}`}
+        className={`btn ${solid ? "" : "btn-g"} ${fullWidth ? "btn-blk" : ""} ${className}`}
+        style={{
+          height: size === "sm" ? 38 : 46,
+          gap: 6,
+          fontWeight: 600,
+          ...(solid
+            ? { background: "var(--dgr)", color: "#fff" }
+            : { borderColor: "var(--dgr)", color: "var(--dgr)" }),
+        }}
         aria-label={`STAT cancel order ${orderId}`}
       >
         <ShieldAlert className="w-3.5 h-3.5" aria-hidden />
         STAT Cancel
-      </Button>
+      </button>
       <StatCancelDialog
         open={open}
         onOpenChange={(o) => {

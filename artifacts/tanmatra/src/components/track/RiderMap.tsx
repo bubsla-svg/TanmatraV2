@@ -24,7 +24,7 @@ const DefaultIcon = L.icon({
 const DestinationIcon = L.divIcon({
   className: "rider-map-destination-icon",
   html:
-    '<div style="width:24px;height:24px;border-radius:50%;background:#D4AF37;border:2px solid #050505;box-shadow:0 0 0 2px #D4AF37;display:flex;align-items:center;justify-content:center;color:#050505;font-size:14px;font-weight:700;">⌂</div>',
+    '<div style="width:24px;height:24px;border-radius:50%;background:#E89A3E;border:2px solid #0A0C0D;box-shadow:0 0 0 2px #E89A3E;display:flex;align-items:center;justify-content:center;color:#0A0C0D;font-size:14px;font-weight:700;">⌂</div>',
   iconSize: [24, 24],
   iconAnchor: [12, 12],
   popupAnchor: [0, -12],
@@ -149,19 +149,19 @@ export default function RiderMap({ orderId, initial, destination }: Props) {
     <div className="space-y-2">
       {eta && (
         <div className="flex items-center justify-between text-xs px-1">
-          <span className="text-clinical-zinc">
-            Live ETA: <span className="text-clinical-gold font-semibold">{etaMinutes} min</span>
+          <span style={{ color: "var(--mut)" }}>
+            Live ETA: <span style={{ color: "var(--safb)", fontWeight: 600 }}>{etaMinutes} min</span>
           </span>
-          <span className="text-clinical-zinc tabular-nums">{distanceLabel} away</span>
+          <span className="tabular-nums" style={{ color: "var(--mut)" }}>{distanceLabel} away</span>
         </div>
       )}
-      <div className="h-64 w-full rounded-md overflow-hidden border border-clinical-border">
+      <div className="h-64 w-full overflow-hidden" style={{ borderRadius: 12, border: "1px solid var(--ln)" }}>
       <MapContainer
         center={center}
         zoom={14}
         scrollWheelZoom={false}
         className="h-full w-full"
-        style={{ background: "#0a0a0a" }}
+        style={{ background: "#0A0C0D" }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
@@ -179,7 +179,7 @@ export default function RiderMap({ orderId, initial, destination }: Props) {
           <Polyline
             positions={trail}
             pathOptions={{
-              color: "#D4AF37",
+              color: "#E89A3E",
               weight: 3,
               opacity: 0.85,
               dashArray: "6 6",

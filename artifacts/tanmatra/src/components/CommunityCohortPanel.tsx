@@ -1,5 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Sparkles, Trophy, Users } from "lucide-react";
 import { useCommunityMe } from "@/lib/contentApi";
 
@@ -16,7 +14,7 @@ export default function CommunityCohortPanel() {
 
   if (isLoading) {
     return (
-      <p className="text-sm text-clinical-zinc">Loading your cohorts…</p>
+      <p className="fine">Loading your cohorts…</p>
     );
   }
   if (!data || data.length === 0) return null;
@@ -24,8 +22,8 @@ export default function CommunityCohortPanel() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Users className="w-4 h-4 text-clinical-gold" />
-        <h2 className="font-serif text-xl text-white">
+        <Users className="w-4 h-4" style={{ color: "var(--safb)" }} />
+        <h2 className="h2" style={{ color: "var(--tx)" }}>
           Your cohort this week
         </h2>
       </div>
@@ -35,57 +33,52 @@ export default function CommunityCohortPanel() {
           const metricLabel =
             METRIC_LABELS[card.challenge.metric] ?? card.challenge.metric;
           return (
-            <Card
-              key={card.cohort.id}
-              className="bg-clinical-surface border-clinical-border"
-            >
-              <CardContent className="p-4 space-y-3">
+            <div key={card.cohort.id} className="card">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Badge className="bg-clinical-blue/20 text-clinical-blue border-0 text-[10px]">
-                    {card.cohort.name}
-                  </Badge>
-                  <span className="text-[10px] uppercase tracking-wider text-clinical-zinc">
+                  <span className="pill">{card.cohort.name}</span>
+                  <span className="lab" style={{ fontSize: 10 }}>
                     Week of {card.challenge.weekStartDate}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-base">
+                  <h3 className="text-base font-semibold" style={{ color: "var(--tx)" }}>
                     {card.challenge.title}
                   </h3>
-                  <p className="text-sm text-clinical-zinc mt-1">
+                  <p className="fine mt-1">
                     {card.challenge.description}
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs text-clinical-zinc">
+                  <div className="flex items-center justify-between fine">
                     <span>
                       {card.progress.count}/{card.challenge.targetCount}{" "}
                       {metricLabel}
                     </span>
-                    <span className="flex items-center gap-1 text-clinical-gold">
+                    <span className="flex items-center gap-1" style={{ color: "var(--safb)" }}>
                       <Trophy className="w-3 h-3" />
                       {card.challenge.rewardPoints} pts
                     </span>
                   </div>
-                  <div className="h-2 bg-clinical-surface-elevated rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all ${
-                        card.progress.completed
-                          ? "bg-clinical-sage"
-                          : "bg-clinical-gold"
-                      }`}
-                      style={{ width: `${pct}%` }}
+                  <div className="pbar" style={{ height: 8 }}>
+                    <b
+                      style={{
+                        width: `${pct}%`,
+                        background: card.progress.completed
+                          ? "var(--sage)"
+                          : "var(--saf)",
+                      }}
                     />
                   </div>
                   {card.progress.completed && (
-                    <p className="text-xs text-clinical-sage flex items-center gap-1">
+                    <p className="fine flex items-center gap-1" style={{ color: "var(--sage)" }}>
                       <Sparkles className="w-3 h-3" />
                       Goal reached — reward unlocked.
                     </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>

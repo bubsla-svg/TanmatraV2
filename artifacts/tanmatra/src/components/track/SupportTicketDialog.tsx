@@ -1,17 +1,5 @@
 import { useEffect, useState } from "react";
 import { API_BASE } from "@/lib/apiBase";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { CheckCircle2, LifeBuoy } from "lucide-react";
 
 interface SupportTicketDialogProps {
@@ -88,58 +76,76 @@ export default function SupportTicketDialog({
     }
   }
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <div
+      className="tnm2"
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.6)",
+        zIndex: 60,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+      onClick={() => onOpenChange(false)}
+    >
+      <div
+        className="card"
+        style={{ maxWidth: 448, width: "100%" }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {done ? (
           <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-clinical-sage" />
-                Care team is on it
-              </DialogTitle>
-              <DialogDescription>
-                Thanks — we've logged your request for order{" "}
-                <span className="font-mono text-xs">{orderDisplayId}</span>. Our
-                care team will reply by email shortly.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button onClick={() => onOpenChange(false)}>Close</Button>
-            </DialogFooter>
+            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+              <CheckCircle2 className="w-5 h-5" style={{ color: "var(--sage)" }} />
+              Care team is on it
+            </div>
+            <div className="fine mt6">
+              Thanks — we've logged your request for order{" "}
+              <span className="mono" style={{ fontSize: 12 }}>{orderDisplayId}</span>. Our
+              care team will reply by email shortly.
+            </div>
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button className="btn btn-p" onClick={() => onOpenChange(false)}>Close</button>
+            </div>
           </>
         ) : (
           <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <LifeBuoy className="w-5 h-5 text-clinical-gold" />
-                Need help with this order?
-              </DialogTitle>
-              <DialogDescription>
-                Tell us what's going on with order{" "}
-                <span className="font-mono text-xs">{orderDisplayId}</span> and
-                our care team will get back to you.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 py-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-subject" className="text-xs">
+            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+              <LifeBuoy className="w-5 h-5" style={{ color: "var(--safb)" }} />
+              Need help with this order?
+            </div>
+            <div className="fine mt6">
+              Tell us what's going on with order{" "}
+              <span className="mono" style={{ fontSize: 12 }}>{orderDisplayId}</span> and
+              our care team will get back to you.
+            </div>
+            <div className="col gap12 mt12">
+              <div className="col gap6">
+                <label htmlFor="ticket-subject" className="lab">
                   Subject
-                </Label>
-                <Input
+                </label>
+                <input
                   id="ticket-subject"
+                  className="inp"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   maxLength={200}
                   disabled={submitting}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-body" className="text-xs">
+              <div className="col gap6">
+                <label htmlFor="ticket-body" className="lab">
                   How can we help?
-                </Label>
-                <Textarea
+                </label>
+                <textarea
                   id="ticket-body"
+                  className="inp"
+                  style={{ height: "auto", minHeight: 110, padding: "12px 14px", alignItems: "flex-start", display: "block" }}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   rows={5}
@@ -149,30 +155,30 @@ export default function SupportTicketDialog({
                 />
               </div>
               {error && (
-                <p className="text-xs text-red-400" role="alert">
+                <p className="fine" style={{ color: "var(--dgr)" }} role="alert">
                   {error}
                 </p>
               )}
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button
+                className={`btn btn-g${submitting ? " dis" : ""}`}
                 onClick={() => onOpenChange(false)}
                 disabled={submitting}
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
+                className={`btn btn-p${!canSubmit ? " dis" : ""}`}
                 onClick={submit}
                 disabled={!canSubmit}
-                className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90"
               >
                 {submitting ? "Sending…" : "Send to care team"}
-              </Button>
-            </DialogFooter>
+              </button>
+            </div>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

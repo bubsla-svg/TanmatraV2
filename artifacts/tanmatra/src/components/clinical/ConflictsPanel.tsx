@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router";
 import { AlertTriangle, X, ArrowRightLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { useActivePatient } from "@/lib/patientContext";
@@ -124,15 +123,21 @@ export default function ConflictsPanel({
       id={panelId}
       role="alert"
       aria-live="assertive"
-      className="rounded-xl border alert-allergen-border alert-allergen-bg px-4 py-3 space-y-3"
+      className="space-y-3"
+      style={{
+        borderRadius: 12,
+        border: "1px solid rgba(201,124,112,.4)",
+        background: "rgba(201,124,112,.1)",
+        padding: "12px 16px",
+      }}
     >
       <div className="flex items-start gap-2">
-        <AlertTriangle className="w-4 h-4 alert-allergen-text shrink-0 mt-0.5" aria-hidden />
+        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--dgr)" }} aria-hidden />
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.16em] font-semibold alert-allergen-text">
+          <p className="text-[10px] uppercase tracking-[0.16em] font-semibold" style={{ color: "var(--dgr)" }}>
             Order blocked — patient safety
           </p>
-          <p className="text-sm alert-allergen-text leading-snug">
+          <p className="text-sm leading-snug" style={{ color: "var(--dgr)" }}>
             {serverMessage ??
               `${rows.length} item${rows.length === 1 ? "" : "s"} conflict with the patient's allergens or active diet order. Remove or replace to continue — there is no manual override on this screen.`}
           </p>
@@ -144,45 +149,74 @@ export default function ConflictsPanel({
           {rows.map((r) => (
             <li
               key={r.lineId}
-              className="flex flex-wrap items-center gap-2 rounded-md alert-allergen-bg alert-allergen-border border px-2.5 py-1.5"
+              className="flex flex-wrap items-center gap-2"
+              style={{
+                borderRadius: 6,
+                border: "1px solid rgba(201,124,112,.3)",
+                background: "rgba(201,124,112,.08)",
+                padding: "6px 10px",
+              }}
             >
               <span
-                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
-                  r.severity === "allergen"
-                    ? "alert-allergen-bg-strong alert-allergen-text alert-allergen-border"
-                    : "alert-stat-bg-strong alert-stat-text alert-stat-border"
-                }`}
+                className="pill"
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: ".08em",
+                  ...(r.severity === "allergen"
+                    ? { background: "rgba(201,124,112,.16)", color: "var(--dgr)" }
+                    : { background: "var(--safd)", color: "var(--safb)" }),
+                }}
               >
                 {r.severity === "allergen" ? "Allergen" : "Diet order"}
               </span>
-              <span className="text-[12px] text-white font-semibold min-w-0 truncate">
+              <span className="text-[12px] font-semibold min-w-0 truncate" style={{ color: "var(--tx)" }}>
                 {r.dishName}
               </span>
-              <span className="text-[11px] alert-allergen-text min-w-0 flex-1">
+              <span className="text-[11px] min-w-0 flex-1" style={{ color: "var(--mut)" }}>
                 {r.reason}
               </span>
               <div className="flex items-center gap-1 shrink-0 ml-auto">
                 {r.swapSlug && r.swapName && (
-                  <Button
+                  <button
                     type="button"
-                    size="sm"
-                    variant="outline"
                     onClick={() => navigate(`/dish/${r.swapSlug}`)}
-                    className="h-7 px-2 text-[10px] uppercase tracking-[0.1em] border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10"
+                    className="btn btn-g"
+                    style={{
+                      height: 28,
+                      padding: "0 8px",
+                      fontSize: 10,
+                      textTransform: "uppercase",
+                      letterSpacing: ".1em",
+                      gap: 4,
+                      color: "var(--safb)",
+                      borderColor: "rgba(232,154,62,.4)",
+                    }}
                   >
-                    <ArrowRightLeft className="w-3 h-3 mr-1" aria-hidden />
+                    <ArrowRightLeft className="w-3 h-3" aria-hidden />
                     Replace with {r.swapName}
-                  </Button>
+                  </button>
                 )}
-                <Button
+                <button
                   type="button"
-                  size="sm"
                   onClick={() => removeItem(r.lineId)}
-                  className="h-7 px-2 text-[10px] uppercase tracking-[0.1em] alert-allergen-bg-strong alert-allergen-text alert-allergen-border border hover:opacity-80"
+                  className="btn"
+                  style={{
+                    height: 28,
+                    padding: "0 8px",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: ".1em",
+                    gap: 4,
+                    background: "rgba(201,124,112,.16)",
+                    color: "var(--dgr)",
+                    border: "1px solid rgba(201,124,112,.4)",
+                  }}
                 >
-                  <X className="w-3 h-3 mr-1" aria-hidden />
+                  <X className="w-3 h-3" aria-hidden />
                   Remove
-                </Button>
+                </button>
               </div>
             </li>
           ))}

@@ -1,14 +1,4 @@
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   ShieldCheck,
   Lock,
@@ -75,44 +65,51 @@ export default function DpdpaConsentCapture({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <Card className="bg-clinical-surface border-clinical-border text-white shadow-lg">
-        <CardHeader className="space-y-2 border-b border-clinical-border/50 pb-5">
+      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        <div
+          className="space-y-2"
+          style={{ padding: 16, borderBottom: "1px solid var(--ln)" }}
+        >
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2.5">
-              <ShieldCheck className="w-6 h-6 text-clinical-gold shrink-0" />
-              <CardTitle className="font-serif text-xl text-white">
+              <ShieldCheck className="w-6 h-6 shrink-0" style={{ color: "var(--safb)" }} />
+              <div className="h2" style={{ color: "var(--tx)" }}>
                 DPDPA 2023 Consent & Privacy Preferences
-              </CardTitle>
+              </div>
             </div>
-            <Badge className="bg-clinical-gold/20 text-clinical-gold border border-clinical-gold/30 text-xs px-2.5 py-0.5">
-              Version {CONSENT_VERSION}
-            </Badge>
+            <span className="pill sg">Version {CONSENT_VERSION}</span>
           </div>
-          <CardDescription className="text-sm text-clinical-zinc">
+          <p className="fine">
             In accordance with India&apos;s Digital Personal Data Protection Act
             (DPDPA) 2023, please review and manage your explicit consent for how
             we process your personal and clinical dietary data.
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
 
-        <CardContent className="pt-6 space-y-5">
+        <div className="space-y-5" style={{ padding: 16 }}>
           {/* Purpose 1: Clinical Delivery (Mandatory) */}
-          <div className="p-4 rounded-xl bg-clinical-surface-elevated/80 border border-clinical-border/80 space-y-3">
+          <div
+            className="p-4 rounded-xl space-y-3"
+            style={{ background: "var(--s2)", border: "1px solid var(--ln)" }}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-clinical-blue/10 text-clinical-blue shrink-0 mt-0.5">
+                <div
+                  className="p-2 rounded-lg shrink-0 mt-0.5"
+                  style={{ background: "var(--s3)", color: "var(--mut)" }}
+                >
                   <Lock className="w-5 h-5" />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base font-semibold text-white">
+                    <h4 className="text-base font-semibold" style={{ color: "var(--tx)" }}>
                       Clinical Delivery & Order Fulfillment
                     </h4>
-                    <Badge className="bg-clinical-blue/20 text-clinical-blue border-0 text-[10px] uppercase font-bold tracking-wider">
+                    <span className="pill" style={{ fontSize: 10, textTransform: "uppercase" }}>
                       Mandatory
-                    </Badge>
+                    </span>
                   </div>
-                  <p className="text-sm text-clinical-zinc leading-relaxed">
+                  <p className="fine leading-relaxed">
                     Required to process personalized therapeutic meals, verify
                     dietary restrictions and allergen protocols, and coordinate
                     precise rider dispatches under DPDPA Section 6(1).
@@ -120,28 +117,42 @@ export default function DpdpaConsentCapture({
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0 pt-1">
-                <Switch checked={true} disabled={true} aria-readonly />
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={true}
+                  aria-readonly
+                  disabled
+                  className="sw on"
+                  style={{ opacity: 0.5, pointerEvents: "none" }}
+                />
               </div>
             </div>
           </div>
 
           {/* Purpose 2: AI Personalization & Copilot (Optional) */}
-          <div className="p-4 rounded-xl bg-clinical-surface-elevated/50 border border-clinical-border/50 space-y-3 transition-colors hover:border-clinical-border">
+          <div
+            className="p-4 rounded-xl space-y-3"
+            style={{ background: "var(--s1)", border: "1px solid var(--ln)" }}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-clinical-sage/10 text-clinical-sage shrink-0 mt-0.5">
+                <div
+                  className="p-2 rounded-lg shrink-0 mt-0.5"
+                  style={{ background: "var(--saged)", color: "var(--sage)" }}
+                >
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base font-semibold text-white">
+                    <h4 className="text-base font-semibold" style={{ color: "var(--tx)" }}>
                       AI Personalization & Nutrition Copilot
                     </h4>
-                    <Badge className="bg-clinical-sage/20 text-clinical-sage border-0 text-[10px] uppercase tracking-wider">
+                    <span className="pill sg" style={{ fontSize: 10, textTransform: "uppercase" }}>
                       Optional Toggle
-                    </Badge>
+                    </span>
                   </div>
-                  <p className="text-sm text-clinical-zinc leading-relaxed">
+                  <p className="fine leading-relaxed">
                     Enables our Registered Dietitian AI Copilot and nutritional
                     models to analyze dietary logs and wearable health metrics
                     to generate adaptive meal suggestions.
@@ -149,33 +160,49 @@ export default function DpdpaConsentCapture({
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0 pt-1">
-                <Switch
-                  checked={purposeAiPersonalization}
-                  onCheckedChange={setPurposeAiPersonalization}
-                  disabled={isLoading || isSubmitting}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={purposeAiPersonalization}
                   aria-label="Toggle AI Personalization consent"
+                  disabled={isLoading || isSubmitting}
+                  className={purposeAiPersonalization ? "sw on" : "sw"}
+                  style={
+                    isLoading || isSubmitting
+                      ? { opacity: 0.5, pointerEvents: "none" }
+                      : undefined
+                  }
+                  onClick={() =>
+                    setPurposeAiPersonalization(!purposeAiPersonalization)
+                  }
                 />
               </div>
             </div>
           </div>
 
           {/* Purpose 3: Marketing & Offers (Optional) */}
-          <div className="p-4 rounded-xl bg-clinical-surface-elevated/50 border border-clinical-border/50 space-y-3 transition-colors hover:border-clinical-border">
+          <div
+            className="p-4 rounded-xl space-y-3"
+            style={{ background: "var(--s1)", border: "1px solid var(--ln)" }}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 shrink-0 mt-0.5">
+                <div
+                  className="p-2 rounded-lg shrink-0 mt-0.5"
+                  style={{ background: "var(--s3)", color: "var(--mut)" }}
+                >
                   <Megaphone className="w-5 h-5" />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base font-semibold text-white">
+                    <h4 className="text-base font-semibold" style={{ color: "var(--tx)" }}>
                       Marketing, Offers & Community Challenges
                     </h4>
-                    <Badge className="bg-purple-500/20 text-purple-300 border-0 text-[10px] uppercase tracking-wider">
+                    <span className="pill" style={{ fontSize: 10, textTransform: "uppercase" }}>
                       Optional Toggle
-                    </Badge>
+                    </span>
                   </div>
-                  <p className="text-sm text-clinical-zinc leading-relaxed">
+                  <p className="fine leading-relaxed">
                     Receive tailored updates, seasonal meal promotions, nutritional
                     challenge reminders, and wellness newsletters via SMS or
                     WhatsApp.
@@ -183,28 +210,39 @@ export default function DpdpaConsentCapture({
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0 pt-1">
-                <Switch
-                  checked={purposeMarketing}
-                  onCheckedChange={setPurposeMarketing}
-                  disabled={isLoading || isSubmitting}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={purposeMarketing}
                   aria-label="Toggle Marketing and Offers consent"
+                  disabled={isLoading || isSubmitting}
+                  className={purposeMarketing ? "sw on" : "sw"}
+                  style={
+                    isLoading || isSubmitting
+                      ? { opacity: 0.5, pointerEvents: "none" }
+                      : undefined
+                  }
+                  onClick={() => setPurposeMarketing(!purposeMarketing)}
                 />
               </div>
             </div>
           </div>
 
           {/* Timestamp & Audit Footer Info */}
-          <div className="p-3.5 rounded-lg bg-clinical-surface border border-clinical-border/60 flex items-center justify-between text-xs text-clinical-zinc flex-wrap gap-2">
+          <div
+            className="p-3.5 rounded-lg flex items-center justify-between fine flex-wrap gap-2"
+            style={{ background: "var(--s1)", border: "1px solid var(--ln)" }}
+          >
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-clinical-gold shrink-0" />
+              <Clock className="w-4 h-4 shrink-0" style={{ color: "var(--safb)" }} />
               <span>
                 Consent Audit Timestamp:{" "}
-                <strong className="text-white font-mono">
+                <strong className="mono" style={{ color: "var(--tx)" }}>
                   {currentTimestamp}
                 </strong>
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-clinical-sage">
+            <div className="flex items-center gap-1.5" style={{ color: "var(--sage)" }}>
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>256-bit Envelope Encrypted Storage</span>
             </div>
@@ -213,27 +251,26 @@ export default function DpdpaConsentCapture({
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2">
             {onCancel && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
+                className={`btn btn-g ${isLoading || isSubmitting ? "dis" : ""}`}
                 onClick={onCancel}
                 disabled={isLoading || isSubmitting}
-                className="border-clinical-border text-clinical-zinc hover:text-white"
               >
                 Cancel
-              </Button>
+              </button>
             )}
-            <Button
+            <button
               type="button"
+              className={`btn btn-p ${isLoading || isSubmitting ? "dis" : ""}`}
               onClick={handleSave}
               disabled={isLoading || isSubmitting}
-              className="bg-clinical-gold text-clinical-surface font-semibold hover:bg-clinical-gold/90 px-6"
             >
               {isSubmitting || isLoading ? "Saving Preferences..." : "Save Preferences"}
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -9,11 +9,6 @@ import {
 import { API_BASE } from "@/lib/apiBase";
 import { useCart, type CartItem } from "@/lib/cartContext";
 import { getDishBySlug } from "@/lib/menuData";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -67,7 +62,10 @@ function ActionCard({
 }) {
   if (action.kind === "add_to_cart") {
     return (
-      <div className="mt-2 rounded-lg border border-[#D4AF37]/30 bg-background/50 p-3">
+      <div
+        className="mt-2 rounded-lg p-3"
+        style={{ background: "var(--s2)", border: "1px solid var(--ln2)" }}
+      >
         <div className="flex items-start gap-3">
           {action.image && (
             <img
@@ -77,20 +75,21 @@ function ActionCard({
             />
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold leading-tight">{action.name}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+            <p className="text-xs font-semibold leading-tight" style={{ color: "var(--tx)" }}>{action.name}</p>
+            <p className="text-[10px] mt-0.5" style={{ color: "var(--mut)" }}>
               {action.priceLabel} · {action.macros.protein}g protein ·{" "}
               {action.macros.calories} kcal
             </p>
-            <p className="text-[10px] text-muted-foreground mt-1 italic">
+            <p className="text-[10px] mt-1 italic" style={{ color: "var(--mut)" }}>
               {action.reasoning}
             </p>
           </div>
         </div>
         <div className="flex gap-2 mt-2">
-          <Button
-            size="sm"
-            className="flex-1 h-7 text-[11px]"
+          <button
+            type="button"
+            className="btn btn-p"
+            style={{ flex: 1, height: 28, fontSize: 11, padding: "0 10px" }}
             onClick={() => onAddToCart(action)}
           >
             <ShoppingCart className="w-3 h-3 mr-1" />
@@ -99,36 +98,43 @@ function ActionCard({
               : action.target === "replace_in_cart"
                 ? "Replace cart with this"
                 : `Add ${action.quantity > 1 ? `×${action.quantity}` : ""} to cart`}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-[11px]"
-            asChild
+          </button>
+          <Link
+            to={`/dish/${action.slug}`}
+            className="btn btn-g"
+            style={{ height: 28, fontSize: 11, padding: "0 10px" }}
           >
-            <Link to={`/dish/${action.slug}`}>View</Link>
-          </Button>
+            View
+          </Link>
         </div>
       </div>
     );
   }
   return (
-    <div className="mt-2 rounded-lg border border-orange-500/30 bg-background/50 p-3">
+    <div
+      className="mt-2 rounded-lg p-3"
+      style={{ background: "var(--s2)", border: "1px solid var(--dgr)" }}
+    >
       <div className="flex items-center gap-2">
-        <Calendar className="w-4 h-4 text-orange-400" />
-        <p className="text-xs font-semibold">Talk to a Registered Dietitian</p>
+        <Calendar className="w-4 h-4" style={{ color: "var(--dgr)" }} />
+        <p className="text-xs font-semibold" style={{ color: "var(--tx)" }}>Talk to a Registered Dietitian</p>
       </div>
-      <p className="text-[10px] text-muted-foreground mt-1">{action.reason}</p>
+      <p className="text-[10px] mt-1" style={{ color: "var(--mut)" }}>{action.reason}</p>
       {action.premiumConsultsRemaining != null && (
-        <p className="text-[10px] text-clinical-gold mt-1">
+        <p className="text-[10px] mt-1" style={{ color: "var(--safb)" }}>
           {action.premiumConsultsRemaining} premium consult
           {action.premiumConsultsRemaining === 1 ? "" : "s"} remaining
         </p>
       )}
-      <Button size="sm" className="w-full h-7 text-[11px] mt-2" onClick={() => onBookRd(action)}>
+      <button
+        type="button"
+        className="btn btn-p btn-blk mt-2"
+        style={{ height: 28, fontSize: 11 }}
+        onClick={() => onBookRd(action)}
+      >
         <ArrowUpRight className="w-3 h-3 mr-1" />
         Book a consult
-      </Button>
+      </button>
     </div>
   );
 }
@@ -351,42 +357,47 @@ export default function CoachAgentWidget({
   };
 
   const chatSurface = (
-    <Card
+    <div
       className={
         inline
-          ? "w-full flex flex-col shadow-md border border-[#D4AF37]/30 max-h-[520px]"
-          : "fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-[#D4AF37]/30 bg-[#050505]"
+          ? "card w-full flex flex-col max-h-[520px]"
+          : "card fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col"
       }
+      style={{ padding: 0, overflow: "hidden" }}
     >
-      <CardHeader className="shrink-0 py-3 px-4 border-b bg-[#050505]">
+      <div
+        className="shrink-0"
+        style={{ padding: "12px 16px", borderBottom: "1px solid var(--ln)" }}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
-            <Apple className="w-5 h-5 text-[#D4AF37]" />
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: "var(--safd)" }}
+          >
+            <Apple className="w-5 h-5" style={{ color: "var(--safb)" }} />
           </div>
           <div>
-            <CardTitle className="text-sm text-white">Nutrition Coach</CardTitle>
-            <p className="text-[10px] text-muted-foreground font-mono">
+            <div className="text-sm" style={{ color: "var(--tx)", fontWeight: 600 }}>Nutrition Coach</div>
+            <p className="text-[10px] mono" style={{ color: "var(--mut)" }}>
               General guidance · not medical advice
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className="ml-auto text-[10px] border-green-500/30 text-green-400"
-          >
+          <span className="pill sg" style={{ marginLeft: "auto", fontSize: 10 }}>
             Online
-          </Badge>
+          </span>
           <button
             type="button"
             onClick={() => setIsOpen(false)}
             aria-label="Close nutrition coach"
-            className="text-clinical-zinc hover:text-white p-1 -mr-1 rounded transition-colors"
+            className="p-1 -mr-1 rounded"
+            style={{ color: "var(--mut)" }}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-      </CardHeader>
+      </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollRef as never}>
+      <div ref={scrollRef} className="flex-1" style={{ overflowY: "auto", padding: 16 }}>
         <div className="space-y-4">
           {messages.map((msg, i) => (
             <div
@@ -394,16 +405,20 @@ export default function CoachAgentWidget({
               className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "agent" && (
-                <div className="w-6 h-6 rounded-full bg-[#D4AF37]/10 flex items-center justify-center shrink-0 mt-1">
-                  <Bot className="w-3 h-3 text-[#D4AF37]" />
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1"
+                  style={{ background: "var(--safd)" }}
+                >
+                  <Bot className="w-3 h-3" style={{ color: "var(--safb)" }} />
                 </div>
               )}
               <div
-                className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                className="max-w-[85%] rounded-lg px-3 py-2 text-sm"
+                style={
                   msg.role === "user"
-                    ? "bg-[#6BA3C8] text-white"
-                    : "bg-muted text-foreground"
-                }`}
+                    ? { background: "var(--saf)", color: "var(--onsaf)" }
+                    : { background: "var(--s2)", color: "var(--tx)" }
+                }
               >
                 <p className="whitespace-pre-wrap">{msg.text}</p>
                 {msg.actions?.map((a, ai) => (
@@ -415,7 +430,7 @@ export default function CoachAgentWidget({
                   />
                 ))}
                 {msg.escalated && (
-                  <div className="mt-2 flex items-center gap-1 text-[10px] text-orange-400">
+                  <div className="mt-2 flex items-center gap-1 text-[10px]" style={{ color: "var(--dgr)" }}>
                     <ArrowUpRight className="w-3 h-3" />
                     Routed to RD
                   </div>
@@ -425,8 +440,11 @@ export default function CoachAgentWidget({
                 </p>
               </div>
               {msg.role === "user" && (
-                <div className="w-6 h-6 rounded-full bg-[#6BA3C8]/10 flex items-center justify-center shrink-0 mt-1">
-                  <User className="w-3 h-3 text-[#6BA3C8]" />
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1"
+                  style={{ background: "var(--s3)" }}
+                >
+                  <User className="w-3 h-3" style={{ color: "var(--mut)" }} />
                 </div>
               )}
             </div>
@@ -434,55 +452,67 @@ export default function CoachAgentWidget({
           {streaming &&
             messages[streamingIndexRef.current ?? -1]?.text === "" && (
               <div className="flex gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
-                  <Bot className="w-3 h-3 text-[#D4AF37] animate-bounce" />
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center"
+                  style={{ background: "var(--safd)" }}
+                >
+                  <Bot className="w-3 h-3 animate-bounce" style={{ color: "var(--safb)" }} />
                 </div>
-                <div className="bg-muted rounded-lg px-3 py-2 text-sm text-muted-foreground">
+                <div
+                  className="rounded-lg px-3 py-2 text-sm"
+                  style={{ background: "var(--s2)", color: "var(--mut)" }}
+                >
                   Thinking...
                 </div>
               </div>
             )}
         </div>
-      </ScrollArea>
+      </div>
 
-      <CardContent className="shrink-0 p-3 border-t">
+      <div
+        className="shrink-0"
+        style={{ padding: 12, borderTop: "1px solid var(--ln)" }}
+      >
         <div className="flex gap-2">
-          <Input
+          <input
+            className="inp"
+            style={{ flex: 1 }}
             placeholder={
               dishSlug ? "Ask about this dish..." : "Ask about macros, swaps, goals..."
             }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1"
             aria-label="Coach chat input"
           />
-          <Button
-            size="icon"
+          <button
+            type="button"
+            className={`btn btn-p ${!input.trim() || streaming ? "dis" : ""}`}
+            style={{ width: 46, padding: 0 }}
             onClick={handleSend}
             disabled={!input.trim() || streaming}
             aria-label="Send message"
           >
             <Send className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 
   if (inline) {
     if (!isOpen) {
       return (
         <div className="space-y-1.5 text-center">
-          <Button
-            variant="outline"
-            className="w-full border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10"
+          <button
+            type="button"
+            className="btn btn-g btn-blk"
             onClick={() => setIsOpen(true)}
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Ask the coach about this dish
-          </Button>
-          <p className="text-[10px] text-clinical-zinc">
+          </button>
+          <p className="fine">
             Ask about protein modifications, metabolic impacts, or allergen alternatives.
           </p>
         </div>
@@ -502,13 +532,15 @@ export default function CoachAgentWidget({
           {trigger}
         </button>
       ) : (
-        <Button
+        <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`fixed ${triggerPositionClass} left-3 sm:left-4 md:left-auto md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-[#D4AF37] text-[#050505] hover:bg-[#D4AF37]/90`}
+          className={`fixed ${triggerPositionClass} left-3 sm:left-4 md:left-auto md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg flex items-center justify-center`}
+          style={{ background: "var(--saf)", color: "var(--onsaf)" }}
           aria-label={isOpen ? "Close nutrition coach" : "Open nutrition coach"}
         >
           {isOpen ? <X className="w-6 h-6" /> : <Apple className="w-6 h-6" />}
-        </Button>
+        </button>
       )}
 
       {isOpen && chatSurface}

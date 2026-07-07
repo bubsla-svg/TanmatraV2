@@ -59,7 +59,11 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
     <div className="space-y-3">
       {/* Connection / cancellation status banner */}
       {isCancelled ? (
-        <div className="flex items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300" role="status">
+        <div
+          className="flex items-center gap-2 text-xs"
+          style={{ borderRadius: 8, border: "1px solid rgba(201,124,112,.4)", background: "rgba(201,124,112,.12)", padding: "8px 12px", color: "var(--dgr)" }}
+          role="status"
+        >
           <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
           <span>
             STAT cancel · {order.cancelReason ?? "reason not recorded"}
@@ -67,17 +71,21 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
           </span>
         </div>
       ) : !socketConnected ? (
-        <div className="flex items-center gap-2 rounded-md border border-orange-500/40 bg-orange-500/10 px-3 py-2 text-xs text-orange-300" role="status">
+        <div
+          className="flex items-center gap-2 text-xs"
+          style={{ borderRadius: 8, border: "1px solid rgba(232,154,62,.4)", background: "var(--safd)", padding: "8px 12px", color: "var(--safb)" }}
+          role="status"
+        >
           <WifiOff className="w-4 h-4 shrink-0" aria-hidden />
           <span>Live updates paused — reconnecting. Status shown may be stale.</span>
         </div>
       ) : (
-        <div className="flex items-center gap-2 text-[11px] text-clinical-sage" aria-live="polite">
+        <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--sage)" }} aria-live="polite">
           <Wifi className="w-3.5 h-3.5" aria-hidden />
           <span>Live</span>
-          {currentTs && <span className="text-clinical-zinc">· {currentMeta.label} at {fmtTime(currentTs)}</span>}
+          {currentTs && <span style={{ color: "var(--mut)" }}>· {currentMeta.label} at {fmtTime(currentTs)}</span>}
           {currentActor && (
-            <span className="text-clinical-zinc inline-flex items-center gap-1">
+            <span className="inline-flex items-center gap-1" style={{ color: "var(--mut)" }}>
               · <UserRound className="w-3 h-3" aria-hidden /> {currentActor}
             </span>
           )}
@@ -102,37 +110,38 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
               aria-current={isCurrent ? "step" : undefined}
             >
               <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors z-10 ${
-                  isCancelled
-                    ? "bg-clinical-surface-elevated border-clinical-border text-clinical-zinc"
-                    : reached
-                      ? "bg-clinical-gold border-clinical-gold text-[#050505]"
-                      : "bg-clinical-surface border-clinical-border text-clinical-zinc"
-                } ${isCurrent ? "ring-2 ring-clinical-gold/50" : ""}`}
+                className="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors z-10"
+                style={{
+                  background: isCancelled ? "var(--s3)" : reached ? "var(--saf)" : "var(--s1)",
+                  borderColor: isCancelled ? "var(--ln2)" : reached ? "var(--saf)" : "var(--ln2)",
+                  color: isCancelled ? "var(--mut)" : reached ? "var(--onsaf)" : "var(--mut)",
+                  boxShadow: isCurrent ? "0 0 0 2px rgba(232,154,62,.5)" : undefined,
+                }}
               >
                 <Icon className="w-4 h-4" aria-hidden />
               </div>
               {idx < CLINICAL_STAGES.length - 1 && (
                 <div
-                  className={`absolute top-4 left-1/2 w-full h-0.5 ${
-                    !isCancelled && idx < currentIdx ? "bg-clinical-gold/60" : "bg-clinical-surface-elevated"
-                  }`}
+                  className="absolute top-4 left-1/2 w-full h-0.5"
+                  style={{ background: !isCancelled && idx < currentIdx ? "rgba(232,154,62,.6)" : "var(--s3)" }}
                   aria-hidden
                 />
               )}
               <span
-                className={`mt-2 text-[10px] leading-tight ${
-                  reached && !isCancelled ? "text-white font-medium" : "text-clinical-zinc"
-                }`}
+                className="mt-2 text-[10px] leading-tight"
+                style={{
+                  color: reached && !isCancelled ? "var(--tx)" : "var(--mut)",
+                  fontWeight: reached && !isCancelled ? 500 : undefined,
+                }}
               >
                 <span className={compact ? "sm:hidden" : "hidden"}>{stage.shortLabel}</span>
                 <span className={compact ? "hidden sm:inline" : ""}>{stage.label}</span>
               </span>
               {ts && reached && (
-                <span className="text-[9px] text-clinical-zinc tabular-nums mt-0.5">{fmtTime(ts)}</span>
+                <span className="text-[9px] tabular-nums mt-0.5" style={{ color: "var(--mut)" }}>{fmtTime(ts)}</span>
               )}
               {actor && reached && (
-                <span className="text-[9px] text-clinical-sage truncate max-w-[80px]" title={actor}>
+                <span className="text-[9px] truncate max-w-[80px]" style={{ color: "var(--sage)" }} title={actor}>
                   {actor}
                 </span>
               )}

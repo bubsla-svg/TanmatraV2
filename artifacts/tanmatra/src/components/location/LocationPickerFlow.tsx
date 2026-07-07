@@ -1,13 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MapPin, Target, MagnifyingGlass, House, Buildings, Notepad, ArrowLeft, X, CircleNotch, CheckCircle, Warning } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { checkPincode } from "@/lib/serviceablePincodes";
-import { cn } from "@/lib/utils";
 
 interface LocationPickerFlowProps {
   open: boolean;
@@ -535,48 +529,66 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(
-        "p-0 bg-clinical-surface border-0 sm:border border-clinical-border w-full max-w-none sm:max-w-lg h-[100dvh] sm:h-[80vh] sm:rounded-lg flex flex-col overflow-hidden",
-        step !== "prompt" && "[&>button]:hidden"
-      )}>
+    <div
+      className="tnm2"
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+      onClick={() => onOpenChange(false)}
+    >
+      <div
+        className="card w-full max-w-none sm:max-w-lg h-[100dvh] sm:h-[80vh] flex flex-col overflow-hidden"
+        style={{ padding: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* STEP 1: Initial Prompt */}
         {step === "prompt" && (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-            <div className="w-24 h-24 rounded-full bg-clinical-gold/10 flex items-center justify-center border border-clinical-gold/20">
-              <MapPin className="w-12 h-12 text-clinical-gold" weight="fill" />
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              aria-label="Close"
+              className="iconbtn"
+              style={{ position: "absolute", top: 12, right: 12 }}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ background: "var(--safd)", border: "1px solid var(--saf)" }}>
+              <MapPin className="w-12 h-12" style={{ color: "var(--safb)" }} weight="fill" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-serif font-semibold text-white">Where should we deliver?</h3>
-              <p className="text-xs text-clinical-zinc">
+              <h3 className="h2" style={{ color: "var(--tx)" }}>Where should we deliver?</h3>
+              <p className="fine">
                 We deliver across Noida, Delhi & Gurgaon — pick your location or type the address.
               </p>
             </div>
             <div className="w-full space-y-3">
-              <Button
+              <button
+                type="button"
                 onClick={handleUseCurrentLocation}
-                className="w-full h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-sm gap-2"
+                className="btn btn-p btn-blk"
               >
                 <Target className="w-4 h-4" weight="bold" />
                 Use my current location
-              </Button>
-              <Button
-                variant="outline"
+              </button>
+              <button
+                type="button"
                 onClick={() => setStep("map")}
-                className="w-full h-11 border-clinical-border text-white hover:bg-white/5 font-semibold text-sm gap-2"
+                className="btn btn-g btn-blk"
               >
-                <MapPin className="w-4 h-4 text-clinical-gold" />
+                <MapPin className="w-4 h-4" style={{ color: "var(--safb)" }} />
                 Select location on map
-              </Button>
-              <Button
-                variant="ghost"
+              </button>
+              <button
+                type="button"
                 onClick={() => setStep("details")}
-                className="w-full h-10 text-clinical-zinc hover:text-white font-medium text-xs"
+                className="btn btn-blk"
+                style={{ color: "var(--mut)" }}
               >
                 Enter address manually
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -585,15 +597,18 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
         {step === "map" && (
           <div className="flex-1 flex flex-col relative">
             <div className="absolute top-4 inset-x-4 z-10 flex gap-2 items-center">
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
+                type="button"
                 onClick={() => setStep("prompt")}
-                className="h-10 w-10 shrink-0 bg-clinical-surface/90 backdrop-blur-md border border-clinical-border rounded-lg text-white hover:bg-clinical-surface"
+                className="iconbtn shrink-0"
+                aria-label="Back"
               >
                 <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div className="flex-1 min-w-0 bg-clinical-surface/95 backdrop-blur-md rounded-lg border border-clinical-border overflow-hidden shadow-lg p-1 flex items-center gap-1">
+              </button>
+              <div
+                className="flex-1 min-w-0 rounded-lg overflow-hidden shadow-lg p-1 flex items-center gap-1"
+                style={{ background: "var(--s1)", border: "1px solid var(--ln)" }}
+              >
                 {mapsReady && !plainSearch ? (
                   <div className="flex-1 w-full relative">
                     <gmpx-place-picker
@@ -640,27 +655,29 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                     }}
                     className="flex-1 flex items-center gap-1 px-2"
                   >
-                    <MagnifyingGlass className="w-4 h-4 text-clinical-zinc shrink-0" />
-                    <Input
+                    <MagnifyingGlass className="w-4 h-4 shrink-0" style={{ color: "var(--mut)" }} />
+                    <input
                       value={searchQuery}
                       onChange={(e) => onSearchChange(e.target.value)}
                       placeholder="Search area, sector or landmark…"
-                      className="h-8 border-0 bg-transparent text-xs text-white focus-visible:ring-0 px-1"
+                      className="f1"
+                      style={{ height: 32, fontSize: 12, color: "var(--tx)", padding: "0 4px" }}
                     />
-                    <Button
+                    <button
                       type="submit"
-                      size="sm"
-                      className="h-7 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs px-2.5 font-semibold"
+                      className="btn btn-p"
+                      style={{ height: 28, fontSize: 12, padding: "0 10px" }}
                     >
                       Search
-                    </Button>
+                    </button>
                   </form>
                 )}
                 {mapsReady && (
                   <button
                     type="button"
                     onClick={() => setPlainSearch(!plainSearch)}
-                    className="text-[10px] text-clinical-gold hover:underline shrink-0 px-2 font-medium"
+                    className="text-[10px] hover:underline shrink-0 px-2 font-medium"
+                    style={{ color: "var(--safb)" }}
                     title={plainSearch ? "Use Google Place Picker" : "Use standard text search"}
                   >
                     {plainSearch ? "Place Picker" : "Text Search"}
@@ -672,19 +689,23 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
             {/* Live suggestions (Places REST) — floats under the search bar
                 and works even when the map canvas failed to boot. */}
             {suggestions.length > 0 && (
-              <div className="absolute top-16 inset-x-4 z-20 mt-1 rounded-lg border border-clinical-border bg-clinical-surface/98 backdrop-blur-md shadow-clinical-lg overflow-hidden">
+              <div
+                className="absolute top-16 inset-x-4 z-20 mt-1 rounded-lg overflow-hidden shadow-lg"
+                style={{ background: "var(--s1)", border: "1px solid var(--ln)" }}
+              >
                 {suggestions.map((sg) => (
                   <button
                     key={sg.id}
                     type="button"
                     onClick={() => choosePlace(sg.id, sg.main)}
-                    className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-clinical-gold/10 border-b border-clinical-border/40 last:border-b-0"
+                    className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left"
+                    style={{ borderBottom: "1px solid var(--ln)" }}
                   >
-                    <MapPin className="w-4 h-4 text-clinical-gold shrink-0 mt-0.5" />
+                    <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--safb)" }} />
                     <span className="min-w-0">
-                      <span className="block text-xs font-medium text-white truncate">{sg.main}</span>
+                      <span className="block text-xs font-medium truncate" style={{ color: "var(--tx)" }}>{sg.main}</span>
                       {sg.secondary && (
-                        <span className="block text-[10px] text-clinical-zinc truncate">{sg.secondary}</span>
+                        <span className="block text-[10px] truncate" style={{ color: "var(--mut)" }}>{sg.secondary}</span>
                       )}
                     </span>
                   </button>
@@ -693,37 +714,41 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
             )}
 
             {/* Google Map Container with Extended Components */}
-            <div className="flex-1 w-full bg-clinical-dark relative">
+            <div className="flex-1 w-full relative" style={{ background: "var(--bg)" }}>
               {!mapsReady && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-clinical-dark">
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3" style={{ background: "var(--bg)" }}>
                   {!mapsFailed ? (
                     <>
-                      <CircleNotch className="w-7 h-7 text-clinical-gold animate-spin" />
-                      <p className="text-xs text-clinical-zinc">Loading map components…</p>
+                      <CircleNotch className="w-7 h-7 animate-spin" style={{ color: "var(--safb)" }} />
+                      <p className="fine">Loading map components…</p>
                     </>
                   ) : (
                     <>
-                      <Warning className="w-7 h-7 text-orange-400" />
-                      <p className="text-xs text-clinical-zinc text-center px-8">
+                      <Warning className="w-7 h-7" style={{ color: "var(--dgr)" }} />
+                      <p className="fine text-center px-8">
                         Map tiles couldn't load — search your area above, or enter
                         the address manually.
                       </p>
-                      <Button
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={() => setStep("details")}
-                        className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs h-9"
+                        className="btn btn-p"
+                        style={{ height: 36, fontSize: 12 }}
                       >
                         Enter address manually
-                      </Button>
+                      </button>
                     </>
                   )}
                 </div>
               )}
 
               {locating && mapsReady && (
-                <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/80 border border-clinical-border rounded-full px-3 py-1.5">
-                  <CircleNotch className="w-3.5 h-3.5 text-clinical-gold animate-spin" />
-                  <span className="text-[11px] text-white">Finding you…</span>
+                <div
+                  className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full px-3 py-1.5"
+                  style={{ background: "rgba(0,0,0,.8)", border: "1px solid var(--ln)" }}
+                >
+                  <CircleNotch className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--safb)" }} />
+                  <span className="text-[11px]" style={{ color: "var(--tx)" }}>Finding you…</span>
                 </div>
               )}
 
@@ -770,18 +795,18 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
             </div>
 
             {/* Bottom Preview Card */}
-            <div className="bg-clinical-surface border-t border-clinical-border p-4 space-y-3">
+            <div className="p-4 space-y-3" style={{ background: "var(--s1)", borderTop: "1px solid var(--ln)" }}>
               <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-md bg-clinical-gold/10 border border-clinical-gold/20 flex items-center justify-center shrink-0">
+                <div className="h-9 w-9 rounded-md flex items-center justify-center shrink-0" style={{ background: "var(--safd)", border: "1px solid var(--saf)" }}>
                   {geocoding ? (
-                    <CircleNotch className="w-4 h-4 text-clinical-gold animate-spin" />
+                    <CircleNotch className="w-4 h-4 animate-spin" style={{ color: "var(--safb)" }} />
                   ) : (
-                    <MapPin className="w-5 h-5 text-clinical-gold" weight="bold" />
+                    <MapPin className="w-5 h-5" style={{ color: "var(--safb)" }} weight="bold" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-xs font-semibold text-white truncate">Delivering your order to</p>
-                  <p className="text-[11px] text-clinical-zinc mt-0.5 line-clamp-2">
+                  <p className="text-xs font-semibold truncate" style={{ color: "var(--tx)" }}>Delivering your order to</p>
+                  <p className="text-[11px] mt-0.5 line-clamp-2" style={{ color: "var(--mut)" }}>
                     {geocoding ? "Updating address…" : locality || "Move the map to drop your pin"}
                   </p>
                 </div>
@@ -790,25 +815,26 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               {/* Early serviceability signal — don't make the user fill a
                   whole form before learning we can't deliver. */}
               {pinCheck.state === "serviceable" && (
-                <div className="flex items-center gap-1.5 text-[11px] text-clinical-sage">
+                <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--sage)" }}>
                   <CheckCircle className="w-3.5 h-3.5" weight="fill" />
                   We deliver here — {pinCheck.info.area}
                 </div>
               )}
               {pinCheck.state === "unserviceable" && (
-                <div className="flex items-center gap-1.5 text-[11px] text-orange-300">
+                <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--dgr)" }}>
                   <Warning className="w-3.5 h-3.5" weight="fill" />
                   Pincode {pincode} looks outside our zone — you can adjust it in the next step.
                 </div>
               )}
 
-              <Button
+              <button
+                type="button"
                 onClick={() => setStep("details")}
                 disabled={!locality || geocoding}
-                className="w-full h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-sm"
+                className={`btn btn-p btn-blk ${!locality || geocoding ? "dis" : ""}`}
               >
                 Confirm location & add details
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -816,42 +842,47 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
         {/* STEP 3: Enter Complete Address */}
         {step === "details" && (
           <div className="flex-1 flex flex-col overflow-y-auto">
-            <DialogHeader className="p-4 border-b border-clinical-border flex flex-row items-center justify-between">
-              <DialogTitle className="text-white text-base font-serif">Enter complete address</DialogTitle>
-              <Button
-                variant="ghost"
-                size="icon"
+            <div className="p-4 flex flex-row items-center justify-between" style={{ borderBottom: "1px solid var(--ln)" }}>
+              <div className="tt" style={{ color: "var(--tx)" }}>Enter complete address</div>
+              <button
+                type="button"
                 onClick={() => onOpenChange(false)}
-                className="h-8 w-8 text-clinical-zinc hover:text-white"
+                aria-label="Close"
+                className="iconbtn"
+                style={{ width: 32, height: 32 }}
               >
                 <X className="w-5 h-5" />
-              </Button>
-            </DialogHeader>
+              </button>
+            </div>
 
             <div className="p-4 space-y-4 text-left flex-1">
 
               {/* Recipient Segment */}
               <div className="space-y-2">
-                <Label className="text-[11px] text-clinical-zinc">Who you are ordering for?</Label>
-                <RadioGroup
-                  value={orderingFor}
-                  onValueChange={(v: any) => setOrderingFor(v)}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="myself" id="myself" />
-                    <Label htmlFor="myself" className="text-xs text-white cursor-pointer">Myself</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="someone" id="someone" />
-                    <Label htmlFor="someone" className="text-xs text-white cursor-pointer">Someone else</Label>
-                  </div>
-                </RadioGroup>
+                <label className="lab">Who you are ordering for?</label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    id="myself"
+                    onClick={() => setOrderingFor("myself")}
+                    className={orderingFor === "myself" ? "chip on" : "chip"}
+                  >
+                    Myself
+                  </button>
+                  <button
+                    type="button"
+                    id="someone"
+                    onClick={() => setOrderingFor("someone")}
+                    className={orderingFor === "someone" ? "chip on" : "chip"}
+                  >
+                    Someone else
+                  </button>
+                </div>
               </div>
 
               {/* Save Address As */}
               <div className="space-y-2">
-                <Label className="text-[11px] text-clinical-zinc">Save address as *</Label>
+                <label className="lab">Save address as *</label>
                 <div className="flex flex-wrap gap-2">
                   {[
                     { value: "home", label: "Home", icon: House },
@@ -866,11 +897,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                         key={item.value}
                         type="button"
                         onClick={() => setAddressType(item.value as any)}
-                        className={`h-9 px-3 rounded-lg border text-xs flex items-center gap-1.5 transition-all font-medium ${
-                          active
-                            ? "bg-clinical-gold/10 border-clinical-gold text-clinical-gold"
-                            : "bg-clinical-dark border-clinical-border text-clinical-zinc hover:border-white/20"
-                        }`}
+                        className={active ? "chip on" : "chip"}
                       >
                         <Icon className="w-4 h-4" />
                         {item.label}
@@ -880,54 +907,55 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                 </div>
 
                 {addressType === "other" && (
-                  <Input
+                  <input
                     placeholder="e.g. Parents, Gym, Friends House"
                     value={otherLabel}
                     onChange={(e) => setOtherLabel(e.target.value)}
-                    className="h-9 text-xs bg-clinical-dark border-clinical-border mt-2"
+                    className="inp mt-2"
                   />
                 )}
               </div>
 
               {/* Flat/House number */}
               <div className="space-y-1">
-                <Label className="text-[11px] text-clinical-zinc">Flat / House no / Building name *</Label>
-                <Input
+                <label className="lab">Flat / House no / Building name *</label>
+                <input
                   value={flatNo}
                   onChange={(e) => setFlatNo(e.target.value)}
-                  className="h-9 text-xs bg-clinical-dark border-clinical-border"
+                  className="inp"
                 />
               </div>
 
               {/* Floor (optional) */}
               <div className="space-y-1">
-                <Label className="text-[11px] text-clinical-zinc">Floor (optional)</Label>
-                <Input
+                <label className="lab">Floor (optional)</label>
+                <input
                   placeholder="Floor (optional)"
                   value={floor}
                   onChange={(e) => setFloor(e.target.value)}
-                  className="h-9 text-xs bg-clinical-dark border-clinical-border"
+                  className="inp"
                 />
               </div>
 
               {/* Area / Sector / Locality */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] text-clinical-zinc">Area / Sector / Locality *</Label>
+                  <label className="lab">Area / Sector / Locality *</label>
                   <button
                     type="button"
                     onClick={() => setStep("map")}
-                    className="text-[11px] text-clinical-gold hover:underline flex items-center gap-1 font-medium"
+                    className="text-[11px] hover:underline flex items-center gap-1 font-medium"
+                    style={{ color: "var(--safb)" }}
                   >
                     <MapPin className="w-3.5 h-3.5" />
                     Pick on Map
                   </button>
                 </div>
-                <Input
+                <input
                   placeholder="e.g. Sector 62, Noida"
                   value={locality}
                   onChange={(e) => setLocality(e.target.value)}
-                  className="h-9 text-xs bg-clinical-dark border-clinical-border text-white"
+                  className="inp"
                 />
               </div>
 
@@ -935,38 +963,41 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                   end, with live serviceability feedback on the PIN. */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-[11px] text-clinical-zinc">City *</Label>
-                  <Input
+                  <label className="lab">City *</label>
+                  <input
                     placeholder="Noida"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="h-9 text-xs bg-clinical-dark border-clinical-border"
+                    className="inp"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[11px] text-clinical-zinc">PIN code *</Label>
-                  <Input
+                  <label className="lab">PIN code *</label>
+                  <input
                     placeholder="201301"
                     inputMode="numeric"
                     maxLength={6}
                     value={pincode}
                     onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
-                    className={cn(
-                      "h-9 text-xs bg-clinical-dark border-clinical-border",
-                      pinCheck.state === "unserviceable" && "border-orange-400/60",
-                      pinCheck.state === "serviceable" && "border-clinical-sage/60",
-                    )}
+                    className="inp"
+                    style={
+                      pinCheck.state === "unserviceable"
+                        ? { borderColor: "var(--dgr)" }
+                        : pinCheck.state === "serviceable"
+                          ? { borderColor: "var(--sage)" }
+                          : undefined
+                    }
                   />
                 </div>
               </div>
               {pinCheck.state === "serviceable" && (
-                <p className="flex items-center gap-1.5 text-[11px] text-clinical-sage -mt-2">
+                <p className="flex items-center gap-1.5 text-[11px] -mt-2" style={{ color: "var(--sage)" }}>
                   <CheckCircle className="w-3.5 h-3.5" weight="fill" />
                   We deliver here — {pinCheck.info.area}
                 </p>
               )}
               {pinCheck.state === "unserviceable" && (
-                <p className="flex items-center gap-1.5 text-[11px] text-orange-300 -mt-2">
+                <p className="flex items-center gap-1.5 text-[11px] -mt-2" style={{ color: "var(--dgr)" }}>
                   <Warning className="w-3.5 h-3.5" weight="fill" />
                   We don't deliver to {pincode} yet — we deliver across Noida, Delhi & Gurgaon.
                 </p>
@@ -974,37 +1005,37 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
               {/* Landmark (optional) */}
               <div className="space-y-1">
-                <Label className="text-[11px] text-clinical-zinc">Nearby landmark (optional)</Label>
-                <Input
+                <label className="lab">Nearby landmark (optional)</label>
+                <input
                   placeholder="Nearby landmark (optional)"
                   value={landmark}
                   onChange={(e) => setLandmark(e.target.value)}
-                  className="h-9 text-xs bg-clinical-dark border-clinical-border"
+                  className="inp"
                 />
               </div>
 
               {/* Someone Else Details */}
               {orderingFor === "someone" && (
-                <div className="space-y-3 pt-2 border-t border-clinical-border animate-in fade-in duration-200">
-                  <p className="text-[11px] font-semibold text-clinical-zinc">Enter details for seamless delivery experience</p>
+                <div className="space-y-3 pt-2 animate-in fade-in duration-200" style={{ borderTop: "1px solid var(--ln)" }}>
+                  <p className="text-[11px] font-semibold" style={{ color: "var(--mut)" }}>Enter details for seamless delivery experience</p>
 
                   <div className="space-y-1">
-                    <Label className="text-[11px] text-clinical-zinc">Recipient's name *</Label>
-                    <Input
+                    <label className="lab">Recipient's name *</label>
+                    <input
                       placeholder="Recipient's Name"
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
-                      className="h-9 text-xs bg-clinical-dark border-clinical-border"
+                      className="inp"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-[11px] text-clinical-zinc">Recipient's phone number *</Label>
-                    <Input
+                    <label className="lab">Recipient's phone number *</label>
+                    <input
                       placeholder="e.g. +91 98765 43210"
                       value={recipientPhone}
                       onChange={(e) => setRecipientPhone(e.target.value)}
-                      className="h-9 text-xs bg-clinical-dark border-clinical-border"
+                      className="inp"
                     />
                   </div>
                 </div>
@@ -1012,19 +1043,20 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
             </div>
 
-            <div className="p-4 border-t border-clinical-border bg-clinical-surface mt-auto">
-              <Button
+            <div className="p-4 mt-auto" style={{ borderTop: "1px solid var(--ln)", background: "var(--s1)" }}>
+              <button
+                type="button"
                 onClick={handleSaveAddress}
                 disabled={saving}
-                className="w-full h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-sm"
+                className={`btn btn-p btn-blk ${saving ? "dis" : ""}`}
               >
                 {saving ? "Saving..." : "Save address"}
-              </Button>
+              </button>
             </div>
           </div>
         )}
 
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
