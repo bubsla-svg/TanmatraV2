@@ -23,6 +23,7 @@ import { sweepOrphanSlotReservations } from "./routes/fulfillment";
 import { drainOpsAuditOutbox } from "./lib/opsAudit";
 import { pool, overridePool } from "@workspace/db";
 import { validateEnv } from "./lib/validateEnv";
+import { ensureRectificationSchema } from "./lib/ensureRectificationSchema";
 
 // Fail-fast on missing critical env + warn on degraded config before binding.
 validateEnv();
@@ -73,6 +74,11 @@ async function start(): Promise<void> {
  logger.error({ err }, "Error listening on port");
  process.exit(1);
  });
+
+ // Additive, idempotent schema ensure (vendor batch + wearable ingestion).
+ // Runs BEFORE the port binds so new tables/columns exist before any request
+ // (e.g. the Wellness page querying wearable_links) is served.
+ await ensureRectificationSchema();
 
  // Explicitly bind to 0.0.0.0 for Cloud Run compatibility
  httpServer.listen(port, "0.0.0.0", () => {
