@@ -1230,158 +1230,133 @@ export default function V2Checkout() {
 
   return (
     <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto" }}>
-        <div className="max-w-4xl mx-auto p-4 pb-40 lg:pb-4 grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in duration-150">
-      <div className="lg:col-span-5 space-y-3">
-        <ConflictsPanel
-          panelId="checkout-server-block"
-          serverMessage={serverAllergenError}
-          serverConflicts={serverConflicts}
-        />
-      </div>
-      <div className="lg:col-span-3 space-y-5">
-        <CheckoutStepper
-          current={stepperStep}
-          reviewComplete={items.length > 0}
-          addressComplete={stepperAddressComplete}
-        />
-        <Card className="bg-clinical-surface border-clinical-border">
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-clinical-gold" />
-              <h2 className="text-sm font-semibold text-white">Delivery Address</h2>
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        <div className="appbar">
+          <button type="button" className="iconbtn" onClick={() => navigate("/cart")} aria-label="Back to cart">
+            <i className="ph-bold ph-arrow-left" />
+          </button>
+          <div className="abt">Checkout</div>
+        </div>
+
+        <div className="content padx" style={{ paddingTop: 4, paddingBottom: 160 }}>
+          <ConflictsPanel
+            panelId="checkout-server-block"
+            serverMessage={serverAllergenError}
+            serverConflicts={serverConflicts}
+          />
+
+          <div className="mb14 mt14">
+            <CheckoutStepper
+              current={stepperStep}
+              reviewComplete={items.length > 0}
+              addressComplete={stepperAddressComplete}
+            />
+          </div>
+
+          {/* Delivery Address */}
+          <div className="card col gap16 mb14">
+            <div className="fx ac gap8">
+              <MapPin className="w-4 h-4" style={{ color: "var(--safb)" }} />
+              <div className="sh">Delivery Address</div>
             </div>
 
-            <RadioGroup
-              value={selectedAddress}
-              onValueChange={(v) => {
-                setSelectedAddress(v);
-              }}
-            >
-              <div className="space-y-2">
-                {savedAddresses.map((addr) => (
-                  <Label
-                    key={addr.id}
-                    htmlFor={addr.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                      selectedAddress === addr.id
-                        ? "border-clinical-gold/50 bg-clinical-gold/5"
-                        : "border-clinical-border bg-transparent hover:border-clinical-border"
-                    }`}
-                  >
-                    <RadioGroupItem value={addr.id} id={addr.id} className="mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {addr.type === "home" && <Home className="w-3 h-3 text-clinical-blue" />}
-                        {addr.type === "work" && <Building2 className="w-3 h-3 text-clinical-gold" />}
-                        <span className="text-xs font-medium text-white">{addr.label}</span>
-                        <Badge variant="outline" className="text-[9px] h-4 px-1 capitalize border-clinical-border text-clinical-zinc">
-                          {addr.type}
-                        </Badge>
-                      </div>
-                      <p className="text-[10px] text-clinical-zinc mt-1">
-                        {addr.line1}
-                        {addr.line2 ? ` · ${addr.line2}` : ""} · {addr.city} {addr.pincode}
-                      </p>
-                      <p className="text-[10px] text-clinical-zinc flex items-center gap-1 mt-0.5">
-                        <Phone className="w-2.5 h-2.5" />
-                        Rider will call you on {addr.phone}
-                      </p>
+            <div className="col gap8">
+              {savedAddresses.map((addr) => (
+                <button
+                  key={addr.id}
+                  type="button"
+                  onClick={() => setSelectedAddress(addr.id)}
+                  className={selectedAddress === addr.id ? "opt on" : "opt"}
+                  style={{ marginBottom: 0, alignItems: "flex-start" }}
+                >
+                  <div className="f1" style={{ minWidth: 0 }}>
+                    <div className="fx ac gap8">
+                      {addr.type === "home" && <Home className="w-3 h-3" style={{ color: "var(--safb)" }} />}
+                      {addr.type === "work" && <Building2 className="w-3 h-3" style={{ color: "var(--safb)" }} />}
+                      <span className="small fw6">{addr.label}</span>
+                      <span className="pill" style={{ fontSize: 10, textTransform: "capitalize" }}>{addr.type}</span>
                     </div>
-                  </Label>
-                ))}
-
-                {savedAddresses.length === 0 ? (
-                  // Prominent inline empty-state target — replaces the old
-                  // auto-opening modal. The user stays on the page, sees
-                  // their order, and adds the address on their own terms.
-                  <button
-                    type="button"
-                    onClick={() => setShowNewAddressFlow(true)}
-                    className="w-full rounded-lg border border-dashed border-clinical-gold/45 bg-clinical-gold/5 hover:bg-clinical-gold/10 transition-colors p-4 text-left space-y-1"
-                  >
-                    <p className="text-xs font-semibold text-white flex items-center gap-1.5">
-                      <Plus className="w-3.5 h-3.5 text-clinical-gold" />
-                      Add your delivery address
+                    <p className="fine mt4">
+                      {addr.line1}
+                      {addr.line2 ? ` · ${addr.line2}` : ""} · {addr.city} {addr.pincode}
                     </p>
-                    <p className="text-[10px] text-clinical-zinc">
-                      Noida · Delhi · Gurgaon · fresh in 25–40 min
+                    <p className="fine fx ac gap6 mt2">
+                      <Phone className="w-2.5 h-2.5" />
+                      Rider will call you on {addr.phone}
                     </p>
-                  </button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-xs text-clinical-gold hover:bg-clinical-gold/10 h-10"
-                    onClick={() => {
-                      setShowNewAddressFlow(true);
-                    }}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add New Address
-                  </Button>
-                )}
-              </div>
-            </RadioGroup>
+                  </div>
+                </button>
+              ))}
 
-            <div className="pt-2 border-t border-clinical-border space-y-2">
-              <div className="flex items-center gap-2">
-                <NotebookPen className="w-3.5 h-3.5 text-clinical-gold" />
-                <Label className="text-xs font-medium text-white">
-                  Notes for the rider
-                </Label>
+              {savedAddresses.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setShowNewAddressFlow(true)}
+                  className="opt"
+                  style={{ marginBottom: 0, flexDirection: "column", alignItems: "flex-start", gap: 4, borderStyle: "dashed", borderColor: "var(--saf)", background: "var(--safd)" }}
+                >
+                  <p className="small fw6 fx ac gap6">
+                    <Plus className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
+                    Add your delivery address
+                  </p>
+                  <p className="fine">Noida · Delhi · Gurgaon · fresh in 25–40 min</p>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowNewAddressFlow(true)}
+                  className="linkq"
+                  style={{ padding: "8px 0" }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add New Address
+                </button>
+              )}
+            </div>
+
+            <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: 0 }} />
+            <div className="col gap8">
+              <div className="fx ac gap8">
+                <NotebookPen className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
+                <span className="small fw6">Notes for the rider</span>
                 {activeAddrLabel && savedInstructions[activeAddrLabel] && (
-                  <Badge
-                    variant="outline"
-                    className="text-[9px] h-4 px-1 ml-auto border-clinical-sage/40 text-clinical-sage"
-                  >
-                    Saved for this address
-                  </Badge>
+                  <span className="pill sg" style={{ marginLeft: "auto", fontSize: 10 }}>Saved for this address</span>
                 )}
               </div>
-              <Textarea
+              <textarea
                 value={deliveryInstructions}
                 onChange={(e) => setDeliveryInstructions(e.target.value)}
                 placeholder="e.g. Gate code 4421, leave at door, call on arrival"
                 maxLength={512}
-                className="text-xs bg-clinical-dark border-clinical-border min-h-[60px]"
+                className="inp"
+                style={{ display: "block", height: "auto", minHeight: 60, padding: "10px 14px", lineHeight: 1.4 }}
               />
-              <p className="text-[10px] text-clinical-zinc">
+              <p className="fine">
                 We'll remember these notes for{" "}
-                <span className="text-white">{activeAddrLabel ?? "this address"}</span>{" "}
+                <span style={{ color: "var(--tx)" }}>{activeAddrLabel ?? "this address"}</span>{" "}
                 so you don't have to type them again.
               </p>
             </div>
+          </div>
 
-
-          </CardContent>
-        </Card>
-
-        <Card
-          id="checkout-fulfillment"
-          className="bg-clinical-surface border-clinical-border scroll-mt-24"
-        >
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-clinical-gold" />
-              <h2 className="text-sm font-semibold text-white">Get it your way</h2>
+          {/* Fulfillment */}
+          <div id="checkout-fulfillment" className="card col gap16 mb14 scroll-mt-24">
+            <div className="fx ac gap8">
+              <Truck className="w-4 h-4" style={{ color: "var(--safb)" }} />
+              <div className="sh">Get it your way</div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid gap8" style={{ gridTemplateColumns: "1fr 1fr" }}>
               <button
                 type="button"
                 onClick={() => setFulfillmentType("delivery")}
-                className={`p-3 rounded-lg border text-left transition-all ${
-                  fulfillmentType === "delivery"
-                    ? "border-clinical-gold/50 bg-clinical-gold/5"
-                    : "border-clinical-border hover:border-clinical-border"
-                }`}
+                className={fulfillmentType === "delivery" ? "opt on" : "opt"}
+                style={{ marginBottom: 0, flexDirection: "column", alignItems: "flex-start", gap: 4 }}
               >
-                <div className="flex items-center gap-2">
-                  <Truck className="w-3.5 h-3.5 text-clinical-gold" />
-                  <span className="text-xs font-medium text-white">Doorstep delivery</span>
+                <div className="fx ac gap6">
+                  <Truck className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
+                  <span className="small fw6">Doorstep delivery</span>
                 </div>
-                <p className="text-[10px] text-clinical-zinc mt-1">
-                  Reserve a 30-minute window
-                </p>
+                <p className="fine">Reserve a 30-minute window</p>
               </button>
               <button
                 type="button"
@@ -1391,37 +1366,29 @@ export default function V2Checkout() {
                   setPreorderTomorrow(false);
                 }}
                 disabled={pickupLocations.length === 0}
-                className={`p-3 rounded-lg border text-left transition-all disabled:opacity-50 ${
-                  fulfillmentType === "pickup"
-                    ? "border-clinical-gold/50 bg-clinical-gold/5"
-                    : "border-clinical-border hover:border-clinical-border"
-                }`}
+                className={fulfillmentType === "pickup" ? "opt on" : "opt"}
+                style={{ marginBottom: 0, flexDirection: "column", alignItems: "flex-start", gap: 4, opacity: pickupLocations.length === 0 ? 0.5 : undefined }}
               >
-                <div className="flex items-center gap-2">
-                  <Store className="w-3.5 h-3.5 text-clinical-gold" />
-                  <span className="text-xs font-medium text-white">Partner pickup</span>
+                <div className="fx ac gap6">
+                  <Store className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
+                  <span className="small fw6">Partner pickup</span>
                 </div>
-                <p className="text-[10px] text-clinical-sage mt-1">
+                <p className="fine sagec">
                   Save up to ₹{Math.max(0, ...pickupLocations.map((p) => p.discountPaise)) / 100 || 30}
                 </p>
               </button>
             </div>
 
             {fulfillmentType === "delivery" && (
-              <div className="space-y-3">
-                {/* Now vs Schedule Segmented Tabs */}
-                <div className="grid grid-cols-2 p-1 bg-clinical-surface-elevated rounded-lg">
+              <div className="col gap12">
+                <div className="grid gap6" style={{ gridTemplateColumns: "1fr 1fr", padding: 4, background: "var(--s2)", borderRadius: 10 }}>
                   <button
                     type="button"
                     onClick={() => {
                       setDeliveryMode("now");
                       setSelectedSlotId(null);
                     }}
-                    className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
-                      deliveryMode === "now"
-                        ? "bg-clinical-surface text-white shadow-sm"
-                        : "text-clinical-zinc hover:text-white"
-                    }`}
+                    style={{ height: 34, borderRadius: 8, fontSize: 12.5, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", background: deliveryMode === "now" ? "var(--s1)" : "transparent", color: deliveryMode === "now" ? "var(--tx)" : "var(--mut)" }}
                   >
                     Deliver Now
                   </button>
@@ -1433,65 +1400,51 @@ export default function V2Checkout() {
                         setSelectedSlotId(slots[0].id);
                       }
                     }}
-                    className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
-                      deliveryMode === "schedule"
-                        ? "bg-clinical-surface text-white shadow-sm"
-                        : "text-clinical-zinc hover:text-white"
-                    }`}
+                    style={{ height: 34, borderRadius: 8, fontSize: 12.5, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", background: deliveryMode === "schedule" ? "var(--s1)" : "transparent", color: deliveryMode === "schedule" ? "var(--tx)" : "var(--mut)" }}
                   >
                     Schedule Later
                   </button>
                 </div>
 
                 {deliveryMode === "now" ? (
-                  /* Deliver ASAP live ETA Container */
-                  <div className="p-3.5 rounded-lg border border-clinical-sage/30 bg-clinical-sage/5 space-y-1.5 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-clinical-sage opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-clinical-sage"></span>
-                      </span>
-                      <span className="text-xs font-semibold text-white">Deliver ASAP</span>
+                  <div className="note" style={{ flexDirection: "column", alignItems: "flex-start", background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                    <div className="fx ac gap8" style={{ width: "100%" }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--sage)", flex: "none" }} />
+                      <span className="small fw6" style={{ color: "var(--tx)" }}>Deliver ASAP</span>
                       {etaMinutes != null && (
-                        <span className="ml-auto text-[11px] font-mono font-bold text-clinical-sage bg-clinical-sage/10 px-2 py-0.5 rounded-full border border-clinical-sage/20">
-                          ~{etaMinutes} MINS
-                        </span>
+                        <span className="pill sg" style={{ marginLeft: "auto", fontSize: 11 }}>~{etaMinutes} MINS</span>
                       )}
                     </div>
-                    <p className="text-[10px] text-clinical-zinc leading-relaxed">
+                    <p className="fine">
                       Your order goes straight into our active kitchen queue. Rider pre-allocation is active. Packaged in a double-insulated, tamper-evident bag.
                     </p>
                   </div>
                 ) : (
-                  /* Scheduled Slot Chips */
-                  <div className="space-y-2 text-left">
-                    <p className="text-[10px] text-clinical-zinc uppercase tracking-wider">
-                      Pick a delivery slot
-                    </p>
+                  <div className="col gap8">
+                    <div className="lab">Pick a delivery slot</div>
                     {loadingSlots ? (
-                      <div className="space-y-2">
-                        <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
-                        <Skeleton className="h-12 w-full rounded-lg bg-clinical-surface-elevated" />
+                      <div className="col gap8">
+                        <div className="skel" style={{ height: 48 }} />
+                        <div className="skel" style={{ height: 48 }} />
                       </div>
                     ) : slotsError || slots.length === 0 ? (
-                      <div className="rounded-lg border border-clinical-border bg-clinical-surface-elevated/40 p-3 text-center space-y-2">
-                        <p className="text-[11px] text-clinical-zinc">
+                      <div className="card tc col gap8" style={{ padding: 12 }}>
+                        <p className="fine">
                           {slotsError ? "Failed to load delivery slots." : "No slots available today."}
                         </p>
-                        <Button
+                        <button
                           type="button"
-                          variant="outline"
                           onClick={fetchSlots}
-                          className="h-8 text-[11px] px-3 border-clinical-gold text-clinical-gold hover:bg-clinical-gold/10"
+                          className="btn btn-g"
+                          style={{ height: 34, alignSelf: "center", fontSize: 12 }}
                         >
                           Retry loading slots
-                        </Button>
+                        </button>
                       </div>
                     ) : (
                       <div
-                        className={`grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1 ${
-                          slotErrorMsg ? "ring-1 alert-allergen-border rounded-md p-1" : ""
-                        }`}
+                        className="grid gap8"
+                        style={{ gridTemplateColumns: "1fr 1fr", maxHeight: 224, overflowY: "auto", ...(slotErrorMsg ? { outline: "1px solid var(--dgr)", borderRadius: 8, padding: 4 } : {}) }}
                         aria-invalid={slotErrorMsg ? true : undefined}
                         aria-describedby={slotErrorMsg ? "slot-error" : undefined}
                       >
@@ -1518,15 +1471,12 @@ export default function V2Checkout() {
                                 setSelectedSlotId(slot.id);
                                 if (slotErrorMsg) setSlotErrorMsg(null);
                               }}
-                              className={`p-2 rounded-md border text-left text-[11px] transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                                selected
-                                  ? "border-clinical-gold/60 bg-clinical-gold/10 text-white"
-                                  : "border-clinical-border text-clinical-zinc hover:border-clinical-border"
-                              }`}
+                              className={selected ? "opt on" : "opt"}
+                              style={{ marginBottom: 0, padding: 8, flexDirection: "column", alignItems: "flex-start", gap: 2, opacity: slot.full ? 0.4 : undefined }}
                             >
-                              <div className="font-medium text-white">{day}</div>
-                              <div className="tabular-nums">{window}</div>
-                              <div className="text-[9px] mt-0.5">
+                              <div className="small fw6">{day}</div>
+                              <div className="mono" style={{ fontSize: 11 }}>{window}</div>
+                              <div className="fine" style={{ fontSize: 9 }}>
                                 {slot.full ? "Full" : `${slot.remaining} left`}
                               </div>
                             </button>
@@ -1535,17 +1485,13 @@ export default function V2Checkout() {
                       </div>
                     )}
                     {slotErrorMsg && (
-                      <p
-                        id="slot-error"
-                        role="alert"
-                        className="text-[10px] alert-allergen-text flex items-center gap-1"
-                      >
+                      <p id="slot-error" role="alert" className="fine dgrc fx ac gap6">
                         <AlertTriangle className="w-2.5 h-2.5" />
                         {slotErrorMsg}
                       </p>
                     )}
                     {isPreorderSlot && (
-                      <p className="text-[10px] text-clinical-sage font-medium flex items-center gap-1 mt-1 bg-clinical-sage/5 border border-clinical-sage/20 rounded px-2.5 py-1.5">
+                      <p className="note" style={{ background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
                         <Tag className="w-3.5 h-3.5" />
                         <span>Pre-order discount active: 5% off meals applied!</span>
                       </p>
@@ -1556,11 +1502,9 @@ export default function V2Checkout() {
             )}
 
             {fulfillmentType === "pickup" && (
-              <div className="space-y-2">
-                <p className="text-[10px] text-clinical-zinc uppercase tracking-wider">
-                  Choose a pickup partner
-                </p>
-                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              <div className="col gap8">
+                <div className="lab">Choose a pickup partner</div>
+                <div className="col gap8" style={{ maxHeight: 224, overflowY: "auto" }}>
                   {pickupLocations.map((loc) => {
                     const selected = selectedPickupId === loc.id;
                     return (
@@ -1568,31 +1512,21 @@ export default function V2Checkout() {
                         key={loc.id}
                         type="button"
                         onClick={() => setSelectedPickupId(loc.id)}
-                        className={`w-full p-3 rounded-lg border text-left transition-all ${
-                          selected
-                            ? "border-clinical-gold/50 bg-clinical-gold/5"
-                            : "border-clinical-border hover:border-clinical-border"
-                        }`}
+                        className={selected ? "opt on" : "opt"}
+                        style={{ marginBottom: 0, flexDirection: "column", alignItems: "flex-start", gap: 4 }}
                       >
-                        <div className="flex items-center gap-2">
-                          <Store className="w-3 h-3 text-clinical-gold" />
-                          <span className="text-xs font-medium text-white">
-                            {loc.name}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className="ml-auto text-[9px] h-4 px-1 border-clinical-sage/40 text-clinical-sage"
-                          >
+                        <div className="fx ac gap8" style={{ width: "100%" }}>
+                          <Store className="w-3 h-3" style={{ color: "var(--safb)" }} />
+                          <span className="small fw6">{loc.name}</span>
+                          <span className="pill sg" style={{ marginLeft: "auto", fontSize: 10 }}>
                             -₹{(loc.discountPaise / 100).toFixed(0)}
-                          </Badge>
+                          </span>
                         </div>
-                        <p className="text-[10px] text-clinical-zinc mt-1">
+                        <p className="fine">
                           {loc.addressLine}, {loc.city} {loc.pincode}
                         </p>
                         {loc.hours && (
-                          <p className="text-[10px] text-clinical-zinc">
-                            Open {loc.hours}
-                          </p>
+                          <p className="fine">Open {loc.hours}</p>
                         )}
                       </button>
                     );
@@ -1602,48 +1536,41 @@ export default function V2Checkout() {
             )}
 
             {fulfillmentType === "delivery" && (
-              <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-clinical-sage/30 bg-clinical-sage/5">
-                <div className="flex items-start gap-2 min-w-0">
-                  <Leaf className="w-4 h-4 text-clinical-sage shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-white">
-                      Reusable eco packaging
-                    </p>
-                    <p className="text-[10px] text-clinical-zinc">
-                      Return clean containers on your next order to earn ₹20 credit
-                    </p>
+              <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                <div className="fx gap8" style={{ minWidth: 0, alignItems: "flex-start" }}>
+                  <Leaf className="w-4 h-4" style={{ color: "var(--sage)", flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <p className="small fw6" style={{ color: "var(--tx)" }}>Reusable eco packaging</p>
+                    <p className="fine">Return clean containers on your next order to earn ₹20 credit</p>
                   </div>
                 </div>
-                <Switch
-                  checked={ecoPackagingOptIn}
-                  onCheckedChange={setEcoPackagingOptIn}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={ecoPackagingOptIn}
+                  className={ecoPackagingOptIn ? "sw on" : "sw"}
+                  onClick={() => setEcoPackagingOptIn(!ecoPackagingOptIn)}
                 />
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="bg-clinical-surface border-clinical-border">
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <Bike className="w-4 h-4 text-clinical-gold" />
-              <h2 className="text-sm font-semibold text-white">Tip for Rider</h2>
-              <span className="text-[10px] text-clinical-zinc ml-auto">100% goes to your delivery partner</span>
+          {/* Tip for Rider */}
+          <div className="card col gap16 mb14">
+            <div className="fx ac gap8">
+              <Bike className="w-4 h-4" style={{ color: "var(--safb)" }} />
+              <div className="sh">Tip for Rider</div>
+              <span className="fine" style={{ marginLeft: "auto" }}>100% goes to your delivery partner</span>
             </div>
 
-            <div className="flex gap-2">
+            <div className="fx gap8">
               {TIP_PRESETS.map((tip) => {
                 const selected = !isCustomTip && tipAmount === tip;
                 return (
-                  <Button
+                  <button
                     key={tip}
-                    size="sm"
-                    variant={selected ? "default" : "outline"}
-                    className={`flex-1 h-11 text-xs tabular-nums ${
-                      selected
-                        ? "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/40"
-                        : "border-clinical-border text-clinical-zinc hover:border-clinical-border"
-                    }`}
+                    className={selected ? "btn btn-s f1" : "btn btn-g f1"}
+                    style={{ height: 44, fontSize: 12 }}
                     onClick={() => {
                       setTipAmount(tip);
                       setCustomTip("");
@@ -1651,33 +1578,25 @@ export default function V2Checkout() {
                     }}
                   >
                     {tip === 0 ? "No Tip" : `+₹${(tip / 100).toFixed(0)}`}
-                  </Button>
+                  </button>
                 );
               })}
-              <Button
-                size="sm"
-                variant={isCustomTip ? "default" : "outline"}
-                className={`h-11 text-xs px-3 ${
-                  isCustomTip
-                    ? "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/40"
-                    : "border-clinical-border text-clinical-zinc"
-                }`}
+              <button
+                className={isCustomTip ? "btn btn-s" : "btn btn-g"}
+                style={{ height: 44, fontSize: 12, padding: "0 12px" }}
                 onClick={() => {
                   setIsCustomTip(true);
-                  // Clear the preset so toggling back to a preset
-                  // doesn't briefly show two buttons highlighted, and
-                  // so effectiveTip falls cleanly to the typed value.
                   setTipAmount(0);
                 }}
               >
                 Custom
-              </Button>
+              </button>
             </div>
 
             {isCustomTip && (
-              <div className="flex gap-2">
-                <IndianRupee className="w-4 h-4 text-clinical-zinc mt-2" />
-                <Input
+              <div className="inp">
+                <IndianRupee className="w-4 h-4" style={{ color: "var(--fnt)" }} />
+                <input
                   placeholder="Enter custom tip amount"
                   type="text"
                   inputMode="decimal"
@@ -1692,7 +1611,6 @@ export default function V2Checkout() {
                     setCustomTip(cleaned);
                   }}
                   min="0"
-                  className="h-9 bg-clinical-surface border-clinical-border tabular-nums"
                   autoFocus
                   aria-label="Custom tip amount in rupees"
                 />
@@ -1700,229 +1618,196 @@ export default function V2Checkout() {
             )}
 
             {effectiveTip > 0 && (
-              <p className="text-[10px] text-clinical-sage flex items-center gap-1">
+              <p className="fine sagec fx ac gap6">
                 <ShieldCheck className="w-3 h-3" />
                 Your rider will receive ₹{(effectiveTip / 100).toFixed(0)} extra
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="bg-clinical-surface border-clinical-border">
-          <CardContent className="p-5 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <CalendarClock className="w-4 h-4 text-clinical-gold" />
-                <h2 className="text-sm font-semibold text-white">Delivery Time</h2>
+          {/* Delivery Time */}
+          <div className="card col gap12 mb14">
+            <div className="fx ac jb gap8">
+              <div className="fx ac gap8">
+                <CalendarClock className="w-4 h-4" style={{ color: "var(--safb)" }} />
+                <div className="sh">Delivery Time</div>
               </div>
               {etaMinutes != null && fulfillmentType === "delivery" && !preorderTomorrow && (
-                <span className="flex items-center gap-1 text-[11px] font-semibold text-clinical-sage bg-clinical-sage/10 border border-clinical-sage/25 px-2 py-0.5 rounded-full">
+                <span className="pill sg">
                   <Timer className="w-3 h-3" />
                   ~{etaMinutes} min
                 </span>
               )}
             </div>
-            {/* Redundant Pre-order Tomorrow card removed; integrated directly into unified delivery slot picker */}
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="bg-clinical-surface border-clinical-border">
-          <CardContent className="p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-clinical-gold" />
-              <h2 className="text-sm font-semibold text-white">Payment</h2>
+          {/* Payment */}
+          <div className="card col gap12 mb14">
+            <div className="fx ac gap8">
+              <CreditCard className="w-4 h-4" style={{ color: "var(--safb)" }} />
+              <div className="sh">Payment</div>
             </div>
             <div
-              className="p-3 rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 flex items-center gap-3"
+              className="fx ac gap12"
+              style={{ padding: 12, borderRadius: 10, border: "1px solid var(--saf)", background: "var(--safd)" }}
               title="Razorpay handles your payment securely. Tanmatra never sees your card or UPI details."
             >
-              <div className="w-8 h-8 rounded-md bg-clinical-gold/20 flex items-center justify-center">
-                <CreditCard className="w-4 h-4 text-clinical-gold" />
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(232,154,62,.2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                <CreditCard className="w-4 h-4" style={{ color: "var(--safb)" }} />
               </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium text-white">Razorpay Secure Checkout</p>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="text-[10px] font-semibold text-clinical-gold bg-clinical-gold/10 border border-clinical-gold/30 rounded px-1.5 py-0.5">UPI</span>
-                  <span className="text-[10px] text-clinical-zinc">Cards · Net Banking · Wallets · COD · PCI-DSS L1</span>
+              <div className="f1">
+                <p className="small fw6">Razorpay Secure Checkout</p>
+                <div className="fx ac gap6 wrap mt2">
+                  <span className="upi">UPI</span>
+                  <span className="fine">Cards · Net Banking · Wallets · COD · PCI-DSS L1</span>
                 </div>
               </div>
-              <ShieldCheck className="w-4 h-4 text-clinical-sage ml-auto" aria-label="Encrypted payment" />
+              <ShieldCheck className="w-4 h-4" style={{ color: "var(--sage)", marginLeft: "auto" }} aria-label="Encrypted payment" />
             </div>
 
-            {/* Recurring upsell — closes the missing one-off → subscription
-                bridge. Per UX audit Journey-B finding 4. We don't toggle
-                the order itself into a subscription (that requires backend
-                contract changes); we deep-link into /subscribe with the
-                current cart's items so the user finishes there post-payment. */}
             <Link
               to={`/subscribe?fromCart=1&cadence=weekly`}
-              className="block rounded-md border border-clinical-gold/30 bg-clinical-gold/5 px-3 py-3 hover:bg-clinical-gold/10"
+              className="note"
+              style={{ alignItems: "flex-start", background: "var(--safd)", borderColor: "var(--saf)", color: "var(--tx)" }}
             >
-              <div className="flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-clinical-gold mt-0.5 shrink-0" aria-hidden="true" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white leading-tight">
-                    Make this a weekly subscription — save up to 15%
-                  </p>
-                  <p className="text-[10px] text-clinical-zinc leading-tight mt-0.5">
-                    Skip checkout next week. Pause, swap or cancel any time.
-                  </p>
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-clinical-gold mt-1 shrink-0" aria-hidden="true" />
+              <Sparkles className="w-4 h-4" style={{ color: "var(--safb)", marginTop: 2, flexShrink: 0 }} aria-hidden="true" />
+              <div className="f1" style={{ minWidth: 0 }}>
+                <p className="small fw6">Make this a weekly subscription — save up to 15%</p>
+                <p className="fine mt2">Skip checkout next week. Pause, swap or cancel any time.</p>
               </div>
+              <ArrowRight className="w-3.5 h-3.5" style={{ color: "var(--safb)", marginTop: 4, flexShrink: 0 }} aria-hidden="true" />
             </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="lg:col-span-2 space-y-4">
-        <AddOnRail
-          cartTags={cartTags}
-          selected={selectedAddons}
-          onChange={setSelectedAddons}
-        />
-
-        {/* Dynamic Threshold Progress Tracker (CRO AOV Booster) */}
-        {fulfillmentType !== "pickup" && (
-          <div className={`rounded-xl px-4 py-3 border transition-all duration-300 shadow-md ${
-            hasFreeDelivery ? "alert-safe-border alert-safe-bg" : "border-clinical-gold/40 bg-[#050505]"
-          }`}>
-            <div className="flex items-center justify-between mb-2 font-sans">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-clinical-zinc flex items-center gap-1.5">
-                {hasFreeDelivery ? <ShieldCheck className="w-4 h-4 alert-safe-text shrink-0" /> : <Zap className="w-4 h-4 text-clinical-gold fill-clinical-gold shrink-0" />}
-                Free Delivery Tracker
-              </span>
-              <span
-                className={cn(
-                  "text-xs font-bold tabular-nums",
-                  hasFreeDelivery ? "alert-safe-text" : "text-white"
-                )}
-              >
-                {hasFreeDelivery
-                  ? "Free Delivery Unlocked!"
-                  : `Add ₹${Math.ceil(amountToFreeDelivery / 100)} more for free delivery`}
-              </span>
-            </div>
-            <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className={cn(
-                  "absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out",
-                  hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_10px_rgba(74,222,128,0.85)]" : "bg-gradient-to-r from-[#E7C766] to-clinical-gold"
-                )}
-                style={{ width: `${freeDeliveryProgress}%` }}
-              />
-            </div>
-            {!hasFreeDelivery && (
-              <p className="text-[10px] text-clinical-zinc mt-1.5">
-                💡 Tip: Add an RD-curated drink or snack above to reach ₹500 and save ₹50 on delivery!
-              </p>
-            )}
           </div>
-        )}
 
-        <Card className="bg-clinical-surface border-clinical-border sticky top-20">
-          <CardContent className="p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <ClipboardList className="w-4 h-4 text-clinical-gold" />
-              Order Summary
-            </h2>
+          {/* Add-ons rail (legacy widget) */}
+          <div className="mb14">
+            <AddOnRail
+              cartTags={cartTags}
+              selected={selectedAddons}
+              onChange={setSelectedAddons}
+            />
+          </div>
 
-            <div className="space-y-3">
+          {/* Free-delivery tracker */}
+          {fulfillmentType !== "pickup" && (
+            <div className="banner mb14" style={hasFreeDelivery ? { background: "var(--saged)", borderColor: "var(--sage)" } : undefined}>
+              <div className="fx ac jb mb8">
+                <span className="lab fx ac gap6">
+                  {hasFreeDelivery ? <ShieldCheck className="w-4 h-4" style={{ color: "var(--sage)" }} /> : <Zap className="w-4 h-4" style={{ color: "var(--safb)" }} />}
+                  Free Delivery Tracker
+                </span>
+                <span className="small fw7" style={{ color: hasFreeDelivery ? "var(--sage)" : "var(--tx)" }}>
+                  {hasFreeDelivery
+                    ? "Free Delivery Unlocked!"
+                    : `Add ₹${Math.ceil(amountToFreeDelivery / 100)} more for free delivery`}
+                </span>
+              </div>
+              <div className="pbar">
+                <b style={{ width: `${freeDeliveryProgress}%`, background: hasFreeDelivery ? "var(--sage)" : "var(--saf)" }} />
+              </div>
+              {!hasFreeDelivery && (
+                <p className="fine mt6">
+                  💡 Tip: Add an RD-curated drink or snack above to reach ₹500 and save ₹50 on delivery!
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Order Summary (desktop bill column) */}
+          <div className="card col gap16 mb14">
+            <div className="fx ac gap8">
+              <ClipboardList className="w-4 h-4" style={{ color: "var(--safb)" }} />
+              <div className="sh">Order Summary</div>
+            </div>
+
+            <div className="col gap12">
               {items.map((item) => (
-                <div key={item.lineId} className="flex items-start gap-3">
-                  <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover border border-clinical-border shrink-0" loading="lazy" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white line-clamp-2">
+                <div key={item.lineId} className="fx gap12" style={{ alignItems: "flex-start" }}>
+                  <img src={item.image} alt={item.name} loading="lazy" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid var(--ln)", flex: "none" }} />
+                  <div className="f1" style={{ minWidth: 0 }}>
+                    <p className="small fw6">
                       {item.name}
                       {item.recipient && (
-                        <span className="text-[10px] text-clinical-gold ml-1 font-semibold">
+                        <span className="safc" style={{ fontSize: 10, fontWeight: 600, marginLeft: 4 }}>
                           (For {item.recipient})
                         </span>
                       )}
                     </p>
-                    <p className="text-[10px] text-clinical-zinc">Qty: {item.quantity}</p>
+                    <p className="fine">Qty: {item.quantity}</p>
                     {item.customizations.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="fx wrap gap6 mt4">
                         {item.customizations.map((c) => (
-                          <span key={c} className="text-[9px] px-1 py-0.5 rounded bg-clinical-surface-elevated text-clinical-zinc">
+                          <span key={c} className="pill" style={{ fontSize: 9 }}>
                             {c}
                           </span>
                         ))}
                       </div>
                     )}
                   </div>
-                  <span className="tabular-nums text-xs text-white font-medium shrink-0">
+                  <span className="price" style={{ fontSize: 12, flex: "none" }}>
                     {formatPrice(item.unitPrice * item.quantity)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <Separator className="bg-clinical-surface-elevated" />
+            <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: 0 }} />
 
             {activeAddr && (
-              <div className="space-y-1 text-[10px] text-clinical-zinc">
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-3 h-3 text-clinical-gold shrink-0 mt-0.5" />
+              <div className="col gap6">
+                <div className="fine fx gap8" style={{ alignItems: "flex-start" }}>
+                  <MapPin className="w-3 h-3" style={{ color: "var(--safb)", flexShrink: 0, marginTop: 2 }} />
                   <span>
                     {activeAddr.label} · {activeAddr.line1} · {activeAddr.city}
                   </span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <Phone className="w-3 h-3 text-clinical-gold shrink-0 mt-0.5" />
+                <div className="fine fx gap8" style={{ alignItems: "flex-start" }}>
+                  <Phone className="w-3 h-3" style={{ color: "var(--safb)", flexShrink: 0, marginTop: 2 }} />
                   <span>Rider will contact you on {activeAddr.phone}</span>
                 </div>
               </div>
             )}
 
-            <Separator className="bg-clinical-surface-elevated" />
+            <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: 0 }} />
 
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-clinical-zinc">Subtotal</span>
-                <span className="tabular-nums text-white">{formatPrice(subtotal)}</span>
+            <div className="col gap8">
+              <div className="billrow" style={{ padding: 0 }}>
+                <span>Subtotal</span>
+                <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(subtotal)}</span>
               </div>
               {gst > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-clinical-zinc">GST (18%)</span>
-                  <span className="tabular-nums text-white">{formatPrice(gst)}</span>
+                <div className="billrow" style={{ padding: 0 }}>
+                  <span>GST (18%)</span>
+                  <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
                 </div>
               )}
               {preorderDiscount > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-clinical-sage flex items-center gap-1">
+                <div className="billrow" style={{ padding: 0 }}>
+                  <span className="sagec fx ac gap6">
                     <CalendarClock className="w-3 h-3" /> Pre-order discount (5%)
                   </span>
-                  <span className="tabular-nums text-clinical-sage">
-                    -{formatPrice(preorderDiscount)}
-                  </span>
+                  <span className="mono sagec">-{formatPrice(preorderDiscount)}</span>
                 </div>
               )}
               {firstOrderDiscount > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-clinical-gold flex items-center gap-1">
+                <div className="billrow" style={{ padding: 0 }}>
+                  <span className="safc fx ac gap6">
                     <Gift className="w-3 h-3" /> First-order offer (25% up to ₹80)
                   </span>
-                  <span className="tabular-nums text-clinical-gold">
-                    -{formatPrice(firstOrderDiscount)}
-                  </span>
+                  <span className="mono safc">-{formatPrice(firstOrderDiscount)}</span>
                 </div>
               )}
               {pickupDiscount > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-clinical-sage flex items-center gap-1">
+                <div className="billrow" style={{ padding: 0 }}>
+                  <span className="sagec fx ac gap6">
                     <Store className="w-3 h-3" /> Partner pickup
                   </span>
-                  <span className="tabular-nums text-clinical-sage">
-                    -{formatPrice(pickupDiscount)}
-                  </span>
+                  <span className="mono sagec">-{formatPrice(pickupDiscount)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-xs">
-                <span className="text-clinical-zinc">
-                  {fulfillmentType === "pickup" ? "Pickup" : "Delivery"}
-                </span>
-                <span className={deliveryFee === 0 ? "text-clinical-sage text-xs" : "tabular-nums text-white"}>
+              <div className="billrow" style={{ padding: 0 }}>
+                <span>{fulfillmentType === "pickup" ? "Pickup" : "Delivery"}</span>
+                <span className={deliveryFee === 0 ? "sagec" : "mono"} style={deliveryFee === 0 ? undefined : { color: "var(--tx)" }}>
                   {fulfillmentType === "pickup"
                     ? "Self-collect"
                     : deliveryFee === 0
@@ -1931,110 +1816,105 @@ export default function V2Checkout() {
                 </span>
               </div>
               {effectiveTip > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-clinical-zinc flex items-center gap-1">
+                <div className="billrow" style={{ padding: 0 }}>
+                  <span className="fx ac gap6">
                     <Bike className="w-3 h-3" />
                     Rider Tip
                   </span>
-                  <span className="tabular-nums text-clinical-gold">{formatPrice(effectiveTip)}</span>
+                  <span className="mono safc">{formatPrice(effectiveTip)}</span>
                 </div>
               )}
               {creditBalance > 0 && (
-                <div className="flex items-center justify-between gap-2 p-2 rounded-md border border-clinical-sage/30 bg-clinical-sage/5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Sparkles className="w-3.5 h-3.5 text-clinical-sage shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-[11px] text-white">Apply credits</p>
-                      <p className="text-[9px] text-clinical-zinc">
-                        Wallet: {formatPrice(creditBalance)}
-                      </p>
+                <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                  <div className="fx ac gap8" style={{ minWidth: 0 }}>
+                    <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--sage)", flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <p className="small" style={{ color: "var(--tx)" }}>Apply credits</p>
+                      <p className="fine">Wallet: {formatPrice(creditBalance)}</p>
                     </div>
                   </div>
-                  <Switch checked={applyCredits} onCheckedChange={setApplyCredits} />
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={applyCredits}
+                    className={applyCredits ? "sw on" : "sw"}
+                    onClick={() => setApplyCredits(!applyCredits)}
+                  />
                 </div>
               )}
               {creditApplied > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-clinical-sage flex items-center gap-1">
+                <div className="billrow" style={{ padding: 0 }}>
+                  <span className="sagec fx ac gap6">
                     <Sparkles className="w-3 h-3" /> Credits applied
                   </span>
-                  <span className="tabular-nums text-clinical-sage">
-                    -{formatPrice(creditApplied)}
-                  </span>
+                  <span className="mono sagec">-{formatPrice(creditApplied)}</span>
                 </div>
               )}
 
               {subsidy?.active && subsidy.company && (
-                <div className="rounded-lg border border-clinical-border bg-clinical-dark/40 p-2.5 space-y-1.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 text-[11px] text-white">
-                      <Building2Icon className="w-3.5 h-3.5 text-clinical-gold" />
-                      <span className="font-medium">{subsidy.company.name} subsidy</span>
+                <div className="card" style={{ padding: 10 }}>
+                  <div className="fx ac jb gap8">
+                    <div className="fx ac gap6 small" style={{ color: "var(--tx)" }}>
+                      <Building2Icon className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
+                      <span className="fw6">{subsidy.company.name} subsidy</span>
                     </div>
-                    <Switch checked={applySubsidy} onCheckedChange={setApplySubsidy} />
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={applySubsidy}
+                      className={applySubsidy ? "sw on" : "sw"}
+                      onClick={() => setApplySubsidy(!applySubsidy)}
+                    />
                   </div>
-                  <p className="text-[10px] text-clinical-zinc">
+                  <p className="fine mt6">
                     {formatPrice(subsidy.remainingPaise ?? 0)} of{" "}
                     {formatPrice(subsidy.monthlyBudgetPaise ?? 0)} left this month
                   </p>
                   {subsidyAvailable > 0 && (
-                    <div className="flex justify-between text-xs pt-0.5">
-                      <span className="text-clinical-sage flex items-center gap-1">
+                    <div className="billrow" style={{ padding: "6px 0 0" }}>
+                      <span className="sagec fx ac gap6">
                         <Building2Icon className="w-3 h-3" /> Company pays
                       </span>
-                      <span className="tabular-nums text-clinical-sage">
-                        -{formatPrice(subsidyAvailable)}
-                      </span>
+                      <span className="mono sagec">-{formatPrice(subsidyAvailable)}</span>
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="rounded-lg border border-clinical-border bg-clinical-dark/40 p-2.5 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-[11px] text-white">
-                  <Ticket className="w-3.5 h-3.5 text-clinical-gold" />
-                  <span className="font-medium">Have a voucher?</span>
+              <div className="card" style={{ padding: 10 }}>
+                <div className="fx ac gap6 small" style={{ color: "var(--tx)" }}>
+                  <Ticket className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
+                  <span className="fw6">Have a voucher?</span>
                 </div>
-                <div className="flex gap-1.5">
+                <div className="fx gap6 mt6">
                   <input
                     type="text"
                     value={voucherCode}
                     onChange={(e) => {
                       const next = e.target.value.toUpperCase();
                       setVoucherCode(next);
-                      // Only clear when the user removes characters (corrective
-                      // edit) — not on every keystroke, so the error stays
-                      // visible long enough to read on mobile.
                       if (voucherError && next.length < voucherCode.length) setVoucherError(null);
                     }}
                     placeholder="VOUCHER CODE"
-                    className={`flex-1 min-w-0 h-8 rounded-md bg-clinical-dark border px-2 text-[11px] text-white placeholder:text-clinical-zinc-muted tracking-wider uppercase focus:outline-none ${
-                      voucherError
-                        ? "alert-allergen-border focus:alert-allergen-border"
-                        : "border-clinical-border focus:border-clinical-gold/60"
-                    }`}
+                    className="inp"
+                    style={{ flex: 1, minWidth: 0, height: 34, textTransform: "uppercase", letterSpacing: ".08em", fontSize: 11, ...(voucherError ? { borderColor: "var(--dgr)" } : {}) }}
                     disabled={redeemingVoucher}
                     aria-invalid={voucherError ? true : undefined}
-                    aria-describedby={
-                      voucherError ? "voucher-error" : undefined
-                    }
+                    aria-describedby={voucherError ? "voucher-error" : undefined}
                   />
-                  <Button
+                  <button
                     type="button"
                     onClick={handleRedeemVoucher}
                     disabled={redeemingVoucher || !voucherCode.trim()}
-                    className="h-8 px-3 text-[11px] bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90"
+                    className={redeemingVoucher || !voucherCode.trim() ? "btn btn-p dis" : "btn btn-p"}
+                    style={{ height: 34, padding: "0 12px", fontSize: 11 }}
                   >
-                    <Gift className="w-3 h-3 mr-1" />
+                    <Gift className="w-3 h-3" />
                     {redeemingVoucher ? "..." : "Redeem"}
-                  </Button>
+                  </button>
                 </div>
                 {voucherError && (
-                  <p
-                    id="voucher-error"
-                    role="alert"
-                    className="text-[10px] alert-allergen-text flex items-center gap-1"
-                  >
+                  <p id="voucher-error" role="alert" className="fine dgrc fx ac gap6 mt6">
                     <AlertTriangle className="w-2.5 h-2.5" />
                     {voucherError}
                   </p>
@@ -2042,14 +1922,8 @@ export default function V2Checkout() {
               </div>
             </div>
 
-            <Separator className="bg-clinical-surface-elevated" />
+            <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: 0 }} />
 
-            {/* Total savings summary (C8). Sums every discount applied to
-                this order so the user sees a single trustworthy "you saved
-                X" line — and can expand to see exactly where it came from.
-                We compute from the same primitives the price uses so it can
-                never drift from the actual price. The constituent rows are
-                already rendered above; the expander is the *summary*. */}
             {(() => {
               const totalSavings =
                 preorderDiscount +
@@ -2059,467 +1933,504 @@ export default function V2Checkout() {
                 subsidyAvailable;
               if (totalSavings <= 0) return null;
               return (
-                <Collapsible className="rounded-lg border border-clinical-sage/30 bg-clinical-sage/5">
-                  <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-left group">
-                    <div className="flex items-center gap-2">
-                      <Tag className="w-3.5 h-3.5 text-clinical-sage" />
-                      <span className="text-xs font-medium text-clinical-sage">
+                <details className="note" style={{ display: "block", padding: 0, background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                  <summary className="fx ac jb" style={{ padding: "8px 12px", cursor: "pointer", listStyle: "none" }}>
+                    <span className="fx ac gap8">
+                      <Tag className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
+                      <span className="small fw6" style={{ color: "var(--sage)" }}>
                         You saved {formatPrice(totalSavings)} on this order
                       </span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-clinical-sage transition-transform group-data-[state=open]:rotate-180" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="px-3 pb-2.5 pt-0.5 space-y-1 border-t border-clinical-sage/20 text-[11px] text-clinical-zinc">
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
+                  </summary>
+                  <div className="col gap6" style={{ padding: "4px 12px 10px", borderTop: "1px solid rgba(136,170,132,.2)", fontSize: 11, color: "var(--mut)" }}>
                     {preorderDiscount > 0 && (
-                      <div className="flex justify-between">
+                      <div className="fx jb">
                         <span>Pre-order discount (5%)</span>
-                        <span className="tabular-nums text-clinical-sage">
-                          -{formatPrice(preorderDiscount)}
-                        </span>
+                        <span className="mono sagec">-{formatPrice(preorderDiscount)}</span>
                       </div>
                     )}
                     {firstOrderDiscount > 0 && (
-                      <div className="flex justify-between">
+                      <div className="fx jb">
                         <span>First-order offer (25% up to ₹80)</span>
-                        <span className="tabular-nums text-clinical-gold">
-                          -{formatPrice(firstOrderDiscount)}
-                        </span>
+                        <span className="mono safc">-{formatPrice(firstOrderDiscount)}</span>
                       </div>
                     )}
                     {pickupDiscount > 0 && (
-                      <div className="flex justify-between">
+                      <div className="fx jb">
                         <span>Pickup partner discount</span>
-                        <span className="tabular-nums text-clinical-sage">
-                          -{formatPrice(pickupDiscount)}
-                        </span>
+                        <span className="mono sagec">-{formatPrice(pickupDiscount)}</span>
                       </div>
                     )}
                     {creditApplied > 0 && (
-                      <div className="flex justify-between">
+                      <div className="fx jb">
                         <span>Loyalty credits</span>
-                        <span className="tabular-nums text-clinical-sage">
-                          -{formatPrice(creditApplied)}
-                        </span>
+                        <span className="mono sagec">-{formatPrice(creditApplied)}</span>
                       </div>
                     )}
                     {subsidyAvailable > 0 && (
-                      <div className="flex justify-between">
+                      <div className="fx jb">
                         <span>Company subsidy</span>
-                        <span className="tabular-nums text-clinical-sage">
-                          -{formatPrice(subsidyAvailable)}
-                        </span>
+                        <span className="mono sagec">-{formatPrice(subsidyAvailable)}</span>
                       </div>
                     )}
-                  </CollapsibleContent>
-                </Collapsible>
+                  </div>
+                </details>
               );
             })()}
 
-            <div className="flex justify-between items-baseline">
-              <span className="text-sm font-semibold text-white">Total</span>
-              <div className="text-right">
-                <span className="tabular-nums text-xl font-bold text-clinical-gold">{formatPrice(razorpayTotal)}</span>
-                <p className="text-[11px] text-clinical-zinc">Inclusive of all taxes</p>
+            <div className="fx jb" style={{ alignItems: "baseline" }}>
+              <span className="sh">Total</span>
+              <div className="tl">
+                <span className="price" style={{ fontSize: 20, color: "var(--safb)" }}>{formatPrice(razorpayTotal)}</span>
+                <p className="fine">Inclusive of all taxes</p>
               </div>
             </div>
 
             {checkoutBlocked && checkoutBlockedReason && (
-              <p className="text-[11px] text-alert-allergen-text bg-alert-allergen/10 border border-alert-allergen/30 rounded-md px-3 py-2 text-center mb-2">
+              <p className="note tc" style={{ display: "block", background: "rgba(201,124,112,.12)", borderColor: "rgba(201,124,112,.35)", color: "var(--dgr)" }}>
                 {checkoutBlockedReason}
               </p>
             )}
-            <Button
-              onClick={handlePlaceOrderClick}
-              disabled={checkoutBlocked}
-              className="hidden lg:flex w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold h-11 shadow-clinical gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-clinical-surface-elevated disabled:text-clinical-zinc disabled:shadow-none"
-              title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
-            >
-              <CreditCard className="w-4 h-4" />
-              {checkoutBlocked
-                ? "Blocked by patient safety"
-                : `Review & Pay ${formatPrice(razorpayTotal)}`}
-            </Button>
-            <a
-              href="https://wa.me/919289213115"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_desktop_summary" })}
-              className="hidden lg:flex text-[10px] text-clinical-zinc hover:text-white mt-2 items-center justify-center gap-1.5"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-clinical-sage" />
-              Need checkout help? WhatsApp Support
-            </a>
 
-            <p className="text-[9px] text-clinical-zinc text-center flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-clinical-sage" />
-              256-bit SSL encryption · Razorpay secure
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Mobile sticky bottom action bar (sits above the bottom nav).
-          Wrapped in a Collapsible (C5) so tapping the price area expands a
-          breakdown panel — viewport real estate on mobile is tight, so the
-          full sidebar isn't visible while the user is filling out the form
-          and they can lose track of why the total came out to X. The
-          breakdown panel slides UP from the chip (above), not down, since
-          the chip is already at the bottom of the screen. */}
-      <Collapsible
-        className="lg:hidden fixed left-0 right-0 z-30 px-3 pb-2 pointer-events-none"
-        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
-        asChild
-      >
-        <div>
-          <CollapsibleContent className="pointer-events-auto rounded-xl border border-clinical-border bg-clinical-surface/95 backdrop-blur-xl shadow-2xl p-3 mb-2 space-y-1 text-[11px]">
-            <div className="flex justify-between text-clinical-zinc">
-              <span>Subtotal</span>
-              <span className="tabular-nums text-white">{formatPrice(subtotal)}</span>
-            </div>
-            {gst > 0 && (
-              <div className="flex justify-between text-clinical-zinc">
-                <span>GST (18%)</span>
-                <span className="tabular-nums text-white">{formatPrice(gst)}</span>
-              </div>
-            )}
-            {addonTotal > 0 && (
-              <div className="flex justify-between text-clinical-zinc">
-                <span>Add-ons</span>
-                <span className="tabular-nums text-white">{formatPrice(addonTotal)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-clinical-zinc">
-              <span>{fulfillmentType === "pickup" ? "Pickup" : "Delivery"}</span>
-              <span className="tabular-nums">
-                {fulfillmentType === "pickup" || deliveryFee === 0
-                  ? <span className="text-clinical-sage">FREE</span>
-                  : <span className="text-white">{formatPrice(deliveryFee)}</span>}
-              </span>
-            </div>
-            {preorderDiscount > 0 && (
-              <div className="flex justify-between"><span className="text-clinical-zinc">Pre-order discount</span><span className="tabular-nums text-clinical-sage">-{formatPrice(preorderDiscount)}</span></div>
-            )}
-            {firstOrderDiscount > 0 && (
-              <div className="flex justify-between"><span className="text-clinical-zinc">First-order offer</span><span className="tabular-nums text-clinical-gold">-{formatPrice(firstOrderDiscount)}</span></div>
-            )}
-            {pickupDiscount > 0 && (
-              <div className="flex justify-between"><span className="text-clinical-zinc">Pickup discount</span><span className="tabular-nums text-clinical-sage">-{formatPrice(pickupDiscount)}</span></div>
-            )}
-            {creditApplied > 0 && (
-              <div className="flex justify-between"><span className="text-clinical-zinc">Loyalty credits</span><span className="tabular-nums text-clinical-sage">-{formatPrice(creditApplied)}</span></div>
-            )}
-            {subsidyAvailable > 0 && (
-              <div className="flex justify-between"><span className="text-clinical-zinc">Company subsidy</span><span className="tabular-nums text-clinical-sage">-{formatPrice(subsidyAvailable)}</span></div>
-            )}
-            {effectiveTip > 0 && (
-              <div className="flex justify-between"><span className="text-clinical-zinc">Rider tip</span><span className="tabular-nums text-clinical-gold">+{formatPrice(effectiveTip)}</span></div>
-            )}
-            <Separator className="bg-clinical-surface-elevated my-1" />
-            <div className="flex justify-between font-semibold pt-0.5">
-              <span className="text-white">Total</span>
-              <span className="tabular-nums text-clinical-gold">{formatPrice(razorpayTotal)}</span>
-            </div>
-          </CollapsibleContent>
-          <div className="pointer-events-auto rounded-xl border border-clinical-border bg-clinical-surface/95 backdrop-blur-xl shadow-2xl p-3 flex items-center gap-3">
-            <CollapsibleTrigger asChild>
+            <div className="hidden lg:block">
               <button
-                type="button"
-                className="min-w-0 flex-1 text-left group"
-                aria-label="Toggle order breakdown"
-              >
-                <p className="text-[10px] text-clinical-zinc leading-none flex items-center gap-1 min-w-0">
-                  <span className="truncate min-w-0">
-                    {fulfillmentType === "pickup" ? "Self-collect" : deliveryFee === 0 ? "FREE delivery" : `+ ${formatPrice(deliveryFee)} delivery`}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-clinical-zinc transition-transform group-data-[state=open]:rotate-180 shrink-0" />
-                  <span className="text-clinical-zinc-muted truncate min-w-0">
-                    See breakdown
-                  </span>
-                </p>
-                <p className="tabular-nums text-lg font-bold text-clinical-gold leading-tight mt-0.5">
-                  {formatPrice(razorpayTotal)}
-                </p>
-              </button>
-            </CollapsibleTrigger>
-            <div className="flex flex-col items-stretch shrink-0 gap-1">
-              {checkoutBlocked && checkoutBlockedReason && (
-                <p className="text-[11px] text-alert-allergen-text bg-alert-allergen/10 border border-alert-allergen/30 rounded-md px-3 py-2 text-center mb-2">
-                  {checkoutBlockedReason}
-                </p>
-              )}
-              <Button
                 onClick={handlePlaceOrderClick}
                 disabled={checkoutBlocked}
-                className="h-12 px-4 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-clinical-surface-elevated disabled:text-clinical-zinc"
+                className={checkoutBlocked ? "btn btn-p btn-blk dis" : "btn btn-p btn-blk"}
                 title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
               >
                 <CreditCard className="w-4 h-4" />
-                {checkoutBlocked ? "Blocked" : "Review & Pay"}
-              </Button>
+                {checkoutBlocked
+                  ? "Blocked by patient safety"
+                  : `Review & Pay ${formatPrice(razorpayTotal)}`}
+              </button>
               <a
                 href="https://wa.me/919289213115"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_mobile_bar" })}
-                className="text-[10px] text-clinical-zinc hover:text-white mt-1.5 items-center justify-center gap-1.5 text-center flex"
+                onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_desktop_summary" })}
+                className="fine fx ac jc gap6 mt8"
+                style={{ color: "var(--mut)" }}
               >
-                <MessageSquare className="w-3.5 h-3.5 text-clinical-sage" />
-                WhatsApp Support
+                <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
+                Need checkout help? WhatsApp Support
               </a>
             </div>
+
+            <p className="fine tc fx ac jc gap6">
+              <ShieldCheck className="w-3 h-3" style={{ color: "var(--sage)" }} />
+              256-bit SSL encryption · Razorpay secure
+            </p>
           </div>
         </div>
-      </Collapsible>
 
-      {/* Guest Phone + OTP Verification Dialog */}
-      <Dialog open={showGuestAuthDialog} onOpenChange={(open) => !guestIsVerifying && setShowGuestAuthDialog(open)}>
-        <DialogContent className="bg-clinical-surface border-clinical-border max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white font-serif text-lg flex items-center gap-2">
-              <Phone className="w-5 h-5 text-clinical-gold" />
-              {guestAuthStep === "welcome" ? "Welcome to Tanmatra!" : "Verify Mobile"}
-            </DialogTitle>
-            <DialogDescription className="text-clinical-zinc text-xs">
-              {guestAuthStep === "phone" && "Enter your mobile number to get a verification code."}
-              {guestAuthStep === "code" && `We've sent a 6-digit code to ${guestCountryCode} ${guestPhone}.`}
-              {guestAuthStep === "welcome" && "We need a few details to personalize your clinical kitchen experience."}
-            </DialogDescription>
-          </DialogHeader>
+        {/* Mobile sticky bottom action bar */}
+        <div className="lg:hidden">
+          <V2MobilePayBar
+            subtotal={subtotal}
+            gst={gst}
+            addonTotal={addonTotal}
+            deliveryFee={deliveryFee}
+            fulfillmentType={fulfillmentType}
+            preorderDiscount={preorderDiscount}
+            firstOrderDiscount={firstOrderDiscount}
+            pickupDiscount={pickupDiscount}
+            creditApplied={creditApplied}
+            subsidyAvailable={subsidyAvailable}
+            effectiveTip={effectiveTip}
+            razorpayTotal={razorpayTotal}
+            checkoutBlocked={checkoutBlocked}
+            checkoutBlockedReason={checkoutBlockedReason}
+            onPay={handlePlaceOrderClick}
+          />
+        </div>
 
-          {guestAuthStep === "phone" && (
-            <div className="space-y-4 py-2 text-left">
-              <div className="space-y-2">
-                <Label htmlFor="guest-phone-input" className="text-xs text-white">Mobile Number</Label>
-                <div className="flex gap-2">
-                  <div className="w-16 h-9 rounded-md bg-clinical-surface-elevated border border-clinical-border flex items-center justify-center text-xs font-semibold text-white select-none">
-                    {guestCountryCode}
+        {/* Guest Phone + OTP Verification Modal */}
+        {showGuestAuthDialog && (
+          <div
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            onClick={() => { if (!guestIsVerifying) setShowGuestAuthDialog(false); }}
+          >
+            <div className="card" style={{ maxWidth: 360, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+              <div className="fx ac gap8">
+                <Phone className="w-5 h-5" style={{ color: "var(--safb)" }} />
+                <div className="h2" style={{ fontSize: 18 }}>
+                  {guestAuthStep === "welcome" ? "Welcome to Tanmatra!" : "Verify Mobile"}
+                </div>
+              </div>
+              <p className="fine mt6">
+                {guestAuthStep === "phone" && "Enter your mobile number to get a verification code."}
+                {guestAuthStep === "code" && `We've sent a 6-digit code to ${guestCountryCode} ${guestPhone}.`}
+                {guestAuthStep === "welcome" && "We need a few details to personalize your clinical kitchen experience."}
+              </p>
+
+              {guestAuthStep === "phone" && (
+                <div className="col gap16 mt14">
+                  <div className="col gap8">
+                    <label htmlFor="guest-phone-input" className="lab">Mobile Number</label>
+                    <div className="fx gap8">
+                      <div style={{ width: 64, height: 46, borderRadius: 10, background: "var(--s3)", border: "1px solid var(--ln2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "var(--tx)", userSelect: "none", flex: "none" }}>
+                        {guestCountryCode}
+                      </div>
+                      <input
+                        id="guest-phone-input"
+                        placeholder="Enter 10-digit mobile number"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        inputMode="tel"
+                        autoComplete="tel-national"
+                        className="inp"
+                        style={{ flex: 1 }}
+                      />
+                    </div>
                   </div>
-                  <Input
-                    id="guest-phone-input"
-                    placeholder="Enter 10-digit mobile number"
-                    value={guestPhone}
-                    onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    inputMode="tel"
-                    autoComplete="tel-national"
-                    className="h-9 text-xs bg-clinical-surface border-clinical-border flex-1"
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={handleSendGuestOtp}
-                disabled={guestIsSending || guestPhone.length < 10}
-                className="w-full h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs"
-              >
-                {guestIsSending ? "Sending code…" : "Send Verification Code"}
-              </Button>
-            </div>
-          )}
-
-          {guestAuthStep === "code" && (
-            <div className="space-y-4 py-2 text-left">
-              <div className="space-y-2">
-                <Label htmlFor="guest-otp-input" className="text-xs text-white">Verification Code</Label>
-                <Input
-                  id="guest-otp-input"
-                  placeholder="Enter 6-digit OTP"
-                  value={guestOtpCode}
-                  onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  className="h-10 text-center text-sm tracking-[1.5em] pl-[1.5em] font-mono bg-clinical-surface border-clinical-border"
-                />
-              </div>
-              <div className="flex items-center justify-between text-[10px] text-clinical-zinc">
-                <span>Didn't receive code?</span>
-                {guestResendIn > 0 ? (
-                  <span>Resend in {guestResendIn}s</span>
-                ) : (
                   <button
-                    type="button"
                     onClick={handleSendGuestOtp}
-                    className="text-clinical-gold hover:underline font-semibold"
+                    disabled={guestIsSending || guestPhone.length < 10}
+                    className={guestIsSending || guestPhone.length < 10 ? "btn btn-p btn-blk dis" : "btn btn-p btn-blk"}
                   >
-                    Resend code
+                    {guestIsSending ? "Sending code…" : "Send Verification Code"}
                   </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setGuestAuthStep("phone")}
-                  disabled={guestIsVerifying}
-                  className="h-10 border-clinical-border text-clinical-zinc text-xs"
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={handleVerifyGuestOtp}
-                  disabled={guestIsVerifying || guestOtpCode.length < 4}
-                  className="h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs"
-                >
-                  {guestIsVerifying ? "Verifying…" : "Verify & Continue"}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {guestAuthStep === "welcome" && (
-            <div className="space-y-4 py-2 text-left">
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="guest-name-input" className="text-xs text-white">First Name</Label>
-                  <Input
-                    id="guest-name-input"
-                    placeholder="Enter your first name"
-                    value={guestFirstName}
-                    onChange={(e) => setGuestFirstName(e.target.value)}
-                    className="h-9 text-xs bg-clinical-surface border-clinical-border"
-                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="guest-email-input" className="text-xs text-white">Email Address (Optional)</Label>
-                  <Input
-                    id="guest-email-input"
-                    placeholder="Enter email for receipts"
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                    type="email"
-                    className="h-9 text-xs bg-clinical-surface border-clinical-border"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <Button
-                  variant="outline"
-                  onClick={handleGuestAuthSuccess}
-                  className="h-10 border-clinical-border text-clinical-zinc text-xs"
-                >
-                  Skip
-                </Button>
-                <Button
-                  onClick={handleGuestAuthSuccess}
-                  disabled={!guestFirstName.trim()}
-                  className="h-10 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold text-xs"
-                >
-                  Let's Eat
-                </Button>
-              </div>
-            </div>
-          )}
-          <div id="recaptcha-container" className="fixed bottom-0 right-0 z-50 pointer-events-none"></div>
-        </DialogContent>
-      </Dialog>
+              )}
 
-      {/* Payment confirmation dialog */}
-      <Dialog open={confirmOpen} onOpenChange={(open) => !isProcessing && setConfirmOpen(open)}>
-        <DialogContent className="bg-clinical-surface border-clinical-border">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-clinical-sage" />
-              Confirm Payment
-            </DialogTitle>
-            <DialogDescription className="text-clinical-zinc">
-              You will be charged <span className="text-clinical-gold font-bold tabular-nums">{formatPrice(razorpayTotal)}</span> via Razorpay.
-              Your rider will contact you on <span className="text-white">{activeAddr?.phone}</span> after pickup.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="bg-clinical-dark/60 border border-clinical-border rounded-lg p-3 space-y-1.5 text-xs">
-            <div className="flex justify-between">
-              <span className="text-clinical-zinc">Subtotal ({items.length} item{items.length === 1 ? "" : "s"})</span>
-              <span className="tabular-nums text-white">{formatPrice(subtotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-clinical-zinc">Delivery</span>
-              <span className={deliveryFee === 0 ? "text-clinical-sage" : "tabular-nums text-white"}>
-                {deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
-              </span>
-            </div>
-            {effectiveTip > 0 && (
-              <div className="flex justify-between">
-                <span className="text-clinical-zinc">Rider Tip</span>
-                <span className="tabular-nums text-clinical-gold">{formatPrice(effectiveTip)}</span>
-              </div>
-            )}
-            <Separator className="bg-clinical-surface-elevated my-1" />
-            <div className="flex justify-between font-semibold">
-              <span className="text-white">Total</span>
-              <span className="tabular-nums text-clinical-gold">{formatPrice(razorpayTotal)}</span>
-            </div>
-            
-            {/* High-Fidelity Trust Strip */}
-            <div className="text-[9px] uppercase tracking-[0.18em] text-clinical-zinc font-semibold flex items-center justify-center gap-4 py-2 border-t border-clinical-border/40 bg-clinical-surface-elevated/20 rounded-md mt-4 select-none">
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-clinical-sage" />
-                FSSAI Certified
-              </span>
-              <span className="opacity-40">·</span>
-              <span className="flex items-center gap-1">
-                <Flame className="w-3.5 h-3.5 text-clinical-gold" />
-                Insulated Bags
-              </span>
-              <span className="opacity-40">·</span>
-              <span className="flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5 text-clinical-sage" />
-                Tamper Sealed
-              </span>
+              {guestAuthStep === "code" && (
+                <div className="col gap16 mt14">
+                  <div className="col gap8">
+                    <label htmlFor="guest-otp-input" className="lab">Verification Code</label>
+                    <input
+                      id="guest-otp-input"
+                      placeholder="Enter 6-digit OTP"
+                      value={guestOtpCode}
+                      onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      className="inp mono"
+                      style={{ textAlign: "center", letterSpacing: ".4em" }}
+                    />
+                  </div>
+                  <div className="fx ac jb fine">
+                    <span>Didn't receive code?</span>
+                    {guestResendIn > 0 ? (
+                      <span>Resend in {guestResendIn}s</span>
+                    ) : (
+                      <button type="button" onClick={handleSendGuestOtp} className="safc fw6">
+                        Resend code
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid gap8" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                    <button
+                      onClick={() => setGuestAuthStep("phone")}
+                      disabled={guestIsVerifying}
+                      className="btn btn-g"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleVerifyGuestOtp}
+                      disabled={guestIsVerifying || guestOtpCode.length < 4}
+                      className={guestIsVerifying || guestOtpCode.length < 4 ? "btn btn-p dis" : "btn btn-p"}
+                    >
+                      {guestIsVerifying ? "Verifying…" : "Verify & Continue"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {guestAuthStep === "welcome" && (
+                <div className="col gap16 mt14">
+                  <div className="col gap12">
+                    <div className="col gap8">
+                      <label htmlFor="guest-name-input" className="lab">First Name</label>
+                      <input
+                        id="guest-name-input"
+                        placeholder="Enter your first name"
+                        value={guestFirstName}
+                        onChange={(e) => setGuestFirstName(e.target.value)}
+                        className="inp"
+                      />
+                    </div>
+                    <div className="col gap8">
+                      <label htmlFor="guest-email-input" className="lab">Email Address (Optional)</label>
+                      <input
+                        id="guest-email-input"
+                        placeholder="Enter email for receipts"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        type="email"
+                        className="inp"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap8" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                    <button onClick={handleGuestAuthSuccess} className="btn btn-g">
+                      Skip
+                    </button>
+                    <button
+                      onClick={handleGuestAuthSuccess}
+                      disabled={!guestFirstName.trim()}
+                      className={!guestFirstName.trim() ? "btn btn-p dis" : "btn btn-p"}
+                    >
+                      Let's Eat
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div id="recaptcha-container" className="fixed bottom-0 right-0 z-50 pointer-events-none"></div>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmOpen(false)}
-              disabled={isProcessing}
-              className="border-clinical-border text-clinical-zinc"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmedPayment}
-              disabled={isProcessing || checkoutBlocked}
-              className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-clinical-surface-elevated disabled:text-clinical-zinc"
-            >
-              {isProcessing ? "Processing…" : checkoutBlocked ? (
-                "Blocked by patient safety"
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4" />
-                  Confirm & Pay {formatPrice(razorpayTotal)}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        )}
 
-      <LocationPickerFlow
-        open={showNewAddressFlow}
-        onOpenChange={setShowNewAddressFlow}
-        onSave={async (addressData) => {
-          if (addressAuthRequired) {
-            const guestAddr: UserAddress = {
-              id: "guest-addr",
-              label: addressData.label,
-              type: "home",
-              line1: addressData.line1,
-              line2: addressData.line2 || "",
-              city: addressData.city,
-              pincode: addressData.pincode,
-              phone: addressData.phone,
-              isDefault: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-            setSavedAddresses([guestAddr]);
-            setSelectedAddress("guest-addr");
-          } else {
-            const r = await addressesApi.create(addressData);
-            setSavedAddresses((prev) => [r.address, ...prev]);
-            setSelectedAddress(r.address.id);
-          }
-        }}
-      />
+        {/* Payment confirmation modal */}
+        {confirmOpen && (
+          <div
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            onClick={() => { if (!isProcessing) setConfirmOpen(false); }}
+          >
+            <div className="card" style={{ maxWidth: 400, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+              <div className="fx ac gap8">
+                <ShieldCheck className="w-5 h-5" style={{ color: "var(--sage)" }} />
+                <div className="h2" style={{ fontSize: 18 }}>Confirm Payment</div>
+              </div>
+              <p className="fine mt6">
+                You will be charged <span className="safc fw7 mono">{formatPrice(razorpayTotal)}</span> via Razorpay.
+                Your rider will contact you on <span style={{ color: "var(--tx)" }}>{activeAddr?.phone}</span> after pickup.
+              </p>
+              <div className="card mt14" style={{ background: "var(--s2)", padding: 12 }}>
+                <div className="billrow" style={{ padding: "4px 0" }}>
+                  <span>Subtotal ({items.length} item{items.length === 1 ? "" : "s"})</span>
+                  <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(subtotal)}</span>
+                </div>
+                <div className="billrow" style={{ padding: "4px 0" }}>
+                  <span>Delivery</span>
+                  <span className={deliveryFee === 0 ? "sagec" : "mono"} style={deliveryFee === 0 ? undefined : { color: "var(--tx)" }}>
+                    {deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
+                  </span>
+                </div>
+                {effectiveTip > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>Rider Tip</span>
+                    <span className="mono safc">{formatPrice(effectiveTip)}</span>
+                  </div>
+                )}
+                <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: "4px 0" }} />
+                <div className="billrow" style={{ padding: "4px 0", color: "var(--tx)", fontWeight: 600 }}>
+                  <span>Total</span>
+                  <span className="mono safc">{formatPrice(razorpayTotal)}</span>
+                </div>
+                <div className="fx ac jc gap16" style={{ fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--mut)", fontWeight: 600, marginTop: 14, padding: "8px 0 0", borderTop: "1px solid var(--ln)" }}>
+                  <span className="fx ac gap6">
+                    <ShieldCheck className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
+                    FSSAI Certified
+                  </span>
+                  <span style={{ opacity: 0.4 }}>·</span>
+                  <span className="fx ac gap6">
+                    <Flame className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
+                    Insulated Bags
+                  </span>
+                  <span style={{ opacity: 0.4 }}>·</span>
+                  <span className="fx ac gap6">
+                    <Lock className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
+                    Tamper Sealed
+                  </span>
+                </div>
+              </div>
+              <div className="fx gap8 mt14" style={{ justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => setConfirmOpen(false)}
+                  disabled={isProcessing}
+                  className="btn btn-g"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmedPayment}
+                  disabled={isProcessing || checkoutBlocked}
+                  className={isProcessing || checkoutBlocked ? "btn btn-p dis" : "btn btn-p"}
+                >
+                  {isProcessing ? "Processing…" : checkoutBlocked ? (
+                    "Blocked by patient safety"
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      Confirm & Pay {formatPrice(razorpayTotal)}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <LocationPickerFlow
+          open={showNewAddressFlow}
+          onOpenChange={setShowNewAddressFlow}
+          onSave={async (addressData) => {
+            if (addressAuthRequired) {
+              const guestAddr: UserAddress = {
+                id: "guest-addr",
+                label: addressData.label,
+                type: "home",
+                line1: addressData.line1,
+                line2: addressData.line2 || "",
+                city: addressData.city,
+                pincode: addressData.pincode,
+                phone: addressData.phone,
+                isDefault: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              setSavedAddresses([guestAddr]);
+              setSelectedAddress("guest-addr");
+            } else {
+              const r = await addressesApi.create(addressData);
+              setSavedAddresses((prev) => [r.address, ...prev]);
+              setSelectedAddress(r.address.id);
+            }
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface V2MobilePayBarProps {
+  subtotal: number;
+  gst: number;
+  addonTotal: number;
+  deliveryFee: number;
+  fulfillmentType: string;
+  preorderDiscount: number;
+  firstOrderDiscount: number;
+  pickupDiscount: number;
+  creditApplied: number;
+  subsidyAvailable: number;
+  effectiveTip: number;
+  razorpayTotal: number;
+  checkoutBlocked: boolean;
+  checkoutBlockedReason: string | null;
+  onPay: () => void;
+}
+
+function V2MobilePayBar({
+  subtotal,
+  gst,
+  addonTotal,
+  deliveryFee,
+  fulfillmentType,
+  preorderDiscount,
+  firstOrderDiscount,
+  pickupDiscount,
+  creditApplied,
+  subsidyAvailable,
+  effectiveTip,
+  razorpayTotal,
+  checkoutBlocked,
+  checkoutBlockedReason,
+  onPay,
+}: V2MobilePayBarProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: "fixed", left: 0, right: 0, zIndex: 30, padding: "0 12px 8px", bottom: "calc(4rem + env(safe-area-inset-bottom))" }}>
+      {open && (
+        <div className="card col gap6" style={{ marginBottom: 8, padding: 12, fontSize: 11 }}>
+          <div className="billrow" style={{ padding: 0 }}>
+            <span>Subtotal</span>
+            <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(subtotal)}</span>
+          </div>
+          {gst > 0 && (
+            <div className="billrow" style={{ padding: 0 }}>
+              <span>GST (18%)</span>
+              <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
+            </div>
+          )}
+          {addonTotal > 0 && (
+            <div className="billrow" style={{ padding: 0 }}>
+              <span>Add-ons</span>
+              <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(addonTotal)}</span>
+            </div>
+          )}
+          <div className="billrow" style={{ padding: 0 }}>
+            <span>{fulfillmentType === "pickup" ? "Pickup" : "Delivery"}</span>
+            <span className="mono">
+              {fulfillmentType === "pickup" || deliveryFee === 0
+                ? <span className="sagec">FREE</span>
+                : <span style={{ color: "var(--tx)" }}>{formatPrice(deliveryFee)}</span>}
+            </span>
+          </div>
+          {preorderDiscount > 0 && (
+            <div className="billrow" style={{ padding: 0 }}><span>Pre-order discount</span><span className="mono sagec">-{formatPrice(preorderDiscount)}</span></div>
+          )}
+          {firstOrderDiscount > 0 && (
+            <div className="billrow" style={{ padding: 0 }}><span>First-order offer</span><span className="mono safc">-{formatPrice(firstOrderDiscount)}</span></div>
+          )}
+          {pickupDiscount > 0 && (
+            <div className="billrow" style={{ padding: 0 }}><span>Pickup discount</span><span className="mono sagec">-{formatPrice(pickupDiscount)}</span></div>
+          )}
+          {creditApplied > 0 && (
+            <div className="billrow" style={{ padding: 0 }}><span>Loyalty credits</span><span className="mono sagec">-{formatPrice(creditApplied)}</span></div>
+          )}
+          {subsidyAvailable > 0 && (
+            <div className="billrow" style={{ padding: 0 }}><span>Company subsidy</span><span className="mono sagec">-{formatPrice(subsidyAvailable)}</span></div>
+          )}
+          {effectiveTip > 0 && (
+            <div className="billrow" style={{ padding: 0 }}><span>Rider tip</span><span className="mono safc">+{formatPrice(effectiveTip)}</span></div>
+          )}
+          <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: "4px 0" }} />
+          <div className="billrow" style={{ padding: 0, color: "var(--tx)", fontWeight: 600 }}>
+            <span>Total</span>
+            <span className="mono safc">{formatPrice(razorpayTotal)}</span>
+          </div>
+        </div>
+      )}
+      <div className="card fx ac gap12" style={{ padding: 12 }}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="f1"
+          style={{ minWidth: 0, textAlign: "left" }}
+          aria-label="Toggle order breakdown"
+        >
+          <p className="fine fx ac gap6" style={{ minWidth: 0 }}>
+            <span className="clamp1">
+              {fulfillmentType === "pickup" ? "Self-collect" : deliveryFee === 0 ? "FREE delivery" : `+ ${formatPrice(deliveryFee)} delivery`}
+            </span>
+            <ChevronDown className="w-3 h-3" style={{ transform: open ? "rotate(180deg)" : "none", flexShrink: 0 }} />
+            <span className="fntc clamp1">See breakdown</span>
+          </p>
+          <p className="price mt2" style={{ fontSize: 18, color: "var(--safb)" }}>
+            {formatPrice(razorpayTotal)}
+          </p>
+        </button>
+        <div className="col gap6" style={{ flexShrink: 0, alignItems: "stretch" }}>
+          {checkoutBlocked && checkoutBlockedReason && (
+            <p className="fine dgrc tc">{checkoutBlockedReason}</p>
+          )}
+          <button
+            onClick={onPay}
+            disabled={checkoutBlocked}
+            className={checkoutBlocked ? "btn btn-p dis" : "btn btn-p"}
+            style={{ height: 48, padding: "0 16px" }}
+            title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
+          >
+            <CreditCard className="w-4 h-4" />
+            {checkoutBlocked ? "Blocked" : "Review & Pay"}
+          </button>
+          <a
+            href="https://wa.me/919289213115"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track("support_click", { channel: "whatsapp", placement: "checkout_mobile_bar" })}
+            className="fine fx ac jc gap6"
+            style={{ marginTop: 2, color: "var(--mut)" }}
+          >
+            <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
+            WhatsApp Support
+          </a>
         </div>
       </div>
     </div>
