@@ -1,21 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   subscriptionsApi,
@@ -446,20 +430,16 @@ export default function V2Subscriptions() {
       )}
 
       {/* Edit delivery window */}
-      <Dialog open={windowEditOpen} onOpenChange={setWindowEditOpen}>
-        <DialogContent
-          style={{
-            background: "#121517",
-            border: "1px solid rgba(255,255,255,.13)",
-            color: "#E9ECEE",
-          }}
+      {windowEditOpen && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setWindowEditOpen(false)}
         >
-          <div className="tnm2">
-            <DialogHeader>
-              <DialogTitle className="tt fx ac gap8" style={{ color: "#fff" }}>
-                <i className="ph-bold ph-clock safc" /> Update delivery window
-              </DialogTitle>
-            </DialogHeader>
+          <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+              <i className="ph-bold ph-clock safc" /> Update delivery window
+            </div>
             <div className="fine mt6">
               The new window applies to every upcoming delivery on this plan.
             </div>
@@ -497,27 +477,20 @@ export default function V2Subscriptions() {
               </button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Reschedule delivery */}
-      <Dialog
-        open={reschedDelivery !== null}
-        onOpenChange={(open) => !open && setReschedDelivery(null)}
-      >
-        <DialogContent
-          style={{
-            background: "#121517",
-            border: "1px solid rgba(255,255,255,.13)",
-            color: "#E9ECEE",
-          }}
+      {reschedDelivery !== null && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setReschedDelivery(null)}
         >
-          <div className="tnm2">
-            <DialogHeader>
-              <DialogTitle className="tt fx ac gap8" style={{ color: "#fff" }}>
-                <i className="ph-bold ph-clock safc" /> Reschedule delivery
-              </DialogTitle>
-            </DialogHeader>
+          <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+              <i className="ph-bold ph-clock safc" /> Reschedule delivery
+            </div>
             <div className="mt12">
               <div className="lab mb6">New date</div>
               <div className="inp">
@@ -569,38 +542,35 @@ export default function V2Subscriptions() {
               </button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* ------ Cancel confirmation (destructive) ------ */}
-      <AlertDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
-        <AlertDialogContent
-          style={{
-            background: "#121517",
-            border: "1px solid rgba(255,255,255,.13)",
-            color: "#E9ECEE",
-          }}
+      {cancelConfirmOpen && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setCancelConfirmOpen(false)}
         >
-          <div className="tnm2">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="tt" style={{ color: "#fff" }}>
-                Cancel this subscription?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="fine mt6">
-                All upcoming deliveries will be cancelled. Any prepaid credits
-                remain on your account and can be used for one-off orders. You can
-                re-subscribe at any time, but you'll lose your current delivery
-                window. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="btn btn-g" style={ACT}>
+          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="tt" style={{ color: "#fff" }}>
+              Cancel this subscription?
+            </div>
+            <div className="fine mt6">
+              All upcoming deliveries will be cancelled. Any prepaid credits
+              remain on your account and can be used for one-off orders. You can
+              re-subscribe at any time, but you'll lose your current delivery
+              window. This action cannot be undone.
+            </div>
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button className="btn btn-g" style={ACT} onClick={() => setCancelConfirmOpen(false)}>
                 Keep subscription
-              </AlertDialogCancel>
-              <AlertDialogAction
+              </button>
+              <button
                 className="btn"
                 style={{ ...ACT, background: "var(--dgr)", color: "#fff" }}
                 onClick={() => {
+                  setCancelConfirmOpen(false);
                   if (detail) {
                     void wrap(
                       subscriptionsApi.cancel(detail.subscription.id),
@@ -610,43 +580,36 @@ export default function V2Subscriptions() {
                 }}
               >
                 Yes, cancel subscription
-              </AlertDialogAction>
-            </AlertDialogFooter>
+              </button>
+            </div>
           </div>
-        </AlertDialogContent>
-      </AlertDialog>
+        </div>
+      )}
 
       {/* ------ Skip-delivery confirmation ------ */}
-      <AlertDialog
-        open={skipConfirm !== null}
-        onOpenChange={(open) => !open && setSkipConfirm(null)}
-      >
-        <AlertDialogContent
-          style={{
-            background: "#121517",
-            border: "1px solid rgba(255,255,255,.13)",
-            color: "#E9ECEE",
-          }}
+      {skipConfirm !== null && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setSkipConfirm(null)}
         >
-          <div className="tnm2">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="tt" style={{ color: "#fff" }}>
-                Skip this delivery?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="fine mt6">
-                {skipConfirm
-                  ? `We'll skip your ${new Date(skipConfirm.date).toLocaleDateString(
-                      "en-IN",
-                      { weekday: "long", day: "numeric", month: "short" },
-                    )} delivery and credit the value back to your wallet. The next delivery in your schedule is unaffected.`
-                  : ""}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="btn btn-g" style={ACT}>
+          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="tt" style={{ color: "#fff" }}>
+              Skip this delivery?
+            </div>
+            <div className="fine mt6">
+              {skipConfirm
+                ? `We'll skip your ${new Date(skipConfirm.date).toLocaleDateString(
+                    "en-IN",
+                    { weekday: "long", day: "numeric", month: "short" },
+                  )} delivery and credit the value back to your wallet. The next delivery in your schedule is unaffected.`
+                : ""}
+            </div>
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button className="btn btn-g" style={ACT} onClick={() => setSkipConfirm(null)}>
                 Keep delivery
-              </AlertDialogCancel>
-              <AlertDialogAction
+              </button>
+              <button
                 className="btn btn-p"
                 style={ACT}
                 onClick={() => {
@@ -660,11 +623,11 @@ export default function V2Subscriptions() {
                 }}
               >
                 Yes, skip
-              </AlertDialogAction>
-            </AlertDialogFooter>
+              </button>
+            </div>
           </div>
-        </AlertDialogContent>
-      </AlertDialog>
+        </div>
+      )}
     </Shell>
   );
 }
@@ -1089,24 +1052,24 @@ function SwapDialog({
       })
       .filter((x): x is SubscriptionItem => x !== null);
 
-  return (
-    <Dialog open={delivery !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        style={{
-          background: "#121517",
-          border: "1px solid rgba(255,255,255,.13)",
-          color: "#E9ECEE",
-          maxWidth: 512,
-        }}
-      >
-        <div className="tnm2">
-          <DialogHeader>
-            <DialogTitle className="tt fx ac gap8" style={{ color: "#fff" }}>
-              <i className="ph-bold ph-swap safc" /> Choose dishes for this delivery
-            </DialogTitle>
-          </DialogHeader>
+  if (delivery === null) return null;
 
-          <div className="fx ac gap12 mt12">
+  return (
+    <div
+      className="tnm2"
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={() => onClose()}
+    >
+      <div
+        className="card"
+        style={{ maxWidth: 512, width: "100%" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+          <i className="ph-bold ph-swap safc" /> Choose dishes for this delivery
+        </div>
+
+        <div className="fx ac gap12 mt12">
             <div className="inp f1">
               <i className="ph-bold ph-magnifying-glass" />
               <input
@@ -1260,8 +1223,7 @@ function SwapDialog({
               {saving ? "Saving…" : "Save delivery"}
             </button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
