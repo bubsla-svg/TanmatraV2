@@ -14,6 +14,7 @@ import { wellnessApi } from "@/lib/wellnessApi";
 import { isCancellable } from "@/lib/clinicalLifecycle";
 import { fulfillmentApi, type PackagingReturnRow } from "@/lib/fulfillmentApi";
 import SupportTicketDialog from "@/components/track/SupportTicketDialog";
+import { PostCheckoutWizard } from "@/components/onboarding/PostCheckoutWizard";
 
 const RiderMap = lazy(() => import("@/components/track/RiderMap"));
 
@@ -313,6 +314,11 @@ export default function V2Track() {
       </div>
 
       <SupportTicketDialog open={supportOpen} onOpenChange={setSupportOpen} orderDisplayId={order.orderId} orderServerId={order.serverOrderId} />
+
+      {/* Phase 3 — Post-Purchase Ingestion: optional profile capture on first
+          arrival after a successful payment. Fixed overlay (CLS 0.0), fully
+          dismissable, and reads only the arrival orderId — no payment coupling. */}
+      <PostCheckoutWizard orderId={orderIdParam} />
     </>
   );
 }

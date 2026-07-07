@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useMatches } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useMatches, useLocation } from "react-router";
 import type { LinksFunction, MetaFunction } from "react-router";
 import { API_BASE } from "@/lib/apiBase";
 import { Toaster } from "sonner";
@@ -11,6 +11,7 @@ import { ThemeProvider } from "next-themes";
 import { OrdersProvider } from "@/lib/ordersContext";
 import { PreferencesProvider } from "@/lib/preferencesContext";
 import OnboardingQuizGate from "@/components/preferences/OnboardingQuizGate";
+import SoftGate from "@/components/onboarding/SoftGate";
 import Header from "@/components/layout/Header";
 import WelcomeOfferBanner from "@/components/marketing/WelcomeOfferBanner";
 import Footer from "@/components/layout/Footer";
@@ -128,6 +129,12 @@ export default function Root() {
 
   const matches = useMatches();
   const hideChrome = matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false);
+  // The Phase 1 soft-gate is top-of-funnel: it must show on the (chrome-less v2)
+  // browse routes a new visitor lands on — home and menu — but never during a
+  // transaction (checkout/track) or on admin/auth routes. It cannot be gated on
+  // !hideChrome, because the whole v2 app is chrome-less.
+  const currentPath = useLocation().pathname;
+  const softGateRoute = currentPath === "/" || currentPath === "/menu";
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -204,6 +211,10 @@ export default function Root() {
                         {!hideChrome && <Header />}
                         {!hideChrome && <WelcomeOfferBanner />}
                         {!hideChrome && <OnboardingQuizGate />}
+                        {/* Phase 1 soft gate — first-touch, fixed overlay (no
+                            CLS). Shows on the home/menu browse routes (which are
+                            chrome-less v2), never during checkout/track. */}
+                        {softGateRoute && <SoftGate />}
                         {/* On chrome-less v2 routes the bottom nav is hidden, so drop
                             its pb-20 spacer — otherwise it paints a light band below
                             the dark .tnm2 content. */}

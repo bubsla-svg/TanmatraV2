@@ -3,6 +3,7 @@ import { useLocation } from "react-router";
 import { Sparkles, X } from "lucide-react";
 import IntakeQuiz from "./IntakeQuiz";
 import { usePreferences } from "@/lib/preferencesContext";
+import { isSoftGateResolved } from "@/components/onboarding/SoftGate";
 
 // Store the dismissal as a timestamp in localStorage rather than a flag
 // in sessionStorage, so dismissing once silences the banner for 7 days
@@ -55,6 +56,13 @@ export default function OnboardingQuizGate() {
       return;
     }
     if (isDismissed()) {
+      setBannerVisible(false);
+      return;
+    }
+    // Don't double up with the Phase 1 soft gate: while that first-touch
+    // gate is still unresolved (fresh visitor), keep this heavier-assessment
+    // banner suppressed so the two never pop at once.
+    if (!isSoftGateResolved()) {
       setBannerVisible(false);
       return;
     }

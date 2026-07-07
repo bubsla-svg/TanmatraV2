@@ -97,6 +97,28 @@
 .tnm2 .addb{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);height:30px;min-width:64px;padding:0 10px;border-radius:8px;background:var(--s3);border:1px solid var(--ln2);color:var(--safb);font-size:12px;font-weight:700;letter-spacing:.04em;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .tnm2 .addb.in{background:var(--saged);border-color:var(--sage);color:var(--sage)}
 .tnm2 .dtitle{font-size:15px;font-weight:600;line-height:1.3;margin:6px 0 4px}
+/* Phase 2 — Ambient Personalization Grid: biometric match badge + locked wearable teaser.
+   Badge is absolutely positioned (never affects layout); reason line + teaser use
+   fixed heights so no reflow occurs when preferences load or a wearable would sync. */
+.tnm2 .mscore{position:absolute;top:6px;left:6px;z-index:2;display:inline-flex;align-items:center;gap:4px;height:21px;max-width:calc(100% - 12px);padding:0 7px;border-radius:7px;background:rgba(10,12,13,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid var(--ln2);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;font-weight:600;line-height:1;letter-spacing:.01em;white-space:nowrap;color:var(--mut)}
+.tnm2 .mscore.hi{color:var(--sage);border-color:rgba(136,170,132,.55)}
+.tnm2 .mscore.mid{color:var(--safb);border-color:rgba(232,154,62,.55)}
+.tnm2 .mscore.low{color:var(--mut)}
+.tnm2 .mscore.off{color:var(--dgr);border-color:rgba(201,124,112,.5)}
+.tnm2 .preason{height:20px;margin-top:8px;overflow:hidden;font-size:11.5px;color:var(--mut);display:flex;align-items:center;gap:5px;line-height:1}
+.tnm2 .preason i{font-size:12px;color:var(--sage);flex:none}
+.tnm2 .preason .preason-cta{display:inline-flex;align-items:center;gap:5px;color:var(--safb);font-weight:500}
+.tnm2 .preason .preason-cta i{color:var(--safb)}
+.tnm2 .preason .preason-off{display:inline-flex;align-items:center;gap:5px;color:var(--dgr)}
+.tnm2 .preason .preason-off i{color:var(--dgr)}
+.tnm2 .wteaser{position:relative;display:flex;align-items:center;gap:10px;height:46px;margin-top:8px;padding:0 12px;border-radius:10px;border:1px dashed var(--ln2);background:var(--s2);overflow:hidden}
+.tnm2 .wteaser .spark{position:absolute;inset:0;opacity:.16;filter:blur(1.4px);pointer-events:none}
+.tnm2 .wteaser .spark svg{display:block;width:100%;height:100%}
+.tnm2 .wteaser .wlock{z-index:1;flex:none;width:26px;height:26px;border-radius:7px;background:var(--s3);border:1px solid var(--ln2);display:flex;align-items:center;justify-content:center;color:var(--fnt);font-size:12px}
+.tnm2 .wteaser .wtxt{z-index:1;flex:1;min-width:0}
+.tnm2 .wteaser .wtxt .wlab{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--fnt)}
+.tnm2 .wteaser .wtxt .wcta{display:block;margin-top:2px;font-size:11px;line-height:1.25;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tnm2 .wteaser .wcar{z-index:1;flex:none;color:var(--fnt);font-size:13px}
 .tnm2 .hrail{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 8px;scrollbar-width:none}
 .tnm2 .hcard{width:152px;flex:none;background:var(--s1);border:1px solid var(--ln);border-radius:12px;overflow:hidden}
 .tnm2 .himg{height:88px}
