@@ -1,5 +1,5 @@
 import { type MetaFunction } from "react-router";
-import V2Protocol from "@/tanmatra-v2/Protocol";
+import V2Wellness from "@/tanmatra-v2/Wellness";
 
 export const meta: MetaFunction = () => [
   { title: "Wellness Protocol | Tanmatra" },
@@ -12,5 +12,5 @@ export const meta: MetaFunction = () => [
 export const handle = { chrome: false };
 
 export default function Wellness() {
-  return <V2Protocol which="wellness" />;
+  return <V2Wellness />;
 }
