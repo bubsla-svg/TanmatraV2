@@ -22,6 +22,10 @@ import { sweepExpiredIdempotencyKeys } from "./middlewares/idempotency";
 import { sweepOrphanSlotReservations } from "./routes/fulfillment";
 import { drainOpsAuditOutbox } from "./lib/opsAudit";
 import { pool, overridePool } from "@workspace/db";
+import { validateEnv } from "./lib/validateEnv";
+
+// Fail-fast on missing critical env + warn on degraded config before binding.
+validateEnv();
 
 const rawPort = process.env["PORT"];
 let port = 8080;

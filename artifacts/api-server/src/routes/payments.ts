@@ -1,8 +1,9 @@
 import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, webhookInboxTable } from "@workspace/db";
+import { db, ordersTable, webhookInboxTable, usersTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
+import { isPetpoojaEnabled, pushOrderToPetpooja } from "../lib/petpoojaClient";
 
 const router: IRouter = Router();
 
@@ -176,6 +177,38 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
   }
 
   res.json({ ok: true, orderId, status: "preparing" });
+
+  // Outbound: push the paid order to Petpooja's POS so the kitchen receives it.
+  // Fire-and-forget AFTER responding — a POS hiccup must never fail or delay a
+  // customer's checkout. No-op when PETPOOJA_* is unconfigured.
+  if (isPetpoojaEnabled()) {
+    void (async () => {
+      try {
+        const [order] = await db
+          .select()
+          .from(ordersTable)
+          .where(eq(ordersTable.externalOrderId, orderId))
+          .limit(1);
+        if (!order) return;
+        let customer: { name?: string | null; email?: string | null } = {};
+        if (order.userId) {
+          const [u] = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.id, order.userId))
+            .limit(1);
+          if (u) {
+            const anyU = u as Record<string, any>;
+            const name = [anyU.firstName, anyU.lastName].filter(Boolean).join(" ").trim();
+            customer = { name: name || anyU.name || null, email: anyU.email ?? null };
+          }
+        }
+        await pushOrderToPetpooja(order, customer, req.log);
+      } catch (err) {
+        req.log.error({ err, orderId }, "petpooja outbound push errored (non-fatal)");
+      }
+    })();
+  }
 });
 
 // ---------------------------------------------------------------------------

@@ -3,10 +3,17 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
 import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload, type PetpoojaRiderInfoPayload } from "../lib/petpooja";
+import { petpoojaAuthOk, getStoreStatus, setStoreStatus } from "../lib/petpoojaClient";
 
 const router = Router();
 
+// 401 response in Petpooja's expected envelope.
+function unauthorized(res: Response) {
+  res.status(401).json({ success: "0", message: "unauthorized: invalid Petpooja credentials" });
+}
+
 router.post("/integrations/petpooja/push-menu", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const payload = req.body as PetpoojaPushMenuPayload;
 
   if (!payload || !payload.items || !Array.isArray(payload.items)) {
@@ -86,6 +93,7 @@ router.post("/integrations/petpooja/fetchmenu", async (req: Request, res: Respon
 });
 
 router.post("/integrations/petpooja/saveorder", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
   const payload = req.body as PetpoojaSaveOrderPayload;
 
   if (!payload || !payload.orderinfo || !payload.orderinfo.OrderInfo) {
@@ -130,6 +138,7 @@ router.post("/integrations/petpooja/saveorder", async (req: Request, res: Respon
 });
 
 router.post("/integrations/petpooja/callback", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const payload = req.body as PetpoojaCallbackPayload;
 
   if (!payload || !payload.orderID || !payload.status) {
@@ -203,6 +212,7 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
 });
 
 router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
   const payload = req.body as PetpoojaUpdateOrderStatusPayload;
 
   if (!payload || !payload.clientorderID || !payload.status) {
@@ -278,6 +288,7 @@ router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Resp
 });
 
 router.post("/integrations/petpooja/rider-info", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
   const payload = req.body as PetpoojaRiderInfoPayload;
 
   if (!payload || !payload.order_id || !payload.status) {
@@ -368,6 +379,7 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
 });
 
 router.post("/integrations/petpooja/item_stock", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const { type, inStock, itemID, restID } = req.body;
 
   if (type === undefined || inStock === undefined || !itemID || !Array.isArray(itemID)) {
@@ -410,6 +422,7 @@ router.post("/integrations/petpooja/item_stock", async (req: Request, res: Respo
 });
 
 router.post("/integrations/petpooja/item_stock_off", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const { type, inStock, itemID, restID, autoTurnOnTime, customTurnOnTime } = req.body;
 
   if (type === undefined || inStock === undefined || !itemID || !Array.isArray(itemID)) {
@@ -464,15 +477,17 @@ router.post("/integrations/petpooja/get_store_status", async (req: Request, res:
 
   req.log?.info({ restID }, "received petpooja get_store_status request");
 
+  const current = getStoreStatus();
   res.status(200).json({
     http_code: 200,
     status: "success",
-    store_status: "1",
+    store_status: current.status,
     message: "Store Delivery Status fetched successfully",
   });
 });
 
 router.post("/integrations/petpooja/update_store_status", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const { restID, store_status, turn_on_time, reason } = req.body;
 
   if (!restID || store_status === undefined || !turn_on_time) {
@@ -485,6 +500,10 @@ router.post("/integrations/petpooja/update_store_status", async (req: Request, r
       { restID, store_status, turn_on_time, reason },
       "received petpooja update_store_status webhook request"
     );
+
+    // Persist so get_store_status reflects the latest (in-instance; see
+    // setStoreStatus note re: multi-instance durability).
+    setStoreStatus(String(store_status) === "1" ? "1" : "0", turn_on_time ?? null, reason ?? null);
 
     res.status(200).json({
       http_code: 200,
