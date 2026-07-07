@@ -5,11 +5,14 @@ import { useBundles, groupOrdersApi } from "@/lib/queries";
 import {
   CATEGORY_LABELS,
   getDishById,
+  macrosAreProvisional,
   useMenuCatalog,
   type DishCategory,
   type DishKitchen,
   type DishData,
 } from "@/lib/menuData";
+import type { UserPreferences } from "@/lib/preferencesApi";
+import type { DishMatchResult } from "@/lib/preferencesMatch";
 import {
   LIFESTYLE_LABELS,
   LIFESTYLE_TAGS,
@@ -64,6 +67,92 @@ const QUICK_FILTERS = [
   { value: "kapha", label: "Kapha Dosha" },
 ];
 const PAGE_SIZE = 24;
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Phase 2 — Ambient Personalization Grid
+ *
+ * A REAL "Biometric Match Score" derived purely from `evaluateDishForPreferences`.
+ * No randomness: the score is a deterministic function of the preference-fit
+ * signals (allergen/diet block, disliked ingredients, cuisine fit, and the
+ * positive goal reasons the evaluator already surfaced).
+ *
+ * Honesty guardrails:
+ *  - Blocked dishes never get a flattering number — they read "Off-plan".
+ *  - When a dish's macros are PROVISIONAL (macrosAreProvisional), the score is
+ *    built ONLY from non-macro signals (goal/cuisine/diet/allergen fit) so it
+ *    never implies macro precision we don't actually have. The reason phrase
+ *    stays general ("for your goal"), never "macro-calibrated".
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** Reasons/warnings whose text is derived from macro numbers (kcal/protein/carbs). */
+const MACRO_TEXT_RE = /kcal|calorie|carb|protein|sugar|fat\b/i;
+
+type MatchTier = "hi" | "mid" | "low";
+export type MatchScore =
+  | { kind: "none" }
+  | { kind: "blocked" }
+  | { kind: "scored"; score: number; tier: MatchTier; phrase: string | null };
+
+/** A short, general reason phrase tied to real preferences — never macro-precise. */
+function goalPhrase(prefs: UserPreferences | null): string | null {
+  if (!prefs) return null;
+  const conds = (prefs.medicalConditions ?? []).map((c) => c.toLowerCase());
+  if (conds.includes("diabetes")) return "for blood-sugar stability";
+  if (conds.includes("hypertension") || conds.includes("high_blood_pressure") || conds.includes("high blood pressure"))
+    return "for blood-pressure balance";
+  switch (prefs.goal) {
+    case "lose_weight": return "for your weight goal";
+    case "gain_muscle": return "for muscle gain";
+    case "maintain": return "to keep you balanced";
+    case "general_wellness": return "for balanced wellness";
+    default: return null;
+  }
+}
+
+/**
+ * Map a real DishMatchResult to a 0-100-ish match score.
+ * Pure + deterministic. `provisional` drops all macro-derived signals so the
+ * number can't imply precision the catalog hasn't verified yet.
+ */
+export function computeMatchScore(
+  match: DishMatchResult | undefined,
+  prefs: UserPreferences | null,
+  provisional: boolean,
+): MatchScore {
+  if (!prefs) return { kind: "none" };
+  if (!match || match.blocked) return { kind: "blocked" };
+
+  // Positive fit — split the evaluator's reasons into macro vs non-macro.
+  const reasons: string[] = match.reasons ?? [];
+  const nonMacroReasons = reasons.filter((r: string) => !MACRO_TEXT_RE.test(r)).length;
+  const macroReasons = reasons.length - nonMacroReasons;
+
+  // Warnings for a non-blocked dish are either the single "dislikes" summary
+  // or macro cautions (heavy kcal, light protein, keto carb cap).
+  const warnings = match.warnings ?? [];
+  const dislikeHits = match.matchedDislikes?.length ?? 0;
+  const dislikeWarnings = dislikeHits > 0 ? 1 : 0;
+  const macroWarnings = Math.max(0, warnings.length - dislikeWarnings);
+
+  let score = 76;
+  score += nonMacroReasons * 10;
+  score -= dislikeHits * 10;
+  if (!match.cuisineMatch) score -= 8; // cuisines set but this dish isn't on the list
+  if (!provisional) {
+    score += macroReasons * 10;
+    score -= macroWarnings * 11;
+  }
+
+  score = Math.max(46, Math.min(99, Math.round(score)));
+  const tier: MatchTier = score >= 82 ? "hi" : score >= 64 ? "mid" : "low";
+  const hasFit = reasons.length > 0 || score >= 78;
+  const phrase = hasFit ? goalPhrase(prefs) : null;
+  return { kind: "scored", score, tier, phrase };
+}
+
+/** Static, honest glucose-curve placeholder — NOT live data. Purely decorative. */
+const SPARK_PATH =
+  "M0 30 L14 26 L28 31 L42 20 L56 24 L70 14 L84 22 L98 12 L112 19 L126 10 L140 17 L154 9 L168 15 L182 8 L200 13";
 
 export default function V2Menu() {
   const { isPremium } = usePremiumStatus();
@@ -536,6 +625,7 @@ export default function V2Menu() {
               {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }) => {
                 const rep = filtered.find((f: any) => f.dish.id === parent.id)!.dish;
                 const price = parent.variants[0].price;
+                const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
                 return (
                   <DishCard
                     key={parent.id}
@@ -543,6 +633,7 @@ export default function V2Menu() {
                     name={parent.name}
                     price={price}
                     match={match}
+                    scoreInfo={scoreInfo}
                     hasVariants={hasVariants}
                     isPremiumOnly={premiumSlugs.has(parent.slug)}
                     isPremium={isPremium}
@@ -645,13 +736,14 @@ function FilterRail({ label, children }: { label: string; children: any }) {
   );
 }
 
-function DishCard({ dish, name, price, match, hasVariants, isPremiumOnly, isPremium, lifestyleTag, canExpress, onAdd, onExpress, onPremiumGate }: any) {
+function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumOnly, isPremium, lifestyleTag, canExpress, onAdd, onExpress, onPremiumGate }: any) {
   const isVeg = !!dish.isVeg;
   const gi = dish.glycaemicIndex || "medium";
   const giCls = gi === "low" ? "gi gi-low" : "gi gi-med";
   const giLabel = gi === "low" ? "GI LOW" : gi === "high" ? "GI HIGH" : "GI MED";
   const blocked = match?.blocked;
   const warned = match?.warnings?.length > 0;
+  const info: MatchScore = scoreInfo ?? { kind: "none" };
   return (
     <div className="dcard" style={blocked ? { opacity: 0.6 } : undefined}>
       <div className="fx gap12">
@@ -668,6 +760,14 @@ function DishCard({ dish, name, price, match, hasVariants, isPremiumOnly, isPrem
           {warned && !blocked && <div className="fine mt6" style={{ color: "var(--dgr)" }}><i className="ph-bold ph-warning" /> {match.warnings[0]}</div>}
         </div>
         <Link to={`/dish/${dish.slug}`} className="dimg" style={{ backgroundImage: `url(${dish.image})`, backgroundSize: "cover", backgroundPosition: "center" }} aria-label={name}>
+          {info.kind === "scored" && (
+            <span className={`mscore ${info.tier}`} aria-label={`Biometric match ${info.score} percent`}>
+              {info.score}% match
+            </span>
+          )}
+          {info.kind === "blocked" && (
+            <span className="mscore off" aria-label="Off your plan"><i className="ph-bold ph-prohibit" />Off-plan</span>
+          )}
           <button
             className="addb"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (isPremiumOnly && !isPremium) { onPremiumGate(); return; } onAdd(); }}
@@ -683,6 +783,39 @@ function DishCard({ dish, name, price, match, hasVariants, isPremiumOnly, isPrem
         <div className="rc"><span className="rl">CARBS</span><span className="rv">{dish.macros.carbs}<i className="ru">g</i></span></div>
         <div className="rc"><span className="rl">FAT</span><span className="rv">{dish.macros.fat}<i className="ru">g</i></span></div>
       </div>
+
+      {/* Reserved-height personalization line — constant height in every state
+          so nothing reflows when preferences load in. */}
+      <div className="preason">
+        {info.kind === "none" && (
+          <Link to="/preferences" className="preason-cta" aria-label="Personalize to unlock your biometric match score">
+            <i className="ph-bold ph-sparkle" />Personalize to see your match score
+          </Link>
+        )}
+        {info.kind === "blocked" && (
+          <span className="preason-off"><i className="ph-bold ph-info" />Not recommended for your profile</span>
+        )}
+        {info.kind === "scored" && info.phrase && (
+          <span><i className="ph-fill ph-seal-check" />Great match {info.phrase}</span>
+        )}
+      </div>
+
+      {/* Aspirational LOCKED wearable teaser — a stylized placeholder, clearly
+          locked. Never real live data. Fixed height (reserved) → zero CLS. */}
+      <Link to="/wellness" className="wteaser" aria-label="Connect your wearable to map your live data stream to this meal">
+        <span className="spark" aria-hidden="true">
+          <svg viewBox="0 0 200 44" preserveAspectRatio="none">
+            <path className="sparkline" d={SPARK_PATH} fill="none" stroke="var(--safb)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="wlock" aria-hidden="true"><i className="ph-fill ph-lock-simple" /></span>
+        <span className="wtxt">
+          <span className="wlab"><i className="ph-bold ph-pulse" />Live glucose forecast · Locked</span>
+          <span className="wcta">Connect your wearable to map your live data stream to this meal.</span>
+        </span>
+        <i className="ph-bold ph-caret-right wcar" aria-hidden="true" />
+      </Link>
+
       {canExpress && (
         <button className="fine mt6" style={{ color: "var(--safb)" }} onClick={onExpress}>Buy now — express checkout →</button>
       )}

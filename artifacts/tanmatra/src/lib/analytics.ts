@@ -18,7 +18,13 @@ type EventName =
   | "first_order_offer_shown"
   | "first_order_offer_applied"
   | "subscription_activated"
-  | "support_click";
+  | "support_click"
+  | "softgate_start"
+  | "softgate_complete"
+  | "softgate_skip"
+  | "post_checkout_wizard_shown"
+  | "post_checkout_wizard_completed"
+  | "post_checkout_wizard_skipped";
 
 export function track(event: EventName, props?: Record<string, unknown>): void {
   if (import.meta.env.DEV) {
