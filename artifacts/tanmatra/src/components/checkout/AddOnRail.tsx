@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Minus, Sparkles, Crown } from "lucide-react";
 import { addonsApi, type Addon } from "@/lib/marketplaceApi";
 import { formatPrice } from "@/lib/api/adapter";
@@ -29,11 +27,9 @@ export default function AddOnRail({ cartTags, selected, onChange }: Props) {
 
   if (q.isLoading) {
     return (
-      <Card className="bg-clinical-surface border-clinical-border">
-        <CardContent className="p-4 text-xs text-clinical-zinc">
-          Loading add-ons…
-        </CardContent>
-      </Card>
+      <div className="card" style={{ padding: 16 }}>
+        <div className="fine" style={{ color: "var(--mut)" }}>Loading add-ons…</div>
+      </div>
     );
   }
   const addons = q.data?.addons ?? [];
@@ -45,34 +41,32 @@ export default function AddOnRail({ cartTags, selected, onChange }: Props) {
   }, 0);
 
   return (
-    <Card className="bg-clinical-surface border-clinical-border">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-clinical-gold" />
-            Add a little extra
-          </h2>
-          {totalPaise > 0 && (
-            <span className="text-[11px] text-clinical-gold tabular-nums">
-              +{formatPrice(totalPaise)}
-            </span>
-          )}
-        </div>
-        <p className="text-[11px] text-clinical-zinc">
-          RD-curated drinks, snacks &amp; supplements that pair with your meal.
-        </p>
-        <div className="flex gap-3 overflow-x-auto -mx-1 px-1 pb-1">
-          {addons.map((a) => (
-            <AddonTile
-              key={a.id}
-              addon={a}
-              qty={selected.get(a.id) ?? 0}
-              onQty={(qty) => setQty(a.id, qty)}
-            />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="card" style={{ padding: 18 }}>
+      <div className="flex items-center justify-between">
+        <h2 className="tt flex items-center gap-2" style={{ color: "var(--tx)" }}>
+          <Sparkles className="w-4 h-4" style={{ color: "var(--saf)" }} />
+          Add a little extra
+        </h2>
+        {totalPaise > 0 && (
+          <span className="mono" style={{ color: "var(--safb)", fontSize: 11 }}>
+            +{formatPrice(totalPaise)}
+          </span>
+        )}
+      </div>
+      <p className="fine mt6" style={{ color: "var(--mut)" }}>
+        RD-curated drinks, snacks &amp; supplements that pair with your meal.
+      </p>
+      <div className="flex gap-3 overflow-x-auto -mx-1 px-1 pb-1 mt12">
+        {addons.map((a) => (
+          <AddonTile
+            key={a.id}
+            addon={a}
+            qty={selected.get(a.id) ?? 0}
+            onQty={(qty) => setQty(a.id, qty)}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -86,8 +80,11 @@ function AddonTile({
   onQty: (qty: number) => void;
 }) {
   return (
-    <div className="w-44 shrink-0 rounded-lg border border-clinical-border bg-[#0b0b0b] overflow-hidden">
-      <div className="relative h-24 bg-clinical-surface-elevated">
+    <div
+      className="w-44 shrink-0 overflow-hidden"
+      style={{ borderRadius: 12, border: "1px solid var(--ln2)", background: "var(--s1)" }}
+    >
+      <div className="relative h-24" style={{ background: "var(--s3)" }}>
         {addon.image && (
           <img
             src={addon.image}
@@ -97,27 +94,30 @@ function AddonTile({
           />
         )}
         {addon.premiumOnly && (
-          <Badge className="absolute top-1.5 left-1.5 bg-clinical-gold text-[#050505] border-0 text-[9px] font-bold flex items-center gap-1">
+          <span
+            className="pill absolute top-1.5 left-1.5 flex items-center gap-1"
+            style={{ background: "var(--saf)", color: "var(--onsaf)", fontSize: 9, fontWeight: 700 }}
+          >
             <Crown className="w-2.5 h-2.5" /> PREMIUM
-          </Badge>
+          </span>
         )}
         {addon.rdVerified && !addon.premiumOnly && (
-          <Badge className="absolute top-1.5 left-1.5 bg-clinical-sage/90 text-[#050505] border-0 text-[9px]">
+          <span className="pill absolute top-1.5 left-1.5" style={{ fontSize: 9 }}>
             RD
-          </Badge>
+          </span>
         )}
       </div>
       <div className="p-2.5 space-y-1.5">
-        <p className="text-[11px] text-white font-medium leading-snug line-clamp-2 h-8">
+        <p className="text-[11px] font-medium leading-snug line-clamp-2 h-8" style={{ color: "var(--tx)" }}>
           {addon.name}
         </p>
         {addon.macros && (
-          <p className="text-[9px] text-clinical-zinc">
+          <p className="text-[9px]" style={{ color: "var(--mut)" }}>
             {addon.macros.kcal} kcal · {addon.macros.proteinG}g protein
           </p>
         )}
         <div className="flex items-center justify-between pt-1">
-          <span className="text-[11px] text-clinical-gold tabular-nums">
+          <span className="mono" style={{ color: "var(--safb)", fontSize: 11 }}>
             {formatPrice(addon.pricePaise)}
           </span>
           {qty === 0 ? (
@@ -125,7 +125,8 @@ function AddonTile({
               type="button"
               onClick={() => onQty(1)}
               aria-label={`Add ${addon.name}`}
-              className="min-w-11 min-h-9 px-3 rounded text-[10px] font-semibold bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90"
+              className="btn btn-p"
+              style={{ minWidth: 44, minHeight: 36, padding: "0 12px", fontSize: 10, fontWeight: 700 }}
             >
               ADD
             </button>
@@ -135,18 +136,19 @@ function AddonTile({
                 type="button"
                 onClick={() => onQty(qty - 1)}
                 aria-label="Decrease quantity"
-                className="w-9 h-9 rounded bg-clinical-surface-elevated text-white flex items-center justify-center hover:bg-clinical-slate/60 active:scale-95 transition-transform"
+                className="qbtn"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[11px] text-white tabular-nums w-5 text-center">
+              <span className="mono w-5 text-center" style={{ color: "var(--tx)", fontSize: 11 }}>
                 {qty}
               </span>
               <button
                 type="button"
                 onClick={() => onQty(qty + 1)}
                 aria-label="Increase quantity"
-                className="w-9 h-9 rounded bg-clinical-gold text-[#050505] flex items-center justify-center hover:bg-clinical-gold/90 active:scale-95 transition-transform"
+                className="qbtn"
+                style={{ background: "var(--saf)", color: "var(--onsaf)" }}
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>

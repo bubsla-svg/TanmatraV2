@@ -28,11 +28,12 @@ export default function CheckoutStepper({
   };
 
   return (
-    <div className="rounded-xl border border-clinical-border bg-clinical-surface p-4">
+    <div className="card" style={{ padding: 14 }}>
       <div className="flex items-center justify-between gap-3">
         {STEPS.map((step, i) => {
           const active = step.id === current;
           const done = completion[step.id] && !active;
+          const accent = active || done;
           return (
             <div key={step.id} className="flex items-center gap-3 flex-1 min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
@@ -40,53 +41,42 @@ export default function CheckoutStepper({
                   initial={false}
                   animate={{
                     backgroundColor: done
-                      ? "rgba(154,176,143,0.15)"
+                      ? "var(--saf)"
                       : active
-                        ? "rgba(212,175,55,0.15)"
-                        : "rgba(45,45,45,0.4)",
-                    borderColor: done
-                      ? "rgba(154,176,143,0.5)"
-                      : active
-                        ? "rgba(212,175,55,0.6)"
-                        : "rgba(64,64,64,0.4)",
+                        ? "var(--safd)"
+                        : "var(--s3)",
+                    borderColor: accent ? "var(--saf)" : "var(--ln2)",
                   }}
                   transition={{ duration: 0.25 }}
                   className="w-7 h-7 rounded-full border flex items-center justify-center shrink-0"
                   aria-current={active ? "step" : undefined}
                 >
                   {done ? (
-                    <Check className="w-3.5 h-3.5 text-clinical-sage" />
+                    <Check className="w-3.5 h-3.5" style={{ color: "var(--onsaf)" }} />
                   ) : (
                     <span
-                      className={`text-[11px] font-bold tabular-nums ${
-                        active ? "text-clinical-gold" : "text-clinical-zinc"
-                      }`}
+                      className="text-[11px] font-bold tabular-nums"
+                      style={{ color: active ? "var(--safb)" : "var(--mut)" }}
                     >
                       {step.index}
                     </span>
                   )}
                 </motion.div>
                 <span
-                  className={`text-[11px] uppercase tracking-[0.12em] font-semibold truncate ${
-                    active
-                      ? "text-clinical-gold"
-                      : done
-                        ? "text-clinical-sage"
-                        : "text-clinical-zinc"
-                  }`}
+                  className="text-[11px] uppercase tracking-[0.12em] font-semibold truncate"
+                  style={{ color: accent ? "var(--safb)" : "var(--mut)" }}
                 >
                   {step.label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className="relative flex-1 h-px bg-clinical-surface-elevated overflow-hidden">
+                <div className="relative flex-1 h-px overflow-hidden" style={{ background: "var(--ln2)" }}>
                   <motion.div
                     initial={false}
-                    animate={{
-                      width: i < currentIdx ? "100%" : "0%",
-                    }}
+                    animate={{ width: i < currentIdx ? "100%" : "0%" }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="absolute inset-y-0 left-0 bg-clinical-gold/60"
+                    className="absolute inset-y-0 left-0"
+                    style={{ background: "var(--saf)" }}
                   />
                 </div>
               )}
