@@ -46,6 +46,7 @@ import paymentsRouter from "./payments";
 import vitalsRouter from "./vitals";
 import complianceRouter from "./compliance";
 import petpoojaRouter from "./petpooja";
+import wearableRouter from "./wearable";
 
 const router: IRouter = Router();
 
@@ -96,5 +97,6 @@ router.use(paymentsRouter);
 router.use(vitalsRouter);
 router.use(complianceRouter);
 router.use(petpoojaRouter);
+router.use(wearableRouter);
 
 export default router;

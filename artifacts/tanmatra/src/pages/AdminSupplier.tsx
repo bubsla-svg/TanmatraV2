@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { API_BASE } from "@/lib/apiBase";
-import { AlertTriangle, CheckCircle2, QrCode, ClipboardList, PackagePlus } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Barcode, ClipboardList, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 
 const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
@@ -119,8 +119,7 @@ export default function AdminSupplier() {
           "x-admin-token": token,
         },
         body: JSON.stringify({
-          product: activeBarcode.product,
-          quantity: activeBarcode.quantity,
+          barcodeToken: activeBarcode.barcodeToken,
         }),
       });
 
@@ -264,7 +263,7 @@ export default function AdminSupplier() {
             <Card className="bg-clinical-surface border-clinical-sage border-2">
               <CardHeader className="bg-clinical-sage/5 border-b border-clinical-sage/20 py-3 px-4 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-white flex items-center gap-1.5">
-                  <QrCode className="w-4 h-4 text-clinical-sage" />
+                  <Barcode className="w-4 h-4 text-clinical-sage" />
                   Active Physical Crate Barcode
                 </CardTitle>
                 <Badge variant="outline" className="border-clinical-sage/30 text-clinical-sage text-[9px] uppercase">
@@ -272,16 +271,19 @@ export default function AdminSupplier() {
                 </Badge>
               </CardHeader>
               <CardContent className="p-5 space-y-4">
-                <div className="flex items-center justify-center p-4 bg-white rounded-lg border-2 border-dashed border-clinical-sage">
-                  {/* Mock Scannable Code Display */}
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-32 h-32 bg-clinical-dark flex items-center justify-center rounded border">
-                      <QrCode className="w-20 h-20 text-white" />
-                    </div>
-                    <span className="text-[10px] font-mono text-clinical-dark font-bold tracking-widest mt-1">
-                      {activeBarcode.barcodeToken}
-                    </span>
-                  </div>
+                <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-lg border-2 border-dashed border-clinical-sage">
+                  {/* Persisted crate barcode token. No QR renderer is bundled,
+                      so we show the real token clerks type/scan rather than a
+                      decorative code that encodes nothing. */}
+                  <span className="text-[9px] uppercase tracking-wider text-clinical-dark/60 font-semibold">
+                    Scannable Crate Barcode Token
+                  </span>
+                  <span className="text-sm font-mono text-clinical-dark font-bold tracking-widest break-all text-center select-all px-2">
+                    {activeBarcode.barcodeToken}
+                  </span>
+                  <span className="text-[9px] text-clinical-dark/50">
+                    Enter this token at the receiving scanner to verify intake.
+                  </span>
                 </div>
 
                 <div className="text-[11px] text-clinical-zinc leading-relaxed space-y-1 bg-clinical-dark/30 p-3 rounded">
@@ -318,7 +320,7 @@ export default function AdminSupplier() {
           ) : (
             <Card className="border-dashed border-clinical-border bg-clinical-surface/50">
               <CardContent className="p-12 text-center text-clinical-zinc flex flex-col items-center gap-2">
-                <QrCode className="w-10 h-10 text-clinical-border" />
+                <Barcode className="w-10 h-10 text-clinical-border" />
                 <p className="text-xs">Awaiting delivery batch entry from the supplier portal.</p>
               </CardContent>
             </Card>

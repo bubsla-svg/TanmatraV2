@@ -46,6 +46,29 @@ export function validateEnv(): void {
     );
   }
 
+  // Wearables (Terra/Vital aggregator): warn if partially configured. The
+  // integration stays inert until the minimum set (provider + api key + signing
+  // secret) is present.
+  const wearableProvider = (process.env["WEARABLE_PROVIDER"] || "").trim();
+  const wearableApiKey =
+    process.env["TERRA_API_KEY"] || process.env["WEARABLE_API_KEY"];
+  const wearableSigningSecret =
+    process.env["TERRA_SIGNING_SECRET"] || process.env["WEARABLE_SIGNING_SECRET"];
+  const wearableParts = [
+    ["WEARABLE_PROVIDER", wearableProvider],
+    ["TERRA_API_KEY/WEARABLE_API_KEY", wearableApiKey],
+    ["TERRA_SIGNING_SECRET/WEARABLE_SIGNING_SECRET", wearableSigningSecret],
+  ] as const;
+  const wearableSet = wearableParts.filter(([, v]) => v);
+  const wearableConfigured = wearableSet.length === wearableParts.length;
+  if (wearableSet.length > 0 && !wearableConfigured) {
+    warnings.push(
+      `Wearables (Terra/Vital) is partially configured (${wearableSet.length}/${wearableParts.length}) — integration stays OFF until all of ${wearableParts
+        .map(([k]) => k)
+        .join(", ")} are set`,
+    );
+  }
+
   for (const w of warnings) logger.warn({ env: true }, w);
 
   if (missingRequired.length > 0) {
@@ -54,7 +77,11 @@ export function validateEnv(): void {
   }
 
   logger.info(
-    { petpooja: petpoojaConfigured ? "configured" : "off", warnings: warnings.length },
+    {
+      petpooja: petpoojaConfigured ? "configured" : "off",
+      wearables: wearableConfigured ? "configured" : "off",
+      warnings: warnings.length,
+    },
     "environment validated",
   );
 }

@@ -8,6 +8,7 @@ import {
   recipeIngredientsTable,
   ordersTable,
   kitchenStockTable,
+  supplierBatchesTable,
 } from "@workspace/db";
 import { asc, eq, ilike, or, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -21,6 +22,7 @@ import {
 } from "../lib/anomalies";
 import { sendDailyDigest } from "../lib/anomalyDigestSender";
 import { requireOps as gateRequireOps } from "../lib/adminGate";
+import { sendDeliveryDelaySms } from "../lib/sms";
 
 const router: IRouter = Router();
 
@@ -242,26 +244,71 @@ router.post("/supplier/deliver", async (req: Request, res: Response) => {
     return;
   }
   const { product, farmOrigin, harvestDate, batchCode, quantity } = parsed.data;
-  // Generate a simulated scannable barcode token
+  // Generate a scannable barcode token that uniquely identifies this crate.
   const barcodeToken = `BARCODE-${product.toUpperCase().slice(0, 3)}-${Date.now()}`;
+
+  // Persist the delivery batch so the ISO audit trail (farm origin, harvest
+  // date, batch code) is durable rather than echoed back and dropped.
+  const [batch] = await db
+    .insert(supplierBatchesTable)
+    .values({
+      product,
+      farmOrigin,
+      harvestDate,
+      batchCode,
+      quantity,
+      barcodeToken,
+      status: "delivered",
+    })
+    .returning();
+
   res.json({
     ok: true,
+    id: batch.id,
     barcodeToken,
     product,
     farmOrigin,
     harvestDate,
     batchCode,
     quantity,
+    status: batch.status,
   });
+});
+
+const intakeSchema = z.object({
+  barcodeToken: z.string().min(1),
 });
 
 router.post("/supplier/intake", async (req: Request, res: Response) => {
   if (!requireOps(req, res)) return;
-  const { product, quantity } = req.body;
-  if (!product || !quantity) {
-    res.status(400).json({ error: "missing product or quantity" });
+  const parsed = intakeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res
+      .status(400)
+      .json({ error: "missing barcodeToken", issues: parsed.error.issues });
     return;
   }
+  const { barcodeToken } = parsed.data;
+
+  // Resolve the crate by its scanned token so the traceability fields
+  // (farm origin, harvest date, batch code) captured at delivery are
+  // preserved and linked to this intake rather than dropped.
+  const batches = await db
+    .select()
+    .from(supplierBatchesTable)
+    .where(eq(supplierBatchesTable.barcodeToken, barcodeToken))
+    .limit(1);
+
+  if (batches.length === 0) {
+    res
+      .status(404)
+      .json({ error: `barcode not recognised: ${barcodeToken}` });
+    return;
+  }
+
+  const batch = batches[0];
+  const product = batch.product;
+  const quantity = batch.quantity;
 
   // Find inventory item matching this product (e.g. Spinach)
   const items = await db
@@ -269,7 +316,7 @@ router.post("/supplier/intake", async (req: Request, res: Response) => {
     .from(inventoryItemsTable)
     .where(ilike(inventoryItemsTable.product, `%${product}%`))
     .limit(1);
-  
+
   if (items.length === 0) {
     res.status(404).json({ error: `inventory item not found: ${product}` });
     return;
@@ -304,7 +351,27 @@ router.post("/supplier/intake", async (req: Request, res: Response) => {
       .where(eq(kitchenStockTable.id, stocks[0].id));
   }
 
-  res.json({ ok: true, product, added: quantity });
+  // Link intake back to the traceability record: mark the crate received.
+  const [received] = await db
+    .update(supplierBatchesTable)
+    .set({ status: "received", receivedAt: new Date() })
+    .where(eq(supplierBatchesTable.id, batch.id))
+    .returning();
+
+  res.json({
+    ok: true,
+    product,
+    added: quantity,
+    barcodeToken,
+    batch: {
+      id: received.id,
+      status: received.status,
+      receivedAt: received.receivedAt,
+      farmOrigin: received.farmOrigin,
+      harvestDate: received.harvestDate,
+      batchCode: received.batchCode,
+    },
+  });
 });
 
 router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response) => {
@@ -319,8 +386,25 @@ router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response
     .set({ createdAt: delayedTime })
     .where(eq(ordersTable.id, orderId));
 
-  // Log CRM SMS notification to console
-  logger.info(`[CRM SMS SENT] Delay Alert for Order #${orderId}: Your Tanmatra wrap is taking a bit longer to prepare due to peak demand. Rest assured, our kitchen is crafting it now!`);
+  // Attempt a real delay-alert SMS. Today no transactional SMS provider is
+  // wired (see lib/sms.ts), so this is a no-op that returns sent:false — we
+  // only report smsSent:true when a message was actually dispatched.
+  const delayMessage = `Delay Alert for Order #${orderId}: Your Tanmatra wrap is taking a bit longer to prepare due to peak demand. Rest assured, our kitchen is crafting it now!`;
+  const smsResult = await sendDeliveryDelaySms({ orderId, message: delayMessage });
+
+  if (!smsResult.sent) {
+    logger.warn(
+      { orderId, reason: smsResult.reason },
+      "ops.simulate_delay.delay_sms_not_sent",
+    );
+    res.json({
+      ok: true,
+      smsSent: false,
+      reason: smsResult.reason ?? "no transactional SMS provider configured",
+      newCreatedAt: delayedTime,
+    });
+    return;
+  }
 
   res.json({ ok: true, smsSent: true, newCreatedAt: delayedTime });
 });
