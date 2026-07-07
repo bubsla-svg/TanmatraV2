@@ -6,9 +6,12 @@
 
 /* ---- reset ---- */
 .tnm2, .tnm2 *{box-sizing:border-box}
-.tnm2 h1,.tnm2 h2,.tnm2 h3,.tnm2 p,.tnm2 ul,.tnm2 li,.tnm2 figure{margin:0;padding:0}
-.tnm2 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
-.tnm2 input{font:inherit;color:inherit;background:none;border:none;outline:none;min-width:0}
+/* Zero-specificity (:where) resets so they act as defaults every v2 class and
+ * every embedded System-A component (shadcn buttons/inputs) can override —
+ * a bare `.tnm2 button` reset would otherwise beat single-class utilities. */
+:where(.tnm2 h1),:where(.tnm2 h2),:where(.tnm2 h3),:where(.tnm2 p),:where(.tnm2 ul),:where(.tnm2 li),:where(.tnm2 figure){margin:0;padding:0}
+:where(.tnm2 button){font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
+:where(.tnm2 input){font:inherit;color:inherit;background:none;border:none;outline:none;min-width:0}
 .tnm2 i[class^="ph"],.tnm2 i[class*=" ph"]{display:inline-flex;line-height:1}
 
 /* ---- component system ---- */

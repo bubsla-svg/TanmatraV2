@@ -195,11 +195,19 @@ export default function Root() {
                     <PreferencesProvider>
                       <ThemeManager />
                       <ScrollToTop />
-                      <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
+                      <div
+                        className={`min-h-screen flex flex-col transition-colors duration-200 ${
+                          hideChrome ? "text-foreground" : "bg-background text-foreground"
+                        }`}
+                        style={hideChrome ? { background: "#0A0C0D" } : undefined}
+                      >
                         {!hideChrome && <Header />}
                         {!hideChrome && <WelcomeOfferBanner />}
                         {!hideChrome && <OnboardingQuizGate />}
-                        <main className="flex-1 pb-20 md:pb-0">
+                        {/* On chrome-less v2 routes the bottom nav is hidden, so drop
+                            its pb-20 spacer — otherwise it paints a light band below
+                            the dark .tnm2 content. */}
+                        <main className={hideChrome ? "flex-1" : "flex-1 pb-20 md:pb-0"}>
                           <Outlet />
                         </main>
                         {!hideChrome && <Footer />}

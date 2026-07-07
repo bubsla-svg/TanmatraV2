@@ -1,82 +1,691 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router";
-import { useCart } from "@/lib/cartContext";
-import { DISHES, toView, toCartItem, F } from "./data";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { F } from "./data";
+import { useBundles, groupOrdersApi } from "@/lib/queries";
+import {
+  CATEGORY_LABELS,
+  getDishById,
+  useMenuCatalog,
+  type DishCategory,
+  type DishKitchen,
+  type DishData,
+} from "@/lib/menuData";
+import {
+  LIFESTYLE_LABELS,
+  LIFESTYLE_TAGS,
+  matchesLifestyle,
+  matchesDietaryFilter,
+  isSecondaryVariant,
+  type Lifestyle,
+} from "@/lib/dishEnrichment";
+import {
+  DIET_ORDER_BY_ID,
+  LIFESTYLE_EHR_LABEL,
+  dishMatchesDietOrder,
+  useClinicalMode,
+  clinicalModeStore,
+} from "@/lib/clinicalDiet";
+import { PROTOCOLS, PROTOCOL_LABELS, PROTOCOL_TAGLINES, isProtocol, matchesProtocol, type Protocol } from "@/lib/protocols";
+import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
+import { usePreferences } from "@/lib/preferencesContext";
+import { useOrders } from "@/lib/ordersContext";
+import { addressesApi } from "@/lib/userAddressesApi";
+import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
+import { track } from "@/lib/analytics";
+import { groupCatalogDishes, type ConsolidatedDish } from "@/lib/menuVariants";
+import { evaluateDishForPreferences, rankDishesForPreferences } from "@/lib/preferencesMatch";
+import { toast } from "sonner";
 
-const PILLS = ["All", "High protein", "Low GI", "Under 250 kcal"];
+/* Full-parity re-port of the System-A Menu (git 2507084, 1489 lines) into the
+ * v2 (.tnm2) design language — same hooks / handlers / filter logic, v2 UI. */
+
+const KITCHEN_TABS: Array<"all" | DishKitchen> = ["all", "continental", "indian", "asian", "mediterranean"];
+const CATEGORY_TABS: Array<"all" | DishCategory> = ["all", "beverages", "breakfast", "salads", "soups", "pasta", "wraps", "bowls", "snacks", "mains"];
+const LIFESTYLE_TABS: Array<{ value: Lifestyle; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "heart-healthy", label: LIFESTYLE_LABELS["heart-healthy"] },
+  { value: "fitness-gains", label: LIFESTYLE_LABELS["fitness-gains"] },
+  { value: "diabetes-management", label: LIFESTYLE_LABELS["diabetes-management"] },
+  { value: "junior-explorers", label: LIFESTYLE_LABELS["junior-explorers"] },
+  { value: "silver-vitality", label: LIFESTYLE_LABELS["silver-vitality"] },
+];
+type DietFilter = "all" | "veg" | "nonveg";
+const QUICK_FILTERS = [
+  { value: "high-protein", label: "High-Protein" },
+  { value: "veg", label: "Veg" },
+  { value: "keto", label: "Keto" },
+  { value: "vegan", label: "Vegan" },
+  { value: "gluten-free", label: "Gluten-Free" },
+  { value: "jain", label: "Jain" },
+  { value: "carnivore", label: "Carnivore" },
+  { value: "low-fodmap", label: "Low-FODMAP" },
+  { value: "vata", label: "Vata Dosha" },
+  { value: "pitta", label: "Pitta Dosha" },
+  { value: "kapha", label: "Kapha Dosha" },
+];
+const PAGE_SIZE = 24;
 
 export default function V2Menu() {
-  const [pill, setPill] = useState("All");
-  const [veg, setVeg] = useState(false);
-  const { addItem, totalQuantity, subtotal } = useCart();
+  const { isPremium } = usePremiumStatus();
+  const premiumSlugs = usePremiumSlugs();
+  const navigate = useNavigate();
 
-  const rows = useMemo(() => {
-    let list = (DISHES as any[]).filter((d) => d.isAvailable !== false);
-    if (veg) list = list.filter((d) => d.isVeg);
-    if (pill === "High protein") list = list.filter((d) => (d.macros?.protein ?? 0) >= 20);
-    if (pill === "Low GI") list = list.filter((d) => d.glycaemicIndex === "low");
-    if (pill === "Under 250 kcal") list = list.filter((d) => (d.macros?.calories ?? 0) > 0 && (d.macros?.calories ?? 0) < 250);
-    return list.map((d) => ({ raw: d, v: toView(d) }));
-  }, [pill, veg]);
+  useEffect(() => { track("view_menu"); }, []);
 
-  const add = (raw: any, e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); addItem(toCartItem(raw)); };
+  const [kitchen, setKitchen] = useState<"all" | DishKitchen>("all");
+  const [category, setCategory] = useState<"all" | DishCategory>("all");
+  const [diet, setDiet] = useState<DietFilter>("all");
+  const [lifestyle, setLifestyle] = useState<Lifestyle>("all");
+  const [quickFilters, setQuickFilters] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [query, setQuery] = useState("");
+  const [hideBlocked, setHideBlocked] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [customizingDish, setCustomizingDish] = useState<ConsolidatedDish | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+
+  const { addItem, addBundleSlug, clear } = useCart();
+  const { open: openCart } = useCartDrawer();
+  const { preferences } = usePreferences();
+  const [hasSavedAddress, setHasSavedAddress] = useState(false);
+
+  useEffect(() => {
+    if (preferences) {
+      addressesApi.list().then((r: any) => setHasSavedAddress(r.addresses.length > 0)).catch(() => setHasSavedAddress(false));
+    } else setHasSavedAddress(false);
+  }, [preferences]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const groupCode = searchParams.get("group");
+  const protocolParam = searchParams.get("protocol");
+  const activeProtocol: Protocol | null = isProtocol(protocolParam) ? protocolParam : null;
+
+  const { data: bundles } = useBundles();
+  const { dishes: catalogDishes } = useMenuCatalog();
+  const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
+  const dietOrder = DIET_ORDER_BY_ID.get(dietOrderId);
+  const { orders } = useOrders();
+  const hasOrderHistory = orders.length > 0;
+
+  const repeatMeals = useMemo(() => {
+    if (!preferences && orders.length === 0) return [];
+    const seen = new Set<number>();
+    const list: DishData[] = [];
+    orders.forEach((o: any) => o.items.forEach((item: any) => {
+      if (!seen.has(item.dishId)) {
+        seen.add(item.dishId);
+        const dish = catalogDishes.find((d: any) => d.id === item.dishId);
+        if (dish && dish.isAvailable && !isSecondaryVariant(dish.slug)) list.push(dish);
+      }
+    }));
+    if (list.length < 6 && preferences) {
+      catalogDishes.forEach((d: any) => {
+        if (!seen.has(d.id) && d.isAvailable && !isSecondaryVariant(d.slug) && !evaluateDishForPreferences(d, preferences).blocked) {
+          seen.add(d.id); list.push(d);
+        }
+      });
+    }
+    return list.slice(0, 8);
+  }, [orders, preferences, catalogDishes]);
+
+  const handleQuickAdd = (item: DishData) => {
+    if (!item.isAvailable) return;
+    if (groupCode) {
+      groupOrdersApi.addItem(groupCode, { dishId: item.id, quantity: 1, customizations: [] })
+        .then(() => toast.success(`Added ${item.name} to group ${groupCode}`))
+        .catch(() => toast.error("Could not add to group order"));
+      return;
+    }
+    if (premiumSlugs.has(item.slug) && !isPremium) {
+      toast.error(`${item.name} is a Premium-only dish`, {
+        description: "Join Tanmatra Premium to unlock chef-table dishes.",
+        action: { label: "See Premium", onClick: () => navigate("/premium") },
+      });
+      return;
+    }
+    addItem({
+      dishId: item.id, slug: item.slug, name: item.name, image: item.image,
+      basePrice: item.price, unitPrice: item.price, quantity: 1,
+      kitchen: item.kitchen, isVeg: item.isVeg, rdVerified: item.rdVerified,
+      macros: item.macros, customizations: [],
+    });
+    openCart();
+    toast.success(`Added ${item.name} to your order`, { description: "Tap the cart to review and check out." });
+  };
+
+  const handleQuickAddClick = (parent: ConsolidatedDish) => {
+    if (parent.optionGroups.length > 0) setCustomizingDish(parent);
+    else {
+      const original = catalogDishes.find((d: any) => d.id === parent.id);
+      if (original) handleQuickAdd(original);
+    }
+  };
+
+  const handleExpressBuy = (item: DishData) => {
+    if (!item.isAvailable) return;
+    clear();
+    addItem({
+      dishId: item.id, slug: item.slug, name: item.name, image: item.image,
+      basePrice: item.price, unitPrice: item.price, quantity: 1,
+      kitchen: item.kitchen, isVeg: item.isVeg, rdVerified: item.rdVerified,
+      macros: item.macros, customizations: [],
+    });
+    navigate("/checkout");
+  };
+
+  useEffect(() => {
+    if (customizingDish) {
+      const init: Record<string, string> = {};
+      customizingDish.optionGroups.forEach((g) => { if (g.options.length) init[g.name] = g.options[0].name; });
+      setSelectedOptions(init);
+    }
+  }, [customizingDish]);
+
+  const activeVariant = useMemo(() => {
+    if (!customizingDish) return null;
+    const names = Object.values(selectedOptions);
+    return customizingDish.variants.find((v) => v.optionNames.every((n) => names.includes(n))) || customizingDish.variants[0];
+  }, [customizingDish, selectedOptions]);
+
+  const handleAddBundle = (bundle: any) => {
+    if (groupCode) { toast.error("Bundles can only be added to your personal cart"); return; }
+    const before = new Set(useCartStore.getState().items.map((i: any) => i.lineId));
+    let added = 0;
+    for (const did of bundle.dishIds) {
+      const dish = getDishById(did);
+      if (!dish || !dish.isAvailable) continue;
+      const ratio = bundle.pricePaise / Math.max(1, bundle.originalPricePaise);
+      addItem({
+        dishId: dish.id, slug: dish.slug, name: dish.name, image: dish.image,
+        basePrice: dish.price, unitPrice: Math.round(dish.price * ratio), quantity: 1,
+        kitchen: dish.kitchen, isVeg: dish.isVeg, rdVerified: dish.rdVerified,
+        macros: dish.macros, customizations: [`Bundle: ${bundle.name}`],
+      });
+      added++;
+    }
+    if (added === 0) { toast.error("This bundle is currently unavailable"); return; }
+    const newIds = useCartStore.getState().items.filter((i: any) => !before.has(i.lineId)).map((i: any) => i.lineId);
+    addBundleSlug(bundle.slug);
+    openCart();
+    toast.success(`${bundle.name} added to your order`, {
+      description: `${added} item${added === 1 ? "" : "s"} for ${F(bundle.pricePaise)}`,
+      action: { label: "Undo", onClick: () => newIds.forEach((lid: string) => useCartStore.getState().removeItem(lid)) },
+    });
+  };
+
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [kitchen, category, diet, lifestyle, query, activeProtocol, quickFilters]);
+
+  const quickFilterCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const base = catalogDishes.filter((d: any) => {
+      if (!d.isAvailable) return false;
+      if (kitchen !== "all" && d.kitchen !== kitchen) return false;
+      if (category !== "all" && d.category !== category) return false;
+      if (diet === "veg" && !d.isVeg) return false;
+      if (diet === "nonveg" && d.isVeg) return false;
+      if (!matchesLifestyle(d, lifestyle)) return false;
+      if (activeProtocol && !matchesProtocol(d, activeProtocol)) return false;
+      if (clinicalMode && dishMatchesDietOrder(d, dietOrderId) !== null) return false;
+      const q = query.toLowerCase();
+      if (query && !d.name.toLowerCase().includes(q) && !d.description.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    for (const qf of QUICK_FILTERS) counts[qf.value] = base.filter((d: any) => matchesDietaryFilter(d, qf.value)).length;
+    return counts;
+  }, [catalogDishes, kitchen, category, diet, lifestyle, activeProtocol, clinicalMode, dietOrderId, query]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const base = catalogDishes.filter((d: any) => {
+      if (!d.isAvailable) return false;
+      if (kitchen !== "all" && d.kitchen !== kitchen) return false;
+      if (category !== "all" && d.category !== category) return false;
+      if (diet === "veg" && !d.isVeg) return false;
+      if (diet === "nonveg" && d.isVeg) return false;
+      if (!matchesLifestyle(d, lifestyle)) return false;
+      if (activeProtocol && !matchesProtocol(d, activeProtocol)) return false;
+      if (clinicalMode && dishMatchesDietOrder(d, dietOrderId) !== null) return false;
+      if (q && !d.name.toLowerCase().includes(q) && !d.description.toLowerCase().includes(q)) return false;
+      if (quickFilters.length > 0) {
+        const nut = quickFilters.filter((f) => ["high-protein", "keto", "carnivore"].includes(f));
+        const dt = quickFilters.filter((f) => ["veg", "vegan", "gluten-free", "jain", "low-fodmap"].includes(f));
+        const dosha = quickFilters.filter((f) => ["vata", "pitta", "kapha"].includes(f));
+        if (nut.length && !nut.some((f) => matchesDietaryFilter(d, f))) return false;
+        if (dt.length && !dt.some((f) => matchesDietaryFilter(d, f))) return false;
+        if (dosha.length && !dosha.some((f) => matchesDietaryFilter(d, f))) return false;
+      }
+      return true;
+    });
+    const ranked = rankDishesForPreferences(base, preferences);
+    return hideBlocked ? ranked.filter((r: any) => !r.match.blocked) : ranked;
+  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters]);
+
+  const consolidatedDishes = useMemo(() => {
+    const grouped = groupCatalogDishes(filtered.map((f: any) => f.dish));
+    return grouped.map((parent) => {
+      const rep = filtered.find((f: any) => f.dish.id === parent.id)!;
+      return { parent, match: rep.match, hasVariants: parent.optionGroups.length > 0 };
+    });
+  }, [filtered]);
+
+  const blockedCount = useMemo(
+    () => (!preferences ? 0 : catalogDishes.filter((d: any) => evaluateDishForPreferences(d, preferences).blocked).length),
+    [preferences, catalogDishes],
+  );
+
+  const lifestyleTag = (() => {
+    if (lifestyle === "all") return null;
+    const consumer = LIFESTYLE_TAGS[lifestyle as Exclude<Lifestyle, "all">];
+    if (!clinicalMode) return consumer;
+    return LIFESTYLE_EHR_LABEL[lifestyle as string] ?? consumer;
+  })();
+
+  const activeFilterChips: Array<{ id: string; label: string; onClear: () => void }> = [];
+  if (kitchen !== "all") activeFilterChips.push({ id: "k", label: kitchen[0].toUpperCase() + kitchen.slice(1), onClear: () => setKitchen("all") });
+  if (category !== "all") activeFilterChips.push({ id: "c", label: CATEGORY_LABELS[category], onClear: () => setCategory("all") });
+  if (diet !== "all") activeFilterChips.push({ id: "d", label: diet === "veg" ? "Veg" : "Non-Veg", onClear: () => setDiet("all") });
+  if (lifestyle !== "all") activeFilterChips.push({ id: "l", label: clinicalMode ? LIFESTYLE_EHR_LABEL[lifestyle] ?? LIFESTYLE_LABELS[lifestyle] : LIFESTYLE_LABELS[lifestyle], onClear: () => setLifestyle("all") });
+  if (activeProtocol) activeFilterChips.push({ id: "p", label: PROTOCOL_LABELS[activeProtocol], onClear: () => clearProtocol() });
+  if (query.trim()) activeFilterChips.push({ id: "q", label: `"${query.trim()}"`, onClear: () => setQuery("") });
+  quickFilters.forEach((v) => { const i = QUICK_FILTERS.find((q) => q.value === v); if (i) activeFilterChips.push({ id: `qf-${v}`, label: i.label, onClear: () => setQuickFilters((p) => p.filter((x) => x !== v)) }); });
+
+  function clearProtocol() {
+    const next = new URLSearchParams(searchParams);
+    next.delete("protocol");
+    setSearchParams(next, { replace: true });
+  }
+  function setProtocol(p: string) {
+    const next = new URLSearchParams(searchParams);
+    if (p === "all") next.delete("protocol"); else next.set("protocol", p);
+    setSearchParams(next, { replace: true });
+  }
+  function resetAll() {
+    setKitchen("all"); setCategory("all"); setDiet("all"); setLifestyle("all"); setQuery(""); setQuickFilters([]);
+    if (activeProtocol) clearProtocol();
+  }
+
+  const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length;
 
   return (
     <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
+        {/* App bar */}
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
-          <div className="abt">Menu</div>
-          <Link className="iconbtn" to="/menu" title="Search"><i className="ph-bold ph-magnifying-glass" /></Link>
+          <div className="abt">{activeProtocol ? `${PROTOCOL_LABELS[activeProtocol]} Protocol` : "Menu"}</div>
+          <button className="iconbtn" onClick={() => setShowSearch((s) => !s)} aria-label="Search"><i className="ph-bold ph-magnifying-glass" /></button>
         </div>
-        <div className="chiprow">
-          {PILLS.map((p) => (
-            <button key={p} className={pill === p ? "chip on" : "chip"} onClick={() => setPill(p)}>{p}</button>
-          ))}
-          <button className={veg ? "chip on" : "chip"} onClick={() => setVeg((x) => !x)}><span className="vd" />Veg only</button>
-        </div>
-        <div className="content padx" style={{ paddingTop: 12, paddingBottom: totalQuantity > 0 ? 96 : 24 }}>
-          <div className="fine mb10">{rows.length} meals · ranked for your profile · allergens screened</div>
-          {rows.map(({ raw, v }) => (
-            <Link key={v.slug} className="dcard pointer" to={`/dish/${v.slug}`} style={{ display: "block" }}>
-              <div className="fx gap12">
-                <div className="f1" style={{ minWidth: 0 }}>
-                  <div className="fx ac g6">
-                    <span className="vtag"><span className={v.vcls} />{v.vlabel}</span>
-                    <span className={v.gcls}>{v.glabel}</span>
-                    {v.rdVerified && <span className="pill sg" style={{ marginLeft: "auto" }}><i className="ph-fill ph-seal-check" />RD</span>}
-                  </div>
-                  <div className="dtitle">{v.name}</div>
-                  <div className="fine"><span className="price">{v.priceStr}</span> · {v.tag}</div>
-                </div>
-                <div className="dimg" style={{ backgroundImage: `url(${v.image})`, backgroundSize: "cover", backgroundPosition: "center" }} role="img" aria-label={v.name}>
-                  <button className="addb" onClick={(e) => add(raw, e)} aria-label={`Add ${v.name}`}>ADD</button>
-                </div>
-              </div>
-              <div className="ribbon cmp mt10" role="group" aria-label={v.aria}>
-                <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{v.k}</span></div>
-                <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{v.p}<i className="ru">g</i></span></div>
-                <div className="rc"><span className="rl">CARBS</span><span className="rv">{v.c}<i className="ru">g</i></span></div>
-                <div className="rc"><span className="rl">FAT</span><span className="rv">{v.f}<i className="ru">g</i></span></div>
-              </div>
-            </Link>
-          ))}
-          {rows.length === 0 && (
-            <div className="tc" style={{ padding: "40px 20px" }}>
-              <div className="tt mt10">Nothing matches those filters</div>
-              <button className="btn btn-g mt20" onClick={() => { setPill("All"); setVeg(false); }}>Clear filters</button>
+
+        {showSearch && (
+          <div className="padx mb10">
+            <div className="inp">
+              <i className="ph-bold ph-magnifying-glass" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dishes, ingredients, protocols…" autoFocus />
+              {query && <button onClick={() => setQuery("")} aria-label="Clear"><i className="ph-bold ph-x" style={{ color: "var(--fnt)" }} /></button>}
             </div>
-          )}
-        </div>
-        {totalQuantity > 0 && (
-          <div className="dock" style={{ position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 0, width: "100%", maxWidth: 480 }}>
-            <Link className="cartpill" to="/cart">
-              <span>{totalQuantity} {totalQuantity === 1 ? "meal" : "meals"}</span>
-              <span className="fx ac gap8"><span className="price">{F(subtotal)}</span><i className="ph-bold ph-arrow-right" /></span>
-            </Link>
           </div>
         )}
+
+        {/* Protocol chips */}
+        <div className="chiprow" role="group" aria-label="Filter by protocol">
+          {(["all", ...PROTOCOLS] as const).map((p) => {
+            const active = p === "all" ? !activeProtocol : activeProtocol === p;
+            return (
+              <button key={p} className={active ? "chip on" : "chip"} onClick={() => setProtocol(p)} aria-pressed={active}>
+                {p === "all" ? "All protocols" : PROTOCOL_LABELS[p]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Quick filters */}
+        <div className="chiprow" role="group" aria-label="Quick filters">
+          {QUICK_FILTERS.map((qf) => {
+            const active = quickFilters.includes(qf.value);
+            const count = quickFilterCounts[qf.value] ?? 0;
+            const disabled = count === 0 && !active;
+            return (
+              <button
+                key={qf.value}
+                className={active ? "chip on" : "chip"}
+                disabled={disabled}
+                style={disabled ? { opacity: 0.4, textDecoration: "line-through" } : undefined}
+                onClick={() => setQuickFilters((prev) => (active ? prev.filter((v) => v !== qf.value) : [...prev, qf.value]))}
+              >
+                {active && <i className="ph-bold ph-check" />}{qf.label}
+                <span className="mono fntc" style={{ fontSize: 9 }}>({count})</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="content padx" style={{ paddingTop: 4, paddingBottom: 96 }}>
+          {/* Clinical-mode diet-order banner */}
+          {clinicalMode && dietOrder && (
+            <div className="banner mb10 fx ac gap8" style={{ padding: "10px 12px" }}>
+              <span className="lab" style={{ color: "var(--safb)" }}>{dietOrder.short}</span>
+              <span className="fine f1">{dietOrder.description}</span>
+              <button onClick={() => clinicalModeStore.disable()} className="fine" aria-label="Exit clinical mode"><i className="ph-bold ph-x" /> Exit</button>
+            </div>
+          )}
+
+          {/* Delivery promise */}
+          <div className="note mb10" style={{ background: "var(--safd)", borderColor: "var(--saf)", color: "var(--safb)" }}>
+            <i className="ph-fill ph-lightning" />
+            <span>Delivered fresh to your doorstep in <b>25–40 minutes</b></span>
+          </div>
+
+          {/* Protocol tagline */}
+          {activeProtocol && (
+            <div className="banner mb10 fx ac gap8">
+              <i className="ph-fill ph-sparkle" style={{ color: "var(--safb)" }} />
+              <span className="fine f1">{PROTOCOL_TAGLINES[activeProtocol]}</span>
+              <button className="fine" style={{ color: "var(--safb)" }} onClick={clearProtocol}>Clear</button>
+            </div>
+          )}
+
+          {/* Group order banner */}
+          {groupCode && (
+            <div className="card mb10 fx ac gap8" style={{ padding: 12 }}>
+              <i className="ph-bold ph-users" style={{ color: "var(--safb)" }} />
+              <span className="fine f1">Adding to group <span className="mono" style={{ color: "var(--safb)" }}>{groupCode}</span> — items go to the shared order.</span>
+              <Link to={`/group/${groupCode}`} className="fine" style={{ color: "var(--safb)" }}>View →</Link>
+            </div>
+          )}
+
+          {/* Re-order / picked-for-you carousel */}
+          {repeatMeals.length > 0 && !groupCode && (
+            <div className="mb14">
+              <div className="fx ac jb mb10">
+                <span className="sh"><i className="ph-fill ph-lightning" style={{ color: "var(--safb)" }} /> {hasOrderHistory ? "Your usual meals" : "Matched to your goals"}</span>
+                <span className="lab">tap + to add</span>
+              </div>
+              <div className="hrail" style={{ marginLeft: -16, marginRight: -16 }}>
+                {repeatMeals.map((dish) => (
+                  <div key={dish.id} className="hcard">
+                    <Link to={`/dish/${dish.slug}`}>
+                      <div className="himg plc" style={{ backgroundImage: `url(${dish.image})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+                    </Link>
+                    <div className="hbody">
+                      <div className="fx ac g6 mb4">
+                        <span className="vtag"><span className={dish.isVeg ? "vd" : "vd nv"} />{dish.isVeg ? "VEG" : "NON-VEG"}</span>
+                        {dish.rdVerified && <span className="pill sg" style={{ padding: "2px 6px" }}><i className="ph-fill ph-seal-check" /></span>}
+                      </div>
+                      <Link to={`/dish/${dish.slug}`} className="small clamp1" style={{ fontWeight: 600, display: "block" }}>{dish.name}</Link>
+                      <div className="mono fntc" style={{ fontSize: 10 }}>{dish.macros.calories} kcal · {dish.macros.protein}g P</div>
+                      <div className="fx ac jb mt6">
+                        <span className="price" style={{ fontSize: 13, color: "var(--safb)" }}>{F(dish.price)}</span>
+                        <button className="qbtn" onClick={() => handleQuickAdd(dish)} aria-label={`Add ${dish.name}`}><i className="ph-bold ph-plus" /></button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* RD-curated combos */}
+          {bundles && bundles.length > 0 && !groupCode && (
+            <div className="mb14">
+              <div className="sh mb10"><i className="ph-bold ph-package" style={{ color: "var(--safb)" }} /> RD-curated combos</div>
+              {bundles.map((b: any) => {
+                const savings = b.originalPricePaise - b.pricePaise;
+                const included = b.dishIds.map((id: number) => getDishById(id)).filter(Boolean) as DishData[];
+                return (
+                  <div key={b.id} className="card mb10">
+                    <div className="fx ac jb">
+                      <div className="f1" style={{ minWidth: 0 }}>
+                        <div className="tt" style={{ fontSize: 15 }}>{b.name}</div>
+                        <div className="fine mt2 clamp1">{included.map((d) => d.name).join(" · ")}</div>
+                      </div>
+                      {b.badge && <span className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>{b.badge}</span>}
+                    </div>
+                    <div className="fx ac jb mt10">
+                      <div className="fx ac gap8">
+                        <span className="price" style={{ fontSize: 17, color: "var(--safb)" }}>{F(b.pricePaise)}</span>
+                        <span className="mono fntc strike" style={{ fontSize: 12 }}>{F(b.originalPricePaise)}</span>
+                        <span className="pill sg" style={{ fontSize: 10 }}>Save {F(savings)}</span>
+                      </div>
+                      <button className="btn btn-s" style={{ height: 38 }} onClick={() => handleAddBundle(b)}><i className="ph-bold ph-plus-circle" /> Add combo</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Secondary filters (collapsible) */}
+          <button className="opt mb10" onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} style={{ marginBottom: 10 }}>
+            <i className="ph-bold ph-sliders-horizontal" />
+            <span className="f1">More filters {secondaryActive > 0 && <span className="pill" style={{ marginLeft: 6 }}>{secondaryActive}</span>}</span>
+            <i className={showFilters ? "ph-bold ph-caret-up" : "ph-bold ph-caret-down"} />
+          </button>
+
+          {showFilters && (
+            <div className="mb10">
+              <FilterRail label={clinicalMode ? "Therapeutic diet" : "Lifestyle"}>
+                {LIFESTYLE_TABS.map(({ value, label }) => {
+                  const l = clinicalMode && value !== "all" ? LIFESTYLE_EHR_LABEL[value] ?? label : label;
+                  return <button key={value} className={lifestyle === value ? "chip on" : "chip"} onClick={() => setLifestyle(value)}>{l}</button>;
+                })}
+              </FilterRail>
+              <FilterRail label="Diet">
+                {(["all", "veg", "nonveg"] as DietFilter[]).map((opt) => (
+                  <button key={opt} className={diet === opt ? "chip on" : "chip"} onClick={() => setDiet(opt)}>
+                    {opt !== "all" && <span className={opt === "veg" ? "vd" : "vd nv"} />}{opt === "all" ? "All" : opt === "veg" ? "Veg" : "Non-Veg"}
+                  </button>
+                ))}
+              </FilterRail>
+              <FilterRail label="Category">
+                {CATEGORY_TABS.map((c) => (
+                  <button key={c} className={category === c ? "chip on" : "chip"} onClick={() => setCategory(c)}>{c === "all" ? "All" : CATEGORY_LABELS[c]}</button>
+                ))}
+              </FilterRail>
+              <FilterRail label="Kitchen">
+                {KITCHEN_TABS.map((k) => (
+                  <button key={k} className={kitchen === k ? "chip on" : "chip"} onClick={() => setKitchen(k)}>{k === "all" ? "All" : k[0].toUpperCase() + k.slice(1)}</button>
+                ))}
+              </FilterRail>
+            </div>
+          )}
+
+          {/* Dosha / Jain guarantee notes */}
+          {quickFilters.some((f) => ["vata", "pitta", "kapha"].includes(f)) && (
+            <div className="note mb10" style={{ background: "var(--s2)", borderColor: "var(--ln2)", color: "var(--mut)" }}>
+              <i className="ph-bold ph-info" /><span><b style={{ color: "var(--tx)" }}>Ayurvedic tip:</b> Doshas are traditional body types — if your doctor advised a standard heart/diabetic plan, focus on High-Protein, Low-FODMAP or Keto instead.</span>
+            </div>
+          )}
+          {quickFilters.includes("jain") && (
+            <div className="note mb10"><i className="ph-fill ph-shield-check" /><span><b>Jain guarantee:</b> Prepared in our ISO 22000 kitchen on dedicated root-vegetable-free surfaces to prevent cross-contamination.</span></div>
+          )}
+
+          {/* Preferences banner */}
+          {preferences && (
+            <div className="banner mb10 fx ac gap8" style={{ flexWrap: "wrap" }}>
+              <i className="ph-fill ph-sparkle" style={{ color: "var(--safb)" }} />
+              <span className="fine">Personalized for your <span style={{ color: "var(--safb)", textTransform: "capitalize" }}>{preferences.dietaryStyle}</span> profile
+                {blockedCount > 0 && <> · <button className="fine" style={{ color: "var(--safb)", textDecoration: "underline" }} onClick={() => setHideBlocked((v) => !v)}>{hideBlocked ? `${blockedCount} hidden — show` : "hide conflicts"}</button></>}
+              </span>
+              <Link to="/preferences" className="fine" style={{ marginLeft: "auto", color: "var(--safb)" }}><i className="ph-bold ph-sliders-horizontal" /> Edit</Link>
+            </div>
+          )}
+
+          {/* Active filter chips */}
+          {activeFilterChips.length > 0 && (
+            <div className="fx ac g6 wrap mb10">
+              {activeFilterChips.map((c) => (
+                <button key={c.id} className="chip on" onClick={c.onClear} style={{ height: 30 }}>{c.label} <i className="ph-bold ph-x" style={{ fontSize: 12 }} /></button>
+              ))}
+              <button className="fine" style={{ color: "var(--safb)" }} onClick={resetAll}>Clear all</button>
+            </div>
+          )}
+
+          <div className="lab mb10">{consolidatedDishes.length} {consolidatedDishes.length === 1 ? "dish" : "dishes"}</div>
+
+          {/* Empty state */}
+          {consolidatedDishes.length === 0 ? (
+            <div className="tc" style={{ padding: "40px 20px" }}>
+              <i className="ph-bold ph-warning" style={{ fontSize: 32, color: "var(--saf)" }} />
+              <div className="tt mt10">No dishes match your filters</div>
+              <div className="fine mt6">Try loosening a filter or clearing the search.</div>
+              <button className="btn btn-g mt20" onClick={resetAll}>Reset filters</button>
+            </div>
+          ) : (
+            <>
+              {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }) => {
+                const rep = filtered.find((f: any) => f.dish.id === parent.id)!.dish;
+                const price = parent.variants[0].price;
+                return (
+                  <DishCard
+                    key={parent.id}
+                    dish={rep}
+                    name={parent.name}
+                    price={price}
+                    match={match}
+                    hasVariants={hasVariants}
+                    isPremiumOnly={premiumSlugs.has(parent.slug)}
+                    isPremium={isPremium}
+                    lifestyleTag={lifestyleTag}
+                    canExpress={hasSavedAddress && !hasVariants}
+                    onAdd={() => handleQuickAddClick(parent)}
+                    onExpress={() => handleExpressBuy(rep)}
+                    onPremiumGate={() => navigate("/premium")}
+                  />
+                );
+              })}
+
+              {visibleCount < consolidatedDishes.length && (
+                <button className="btn btn-g btn-blk mt10" onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}>
+                  Load {Math.min(PAGE_SIZE, consolidatedDishes.length - visibleCount)} more
+                  <span className="mono fntc" style={{ marginLeft: 6, fontSize: 11 }}>({visibleCount}/{consolidatedDishes.length})</span>
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Customization sheet */}
+      {customizingDish && activeVariant && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setCustomizingDish(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--s1)", borderRadius: "20px 20px 0 0", borderTop: "1px solid var(--ln2)", padding: 16, maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="fx ac jb mb10">
+              <div className="h2" style={{ fontSize: 18 }}>Customise {customizingDish.name}</div>
+              <button className="iconbtn" onClick={() => setCustomizingDish(null)} aria-label="Close"><i className="ph-bold ph-x" /></button>
+            </div>
+            <div className="fine mb10">{customizingDish.description}</div>
+
+            {customizingDish.optionGroups.map((group) => (
+              <div key={group.name} className="mb14">
+                <div className="lab mb6">{group.name}</div>
+                {group.options.map((option) => {
+                  const sel = selectedOptions[group.name] === option.name;
+                  const optDish = catalogDishes.find((d: any) => d.id === option.dishId);
+                  const diff = optDish ? optDish.price - customizingDish.variants[0].price : 0;
+                  return (
+                    <button key={option.name} className={sel ? "opt on" : "opt"} onClick={() => setSelectedOptions((p) => ({ ...p, [group.name]: option.name }))}>
+                      <i className={sel ? "ph-fill ph-radio-button" : "ph-bold ph-circle"} />
+                      <span className="f1">{option.name}</span>
+                      {diff > 0 && <span className="mono" style={{ fontSize: 13, color: "var(--sage)" }}>+{F(diff)}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+
+            <div className="card mb14">
+              <div className="fx ac jb"><span className="fine">Calibrated price</span><span className="price" style={{ fontSize: 18, color: "var(--safb)" }}>{F(activeVariant.price)}</span></div>
+              <div className="ribbon cmp mt10">
+                <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{activeVariant.macros.calories}</span></div>
+                <div className="rc"><span className="rl">P</span><span className="rv">{activeVariant.macros.protein}<i className="ru">g</i></span></div>
+                <div className="rc"><span className="rl">C</span><span className="rv">{activeVariant.macros.carbs}<i className="ru">g</i></span></div>
+                <div className="rc"><span className="rl">F</span><span className="rv">{activeVariant.macros.fat}<i className="ru">g</i></span></div>
+              </div>
+            </div>
+
+            <div className="fx ac gap12">
+              <button className="btn btn-g f1" onClick={() => setCustomizingDish(null)}>Cancel</button>
+              <button
+                className="btn btn-p f1"
+                onClick={() => {
+                  const original = catalogDishes.find((d: any) => d.id === activeVariant.id);
+                  if (!original) return;
+                  if (premiumSlugs.has(original.slug) && !isPremium) {
+                    toast.error(`${original.name} is a Premium-only dish`, { description: "Join Tanmatra Premium to unlock chef-table dishes.", action: { label: "See Premium", onClick: () => navigate("/premium") } });
+                    return;
+                  }
+                  addItem({
+                    dishId: original.id, slug: original.slug, name: original.name, image: original.image,
+                    basePrice: original.price, unitPrice: original.price, quantity: 1,
+                    kitchen: original.kitchen, isVeg: original.isVeg, rdVerified: original.rdVerified,
+                    macros: original.macros, customizations: [],
+                  });
+                  setCustomizingDish(null);
+                  openCart();
+                  toast.success(`Added ${original.name} to your order`);
+                }}
+              >
+                {premiumSlugs.has(activeVariant.slug) && !isPremium ? "Upgrade to Premium" : "Add to order"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterRail({ label, children }: { label: string; children: any }) {
+  return (
+    <div className="mb6">
+      <div className="lab" style={{ padding: "0 0 6px" }}>{label}</div>
+      <div className="fx ac g6 wrap">{children}</div>
+    </div>
+  );
+}
+
+function DishCard({ dish, name, price, match, hasVariants, isPremiumOnly, isPremium, lifestyleTag, canExpress, onAdd, onExpress, onPremiumGate }: any) {
+  const isVeg = !!dish.isVeg;
+  const gi = dish.glycaemicIndex || "medium";
+  const giCls = gi === "low" ? "gi gi-low" : "gi gi-med";
+  const giLabel = gi === "low" ? "GI LOW" : gi === "high" ? "GI HIGH" : "GI MED";
+  const blocked = match?.blocked;
+  const warned = match?.warnings?.length > 0;
+  return (
+    <div className="dcard" style={blocked ? { opacity: 0.6 } : undefined}>
+      <div className="fx gap12">
+        <div className="f1" style={{ minWidth: 0 }}>
+          <div className="fx ac g6 wrap">
+            <span className="vtag"><span className={isVeg ? "vd" : "vd nv"} />{isVeg ? "VEG" : "NON-VEG"}</span>
+            <span className={giCls}>{giLabel}</span>
+            {lifestyleTag && <span className="pill" style={{ fontSize: 9 }}>{lifestyleTag}</span>}
+            {dish.rdVerified && <span className="pill sg" style={{ marginLeft: "auto" }}><i className="ph-fill ph-seal-check" />RD</span>}
+          </div>
+          <Link to={`/dish/${dish.slug}`} className="dtitle" style={{ display: "block" }}>{name}</Link>
+          <div className="fine"><span className="price" style={{ color: "var(--safb)" }}>{F(price)}</span>{hasVariants ? " · options" : ""} · <span style={{ textTransform: "capitalize" }}>{dish.category}</span></div>
+          {isPremiumOnly && <div className="pill mt6" style={{ background: "var(--safd)", color: "var(--safb)", width: "fit-content" }}><i className="ph-fill ph-crown" />Premium</div>}
+          {warned && !blocked && <div className="fine mt6" style={{ color: "var(--dgr)" }}><i className="ph-bold ph-warning" /> {match.warnings[0]}</div>}
+        </div>
+        <Link to={`/dish/${dish.slug}`} className="dimg" style={{ backgroundImage: `url(${dish.image})`, backgroundSize: "cover", backgroundPosition: "center" }} aria-label={name}>
+          <button
+            className="addb"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (isPremiumOnly && !isPremium) { onPremiumGate(); return; } onAdd(); }}
+            aria-label={`Add ${name}`}
+          >
+            {hasVariants ? "CUSTOMISE" : "ADD"}
+          </button>
+        </Link>
+      </div>
+      <div className="ribbon cmp mt10" role="group" aria-label={`${dish.macros.calories} kcal, ${dish.macros.protein}g protein`}>
+        <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{dish.macros.calories}</span></div>
+        <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{dish.macros.protein}<i className="ru">g</i></span></div>
+        <div className="rc"><span className="rl">CARBS</span><span className="rv">{dish.macros.carbs}<i className="ru">g</i></span></div>
+        <div className="rc"><span className="rl">FAT</span><span className="rv">{dish.macros.fat}<i className="ru">g</i></span></div>
+      </div>
+      {canExpress && (
+        <button className="fine mt6" style={{ color: "var(--safb)" }} onClick={onExpress}>Buy now — express checkout →</button>
+      )}
     </div>
   );
 }
