@@ -25,7 +25,6 @@ import { API_BASE } from "@/lib/apiBase";
 import { formatPrice } from "@/lib/api/adapter";
 import { track } from "@/lib/analytics";
 import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
-import { cn } from "@/lib/utils";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { usePremiumStatus } from "@/lib/usePremium";
 import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
@@ -307,7 +306,7 @@ export default function CartDrawer() {
             animate="visible"
             exit="exit"
             onClick={close}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 70 }}
             aria-hidden="true"
           />
 
@@ -323,9 +322,24 @@ export default function CartDrawer() {
             aria-modal="true"
             aria-label="Shopping cart"
             onKeyDown={handlePanelKeyDown}
-            className="fixed right-0 top-0 z-50 h-[100dvh] w-full max-w-[min(420px,100vw)] bg-clinical-dark border-l border-clinical-zinc/20 text-white flex flex-col shadow-2xl"
+            className="tnm2"
+            style={{
+              position: "fixed",
+              right: 0,
+              top: 0,
+              zIndex: 71,
+              height: "100dvh",
+              width: "100%",
+              maxWidth: "min(420px,100vw)",
+              background: "var(--s1)",
+              borderLeft: "1px solid var(--ln)",
+              color: "var(--tx)",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 40px 90px rgba(0,0,0,.65)",
+            }}
           >
-            <DrawerHeader
+            <CartHeader
               totalQuantity={totals.totalQuantity}
               onClose={close}
               closeButtonRef={closeButtonRef}
@@ -335,7 +349,19 @@ export default function CartDrawer() {
               <EmptyState onClose={close} />
             ) : (
               <>
-                <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y px-5 py-4 space-y-3">
+                <div
+                  className="content"
+                  style={{
+                    flex: 1,
+                    overflowY: "auto",
+                    overscrollBehavior: "contain",
+                    touchAction: "pan-y",
+                    padding: "16px 20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
                   {/* FreeDeliveryBar inside scroll so it stays visible on long carts */}
                   <FreeDeliveryBar
                     subtotal={subtotal}
@@ -366,18 +392,19 @@ export default function CartDrawer() {
                     <button
                       type="button"
                       onClick={() => { close(); navigate("/premium"); }}
-                      className="w-full text-left rounded-xl border border-clinical-gold/25 bg-clinical-gold/[0.06] hover:bg-clinical-gold/10 transition-colors p-3.5 flex items-center gap-3"
+                      className="banner"
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-clinical-gold/15 flex items-center justify-center shrink-0">
-                        <Crown className="w-4 h-4 text-clinical-gold" />
+                      <div style={{ width: 32, height: 32, borderRadius: 9, background: "var(--safd)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                        <Crown className="w-4 h-4" style={{ color: "var(--safb)" }} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-semibold text-white">Unlock Tanmatra Premium</p>
-                        <p className="text-[10px] text-clinical-zinc leading-snug mt-0.5">
+                      <div className="f1" style={{ minWidth: 0 }}>
+                        <p className="small" style={{ fontWeight: 600 }}>Unlock Tanmatra Premium</p>
+                        <p className="fine mt2" style={{ fontSize: 11 }}>
                           Priority delivery · free RD consult · exclusive dishes
                         </p>
                       </div>
-                      <span className="text-[10px] font-bold text-clinical-gold shrink-0">₹999/mo →</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--safb)", flex: "none" }}>₹999/mo →</span>
                     </button>
                   )}
                 </div>
@@ -400,10 +427,10 @@ export default function CartDrawer() {
 }
 
 /* ------------------------------------------------------------------ */
-/* DrawerHeader                                                          */
+/* CartHeader                                                          */
 /* ------------------------------------------------------------------ */
 
-function DrawerHeader({
+function CartHeader({
   totalQuantity,
   onClose,
   closeButtonRef,
@@ -413,14 +440,17 @@ function DrawerHeader({
   closeButtonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
-    <div className="px-5 py-4 border-b border-clinical-zinc/15 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-2">
-        <ShoppingBag className="w-4 h-4 text-clinical-gold" aria-hidden />
-        <span className="text-sm font-semibold uppercase tracking-[0.14em] text-white">
+    <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--ln)", display: "flex", alignItems: "center", justifyContent: "space-between", flex: "none" }}>
+      <div className="fx ac gap8">
+        <ShoppingBag className="w-4 h-4" style={{ color: "var(--safb)" }} aria-hidden />
+        <span style={{ fontSize: 14, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".14em", color: "var(--tx)" }}>
           Your Cart
         </span>
         {totalQuantity > 0 && (
-          <span className="inline-flex items-center justify-center bg-clinical-gold text-[#050505] rounded-full h-5 min-w-[20px] px-1.5 text-[10px] font-bold">
+          <span
+            className="mono"
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--saf)", color: "var(--onsaf)", borderRadius: 999, height: 20, minWidth: 20, padding: "0 6px", fontSize: 10, fontWeight: 700 }}
+          >
             {totalQuantity}
           </span>
         )}
@@ -430,7 +460,7 @@ function DrawerHeader({
         type="button"
         onClick={onClose}
         aria-label="Close cart"
-        className="w-11 h-11 -mr-2 inline-flex items-center justify-center text-clinical-zinc hover:text-white transition-colors"
+        style={{ width: 44, height: 44, marginRight: -8, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--mut)", background: "none", border: "none" }}
       >
         <X className="w-4 h-4" aria-hidden />
       </button>
@@ -444,20 +474,20 @@ function DrawerHeader({
 
 function EmptyState({ onClose }: { onClose: () => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center px-8 gap-4">
-      <div className="w-16 h-16 rounded-full bg-clinical-gold/10 flex items-center justify-center">
-        <ShoppingBag className="w-7 h-7 text-clinical-gold" aria-hidden />
+    <div className="f1 col ac jc tc" style={{ padding: "0 32px", gap: 16 }}>
+      <div className="avatar big" style={{ background: "var(--safd)", color: "var(--safb)" }}>
+        <ShoppingBag className="w-7 h-7" aria-hidden />
       </div>
-      <div className="space-y-1.5">
-        <h3 className="text-base font-semibold text-white">Your cart is empty</h3>
-        <p className="text-xs text-clinical-zinc max-w-[240px]">
+      <div>
+        <div className="tt">Your cart is empty</div>
+        <div className="fine mt6" style={{ maxWidth: 240, margin: "6px auto 0" }}>
           Browse the menu and add dishes designed by registered dietitians.
-        </p>
+        </div>
       </div>
       <Link
         to="/menu"
         onClick={onClose}
-        className="inline-flex items-center justify-center h-10 px-5 rounded-md bg-clinical-gold text-[#050505] text-xs font-semibold uppercase tracking-[0.12em] hover:bg-clinical-gold/90 transition-colors"
+        className="btn btn-p"
       >
         Browse menu
       </Link>
@@ -512,37 +542,51 @@ function FreeDeliveryBar({
   }
 
   return (
-    <div className={`rounded-xl px-3.5 pt-3 pb-2.5 border transition-all duration-300 ${
-      hasFreeDelivery ? "alert-safe-border alert-safe-bg" : "border-clinical-gold/30 bg-[#050505]"
-    }`}>
-      <div className="flex items-center justify-between mb-1.5 font-sans">
-        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-clinical-zinc flex items-center gap-1">
-          {hasFreeDelivery ? <ShieldCheck className="w-3.5 h-3.5 alert-safe-text" /> : <Zap className="w-3.5 h-3.5 text-clinical-gold fill-clinical-gold" />}
+    <div
+      style={{
+        borderRadius: 12,
+        padding: "12px 14px 10px",
+        border: "1px solid",
+        transition: "all .3s",
+        ...(hasFreeDelivery
+          ? { borderColor: "rgba(136,170,132,.35)", background: "var(--saged)" }
+          : { borderColor: "var(--saf)", background: "var(--safd)" }),
+      }}
+    >
+      <div className="fx ac jb" style={{ marginBottom: 6 }}>
+        <span className="lab" style={{ display: "inline-flex", alignItems: "center", gap: 4, color: hasFreeDelivery ? "var(--sage)" : "var(--mut)" }}>
+          {hasFreeDelivery ? <ShieldCheck className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} /> : <Zap className="w-3.5 h-3.5" style={{ color: "var(--safb)", fill: "var(--safb)" }} />}
           Free Delivery
         </span>
         <span
-          className={cn(
-            "text-xs font-bold tabular-nums transition-colors duration-200",
-            hasFreeDelivery
-              ? "alert-safe-text"
-              : ghostUnlocksDelivery
-              ? "alert-safe-text"
-              : "text-white",
-          )}
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            fontVariantNumeric: "tabular-nums",
+            transition: "color .2s",
+            color: hasFreeDelivery ? "var(--sage)" : ghostUnlocksDelivery ? "var(--sage)" : "var(--tx)",
+          }}
         >
           {label}
         </span>
       </div>
 
       {/* Progress track */}
-      <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+      <div style={{ position: "relative", height: 8, borderRadius: 999, background: "rgba(255,255,255,.1)", overflow: "hidden" }}>
         {/* Filled (real) track */}
         <div
-          className={cn(
-            "absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out",
-            hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_10px_rgba(74,222,128,0.85)]" : "bg-gradient-to-r from-[#E7C766] to-clinical-gold"
-          )}
-          style={{ width: `${currentFill * 100}%` }}
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            borderRadius: 999,
+            transition: "all .5s ease-out",
+            width: `${currentFill * 100}%`,
+            ...(hasFreeDelivery
+              ? { background: "var(--sage)", boxShadow: "0 0 10px rgba(136,170,132,.85)" }
+              : { background: "linear-gradient(to right,var(--safb),var(--saf))" }),
+          }}
         />
 
         {/* Ghost layer — uses only transform (GPU-composited, zero layout cost).
@@ -550,11 +594,15 @@ function FreeDeliveryBar({
             of the bar), then scaleX shrinks it to ghostWidth% from the left. */}
         {showGhostLayer && ghostWidth > 0 && (
           <motion.div
-            className={cn(
-              "absolute inset-y-0 left-0 w-full rounded-full origin-left",
-              prefersReducedMotion ? "bg-matcha/25" : "bg-matcha/40",
-            )}
             style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: "100%",
+              borderRadius: 999,
+              transformOrigin: "left",
+              background: prefersReducedMotion ? "rgba(136,170,132,.25)" : "rgba(136,170,132,.4)",
               transform: `translateX(${currentFill * 100}%) scaleX(${ghostWidth / 100})`,
             }}
             variants={prefersReducedMotion ? undefined : PULSE_OPACITY}
@@ -566,7 +614,7 @@ function FreeDeliveryBar({
         {/* Micro-label above bar when ghost unlocks delivery */}
         {ghostUnlocksDelivery && (
           <span
-            className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-matcha whitespace-nowrap pointer-events-none"
+            style={{ position: "absolute", top: -20, left: "50%", transform: "translateX(-50%)", fontSize: 9, fontWeight: 600, color: "var(--sage)", whiteSpace: "nowrap", pointerEvents: "none" }}
             aria-hidden="true"
           >
             Unlocks free delivery
@@ -595,7 +643,7 @@ function CartLineList({
   addItem: (item: Omit<CartItem, "lineId">) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="col" style={{ gap: 12 }}>
       {items.map((item) => (
         <CartLine
           key={item.lineId}
@@ -654,85 +702,91 @@ function CartLine({
   };
 
   return (
-    <div className="flex gap-3 rounded-lg border border-clinical-zinc/15 bg-clinical-zinc/[0.04] p-3">
-      <img
-        src={item.image}
-        srcSet={unsplashSrcset(item.image)}
-        sizes="64px"
-        alt=""
-        loading="lazy"
-        className="w-16 h-16 rounded-md object-cover shrink-0 bg-clinical-zinc/10"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-white leading-tight line-clamp-2">
-              {item.name}
-            </p>
-            <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-clinical-zinc">
-              {item.isVeg && (
-                <Leaf className="w-3 h-3 text-clinical-sage" aria-label="Vegetarian" />
-              )}
-              {item.rdVerified && (
-                <ShieldCheck
-                  className="w-3 h-3 text-clinical-gold"
-                  aria-label="RD-verified"
-                />
-              )}
-              <span className="tabular-nums">
-                {item.macros.calories} kcal · P{item.macros.protein}g
-              </span>
-            </div>
-            {item.customizations.length > 0 && (
-              <p className="text-[10px] text-clinical-zinc/80 mt-1 line-clamp-1">
-                {item.customizations.join(" · ")}
+    <div className="dcard" style={{ marginBottom: 0 }}>
+      <div className="fx gap12">
+        <img
+          src={item.image}
+          srcSet={unsplashSrcset(item.image)}
+          sizes="64px"
+          alt=""
+          loading="lazy"
+          style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", flex: "none", background: "var(--s2)" }}
+        />
+        <div className="f1" style={{ minWidth: 0 }}>
+          <div className="fx" style={{ alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ minWidth: 0 }}>
+              <p className="small" style={{ fontWeight: 600, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                {item.name}
               </p>
-            )}
-            {item.recipient || showTagInput ? (
-              <div className="mt-1.5 flex items-center gap-1.5 animate-in fade-in duration-100">
-                <span className="text-[9px] uppercase tracking-wider text-clinical-zinc font-semibold shrink-0">For:</span>
-                <input
-                  type="text"
-                  placeholder="e.g. Mom, Child"
-                  autoFocus={showTagInput}
-                  value={item.recipient || ""}
-                  onChange={(e) => onUpdateRecipient(e.target.value)}
-                  onBlur={() => {
-                    if (!item.recipient) setShowTagInput(false);
-                  }}
-                  className="bg-clinical-dark border border-clinical-zinc/20 text-white rounded px-2 py-0.5 text-[10px] focus:outline-none focus:border-clinical-gold w-28 h-5.5 transition-colors font-sans"
-                />
+              <div className="fx ac" style={{ gap: 6, marginTop: 2, fontSize: 10, color: "var(--mut)" }}>
+                {item.isVeg && (
+                  <Leaf className="w-3 h-3" style={{ color: "var(--sage)" }} aria-label="Vegetarian" />
+                )}
+                {item.rdVerified && (
+                  <ShieldCheck
+                    className="w-3 h-3"
+                    style={{ color: "var(--safb)" }}
+                    aria-label="RD-verified"
+                  />
+                )}
+                <span className="mono" style={{ fontSize: 10 }}>
+                  {item.macros.calories} kcal · P{item.macros.protein}g
+                </span>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowTagInput(true)}
-                className="text-[10px] text-clinical-gold hover:underline mt-1.5 text-left font-medium block animate-in fade-in duration-100"
-              >
-                + Add name tag
-              </button>
-            )}
+              {item.customizations.length > 0 && (
+                <p className="fine clamp1" style={{ fontSize: 10, marginTop: 4 }}>
+                  {item.customizations.join(" · ")}
+                </p>
+              )}
+              {item.recipient || showTagInput ? (
+                <div className="fx ac" style={{ gap: 6, marginTop: 6 }}>
+                  <span className="lab">For</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mom, Child"
+                    autoFocus={showTagInput}
+                    value={item.recipient || ""}
+                    onChange={(e) => onUpdateRecipient(e.target.value)}
+                    onBlur={() => {
+                      if (!item.recipient) setShowTagInput(false);
+                    }}
+                    className="inp"
+                    style={{ height: 28, width: 120, padding: "0 10px", fontSize: 11 }}
+                  />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowTagInput(true)}
+                  className="linkq"
+                  style={{ fontSize: 11, marginTop: 6, display: "block" }}
+                >
+                  + Add name tag
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleRemove}
+              aria-label={`Remove ${item.name}`}
+              className="qbtn"
+              style={{ width: 30, height: 30, flex: "none" }}
+            >
+              <Trash2 className="w-3.5 h-3.5" aria-hidden />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleRemove}
-            aria-label={`Remove ${item.name}`}
-            className="text-clinical-zinc hover:text-red-400 transition-colors shrink-0"
-          >
-            <Trash2 className="w-3.5 h-3.5" aria-hidden />
-          </button>
-        </div>
 
-        <div className="flex items-center justify-between mt-2.5">
-          <QtyStepper
-            quantity={item.quantity}
-            onInc={onInc}
-            onDec={item.quantity === 1 ? handleRemove : onDec}
-            name={item.name}
-          />
-          <span className="text-sm font-semibold tabular-nums text-white">
-            {formatPrice(lineTotal)}
-          </span>
+          <div className="fx ac jb mt10">
+            <QtyStepper
+              quantity={item.quantity}
+              onInc={onInc}
+              onDec={item.quantity === 1 ? handleRemove : onDec}
+              name={item.name}
+            />
+            <span className="price" style={{ fontSize: 15, color: "var(--safb)" }}>
+              {formatPrice(lineTotal)}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -751,18 +805,19 @@ function QtyStepper({
   name: string;
 }) {
   return (
-    <div className="inline-flex items-center rounded-md border border-clinical-zinc/25 bg-clinical-dark">
+    <div className="fx ac gap10">
       <button
         type="button"
         onClick={onDec}
         aria-label={`Decrease ${name} quantity`}
-        className="w-11 h-11 inline-flex items-center justify-center text-clinical-zinc hover:text-clinical-gold transition-colors"
+        className="qbtn"
       >
         <Minus className="w-3 h-3" aria-hidden />
       </button>
       <span
         aria-live="polite"
-        className="w-6 text-center text-xs font-semibold tabular-nums text-white"
+        className="mono"
+        style={{ width: 20, textAlign: "center", fontSize: 15, fontWeight: 600 }}
       >
         {quantity}
       </span>
@@ -770,7 +825,7 @@ function QtyStepper({
         type="button"
         onClick={onInc}
         aria-label={`Increase ${name} quantity`}
-        className="w-11 h-11 inline-flex items-center justify-center text-clinical-zinc hover:text-clinical-gold transition-colors"
+        className="qbtn"
       >
         <Plus className="w-3 h-3" aria-hidden />
       </button>
@@ -806,19 +861,20 @@ function UpsellCarousel({
   }, []);
 
   return (
-    <section aria-label="Frequently added together" className="pt-2">
-      <div className="flex items-baseline justify-between mb-2">
-        <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-clinical-gold">
+    <section aria-label="Frequently added together" style={{ paddingTop: 8 }}>
+      <div className="fx" style={{ alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+        <h3 className="lab" style={{ color: "var(--safb)" }}>
           Add to your order
         </h3>
-        <span className="text-[10px] text-clinical-zinc">RD picks</span>
+        <span className="fine" style={{ fontSize: 10 }}>RD picks</span>
       </div>
       <div
         ref={scrollRef}
         role="list"
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        className="-mx-1 flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-thin focus:outline-none"
+        className="hrail"
+        style={{ margin: "0 -4px", padding: "2px 4px 4px", scrollSnapType: "x mandatory", outline: "none" }}
         aria-label="Upsell items, use arrow keys to scroll"
       >
         {dishes.map((d) => (
@@ -863,33 +919,34 @@ function UpsellCard({
     <article
       role="group"
       aria-label={dish.name}
-      className="snap-start shrink-0 w-[156px] rounded-lg border border-clinical-zinc/15 bg-upsell-accent overflow-hidden"
+      className="hcard"
+      style={{ width: 156, scrollSnapAlign: "start" }}
       onPointerEnter={() => { setGhostActive(true); onGhost(dish); }}
       onPointerLeave={() => { setGhostActive(false); onGhost(null); }}
       onFocus={() => onGhost(dish)}
       onBlur={() => { setGhostActive(false); onGhost(null); }}
     >
-      <div className="relative aspect-[4/3] bg-clinical-zinc/10">
+      <div className="posrel" style={{ aspectRatio: "4 / 3", background: "var(--s2)" }}>
         <img
           src={dish.image}
           srcSet={unsplashSrcset(dish.image)}
           sizes="156px"
           alt=""
           loading="lazy"
-          className="w-full h-full object-cover"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         {dish.isVeg && (
-          <span className="absolute top-1.5 left-1.5 inline-flex items-center justify-center w-4 h-4 rounded-sm border border-clinical-sage/70 bg-clinical-dark/70">
-            <Leaf className="w-2.5 h-2.5 text-clinical-sage" aria-label="Vegetarian" />
+          <span style={{ position: "absolute", top: 6, left: 6, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: 4, border: "1px solid rgba(136,170,132,.7)", background: "rgba(10,12,13,.7)" }}>
+            <Leaf className="w-2.5 h-2.5" style={{ color: "var(--sage)" }} aria-label="Vegetarian" />
           </span>
         )}
       </div>
-      <div className="p-2 space-y-1.5">
-        <p className="text-[11px] font-medium leading-tight text-white line-clamp-2 min-h-[28px]">
+      <div className="hbody" style={{ padding: 8 }}>
+        <p className="small" style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.3, minHeight: 28, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
           {dish.name}
         </p>
-        <div className="flex items-center justify-between gap-1">
-          <span className="text-[11px] font-semibold tabular-nums text-clinical-gold">
+        <div className="fx ac jb" style={{ gap: 4, marginTop: 6 }}>
+          <span className="price" style={{ fontSize: 11, color: "var(--safb)" }}>
             {formatPrice(dish.price)}
           </span>
           <button
@@ -897,10 +954,18 @@ function UpsellCard({
             onClick={handleAdd}
             disabled={status === "loading"}
             aria-label={`Add ${dish.name} to order`}
-            className={cn(
-              "h-11 px-2 text-[10px] font-semibold text-[#050505] rounded-md transition-colors uppercase tracking-[0.08em] shrink-0 inline-flex items-center gap-1",
-              status === "success" ? "bg-clinical-sage" : "bg-clinical-gold hover:bg-clinical-gold/90",
-            )}
+            className="btn"
+            style={{
+              height: 30,
+              padding: "0 10px",
+              fontSize: 11,
+              borderRadius: 8,
+              flex: "none",
+              gap: 4,
+              ...(status === "success"
+                ? { background: "var(--saged)", color: "var(--sage)" }
+                : { background: "var(--saf)", color: "var(--onsaf)" }),
+            }}
           >
             {status === "idle" && <><Plus className="w-3 h-3" /> Add</>}
             {status === "loading" && <Loader2 className="w-3 h-3 animate-spin" />}
@@ -946,31 +1011,40 @@ function FooterTotals({
   const hasExpressUPI = Boolean(import.meta.env.VITE_RAZORPAY_KEY_ID);
 
   return (
-    <div className="border-t border-clinical-zinc/15 bg-clinical-dark/95 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 shrink-0">
-      <dl className="space-y-1.5 text-xs">
+    <div
+      style={{
+        borderTop: "1px solid var(--ln)",
+        background: "var(--s1)",
+        padding: "16px 20px calc(16px + env(safe-area-inset-bottom))",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        flex: "none",
+      }}
+    >
+      <dl style={{ margin: 0 }}>
         <TotalsRow label="Subtotal" value={formatPrice(totals.subtotal)} />
         <TotalsRow label="GST (18%)" value={formatPrice(totals.tax)} muted />
         <TotalsRow
           label="Delivery"
           value={totals.hasFreeDelivery ? "FREE" : formatPrice(totals.deliveryFee)}
-          valueClass={totals.hasFreeDelivery ? "text-clinical-sage font-semibold" : undefined}
+          valueClass={totals.hasFreeDelivery ? "sagec" : undefined}
         />
-        <div className="h-px bg-clinical-zinc/15 my-2" />
         <TotalsRow label="Total" value={formatPrice(totals.total)} large />
       </dl>
 
       {/* Aggregated cart macros — clinical differentiator */}
-      <div className="flex items-center justify-between text-[10px] text-clinical-zinc/70 py-1.5 px-2 rounded-lg bg-clinical-surface/50">
-        <span className="tabular-nums">{cartMacros.calories} kcal</span>
-        <span className="tabular-nums text-clinical-zinc/50">·</span>
-        <span className="tabular-nums"><span className="text-clinical-zinc/90">{cartMacros.protein}g</span> protein</span>
-        <span className="tabular-nums text-clinical-zinc/50">·</span>
-        <span className="tabular-nums"><span className="text-clinical-zinc/90">{cartMacros.carbs}g</span> carbs</span>
-        <span className="tabular-nums text-clinical-zinc/50">·</span>
-        <span className="tabular-nums"><span className="text-clinical-zinc/90">{cartMacros.fat}g</span> fat</span>
+      <div className="fx ac jb mono" style={{ fontSize: 10, color: "var(--mut)", padding: "6px 8px", borderRadius: 10, background: "var(--s2)" }}>
+        <span>{cartMacros.calories} kcal</span>
+        <span className="fntc">·</span>
+        <span><span style={{ color: "var(--tx)" }}>{cartMacros.protein}g</span> protein</span>
+        <span className="fntc">·</span>
+        <span><span style={{ color: "var(--tx)" }}>{cartMacros.carbs}g</span> carbs</span>
+        <span className="fntc">·</span>
+        <span><span style={{ color: "var(--tx)" }}>{cartMacros.fat}g</span> fat</span>
       </div>
 
-      <p className="text-[10px] text-clinical-zinc/70 text-center">
+      <p className="fine tc" style={{ fontSize: 10 }}>
         Discounts &amp; credits applied at checkout
       </p>
 
@@ -980,7 +1054,8 @@ function FooterTotals({
           type="button"
           onClick={onExpressUPI}
           disabled={expressLoading}
-          className="flex items-center justify-center gap-2 h-11 w-full rounded-md bg-clinical-surface border border-clinical-gold/30 text-clinical-gold text-xs font-semibold hover:bg-clinical-gold/10 transition-colors disabled:opacity-60"
+          className={expressLoading ? "btn btn-g btn-blk dis" : "btn btn-g btn-blk"}
+          style={{ color: "var(--safb)", borderColor: "var(--saf)" }}
         >
           {expressLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -996,7 +1071,7 @@ function FooterTotals({
       <Link
         to="/checkout"
         onClick={onClose}
-        className="flex items-center justify-center h-11 rounded-md bg-clinical-gold text-[#050505] text-xs font-semibold uppercase tracking-[0.14em] hover:bg-clinical-gold/90 transition-colors"
+        className="btn btn-p btn-blk"
       >
         {hasExpressUPI ? "Checkout →" : `Checkout · ${formatPrice(totals.total)}`}
       </Link>
@@ -1018,21 +1093,17 @@ function TotalsRow({
   valueClass?: string;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <dt
-        className={cn(
-          muted ? "text-clinical-zinc" : "text-clinical-zinc/90",
-          large && "text-white font-semibold uppercase tracking-[0.12em] text-[11px]",
-        )}
-      >
+    <div className={large ? "billrow tot" : "billrow"}>
+      <dt style={large ? { textTransform: "uppercase", letterSpacing: ".12em", fontSize: 11 } : muted ? { color: "var(--mut)" } : { color: "var(--tx)" }}>
         {label}
       </dt>
       <dd
-        className={cn(
-          "tabular-nums",
-          large ? "text-base font-bold text-clinical-gold" : "text-white",
-          valueClass,
-        )}
+        className={large ? "price" : "mono"}
+        style={{
+          ...(large ? { fontSize: 16 } : {}),
+          ...(valueClass === "sagec" ? { fontWeight: 600 } : {}),
+          color: valueClass === "sagec" ? "var(--sage)" : large ? "var(--safb)" : "var(--tx)",
+        }}
       >
         {value}
       </dd>
