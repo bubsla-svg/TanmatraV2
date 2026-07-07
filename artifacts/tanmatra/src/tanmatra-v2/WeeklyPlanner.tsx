@@ -1,12 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   mealPlanApi,
@@ -473,16 +466,16 @@ export default function V2WeeklyPlanner() {
       </div>
 
       {/* Swap dialog */}
-      <Dialog
-        open={swapDialog !== null}
-        onOpenChange={(open) => !open && setSwapDialog(null)}
-      >
-        <DialogContent className="tnm2" style={{ ...DIALOG_SURFACE, maxWidth: 520 }}>
-          <DialogHeader>
-            <DialogTitle className="h2" style={{ color: "var(--tx)" }}>
+      {swapDialog !== null && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setSwapDialog(null)}
+        >
+          <div className="card" style={{ ...DIALOG_SURFACE, maxWidth: 520, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="h2" style={{ color: "var(--tx)" }}>
               Swap {swapDialog ? SLOT_LABEL[swapDialog.slot] : ""}
-            </DialogTitle>
-          </DialogHeader>
+            </div>
           {swapDialog?.loading ? (
             <div>
               {Array.from({ length: 4 }).map((_, i) => (
@@ -545,26 +538,30 @@ export default function V2WeeklyPlanner() {
               ))}
             </div>
           )}
-          <DialogFooter>
-            <button
-              type="button"
-              className="btn btn-g btn-blk"
-              onClick={() => setSwapDialog(null)}
-            >
-              Cancel
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <div className="fx gap8 mt16">
+              <button
+                type="button"
+                className="btn btn-g btn-blk"
+                onClick={() => setSwapDialog(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings dialog */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="tnm2" style={DIALOG_SURFACE}>
-          <DialogHeader>
-            <DialogTitle className="h2" style={{ color: "var(--tx)" }}>
+      {settingsOpen && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setSettingsOpen(false)}
+        >
+          <div className="card" style={{ ...DIALOG_SURFACE, maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="h2" style={{ color: "var(--tx)" }}>
               Meal planner settings
-            </DialogTitle>
-          </DialogHeader>
+            </div>
           <div className="mt10">
             <div className="fx ac jb gap12 mb16">
               <div className="f1" style={{ minWidth: 0 }}>
@@ -634,25 +631,26 @@ export default function V2WeeklyPlanner() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <button
-              type="button"
-              className="btn btn-g"
-              onClick={() => setSettingsOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-p"
-              onClick={saveSettings}
-              data-testid="button-save-settings"
-            >
-              Save
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="btn btn-g"
+                onClick={() => setSettingsOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-p"
+                onClick={saveSettings}
+                data-testid="button-save-settings"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

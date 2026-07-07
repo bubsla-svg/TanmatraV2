@@ -1,15 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { useOrders, formatRelativeTime, type PastOrder } from "@/lib/ordersContext";
 import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/api/adapter";
@@ -237,46 +228,52 @@ export default function V2Orders() {
         </div>
 
         {/* Dispute dialog — reuse the accessible modal primitive, restyled v2 */}
-        <Dialog open={disputeFor !== null} onOpenChange={(open) => !open && setDisputeFor(null)}>
-          <DialogContent
+        {disputeFor !== null && (
+          <div
             className="tnm2"
-            style={{ background: "var(--s1)", border: "1px solid var(--ln)", color: "var(--tx)" }}
-            aria-describedby="dispute-desc"
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            onClick={() => setDisputeFor(null)}
           >
-            <DialogHeader>
-              <DialogTitle className="fx ac gap8" style={{ color: "var(--tx)" }}>
+            <div
+              className="card"
+              style={{ maxWidth: 460, width: "100%" }}
+              onClick={(e) => e.stopPropagation()}
+              aria-describedby="dispute-desc"
+            >
+              <div className="tt fx ac gap8" style={{ color: "var(--tx)" }}>
                 <i className="ph-bold ph-warning safc" />
                 Report a problem
-              </DialogTitle>
-              <DialogDescription id="dispute-desc" className="fine">
+              </div>
+              <div id="dispute-desc" className="fine mt6">
                 Tell us what went wrong with order{" "}
                 <span className="mono safc">{disputeFor?.orderId}</span>. Our care team responds
                 within 30 minutes during operating hours.
-              </DialogDescription>
-            </DialogHeader>
-            <Textarea
-              aria-describedby="dispute-desc"
-              placeholder="e.g., Wrong dish delivered, food was cold, missing item, allergen concern…"
-              value={disputeText}
-              onChange={(e) => setDisputeText(e.target.value)}
-              className="min-h-[120px] bg-clinical-dark border-clinical-border text-sm"
-            />
-            <DialogFooter className="gap8">
-              <button className="btn btn-g" onClick={() => setDisputeFor(null)}>
-                Cancel
-              </button>
-              <button
-                className="btn btn-p"
-                onClick={submitDispute}
-                disabled={!disputeText.trim()}
-                style={!disputeText.trim() ? { opacity: 0.4, pointerEvents: "none" } : undefined}
-              >
-                <i className="ph-bold ph-check-circle" />
-                Submit report
-              </button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              </div>
+              <textarea
+                aria-describedby="dispute-desc"
+                placeholder="e.g., Wrong dish delivered, food was cold, missing item, allergen concern…"
+                value={disputeText}
+                onChange={(e) => setDisputeText(e.target.value)}
+                className="inp mt12"
+                style={{ minHeight: 120, height: "auto", alignItems: "flex-start", padding: "12px 14px", resize: "vertical" }}
+              />
+              <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+                <button className="btn btn-g" onClick={() => setDisputeFor(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-p"
+                  onClick={submitDispute}
+                  disabled={!disputeText.trim()}
+                  style={!disputeText.trim() ? { opacity: 0.4, pointerEvents: "none" } : undefined}
+                >
+                  <i className="ph-bold ph-check-circle" />
+                  Submit report
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

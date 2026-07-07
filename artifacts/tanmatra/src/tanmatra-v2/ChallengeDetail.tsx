@@ -1,16 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   useChallenge,
   useJoinChallenge,
   useLeaveChallenge,
@@ -420,87 +410,99 @@ export default function V2ChallengeDetail() {
       </div>
 
       {/* ------ Leave-challenge confirmation ------ */}
-      <AlertDialog open={leaveConfirmOpen} onOpenChange={setLeaveConfirmOpen}>
-        <AlertDialogContent className="bg-clinical-surface border-clinical-border">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">
+      {leaveConfirmOpen && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setLeaveConfirmOpen(false)}
+        >
+          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="tt" style={{ color: "#fff" }}>
               Leave this challenge?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-clinical-zinc text-xs">
+            </div>
+            <div className="fine mt6">
               You'll lose your spot in the cohort. Your check-in history is
               preserved if you re-join later, but your current streak resets
               to zero. You can re-join while spots are open.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">
-              Stay in challenge
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="min-h-11 bg-red-500 text-white hover:bg-red-600"
-              onClick={handleLeave}
-            >
-              Yes, leave
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </div>
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button className="btn btn-g" onClick={() => setLeaveConfirmOpen(false)}>
+                Stay in challenge
+              </button>
+              <button
+                className="btn"
+                style={{ background: "var(--dgr)", color: "#fff" }}
+                onClick={() => {
+                  handleLeave();
+                  setLeaveConfirmOpen(false);
+                }}
+              >
+                Yes, leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ------ Post-join welcome — sets expectations for first-time joiners ------ */}
-      <AlertDialog open={showWelcome} onOpenChange={setShowWelcome}>
-        <AlertDialogContent className="bg-clinical-surface border-clinical-gold/30">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">
+      {showWelcome && (
+        <div
+          className="tnm2"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => setShowWelcome(false)}
+        >
+          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="tt" style={{ color: "#fff" }}>
               You're in — here's what's next
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-clinical-zinc text-xs">
+            </div>
+            <div className="fine mt6">
               Welcome to {challenge.title}.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <ul className="text-xs text-clinical-zinc space-y-2 leading-relaxed">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-clinical-gold font-bold">1.</span>
-              <span>
-                <strong className="text-white">Starts {formatRelative(challenge.startsAt)}.</strong>
-                {" "}You'll get a kickoff email with your day-1 plan.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-clinical-gold font-bold">2.</span>
-              <span>
-                <strong className="text-white">Daily check-ins</strong> appear
-                on this page once the challenge is live — log meals, mood,
-                and metrics in 30 seconds.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-clinical-gold font-bold">3.</span>
-              <span>
-                <strong className="text-white">Cohort feed</strong> below lets
-                you ask questions and cheer on others. {challenge.rdName} drops
-                in a few times a week.
-              </span>
-            </li>
-            {challenge.bundleSlug && (
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5 text-clinical-gold font-bold">4.</span>
+            </div>
+            <ul className="fine mt12" style={{ display: "flex", flexDirection: "column", gap: 8, lineHeight: 1.55 }}>
+              <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
+                <span className="safc fw7" style={{ marginTop: 2 }}>1.</span>
                 <span>
-                  <strong className="text-white">Optional meal bundle</strong>{" "}
-                  available below — RD-curated dishes that fit the protocol.
+                  <strong style={{ color: "#fff" }}>Starts {formatRelative(challenge.startsAt)}.</strong>
+                  {" "}You'll get a kickoff email with your day-1 plan.
                 </span>
               </li>
-            )}
-          </ul>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              className="min-h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold"
-              onClick={() => setShowWelcome(false)}
-            >
-              Got it
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
+                <span className="safc fw7" style={{ marginTop: 2 }}>2.</span>
+                <span>
+                  <strong style={{ color: "#fff" }}>Daily check-ins</strong> appear
+                  on this page once the challenge is live — log meals, mood,
+                  and metrics in 30 seconds.
+                </span>
+              </li>
+              <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
+                <span className="safc fw7" style={{ marginTop: 2 }}>3.</span>
+                <span>
+                  <strong style={{ color: "#fff" }}>Cohort feed</strong> below lets
+                  you ask questions and cheer on others. {challenge.rdName} drops
+                  in a few times a week.
+                </span>
+              </li>
+              {challenge.bundleSlug && (
+                <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
+                  <span className="safc fw7" style={{ marginTop: 2 }}>4.</span>
+                  <span>
+                    <strong style={{ color: "#fff" }}>Optional meal bundle</strong>{" "}
+                    available below — RD-curated dishes that fit the protocol.
+                  </span>
+                </li>
+              )}
+            </ul>
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button
+                className="btn btn-p"
+                onClick={() => setShowWelcome(false)}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

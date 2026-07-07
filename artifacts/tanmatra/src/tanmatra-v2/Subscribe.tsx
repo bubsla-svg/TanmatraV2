@@ -8,13 +8,6 @@ import { useCartStore } from "@/lib/cartContext";
 import type { SubscriptionItem } from "@/lib/subscriptionsApi";
 import { payWithRazorpay, razorpayConfigured } from "@/lib/razorpayClient";
 import { track } from "@/lib/analytics";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
@@ -1024,36 +1017,40 @@ export default function V2Subscribe() {
           </div>
         </div>
 
-        <Dialog open={policyModal !== null} onOpenChange={(open) => !open && setPolicyModal(null)}>
-          <DialogContent className="bg-clinical-surface border-clinical-border max-w-md text-white">
-            <DialogHeader>
-              <DialogTitle className="text-clinical-gold flex items-center gap-2">
+        {policyModal !== null && (
+          <div
+            className="tnm2"
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            onClick={() => setPolicyModal(null)}
+          >
+            <div className="card" style={{ maxWidth: 448, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+              <div className="tt fx ac gap8 safc">
                 {policyModal === "pause" ? "⏸️ Pause & Cancellation Policy" : "🔀 Flexible Dish Swap Guarantee"}
-              </DialogTitle>
-              <DialogDescription className="text-clinical-zinc text-xs space-y-2 pt-2">
+              </div>
+              <div className="fine mt6" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {policyModal === "pause" ? (
                   <>
-                    <p className="text-zinc-200">
+                    <p style={{ color: "var(--tx)" }}>
                       <strong>Pause up to 8 weeks:</strong> Need to skip a delivery or going on a trip? You can pause your plan directly from the <em>My Plans</em> dashboard up to 24 hours before any scheduled delivery window. Your delivery schedule and remaining credits are frozen instantly.
                     </p>
-                    <p className="text-zinc-200">
+                    <p style={{ color: "var(--tx)" }}>
                       <strong>Cancel anytime:</strong> If you cancel mid-cycle, any remaining unfulfilled full weeks are refunded within 7 business days or kept as wallet credit for future one-off orders.
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-zinc-200">
+                    <p style={{ color: "var(--tx)" }}>
                       <strong>Swap before kitchen cutoff:</strong> Don't fancy tomorrow's recipe? Up to 24 hours before your scheduled slot, click <em>Change dish</em> on any upcoming delivery day to select any alternative RD-certified meal on our active rotation at zero extra charge.
                     </p>
-                    <p className="text-zinc-200">
+                    <p style={{ color: "var(--tx)" }}>
                       <strong>Allergen auto-filtering:</strong> Our kitchen automatically excludes your saved allergens and preferences every week so your menu is 100% safe by default.
                     </p>
                   </>
                 )}
-              </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
