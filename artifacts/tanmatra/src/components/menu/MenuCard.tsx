@@ -77,7 +77,7 @@ export default function MenuCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.04 }}
       whileHover={{ y: -4 }}
-      className={`group relative flex flex-row sm:flex-col rounded-2xl overflow-hidden bg-clinical-surface-elevated border border-clinical-border hover:border-clinical-gold/50 hover:shadow-[0_8px_30px_rgba(212,175,55,0.12)] transition-all duration-300 ${
+      className={`group relative flex flex-row sm:flex-col rounded-2xl overflow-hidden bg-clinical-surface-elevated border border-clinical-border hover:border-clinical-gold/50 hover:shadow-[0_8px_30px_rgba(244,196,48,0.12)] transition-all duration-300 ${
         !item.isAvailable ? "opacity-50 grayscale" : ""
       } ${match.blocked ? "ring-1 ring-orange-500/40" : ""}`}
     >
@@ -101,7 +101,7 @@ export default function MenuCard({
           whileHover={{ scale: 1, rotate: 12 }}
           aria-hidden="true"
         >
-          <Sparkle weight="fill" className="w-3.5 h-3.5 text-clinical-gold drop-shadow-[0_0_6px_rgba(212,175,55,0.6)]" />
+          <Sparkle weight="fill" className="w-3.5 h-3.5 text-clinical-gold drop-shadow-[0_0_6px_rgba(244,196,48,0.6)]" />
         </motion.div>
 
         {/* Top-left: sophisticated modern pill-badges + RD + premium */}
@@ -251,7 +251,7 @@ export default function MenuCard({
               Upgrade to Premium
             </Button>
           ) : cartItem && !hasVariants ? (
-            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(212,175,55,0.35)] transition-all duration-200">
+            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(244,196,48,0.35)] transition-all duration-200">
               <button
                 type="button"
                 onClick={(e) => {
@@ -289,7 +289,7 @@ export default function MenuCard({
                 }}
                 disabled={!item.isAvailable || !isLive || match.blocked}
                 title={match.blocked ? "Cannot add dish: Allergen/Contraindication conflict" : !isLive ? "Menu is updating — add to cart will be available shortly" : undefined}
-                className="flex-1 h-11 sm:h-10 rounded-xl border border-clinical-gold bg-clinical-gold/10 hover:bg-clinical-gold/25 text-clinical-gold px-3 py-2 font-sans text-xs font-extrabold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(212,175,55,0.15)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed truncate flex items-center justify-center gap-1"
+                className="flex-1 h-11 sm:h-10 rounded-xl border border-clinical-gold bg-clinical-gold/10 hover:bg-clinical-gold/25 text-clinical-gold px-3 py-2 font-sans text-xs font-extrabold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(244,196,48,0.15)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed truncate flex items-center justify-center gap-1"
               >
                 <span className="text-sm font-black leading-none" aria-hidden="true">+</span> ADD{familyCartCount > 0 ? ` (${familyCartCount})` : ""}
               </button>
@@ -302,7 +302,7 @@ export default function MenuCard({
                     e.stopPropagation();
                     onExpressBuy?.(item);
                   }}
-                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(212,175,55,0.3)] active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(244,196,48,0.3)] active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Buy Now
                 </button>
@@ -334,10 +334,10 @@ function StarRating({ value }: { value: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <svg key={i} className="w-3 h-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           {i <= full ? (
-            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#D4AF37" />
+            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#F4C430" />
           ) : i === full + 1 && half ? (
             <>
-              <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3V1z" fill="#D4AF37" />
+              <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3V1z" fill="#F4C430" />
               <path d="M6 1v7.3L3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#3a3a3a" />
             </>
           ) : (

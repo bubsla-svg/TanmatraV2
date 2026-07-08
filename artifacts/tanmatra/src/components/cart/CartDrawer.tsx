@@ -173,7 +173,7 @@ export default function CartDrawer() {
         order_id: razorpayOrderId,
         name: "Tanmatra",
         description: `${totals.totalQuantity} item${totals.totalQuantity === 1 ? "" : "s"}`,
-        theme: { color: "#D4AF37" },
+        theme: { color: "#F4C430" },
         prefill: { contact: addr.phone },
         handler: async (response: {
           razorpay_payment_id: string;

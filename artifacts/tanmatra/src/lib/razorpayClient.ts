@@ -92,7 +92,7 @@ export async function payWithRazorpay(args: {
       order_id: razorpayOrderId,
       name: "Tanmatra",
       description: args.description,
-      theme: { color: "#D4AF37" },
+      theme: { color: "#F4C430" },
       prefill: { contact: args.contact ?? "" },
       handler: async (response: {
         razorpay_payment_id: string;

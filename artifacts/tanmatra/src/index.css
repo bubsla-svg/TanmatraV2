@@ -191,7 +191,7 @@
   --color-info: var(--color-info-theme);
 
   /* ─── Legacy Clinical Overrides (mapped to new variables) ─── */
-  --color-clinical-gold: #D4AF37;
+  --color-clinical-gold: #F4C430;
   --color-clinical-gold-light: rgba(212, 175, 55, 0.12);
   --color-clinical-blue: #6BA3C8;
   --color-clinical-blue-light: rgba(107, 163, 200, 0.12);

@@ -425,7 +425,7 @@ function ApptCard({
   const notesBlock = appt.rdNotes && (
     <div
       className="mt10"
-      style={{ background: "var(--safd)", border: "1px solid rgba(232,154,62,.35)", borderRadius: 10, padding: "10px 12px" }}
+      style={{ background: "var(--safd)", border: "1px solid rgba(244,196,48,.35)", borderRadius: 10, padding: "10px 12px" }}
     >
       <div className="lab safc mb4">RD notes</div>
       <div className="fine" style={{ whiteSpace: "pre-line" }}>{appt.rdNotes}</div>

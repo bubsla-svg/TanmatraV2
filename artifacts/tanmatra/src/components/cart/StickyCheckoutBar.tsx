@@ -69,7 +69,7 @@ export default function StickyCheckoutBar() {
           className="fixed inset-x-0 z-45 px-3 sm:px-6 bottom-[calc(var(--bottom-nav-height)+var(--safe-bottom))] md:bottom-6 pointer-events-none"
         >
           <div className="mx-auto max-w-3xl pointer-events-auto">
-            <div className="flex flex-col rounded-2xl border border-clinical-gold/40 bg-clinical-dark/95 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(212,175,55,0.15)] overflow-hidden">
+            <div className="flex flex-col rounded-2xl border border-clinical-gold/40 bg-clinical-dark/95 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(244,196,48,0.15)] overflow-hidden">
               
               {/* Dynamic Threshold Progress Tracker (AOV Booster) */}
               {subtotal > 0 && showProgress && (
@@ -136,7 +136,7 @@ export default function StickyCheckoutBar() {
                   type="button"
                   onClick={() => navigate("/checkout")}
                   aria-label={`Proceed to checkout · ${formatPrice(subtotal)} subtotal`}
-                  className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-clinical-gold px-5 py-3 text-xs sm:text-sm font-extrabold text-[#050505] shadow-[0_0_20px_rgba(212,175,55,0.35)] hover:bg-clinical-gold/90 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                  className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-clinical-gold px-5 py-3 text-xs sm:text-sm font-extrabold text-[#050505] shadow-[0_0_20px_rgba(244,196,48,0.35)] hover:bg-clinical-gold/90 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4C430]"
                 >
                   Checkout
                   <ArrowRight className="w-4 h-4" weight="bold" aria-hidden />

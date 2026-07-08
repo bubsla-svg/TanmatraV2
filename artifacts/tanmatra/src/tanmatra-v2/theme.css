@@ -15,7 +15,7 @@
 .tnm2 i[class^="ph"],.tnm2 i[class*=" ph"]{display:inline-flex;line-height:1}
 
 /* ---- component system ---- */
-.tnm2{--bg:#0A0C0D;--s1:#121517;--s2:#191D20;--s3:#20262A;--tx:#E9ECEE;--mut:#8B9398;--fnt:#5C6367;--ln:rgba(255,255,255,.07);--ln2:rgba(255,255,255,.13);--saf:#E89A3E;--safb:#F3AB50;--safd:rgba(232,154,62,.14);--onsaf:#141210;--sage:#88AA84;--saged:rgba(136,170,132,.16);--dgr:#C97C70;--e:cubic-bezier(.4,0,.2,1);color-scheme:dark;font-family:Inter,system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased;min-height:100%}
+.tnm2{--bg:#0A0C0D;--s1:#121517;--s2:#191D20;--s3:#20262A;--tx:#E9ECEE;--mut:#8B9398;--fnt:#5C6367;--ln:rgba(255,255,255,.07);--ln2:rgba(255,255,255,.13);--saf:#F4C430;--safb:#FFD75A;--safd:rgba(244,196,48,.14);--onsaf:#141210;--sage:#88AA84;--saged:rgba(136,170,132,.16);--dgr:#C97C70;--e:cubic-bezier(.4,0,.2,1);color-scheme:dark;font-family:Inter,system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased;min-height:100%}
 .tnm2 .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
 .tnm2 .lab{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fnt);font-weight:500}
 .tnm2 .mut{color:var(--mut)}.fntc{color:var(--fnt)}.safc{color:var(--safb)}.sagec{color:var(--sage)}.dgrc{color:var(--dgr)}
@@ -58,7 +58,7 @@
 .tnm2 .homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:132px;height:5px;border-radius:3px;background:var(--tx);opacity:.2;z-index:90;pointer-events:none}
 .tnm2 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:14.5px;border-radius:10px;padding:0 18px;height:46px;transition:transform 150ms var(--e),background 150ms;white-space:nowrap}
 .tnm2 .btn:active{transform:scale(.98)}
-.tnm2 .btn-p{background:var(--saf);color:var(--onsaf)}
+.tnm2 .btn-p{background:linear-gradient(180deg,#FFD75A 0%,var(--saf) 60%);color:var(--onsaf);box-shadow:0 4px 18px rgba(244,196,48,.22)}
 .tnm2 .btn-p:active{background:var(--safb)}
 .tnm2 .btn-g{border:1px solid var(--ln2);color:var(--tx);background:transparent}
 .tnm2 .btn-s{background:var(--s3);color:var(--tx)}
@@ -102,7 +102,7 @@
    fixed heights so no reflow occurs when preferences load or a wearable would sync. */
 .tnm2 .mscore{position:absolute;top:6px;left:6px;z-index:2;display:inline-flex;align-items:center;gap:4px;height:21px;max-width:calc(100% - 12px);padding:0 7px;border-radius:7px;background:rgba(10,12,13,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid var(--ln2);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;font-weight:600;line-height:1;letter-spacing:.01em;white-space:nowrap;color:var(--mut)}
 .tnm2 .mscore.hi{color:var(--sage);border-color:rgba(136,170,132,.55)}
-.tnm2 .mscore.mid{color:var(--safb);border-color:rgba(232,154,62,.55)}
+.tnm2 .mscore.mid{color:var(--safb);border-color:rgba(244,196,48,.55)}
 .tnm2 .mscore.low{color:var(--mut)}
 .tnm2 .mscore.off{color:var(--dgr);border-color:rgba(201,124,112,.5)}
 .tnm2 .preason{height:20px;margin-top:8px;overflow:hidden;font-size:11.5px;color:var(--mut);display:flex;align-items:center;gap:5px;line-height:1}

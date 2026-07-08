@@ -22,7 +22,7 @@ const swatches = [
   { name: "clinical-dark", token: "--color-clinical-dark", value: "#050505" },
   { name: "clinical-surface", token: "--color-clinical-surface", value: "#0A0A0C" },
   { name: "clinical-surface-elevated", token: "--color-clinical-surface-elevated", value: "#111114" },
-  { name: "clinical-gold", token: "--color-clinical-gold", value: "#D4AF37" },
+  { name: "clinical-gold", token: "--color-clinical-gold", value: "#F4C430" },
   { name: "clinical-blue", token: "--color-clinical-blue", value: "#6BA3C8" },
   { name: "clinical-sage", token: "--color-clinical-sage", value: "#7D9E7E" },
   { name: "clinical-slate", token: "--color-clinical-slate", value: "#334155" },

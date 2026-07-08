@@ -933,7 +933,7 @@ export default function V2Checkout() {
                 order_id: razorpayOrderId,
                 name: "Tanmatra",
                 description: `Order ${orderId}`,
-                theme: { color: "#D4AF37" },
+                theme: { color: "#F4C430" },
                 prefill: {
                   contact: activeAddr?.phone ?? "",
                 },
@@ -1644,7 +1644,7 @@ export default function V2Checkout() {
               style={{ padding: 12, borderRadius: 10, border: "1px solid var(--saf)", background: "var(--safd)" }}
               title="Razorpay handles your payment securely. Tanmatra never sees your card or UPI details."
             >
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(232,154,62,.2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(244,196,48,.2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
                 <CreditCard className="w-4 h-4" style={{ color: "var(--safb)" }} />
               </div>
               <div className="f1">

@@ -35,7 +35,7 @@ const CFG: Record<Key, {
     heroImg: "/dishes/buddha-bowl.jpg",
   },
   clinical: {
-    name: "Clinical Protocol", accent: "#E89A3E", accentBg: "var(--safd)", icon: "ph-heartbeat",
+    name: "Clinical Protocol", accent: "#F4C430", accentBg: "var(--safd)", icon: "ph-heartbeat",
     headline: "Therapeutic nutrition,", accentWord: "RD-supervised",
     desc: "Evidence-based medical nutrition therapy for diabetes, cardiovascular, renal and post-surgical recovery — precise nutrient restrictions, every menu RD-signed.",
     pillars: [
