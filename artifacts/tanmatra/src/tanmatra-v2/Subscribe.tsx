@@ -17,6 +17,7 @@ import {
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
 import { checkPincode } from "@/lib/serviceablePincodes";
+import GoalPlanChooser from "@/components/subscribe/GoalPlanChooser";
 import { F } from "./data";
 
 const CADENCES: Array<{
@@ -104,7 +105,7 @@ const PROTOCOL_PRESETS = {
 
 export default function V2Subscribe() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { orders } = useOrders();
   const isFirstOrder = orders.length === 0;
   const [policyModal, setPolicyModal] = useState<"pause" | "swap" | null>(null);
@@ -191,6 +192,11 @@ export default function V2Subscribe() {
     !rdPlan && !isTrial && protocolParam && protocolParam in PROTOCOL_PRESETS
       ? PROTOCOL_PRESETS[protocolParam as keyof typeof PROTOCOL_PRESETS]
       : null;
+  // Bare entry (no plan, no trial, no cart hand-off, no protocol preset)
+  // used to render an empty configurator with zero plan items — a dead end.
+  // Show a goal-first chooser instead; picking a plan sets ?plan=<slug> and
+  // flows into the existing plan render path below, unchanged.
+  const showChooser = !rdPlan && !isTrial && !fromCart && !protocolPreset;
   useEffect(() => {
     if (rdPlan) {
       setCadence("weekly");
@@ -434,10 +440,27 @@ export default function V2Subscribe() {
           >
             <i className="ph-bold ph-arrow-left" />
           </Link>
-          <div className="abt">{isTrial ? "Start your 3-day trial" : "Build your meal plan"}</div>
+          <div className="abt">
+            {isTrial
+              ? "Start your 3-day trial"
+              : showChooser
+                ? "Choose your plan"
+                : "Build your meal plan"}
+          </div>
         </div>
 
         <div className="content padx" style={{ paddingTop: 4 }}>
+          {showChooser ? (
+            <GoalPlanChooser
+              preferences={preferences}
+              onSelect={(slug) => {
+                const next = new URLSearchParams(searchParams);
+                next.set("plan", slug);
+                setSearchParams(next);
+              }}
+            />
+          ) : (
+          <>
           {/* Hero */}
           <div className="tc mb16">
             <span className="lab" style={{ color: "var(--safb)" }}>
@@ -612,6 +635,36 @@ export default function V2Subscribe() {
               </div>
             </div>
           )}
+
+          {/* Trial vs recurring — surface the exact commit terms the code
+              applies, with the row matching this entry highlighted. */}
+          <div className="card mb16" style={{ padding: "12px 14px" }}>
+            <div className="fx gap8" style={{ alignItems: "flex-start", opacity: isTrial ? 1 : 0.55 }}>
+              <i
+                className={isTrial ? "ph-bold ph-check-circle safc" : "ph-bold ph-flask fntc"}
+                style={{ marginTop: 2, flex: "none" }}
+              />
+              <p className="fine" style={{ fontSize: 11 }}>
+                <span style={{ color: isTrial ? "var(--safb)" : "var(--tx)", fontWeight: 600 }}>
+                  3-day trial
+                </span>{" "}
+                · one-off · 25% off · does not auto-renew
+              </p>
+            </div>
+            <div className="fx gap8 mt6" style={{ alignItems: "flex-start", opacity: isTrial ? 0.55 : 1 }}>
+              <i
+                className={isTrial ? "ph-bold ph-arrows-clockwise fntc" : "ph-bold ph-check-circle safc"}
+                style={{ marginTop: 2, flex: "none" }}
+              />
+              <p className="fine" style={{ fontSize: 11 }}>
+                <span style={{ color: isTrial ? "var(--tx)" : "var(--safb)", fontWeight: 600 }}>
+                  Recurring plan
+                </span>{" "}
+                · weekly, fortnightly or monthly (save 5–15%) · pause, skip a
+                delivery (meals roll over as credits) or cancel anytime
+              </p>
+            </div>
+          </div>
 
           {/* Cadence */}
           {isTrial ? (
@@ -1015,6 +1068,8 @@ export default function V2Subscribe() {
               </button>
             </div>
           </div>
+          </>
+          )}
         </div>
 
         {policyModal !== null && (

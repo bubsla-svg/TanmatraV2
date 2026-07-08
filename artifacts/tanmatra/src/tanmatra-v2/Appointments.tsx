@@ -25,6 +25,27 @@ function fmtDateTime(iso: string) {
   });
 }
 
+function fmtWeekdayTime(iso: string) {
+  return new Date(iso).toLocaleString("en-IN", {
+    weekday: "long",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+const AVATAR_ACCENT: Record<string, any> = {
+  sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid rgba(136,170,132,.35)" },
+  blue: { background: "rgba(96,165,250,.15)", color: "#93C5FD", border: "1px solid rgba(96,165,250,.32)" },
+  gold: { background: "var(--safd)", color: "var(--safb)", border: "1px solid var(--saf)" },
+};
+
+const TAB_CSS = `
+.tnm2 .apx-tabs{display:flex;gap:4px;background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:4px}
+.tnm2 .apx-tab{flex:1;min-width:0;height:38px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--mut);white-space:nowrap;transition:background 150ms,color 150ms}
+.tnm2 .apx-tab i{font-size:15px;flex:none}
+.tnm2 .apx-tab.on{background:var(--safd);color:var(--safb);box-shadow:inset 0 0 0 1px var(--saf)}
+`;
+
 const taStyle: any = {
   width: "100%",
   background: "var(--bg)",
@@ -97,6 +118,14 @@ export default function V2Appointments() {
     return listRds()[0]?.profile.slug ?? "";
   }, [appointments]);
 
+  // display-only derivations
+  const activeRd = getRdMember(activeRdSlug);
+  const hasHistory = appointments.length > 0;
+  const nextUp = upcoming.reduce<RdAppointment | null>(
+    (min, a) => (!min || new Date(a.startAt) < new Date(min.startAt) ? a : min),
+    null,
+  );
+
   if (unauth) {
     return (
       <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -108,10 +137,23 @@ export default function V2Appointments() {
             <div className="abt">Appointments</div>
           </div>
           <div className="content padx">
-            <div className="tc" style={{ padding: "52px 20px" }}>
-              <i className="ph-bold ph-lock-key" style={{ fontSize: 32, color: "var(--fnt)" }} />
-              <div className="tt mt10">Sign in to continue</div>
-              <div className="fine mt6">
+            <div className="card tc" style={{ marginTop: 20, padding: "44px 24px" }}>
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 999,
+                  background: "var(--s3)",
+                  border: "1px solid var(--ln2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <i className="ph-bold ph-lock-key" style={{ fontSize: 26, color: "var(--fnt)" }} />
+              </div>
+              <div className="tt mt12">Sign in to continue</div>
+              <div className="fine mt6" style={{ maxWidth: 260, margin: "6px auto 0" }}>
                 Sign in to see your appointments and message your dietitian.
               </div>
               <Link className="btn btn-p mt20" to="/login">
@@ -137,32 +179,112 @@ export default function V2Appointments() {
           </Link>
         </div>
 
+        <style>{TAB_CSS}</style>
+
         <div className="content" style={{ paddingBottom: 24 }}>
           <div className="padx" style={{ paddingTop: 4 }}>
             <div className="lab" style={{ color: "var(--sage)" }}>Care</div>
             <h1 className="disp mt6" style={{ color: "#fff" }}>My RD appointments</h1>
-            <Link className="btn btn-p mt12" to="/rd">
-              <i className="ph-bold ph-calendar-dots" />
-              Book a session
-            </Link>
-          </div>
 
-          <div className="chiprow mt14" role="tablist" aria-label="Appointments sections">
-            {TABS.map((t) => (
-              <button
-                key={t.value}
-                role="tab"
-                aria-selected={tab === t.value}
-                className={tab === t.value ? "chip on" : "chip"}
-                onClick={() => setTab(t.value)}
+            {/* Active RD identity card — who is my dietitian, next session when */}
+            {!loading && hasHistory && activeRd && (
+              <div className="card mt16" style={{ padding: 14 }}>
+                <div className="fx ac gap12">
+                  <div
+                    className="avatar big"
+                    style={AVATAR_ACCENT[activeRd.accent] ?? AVATAR_ACCENT.gold}
+                    aria-hidden="true"
+                  >
+                    {activeRd.initials}
+                  </div>
+                  <div className="f1" style={{ minWidth: 0 }}>
+                    <div className="lab" style={{ fontSize: 9 }}>Your dietitian</div>
+                    <div className="tt clamp1 mt2">{activeRd.name}</div>
+                    <div className="fine clamp1 mt2">
+                      {activeRd.title}
+                      {activeRd.credentials[0] ? ` · ${activeRd.credentials[0]}` : ""}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className="fx ac jb gap8 mt12"
+                  style={{ borderTop: "1px solid var(--ln)", paddingTop: 12 }}
+                >
+                  {nextUp ? (
+                    <span className="pill sg">
+                      <i className="ph-bold ph-calendar-check" />
+                      Next: {fmtDateTime(nextUp.startAt)}
+                    </span>
+                  ) : (
+                    <span className="pill">
+                      <i className="ph-bold ph-calendar-x" />
+                      No session booked
+                    </span>
+                  )}
+                  <Link className="linkq" to="/rd" style={{ flex: "none" }}>
+                    Book <i className="ph-bold ph-caret-right" style={{ fontSize: 12 }} />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Prominent booking CTA when nothing is on the calendar */}
+            {!loading && !nextUp && (
+              <Link
+                to="/rd"
+                className="card mt12"
+                style={{
+                  display: "block",
+                  background: "var(--saged)",
+                  borderColor: "rgba(136,170,132,.35)",
+                }}
               >
-                <i className={`ph-bold ${t.icon}`} />
-                {t.label}
-              </button>
-            ))}
+                <div className="fx ac gap12">
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      background: "rgba(136,170,132,.18)",
+                      border: "1px solid rgba(136,170,132,.35)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flex: "none",
+                    }}
+                  >
+                    <i className="ph-bold ph-calendar-plus sagec" style={{ fontSize: 22 }} />
+                  </div>
+                  <div className="f1" style={{ minWidth: 0 }}>
+                    <div className="tt">Book a session</div>
+                    <div className="fine mt2">
+                      Free 15-min intro with a registered dietitian.
+                    </div>
+                  </div>
+                  <i className="ph-bold ph-caret-right fntc" style={{ flex: "none" }} />
+                </div>
+              </Link>
+            )}
           </div>
 
-          <div className="padx" style={{ paddingTop: 4 }}>
+          <div className="padx mt16">
+            <div className="apx-tabs" role="tablist" aria-label="Appointments sections">
+              {TABS.map((t) => (
+                <button
+                  key={t.value}
+                  role="tab"
+                  aria-selected={tab === t.value}
+                  className={tab === t.value ? "apx-tab on" : "apx-tab"}
+                  onClick={() => setTab(t.value)}
+                >
+                  <i className={`ph-bold ${t.icon}`} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="padx" style={{ paddingTop: 16 }}>
             {tab === "schedule" && (
               <ScheduleTab
                 loading={loading}
@@ -229,24 +351,55 @@ function ScheduleTab({
   return (
     <div>
       <section>
-        <div className="lab mb10">Upcoming</div>
+        <div className="fx ac jb mb12">
+          <div className="sh">Upcoming</div>
+          {upcoming.length > 0 && (
+            <span className="fine">{upcoming.length} scheduled</span>
+          )}
+        </div>
         {upcoming.length === 0 ? (
-          <div className="tc" style={{ padding: "40px 20px" }}>
-            <i className="ph-bold ph-calendar-x" style={{ fontSize: 30, color: "var(--fnt)" }} />
-            <div className="tt mt10">No upcoming sessions</div>
-            <div className="fine mt6">Browse our dietitians to book your next session.</div>
+          <div
+            className="tc"
+            style={{
+              padding: "36px 20px",
+              border: "1px dashed var(--ln2)",
+              borderRadius: 12,
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 999,
+                background: "var(--s3)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <i className="ph-bold ph-calendar-x" style={{ fontSize: 26, color: "var(--fnt)" }} />
+            </div>
+            <div className="tt mt12">No upcoming sessions</div>
+            <div className="fine mt6" style={{ maxWidth: 240, margin: "6px auto 0" }}>
+              Browse our dietitians to book your next session.
+            </div>
             <Link className="btn btn-p mt20" to="/rd">Browse dietitians</Link>
           </div>
         ) : (
-          upcoming.map((a) => <ApptCard key={a.id} appt={a} onCancel={onCancel} />)
+          upcoming.map((a) => (
+            <ApptCard key={a.id} appt={a} onCancel={onCancel} variant="upcoming" />
+          ))
         )}
       </section>
 
       {past.length > 0 && (
         <section className="mt20">
-          <div className="lab mb10">Past &amp; cancelled</div>
+          <div className="fx ac jb mb12">
+            <div className="sh">Past &amp; cancelled</div>
+            <span className="fine">{past.length}</span>
+          </div>
           {past.map((a) => (
-            <ApptCard key={a.id} appt={a} />
+            <ApptCard key={a.id} appt={a} variant="past" />
           ))}
         </section>
       )}
@@ -257,71 +410,145 @@ function ScheduleTab({
 function ApptCard({
   appt,
   onCancel,
+  variant = "upcoming",
 }: {
   appt: RdAppointment;
   onCancel?: (id: number) => void;
+  variant?: "upcoming" | "past";
 }) {
   const member = getRdMember(appt.rdSlug);
   const meta = APPOINTMENT_KIND_META[appt.kind];
   const sp = statusPill(appt.status);
-  return (
-    <div className="card mb12">
-      <div className="fx ac jb gap12">
-        <div className="f1" style={{ minWidth: 0 }}>
-          <div className="tt">{member?.name ?? appt.rdSlug}</div>
-          <div className="fine mt2">{meta.label}</div>
+  const isUpcoming = variant === "upcoming";
+  const startDate = new Date(appt.startAt);
+
+  const notesBlock = appt.rdNotes && (
+    <div
+      className="mt10"
+      style={{ background: "var(--safd)", border: "1px solid rgba(232,154,62,.35)", borderRadius: 10, padding: "10px 12px" }}
+    >
+      <div className="lab safc mb4">RD notes</div>
+      <div className="fine" style={{ whiteSpace: "pre-line" }}>{appt.rdNotes}</div>
+    </div>
+  );
+
+  const questionBlock = appt.userQuestion && (
+    <div
+      className="fine mt6"
+      style={{ fontStyle: "italic", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}
+    >
+      “{appt.userQuestion}”
+    </div>
+  );
+
+  const actionsBlock = ((appt.joinUrl && appt.status === "scheduled") ||
+    (onCancel && appt.status === "scheduled")) && (
+    <div
+      className="fx ac gap8 mt12"
+      style={isUpcoming ? { borderTop: "1px solid var(--ln)", paddingTop: 12 } : undefined}
+    >
+      {appt.joinUrl && appt.status === "scheduled" && (
+        <a
+          className={isUpcoming ? "btn btn-p" : "linkq"}
+          href={appt.joinUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={isUpcoming ? { height: 38, fontSize: 13, padding: "0 14px" } : undefined}
+        >
+          Join call <i className="ph-bold ph-arrow-square-out" />
+        </a>
+      )}
+      {onCancel && appt.status === "scheduled" && (
+        <div className="fx ac gap8" style={{ marginLeft: "auto" }}>
+          <span className="fine" style={{ fontSize: 11 }}>
+            Free cancellation up to 12h before
+          </span>
+          <button
+            className="btn btn-g"
+            onClick={() => onCancel(appt.id)}
+            aria-label="Cancel appointment (free up to 12h before)"
+            style={{ height: 38, fontSize: 13, padding: "0 14px" }}
+          >
+            <i className="ph-bold ph-x" />
+            Cancel
+          </button>
         </div>
-        <span className={sp.cls} style={{ ...(sp.style || {}), textTransform: "uppercase" }}>
+      )}
+    </div>
+  );
+
+  if (!isUpcoming) {
+    // Past / cancelled — muted compact row
+    return (
+      <div className="card mb10" style={{ padding: "12px 14px", background: "transparent" }}>
+        <div className="fx ac jb gap12">
+          <div className="f1" style={{ minWidth: 0 }}>
+            <div className="small clamp1" style={{ fontWeight: 600, color: "var(--tx)" }}>
+              {member?.name ?? appt.rdSlug} · {meta.label}
+            </div>
+            <div className="fine mt2">
+              {fmtDateTime(appt.startAt)} · {meta.durationMin}m ·{" "}
+              <span className="mono">{formatRupees(appt.pricePaise)}</span>
+            </div>
+          </div>
+          <span
+            className={sp.cls}
+            style={{ ...(sp.style || {}), textTransform: "uppercase", fontSize: 10, flex: "none" }}
+          >
+            {appt.status}
+          </span>
+        </div>
+        {questionBlock}
+        {notesBlock}
+        {actionsBlock}
+      </div>
+    );
+  }
+
+  // Upcoming — elevated card, date/time prominent
+  return (
+    <div className="card mb12" style={{ borderColor: "rgba(136,170,132,.4)" }}>
+      <div className="fx gap12">
+        <div
+          aria-hidden="true"
+          style={{
+            width: 52,
+            flex: "none",
+            borderRadius: 10,
+            background: "var(--saged)",
+            border: "1px solid rgba(136,170,132,.35)",
+            textAlign: "center",
+            padding: "9px 0 7px",
+            alignSelf: "flex-start",
+          }}
+        >
+          <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: "var(--sage)", lineHeight: 1 }}>
+            {startDate.getDate()}
+          </div>
+          <div className="lab mt4" style={{ color: "var(--sage)", fontSize: 9 }}>
+            {startDate.toLocaleDateString("en-IN", { month: "short" })}
+          </div>
+        </div>
+        <div className="f1" style={{ minWidth: 0 }}>
+          <div className="tt">{fmtWeekdayTime(appt.startAt)}</div>
+          <div className="fine mt2 clamp1">
+            {member?.name ?? appt.rdSlug} · {meta.label}
+          </div>
+          <div className="fine mt2">
+            {meta.durationMin}m ·{" "}
+            <span className="mono" style={{ color: "var(--tx)" }}>{formatRupees(appt.pricePaise)}</span>
+          </div>
+        </div>
+        <span
+          className={sp.cls}
+          style={{ ...(sp.style || {}), textTransform: "uppercase", flex: "none", alignSelf: "flex-start" }}
+        >
           {appt.status}
         </span>
       </div>
-      <div className="fine mt10">
-        {fmtDateTime(appt.startAt)} · {meta.durationMin}m ·{" "}
-        <span className="mono" style={{ color: "var(--tx)" }}>{formatRupees(appt.pricePaise)}</span>
-      </div>
-      {appt.userQuestion && (
-        <div
-          className="fine mt6"
-          style={{ fontStyle: "italic", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}
-        >
-          “{appt.userQuestion}”
-        </div>
-      )}
-      {appt.rdNotes && (
-        <div
-          className="mt10"
-          style={{ background: "var(--safd)", border: "1px solid rgba(232,154,62,.35)", borderRadius: 10, padding: "10px 12px" }}
-        >
-          <div className="lab safc mb4">RD notes</div>
-          <div className="fine" style={{ whiteSpace: "pre-line" }}>{appt.rdNotes}</div>
-        </div>
-      )}
-      {((appt.joinUrl && appt.status === "scheduled") ||
-        (onCancel && appt.status === "scheduled")) && (
-        <div className="fx ac gap8 mt12">
-          {appt.joinUrl && appt.status === "scheduled" && (
-            <a className="linkq" href={appt.joinUrl} target="_blank" rel="noopener noreferrer">
-              Join call <i className="ph-bold ph-arrow-square-out" />
-            </a>
-          )}
-          {onCancel && appt.status === "scheduled" && (
-            <div className="fx ac gap8" style={{ marginLeft: "auto" }}>
-              <span className="fine" style={{ fontSize: 11 }}>
-                Free cancellation up to 12h before
-              </span>
-              <button
-                className="btn btn-g"
-                onClick={() => onCancel(appt.id)}
-                aria-label="Cancel appointment (free up to 12h before)"
-                style={{ height: 38, fontSize: 13, padding: "0 14px" }}
-              >
-                <i className="ph-bold ph-x" />
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      {questionBlock}
+      {notesBlock}
+      {actionsBlock}
     </div>
   );
 }
@@ -369,9 +596,24 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
 
   return (
     <div className="card">
-      <div className="fx ac gap8 mb12">
-        <i className="ph-bold ph-chat-circle sagec" style={{ fontSize: 18 }} />
-        <span className="tt">Chat with {member?.name ?? rdSlug}</span>
+      <div className="fx ac gap10 mb12">
+        {member ? (
+          <div
+            className="avatar"
+            style={{ width: 34, height: 34, fontSize: 12, ...(AVATAR_ACCENT[member.accent] ?? AVATAR_ACCENT.gold) }}
+            aria-hidden="true"
+          >
+            {member.initials}
+          </div>
+        ) : (
+          <i className="ph-bold ph-chat-circle sagec" style={{ fontSize: 18 }} />
+        )}
+        <div className="f1" style={{ minWidth: 0 }}>
+          <span className="tt clamp1" style={{ display: "block" }}>
+            Chat with {member?.name ?? rdSlug}
+          </span>
+          {member && <div className="fine clamp1">{member.title}</div>}
+        </div>
       </div>
       <div
         style={{
