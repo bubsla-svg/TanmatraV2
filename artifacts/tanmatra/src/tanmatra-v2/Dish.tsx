@@ -578,8 +578,19 @@ export default function V2Dish() {
           <div style={{ height: 16 }} />
         </div>
 
-        {/* Sticky CTA */}
-        <div className="dock">
+        {/* Sticky CTA — .dock is position:relative in theme.css (correct for the
+            flex-column pages like Cart), but this PDP is one long window-scroll
+            document, which buried the buy button at the very end. Pin it. */}
+        <div
+          className="dock"
+          style={{
+            position: "sticky",
+            bottom: 0,
+            zIndex: 55,
+            boxShadow: "0 -12px 30px rgba(0,0,0,.45)",
+            paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
+          }}
+        >
           <div className="fx ac jb gap12">
             <div style={{ flex: "none" }}>
               <div className="lab">Total</div>
