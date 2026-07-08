@@ -72,7 +72,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="#D4AF37"
+                stroke="#F4C430"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenC} ${C}`}
                 strokeDashoffset={`-${lenP}`}

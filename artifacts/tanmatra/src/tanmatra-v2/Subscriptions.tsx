@@ -814,7 +814,7 @@ function DetailView({
             className="note mt12"
             style={{
               background: "var(--safd)",
-              borderColor: "rgba(232,154,62,.35)",
+              borderColor: "rgba(244,196,48,.35)",
               color: "var(--safb)",
             }}
           >

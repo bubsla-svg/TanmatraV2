@@ -95,12 +95,12 @@ const LOADER_STYLE = `
     align-items: center; justify-content: center; gap: 20px;
   }
   #__tanmatra-loader.hidden { display: none; }
-  .__tl-wordmark { color: #D4AF37; font-size: 1.25rem; font-weight: 600; letter-spacing: 0.08em; font-family: serif; }
+  .__tl-wordmark { color: #F4C430; font-size: 1.25rem; font-weight: 600; letter-spacing: 0.08em; font-family: serif; }
   .__tl-sub { color: #A1A1AA; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.12em; }
   .__tl-bar { width: 120px; height: 2px; background: #111114; border-radius: 2px; overflow: hidden; }
-  .__tl-bar-inner { height: 100%; width: 0%; background: #D4AF37; animation: __tl-slide 1.4s ease-in-out infinite; }
+  .__tl-bar-inner { height: 100%; width: 0%; background: #F4C430; animation: __tl-slide 1.4s ease-in-out infinite; }
   @keyframes __tl-slide { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
-  .__tl-retry { display: none; margin-top: 8px; background: transparent; border: 1px solid #D4AF37; color: #D4AF37;
+  .__tl-retry { display: none; margin-top: 8px; background: transparent; border: 1px solid #F4C430; color: #F4C430;
     padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
 `.trim();
 
@@ -199,10 +199,10 @@ export default function Root() {
         </div>
         <noscript>
           <div style={{ position:"fixed", inset:0, background:"#050505", color:"#fff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
-            <strong style={{ color:"#D4AF37", fontSize:"1.25rem" }}>Tanmatra</strong>
+            <strong style={{ color:"#F4C430", fontSize:"1.25rem" }}>Tanmatra</strong>
             <p style={{ color:"#A1A1AA", fontSize:"0.875rem", maxWidth:"300px" }}>
               This site requires JavaScript. To order, please WhatsApp us or email
-              <a href="mailto:care@tanmatra.health" style={{ color:"#D4AF37", marginLeft:"4px" }}>care@tanmatra.health</a>
+              <a href="mailto:care@tanmatra.health" style={{ color:"#F4C430", marginLeft:"4px" }}>care@tanmatra.health</a>
             </p>
           </div>
         </noscript>

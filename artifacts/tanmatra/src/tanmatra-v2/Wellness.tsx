@@ -295,7 +295,7 @@ export default function V2Wellness() {
               <>
                 <div className="card">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, justifyItems: "center" }}>
-                    <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="#E89A3E" icon="ph-flame" />
+                    <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="#F4C430" icon="ph-flame" />
                     <Ring label="Protein" value={data.totals.proteinGrams} target={data.targets.proteinTargetGrams} unit="g" color="#E7C766" icon="ph-barbell" />
                     <Ring label="Fiber" value={data.totals.fiberGrams} target={data.targets.fiberTargetGrams} unit="g" color="#88AA84" icon="ph-plant" />
                     <Ring label="Water" value={data.totals.waterMl} target={data.targets.waterTargetMl} unit="ml" color="#6BA3C8" icon="ph-drop" />
@@ -320,7 +320,7 @@ export default function V2Wellness() {
               <div className="secrow"><span className="sh">Last 7 days</span></div>
               <div className="padx">
                 <div className="card">
-                  <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="#E89A3E" label="Calories" unit="kcal" />
+                  <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="#F4C430" label="Calories" unit="kcal" />
                   <WeekBars data={week.days} field="proteinGrams" target={week.targets.proteinTargetGrams} color="#E7C766" label="Protein" unit="g" />
                   <WeekBars data={week.days} field="fiberGrams" target={week.targets.fiberTargetGrams} color="#88AA84" label="Fiber" unit="g" />
                   <WeekBars data={week.days} field="waterMl" target={week.targets.waterTargetMl} color="#6BA3C8" label="Water" unit="ml" />

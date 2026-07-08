@@ -1046,7 +1046,7 @@ export default function V2Subscribe() {
                 )}
               </div>
             </div>
-            <div className="fx wrap ac gap16 mt10" style={{ paddingTop: 10, borderTop: "1px solid rgba(232,154,62,.25)" }}>
+            <div className="fx wrap ac gap16 mt10" style={{ paddingTop: 10, borderTop: "1px solid rgba(244,196,48,.25)" }}>
               <span className="fine fx ac g6" style={{ fontSize: 10 }}>
                 <i className="ph-bold ph-shield-check safc" /> Secured by Razorpay
               </span>

@@ -191,7 +191,7 @@ export default function ConflictsPanel({
                       letterSpacing: ".1em",
                       gap: 4,
                       color: "var(--safb)",
-                      borderColor: "rgba(232,154,62,.4)",
+                      borderColor: "rgba(244,196,48,.4)",
                     }}
                   >
                     <ArrowRightLeft className="w-3 h-3" aria-hidden />
