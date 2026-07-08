@@ -23,6 +23,7 @@ export default [
     ]),
     route("terms", "pages/Terms.tsx"),
     route("privacy", "pages/Privacy.tsx"),
+    route("refunds", "pages/Refunds.tsx"),
     route("wellness", "pages/Wellness.tsx"),
     route("performance", "pages/Performance.tsx"),
     route("clinical", "pages/Clinical.tsx"),

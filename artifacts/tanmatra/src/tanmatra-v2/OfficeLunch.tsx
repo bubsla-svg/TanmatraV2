@@ -100,7 +100,7 @@ export default function V2OfficeLunch() {
   const handleClose = async () => {
     try {
       await corporateApi.closeOfficeOrder(orderId);
-      toast.success("Office lunch closed and dispatched");
+      toast.success("Picks closed — order locked in");
       refresh();
     } catch {
       toast.error("Could not close");
@@ -199,7 +199,7 @@ export default function V2OfficeLunch() {
               ))
             )}
             {isAdmin && windowOpen && (
-              <button onClick={handleClose} className="btn btn-g btn-blk mt10">Close picks &amp; dispatch</button>
+              <button onClick={handleClose} className="btn btn-g btn-blk mt10">Close picks</button>
             )}
           </div>
         </div>

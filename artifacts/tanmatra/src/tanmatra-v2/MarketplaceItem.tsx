@@ -103,7 +103,7 @@ export default function V2MarketplaceItem() {
       idempotencyRef.current = null;
       toast.success(
         deliveryMode === "ship"
-          ? "Order placed — ships in 24h"
+          ? "Order placed — arrives in 24–48 hours"
           : "Bundled with your next meal delivery",
         {
           action: { label: "View Orders", onClick: () => navigate("/orders") },

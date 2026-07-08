@@ -42,8 +42,23 @@ export default function GymsLanding() {
       toast.error("Please fill in all details");
       return;
     }
+    // No partner-lead API exists yet — hand the inquiry to our real
+    // partnerships channel (the same WhatsApp business line published on
+    // the Refunds & Grievance page) with the details pre-filled.
+    const message = [
+      "Gym partnership inquiry — Tanmatra",
+      `Name: ${name}`,
+      `Gym / fitness center: ${gymName}`,
+      `Email: ${email}`,
+      `Phone: ${phone}`,
+    ].join("\n");
+    window.open(
+      `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
     setSubmitted(true);
-    toast.success("Partnership application submitted! We will reach out within 24 hours.");
+    toast.success("Almost done — send the pre-filled WhatsApp message to reach our partnerships team.");
   };
 
   return (
@@ -56,7 +71,7 @@ export default function GymsLanding() {
               GYM & FITNESS CENTER PARTNERSHIPS
             </Badge>
             <h1 className="font-serif text-4xl sm:text-6xl leading-tight">
-              70% of results come from nutrition. <span className="text-clinical-gold">Own the other 70%.</span>
+              70% of results come from nutrition. <span className="text-clinical-gold">Own that 70%.</span>
             </h1>
             <p className="text-base sm:text-lg text-clinical-zinc max-w-xl leading-relaxed">
               Integrate Tanmatra's dietitian-designed, macro-calibrated meals directly into your memberships. Increase client retention, accelerate their fat-loss or muscle-gain results, and unlock a passive revenue stream.
@@ -113,7 +128,7 @@ export default function GymsLanding() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">Higher Client Retention</h3>
                 <p className="text-xs text-clinical-zinc leading-relaxed">
-                  When gym members get real results, they renew. By addressing their dietary needs alongside their training, they reach milestones 2x faster.
+                  When gym members get real results, they renew. By addressing their dietary needs alongside their training, they reach milestones faster.
                 </p>
               </CardContent>
             </Card>
@@ -248,7 +263,7 @@ export default function GymsLanding() {
           <div className="text-center space-y-3">
             <h2 className="font-serif text-3xl sm:text-4xl">Start Your Application</h2>
             <p className="text-xs text-clinical-zinc">
-              Enter your details below. Our partnership specialist will verify your center and reach out to deliver your onboarding kit.
+              Enter your details below and send them to our partnerships team on WhatsApp. A partnership specialist will verify your center and follow up.
             </p>
           </div>
 
@@ -257,9 +272,9 @@ export default function GymsLanding() {
               {submitted ? (
                 <div className="text-center py-10 space-y-4">
                   <CheckCircle className="w-16 h-16 mx-auto text-clinical-sage" />
-                  <h3 className="text-2xl font-bold text-white">Thank you!</h3>
+                  <h3 className="text-2xl font-bold text-white">One step left</h3>
                   <p className="text-sm text-clinical-zinc max-w-sm mx-auto">
-                    We have received your request. A Tanmatra representative will call you on the registered phone number to finalize your setup.
+                    We've opened WhatsApp with your details pre-filled. Send the message and our partnerships team will get back to you on WhatsApp or email.
                   </p>
                   <Button 
                     onClick={() => setSubmitted(false)}
@@ -322,7 +337,7 @@ export default function GymsLanding() {
                     type="submit" 
                     className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-medium text-xs h-10 mt-2"
                   >
-                    Submit Partnership Inquiry
+                    Send Inquiry via WhatsApp
                   </Button>
                 </form>
               )}

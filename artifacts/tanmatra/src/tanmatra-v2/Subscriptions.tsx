@@ -299,7 +299,7 @@ export default function V2Subscriptions() {
               <Link className="btn btn-p" to="/subscribe?trial=1">
                 <i className="ph-bold ph-gift" /> Start 3-day trial
               </Link>
-              <Link className="btn btn-g" to="/subscription-plans">
+              <Link className="btn btn-g" to="/plans">
                 See all plans
               </Link>
             </div>
@@ -336,7 +336,7 @@ export default function V2Subscriptions() {
                 </div>
               </div>
             </div>
-            <Link className="btn btn-p" to="/subscription-plans" style={ACT}>
+            <Link className="btn btn-p" to="/plans" style={ACT}>
               <i className="ph-bold ph-plus-circle" /> New plan
             </Link>
           </div>
@@ -853,7 +853,7 @@ function DetailView({
             Turn it into a recurring plan to lock your delivery window, save up to
             15%, and earn a free meal every few deliveries.
           </div>
-          <Link className="btn btn-p btn-blk mt12" to="/subscription-plans">
+          <Link className="btn btn-p btn-blk mt12" to="/plans">
             Start a recurring plan <i className="ph-bold ph-arrow-right" />
           </Link>
         </div>

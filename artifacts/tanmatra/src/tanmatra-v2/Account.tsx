@@ -112,6 +112,12 @@ const SECTIONS: SectionLink[] = [
     desc: "Chef's tier benefits & membership",
     icon: "ph-crown",
   },
+  {
+    to: "/refunds",
+    label: "Refunds & cancellation",
+    desc: "Refund policy & Grievance Officer",
+    icon: "ph-arrow-counter-clockwise",
+  },
 ];
 
 export default function V2Account() {

@@ -435,7 +435,7 @@ export default function V2Subscribe() {
         <div className="appbar">
           <Link
             className="iconbtn"
-            to={rdPlan ? "/plans" : "/subscription-plans"}
+            to="/plans"
             aria-label={rdPlan ? "Back to RD Plans" : "Back to plans"}
           >
             <i className="ph-bold ph-arrow-left" />

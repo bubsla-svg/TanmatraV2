@@ -198,7 +198,7 @@ export default function V2Menu() {
   const [customizingDish, setCustomizingDish] = useState<ConsolidatedDish | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
-  const { addItem, addBundleSlug, clear } = useCart();
+  const { addItem, addBundleSlug } = useCart();
   const { open: openCart } = useCartDrawer();
   const { preferences } = usePreferences();
   const [hasSavedAddress, setHasSavedAddress] = useState(false);
@@ -277,7 +277,6 @@ export default function V2Menu() {
 
   const handleExpressBuy = (item: DishData) => {
     if (!item.isAvailable) return;
-    clear();
     addItem({
       dishId: item.id, slug: item.slug, name: item.name, image: item.image,
       basePrice: item.price, unitPrice: item.price, quantity: 1,
@@ -660,7 +659,7 @@ export default function V2Menu() {
             </div>
           ) : (
             <>
-              {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }) => {
+              {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }, cardIndex) => {
                 const rep = filtered.find((f: any) => f.dish.id === parent.id)!.dish;
                 const price = parent.variants[0].price;
                 const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
@@ -676,6 +675,7 @@ export default function V2Menu() {
                     isPremiumOnly={premiumSlugs.has(parent.slug)}
                     isPremium={isPremium}
                     lifestyleTag={lifestyleTag}
+                    showWearableTeaser={cardIndex === 0}
                     canExpress={hasSavedAddress && !hasVariants}
                     onAdd={() => handleQuickAddClick(parent)}
                     onExpress={() => handleExpressBuy(rep)}
@@ -774,7 +774,7 @@ function FilterRail({ label, children }: { label: string; children: any }) {
   );
 }
 
-function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumOnly, isPremium, lifestyleTag, canExpress, onAdd, onExpress, onPremiumGate }: any) {
+function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumOnly, isPremium, lifestyleTag, showWearableTeaser, canExpress, onAdd, onExpress, onPremiumGate }: any) {
   const isVeg = !!dish.isVeg;
   const gi = dish.glycaemicIndex || "medium";
   const giCls = gi === "low" ? "gi gi-low" : "gi gi-med";
@@ -822,37 +822,43 @@ function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumO
         <div className="rc"><span className="rl">FAT</span><span className="rv">{dish.macros.fat}<i className="ru">g</i></span></div>
       </div>
 
-      {/* Reserved-height personalization line — constant height in every state
-          so nothing reflows when preferences load in. */}
-      <div className="preason">
-        {info.kind === "none" && (
-          <Link to="/preferences" className="preason-cta" aria-label="Personalize to unlock your biometric match score">
-            <i className="ph-bold ph-sparkle" />Personalize to see your match score
-          </Link>
-        )}
-        {info.kind === "blocked" && (
-          <span className="preason-off"><i className="ph-bold ph-info" />Not recommended for your profile</span>
-        )}
-        {info.kind === "scored" && info.phrase && (
-          <span><i className="ph-fill ph-seal-check" />Great match {info.phrase}</span>
-        )}
-      </div>
+      {/* Personalization line — rendered only when there is something to say
+          (a score phrase, a personalize hint, or an off-plan note); the empty
+          reserved row is collapsed on all other cards. */}
+      {(info.kind === "none" || info.kind === "blocked" || (info.kind === "scored" && info.phrase)) && (
+        <div className="preason">
+          {info.kind === "none" && (
+            <Link to="/preferences" className="preason-cta" aria-label="Personalize to unlock your biometric match score">
+              <i className="ph-bold ph-sparkle" />Personalize to see your match score
+            </Link>
+          )}
+          {info.kind === "blocked" && (
+            <span className="preason-off"><i className="ph-bold ph-info" />Not recommended for your profile</span>
+          )}
+          {info.kind === "scored" && info.phrase && (
+            <span><i className="ph-fill ph-seal-check" />Great match {info.phrase}</span>
+          )}
+        </div>
+      )}
 
       {/* Aspirational LOCKED wearable teaser — a stylized placeholder, clearly
-          locked. Never real live data. Fixed height (reserved) → zero CLS. */}
-      <Link to="/wellness" className="wteaser" aria-label="Connect your wearable to map your live data stream to this meal">
-        <span className="spark" aria-hidden="true">
-          <svg viewBox="0 0 200 44" preserveAspectRatio="none">
-            <path className="sparkline" d={SPARK_PATH} fill="none" stroke="var(--safb)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <span className="wlock" aria-hidden="true"><i className="ph-fill ph-lock-simple" /></span>
-        <span className="wtxt">
-          <span className="wlab"><i className="ph-bold ph-pulse" />Live glucose forecast · Locked</span>
-          <span className="wcta">Connect your wearable to map your live data stream to this meal.</span>
-        </span>
-        <i className="ph-bold ph-caret-right wcar" aria-hidden="true" />
-      </Link>
+          locked. Never real live data. Shown once per page render (first card
+          only, static per card) → zero CLS. */}
+      {showWearableTeaser && (
+        <Link to="/wellness" className="wteaser" aria-label="Connect your wearable to map your live data stream to this meal">
+          <span className="spark" aria-hidden="true">
+            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
+              <path className="sparkline" d={SPARK_PATH} fill="none" stroke="var(--safb)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className="wlock" aria-hidden="true"><i className="ph-fill ph-lock-simple" /></span>
+          <span className="wtxt">
+            <span className="wlab"><i className="ph-bold ph-pulse" />Live glucose forecast · Locked</span>
+            <span className="wcta">Connect your wearable to map your live data stream to this meal.</span>
+          </span>
+          <i className="ph-bold ph-caret-right wcar" aria-hidden="true" />
+        </Link>
+      )}
 
       {canExpress && (
         <button className="fine mt6" style={{ color: "var(--safb)" }} onClick={onExpress}>Buy now — express checkout →</button>

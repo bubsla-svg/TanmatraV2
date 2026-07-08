@@ -1341,9 +1341,17 @@ export default function V2Checkout() {
 
           {/* Fulfillment */}
           <div id="checkout-fulfillment" className="card col gap16 mb14 scroll-mt-24">
-            <div className="fx ac gap8">
-              <Truck className="w-4 h-4" style={{ color: "var(--safb)" }} />
-              <div className="sh">Get it your way</div>
+            <div className="fx ac jb gap8">
+              <div className="fx ac gap8">
+                <Truck className="w-4 h-4" style={{ color: "var(--safb)" }} />
+                <div className="sh">Get it your way</div>
+              </div>
+              {etaMinutes != null && fulfillmentType === "delivery" && !preorderTomorrow && (
+                <span className="pill sg">
+                  <Timer className="w-3 h-3" />
+                  ~{etaMinutes} min
+                </span>
+              )}
             </div>
             <div className="grid gap8" style={{ gridTemplateColumns: "1fr 1fr" }}>
               <button
@@ -1623,22 +1631,6 @@ export default function V2Checkout() {
                 Your rider will receive ₹{(effectiveTip / 100).toFixed(0)} extra
               </p>
             )}
-          </div>
-
-          {/* Delivery Time */}
-          <div className="card col gap12 mb14">
-            <div className="fx ac jb gap8">
-              <div className="fx ac gap8">
-                <CalendarClock className="w-4 h-4" style={{ color: "var(--safb)" }} />
-                <div className="sh">Delivery Time</div>
-              </div>
-              {etaMinutes != null && fulfillmentType === "delivery" && !preorderTomorrow && (
-                <span className="pill sg">
-                  <Timer className="w-3 h-3" />
-                  ~{etaMinutes} min
-                </span>
-              )}
-            </div>
           </div>
 
           {/* Payment */}
