@@ -34,7 +34,7 @@ export default function V2Marketplace() {
         <div className="padx" style={{ paddingBottom: 4 }}>
           <span className="pill sg"><i className="ph-fill ph-sparkle" />RD-curated pantry</span>
           <h1 className="h2 mt10" style={{ color: "var(--tx)" }}>The Tanmatra Marketplace</h1>
-          <p className="fine mt6">Single-origin oils, small-batch sauces, third-party-tested supplements — hand-picked by our registered dietitians. Ship to you, or bundle with your next meal delivery.</p>
+          <p className="fine mt6">Single-origin oils, small-batch sauces, supplements and pantry staples — hand-picked by our registered dietitians. Ship to you, or bundle with your next meal delivery.</p>
         </div>
 
         <div className="chiprow mt10">
@@ -76,7 +76,7 @@ export default function V2Marketplace() {
             </div>
           ) : (
             <>
-              <div className="fine mb10">{items.length} {items.length === 1 ? "item" : "items"} · RD-curated · third-party tested</div>
+              <div className="fine mb10">{items.length} {items.length === 1 ? "item" : "items"} · look for the RD badge on dietitian-reviewed picks</div>
               {items.map((item) => {
                 const lowStock = item.stockQty < 10 && item.stockQty > 0;
                 return (

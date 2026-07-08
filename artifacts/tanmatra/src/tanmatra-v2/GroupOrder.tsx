@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/api/adapter";
 import { useGroupOrder, groupOrdersApi } from "@/lib/queries";
 import { useCart } from "@/lib/cartContext";
+import { API_BASE } from "@/lib/apiBase";
 import { getDishById } from "@workspace/menu-catalog";
 
 /* Full-parity re-port of the System-A GroupOrder (git 2507084, 329 lines) into
@@ -16,9 +18,24 @@ export default function V2GroupOrder() {
   const code = (rawCode ?? "").toUpperCase();
   const navigate = useNavigate();
   const { data: group, isLoading, error, refetch } = useGroupOrder(code);
-  const { addItem, clear } = useCart();
+  const { addItem } = useCart();
   const [copied, setCopied] = useState(false);
   const [closing, setClosing] = useState(false);
+
+  // Same identity the server checks (it 403s non-hosts on close) — used to
+  // gate the "Close & checkout" UI on the client too.
+  const { data: authUser } = useQuery({
+    queryKey: ["auth", "user"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/auth/user`, { credentials: "include" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = (await res.json()) as { user: { id: string } | null };
+      return data.user;
+    },
+    staleTime: 30_000,
+    retry: false,
+  });
+  const isHost = !!group?.hostUserId && authUser?.id === group.hostUserId;
 
   const subtotal = useMemo(
     () => (group?.items ?? []).reduce((s, it) => s + it.unitPrice * it.quantity, 0),
@@ -60,9 +77,9 @@ export default function V2GroupOrder() {
     try {
       // Server enforces "host only"; non-hosts will get 403. Use the
       // close response as source of truth — it includes any item added
-      // since our last poll.
+      // since our last poll. Group items are MERGED into the host's cart
+      // (never replacing what's already in it).
       const { group: closed } = await groupOrdersApi.close(code);
-      clear();
       let unresolved = 0;
       for (const it of closed.items) {
         // Resolve canonical dish metadata from the catalog so cart
@@ -92,7 +109,7 @@ export default function V2GroupOrder() {
           `${unresolved} item${unresolved === 1 ? "" : "s"} could not be transferred`,
         );
       }
-      toast.success(`Group order ${code} closed — proceed to checkout`);
+      toast.success(`Group order ${code} closed — items added to your cart`);
       navigate("/checkout");
     } catch {
       toast.error("Only the host can close this group order");
@@ -286,13 +303,19 @@ export default function V2GroupOrder() {
               <button className="btn btn-g" style={{ flex: "none" }} onClick={copyShare} aria-label="Copy group link">
                 <i className={copied ? "ph-bold ph-check" : "ph-bold ph-copy"} />
               </button>
-              <button
-                className={closing || group.items.length === 0 ? "btn btn-p f1 dis" : "btn btn-p f1"}
-                disabled={closing || group.items.length === 0}
-                onClick={closeAndCheckout}
-              >
-                <i className="ph-bold ph-lock-simple" /> {closing ? "Closing…" : "Close & checkout"} <i className="ph-bold ph-arrow-right" />
-              </button>
+              {isHost ? (
+                <button
+                  className={closing || group.items.length === 0 ? "btn btn-p f1 dis" : "btn btn-p f1"}
+                  disabled={closing || group.items.length === 0}
+                  onClick={closeAndCheckout}
+                >
+                  <i className="ph-bold ph-lock-simple" /> {closing ? "Closing…" : "Close & checkout"} <i className="ph-bold ph-arrow-right" />
+                </button>
+              ) : (
+                <Link to={`/menu?group=${code}`} className="btn btn-s f1">
+                  <i className="ph-bold ph-shopping-bag" /> Add your items
+                </Link>
+              )}
             </div>
             <div className="fine tc mt6">
               Only <span style={{ color: "var(--tx)" }}>{group.hostName}</span> (the host) can close this order and pay for everyone.

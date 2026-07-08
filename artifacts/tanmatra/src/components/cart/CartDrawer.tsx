@@ -27,6 +27,7 @@ import { track } from "@/lib/analytics";
 import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { usePremiumStatus } from "@/lib/usePremium";
+import { useOrders } from "@/lib/ordersContext";
 import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Suppress unused-import warning — DELIVERY_FEE is used in the comment context only,
@@ -47,6 +48,7 @@ export default function CartDrawer() {
   const { dishes } = useMenuCatalog();
   const navigate = useNavigate();
   const { isPremium } = usePremiumStatus();
+  const { addOrder } = useOrders();
   const [expressLoading, setExpressLoading] = useState(false);
 
   // Ghost-math state
@@ -192,6 +194,30 @@ export default function CartDrawer() {
             });
             removePendingTransaction(localOrderId);
           } catch { /* non-fatal; order recorded server-side */ }
+          // Record the order locally so it appears in /orders and the Track
+          // page can resolve `/track/:id` (otherwise express UPI orders were
+          // orphaned — the tracker showed "Order not found").
+          const nowMs = Date.now();
+          addOrder({
+            orderId: localOrderId,
+            placedAt: new Date(nowMs).toISOString(),
+            etaAt: new Date(nowMs + 40 * 60 * 1000).toISOString(),
+            status: "placed",
+            items: [...items],
+            subtotal: totals.subtotal,
+            deliveryFee: totals.deliveryFee,
+            tip: 0,
+            total: totals.total,
+            fulfillmentType: "delivery",
+            address: {
+              label: addr.label,
+              line1: addr.line1,
+              line2: addr.line2,
+              city: addr.city,
+              pincode: addr.pincode,
+              phone: addr.phone,
+            },
+          });
           clear();
           close();
           navigate(`/track/${localOrderId}`);

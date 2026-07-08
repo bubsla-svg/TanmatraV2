@@ -225,7 +225,7 @@ export default function V2Cart() {
           </div>
 
           <StartGroupOrderButton />
-          <Link to="/subscriptions" className="fine tc mt10" style={{ color: "var(--safb)", display: "block" }}>Subscribe to weekly delivery — save 10% →</Link>
+          <Link to="/subscribe?fromCart=1" className="fine tc mt10" style={{ color: "var(--safb)", display: "block" }}>Subscribe to weekly delivery — save 10% →</Link>
           <div className="fine tc mt6"><i className="ph-bold ph-lock-simple" /> Secured by Razorpay · SSL encrypted</div>
         </div>
 

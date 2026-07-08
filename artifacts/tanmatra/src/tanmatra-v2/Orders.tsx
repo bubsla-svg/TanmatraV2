@@ -6,17 +6,25 @@ import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/api/adapter";
 import { ClinicalLifecycleStepper } from "@/components/track/ClinicalLifecycleStepper";
 import { StatCancelButton } from "@/components/track/StatCancelButton";
+import SupportTicketDialog from "@/components/track/SupportTicketDialog";
 import { useSocketStatus } from "@/lib/useSocketStatus";
 import { isCancellable } from "@/lib/clinicalLifecycle";
+import { useClinicalMode } from "@/lib/clinicalDiet";
 
-// v2 status pill: same labels as the clinical page, mapped to dark-theme tokens.
+// v2 status pill: consumer-facing labels by default, mapped to dark-theme tokens.
 const STATUS_BADGE: Record<PastOrder["status"], { label: string; cls: string; style?: any }> = {
   placed: { label: "Submitted", cls: "pill", style: { background: "var(--safd)", color: "var(--safb)" } },
   preparing: { label: "In Preparation", cls: "pill", style: { background: "var(--s3)", color: "var(--tx)" } },
   ready: { label: "In Preparation", cls: "pill", style: { background: "var(--s3)", color: "var(--tx)" } },
   out_for_delivery: { label: "Out for Delivery", cls: "pill", style: { background: "var(--safd)", color: "var(--safb)" } },
-  delivered: { label: "Patient Received", cls: "pill sg" },
-  cancelled: { label: "STAT Cancelled", cls: "pill", style: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" } },
+  delivered: { label: "Delivered", cls: "pill sg" },
+  cancelled: { label: "Cancelled", cls: "pill", style: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" } },
+};
+
+// Clinical-mode wording, shown only when the user has clinical mode on.
+const CLINICAL_STATUS_LABELS: Partial<Record<PastOrder["status"], string>> = {
+  delivered: "Patient Received",
+  cancelled: "STAT Cancelled",
 };
 
 export default function V2Orders() {
@@ -24,8 +32,8 @@ export default function V2Orders() {
   const { orders } = useOrders();
   const { addItem } = useCart();
   const { connected: socketConnected } = useSocketStatus();
-  const [disputeFor, setDisputeFor] = useState<PastOrder | null>(null);
-  const [disputeText, setDisputeText] = useState("");
+  const { enabled: clinicalMode } = useClinicalMode();
+  const [reportFor, setReportFor] = useState<PastOrder | null>(null);
 
   const handleReorder = (order: PastOrder) => {
     order.items.forEach((item) => {
@@ -48,15 +56,6 @@ export default function V2Orders() {
       description: `${order.items.length} item${order.items.length === 1 ? "" : "s"} from ${order.orderId}`,
       action: { label: "View Cart", onClick: () => navigate("/cart") },
     });
-  };
-
-  const submitDispute = () => {
-    if (!disputeFor || !disputeText.trim()) return;
-    toast.success(`Dispute raised for ${disputeFor.orderId}`, {
-      description: "Our care team will reach out within 30 minutes.",
-    });
-    setDisputeFor(null);
-    setDisputeText("");
   };
 
   return (
@@ -97,6 +96,8 @@ export default function V2Orders() {
               <div className="mt16">
                 {orders.map((order) => {
                   const badge = STATUS_BADGE[order.status];
+                  const badgeLabel =
+                    (clinicalMode && CLINICAL_STATUS_LABELS[order.status]) || badge.label;
                   const active = order.status !== "delivered" && order.status !== "cancelled";
                   return (
                     <div key={order.orderId} className="card mb12">
@@ -110,7 +111,7 @@ export default function V2Orders() {
                           </div>
                         </div>
                         <div className="fx ac wrap g6" style={{ flex: "none", justifyContent: "flex-end" }}>
-                          <span className={badge.cls} style={badge.style}>{badge.label}</span>
+                          <span className={badge.cls} style={badge.style}>{badgeLabel}</span>
                           {isCancellable(order.status) && (
                             <StatCancelButton
                               orderId={order.orderId}
@@ -214,7 +215,7 @@ export default function V2Orders() {
                       <button
                         className="fx ac jc gap8 mt10 w100 pointer"
                         style={{ color: "var(--dgr)", fontSize: 13, fontWeight: 600, padding: "6px 0" }}
-                        onClick={() => setDisputeFor(order)}
+                        onClick={() => setReportFor(order)}
                       >
                         <i className="ph-bold ph-warning" />
                         Report a problem
@@ -227,52 +228,16 @@ export default function V2Orders() {
           )}
         </div>
 
-        {/* Dispute dialog — reuse the accessible modal primitive, restyled v2 */}
-        {disputeFor !== null && (
-          <div
-            className="tnm2"
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-            onClick={() => setDisputeFor(null)}
-          >
-            <div
-              className="card"
-              style={{ maxWidth: 460, width: "100%" }}
-              onClick={(e) => e.stopPropagation()}
-              aria-describedby="dispute-desc"
-            >
-              <div className="tt fx ac gap8" style={{ color: "var(--tx)" }}>
-                <i className="ph-bold ph-warning safc" />
-                Report a problem
-              </div>
-              <div id="dispute-desc" className="fine mt6">
-                Tell us what went wrong with order{" "}
-                <span className="mono safc">{disputeFor?.orderId}</span>. Our care team responds
-                within 30 minutes during operating hours.
-              </div>
-              <textarea
-                aria-describedby="dispute-desc"
-                placeholder="e.g., Wrong dish delivered, food was cold, missing item, allergen concern…"
-                value={disputeText}
-                onChange={(e) => setDisputeText(e.target.value)}
-                className="inp mt12"
-                style={{ minHeight: 120, height: "auto", alignItems: "flex-start", padding: "12px 14px", resize: "vertical" }}
-              />
-              <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
-                <button className="btn btn-g" onClick={() => setDisputeFor(null)}>
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-p"
-                  onClick={submitDispute}
-                  disabled={!disputeText.trim()}
-                  style={!disputeText.trim() ? { opacity: 0.4, pointerEvents: "none" } : undefined}
-                >
-                  <i className="ph-bold ph-check-circle" />
-                  Submit report
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Report-a-problem — reuses the real support-ticket dialog (POST /support-tickets) */}
+        {reportFor !== null && (
+          <SupportTicketDialog
+            open={reportFor !== null}
+            onOpenChange={(open) => {
+              if (!open) setReportFor(null);
+            }}
+            orderDisplayId={reportFor.orderId}
+            orderServerId={reportFor.serverOrderId}
+          />
         )}
       </div>
     </div>

@@ -121,6 +121,34 @@ export default function V2Home() {
         {/* Viewport 3 — Circular category badges → real Menu deep-links */}
         <div className="mt16"><CategoryBadges /></div>
 
+        {/* Order again — hoisted for returning customers; hidden for new visitors */}
+        {reorderRail.length > 0 && (
+          <>
+            <div className="secrow"><span className="sh"><i className="ph-bold ph-arrows-clockwise" style={{ color: "var(--safb)" }} /> Order again</span><Link to="/orders" className="fine" style={{ color: "var(--safb)" }}>All →</Link></div>
+            <div className="hrail">
+              {reorderRail.map((order: any) => (
+                <div key={order.orderId} className="hcard" style={{ width: 210, padding: 12 }}>
+                  <div className="fx ac jb"><span className="mono" style={{ fontSize: 10, color: "var(--safb)" }}>{order.orderId}</span><span className="pill" style={{ fontSize: 9, textTransform: "capitalize" }}>{order.status.replace(/_/g, " ")}</span></div>
+                  <div className="fine mt2">{order.items.length} item{order.items.length === 1 ? "" : "s"} · {F(order.total)}</div>
+                  <div className="fx g6 mt6">
+                    {order.items.slice(0, 3).map((it: any) => <div key={it.lineId} className="plc" style={{ width: 40, height: 40, borderRadius: 8, backgroundImage: `url(${it.image})`, backgroundSize: "cover" }} />)}
+                  </div>
+                  <button
+                    className="btn btn-s btn-blk mt10"
+                    style={{ height: 36 }}
+                    onClick={() => {
+                      order.items.forEach((it: any) => addItem({ dishId: it.dishId, slug: it.slug, name: it.name, image: it.image, basePrice: it.basePrice, unitPrice: it.unitPrice, quantity: it.quantity, kitchen: it.kitchen, isVeg: it.isVeg, rdVerified: it.rdVerified, macros: it.macros, customizations: it.customizations }));
+                      toast.success(`${order.items.length} item${order.items.length === 1 ? "" : "s"} added`, { action: { label: "View cart", onClick: () => navigate("/cart") } });
+                    }}
+                  >
+                    <i className="ph-bold ph-arrows-clockwise" /> Reorder
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Viewport 4 — Ambient assessment nudge (opens the real IntakeQuiz) */}
         <div className="mt16"><AssessmentNudge onStart={() => setQuizOpen(true)} /></div>
 
@@ -183,7 +211,7 @@ export default function V2Home() {
         </div>
 
         {/* Subscription plans */}
-        <div className="secrow"><span className="sh">Never plan lunch again</span><Link to="/subscription-plans" className="fine" style={{ color: "var(--safb)" }}>All plans →</Link></div>
+        <div className="secrow"><span className="sh">Never plan lunch again</span><Link to="/plans" className="fine" style={{ color: "var(--safb)" }}>All plans →</Link></div>
         <div className="padx">
           {PLANS.map((p) => (
             <div key={p.slug} className="card mb10">
@@ -219,34 +247,6 @@ export default function V2Home() {
 
         {/* Wellness weekly summary (reused, self-contained) */}
         <div className="padx mt16"><WeeklySummaryCard /></div>
-
-        {/* Order again */}
-        {reorderRail.length > 0 && (
-          <>
-            <div className="secrow"><span className="sh"><i className="ph-bold ph-arrows-clockwise" style={{ color: "var(--safb)" }} /> Order again</span><Link to="/orders" className="fine" style={{ color: "var(--safb)" }}>All →</Link></div>
-            <div className="hrail">
-              {reorderRail.map((order: any) => (
-                <div key={order.orderId} className="hcard" style={{ width: 210, padding: 12 }}>
-                  <div className="fx ac jb"><span className="mono" style={{ fontSize: 10, color: "var(--safb)" }}>{order.orderId}</span><span className="pill" style={{ fontSize: 9, textTransform: "capitalize" }}>{order.status.replace(/_/g, " ")}</span></div>
-                  <div className="fine mt2">{order.items.length} item{order.items.length === 1 ? "" : "s"} · {F(order.total)}</div>
-                  <div className="fx g6 mt6">
-                    {order.items.slice(0, 3).map((it: any) => <div key={it.lineId} className="plc" style={{ width: 40, height: 40, borderRadius: 8, backgroundImage: `url(${it.image})`, backgroundSize: "cover" }} />)}
-                  </div>
-                  <button
-                    className="btn btn-s btn-blk mt10"
-                    style={{ height: 36 }}
-                    onClick={() => {
-                      order.items.forEach((it: any) => addItem({ dishId: it.dishId, slug: it.slug, name: it.name, image: it.image, basePrice: it.basePrice, unitPrice: it.unitPrice, quantity: it.quantity, kitchen: it.kitchen, isVeg: it.isVeg, rdVerified: it.rdVerified, macros: it.macros, customizations: it.customizations }));
-                      toast.success(`${order.items.length} item${order.items.length === 1 ? "" : "s"} added`, { action: { label: "View cart", onClick: () => navigate("/cart") } });
-                    }}
-                  >
-                    <i className="ph-bold ph-arrows-clockwise" /> Reorder
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
 
         {/* Time-of-day rail */}
         {daypartDishes.length > 0 && (

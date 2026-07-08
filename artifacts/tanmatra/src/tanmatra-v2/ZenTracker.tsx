@@ -74,6 +74,16 @@ function statusCopy(status: OrderStatus, isLate: boolean): { headline: string; s
       return { headline: "Freshness is on the move", sub: "Arriving shortly." };
     case "delivered":
       return { headline: "Delivered", sub: "Enjoy your meal. Your body will thank you." };
+    case "cancelled":
+      return {
+        headline: "Order cancelled",
+        sub: "This order was cancelled and won't be delivered. See your orders page for details.",
+      };
+    case "failed":
+      return {
+        headline: "Something went wrong",
+        sub: "This order could not be completed. Please contact support.",
+      };
     default:
       return { headline: "Your order is on the way", sub: "" };
   }
@@ -232,16 +242,19 @@ export default function V2ZenTracker() {
     return () => { if (pollRef.current) window.clearTimeout(pollRef.current); };
   }, [poll]);
 
-  const isLate = status !== "delivered" && elapsedMinutes > DELIVERY_WINDOW_MINUTES;
+  const isTerminated = status === "cancelled" || status === "failed";
+  const isLate = status !== "delivered" && !isTerminated && elapsedMinutes > DELIVERY_WINDOW_MINUTES;
 
   // Progress: based on elapsed time vs window when API available, else client timer
-  const progressFraction = apiAvailable
-    ? status === "delivered"
-      ? 1
-      : status === "out_for_delivery"
-        ? 0.65 + Math.min(0.35, elapsedMinutes / DELIVERY_WINDOW_MINUTES * 0.35)
-        : Math.min(0.6, elapsedMinutes / DELIVERY_WINDOW_MINUTES)
-    : Math.min(0.99, elapsedMinutes / DELIVERY_WINDOW_MINUTES);
+  const progressFraction = isTerminated
+    ? 0
+    : apiAvailable
+      ? status === "delivered"
+        ? 1
+        : status === "out_for_delivery"
+          ? 0.65 + Math.min(0.35, elapsedMinutes / DELIVERY_WINDOW_MINUTES * 0.35)
+          : Math.min(0.6, elapsedMinutes / DELIVERY_WINDOW_MINUTES)
+      : Math.min(0.99, elapsedMinutes / DELIVERY_WINDOW_MINUTES);
 
   const copy = statusCopy(status, isLate);
   const isDelivered = status === "delivered";
@@ -268,6 +281,8 @@ export default function V2ZenTracker() {
             <div className="posabs col ac jc" style={{ inset: 0, gap: 2 }}>
               {isDelivered ? (
                 <i className="ph-bold ph-package sagec" style={{ fontSize: 34 }} aria-hidden />
+              ) : isTerminated ? (
+                <i className="ph-bold ph-x-circle" style={{ fontSize: 34, color: "var(--dgr)" }} aria-hidden />
               ) : (
                 <>
                   <div className="eta mono">{apiAvailable ? `${etaMinutes}` : `${Math.max(0, DELIVERY_WINDOW_MINUTES - elapsedMinutes)}`}</div>
@@ -320,6 +335,7 @@ export default function V2ZenTracker() {
               {status === "confirmed" && "Order confirmed"}
               {status === "out_for_delivery" && "Rider is on the way"}
               {status === "delivered" && "Delivered"}
+              {status === "cancelled" && "Order cancelled"}
               {status === "failed" && "Order failed — contact support"}
             </motion.div>
           </AnimatePresence>

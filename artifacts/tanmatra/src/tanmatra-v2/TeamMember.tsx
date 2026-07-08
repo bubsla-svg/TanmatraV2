@@ -106,7 +106,7 @@ export default function V2TeamMember() {
           {/* Lifestyles / owned protocols */}
           {member.lifestyles && member.lifestyles.length > 0 && (
             <div className="padx mt16">
-              <div className="lab mb10">Owns these protocols</div>
+              <div className="lab mb10">Specialises in</div>
               <div className="fx ac g6 wrap">
                 {member.lifestyles.map((l: string) => (
                   <span key={l} className="pill" style={{ background: accent.bg, color: accent.text }}>
