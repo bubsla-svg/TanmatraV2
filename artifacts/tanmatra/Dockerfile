@@ -65,28 +65,11 @@ WORKDIR /app
 
 COPY --from=builder /app/artifacts/tanmatra/build/client ./public
 
-# Inline static server. Serve real files (incl. prerendered <route>/index.html)
-# when they exist, and the route-AGNOSTIC SPA shell (__spa-fallback.html) for all
-# other (client-only) routes. Falling back to the prerendered HOME index.html for
-# routes like /checkout made the browser hydrate the "/" route's embedded
-# react-router server context at the wrong URL -> React #418 hydration mismatch
-# -> the app's "Something went wrong" error boundary. __spa-fallback.html carries
-# no route-specific context, so it hydrates cleanly at any URL.
-RUN printf '%s\n' \
-  "const http=require('http'),fs=require('fs'),path=require('path');" \
-  "const root=path.join(__dirname,'public');" \
-  "const spa=path.join(root,'__spa-fallback.html');" \
-  "http.createServer((req,res)=>{" \
-  "  const u=req.url.split('?')[0];" \
-  "  let f=path.join(root,u==='/'?'/index.html':u);" \
-  "  if(fs.existsSync(f)&&fs.statSync(f).isDirectory()){const i=path.join(f,'index.html');f=fs.existsSync(i)?i:spa;}" \
-  "  else if(!fs.existsSync(f))f=spa;" \
-  "  const ext=path.extname(f);" \
-  "  const ct={'html':'text/html','js':'application/javascript','css':'text/css','json':'application/json','svg':'image/svg+xml','png':'image/png','ico':'image/x-icon','webmanifest':'application/manifest+json'}[ext.slice(1)]||'application/octet-stream';" \
-  "  res.writeHead(200,{'Content-Type':ct,'Cache-Control':ext==='.html'?'no-cache':'public,max-age=31536000,immutable'});" \
-  "  fs.createReadStream(f).pipe(res);" \
-  "}).listen(process.env.PORT||8080,()=>console.log('Serving on',process.env.PORT||8080));" \
-  > server.js
+# Static server + /api reverse proxy (see server/static-server.mjs):
+# same-origin API keeps the session cookie first-party — the cross-site
+# topology (tanmatra.food -> run.app) had Safari/ITP and Chrome Incognito
+# silently dropping the cookie, bouncing freshly-verified users to /login.
+COPY --from=builder /app/artifacts/tanmatra/server/static-server.mjs ./server.mjs
 
 RUN groupadd --system --gid 1001 app \
  && useradd  --system --uid 1001 --gid app --home /app app \
@@ -95,4 +78,4 @@ USER app
 
 EXPOSE 8080
 
-CMD ["node", "server.js"]
+CMD ["node", "server.mjs"]
