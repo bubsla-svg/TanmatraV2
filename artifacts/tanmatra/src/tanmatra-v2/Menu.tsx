@@ -60,7 +60,6 @@ const QUICK_FILTERS = [
   { value: "vegan", label: "Vegan" },
   { value: "gluten-free", label: "Gluten-Free" },
   { value: "jain", label: "Jain" },
-  { value: "carnivore", label: "Carnivore" },
   { value: "low-fodmap", label: "Low-FODMAP" },
   { value: "vata", label: "Vata Dosha" },
   { value: "pitta", label: "Pitta Dosha" },
@@ -360,7 +359,7 @@ export default function V2Menu() {
       if (clinicalMode && dishMatchesDietOrder(d, dietOrderId) !== null) return false;
       if (q && !d.name.toLowerCase().includes(q) && !d.description.toLowerCase().includes(q)) return false;
       if (quickFilters.length > 0) {
-        const nut = quickFilters.filter((f) => ["high-protein", "keto", "carnivore"].includes(f));
+        const nut = quickFilters.filter((f) => ["high-protein", "keto"].includes(f));
         const dt = quickFilters.filter((f) => ["veg", "vegan", "gluten-free", "jain", "low-fodmap"].includes(f));
         const dosha = quickFilters.filter((f) => ["vata", "pitta", "kapha"].includes(f));
         if (nut.length && !nut.some((f) => matchesDietaryFilter(d, f))) return false;
@@ -623,7 +622,7 @@ export default function V2Menu() {
             </div>
           )}
           {quickFilters.includes("jain") && (
-            <div className="note mb10"><i className="ph-fill ph-shield-check" /><span><b>Jain guarantee:</b> Prepared in our ISO 22000 kitchen on dedicated root-vegetable-free surfaces to prevent cross-contamination.</span></div>
+            <div className="note mb10"><i className="ph-bold ph-info" /><span><b>Jain-style picks:</b> filtered by ingredient keywords — please confirm root-vegetable-free preparation with us on WhatsApp before ordering for strict Jain requirements.</span></div>
           )}
 
           {/* Preferences banner */}
