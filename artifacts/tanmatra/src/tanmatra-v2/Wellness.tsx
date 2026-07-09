@@ -288,7 +288,7 @@ export default function V2Wellness() {
             {unauth ? (
               <div className="card tc"><div className="fine mb10">Sign in to track your daily nutrition, water and streaks.</div><Link className="btn btn-p" to="/login?next=/wellness">Sign in</Link></div>
             ) : loadError ? (
-              <div className="card tc"><div className="fine mb10">Couldn't load your wellness dashboard.</div><button className="btn btn-p" onClick={refreshAll}>Retry</button></div>
+              <div className="card tc"><div className="fine mb10">Sign in to see your wellness dashboard — meals, macros and streaks live here.</div><div className="fx gap8 jc"><Link className="btn btn-p" to="/login?next=/wellness">Sign in</Link><button className="btn btn-g" onClick={refreshAll}>Retry</button></div></div>
             ) : !data ? (
               <div className="card"><div className="skel" style={{ height: 96 }} /><div className="skel mt10" style={{ height: 60 }} /></div>
             ) : (

@@ -41,7 +41,7 @@ const CFG: Record<Key, {
     desc: "Evidence-based medical nutrition therapy for diabetes, cardiovascular, renal and post-surgical recovery — precise nutrient restrictions, every menu RD-signed.",
     pillars: [
       { icon: "ph-syringe", title: "Condition-specific", desc: "Formulated for diabetes, cardiovascular, renal and post-surgical protocols with precise nutrient restrictions." },
-      { icon: "ph-heartbeat", title: "EHR integration", desc: "Plans sync with patient records for real-time dietary adherence monitoring." },
+      { icon: "ph-heartbeat", title: "Care-team friendly", desc: "Weekly plans and nutrition labels you can share with your doctor or dietitian." },
       { icon: "ph-dna", title: "Evidence-based", desc: "Grounded in peer-reviewed clinical trials and ADA/ESC guidelines." },
     ],
     featuredLabel: "Lowest-sugar clinical picks", featuredSub: "Dishes passing the Clinical criteria, sorted by lowest sugar per serving.",

@@ -58,10 +58,12 @@ export const PUBLIC_PRERENDER_PATHS: string[] = [
 // (empty cart) hydration-mismatches against a real cart loaded from
 // localStorage, and the money path must never carry that risk. It is
 // robots-disallowed and served by the branded SPA fallback instead.
+// NOTE: /subscribe is also excluded — its prerendered bare-chooser HTML
+// hydration-mismatches (#418) against ?plan= parameterized entries, and a
+// conversion page must hydrate clean. It is noindexed anyway.
 export const NOINDEX_SHELL_PATHS: string[] = [
   "/cart",
   "/track",
-  "/subscribe",
   "/login",
   "/account",
   "/account/addresses",

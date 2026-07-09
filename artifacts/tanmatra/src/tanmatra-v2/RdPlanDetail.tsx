@@ -74,7 +74,7 @@ export default function V2RdPlanDetail() {
           <div className="fx ac jb mt14">
             <div>
               <div className="lab mb4">FROM</div>
-              <span className="price safc" style={{ fontSize: 22 }}>{F(plan.pricePerWeekPaise)}</span>
+              <span className="price safc" style={{ fontSize: 22 }}>{F(PLAN_FROM_PRICE_PER_WEEK_PAISE)}</span>
               <span className="fine" style={{ fontSize: 12 }}> / week</span>
             </div>
             <Link className="btn btn-p" to={`/subscribe?plan=${plan.slug}`}>Subscribe<i className="ph-bold ph-arrow-right" /></Link>
