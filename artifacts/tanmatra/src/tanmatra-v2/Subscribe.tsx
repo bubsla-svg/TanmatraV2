@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
-import { getRdPlanBySlug, getRdAuthor, resolvePlanWeek, findPlanSafeSwap } from "@/lib/rdPlans";
+import { DISHES, macrosAreProvisional, type DishData } from "@workspace/menu-catalog";
+import { getRdPlanBySlug, getRdAuthor, resolvePlanWeek, findPlanSafeSwap, type RdPlan } from "@/lib/rdPlans";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { usePreferences } from "@/lib/preferencesContext";
 import { ACCENT_CLASSES } from "@/lib/teamData";
 import { useCartStore } from "@/lib/cartContext";
-import type { SubscriptionItem } from "@/lib/subscriptionsApi";
+import type { SubscriptionItem, SubscriptionDayPlanEntry } from "@/lib/subscriptionsApi";
 import { payWithRazorpay, razorpayConfigured } from "@/lib/razorpayClient";
 import { track } from "@/lib/analytics";
 import { toast } from "sonner";
@@ -19,26 +20,6 @@ import {
 import { checkPincode } from "@/lib/serviceablePincodes";
 import GoalPlanChooser from "@/components/subscribe/GoalPlanChooser";
 import { F } from "./data";
-
-const CADENCES: Array<{
-  value: SubscriptionCadence;
-  description: string;
-  saving: string;
-}> = [
-  { value: "weekly", description: "7 days · max freshness", saving: "Save 5%" },
-  {
-    value: "fortnightly",
-    description: "14 days · balanced rhythm",
-    saving: "Save 10%",
-  },
-  {
-    value: "monthly",
-    description: "30 days · best value",
-    saving: "Save 15%",
-  },
-];
-
-const MEAL_COUNTS = [5, 10, 15, 21];
 
 const TIME_WINDOWS = [
   "07:00 - 08:00",
@@ -75,33 +56,98 @@ const blankMember = (): MemberDraft => ({
   spiceLevel: "medium",
 });
 
+// Flat plan rate per meal — matches the server's PER_MEAL_PAISE exactly so
+// the price on this page is the price Razorpay charges, to the paisa.
 const PER_MEAL_PAISE = 26000;
 const CADENCE_DISCOUNT_PCT: Record<SubscriptionCadence, number> = {
   weekly: 5,
   fortnightly: 10,
   monthly: 15,
 };
+// Billing cycles in weeks — the weekly menu pattern repeats each week
+// inside longer cycles ("monthly" bills every 4 weeks, never 30 days,
+// so day-of-week plans can't drift).
+const CYCLE_WEEKS: Record<SubscriptionCadence, number> = {
+  weekly: 1,
+  fortnightly: 2,
+  monthly: 4,
+};
+const CADENCE_BILLING_COPY: Record<SubscriptionCadence, string> = {
+  weekly: "Billed every week",
+  fortnightly: "Billed every 2 weeks",
+  monthly: "Billed every 4 weeks",
+};
 
-function basePrice(cadence: SubscriptionCadence, meals: number): number {
-  return Math.round(
-    meals * PER_MEAL_PAISE * (1 - CADENCE_DISCOUNT_PCT[cadence] / 100),
-  );
-}
+type MealSlot = "breakfast" | "lunch" | "dinner";
+const SLOT_ORDER: MealSlot[] = ["breakfast", "lunch", "dinner"];
+const SLOT_META: Record<MealSlot, { label: string; icon: string }> = {
+  breakfast: { label: "Breakfast", icon: "ph-sun-horizon" },
+  lunch: { label: "Lunch", icon: "ph-sun" },
+  dinner: { label: "Dinner", icon: "ph-moon-stars" },
+};
 
-// Landing-card entries (?protocol=…) preset the configurator to what the
-// card advertised.
-const PROTOCOL_PRESETS = {
+type DaysMode = "everyday" | "weekdays";
+
+// Landing-card entries (?protocol=…) map to a real RD rotation preset so
+// the card's promise opens as an actual, editable week — not an empty form.
+const PROTOCOL_PRESETS: Record<
+  string,
+  { planSlug: string; slots: Record<MealSlot, boolean>; daysMode: DaysMode; blurb: string }
+> = {
   wellness: {
-    name: "Everyday Balanced",
-    blurb: "Clean, calorie-smart meals for busy weekdays — 5 lunches a week.",
-    meals: 5,
+    planSlug: "healthy-everyday-plan",
+    slots: { breakfast: false, lunch: true, dinner: false },
+    daysMode: "weekdays",
+    blurb: "Clean, calorie-smart weekday lunches — adjust anything below.",
   },
   performance: {
-    name: "High-Protein",
-    blurb: "Protein-forward meals for training days — 6 meals a week.",
-    meals: 6,
+    planSlug: "lean-muscle-builder",
+    slots: { breakfast: false, lunch: true, dinner: true },
+    daysMode: "weekdays",
+    blurb: "Protein-forward lunches + recovery dinners on training days.",
   },
-} as const;
+};
+
+const DISH_BY_SLUG = new Map<string, DishData>(DISHES.map((d) => [d.slug, d]));
+
+const DATE_FMT = new Intl.DateTimeFormat("en-IN", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
+
+function scheduleDates(start: Date, mode: DaysMode, count: number): Date[] {
+  const out: Date[] = [];
+  const d = new Date(start);
+  let guard = 0;
+  while (out.length < count && guard < 21) {
+    const dow = d.getDay();
+    if (mode === "everyday" || (dow !== 0 && dow !== 6)) out.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+    guard += 1;
+  }
+  return out;
+}
+
+function dayOffsetFrom(start: Date, date: Date): number {
+  return Math.round((date.getTime() - start.getTime()) / 86400000);
+}
+
+interface ScheduleMeal {
+  slot: MealSlot;
+  dish: DishData;
+  autoSwapped: boolean;
+  userSwapped: boolean;
+}
+
+interface ScheduleDay {
+  date: Date;
+  dayOffset: number;
+  rotationIdx: number;
+  meals: ScheduleMeal[];
+  droppedSlots: MealSlot[];
+  rdTip?: string;
+}
 
 export default function V2Subscribe() {
   const navigate = useNavigate();
@@ -109,72 +155,55 @@ export default function V2Subscribe() {
   const { orders } = useOrders();
   const isFirstOrder = orders.length === 0;
   const [policyModal, setPolicyModal] = useState<"pause" | "swap" | null>(null);
+
   const planSlug = searchParams.get("plan");
-  const rdPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
+  const directPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
   // Trial mode: either the D2C `?trial=1` entry or the legacy RD trial slug.
   const isTrial =
     searchParams.get("trial") === "1" ||
-    rdPlan?.slug === "three-day-trial-pack";
-  const rdAuthor = rdPlan ? getRdAuthor(rdPlan) : undefined;
-  const { preferences, update } = usePreferences();
+    directPlan?.slug === "three-day-trial-pack";
   const fromCart = searchParams.get("fromCart") === "1";
+  const protocolParam = searchParams.get("protocol");
+  const protocolPreset =
+    !directPlan && !isTrial && protocolParam && protocolParam in PROTOCOL_PRESETS
+      ? PROTOCOL_PRESETS[protocolParam]
+      : null;
+
+  // Every plan entry resolves to a real RD rotation. Only the cart hand-off
+  // is item-based (no day mapping).
+  const effectivePlan: RdPlan | undefined =
+    directPlan ??
+    (protocolPreset ? getRdPlanBySlug(protocolPreset.planSlug) : undefined) ??
+    (isTrial ? getRdPlanBySlug("three-day-trial-pack") : undefined);
+
+  const rdAuthor = effectivePlan ? getRdAuthor(effectivePlan) : undefined;
+  const { preferences, update } = usePreferences();
   const cartItems = useCartStore((s) => s.items);
-  const planItemsResult = useMemo<{ items: SubscriptionItem[]; swappedCount: number; droppedCount: number }>(() => {
-    if (fromCart && !rdPlan) {
-      const items: SubscriptionItem[] = cartItems.map((ci) => ({
-        slug: ci.slug,
-        name: ci.name,
-        image: ci.image,
-        quantity: ci.quantity,
-        unitPricePaise: ci.unitPrice,
-      }));
-      return { items, swappedCount: 0, droppedCount: 0 };
-    }
-    if (!rdPlan) return { items: [], swappedCount: 0, droppedCount: 0 };
-    const week = resolvePlanWeek(rdPlan);
-    const items: SubscriptionItem[] = [];
-    const seen = new Set<string>();
-    let swappedCount = 0;
-    let droppedCount = 0;
-    for (const day of week) {
-      for (const meal of [day.lunch, day.dinner]) {
-        if (!meal) continue;
-        let chosen = meal;
-        if (preferences) {
-          const evalResult = evaluateDishForPreferences(meal, preferences);
-          const needsSwap =
-            evalResult.blocked ||
-            evalResult.matchedAllergens.length > 0 ||
-            evalResult.matchedDislikes.length > 0;
-          if (needsSwap) {
-            const swap = findPlanSafeSwap(rdPlan, meal, preferences);
-            if (!swap) {
-              droppedCount += 1;
-              continue;
-            }
-            chosen = swap;
-            swappedCount += 1;
-          }
-        }
-        if (seen.has(chosen.slug)) continue;
-        seen.add(chosen.slug);
-        items.push({
-          slug: chosen.slug,
-          name: chosen.name,
-          image: chosen.image,
-          quantity: 1,
-          unitPricePaise: chosen.price,
-        });
-      }
-    }
-    return { items: items.slice(0, 14), swappedCount, droppedCount };
-  }, [rdPlan, preferences, fromCart, cartItems]);
-  const planWeekItems = planItemsResult.items;
-  // Resolved 7-day rotation for the inline preview (dish objects per day).
-  const resolvedWeek = useMemo(
-    () => (rdPlan ? resolvePlanWeek(rdPlan) : []),
-    [rdPlan],
+
+  // Bare entry (no plan, no trial, no cart hand-off, no protocol preset):
+  // show the goal-first chooser; picking a plan sets ?plan=<slug> and flows
+  // into the day-first configurator below.
+  const showChooser = !effectivePlan && !fromCart;
+
+  // ---- Step 1 state: meal slots + days per week --------------------------
+  const [slots, setSlots] = useState<Record<MealSlot, boolean>>(
+    protocolPreset?.slots ??
+      (isTrial
+        ? { breakfast: true, lunch: true, dinner: true }
+        : { breakfast: false, lunch: true, dinner: true }),
   );
+  const [daysMode, setDaysMode] = useState<DaysMode>(
+    protocolPreset?.daysMode ?? "everyday",
+  );
+  // User dish swaps, keyed by `${rotationIdx}:${slot}` → replacement slug.
+  const [swaps, setSwaps] = useState<Record<string, string>>({});
+  const [swapSheet, setSwapSheet] = useState<{
+    rotationIdx: number;
+    slot: MealSlot;
+    current: DishData;
+    dateLabel: string;
+  } | null>(null);
+
   const cadenceParam = searchParams.get("cadence");
   const initialCadence: SubscriptionCadence =
     cadenceParam === "weekly" ||
@@ -183,37 +212,7 @@ export default function V2Subscribe() {
       ? cadenceParam
       : "weekly";
   const [cadence, setCadence] = useState<SubscriptionCadence>(initialCadence);
-  const [meals, setMeals] = useState(10);
-  // Landing-page protocol entries preset sensible defaults so the page
-  // opens configured to what the card advertised (Everyday Balanced =
-  // 5 meals/wk, High-Protein = 6) instead of a generic 10.
-  const protocolParam = searchParams.get("protocol");
-  const protocolPreset =
-    !rdPlan && !isTrial && protocolParam && protocolParam in PROTOCOL_PRESETS
-      ? PROTOCOL_PRESETS[protocolParam as keyof typeof PROTOCOL_PRESETS]
-      : null;
-  // Bare entry (no plan, no trial, no cart hand-off, no protocol preset)
-  // used to render an empty configurator with zero plan items — a dead end.
-  // Show a goal-first chooser instead; picking a plan sets ?plan=<slug> and
-  // flows into the existing plan render path below, unchanged.
-  const showChooser = !rdPlan && !isTrial && !fromCart && !protocolPreset;
-  useEffect(() => {
-    if (rdPlan) {
-      setCadence("weekly");
-      setMeals(Math.min(planWeekItems.length || 10, 14));
-    } else if (isTrial) {
-      // D2C 3-day sampler defaults to 3 days × 3 meals.
-      setCadence("weekly");
-      setMeals(9);
-    } else if (fromCart && planWeekItems.length > 0) {
-      const totalCartQty = planWeekItems.reduce((sum, item) => sum + item.quantity, 0);
-      setMeals(totalCartQty || planWeekItems.length || 10);
-    } else if (protocolPreset) {
-      setMeals(protocolPreset.meals);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rdPlan, planWeekItems.length, isTrial, protocolParam, fromCart]);
-  const [window, setWindow] = useState(TIME_WINDOWS[1]);
+  const [deliveryWindow, setDeliveryWindow] = useState(TIME_WINDOWS[1]);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 2);
@@ -231,6 +230,143 @@ export default function V2Subscribe() {
   });
   const [addressPrefilled, setAddressPrefilled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const toggleSlot = (slot: MealSlot) => {
+    setSlots((prev) => {
+      const next = { ...prev, [slot]: !prev[slot] };
+      if (!next.breakfast && !next.lunch && !next.dinner) {
+        toast.info("Keep at least one meal a day");
+        return prev;
+      }
+      return next;
+    });
+  };
+
+  // ---- Derived: the actual week, day by day ------------------------------
+  const resolvedWeek = useMemo(
+    () => (effectivePlan ? resolvePlanWeek(effectivePlan) : []),
+    [effectivePlan],
+  );
+
+  const daysCount = isTrial ? Math.min(3, resolvedWeek.length || 3) : daysMode === "weekdays" ? 5 : 7;
+
+  // Parse the date-only string as UTC midnight (same as the server's
+  // "today or later" check) so picking today never fails in IST.
+  const startDateObj = useMemo(() => {
+    const d = new Date(startDate);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  }, [startDate]);
+
+  const schedule: ScheduleDay[] = useMemo(() => {
+    if (!effectivePlan || resolvedWeek.length === 0) return [];
+    const dates = scheduleDates(startDateObj, isTrial ? "everyday" : daysMode, daysCount);
+    return dates.map((date, i) => {
+      const rotationIdx = i % resolvedWeek.length;
+      const rotationDay = resolvedWeek[rotationIdx];
+      const meals: ScheduleMeal[] = [];
+      const droppedSlots: MealSlot[] = [];
+      for (const slot of SLOT_ORDER) {
+        if (!slots[slot]) continue;
+        const base = rotationDay[slot];
+        if (!base) continue;
+        const userSwapSlug = swaps[`${rotationIdx}:${slot}`];
+        const userSwapDish = userSwapSlug ? DISH_BY_SLUG.get(userSwapSlug) : undefined;
+        if (userSwapDish) {
+          meals.push({ slot, dish: userSwapDish, autoSwapped: false, userSwapped: true });
+          continue;
+        }
+        if (preferences) {
+          const ev = evaluateDishForPreferences(base, preferences);
+          const conflict =
+            ev.blocked || ev.matchedAllergens.length > 0 || ev.matchedDislikes.length > 0;
+          if (conflict) {
+            const safe = findPlanSafeSwap(effectivePlan, base, preferences);
+            if (safe) {
+              meals.push({ slot, dish: safe, autoSwapped: true, userSwapped: false });
+            } else {
+              droppedSlots.push(slot);
+            }
+            continue;
+          }
+        }
+        meals.push({ slot, dish: base, autoSwapped: false, userSwapped: false });
+      }
+      return {
+        date,
+        dayOffset: dayOffsetFrom(startDateObj, date),
+        rotationIdx,
+        meals,
+        droppedSlots,
+        rdTip: rotationDay.rdTip,
+      };
+    });
+  }, [effectivePlan, resolvedWeek, startDateObj, daysMode, daysCount, slots, swaps, preferences, isTrial]);
+
+  const weekMeals = fromCart && !effectivePlan
+    ? cartItems.reduce((s, it) => s + it.quantity, 0)
+    : schedule.reduce((s, d) => s + d.meals.length, 0);
+  const autoSwapCount = schedule.reduce(
+    (s, d) => s + d.meals.filter((m) => m.autoSwapped).length,
+    0,
+  );
+  const droppedCount = schedule.reduce((s, d) => s + d.droppedSlots.length, 0);
+
+  const cycleWeeks = isTrial ? 1 : CYCLE_WEEKS[cadence];
+  // Day-first plans repeat the week across the cycle; the cart hand-off is
+  // one drop per cycle, so its meal count doesn't scale with cadence.
+  const cycleMeals = effectivePlan ? weekMeals * cycleWeeks : weekMeals;
+
+  // Price mirrors the server formula exactly (see routes/subscriptions.ts).
+  const cyclePrice = isTrial
+    ? Math.round(cycleMeals * PER_MEAL_PAISE * 0.75)
+    : Math.round(cycleMeals * PER_MEAL_PAISE * (1 - CADENCE_DISCOUNT_PCT[cadence] / 100));
+  const trialListPrice = Math.round(cycleMeals * PER_MEAL_PAISE);
+  const weekPrice = cycleWeeks > 0 ? Math.round(cyclePrice / cycleWeeks) : cyclePrice;
+
+  // Honest daily-energy readout: only sum verified macros; flag partials.
+  const kcalInfo = useMemo(() => {
+    if (schedule.length === 0) return null;
+    let sum = 0;
+    let daysWithReal = 0;
+    let anyProvisional = false;
+    for (const day of schedule) {
+      let daySum = 0;
+      let allReal = day.meals.length > 0;
+      for (const m of day.meals) {
+        if (macrosAreProvisional(m.dish)) {
+          anyProvisional = true;
+          allReal = false;
+        } else {
+          daySum += m.dish.macros?.calories ?? 0;
+        }
+      }
+      if (allReal) {
+        sum += daySum;
+        daysWithReal += 1;
+      }
+    }
+    if (daysWithReal === 0) return { avg: null as number | null, anyProvisional };
+    return { avg: Math.round(sum / daysWithReal), anyProvisional };
+  }, [schedule]);
+
+  const firstDeliveryLabel = schedule.length > 0 ? DATE_FMT.format(schedule[0].date) : DATE_FMT.format(startDateObj);
+
+  // Swap-sheet alternatives: same category, in stock, safe for saved prefs.
+  const swapAlternatives = useMemo(() => {
+    if (!swapSheet) return [];
+    return DISHES.filter(
+      (d) =>
+        d.isAvailable &&
+        d.category === swapSheet.current.category &&
+        d.slug !== swapSheet.current.slug,
+    )
+      .filter((d) => {
+        if (!preferences) return true;
+        const ev = evaluateDishForPreferences(d, preferences);
+        return !ev.blocked && ev.matchedAllergens.length === 0 && ev.matchedDislikes.length === 0;
+      })
+      .slice(0, 12);
+  }, [swapSheet, preferences]);
 
   // Returning customers shouldn't retype an address they've already saved —
   // prefill from the default saved address once, leaving edits untouched.
@@ -260,13 +396,6 @@ export default function V2Subscribe() {
       alive = false;
     };
   }, []);
-
-  // Trial = one-off 3-day sampler at 25% off list (mirrors the server's
-  // computeTrialPricePaise). Standard = cadence-discounted recurring price.
-  const total = isTrial
-    ? Math.round(meals * 26000 * 0.75)
-    : basePrice(cadence, meals);
-  const trialListPrice = Math.round(meals * 26000);
 
   useEffect(() => {
     if (preferences?.allergens && preferences.allergens.length > 0) {
@@ -329,6 +458,32 @@ export default function V2Subscribe() {
   );
   const eatersComplete = members.every((m) => m.name.trim());
 
+  const applySwap = (dish: DishData) => {
+    if (!swapSheet) return;
+    setSwaps((prev) => ({
+      ...prev,
+      [`${swapSheet.rotationIdx}:${swapSheet.slot}`]: dish.slug,
+    }));
+    track("plan_dish_swapped", {
+      plan: effectivePlan?.slug,
+      slot: swapSheet.slot,
+      from: swapSheet.current.slug,
+      to: dish.slug,
+    });
+    toast.success(`${SLOT_META[swapSheet.slot].label} swapped to ${dish.name}`, {
+      description: "Applies to this day every week.",
+    });
+    setSwapSheet(null);
+  };
+
+  const clearSwap = (rotationIdx: number, slot: MealSlot) => {
+    setSwaps((prev) => {
+      const next = { ...prev };
+      delete next[`${rotationIdx}:${slot}`];
+      return next;
+    });
+  };
+
   const submit = async () => {
     if (!eatersComplete) {
       toast.error("Please name every eater");
@@ -347,20 +502,67 @@ export default function V2Subscribe() {
       scrollToCard("sub-address");
       return;
     }
+    if (weekMeals === 0) {
+      toast.error("Your plan has no meals — add a meal slot or pick dishes");
+      return;
+    }
     setSubmitting(true);
     try {
+      // Day-first payload: the week pattern expands across the billing
+      // cycle so every delivery day is explicit and dated.
+      let dayPlan: SubscriptionDayPlanEntry[] | undefined;
+      let defaultItems: SubscriptionItem[];
+      if (effectivePlan && schedule.length > 0) {
+        const weekEntries: SubscriptionDayPlanEntry[] = schedule
+          .filter((d) => d.meals.length > 0)
+          .map((d) => ({
+            dayOffset: d.dayOffset,
+            items: d.meals.map((m) => ({
+              slug: m.dish.slug,
+              name: m.dish.name,
+              image: m.dish.image,
+              quantity: 1,
+              unitPricePaise: m.dish.price,
+            })),
+          }));
+        dayPlan = [];
+        for (let w = 0; w < cycleWeeks; w++) {
+          for (const entry of weekEntries) {
+            dayPlan.push({ dayOffset: entry.dayOffset + w * 7, items: entry.items });
+          }
+        }
+        // Aggregated week list (with true quantities) for backward compat.
+        const agg = new Map<string, SubscriptionItem>();
+        for (const entry of weekEntries) {
+          for (const it of entry.items) {
+            const prev = agg.get(it.slug);
+            if (prev) prev.quantity += it.quantity;
+            else agg.set(it.slug, { ...it });
+          }
+        }
+        defaultItems = Array.from(agg.values());
+      } else {
+        defaultItems = cartItems.map((ci) => ({
+          slug: ci.slug,
+          name: ci.name,
+          image: ci.image,
+          quantity: ci.quantity,
+          unitPricePaise: ci.unitPrice,
+        }));
+      }
+
       const result = await subscriptionsApi.create({
-        cadence,
-        mealsPerDelivery: meals,
-        deliveryWindow: window,
-        startDate: new Date(startDate).toISOString(),
+        cadence: isTrial ? "weekly" : cadence,
+        mealsPerDelivery: cycleMeals,
+        deliveryWindow,
+        startDate: startDateObj.toISOString(),
         planType: isTrial ? "trial" : "standard",
         addressLabel: address.label,
         addressLine: address.line,
         city: address.city,
         pincode: address.pincode,
         phone: address.phone,
-        notes: rdPlan ? `RD Plan: ${rdPlan.name}` : undefined,
+        notes: effectivePlan ? `RD Plan: ${effectivePlan.name}` : undefined,
         members: members.map((m) => ({
           name: m.name.trim(),
           diet: m.diet,
@@ -368,7 +570,8 @@ export default function V2Subscribe() {
           lifestyle: m.lifestyle || undefined,
           spiceLevel: m.spiceLevel,
         })),
-        defaultItems: planWeekItems,
+        defaultItems,
+        dayPlan,
       });
 
       // Collect payment for the first delivery (or the one-off trial pack)
@@ -383,7 +586,7 @@ export default function V2Subscribe() {
           receipt: `sub-${result.subscription.id}`,
           description: isTrial
             ? "Tanmatra 3-Day Trial Pack"
-            : `Tanmatra ${CADENCE_LABEL[cadence]} plan — first delivery`,
+            : `Tanmatra ${CADENCE_LABEL[cadence]} plan — first cycle`,
           contact: address.phone,
         });
         if (outcome === "cancelled") {
@@ -411,9 +614,11 @@ export default function V2Subscribe() {
         planType: isTrial ? "trial" : "standard",
         cadence,
         amountPaise: amountDue,
+        mealsPerWeek: weekMeals,
+        dayFirst: Boolean(dayPlan),
       });
       toast.success(isTrial ? "Trial started" : "Subscription activated", {
-        description: `Next delivery: ${new Date(result.subscription.nextDeliveryAt).toLocaleDateString()}`,
+        description: `First delivery: ${new Date(result.subscription.nextDeliveryAt).toLocaleDateString()}`,
       });
       navigate("/subscriptions");
     } catch (err) {
@@ -429,6 +634,8 @@ export default function V2Subscribe() {
     }
   };
 
+  const activeSlotCount = SLOT_ORDER.filter((s) => slots[s]).length;
+
   return (
     <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
@@ -436,7 +643,7 @@ export default function V2Subscribe() {
           <Link
             className="iconbtn"
             to="/plans"
-            aria-label={rdPlan ? "Back to RD Plans" : "Back to plans"}
+            aria-label="Back to plans"
           >
             <i className="ph-bold ph-arrow-left" />
           </Link>
@@ -445,7 +652,7 @@ export default function V2Subscribe() {
               ? "Start your 3-day trial"
               : showChooser
                 ? "Choose your plan"
-                : "Build your meal plan"}
+                : "Build your week"}
           </div>
         </div>
 
@@ -461,22 +668,8 @@ export default function V2Subscribe() {
             />
           ) : (
           <>
-          {/* Hero */}
-          <div className="tc mb16">
-            <span className="lab" style={{ color: "var(--safb)" }}>
-              {isTrial ? "3-Day Trial" : "Tanmatra Plans"}
-            </span>
-            <h1 className="disp mt6" style={{ color: "#fff" }}>
-              {isTrial ? "Start your 3-day trial" : "Build your meal plan"}
-            </h1>
-            <p className="fine mt6">
-              {isTrial
-                ? "Nine meals over three days at 25% off — one-off, no commitment. Set your window and address below."
-                : "Choose your rhythm. We schedule the next few deliveries instantly, locked into the same time window. Skip any delivery — your meals roll over as credits."}
-            </p>
-          </div>
-
-          {rdPlan && (
+          {/* Plan identity */}
+          {effectivePlan && (
             <div className="card mb16" style={{ background: "var(--safd)", borderColor: "var(--saf)" }}>
               <div className="fx gap12" style={{ alignItems: "flex-start" }}>
                 <div className="dic" style={{ background: "var(--safd)", color: "var(--safb)" }}>
@@ -484,293 +677,124 @@ export default function V2Subscribe() {
                 </div>
                 <div className="f1" style={{ minWidth: 0 }}>
                   <div className="fx wrap ac gap8">
-                    <span className="h2" style={{ color: "#fff" }}>{rdPlan.name}</span>
-                    {rdPlan.badges.slice(0, 2).map((b) => (
+                    <span className="h2" style={{ color: "#fff" }}>{effectivePlan.name}</span>
+                    {effectivePlan.badges.slice(0, 2).map((b) => (
                       <span key={b} className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>
                         {b}
                       </span>
                     ))}
                   </div>
                   <p className="mono mt6 safc" style={{ fontSize: 11 }}>
-                    {rdPlan.calorieTargetPerDay} kcal/day · {rdPlan.proteinTargetGrams}g protein · {rdPlan.carbsTargetGrams}g carbs
+                    Plan target: {effectivePlan.calorieTargetPerDay} kcal/day across 3 meals · {effectivePlan.proteinTargetGrams}g protein
                   </p>
                   <p className="fine mt4">
-                    {planWeekItems.length} curated meals pre-loaded
-                    {planItemsResult.swappedCount > 0 && (
-                      <>
-                        {" "}— <span className="sagec">{planItemsResult.swappedCount} auto-swapped</span> for your allergens & dislikes
-                      </>
-                    )}
-                    {planItemsResult.droppedCount > 0 && (
-                      <> ({planItemsResult.droppedCount} skipped — no safe match)</>
-                    )}
-                    .
-                    {rdAuthor && (
-                      <>
-                        {" "}Designed by{" "}
-                        <Link
-                          to={`/team/${rdAuthor.slug}`}
-                          className={`${ACCENT_CLASSES[rdAuthor.accent].text}`}
-                          style={{ textDecoration: "underline" }}
-                        >
-                          {rdAuthor.name}, RD
-                        </Link>
-                        .
-                      </>
-                    )}
+                    {protocolPreset
+                      ? protocolPreset.blurb
+                      : effectivePlan.tagline}
                   </p>
+                  {rdAuthor && (
+                    <p className="fine mt4" style={{ fontSize: 11 }}>
+                      By{" "}
+                      <Link
+                        to={`/team/${rdAuthor.slug}`}
+                        className={`${ACCENT_CLASSES[rdAuthor.accent].text}`}
+                        style={{ textDecoration: "underline" }}
+                      >
+                        {rdAuthor.name}, RD
+                      </Link>
+                    </p>
+                  )}
                 </div>
               </div>
-
-              {/* Enhanced Daily Schedule Grid (Reference UI Patterns) */}
-              {resolvedWeek.length > 0 && (
-                <div className="mt14" style={{ paddingTop: 12, borderTop: "1px solid var(--ln)" }}>
-                  <div className="fx ac jb mb10">
-                    <span className="lab fx ac gap8" style={{ color: "#fff" }}>
-                      <i className="ph-bold ph-calendar-dots safc" /> Your {resolvedWeek.length}-Day Plan Schedule
-                    </span>
-                    <button
-                      onClick={() => toast.success("Plan shuffled! Fresh RD-certified rotation loaded.")}
-                      className="linkq"
-                    >
-                      Shuffle rotation 🔀
-                    </button>
-                  </div>
-
-                  <div>
-                    {resolvedWeek.map((day, idx) => {
-                      let primaryDish = day.lunch || day.dinner || day.breakfast;
-                      let dailyCal = (day.lunch?.macros?.calories || 0) + (day.dinner?.macros?.calories || 0) || 520;
-                      let dailyPro = (day.lunch?.macros?.protein || 0) + (day.dinner?.macros?.protein || 0) || 34;
-                      let isVeg = primaryDish?.isVeg !== false;
-                      let dishName = [day.lunch?.name, day.dinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || "Chef's Curated Selection";
-                      let isAutoSwapped = false;
-
-                      if (preferences && rdPlan) {
-                        const lunchEval = day.lunch ? evaluateDishForPreferences(day.lunch, preferences) : null;
-                        const dinnerEval = day.dinner ? evaluateDishForPreferences(day.dinner, preferences) : null;
-                        if ((lunchEval && (lunchEval.blocked || lunchEval.matchedAllergens.length > 0)) ||
-                            (dinnerEval && (dinnerEval.blocked || dinnerEval.matchedAllergens.length > 0))) {
-                          isAutoSwapped = true;
-                          const safeLunch = day.lunch ? (findPlanSafeSwap(rdPlan, day.lunch, preferences) || day.lunch) : null;
-                          const safeDinner = day.dinner ? (findPlanSafeSwap(rdPlan, day.dinner, preferences) || day.dinner) : null;
-                          primaryDish = safeLunch || safeDinner || primaryDish;
-                          dishName = [safeLunch?.name, safeDinner?.name].filter(Boolean).join(" + ") || primaryDish?.name || dishName;
-                          dailyCal = (safeLunch?.macros?.calories || 0) + (safeDinner?.macros?.calories || 0) || dailyCal;
-                          dailyPro = (safeLunch?.macros?.protein || 0) + (safeDinner?.macros?.protein || 0) || dailyPro;
-                          isVeg = primaryDish?.isVeg !== false;
-                        }
-                      }
-
-                      return (
-                        <div key={day.label} className="dcard">
-                          <div className="fx gap12" style={{ alignItems: "flex-start" }}>
-                            <div
-                              className="dimg fx ac jc"
-                              style={{
-                                width: 60,
-                                height: 60,
-                                borderRadius: 10,
-                                overflow: "hidden",
-                                position: "relative",
-                                backgroundImage: primaryDish?.image ? `url(${primaryDish.image})` : undefined,
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                                background: primaryDish?.image ? undefined : "var(--s2)",
-                              }}
-                            >
-                              {!primaryDish?.image && <span style={{ fontSize: 22 }}>🥗</span>}
-                              <span className={isVeg ? "vd" : "vd nv"} style={{ position: "absolute", bottom: 4, left: 4 }} />
-                            </div>
-                            <div className="f1" style={{ minWidth: 0 }}>
-                              <div className="fx wrap ac jb gap8">
-                                <span className="lab safc" style={{ background: "var(--safd)", padding: "2px 6px", borderRadius: 6 }}>
-                                  Day {idx + 1} · {day.label}
-                                </span>
-                                {isAutoSwapped && (
-                                  <span className="pill sg">
-                                    🛡️ Auto-swapped: 100% allergen safe
-                                  </span>
-                                )}
-                              </div>
-                              <p className="small clamp1 mt4" style={{ fontWeight: 700, color: "#fff" }}>
-                                {dishName}
-                              </p>
-                              <p className="mono mt2 fx ac g6" style={{ fontSize: 11 }}>
-                                <span className="sagec fw6">💚 High</span> • {dailyCal} kcal • {dailyPro}g protein
-                              </p>
-                            </div>
-                          </div>
-                          <div className="fx ac jb mt10" style={{ paddingTop: 10, borderTop: "1px solid var(--ln)" }}>
-                            <div>
-                              <span className="price" style={{ color: "#fff" }}>₹330</span>{" "}
-                              <span className="fntc strike" style={{ fontSize: 11 }}>₹392</span>
-                            </div>
-                            <button
-                              onClick={() => toast.info(`Swapping dish for Day ${idx + 1} (${day.label}) — Select any item from active rotation.`)}
-                              className="chip"
-                            >
-                              Change dish 📝
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
-          {protocolPreset && (
+          {fromCart && !effectivePlan && (
             <div className="card mb16" style={{ background: "var(--safd)", borderColor: "var(--saf)" }}>
               <div className="fx ac gap12">
                 <div className="dic" style={{ background: "var(--safd)", color: "var(--safb)" }}>
-                  <i className="ph-fill ph-sparkle" />
+                  <i className="ph-bold ph-basket" />
                 </div>
                 <div className="f1">
-                  <p className="tt" style={{ color: "#fff" }}>{protocolPreset.name}</p>
-                  <p className="fine mt2">{protocolPreset.blurb} Adjust anything below.</p>
+                  <p className="tt" style={{ color: "#fff" }}>Repeat your cart weekly</p>
+                  <p className="fine mt2">
+                    {weekMeals} meal{weekMeals === 1 ? "" : "s"} from your cart, delivered on your schedule below.
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Trial vs recurring — surface the exact commit terms the code
-              applies, with the row matching this entry highlighted. */}
-          <div className="card mb16" style={{ padding: "12px 14px" }}>
-            <div className="fx gap8" style={{ alignItems: "flex-start", opacity: isTrial ? 1 : 0.55 }}>
-              <i
-                className={isTrial ? "ph-bold ph-check-circle safc" : "ph-bold ph-flask fntc"}
-                style={{ marginTop: 2, flex: "none" }}
-              />
-              <p className="fine" style={{ fontSize: 11 }}>
-                <span style={{ color: isTrial ? "var(--safb)" : "var(--tx)", fontWeight: 600 }}>
-                  3-day trial
-                </span>{" "}
-                · one-off · 25% off · does not auto-renew
-              </p>
-            </div>
-            <div className="fx gap8 mt6" style={{ alignItems: "flex-start", opacity: isTrial ? 0.55 : 1 }}>
-              <i
-                className={isTrial ? "ph-bold ph-arrows-clockwise fntc" : "ph-bold ph-check-circle safc"}
-                style={{ marginTop: 2, flex: "none" }}
-              />
-              <p className="fine" style={{ fontSize: 11 }}>
-                <span style={{ color: isTrial ? "var(--tx)" : "var(--safb)", fontWeight: 600 }}>
-                  Recurring plan
-                </span>{" "}
-                · weekly, fortnightly or monthly (save 5–15%) · pause, skip a
-                delivery (meals roll over as credits) or cancel anytime
-              </p>
-            </div>
-          </div>
-
-          {/* Cadence */}
-          {isTrial ? (
-            <div className="card mb16" style={{ opacity: 0.85 }}>
-              <div className="lab fx ac gap8">
-                <i className="ph-bold ph-calendar-dots safc" /> Step 1 — Cadence
-              </div>
-              <div className="fx ac jb mt10">
-                <p className="tt" style={{ color: "#fff" }}>3-Day One-off Trial Pack</p>
-                <span className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>
-                  Fixed Duration
-                </span>
-              </div>
-              <p className="fine mt6">
-                This pack delivers a single set of 3 days of meals. Does not auto-renew.
-              </p>
-            </div>
-          ) : (
+          {/* Step 1 — shape the week */}
+          {effectivePlan && (
             <div className="card mb16">
-              <div className="lab fx ac gap8 mb10">
-                <i className="ph-bold ph-calendar-dots safc" /> Step 1 — Cadence
+              <div className="lab fx ac gap8 mb12">
+                <i className="ph-bold ph-fork-knife safc" /> Step 1 — Your rhythm
               </div>
-              <div>
-                {CADENCES.map((c) => {
-                  const active = cadence === c.value;
+              <div className="lab mb8">Meals each day</div>
+              <div className="fx gap8 mb14">
+                {SLOT_ORDER.map((slot) => {
+                  const on = slots[slot];
                   return (
                     <button
-                      key={c.value}
-                      onClick={() => setCadence(c.value)}
-                      className={active ? "opt on" : "opt"}
-                      style={{ flexDirection: "column", alignItems: "stretch" }}
+                      key={slot}
+                      onClick={() => toggleSlot(slot)}
+                      className={on ? "chip on f1" : "chip f1"}
+                      style={{ justifyContent: "center" }}
                     >
-                      <div className="fx ac jb w100">
-                        <span style={{ color: "#fff", fontWeight: 600 }}>
-                          {CADENCE_LABEL[c.value]}
-                        </span>
-                        <span className="pill sg">{c.saving}</span>
-                      </div>
-                      <span className="fine mt2">{c.description}</span>
+                      <i className={`ph-bold ${SLOT_META[slot].icon}`} />
+                      {SLOT_META[slot].label}
                     </button>
                   );
                 })}
               </div>
+              {!isTrial && (
+                <>
+                  <div className="lab mb8">Days each week</div>
+                  <div className="fx gap8">
+                    <button
+                      onClick={() => setDaysMode("everyday")}
+                      className={daysMode === "everyday" ? "chip on f1" : "chip f1"}
+                      style={{ justifyContent: "center" }}
+                    >
+                      Every day · 7
+                    </button>
+                    <button
+                      onClick={() => setDaysMode("weekdays")}
+                      className={daysMode === "weekdays" ? "chip on f1" : "chip f1"}
+                      style={{ justifyContent: "center" }}
+                    >
+                      Weekdays · 5
+                    </button>
+                  </div>
+                </>
+              )}
+              <div className="fx ac jb mt12" style={{ paddingTop: 10, borderTop: "1px solid var(--ln)" }}>
+                <span className="fine">
+                  {isTrial
+                    ? `${daysCount} days × ${activeSlotCount} meal${activeSlotCount === 1 ? "" : "s"}`
+                    : `${daysCount} days × ${activeSlotCount} meal${activeSlotCount === 1 ? "" : "s"}/day`}
+                </span>
+                <span className="mono safc" style={{ fontSize: 12, fontWeight: 600 }}>
+                  {weekMeals} meals{isTrial ? "" : " a week"}
+                </span>
+              </div>
+              {kcalInfo && activeSlotCount < 3 && kcalInfo.avg !== null && (
+                <p className="fine mt6" style={{ fontSize: 11 }}>
+                  Covers ~{kcalInfo.avg} kcal of the plan's {effectivePlan.calorieTargetPerDay} kcal/day target — the rest is on your own table.
+                </p>
+              )}
             </div>
           )}
 
-          {/* Meals + window */}
+          {/* Step 2 — start date + window */}
           <div className="card mb16">
             <div className="lab fx ac gap8 mb12">
-              <i className="ph-fill ph-sparkle safc" /> Step 2 — Volume & Window
+              <i className="ph-bold ph-calendar-dots safc" /> Step 2 — Start & delivery
             </div>
-            {!isTrial ? (
-              <div className="mb16">
-                <div className="lab mb8">Meals per delivery</div>
-                <div className="fx wrap gap8">
-                  {Array.from(new Set([...MEAL_COUNTS, meals]))
-                    .sort((a, b) => a - b)
-                    .map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setMeals(m)}
-                      className={meals === m ? "chip on" : "chip"}
-                    >
-                      {m} meals
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mb16">
-                <div className="lab mb4">Meals per delivery</div>
-                <p className="tt" style={{ color: "#fff" }}>
-                  {meals} meals over 3 days
-                </p>
-              </div>
-            )}
-            <div>
-              <div className="mb16">
-                <div className="fx wrap ac jb gap8 mb8">
-                  <span className="lab fx ac g6">
-                    <i className="ph-bold ph-clock" /> Delivery window (locked-in)
-                  </span>
-                  {pincodeCheck.state === "serviceable" ? (
-                    <span className="fine sagec fw6" style={{ fontSize: 10 }}>
-                      ✓ Slot guaranteed in {pincodeCheck.info.city}
-                    </span>
-                  ) : pincodeCheck.state === "unserviceable" ? (
-                    <span className="fine dgrc fw6" style={{ fontSize: 10 }}>
-                      ⚠️ Slot restricted for PIN {address.pincode}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="fx wrap gap8">
-                  {TIME_WINDOWS.map((w) => (
-                    <button
-                      key={w}
-                      onClick={() => setWindow(w)}
-                      className={window === w ? "chip on" : "chip"}
-                    >
-                      {w}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="lab mb8">First delivery date</div>
+            <div className="fx wrap gap12">
+              <div className="f1" style={{ minWidth: 150 }}>
+                <div className="lab mb8">First delivery</div>
                 <input
                   type="date"
                   value={startDate}
@@ -780,13 +804,213 @@ export default function V2Subscribe() {
                 />
               </div>
             </div>
+            <div className="mt12">
+              <div className="fx wrap ac jb gap8 mb8">
+                <span className="lab fx ac g6">
+                  <i className="ph-bold ph-clock" /> Delivery window
+                </span>
+                {pincodeCheck.state === "serviceable" ? (
+                  <span className="fine sagec fw6" style={{ fontSize: 10 }}>
+                    ✓ Slot guaranteed in {pincodeCheck.info.city}
+                  </span>
+                ) : pincodeCheck.state === "unserviceable" ? (
+                  <span className="fine dgrc fw6" style={{ fontSize: 10 }}>
+                    ⚠️ Slot restricted for PIN {address.pincode}
+                  </span>
+                ) : null}
+              </div>
+              <div className="fx wrap gap8">
+                {TIME_WINDOWS.map((w) => (
+                  <button
+                    key={w}
+                    onClick={() => setDeliveryWindow(w)}
+                    className={deliveryWindow === w ? "chip on" : "chip"}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+              <p className="fine mt8" style={{ fontSize: 11 }}>
+                Each delivery day, that day's meals arrive together in one chilled drop within this window.
+              </p>
+            </div>
           </div>
 
-          {/* Members */}
+          {/* Step 3 — the actual week, day by day */}
+          {effectivePlan && schedule.length > 0 && (
+            <div className="card mb16">
+              <div className="fx ac jb mb4">
+                <span className="lab fx ac gap8">
+                  <i className="ph-bold ph-calendar-check safc" /> Step 3 — Your {schedule.length} days
+                </span>
+                {!isTrial && (
+                  <span className="fine" style={{ fontSize: 10 }}>
+                    repeats weekly
+                  </span>
+                )}
+              </div>
+              {(autoSwapCount > 0 || droppedCount > 0) && (
+                <p className="fine mb8" style={{ fontSize: 11 }}>
+                  {autoSwapCount > 0 && (
+                    <span className="sagec">{autoSwapCount} dish{autoSwapCount === 1 ? "" : "es"} auto-swapped for your allergens & dislikes.</span>
+                  )}
+                  {droppedCount > 0 && (
+                    <> {droppedCount} meal{droppedCount === 1 ? "" : "s"} skipped — no safe match; pick one via Swap.</>
+                  )}
+                </p>
+              )}
+              <div className="mt8">
+                {schedule.map((day, idx) => (
+                  <div key={idx} className="dcard" style={{ marginBottom: 10 }}>
+                    <div className="fx ac jb mb10">
+                      <span className="lab safc" style={{ background: "var(--safd)", padding: "3px 8px", borderRadius: 6 }}>
+                        Day {idx + 1} · {DATE_FMT.format(day.date)}
+                      </span>
+                      <span className="mono fntc" style={{ fontSize: 10 }}>
+                        {day.meals.length} meal{day.meals.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    {day.meals.map((m) => (
+                      <div key={m.slot} className="fx ac gap10" style={{ padding: "7px 0", borderTop: "1px solid var(--ln)" }}>
+                        <div
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 9,
+                            flex: "none",
+                            overflow: "hidden",
+                            position: "relative",
+                            backgroundImage: m.dish.image ? `url(${m.dish.image})` : undefined,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            background: m.dish.image ? undefined : "var(--s2)",
+                          }}
+                        >
+                          <span className={m.dish.isVeg ? "vd" : "vd nv"} style={{ position: "absolute", bottom: 3, left: 3 }} />
+                        </div>
+                        <div className="f1" style={{ minWidth: 0 }}>
+                          <div className="fx ac gap6">
+                            <span className="lab" style={{ fontSize: 8.5 }}>
+                              <i className={`ph-bold ${SLOT_META[m.slot].icon}`} /> {SLOT_META[m.slot].label}
+                            </span>
+                            {m.autoSwapped && (
+                              <span className="pill sg" style={{ fontSize: 9 }}>allergen-safe swap</span>
+                            )}
+                            {m.userSwapped && (
+                              <span className="pill" style={{ fontSize: 9, background: "var(--safd)", color: "var(--safb)" }}>your pick</span>
+                            )}
+                          </div>
+                          <p className="small clamp1 mt2" style={{ fontWeight: 600, color: "#fff" }}>
+                            {m.dish.name}
+                          </p>
+                          <p className="mono fntc" style={{ fontSize: 10 }}>
+                            {macrosAreProvisional(m.dish)
+                              ? "macros being verified"
+                              : `${m.dish.macros?.calories ?? "—"} kcal · ${m.dish.macros?.protein ?? "—"}g protein`}
+                          </p>
+                        </div>
+                        <div className="fx ac gap6" style={{ flex: "none" }}>
+                          {m.userSwapped && (
+                            <button
+                              onClick={() => clearSwap(day.rotationIdx, m.slot)}
+                              className="qbtn"
+                              aria-label="Undo swap"
+                              title="Back to the RD pick"
+                            >
+                              <i className="ph-bold ph-arrow-counter-clockwise" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() =>
+                              setSwapSheet({
+                                rotationIdx: day.rotationIdx,
+                                slot: m.slot,
+                                current: m.dish,
+                                dateLabel: DATE_FMT.format(day.date),
+                              })
+                            }
+                            className="chip"
+                            style={{ height: 30, fontSize: 11.5 }}
+                          >
+                            Swap
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {day.droppedSlots.map((slot) => (
+                      <div key={slot} className="fx ac gap10" style={{ padding: "7px 0", borderTop: "1px solid var(--ln)", opacity: 0.75 }}>
+                        <div className="fx ac jc" style={{ width: 44, height: 44, borderRadius: 9, flex: "none", background: "var(--s2)", color: "var(--fnt)" }}>
+                          <i className="ph-bold ph-warning" />
+                        </div>
+                        <div className="f1">
+                          <span className="lab" style={{ fontSize: 8.5 }}>{SLOT_META[slot].label}</span>
+                          <p className="fine mt2" style={{ fontSize: 11.5 }}>
+                            No allergen-safe match in this rotation — pick your own.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const rotationDish = resolvedWeek[day.rotationIdx]?.[slot];
+                            if (rotationDish) {
+                              setSwapSheet({
+                                rotationIdx: day.rotationIdx,
+                                slot,
+                                current: rotationDish,
+                                dateLabel: DATE_FMT.format(day.date),
+                              });
+                            }
+                          }}
+                          className="chip"
+                          style={{ height: 30, fontSize: 11.5, flex: "none" }}
+                        >
+                          Pick
+                        </button>
+                      </div>
+                    ))}
+                    {day.rdTip && (
+                      <p className="fine mt8" style={{ fontSize: 10.5, fontStyle: "italic", color: "var(--mut)" }}>
+                        <i className="ph-bold ph-lightbulb safc" /> RD tip: {day.rdTip}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="fine" style={{ fontSize: 10.5 }}>
+                Flat plan rate: ₹260/meal whichever dishes you pick. Swap any day up to 24h before its delivery — also later from My Plans.
+              </p>
+            </div>
+          )}
+
+          {/* Cart hand-off: show the actual items being repeated */}
+          {fromCart && !effectivePlan && cartItems.length > 0 && (
+            <div className="card mb16">
+              <div className="lab fx ac gap8 mb10">
+                <i className="ph-bold ph-basket safc" /> Your weekly items
+              </div>
+              {cartItems.map((ci) => (
+                <div key={ci.dishId} className="fx ac gap10" style={{ padding: "7px 0", borderTop: "1px solid var(--ln)" }}>
+                  <div
+                    style={{
+                      width: 40, height: 40, borderRadius: 8, flex: "none", overflow: "hidden",
+                      backgroundImage: ci.image ? `url(${ci.image})` : undefined,
+                      backgroundSize: "cover", backgroundPosition: "center",
+                      background: ci.image ? undefined : "var(--s2)",
+                    }}
+                  />
+                  <div className="f1" style={{ minWidth: 0 }}>
+                    <p className="small clamp1" style={{ fontWeight: 600, color: "#fff" }}>{ci.name}</p>
+                    <p className="mono fntc" style={{ fontSize: 10 }}>×{ci.quantity}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Step 4 — eaters */}
           <div id="sub-eaters" className="card mb16">
             <div className="fx ac jb mb12">
               <div className="lab fx ac gap8">
-                <i className="ph-bold ph-users safc" /> Step 3 — Who's eating?
+                <i className="ph-bold ph-users safc" /> Step {effectivePlan ? 4 : 3} — Who's eating?
               </div>
               <button
                 onClick={addMember}
@@ -896,12 +1120,12 @@ export default function V2Subscribe() {
             ))}
           </div>
 
-          {/* Address */}
+          {/* Step 5 — address */}
           <div id="sub-address" className="card mb16">
             <div className="fx ac jb gap8 mb12">
               <div className="lab fx ac gap8">
                 <i className="ph-bold ph-map-pin safc" />
-                Step 4 — Delivery Address
+                Step {effectivePlan ? 5 : 4} — Delivery Address
               </div>
               {addressPrefilled && (
                 <span className="fine sagec fx ac g6" style={{ fontSize: 10 }}>
@@ -974,17 +1198,43 @@ export default function V2Subscribe() {
             </div>
           </div>
 
-          {/* Summary */}
+          {/* Summary: billing choice lives next to the price it changes */}
           <div className="card mb16" style={{ background: "var(--safd)", borderColor: "var(--saf)" }}>
+            {!isTrial && (
+              <div className="mb12">
+                <div className="lab mb8">Billing cycle</div>
+                {(["weekly", "fortnightly", "monthly"] as const).map((c) => {
+                  const active = cadence === c;
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => setCadence(c)}
+                      className={active ? "opt on" : "opt"}
+                      style={{ flexDirection: "column", alignItems: "stretch" }}
+                    >
+                      <div className="fx ac jb w100">
+                        <span style={{ color: "#fff", fontWeight: 600 }}>
+                          {CADENCE_LABEL[c]}
+                        </span>
+                        <span className="pill sg">Save {CADENCE_DISCOUNT_PCT[c]}%</span>
+                      </div>
+                      <span className="fine mt2">
+                        {CADENCE_BILLING_COPY[c]} · your week repeats each cycle
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="fx wrap ac jb gap16">
               <div>
                 <p className="lab">
                   {isTrial
-                    ? `3-day sampler · ${meals} meals · ${members.length} eater${members.length === 1 ? "" : "s"}`
-                    : `${CADENCE_LABEL[cadence]} · ${meals} meals · ${members.length} eater${members.length === 1 ? "" : "s"}`}
+                    ? `3-day sampler · ${weekMeals} meals · ${members.length} eater${members.length === 1 ? "" : "s"}`
+                    : `${weekMeals} meals${effectivePlan ? "/week" : " per delivery"} · ${members.length} eater${members.length === 1 ? "" : "s"}`}
                 </p>
                 <p className="price safc mt4 fx" style={{ fontSize: 26, alignItems: "baseline", gap: 8 }}>
-                  {F(total)}
+                  {F(cyclePrice)}
                   {isTrial ? (
                     <>
                       <span className="fntc strike" style={{ fontSize: 14, fontWeight: 400 }}>
@@ -995,15 +1245,21 @@ export default function V2Subscribe() {
                       </span>
                     </>
                   ) : (
-                    <span className="fntc" style={{ fontSize: 14, fontWeight: 400 }}> / delivery</span>
+                    <span className="fntc" style={{ fontSize: 14, fontWeight: 400 }}>
+                      {!effectivePlan ? " / delivery" : cadence === "weekly" ? " / week" : cadence === "fortnightly" ? " / 2 weeks" : " / 4 weeks"}
+                    </span>
                   )}
                 </p>
                 {/* Price math — no surprises at the payment modal. */}
                 <div className="mt6">
                   <p className="fine" style={{ fontSize: 10 }}>
                     {isTrial
-                      ? `${meals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
-                      : `${meals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% ${CADENCE_LABEL[cadence].toLowerCase()} saving`}
+                      ? `${weekMeals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
+                      : `${cycleMeals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% saving${effectivePlan && cycleWeeks > 1 ? ` (${F(weekPrice)}/week)` : ""}`}
+                  </p>
+                  <p className="fine mt2" style={{ fontSize: 10 }}>
+                    📅 First delivery {firstDeliveryLabel} · {deliveryWindow}
+                    {!isTrial && effectivePlan && (daysMode === "weekdays" ? " · then every weekday" : " · then daily")}
                   </p>
                   {isFirstOrder && !isTrial && (
                     <p className="fine sagec fw6 mt2" style={{ fontSize: 10 }}>
@@ -1072,6 +1328,70 @@ export default function V2Subscribe() {
           )}
         </div>
 
+        {/* Swap sheet */}
+        {swapSheet !== null && (
+          <div
+            className="tnm2"
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+            onClick={() => setSwapSheet(null)}
+          >
+            <div
+              className="card"
+              style={{ maxWidth: 480, width: "100%", maxHeight: "72vh", overflowY: "auto", borderRadius: "16px 16px 0 0", paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="fx ac jb mb4">
+                <div>
+                  <p className="lab safc">{SLOT_META[swapSheet.slot].label} · {swapSheet.dateLabel}</p>
+                  <p className="tt mt2" style={{ color: "#fff" }}>
+                    Swap “{swapSheet.current.name}”
+                  </p>
+                </div>
+                <button className="qbtn" onClick={() => setSwapSheet(null)} aria-label="Close">
+                  <i className="ph-bold ph-x" />
+                </button>
+              </div>
+              <p className="fine mb10" style={{ fontSize: 11 }}>
+                Same flat ₹260/meal rate whichever you pick.{preferences ? " Only allergen-safe options are shown." : ""}
+              </p>
+              {swapAlternatives.length === 0 ? (
+                <p className="fine" style={{ padding: "16px 0" }}>
+                  No safe alternatives in this category right now — try adjusting allergens in Step {effectivePlan ? 4 : 3}, or keep the RD pick.
+                </p>
+              ) : (
+                swapAlternatives.map((d) => (
+                  <button
+                    key={d.slug}
+                    onClick={() => applySwap(d)}
+                    className="fx ac gap10 w100"
+                    style={{ padding: "9px 0", borderTop: "1px solid var(--ln)", textAlign: "left" }}
+                  >
+                    <div
+                      style={{
+                        width: 44, height: 44, borderRadius: 9, flex: "none", overflow: "hidden", position: "relative",
+                        backgroundImage: d.image ? `url(${d.image})` : undefined,
+                        backgroundSize: "cover", backgroundPosition: "center",
+                        background: d.image ? undefined : "var(--s2)",
+                      }}
+                    >
+                      <span className={d.isVeg ? "vd" : "vd nv"} style={{ position: "absolute", bottom: 3, left: 3 }} />
+                    </div>
+                    <div className="f1" style={{ minWidth: 0 }}>
+                      <p className="small clamp1" style={{ fontWeight: 600, color: "#fff" }}>{d.name}</p>
+                      <p className="mono fntc" style={{ fontSize: 10 }}>
+                        {macrosAreProvisional(d)
+                          ? "macros being verified"
+                          : `${d.macros?.calories ?? "—"} kcal · ${d.macros?.protein ?? "—"}g protein`}
+                      </p>
+                    </div>
+                    <i className="ph-bold ph-plus-circle safc" style={{ fontSize: 18, flex: "none" }} />
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {policyModal !== null && (
           <div
             className="tnm2"
@@ -1095,7 +1415,7 @@ export default function V2Subscribe() {
                 ) : (
                   <>
                     <p style={{ color: "var(--tx)" }}>
-                      <strong>Swap before kitchen cutoff:</strong> Don't fancy tomorrow's recipe? Up to 24 hours before your scheduled slot, click <em>Change dish</em> on any upcoming delivery day to select any alternative RD-certified meal on our active rotation at zero extra charge.
+                      <strong>Swap before kitchen cutoff:</strong> Don't fancy tomorrow's recipe? Up to 24 hours before your scheduled slot, click <em>Swap</em> on any upcoming delivery day to select any alternative RD-certified meal on our active rotation at zero extra charge.
                     </p>
                     <p style={{ color: "var(--tx)" }}>
                       <strong>Allergen auto-filtering:</strong> Our kitchen automatically excludes your saved allergens and preferences every week so your menu is 100% safe by default.
