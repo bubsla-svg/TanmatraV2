@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { API_BASE } from "@/lib/apiBase";
 import { track } from "@/lib/analytics";
+import { usePreferences } from "@/lib/preferencesContext";
 import { auth, friendlyFirebaseError } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { captureAttribution, getAttribution } from "@/lib/attribution";
@@ -21,6 +22,7 @@ const TOS_VERSION = "2026-05";
 export default function V2Login() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const { refresh: refreshPreferences } = usePreferences();
   const rawNext = params.get("next") ?? "/";
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
   const UNLOCK_PHRASE = "tanmatra-ops-2026";
@@ -35,12 +37,21 @@ export default function V2Login() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const recaptchaVerifierRef = useRef<any>(null);
+  const phoneInputRef = useRef<HTMLInputElement | null>(null);
   const [smsConsent, setSmsConsent] = useState(false);
   const [whatsAppConsent, setWhatsAppConsent] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const [resendIn, setResendIn] = useState(0);
 
   useEffect(() => { captureAttribution(); }, []);
+  // /login is prerendered, so the browser lets users type into the static
+  // autofocused input before React hydrates — the controlled value would
+  // then wipe those keystrokes. Adopt whatever is already in the DOM.
+  useEffect(() => {
+    const el = phoneInputRef.current;
+    if (el && el.value && !phone) setPhone(el.value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     if (resendIn <= 0) return;
     const t = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
@@ -113,6 +124,9 @@ export default function V2Login() {
           return;
         }
       } catch { /* network blip — proceed; the guard will re-check */ }
+      // Pull the account profile and migrate any guest quiz answers so
+      // personalization survives sign-in (see preferencesContext.refresh).
+      void refreshPreferences();
       if (data.user.firstName === null) { setShowWelcome(true); return; }
       toast.success("Signed in");
       navigate(next, { replace: true });
@@ -148,7 +162,7 @@ export default function V2Login() {
                   <option value="+91">🇮🇳 +91</option><option value="+1">🇺🇸 +1</option><option value="+44">🇬🇧 +44</option>
                   <option value="+61">🇦🇺 +61</option><option value="+971">🇦🇪 +971</option><option value="+65">🇸🇬 +65</option>
                 </select>
-                <div className="inp f1"><input autoFocus inputMode="numeric" autoComplete="tel-national" placeholder="98765 43210" value={phone}
+                <div className="inp f1"><input ref={phoneInputRef} autoFocus inputMode="numeric" autoComplete="tel-national" placeholder="98765 43210" value={phone}
                   onChange={(e) => setPhone(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void sendOtp(); }} /></div>
               </div>
 
