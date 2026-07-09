@@ -16,6 +16,12 @@ export interface SubscriptionItem {
   memberId?: number | null;
 }
 
+/** One delivery day within a billing cycle (dayOffset = days from cycle start). */
+export interface SubscriptionDayPlanEntry {
+  dayOffset: number;
+  items: SubscriptionItem[];
+}
+
 export interface SubscriptionMember {
   id: number;
   subscriptionId: number;
@@ -118,6 +124,8 @@ export interface CreateSubscriptionInput {
     spiceLevel: "mild" | "medium" | "hot";
   }>;
   defaultItems: SubscriptionItem[];
+  /** Day-first plans: per-day deliveries within each billing cycle. */
+  dayPlan?: SubscriptionDayPlanEntry[];
 }
 
 function mintIdempotencyKey(): string {

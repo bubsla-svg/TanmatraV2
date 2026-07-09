@@ -67,6 +67,8 @@ ALTER TABLE public.wearable_links ADD COLUMN IF NOT EXISTS status varchar(24) NO
 ALTER TABLE public.wearable_links ADD COLUMN IF NOT EXISTS scopes jsonb;
 ALTER TABLE public.wearable_links ADD COLUMN IF NOT EXISTS consent_at timestamptz;
 CREATE INDEX IF NOT EXISTS idx_wearable_links_provider_user ON public.wearable_links (provider, provider_user_id);
+
+ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS day_plan jsonb;
 `;
 
 export async function ensureRectificationSchema(): Promise<void> {

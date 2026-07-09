@@ -34,6 +34,14 @@ export interface SubscriptionItem {
   memberId?: number | null;
 }
 
+// One entry per delivery day within a billing cycle. `dayOffset` is days
+// from the cycle start; the week pattern is expanded client-side across
+// fortnightly/monthly cycles so offsets are explicit, never inferred.
+export interface SubscriptionDayPlanEntry {
+  dayOffset: number;
+  items: SubscriptionItem[];
+}
+
 export const subscriptionsTable = pgTable(
   "subscriptions",
   {
@@ -64,6 +72,7 @@ export const subscriptionsTable = pgTable(
     pricePerDeliveryPaise: integer("price_per_delivery_paise")
       .notNull()
       .default(0),
+    dayPlan: jsonb("day_plan").$type<SubscriptionDayPlanEntry[] | null>(),
     notes: varchar("notes", { length: 512 }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
