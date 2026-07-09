@@ -33,7 +33,46 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const out = await preferencesApi.get();
-      setPreferences(out.preferences);
+      // Guest → account migration: a visitor who completed the quiz before
+      // signing in has their profile only in localStorage. Without this
+      // push, logging in silently reset personalization to the account's
+      // (empty) server profile — the "quiz twice" bug. Server data wins
+      // where it already exists; the guest profile only fills the gaps.
+      let serverPrefs = out.preferences;
+      try {
+        const raw = localStorage.getItem("tanmatra:guest-preferences");
+        if (raw) {
+          const guest = JSON.parse(raw) as Record<string, unknown>;
+          const serverHasProfile = Boolean(serverPrefs?.quizCompletedAt);
+          if (!serverHasProfile && guest && Object.keys(guest).length > 0) {
+            const patch: Record<string, unknown> = {};
+            for (const k of [
+              "goal",
+              "dietaryStyle",
+              "allergens",
+              "dislikedIngredients",
+              "cuisines",
+              "spiceLevel",
+              "calorieTarget",
+              "proteinTargetGrams",
+              "medicalConditions",
+            ]) {
+              if (guest[k] !== undefined && guest[k] !== null) patch[k] = guest[k];
+            }
+            if (guest["quizCompletedAt"]) patch["markQuizComplete"] = true;
+            if (Object.keys(patch).length > 0) {
+              const migrated = await preferencesApi.update(patch as PreferencesPatch);
+              serverPrefs = migrated.preferences;
+            }
+          }
+          // Either migrated or the account already had a profile — the
+          // guest copy has served its purpose.
+          localStorage.removeItem("tanmatra:guest-preferences");
+        }
+      } catch {
+        // Migration is best-effort; never block sign-in on it.
+      }
+      setPreferences(serverPrefs);
       setUnauthorized(false);
     } catch (e) {
       if (String(e).includes("401")) {
