@@ -7,6 +7,7 @@ export const meta: MetaFunction = () => [
   { property: "og:title", content: "Wellness Protocol | Tanmatra" },
   { property: "og:description", content: "Dietitian-designed meals for everyday wellness, immune support, and sustainable healthy habits." },
   { property: "og:image", content: "https://tanmatra.food/opengraph.jpg" },
+  { name: "robots", content: "noindex, follow" },
 ];
 
 export const handle = { chrome: false };

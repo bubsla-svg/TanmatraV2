@@ -21,6 +21,16 @@ import { toast } from "sonner";
 export const meta: MetaFunction = () => [
   { title: "Morning Fitness & Running Clubs | Tanmatra" },
   { name: "description", content: "Post-workout breakfast drop-offs for running, cycling, and morning bootcamps. Healthy, dietitian-designed recovery meals delivered directly to your meetup spots." },
+  { property: "og:type", content: "website" },
+  { property: "og:title", content: "Morning Fitness & Running Clubs | Tanmatra" },
+  { property: "og:description", content: "Post-workout breakfast drop-offs for running, cycling, and morning bootcamps — delivered directly to your meetup spots." },
+  { property: "og:image", content: "https://tanmatra.food/opengraph.jpg" },
+  { property: "og:url", content: "https://tanmatra.food/partners/fitness-clubs" },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Morning Fitness & Running Clubs | Tanmatra" },
+  { name: "twitter:description", content: "Post-workout breakfast drop-offs for running, cycling, and morning bootcamps — delivered directly to your meetup spots." },
+  { name: "twitter:image", content: "https://tanmatra.food/opengraph.jpg" },
+  { tagName: "link", rel: "canonical", href: "https://tanmatra.food/partners/fitness-clubs" },
 ];
 
 export default function MorningFitnessLanding() {

@@ -1,4 +1,10 @@
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => [
+  { title: "Page Not Found | Tanmatra" },
+  { name: "description", content: "The page you were looking for doesn't exist or has moved. Browse the Tanmatra menu or head back home." },
+  { name: "robots", content: "noindex, follow" },
+];
 
 // Chrome-less native v2 (.tnm2) route — appbar-less centered state, matching
 // the other v2 pages (Home, Cart, Menu …).

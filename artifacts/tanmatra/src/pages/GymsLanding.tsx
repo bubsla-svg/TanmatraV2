@@ -22,6 +22,16 @@ import { toast } from "sonner";
 export const meta: MetaFunction = () => [
   { title: "Partner with Tanmatra | Gyms & Fitness Centers" },
   { name: "description", content: "Bundle clinical-grade nutrition with your gym membership. Increase member retention, generate ancillary revenue, and provide complete fitness solutions." },
+  { property: "og:type", content: "website" },
+  { property: "og:title", content: "Partner with Tanmatra | Gyms & Fitness Centers" },
+  { property: "og:description", content: "Bundle clinical-grade nutrition with your gym membership. Increase member retention and generate ancillary revenue." },
+  { property: "og:image", content: "https://tanmatra.food/opengraph.jpg" },
+  { property: "og:url", content: "https://tanmatra.food/partners/gyms" },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Partner with Tanmatra | Gyms & Fitness Centers" },
+  { name: "twitter:description", content: "Bundle clinical-grade nutrition with your gym membership. Increase member retention and generate ancillary revenue." },
+  { name: "twitter:image", content: "https://tanmatra.food/opengraph.jpg" },
+  { tagName: "link", rel: "canonical", href: "https://tanmatra.food/partners/gyms" },
 ];
 
 export default function GymsLanding() {

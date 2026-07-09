@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,27 @@ import {
   Users,
 } from "lucide-react";
 import { trackRdPartnersEvent } from "@/lib/rdPartnersAnalytics";
+
+const META_TITLE = "Partner With Tanmatra — For Registered Dietitians";
+const META_DESCRIPTION =
+  "Grow your clinical practice on Tanmatra: built-in booking and messaging, a 70/30 revenue share on follow-ups, monthly payouts, and the chance to shape the menu as an advisory partner.";
+const META_IMAGE = "https://tanmatra.food/opengraph.jpg";
+const META_URL = "https://tanmatra.food/rd-partners";
+
+export const meta: MetaFunction = () => [
+  { title: META_TITLE },
+  { name: "description", content: META_DESCRIPTION },
+  { property: "og:type", content: "website" },
+  { property: "og:title", content: META_TITLE },
+  { property: "og:description", content: META_DESCRIPTION },
+  { property: "og:image", content: META_IMAGE },
+  { property: "og:url", content: META_URL },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: META_TITLE },
+  { name: "twitter:description", content: META_DESCRIPTION },
+  { name: "twitter:image", content: META_IMAGE },
+  { tagName: "link", rel: "canonical", href: META_URL },
+];
 
 const VALUE_PROPS = [
   {
