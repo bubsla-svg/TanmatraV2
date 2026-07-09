@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { API_BASE } from "@/lib/apiBase";
+import { track } from "@/lib/analytics";
 import { auth, friendlyFirebaseError } from "../lib/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { captureAttribution, getAttribution } from "@/lib/attribution";
@@ -95,6 +96,23 @@ export default function V2Login() {
       });
       const data: any = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok || !data.user) { toast.error(data.error ?? "Incorrect code"); return; }
+      // Session probe: confirm the browser actually STORED the session
+      // cookie before navigating into an auth-gated page. If it didn't
+      // (third-party cookie blocking on a cross-site API), the guard
+      // would bounce straight back here — an infinite-feeling loop with
+      // no explanation. Surface the real problem instead.
+      try {
+        const probe = await fetch(`${API_BASE}/auth/user`, { credentials: "include" });
+        const probeData: any = await probe.json().catch(() => ({}));
+        if (!probe.ok || !probeData.user) {
+          track("auth_session_cookie_dropped", { path: "/login" });
+          toast.error("Signed in, but your browser refused the session cookie", {
+            description:
+              "Please disable 'block all cookies' / strict tracking prevention for this site and try again.",
+          });
+          return;
+        }
+      } catch { /* network blip — proceed; the guard will re-check */ }
       if (data.user.firstName === null) { setShowWelcome(true); return; }
       toast.success("Signed in");
       navigate(next, { replace: true });

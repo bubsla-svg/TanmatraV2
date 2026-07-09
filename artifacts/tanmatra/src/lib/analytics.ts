@@ -31,7 +31,8 @@ type EventName =
   | "menu_filter_applied"
   | "plan_selected"
   | "plan_dish_swapped"
-  | "pincode_unserviceable";
+  | "pincode_unserviceable"
+  | "auth_session_cookie_dropped";
 
 // Health-adjacent or personal keys never leave the device — the server
 // scrubs them again, but the first line of defence is here.
