@@ -1,61 +1,11 @@
 import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, webhookInboxTable, usersTable } from "@workspace/db";
+import { db, ordersTable, webhookInboxTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
-import { isPetpoojaEnabled, pushOrderToPetpooja } from "../lib/petpoojaClient";
-import { makeBatchDishResolver } from "../lib/menuResolver";
+import { sendOrderConfirmation } from "../lib/orderNotification";
 
 const router: IRouter = Router();
-
-/**
- * EC4 oversell guard. Re-validates each line item of a stored order against
- * live menu availability. An item that was available at order-create can
- * deplete during the payment handshake; this catches that at pay time.
- *
- * Returns the human-readable names of items that are now unavailable. Returns
- * an empty list (fail-open) when the order can't be found or the menu snapshot
- * can't be loaded — we never block a customer's payment on an infra hiccup,
- * only on a confirmed unavailability.
- *
- * Availability is resolved through the merged catalog (makeBatchDishResolver),
- * the same source checkout uses, so it reflects menu_items.is_available
- * regardless of whether the line item is a static or CMS (synthetic-id) dish.
- */
-async function findUnavailableOrderItems(
-  externalOrderId: string,
-  log: Request["log"],
-): Promise<string[]> {
-  let order: { items: Array<{ id: number; name: string; qty: number; price: number }> } | undefined;
-  try {
-    [order] = await db
-      .select({ items: ordersTable.items })
-      .from(ordersTable)
-      .where(eq(ordersTable.externalOrderId, externalOrderId))
-      .limit(1);
-  } catch (err) {
-    log.error({ err, externalOrderId }, "availability re-check: order lookup failed");
-    return [];
-  }
-  if (!order || !Array.isArray(order.items) || order.items.length === 0) return [];
-
-  let resolver: Awaited<ReturnType<typeof makeBatchDishResolver>>;
-  try {
-    resolver = await makeBatchDishResolver();
-  } catch (err) {
-    log.error({ err, externalOrderId }, "availability re-check: menu resolver unavailable");
-    return [];
-  }
-
-  const unavailable: string[] = [];
-  for (const item of order.items) {
-    const dish = resolver.byId(item.id);
-    if (dish && dish.isAvailable === false) {
-      unavailable.push(item.name || dish.name);
-    }
-  }
-  return unavailable;
-}
 
 /** Returns [keyId, keySecret] or null when either env var is absent. */
 function razorpayCredentials(): [string, string] | null {
@@ -116,28 +66,6 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
 
   const { amountPaise, receipt } = parsed.data;
 
-  const targetOrderId = parsed.data.orderId ?? parsed.data.receipt;
-
-  // EC4: close the oversell window at payment. Re-check availability BEFORE
-  // creating the Razorpay order so we never send a customer to pay for a dish
-  // that depleted after order-create. If anything is now unavailable, refuse
-  // with 409 and do not create the Razorpay order.
-  if (targetOrderId) {
-    const unavailable = await findUnavailableOrderItems(targetOrderId, req.log);
-    if (unavailable.length > 0) {
-      req.log.warn(
-        { targetOrderId, unavailable },
-        "razorpay order-create blocked: item unavailable at payment",
-      );
-      res.status(409).json({
-        error: "one or more items are no longer available",
-        code: "dish_unavailable_at_payment",
-        unavailable,
-      });
-      return;
-    }
-  }
-
   const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
     method: "POST",
     headers: {
@@ -166,6 +94,7 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
 
   const rp = (await rpRes.json()) as { id: string; amount: number; currency: string };
 
+  const targetOrderId = parsed.data.orderId ?? parsed.data.receipt;
   if (targetOrderId) {
     try {
       await db
@@ -235,10 +164,14 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
 
   // Transition order to "preparing".
   try {
-    await db
+    const updated = await db
       .update(ordersTable)
       .set({ status: "preparing", razorpayOrderId })
-      .where(eq(ordersTable.externalOrderId, orderId));
+      .where(eq(ordersTable.externalOrderId, orderId))
+      .returning({ id: ordersTable.id });
+    if (updated[0]) {
+      void sendOrderConfirmation(updated[0].id);
+    }
   } catch (err) {
     // Payment is confirmed by Razorpay — do not fail the response. The ops
     // team will reconcile via the Razorpay dashboard and the orders table.
@@ -248,70 +181,6 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
   }
 
   res.json({ ok: true, orderId, status: "preparing" });
-
-  // EC4 backstop: the customer has already paid and the signature is valid, so
-  // we never fail this response. But if a line item went unavailable during the
-  // checkout modal, do NOT silently succeed — surface the conflict so ops can
-  // action a refund. We keep the order status and payment intact (no auto-refund
-  // — out of scope) and only flag it: an error-level log plus an idempotent
-  // "[REVIEW: item unavailable at capture]" marker on deliveryInstructions.
-  void (async () => {
-    try {
-      const unavailable = await findUnavailableOrderItems(orderId, req.log);
-      if (unavailable.length === 0) return;
-      req.log.error(
-        { orderId, razorpayPaymentId, razorpayOrderId, unavailable },
-        "payment captured for order with unavailable item(s) — needs ops review/refund",
-      );
-      const [existing] = await db
-        .select({ deliveryInstructions: ordersTable.deliveryInstructions })
-        .from(ordersTable)
-        .where(eq(ordersTable.externalOrderId, orderId))
-        .limit(1);
-      const prior = existing?.deliveryInstructions ?? "";
-      if (prior.includes("[REVIEW: item unavailable at capture")) return;
-      const marker = `[REVIEW: item unavailable at capture: ${unavailable.join(", ")}]`;
-      const combined = (prior ? `${prior} ${marker}` : marker).slice(0, 512);
-      await db
-        .update(ordersTable)
-        .set({ deliveryInstructions: combined })
-        .where(eq(ordersTable.externalOrderId, orderId));
-    } catch (err) {
-      req.log.error({ err, orderId }, "EC4 post-payment availability backstop failed (non-fatal)");
-    }
-  })();
-
-  // Outbound: push the paid order to Petpooja's POS so the kitchen receives it.
-  // Fire-and-forget AFTER responding — a POS hiccup must never fail or delay a
-  // customer's checkout. No-op when PETPOOJA_* is unconfigured.
-  if (isPetpoojaEnabled()) {
-    void (async () => {
-      try {
-        const [order] = await db
-          .select()
-          .from(ordersTable)
-          .where(eq(ordersTable.externalOrderId, orderId))
-          .limit(1);
-        if (!order) return;
-        let customer: { name?: string | null; email?: string | null } = {};
-        if (order.userId) {
-          const [u] = await db
-            .select()
-            .from(usersTable)
-            .where(eq(usersTable.id, order.userId))
-            .limit(1);
-          if (u) {
-            const anyU = u as Record<string, any>;
-            const name = [anyU.firstName, anyU.lastName].filter(Boolean).join(" ").trim();
-            customer = { name: name || anyU.name || null, email: anyU.email ?? null };
-          }
-        }
-        await pushOrderToPetpooja(order, customer, req.log);
-      } catch (err) {
-        req.log.error({ err, orderId }, "petpooja outbound push errored (non-fatal)");
-      }
-    })();
-  }
 });
 
 // ---------------------------------------------------------------------------
@@ -496,10 +365,14 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
       const razorpayOrderId = paymentEntity?.order_id ?? "";
       const razorpayPaymentId = paymentEntity?.id ?? "";
       if (razorpayOrderId) {
-        await db
+        const updated = await db
           .update(ordersTable)
           .set({ status: "preparing" })
-          .where(eq(ordersTable.razorpayOrderId, razorpayOrderId));
+          .where(eq(ordersTable.razorpayOrderId, razorpayOrderId))
+          .returning({ id: ordersTable.id });
+        if (updated[0]) {
+          void sendOrderConfirmation(updated[0].id);
+        }
       }
     } else if (eventType === "payment.failed") {
       req.log.warn({ razorpayOrderId: paymentEntity?.order_id }, "webhook: payment failed");

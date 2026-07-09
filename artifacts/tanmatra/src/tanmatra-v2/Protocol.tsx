@@ -7,6 +7,7 @@ import { RD_PLANS } from "@/lib/rdPlans";
 import { RD_BOOKING } from "@/lib/rdBookingData";
 import { TEAM } from "@/lib/teamData";
 import { useEnableClinicalMode } from "@/lib/clinicalDiet";
+import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 
 /* Full-parity re-port of the System-A protocol landings (Performance 322 /
  * Clinical 389, git 2507084) into v2. Reuses dishesForProtocol /
@@ -177,6 +178,7 @@ export default function V2Protocol({ which }: { which: Key }) {
           ) : (
             <Link className="btn btn-p btn-lg btn-blk" to={`/subscribe?plan=${which}`} style={{ background: cfg.accent, color: "#0b0b0b" }}>Start {cfg.name} <i className="ph-bold ph-arrow-right" /></Link>
           )}
+          <MedicalDisclaimer />
         </div>
       </div>
     </div>

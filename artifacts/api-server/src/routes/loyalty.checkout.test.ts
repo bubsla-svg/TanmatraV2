@@ -411,3 +411,43 @@ test("POST /orders/finalize honors slot capacity under concurrent finalize calls
     .where(eq(slotReservationsTable.slotId, slotId));
   assert.equal(reservations.length, capacity);
 });
+
+test("POST /orders/finalize auto-assigns an ASAP slot when delivery arrives with no slot", async () => {
+  const user = await makeUser("AsapNow");
+  // Guarantee at least one open future window exists for the auto-assign.
+  const slotId = await makeSlot(5);
+  const [dish] = pickAvailableNonPremium(1);
+
+  const r = await api(
+    "POST",
+    "/orders/finalize",
+    {
+      orderId: `ord-${randomUUID()}`,
+      fulfillmentType: "delivery",
+      // Deliberately NO deliverySlotId — the "Deliver Now" default mode.
+      items: [{ id: dish!.id, name: dish!.name, qty: 1, price: dish!.price }],
+      address: {
+        label: "Home",
+        line: "42 Test Lane",
+        city: "Noida",
+        pincode: "201301",
+        phone: "+911234567890",
+      },
+    },
+    user,
+  );
+
+  assert.equal(
+    r.status,
+    200,
+    `ASAP finalize must succeed, got ${r.status}: ${JSON.stringify(r.json)}`,
+  );
+  // A real slot reservation must exist for the order — ASAP means "earliest
+  // open window", not "no window".
+  const reservations = await db
+    .select({ slotId: slotReservationsTable.slotId })
+    .from(slotReservationsTable)
+    .where(eq(slotReservationsTable.orderId, r.json.serverOrderId));
+  assert.equal(reservations.length, 1, "ASAP order must reserve exactly one slot");
+  void slotId; // referenced to keep the created slot in cleanup scope
+});

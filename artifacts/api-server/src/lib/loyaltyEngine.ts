@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import {
   bundlesTable,
   creditLedgerTable,
@@ -655,7 +655,24 @@ export async function finalizeOrder(args: {
   // 4xx responses instead of a generic 500.
   const fulfillmentType = args.fulfillmentType === "pickup" ? "pickup" : "delivery";
   if (fulfillmentType === "delivery" && !args.deliverySlotId) {
-    throw new Error("delivery slot required");
+    // ASAP ("Deliver Now") orders arrive without a slot — the default
+    // checkout mode. Assign the earliest still-open window instead of
+    // rejecting the order; only fail when no window is open at all.
+    const [asap] = await db
+      .select({ id: deliverySlotsTable.id })
+      .from(deliverySlotsTable)
+      .where(
+        and(
+          gt(deliverySlotsTable.endsAt, new Date()),
+          sql`${deliverySlotsTable.reservedCount} < ${deliverySlotsTable.capacity}`,
+        ),
+      )
+      .orderBy(asc(deliverySlotsTable.startsAt))
+      .limit(1);
+    if (!asap) {
+      throw new Error("delivery slot required");
+    }
+    args.deliverySlotId = asap.id;
   }
   if (fulfillmentType === "pickup" && !args.pickupLocationId) {
     throw new Error("pickup location required");

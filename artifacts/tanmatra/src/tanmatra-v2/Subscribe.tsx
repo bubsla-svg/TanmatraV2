@@ -20,6 +20,7 @@ import {
 import { checkPincode } from "@/lib/serviceablePincodes";
 import GoalPlanChooser from "@/components/subscribe/GoalPlanChooser";
 import { F } from "./data";
+import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 
 const TIME_WINDOWS = [
   "07:00 - 08:00",
@@ -153,7 +154,6 @@ export default function V2Subscribe() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { orders } = useOrders();
-  const isFirstOrder = orders.length === 0;
   const [policyModal, setPolicyModal] = useState<"pause" | "swap" | null>(null);
 
   const planSlug = searchParams.get("plan");
@@ -444,6 +444,9 @@ export default function V2Subscribe() {
   const pincodeCheck = useMemo(() => checkPincode(address.pincode), [address.pincode]);
 
   useEffect(() => {
+    if (pincodeCheck.state === "unserviceable") {
+      track("pincode_unserviceable", { pincode: address.pincode });
+    }
     if (pincodeCheck.state === "serviceable" && !address.city.trim()) {
       setAddress((prev) => ({ ...prev, city: pincodeCheck.info.city }));
     }
@@ -661,6 +664,7 @@ export default function V2Subscribe() {
             <GoalPlanChooser
               preferences={preferences}
               onSelect={(slug) => {
+                track("plan_selected", { plan: slug });
                 const next = new URLSearchParams(searchParams);
                 next.set("plan", slug);
                 setSearchParams(next);
@@ -1261,11 +1265,6 @@ export default function V2Subscribe() {
                     📅 First delivery {firstDeliveryLabel} · {deliveryWindow}
                     {!isTrial && effectivePlan && (daysMode === "weekdays" ? " · then every weekday" : " · then daily")}
                   </p>
-                  {isFirstOrder && !isTrial && (
-                    <p className="fine sagec fw6 mt2" style={{ fontSize: 10 }}>
-                      🎁 First order welcome offer: flat 25% off (capped at ₹80) applied automatically at payment
-                    </p>
-                  )}
                   <p className="fine sagec fw5 mt2" style={{ fontSize: 10 }}>
                     🚚 Delivery fee: FREE (included on all subscription plans)
                   </p>
@@ -1324,6 +1323,8 @@ export default function V2Subscribe() {
               </button>
             </div>
           </div>
+
+          <MedicalDisclaimer compact />
           </>
           )}
         </div>

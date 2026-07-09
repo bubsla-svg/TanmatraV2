@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
-import {
+import { PLAN_FROM_PRICE_PER_WEEK_PAISE,
   RD_PLANS,
   PLAN_GOAL_LABEL,
   getRdAuthor,
@@ -96,7 +96,7 @@ export default function GoalPlanChooser({
                 {PLAN_GOAL_LABEL[plan.goal]}
               </span>
               <span className="price safc nowrap" style={{ fontSize: 14 }}>
-                {formatRupees(plan.pricePerWeekPaise)}
+                {formatRupees(PLAN_FROM_PRICE_PER_WEEK_PAISE)}
                 <span className="fntc" style={{ fontSize: 11 }}>
                   {isTrialPack ? " one-off" : " /wk"}
                 </span>

@@ -1041,6 +1041,9 @@ export default function V2Checkout() {
         } catch {
           /* noop */
         }
+        // The picker only exists in "schedule" mode — flip into it so the
+        // user always sees the grid the error is pointing at.
+        setDeliveryMode("schedule");
         setSelectedSlotId(null);
         setSlotErrorMsg(
           "That delivery window just sold out. Please pick another.",
@@ -1048,9 +1051,12 @@ export default function V2Checkout() {
         scrollToFulfillment();
         toast.error("That delivery slot is full");
       } else if (msg.includes("delivery slot required")) {
-        setSlotErrorMsg("Please pick a delivery window before placing the order.");
+        // Server auto-assigns ASAP slots now, so this only fires when no
+        // window is open at all — show the picker, not a dead-end toast.
+        setDeliveryMode("schedule");
+        setSlotErrorMsg("No ASAP window is open right now — pick a delivery slot.");
         scrollToFulfillment();
-        toast.error("Please pick a delivery window before placing the order");
+        toast.error("No ASAP window open — please pick a delivery slot");
       } else if (
         msg.includes("pickup location required") ||
         msg.includes("pickup location unavailable")
