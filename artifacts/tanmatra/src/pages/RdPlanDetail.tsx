@@ -1,5 +1,5 @@
 import { type MetaFunction } from "react-router";
-import { getRdPlanBySlug } from "@/lib/rdPlans";
+import { PLAN_FROM_PRICE_PER_WEEK_PAISE, getRdPlanBySlug } from "@/lib/rdPlans";
 import V2RdPlanDetail from "@/tanmatra-v2/RdPlanDetail";
 
 export const meta: MetaFunction = ({ params }) => {
@@ -8,7 +8,7 @@ export const meta: MetaFunction = ({ params }) => {
   const title = `${plan.name} — RD Meal Plan | Tanmatra`;
   const image = "https://tanmatra.food/opengraph.jpg";
   const url = `https://tanmatra.food/plans/${plan.slug}`;
-  const price = (plan.pricePerWeekPaise / 100).toFixed(0);
+  const price = (PLAN_FROM_PRICE_PER_WEEK_PAISE / 100).toFixed(0);
   return [
     { title },
     { name: "description", content: plan.tagline },

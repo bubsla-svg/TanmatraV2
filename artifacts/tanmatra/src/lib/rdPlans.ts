@@ -455,6 +455,16 @@ export function findPlanSafeSwap(
   return null;
 }
 
+/**
+ * Advertised "from" price per week — MUST match the server's flat
+ * per-meal pricing (PER_MEAL_PAISE 26000 x weekly 5% discount) for the
+ * default lunch+dinner x 7 days configuration. Plan cards, detail CTAs,
+ * and JSON-LD all derive from this so no surface can contradict the
+ * configurator's real price again. (RdPlan.pricePerWeekPaise is legacy
+ * copy data - do not price UI from it.)
+ */
+export const PLAN_FROM_PRICE_PER_WEEK_PAISE = Math.round(14 * 26000 * 0.95);
+
 export function formatRupees(paise: number): string {
   return `₹${(paise / 100).toFixed(0)}`;
 }

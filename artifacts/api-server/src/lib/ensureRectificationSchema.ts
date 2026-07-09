@@ -69,6 +69,18 @@ ALTER TABLE public.wearable_links ADD COLUMN IF NOT EXISTS consent_at timestampt
 CREATE INDEX IF NOT EXISTS idx_wearable_links_provider_user ON public.wearable_links (provider, provider_user_id);
 
 ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS day_plan jsonb;
+
+CREATE TABLE IF NOT EXISTS public.funnel_events (
+  id serial PRIMARY KEY,
+  name varchar(64) NOT NULL,
+  props jsonb,
+  session_id varchar(64),
+  user_id varchar,
+  path varchar(256),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_funnel_events_name_time ON public.funnel_events (name, created_at);
+CREATE INDEX IF NOT EXISTS idx_funnel_events_session ON public.funnel_events (session_id);
 `;
 
 export async function ensureRectificationSchema(): Promise<void> {

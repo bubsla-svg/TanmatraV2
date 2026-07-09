@@ -6,6 +6,7 @@ import { makeBatchDishResolver } from "../lib/menuResolver";
 import { calculateCartTotals } from "../lib/cartMath";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { isServiceablePincode, SERVICEABLE_PINCODES } from "@workspace/api-zod";
+import { sendOrderConfirmation } from "../lib/orderNotification";
 
 const router: IRouter = Router();
 
@@ -142,6 +143,7 @@ router.post("/orders", async (req: Request, res: Response) => {
   }
 
   req.log.info({ externalOrderId, serverOrderId: row.id, totalPaise }, "guest order placed");
+  void sendOrderConfirmation(row.id);
 
   res.status(201).json({
     orderId: externalOrderId,

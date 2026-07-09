@@ -1,6 +1,8 @@
-// Lightweight event tracker. Calls window.gtag if available; logs in dev.
-// Replace with your analytics provider (Posthog, Mixpanel, etc.) by
-// swapping the implementation here — the call sites don't need to change.
+// First-party event tracker. Every event beacons to the API's
+// /events endpoint (persisted in the funnel_events table, queryable by
+// the existing admin analytics console), and additionally forwards to
+// window.gtag when a vendor script is present — call sites never change.
+import { API_BASE } from "./apiBase";
 
 type EventName =
   | "view_home"
@@ -24,15 +26,70 @@ type EventName =
   | "softgate_skip"
   | "post_checkout_wizard_shown"
   | "post_checkout_wizard_completed"
-  | "post_checkout_wizard_skipped";
+  | "post_checkout_wizard_skipped"
+  | "home_cta_click"
+  | "menu_filter_applied"
+  | "plan_selected"
+  | "plan_dish_swapped"
+  | "pincode_unserviceable";
+
+// Health-adjacent or personal keys never leave the device — the server
+// scrubs them again, but the first line of defence is here.
+const BLOCKED_PROP_KEYS = new Set([
+  "allergens",
+  "conditions",
+  "medicalConditions",
+  "phone",
+  "email",
+  "address",
+  "name",
+]);
+
+function sessionId(): string {
+  try {
+    let sid = sessionStorage.getItem("tanmatra:sid");
+    if (!sid) {
+      sid = crypto.randomUUID?.() ?? `s-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      sessionStorage.setItem("tanmatra:sid", sid);
+    }
+    return sid;
+  } catch {
+    return "no-session";
+  }
+}
 
 export function track(event: EventName, props?: Record<string, unknown>): void {
   if (import.meta.env.DEV) {
     console.debug(`[analytics] ${event}`, props);
   }
+  const clean: Record<string, unknown> = {};
+  if (props) {
+    for (const [k, v] of Object.entries(props)) {
+      if (BLOCKED_PROP_KEYS.has(k)) continue;
+      clean[k] = v;
+    }
+  }
+  try {
+    // keepalive lets the beacon survive page navigations, like sendBeacon,
+    // while keeping a JSON content-type the API parses natively.
+    void fetch(`${API_BASE}/events`, {
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: event,
+        props: Object.keys(clean).length > 0 ? clean : undefined,
+        sessionId: sessionId(),
+        path: typeof location !== "undefined" ? location.pathname : undefined,
+        ts: Date.now(),
+      }),
+    }).catch(() => undefined);
+  } catch {
+    // never let analytics crash the app
+  }
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).gtag?.("event", event, props);
+    (window as any).gtag?.("event", event, clean);
   } catch {
     // never let analytics crash the app
   }

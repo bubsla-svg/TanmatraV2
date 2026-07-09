@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import {
+import { PLAN_FROM_PRICE_PER_WEEK_PAISE,
   RD_PLANS,
   PLAN_GOAL_LABEL,
   recommendPlansForPreferences,
@@ -8,6 +8,7 @@ import {
   formatRupees,
   type PlanGoal,
 } from "@/lib/rdPlans";
+import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { usePreferences } from "@/lib/preferencesContext";
 import {
   PROTOCOL_LABELS,
@@ -166,7 +167,7 @@ export default function V2RdPlans() {
                           {PLAN_GOAL_LABEL[plan.goal]}
                         </span>
                         <span className="price safc" style={{ fontSize: 14 }}>
-                          {formatRupees(plan.pricePerWeekPaise)}
+                          {formatRupees(PLAN_FROM_PRICE_PER_WEEK_PAISE)}
                           <span className="fntc" style={{ fontSize: 11 }}> /wk</span>
                         </span>
                       </div>
@@ -260,7 +261,7 @@ export default function V2RdPlans() {
                       <div style={{ flex: "none", textAlign: "right" }}>
                         <div className="lab">from</div>
                         <div className="price safc" style={{ fontSize: 18 }}>
-                          {formatRupees(plan.pricePerWeekPaise)}
+                          {formatRupees(PLAN_FROM_PRICE_PER_WEEK_PAISE)}
                         </div>
                         <div className="lab">/ week</div>
                       </div>
@@ -315,6 +316,7 @@ export default function V2RdPlans() {
               })
             )}
           </div>
+          <MedicalDisclaimer compact />
         </div>
       </div>
     </div>

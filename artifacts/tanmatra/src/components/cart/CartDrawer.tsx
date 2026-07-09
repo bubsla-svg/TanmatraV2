@@ -22,6 +22,7 @@ import {
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { addressesApi } from "@/lib/userAddressesApi";
 import { API_BASE } from "@/lib/apiBase";
+import { loyaltyApi } from "@/lib/loyaltyApi";
 import { formatPrice } from "@/lib/api/adapter";
 import { track } from "@/lib/analytics";
 import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
@@ -108,35 +109,73 @@ export default function CartDrawer() {
     [dishes, items, totals.amountToFreeDelivery],
   );
 
-  // Express UPI checkout: resolve default address, create Razorpay order,
-  // open modal inline — bypasses the full checkout page for impulse orders.
-  // Falls back silently to /checkout if any step fails (no error toast).
+  // Express UPI checkout — finalize-then-pay, mirroring the Checkout page:
+  // the server order is created (safety gates, discounts, ASAP slot) BEFORE
+  // any money moves, so a charge can never exist without a kitchen order.
+  // Falls back to /checkout when any step needs the full page's UI.
   const handleExpressUPI = useCallback(async () => {
     const rpKey = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
     if (!rpKey) { navigate("/checkout"); return; }
     // Cancel any previous in-flight request before starting a new one.
     expressAbortRef.current?.abort();
     expressAbortRef.current = new AbortController();
-    const { signal } = expressAbortRef.current;
     setExpressLoading(true);
+    const localOrderId = `TAN-${Date.now()}`;
     try {
       // 1. Resolve default address
       const { addresses } = await addressesApi.list();
       const addr = addresses.find((a) => a.isDefault) ?? addresses[0];
       if (!addr) { navigate("/checkout"); return; }
 
-      // 2. Create server-side Razorpay order
+      // 2. Create the server order FIRST — runs the allergen safety gate,
+      //    applies the first-order discount, and reserves an ASAP slot.
+      //    Any rejection (safety block, auth, serviceability) sends the
+      //    user to /checkout where the full error UI lives — unpaid.
+      const out = await loyaltyApi.finalizeOrder({
+        idempotencyKey: `idem-express-${localOrderId}`,
+        orderId: localOrderId,
+        items: items.map((it) => ({
+          id: it.dishId,
+          name: it.name,
+          qty: it.quantity,
+          price: it.unitPrice,
+        })),
+        address: {
+          label: addr.label,
+          line: [addr.line1, addr.line2].filter(Boolean).join(", "),
+          city: addr.city,
+          pincode: addr.pincode,
+          phone: addr.phone,
+        },
+        fulfillmentType: "delivery",
+        deliverySlotId: null,
+      });
+
+      // 3. Charge exactly what the server decided: discounted meal total
+      //    + 18% GST on that base + the same delivery-fee rule as the cart.
+      const gst = Math.round(out.finalPaise * 0.18);
+      const chargeTotal = Math.max(0, out.finalPaise + gst + totals.deliveryFee);
+
+      const cancelServerOrder = () => {
+        void fetch(`${API_BASE}/orders/${encodeURIComponent(localOrderId)}/cancel`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: "Payment cancelled by user" }),
+        }).catch(() => undefined);
+      };
+
+      // 4. Create the Razorpay order for the reconciled amount.
       const rpRes = await fetch(`${API_BASE}/payments/razorpay/order`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amountPaise: totals.total }),
-        signal,
+        body: JSON.stringify({ amountPaise: chargeTotal, receipt: localOrderId.slice(0, 40) }),
       });
-      if (!rpRes.ok) { navigate("/checkout"); return; }
+      if (!rpRes.ok) { cancelServerOrder(); navigate("/checkout"); return; }
       const { razorpayOrderId } = (await rpRes.json()) as { razorpayOrderId: string };
 
-      // 3. Load Razorpay script lazily (5 s timeout → fallback to /checkout)
+      // 5. Load Razorpay script lazily (5 s timeout → fallback to /checkout)
       await new Promise<void>((resolve, reject) => {
         if ((window as { Razorpay?: unknown }).Razorpay) { resolve(); return; }
         const timer = window.setTimeout(() => reject(new Error("timeout")), 5000);
@@ -152,23 +191,22 @@ export default function CartDrawer() {
           window.clearTimeout(timer);
           resolve();
         }
-      });
+      }).catch((err) => { cancelServerOrder(); throw err; });
 
-      // 4. Open modal
-      const localOrderId = `TAN-${Date.now()}`;
+      // 6. Open modal
       savePendingTransaction({
         orderId: localOrderId,
         idempotencyKey: `idem-express-${localOrderId}`,
         initiatedAt: Date.now(),
-        amount: totals.total,
+        amount: chargeTotal,
         provider: "razorpay",
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const RazorpayClass = (window as any).Razorpay;
-      if (!RazorpayClass) { navigate("/checkout"); return; }
+      if (!RazorpayClass) { cancelServerOrder(); navigate("/checkout"); return; }
       const rzp = new RazorpayClass({
         key: rpKey,
-        amount: totals.total,
+        amount: chargeTotal,
         currency: "INR",
         order_id: razorpayOrderId,
         name: "Tanmatra",
@@ -193,10 +231,9 @@ export default function CartDrawer() {
               }),
             });
             removePendingTransaction(localOrderId);
-          } catch { /* non-fatal; order recorded server-side */ }
+          } catch { /* non-fatal; webhook reconciles server-side */ }
           // Record the order locally so it appears in /orders and the Track
-          // page can resolve `/track/:id` (otherwise express UPI orders were
-          // orphaned — the tracker showed "Order not found").
+          // page can resolve `/track/:id`.
           const nowMs = Date.now();
           addOrder({
             orderId: localOrderId,
@@ -204,10 +241,11 @@ export default function CartDrawer() {
             etaAt: new Date(nowMs + 40 * 60 * 1000).toISOString(),
             status: "placed",
             items: [...items],
-            subtotal: totals.subtotal,
+            subtotal: out.finalPaise,
             deliveryFee: totals.deliveryFee,
             tip: 0,
-            total: totals.total,
+            total: chargeTotal,
+            serverOrderId: out.serverOrderId,
             fulfillmentType: "delivery",
             address: {
               label: addr.label,
@@ -224,8 +262,11 @@ export default function CartDrawer() {
         },
         modal: {
           ondismiss: () => {
+            // The unpaid server order must not sit in the kitchen queue.
+            cancelServerOrder();
+            removePendingTransaction(localOrderId);
             setExpressLoading(false);
-            // Keep pending transaction in localStorage briefly so visibilitychange auto-polling can recover if app switched
+            toast.info("Payment cancelled — your cart is safe");
           },
         },
       });
@@ -235,7 +276,7 @@ export default function CartDrawer() {
     } finally {
       setExpressLoading(false);
     }
-  }, [totals, navigate, close, clear]);
+  }, [totals, items, addOrder, navigate, close, clear]);
   const isEmpty = items.length === 0;
 
   // Body scroll lock
