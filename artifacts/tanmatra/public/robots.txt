@@ -1,4 +1,21 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /rd-console
+Disallow: /checkout
+Disallow: /checkout-appointment
+Disallow: /cart
+Disallow: /account
+Disallow: /orders
+Disallow: /subscriptions
+Disallow: /rewards
+Disallow: /vouchers
+Disallow: /preferences
+Disallow: /meal-planner
+Disallow: /track
+Disallow: /login
+Disallow: /group/
+Disallow: /office-lunch/
+Disallow: /corporate/invite/
 
 Sitemap: https://tanmatra.food/sitemap.xml

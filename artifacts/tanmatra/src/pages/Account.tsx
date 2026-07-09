@@ -3,7 +3,8 @@ import V2Account from "@/tanmatra-v2/Account";
 
 export const meta: MetaFunction = () => [
   { title: "Account | Tanmatra" },
-  { name: "robots", content: "noindex, nofollow" },
+  { name: "description", content: "Manage your Tanmatra profile, contact details, and account settings. Sign in to view your account." },
+  { name: "robots", content: "noindex, follow" },
 ];
 
 export const handle = { chrome: false };

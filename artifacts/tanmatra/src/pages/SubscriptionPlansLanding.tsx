@@ -30,6 +30,16 @@ export const meta: MetaFunction = () => [
     content:
       "Chef-made, dietitian-approved meal plans on autopilot. Start with a 3-day trial at 25% off, then subscribe weekly, fortnightly, or monthly. Pause or skip anytime.",
   },
+  { property: "og:type", content: "website" },
+  { property: "og:title", content: "Meal Plans | Tanmatra" },
+  { property: "og:description", content: "Chef-made, dietitian-approved meal plans on autopilot. Subscribe weekly, fortnightly, or monthly — pause or skip anytime." },
+  { property: "og:image", content: "https://tanmatra.food/opengraph.jpg" },
+  { property: "og:url", content: "https://tanmatra.food/subscription-plans" },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Meal Plans | Tanmatra" },
+  { name: "twitter:description", content: "Chef-made, dietitian-approved meal plans on autopilot. Subscribe weekly, fortnightly, or monthly — pause or skip anytime." },
+  { name: "twitter:image", content: "https://tanmatra.food/opengraph.jpg" },
+  { tagName: "link", rel: "canonical", href: "https://tanmatra.food/subscription-plans" },
 ];
 
 import { RD_PLANS } from "@/lib/rdPlans";

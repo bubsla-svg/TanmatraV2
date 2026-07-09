@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useMatches, useLocation } from "react-router";
 import type { LinksFunction, MetaFunction } from "react-router";
 import { API_BASE } from "@/lib/apiBase";
@@ -123,33 +123,14 @@ const LOADER_SCRIPT = `
   })();
 `.trim();
 
-export default function Root() {
-  useEffect(() => {
-    window.__clearTanmatraLoader?.();
-  }, []);
-
-  const matches = useMatches();
-  const hideChrome = matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false);
-  // The Phase 1 soft-gate is top-of-funnel: it must show on the (chrome-less v2)
-  // browse routes a new visitor lands on — home and menu — but never during a
-  // transaction (checkout/track) or on admin/auth routes. It cannot be gated on
-  // !hideChrome, because the whole v2 app is chrome-less.
-  const currentPath = useLocation().pathname;
-  const softGateRoute = currentPath === "/" || currentPath === "/menu";
-
-  // V2 persistent bottom dock — mirrors the SoftGate route-conditional mount.
-  // It rides only on the primary BROWSE/dashboard routes and must never collide
-  // with a transaction screen's own sticky pay/action bar. Deny-list guards the
-  // transaction/auth/admin surfaces (checkout/cart/track/login/admin); the
-  // allow-list keeps unknown deep transaction paths hidden by default.
-  const dockHidden = ["/checkout", "/cart", "/track", "/login", "/admin"].some(
-    (deny) => currentPath === deny || currentPath.startsWith(deny + "/"),
-  );
-  const dockShown = ["/menu", "/wellness", "/subscriptions", "/orders", "/account", "/recipes", "/challenges"].some(
-    (root) => currentPath === root || currentPath.startsWith(root + "/"),
-  );
-  const showDock = !dockHidden && (currentPath === "/" || dockShown);
-
+/**
+ * Shared document shell. React Router renders this around the route tree,
+ * the HydrateFallback, AND the generated __spa-fallback.html — so every
+ * non-prerendered route now ships a real <head> (root meta: title,
+ * description, OG, robots), the branded splash, and a useful <noscript>
+ * instead of a bare "Loading...".
+ */
+export function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -198,16 +179,74 @@ export default function Root() {
           </button>
         </div>
         <noscript>
-          <div style={{ position:"fixed", inset:0, background:"#050505", color:"#fff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
+          <div style={{ minHeight:"100vh", background:"#050505", color:"#fff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
             <strong style={{ color:"#F4C430", fontSize:"1.25rem" }}>Tanmatra</strong>
-            <p style={{ color:"#A1A1AA", fontSize:"0.875rem", maxWidth:"300px" }}>
-              This site requires JavaScript. To order, please WhatsApp us or email
-              <a href="mailto:care@tanmatra.health" style={{ color:"#F4C430", marginLeft:"4px" }}>care@tanmatra.health</a>
+            <p style={{ color:"#A1A1AA", fontSize:"0.875rem", maxWidth:"320px" }}>
+              Therapeutic meals designed by registered dietitians, delivered fresh
+              across Noida, Delhi &amp; Gurgaon. This app needs JavaScript — or reach
+              us directly:
+            </p>
+            <p style={{ fontSize:"0.875rem" }}>
+              <a href="mailto:care@tanmatra.health" style={{ color:"#F4C430" }}>care@tanmatra.health</a>
+            </p>
+            <p style={{ color:"#A1A1AA", fontSize:"0.8125rem", maxWidth:"320px" }}>
+              <a href="/menu" style={{ color:"#F4C430" }}>Menu</a>
+              {" · "}
+              <a href="/plans" style={{ color:"#F4C430" }}>Meal plans</a>
+              {" · "}
+              <a href="/faq" style={{ color:"#F4C430" }}>FAQ</a>
+              {" · "}
+              <a href="/refunds" style={{ color:"#F4C430" }}>Refunds</a>
             </p>
           </div>
         </noscript>
+        {children}
+        <ScrollRestoration />
+        <script dangerouslySetInnerHTML={{ __html: LOADER_SCRIPT }} />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
 
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+/**
+ * Rendered (inside Layout) while a non-prerendered route hydrates, and
+ * baked into __spa-fallback.html at build. The branded splash + noscript
+ * live in Layout, so nothing extra is needed here.
+ */
+export function HydrateFallback() {
+  return null;
+}
+
+export default function Root() {
+  useEffect(() => {
+    window.__clearTanmatraLoader?.();
+  }, []);
+
+  const matches = useMatches();
+  const hideChrome = matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false);
+  // The Phase 1 soft-gate is top-of-funnel: it must show on the (chrome-less v2)
+  // browse routes a new visitor lands on — home and menu — but never during a
+  // transaction (checkout/track) or on admin/auth routes. It cannot be gated on
+  // !hideChrome, because the whole v2 app is chrome-less.
+  const currentPath = useLocation().pathname;
+  const softGateRoute = currentPath === "/" || currentPath === "/menu";
+
+  // V2 persistent bottom dock — mirrors the SoftGate route-conditional mount.
+  // It rides only on the primary BROWSE/dashboard routes and must never collide
+  // with a transaction screen's own sticky pay/action bar. Deny-list guards the
+  // transaction/auth/admin surfaces (checkout/cart/track/login/admin); the
+  // allow-list keeps unknown deep transaction paths hidden by default.
+  const dockHidden = ["/checkout", "/cart", "/track", "/login", "/admin"].some(
+    (deny) => currentPath === deny || currentPath.startsWith(deny + "/"),
+  );
+  const dockShown = ["/menu", "/wellness", "/subscriptions", "/orders", "/account", "/recipes", "/challenges"].some(
+    (root) => currentPath === root || currentPath.startsWith(root + "/"),
+  );
+  const showDock = !dockHidden && (currentPath === "/" || dockShown);
+
+  return (
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
               <TooltipProvider>
@@ -256,10 +295,5 @@ export default function Root() {
             </QueryClientProvider>
           </ErrorBoundary>
         </ThemeProvider>
-        <ScrollRestoration />
-        <script dangerouslySetInnerHTML={{ __html: LOADER_SCRIPT }} />
-        <Scripts />
-      </body>
-    </html>
   );
 }

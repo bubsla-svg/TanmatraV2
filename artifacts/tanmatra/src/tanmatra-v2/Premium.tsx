@@ -85,18 +85,7 @@ export default function V2Premium() {
           <div className="abt">Premium</div>
         </div>
         <div className="content padx" style={{ paddingTop: 8, paddingBottom: 24 }}>
-          {status.isLoading ? (
-            <>
-              <div className="skel" style={{ height: 128, borderRadius: 12 }} />
-              <div className="skel mt14" style={{ height: 168, borderRadius: 12 }} />
-              <div className="prodgrid mt14">
-                <div className="skel" style={{ height: 118, borderRadius: 12 }} />
-                <div className="skel" style={{ height: 118, borderRadius: 12 }} />
-                <div className="skel" style={{ height: 118, borderRadius: 12 }} />
-                <div className="skel" style={{ height: 118, borderRadius: 12 }} />
-              </div>
-            </>
-          ) : status.isError ? (
+          {status.isError ? (
             <div className="tc" style={{ padding: "52px 20px" }}>
               <i className="ph-bold ph-warning-circle" style={{ fontSize: 32, color: "var(--fnt)" }} />
               <div className="tt mt10">Couldn't load Premium</div>
@@ -148,7 +137,11 @@ export default function V2Premium() {
                 )}
 
                 <div className="mt14">
-                  {isPremium ? (
+                  {status.isLoading ? (
+                    <button className="btn btn-p btn-lg btn-blk dis" disabled>
+                      <i className="ph-fill ph-crown" />Join Tanmatra Premium
+                    </button>
+                  ) : isPremium ? (
                     <>
                       <Link className="btn btn-p btn-lg btn-blk" to="/rd">
                         <i className="ph-fill ph-stethoscope" />Book free RD consult
