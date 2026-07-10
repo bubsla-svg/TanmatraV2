@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 // Base URLs are env-driven so the same specs run against local dev, a preview
 // Cloud Run revision, or production. Defaults point at local dev + the prod API.
-const BASE_URL = process.env["E2E_BASE_URL"] ?? "http://localhost:5190";
+const BASE_URL = process.env["E2E_BASE_URL"] ?? "http://127.0.0.1:5190";
 
 export default defineConfig({
   testDir: "./specs",
