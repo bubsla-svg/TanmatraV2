@@ -1312,7 +1312,11 @@ export default function V2Checkout() {
           <div className="abt">Checkout</div>
         </div>
 
-        <div className="content padx" style={{ paddingTop: 4, paddingBottom: 160 }}>
+        {/* Bottom clearance must exceed the fixed mobile pay bar's footprint
+            (it sits at bottom:4rem and is ~114px tall: FSSAI strip + total +
+            Review&Pay + WhatsApp line), or the last section — the "Add a little
+            extra" upsell rail — scrolls underneath it and gets clipped. */}
+        <div className="content padx" style={{ paddingTop: 4, paddingBottom: "calc(220px + var(--safe-bottom))" }}>
           <ConflictsPanel
             panelId="checkout-server-block"
             serverMessage={serverAllergenError}

@@ -391,7 +391,10 @@ export async function runAgent(
     throw Object.assign(new Error(message), { runId });
   }
 
-  const text = fullText || "I'm not sure how to help with that.";
+  // Treat whitespace-only output as empty too — the model sometimes returns a
+  // bare newline (often after a tool call), which is truthy and would otherwise
+  // stream through as a blank chat bubble.
+  const text = fullText.trim().length > 0 ? fullText : "I'm not sure how to help with that.";
   const escalated = agent.detectEscalation
     ? agent.detectEscalation(text, traces)
     : false;
