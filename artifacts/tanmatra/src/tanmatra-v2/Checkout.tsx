@@ -1992,6 +1992,9 @@ export default function V2Checkout() {
             )}
 
             <div className="hidden lg:block">
+              <p className="fine tc" style={{ fontSize: 10.5, color: "var(--mut)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: 8 }}>
+                FSSAI-licensed kitchen · RD-designed menu · Allergens disclosed per dish
+              </p>
               <button
                 onClick={handlePlaceOrderClick}
                 disabled={checkoutBlocked}
@@ -2019,6 +2022,11 @@ export default function V2Checkout() {
             <p className="fine tc fx ac jc gap6">
               <ShieldCheck className="w-3 h-3" style={{ color: "var(--sage)" }} />
               256-bit SSL encryption · Razorpay secure
+            </p>
+            <p className="fine tc" style={{ marginTop: -8 }}>
+              <Link to="/refunds" style={{ color: "var(--mut)", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                Refund &amp; cancellation policy
+              </Link>
             </p>
           </div>
         </div>
@@ -2203,16 +2211,58 @@ export default function V2Checkout() {
                   <span>Subtotal ({items.length} item{items.length === 1 ? "" : "s"})</span>
                   <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(subtotal)}</span>
                 </div>
+                {preorderDiscount > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>Pre-order discount</span>
+                    <span className="mono sagec">-{formatPrice(preorderDiscount)}</span>
+                  </div>
+                )}
+                {pickupDiscount > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>Pickup discount</span>
+                    <span className="mono sagec">-{formatPrice(pickupDiscount)}</span>
+                  </div>
+                )}
+                {firstOrderDiscount > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>First-order offer</span>
+                    <span className="mono safc">-{formatPrice(firstOrderDiscount)}</span>
+                  </div>
+                )}
+                {gst > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>GST (18%)</span>
+                    <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
+                  </div>
+                )}
+                {addonTotal > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>Add-ons</span>
+                    <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(addonTotal)}</span>
+                  </div>
+                )}
                 <div className="billrow" style={{ padding: "4px 0" }}>
-                  <span>Delivery</span>
+                  <span>{fulfillmentType === "pickup" ? "Pickup" : "Delivery"}</span>
                   <span className={deliveryFee === 0 ? "sagec" : "mono"} style={deliveryFee === 0 ? undefined : { color: "var(--tx)" }}>
-                    {deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
+                    {fulfillmentType === "pickup" ? "Self-collect" : deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
                   </span>
                 </div>
                 {effectiveTip > 0 && (
                   <div className="billrow" style={{ padding: "4px 0" }}>
                     <span>Rider Tip</span>
                     <span className="mono safc">{formatPrice(effectiveTip)}</span>
+                  </div>
+                )}
+                {creditApplied > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>Loyalty credits</span>
+                    <span className="mono sagec">-{formatPrice(creditApplied)}</span>
+                  </div>
+                )}
+                {subsidyAvailable > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0" }}>
+                    <span>Company subsidy</span>
+                    <span className="mono sagec">-{formatPrice(subsidyAvailable)}</span>
                   </div>
                 )}
                 <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: "4px 0" }} />
@@ -2237,7 +2287,15 @@ export default function V2Checkout() {
                   </span>
                 </div>
               </div>
-              <div className="fx gap8 mt14" style={{ justifyContent: "flex-end" }}>
+              <p className="fine tc mt14" style={{ fontSize: 10.5, color: "var(--mut)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                FSSAI-licensed kitchen · RD-designed menu · Allergens disclosed per dish
+              </p>
+              <p className="fine tc mt4">
+                <Link to="/refunds" style={{ color: "var(--mut)", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                  Refund &amp; cancellation policy
+                </Link>
+              </p>
+              <div className="fx gap8 mt10" style={{ justifyContent: "flex-end" }}>
                 <button
                   onClick={() => setConfirmOpen(false)}
                   disabled={isProcessing}
@@ -2385,6 +2443,9 @@ function V2MobilePayBar({
           </div>
         </div>
       )}
+      <p className="fine tc" style={{ fontSize: 10, color: "var(--mut)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", background: "var(--s1)", border: "1px solid var(--ln)", borderRadius: 8, padding: "4px 10px", marginBottom: 6 }}>
+        FSSAI-licensed kitchen · RD-designed menu · Allergens disclosed per dish
+      </p>
       <div className="card fx ac gap12" style={{ padding: 12 }}>
         <button
           type="button"

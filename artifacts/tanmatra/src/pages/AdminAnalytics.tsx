@@ -1,16 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactElement } from "react";
 import { API_BASE } from "@/lib/apiBase";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +9,29 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
+
+// recharts is ~390 KB minified. Loading it via dynamic import() keeps it in an
+// async chunk that is fetched only when a chart actually renders, instead of
+// riding along in the synchronous route (and, via shared-chunk colocation, the
+// first-load) graph. Destructuring inside .then() (rather than keeping the whole
+// namespace) lets rollup tree-shake the unused recharts exports.
+type RechartsBits = Pick<
+  typeof import("recharts"),
+  "Bar" | "BarChart" | "CartesianGrid" | "Line" | "LineChart" | "ResponsiveContainer" | "Tooltip" | "XAxis" | "YAxis"
+>;
+
+const RechartsHost = lazy(() =>
+  import("recharts").then(
+    ({ Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis }) => ({
+      default: ({ render }: { render: (r: RechartsBits) => ReactElement }) =>
+        render({ Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis }),
+    })
+  )
+);
+
+function ChartSkeleton() {
+  return <div className="h-full w-full rounded-md bg-muted/40 animate-pulse" aria-hidden="true" />;
+}
 
 type ChartKind = "bar" | "line" | "area" | "table";
 interface ChartSpec {
@@ -168,25 +180,31 @@ function ResultChart({ chartSpec, rows }: { chartSpec: ChartSpec; rows: Record<s
   const data = rows.map((r) => ({ ...r, [yKey]: Number(r[yKey] ?? 0) }));
   return (
     <div className="h-72">
-      <ResponsiveContainer width="100%" height="100%">
-        {chartSpec.kind === "line" || chartSpec.kind === "area" ? (
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Line type="monotone" dataKey={yKey} stroke="#10b981" strokeWidth={2} dot={false} />
-          </LineChart>
-        ) : (
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Bar dataKey={yKey} fill="#0ea5e9" />
-          </BarChart>
-        )}
-      </ResponsiveContainer>
+      <Suspense fallback={<ChartSkeleton />}>
+        <RechartsHost
+          render={(R) => (
+            <R.ResponsiveContainer width="100%" height="100%">
+              {chartSpec.kind === "line" || chartSpec.kind === "area" ? (
+                <R.LineChart data={data}>
+                  <R.CartesianGrid strokeDasharray="3 3" />
+                  <R.XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+                  <R.YAxis tick={{ fontSize: 11 }} />
+                  <R.Tooltip />
+                  <R.Line type="monotone" dataKey={yKey} stroke="#10b981" strokeWidth={2} dot={false} />
+                </R.LineChart>
+              ) : (
+                <R.BarChart data={data}>
+                  <R.CartesianGrid strokeDasharray="3 3" />
+                  <R.XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+                  <R.YAxis tick={{ fontSize: 11 }} />
+                  <R.Tooltip />
+                  <R.Bar dataKey={yKey} fill="#0ea5e9" />
+                </R.BarChart>
+              )}
+            </R.ResponsiveContainer>
+          )}
+        />
+      </Suspense>
     </div>
   );
 }
@@ -409,15 +427,21 @@ function WbrTab() {
                 <CardHeader><CardTitle>Revenue by day</CardTitle></CardHeader>
                 <CardContent>
                   <div className="h-60">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={active.chartSpec.revenueByDay.map((d) => ({ day: d.day, revenue: d.revenuePaise / 100 }))}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <Suspense fallback={<ChartSkeleton />}>
+                      <RechartsHost
+                        render={(R) => (
+                          <R.ResponsiveContainer width="100%" height="100%">
+                            <R.LineChart data={active.chartSpec!.revenueByDay.map((d) => ({ day: d.day, revenue: d.revenuePaise / 100 }))}>
+                              <R.CartesianGrid strokeDasharray="3 3" />
+                              <R.XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                              <R.YAxis tick={{ fontSize: 11 }} />
+                              <R.Tooltip />
+                              <R.Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot />
+                            </R.LineChart>
+                          </R.ResponsiveContainer>
+                        )}
+                      />
+                    </Suspense>
                   </div>
                 </CardContent>
               </Card>
@@ -538,11 +562,17 @@ function VocTab() {
                     )}
                     {trend.length > 1 && (
                       <div className="h-16 mt-2">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={trend}>
-                            <Line type="monotone" dataKey="mentions" stroke="#0ea5e9" strokeWidth={2} dot={false} />
-                          </LineChart>
-                        </ResponsiveContainer>
+                        <Suspense fallback={<ChartSkeleton />}>
+                          <RechartsHost
+                            render={(R) => (
+                              <R.ResponsiveContainer width="100%" height="100%">
+                                <R.LineChart data={trend}>
+                                  <R.Line type="monotone" dataKey="mentions" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                                </R.LineChart>
+                              </R.ResponsiveContainer>
+                            )}
+                          />
+                        </Suspense>
                       </div>
                     )}
                   </div>

@@ -15,6 +15,7 @@ import HeroCarousel from "@/components/home/HeroCarousel";
 import CategoryBadges from "@/components/home/CategoryBadges";
 import AssessmentNudge from "@/components/home/AssessmentNudge";
 import MetaDishCard from "@/components/home/MetaDishCard";
+import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { toast } from "sonner";
 
 /* Full-parity re-port of the System-A Home (git 2507084, 955 lines) into v2. */
@@ -41,7 +42,7 @@ const PLANS = [
 const PROTOCOLS = [
   { id: "wellness", title: "Wellness Protocol", subtitle: "Preventive & longevity nutrition", icon: "ph-heartbeat", features: ["Anti-inflammatory", "12g+ fiber/meal", "<400 avg kcal", "Gut-health optimized"] },
   { id: "performance", title: "Performance Protocol", subtitle: "Athletic & recovery nutrition", icon: "ph-lightning", features: ["2.5g+ leucine/meal", "3:1 carb:protein", "40g+ protein/meal", "Tart-cherry recovery"] },
-  { id: "clinical", title: "Clinical Protocol", subtitle: "Therapeutic & condition-specific", icon: "ph-dna", features: ["100% RD verified", "<15g net carbs (keto)", "ADA-guideline informed", "Designed with your RD"] },
+  { id: "clinical", title: "Clinical Protocol", subtitle: "Therapeutic & condition-specific", icon: "ph-dna", features: ["RD-designed menu", "Keto-friendly options ≤15g net carbs", "ADA-guideline informed", "Designed with your RD"] },
 ];
 
 const QUICK = [
@@ -290,6 +291,9 @@ export default function V2Home() {
           <div className="fine mt6" style={{ maxWidth: 320, margin: "6px auto 0" }}>Take the 60-second metabolic assessment for a plan calibrated to your BMR, TDEE and goals.</div>
           <button className="btn btn-p mt14" onClick={() => setQuizOpen(true)}><i className="ph-bold ph-activity" /> Start assessment</button>
         </div>
+
+        {/* Medical disclaimer — v2 pages have no legacy footer, so mount it here. */}
+        <div className="padx mb20"><MedicalDisclaimer compact /></div>
       </div>
 
       {/* The real 60-second metabolic assessment — re-ranks the menu by goal + macros. */}

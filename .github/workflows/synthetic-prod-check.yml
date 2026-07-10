@@ -1,0 +1,37 @@
+# Synthetic production monitoring — the eyes on prod that development
+# sandboxes don't have. Runs the real funnel against the live site in
+# Chromium AND WebKit (the engine where cross-site-cookie login breakage
+# lived undetected) every 2 hours and after every deploy completes.
+name: Synthetic Prod Check
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    # For deploy-triggered runs, only check after successful deploys.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright (chromium + webkit)
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm install --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium webkit
+
+      - name: Run synthetic checks against production
+        env:
+          PROD_URL: https://tanmatra.food
+        run: node scripts/synthetic-check.mjs

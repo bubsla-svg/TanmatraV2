@@ -73,10 +73,12 @@ const CYCLE_WEEKS: Record<SubscriptionCadence, number> = {
   fortnightly: 2,
   monthly: 4,
 };
+// Honest copy: there is no recurring billing mandate — only the first
+// cycle is charged up front; renewal is a manual one-tap action.
 const CADENCE_BILLING_COPY: Record<SubscriptionCadence, string> = {
-  weekly: "Billed every week",
-  fortnightly: "Billed every 2 weeks",
-  monthly: "Billed every 4 weeks",
+  weekly: "Prepaid week — renew in one tap",
+  fortnightly: "Prepaid 2 weeks — renew in one tap",
+  monthly: "Prepaid 4 weeks — renew in one tap",
 };
 
 type MealSlot = "breakfast" | "lunch" | "dinner";
@@ -1265,6 +1267,11 @@ export default function V2Subscribe() {
                     📅 First delivery {firstDeliveryLabel} · {deliveryWindow}
                     {!isTrial && effectivePlan && (daysMode === "weekdays" ? " · then every weekday" : " · then daily")}
                   </p>
+                  {!isTrial && (
+                    <p className="fine mt2" style={{ fontSize: 10 }}>
+                      Your cycle is prepaid. We'll remind you before it ends — renew in one tap from My Plans.
+                    </p>
+                  )}
                   <p className="fine sagec fw5 mt2" style={{ fontSize: 10 }}>
                     🚚 Delivery fee: FREE (included on all subscription plans)
                   </p>

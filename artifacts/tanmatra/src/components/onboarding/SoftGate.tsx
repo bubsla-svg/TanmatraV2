@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
 import { usePreferences } from "@/lib/preferencesContext";
 import { track } from "@/lib/analytics";
 import type { WellnessGoal } from "@/lib/preferencesApi";
@@ -125,6 +126,19 @@ const ALLERGY_CARDS: AllergyCard[] = [
 ];
 
 type Phase = "goal" | "allergy" | "confirm";
+
+/** One-line privacy fine print shown wherever health data is collected. */
+function PrivacyNote() {
+  return (
+    <p className="fine" style={{ fontSize: 10.5, color: "var(--mut)", marginTop: 12 }}>
+      Stored to personalise your menu. Delete anytime in Preferences. See{" "}
+      <Link to="/privacy" style={{ color: "var(--safb)", textDecoration: "underline" }}>
+        Privacy Policy
+      </Link>
+      .
+    </p>
+  );
+}
 
 export default function SoftGate() {
   const { update } = usePreferences();
@@ -333,6 +347,7 @@ export default function SoftGate() {
                 );
               })}
             </div>
+            <PrivacyNote />
           </div>
         )}
 
@@ -396,6 +411,8 @@ export default function SoftGate() {
                 />
               )}
             </button>
+
+            <PrivacyNote />
 
             <div style={{ flex: 1 }} />
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
