@@ -65,10 +65,15 @@ function serveStatic(req, res) {
     f = SPA;
   }
   const ext = path.extname(f).slice(1);
+  // The service worker must never be cached immutably (updates would freeze
+  // forever) and WebKit requires an explicit script content-type + scope
+  // header to pass its access-control checks.
+  const isSw = u === "/sw.js";
   res.writeHead(200, {
     "Content-Type": TYPES[ext] || "application/octet-stream",
     "Cache-Control":
-      ext === "html" ? "no-cache" : "public,max-age=31536000,immutable",
+      ext === "html" || isSw ? "no-cache" : "public,max-age=31536000,immutable",
+    ...(isSw ? { "Service-Worker-Allowed": "/" } : {}),
   });
   fs.createReadStream(f).pipe(res);
 }
