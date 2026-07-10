@@ -5,6 +5,7 @@ import {
   deliverySlotsTable,
   ordersTable,
   rdUsersTable,
+  refundRequestsTable,
   slotReservationsTable,
   teamProfilesTable,
 } from "@workspace/db";
@@ -153,6 +154,9 @@ router.post(
         status: ordersTable.status,
         deliverySlotId: ordersTable.deliverySlotId,
         razorpayOrderId: ordersTable.razorpayOrderId,
+        razorpayPaymentId: ordersTable.razorpayPaymentId,
+        chargePaise: ordersTable.chargePaise,
+        totalPaise: ordersTable.totalPaise,
       })
       .from(ordersTable)
       .where(eq(ordersTable.externalOrderId, externalOrderId))
@@ -234,6 +238,24 @@ router.post(
             .set({ reservedCount: sql`greatest(0, ${deliverySlotsTable.reservedCount} - 1)` })
             .where(eq(deliverySlotsTable.id, row.deliverySlotId));
         }
+      }
+
+      // Raise a PENDING refund request for a paid order — an operator approves
+      // it before any money is returned (never an automatic gateway refund).
+      // Idempotent: one request per order.
+      if (refundRequired) {
+        await tx
+          .insert(refundRequestsTable)
+          .values({
+            orderId: row.id,
+            externalOrderId,
+            amountPaise: row.chargePaise ?? row.totalPaise,
+            status: "pending",
+            reason,
+            razorpayPaymentId: row.razorpayPaymentId ?? null,
+            requestedBy: req.user.id,
+          })
+          .onConflictDoNothing({ target: refundRequestsTable.orderId });
       }
     });
 
