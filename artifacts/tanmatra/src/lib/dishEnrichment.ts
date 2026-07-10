@@ -1,4 +1,4 @@
-import { DISHES, type DishCategory, type DishCustomGroup, type DishData } from "./menuData";
+import { DISHES, macrosAreProvisional, type DishCategory, type DishCustomGroup, type DishData } from "./menuData";
 
 export type Lifestyle =
   | "all"
@@ -384,27 +384,34 @@ export function matchesDietaryFilter(dish: DishData, filter: string): boolean {
     return dish.isVeg;
   }
   if (f === "keto") {
-    return dish.macros.carbs <= 15;
+    // Honesty rule: only dishes with VERIFIED macros can claim the keto carb
+    // cap — dishes whose macro block is a provisional placeholder never pass.
+    return !macrosAreProvisional(dish) && dish.macros.carbs <= 15;
+  }
+  if (f === "low-gi") {
+    // Backed by real catalog data — glycaemicIndex exists on every dish.
+    return dish.glycaemicIndex === "low";
   }
   if (f === "vegan") {
-    const allergens = (dish.allergens || []).map(a => a.toLowerCase());
-    return dish.isVeg && !allergens.includes("dairy") && !allergens.includes("egg");
+    if (!dish.isVeg) return false;
+    const allergens = (dish.allergens || []).map((a: string) => a.toLowerCase());
+    if (allergens.includes("dairy") || allergens.includes("egg") || allergens.includes("eggs")) return false;
+    // Also exclude animal-derived ingredients the allergen array doesn't cover.
+    const text = (dish.name + " " + (dish.ingredients || []).join(" ")).toLowerCase();
+    const animalDerived = ["honey", "ghee", "paneer", "curd", "cheese", "butter"];
+    return !animalDerived.some((w) => text.includes(w));
   }
   if (f === "gluten-free") {
-    const allergens = (dish.allergens || []).map(a => a.toLowerCase());
-    const name = dish.name.toLowerCase();
-    return !allergens.includes("gluten") && !name.includes("wheat") && !name.includes("bread");
+    // Unknown ≠ safe: a dish with an EMPTY/missing allergens array has
+    // unverified allergen data and must NOT pass a gluten-free filter.
+    const allergens = (dish.allergens || []).map((a: string) => a.toLowerCase());
+    if (allergens.length === 0) return false;
+    if (allergens.includes("gluten")) return false;
+    const text = (dish.name + " " + (dish.ingredients || []).join(" ")).toLowerCase();
+    return !text.includes("wheat") && !text.includes("bread");
   }
   if (f === "carnivore") {
     return !dish.isVeg && dish.macros.carbs <= 5;
-  }
-  if (f === "low-fodmap") {
-    const highFodmaps = [
-      "onion", "garlic", "wheat", "paneer", "cheese", "milk",
-      "broccoli", "beans", "chickpea", "lentil", "cabbage", "cauliflower"
-    ];
-    const text = (dish.description + " " + dish.name + " " + dish.ingredients.join(" ")).toLowerCase();
-    return !highFodmaps.some((x) => text.includes(x));
   }
   if (f === "jain") {
     if (!dish.isVeg) return false;
@@ -416,6 +423,30 @@ export function matchesDietaryFilter(dish: DishData, filter: string): boolean {
     return matchesDosha(dish, f as "vata" | "pitta" | "kapha");
   }
   return true;
+}
+
+/** Allergens the user can explicitly exclude in the menu's More-filters panel.
+ * `matches` are lowercase values as they appear in the catalog allergen arrays
+ * (e.g. "Tree Nuts", "Peanuts", "Eggs", "Soy", "Dairy", "Gluten"). */
+export const EXCLUDABLE_ALLERGENS: Array<{ value: string; label: string; matches: string[] }> = [
+  { value: "dairy", label: "Dairy", matches: ["dairy"] },
+  { value: "gluten", label: "Gluten", matches: ["gluten"] },
+  { value: "nuts", label: "Nuts", matches: ["tree nuts", "peanuts", "nuts", "peanut"] },
+  { value: "soy", label: "Soy", matches: ["soy", "soya"] },
+  { value: "eggs", label: "Eggs", matches: ["eggs", "egg"] },
+];
+
+/** True when the dish must be HIDDEN for the given exclusions. Unknown ≠ safe:
+ * a dish whose allergens array is empty/missing has unverified allergen data
+ * and is excluded whenever any allergen exclusion is active. */
+export function dishFailsAllergenExclusion(dish: DishData, excluded: string[]): boolean {
+  if (excluded.length === 0) return false;
+  const allergens = (dish.allergens || []).map((a: string) => a.toLowerCase());
+  if (allergens.length === 0) return true;
+  return excluded.some((value) => {
+    const def = EXCLUDABLE_ALLERGENS.find((e) => e.value === value);
+    return def ? def.matches.some((m) => allergens.includes(m)) : false;
+  });
 }
 
 export interface DishVariantOption {

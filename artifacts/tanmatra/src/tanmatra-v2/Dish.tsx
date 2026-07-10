@@ -20,8 +20,10 @@ import {
   matchesDosha,
 } from "@/lib/dishEnrichment";
 import { buildNutritionLabel } from "@/lib/nutritionLabel";
-import { getChefForDish, getRdForDish } from "@/lib/teamData";
+import { getChefForDish } from "@/lib/teamData";
+import { RD_PLANS } from "@/lib/rdPlans";
 import CoachAgentWidget from "@/components/ai/CoachAgent";
+import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { API_BASE } from "@/lib/apiBase";
 
 /* ------------------------------------------------------------------ *
@@ -38,6 +40,14 @@ const GOAL_LABEL: Record<string, string> = {
   maintain: "maintenance",
   general_wellness: "general-wellness",
 };
+// Every dish slug that appears in any RD_PLANS weekly rotation — used to show
+// the "available in weekly RD plans" hint only where it is true.
+const PLAN_DISH_SLUGS: Set<string> = new Set(
+  RD_PLANS.flatMap((p) => p.week.flatMap((d) => [d.breakfastSlug, d.lunchSlug, d.dinnerSlug])),
+);
+
+const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
 function buildNarrative(dish: any, prefs: any): string {
   const goalLabel = prefs.goal ? GOAL_LABEL[prefs.goal] ?? prefs.goal : null;
   const parts: string[] = [];
@@ -158,7 +168,7 @@ export default function V2Dish() {
   const kitchenNote = getKitchenNoteForDish(meal);
   const rdNote = getRdNoteForDish(meal);
   const chef = getChefForDish(meal);
-  const rd = getRdForDish(meal);
+  const inRdPlanRotation = PLAN_DISH_SLUGS.has(meal.slug);
   const upsells = getUpsellsForDish(meal, 3);
   const pairing = meal.pairingSlug ? getDishBySlug(meal.pairingSlug) : undefined;
   const balancedDoshas = (["vata", "pitta", "kapha"] as const).filter((d) => matchesDosha(meal, d));
@@ -278,7 +288,27 @@ export default function V2Dish() {
 
             <div className="fx ac jb mt10">
               <span className="price" style={{ fontSize: 21, color: "var(--safb)" }}>{F(meal.price)}</span>
-              <span className="fine">per serving</span>
+              <span className="fine">
+                per serving{label.servingSize ? <> · {label.servingSize}</> : null}
+              </span>
+            </div>
+
+            {/* Allergens — safety-critical, so surfaced above the fold instead
+                of only inside the collapsed nutrition accordion. */}
+            <div className="fx g6 mt10" style={{ alignItems: "flex-start" }}>
+              <i className="ph-fill ph-warning-circle" style={{ color: "var(--safb)", fontSize: 14, marginTop: 2, flex: "none" }} />
+              <div style={{ minWidth: 0 }}>
+                <div className="small" style={{ fontWeight: 500 }}>
+                  {meal.allergens?.length ? (
+                    <>Allergens: {meal.allergens.map((a: string) => capitalize(a)).join(", ")}</>
+                  ) : (
+                    <>Allergen data being verified — ask us before ordering if you have allergies.</>
+                  )}
+                </div>
+                <div className="fine mt2">
+                  Prepared in a shared kitchen — cross-contact with allergens is possible.
+                </div>
+              </div>
             </div>
 
             {/* Variant switcher */}
@@ -324,17 +354,17 @@ export default function V2Dish() {
                   <div className="rc"><span className="rl">FAT</span><span className="rv">{meal.macros.fat}<i className="ru">g</i></span></div>
                 </div>
                 <div className="fine mt6">
-                  Fibre <span className="mono">{meal.macros.fiber} g</span> · sodium{" "}
-                  <span className="mono">{label.macros.sodiumMg} mg</span>{" "}
-                  ({Math.round((label.macros.sodiumMg / 2300) * 100)}% DV) · sat fat{" "}
+                  Fibre <span className="mono">{meal.macros.fiber} g</span> · sat fat{" "}
                   <span className="mono">{label.macros.saturatedFat} g</span>
                 </div>
 
                 {/* Nutrition-fact claims — derived from macros, so only shown
-                    when the macros are verified. */}
-                {label.containsClaims.length > 0 && (
+                    when the macros are verified. Sodium claims are filtered out:
+                    the catalog carries no sodium data, so any sodium badge would
+                    be a category-level guess, not a fact. */}
+                {label.containsClaims.filter((c: string) => !/sodium/i.test(c)).length > 0 && (
                   <div className="fx ac g6 wrap mt10">
-                    {label.containsClaims.map((c: string) => (
+                    {label.containsClaims.filter((c: string) => !/sodium/i.test(c)).map((c: string) => (
                       <span key={c} className="pill sg"><i className="ph-fill ph-check" />{c}</span>
                     ))}
                   </div>
@@ -359,7 +389,12 @@ export default function V2Dish() {
                   {macrosProvisional && (
                     <div className="fine mt6">Macros (kcal, protein, carbs, fat, sugar) are being verified for this dish.</div>
                   )}
-                  <div className="mt6">Allergens: {meal.allergens?.length ? meal.allergens.join(", ") : "None declared"}</div>
+                  <div className="mt6">
+                    Allergens: {meal.allergens?.length
+                      ? meal.allergens.map((a: string) => capitalize(a)).join(", ")
+                      : "data being verified — ask us before ordering if you have allergies"}
+                  </div>
+                  <div className="fine mt2">Prepared in a shared kitchen — cross-contact with allergens is possible.</div>
                 </div>
               )}
             </div>
@@ -447,12 +482,12 @@ export default function V2Dish() {
               <div>
                 <div style={{ fontWeight: 600, marginBottom: 4 }}>RD advisory note</div>
                 <div style={{ color: "var(--mut)" }}>{rdNote}</div>
-                {rd && (
-                  <Link to={`/team/${rd.slug}`} className="fx ac gap8 mt6">
-                    <span className="avatar" style={{ width: 28, height: 28, fontSize: 11 }}>{rd.initials}</span>
-                    <span className="fine">Signed off by <span style={{ color: "var(--sage)" }}>{rd.name}</span> · {rd.title}</span>
-                  </Link>
-                )}
+                {/* No per-dish reviewer field exists in the dish data, so we
+                    credit the team honestly rather than name an individual. */}
+                <Link to="/team" className="fx ac gap8 mt6">
+                  <i className="ph-fill ph-users-three" style={{ color: "var(--sage)", fontSize: 16 }} />
+                  <span className="fine">From Tanmatra's <span style={{ color: "var(--sage)" }}>RD-designed menu</span> · meet the team</span>
+                </Link>
               </div>
             </div>
           </div>
@@ -571,6 +606,20 @@ export default function V2Dish() {
                   <div className="mono fntc" style={{ fontSize: 10.5 }}>Adds {pairing.macros.protein}g protein · {pairing.macros.calories} kcal</div>
                 </div>
                 <span className="price" style={{ fontSize: 13, color: "var(--safb)" }}>+{F(pairing.price)}</span>
+              </Link>
+            </div>
+          )}
+
+          {/* PDP carries GI / clinical tags, so it must carry the disclaimer. */}
+          <div className="padx mt10">
+            <MedicalDisclaimer compact />
+          </div>
+
+          {inRdPlanRotation && (
+            <div className="padx">
+              <Link to="/plans" className="fine" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <i className="ph-bold ph-calendar-check" />
+                Also available in weekly RD plans <i className="ph-bold ph-arrow-right" />
               </Link>
             </div>
           )}

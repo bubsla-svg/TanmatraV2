@@ -184,7 +184,7 @@ export default function SubscriptionPlansLanding() {
                 <p className="text-xs text-clinical-zinc mt-1.5">Every meal signed off by clinical RDs to hit your exact macro goals.</p>
               </div>
               <div className="flex items-center gap-2 mt-4 pt-3 border-t border-clinical-border/50 text-xs text-clinical-sage font-semibold">
-                <ShieldCheck className="w-4 h-4" /> FSSAI & ISO 22000 Certified
+                <ShieldCheck className="w-4 h-4" /> FSSAI-licensed kitchen · ISO 22000-aligned processes
               </div>
             </CardContent>
           </Card>

@@ -2,10 +2,10 @@ import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { F } from "./data";
 import { useBundles, groupOrdersApi } from "@/lib/queries";
+import { macrosAreProvisional } from "@workspace/menu-catalog";
 import {
   CATEGORY_LABELS,
   getDishById,
-  macrosAreProvisional,
   useMenuCatalog,
   type DishCategory,
   type DishKitchen,
@@ -14,8 +14,10 @@ import {
 import type { UserPreferences } from "@/lib/preferencesApi";
 import type { DishMatchResult } from "@/lib/preferencesMatch";
 import {
+  EXCLUDABLE_ALLERGENS,
   LIFESTYLE_LABELS,
   LIFESTYLE_TAGS,
+  dishFailsAllergenExclusion,
   matchesLifestyle,
   matchesDietaryFilter,
   isSecondaryVariant,
@@ -56,14 +58,25 @@ type DietFilter = "all" | "veg" | "nonveg";
 const QUICK_FILTERS = [
   { value: "high-protein", label: "High-Protein" },
   { value: "veg", label: "Veg" },
-  { value: "keto", label: "Keto" },
+  // Backed by real catalog data (glycaemicIndex on every dish).
+  { value: "low-gi", label: "Low GI" },
+  // "(verified)" because the predicate only passes dishes with verified
+  // (non-provisional) macros — a handful of dishes today, honestly labelled.
+  { value: "keto", label: "Keto (verified)" },
   { value: "vegan", label: "Vegan" },
   { value: "gluten-free", label: "Gluten-Free" },
   { value: "jain", label: "Jain" },
-  { value: "low-fodmap", label: "Low-FODMAP" },
   { value: "vata", label: "Vata Dosha" },
   { value: "pitta", label: "Pitta Dosha" },
   { value: "kapha", label: "Kapha Dosha" },
+];
+type SortOption = "recommended" | "price-asc" | "price-desc" | "protein" | "calories";
+const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
+  { value: "recommended", label: "Recommended" },
+  { value: "price-asc", label: "Price: low to high" },
+  { value: "price-desc", label: "Price: high to low" },
+  { value: "protein", label: "Protein (verified first)" },
+  { value: "calories", label: "Calories (verified first)" },
 ];
 const PAGE_SIZE = 24;
 
@@ -186,6 +199,10 @@ export default function V2Menu() {
   const [diet, setDiet] = useState<DietFilter>(initialDiet);
   const [lifestyle, setLifestyle] = useState<Lifestyle>("all");
   const [quickFilters, setQuickFilters] = useState<string[]>(initialQuick);
+  // Allergen EXCLUSION toggles (More filters). Unknown ≠ safe: excluding an
+  // allergen also hides dishes whose allergen data is empty/unverified.
+  const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [showFilters, setShowFilters] = useState(false);
   const [showSearch, setShowSearch] = useState(initialQuery.length > 0);
   const [query, setQuery] = useState(initialQuery);
@@ -325,7 +342,7 @@ export default function V2Menu() {
     });
   };
 
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [kitchen, category, diet, lifestyle, query, activeProtocol, quickFilters]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [kitchen, category, diet, lifestyle, query, activeProtocol, quickFilters, excludedAllergens, sortBy]);
 
   const quickFilterCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -338,13 +355,14 @@ export default function V2Menu() {
       if (!matchesLifestyle(d, lifestyle)) return false;
       if (activeProtocol && !matchesProtocol(d, activeProtocol)) return false;
       if (clinicalMode && dishMatchesDietOrder(d, dietOrderId) !== null) return false;
+      if (dishFailsAllergenExclusion(d, excludedAllergens)) return false;
       const q = query.toLowerCase();
       if (query && !d.name.toLowerCase().includes(q) && !d.description.toLowerCase().includes(q)) return false;
       return true;
     });
     for (const qf of QUICK_FILTERS) counts[qf.value] = base.filter((d: any) => matchesDietaryFilter(d, qf.value)).length;
     return counts;
-  }, [catalogDishes, kitchen, category, diet, lifestyle, activeProtocol, clinicalMode, dietOrderId, query]);
+  }, [catalogDishes, kitchen, category, diet, lifestyle, activeProtocol, clinicalMode, dietOrderId, query, excludedAllergens]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -357,10 +375,12 @@ export default function V2Menu() {
       if (!matchesLifestyle(d, lifestyle)) return false;
       if (activeProtocol && !matchesProtocol(d, activeProtocol)) return false;
       if (clinicalMode && dishMatchesDietOrder(d, dietOrderId) !== null) return false;
+      if (dishFailsAllergenExclusion(d, excludedAllergens)) return false;
       if (q && !d.name.toLowerCase().includes(q) && !d.description.toLowerCase().includes(q)) return false;
       if (quickFilters.length > 0) {
+        if (quickFilters.includes("low-gi") && !matchesDietaryFilter(d, "low-gi")) return false;
         const nut = quickFilters.filter((f) => ["high-protein", "keto"].includes(f));
-        const dt = quickFilters.filter((f) => ["veg", "vegan", "gluten-free", "jain", "low-fodmap"].includes(f));
+        const dt = quickFilters.filter((f) => ["veg", "vegan", "gluten-free", "jain"].includes(f));
         const dosha = quickFilters.filter((f) => ["vata", "pitta", "kapha"].includes(f));
         if (nut.length && !nut.some((f) => matchesDietaryFilter(d, f))) return false;
         if (dt.length && !dt.some((f) => matchesDietaryFilter(d, f))) return false;
@@ -372,15 +392,27 @@ export default function V2Menu() {
     // Healthy Mode forces off-plan (blocked) dishes to stay hidden even if the
     // user un-hid conflicts — a pure goal/profile filter over existing ranking.
     return hideBlocked || healthyMode ? ranked.filter((r: any) => !r.match.blocked) : ranked;
-  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, healthyMode, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters]);
+  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, healthyMode, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters, excludedAllergens]);
 
   const consolidatedDishes = useMemo(() => {
     const grouped = groupCatalogDishes(filtered.map((f: any) => f.dish));
-    return grouped.map((parent) => {
+    const entries = grouped.map((parent) => {
       const rep = filtered.find((f: any) => f.dish.id === parent.id)!;
-      return { parent, match: rep.match, hasVariants: parent.optionGroups.length > 0 };
+      return { parent, dish: rep.dish as DishData, match: rep.match, hasVariants: parent.optionGroups.length > 0 };
     });
-  }, [filtered]);
+    if (sortBy === "recommended") return entries;
+    if (sortBy === "price-asc" || sortBy === "price-desc") {
+      const dir = sortBy === "price-asc" ? 1 : -1;
+      return [...entries].sort((a, b) => dir * (a.parent.variants[0].price - b.parent.variants[0].price));
+    }
+    // Macro sorts are honest: only dishes with VERIFIED macros are ranked by
+    // the numbers; provisional dishes sink to the end in recommended order.
+    const verified = entries.filter((e) => !macrosAreProvisional(e.dish));
+    const provisional = entries.filter((e) => macrosAreProvisional(e.dish));
+    if (sortBy === "protein") verified.sort((a, b) => b.dish.macros.protein - a.dish.macros.protein);
+    else verified.sort((a, b) => a.dish.macros.calories - b.dish.macros.calories);
+    return [...verified, ...provisional];
+  }, [filtered, sortBy]);
 
   const blockedCount = useMemo(
     () => (!preferences ? 0 : catalogDishes.filter((d: any) => evaluateDishForPreferences(d, preferences).blocked).length),
@@ -402,6 +434,7 @@ export default function V2Menu() {
   if (activeProtocol) activeFilterChips.push({ id: "p", label: PROTOCOL_LABELS[activeProtocol], onClear: () => clearProtocol() });
   if (query.trim()) activeFilterChips.push({ id: "q", label: `"${query.trim()}"`, onClear: () => setQuery("") });
   quickFilters.forEach((v) => { const i = QUICK_FILTERS.find((q) => q.value === v); if (i) activeFilterChips.push({ id: `qf-${v}`, label: i.label, onClear: () => setQuickFilters((p) => p.filter((x) => x !== v)) }); });
+  excludedAllergens.forEach((v) => { const a = EXCLUDABLE_ALLERGENS.find((e) => e.value === v); if (a) activeFilterChips.push({ id: `xa-${v}`, label: `No ${a.label.toLowerCase()}`, onClear: () => setExcludedAllergens((p) => p.filter((x) => x !== v)) }); });
 
   function clearProtocol() {
     const next = new URLSearchParams(searchParams);
@@ -414,11 +447,11 @@ export default function V2Menu() {
     setSearchParams(next, { replace: true });
   }
   function resetAll() {
-    setKitchen("all"); setCategory("all"); setDiet("all"); setLifestyle("all"); setQuery(""); setQuickFilters([]); setHealthyMode(false);
+    setKitchen("all"); setCategory("all"); setDiet("all"); setLifestyle("all"); setQuery(""); setQuickFilters([]); setExcludedAllergens([]); setHealthyMode(false);
     if (activeProtocol) clearProtocol();
   }
 
-  const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length;
+  const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length + excludedAllergens.length;
 
   return (
     <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -434,7 +467,7 @@ export default function V2Menu() {
           <div className="padx mb10">
             <div className="inp">
               <i className="ph-bold ph-magnifying-glass" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dishes, ingredients, protocols…" autoFocus />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dishes…" autoFocus />
               {query && <button onClick={() => setQuery("")} aria-label="Clear"><i className="ph-bold ph-x" style={{ color: "var(--fnt)" }} /></button>}
             </div>
           </div>
@@ -538,7 +571,9 @@ export default function V2Menu() {
                         {dish.rdVerified && <span className="pill sg" style={{ padding: "2px 6px" }}><i className="ph-fill ph-seal-check" /></span>}
                       </div>
                       <Link to={`/dish/${dish.slug}`} className="small clamp1" style={{ fontWeight: 600, display: "block" }}>{dish.name}</Link>
-                      <div className="mono fntc" style={{ fontSize: 10 }}>{dish.macros.calories} kcal · {dish.macros.protein}g P</div>
+                      <div className="mono" style={{ fontSize: 10, color: "var(--fnt)" }}>
+                        {macrosAreProvisional(dish) ? "macros being verified" : `${dish.macros.calories} kcal · ${dish.macros.protein}g P`}
+                      </div>
                       <div className="fx ac jb mt6">
                         <span className="price" style={{ fontSize: 13, color: "var(--safb)" }}>{F(dish.price)}</span>
                         <button className="qbtn" onClick={() => handleQuickAdd(dish)} aria-label={`Add ${dish.name}`}><i className="ph-bold ph-plus" /></button>
@@ -612,13 +647,29 @@ export default function V2Menu() {
                   <button key={k} className={kitchen === k ? "chip on" : "chip"} onClick={() => setKitchen(k)}>{k === "all" ? "All" : k[0].toUpperCase() + k.slice(1)}</button>
                 ))}
               </FilterRail>
+              <FilterRail label="Avoid allergens">
+                {EXCLUDABLE_ALLERGENS.map((a) => {
+                  const on = excludedAllergens.includes(a.value);
+                  return (
+                    <button
+                      key={a.value}
+                      className={on ? "chip on" : "chip"}
+                      aria-pressed={on}
+                      onClick={() => setExcludedAllergens((p) => (on ? p.filter((v) => v !== a.value) : [...p, a.value]))}
+                    >
+                      {on && <i className="ph-bold ph-prohibit" />}No {a.label.toLowerCase()}
+                    </button>
+                  );
+                })}
+              </FilterRail>
+              <div className="fine mb6" style={{ color: "var(--fnt)" }}>Excludes dishes with unverified allergen data</div>
             </div>
           )}
 
           {/* Dosha / Jain guarantee notes */}
           {quickFilters.some((f) => ["vata", "pitta", "kapha"].includes(f)) && (
             <div className="note mb10" style={{ background: "var(--s2)", borderColor: "var(--ln2)", color: "var(--mut)" }}>
-              <i className="ph-bold ph-info" /><span><b style={{ color: "var(--tx)" }}>Ayurvedic tip:</b> Doshas are traditional body types — if your doctor advised a standard heart/diabetic plan, focus on High-Protein, Low-FODMAP or Keto instead.</span>
+              <i className="ph-bold ph-info" /><span><b style={{ color: "var(--tx)" }}>Ayurvedic tip:</b> Doshas are traditional body types — if your doctor advised a standard heart/diabetic plan, focus on High-Protein or Low GI instead.</span>
             </div>
           )}
           {quickFilters.includes("jain") && (
@@ -646,7 +697,21 @@ export default function V2Menu() {
             </div>
           )}
 
-          <div className="lab mb10">{consolidatedDishes.length} {consolidatedDishes.length === 1 ? "dish" : "dishes"}</div>
+          <div className="fx ac jb mb10">
+            <div className="lab">{consolidatedDishes.length} {consolidatedDishes.length === 1 ? "dish" : "dishes"}</div>
+            <label className="fx ac g6">
+              <span className="lab" style={{ padding: 0 }}>Sort</span>
+              <select
+                className="chip"
+                aria-label="Sort dishes"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                style={{ height: 30, paddingRight: 10, appearance: "auto" as any }}
+              >
+                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+          </div>
 
           {/* Empty state */}
           {consolidatedDishes.length === 0 ? (
@@ -658,8 +723,7 @@ export default function V2Menu() {
             </div>
           ) : (
             <>
-              {consolidatedDishes.slice(0, visibleCount).map(({ parent, match, hasVariants }, cardIndex) => {
-                const rep = filtered.find((f: any) => f.dish.id === parent.id)!.dish;
+              {consolidatedDishes.slice(0, visibleCount).map(({ parent, dish: rep, match, hasVariants }, cardIndex) => {
                 const price = parent.variants[0].price;
                 const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
                 return (
@@ -724,12 +788,23 @@ export default function V2Menu() {
 
             <div className="card mb14">
               <div className="fx ac jb"><span className="fine">Calibrated price</span><span className="price" style={{ fontSize: 18, color: "var(--safb)" }}>{F(activeVariant.price)}</span></div>
-              <div className="ribbon cmp mt10">
-                <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{activeVariant.macros.calories}</span></div>
-                <div className="rc"><span className="rl">P</span><span className="rv">{activeVariant.macros.protein}<i className="ru">g</i></span></div>
-                <div className="rc"><span className="rl">C</span><span className="rv">{activeVariant.macros.carbs}<i className="ru">g</i></span></div>
-                <div className="rc"><span className="rl">F</span><span className="rv">{activeVariant.macros.fat}<i className="ru">g</i></span></div>
-              </div>
+              {/* Same honesty rule as the card ribbon / PDP: provisional macro
+                  blocks are shown as "being verified", never as real numbers. */}
+              {macrosAreProvisional(activeVariant) ? (
+                <div className="ribbon cmp mt10" role="group" aria-label="Macros being verified">
+                  <div className="rc">
+                    <span className="rl">NUTRITION</span>
+                    <span className="mono" style={{ fontSize: 10, color: "var(--fnt)", lineHeight: "16px" }}>macros being verified</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="ribbon cmp mt10">
+                  <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{activeVariant.macros.calories}</span></div>
+                  <div className="rc"><span className="rl">P</span><span className="rv">{activeVariant.macros.protein}<i className="ru">g</i></span></div>
+                  <div className="rc"><span className="rl">C</span><span className="rv">{activeVariant.macros.carbs}<i className="ru">g</i></span></div>
+                  <div className="rc"><span className="rl">F</span><span className="rv">{activeVariant.macros.fat}<i className="ru">g</i></span></div>
+                </div>
+              )}
             </div>
 
             <div className="fx ac gap12">
@@ -780,6 +855,7 @@ function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumO
   const giLabel = gi === "low" ? "GI LOW" : gi === "high" ? "GI HIGH" : "GI MED";
   const blocked = match?.blocked;
   const warned = match?.warnings?.length > 0;
+  const provisional = macrosAreProvisional(dish);
   const info: MatchScore = scoreInfo ?? { kind: "none" };
   return (
     <div className="dcard" style={blocked ? { opacity: 0.6 } : undefined}>
@@ -814,12 +890,24 @@ function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumO
           </button>
         </Link>
       </div>
-      <div className="ribbon cmp mt10" role="group" aria-label={`${dish.macros.calories} kcal, ${dish.macros.protein}g protein`}>
-        <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{dish.macros.calories}</span></div>
-        <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{dish.macros.protein}<i className="ru">g</i></span></div>
-        <div className="rc"><span className="rl">CARBS</span><span className="rv">{dish.macros.carbs}<i className="ru">g</i></span></div>
-        <div className="rc"><span className="rl">FAT</span><span className="rv">{dish.macros.fat}<i className="ru">g</i></span></div>
-      </div>
+      {/* Macro ribbon — same honesty rule as the PDP: provisional (placeholder)
+          macro blocks are never shown as real numbers. Container + row heights
+          match the numeric ribbon, so swapping states causes no CLS. */}
+      {provisional ? (
+        <div className="ribbon cmp mt10" role="group" aria-label="Macros being verified">
+          <div className="rc">
+            <span className="rl">NUTRITION</span>
+            <span className="mono" style={{ fontSize: 10, color: "var(--fnt)", lineHeight: "16px" }}>macros being verified</span>
+          </div>
+        </div>
+      ) : (
+        <div className="ribbon cmp mt10" role="group" aria-label={`${dish.macros.calories} kcal, ${dish.macros.protein}g protein`}>
+          <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{dish.macros.calories}</span></div>
+          <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{dish.macros.protein}<i className="ru">g</i></span></div>
+          <div className="rc"><span className="rl">CARBS</span><span className="rv">{dish.macros.carbs}<i className="ru">g</i></span></div>
+          <div className="rc"><span className="rl">FAT</span><span className="rv">{dish.macros.fat}<i className="ru">g</i></span></div>
+        </div>
+      )}
 
       {/* Personalization line — rendered only when there is something to say
           (a score phrase, a personalize hint, or an off-plan note); the empty

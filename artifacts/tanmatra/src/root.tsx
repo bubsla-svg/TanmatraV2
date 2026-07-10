@@ -21,6 +21,7 @@ import ScrollToTop from "@/components/layout/ScrollToTop";
 import StickyCheckoutBar from "@/components/cart/StickyCheckoutBar";
 import CartDrawer from "@/components/cart/CartDrawer";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
+import { installErrorTelemetry } from "@/lib/errorTelemetry";
 import "./index.css";
 import "./tanmatra-v2/theme.css";
 
@@ -30,8 +31,6 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: "/phosphor/regular/style.css" },
   { rel: "stylesheet", href: "/phosphor/fill/style.css" },
   { rel: "stylesheet", href: "/phosphor/bold/style.css" },
-  // LCP image — tell the browser to fetch this before the JS bundle evaluates.
-  { rel: "preload", as: "image", href: "/hero-bg.jpg" },
   // Critical font — Inter Variable latin subset is the first face the browser
   // needs. Without this hint it discovers the URL only after CSS is parsed.
   {
@@ -74,6 +73,10 @@ function sendVital(name: string, value: number, id: string): void {
   } catch {
     // Non-critical — never throw from a perf observer callback.
   }
+}
+
+if (typeof window !== "undefined") {
+  installErrorTelemetry();
 }
 
 // Lazy-import web-vitals so it never blocks the critical render path.

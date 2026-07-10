@@ -78,15 +78,15 @@ export const RD_PLANS: RdPlan[] = [
     week: [
       { label: "Mon", breakfastSlug: "amaranth-porridge-with-blueberry-sauce", lunchSlug: "signature-quinoa-salad", dinnerSlug: "quinoa-khichdi", rdTip: "Front-load fibre and water at breakfast — keeps afternoon snacking down." },
       { label: "Tue", breakfastSlug: "moong-dal-chilla-with-curd", lunchSlug: "broccoli-lemon-chicken-salad", dinnerSlug: "tomato-basil-soup" },
-      { label: "Wed", breakfastSlug: "exotic-fruit-bowl", lunchSlug: "chickpea-peanut-tabbouleh-salad", dinnerSlug: "broccoli-almond-soup", rdTip: "Soup-first dinners reduce total intake by ~15% in our cohort." },
+      { label: "Wed", breakfastSlug: "exotic-fruit-bowl", lunchSlug: "chickpea-peanut-tabbouleh-salad", dinnerSlug: "broccoli-almond-soup", rdTip: "Soup-first dinners help many people eat less overall — start with the soup tonight." },
       { label: "Thu", breakfastSlug: "quinoa-upma", lunchSlug: "lebanese-hummus-salad", dinnerSlug: "quinoa-khichdi" },
       { label: "Fri", breakfastSlug: "spinach-mushroom-omelette", lunchSlug: "broccoli-babycorn-tomato-salad", dinnerSlug: "tomato-basil-soup" },
       { label: "Sat", breakfastSlug: "exotic-amaranth-blueberry-yogurt", lunchSlug: "signature-quinoa-salad", dinnerSlug: "broccoli-almond-soup", rdTip: "Weekend treat day — keep within ±200 kcal of plan." },
       { label: "Sun", breakfastSlug: "moong-dal-chilla-with-curd", lunchSlug: "chickpea-peanut-tabbouleh-salad", dinnerSlug: "quinoa-khichdi" },
     ],
     weeklyNotes: [
-      { weekNumber: 1, title: "Hydration first", body: "3 L/day of water this week. Track every dinner — feedback in-app helps me tune portions for week two." },
-      { weekNumber: 2, title: "Walk after dinner", body: "10-min post-dinner walk improves glucose response by ~22% in adults. Logging it nudges your streak." },
+      { weekNumber: 1, title: "Hydration first", body: "3 L/day of water this week. Track every dinner in-app — your own notes make it easier to adjust portions for week two." },
+      { weekNumber: 2, title: "Walk after dinner", body: "A short walk after dinner helps your body handle the meal's glucose. Logging it nudges your streak." },
       { weekNumber: 3, title: "Protein anchor", body: "Add an extra hand-sized protein at lunch on training days — no calorie penalty in this plan." },
     ],
   },
@@ -137,7 +137,7 @@ export const RD_PLANS: RdPlan[] = [
     badges: ["Low GI", "Anti-inflammatory", "Hormone-aware"],
     matchesGoals: ["lose_weight", "general_wellness", "maintain"],
     week: [
-      { label: "Mon", breakfastSlug: "moong-dal-chilla-with-curd", lunchSlug: "signature-quinoa-salad", dinnerSlug: "tomato-basil-soup", rdTip: "Cinnamon in your morning chai — small but evidence-backed for insulin response." },
+      { label: "Mon", breakfastSlug: "moong-dal-chilla-with-curd", lunchSlug: "signature-quinoa-salad", dinnerSlug: "tomato-basil-soup", rdTip: "Try cinnamon in your morning chai — a small, pleasant habit some people find helpful alongside low-GI eating." },
       { label: "Tue", breakfastSlug: "amaranth-porridge-with-blueberry-sauce", lunchSlug: "broccoli-babycorn-tomato-salad", dinnerSlug: "quinoa-khichdi" },
       { label: "Wed", breakfastSlug: "spinach-mushroom-omelette", lunchSlug: "lebanese-hummus-salad", dinnerSlug: "broccoli-almond-soup" },
       { label: "Thu", breakfastSlug: "exotic-amaranth-blueberry-yogurt", lunchSlug: "chickpea-peanut-tabbouleh-salad", dinnerSlug: "tomato-basil-soup" },
@@ -146,7 +146,7 @@ export const RD_PLANS: RdPlan[] = [
       { label: "Sun", breakfastSlug: "exotic-fruit-bowl", lunchSlug: "lebanese-hummus-salad", dinnerSlug: "quinoa-khichdi" },
     ],
     weeklyNotes: [
-      { weekNumber: 1, title: "Track your cycle", body: "Note any symptom changes — bloating, energy, mood. Most members feel a shift by week 4." },
+      { weekNumber: 1, title: "Track your cycle", body: "Note any symptom changes — bloating, energy, mood — so you can see your own trend over the weeks." },
       { weekNumber: 2, title: "Magnesium nightcap", body: "Pumpkin-seed snack 30 min before bed supports sleep + magnesium repletion." },
     ],
   },
@@ -176,8 +176,8 @@ export const RD_PLANS: RdPlan[] = [
       { label: "Sun", breakfastSlug: "exotic-amaranth-blueberry-yogurt", lunchSlug: "signature-quinoa-salad", dinnerSlug: "tomato-basil-soup", rdTip: "Walk for 15 min after Sunday lunch — biggest carb meal of the week." },
     ],
     weeklyNotes: [
-      { weekNumber: 1, title: "Plate sequencing", body: "Eat fibre/protein first, carbs last. Cuts post-meal spikes by 20–30% without changing what's on the plate." },
-      { weekNumber: 2, title: "Sleep + glucose", body: "<7h sleep raises next-day fasting by 9–15 mg/dL. We're not weighing you — but we are watching the labs." },
+      { weekNumber: 1, title: "Plate sequencing", body: "Eat fibre/protein first, carbs last — a simple sequencing habit that can help soften post-meal spikes without changing what's on the plate." },
+      { weekNumber: 2, title: "Sleep + glucose", body: "Short sleep can push next-morning fasting glucose upward. A consistent bedtime this week is worth as much as any menu tweak." },
     ],
   },
   {
@@ -185,7 +185,7 @@ export const RD_PLANS: RdPlan[] = [
     name: "Senior Vitality",
     tagline: "Soft-textured, calcium + B12 forward, gentle on digestion.",
     description:
-      "For guests 60+. Soft-textured proteins, calcium and vitamin-D forward dishes, lower sodium, and predictable portions. Designed by our family-and-gut RD with feedback from a 50-member elder cohort.",
+      "For guests 60+. Soft-textured proteins, calcium and vitamin-D forward dishes, lower sodium, and predictable portions. Designed by our family-and-gut RD with older adults' needs in mind.",
     goal: "senior_vitality",
     rdAuthorSlug: "rd-kavya-menon",
     calorieTargetPerDay: 1700,
@@ -227,7 +227,7 @@ export const RD_PLANS: RdPlan[] = [
     badges: ["Low FODMAP", "Garlic + onion free", "IBS protocol"],
     matchesGoals: ["general_wellness", "maintain"],
     week: [
-      { label: "Mon", breakfastSlug: "exotic-amaranth-blueberry-yogurt", lunchSlug: "signature-quinoa-salad", dinnerSlug: "broccoli-almond-soup", rdTip: "Keep a symptom log — we'll review at week 4." },
+      { label: "Mon", breakfastSlug: "exotic-amaranth-blueberry-yogurt", lunchSlug: "signature-quinoa-salad", dinnerSlug: "broccoli-almond-soup", rdTip: "Keep a symptom log — it makes a week-4 RD consultation far more useful." },
       { label: "Tue", breakfastSlug: "amaranth-porridge-with-blueberry-sauce", lunchSlug: "quinoa-khichdi", dinnerSlug: "tomato-basil-soup" },
       { label: "Wed", breakfastSlug: "spinach-mushroom-omelette", lunchSlug: "broccoli-lemon-chicken-salad", dinnerSlug: "broccoli-almond-soup" },
       { label: "Thu", breakfastSlug: "exotic-amaranth-blueberry-yogurt", lunchSlug: "signature-quinoa-salad", dinnerSlug: "tomato-basil-soup" },
@@ -236,8 +236,8 @@ export const RD_PLANS: RdPlan[] = [
       { label: "Sun", breakfastSlug: "exotic-fruit-bowl", lunchSlug: "quinoa-khichdi", dinnerSlug: "broccoli-almond-soup" },
     ],
     weeklyNotes: [
-      { weekNumber: 1, title: "Strict elimination", body: "First two weeks are strict — no garlic/onion/dairy. Symptoms typically calm by day 10." },
-      { weekNumber: 2, title: "Stress + gut", body: "Gut-brain axis is real. 5 min of slow breathing before meals improves digestion measurably." },
+      { weekNumber: 1, title: "Strict elimination", body: "First two weeks are strict — no garlic/onion/dairy. Many people notice symptoms start to settle during this phase." },
+      { weekNumber: 2, title: "Stress + gut", body: "Gut-brain axis is real. A few minutes of slow breathing before meals can help your digestion settle." },
       { weekNumber: 3, title: "Re-introduction starts", body: "Week 5 — we re-introduce one FODMAP category at a time. Your tolerance map is yours alone." },
     ],
   },

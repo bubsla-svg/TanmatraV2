@@ -692,11 +692,19 @@ router.post(
 
     const expiresAt = new Date();
     expiresAt.setUTCDate(expiresAt.getUTCDate() + 60);
+    // Credit only the meals in THE SKIPPED DELIVERY. For day-first (dayPlan)
+    // subscriptions, mealsPerDelivery is the whole cycle's meal count, so
+    // using it here would massively over-credit a single skipped day. Fall
+    // back to mealsPerDelivery only for legacy rows with no items.
+    const skippedMeals = (found.delivery.items ?? []).reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
     await db.insert(mealCreditsTable).values({
       userId,
       subscriptionId: found.subscription.id,
       deliveryId,
-      amount: found.subscription.mealsPerDelivery,
+      amount: skippedMeals > 0 ? skippedMeals : found.subscription.mealsPerDelivery,
       reason: "skipped_delivery",
       expiresAt,
     });
