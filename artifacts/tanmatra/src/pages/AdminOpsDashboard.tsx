@@ -20,6 +20,7 @@ import DecisionsTable from "@/components/ops/DecisionsTable";
 import EtaAccuracyPanel from "@/components/ops/EtaAccuracyPanel";
 import DispatchPanel from "@/components/ops/DispatchPanel";
 import AnomaliesPanel from "@/components/ops/AnomaliesPanel";
+import RefundsPanel from "@/components/ops/RefundsPanel";
 import {
   Send,
   Bot,
@@ -422,6 +423,8 @@ export default function AdminOpsDashboard() {
         <EtaAccuracyPanel />
 
         <DispatchPanel />
+
+        <RefundsPanel />
 
         <AnomaliesPanel
           onOpenAgent={(prompt) => {

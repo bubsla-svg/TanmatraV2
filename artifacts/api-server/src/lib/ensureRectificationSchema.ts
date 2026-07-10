@@ -74,6 +74,30 @@ ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS day_plan jsonb;
 -- The payment path bills and reconciles against this column exclusively.
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS charge_paise integer;
 
+-- Captured Razorpay payment id (refunds target the payment, not the order).
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_payment_id varchar(64);
+
+-- Refund-after-approval pipeline: a paid-order cancel raises a pending refund
+-- request; an operator approves it before the gateway refund fires.
+CREATE TABLE IF NOT EXISTS public.refund_requests (
+  id serial PRIMARY KEY,
+  order_id integer NOT NULL REFERENCES public.orders(id),
+  external_order_id varchar(64),
+  amount_paise integer NOT NULL,
+  status varchar(24) NOT NULL DEFAULT 'pending',
+  reason varchar(256),
+  razorpay_payment_id varchar(64),
+  razorpay_refund_id varchar(64),
+  requested_by varchar,
+  decided_by varchar,
+  decided_at timestamptz,
+  note varchar(512),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_refund_requests_order ON public.refund_requests (order_id);
+CREATE INDEX IF NOT EXISTS idx_refund_requests_status_created ON public.refund_requests (status, created_at);
+
 CREATE TABLE IF NOT EXISTS public.funnel_events (
   id serial PRIMARY KEY,
   name varchar(64) NOT NULL,

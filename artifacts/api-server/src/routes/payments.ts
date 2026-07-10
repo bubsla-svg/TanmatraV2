@@ -255,10 +255,11 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
   }
 
   // Guarded transition placed → preparing (never downgrade a paid state).
+  // Capture the payment id too — refunds are issued against it.
   try {
     const updated = await db
       .update(ordersTable)
-      .set({ status: "preparing" })
+      .set({ status: "preparing", razorpayPaymentId })
       .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
       .returning({ id: ordersTable.id });
     if (updated[0]) {
@@ -477,10 +478,12 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
           );
         } else if (order) {
           // Guarded: only a placed order becomes preparing. Never resurrect a
-          // cancelled/failed order or downgrade a later state.
+          // cancelled/failed order or downgrade a later state. Capture the
+          // payment id (used to issue refunds).
+          const razorpayPaymentId = paymentEntity?.id ?? null;
           const updated = await db
             .update(ordersTable)
-            .set({ status: "preparing" })
+            .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
             .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
             .returning({ id: ordersTable.id });
           if (updated[0]) {

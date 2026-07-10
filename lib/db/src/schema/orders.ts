@@ -14,6 +14,10 @@ export const ordersTable = pgTable(
     userId: varchar("user_id").references(() => usersTable.id),
     externalOrderId: varchar("external_order_id", { length: 64 }),
     razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
+    // The captured Razorpay payment id (set at verify / webhook capture).
+    // Refunds target a payment, not an order, so this is what the refund
+    // pipeline issues against.
+    razorpayPaymentId: varchar("razorpay_payment_id", { length: 64 }),
     status: varchar("status", { length: 32 }).notNull().default("placed"),
     // Meal subtotal after discounts/credit (NO GST, NO delivery fee). Kept
     // for historical/ops continuity — do not use this to charge.
