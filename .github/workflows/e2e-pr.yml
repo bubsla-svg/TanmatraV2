@@ -52,15 +52,15 @@ jobs:
           sleep 2
           curl -sf http://127.0.0.1:5190/ >/dev/null && echo "server up"
 
-      - name: Install Playwright
-        run: |
-          npm install --no-save @playwright/test@1.49.1
-          npx playwright install --with-deps chromium
+      # @playwright/test is a workspace devDependency (npm can't install at a
+      # pnpm workspace root) — only the browser binary needs fetching here.
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run e2e suite
         env:
           E2E_BASE_URL: http://127.0.0.1:5190
-        run: npx playwright test --config artifacts/tanmatra/e2e/playwright.config.ts --project=chromium
+        run: pnpm exec playwright test --config artifacts/tanmatra/e2e/playwright.config.ts --project=chromium
 
       - name: Upload report on failure
         if: failure()
