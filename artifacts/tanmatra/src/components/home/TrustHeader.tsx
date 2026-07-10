@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { addressesApi } from "@/lib/userAddressesApi";
+import { usePreferences } from "@/lib/preferencesContext";
 
 /* Viewport 1 — Trust header.
  * Location selector (real default address area if saved, else neutral
@@ -22,13 +23,18 @@ function prefersReducedMotion(): boolean {
 
 export default function TrustHeader() {
   const navigate = useNavigate();
+  const { unauthorized, loading } = usePreferences();
   const [area, setArea] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [termIdx, setTermIdx] = useState(0);
   const cancelled = useRef(false);
 
   // Real selected/default delivery area — never fabricate a sector.
+  // Only query saved addresses once we know the visitor is signed in;
+  // /addresses is auth-gated, so calling it as a guest just 401s (and WebKit
+  // logs the failed fetch as a page error).
   useEffect(() => {
+    if (loading || unauthorized) return;
     cancelled.current = false;
     addressesApi
       .list()
@@ -41,7 +47,7 @@ export default function TrustHeader() {
     return () => {
       cancelled.current = true;
     };
-  }, []);
+  }, [loading, unauthorized]);
 
   // Rotating placeholder — disabled under reduced motion.
   useEffect(() => {

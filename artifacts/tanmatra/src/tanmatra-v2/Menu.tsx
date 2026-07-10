@@ -216,14 +216,17 @@ export default function V2Menu() {
 
   const { addItem, addBundleSlug } = useCart();
   const { open: openCart } = useCartDrawer();
-  const { preferences } = usePreferences();
+  const { preferences, unauthorized } = usePreferences();
   const [hasSavedAddress, setHasSavedAddress] = useState(false);
 
   useEffect(() => {
-    if (preferences) {
+    // /addresses is auth-gated — only query it for a signed-in visitor. A
+    // guest can have local preferences but no account, so gate on !unauthorized
+    // to avoid a guaranteed 401 (which WebKit surfaces as a page error).
+    if (preferences && !unauthorized) {
       addressesApi.list().then((r: any) => setHasSavedAddress(r.addresses.length > 0)).catch(() => setHasSavedAddress(false));
     } else setHasSavedAddress(false);
-  }, [preferences]);
+  }, [preferences, unauthorized]);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const groupCode = searchParams.get("group");
