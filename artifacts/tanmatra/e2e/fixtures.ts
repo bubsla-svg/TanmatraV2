@@ -5,7 +5,7 @@ import { type Page, type APIRequestContext, expect } from "@playwright/test";
 // import from a shared module once one exists).
 export const FREE_DELIVERY_THRESHOLD = 50_000; // ₹500
 export const DELIVERY_FEE = 5_000; // ₹50
-export const GST_BPS = 500; // 5.00%
+export const GST_BPS = 1800; // 18.00% — mirrors cartMath.ts (tax = round(subtotal * 0.18))
 
 export const rupees = (r: number): number => Math.round(r * 100); // ₹ → paise
 export const gstOn = (subtotalPaise: number): number =>

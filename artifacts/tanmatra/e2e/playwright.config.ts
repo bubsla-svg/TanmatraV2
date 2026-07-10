@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 // Base URLs are env-driven so the same specs run against local dev, a preview
 // Cloud Run revision, or production. Defaults point at local dev + the prod API.
-const BASE_URL = process.env["E2E_BASE_URL"] ?? "http://localhost:5190";
+const BASE_URL = process.env["E2E_BASE_URL"] ?? "http://127.0.0.1:5190";
 
 export default defineConfig({
   testDir: "./specs",
@@ -16,9 +16,14 @@ export default defineConfig({
   expect: { timeout: 7_500 },
   use: {
     baseURL: BASE_URL,
+    // Sandbox/CI escape hatch: point at a pre-installed browser build.
+    ...(process.env["E2E_CHROMIUM_PATH"]
+      ? { launchOptions: { executablePath: process.env["E2E_CHROMIUM_PATH"] } }
+      : {}),
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    // video needs an ffmpeg binary not present in all sandboxes; screenshots + traces cover failure triage.
+    video: "off",
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
