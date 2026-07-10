@@ -12,6 +12,9 @@ on:
     workflows: ["Deploy"]
     types: [completed]
 
+permissions:
+  contents: write
+
 jobs:
   synthetic:
     runs-on: ubuntu-latest
@@ -35,3 +38,17 @@ jobs:
         env:
           PROD_URL: https://tanmatra.food
         run: node scripts/synthetic-check.mjs
+
+      - name: Publish report as commit comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f synthetic-report.md ]; then
+            BODY=$(python3 -c "import json,sys; print(json.dumps({'body': open('synthetic-report.md').read()}))")
+            curl -s -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+              -d "$BODY" >/dev/null && echo "report posted"
+          fi

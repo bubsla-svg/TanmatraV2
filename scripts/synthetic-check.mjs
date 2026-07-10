@@ -25,13 +25,23 @@ function check(name, ok, detail = "") {
   if (!ok) failed++;
 }
 
-// ---- pick a reachable base URL ------------------------------------------
+// ---- candidate diagnostics: catch a stale domain serving an old build ----
 let BASE = null;
 for (const url of CANDIDATES) {
   try {
     const r = await fetch(url, { redirect: "follow" });
-    if (r.ok) { BASE = url.replace(/\/+$/, ""); break; }
-  } catch { /* try next */ }
+    const html = await r.text();
+    const title = (html.match(/<title>([^<]*)</) || [, "—"])[1];
+    let locs = -1;
+    try {
+      const sm = await fetch(`${url.replace(/\/+$/, "")}/sitemap.xml`).then((x) => x.text());
+      locs = (sm.match(/<loc>/g) || []).length;
+    } catch { /* no sitemap */ }
+    console.log(`candidate ${url}: status=${r.status} title=${JSON.stringify(title)} sitemapLocs=${locs} bytes=${html.length}`);
+    if (r.ok && !BASE) BASE = url.replace(/\/+$/, "");
+  } catch (e) {
+    console.log(`candidate ${url}: UNREACHABLE ${String(e).slice(0, 120)}`);
+  }
 }
 if (!BASE) {
   console.error("FATAL: no production URL reachable:", CANDIDATES.join(", "));
@@ -112,4 +122,14 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
 
 // ---- summary --------------------------------------------------------------
 console.log(`\n${results.length - failed}/${results.length} checks passed`);
+// Persist a machine-readable report for the workflow to publish (commit
+// comment + step summary) — CI log storage isn't always reachable from
+// every operator environment.
+try {
+  const fs = await import("node:fs");
+  const lines = results.map((r) => `${r.ok ? "✅" : "❌"} ${r.name}${r.detail ? ` — ${r.detail}` : ""}`);
+  const report = [`### Synthetic prod check — ${BASE}`, "", ...lines, "", `**${results.length - failed}/${results.length} passed**`].join("\n");
+  fs.writeFileSync("synthetic-report.md", report);
+  if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report + "\n");
+} catch { /* reporting is best-effort */ }
 if (failed > 0) process.exit(1);
