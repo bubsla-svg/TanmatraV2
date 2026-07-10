@@ -317,6 +317,15 @@ export default function CoachAgentWidget({
           },
         },
       );
+      // Never leave a blank bubble: if the model returned empty/whitespace and
+      // there's no action card to carry the reply, show a friendly fallback so
+      // the coach never reads as "broken".
+      const hasActions = (result.actions?.length ?? 0) > 0;
+      const safeText = result.text?.trim()
+        ? result.text
+        : hasActions
+          ? result.text
+          : "I couldn't put together a reply just then — mind rephrasing? You can ask about a dish's macros, a higher-protein swap, or what to add to your order.";
       setMessages((prev) => {
         const idx = streamingIndexRef.current;
         if (idx == null) return prev;
@@ -325,7 +334,7 @@ export default function CoachAgentWidget({
         if (!cur) return prev;
         copy[idx] = {
           ...cur,
-          text: result.text,
+          text: safeText,
           actions: result.actions,
           escalated: result.escalated,
         };
