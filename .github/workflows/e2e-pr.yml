@@ -1,0 +1,71 @@
+# PR-gate e2e: builds the SPA and drives the real funnel against the static
+# build (guest surface — no API needed) before anything merges. Complements
+# the unit/integration suites and the post-deploy synthetic prod checks.
+name: E2E (PR gate)
+
+on:
+  pull_request:
+    paths:
+      - "artifacts/tanmatra/**"
+      - "lib/**"
+      - ".github/workflows/e2e-pr.yml"
+  workflow_dispatch: {}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build SPA
+        run: pnpm --filter "@workspace/tanmatra" run build
+
+      - name: Serve static build
+        run: |
+          node - <<'EOF' &
+          const http=require('http'),fs=require('fs'),path=require('path');
+          const root=path.join(process.cwd(),'artifacts/tanmatra/build/client');
+          const spa=path.join(root,'__spa-fallback.html');
+          http.createServer((req,res)=>{
+            const u=decodeURIComponent(req.url.split('?')[0]);
+            let f=path.join(root,u==='/'?'/index.html':u);
+            if(fs.existsSync(f)&&fs.statSync(f).isDirectory()){const i=path.join(f,'index.html');f=fs.existsSync(i)?i:spa;}
+            else if(!fs.existsSync(f))f=spa;
+            const ct={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json','.woff2':'font/woff2'}[path.extname(f)]||'application/octet-stream';
+            res.writeHead(200,{'Content-Type':ct});
+            fs.createReadStream(f).pipe(res);
+          }).listen(5190,()=>console.log('e2e static server on 5190'));
+          EOF
+          sleep 2
+          curl -sf http://127.0.0.1:5190/ >/dev/null && echo "server up"
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save @playwright/test@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Run e2e suite
+        env:
+          E2E_BASE_URL: http://127.0.0.1:5190
+        run: npx playwright test --config artifacts/tanmatra/e2e/playwright.config.ts --project=chromium
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

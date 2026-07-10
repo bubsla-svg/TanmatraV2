@@ -1,201 +1,184 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from "@playwright/test";
+import { seedCart, cartItem, GST_BPS } from "../fixtures";
 
-test.describe('Tanmatra High-Velocity Storefront & Checkout Audit', () => {
-  test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
-    page.on('pageerror', err => console.log('BROWSER ERROR:', err));
-    await page.addInitScript(() => {
-      console.log("INIT SCRIPT RUNNING: Injecting E2E Mock Flags");
-      window.localStorage.clear();
-      (window as any).__E2E_MOCK_AUTH__ = true;
-      (window as any).__E2E_MOCK_MAPS__ = true;
-    });
+/**
+ * Storefront & checkout 5-vector audit — rewritten against the REAL app.
+ *
+ * The original draft of this suite (credit: external engineering agent —
+ * the five vectors map exactly to real bug classes from this launch cycle)
+ * targeted selectors, routes, and flows that don't exist in this codebase
+ * (/product/:slug, .sticky-total-bar, .otp-input-field, option price
+ * modifiers…). This version keeps the vector intent and asserts against
+ * the shipped v2 DOM (.tnm2 design system, /dish/:slug, integer-paise
+ * money, 18% GST).
+ *
+ * Runs against a static build (no API): guest flows only, which is exactly
+ * the surface these vectors cover. Serve build/client on E2E_BASE_URL
+ * (default http://127.0.0.1:5190) with SPA fallback to __spa-fallback.html.
+ */
 
-    let isUserAuthenticated = false;
+// Dishes chosen from the bundled catalog with KNOWN macro states:
+// almond-chicken-salad shares a macro tuple (provisional), greek-roman-
+// chicken-salad carries real verified macros (320 kcal · 26 g protein).
+const PROVISIONAL_DISH = "almond-chicken-salad";
+const VERIFIED_DISH = "greek-roman-chicken-salad";
 
-    // Stateful mock for saved addresses API
-    await page.route('**/api/addresses', async (route) => {
-      if (!isUserAuthenticated) {
-        await route.fulfill({
-          status: 401,
-          contentType: 'application/json',
-          body: JSON.stringify({ error: 'unauthorized' })
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            addresses: [
-              {
-                id: "addr-123",
-                label: "Home",
-                type: "home",
-                line1: "Apt 4B, Tanmatra Towers",
-                line2: "Sector 62",
-                city: "Noida",
-                pincode: "201301",
-                phone: "8700124135",
-                isDefault: true,
-                createdAt: "2026-07-10T00:00:00Z",
-                updatedAt: "2026-07-10T00:00:00Z"
-              }
-            ]
-          })
-        });
-      }
-    });
+const BENIGN_ERRORS = /ResizeObserver|Loading chunk|sw\.js|Failed to fetch|NetworkError|load failed|ERR_/i;
 
-    // Mock for OTP sending API
-    await page.route('**/api/auth/phone/send-otp', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ ok: true })
-      });
-    });
+function collectErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
+  return errors;
+}
 
-    // Stateful mock for OTP verification API
-    await page.route('**/api/auth/phone/verify-otp', async (route) => {
-      isUserAuthenticated = true;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          ok: true,
-          user: {
-            id: "mock-user-123",
-            phoneE164: "+918700124135",
-            email: "mock@tanmatra.food",
-            firstName: "Mock",
-            lastName: "User"
-          }
-        })
-      });
-    });
+async function dismissSoftGate(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tanmatra:softgate:v1",
+      JSON.stringify({ v: 1, at: 1, outcome: "skip" }),
+    );
+  });
+}
 
-    // Mock for delivery slots API
-    await page.route('**/api/delivery/slots**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          slots: [
-            {
-              id: 12,
-              slotDate: "2026-07-10",
-              startsAt: "12:00:00",
-              endsAt: "13:00:00",
-              zone: "default",
-              capacity: 10,
-              reservedCount: 2,
-              remaining: 8,
-              full: false
-            }
-          ]
-        })
-      });
-    });
+const digitsOf = (s: string | null): number =>
+  Number((s ?? "").replace(/[^0-9]/g, ""));
 
-    // Intercept requests to https://tanmatra.food and map them to local baseURL
-    await page.route('https://tanmatra.food/**', async (route) => {
-      const requestUrl = new URL(route.request().url());
-      const baseUrl = route.request().frame().page().context()._options.baseURL ?? 'http://127.0.0.1:5190';
-      const localUrl = `${baseUrl}${requestUrl.pathname}${requestUrl.search}`;
-      const response = await route.fetch({ url: localUrl });
-      await route.fulfill({ response });
-    });
+test.describe("Tanmatra storefront & checkout audit (v2 app)", () => {
+  test("V1 — PDP renders honestly: verified macros show numbers, provisional dishes say so", async ({ page }) => {
+    await dismissSoftGate(page);
+    const errors = collectErrors(page);
+
+    // Verified-macro dish: real numbers, no verification placeholder.
+    await page.goto(`/dish/${VERIFIED_DISH}`);
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+    await expect(page.locator("h1, .h2").first()).toContainText(/Greek Roman/i);
+    await expect(page.getByText(/macros being verified/i)).toHaveCount(0);
+    await expect(page.getByText(/kcal/i).first()).toBeVisible();
+
+    // Provisional dish: the honesty label MUST be visible (this is the
+    // designed behavior — the original draft asserted the opposite).
+    await page.goto(`/dish/${PROVISIONAL_DISH}`);
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+    await expect(page.getByText(/macros being verified/i).first()).toBeVisible();
+
+    // Safety surface: allergen row + cross-contact line above the fold.
+    await expect(
+      page.getByText(/Allergens:|Allergen data being verified/i).first(),
+    ).toBeVisible();
+    await expect(page.getByText(/cross-contact/i).first()).toBeVisible();
+
+    expect(errors.filter((e) => !BENIGN_ERRORS.test(e))).toEqual([]);
   });
 
-  test('Should execute E2E flow without loops, mathematical drift, or map blackouts', async ({ page }) => {
-    test.setTimeout(60000);
-    // -------------------------------------------------------------
-    // VECTOR 1: DATA COMPLETION & ACCURATE RENDER TEST
-    // -------------------------------------------------------------
-    await page.goto('https://tanmatra.food/product/almond-chicken-salad');
-    await expect(page.locator('#__tanmatra-loader')).toBeHidden({ timeout: 10000 });
-    
-    // Verify that the UI layout does not contain unverified placeholder markers
-    const macroWarningText = page.locator('text=macros being verified');
-    await expect(macroWarningText).not.toBeVisible(); 
-    
-    // Assert structural macro-bar density template is standard
-    await expect(page.locator('.macro-nutrient-strip')).toBeVisible();
+  test("V2 — ledger math: dock total scales exactly with quantity (integer rupees, no drift)", async ({ page }) => {
+    await dismissSoftGate(page);
+    await page.goto(`/dish/${VERIFIED_DISH}`);
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
 
-    // -------------------------------------------------------------
-    // VECTOR 2: THE CARD MODIFIER & LEDGER MATH TEST
-    // -------------------------------------------------------------
-    // Select a complex protein modifier (+₹120)
-    await page.locator('label', { hasText: 'Grilled chicken' }).click({ force: true });
-    
-    // Assert sticky bottom CTA calculates total precisely (Base ₹155 + Mod ₹120 = ₹275)
-    await expect(page.locator('.sticky-total-bar .price')).toHaveText('₹275');
+    const dock = page.locator(".dock");
+    await expect(dock).toBeVisible();
+    const total1 = digitsOf(await dock.locator(".price").first().textContent());
+    expect(total1).toBeGreaterThan(0);
 
-    // -------------------------------------------------------------
-    // VECTOR 3: THE UPSELL STATE COMPONENT SYNCHRONIZATION TEST
-    // -------------------------------------------------------------
-    // Click Add to Order to open the cart drawer and expose upsell cards
-    await page.locator('button:has-text("Add to Order")').click({ force: true });
-    await page.locator('button[aria-label="Open sliding cart drawer"]').click({ force: true });
+    // Bump quantity via the dock's plus control.
+    await dock.locator(".qbtn").last().click();
+    await expect
+      .poll(async () => digitsOf(await dock.locator(".price").first().textContent()))
+      .toBe(total1 * 2);
+  });
 
-    // Assert that the sliding cart drawer automatically opens
-    const cartDrawer = page.locator('.cart-drawer-container');
-    await expect(cartDrawer).toBeVisible();
+  test("V3 — drawer/cart state sync: added items persist across drawer close and page, GST is exactly 18%", async ({ page }) => {
+    await dismissSoftGate(page);
+    const errors = collectErrors(page);
 
-    // Scroll to upsell card and trigger an item addition (Cream of Broccoli - ₹125)
-    const broccoliUpsellCard = cartDrawer.locator('.upsell-card', { hasText: 'Cream of Broccoli' });
-    const addButton = broccoliUpsellCard.locator('button:has-text("+")');
-    await addButton.scrollIntoViewIfNeeded();
-    await addButton.click({ force: true });
-    await page.waitForTimeout(500);
+    await page.goto("/menu");
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+    await page.waitForTimeout(800);
 
-    // CRITICAL: Close the drawer layout to return to parent page context
-    await page.keyboard.press('Escape');
+    // Add the first available dish from its card.
+    const addBtn = page.locator(".addb").first();
+    await addBtn.scrollIntoViewIfNeeded();
+    await addBtn.click();
 
-    // ASSERTION: The parent page product card MUST retain state synchronization 
-    // It must not flip back to default unselected '+' state
-    await expect(page.locator('.parent-upsell-card', { hasText: 'Cream of Broccoli' }).locator('.quantity-badge')).toHaveText('1');
+    // The drawer opens as a fixed overlay carrying the Close cart control.
+    await expect(page.getByLabel("Close cart").first()).toBeVisible({ timeout: 5000 });
 
-    // Re-open cart to initialize transaction processing
-    await page.locator('button[aria-label="Open sliding cart drawer"]').click({ force: true });
+    // Close it — the cart state must survive the drawer closing (the
+    // original report claimed selections reset the moment the drawer
+    // collapsed; the persisted store is the real invariant).
+    await page.getByLabel("Close cart").first().click();
+    await expect
+      .poll(async () =>
+        page.evaluate(() => {
+          try {
+            const raw = JSON.parse(localStorage.getItem("tanmatra:cart:v1") ?? "{}");
+            return (raw?.state?.items ?? []).length;
+          } catch { return -1; }
+        }),
+      )
+      .toBeGreaterThanOrEqual(1);
 
-    // ASSERTION: Verify Parent-Child structural isolation is not broken.
-    // The cart must contain both the chosen parent salad and the addon item.
-    await expect(cartDrawer.locator('.cart-item-title', { hasText: 'Almond Chicken Salad' })).toBeVisible();
-    await expect(cartDrawer.locator('.cart-item-title', { hasText: 'Cream of Broccoli' })).toBeVisible();
+    // The cart page must show the item plus an exact 18% GST line.
+    await page.goto("/cart");
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+    const body = await page.evaluate(() => document.body.innerText);
+    const sub = body.match(/Subtotal[^₹]*₹\s?([\d,]+)/i);
+    const gst = body.match(/GST[^₹]*₹\s?([\d,]+)/i);
+    expect(sub, "cart must itemize a Subtotal line").toBeTruthy();
+    expect(gst, "cart must itemize a GST line").toBeTruthy();
+    const subR = Number(sub![1].replace(/,/g, ""));
+    const gstR = Number(gst![1].replace(/,/g, ""));
+    // 18% of the rupee subtotal, matching cartMath.ts (paise-exact upstream;
+    // ±1 rupee tolerance for display rounding).
+    expect(Math.abs(gstR - Math.round((subR * GST_BPS) / 10_000))).toBeLessThanOrEqual(1);
 
-    // ASSERTION: Validate that line item pricing matches the target config exactly without ghost additions
-    await expect(cartDrawer.locator('.cart-item', { hasText: 'Almond Chicken Salad' }).locator('.price')).toHaveText('₹275'); // Catches the ₹329 software inflation bug instantly
+    expect(errors.filter((e) => !BENIGN_ERRORS.test(e))).toEqual([]);
+  });
 
-    // Proceed cleanly to transaction staging
-    await cartDrawer.locator('a:has-text("Checkout")').click({ force: true });
+  test("V4 — auth guard: guests get a clear login (with next-param), typed digits survive hydration, no redirect loop", async ({ page }) => {
+    await dismissSoftGate(page);
+    const errors = collectErrors(page);
 
-    // -------------------------------------------------------------
-    // VECTOR 4: AUTHENTICATION ROUTING AND LIFECYCLE LOOPS
-    // -------------------------------------------------------------
-    // Execute secure phone input validation
-    await page.fill('input[type="tel"]', '8700124135');
-    await page.locator('button:has-text("Send")').click({ force: true });
+    // Auth-gated page → login with return path, not a blank screen.
+    await page.goto("/orders");
+    await expect(page).toHaveURL(/\/login\?next=%2Forders/);
+    await expect(page.getByText(/Welcome to Tanmatra/i)).toBeVisible();
 
-    // Verify OTP container is exposed, insert target mock digits
-    await page.fill('.otp-input-field', '387217');
-    await page.locator('button:has-text("Verify")').click({ force: true });
+    // Keystrokes typed into the (prerendered) login input must survive —
+    // guards the hydration-wipe regression.
+    const phone = page.locator('input[inputmode="numeric"]').first();
+    await phone.click();
+    await page.keyboard.type("9876543210", { delay: 30 });
+    await page.waitForTimeout(600);
+    await expect(phone).toHaveValue(/9876543210/);
 
-    // ASSERTION: The page MUST route forward to the checkout view component
-    // If the middleware errors out and loops back to login, the script breaks and throws a failure log here
-    await expect(page).toHaveURL(/\/checkout$/);
+    // Visiting the gated page again produces the same single redirect —
+    // stable, not an accumulating loop.
+    await page.goto("/orders");
+    await expect(page).toHaveURL(/\/login\?next=%2Forders/);
 
-    // -------------------------------------------------------------
-    // VECTOR 5: THIRD-PARTY MAP PLATFORM COUPLING TEST
-    // -------------------------------------------------------------
-    await page.locator('button:has-text("Add New Address"), button:has-text("Add your delivery address")').first().click({ force: true });
-    await page.locator('text=Select location on map').click({ force: true });
+    expect(errors.filter((e) => !BENIGN_ERRORS.test(e))).toEqual([]);
+  });
 
-    // Monitor network socket pipelines for Map CDN and canvas loads
-    const mapCanvasElement = page.locator('.gm-style, .mapboxgl-map'); // Targets native Google Maps or Mapbox frames
-    
-    // Assert that the canvas component initialization does not timeout or drop error banners
-    await expect(mapCanvasElement).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('text=Map tiles couldn\'t load')).not.toBeVisible();
+  test("V5 — checkout renders with a seeded cart: address UI present, no map blackout crash, pay CTA reachable", async ({ page }) => {
+    await dismissSoftGate(page);
+    const errors = collectErrors(page);
+    await seedCart(page, [cartItem({ quantity: 2 })]);
+
+    await page.goto("/checkout");
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+    await page.waitForTimeout(1500);
+
+    const body = await page.evaluate(() => document.body.innerText);
+    expect(body).toMatch(/address|pin\s?code/i);
+    expect(body).toMatch(/total|subtotal/i);
+    // Maps without an API key must degrade gracefully — never a hard crash
+    // or an error banner as the only content.
+    expect(body).not.toMatch(/something went wrong/i);
+    await expect(
+      page.locator("button").filter({ hasText: /pay|place order|confirm/i }).first(),
+    ).toBeVisible();
+
+    expect(errors.filter((e) => !BENIGN_ERRORS.test(e))).toEqual([]);
   });
 });
