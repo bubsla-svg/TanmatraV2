@@ -24,9 +24,11 @@ function razorpayBasicAuth(keyId: string, keySecret: string): string {
 // ---------------------------------------------------------------------------
 
 const createRazorpayOrderSchema = z.object({
-  amountPaise: z.number().int().positive().max(10_000_000),
+  // Retained for backward compatibility and tamper detection only — the
+  // gateway order is ALWAYS created for the server-stored charge, never this.
+  amountPaise: z.number().int().positive().max(10_000_000).optional(),
   receipt: z.string().max(64).optional(),
-  orderId: z.string().max(64).optional(),
+  orderId: z.string().min(1).max(64),
 });
 
 const verifyPaymentSchema = z.object({
@@ -64,7 +66,55 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     return;
   }
 
-  const { amountPaise, receipt } = parsed.data;
+  const { amountPaise: clientAmount, orderId } = parsed.data;
+
+  // The gateway order MUST be created for the amount the server computed and
+  // stored on the order, never a client-supplied number. Resolve it first.
+  const [order] = await db
+    .select({
+      id: ordersTable.id,
+      userId: ordersTable.userId,
+      status: ordersTable.status,
+      chargePaise: ordersTable.chargePaise,
+      totalPaise: ordersTable.totalPaise,
+    })
+    .from(ordersTable)
+    .where(eq(ordersTable.externalOrderId, orderId))
+    .limit(1);
+
+  if (!order) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+
+  // Ownership: an order that belongs to a user may only be paid by that user.
+  // Guest orders (userId null) stay open for the guest-checkout flow.
+  if (order.userId) {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+    if (req.user.id !== order.userId) {
+      res.status(403).json({ error: "forbidden" });
+      return;
+    }
+  }
+
+  // total_paise already includes GST+fee on the guest-checkout path; the
+  // loyalty finalize path writes the authoritative amount to charge_paise.
+  const authoritativePaise = order.chargePaise ?? order.totalPaise;
+  if (!Number.isInteger(authoritativePaise) || authoritativePaise <= 0) {
+    res.status(409).json({ error: "order has no payable amount" });
+    return;
+  }
+  if (typeof clientAmount === "number" && clientAmount !== authoritativePaise) {
+    // Not fatal — we bill the authoritative amount regardless — but a
+    // divergence is worth surfacing (client math drift or tamper attempt).
+    req.log.warn(
+      { orderId, clientAmount, authoritativePaise },
+      "razorpay order amount mismatch — billing server amount",
+    );
+  }
 
   const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
     method: "POST",
@@ -73,9 +123,9 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      amount: amountPaise,
+      amount: authoritativePaise,
       currency: "INR",
-      receipt: receipt ?? `rp-${Date.now()}`,
+      receipt: orderId.slice(0, 40),
       payment_capture: 1,
     }),
   });
@@ -94,16 +144,19 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
 
   const rp = (await rpRes.json()) as { id: string; amount: number; currency: string };
 
-  const targetOrderId = parsed.data.orderId ?? parsed.data.receipt;
-  if (targetOrderId) {
-    try {
-      await db
-        .update(ordersTable)
-        .set({ razorpayOrderId: rp.id })
-        .where(eq(ordersTable.externalOrderId, targetOrderId));
-    } catch (err) {
-      req.log.error({ err, targetOrderId, razorpayOrderId: rp.id }, "failed to store razorpayOrderId on order");
-    }
+  // Bind the gateway order to exactly the row we priced (by id, not a second
+  // externalOrderId match) so verify/webhook can require this linkage.
+  try {
+    await db
+      .update(ordersTable)
+      .set({ razorpayOrderId: rp.id })
+      .where(eq(ordersTable.id, order.id));
+  } catch (err) {
+    req.log.error({ err, orderId, razorpayOrderId: rp.id }, "failed to store razorpayOrderId on order");
+    // Without this linkage the capture cannot be reconciled — fail loudly
+    // rather than open a modal for an unreconcilable payment.
+    res.status(500).json({ error: "could not link payment to order" });
+    return;
   }
 
   res.json({
@@ -162,19 +215,58 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
     return;
   }
 
-  // Transition order to "preparing".
+  // A valid signature only proves SOME payment succeeded on SOME Razorpay
+  // order. Bind it to THIS order: the razorpayOrderId presented must equal the
+  // one we created and stored when pricing the order. Without this, a genuine
+  // ₹1 payment's signature could be replayed against any other order id.
+  const [order] = await db
+    .select({
+      id: ordersTable.id,
+      status: ordersTable.status,
+      razorpayOrderId: ordersTable.razorpayOrderId,
+    })
+    .from(ordersTable)
+    .where(eq(ordersTable.externalOrderId, orderId))
+    .limit(1);
+
+  if (!order) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  if (!order.razorpayOrderId || order.razorpayOrderId !== razorpayOrderId) {
+    req.log.warn(
+      { orderId, presented: razorpayOrderId, stored: order.razorpayOrderId },
+      "razorpay order id does not match the order — refusing to confirm",
+    );
+    res.status(400).json({ error: "payment does not belong to this order" });
+    return;
+  }
+
+  const PAID_STATES = new Set(["preparing", "ready", "out_for_delivery", "delivered"]);
+  // Already confirmed (e.g. the webhook won the race) — idempotent success.
+  if (PAID_STATES.has(order.status)) {
+    res.json({ ok: true, orderId, status: order.status });
+    return;
+  }
+  // A cancelled/failed order must not be silently resurrected by a late verify.
+  if (order.status === "cancelled" || order.status === "failed") {
+    res.status(409).json({ ok: false, orderId, status: order.status, error: "order not payable" });
+    return;
+  }
+
+  // Guarded transition placed → preparing (never downgrade a paid state).
   try {
     const updated = await db
       .update(ordersTable)
-      .set({ status: "preparing", razorpayOrderId })
-      .where(eq(ordersTable.externalOrderId, orderId))
+      .set({ status: "preparing" })
+      .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
       .returning({ id: ordersTable.id });
     if (updated[0]) {
       void sendOrderConfirmation(updated[0].id);
     }
   } catch (err) {
-    // Payment is confirmed by Razorpay — do not fail the response. The ops
-    // team will reconcile via the Razorpay dashboard and the orders table.
+    // Payment is confirmed by Razorpay — do not fail the response. The webhook
+    // reconciles the status independently; ops can verify via the dashboard.
     req.log.error({ err, orderId }, "order status update failed after payment verification");
     res.json({ ok: true, orderId, status: "placed", warning: "status_update_failed" });
     return;
@@ -300,7 +392,7 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     return;
   }
 
-  let event: { id?: string; event?: string; payload?: { payment?: { entity?: { order_id?: string; id?: string } } } };
+  let event: { id?: string; event?: string; payload?: { payment?: { entity?: { order_id?: string; id?: string; amount?: number } } } };
   try {
     event = JSON.parse(rawBody.toString("utf8"));
   } catch {
@@ -363,19 +455,56 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
   try {
     if (eventType === "payment.captured") {
       const razorpayOrderId = paymentEntity?.order_id ?? "";
-      const razorpayPaymentId = paymentEntity?.id ?? "";
+      const capturedAmount = paymentEntity?.amount;
       if (razorpayOrderId) {
-        const updated = await db
-          .update(ordersTable)
-          .set({ status: "preparing" })
+        const [order] = await db
+          .select({
+            id: ordersTable.id,
+            status: ordersTable.status,
+            chargePaise: ordersTable.chargePaise,
+            totalPaise: ordersTable.totalPaise,
+          })
+          .from(ordersTable)
           .where(eq(ordersTable.razorpayOrderId, razorpayOrderId))
-          .returning({ id: ordersTable.id });
-        if (updated[0]) {
-          void sendOrderConfirmation(updated[0].id);
+          .limit(1);
+        const expected = order ? order.chargePaise ?? order.totalPaise : null;
+        // Reconcile the captured amount against the authoritative order total.
+        // A mismatch is an integrity alarm — record it and do NOT promote.
+        if (order && expected != null && capturedAmount != null && capturedAmount !== expected) {
+          req.log.error(
+            { razorpayOrderId, capturedAmount, expected, orderId: order.id },
+            "webhook: captured amount does not match order total — not confirming",
+          );
+        } else if (order) {
+          // Guarded: only a placed order becomes preparing. Never resurrect a
+          // cancelled/failed order or downgrade a later state.
+          const updated = await db
+            .update(ordersTable)
+            .set({ status: "preparing" })
+            .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
+            .returning({ id: ordersTable.id });
+          if (updated[0]) {
+            void sendOrderConfirmation(updated[0].id);
+          } else if (order.status === "cancelled" || order.status === "failed") {
+            req.log.error(
+              { razorpayOrderId, orderId: order.id, status: order.status },
+              "webhook: capture arrived for a cancelled/failed order — needs refund review",
+            );
+          }
         }
       }
     } else if (eventType === "payment.failed") {
-      req.log.warn({ razorpayOrderId: paymentEntity?.order_id }, "webhook: payment failed");
+      // Mark the order failed so it leaves the active kitchen queue and the
+      // client's recovery poller surfaces a terminal failure. Guarded to a
+      // still-unpaid order so a retry-after-success can't flip a paid order.
+      const razorpayOrderId = paymentEntity?.order_id ?? "";
+      if (razorpayOrderId) {
+        await db
+          .update(ordersTable)
+          .set({ status: "failed" })
+          .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")));
+      }
+      req.log.warn({ razorpayOrderId }, "webhook: payment failed");
     }
 
     await db

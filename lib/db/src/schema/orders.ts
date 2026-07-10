@@ -15,7 +15,16 @@ export const ordersTable = pgTable(
     externalOrderId: varchar("external_order_id", { length: 64 }),
     razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
     status: varchar("status", { length: 32 }).notNull().default("placed"),
+    // Meal subtotal after discounts/credit (NO GST, NO delivery fee). Kept
+    // for historical/ops continuity — do not use this to charge.
     totalPaise: integer("total_paise").notNull(),
+    // THE authoritative amount to charge, in paise: post-discount meal total
+    // + 18% GST + delivery fee. Written once by finalizeOrder and is the ONLY
+    // number the payment path may bill or reconcile against (mirrors Medusa's
+    // "the order carries its own payable total" rule). Nullable so legacy rows
+    // and the guest-checkout path — whose total_paise already includes GST+fee
+    // — remain valid; the payment path falls back to total_paise when null.
+    chargePaise: integer("charge_paise"),
     addressLabel: varchar("address_label", { length: 64 }),
     addressLine: varchar("address_line", { length: 256 }),
     city: varchar("city", { length: 64 }),

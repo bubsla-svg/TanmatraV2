@@ -12,11 +12,11 @@ import { Minus, Plus, ShoppingBag, Trash2, X, Leaf, ShieldCheck, Loader2, Check,
 import { toast } from "sonner";
 import {
   useCart,
+  useCartStore,
   useCartDrawer,
   useCartTotals,
   FREE_DELIVERY_THRESHOLD,
   DELIVERY_FEE,
-  useAddToCartStatus,
   type CartItem,
 } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
@@ -44,7 +44,7 @@ const UPSELL_CATEGORIES = new Set<string>(["beverages", "soups", "snacks", "brea
  */
 export default function CartDrawer() {
   const { isOpen, close } = useCartDrawer();
-  const { items, addItem, updateQty, updateRecipient, removeItem, clear } = useCart();
+  const { items, bundleSlugs, addItem, updateQty, updateRecipient, removeItem, clear } = useCart();
   const totals = useCartTotals();
   const { dishes } = useMenuCatalog();
   const navigate = useNavigate();
@@ -104,10 +104,23 @@ export default function CartDrawer() {
     [addItem, projectedFill, totals.hasFreeDelivery, setGhost],
   );
 
-  const upsells = useMemo(
-    () => pickUpsells(dishes, items, totals.amountToFreeDelivery),
-    [dishes, items, totals.amountToFreeDelivery],
-  );
+  // Freeze the upsell rail per drawer-open. Recomputing pickUpsells on every
+  // cart change made cards jump position and vanish mid-tap (the reshuffle was
+  // also what unmounted cards and stranded their add-status). We snapshot the
+  // rail when the drawer opens (and once more if the catalog finishes loading
+  // after open) and keep it stable for the session; a dish that gets added
+  // stays in its slot and simply flips to an "Added" state.
+  const [upsells, setUpsells] = useState<DishData[]>([]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const its = useCartStore.getState().items;
+    const sub = its.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
+    const gap = Math.max(0, FREE_DELIVERY_THRESHOLD - sub);
+    setUpsells(pickUpsells(dishes, its, gap));
+    // Intentionally NOT keyed on items/totals — stability is the point.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, dishes]);
+  const inCartIds = useMemo(() => new Set(items.map((i) => i.dishId)), [items]);
 
   // Express UPI checkout — finalize-then-pay, mirroring the Checkout page:
   // the server order is created (safety gates, discounts, ASAP slot) BEFORE
@@ -147,14 +160,17 @@ export default function CartDrawer() {
           pincode: addr.pincode,
           phone: addr.phone,
         },
+        // Pass accepted combo bundles so the server applies the discount the
+        // user saw — omitting them silently charged full price for bundles.
+        bundleSlugs: bundleSlugs.length > 0 ? bundleSlugs : undefined,
         fulfillmentType: "delivery",
         deliverySlotId: null,
       });
 
-      // 3. Charge exactly what the server decided: discounted meal total
-      //    + 18% GST on that base + the same delivery-fee rule as the cart.
-      const gst = Math.round(out.finalPaise * 0.18);
-      const chargeTotal = Math.max(0, out.finalPaise + gst + totals.deliveryFee);
+      // 3. Charge EXACTLY the server-authoritative amount (meal-after-discount
+      //    + GST + delivery fee, computed once server-side). Never recompute
+      //    the total on the client.
+      const chargeTotal = out.chargePaise;
 
       const cancelServerOrder = () => {
         void fetch(`${API_BASE}/orders/${encodeURIComponent(localOrderId)}/cancel`, {
@@ -170,7 +186,9 @@ export default function CartDrawer() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amountPaise: chargeTotal, receipt: localOrderId.slice(0, 40) }),
+        // The server prices the gateway order from the stored charge; we send
+        // only the order id (amount included for server-side drift detection).
+        body: JSON.stringify({ orderId: localOrderId, amountPaise: chargeTotal }),
       });
       if (!rpRes.ok) { cancelServerOrder(); navigate("/checkout"); return; }
       const { razorpayOrderId } = (await rpRes.json()) as { razorpayOrderId: string };
@@ -219,7 +237,7 @@ export default function CartDrawer() {
           razorpay_signature: string;
         }) => {
           try {
-            await fetch(`${API_BASE}/payments/razorpay/verify`, {
+            const vres = await fetch(`${API_BASE}/payments/razorpay/verify`, {
               method: "POST",
               credentials: "include",
               headers: { "Content-Type": "application/json" },
@@ -230,8 +248,14 @@ export default function CartDrawer() {
                 razorpaySignature: response.razorpay_signature,
               }),
             });
-            removePendingTransaction(localOrderId);
-          } catch { /* non-fatal; webhook reconciles server-side */ }
+            // Only clear the recovery marker when the server actually confirmed
+            // the payment. On a non-OK verify (e.g. 400 bad signature) keep the
+            // pending tx so the webhook/recovery poller can reconcile it — a
+            // 4xx must never be treated as a successful payment.
+            if (vres.ok) {
+              removePendingTransaction(localOrderId);
+            }
+          } catch { /* non-fatal; webhook + pending-tx recovery reconcile server-side */ }
           // Record the order locally so it appears in /orders and the Track
           // page can resolve `/track/:id`.
           const nowMs = Date.now();
@@ -242,7 +266,7 @@ export default function CartDrawer() {
             status: "placed",
             items: [...items],
             subtotal: out.finalPaise,
-            deliveryFee: totals.deliveryFee,
+            deliveryFee: out.deliveryFeePaise,
             tip: 0,
             total: chargeTotal,
             serverOrderId: out.serverOrderId,
@@ -317,17 +341,21 @@ export default function CartDrawer() {
   useEffect(() => () => { expressAbortRef.current?.abort(); }, []);
 
   useEffect(() => {
+    // CartDrawer is globally mounted, so this listener runs whether or not the
+    // drawer is open. It must NOT be gated on isOpen — a payment that captured
+    // after the modal closed (or on the next app boot) would otherwise be
+    // silently swallowed, leaving the customer charged with no confirmation.
     return subscribeUpiRecovery({
       onRecovered: (event) => {
-        if (isOpen && event.tx.orderId.startsWith("TAN-")) {
-          toast.success(`Payment recovered for order ${event.tx.orderId}!`);
+        if (event.tx.orderId.startsWith("TAN-")) {
+          toast.success(`Payment confirmed for order ${event.tx.orderId}`);
           clear();
           close();
           navigate(`/track/${event.tx.orderId}`);
         }
       },
     });
-  }, [isOpen, clear, close, navigate]);
+  }, [clear, close, navigate]);
 
   // Focus the close button when drawer opens
   useEffect(() => {
@@ -450,6 +478,7 @@ export default function CartDrawer() {
                   {upsells.length > 0 && (
                     <UpsellCarousel
                       dishes={upsells}
+                      inCartIds={inCartIds}
                       onGhost={setGhost}
                       onAdd={addUpsell}
                     />
@@ -906,10 +935,12 @@ function QtyStepper({
 
 function UpsellCarousel({
   dishes,
+  inCartIds,
   onGhost,
   onAdd,
 }: {
   dishes: DishData[];
+  inCartIds: Set<number>;
   onGhost: (dish: DishData | null) => void;
   onAdd: (dish: DishData) => void;
 }) {
@@ -945,7 +976,7 @@ function UpsellCarousel({
         aria-label="Upsell items, use arrow keys to scroll"
       >
         {dishes.map((d) => (
-          <UpsellCard key={d.id} dish={d} onGhost={onGhost} onAdd={onAdd} />
+          <UpsellCard key={d.id} dish={d} inCart={inCartIds.has(d.id)} onGhost={onGhost} onAdd={onAdd} />
         ))}
       </div>
     </section>
@@ -954,33 +985,37 @@ function UpsellCarousel({
 
 function UpsellCard({
   dish,
+  inCart,
   onGhost,
   onAdd,
 }: {
   dish: DishData;
+  inCart: boolean;
   onGhost: (dish: DishData | null) => void;
   onAdd: (dish: DishData) => void;
 }) {
-  const { status, setStatus } = useAddToCartStatus(dish.id);
+  // `inCart` (derived from the live cart) is the durable "Added" signal — it
+  // can never strand, unlike the old global dishId→status map. A short local
+  // pulse gives immediate tap feedback and self-clears; if the card unmounts
+  // the timer is cleaned up and nothing leaks because the add already fired.
+  const [justAdded, setJustAdded] = useState(false);
   const timerRef = useRef<number | null>(null);
-  // Track whether ghost preview is active (for tap-to-preview on touch devices)
-  const [ghostActive, setGhostActive] = useState(false);
 
   useEffect(() => () => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
   }, []);
 
   const handleAdd = () => {
-    if (status !== "idle") return;
-    setGhostActive(false);
+    // Fire the add synchronously — no artificial delay that a close/unmount
+    // could drop. Re-taps simply add another unit (never a dead no-op).
     onGhost(null);
-    setStatus("loading");
-    timerRef.current = window.setTimeout(() => {
-      onAdd(dish);
-      setStatus("success");
-      timerRef.current = window.setTimeout(() => setStatus("idle"), 1200);
-    }, 180);
+    onAdd(dish);
+    setJustAdded(true);
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => setJustAdded(false), 1100);
   };
+
+  const showAdded = justAdded || inCart;
 
   return (
     <article
@@ -988,10 +1023,10 @@ function UpsellCard({
       aria-label={dish.name}
       className="hcard"
       style={{ width: 156, scrollSnapAlign: "start" }}
-      onPointerEnter={() => { setGhostActive(true); onGhost(dish); }}
-      onPointerLeave={() => { setGhostActive(false); onGhost(null); }}
+      onPointerEnter={() => { onGhost(dish); }}
+      onPointerLeave={() => { onGhost(null); }}
       onFocus={() => onGhost(dish)}
-      onBlur={() => { setGhostActive(false); onGhost(null); }}
+      onBlur={() => { onGhost(null); }}
     >
       <div className="posrel" style={{ aspectRatio: "4 / 3", background: "var(--s2)" }}>
         <img
@@ -1019,8 +1054,7 @@ function UpsellCard({
           <button
             type="button"
             onClick={handleAdd}
-            disabled={status === "loading"}
-            aria-label={`Add ${dish.name} to order`}
+            aria-label={inCart ? `Add another ${dish.name}` : `Add ${dish.name} to order`}
             className="btn"
             style={{
               height: 30,
@@ -1029,14 +1063,12 @@ function UpsellCard({
               borderRadius: 8,
               flex: "none",
               gap: 4,
-              ...(status === "success"
+              ...(showAdded
                 ? { background: "var(--saged)", color: "var(--sage)" }
                 : { background: "var(--saf)", color: "var(--onsaf)" }),
             }}
           >
-            {status === "idle" && <><Plus className="w-3 h-3" /> Add</>}
-            {status === "loading" && <Loader2 className="w-3 h-3 animate-spin" />}
-            {status === "success" && <Check className="w-3 h-3" />}
+            {showAdded ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add</>}
           </button>
         </div>
       </div>

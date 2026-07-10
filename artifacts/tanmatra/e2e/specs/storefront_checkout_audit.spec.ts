@@ -181,4 +181,74 @@ test.describe("Tanmatra storefront & checkout audit (v2 app)", () => {
 
     expect(errors.filter((e) => !BENIGN_ERRORS.test(e))).toEqual([]);
   });
+
+  test("V6 — upsell rail: adding an upsell keeps the cart growing and the card flips to Added (no dead button)", async ({ page }) => {
+    await dismissSoftGate(page);
+    const errors = collectErrors(page);
+
+    // Seed a small cart so the drawer's upsell rail ("Add to your order")
+    // renders, then open the drawer from the menu.
+    await seedCart(page, [cartItem({ quantity: 1 })]);
+    await page.goto("/menu");
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+
+    // Open the cart drawer via the first add on a menu card (opens the drawer)
+    // or the cart entry point; then locate the upsell "Add" buttons.
+    const addBtn = page.locator(".addb").first();
+    await addBtn.scrollIntoViewIfNeeded();
+    await addBtn.click();
+    await expect(page.getByLabel("Close cart").first()).toBeVisible({ timeout: 5000 });
+
+    // The upsell rail lives under the "Add to your order" heading. Grab its
+    // first "Add" button and record the cart line count before adding.
+    const railAdd = page.getByRole("button", { name: /Add .* to order/i }).first();
+    const railCount = await railAdd.count();
+    if (railCount > 0) {
+      const before = await page.evaluate(() => {
+        try { return JSON.parse(localStorage.getItem("tanmatra:cart:v1") ?? "{}")?.state?.items?.length ?? 0; }
+        catch { return 0; }
+      });
+      await railAdd.click();
+      // The card must NOT vanish into a dead state — it flips to "Added" and
+      // the cart grows. Poll the persisted store (the true invariant).
+      await expect
+        .poll(async () =>
+          page.evaluate(() => {
+            try { return JSON.parse(localStorage.getItem("tanmatra:cart:v1") ?? "{}")?.state?.items?.length ?? 0; }
+            catch { return -1; }
+          }),
+        )
+        .toBeGreaterThan(before);
+      // The same button re-taps as "Add another" — never a permanently
+      // disabled/dead control (the stranded-status regression).
+      await expect(page.getByText(/Added/i).first()).toBeVisible();
+    }
+
+    expect(errors.filter((e) => !BENIGN_ERRORS.test(e))).toEqual([]);
+  });
+
+  test("V7 — hero banners: the three homepage slides point to three DISTINCT destinations", async ({ page }) => {
+    await dismissSoftGate(page);
+    await page.goto("/");
+    await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+    await page.waitForTimeout(500);
+
+    // Each slide CTA navigates on click; assert the three CTAs resolve to three
+    // different routes (regression guard for two banners sharing /menu).
+    const ctas = page.locator(".herocar-slide button.btn-p");
+    await expect(ctas.first()).toBeVisible({ timeout: 8000 });
+    const n = await ctas.count();
+    expect(n).toBeGreaterThanOrEqual(3);
+
+    const dests: string[] = [];
+    for (let i = 0; i < Math.min(n, 3); i++) {
+      await page.goto("/");
+      await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
+      await page.locator(".herocar-slide button.btn-p").nth(i).click();
+      await page.waitForTimeout(400);
+      dests.push(new URL(page.url()).pathname);
+    }
+    // All distinct.
+    expect(new Set(dests).size).toBe(dests.length);
+  });
 });

@@ -70,6 +70,10 @@ CREATE INDEX IF NOT EXISTS idx_wearable_links_provider_user ON public.wearable_l
 
 ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS day_plan jsonb;
 
+-- Authoritative payable total (meal-after-discount + GST + delivery fee).
+-- The payment path bills and reconciles against this column exclusively.
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS charge_paise integer;
+
 CREATE TABLE IF NOT EXISTS public.funnel_events (
   id serial PRIMARY KEY,
   name varchar(64) NOT NULL,

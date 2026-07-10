@@ -153,6 +153,11 @@ export const loyaltyApi = {
       firstOrderDiscountPaise: number;
       redeemedPaise: number;
       finalPaise: number;
+      // Authoritative charge breakdown — bill exactly `chargePaise`, never a
+      // client-recomputed total. gst/deliveryFee are provided for display.
+      gstPaise: number;
+      deliveryFeePaise: number;
+      chargePaise: number;
       balancePaise: number;
       duplicate: boolean;
       referral:
