@@ -415,6 +415,44 @@ export const PREORDER_DISCOUNT_BPS = 500; // 5% off scheduled orders
 export const FIRST_ORDER_DISCOUNT_BPS = 2500;
 export const FIRST_ORDER_DISCOUNT_CAP_PAISE = 8_000;
 
+// Charge composition — must mirror the client cart display (cartMath.ts):
+// 18% GST, ₹50 delivery fee waived at/above a ₹500 subtotal.
+export const GST_BPS = 1800;
+export const DELIVERY_FEE_PAISE = 5_000;
+export const FREE_DELIVERY_THRESHOLD_PAISE = 50_000;
+
+/**
+ * The single authoritative payable amount for an order, in paise.
+ *
+ *   charge = payable meal total (post-discount, post-credit)
+ *          + 18% GST on that taxable value
+ *          + delivery fee (waived when the pre-discount subtotal clears the
+ *            free-delivery threshold; always zero for pickup)
+ *
+ * This is the ONLY number the payment path may bill or reconcile against.
+ * `subtotalPaise` is the pre-discount meal subtotal used purely for the
+ * free-delivery threshold, so the fee tracks the same basis the cart's
+ * free-delivery progress bar shows the customer.
+ */
+export function computeChargePaise(args: {
+  finalPaise: number;
+  subtotalPaise: number;
+  fulfillmentType: "delivery" | "pickup";
+}): { chargePaise: number; gstPaise: number; deliveryFeePaise: number } {
+  const gstPaise = Math.round((args.finalPaise * GST_BPS) / 10_000);
+  const deliveryFeePaise =
+    args.fulfillmentType === "pickup" ||
+    args.subtotalPaise === 0 ||
+    args.subtotalPaise >= FREE_DELIVERY_THRESHOLD_PAISE
+      ? 0
+      : DELIVERY_FEE_PAISE;
+  return {
+    chargePaise: args.finalPaise + gstPaise + deliveryFeePaise,
+    gstPaise,
+    deliveryFeePaise,
+  };
+}
+
 export async function userIsFirstOrderEligible(
   userId: string,
   // Exclude the order being finalized so an idempotent retry of the
@@ -462,6 +500,9 @@ export async function finalizeOrder(args: {
   firstOrderDiscountPaise: number;
   redeemedPaise: number;
   finalPaise: number;
+  gstPaise: number;
+  deliveryFeePaise: number;
+  chargePaise: number;
   balancePaise: number;
   duplicate: boolean;
   referral: AwardReferralResult;
@@ -885,6 +926,12 @@ export async function finalizeOrder(args: {
           ),
         );
       const balance = await getCreditBalancePaise(args.userId, tx);
+      const dupFinalPaise = existing?.finalPaise ?? discountedGross;
+      const dupCharge = computeChargePaise({
+        finalPaise: dupFinalPaise,
+        subtotalPaise: grossPaise,
+        fulfillmentType,
+      });
       return {
         orderId: args.orderId,
         serverOrderId,
@@ -894,7 +941,10 @@ export async function finalizeOrder(args: {
         preorderDiscountPaise,
         firstOrderDiscountPaise,
         redeemedPaise: existing?.redeemedPaise ?? 0,
-        finalPaise: existing?.finalPaise ?? discountedGross,
+        finalPaise: dupFinalPaise,
+        gstPaise: dupCharge.gstPaise,
+        deliveryFeePaise: dupCharge.deliveryFeePaise,
+        chargePaise: dupCharge.chargePaise,
         balancePaise: balance,
         duplicate: true,
         referral: {
@@ -965,17 +1015,25 @@ export async function finalizeOrder(args: {
     }
     const finalPaise = discountedGross - redeemed;
 
-    // 4. Persist actual amounts on the claim and the order total.
+    // Authoritative payable amount — the ONLY number the payment path bills.
+    const { chargePaise, gstPaise, deliveryFeePaise } = computeChargePaise({
+      finalPaise,
+      subtotalPaise: grossPaise,
+      fulfillmentType,
+    });
+
+    // 4. Persist actual amounts on the claim and the order.
+    //    charge_paise is written unconditionally (it is the payment source of
+    //    truth); total_paise is only rewritten when credit changed the meal
+    //    total, preserving its existing meal-subtotal semantics.
     await tx
       .update(orderClaimsTable)
       .set({ redeemedPaise: redeemed, finalPaise })
       .where(eq(orderClaimsTable.id, created.id));
-    if (redeemed > 0) {
-      await tx
-        .update(ordersTable)
-        .set({ totalPaise: finalPaise })
-        .where(eq(ordersTable.id, serverOrderId));
-    }
+    await tx
+      .update(ordersTable)
+      .set({ chargePaise, ...(redeemed > 0 ? { totalPaise: finalPaise } : {}) })
+      .where(eq(ordersTable.id, serverOrderId));
 
     // 5. Award referral — server-recorded first order satisfies the
     //    "both earn credits on first order" requirement. We additionally
@@ -1010,6 +1068,9 @@ export async function finalizeOrder(args: {
       firstOrderDiscountPaise,
       redeemedPaise: redeemed,
       finalPaise,
+      gstPaise,
+      deliveryFeePaise,
+      chargePaise,
       balancePaise,
       duplicate: false,
       referral,

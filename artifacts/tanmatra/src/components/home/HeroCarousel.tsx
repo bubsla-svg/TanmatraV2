@@ -18,18 +18,18 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     eyebrow: "First order",
-    heading: "CLINICAL PRECISION. CULINARY SPEED.",
-    sub: "Flat 25% off your first dietitian-calibrated meal — up to ₹80.",
-    cta: "Get My Meal Plan",
+    heading: "MACROS ON THE LABEL. NOTHING HIDDEN.",
+    sub: "Flat 25% off your first à-la-carte order — up to ₹80. Calories, protein, carbs and fat printed on every RD-verified plate.",
+    cta: "Claim 25% off",
     to: "/menu",
     icon: "ph-gift",
   },
   {
-    eyebrow: "Every dish",
-    heading: "MACROS ON THE LABEL. NOTHING HIDDEN.",
-    sub: "Calories, protein, carbs, fat and GI disclosed on every plate.",
-    cta: "Browse the menu",
-    to: "/menu",
+    eyebrow: "Your goal",
+    heading: "CLINICAL PRECISION. CULINARY SPEED.",
+    sub: "A dietitian-calibrated meal plan built around your goal, macros and weekly schedule.",
+    cta: "Build my meal plan",
+    to: "/plans",
     icon: "ph-seal-check",
   },
   {

@@ -813,6 +813,14 @@ export default function V2Checkout() {
     let referralAwarded = false;
     let serverOrderIdFromFinalize: number | undefined;
     let firstOrderDiscountApplied = 0;
+    // Server-authoritative money fields captured out of the finalize response
+    // for the post-payment local order record (`out` is scoped to the try).
+    let serverSubtotalPaise = subtotal;
+    let serverDeliveryFeePaise = deliveryFee;
+    // Corporate subsidy actually applied to the customer's card charge (the
+    // company is billed this amount post-payment). Captured here so the
+    // subsidy-charge step below bills exactly what reduced the card total.
+    let subsidyApplied = 0;
     try {
       const out = await loyaltyApi.finalizeOrder({
         // Same key for every retry of THIS submit attempt; the server
@@ -863,89 +871,132 @@ export default function V2Checkout() {
       // ───────────────────────────────────────────────────────────────
       // C3 — Razorpay checkout handoff.
       // Requires: RAZORPAY_KEY_ID env var on the client, and the backend
-      // to expose POST /payments/razorpay/order returning
-      // { razorpayOrderId, amount, currency, keyId }.
-      // Until those are provisioned, falls through to the deferred path.
+      // to expose POST /payments/razorpay/order returning { razorpayOrderId }.
+      // The server is the single authority for the payable amount: it prices
+      // the gateway order from the stored charge_paise, so we bill exactly
+      // out.chargePaise (post-discount meal + 18% GST + delivery fee).
       // ───────────────────────────────────────────────────────────────
       const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID as
         | string
         | undefined;
-      // Reconcile the charge against the server's first-order decision: if
-      // the server applied a different discount than our estimate (e.g.
-      // the user's first order raced in from another device), shift the
-      // charge by the delta so the amount always matches the stored order.
       firstOrderDiscountApplied = out.firstOrderDiscountPaise ?? 0;
-      const chargeTotal = Math.max(
-        0,
-        razorpayTotal - (firstOrderDiscountApplied - firstOrderDiscount),
-      );
-      if (RAZORPAY_KEY_ID) {
-        try {
-          // 1. Ask the server to create a Razorpay order.
-          const rpOrderRes = await fetch(
-            `${API_BASE}/payments/razorpay/order`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              // Server contract is { amountPaise, receipt } — the previous
-              // { orderId, amount, currency } payload failed schema
-              // validation (400) and silently pushed every live payment
-              // onto the "placed but not charged" fallback.
-              body: JSON.stringify({
-                amountPaise: chargeTotal,
-                receipt: orderId.slice(0, 40),
-              }),
-            },
-          );
-          if (!rpOrderRes.ok)
-            throw new Error(`razorpay/order ${rpOrderRes.status}`);
-          const { razorpayOrderId } = (await rpOrderRes.json()) as {
-            razorpayOrderId: string;
-          };
+      // Server-authoritative money fields for the local order record.
+      serverSubtotalPaise = out.finalPaise;
+      serverDeliveryFeePaise = out.deliveryFeePaise;
+      // Bill EXACTLY the server-computed charge, never a client recomputation.
+      // Tip and add-ons are checkout-only extras not modeled in the server
+      // order total, so they are the only things added ON TOP of chargePaise
+      // (GST / delivery / discounts / credits are already inside chargePaise —
+      // do NOT re-add them here or the customer is double-charged).
+      const tipPaise = effectiveTip;
+      const addonPaise = addonTotal;
+      // Corporate subsidy is a client/corporate-side reduction that the server
+      // order total does NOT model: the company is billed `subsidyApplied` and
+      // the customer's card is charged the remainder. Cap it to the payable so
+      // the card charge can never go negative, and bill the company exactly the
+      // amount that reduced the card charge (avoids over-collecting).
+      const grossPayable = out.chargePaise + tipPaise + addonPaise;
+      subsidyApplied = Math.min(Math.max(0, subsidyAvailable), grossPayable);
+      const finalCharge = Math.max(0, grossPayable - subsidyApplied);
 
-          // 2. Open Razorpay checkout modal — script loaded lazily below.
-          await new Promise<void>((resolve, reject) => {
-            // Load Razorpay checkout.js if not already present.
-            if (!document.getElementById("__rzp_script")) {
-              const s = document.createElement("script");
-              s.id = "__rzp_script";
-              s.src = "https://checkout.razorpay.com/v1/checkout.js";
-              s.onload = () => openModal();
-              s.onerror = () =>
-                reject(new Error("Razorpay script failed to load"));
-              document.head.appendChild(s);
-            } else {
-              openModal();
+      // Cancel the (already-created) unpaid server order so it never sits in
+      // the kitchen queue when payment doesn't complete. Mirrors CartDrawer.
+      const cancelServerOrder = () => {
+        void fetch(
+          `${API_BASE}/orders/${encodeURIComponent(orderId)}/cancel`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ reason: "Payment not completed" }),
+          },
+        ).catch((err) => console.error("Failed to cancel unpaid order:", err));
+      };
+
+      if (!RAZORPAY_KEY_ID) {
+        // No gateway configured — we must NOT present an unpaid order as
+        // placed. Cancel it and keep the user on checkout (cart preserved).
+        cancelServerOrder();
+        removePendingTransaction(orderId);
+        submitAttemptRef.current = null;
+        toast.error("Payments are temporarily unavailable — your cart is safe");
+        setIsProcessing(false);
+        setConfirmOpen(false);
+        return;
+      }
+
+      try {
+        // 1. Ask the server to create a Razorpay order. It prices the gateway
+        //    order from the stored charge_paise; we pass the SAME
+        //    externalOrderId used in finalize (and later in verify) and include
+        //    amountPaise only for the server's drift log — it is ignored for
+        //    pricing.
+        const rpOrderRes = await fetch(
+          `${API_BASE}/payments/razorpay/order`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ orderId, amountPaise: out.chargePaise }),
+          },
+        );
+        if (!rpOrderRes.ok)
+          throw new Error(`razorpay/order ${rpOrderRes.status}`);
+        const { razorpayOrderId } = (await rpOrderRes.json()) as {
+          razorpayOrderId: string;
+        };
+
+        // 2. Open Razorpay checkout modal — script loaded lazily below. The
+        //    promise resolves ONLY after the server confirms the payment
+        //    (verify res.ok); every other outcome rejects, so an unconfirmed
+        //    payment is never treated as placed.
+        await new Promise<void>((resolve, reject) => {
+          // Load Razorpay checkout.js if not already present.
+          if (!document.getElementById("__rzp_script")) {
+            const s = document.createElement("script");
+            s.id = "__rzp_script";
+            s.src = "https://checkout.razorpay.com/v1/checkout.js";
+            s.onload = () => openModal();
+            s.onerror = () =>
+              reject(new Error("Razorpay script failed to load"));
+            document.head.appendChild(s);
+          } else {
+            openModal();
+          }
+
+          function openModal() {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const Razorpay = (window as any).Razorpay;
+            if (!Razorpay) {
+              reject(new Error("Razorpay not available"));
+              return;
             }
-
-            function openModal() {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const Razorpay = (window as any).Razorpay;
-              if (!Razorpay) {
-                reject(new Error("Razorpay not available"));
-                return;
-              }
-              const rzp = new Razorpay({
-                key: RAZORPAY_KEY_ID,
-                amount: chargeTotal,
-                currency: "INR",
-                order_id: razorpayOrderId,
-                name: "Tanmatra",
-                description: `Order ${orderId}`,
-                theme: { color: "#F4C430" },
-                prefill: {
-                  contact: activeAddr?.phone ?? "",
-                },
-                handler: async (response: {
-                  razorpay_payment_id: string;
-                  razorpay_order_id: string;
-                  razorpay_signature: string;
-                }) => {
-                  // 3. Verify payment server-side before accepting the order.
-                  try {
-                    removePendingTransaction(orderId);
-                    await fetch(`${API_BASE}/payments/razorpay/verify`, {
+            const rzp = new Razorpay({
+              key: RAZORPAY_KEY_ID,
+              amount: finalCharge,
+              currency: "INR",
+              order_id: razorpayOrderId,
+              name: "Tanmatra",
+              description: `Order ${orderId}`,
+              theme: { color: "#F4C430" },
+              prefill: {
+                contact: activeAddr?.phone ?? "",
+              },
+              handler: async (response: {
+                razorpay_payment_id: string;
+                razorpay_order_id: string;
+                razorpay_signature: string;
+              }) => {
+                // 3. Verify server-side before accepting the order. Only a
+                //    res.ok verify confirms the charge — a 400/404/409 (bad
+                //    signature, unknown order, wrong state) means the payment
+                //    was NOT confirmed. In that case keep the pending-tx
+                //    marker so the webhook + recovery poller reconcile, and do
+                //    NOT clear the cart / record the order / navigate as paid.
+                try {
+                  const vres = await fetch(
+                    `${API_BASE}/payments/razorpay/verify`,
+                    {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       credentials: "include",
@@ -955,69 +1006,85 @@ export default function V2Checkout() {
                         razorpayOrderId: response.razorpay_order_id,
                         razorpaySignature: response.razorpay_signature,
                       }),
-                    });
+                    },
+                  );
+                  if (vres.ok) {
+                    // Confirmed — safe to drop the recovery marker now.
+                    removePendingTransaction(orderId);
                     resolve();
-                  } catch (verifyErr) {
-                    reject(verifyErr);
+                  } else {
+                    reject(new Error("verify_unconfirmed"));
                   }
-                },
-                modal: {
-                  ondismiss: () => reject(new Error("payment_cancelled")),
-                },
-              });
-              savePendingTransaction({
-                orderId,
-                idempotencyKey: submitAttemptRef.current?.key ?? orderId,
-                initiatedAt: Date.now(),
-                amount: chargeTotal,
-                provider: "razorpay",
-              });
-              rzp.open();
-            }
-          });
-        } catch (rpErr) {
-          const rpMsg = String((rpErr as Error).message);
-          if (rpMsg === "payment_cancelled") {
-            removePendingTransaction(orderId);
-            submitAttemptRef.current = null;
-            void fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/cancel`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ reason: "Payment cancelled by user" }),
-            }).catch((err) => console.error("Failed to cancel orphaned order:", err));
-
-            toast.info("Payment cancelled — your cart is safe");
-            setIsProcessing(false);
-            setConfirmOpen(false);
-            return;
+                } catch {
+                  // Network error reaching verify: treat as unconfirmed and
+                  // let the webhook + pending-tx recovery reconcile.
+                  reject(new Error("verify_unconfirmed"));
+                }
+              },
+              modal: {
+                ondismiss: () => reject(new Error("payment_cancelled")),
+              },
+            });
+            savePendingTransaction({
+              orderId,
+              idempotencyKey: submitAttemptRef.current?.key ?? orderId,
+              initiatedAt: Date.now(),
+              amount: finalCharge,
+              provider: "razorpay",
+            });
+            rzp.open();
           }
-          // Non-cancellation Razorpay error: fall through to order creation
-          // but surface a warning so the user knows payment isn't confirmed.
-          toast.warning(
-            "Payment gateway error — order placed but not charged. Our team will contact you.",
+        });
+        // Reaching here means verify returned res.ok — payment confirmed.
+      } catch (rpErr) {
+        const rpMsg = String((rpErr as Error).message);
+        if (rpMsg === "verify_unconfirmed") {
+          // Payment was attempted but the server did NOT confirm it. Keep the
+          // pending-tx marker (webhook + recovery poller reconcile) and do NOT
+          // record the order as paid, clear the cart, or navigate as placed.
+          // Show an honest "confirming" state and route to the tracker's
+          // recovery view.
+          toast.info(
+            "We're confirming your payment — we'll update your order shortly.",
           );
+          setIsProcessing(false);
+          setConfirmOpen(false);
+          navigate(`/track?orderId=${encodeURIComponent(orderId)}`);
+          return;
         }
+        // Pre-modal failure (razorpay/order non-OK, script load failure,
+        // gateway unavailable) or user cancellation: cancel the unpaid server
+        // order and stay on checkout. Never present it as a completed order.
+        cancelServerOrder();
+        removePendingTransaction(orderId);
+        submitAttemptRef.current = null;
+        toast.info(
+          rpMsg === "payment_cancelled"
+            ? "Payment cancelled — your cart is safe"
+            : "Payment could not be started — your cart is safe",
+        );
+        setIsProcessing(false);
+        setConfirmOpen(false);
+        return;
       }
 
-      // Add delivery + tip on top of the server-validated meal total. The
-      // server's finalPaise already nets out bundle, pickup, preorder, and
-      // credit redemptions (see loyaltyEngine.finalizeOrder), so we must
-      // NOT subtract preorder/pickup again here — that would double-discount.
-      finalTotal = out.finalPaise + deliveryFee + effectiveTip;
+      // Payment confirmed. The recorded local total is the amount actually
+      // charged (chargePaise + tip + add-ons). The server's finalPaise/​
+      // deliveryFeePaise are recorded separately for the order breakdown.
+      finalTotal = finalCharge;
       setCreditBalance(out.balancePaise);
       referralAwarded = out.referral.awarded;
       serverOrderIdFromFinalize = out.serverOrderId;
       // Attach add-ons (drinks/snacks/supplements) to the freshly-created
       // server order. Failures here should not block the order itself —
-      // the user already paid for the meals.
+      // the user already paid. The add-on amount is already inside finalCharge
+      // (billed above), so we do NOT add r.addedPaise to the total again.
       if (out.serverOrderId && selectedAddons.size > 0) {
         try {
           const items = Array.from(selectedAddons.entries()).map(
             ([addonId, qty]) => ({ addonId, qty }),
           );
-          const r = await addonsApi.attach(out.serverOrderId, items);
-          finalTotal += r.addedPaise;
+          await addonsApi.attach(out.serverOrderId, items);
         } catch {
           toast.warning("Add-ons could not be attached — contact support");
         }
@@ -1137,19 +1204,17 @@ export default function V2Checkout() {
       return;
     }
 
-    // Charge the company subsidy AFTER the order is finalized server-side.
-    // The subsidy reduces the employee's out-of-pocket without changing the
-    // order amount itself; it's tracked separately for usage reporting.
-    if (subsidyAvailable > 0 && subsidy?.active && subsidy.company) {
+    // Record the company subsidy AFTER the order is finalized + paid. The
+    // customer's card was charged `finalCharge` (already net of the subsidy),
+    // so we bill the company exactly `subsidyApplied` — the amount that reduced
+    // the card charge — keeping customer-charge + company-charge == the total.
+    if (subsidyApplied > 0 && subsidy?.active && subsidy.company) {
       try {
-        // Use the server-returned charged amount, NOT the requested amount —
-        // the server may charge less under contention or stale budget data.
-        const charge = await corporateApi.chargeSubsidy(
+        await corporateApi.chargeSubsidy(
           subsidy.company.id,
-          subsidyAvailable,
+          subsidyApplied,
           orderId,
         );
-        finalTotal = Math.max(0, finalTotal - (charge.chargedPaise ?? 0));
       } catch {
         // Non-fatal: order is placed, just log a soft warning.
         toast.warning("Company subsidy could not be applied to this order");
@@ -1174,8 +1239,11 @@ export default function V2Checkout() {
       etaAt,
       status: "placed",
       items: [...items],
-      subtotal,
-      deliveryFee,
+      // Server-authoritative breakdown: subtotal is the server's post-discount
+      // meal total (finalPaise) and deliveryFee is the server's fee. total is
+      // the amount actually charged (chargePaise + tip + add-ons).
+      subtotal: serverSubtotalPaise,
+      deliveryFee: serverDeliveryFeePaise,
       tip: effectiveTip,
       total: finalTotal,
       scheduledFor: preorderTomorrow ? tomorrowSlot.toISOString() : undefined,

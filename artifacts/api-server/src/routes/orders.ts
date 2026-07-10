@@ -2,11 +2,13 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import {
   db,
   deliveryEventsTable,
+  deliverySlotsTable,
   ordersTable,
   rdUsersTable,
+  slotReservationsTable,
   teamProfilesTable,
 } from "@workspace/db";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { emitDeliveryEvent } from "../lib/realtime";
 
@@ -149,6 +151,8 @@ router.post(
         id: ordersTable.id,
         userId: ordersTable.userId,
         status: ordersTable.status,
+        deliverySlotId: ordersTable.deliverySlotId,
+        razorpayOrderId: ordersTable.razorpayOrderId,
       })
       .from(ordersTable)
       .where(eq(ordersTable.externalOrderId, externalOrderId))
@@ -177,28 +181,69 @@ router.post(
       return;
     }
 
+    // State machine: an order already handed to the rider or completed cannot
+    // be cancelled here. Cancellable window = placed | preparing | ready.
+    if (row.status === "cancelled") {
+      // Idempotent — a re-issued cancel is a no-op success.
+      res.json({ ok: true, cancelled: true, persisted: true, priority, reason, orderId: row.id, alreadyCancelled: true });
+      return;
+    }
+    const CANCELLABLE = new Set(["placed", "preparing", "ready"]);
+    if (!CANCELLABLE.has(row.status)) {
+      res.status(409).json({
+        ok: false,
+        cancelled: false,
+        error: "order can no longer be cancelled",
+        status: row.status,
+      });
+      return;
+    }
+
     const verifiedByName = callerIsClinician
       ? await lookupClinicianName(req.user.id)
       : null;
 
-    await db
-      .update(ordersTable)
-      .set({ status: "cancelled" })
-      .where(
-        and(
-          eq(ordersTable.id, row.id),
-          // Defence in depth: scope the UPDATE to the row we just read so
-          // we never accidentally update a different row even if a race
-          // changed it.
-          eq(ordersTable.externalOrderId, externalOrderId),
-        ),
-      );
+    // A paid order (money captured before cancel) needs a refund; we flag it
+    // for ops rather than firing an irreversible gateway refund automatically.
+    const refundRequired = Boolean(row.razorpayOrderId) && row.status !== "placed";
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(ordersTable)
+        .set({ status: "cancelled" })
+        .where(
+          and(
+            eq(ordersTable.id, row.id),
+            // Defence in depth: scope the UPDATE to the row we just read so
+            // we never accidentally update a different row even if a race
+            // changed it.
+            eq(ordersTable.externalOrderId, externalOrderId),
+          ),
+        );
+
+      // Release the held delivery-slot capacity so an abandoned/cancelled
+      // order stops consuming a seat (previously a permanent capacity leak).
+      if (row.deliverySlotId) {
+        const removed = await tx
+          .delete(slotReservationsTable)
+          .where(and(eq(slotReservationsTable.orderId, row.id), eq(slotReservationsTable.kind, "order")))
+          .returning({ id: slotReservationsTable.id });
+        if (removed.length > 0) {
+          await tx
+            .update(deliverySlotsTable)
+            .set({ reservedCount: sql`greatest(0, ${deliverySlotsTable.reservedCount} - 1)` })
+            .where(eq(deliverySlotsTable.id, row.deliverySlotId));
+        }
+      }
+    });
+
     const meta = {
       reason,
       priority,
       externalOrderId,
       cancelledByUserId: req.user.id,
       cancelledByRole: callerIsClinician ? "clinician" : "patient",
+      ...(refundRequired ? { refundRequired: true } : {}),
       ...(verifiedByName ? { verifiedByName } : {}),
     } as const;
     await db.insert(deliveryEventsTable).values({
@@ -226,6 +271,7 @@ router.post(
       reason,
       orderId: row.id,
       cancelledByRole: meta.cancelledByRole,
+      refundRequired,
     });
   },
 );
