@@ -58,6 +58,9 @@ export const NOINDEX_SHELL_PATHS: string[] = [
   "/cart",
   "/track",
   "/login",
+  // /profile is a client-side redirect to /account; prerender a noindex shell
+  // so crawlers get robots:noindex instead of the indexable SPA fallback HTML.
+  "/profile",
   "/account",
   "/account/addresses",
   "/orders",
