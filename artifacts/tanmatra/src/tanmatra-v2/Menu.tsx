@@ -39,6 +39,7 @@ import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { track } from "@/lib/analytics";
 import { groupCatalogDishes, type ConsolidatedDish } from "@/lib/menuVariants";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 import { evaluateDishForPreferences, rankDishesForPreferences } from "@/lib/preferencesMatch";
 import { toast } from "sonner";
 
@@ -580,6 +581,7 @@ export default function V2Menu() {
                             loading="lazy"
                             decoding="async"
                             alt={dish.name}
+                            onError={onDishImageError}
                             style={{ width: "100%", height: "100%", objectFit: "cover" }}
                           />
                         </picture>
@@ -905,6 +907,7 @@ function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumO
               loading="lazy"
               decoding="async"
               alt={name}
+              onError={onDishImageError}
               style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }}
             />
           </picture>

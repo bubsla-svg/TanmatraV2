@@ -273,6 +273,7 @@ export default function V2Dish() {
                 loading="eager"
                 fetchPriority="high"
                 decoding="sync"
+                onError={onDishImageError}
                 alt={meal.name}
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
               />
@@ -427,10 +428,11 @@ export default function V2Dish() {
                     }}
                   >
                     <div className="fx ac gap8">
-                      <img 
+                      <img
                         src={getLocalDishFallback(smartSwap.image, 200)}
                         srcSet={localDishSrcset(smartSwap.image, "webp")}
                         alt={smartSwap.name}
+                        onError={onDishImageError}
                         style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flex: "none" }}
                       />
                       <div>

@@ -7,7 +7,11 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DISHES_DIR = path.resolve(__dirname, "../../artifacts/tanmatra/public/dishes");
+// Must match the catalog's `image` field prefix (@workspace/menu-catalog uses
+// "/images/dishes/<slug>.jpg") and the prefix imgSrcset.ts's localDishSrcset /
+// getLocalDishFallback match against — otherwise every generated variant is
+// unreachable dead weight and the responsive <picture>/srcSet never engages.
+const DISHES_DIR = path.resolve(__dirname, "../../artifacts/tanmatra/public/images/dishes");
 
 async function main() {
   console.log(`Scanning dishes directory: ${DISHES_DIR}`);

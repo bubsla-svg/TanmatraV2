@@ -36,13 +36,13 @@ export function localDishSrcset(url: string, format: "webp" | "avif" | "jpg" = "
     }
   }
   
-  if (!pathname.startsWith("/dishes/")) return undefined;
-  
+  if (!pathname.startsWith("/images/dishes/")) return undefined;
+
   try {
     const extIdx = pathname.lastIndexOf(".");
     if (extIdx === -1) return undefined;
     const basePath = pathname.substring(0, extIdx);
-    
+
     const make = (w: number): string => {
       return `${basePath}-${w}.${format} ${w}w`;
     };
@@ -72,7 +72,7 @@ export function getLocalDishFallback(url: string, width: 200 | 400 | 800 = 800):
     }
   }
   
-  if (!pathname.startsWith("/dishes/")) return url;
+  if (!pathname.startsWith("/images/dishes/")) return url;
   const extIdx = pathname.lastIndexOf(".");
   if (extIdx === -1) return url;
   const basePath = pathname.substring(0, extIdx);

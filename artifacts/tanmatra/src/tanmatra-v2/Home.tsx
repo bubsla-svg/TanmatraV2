@@ -18,6 +18,7 @@ import MetaDishCard from "@/components/home/MetaDishCard";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { toast } from "sonner";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 
 /* Full-parity re-port of the System-A Home (git 2507084, 955 lines) into v2. */
 
@@ -271,6 +272,7 @@ export default function V2Home() {
                           loading="lazy"
                           decoding="async"
                           alt={d.name}
+                          onError={onDishImageError}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />
                       </picture>
