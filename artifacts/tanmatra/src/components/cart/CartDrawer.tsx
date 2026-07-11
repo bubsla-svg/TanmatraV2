@@ -27,6 +27,7 @@ import { formatPrice } from "@/lib/api/adapter";
 import { track } from "@/lib/analytics";
 import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
 import { unsplashSrcset } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 import { usePremiumStatus } from "@/lib/usePremium";
 import { useOrders } from "@/lib/ordersContext";
 import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
@@ -806,6 +807,7 @@ function CartLine({
           sizes="64px"
           alt=""
           loading="lazy"
+          onError={onDishImageError}
           style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", flex: "none", background: "var(--s2)" }}
         />
         <div className="f1" style={{ minWidth: 0 }}>
@@ -1035,6 +1037,7 @@ function UpsellCard({
           sizes="156px"
           alt=""
           loading="lazy"
+          onError={onDishImageError}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         {dish.isVeg && (

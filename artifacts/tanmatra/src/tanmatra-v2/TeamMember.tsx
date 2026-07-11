@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router";
 import { getOwnedDishesForMember, getTeamMemberBySlug } from "@/lib/teamData";
 import { LIFESTYLE_LABELS } from "@/lib/dishEnrichment";
+import { useMenuCatalog } from "@/lib/menuData";
 import { F } from "./data";
 
 /* ------------------------------------------------------------------ *
@@ -21,6 +22,10 @@ const ACCENT: Record<string, { text: string; bg: string; border: string }> = {
 export default function V2TeamMember() {
   const { slug } = useParams<{ slug: string }>();
   const member: any = slug ? getTeamMemberBySlug(slug) : undefined;
+  // Called unconditionally (before the early return below) per the Rules of
+  // Hooks — live catalog so a dish pulled from the menu never keeps showing
+  // as "owned" here.
+  const { dishes: catalogDishes } = useMenuCatalog();
 
   if (!member) {
     return (
@@ -42,7 +47,7 @@ export default function V2TeamMember() {
   }
 
   const accent = ACCENT[member.accent] ?? ACCENT.gold;
-  const ownedDishes = getOwnedDishesForMember(member);
+  const ownedDishes = getOwnedDishesForMember(member, catalogDishes);
   const isRd = member.role === "rd";
 
   return (

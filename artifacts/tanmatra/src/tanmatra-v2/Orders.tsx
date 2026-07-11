@@ -10,6 +10,7 @@ import SupportTicketDialog from "@/components/track/SupportTicketDialog";
 import { useSocketStatus } from "@/lib/useSocketStatus";
 import { isCancellable } from "@/lib/clinicalLifecycle";
 import { useClinicalMode } from "@/lib/clinicalDiet";
+import { onDishImageError } from "@/lib/imgFallback";
 
 // v2 status pill: consumer-facing labels by default, mapped to dark-theme tokens.
 const STATUS_BADGE: Record<PastOrder["status"], { label: string; cls: string; style?: any }> = {
@@ -138,6 +139,7 @@ export default function V2Orders() {
                             <img
                               src={item.image}
                               alt={item.name}
+                              onError={onDishImageError}
                               style={{ width: 56, height: 56, borderRadius: 9, objectFit: "cover", border: "1px solid var(--ln)" }}
                             />
                             <div className="fine mt4" style={{ fontSize: 10 }}>×{item.quantity}</div>

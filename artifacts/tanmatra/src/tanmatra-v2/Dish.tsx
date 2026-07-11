@@ -25,6 +25,7 @@ import { RD_PLANS } from "@/lib/rdPlans";
 import CoachAgentWidget from "@/components/ai/CoachAgent";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { API_BASE } from "@/lib/apiBase";
+import { onDishImageError } from "@/lib/imgFallback";
 
 /* ------------------------------------------------------------------ *
  * Full-parity re-port of the original System-A Dish PDP into the v2   *
@@ -91,7 +92,7 @@ export default function V2Dish() {
   }, [slug, catalogDishes]);
 
   const match = useMemo(() => (meal ? evaluateDishForPreferences(meal, preferences) : null), [meal, preferences]);
-  const smartSwap = useMemo(() => (meal ? findSmartSwap(meal, preferences) : null), [meal, preferences]);
+  const smartSwap = useMemo(() => (meal ? findSmartSwap(meal, preferences, catalogDishes) : null), [meal, preferences, catalogDishes]);
   const customizations = useMemo(() => (meal ? getCustomizationsForDish(meal) : []), [meal]);
   const variants = useMemo(() => (meal ? getDishVariants(meal.slug, catalogDishes) : []), [meal, catalogDishes]);
 
@@ -169,8 +170,11 @@ export default function V2Dish() {
   const rdNote = getRdNoteForDish(meal);
   const chef = getChefForDish(meal);
   const inRdPlanRotation = PLAN_DISH_SLUGS.has(meal.slug);
-  const upsells = getUpsellsForDish(meal, 3);
-  const pairing = meal.pairingSlug ? getDishBySlug(meal.pairingSlug) : undefined;
+  const upsells = getUpsellsForDish(meal, 3, catalogDishes);
+  // A dish someone stopped selling shouldn't still surface as a "suggested
+  // pairing" add-on.
+  const pairingCandidate = meal.pairingSlug ? getDishBySlug(meal.pairingSlug) : undefined;
+  const pairing = pairingCandidate?.isAvailable ? pairingCandidate : undefined;
   const balancedDoshas = (["vata", "pitta", "kapha"] as const).filter((d) => matchesDosha(meal, d));
 
   const handleSingleSelect = (idx: number, value: string) =>
@@ -456,7 +460,7 @@ export default function V2Dish() {
 
               {smartSwap && (
                 <Link to={`/dish/${smartSwap.slug}`} className="fx ac gap12 mt10" style={{ padding: 10, border: "1px solid var(--saf)", background: "var(--safd)", borderRadius: 12 }}>
-                  <img src={smartSwap.image} alt={smartSwap.name} style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }} />
+                  <img src={smartSwap.image} alt={smartSwap.name} onError={onDishImageError} style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }} />
                   <div className="f1" style={{ minWidth: 0 }}>
                     <div className="lab" style={{ color: "var(--safb)" }}>Smart swap for your profile</div>
                     <div className="small clamp1">{smartSwap.name}</div>
@@ -583,7 +587,7 @@ export default function V2Dish() {
               {upsells.map((u: any) => (
                 <div key={u.id} className="fx ac gap12 mb10" style={{ padding: 10, border: "1px solid var(--ln)", background: "var(--s1)", borderRadius: 12 }}>
                   <Link to={`/dish/${u.slug}`} style={{ flex: "none" }}>
-                    <img src={u.image} alt={u.name} loading="lazy" style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }} />
+                    <img src={u.image} alt={u.name} loading="lazy" onError={onDishImageError} style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }} />
                   </Link>
                   <div className="f1" style={{ minWidth: 0 }}>
                     <Link to={`/dish/${u.slug}`} className="small clamp1" style={{ fontWeight: 500, display: "block" }}>{u.name}</Link>
@@ -600,7 +604,7 @@ export default function V2Dish() {
             <div className="padx mt10">
               <div className="lab mb6">Suggested pairing</div>
               <Link className="fx ac gap12" to={`/dish/${pairing.slug}`} style={{ padding: "9px 0", borderTop: "1px solid var(--ln)" }}>
-                <img src={pairing.image} alt={pairing.name} style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} />
+                <img src={pairing.image} alt={pairing.name} onError={onDishImageError} style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} />
                 <div className="f1" style={{ minWidth: 0 }}>
                   <div className="small clamp1" style={{ fontWeight: 500 }}>{pairing.name}</div>
                   <div className="mono fntc" style={{ fontSize: 10.5 }}>Adds {pairing.macros.protein}g protein · {pairing.macros.calories} kcal</div>

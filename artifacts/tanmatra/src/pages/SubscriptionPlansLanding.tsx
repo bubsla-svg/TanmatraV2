@@ -22,6 +22,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { getDishBySlug } from "@/lib/menuData";
+import { onDishImageError } from "@/lib/imgFallback";
 
 export const meta: MetaFunction = () => [
   { title: "Meal Plans | Tanmatra" },
@@ -438,7 +439,7 @@ export default function SubscriptionPlansLanding() {
                         <div key={idx} className="shrink-0 w-44 sm:w-52 rounded-xl bg-clinical-dark border border-clinical-border/80 overflow-hidden flex flex-col justify-between group">
                           <div className="h-28 bg-clinical-surface-elevated relative overflow-hidden flex items-center justify-center">
                             {sample.image ? (
-                              <img src={sample.image} alt={sample.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              <img src={sample.image} alt={sample.name} onError={onDishImageError} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             ) : (
                               <Flame className="w-8 h-8 text-clinical-gold/30 group-hover:scale-110 transition-transform" />
                             )}

@@ -20,6 +20,7 @@ import {
   swapSlot,
   suggestSwapsForSlot,
   validatePlan,
+  liveDishes,
   DEFAULT_MAX_REPETITIONS,
 } from "../lib/mealPlanner";
 import { invalidateUserBrief } from "../lib/userBrief";
@@ -367,6 +368,7 @@ router.patch("/meal-plans/:id/slot", async (req: Request, res: Response) => {
       parsed.data.slot,
       parsed.data.dishId,
       plan.constraints,
+      await liveDishes(),
     );
     // swapSlot only enforces allergen / diet / repetition / unknown-dish.
     // Run the full validatePlan after the swap so an edit can never push

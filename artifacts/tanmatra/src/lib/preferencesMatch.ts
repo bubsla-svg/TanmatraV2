@@ -53,14 +53,21 @@ function reviewScore(dish: DishData): number {
   );
 }
 
+/**
+ * `pool` defaults to the static build-time seed (its isAvailable is always
+ * true), so callers should pass the live catalog from `useMenuCatalog()`
+ * whenever one is in scope — otherwise a dish an ops/RD editor has pulled
+ * from the live menu can still be suggested here as a "safer swap."
+ */
 export function findSmartSwap(
   dish: DishData,
   prefs: UserPreferences | null,
+  pool: DishData[] = DISHES,
 ): DishData | null {
   if (!prefs) return null;
   const original = evaluateDishForPreferences(dish, prefs);
   if (!original.blocked && original.warnings.length === 0) return null;
-  const scored = DISHES.filter(
+  const scored = pool.filter(
     (d) => d.id !== dish.id && d.isAvailable && d.category === dish.category,
   )
     .map((d) => ({ d, m: evaluateDishForPreferences(d, prefs) }))

@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ordersApi, type OrderStatus } from "@/lib/ordersApi";
 import { useCart, useAddToCartStatus } from "@/lib/cartContext";
-import { DISHES } from "@/lib/menuData";
+import { DISHES, useMenuCatalog } from "@/lib/menuData";
+import { onDishImageError } from "@/lib/imgFallback";
 import { formatCurrency } from "@/lib/utils";
 import { FADE, DURATION, EASE } from "@/lib/motion";
 
@@ -90,15 +91,11 @@ function statusCopy(status: OrderStatus, isLate: boolean): { headline: string; s
 }
 
 // ── Post-purchase snack upsell ────────────────────────────────────────────────
-const UPSELL_DISHES = DISHES.filter(
-  (d) => (d.category === "snacks" || d.category === "beverages") && d.isAvailable,
-).slice(0, 4);
-
 function SnackCard({ dish, onAdd }: { dish: (typeof DISHES)[number]; onAdd: () => void }) {
   const { status } = useAddToCartStatus(dish.id);
   return (
     <div className="hcard">
-      <img className="himg" src={dish.image} alt={dish.name} loading="lazy" style={{ width: "100%", objectFit: "cover", display: "block" }} />
+      <img className="himg" src={dish.image} alt={dish.name} loading="lazy" onError={onDishImageError} style={{ width: "100%", objectFit: "cover", display: "block" }} />
       <div className="hbody col" style={{ gap: 6 }}>
         <div className="small fw5 clamp1" style={{ fontSize: 12 }}>{dish.name}</div>
         <div className="fine" style={{ fontSize: 11 }}>{formatCurrency(dish.price)}</div>
@@ -125,8 +122,19 @@ function SnackCard({ dish, onAdd }: { dish: (typeof DISHES)[number]; onAdd: () =
 function PostPurchaseUpsell() {
   const [dismissed, setDismissed] = useState(false);
   const { addItem } = useCart();
+  // Sourced from the live catalog (not the module-level static DISHES import)
+  // so a dish an ops/RD editor has 86'd since deploy never gets suggested
+  // as a post-purchase add-on.
+  const { dishes: catalogDishes } = useMenuCatalog();
+  const upsellDishes = useMemo(
+    () =>
+      catalogDishes
+        .filter((d) => (d.category === "snacks" || d.category === "beverages") && d.isAvailable)
+        .slice(0, 4),
+    [catalogDishes],
+  );
 
-  if (dismissed || UPSELL_DISHES.length === 0) return null;
+  if (dismissed || upsellDishes.length === 0) return null;
 
   return (
     <motion.div
@@ -148,7 +156,7 @@ function PostPurchaseUpsell() {
         </button>
         <div className="tt mb10" style={{ fontSize: 14, paddingRight: 24 }}>Add a little extra to your delivery</div>
         <div className="fx gap10" style={{ overflowX: "auto", scrollbarWidth: "none", paddingBottom: 2 }}>
-          {UPSELL_DISHES.map((dish) => (
+          {upsellDishes.map((dish) => (
             <SnackCard
               key={dish.id}
               dish={dish}

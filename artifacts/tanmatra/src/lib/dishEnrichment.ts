@@ -318,8 +318,14 @@ function isClinicallyCompatible(candidate: DishData, source: DishData): boolean 
   return true;
 }
 
-export function getUpsellsForDish(dish: DishData, count = 3): DishData[] {
-  const sameKitchen = DISHES.filter(
+/**
+ * `catalog` defaults to the static build-time seed (its isAvailable is
+ * always true) so this stays callable without React context; pass the live
+ * catalog from `useMenuCatalog()` whenever one is in scope so a dish an
+ * ops/RD editor has pulled from the menu is never suggested as a cross-sell.
+ */
+export function getUpsellsForDish(dish: DishData, count = 3, catalog: DishData[] = DISHES): DishData[] {
+  const sameKitchen = catalog.filter(
     (d) =>
       d.id !== dish.id &&
       d.kitchen === dish.kitchen &&
@@ -327,7 +333,7 @@ export function getUpsellsForDish(dish: DishData, count = 3): DishData[] {
       d.isAvailable &&
       isClinicallyCompatible(d, dish),
   );
-  const crossKitchen = DISHES.filter(
+  const crossKitchen = catalog.filter(
     (d) =>
       d.id !== dish.id &&
       d.kitchen !== dish.kitchen &&
