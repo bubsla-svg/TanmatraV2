@@ -46,6 +46,20 @@ export interface AuditLoggerGateway {
   logEvent(event: any): Promise<void>;
 }
 
+export interface SupervisorAuthGateway {
+  /**
+   * Verify a QA supervisor's credentials out-of-band — e.g. against the HR /
+   * IdP directory, a rotating hardware-token service, or a per-shift PIN
+   * issued by the ops console. Returns true ONLY for a currently-authorised
+   * supervisor.
+   *
+   * This is the injection seam that keeps override credentials out of the
+   * codebase: implementations MUST NOT embed a static PIN in source, and this
+   * service never sees or stores the shared secret itself.
+   */
+  verifySupervisor(empId: string, pin: string): Promise<boolean>;
+}
+
 export class PackingStationInterlockService {
   private readonly sessions = new Map<string, PackingSession>();
   private readonly contraindicationEngine =
@@ -55,6 +69,7 @@ export class PackingStationInterlockService {
     private readonly printerGateway: PrinterGateway,
     private readonly alarmGateway: AlarmGateway,
     private readonly auditLogger: AuditLoggerGateway,
+    private readonly supervisorAuth: SupervisorAuthGateway,
   ) {}
 
   public async startSession(
@@ -231,7 +246,11 @@ export class PackingStationInterlockService {
       throw new Error('Invalid override state.');
     }
 
-    if (supervisorPin !== '998102') {
+    const isAuthorised = await this.supervisorAuth.verifySupervisor(
+      supervisorEmpId,
+      supervisorPin,
+    );
+    if (!isAuthorised) {
       throw new Error('Unauthorized supervisor credentials.');
     }
 
