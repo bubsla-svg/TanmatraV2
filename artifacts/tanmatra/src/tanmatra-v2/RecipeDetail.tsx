@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router";
 import { useRecipe } from "@/lib/contentApi";
 import { unsplashSrcset } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 
 export default function V2RecipeDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -71,6 +72,7 @@ export default function V2RecipeDetail() {
                 alt={recipe.title}
                 loading="eager"
                 fetchPriority="high"
+                onError={onDishImageError}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
               <div className="herograd" />

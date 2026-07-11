@@ -3,7 +3,7 @@ import {
   getTeamProfileBySlug,
   listTeamProfiles,
 } from "../lib/teamProfiles";
-import { DISHES } from "@workspace/menu-catalog";
+import { getMergedCatalog } from "../lib/menuResolver";
 
 const router: IRouter = Router();
 
@@ -20,10 +20,16 @@ router.get("/team-profiles/:slug", async (req: Request, res: Response) => {
     res.status(404).json({ error: "not found" });
     return;
   }
+  // Source from the live, DB-merged catalog — the static seed's isAvailable
+  // is always true, so a dish an ops/RD editor has 86'd would otherwise keep
+  // showing up as "owned" on this public profile page.
+  const dishes = (await getMergedCatalog()).filter(
+    (d) => !d.rdReviewState || d.rdReviewState === "reviewed",
+  );
   const ownedDishSlugs: string[] = [];
   if (profile.role === "chef") {
     const kitchens = (profile.kitchens ?? []) as string[];
-    for (const d of DISHES) {
+    for (const d of dishes) {
       if (!d.isAvailable) continue;
       if (kitchens.includes(d.kitchen)) ownedDishSlugs.push(d.slug);
       if (ownedDishSlugs.length >= 8) break;
@@ -31,7 +37,7 @@ router.get("/team-profiles/:slug", async (req: Request, res: Response) => {
   } else if (profile.role === "rd") {
     // Map RDs to dishes via the same heuristic the storefront uses
     // (see artifacts/tanmatra/src/lib/teamData.ts#getRdForDish).
-    for (const d of DISHES) {
+    for (const d of dishes) {
       if (!d.isAvailable) continue;
       const sugarNum = parseFloat(d.sugarPerServing) || 0;
       let matchedSlug: string | null = null;

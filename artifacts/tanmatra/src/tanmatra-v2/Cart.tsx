@@ -19,7 +19,7 @@ export default function V2Cart() {
   const { items, updateQty, updateRecipient, removeItem, totalQuantity } = useCart();
   const { preferences } = usePreferences();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
-  useMenuCatalog();
+  const { dishes: catalogDishes } = useMenuCatalog();
 
   const [nextSlot, setNextSlot] = useState<DeliverySlotOption | null>(null);
   const [showTagInput, setShowTagInput] = useState<string | null>(null);
@@ -43,7 +43,7 @@ export default function V2Cart() {
       const dietConflict = clinicalMode ? dishMatchesDietOrder(dish, dietOrderId) : null;
       const hasPrefSignal = m !== null && (m.warnings.length > 0 || m.blocked);
       if (!hasPrefSignal && !dietConflict) continue;
-      const swap = preferences ? findSmartSwap(dish, preferences) : null;
+      const swap = preferences ? findSmartSwap(dish, preferences, catalogDishes) : null;
       out.set(item.lineId, {
         warnings: m?.warnings ?? [],
         blocked: m?.blocked ?? false,

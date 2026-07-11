@@ -9,6 +9,7 @@ import {
 import { API_BASE } from "@/lib/apiBase";
 import { useCart, type CartItem } from "@/lib/cartContext";
 import { getDishBySlug } from "@/lib/menuData";
+import { onDishImageError } from "@/lib/imgFallback";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -71,6 +72,7 @@ function ActionCard({
             <img
               src={action.image}
               alt={action.name}
+              onError={onDishImageError}
               className="w-12 h-12 rounded object-cover shrink-0"
             />
           )}
