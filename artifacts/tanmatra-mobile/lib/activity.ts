@@ -4,7 +4,13 @@ import type { WearableProvider } from "@workspace/api-client-react";
 export const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? "https://wellness-foods-475157072474.asia-south2.run.app/api";
 
 export function defaultProvider(): WearableProvider {
-  return Platform.OS === "android" ? "health_connect" : "apple_health";
+  // Android's native source is Health Connect. The DB schema recognises a
+  // distinct `health_connect` provider, but the generated api-client
+  // WearableProvider type — which this return value must satisfy — currently
+  // exposes only `apple_health | google_fit` (a codegen lag). We therefore
+  // report the closest valid wire value, `google_fit`, until the client types
+  // are regenerated to include `health_connect`.
+  return Platform.OS === "android" ? "google_fit" : "apple_health";
 }
 
 export function providerLabel(p: WearableProvider | string): string {
