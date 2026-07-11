@@ -20,6 +20,7 @@ import { usePreferences } from "@/lib/preferencesContext";
 import {
   recommendPlansForPreferences,
   PLAN_GOAL_LABEL,
+  type PlanGoal,
 } from "@/lib/rdPlans";
 import DpdpaConsentCapture, {
   type DpdpaConsentState,
@@ -279,7 +280,7 @@ export default function V2Preferences() {
                         className="pill"
                         style={{ background: "var(--safd)", color: "var(--safb)" }}
                       >
-                        {PLAN_GOAL_LABEL[plan.goal]}
+                        {PLAN_GOAL_LABEL[plan.goal as PlanGoal]}
                       </span>
                       <div className="dtitle">{plan.name}</div>
                       <div

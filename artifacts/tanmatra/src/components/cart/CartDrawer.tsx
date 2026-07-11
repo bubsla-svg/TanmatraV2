@@ -26,7 +26,7 @@ import { loyaltyApi } from "@/lib/loyaltyApi";
 import { formatPrice } from "@/lib/api/adapter";
 import { track } from "@/lib/analytics";
 import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
-import { unsplashSrcset } from "@/lib/imgSrcset";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { usePremiumStatus } from "@/lib/usePremium";
 import { useOrders } from "@/lib/ordersContext";
 import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
@@ -801,11 +801,12 @@ function CartLine({
     <div className="dcard" style={{ marginBottom: 0 }}>
       <div className="fx gap12">
         <img
-          src={item.image}
-          srcSet={unsplashSrcset(item.image)}
+          src={getLocalDishFallback(item.image, 200)}
+          srcSet={localDishSrcset(item.image, "webp")}
           sizes="64px"
           alt=""
           loading="lazy"
+          decoding="async"
           style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", flex: "none", background: "var(--s2)" }}
         />
         <div className="f1" style={{ minWidth: 0 }}>
@@ -1030,11 +1031,12 @@ function UpsellCard({
     >
       <div className="posrel" style={{ aspectRatio: "4 / 3", background: "var(--s2)" }}>
         <img
-          src={dish.image}
-          srcSet={unsplashSrcset(dish.image)}
+          src={getLocalDishFallback(dish.image, 200)}
+          srcSet={localDishSrcset(dish.image, "webp")}
           sizes="156px"
           alt=""
           loading="lazy"
+          decoding="async"
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         {dish.isVeg && (

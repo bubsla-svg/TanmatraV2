@@ -38,6 +38,7 @@ import { addressesApi } from "@/lib/userAddressesApi";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { track } from "@/lib/analytics";
 import { groupCatalogDishes, type ConsolidatedDish } from "@/lib/menuVariants";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { evaluateDishForPreferences, rankDishesForPreferences } from "@/lib/preferencesMatch";
 import { toast } from "sonner";
 
@@ -566,7 +567,23 @@ export default function V2Menu() {
                 {repeatMeals.map((dish) => (
                   <div key={dish.id} className="hcard">
                     <Link to={`/dish/${dish.slug}`}>
-                      <div className="himg plc" style={{ backgroundImage: `url(${dish.image})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+                      <div className="himg plc" style={{ position: "relative", overflow: "hidden" }}>
+                        <picture>
+                          <source srcSet={localDishSrcset(dish.image, "avif")} type="image/avif" />
+                          <source srcSet={localDishSrcset(dish.image, "webp")} type="image/webp" />
+                          <img
+                            src={getLocalDishFallback(dish.image, 200)}
+                            srcSet={localDishSrcset(dish.image, "jpg")}
+                            sizes="152px"
+                            width="152"
+                            height="88"
+                            loading="lazy"
+                            decoding="async"
+                            alt={dish.name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        </picture>
+                      </div>
                     </Link>
                     <div className="hbody">
                       <div className="fx ac g6 mb4">
@@ -875,7 +892,22 @@ function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumO
           {isPremiumOnly && <div className="pill mt6" style={{ background: "var(--safd)", color: "var(--safb)", width: "fit-content" }}><i className="ph-fill ph-crown" />Premium</div>}
           {warned && !blocked && <div className="fine mt6" style={{ color: "var(--dgr)" }}><i className="ph-bold ph-warning" /> {match.warnings[0]}</div>}
         </div>
-        <Link to={`/dish/${dish.slug}`} className="dimg" style={{ backgroundImage: `url(${dish.image})`, backgroundSize: "cover", backgroundPosition: "center" }} aria-label={name}>
+        <Link to={`/dish/${dish.slug}`} className="dimg" aria-label={name}>
+          <picture>
+            <source srcSet={localDishSrcset(dish.image, "avif")} type="image/avif" />
+            <source srcSet={localDishSrcset(dish.image, "webp")} type="image/webp" />
+            <img
+              src={getLocalDishFallback(dish.image, 400)}
+              srcSet={localDishSrcset(dish.image, "jpg")}
+              sizes="92px"
+              width="92"
+              height="92"
+              loading="lazy"
+              decoding="async"
+              alt={name}
+              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }}
+            />
+          </picture>
           {info.kind === "scored" && (
             <span className={`mscore ${info.tier}`} aria-label={`Biometric match ${info.score} percent`}>
               {info.score}% match

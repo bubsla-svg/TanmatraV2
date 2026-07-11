@@ -12,6 +12,7 @@
     "verify-dpdpa": "tsx ./src/verify-dpdpa-kms.ts",
     "verify-allergen-gate": "tsx ./src/verify-allergen-gate.ts",
     "stress-test-ledger": "tsx ./src/stress-test-ledger.ts",
+    "optimize-images": "tsx ./src/optimize-dish-images.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -19,7 +20,8 @@
     "@workspace/db": "workspace:*",
     "@workspace/menu-catalog": "workspace:*",
     "@workspace/preferences-match": "workspace:*",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
     "@types/node": "catalog:",

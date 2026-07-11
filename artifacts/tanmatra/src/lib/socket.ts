@@ -38,7 +38,7 @@ export function getSocket(): Socket {
       })
     : io({
         path,
-        transports: ["websocket", "polling"],
+        transports: ["polling"],
         autoConnect: true,
         withCredentials: true,
       });

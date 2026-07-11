@@ -17,6 +17,7 @@ import AssessmentNudge from "@/components/home/AssessmentNudge";
 import MetaDishCard from "@/components/home/MetaDishCard";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { toast } from "sonner";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 
 /* Full-parity re-port of the System-A Home (git 2507084, 955 lines) into v2. */
 
@@ -256,7 +257,25 @@ export default function V2Home() {
             <div className="hrail">
               {daypartDishes.map((d: any) => (
                 <div key={d.id} className="hcard">
-                  <Link to={`/dish/${d.slug}`}><div className="himg plc" style={{ backgroundImage: `url(${d.image})`, backgroundSize: "cover", backgroundPosition: "center" }} /></Link>
+                  <Link to={`/dish/${d.slug}`}>
+                    <div className="himg plc" style={{ position: "relative", overflow: "hidden" }}>
+                      <picture>
+                        <source srcSet={localDishSrcset(d.image, "avif")} type="image/avif" />
+                        <source srcSet={localDishSrcset(d.image, "webp")} type="image/webp" />
+                        <img
+                          src={getLocalDishFallback(d.image, 200)}
+                          srcSet={localDishSrcset(d.image, "jpg")}
+                          sizes="152px"
+                          width="152"
+                          height="88"
+                          loading="lazy"
+                          decoding="async"
+                          alt={d.name}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      </picture>
+                    </div>
+                  </Link>
                   <div className="hbody">
                     <div className="fx ac g6 mb4"><span className={d.isVeg ? "vd" : "vd nv"} />{d.rdVerified && <span className="pill sg" style={{ padding: "2px 6px" }}><i className="ph-fill ph-seal-check" /></span>}</div>
                     <Link to={`/dish/${d.slug}`} className="small clamp1" style={{ fontWeight: 600, display: "block" }}>{d.name}</Link>

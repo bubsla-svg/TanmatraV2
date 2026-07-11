@@ -25,6 +25,7 @@ import { RD_PLANS } from "@/lib/rdPlans";
 import CoachAgentWidget from "@/components/ai/CoachAgent";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { API_BASE } from "@/lib/apiBase";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 
 /* ------------------------------------------------------------------ *
  * Full-parity re-port of the original System-A Dish PDP into the v2   *
@@ -255,8 +256,24 @@ export default function V2Dish() {
       <div style={{ maxWidth: 480, margin: "0 auto", position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="content">
           {/* Hero */}
-          <div className="plc" style={{ height: 300, backgroundImage: `url(${meal.image})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-            <div className="herograd" />
+          <div className="plc" style={{ height: 300, position: "relative", overflow: "hidden" }}>
+            <picture>
+              <source srcSet={localDishSrcset(meal.image, "avif")} type="image/avif" />
+              <source srcSet={localDishSrcset(meal.image, "webp")} type="image/webp" />
+              <img
+                src={getLocalDishFallback(meal.image, 800)}
+                srcSet={localDishSrcset(meal.image, "jpg")}
+                sizes="(max-width: 480px) 100vw, 480px"
+                width="480"
+                height="300"
+                loading="eager"
+                fetchPriority="high"
+                decoding="sync"
+                alt={meal.name}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
+              />
+            </picture>
+            <div className="herograd" style={{ zIndex: 1 }} />
             <div className="posabs w100 fx ac jb" style={{ top: 0, left: 0, padding: "12px 16px", zIndex: 2 }}>
               <Link className="glass" to="/menu" aria-label="Back to menu"><i className="ph-bold ph-arrow-left" /></Link>
               <span className="pill" style={{ background: "rgba(10,12,13,.55)", backdropFilter: "blur(8px)", textTransform: "capitalize" }}>
@@ -270,14 +287,39 @@ export default function V2Dish() {
             {/* Signal row */}
             <div className="fx ac g6 wrap">
               <span className="vtag"><span className={isVeg ? "vd" : "vd nv"} />{isVeg ? "VEG" : "NON-VEG"}</span>
-              <span className={giCls}>{giLabel}</span>
+              <span 
+                className={giCls} 
+                style={{ cursor: "pointer" }}
+                role="button"
+                onClick={() => {
+                  const desc = gi === "low" 
+                    ? "Low Glycemic Index (<55). Digested slowly, causing a gradual, stable rise in blood sugar. Excellent for energy stability."
+                    : gi === "high"
+                    ? "High Glycemic Index (>70). Digested rapidly, causing a fast spike in blood sugar. Best consumed pre-workout."
+                    : "Medium Glycemic Index (56-69). Has a moderate impact on blood sugar levels.";
+                  toast.info(`${giLabel} explanation`, { description: desc });
+                }}
+              >
+                {giLabel}
+              </span>
               {isPremiumOnly && (
                 <span className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>
                   <i className="ph-fill ph-crown" />PREMIUM
                 </span>
               )}
               {meal.rdVerified && (
-                <span className="pill sg" style={{ marginLeft: "auto" }}><i className="ph-fill ph-seal-check" />RD-signed</span>
+                <span 
+                  className="pill sg" 
+                  style={{ marginLeft: "auto", cursor: "pointer" }}
+                  role="button"
+                  onClick={() => {
+                    toast.info("Registered Dietitian Signed", {
+                      description: "This recipe has been clinically reviewed and approved by our team of Registered Dietitians to meet the strict parameters of its therapeutic protocol."
+                    });
+                  }}
+                >
+                  <i className="ph-fill ph-seal-check" />RD-signed
+                </span>
               )}
             </div>
 
@@ -326,6 +368,75 @@ export default function V2Dish() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Safety conflict block */}
+            {match?.blocked && (
+              <div
+                role="alert"
+                className="note mt14"
+                style={{
+                  background: "rgba(201,124,112,.12)",
+                  borderColor: "rgba(201,124,112,.35)",
+                  color: "var(--dgr)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "stretch",
+                  gap: 10,
+                  padding: 12,
+                  borderRadius: 12,
+                  border: "1px solid"
+                }}
+              >
+                <div className="fx gap8" style={{ alignItems: "flex-start" }}>
+                  <i className="ph-fill ph-warning-circle" style={{ fontSize: 16, marginTop: 2, flex: "none" }} />
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Order blocked — patient safety</div>
+                    <div className="small" style={{ color: "var(--dgr)", lineHeight: 1.4 }}>
+                      {match.blockReasons.map((r, i) => {
+                        if (r.code === "allergen_block") {
+                          return <div key={i}>• Contains allergens: {r.allergens.map(a => a.toUpperCase()).join(", ")}</div>;
+                        }
+                        if (r.code === "contraindication_block") {
+                          return <div key={i}>• Contraindicated for: {r.conditions.join(", ")} ({r.detail})</div>;
+                        }
+                        if (r.code === "diet_block") {
+                          return <div key={i}>• Diet order conflict: {r.detail}</div>;
+                        }
+                        return <div key={i}>• Patient safety conflict detected.</div>;
+                      })}
+                    </div>
+                  </div>
+                </div>
+                {smartSwap && (
+                  <Link
+                    to={`/dish/${smartSwap.slug}`}
+                    className="fx ac jb gap12 mt6"
+                    style={{
+                      padding: "8px 12px",
+                      border: "1px solid var(--saf)",
+                      background: "var(--safd)",
+                      borderRadius: 8,
+                      color: "var(--safb)",
+                      textDecoration: "none"
+                    }}
+                  >
+                    <div className="fx ac gap8">
+                      <img 
+                        src={getLocalDishFallback(smartSwap.image, 200)}
+                        srcSet={localDishSrcset(smartSwap.image, "webp")}
+                        alt={smartSwap.name}
+                        style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flex: "none" }}
+                      />
+                      <div>
+                        <div className="fine" style={{ fontWeight: 600, color: "var(--safb)" }}>Recommended smart swap</div>
+                        <div className="small clamp1" style={{ color: "var(--tx)", fontWeight: 500 }}>{smartSwap.name}</div>
+                      </div>
+                    </div>
+                    <i className="ph-bold ph-arrow-right" style={{ color: "var(--safb)" }} />
+                  </Link>
+                )}
               </div>
             )}
 
@@ -456,7 +567,14 @@ export default function V2Dish() {
 
               {smartSwap && (
                 <Link to={`/dish/${smartSwap.slug}`} className="fx ac gap12 mt10" style={{ padding: 10, border: "1px solid var(--saf)", background: "var(--safd)", borderRadius: 12 }}>
-                  <img src={smartSwap.image} alt={smartSwap.name} style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }} />
+                  <img
+                    src={getLocalDishFallback(smartSwap.image, 200)}
+                    srcSet={localDishSrcset(smartSwap.image, "webp")}
+                    alt={smartSwap.name}
+                    loading="lazy"
+                    decoding="async"
+                    style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }}
+                  />
                   <div className="f1" style={{ minWidth: 0 }}>
                     <div className="lab" style={{ color: "var(--safb)" }}>Smart swap for your profile</div>
                     <div className="small clamp1">{smartSwap.name}</div>
@@ -583,7 +701,14 @@ export default function V2Dish() {
               {upsells.map((u: any) => (
                 <div key={u.id} className="fx ac gap12 mb10" style={{ padding: 10, border: "1px solid var(--ln)", background: "var(--s1)", borderRadius: 12 }}>
                   <Link to={`/dish/${u.slug}`} style={{ flex: "none" }}>
-                    <img src={u.image} alt={u.name} loading="lazy" style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }} />
+                    <img
+                      src={getLocalDishFallback(u.image, 200)}
+                      srcSet={localDishSrcset(u.image, "webp")}
+                      alt={u.name}
+                      loading="lazy"
+                      decoding="async"
+                      style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }}
+                    />
                   </Link>
                   <div className="f1" style={{ minWidth: 0 }}>
                     <Link to={`/dish/${u.slug}`} className="small clamp1" style={{ fontWeight: 500, display: "block" }}>{u.name}</Link>
@@ -600,7 +725,14 @@ export default function V2Dish() {
             <div className="padx mt10">
               <div className="lab mb6">Suggested pairing</div>
               <Link className="fx ac gap12" to={`/dish/${pairing.slug}`} style={{ padding: "9px 0", borderTop: "1px solid var(--ln)" }}>
-                <img src={pairing.image} alt={pairing.name} style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} />
+                <img
+                  src={getLocalDishFallback(pairing.image, 200)}
+                  srcSet={localDishSrcset(pairing.image, "webp")}
+                  alt={pairing.name}
+                  loading="lazy"
+                  decoding="async"
+                  style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }}
+                />
                 <div className="f1" style={{ minWidth: 0 }}>
                   <div className="small clamp1" style={{ fontWeight: 500 }}>{pairing.name}</div>
                   <div className="mono fntc" style={{ fontSize: 10.5 }}>Adds {pairing.macros.protein}g protein · {pairing.macros.calories} kcal</div>
@@ -655,6 +787,14 @@ export default function V2Dish() {
               )}
               {isPremiumOnly && !isPremium ? (
                 <button className="btn btn-g btn-lg" onClick={() => navigate("/premium")}><i className="ph-bold ph-crown" /> Premium only</button>
+              ) : match?.blocked ? (
+                <button 
+                  className="btn btn-lg" 
+                  disabled 
+                  style={{ background: "rgba(201,124,112,.3)", border: "1px solid rgba(201,124,112,.4)", color: "var(--dgr)", cursor: "not-allowed" }}
+                >
+                  <i className="ph-bold ph-warning-circle" /> Blocked by Safety
+                </button>
               ) : (
                 <button className="btn btn-p btn-lg" onClick={handleAddToOrder}><i className="ph-bold ph-shopping-cart-simple" /> Add to order</button>
               )}
