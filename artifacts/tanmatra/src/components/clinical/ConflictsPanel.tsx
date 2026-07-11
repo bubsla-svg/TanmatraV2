@@ -3,7 +3,7 @@ import { AlertTriangle, X, ArrowRightLeft } from "lucide-react";
 import { useCart } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { useActivePatient } from "@/lib/patientContext";
-import { getDishById } from "@/lib/menuData";
+import { getDishById, useMenuCatalog } from "@/lib/menuData";
 import { evaluateDishForPreferences, findSmartSwap } from "@/lib/preferencesMatch";
 import {
   dishMatchesDietOrder,
@@ -49,6 +49,7 @@ export default function ConflictsPanel({
   const patient = useActivePatient();
   const { preferences } = usePreferences();
   const { enabled: clinicalMode } = useClinicalMode();
+  const { dishes: catalogDishes } = useMenuCatalog();
   const dietOrderId = patient.dietOrderId;
 
   const rows: ConflictRow[] = [];
@@ -58,7 +59,7 @@ export default function ConflictsPanel({
     if (patient.allergens.length > 0 && preferences) {
       const m = evaluateDishForPreferences(dish, preferences);
       if (m.matchedAllergens.length > 0) {
-        const swap = findSmartSwap(dish, preferences);
+        const swap = findSmartSwap(dish, preferences, catalogDishes);
         rows.push({
           lineId: it.lineId,
           dishName: dish.name,
@@ -73,7 +74,7 @@ export default function ConflictsPanel({
     if (clinicalMode) {
       const c = dishMatchesDietOrder(dish, dietOrderId);
       if (c) {
-        const swap = preferences ? findSmartSwap(dish, preferences) : null;
+        const swap = preferences ? findSmartSwap(dish, preferences, catalogDishes) : null;
         rows.push({
           lineId: it.lineId,
           dishName: dish.name,
@@ -104,7 +105,7 @@ export default function ConflictsPanel({
           .join("; ") || "Server patient-safety gate flagged this item.";
       const dish = getDishById(sc.dishId);
       const swap =
-        dish && preferences ? findSmartSwap(dish, preferences) : null;
+        dish && preferences ? findSmartSwap(dish, preferences, catalogDishes) : null;
       rows.push({
         lineId: line.lineId,
         dishName: sc.dishName,

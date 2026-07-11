@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { unsplashSrcset } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 import { motion } from "framer-motion";
 import { Sparkle } from "@phosphor-icons/react";
 import {
@@ -89,6 +90,7 @@ export default function MenuCard({
           sizes="(max-width: 640px) 112px, (max-width: 1024px) calc(50vw - 1.5rem), 25vw"
           alt={item.name}
           loading="lazy"
+          onError={onDishImageError}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {/* Gradient fade only meaningful in vertical (sm+) card layout */}

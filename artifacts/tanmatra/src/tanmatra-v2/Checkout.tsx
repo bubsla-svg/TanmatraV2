@@ -25,6 +25,7 @@ import { addonsApi } from "@/lib/marketplaceApi";
 import { useOrders, generateOrderId, submitOrderIdempotencyKey } from "@/lib/ordersContext";
 import { loyaltyApi } from "@/lib/loyaltyApi";
 import { corporateApi, type CompanySubsidy } from "@/lib/corporateApi";
+import { onDishImageError } from "@/lib/imgFallback";
 import {
   fulfillmentApi,
   type DeliverySlotOption,
@@ -1793,7 +1794,7 @@ export default function V2Checkout() {
             <div className="col gap12">
               {items.map((item) => (
                 <div key={item.lineId} className="fx gap12" style={{ alignItems: "flex-start" }}>
-                  <img src={item.image} alt={item.name} loading="lazy" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid var(--ln)", flex: "none" }} />
+                  <img src={item.image} alt={item.name} loading="lazy" onError={onDishImageError} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid var(--ln)", flex: "none" }} />
                   <div className="f1" style={{ minWidth: 0 }}>
                     <p className="small fw6">
                       {item.name}

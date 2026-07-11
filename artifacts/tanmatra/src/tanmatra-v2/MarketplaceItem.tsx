@@ -8,6 +8,7 @@ import {
 } from "@/lib/marketplaceApi";
 import { formatPrice } from "@/lib/api/adapter";
 import { useOrders } from "@/lib/ordersContext";
+import { onDishImageError } from "@/lib/imgFallback";
 
 export default function V2MarketplaceItem() {
   const { slug } = useParams<{ slug: string }>();
@@ -179,6 +180,7 @@ export default function V2MarketplaceItem() {
                 src={imgSrc}
                 alt={item.name}
                 loading="lazy"
+                onError={onDishImageError}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (

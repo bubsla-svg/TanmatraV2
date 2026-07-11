@@ -17,6 +17,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
+import { onDishImageError } from "@/lib/imgFallback";
 
 export const meta: MetaFunction = () => [
   { title: "Morning Fitness & Running Clubs | Tanmatra" },
@@ -180,7 +181,7 @@ export default function MorningFitnessLanding() {
               }
             ].map((d) => (
               <Card key={d.name} className="bg-clinical-surface border-clinical-border overflow-hidden">
-                <img src={d.img} alt={d.name} className="w-full h-40 object-cover" />
+                <img src={d.img} alt={d.name} onError={onDishImageError} className="w-full h-40 object-cover" />
                 <CardContent className="p-4 space-y-2">
                   <h4 className="text-sm font-semibold text-white">{d.name}</h4>
                   <p className="text-[10px] text-clinical-gold font-mono">{d.macros}</p>

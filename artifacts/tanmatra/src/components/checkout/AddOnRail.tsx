@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Minus, Sparkles, Crown } from "lucide-react";
 import { addonsApi, type Addon } from "@/lib/marketplaceApi";
 import { formatPrice } from "@/lib/api/adapter";
+import { onDishImageError } from "@/lib/imgFallback";
 
 interface Props {
   cartTags: string[];
@@ -91,6 +92,7 @@ function AddonTile({
             alt={addon.name}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={onDishImageError}
           />
         )}
         {addon.premiumOnly && (

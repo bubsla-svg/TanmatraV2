@@ -26,6 +26,7 @@ import CoachAgentWidget from "@/components/ai/CoachAgent";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { API_BASE } from "@/lib/apiBase";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 
 /* ------------------------------------------------------------------ *
  * Full-parity re-port of the original System-A Dish PDP into the v2   *
@@ -92,7 +93,7 @@ export default function V2Dish() {
   }, [slug, catalogDishes]);
 
   const match = useMemo(() => (meal ? evaluateDishForPreferences(meal, preferences) : null), [meal, preferences]);
-  const smartSwap = useMemo(() => (meal ? findSmartSwap(meal, preferences) : null), [meal, preferences]);
+  const smartSwap = useMemo(() => (meal ? findSmartSwap(meal, preferences, catalogDishes) : null), [meal, preferences, catalogDishes]);
   const customizations = useMemo(() => (meal ? getCustomizationsForDish(meal) : []), [meal]);
   const variants = useMemo(() => (meal ? getDishVariants(meal.slug, catalogDishes) : []), [meal, catalogDishes]);
 
@@ -170,8 +171,11 @@ export default function V2Dish() {
   const rdNote = getRdNoteForDish(meal);
   const chef = getChefForDish(meal);
   const inRdPlanRotation = PLAN_DISH_SLUGS.has(meal.slug);
-  const upsells = getUpsellsForDish(meal, 3);
-  const pairing = meal.pairingSlug ? getDishBySlug(meal.pairingSlug) : undefined;
+  const upsells = getUpsellsForDish(meal, 3, catalogDishes);
+  // A dish someone stopped selling shouldn't still surface as a "suggested
+  // pairing" add-on.
+  const pairingCandidate = meal.pairingSlug ? getDishBySlug(meal.pairingSlug) : undefined;
+  const pairing = pairingCandidate?.isAvailable ? pairingCandidate : undefined;
   const balancedDoshas = (["vata", "pitta", "kapha"] as const).filter((d) => matchesDosha(meal, d));
 
   const handleSingleSelect = (idx: number, value: string) =>
@@ -573,6 +577,7 @@ export default function V2Dish() {
                     alt={smartSwap.name}
                     loading="lazy"
                     decoding="async"
+                    onError={onDishImageError}
                     style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }}
                   />
                   <div className="f1" style={{ minWidth: 0 }}>
@@ -707,6 +712,7 @@ export default function V2Dish() {
                       alt={u.name}
                       loading="lazy"
                       decoding="async"
+                      onError={onDishImageError}
                       style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }}
                     />
                   </Link>
@@ -731,6 +737,7 @@ export default function V2Dish() {
                   alt={pairing.name}
                   loading="lazy"
                   decoding="async"
+                  onError={onDishImageError}
                   style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }}
                 />
                 <div className="f1" style={{ minWidth: 0 }}>

@@ -427,12 +427,18 @@ function countPlanConflicts(plan: RdPlan, prefs: UserPreferences): number {
   return getPlanConflicts(plan, prefs).length;
 }
 
+/**
+ * `pool` defaults to the static build-time seed (its isAvailable is always
+ * true); pass the live catalog from `useMenuCatalog()` whenever one is in
+ * scope so a dish pulled from the menu is never offered as a plan swap.
+ */
 export function findPlanSafeSwap(
   plan: RdPlan,
   blocked: DishData,
   prefs: UserPreferences,
+  pool: DishData[] = DISHES,
 ): DishData | null {
-  const candidates = DISHES.filter(
+  const candidates = pool.filter(
     (d) =>
       d.isAvailable &&
       d.category === blocked.category &&

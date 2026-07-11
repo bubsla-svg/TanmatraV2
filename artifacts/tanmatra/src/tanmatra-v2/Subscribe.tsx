@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { DISHES, macrosAreProvisional, type DishData } from "@workspace/menu-catalog";
+import { useMenuCatalog } from "@/lib/menuData";
 import { getRdPlanBySlug, getRdAuthor, resolvePlanWeek, findPlanSafeSwap, type RdPlan } from "@/lib/rdPlans";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { usePreferences } from "@/lib/preferencesContext";
@@ -181,6 +182,9 @@ export default function V2Subscribe() {
   const rdAuthor = effectivePlan ? getRdAuthor(effectivePlan) : undefined;
   const { preferences, update } = usePreferences();
   const cartItems = useCartStore((s) => s.items);
+  // Live catalog for swap suggestions — a dish an ops/RD editor has 86'd
+  // since deploy must never be auto-swapped in or offered on the swap sheet.
+  const { dishes: catalogDishes } = useMenuCatalog();
 
   // Bare entry (no plan, no trial, no cart hand-off, no protocol preset):
   // show the goal-first chooser; picking a plan sets ?plan=<slug> and flows
@@ -282,7 +286,7 @@ export default function V2Subscribe() {
           const conflict =
             ev.blocked || ev.matchedAllergens.length > 0 || ev.matchedDislikes.length > 0;
           if (conflict) {
-            const safe = findPlanSafeSwap(effectivePlan, base, preferences);
+            const safe = findPlanSafeSwap(effectivePlan, base, preferences, catalogDishes);
             if (safe) {
               meals.push({ slot, dish: safe, autoSwapped: true, userSwapped: false });
             } else {
@@ -302,7 +306,7 @@ export default function V2Subscribe() {
         rdTip: rotationDay.rdTip,
       };
     });
-  }, [effectivePlan, resolvedWeek, startDateObj, daysMode, daysCount, slots, swaps, preferences, isTrial]);
+  }, [effectivePlan, resolvedWeek, startDateObj, daysMode, daysCount, slots, swaps, preferences, isTrial, catalogDishes]);
 
   const weekMeals = fromCart && !effectivePlan
     ? cartItems.reduce((s, it) => s + it.quantity, 0)
@@ -356,7 +360,7 @@ export default function V2Subscribe() {
   // Swap-sheet alternatives: same category, in stock, safe for saved prefs.
   const swapAlternatives = useMemo(() => {
     if (!swapSheet) return [];
-    return DISHES.filter(
+    return catalogDishes.filter(
       (d) =>
         d.isAvailable &&
         d.category === swapSheet.current.category &&
@@ -368,7 +372,7 @@ export default function V2Subscribe() {
         return !ev.blocked && ev.matchedAllergens.length === 0 && ev.matchedDislikes.length === 0;
       })
       .slice(0, 12);
-  }, [swapSheet, preferences]);
+  }, [swapSheet, preferences, catalogDishes]);
 
   // Returning customers shouldn't retype an address they've already saved —
   // prefill from the default saved address once, leaving edits untouched.

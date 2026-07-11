@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { DISHES, type DishData } from "@workspace/menu-catalog";
+import { type DishData } from "@workspace/menu-catalog";
 import { definePrompt } from "../prompts";
 import { defineTool } from "../tools";
 import { registerAgent } from "../agentRegistry";
@@ -8,6 +8,7 @@ import {
   getUserBrief,
   type UserBrief,
 } from "../../userBrief";
+import { getMergedCatalog } from "../../menuResolver";
 
 async function loadBriefSafe(userId: string | null): Promise<UserBrief | null> {
   if (!userId) return null;
@@ -18,6 +19,17 @@ async function loadBriefSafe(userId: string | null): Promise<UserBrief | null> {
   } catch {
     return null;
   }
+}
+
+// The static `DISHES` seed always reports isAvailable: true — it is a
+// build-time fallback, not the live menu. The coach must never recommend,
+// price-check, or build an "add to cart" card for a dish an RD/ops editor
+// has 86'd or pulled for review since the last deploy, so every tool below
+// resolves against the same DB-merged, review-filtered view `/menu/public`
+// serves customers, fetched fresh per tool call (cheap: one small table).
+async function liveDishes(): Promise<DishData[]> {
+  const merged = await getMergedCatalog();
+  return merged.filter((d) => !d.rdReviewState || d.rdReviewState === "reviewed");
 }
 
 interface CoachPromptContext {
@@ -193,7 +205,7 @@ const searchMenu = defineTool({
     const brief = await loadBriefSafe(ctx.userId);
     const q = input.query?.toLowerCase().trim() ?? "";
     const limit = input.limit ?? 6;
-    let pool = DISHES.filter((d) => safeForUser(d, brief));
+    let pool = (await liveDishes()).filter((d) => safeForUser(d, brief));
     if (input.vegOnly) pool = pool.filter((d) => d.isVeg);
     if (input.kitchen) pool = pool.filter((d) => d.kitchen === input.kitchen);
     if (input.category) pool = pool.filter((d) => d.category === input.category);
@@ -226,7 +238,7 @@ const getNutritionFacts = defineTool({
   inputSchema: z.object({ slug: z.string() }),
   authScope: "public",
   handler: async ({ slug }) => {
-    const d = DISHES.find((x) => x.slug === slug);
+    const d = (await liveDishes()).find((x) => x.slug === slug);
     if (!d) return { success: false as const, error: "Dish not found" };
     return {
       success: true as const,
@@ -257,7 +269,8 @@ const proposeSwap = defineTool({
   authScope: "public",
   handler: async ({ slug, goal, limit }, ctx) => {
     const brief = await loadBriefSafe(ctx.userId);
-    const original = DISHES.find((d) => d.slug === slug);
+    const pool = await liveDishes();
+    const original = pool.find((d) => d.slug === slug);
     if (!original) {
       return { success: false as const, error: "Original dish not found" };
     }
@@ -270,7 +283,7 @@ const proposeSwap = defineTool({
       else effectiveGoal = "higher_protein";
     }
 
-    const candidates = DISHES.filter(
+    const candidates = pool.filter(
       (d) => d.slug !== slug && safeForUser(d, brief) && d.category === original.category,
     );
 
@@ -328,7 +341,7 @@ const prepareAddToCart = defineTool({
   authScope: "public",
   handler: async ({ slug, quantity, target, replaceSlug, reasoning }, ctx) => {
     const brief = await loadBriefSafe(ctx.userId);
-    const dish = DISHES.find((d) => d.slug === slug);
+    const dish = (await liveDishes()).find((d) => d.slug === slug);
     if (!dish) return { success: false as const, error: "Dish not found" };
     if (!safeForUser(dish, brief)) {
       return {

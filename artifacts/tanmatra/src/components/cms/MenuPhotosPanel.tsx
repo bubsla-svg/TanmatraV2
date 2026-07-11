@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { onDishImageError } from "@/lib/imgFallback";
 
 interface MenuItemRow {
   slug: string;
@@ -579,6 +580,7 @@ export function MenuPhotosPanel({
                         <img
                           src={it.imageUrl}
                           alt={it.name}
+                          onError={onDishImageError}
                           className="object-cover w-full h-full"
                         />
                       ) : (
@@ -817,6 +819,7 @@ export function MenuPhotosPanel({
                     <img
                       src={a.publicUrl}
                       alt={`${a.kind} ${a.id}`}
+                      onError={onDishImageError}
                       className="object-cover w-full h-full"
                       style={
                         a.kind === "nobg"

@@ -136,13 +136,19 @@ export function getRdForDish(dish: DishData): TeamMember | undefined {
   return TEAM.find((m) => m.slug === "rd-kavya-menon");
 }
 
-export function getOwnedDishesForMember(member: TeamMember): DishData[] {
+/**
+ * `catalog` defaults to the static build-time seed (its isAvailable is
+ * always true); pass the live catalog from `useMenuCatalog()` whenever one
+ * is in scope so a dish pulled from the menu never keeps showing up as
+ * "owned" on a public chef/RD profile page.
+ */
+export function getOwnedDishesForMember(member: TeamMember, catalog: DishData[] = DISHES): DishData[] {
   if (member.role === "chef") {
-    return DISHES.filter(
+    return catalog.filter(
       (d) => d.isAvailable && member.kitchens?.includes(d.kitchen),
     ).slice(0, 8);
   }
-  return DISHES.filter((d) => {
+  return catalog.filter((d) => {
     if (!d.isAvailable) return false;
     const matched = getRdForDish(d);
     return matched?.slug === member.slug;

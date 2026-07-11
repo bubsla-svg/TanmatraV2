@@ -25,6 +25,7 @@ import {
 } from "@workspace/db";
 import { logger } from "./logger";
 import { getModel, DEFAULT_MODEL_ID } from "./ai/model";
+import { getMergedCatalog } from "./menuResolver";
 import {
   getUserBrief,
   briefToRedacted,
@@ -38,6 +39,21 @@ const POOL_SIZE_PER_SLOT = 18;
 export const DEFAULT_MAX_REPETITIONS = 2;
 
 const dishById = new Map<number, DishData>(DISHES.map((d) => [d.id, d]));
+
+// The static `DISHES` seed's isAvailable is always true — it's a build-time
+// fallback, not the live menu. Fresh recommendations (a new week's candidate
+// pool, or a dish the user swaps IN) must be sourced from the same DB-merged,
+// review-filtered view /menu/public serves, so an item 86'd or pulled by an
+// RD since deploy never gets newly suggested. (Resolving an ID already baked
+// into an EXISTING plan day — dishById below — is a separate, lower-risk
+// concern: that's re-displaying a past choice, not producing a new one.)
+//
+// Exported so route handlers that call swapSlot() directly (outside this
+// file's own async generators) can fetch the same live, filtered pool.
+export async function liveDishes(): Promise<DishData[]> {
+  const merged = await getMergedCatalog();
+  return merged.filter((d) => !d.rdReviewState || d.rdReviewState === "reviewed");
+}
 
 const SLOT_CATEGORY_BUCKETS: Record<MealPlanSlot, Set<string>> = {
   breakfast: new Set(["breakfast", "beverages", "snacks"]),
@@ -151,15 +167,22 @@ export function matchesDiet(
   return !match.blockReasons.some((r) => r.code === "diet_block" || r.code === "keto_block");
 }
 
+/**
+ * `dishes` defaults to the static seed so existing pure-function tests keep
+ * working unchanged; every real (non-test) call site explicitly passes the
+ * live, DB-merged, review-filtered pool from `liveDishes()` so the picker
+ * only ever recommends what's actually orderable right now.
+ */
 export function buildCandidatePool(
   constraints: MealPlanConstraints,
+  dishes: DishData[] = DISHES,
 ): Record<MealPlanSlot, DishData[]> {
   const pool: Record<MealPlanSlot, DishData[]> = {
     breakfast: [],
     lunch: [],
     dinner: [],
   };
-  const eligible = DISHES.filter((d) => {
+  const eligible = dishes.filter((d) => {
     if (!d.isAvailable) return false;
     const prefs: PreferencesForMatch = {
       allergens: constraints.allergens,
@@ -710,7 +733,7 @@ export async function generateWeeklyPlan(
     include: ["preferences", "recentOrders"],
   });
   const constraints = defaultConstraintsFromBrief(brief, overrides);
-  const pool = buildCandidatePool(constraints);
+  const pool = buildCandidatePool(constraints, await liveDishes());
   const dates = weekDates(weekStart);
   const notes: string[] = [];
 
@@ -774,7 +797,7 @@ export async function regenerateDay(
   if (dayIndex < 0 || dayIndex >= days.length) {
     throw new Error("invalid dayIndex");
   }
-  const pool = buildCandidatePool(constraints);
+  const pool = buildCandidatePool(constraints, await liveDishes());
   const counts = new Map<number, number>();
   for (let i = 0; i < days.length; i++) {
     if (i === dayIndex) continue;
@@ -833,18 +856,27 @@ export async function regenerateDay(
  * Swap a single slot to a chosen dish. Validates that the dish exists,
  * passes diet + allergen rules, and doesn't blow the repetition cap.
  */
+/**
+ * `dishes` defaults to the static seed's id lookup (matching the previous
+ * behavior) so existing tests are unaffected; the live route handler passes
+ * the DB-merged, review-filtered pool from `liveDishes()` explicitly.
+ */
 export function swapSlot(
   days: MealPlanDay[],
   dayIndex: number,
   slot: MealPlanSlot,
   newDishId: number,
   constraints: MealPlanConstraints,
+  dishes: DishData[] = DISHES,
 ): { days: MealPlanDay[]; totals: MealPlanTotals } {
   if (dayIndex < 0 || dayIndex >= days.length) {
     throw new Error("invalid dayIndex");
   }
-  const dish = dishById.get(newDishId);
+  const dish = dishes.find((d) => d.id === newDishId);
   if (!dish) throw new Error("unknown dishId");
+  // Was previously missing entirely: an unavailable-but-still-in-the-static-
+  // array dish could be swapped in with no availability check at all.
+  if (!dish.isAvailable) throw new Error("dish is not currently available");
   if (!isAllergenSafe(dish, constraints.allergens))
     throw new Error("dish contains a flagged allergen");
   if (!matchesDiet(dish, constraints.dietaryStyle))
@@ -883,7 +915,7 @@ export async function suggestSwapsForSlot(
   constraints: MealPlanConstraints,
   limit = 8,
 ): Promise<MealPlanSlotEntry[]> {
-  const pool = buildCandidatePool(constraints);
+  const pool = buildCandidatePool(constraints, await liveDishes());
   const counts = new Map<number, number>();
   for (let i = 0; i < days.length; i++) {
     for (const s of MEAL_SLOTS) {
