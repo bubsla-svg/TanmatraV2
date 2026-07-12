@@ -267,6 +267,7 @@ const finalizeOrderSchema = z.object({
   fulfillmentType: z.enum(["delivery", "pickup"]).optional(),
   ecoPackagingOptIn: z.boolean().optional(),
   deliveryInstructions: z.string().max(512).nullable().optional(),
+  subscriptionId: z.number().int().positive().nullable().optional(),
 });
 
 const SERVICEABLE_PINCODES = new Set([

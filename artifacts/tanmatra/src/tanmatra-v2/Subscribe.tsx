@@ -196,15 +196,29 @@ export default function V2Subscribe() {
   const showChooser = !effectivePlan && !fromCart;
 
   // ---- Step 1 state: meal slots + days per week --------------------------
-  const [slots, setSlots] = useState<Record<MealSlot, boolean>>(
-    protocolPreset?.slots ??
+  const slotsParam = searchParams.get("slots");
+  const initialSlots = useMemo(() => {
+    if (slotsParam) {
+      const split = slotsParam.split(",");
+      return {
+        breakfast: split.includes("breakfast"),
+        lunch: split.includes("lunch"),
+        dinner: split.includes("dinner"),
+      };
+    }
+    return protocolPreset?.slots ??
       (isTrial
         ? { breakfast: true, lunch: true, dinner: true }
-        : { breakfast: false, lunch: true, dinner: true }),
-  );
-  const [daysMode, setDaysMode] = useState<DaysMode>(
-    protocolPreset?.daysMode ?? "everyday",
-  );
+        : { breakfast: false, lunch: true, dinner: true });
+  }, [slotsParam, protocolPreset, isTrial]);
+
+  const daysModeParam = searchParams.get("daysMode");
+  const initialDaysMode = (daysModeParam === "weekdays" || daysModeParam === "everyday")
+    ? daysModeParam
+    : (protocolPreset?.daysMode ?? "everyday");
+
+  const [slots, setSlots] = useState<Record<MealSlot, boolean>>(initialSlots);
+  const [daysMode, setDaysMode] = useState<DaysMode>(initialDaysMode);
   // User dish swaps, keyed by `${rotationIdx}:${slot}` → replacement slug.
   const [swaps, setSwaps] = useState<Record<string, string>>({});
   const [swapSheet, setSwapSheet] = useState<{
@@ -575,7 +589,10 @@ export default function V2Subscribe() {
         city: address.city,
         pincode: address.pincode,
         phone: address.phone,
-        notes: effectivePlan ? `RD Plan: ${effectivePlan.name}` : undefined,
+        notes: [
+          effectivePlan ? `RD Plan: ${effectivePlan.name}` : undefined,
+          searchParams.get("duration") ? `Duration: ${searchParams.get("duration")} weeks` : undefined,
+        ].filter(Boolean).join(" · ") || undefined,
         members: members.map((m) => ({
           name: m.name.trim(),
           diet: m.diet,

@@ -55,3 +55,4 @@ export * from "./userConsents";
 export * from "./webhookInbox";
 export * from "./funnelEvents";
 export * from "./refundRequests";
+export * from "./messageDispatches";
