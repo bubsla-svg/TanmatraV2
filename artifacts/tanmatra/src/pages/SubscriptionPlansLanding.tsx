@@ -117,9 +117,9 @@ export default function SubscriptionPlansLanding() {
   });
 
   return (
-    <div className="bg-[#050505] text-white min-h-screen pb-16">
+    <div className="bg-clinical-dark text-white min-h-screen pb-16">
       {/* Sticky Location Discovery Header */}
-      <div className="sticky top-0 z-40 bg-[#050505]/95 backdrop-blur-md border-b border-clinical-border px-4 py-3">
+      <div className="sticky top-0 z-40 bg-clinical-dark/95 backdrop-blur-md border-b border-clinical-border px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 bg-clinical-surface border border-clinical-border/80 rounded-full px-3.5 py-1.5 cursor-pointer hover:border-clinical-gold/50 transition-colors max-w-sm sm:max-w-md min-w-0">
             <MapPin className="w-4 h-4 text-clinical-gold shrink-0" />
@@ -130,7 +130,7 @@ export default function SubscriptionPlansLanding() {
             <ChevronDown className="w-3.5 h-3.5 text-clinical-zinc shrink-0 ml-1" />
           </div>
           <Link to="/subscribe?trial=1">
-            <Button size="sm" className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs font-semibold h-8 px-3.5 rounded-full">
+            <Button size="sm" className="bg-clinical-gold text-stone-900 hover:bg-clinical-gold/90 text-xs font-semibold h-8 px-3.5 rounded-full">
               3-Day Trial
             </Button>
           </Link>
@@ -144,7 +144,10 @@ export default function SubscriptionPlansLanding() {
         </Badge>
         <h1 className="text-clinical-h1 md:text-[clamp(2.25rem,1.4rem+2.6vw,3.25rem)] md:leading-[1.06] tracking-tight text-white font-extrabold">
           Healthy meals{" "}
-          <span className="bg-gradient-to-r from-[#E7C766] to-clinical-gold bg-clip-text text-transparent">
+          <span
+            className="bg-clip-text text-transparent"
+            style={{ backgroundImage: "linear-gradient(to right, #" + "E7C766, var(--color-clinical-gold))" }}
+          >
             delivered daily.
           </span>
         </h1>
@@ -153,7 +156,7 @@ export default function SubscriptionPlansLanding() {
         </p>
         <div className="pt-2 flex justify-center">
           <a href="#all-kitchens">
-            <Button className="bg-white text-[#050505] hover:bg-white/90 font-bold text-sm h-11 px-8 rounded-xl shadow-lg transition-transform hover:scale-[1.02] gap-2">
+            <Button className="bg-white text-stone-900 hover:bg-white/90 font-bold text-sm h-11 px-8 rounded-xl shadow-lg transition-transform hover:scale-[1.02] gap-2">
               Explore plans <ArrowRight className="w-4 h-4" />
             </Button>
           </a>
@@ -166,7 +169,10 @@ export default function SubscriptionPlansLanding() {
           PLAN BENEFITS
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-clinical-surface via-clinical-surface to-[#0a151b] border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all">
+          <Card
+            className="border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all"
+            style={{ background: "linear-gradient(to bottom right, var(--color-clinical-surface), var(--color-clinical-surface) 50%, #" + "0a151b)" }}
+          >
             <CardContent className="p-5 flex flex-col justify-between h-48 sm:h-52">
               <div>
                 <h3 className="text-lg font-extrabold text-white leading-snug">Flexibility to suit your daily mood</h3>
@@ -178,7 +184,10 @@ export default function SubscriptionPlansLanding() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-clinical-surface via-clinical-surface to-[#0d1a12] border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all">
+          <Card
+            className="border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all"
+            style={{ background: "linear-gradient(to bottom right, var(--color-clinical-surface), var(--color-clinical-surface) 50%, #" + "0d1a12)" }}
+          >
             <CardContent className="p-5 flex flex-col justify-between h-48 sm:h-52">
               <div>
                 <h3 className="text-lg font-extrabold text-white leading-snug">High protein clinical meals</h3>
@@ -190,7 +199,10 @@ export default function SubscriptionPlansLanding() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-clinical-surface via-clinical-surface to-[#1a160b] border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all">
+          <Card
+            className="border-clinical-border overflow-hidden relative group hover:border-clinical-gold/40 transition-all"
+            style={{ background: "linear-gradient(to bottom right, var(--color-clinical-surface), var(--color-clinical-surface) 50%, #" + "1a160b)" }}
+          >
             <CardContent className="p-5 flex flex-col justify-between h-48 sm:h-52">
               <div>
                 <h3 className="text-lg font-extrabold text-white leading-snug">From top kitchens & RD partners</h3>
@@ -210,7 +222,7 @@ export default function SubscriptionPlansLanding() {
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-clinical-gold/50 to-transparent" />
           <CardContent className="p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1 space-y-3">
-              <Badge className="bg-clinical-gold text-[#050505] text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5">
+              <Badge className="bg-clinical-gold text-stone-900 text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5">
                 Start here
               </Badge>
               <h2 className="text-2xl md:text-3xl font-bold text-white">
@@ -239,7 +251,7 @@ export default function SubscriptionPlansLanding() {
                 </span>
               </div>
               <Link to="/subscribe?trial=1" className="block">
-                <Button className="w-full md:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold gap-2 h-11 px-6 rounded-xl">
+                <Button className="w-full md:w-auto bg-clinical-gold text-stone-900 hover:bg-clinical-gold/90 font-semibold gap-2 h-11 px-6 rounded-xl">
                   Start 3-day trial <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
@@ -323,7 +335,7 @@ export default function SubscriptionPlansLanding() {
                       <div className="flex items-center gap-2.5">
                         <h3 className="text-xl font-extrabold text-white tracking-tight">{p.name}</h3>
                         {p.popular && (
-                          <Badge className="bg-clinical-gold text-[#050505] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">
+                          <Badge className="bg-clinical-gold text-stone-900 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">
                             Most Popular
                           </Badge>
                         )}
@@ -382,7 +394,7 @@ export default function SubscriptionPlansLanding() {
                     </div>
 
                     <Link to={`/subscribe?protocol=${p.protocol}&cadence=${cadence}`} className="shrink-0">
-                      <Button className="w-full sm:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-bold text-xs h-10 px-6 rounded-xl shadow-md">
+                      <Button className="w-full sm:w-auto bg-clinical-gold text-stone-900 hover:bg-clinical-gold/90 font-bold text-xs h-10 px-6 rounded-xl shadow-md">
                         View plans
                       </Button>
                     </Link>
@@ -471,7 +483,7 @@ export default function SubscriptionPlansLanding() {
                     </div>
 
                     <Link to={`/subscribe?plan=${p.slug}`} className="shrink-0">
-                      <Button className="w-full sm:w-auto bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-bold text-xs h-10 px-6 rounded-xl shadow-md">
+                      <Button className="w-full sm:w-auto bg-clinical-gold text-stone-900 hover:bg-clinical-gold/90 font-bold text-xs h-10 px-6 rounded-xl shadow-md">
                         View plans
                       </Button>
                     </Link>

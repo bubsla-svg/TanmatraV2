@@ -516,7 +516,7 @@ export default function V2CorporateLunchPlanner() {
                           <span
                             className="pill"
                             style={{
-                              background: "rgba(201,124,112,.16)",
+                              background: "color-mix(in oklab, var(--color-error) 16%, transparent)",
                               color: "var(--dgr)",
                             }}
                           >

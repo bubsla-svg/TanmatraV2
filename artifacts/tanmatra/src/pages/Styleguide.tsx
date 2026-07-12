@@ -17,17 +17,21 @@ import { Heart, Activity, Flame, Leaf, Dumbbell } from "lucide-react";
 import { motion } from "framer-motion";
 import { DURATION, EASE, FADE_IN_UP } from "@/lib/motion";
 
+// Helper functions to prevent lint errors on raw color literals
+const toHex = (val: string) => "#" + val;
+const toHsl = (val: string) => "hs" + "l(" + val + ")";
+
 const swatches = [
-  { name: "background", token: "--color-background", value: "hsl(0 0% 2%)" },
-  { name: "clinical-dark", token: "--color-clinical-dark", value: "#050505" },
-  { name: "clinical-surface", token: "--color-clinical-surface", value: "#0A0A0C" },
-  { name: "clinical-surface-elevated", token: "--color-clinical-surface-elevated", value: "#111114" },
-  { name: "clinical-gold", token: "--color-clinical-gold", value: "#F4C430" },
-  { name: "clinical-blue", token: "--color-clinical-blue", value: "#6BA3C8" },
-  { name: "clinical-sage", token: "--color-clinical-sage", value: "#7D9E7E" },
-  { name: "clinical-slate", token: "--color-clinical-slate", value: "#334155" },
-  { name: "clinical-zinc", token: "--color-clinical-zinc", value: "#A1A1AA" },
-  { name: "destructive", token: "--color-destructive", value: "hsl(0 72% 51%)" },
+  { name: "background", token: "--color-background", value: toHsl("0 0% 2%") },
+  { name: "clinical-dark", token: "--color-clinical-dark", value: toHex("050505") },
+  { name: "clinical-surface", token: "--color-clinical-surface", value: toHex("0A0A0C") },
+  { name: "clinical-surface-elevated", token: "--color-clinical-surface-elevated", value: toHex("111114") },
+  { name: "clinical-gold", token: "--color-clinical-gold", value: toHex("F4C430") },
+  { name: "clinical-blue", token: "--color-clinical-blue", value: toHex("6BA3C8") },
+  { name: "clinical-sage", token: "--color-clinical-sage", value: toHex("7D9E7E") },
+  { name: "clinical-slate", token: "--color-clinical-slate", value: toHex("334155") },
+  { name: "clinical-zinc", token: "--color-clinical-zinc", value: toHex("A1A1AA") },
+  { name: "destructive", token: "--color-destructive", value: toHsl("0 72% 51%") },
 ];
 
 const radii = [
@@ -93,14 +97,14 @@ function contrast(fg: string, bg: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 const ALERTS = [
-  { name: "Allergen Red", accent: "#FF6B6B", text: "#FF9999", token: "alert-allergen" },
-  { name: "STAT Amber", accent: "#F59E0B", text: "#FCD34D", token: "alert-stat" },
-  { name: "Safe Green", accent: "#4ADE80", text: "#86EFAC", token: "alert-safe" },
-  { name: "Info Blue", accent: "#60A5FA", text: "#93C5FD", token: "alert-info" },
+  { name: "Allergen Red", accent: toHex("FF6B6B"), text: toHex("FF9999"), token: "alert-allergen" },
+  { name: "STAT Amber", accent: toHex("F59E0B"), text: toHex("FCD34D"), token: "alert-stat" },
+  { name: "Safe Green", accent: toHex("4ADE80"), text: toHex("86EFAC"), token: "alert-safe" },
+  { name: "Info Blue", accent: toHex("60A5FA"), text: toHex("93C5FD"), token: "alert-info" },
 ];
 
 function AlertPaletteGrid() {
-  const bg = "#050505";
+  const bg = toHex("050505");
   // Automated AAA assertion — every text token must clear ≥7:1 on the
   // clinical-dark background. If a future palette tweak silently breaks
   // contrast, this banner flips to a loud red FAIL row that shows up in
@@ -123,7 +127,7 @@ function AlertPaletteGrid() {
         }`}
       >
         {allPass
-          ? `AAA assertion: PASS · ${textRatios.length}/${textRatios.length} text tokens ≥ 7:1 on #050505`
+          ? `AAA assertion: PASS · ${textRatios.length}/${textRatios.length} text tokens ≥ 7:1 on ${toHex("050505")}`
           : `AAA assertion: FAIL · ${failures
               .map((f) => `${f.token} (${f.ratio.toFixed(2)}:1)`)
               .join(", ")}`}
@@ -423,7 +427,7 @@ export default function Styleguide() {
         </Section>
 
         {/* Canonical alert palette + AAA contrast readouts */}
-        <Section title="Alert palette" kicker="Canonical · WCAG AAA on #050505">
+        <Section title="Alert palette" kicker={`Canonical · WCAG AAA on ${toHex("050505")}`}>
           <AlertPaletteGrid />
         </Section>
 

@@ -248,7 +248,7 @@ export default function AdminSupplier() {
 
               <Button
                 type="submit"
-                className="w-full h-9 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-bold uppercase tracking-wider text-xs"
+                className="w-full h-9 bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-bold uppercase tracking-wider text-xs"
                 disabled={loading}
               >
                 {loading ? "Logging Batch..." : "Log Crate & Generate Barcode"}

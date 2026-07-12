@@ -240,7 +240,7 @@ export function RdCopilotPanel({
                 size="sm"
                 onClick={draftPlan}
                 disabled={proposalBusy}
-                className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs h-8"
+                className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-8"
               >
                 Draft AI plan
               </Button>
@@ -308,7 +308,7 @@ export function RdCopilotPanel({
                   size="sm"
                   onClick={approve}
                   disabled={proposalBusy || proposal.status === "rd_approved"}
-                  className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs h-8"
+                  className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-8"
                 >
                   Approve & send to client
                 </Button>

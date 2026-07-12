@@ -190,7 +190,7 @@ function ResultChart({ chartSpec, rows }: { chartSpec: ChartSpec; rows: Record<s
                   <R.XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
                   <R.YAxis tick={{ fontSize: 11 }} />
                   <R.Tooltip />
-                  <R.Line type="monotone" dataKey={yKey} stroke="#10b981" strokeWidth={2} dot={false} />
+                  <R.Line type="monotone" dataKey={yKey} stroke="var(--color-success)" strokeWidth={2} dot={false} />
                 </R.LineChart>
               ) : (
                 <R.BarChart data={data}>
@@ -198,7 +198,7 @@ function ResultChart({ chartSpec, rows }: { chartSpec: ChartSpec; rows: Record<s
                   <R.XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
                   <R.YAxis tick={{ fontSize: 11 }} />
                   <R.Tooltip />
-                  <R.Bar dataKey={yKey} fill="#0ea5e9" />
+                  <R.Bar dataKey={yKey} fill="var(--color-clinical-blue)" />
                 </R.BarChart>
               )}
             </R.ResponsiveContainer>
@@ -436,7 +436,7 @@ function WbrTab() {
                               <R.XAxis dataKey="day" tick={{ fontSize: 11 }} />
                               <R.YAxis tick={{ fontSize: 11 }} />
                               <R.Tooltip />
-                              <R.Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot />
+                              <R.Line type="monotone" dataKey="revenue" stroke="var(--color-success)" strokeWidth={2} dot />
                             </R.LineChart>
                           </R.ResponsiveContainer>
                         )}
@@ -567,7 +567,7 @@ function VocTab() {
                             render={(R) => (
                               <R.ResponsiveContainer width="100%" height="100%">
                                 <R.LineChart data={trend}>
-                                  <R.Line type="monotone" dataKey="mentions" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                                  <R.Line type="monotone" dataKey="mentions" stroke="var(--color-clinical-blue)" strokeWidth={2} dot={false} />
                                 </R.LineChart>
                               </R.ResponsiveContainer>
                             )}

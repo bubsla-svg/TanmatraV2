@@ -104,6 +104,10 @@ const TIP_PRESETS = [2000, 5000, 10000, 0];
 
 export default function V2Checkout() {
   const navigate = useNavigate();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const { items, bundleSlugs, subtotal, clear } = useCart();
   // Guard: redirect to menu if cart is empty (e.g. deep link, back-button after clear).
   useEffect(() => {
@@ -627,6 +631,9 @@ export default function V2Checkout() {
   // First-order offer — mirrors the server pipeline exactly (applied after
   // pickup/preorder discounts, before credits); the finalize response is
   // reconciled against this estimate before charging.
+  const offerPercent = firstOrderOffer ? firstOrderOffer.percentBps / 100 : 25;
+  const offerCapPaise = firstOrderOffer ? firstOrderOffer.capPaise : 8000;
+
   const preFirstOrderSubtotal = Math.max(0, subtotal - preorderDiscount - pickupDiscount);
   const firstOrderDiscount = firstOrderOffer?.eligible
     ? Math.min(
@@ -736,17 +743,32 @@ export default function V2Checkout() {
 
 
 
+  if (!isMounted) {
+    return (
+      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto" }}>
+          <div className="content padx tc" style={{ padding: "72px 20px" }}>
+            <h1>Checkout</h1>
+            <div style={{ marginTop: 24 }}>
+              <Link to="/menu" className="btn btn-p opacity-50 pointer-events-none">Browse Menu</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="content padx tc" style={{ padding: "72px 20px" }}>
             <i className="ph-bold ph-warning-circle" style={{ fontSize: 34, color: "var(--safb)" }} />
-            <div className="h2 mt10" style={{ color: "#fff" }}>Your cart is empty</div>
+            <h1 className="h2 mt10" style={{ color: "var(--text-primary)" }}>Your cart is empty</h1>
             <div className="fine mt6">Add meals to your cart before checking out.</div>
-            <button className="btn btn-p mt20" onClick={() => navigate("/menu")}>
+            <Link to="/menu" className="btn btn-p mt20 inline-flex items-center justify-center">
               Browse Menu
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -979,7 +1001,7 @@ export default function V2Checkout() {
               order_id: razorpayOrderId,
               name: "Tanmatra",
               description: `Order ${orderId}`,
-              theme: { color: "#F4C430" },
+              theme: { color: "var(--color-clinical-gold)" },
               prefill: {
                 contact: activeAddr?.phone ?? "",
               },
@@ -1494,7 +1516,7 @@ export default function V2Checkout() {
                 </div>
 
                 {deliveryMode === "now" ? (
-                  <div className="note" style={{ flexDirection: "column", alignItems: "flex-start", background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                  <div className="note" style={{ flexDirection: "column", alignItems: "flex-start", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
                     <div className="fx ac gap8" style={{ width: "100%" }}>
                       <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--sage)", flex: "none" }} />
                       <span className="small fw6" style={{ color: "var(--tx)" }}>Deliver ASAP</span>
@@ -1578,7 +1600,7 @@ export default function V2Checkout() {
                       </p>
                     )}
                     {isPreorderSlot && (
-                      <p className="note" style={{ background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                      <p className="note" style={{ background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
                         <Tag className="w-3.5 h-3.5" />
                         <span>Pre-order discount active: 5% off meals applied!</span>
                       </p>
@@ -1623,12 +1645,12 @@ export default function V2Checkout() {
             )}
 
             {fulfillmentType === "delivery" && (
-              <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+              <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
                 <div className="fx gap8" style={{ minWidth: 0, alignItems: "flex-start" }}>
                   <Leaf className="w-4 h-4" style={{ color: "var(--sage)", flexShrink: 0, marginTop: 2 }} />
                   <div style={{ minWidth: 0 }}>
                     <p className="small fw6" style={{ color: "var(--tx)" }}>Reusable eco packaging</p>
-                    <p className="fine">Return clean containers on your next order to earn ₹20 credit</p>
+                    <p className="fine">Return clean containers on your next order to earn {formatPrice(2000)} credit</p>
                   </div>
                 </div>
                 <button
@@ -1723,7 +1745,7 @@ export default function V2Checkout() {
               style={{ padding: 12, borderRadius: 10, border: "1px solid var(--saf)", background: "var(--safd)" }}
               title="Razorpay handles your payment securely. Tanmatra never sees your card or UPI details."
             >
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(244,196,48,.2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--color-clinical-gold-light)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
                 <CreditCard className="w-4 h-4" style={{ color: "var(--safb)" }} />
               </div>
               <div className="f1">
@@ -1778,7 +1800,7 @@ export default function V2Checkout() {
               </div>
               {!hasFreeDelivery && (
                 <p className="fine mt6">
-                  💡 Tip: Add an RD-curated drink or snack above to reach ₹500 and save ₹50 on delivery!
+                  💡 Tip: Add an RD-curated drink or snack above to reach {formatPrice(FREE_DELIVERY_THRESHOLD)} and save {formatPrice(DELIVERY_FEE)} on delivery!
                 </p>
               )}
             </div>
@@ -1863,7 +1885,7 @@ export default function V2Checkout() {
               {firstOrderDiscount > 0 && (
                 <div className="billrow" style={{ padding: 0 }}>
                   <span className="safc fx ac gap6">
-                    <Gift className="w-3 h-3" /> First-order offer (25% up to ₹80)
+                    <Gift className="w-3 h-3" /> First-order offer ({offerPercent}% up to {formatPrice(offerCapPaise)})
                   </span>
                   <span className="mono safc">-{formatPrice(firstOrderDiscount)}</span>
                 </div>
@@ -1896,7 +1918,7 @@ export default function V2Checkout() {
                 </div>
               )}
               {creditBalance > 0 && (
-                <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
                   <div className="fx ac gap8" style={{ minWidth: 0 }}>
                     <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--sage)", flexShrink: 0 }} />
                     <div style={{ minWidth: 0 }}>
@@ -2004,7 +2026,7 @@ export default function V2Checkout() {
                 subsidyAvailable;
               if (totalSavings <= 0) return null;
               return (
-                <details className="note" style={{ display: "block", padding: 0, background: "var(--saged)", borderColor: "rgba(136,170,132,.35)", color: "var(--sage)" }}>
+                <details className="note" style={{ display: "block", padding: 0, background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
                   <summary className="fx ac jb" style={{ padding: "8px 12px", cursor: "pointer", listStyle: "none" }}>
                     <span className="fx ac gap8">
                       <Tag className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
@@ -2014,7 +2036,7 @@ export default function V2Checkout() {
                     </span>
                     <ChevronDown className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
                   </summary>
-                  <div className="col gap6" style={{ padding: "4px 12px 10px", borderTop: "1px solid rgba(136,170,132,.2)", fontSize: 11, color: "var(--mut)" }}>
+                  <div className="col gap6" style={{ padding: "4px 12px 10px", borderTop: "1px solid color-mix(in oklab, var(--color-clinical-sage) 20%, transparent)", fontSize: 11, color: "var(--mut)" }}>
                     {preorderDiscount > 0 && (
                       <div className="fx jb">
                         <span>Pre-order discount (5%)</span>
@@ -2023,7 +2045,7 @@ export default function V2Checkout() {
                     )}
                     {firstOrderDiscount > 0 && (
                       <div className="fx jb">
-                        <span>First-order offer (25% up to ₹80)</span>
+                        <span>First-order offer ({offerPercent}% up to {formatPrice(offerCapPaise)})</span>
                         <span className="mono safc">-{formatPrice(firstOrderDiscount)}</span>
                       </div>
                     )}
@@ -2059,7 +2081,7 @@ export default function V2Checkout() {
             </div>
 
             {checkoutBlocked && checkoutBlockedReason && (
-              <p className="note tc" style={{ display: "block", background: "rgba(201,124,112,.12)", borderColor: "rgba(201,124,112,.35)", color: "var(--dgr)" }}>
+              <p className="note tc" style={{ display: "block", background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" }}>
                 {checkoutBlockedReason}
               </p>
             )}
@@ -2128,7 +2150,8 @@ export default function V2Checkout() {
         {/* Guest Phone + OTP Verification Modal */}
         {showGuestAuthDialog && (
           <div
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            className="bg-black/60"
+            style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!guestIsVerifying) setShowGuestAuthDialog(false); }}
           >
             <div className="card" style={{ maxWidth: 360, width: "100%" }} onClick={(e) => e.stopPropagation()}>
@@ -2267,7 +2290,8 @@ export default function V2Checkout() {
         {/* Payment confirmation modal */}
         {confirmOpen && (
           <div
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            className="bg-black/60"
+            style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!isProcessing) setConfirmOpen(false); }}
           >
             <div className="card" style={{ maxWidth: 400, width: "100%" }} onClick={(e) => e.stopPropagation()}>

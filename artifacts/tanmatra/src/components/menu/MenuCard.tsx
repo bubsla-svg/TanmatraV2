@@ -127,16 +127,16 @@ export default function MenuCard({
             </span>
           )}
           {isPremiumOnly && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-gold/50 text-clinical-gold bg-[#050505]/80 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-gold/50 text-clinical-gold bg-clinical-dark/80 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
               <Crown className="w-2.5 h-2.5" /> Premium
             </span>
           )}
           {match.blocked ? (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-red-500 text-red-400 bg-[#050505]/95 backdrop-blur-sm font-extrabold tracking-wider uppercase flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-red-500 text-red-400 bg-clinical-dark/95 backdrop-blur-sm font-extrabold tracking-wider uppercase flex items-center gap-1 shadow-[0_0_8px_color-mix(in_srgb,var(--color-error)_50%,transparent)]">
               <ShieldAlert className="w-3.5 h-3.5 text-red-400" /> Blocked
             </span>
           ) : match.warnings.length > 0 ? (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-orange-500/50 text-orange-400 bg-[#050505]/85 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-orange-500/50 text-orange-400 bg-clinical-dark/85 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
               <ShieldAlert className="w-3.5 h-3.5" /> Warning
             </span>
           ) : null}
@@ -145,7 +145,7 @@ export default function MenuCard({
         {/* Lifestyle tag (only when no premium overlay would conflict) */}
         {lifestyleTag && !showPremiumGate && (
           <div className="absolute top-3 right-3 z-10">
-            <span className="text-[9px] px-2 py-1 rounded border border-clinical-gold/40 text-clinical-gold bg-[#050505]/70 backdrop-blur-sm font-bold tracking-[0.12em] uppercase">
+            <span className="text-[9px] px-2 py-1 rounded border border-clinical-gold/40 text-clinical-gold bg-clinical-dark/70 backdrop-blur-sm font-bold tracking-[0.12em] uppercase">
               {lifestyleTag}
             </span>
           </div>
@@ -253,7 +253,7 @@ export default function MenuCard({
               Upgrade to Premium
             </Button>
           ) : cartItem && !hasVariants ? (
-            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(244,196,48,0.35)] transition-all duration-200">
+            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-action-text font-sans text-xs font-extrabold shadow-[0_4px_15px] shadow-clinical-gold/35 transition-all duration-200">
               <button
                 type="button"
                 onClick={(e) => {
@@ -304,7 +304,7 @@ export default function MenuCard({
                     e.stopPropagation();
                     onExpressBuy?.(item);
                   }}
-                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(244,196,48,0.3)] active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px] shadow-clinical-gold/30 active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Buy Now
                 </button>
@@ -336,14 +336,14 @@ function StarRating({ value }: { value: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <svg key={i} className="w-3 h-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           {i <= full ? (
-            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#F4C430" />
+            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="var(--color-clinical-gold)" />
           ) : i === full + 1 && half ? (
             <>
-              <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3V1z" fill="#F4C430" />
-              <path d="M6 1v7.3L3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#3a3a3a" />
+              <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3V1z" fill="var(--color-clinical-gold)" />
+              <path d="M6 1v7.3L3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="var(--color-clinical-slate)" />
             </>
           ) : (
-            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#3a3a3a" />
+            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="var(--color-clinical-slate)" />
           )}
         </svg>
       ))}

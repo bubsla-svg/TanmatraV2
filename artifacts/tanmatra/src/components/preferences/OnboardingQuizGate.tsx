@@ -104,7 +104,7 @@ export default function OnboardingQuizGate() {
             <button
               type="button"
               onClick={() => setQuizOpen(true)}
-              className="shrink-0 min-h-11 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-md bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clinical-gold focus-visible:ring-offset-2 focus-visible:ring-offset-clinical-surface"
+              className="shrink-0 min-h-11 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-md bg-clinical-gold text-action-text hover:bg-clinical-gold/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clinical-gold focus-visible:ring-offset-2 focus-visible:ring-offset-clinical-surface"
             >
               Start
             </button>

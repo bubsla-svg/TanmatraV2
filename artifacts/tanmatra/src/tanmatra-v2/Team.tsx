@@ -7,7 +7,7 @@ import { TEAM } from "@/lib/teamData";
 const ACCENT: Record<string, { c: string; bg: string }> = {
   gold: { c: "var(--safb)", bg: "var(--safd)" },
   sage: { c: "var(--sage)", bg: "var(--saged)" },
-  blue: { c: "#7BA7D0", bg: "rgba(123,167,208,.16)" },
+  blue: { c: "var(--color-clinical-blue)", bg: "var(--color-clinical-blue-light)" },
 };
 
 function TeamCard({ member }: { member: any }) {

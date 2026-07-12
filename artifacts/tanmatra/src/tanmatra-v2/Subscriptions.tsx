@@ -51,7 +51,7 @@ const STATUS_META: Record<
   cancelled: {
     label: "Cancelled",
     dot: "var(--dgr)",
-    pillStyle: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" },
+    pillStyle: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--dgr)" },
   },
 };
 
@@ -77,7 +77,7 @@ const DELIVERY_META: Record<
   },
   cancelled: {
     label: "Cancelled",
-    style: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" },
+    style: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--dgr)" },
   },
 };
 
@@ -288,7 +288,7 @@ export default function V2Subscriptions() {
               className="ph-fill ph-sparkle"
               style={{ fontSize: 34, color: "var(--safb)" }}
             />
-            <div className="h2 mt10" style={{ color: "#fff" }}>
+            <div className="h2 mt10" style={{ color: "var(--text-primary)" }}>
               No active plans yet
             </div>
             <div className="fine mt6" style={{ maxWidth: 300, margin: "6px auto 0" }}>
@@ -316,7 +316,7 @@ export default function V2Subscriptions() {
       <div className="content" style={{ paddingBottom: 24 }}>
         {/* Hero + wallet */}
         <div className="padx" style={{ paddingTop: 4 }}>
-          <h1 className="h2" style={{ color: "#fff" }}>
+          <h1 className="h2" style={{ color: "var(--text-primary)" }}>
             Your subscriptions
           </h1>
           <div className="fine mt4">
@@ -432,12 +432,12 @@ export default function V2Subscriptions() {
       {/* Edit delivery window */}
       {windowEditOpen && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setWindowEditOpen(false)}
         >
           <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+            <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Update delivery window
             </div>
             <div className="fine mt6">
@@ -483,12 +483,12 @@ export default function V2Subscriptions() {
       {/* Reschedule delivery */}
       {reschedDelivery !== null && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setReschedDelivery(null)}
         >
           <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+            <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Reschedule delivery
             </div>
             <div className="mt12">
@@ -548,12 +548,12 @@ export default function V2Subscriptions() {
       {/* ------ Cancel confirmation (destructive) ------ */}
       {cancelConfirmOpen && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setCancelConfirmOpen(false)}
         >
           <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt" style={{ color: "#fff" }}>
+            <div className="tt" style={{ color: "var(--text-primary)" }}>
               Cancel this subscription?
             </div>
             <div className="fine mt6">
@@ -568,7 +568,7 @@ export default function V2Subscriptions() {
               </button>
               <button
                 className="btn"
-                style={{ ...ACT, background: "var(--dgr)", color: "#fff" }}
+                style={{ ...ACT, background: "var(--color-error)", color: "var(--color-stone-0)" }}
                 onClick={() => {
                   setCancelConfirmOpen(false);
                   if (detail) {
@@ -589,12 +589,12 @@ export default function V2Subscriptions() {
       {/* ------ Skip-delivery confirmation ------ */}
       {skipConfirm !== null && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSkipConfirm(null)}
         >
           <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt" style={{ color: "#fff" }}>
+            <div className="tt" style={{ color: "var(--text-primary)" }}>
               Skip this delivery?
             </div>
             <div className="fine mt6">
@@ -814,7 +814,7 @@ function DetailView({
             className="note mt12"
             style={{
               background: "var(--safd)",
-              borderColor: "rgba(244,196,48,.35)",
+              borderColor: "color-mix(in oklab, var(--color-warning) 35%, transparent)",
               color: "var(--safb)",
             }}
           >
@@ -846,7 +846,7 @@ function DetailView({
           className="card mt12"
           style={{ background: "var(--safd)", borderColor: "var(--saf)" }}
         >
-          <div className="tt" style={{ color: "#fff" }}>
+          <div className="tt" style={{ color: "var(--text-primary)" }}>
             Enjoying your trial?
           </div>
           <div className="fine mt4">
@@ -1056,8 +1056,8 @@ function SwapDialog({
 
   return (
     <div
-      className="tnm2"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      className="tnm2 bg-black/60"
+      style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={() => onClose()}
     >
       <div
@@ -1065,7 +1065,7 @@ function SwapDialog({
         style={{ maxWidth: 512, width: "100%" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+        <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
           <i className="ph-bold ph-swap safc" /> Choose dishes for this delivery
         </div>
 
@@ -1102,9 +1102,9 @@ function SwapDialog({
                     padding: 8,
                     borderRadius: 10,
                     marginBottom: 6,
-                    border: `1px solid ${blocked ? "rgba(201,124,112,.5)" : qty > 0 ? "var(--saf)" : "var(--ln)"}`,
+                    border: `1px solid ${blocked ? "color-mix(in oklab, var(--color-error) 50%, transparent)" : qty > 0 ? "var(--saf)" : "var(--ln)"}`,
                     background: blocked
-                      ? "rgba(201,124,112,.1)"
+                      ? "color-mix(in oklab, var(--color-error) 10%, transparent)"
                       : qty > 0
                         ? "var(--safd)"
                         : "transparent",
@@ -1142,7 +1142,7 @@ function SwapDialog({
                           className="lab"
                           style={{
                             color: "var(--dgr)",
-                            border: "1px solid rgba(201,124,112,.5)",
+                            border: "1px solid color-mix(in oklab, var(--color-error) 50%, transparent)",
                             padding: "1px 5px",
                             borderRadius: 5,
                           }}

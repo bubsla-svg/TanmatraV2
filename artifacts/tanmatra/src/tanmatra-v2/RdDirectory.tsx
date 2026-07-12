@@ -11,8 +11,8 @@ import {
 } from "@/lib/protocols";
 
 const ACCENT: Record<string, { background: string; color: string; border: string }> = {
-  sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid rgba(136,170,132,.35)" },
-  blue: { background: "rgba(96,165,250,.15)", color: "#93C5FD", border: "1px solid rgba(96,165,250,.32)" },
+  sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)" },
+  blue: { background: "var(--color-clinical-blue-light)", color: "var(--color-clinical-blue)", border: "1px solid color-mix(in oklab, var(--color-clinical-blue) 32%, transparent)" },
   gold: { background: "var(--safd)", color: "var(--safb)", border: "1px solid var(--saf)" },
 };
 
@@ -64,7 +64,7 @@ export default function V2RdDirectory() {
 
         <div className="content padx" style={{ paddingTop: 8, paddingBottom: 24 }}>
           <div className="lab" style={{ color: "var(--safb)" }}>1:1 Advisory</div>
-          <h1 className="h2 mt6" style={{ color: "#fff" }}>
+          <h1 className="h2 mt6" style={{ color: "var(--text-primary)" }}>
             {activeProtocol
               ? `${PROTOCOL_LABELS[activeProtocol]} Protocol — RD specialists`
               : "Book a registered dietitian"}

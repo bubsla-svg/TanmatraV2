@@ -213,7 +213,7 @@ export default function MobileSearchSheet({
           e.preventDefault();
           inputRef.current?.focus();
         }}
-        className="h-[92dvh] max-h-[92dvh] w-full bg-[#050505] border-t border-clinical-border p-0 flex flex-col rounded-t-2xl overflow-hidden focus:outline-none [&>button]:hidden"
+        className="h-[92dvh] max-h-[92dvh] w-full bg-clinical-dark border-t border-clinical-border p-0 flex flex-col rounded-t-2xl overflow-hidden focus:outline-none [&>button]:hidden"
       >
         <SheetTitle className="sr-only">Mobile search</SheetTitle>
         <SheetDescription className="sr-only">
@@ -272,7 +272,7 @@ export default function MobileSearchSheet({
             onClick={() => setSelectedProtocol(null)}
             className={`min-h-[34px] px-3.5 rounded-full text-xs font-medium transition-all shrink-0 ${
               selectedProtocol === null
-                ? "bg-clinical-gold text-[#050505] font-semibold shadow-sm"
+                ? "bg-clinical-gold text-action-text font-semibold shadow-sm"
                 : "bg-white/5 text-clinical-zinc border border-clinical-border hover:text-white hover:bg-white/10"
             }`}
           >
@@ -287,7 +287,7 @@ export default function MobileSearchSheet({
                 onClick={() => setSelectedProtocol(active ? null : proto)}
                 className={`min-h-[34px] px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all shrink-0 ${
                   active
-                    ? "bg-clinical-gold text-[#050505] font-semibold shadow-sm"
+                    ? "bg-clinical-gold text-action-text font-semibold shadow-sm"
                     : "bg-white/5 text-clinical-zinc border border-clinical-border hover:text-white hover:bg-white/10"
                 }`}
               >

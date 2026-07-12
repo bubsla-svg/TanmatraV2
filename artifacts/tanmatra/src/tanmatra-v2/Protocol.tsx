@@ -22,7 +22,7 @@ const CFG: Record<Key, {
   heroImg?: string;
 }> = {
   performance: {
-    name: "Performance Protocol", accent: "#7BA7D0", accentBg: "rgba(123,167,208,.14)", icon: "ph-lightning",
+    name: "Performance Protocol", accent: "var(--color-clinical-blue)", accentBg: "var(--color-clinical-blue-light)", icon: "ph-lightning",
     headline: "Athletic nutrition for", accentWord: "peak output",
     desc: "Evidence-based sports nutrition engineered for muscle protein synthesis, glycogen replenishment and rapid recovery. Macro ratios validated by exercise-physiology research.",
     pillars: [
@@ -36,7 +36,7 @@ const CFG: Record<Key, {
     heroImg: "/dishes/buddha-bowl.jpg",
   },
   clinical: {
-    name: "Clinical Protocol", accent: "#F4C430", accentBg: "var(--safd)", icon: "ph-heartbeat",
+    name: "Clinical Protocol", accent: "var(--color-clinical-gold)", accentBg: "var(--safd)", icon: "ph-heartbeat",
     headline: "Therapeutic nutrition,", accentWord: "RD-supervised",
     desc: "Evidence-based medical nutrition therapy for diabetes, cardiovascular, renal and post-surgical recovery — precise nutrient restrictions, every menu RD-signed.",
     pillars: [
@@ -49,7 +49,7 @@ const CFG: Record<Key, {
     dishBadge: (d) => `GI ${d.glycaemicIndex}`,
   },
   wellness: {
-    name: "Wellness Protocol", accent: "#88AA84", accentBg: "var(--saged)", icon: "ph-leaf",
+    name: "Wellness Protocol", accent: "var(--color-clinical-sage)", accentBg: "var(--saged)", icon: "ph-leaf",
     headline: "Preventive nutrition for", accentWord: "everyday vitality",
     desc: "Balanced, RD-portioned meals for daily energy, immunity and gut health.",
     pillars: [
@@ -87,7 +87,7 @@ export default function V2Protocol({ which }: { which: Key }) {
             <div className="posabs" style={{ top: 12, left: 16, zIndex: 2 }}><Link className="glass" to="/challenges" aria-label="Community"><i className="ph-bold ph-arrow-left" /></Link></div>
             <div className="posabs padx" style={{ left: 0, right: 0, bottom: 16, zIndex: 2 }}>
               <span className="pill" style={{ background: cfg.accentBg, color: cfg.accent }}><i className={`ph-fill ${cfg.icon}`} /> {cfg.name}</span>
-              <h1 className="disp mt10" style={{ fontSize: 26, color: "#fff" }}>{cfg.headline} <span style={{ color: cfg.accent }}>{cfg.accentWord}</span></h1>
+              <h1 className="disp mt10" style={{ fontSize: 26, color: "var(--color-stone-0)" }}>{cfg.headline} <span style={{ color: cfg.accent }}>{cfg.accentWord}</span></h1>
             </div>
           </div>
 
@@ -104,7 +104,7 @@ export default function V2Protocol({ which }: { which: Key }) {
             )}
 
             <div className="fx ac gap8 mt14">
-              <Link className="btn btn-p f1" to={`/menu?protocol=${which}`} style={{ background: cfg.accent, color: "#0b0b0b" }}><i className="ph-bold ph-fork-knife" /> See dishes</Link>
+              <Link className="btn btn-p f1" to={`/menu?protocol=${which}`} style={{ background: cfg.accent, color: "var(--color-ink-900)" }}><i className="ph-bold ph-fork-knife" /> See dishes</Link>
               <Link className="btn btn-g f1" to={`/plans?protocol=${which}`}><i className="ph-bold ph-calendar-dots" /> Plans</Link>
             </div>
 
@@ -174,9 +174,9 @@ export default function V2Protocol({ which }: { which: Key }) {
         {/* Closing CTA dock */}
         <div className="dock">
           {samplePlan ? (
-            <Link className="btn btn-p btn-lg btn-blk" to={`/subscribe?plan=${samplePlan.slug}`} style={{ background: cfg.accent, color: "#0b0b0b" }}>Start {samplePlan.name} <i className="ph-bold ph-arrow-right" /></Link>
+            <Link className="btn btn-p btn-lg btn-blk" to={`/subscribe?plan=${samplePlan.slug}`} style={{ background: cfg.accent, color: "var(--color-ink-900)" }}>Start {samplePlan.name} <i className="ph-bold ph-arrow-right" /></Link>
           ) : (
-            <Link className="btn btn-p btn-lg btn-blk" to={`/subscribe?plan=${which}`} style={{ background: cfg.accent, color: "#0b0b0b" }}>Start {cfg.name} <i className="ph-bold ph-arrow-right" /></Link>
+            <Link className="btn btn-p btn-lg btn-blk" to={`/subscribe?plan=${which}`} style={{ background: cfg.accent, color: "var(--color-ink-900)" }}>Start {cfg.name} <i className="ph-bold ph-arrow-right" /></Link>
           )}
           <MedicalDisclaimer />
         </div>

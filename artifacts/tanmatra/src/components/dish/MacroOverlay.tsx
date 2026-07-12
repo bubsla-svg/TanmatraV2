@@ -34,7 +34,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
 
     return (
       <div
-        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-[#050505]/85 border border-clinical-border/40 backdrop-blur-md shadow-clinical-lg"
+        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-clinical-dark/85 border border-clinical-border/40 backdrop-blur-md shadow-clinical-lg"
         role="group"
         aria-label="Macro nutrient distribution ratios"
       >
@@ -47,7 +47,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
               cy="18"
               r={r}
               fill="transparent"
-              stroke="rgba(255,255,255,0.05)"
+              className="stroke-white/5"
               strokeWidth="3"
             />
             {/* Protein segment */}
@@ -57,7 +57,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="#6BA3C8"
+                stroke="var(--color-clinical-blue)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenP} ${C}`}
                 strokeDashoffset="0"
@@ -72,7 +72,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="#F4C430"
+                stroke="var(--color-clinical-gold)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenC} ${C}`}
                 strokeDashoffset={`-${lenP}`}
@@ -87,7 +87,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="#7D9E7E"
+                stroke="var(--color-clinical-sage)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenF} ${C}`}
                 strokeDashoffset={`-${lenP + lenC}`}
@@ -97,7 +97,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
             )}
           </svg>
           {/* Center Calorie Display */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-[#050505] dark:text-white">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
             <span className="text-[9px] font-bold leading-none tabular-nums">{macros.calories}</span>
             <span className="text-[6px] opacity-60 font-medium uppercase tracking-tight">kcal</span>
           </div>

@@ -1,0 +1,12 @@
+[
+  "/",
+  "/menu",
+  "/dish/*",
+  "/plans",
+  "/subscribe",
+  "/checkout/*",
+  "/trial/*",
+  "/order/confirmed/*",
+  "/account/plan",
+  "/account/billing"
+]

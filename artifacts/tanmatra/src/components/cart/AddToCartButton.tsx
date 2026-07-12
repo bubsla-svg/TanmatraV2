@@ -62,9 +62,9 @@ export default function AddToCartButton({
       }
       className={cn(
         "inline-flex items-center justify-center gap-1.5 rounded-md px-3 h-9 text-xs font-semibold uppercase tracking-wider transition-all",
-        "bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 active:scale-[0.98]",
+        "bg-clinical-gold text-action-text hover:bg-clinical-gold/90 active:scale-[0.98]",
         "disabled:cursor-not-allowed",
-        status === "success" && "bg-clinical-sage text-[#050505]",
+        status === "success" && "bg-clinical-sage text-action-text",
         fullWidth && "w-full",
         className,
       )}

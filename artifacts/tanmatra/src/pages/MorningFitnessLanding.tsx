@@ -53,7 +53,7 @@ export default function MorningFitnessLanding() {
   };
 
   return (
-    <div className="bg-[#050505] text-white min-h-screen">
+    <div className="bg-clinical-dark text-white min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-clinical-border py-20 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 items-center">
@@ -69,7 +69,7 @@ export default function MorningFitnessLanding() {
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <a href="#propose-club">
-                <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 h-11 px-6 text-sm font-medium gap-2">
+                <Button className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-11 px-6 text-sm font-medium gap-2">
                   Register Your Club
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -283,7 +283,7 @@ export default function MorningFitnessLanding() {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-medium text-xs h-10 mt-2"
+                    className="w-full bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-medium text-xs h-10 mt-2"
                   >
                     Request Trial Breakfast Drop-off
                   </Button>

@@ -281,7 +281,7 @@ export default function V2Dish() {
             <div className="herograd" style={{ zIndex: 1 }} />
             <div className="posabs w100 fx ac jb" style={{ top: 0, left: 0, padding: "12px 16px", zIndex: 2 }}>
               <Link className="glass" to="/menu" aria-label="Back to menu"><i className="ph-bold ph-arrow-left" /></Link>
-              <span className="pill" style={{ background: "rgba(10,12,13,.55)", backdropFilter: "blur(8px)", textTransform: "capitalize" }}>
+              <span className="pill" style={{ background: "color-mix(in oklab, var(--bg) 55%, transparent)", backdropFilter: "blur(8px)", textTransform: "capitalize" }}>
                 <i className="ph-bold ph-cooking-pot" />
                 {clinicalMode ? clinicalCategoryLabel(meal.category, meal.kitchen) : meal.kitchen}
               </span>
@@ -382,8 +382,8 @@ export default function V2Dish() {
                 role="alert"
                 className="note mt14"
                 style={{
-                  background: "rgba(201,124,112,.12)",
-                  borderColor: "rgba(201,124,112,.35)",
+                  background: "color-mix(in oklab, var(--color-error) 12%, transparent)",
+                  borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)",
                   color: "var(--dgr)",
                   display: "flex",
                   flexDirection: "column",
@@ -545,7 +545,7 @@ export default function V2Dish() {
           {match && (match.warnings.length > 0 || (preferences && match.reasons.length >= 0)) && (
             <div className="padx mt16">
               {match.warnings.length > 0 ? (
-                <div className="note" style={{ background: "rgba(201,124,112,.12)", borderColor: "rgba(201,124,112,.35)", color: "var(--dgr)" }}>
+                <div className="note" style={{ background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" }}>
                   <i className="ph-fill ph-warning" />
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>Heads up — based on your preferences</div>
@@ -777,7 +777,7 @@ export default function V2Dish() {
             position: "sticky",
             bottom: 0,
             zIndex: 55,
-            boxShadow: "0 -12px 30px rgba(0,0,0,.45)",
+            boxShadow: "0 -12px 30px color-mix(in oklab, var(--color-stone-900) 45%, transparent)",
             paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
           }}
         >
@@ -800,7 +800,7 @@ export default function V2Dish() {
                 <button 
                   className="btn btn-lg" 
                   disabled 
-                  style={{ background: "rgba(201,124,112,.3)", border: "1px solid rgba(201,124,112,.4)", color: "var(--dgr)", cursor: "not-allowed" }}
+                  style={{ background: "color-mix(in oklab, var(--color-error) 30%, transparent)", border: "1px solid color-mix(in oklab, var(--color-error) 40%, transparent)", color: "var(--color-error)", cursor: "not-allowed" }}
                 >
                   <i className="ph-bold ph-warning-circle" /> Blocked by Safety
                 </button>

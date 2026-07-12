@@ -18,6 +18,7 @@ import {
   Award
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatRupees } from "@/lib/rdPlans";
 
 export const meta: MetaFunction = () => [
   { title: "Partner with Tanmatra | Gyms & Fitness Centers" },
@@ -34,11 +35,13 @@ export const meta: MetaFunction = () => [
   { tagName: "link", rel: "canonical", href: "https://tanmatra.food/partners/gyms" },
 ];
 
+const GYM_STANDARD_PLAN_PRICE_RUPEES = 6500;
+
 export default function GymsLanding() {
   const [members, setMembers] = useState(250);
   const [commissionTier, setCommissionTier] = useState(10); // 10%
 
-  const monthlyAncillaryRevenue = Math.round(members * 0.15 * 6500 * (commissionTier / 100));
+  const monthlyAncillaryRevenue = Math.round(members * 0.15 * GYM_STANDARD_PLAN_PRICE_RUPEES * (commissionTier / 100));
 
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState("");
@@ -72,7 +75,7 @@ export default function GymsLanding() {
   };
 
   return (
-    <div className="bg-[#050505] text-white min-h-screen">
+    <div className="bg-clinical-dark text-white min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-clinical-border py-20 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 items-center">
@@ -88,7 +91,7 @@ export default function GymsLanding() {
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <a href="#partner-form">
-                <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 h-11 px-6 text-sm font-medium gap-2">
+                <Button className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-11 px-6 text-sm font-medium gap-2">
                   Apply for Partnership
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -207,7 +210,7 @@ export default function GymsLanding() {
                       key={val}
                       onClick={() => setCommissionTier(val)}
                       variant={commissionTier === val ? "default" : "outline"}
-                      className={`flex-1 text-xs h-8 ${commissionTier === val ? "bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90" : "border-clinical-border text-white hover:text-white"}`}
+                      className={`flex-1 text-xs h-8 ${commissionTier === val ? "bg-clinical-gold text-action-text hover:bg-clinical-gold/90" : "border-clinical-border text-white hover:text-white"}`}
                     >
                       {val}% ({val === 10 ? "Standard" : val === 12.5 ? "Silver" : "Gold"})
                     </Button>
@@ -218,10 +221,10 @@ export default function GymsLanding() {
               <div className="border-t border-clinical-border pt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                 <div>
                   <p className="text-xs text-clinical-zinc uppercase tracking-wider">Estimated Monthly Earnings</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-white mt-1">₹{monthlyAncillaryRevenue.toLocaleString("en-IN")}</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-white mt-1">{formatRupees(monthlyAncillaryRevenue * 100)}</p>
                 </div>
                 <div className="text-xs text-clinical-zinc leading-relaxed">
-                  * Assumes a conservative 15% adoption rate among gym members on our standard 30-day (₹6,500/mo) plan. Actual numbers may vary based on member profile.
+                  * Assumes a conservative 15% adoption rate among gym members on our standard 30-day ({formatRupees(GYM_STANDARD_PLAN_PRICE_RUPEES * 100)}/mo) plan. Actual numbers may vary based on member profile.
                 </div>
               </div>
             </CardContent>
@@ -345,7 +348,7 @@ export default function GymsLanding() {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-medium text-xs h-10 mt-2"
+                    className="w-full bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-medium text-xs h-10 mt-2"
                   >
                     Send Inquiry via WhatsApp
                   </Button>

@@ -131,7 +131,7 @@ export default function V2OfficeLunch() {
               <span className="pill" style={o.status === "open" && windowOpen ? { background: "var(--saged)", color: "var(--sage)" } : {}}>
                 <i className="ph-fill ph-circle" style={{ fontSize: 8 }} /> {windowOpen ? "Picks open" : o.status}
               </span>
-              <h1 className="disp mt10" style={{ fontSize: 26, color: "#fff" }}>{o.title}</h1>
+              <h1 className="disp mt10" style={{ fontSize: 26, color: "var(--color-stone-0)" }}>{o.title}</h1>
             </div>
           </div>
 

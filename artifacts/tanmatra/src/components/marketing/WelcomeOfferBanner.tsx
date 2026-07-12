@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Gift, X, ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useOrders } from "@/lib/ordersContext";
 import { track } from "@/lib/analytics";
+import { loyaltyApi } from "@/lib/loyaltyApi";
+import { formatPrice } from "@/lib/api/adapter";
 
 /**
  * First-order welcome banner.
  *
- * Surfaces the first-order offer (flat 25% off, capped at ₹80) to
+ * Surfaces the first-order offer (flat 25% off, capped at the configured cap) to
  * visitors with no order history. No code to type: the discount is
  * auto-applied server-side by loyaltyEngine.finalizeOrder, which is
  * the single source of truth for eligibility and the amount. This
@@ -16,9 +19,6 @@ import { track } from "@/lib/analytics";
 
 const DISMISS_KEY = "tanmatra:welcome-banner-dismissed-at:v1";
 const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Keep in sync with FIRST_ORDER_DISCOUNT_BPS / _CAP_PAISE on the server.
-const WELCOME_AMOUNT_LABEL = "flat 25% off (up to ₹80)";
 
 function isDismissed(): boolean {
   if (typeof window === "undefined") return false;
@@ -32,6 +32,12 @@ export default function WelcomeOfferBanner() {
   const { orders } = useOrders();
   const [visible, setVisible] = useState(false);
 
+  const { data: offer } = useQuery({
+    queryKey: ["firstOrderOffer"],
+    queryFn: loyaltyApi.getFirstOrderOffer,
+    staleTime: 5 * 60_000,
+  });
+
   useEffect(() => {
     if (orders.length > 0) {
       setVisible(false);
@@ -42,7 +48,12 @@ export default function WelcomeOfferBanner() {
     if (show) track("first_order_offer_shown");
   }, [orders.length]);
 
-  if (!visible) return null;
+  const eligible = offer ? offer.eligible : true;
+  if (!visible || !eligible) return null;
+
+  const percent = offer ? offer.percentBps / 100 : 25;
+  const capFormatted = offer ? formatPrice(offer.capPaise) : formatPrice(8000);
+  const offerLabel = `flat ${percent}% off (up to ${capFormatted})`;
 
   const dismiss = () => {
     setVisible(false);
@@ -58,7 +69,7 @@ export default function WelcomeOfferBanner() {
         <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="font-semibold text-white">
             First order?{" "}
-            <span className="text-clinical-gold">{WELCOME_AMOUNT_LABEL}</span>
+            <span className="text-clinical-gold">{offerLabel}</span>
           </span>
           <span className="text-clinical-zinc hidden sm:inline">
             · auto-applied at checkout, no code needed

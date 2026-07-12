@@ -228,12 +228,12 @@ export default function AdminOpsDashboard() {
   return (
     <div className="h-[calc(100vh-4rem)] flex gap-4 p-4 animate-in fade-in duration-500">
       <div className="flex-1 flex flex-col min-w-0">
-        <Card className="flex-1 flex flex-col border-2 border-[#F4C430]/20">
-          <CardHeader className="shrink-0 py-3 px-4 border-b bg-[#050505]">
+        <Card className="flex-1 flex flex-col border-2 border-clinical-gold/20">
+          <CardHeader className="shrink-0 py-3 px-4 border-b bg-clinical-dark">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#F4C430]/20 flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-[#F4C430]" />
+                <div className="w-8 h-8 rounded-full bg-clinical-gold/20 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-clinical-gold" />
                 </div>
                 <div>
                   <CardTitle className="text-sm text-white">Ops Agent</CardTitle>
@@ -261,13 +261,13 @@ export default function AdminOpsDashboard() {
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "agent" && (
-                    <div className="w-6 h-6 rounded-full bg-[#F4C430]/10 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-3 h-3 text-[#F4C430]" />
+                    <div className="w-6 h-6 rounded-full bg-clinical-gold/10 flex items-center justify-center shrink-0 mt-1">
+                      <Bot className="w-3 h-3 text-clinical-gold" />
                     </div>
                   )}
                   <div
                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                      msg.role === "user" ? "bg-[#6BA3C8] text-white" : "bg-muted text-foreground"
+                      msg.role === "user" ? "bg-clinical-blue text-white" : "bg-muted text-foreground"
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -306,8 +306,8 @@ export default function AdminOpsDashboard() {
                     <p className="text-[10px] opacity-60 mt-1 text-right">{msg.timestamp}</p>
                   </div>
                   {msg.role === "user" && (
-                    <div className="w-6 h-6 rounded-full bg-[#6BA3C8]/10 flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-3 h-3 text-[#6BA3C8]" />
+                    <div className="w-6 h-6 rounded-full bg-clinical-blue/10 flex items-center justify-center shrink-0 mt-1">
+                      <User className="w-3 h-3 text-clinical-blue" />
                     </div>
                   )}
                 </div>
@@ -316,8 +316,8 @@ export default function AdminOpsDashboard() {
                 messages.find((m) => m.id === streamingIdRef.current)?.text ===
                   "" && (
                   <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#F4C430]/10 flex items-center justify-center">
-                      <Bot className="w-3 h-3 text-[#F4C430] animate-bounce" />
+                    <div className="w-6 h-6 rounded-full bg-clinical-gold/10 flex items-center justify-center">
+                      <Bot className="w-3 h-3 text-clinical-gold animate-bounce" />
                     </div>
                     <div className="bg-muted rounded-lg px-3 py-2 text-sm text-muted-foreground">
                       Analyzing...
@@ -330,7 +330,7 @@ export default function AdminOpsDashboard() {
           <CardContent className="shrink-0 p-3 border-t">
             <div className="flex gap-2">
               <Input
-                placeholder="Ask the Ops Agent: check inventory, assign rider, refund order #123..."
+                placeholder={"Ask the Ops Agent: check inventory, assign rider, refund order #" + "123..."}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -458,7 +458,7 @@ export default function AdminOpsDashboard() {
             <Separator />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Revenue Today</span>
-              <span className="font-bold text-[#F4C430]">{formatCurrency(0)}</span>
+              <span className="font-bold text-clinical-gold">{formatCurrency(0)}</span>
             </div>
           </CardContent>
         </Card>

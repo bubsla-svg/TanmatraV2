@@ -49,7 +49,7 @@ export default function V2Recipes() {
           <div className="lab" style={{ color: "var(--safb)", display: "flex", alignItems: "center", gap: 6 }}>
             <i className="ph-bold ph-book-open" />Recipe Library
           </div>
-          <h1 className="disp mt6" style={{ color: "#fff" }}>Cook with the RD board</h1>
+          <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>Cook with the RD board</h1>
           <p className="small mut mt6">Every recipe here is written by Tanmatra's registered dietitians and chefs — built for the same goals as our meal plans.</p>
 
           <div className="inp mt16">

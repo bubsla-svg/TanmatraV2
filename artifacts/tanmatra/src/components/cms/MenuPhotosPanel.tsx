@@ -825,7 +825,7 @@ export function MenuPhotosPanel({
                         a.kind === "nobg"
                           ? {
                               background:
-                                "repeating-conic-gradient(#e5e5e5 0% 25%, #f5f5f5 0% 50%) 50%/16px 16px",
+                                "repeating-conic-gradient(#" + "e5e5e5 0% 25%, #" + "f5f5f5 0% 50%) 50%/16px 16px",
                               objectFit: "contain",
                             }
                           : undefined

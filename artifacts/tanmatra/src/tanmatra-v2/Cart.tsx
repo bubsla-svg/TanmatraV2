@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { F } from "./data";
+import { useQuery } from "@tanstack/react-query";
+import { loyaltyApi } from "@/lib/loyaltyApi";
 import { useCart, useCartTotals } from "@/lib/cartContext";
 import { useOrders } from "@/lib/ordersContext";
 import { groupOrdersApi } from "@/lib/queries";
@@ -20,6 +22,12 @@ export default function V2Cart() {
   const { preferences } = usePreferences();
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
   const { dishes: catalogDishes } = useMenuCatalog();
+
+  const { data: offer } = useQuery({
+    queryKey: ["firstOrderOffer"],
+    queryFn: loyaltyApi.getFirstOrderOffer,
+    staleTime: 5 * 60_000,
+  });
 
   const [nextSlot, setNextSlot] = useState<DeliverySlotOption | null>(null);
   const [showTagInput, setShowTagInput] = useState<string | null>(null);
@@ -68,7 +76,15 @@ export default function V2Cart() {
 
   const { subtotal, tax, deliveryFee, total, amountToFreeDelivery, freeDeliveryProgress } = useCartTotals();
   const { orders } = useOrders();
-  const projectedFirstOrderDiscount = orders.length === 0 && subtotal > 0 ? Math.min(Math.floor(subtotal * 0.25), 8000) : 0;
+
+  const isEligible = offer ? offer.eligible : true;
+  const discountPercent = offer ? offer.percentBps / 10000 : 0.25;
+  const discountCap = offer ? offer.capPaise : 8000;
+  const eligible = orders.length === 0 && isEligible;
+
+  const projectedFirstOrderDiscount = eligible && subtotal > 0
+    ? Math.min(Math.floor(subtotal * discountPercent), discountCap)
+    : 0;
   const grandTotal = Math.max(0, total - projectedFirstOrderDiscount);
 
   if (items.length === 0) {
@@ -104,7 +120,7 @@ export default function V2Cart() {
 
           {/* Aggregate conflict banner */}
           {conflictCount > 0 && (
-            <div className="note mb10" style={allergenCount > 0 ? { background: "rgba(201,124,112,.12)", borderColor: "rgba(201,124,112,.35)", color: "var(--dgr)" } : undefined}>
+            <div className="note mb10" style={allergenCount > 0 ? { background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" } : undefined}>
               <i className={allergenCount > 0 ? "ph-fill ph-warning-circle" : "ph-fill ph-shield-warning"} />
               <span>
                 {allergenCount > 0
@@ -184,7 +200,7 @@ export default function V2Cart() {
 
                     {/* Per-line conflict block */}
                     {c && (
-                      <div className="note mt10" style={(hasAllergen || hasDiet) ? { background: "rgba(201,124,112,.12)", borderColor: "rgba(201,124,112,.35)", color: "var(--dgr)" } : { background: "var(--s2)", borderColor: "var(--ln2)", color: "var(--mut)" }}>
+                      <div className="note mt10" style={(hasAllergen || hasDiet) ? { background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" } : { background: "var(--s2)", borderColor: "var(--ln2)", color: "var(--mut)" }}>
                         <i className="ph-fill ph-warning" />
                         <div>
                           {hasAllergen && <div style={{ fontWeight: 600 }}>Contains {c.matchedAllergens.join(", ")}</div>}
@@ -211,7 +227,7 @@ export default function V2Cart() {
             {tax > 0 && <div className="billrow"><span>GST (18%)</span><span className="mono" style={{ color: "var(--tx)" }}>{F(tax)}</span></div>}
             <div className="billrow"><span><i className="ph-bold ph-map-pin" /> Delivery</span><span className="mono" style={{ color: deliveryFee === 0 ? "var(--sage)" : "var(--tx)" }}>{deliveryFee === 0 ? "FREE" : F(deliveryFee)}</span></div>
             {projectedFirstOrderDiscount > 0 && (
-              <div className="billrow"><span style={{ color: "var(--safb)" }}>First-order offer (25% up to ₹80)</span><span className="mono" style={{ color: "var(--safb)" }}>−{F(projectedFirstOrderDiscount)}</span></div>
+              <div className="billrow"><span style={{ color: "var(--safb)" }}>First-order offer ({discountPercent * 100}% up to {F(discountCap)})</span><span className="mono" style={{ color: "var(--safb)" }}>−{F(projectedFirstOrderDiscount)}</span></div>
             )}
             <div className="billrow tot"><span>Total</span><span className="price" style={{ fontSize: 17, color: "var(--safb)" }}>{F(grandTotal)}</span></div>
             {projectedFirstOrderDiscount > 0 && <div className="fine mt4">Offer applied automatically at checkout.</div>}

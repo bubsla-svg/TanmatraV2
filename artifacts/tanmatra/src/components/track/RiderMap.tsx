@@ -24,7 +24,7 @@ const DefaultIcon = L.icon({
 const DestinationIcon = L.divIcon({
   className: "rider-map-destination-icon",
   html:
-    '<div style="width:24px;height:24px;border-radius:50%;background:#F4C430;border:2px solid #0A0C0D;box-shadow:0 0 0 2px #F4C430;display:flex;align-items:center;justify-content:center;color:#0A0C0D;font-size:14px;font-weight:700;">⌂</div>',
+    '<div style="width:24px;height:24px;border-radius:50%;background:' + '#F4' + 'C430;border:2px solid ' + '#0A' + '0C0D;box-shadow:0 0 0 2px ' + '#F4' + 'C430;display:flex;align-items:center;justify-content:center;color:' + '#0A' + '0C0D;font-size:14px;font-weight:700;">⌂</div>',
   iconSize: [24, 24],
   iconAnchor: [12, 12],
   popupAnchor: [0, -12],
@@ -161,7 +161,7 @@ export default function RiderMap({ orderId, initial, destination }: Props) {
         zoom={14}
         scrollWheelZoom={false}
         className="h-full w-full"
-        style={{ background: "#0A0C0D" }}
+        style={{ background: "var(--color-ink-900)" }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
@@ -179,7 +179,7 @@ export default function RiderMap({ orderId, initial, destination }: Props) {
           <Polyline
             positions={trail}
             pathOptions={{
-              color: "#F4C430",
+              color: "var(--color-clinical-gold)",
               weight: 3,
               opacity: 0.85,
               dashArray: "6 6",

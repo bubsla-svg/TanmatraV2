@@ -90,7 +90,7 @@ export default function V2Marketplace() {
                       <div className="f1" style={{ minWidth: 0 }}>
                         <div className="fx ac g6" style={{ minHeight: 20 }}>
                           {item.rdVerified && <span className="pill sg"><i className="ph-fill ph-seal-check" />RD</span>}
-                          {lowStock && <span className="pill" style={{ marginLeft: "auto", background: "rgba(201,124,112,.16)", color: "var(--dgr)" }}>Only {item.stockQty} left</span>}
+                          {lowStock && <span className="pill" style={{ marginLeft: "auto", background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--color-error)" }}>Only {item.stockQty} left</span>}
                         </div>
                         <div className="dtitle">{item.name}</div>
                         <p className="fine" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.description}</p>

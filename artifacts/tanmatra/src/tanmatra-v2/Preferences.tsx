@@ -218,7 +218,7 @@ export default function V2Preferences() {
               <i className="ph-bold ph-sliders-horizontal" />
               Your profile
             </div>
-            <h1 className="disp mt6" style={{ color: "#fff" }}>
+            <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>
               Your Preferences
             </h1>
             <p className="small mut mt6">
@@ -555,9 +555,9 @@ function Chip({
         style={{
           ...(active
             ? {
-                background: "rgba(201,124,112,.14)",
-                borderColor: "var(--dgr)",
-                color: "var(--dgr)",
+                background: "color-mix(in oklab, var(--color-error) 14%, transparent)",
+                borderColor: "var(--color-error)",
+                color: "var(--color-error)",
               }
             : {}),
           ...style,

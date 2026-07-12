@@ -341,7 +341,7 @@ export default function AdminKds() {
                   </Button>
                   <Button
                     size="sm"
-                    className="flex-[2] h-9 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-bold uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-[2] h-9 bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-bold uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!orderIsCalibrated || busyOrderId !== null}
                     onClick={() => handlePackReady(order.id)}
                   >

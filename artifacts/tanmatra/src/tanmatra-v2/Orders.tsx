@@ -19,7 +19,7 @@ const STATUS_BADGE: Record<PastOrder["status"], { label: string; cls: string; st
   ready: { label: "In Preparation", cls: "pill", style: { background: "var(--s3)", color: "var(--tx)" } },
   out_for_delivery: { label: "Out for Delivery", cls: "pill", style: { background: "var(--safd)", color: "var(--safb)" } },
   delivered: { label: "Delivered", cls: "pill sg" },
-  cancelled: { label: "Cancelled", cls: "pill", style: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" } },
+  cancelled: { label: "Cancelled", cls: "pill", style: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--color-error)" } },
 };
 
 // Clinical-mode wording, shown only when the user has clinical mode on.
@@ -89,7 +89,7 @@ export default function V2Orders() {
           ) : (
             <>
               <div className="lab" style={{ color: "var(--safb)" }}>Order history</div>
-              <h1 className="disp mt6" style={{ color: "#fff" }}>Your orders</h1>
+              <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>Your orders</h1>
               <p className="fine mt6">
                 {orders.length} past order{orders.length === 1 ? "" : "s"} · Tap any order to track or reorder
               </p>

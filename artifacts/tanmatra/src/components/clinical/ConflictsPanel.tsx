@@ -127,8 +127,8 @@ export default function ConflictsPanel({
       className="space-y-3"
       style={{
         borderRadius: 12,
-        border: "1px solid rgba(201,124,112,.4)",
-        background: "rgba(201,124,112,.1)",
+        border: "1px solid color-mix(in oklab, var(--color-error) 40%, transparent)",
+        background: "color-mix(in oklab, var(--color-error) 10%, transparent)",
         padding: "12px 16px",
       }}
     >
@@ -153,8 +153,8 @@ export default function ConflictsPanel({
               className="flex flex-wrap items-center gap-2"
               style={{
                 borderRadius: 6,
-                border: "1px solid rgba(201,124,112,.3)",
-                background: "rgba(201,124,112,.08)",
+                border: "1px solid color-mix(in oklab, var(--color-error) 30%, transparent)",
+                background: "color-mix(in oklab, var(--color-error) 8%, transparent)",
                 padding: "6px 10px",
               }}
             >
@@ -166,7 +166,7 @@ export default function ConflictsPanel({
                   textTransform: "uppercase",
                   letterSpacing: ".08em",
                   ...(r.severity === "allergen"
-                    ? { background: "rgba(201,124,112,.16)", color: "var(--dgr)" }
+                    ? { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--color-error)" }
                     : { background: "var(--safd)", color: "var(--safb)" }),
                 }}
               >
@@ -192,7 +192,7 @@ export default function ConflictsPanel({
                       letterSpacing: ".1em",
                       gap: 4,
                       color: "var(--safb)",
-                      borderColor: "rgba(244,196,48,.4)",
+                      borderColor: "color-mix(in oklab, var(--color-clinical-gold) 40%, transparent)",
                     }}
                   >
                     <ArrowRightLeft className="w-3 h-3" aria-hidden />
@@ -210,9 +210,9 @@ export default function ConflictsPanel({
                     textTransform: "uppercase",
                     letterSpacing: ".1em",
                     gap: 4,
-                    background: "rgba(201,124,112,.16)",
-                    color: "var(--dgr)",
-                    border: "1px solid rgba(201,124,112,.4)",
+                    background: "color-mix(in oklab, var(--color-error) 16%, transparent)",
+                    color: "var(--color-error)",
+                    border: "1px solid color-mix(in oklab, var(--color-error) 40%, transparent)",
                   }}
                 >
                   <X className="w-3 h-3" aria-hidden />

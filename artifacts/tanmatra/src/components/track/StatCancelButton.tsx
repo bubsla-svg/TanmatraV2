@@ -52,7 +52,7 @@ export function StatCancelButton({
           gap: 6,
           fontWeight: 600,
           ...(solid
-            ? { background: "var(--dgr)", color: "#fff" }
+            ? { background: "var(--dgr)", color: "var(--color-stone-0)" }
             : { borderColor: "var(--dgr)", color: "var(--dgr)" }),
         }}
         aria-label={`STAT cancel order ${orderId}`}

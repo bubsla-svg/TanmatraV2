@@ -11,6 +11,7 @@ export function usePremiumStatus() {
   return {
     isPremium: q.data?.isPremium ?? false,
     membership: q.data?.membership ?? null,
+    pricePaise: q.data?.pricePaise,
     isLoading: q.isLoading,
   };
 }

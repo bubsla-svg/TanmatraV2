@@ -49,7 +49,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-clinical-border bg-[#050505]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-clinical-border bg-clinical-dark/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="Tanmatra">
             <Logo className="h-10 w-auto" aria-hidden="true" />
@@ -111,7 +111,7 @@ export default function Header() {
               <ShoppingCart className="w-5 h-5 sm:w-4 sm:h-4" aria-hidden />
               <span className="hidden sm:inline ml-1.5 text-xs">Cart</span>
               {totalQuantity > 0 && (
-                <Badge className="absolute top-1 right-1 sm:static sm:ml-1 h-4 min-w-4 px-1 text-[10px] bg-clinical-gold text-[#050505] border-0 font-bold leading-none">
+                <Badge className="absolute top-1 right-1 sm:static sm:ml-1 h-4 min-w-4 px-1 text-[10px] bg-clinical-gold text-action-text border-0 font-bold leading-none">
                   {totalQuantity}
                 </Badge>
               )}

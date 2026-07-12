@@ -50,7 +50,7 @@ export default function V2Challenges() {
             <i className="ph-bold ph-flag" style={{ marginRight: 6 }} />
             Cohort Challenges
           </div>
-          <h1 className="disp" style={{ margin: "8px 0 6px", color: "#fff" }}>
+          <h1 className="disp" style={{ margin: "8px 0 6px", color: "var(--text-primary)" }}>
             Time-boxed resets, with the cohort
           </h1>
           <p className="small mut" style={{ maxWidth: 340 }}>

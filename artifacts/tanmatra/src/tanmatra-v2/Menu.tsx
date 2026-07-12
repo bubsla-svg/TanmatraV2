@@ -464,7 +464,7 @@ export default function V2Menu() {
         {/* App bar */}
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
-          <div className="abt">{activeProtocol ? `${PROTOCOL_LABELS[activeProtocol]} Protocol` : "Menu"}</div>
+          <h1 className="abt">{activeProtocol ? `${PROTOCOL_LABELS[activeProtocol]} Protocol` : "Menu"}</h1>
           <button className="iconbtn" onClick={() => setShowSearch((s) => !s)} aria-label="Search"><i className="ph-bold ph-magnifying-glass" /></button>
         </div>
 
@@ -782,7 +782,7 @@ export default function V2Menu() {
 
       {/* Customization sheet */}
       {customizingDish && activeVariant && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setCustomizingDish(null)}>
+        <div className="bg-black/60" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setCustomizingDish(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--s1)", borderRadius: "20px 20px 0 0", borderTop: "1px solid var(--ln2)", padding: 16, maxHeight: "85vh", overflowY: "auto" }}>
             <div className="fx ac jb mb10">
               <div className="h2" style={{ fontSize: 18 }}>Customise {customizingDish.name}</div>
