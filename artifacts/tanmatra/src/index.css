@@ -8,47 +8,47 @@
   --bottom-nav-height: 58px;
   --bottom-cta-height: 68px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --bg: #FAF8F3;            /* stone-50: warm cream background */
-  --surface: #FFFFFF;       /* stone-0: elevated card background */
-  --surface-raised: #FFFFFF;
-  --border: #DED9CC;        /* stone-200: hairline dividers */
-  --border-strong: #C6C0B0; /* stone-300: active borders */
-  --text-primary: #1A1714;  /* stone-900: primary readability */
-  --text-secondary: #57534A;/* stone-600: secondary descriptive */
-  --text-tertiary: #A39C8B; /* stone-400: muted captions */
-  --action: #E0922B;        /* saffron-500: transactional primary */
-  --action-text: #2A1B08;   /* saffron-on: contrast text on saffron */
+  --bg: #0A0C0D;            /* ink-900: near-black canvas */
+  --surface: #121517;       /* ink-800: card container */
+  --surface-raised: #191D20;/* ink-700: elevated modal */
+  --border: #262A30;        /* ink-600: border boundaries */
+  --border-strong: #33373E; /* ink-500: hover border */
+  --text-primary: #E9ECEE;  /* bone: readable soft-white */
+  --text-secondary: #8B9398;/* mute: secondary zinc-gray */
+  --text-tertiary: #5C6367; /* faint: tertiary divider gray */
+  --action: #F4C430;        /* saffron-400: dark CTA fill */
+  --action-text: #141210;   /* saffron-on: dark action text */
   
-  --color-macro-protein-theme: #6E8B74; /* moss */
-  --color-macro-carbs-theme: #B89A5E;    /* oat */
-  --color-macro-fat-theme: #C28A6E;      /* soft terracotta */
+  --color-macro-protein-theme: #8FB996;
+  --color-macro-carbs-theme: #CBB07A;
+  --color-macro-fat-theme: #D9A488;
 
-  /* Semantic alert states (Light) */
-  --color-success-theme: #3E6448;
-  --color-error-theme: #C2503A;
-  --color-warning-theme: #B5851F;
-  --color-info-theme: #4A6B7A;
+  /* Semantic alert states */
+  --color-success-theme: #93B59B;
+  --color-error-theme: #DC8773;
+  --color-warning-theme: #D8B45E;
+  --color-info-theme: #7FA3B3;
 
   /* HSL mappings for shadcn/ui legacy classes */
-  --background: 43 24% 97%;      /* stone-50 HSL */
-  --foreground: 24 13% 10%;      /* stone-900 HSL */
-  --card: 0 0% 100%;             /* stone-0 HSL */
-  --card-foreground: 24 13% 10%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 24 13% 10%;
-  --primary: 35 77% 52%;         /* saffron-500 HSL */
-  --primary-foreground: 33 58% 10%; /* saffron-on HSL */
-  --secondary: 43 9% 31%;        /* stone-600 HSL */
-  --secondary-foreground: 24 13% 10%;
-  --muted: 40 18% 93%;           /* stone-100 HSL */
-  --muted-foreground: 43 9% 59%; /* stone-400 HSL */
-  --accent: 35 77% 52%;
+  --background: 220 13% 5%;      /* ink-900 HSL */
+  --foreground: 45 20% 93%;      /* bone HSL */
+  --card: 220 11% 9%;            /* ink-800 HSL */
+  --card-foreground: 45 20% 93%;
+  --popover: 220 11% 9%;
+  --popover-foreground: 45 20% 93%;
+  --primary: 36 78% 60%;         /* saffron-400 HSL */
+  --primary-foreground: 33 58% 10%;
+  --secondary: 220 5% 57%;       /* mute HSL */
+  --secondary-foreground: 45 20% 93%;
+  --muted: 220 10% 13%;          /* ink-700 HSL */
+  --muted-foreground: 220 5% 57%;
+  --accent: 36 78% 60%;
   --accent-foreground: 33 58% 10%;
-  --destructive: 9 54% 49%;      /* clay-500 HSL */
-  --destructive-foreground: 0 0% 100%;
-  --border: 43 17% 83%;          /* stone-200 HSL */
-  --input: 43 17% 83%;
-  --ring: 35 77% 52%;
+  --destructive: 11 63% 66%;     /* clay-300 HSL */
+  --destructive-foreground: 220 13% 5%;
+  --border: 220 12% 14%;         /* ink-600 HSL */
+  --input: 220 12% 14%;
+  --ring: 36 78% 60%;
 }
 
 .dark {

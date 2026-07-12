@@ -143,6 +143,24 @@ export const subscriptionsApi = {
       members: SubscriptionMember[];
       deliveries: SubscriptionDelivery[];
     }>(`/subscriptions/${id}`),
+  quote: (input: {
+    cadence: SubscriptionCadence;
+    mealsPerDelivery?: number;
+    planType?: "standard" | "trial";
+    dayPlan?: SubscriptionDayPlanEntry[];
+  }) =>
+    request<{
+      mealsPerDelivery: number;
+      pricePerMealPaise: number;
+      pricePerDeliveryPaise: number;
+      discountPaise: number;
+      deliveryFeePaise: number;
+      gstPaise: number;
+      totalPaise: number;
+    }>("/subscriptions/quote", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
   create: (input: CreateSubscriptionInput, idempotencyKey?: string) =>
     request<{ subscription: Subscription; deliveries: SubscriptionDelivery[] }>(
       "/subscriptions",

@@ -6,7 +6,7 @@ import type { SyntheticEvent } from "react";
  * Deliberately generic (not a fabricated dish photo): it reads as "image
  * unavailable," not as a real product shot.
  */
-const FALLBACK_DISH_IMAGE =
+export const FALLBACK_DISH_IMAGE =
   "data:image/svg+xml," +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">` +
