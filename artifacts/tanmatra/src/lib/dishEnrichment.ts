@@ -308,6 +308,8 @@ export function getRdNoteForDish(dish: DishData): string {
 }
 
 function isClinicallyCompatible(candidate: DishData, source: DishData): boolean {
+  // Never cross-sell a non-vegetarian dish alongside a vegetarian one.
+  if (source.isVeg && !candidate.isVeg) return false;
   if (source.glycaemicIndex === "low") {
     if (candidate.glycaemicIndex === "high") return false;
     if (["salads", "soups"].includes(source.category)) {

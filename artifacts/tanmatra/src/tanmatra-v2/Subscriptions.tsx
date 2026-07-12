@@ -9,8 +9,10 @@ import {
   type SubscriptionMember,
   type SubscriptionItem,
   type MealCredit,
+  type CreateSubscriptionInput,
 } from "@/lib/subscriptionsApi";
 import { loyaltyApi } from "@/lib/loyaltyApi";
+import { track } from "@/lib/analytics";
 import { useMenuCatalog } from "@/lib/menuData";
 import { whatsappLink } from "@/lib/support";
 import type { DishData } from "@/lib/menuData";
@@ -235,6 +237,62 @@ export default function V2Subscriptions() {
     }
   };
 
+  // ---------- Post-trial → recurring bridge (the conversion moment) ----------
+  // A trial is a one-off 3-day sampler. Rather than send the customer back to
+  // /plans to rebuild from scratch, carry the exact meals / eaters / window
+  // they sampled into a recurring weekly plan in one tap.
+  const [continuing, setContinuing] = useState(false);
+  const handleContinueTrial = useCallback(async () => {
+    if (!detail) return;
+    const { subscription: s, members, deliveries } = detail;
+    const sampledItems: SubscriptionItem[] =
+      deliveries.find((d) => d.items.length > 0)?.items ?? [];
+    const startDate = new Date(Date.now() + 86_400_000)
+      .toISOString()
+      .slice(0, 10); // tomorrow
+    const input: CreateSubscriptionInput = {
+      cadence: "weekly",
+      mealsPerDelivery: s.mealsPerDelivery,
+      deliveryWindow: s.deliveryWindow,
+      startDate,
+      planType: "standard",
+      addressLabel: s.addressLabel ?? undefined,
+      addressLine: s.addressLine ?? undefined,
+      city: s.city ?? undefined,
+      pincode: s.pincode ?? undefined,
+      phone: s.phone ?? undefined,
+      // Plain note (no "3-day pack" marker) so this recurring plan is never
+      // re-detected as a trial by isTrialSub / the server's trial matcher.
+      notes: "Recurring plan (continued from a trial)",
+      members: members.map((m) => ({
+        name: m.name,
+        diet: m.diet,
+        allergens: m.allergens,
+        lifestyle: m.lifestyle ?? undefined,
+        spiceLevel: m.spiceLevel ?? "medium",
+      })),
+      defaultItems: sampledItems,
+    };
+    track("post_trial_continue_clicked", {
+      trialSubscriptionId: s.id,
+      meals: s.mealsPerDelivery,
+    });
+    setContinuing(true);
+    try {
+      const { subscription: created } = await subscriptionsApi.create(input);
+      track("post_trial_continue_success", { newSubscriptionId: created.id });
+      toast.success("Your weekly plan is set — welcome aboard!");
+      await refreshList();
+      setActiveId(created.id);
+    } catch (err) {
+      toast.error("Couldn't start your plan", {
+        description: err instanceof Error ? err.message : "Error",
+      });
+    } finally {
+      setContinuing(false);
+    }
+  }, [detail, refreshList]);
+
   // ---------- Destructive-action safeguards ----------
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [skipConfirm, setSkipConfirm] = useState<{ deliveryId: number; date: string } | null>(null);
@@ -408,6 +466,8 @@ export default function V2Subscriptions() {
               setReschedDate(new Date(d.scheduledFor).toISOString().slice(0, 10));
               setReschedWindow(d.deliveryWindow);
             }}
+            onContinueTrial={handleContinueTrial}
+            continuing={continuing}
           />
         )}
       </div>
@@ -710,6 +770,8 @@ function DetailView({
   onSkip,
   onSwap,
   onReschedule,
+  onContinueTrial,
+  continuing,
 }: {
   detail: Detail;
   progress?: LoyaltyProgress;
@@ -721,6 +783,8 @@ function DetailView({
   onSkip: (d: SubscriptionDelivery) => void;
   onSwap: (d: SubscriptionDelivery) => void;
   onReschedule: (d: SubscriptionDelivery) => void;
+  onContinueTrial: () => void;
+  continuing: boolean;
 }) {
   const { subscription: s, members, deliveries } = detail;
   const meta = STATUS_META[s.status];
@@ -840,21 +904,47 @@ function DetailView({
         </div>
       </div>
 
-      {/* Trial → recurring conversion (the revenue moment) */}
+      {/* Post-trial → recurring bridge (the conversion moment). Recaps exactly
+          what the customer sampled and continues the SAME setup in one tap,
+          instead of a rebuild-from-scratch on /plans. */}
       {trial && s.status !== "cancelled" && (
         <div
           className="card mt12"
           style={{ background: "var(--safd)", borderColor: "var(--saf)" }}
         >
           <div className="tt" style={{ color: "var(--text-primary)" }}>
-            Enjoying your trial?
+            Keep your plan going
           </div>
           <div className="fine mt4">
-            Turn it into a recurring plan to lock your delivery window, save up to
-            15%, and earn a free meal every few deliveries.
+            You sampled {s.mealsPerDelivery} meals
+            {members.length > 0
+              ? ` for ${members.map((m) => m.name).join(", ")}`
+              : ""}
+            , delivered {s.deliveryWindow}. Continue the exact same setup as a
+            recurring <strong>weekly</strong> plan — lock your window, save up to
+            15%, and earn a free meal every few deliveries. Pause, swap or cancel
+            anytime.
           </div>
-          <Link className="btn btn-p btn-blk mt12" to="/plans">
-            Start a recurring plan <i className="ph-bold ph-arrow-right" />
+          <button
+            className="btn btn-p btn-blk mt12"
+            onClick={onContinueTrial}
+            disabled={continuing}
+          >
+            {continuing ? (
+              "Setting up your plan…"
+            ) : (
+              <>
+                Continue my plan — subscribe &amp; save{" "}
+                <i className="ph-bold ph-arrow-right" />
+              </>
+            )}
+          </button>
+          <Link
+            to="/plans"
+            className="fine mt10"
+            style={{ display: "block", textAlign: "center", color: "var(--safb)" }}
+          >
+            Or choose a different plan
           </Link>
         </div>
       )}

@@ -80,6 +80,7 @@ export default [
     route("premium", "pages/Premium.tsx"),
     route("marketplace", "pages/Marketplace.tsx"),
     route("marketplace/:slug", "pages/MarketplaceItem.tsx"),
+    route("profile", "pages/ProfileRedirect.tsx"),
     route("login", "pages/Login.tsx"),
     route("admin/login", "pages/AdminLogin.tsx"),
     route("*", "pages/not-found.tsx")

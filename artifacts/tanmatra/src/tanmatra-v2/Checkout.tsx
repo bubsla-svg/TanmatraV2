@@ -652,7 +652,8 @@ export default function V2Checkout() {
   const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
   const freeDeliveryProgress = subtotal === 0 ? 0 : Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
   const hasFreeDelivery = fulfillmentType === "pickup" || deliveryFee === 0;
-  const gst = Math.round(discountedSubtotal * 0.18); // 18% GST
+  // Statutory GST split: prepared food 5% (no ITC) + delivery service 18%.
+  const gst = Math.round(discountedSubtotal * 0.05) + Math.round(deliveryFee * 0.18);
   const grossTotal = discountedSubtotal + gst + deliveryFee + effectiveTip + addonTotal;
   // Server only redeems against the (discounted) meal subtotal; cap here too
   // so the UI total matches the server final total exactly.
@@ -1870,7 +1871,7 @@ export default function V2Checkout() {
               </div>
               {gst > 0 && (
                 <div className="billrow" style={{ padding: 0 }}>
-                  <span>GST (18%)</span>
+                  <span>GST</span>
                   <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
                 </div>
               )}
@@ -2328,7 +2329,7 @@ export default function V2Checkout() {
                 )}
                 {gst > 0 && (
                   <div className="billrow" style={{ padding: "4px 0" }}>
-                    <span>GST (18%)</span>
+                    <span>GST</span>
                     <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
                   </div>
                 )}
@@ -2497,7 +2498,7 @@ function V2MobilePayBar({
           </div>
           {gst > 0 && (
             <div className="billrow" style={{ padding: 0 }}>
-              <span>GST (18%)</span>
+              <span>GST</span>
               <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
             </div>
           )}

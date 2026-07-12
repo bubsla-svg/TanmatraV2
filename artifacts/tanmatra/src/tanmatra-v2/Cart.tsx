@@ -224,7 +224,7 @@ export default function V2Cart() {
           <div className="card mt10">
             <div className="lab mb10"><i className="ph-bold ph-receipt" /> Order summary</div>
             <div className="billrow"><span>Subtotal ({totalQuantity} items)</span><span className="mono" style={{ color: "var(--tx)" }}>{F(subtotal)}</span></div>
-            {tax > 0 && <div className="billrow"><span>GST (18%)</span><span className="mono" style={{ color: "var(--tx)" }}>{F(tax)}</span></div>}
+            {tax > 0 && <div className="billrow"><span>GST</span><span className="mono" style={{ color: "var(--tx)" }}>{F(tax)}</span></div>}
             <div className="billrow"><span><i className="ph-bold ph-map-pin" /> Delivery</span><span className="mono" style={{ color: deliveryFee === 0 ? "var(--sage)" : "var(--tx)" }}>{deliveryFee === 0 ? "FREE" : F(deliveryFee)}</span></div>
             {projectedFirstOrderDiscount > 0 && (
               <div className="billrow"><span style={{ color: "var(--safb)" }}>First-order offer ({discountPercent * 100}% up to {F(discountCap)})</span><span className="mono" style={{ color: "var(--safb)" }}>−{F(projectedFirstOrderDiscount)}</span></div>

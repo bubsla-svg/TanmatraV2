@@ -5,13 +5,17 @@ import { type Page, type APIRequestContext, expect } from "@playwright/test";
 // import from a shared module once one exists).
 export const FREE_DELIVERY_THRESHOLD = 50_000; // ₹500
 export const DELIVERY_FEE = 5_000; // ₹50
-export const GST_BPS = 1800; // 18.00% — mirrors cartMath.ts (tax = round(subtotal * 0.18))
+// Statutory GST split — mirrors cartMath.ts / computeChargePaise:
+// prepared food 5% (no ITC) + delivery service 18%.
+export const FOOD_GST_BPS = 500; // 5.00%
+export const DELIVERY_GST_BPS = 1800; // 18.00%
 
 export const rupees = (r: number): number => Math.round(r * 100); // ₹ → paise
-export const gstOn = (subtotalPaise: number): number =>
-  Math.round((subtotalPaise * GST_BPS) / 10_000);
 export const deliveryFeeFor = (subtotalPaise: number): number =>
   subtotalPaise === 0 || subtotalPaise >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+export const gstOn = (subtotalPaise: number): number =>
+  Math.round((subtotalPaise * FOOD_GST_BPS) / 10_000) +
+  Math.round((deliveryFeeFor(subtotalPaise) * DELIVERY_GST_BPS) / 10_000);
 
 /** Assert a paise amount exactly (never compare floats). */
 export function expectPaise(actual: number, expected: number, msg?: string): void {

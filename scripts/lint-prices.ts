@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'node:url';
 
-const SRC_DIR = '/usr/local/google/home/chandansinghr/Wellness-Foods/artifacts/tanmatra/src';
+// Resolve paths relative to this script's own location so the gate runs
+// identically on any machine / CI / Vercel — never a developer's absolute path.
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url)); // <repo>/scripts
+const REPO_ROOT = path.resolve(SCRIPT_DIR, '..');
+const SRC_DIR = path.join(REPO_ROOT, 'artifacts', 'tanmatra', 'src');
 
 function shouldExcludeFile(filePath: string): boolean {
   const base = path.basename(filePath);
@@ -38,12 +43,16 @@ function getFiles(dir: string): string[] {
 const PRICE_REGEX = /₹[0-9]/;
 
 function run() {
+  if (!fs.existsSync(SRC_DIR)) {
+    console.error(`Price lint: source directory not found at ${SRC_DIR}`);
+    process.exit(1);
+  }
   const files = getFiles(SRC_DIR).filter(f => !shouldExcludeFile(f));
   let hasErrors = false;
 
   files.forEach(file => {
     const rawContent = fs.readFileSync(file, 'utf8');
-    
+
     // Strip block comments while preserving line count (replace non-newline chars with space)
     const content = rawContent.replace(/\/\*[\s\S]*?\*\//g, (match) => {
       return match.replace(/[^\r\n]/g, ' ');
@@ -53,7 +62,7 @@ function run() {
 
     lines.forEach((line, idx) => {
       let cleanLine = line;
-      
+
       // Strip single-line comments
       const doubleSlashIndex = line.indexOf('//');
       if (doubleSlashIndex !== -1) {

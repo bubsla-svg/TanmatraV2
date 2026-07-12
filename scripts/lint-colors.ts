@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'node:url';
 
-const SRC_DIR = '/usr/local/google/home/chandansinghr/Wellness-Foods/artifacts/tanmatra/src';
+// Resolve paths relative to this script's own location so the gate runs
+// identically on any machine / CI / Vercel — never a developer's absolute path.
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url)); // <repo>/scripts
+const REPO_ROOT = path.resolve(SCRIPT_DIR, '..');
+const SRC_DIR = path.join(REPO_ROOT, 'artifacts', 'tanmatra', 'src');
 const INDEX_CSS = path.join(SRC_DIR, 'index.css');
 
 function shouldExcludeFile(filePath: string): boolean {
@@ -57,7 +62,7 @@ function isViolation(line: string, filePath: string): { offendingText: string } 
   while ((match = HEX_COLOR_REGEX.exec(cleanLine)) !== null) {
     const hexVal = match[1];
     const fullMatch = match[0];
-    
+
     // Validate hex color length: 3, 4, 6, or 8 digits
     const len = hexVal.length;
     if (len !== 3 && len !== 4 && len !== 6 && len !== 8) {
@@ -87,6 +92,10 @@ function isViolation(line: string, filePath: string): { offendingText: string } 
 }
 
 function run() {
+  if (!fs.existsSync(SRC_DIR)) {
+    console.error(`Color lint: source directory not found at ${SRC_DIR}`);
+    process.exit(1);
+  }
   const files = getFiles(SRC_DIR).filter(f => !shouldExcludeFile(f));
   let hasErrors = false;
 

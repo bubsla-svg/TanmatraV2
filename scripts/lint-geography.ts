@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'node:url';
 
-const BUILD_DIR = '/usr/local/google/home/chandansinghr/Wellness-Foods/artifacts/tanmatra/build/client';
+// Resolve paths relative to this script's own location so the gate runs
+// identically on any machine / CI / Vercel — never a developer's absolute path.
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url)); // <repo>/scripts
+const REPO_ROOT = path.resolve(SCRIPT_DIR, '..');
+const BUILD_DIR = path.join(REPO_ROOT, 'artifacts', 'tanmatra', 'build', 'client');
 
 const PROHIBITED_STRINGS = ['Bengaluru', '+91 80', '+9180'];
 const COPYRIGHT_REGEX = /(?:©|copyright)\s*(?:\([^)]+\)\s*)?\b(2024|2025)\b/i;
@@ -30,6 +35,16 @@ function isTextFile(filePath: string): boolean {
 }
 
 function run() {
+  // This gate scans built HTML/JS/CSS, so it must run against a fresh build.
+  // Passing vacuously when no build exists would be a false green — fail loudly.
+  if (!fs.existsSync(BUILD_DIR)) {
+    console.error(
+      `Geography lint: build output not found at ${BUILD_DIR}. ` +
+      `Run \`pnpm --filter @workspace/tanmatra build\` first.`,
+    );
+    process.exit(1);
+  }
+
   const files = getFiles(BUILD_DIR).filter(isTextFile);
   let hasErrors = false;
 

@@ -20,6 +20,8 @@ type EventName =
   | "first_order_offer_shown"
   | "first_order_offer_applied"
   | "subscription_activated"
+  | "post_trial_continue_clicked"
+  | "post_trial_continue_success"
   | "support_click"
   | "softgate_start"
   | "softgate_complete"

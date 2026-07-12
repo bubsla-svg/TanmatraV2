@@ -1134,7 +1134,7 @@ function FooterTotals({
       {showBill && (
         <dl style={{ margin: 0 }}>
           <TotalsRow label="Subtotal" value={formatPrice(totals.subtotal)} />
-          <TotalsRow label="GST (18%)" value={formatPrice(totals.tax)} muted />
+          <TotalsRow label="GST" value={formatPrice(totals.tax)} muted />
           <TotalsRow
             label="Delivery"
             value={totals.hasFreeDelivery ? "FREE" : formatPrice(totals.deliveryFee)}

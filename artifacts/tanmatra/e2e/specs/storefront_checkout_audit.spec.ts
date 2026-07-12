@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { seedCart, cartItem, GST_BPS } from "../fixtures";
+import { seedCart, cartItem, gstOn, rupees } from "../fixtures";
 
 /**
  * Storefront & checkout 5-vector audit — rewritten against the REAL app.
@@ -128,9 +128,10 @@ test.describe("Tanmatra storefront & checkout audit (v2 app)", () => {
     expect(gst, "cart must itemize a GST line").toBeTruthy();
     const subR = Number(sub![1].replace(/,/g, ""));
     const gstR = Number(gst![1].replace(/,/g, ""));
-    // 18% of the rupee subtotal, matching cartMath.ts (paise-exact upstream;
-    // ±1 rupee tolerance for display rounding).
-    expect(Math.abs(gstR - Math.round((subR * GST_BPS) / 10_000))).toBeLessThanOrEqual(1);
+    // Statutory GST split (5% food + 18% delivery), matching cartMath.ts
+    // (paise-exact upstream; ±2 rupee tolerance for display rounding).
+    const expectedGstR = gstOn(rupees(subR)) / 100;
+    expect(Math.abs(gstR - expectedGstR)).toBeLessThanOrEqual(2);
 
     expect(errors.filter((e) => !BENIGN_ERRORS.test(e))).toEqual([]);
   });
