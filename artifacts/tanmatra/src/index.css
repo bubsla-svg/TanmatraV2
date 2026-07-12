@@ -18,6 +18,12 @@
   --text-tertiary: #5C6367; /* faint: tertiary divider gray */
   --action: #F4C430;        /* saffron-400: dark CTA fill */
   --action-text: #141210;   /* saffron-on: dark action text */
+
+  /* Tanmatra components compatibility tokens */
+  --tnm-action: var(--action);
+  --tnm-surface-ink: var(--surface);
+  --tnm-surface-ink-2: var(--surface-raised);
+  --tnm-sage: var(--color-success-theme);
   
   --color-macro-protein-theme: #8FB996;
   --color-macro-carbs-theme: #CBB07A;
@@ -28,6 +34,17 @@
   --color-error-theme: #DC8773;
   --color-warning-theme: #D8B45E;
   --color-info-theme: #7FA3B3;
+
+  /* Alert compatibility mappings */
+  --color-alert-allergen: var(--color-error-theme);
+  --color-alert-allergen-text: var(--color-error-theme);
+  --color-alert-stat: var(--color-warning-theme);
+  --color-alert-stat-text: var(--color-warning-theme);
+  --color-alert-safe: var(--color-success-theme);
+  --color-alert-safe-text: var(--color-success-theme);
+  --color-alert-info: var(--color-info-theme);
+  --color-alert-info-text: var(--color-info-theme);
+
 
   /* HSL mappings for shadcn/ui legacy classes */
   --background: 220 13% 5%;      /* ink-900 HSL */
@@ -291,6 +308,8 @@
   .text-clinical-label { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-clinical-zinc); }
 
   .tabular-nums { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+  .tnm-data { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+
 
   /* ─── Canonical focus ring (use on every interactive primitive) ─── */
   .focus-ring-clinical {

@@ -18,6 +18,8 @@ import {
   stripIngredientAmount,
   getDishVariants,
   matchesDosha,
+  getTasteDescriptionForDish,
+  getOptionMacroModifier,
 } from "@/lib/dishEnrichment";
 import { buildNutritionLabel } from "@/lib/nutritionLabel";
 import { getChefForDish } from "@/lib/teamData";
@@ -148,6 +150,30 @@ export default function V2Dish() {
     return meal.price + mod;
   }, [selections, meal, customizations]);
 
+  const calculatedMacros = useMemo(() => {
+    if (!meal) return null;
+    const base = { ...meal.macros };
+    customizations.forEach((group: any, idx: number) => {
+      const sel = selections[idx];
+      const applyMod = (optName: string) => {
+        const mod = getOptionMacroModifier(optName);
+        base.calories += mod.calories;
+        base.protein += mod.protein;
+        base.carbs += mod.carbs;
+        base.fat += mod.fat;
+        base.fiber += mod.fiber;
+      };
+      
+      if (group.type === "single" && typeof sel === "string") {
+        applyMod(sel);
+      } else if (group.type === "multiple" && Array.isArray(sel)) {
+        sel.forEach(applyMod);
+      }
+    });
+    return base;
+  }, [selections, meal, customizations]);
+
+
   const calculatedTotal = calculatedUnitPrice * quantity;
 
   if (!meal) {
@@ -159,7 +185,7 @@ export default function V2Dish() {
             <div className="abt">Dish</div>
           </div>
           <div className="padx tc pt-12">
-            <i className="ph-bold ph-warning text-yellow-500 text-3xl" />
+            <i className="ph-bold ph-warning text-[var(--color-warning)] text-3xl" />
             <div className="tt mt-5 text-base font-bold text-white">Dish not found</div>
             <Link className="btn btn-g btn-blk mt-5" to="/menu">Back to menu</Link>
           </div>
@@ -316,7 +342,7 @@ export default function V2Dish() {
           
           {/* Taste line sensory description */}
           <p className="text-xs text-white/50 italic mt-1 leading-snug">
-            Rich umami spiced sauce, roasted tender greens, medium warmth finish.
+            {getTasteDescriptionForDish(meal)}
           </p>
 
           {/* Capped 2 Status Badges (neutral gray, veg status is only sage colored) */}
@@ -333,6 +359,13 @@ export default function V2Dish() {
             <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/80 font-bold uppercase tracking-wider">
               {gi === "low" ? "GI Low" : "GI Med"}
             </span>
+
+            {meal.rdVerified && (
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/85 font-extrabold uppercase tracking-wider inline-flex items-center gap-1">
+                <Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" />
+                RD Reviewed
+              </span>
+            )}
           </div>
 
           {/* 4.4 Persistent Allergen summary line above fold */}
@@ -344,15 +377,15 @@ export default function V2Dish() {
           </div>
 
           {/* 4.5 Nutrition Snapshot Chips */}
-          {!macrosProvisional && (
+          {!macrosProvisional && calculatedMacros && (
             <div className="grid grid-cols-4 gap-2 mt-4 bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
               <div className="flex flex-col items-center">
                 <span className="text-[9px] font-mono text-white/45 uppercase">Calories</span>
-                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{meal.macros.calories}</span>
+                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{calculatedMacros.calories}</span>
               </div>
               <div className="flex flex-col items-center border-l border-white/5">
                 <span className="text-[9px] font-mono text-white/45 uppercase">Protein</span>
-                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{meal.macros.protein}g</span>
+                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{calculatedMacros.protein}g</span>
               </div>
               <div className="flex flex-col items-center border-l border-white/5">
                 <span className="text-[9px] font-mono text-white/45 uppercase">Glycemic</span>
@@ -487,14 +520,14 @@ export default function V2Dish() {
                 {/* Calories Track */}
                 <MacroTrack
                   label="Calories"
-                  value={meal.macros.calories}
+                  value={calculatedMacros.calories}
                   target={preferences?.calorieTarget || null}
                   unit="kcal"
                 />
                 {/* Protein Track */}
                 <MacroTrack
                   label="Protein"
-                  value={meal.macros.protein}
+                  value={calculatedMacros.protein}
                   target={preferences?.proteinTargetGrams || null}
                   unit="g"
                 />
@@ -524,23 +557,23 @@ export default function V2Dish() {
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-1">
                   <span>Calories</span>
-                  <span className="font-mono text-white/80">{meal.macros.calories} kcal</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.calories} kcal</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-1">
                   <span>Protein</span>
-                  <span className="font-mono text-white/80">{meal.macros.protein} g</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.protein} g</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-1">
                   <span>Carbohydrates</span>
-                  <span className="font-mono text-white/80">{meal.macros.carbs} g</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.carbs} g</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-1">
                   <span>Fat</span>
-                  <span className="font-mono text-white/80">{meal.macros.fat} g</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.fat} g</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-1">
                   <span>Fiber</span>
-                  <span className="font-mono text-white/80">{meal.macros.fiber} g</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.fiber} g</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-1">
                   <span>Sugar</span>
@@ -691,7 +724,7 @@ export default function V2Dish() {
         {/* Customization Drawer Overlay */}
         {customizerOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950] flex items-end justify-center">
-            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-2xl max-h-[85vh] overflow-y-auto flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
               <div className="flex justify-between items-center border-b border-white/5 pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-white/90">Customize {meal.name}</h3>
@@ -706,7 +739,7 @@ export default function V2Dish() {
               </div>
 
               {/* Allergen banner visible during customization */}
-              <div className="mt-3.5 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex gap-2 items-center">
+              <div className="mt-3.5 alert-allergen-bg alert-allergen-border border rounded-xl p-3 flex gap-2 items-center">
                 <Warning className="w-4.5 h-4.5 text-[var(--tnm-alert)] shrink-0" weight="fill" />
                 <div className="text-[11px]">
                   <span className="font-bold text-[var(--tnm-alert)] mr-1">Allergen Warning:</span>
@@ -717,7 +750,7 @@ export default function V2Dish() {
               </div>
 
               {/* Customization groups */}
-              <div className="flex-1 flex flex-col gap-5 mt-4 py-2">
+              <div className="flex-1 overflow-y-auto flex flex-col gap-5 mt-4 py-2 pr-1">
                 {customizations.map((group: any, groupIdx: number) => {
                   const selection = selections[groupIdx];
                   return (
@@ -815,7 +848,7 @@ function MacroTrack({ label, value, target, unit }: MacroTrackProps) {
           {target ? (
             <>
               <span className="text-white/40"> / {target}{unit}</span>
-              <span className={`ml-1.5 font-sans font-bold text-[10px] ${isOver ? "text-amber-400" : "text-[var(--color-alert-safe)]"}`}>
+              <span className={`ml-1.5 font-sans font-bold text-[10px] ${isOver ? "text-[var(--color-alert-stat)]" : "text-[var(--color-alert-safe)]"}`}>
                 {isOver ? `Above range` : `${percent}% of target`}
               </span>
             </>
@@ -829,7 +862,7 @@ function MacroTrack({ label, value, target, unit }: MacroTrackProps) {
           className={`h-full transition-all duration-300 ${
             target
               ? isOver
-                ? "bg-amber-400"
+                ? "bg-[var(--color-alert-stat)]"
                 : "bg-[var(--color-alert-safe)]"
               : "bg-white/20"
           }`}

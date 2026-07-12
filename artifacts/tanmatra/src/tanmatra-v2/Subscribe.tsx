@@ -953,7 +953,7 @@ export default function V2Subscribe() {
               </div>
               <p className="fine text-white/45 mt-1">Pay every 7 days via UPI Autopay.</p>
               <p className="fine text-[9px] text-[var(--tnm-action)]/85 mt-2 leading-relaxed">
-                Weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge... Setting up Autopay is free.
+                Weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge, and you can pause or cancel anytime in one tap. Setting up Autopay is free.
               </p>
             </div>
             <span className="tnm-data text-sm font-bold text-white/90 font-mono shrink-0">{weeklyPriceStr}</span>
@@ -972,7 +972,7 @@ export default function V2Subscribe() {
               <span className="text-xs font-bold text-white/90">Pay Bi-Weekly</span>
               <p className="fine text-white/45 mt-1">Prepay 10 meals (Save 10% total).</p>
               <p className="fine text-[9px] text-[var(--tnm-action)]/85 mt-2 leading-relaxed">
-                Bi-weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge... Setting up Autopay is free.
+                Bi-weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge, and you can pause or cancel anytime in one tap. Setting up Autopay is free.
               </p>
             </div>
             <span className="tnm-data text-sm font-bold text-white/90 font-mono shrink-0">{fortnightlyPriceStr}</span>
