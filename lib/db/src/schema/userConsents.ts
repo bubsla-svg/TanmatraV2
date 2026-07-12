@@ -26,6 +26,9 @@ export const userConsentsTable = pgTable(
     purposeAiPersonalization: boolean("purpose_ai_personalization")
       .notNull()
       .default(false),
+    purposeHealthDataProcessing: boolean("purpose_health_data_processing")
+      .notNull()
+      .default(false),
     consentVersion: varchar("consent_version", { length: 64 })
       .notNull()
       .default("2023_DPDPA_v1"),

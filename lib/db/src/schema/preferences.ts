@@ -4,6 +4,8 @@ import {
   integer,
   timestamp,
   text,
+  doublePrecision,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { usersTable } from "./auth";
 
@@ -65,6 +67,10 @@ export const userPreferencesTable = pgTable("user_preferences", {
   proteinTargetGrams: integer("protein_target_grams"),
   carbsTargetGrams: integer("carbs_target_grams"),
   fatTargetGrams: integer("fat_target_grams"),
+  hba1cPct: doublePrecision("hba1c_pct"),
+  pcosHistory: boolean("pcos_history"),
+  heightCm: integer("height_cm"),
+  weightKg: doublePrecision("weight_kg"),
   quizCompletedAt: timestamp("quiz_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

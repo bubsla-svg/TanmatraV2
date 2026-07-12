@@ -7,6 +7,7 @@ export interface UserConsentRecord {
   purposeClinicalDelivery: boolean;
   purposeMarketing: boolean;
   purposeAiPersonalization: boolean;
+  purposeHealthDataProcessing: boolean;
   consentVersion: string;
   status: string;
   grantedAt: string | null;
