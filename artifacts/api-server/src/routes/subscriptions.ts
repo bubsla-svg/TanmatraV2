@@ -7,6 +7,9 @@ import {
   subscriptionDeliveriesTable,
   mealCreditsTable,
   userPreferencesTable,
+  deliverySlotsTable,
+  slotReservationsTable,
+  subscriptionMandatesTable,
   type SubscriptionCadence,
   type SubscriptionItem,
   type SubscriptionDelivery,
@@ -14,7 +17,7 @@ import {
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
-import { resolveDishBySlug } from "../lib/menuResolver";
+import { resolveDishBySlug, makeBatchDishResolver } from "../lib/menuResolver";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const router: IRouter = Router();
@@ -116,6 +119,60 @@ const LEGACY_TRIAL_NOTE = "RD Plan: 3-Day Trial Pack";
 function isTrialSubscription(sub: { notes: string | null }): boolean {
   return sub.notes === TRIAL_NOTE || sub.notes === LEGACY_TRIAL_NOTE;
 }
+
+export function getSunday8PM(date: Date): Date {
+  const sunday = new Date(date);
+  const day = sunday.getUTCDay();
+  const daysToAdd = day === 0 ? 0 : 7 - day;
+  sunday.setUTCDate(sunday.getUTCDate() + daysToAdd);
+  sunday.setUTCHours(20, 0, 0, 0); // 8:00 PM
+  return sunday;
+}
+
+export function isCapacityHoldExpired(createdAt: Date): boolean {
+  return new Date() > getSunday8PM(createdAt);
+}
+
+export async function updateTrialState(
+  subscriptionId: number,
+  event: "delivery_active" | "delivery_delivered"
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [sub] = await tx
+      .select()
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.id, subscriptionId))
+      .for("update")
+      .limit(1);
+
+    if (!sub || sub.trialState == null) return;
+
+    if (event === "delivery_active" && sub.trialState === "trial_purchased") {
+      await tx
+        .update(subscriptionsTable)
+        .set({ trialState: "trial_active", updatedAt: new Date() })
+        .where(eq(subscriptionsTable.id, subscriptionId));
+    } else if (event === "delivery_delivered") {
+      const [{ count }] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(subscriptionDeliveriesTable)
+        .where(
+          and(
+            eq(subscriptionDeliveriesTable.subscriptionId, subscriptionId),
+            eq(subscriptionDeliveriesTable.status, "delivered")
+          )
+        );
+
+      if (count >= 3 && sub.trialState === "trial_active") {
+        await tx
+          .update(subscriptionsTable)
+          .set({ trialState: "trial_bridge_eligible", updatedAt: new Date() })
+          .where(eq(subscriptionsTable.id, subscriptionId));
+      }
+    }
+  });
+}
+
 
 function computeDeliveryPricePaise(
   cadence: SubscriptionCadence,
@@ -438,6 +495,7 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       pincode: data.pincode,
       phone: data.phone,
       notes,
+      trialState: isTrial ? "trial_purchased" : null,
     })
     .returning();
 
@@ -497,7 +555,7 @@ router.get("/subscriptions/:id", async (req: Request, res: Response) => {
     res.status(404).json({ error: "not found" });
     return;
   }
-  const [members, deliveries] = await Promise.all([
+  const [members, deliveries, mandate] = await Promise.all([
     db
       .select()
       .from(subscriptionMembersTable)
@@ -508,8 +566,19 @@ router.get("/subscriptions/:id", async (req: Request, res: Response) => {
       .from(subscriptionDeliveriesTable)
       .where(eq(subscriptionDeliveriesTable.subscriptionId, subId))
       .orderBy(asc(subscriptionDeliveriesTable.scheduledFor)),
+    db
+      .select()
+      .from(subscriptionMandatesTable)
+      .where(
+        and(
+          eq(subscriptionMandatesTable.subscriptionId, subId),
+          eq(subscriptionMandatesTable.status, "active")
+        )
+      )
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
   ]);
-  res.json({ subscription: sub, members, deliveries });
+  res.json({ subscription: sub, members, deliveries, mandate });
 });
 
 router.post("/subscriptions/:id/pause", async (req: Request, res: Response) => {
@@ -716,6 +785,64 @@ router.post(
     invalidateUserBrief(userId);
     res.json({ delivery: updated });
   },
+);
+
+router.post(
+  "/subscriptions/:id/skip",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+    const sub = await loadSubscriptionForUser(subId, userId);
+    if (!sub) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+
+    const upcoming = await db
+      .select()
+      .from(subscriptionDeliveriesTable)
+      .where(
+        and(
+          eq(subscriptionDeliveriesTable.subscriptionId, subId),
+          eq(subscriptionDeliveriesTable.status, "upcoming")
+        )
+      )
+      .orderBy(asc(subscriptionDeliveriesTable.scheduledFor))
+      .limit(1);
+
+    const delivery = upcoming[0];
+    if (!delivery) {
+      res.status(400).json({ error: "no upcoming delivery found" });
+      return;
+    }
+
+    const [updated] = await db
+      .update(subscriptionDeliveriesTable)
+      .set({ status: "skipped" })
+      .where(eq(subscriptionDeliveriesTable.id, delivery.id))
+      .returning();
+
+    const expiresAt = new Date();
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 60);
+    const skippedMeals = (delivery.items ?? []).reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+    await db.insert(mealCreditsTable).values({
+      userId,
+      subscriptionId: subId,
+      deliveryId: delivery.id,
+      amount: skippedMeals > 0 ? skippedMeals : sub.mealsPerDelivery,
+      reason: "skipped_delivery",
+      expiresAt,
+    });
+
+    await recomputeNextDeliveryAt(subId, sub.nextDeliveryAt);
+    invalidateUserBrief(userId);
+    res.json({ delivery: updated });
+  }
 );
 
 router.post(
@@ -1015,5 +1142,232 @@ router.post(
     res.json({ deliveries: newOnes });
   },
 );
+router.get(
+  "/subscriptions/:id/trial-recap",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+
+    const sub = await loadSubscriptionForUser(subId, userId);
+    if (!sub) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+
+    const isEligibleOrActiveTrial =
+      sub.trialState === "trial_purchased" ||
+      sub.trialState === "trial_active" ||
+      sub.trialState === "trial_bridge_eligible";
+
+    if (!isEligibleOrActiveTrial) {
+      res.status(400).json({ error: "subscription is not an active or eligible trial" });
+      return;
+    }
+
+    const completedDeliveries = await db
+      .select()
+      .from(subscriptionDeliveriesTable)
+      .where(
+        and(
+          eq(subscriptionDeliveriesTable.subscriptionId, subId),
+          eq(subscriptionDeliveriesTable.status, "delivered"),
+        )
+      );
+
+    const stats = {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+    };
+
+    const resolver = await makeBatchDishResolver();
+
+    for (const d of completedDeliveries) {
+      const items = d.items ?? [];
+      for (const item of items) {
+        const dish = resolver.bySlug(item.slug);
+        if (dish && dish.macros) {
+          stats.calories += (dish.macros.calories ?? 0) * item.quantity;
+          stats.protein += (dish.macros.protein ?? 0) * item.quantity;
+          stats.carbs += (dish.macros.carbs ?? 0) * item.quantity;
+          stats.fat += (dish.macros.fat ?? 0) * item.quantity;
+          stats.fiber += (dish.macros.fiber ?? 0) * item.quantity;
+        }
+      }
+    }
+
+    const holdExpiration = getSunday8PM(sub.createdAt);
+
+    res.json({
+      stats,
+      holdExpiration: holdExpiration.toISOString(),
+    });
+  }
+);
+
+router.post(
+  "/subscriptions/:id/trial-state",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+
+    const parsed = z.object({
+      event: z.enum(["delivery_active", "delivery_delivered"]),
+    }).safeParse(req.body);
+
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid payload" });
+      return;
+    }
+
+    const sub = await loadSubscriptionForUser(subId, userId);
+    if (!sub) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+
+    await updateTrialState(subId, parsed.data.event);
+    res.json({ ok: true });
+  }
+);
+
+router.post(
+  "/subscriptions/:id/convert",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+
+    try {
+      const result = await db.transaction(async (tx) => {
+        const [sub] = await tx
+          .select()
+          .from(subscriptionsTable)
+          .where(
+            and(
+              eq(subscriptionsTable.id, subId),
+              eq(subscriptionsTable.userId, userId),
+            ),
+          )
+          .for("update")
+          .limit(1);
+
+        if (!sub) {
+          throw new Error("subscription not found");
+        }
+
+        const isTrial = sub.trialState != null && sub.trialState !== "converted" && sub.trialState !== "ended_abandoned";
+        if (!isTrial) {
+          throw new Error("subscription is not an active trial");
+        }
+
+        if (isCapacityHoldExpired(sub.createdAt)) {
+          throw new Error("capacity hold expired");
+        }
+
+        if (sub.preferredSlotId != null) {
+          const [slot] = await tx
+            .select()
+            .from(deliverySlotsTable)
+            .where(eq(deliverySlotsTable.id, sub.preferredSlotId))
+            .limit(1);
+
+          if (!slot) {
+            throw new Error("preferred slot not found");
+          }
+
+          if (slot.reservedCount >= slot.capacity) {
+            const [existingReservation] = await tx
+              .select()
+              .from(slotReservationsTable)
+              .where(
+                and(
+                  eq(slotReservationsTable.subscriptionId, sub.id),
+                  eq(slotReservationsTable.slotId, sub.preferredSlotId),
+                )
+              )
+              .limit(1);
+
+            if (!existingReservation) {
+              throw new Error("delivery slot full");
+            }
+          }
+        }
+
+        const pricePerDeliveryPaise = computeDeliveryPricePaise(sub.cadence, sub.mealsPerDelivery);
+
+        const [updated] = await tx
+          .update(subscriptionsTable)
+          .set({
+            trialState: "converted",
+            pricePerDeliveryPaise,
+            notes: sub.notes ? sub.notes.replace(TRIAL_NOTE, "").replace(LEGACY_TRIAL_NOTE, "").trim() : null,
+            updatedAt: new Date(),
+          })
+          .where(eq(subscriptionsTable.id, sub.id))
+          .returning();
+
+        const generateCount = sub.dayPlan ? CADENCE_CYCLES_AHEAD[sub.cadence] : 4;
+        const last = await tx
+          .select()
+          .from(subscriptionDeliveriesTable)
+          .where(eq(subscriptionDeliveriesTable.subscriptionId, sub.id))
+          .orderBy(desc(subscriptionDeliveriesTable.scheduledFor))
+          .limit(1);
+        const lastDate = last[0]?.scheduledFor ?? sub.startDate;
+        const stepDays = CADENCE_DAYS[sub.cadence];
+        const dayPlan = sub.dayPlan ?? null;
+        let startFrom: Date;
+        if (dayPlan && dayPlan.length > 0) {
+          const base = new Date(sub.startDate);
+          const elapsedMs = new Date(lastDate).getTime() - base.getTime();
+          const cyclesElapsed = Math.floor(elapsedMs / (stepDays * 86400000)) + 1;
+          startFrom = addDays(base, cyclesElapsed * stepDays);
+        } else {
+          startFrom = addDays(new Date(lastDate), stepDays);
+        }
+
+        const newOnes = await generateDeliveriesForSubscription(
+          sub.id,
+          sub.cadence,
+          startFrom,
+          generateCount - 1,
+          sub.deliveryWindow,
+          [],
+          dayPlan,
+        );
+
+        return { subscription: updated, deliveries: newOnes };
+      });
+
+      invalidateUserBrief(userId);
+      res.json(result);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg === "subscription not found" || msg === "preferred slot not found") {
+        res.status(404).json({ error: msg });
+        return;
+      }
+      if (msg === "subscription is not an active trial") {
+        res.status(400).json({ error: msg });
+        return;
+      }
+      if (msg === "capacity hold expired" || msg === "delivery slot full") {
+        res.status(409).json({ error: msg });
+        return;
+      }
+      req.log.error({ err }, "subscription conversion failed");
+      res.status(500).json({ error: "subscription conversion failed" });
+    }
+  }
+);
 
 export default router;
+

@@ -1,10 +1,20 @@
 import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, webhookInboxTable, usersTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import {
+  db,
+  ordersTable,
+  webhookInboxTable,
+  usersTable,
+  subscriptionsTable,
+  subscriptionMandatesTable,
+  preDebitNotificationsTable,
+  subscriptionDeliveriesTable,
+} from "@workspace/db";
+import { and, eq, gte, lte, asc } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
+import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 
 const router: IRouter = Router();
 
@@ -30,6 +40,7 @@ const createRazorpayOrderSchema = z.object({
   amountPaise: z.number().int().positive().max(10_000_000).optional(),
   receipt: z.string().max(64).optional(),
   orderId: z.string().min(1).max(64),
+  subscriptionId: z.number().int().positive().optional(),
 });
 
 const verifyPaymentSchema = z.object({
@@ -44,6 +55,147 @@ const upiIntentSchema = z.object({
   orderId: z.string().max(40),
   phone: z.string().max(20),
 });
+
+async function getOrCreateRazorpayCustomer(
+  userId: string,
+  keyId: string,
+  keySecret: string,
+  log: any
+): Promise<string> {
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  if (!user) {
+    throw new Error("user not found");
+  }
+
+  const rpRes = await fetch("https://api.razorpay.com/v1/customers", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Subscription Customer",
+      email: user.email || undefined,
+      contact: user.phoneE164 || undefined,
+      fail_existing: 0,
+    }),
+  });
+
+  if (!rpRes.ok) {
+    const body = await rpRes.text();
+    log.error({ status: rpRes.status, body }, "Razorpay customer creation failed");
+    throw new Error("Razorpay customer creation failed");
+  }
+
+  const customer = (await rpRes.json()) as { id: string };
+  return customer.id;
+}
+
+async function fetchRazorpayPayment(
+  paymentId: string,
+  keyId: string,
+  keySecret: string
+): Promise<any> {
+  const res = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`failed to fetch payment from Razorpay: ${res.statusText}`);
+  }
+
+  return res.json();
+}
+
+async function registerAutopayMandate(
+  orderId: number,
+  paymentId: string,
+  keyId: string,
+  keySecret: string,
+  log: any
+): Promise<{ autopayDisclaimer?: string } | null> {
+  const [subDelivery] = await db
+    .select({
+      subscriptionId: subscriptionDeliveriesTable.subscriptionId,
+      cadence: subscriptionsTable.cadence,
+    })
+    .from(subscriptionDeliveriesTable)
+    .innerJoin(
+      subscriptionsTable,
+      eq(subscriptionDeliveriesTable.subscriptionId, subscriptionsTable.id)
+    )
+    .where(eq(subscriptionDeliveriesTable.orderId, orderId))
+    .limit(1);
+
+  if (!subDelivery) return null;
+
+  let payment;
+  try {
+    payment = await fetchRazorpayPayment(paymentId, keyId, keySecret);
+  } catch (err) {
+    log.error({ err, paymentId }, "failed to fetch payment details from Razorpay for mandate registration");
+    return null;
+  }
+
+  const customerId = payment.customer_id;
+  const tokenId = payment.token_id || payment.razorpay_token_id;
+
+  if (!customerId || !tokenId) {
+    log.warn({ paymentId, customerId, tokenId }, "payment details missing customer_id or token_id for mandate");
+    return null;
+  }
+
+  const days = subDelivery.cadence === "weekly" ? 7 : subDelivery.cadence === "fortnightly" ? 14 : 30;
+  const nextChargeAt = new Date();
+  nextChargeAt.setDate(nextChargeAt.getDate() + days);
+
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(subscriptionMandatesTable)
+      .where(eq(subscriptionMandatesTable.subscriptionId, subDelivery.subscriptionId))
+      .limit(1);
+
+    if (existing) {
+      await tx
+        .update(subscriptionMandatesTable)
+        .set({
+          razorpayCustomerId: customerId,
+          razorpayTokenId: tokenId,
+          status: "active",
+          nextChargeAt,
+        })
+        .where(eq(subscriptionMandatesTable.id, existing.id));
+    } else {
+      await tx
+        .insert(subscriptionMandatesTable)
+        .values({
+          subscriptionId: subDelivery.subscriptionId,
+          razorpayCustomerId: customerId,
+          razorpayTokenId: tokenId,
+          status: "active",
+          nextChargeAt,
+        });
+    }
+
+    await tx
+      .update(subscriptionsTable)
+      .set({ status: "active", updatedAt: new Date() })
+      .where(eq(subscriptionsTable.id, subDelivery.subscriptionId));
+  });
+
+  return {
+    autopayDisclaimer: "Weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge..."
+  };
+}
 
 // ---------------------------------------------------------------------------
 // POST /payments/razorpay/order
@@ -67,7 +219,7 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     return;
   }
 
-  const { amountPaise: clientAmount, orderId } = parsed.data;
+  const { amountPaise: clientAmount, orderId, subscriptionId } = parsed.data;
 
   // The gateway order MUST be created for the amount the server computed and
   // stored on the order, never a client-supplied number. Resolve it first.
@@ -117,18 +269,60 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     );
   }
 
+  let isRecurring = false;
+  let razorpayCustomerId: string | null = null;
+  if (subscriptionId) {
+    const [sub] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(
+        and(
+          eq(subscriptionsTable.id, subscriptionId),
+          eq(subscriptionsTable.userId, order.userId || "")
+        )
+      )
+      .limit(1);
+
+    if (sub && (sub.cadence === "weekly" || sub.cadence === "fortnightly")) {
+      isRecurring = true;
+      try {
+        razorpayCustomerId = await getOrCreateRazorpayCustomer(
+          sub.userId,
+          keyId,
+          keySecret,
+          req.log
+        );
+      } catch (err) {
+        res.status(500).json({ error: "failed to setup customer for recurring payment" });
+        return;
+      }
+    }
+  }
+
+  const rpOrderPayload: Record<string, any> = {
+    amount: authoritativePaise,
+    currency: "INR",
+    receipt: orderId.slice(0, 40),
+    payment_capture: 1,
+  };
+
+  if (isRecurring && razorpayCustomerId) {
+    rpOrderPayload.customer_id = razorpayCustomerId;
+    rpOrderPayload.token = {
+      auth_type: "otp",
+      max_amount: 1500000,
+      expire_by: Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 60 * 60, // 10 years
+      frequency: "as_presented",
+    };
+  }
+
   const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
     method: "POST",
     headers: {
       Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      amount: authoritativePaise,
-      currency: "INR",
-      receipt: orderId.slice(0, 40),
-      payment_capture: 1,
-    }),
+    body: JSON.stringify(rpOrderPayload),
   });
 
   if (!rpRes.ok) {
@@ -255,6 +449,9 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
     return;
   }
 
+  const [keyId] = creds;
+  let autopayDisclaimer: string | undefined;
+
   // Guarded transition placed → preparing (never downgrade a paid state).
   // Capture the payment id too — refunds are issued against it.
   try {
@@ -266,15 +463,25 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
     if (updated[0]) {
       void sendOrderConfirmation(updated[0].id);
     }
+
+    const mandateResult = await registerAutopayMandate(order.id, razorpayPaymentId, keyId, keySecret, req.log);
+    if (mandateResult) {
+      autopayDisclaimer = mandateResult.autopayDisclaimer;
+    }
   } catch (err) {
     // Payment is confirmed by Razorpay — do not fail the response. The webhook
     // reconciles the status independently; ops can verify via the dashboard.
-    req.log.error({ err, orderId }, "order status update failed after payment verification");
+    req.log.error({ err, orderId }, "order status update / mandate registration failed after payment verification");
     res.json({ ok: true, orderId, status: "placed", warning: "status_update_failed" });
     return;
   }
 
-  res.json({ ok: true, orderId, status: "preparing" });
+  res.json({
+    ok: true,
+    orderId,
+    status: "preparing",
+    ...(autopayDisclaimer ? { autopayDisclaimer } : {})
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -509,6 +716,14 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               "webhook: capture arrived for a cancelled/failed order — needs refund review",
             );
           }
+
+          if (razorpayPaymentId && order.status !== "cancelled" && order.status !== "failed") {
+            const creds = razorpayCredentials();
+            if (creds) {
+              const [kId, kSecret] = creds;
+              await registerAutopayMandate(order.id, razorpayPaymentId, kId, kSecret, req.log);
+            }
+          }
         }
       }
     } else if (eventType === "payment.failed") {
@@ -543,8 +758,176 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     res.status(500).json({ error: "webhook business logic failed", eventId, processed: false });
     return;
   }
+});
 
-  res.status(200).json({ ok: true, eventId, processed: true });
+const chargeMandateSchema = z.object({
+  subscriptionId: z.number().int().positive(),
+  amountPaise: z.number().int().positive(),
+  scheduledChargeDate: z.string().or(z.date()),
+});
+
+router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
+  const creds = razorpayCredentials();
+  if (!creds) {
+    res.status(503).json({ error: "payment gateway not configured" });
+    return;
+  }
+  const [keyId, keySecret] = creds;
+
+  const parsed = chargeMandateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+
+  const { subscriptionId, amountPaise, scheduledChargeDate } = parsed.data;
+  const chargeDate = new Date(scheduledChargeDate);
+  if (isNaN(chargeDate.getTime())) {
+    res.status(400).json({ error: "invalid scheduledChargeDate" });
+    return;
+  }
+
+  const [mandate] = await db
+    .select()
+    .from(subscriptionMandatesTable)
+    .where(
+      and(
+        eq(subscriptionMandatesTable.subscriptionId, subscriptionId),
+        eq(subscriptionMandatesTable.status, "active")
+      )
+    )
+    .limit(1);
+
+  if (!mandate) {
+    res.status(404).json({ error: "active subscription mandate not found" });
+    return;
+  }
+
+  const startOfDay = new Date(chargeDate);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const endOfDay = new Date(chargeDate);
+  endOfDay.setUTCHours(23, 59, 59, 999);
+
+  const [notification] = await db
+    .select()
+    .from(preDebitNotificationsTable)
+    .where(
+      and(
+        eq(preDebitNotificationsTable.subscriptionId, subscriptionId),
+        gte(preDebitNotificationsTable.scheduledChargeAt, startOfDay),
+        lte(preDebitNotificationsTable.scheduledChargeAt, endOfDay)
+      )
+    )
+    .limit(1);
+
+  if (!notification) {
+    req.log.warn({ subscriptionId, chargeDate }, "charge-mandate: pre-debit notification record not found");
+    res.status(400).json({ error: "pre-debit notification not found for this charge date" });
+    return;
+  }
+
+  if (notification.status !== "sent") {
+    req.log.warn({ subscriptionId, notificationId: notification.id, status: notification.status }, "charge-mandate: pre-debit notification status is not 'sent'");
+    res.status(400).json({ error: "pre-debit notification has not been sent yet" });
+    return;
+  }
+
+  if (!notification.dispatchedAt) {
+    req.log.warn({ subscriptionId, notificationId: notification.id }, "charge-mandate: pre-debit notification has no dispatch time");
+    res.status(400).json({ error: "pre-debit notification has no dispatch timestamp" });
+    return;
+  }
+
+  const hoursSinceDispatch = (Date.now() - new Date(notification.dispatchedAt).getTime()) / (1000 * 60 * 60);
+  if (hoursSinceDispatch < 24) {
+    req.log.warn({ subscriptionId, notificationId: notification.id, hoursSinceDispatch }, "charge-mandate: pre-debit notification dispatched less than 24 hours ago");
+    res.status(400).json({ error: "pre-debit notification must be sent at least 24 hours before debiting" });
+    return;
+  }
+
+  const [sub] = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.id, subscriptionId))
+    .limit(1);
+
+  if (!sub) {
+    res.status(404).json({ error: "subscription not found" });
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, sub.userId))
+    .limit(1);
+
+  if (!user) {
+    res.status(404).json({ error: "user not found" });
+    return;
+  }
+
+  const rpRes = await fetch("https://api.razorpay.com/v1/payments/charge", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: amountPaise,
+      currency: "INR",
+      customer_id: mandate.razorpayCustomerId,
+      token: mandate.razorpayTokenId,
+      email: user.email || undefined,
+      contact: user.phoneE164 || undefined,
+      description: `Charge for subscription #${subscriptionId} delivery on ${chargeDate.toISOString().slice(0, 10)}`,
+    }),
+  });
+
+  if (!rpRes.ok) {
+    let body: unknown;
+    try {
+      body = await rpRes.json();
+    } catch {
+      body = await rpRes.text();
+    }
+    req.log.error({ status: rpRes.status, body, subscriptionId }, "Razorpay mandate charge failed");
+    res.status(502).json({ error: "payment gateway charge failed", details: body });
+    return;
+  }
+
+  const charge = (await rpRes.json()) as { id: string; status: string; amount: number };
+
+  const days = sub.cadence === "weekly" ? 7 : sub.cadence === "fortnightly" ? 14 : 30;
+  const nextChargeAt = new Date();
+  nextChargeAt.setDate(nextChargeAt.getDate() + days);
+
+  await db
+    .update(subscriptionMandatesTable)
+    .set({ nextChargeAt })
+    .where(eq(subscriptionMandatesTable.id, mandate.id));
+
+  res.json({
+    success: true,
+    paymentId: charge.id,
+    status: charge.status,
+    amount: charge.amount,
+    nextChargeAt: nextChargeAt.toISOString(),
+  });
+});
+
+router.post("/jobs/pre-debit-notifications", async (req: Request, res: Response) => {
+  try {
+    const result = await runPreDebitNotificationsSweep();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    req.log.error({ err }, "POST /jobs/pre-debit-notifications failed");
+    res.status(500).json({
+      error: "failed to run pre-debit notifications sweep",
+      details: (err as Error).message,
+    });
+  }
 });
 
 export default router;
+

@@ -13,6 +13,7 @@ import { startAnomalyDigestSender } from "./lib/anomalyDigestSender";
 import { startReviewSummarizerScheduler } from "./lib/menuEngineeringScheduler";
 import { startMealPlanScheduler } from "./lib/mealPlanScheduler";
 import { startAnalyticsScheduler } from "./lib/analyticsScheduler";
+import { startPreDebitScheduler, stopPreDebitScheduler } from "./lib/preDebitScheduler";
 import { ensureSafeViews } from "./lib/safeSql";
 import { seedComplianceLogsIfEmpty } from "./lib/complianceSeeder";
 import { resumeActiveSimulations } from "./lib/riderSim";
@@ -62,6 +63,7 @@ if (!schedulersDisabled) {
   startAnomalyDigestSender();
   startReviewSummarizerScheduler();
   startMealPlanScheduler();
+  startPreDebitScheduler();
   void resumeActiveSimulations();
 }
 
@@ -202,6 +204,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  } catch (err) {
  logger.error({ err }, "stopWorkers failed");
  }
+ stopPreDebitScheduler();
  clearInterval(purgeTimer);
  clearInterval(slotReclaimTimer);
  clearInterval(opsAuditOutboxTimer);

@@ -11,6 +11,7 @@ export default [
     ]),
     route("track", "pages/Track.tsx"),
     route("subscribe", "pages/Subscribe.tsx"),
+    route("subscription/bridge", "pages/SubscriptionBridge.tsx"),
     route("trial/:id", "pages/TrialStub.tsx"),
     route("order/confirmed/:orderId", "pages/OrderConfirmedStub.tsx"),
     layout("routes/UserAuthLayout.tsx", [
@@ -22,7 +23,7 @@ export default [
       route("account", "pages/Account.tsx"),
       route("account/addresses", "pages/Addresses.tsx"),
       route("account/plan", "pages/PlanStub.tsx"),
-      route("account/billing", "pages/BillingStub.tsx"),
+      route("account/billing", "pages/Billing.tsx"),
       route("vouchers", "pages/Vouchers.tsx"),
     ]),
     route("terms", "pages/Terms.tsx"),
