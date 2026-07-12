@@ -72,18 +72,33 @@ export default function MenuCard({
     ? clinicalCategoryLabel(item.category, CATEGORY_LABELS[item.category])
     : `${CATEGORY_LABELS[item.category]} · ${item.kitchen}`;
 
+  const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
+  let fit_band: "high" | "moderate" | "neutral" | "conflict" = "neutral";
+  if (match.blocked) {
+    fit_band = "conflict";
+  } else if (preferences) {
+    const hasGoalMatch =
+      (preferences.goal === "lose_weight" && item.macros.calories <= 450) ||
+      (preferences.goal === "gain_muscle" && item.macros.protein >= 25);
+    if (hasGoalMatch && match.warnings.length === 0) {
+      fit_band = "high";
+    } else if (match.cuisineMatch || (match.reasons && match.reasons.length > 0)) {
+      fit_band = "moderate";
+    }
+  }
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.04 }}
       whileHover={{ y: -4 }}
-      className={`group relative flex flex-row sm:flex-col rounded-2xl overflow-hidden bg-clinical-surface-elevated border border-clinical-border hover:border-clinical-gold/50 hover:shadow-[0_8px_30px_rgba(244,196,48,0.12)] transition-all duration-300 ${
+      className={`group relative flex flex-row sm:flex-col rounded-md overflow-hidden bg-clinical-surface-elevated border border-clinical-border hover:border-clinical-gold/50 hover:shadow-[0_8px_30px_rgba(244,196,48,0.12)] transition-all duration-300 ${
         !item.isAvailable ? "opacity-50 grayscale" : ""
       } ${match.blocked ? "ring-1 ring-orange-500/40" : ""}`}
     >
-      {/* Image — square thumbnail on mobile, 4:3 full-width on sm+ */}
-      <Link to={`/dish/${item.slug}`} className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-[4/3] overflow-hidden block">
+      {/* Image — square thumbnail on mobile, square full-width on sm+ */}
+      <Link to={`/dish/${item.slug}`} className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-square overflow-hidden block">
         <img
           src={item.image}
           srcSet={unsplashSrcset(item.image)}
@@ -126,6 +141,11 @@ export default function MenuCard({
               ★ RD Verified
             </span>
           )}
+          {isAssessed && fit_band === "high" && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full border border-clinical-sage/30 bg-clinical-sage/10 text-clinical-sage font-extrabold tracking-wider uppercase shadow-sm flex items-center gap-1">
+              <Sparkle className="w-2.5 h-2.5" /> Strong goal match
+            </span>
+          )}
           {isPremiumOnly && (
             <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-gold/50 text-clinical-gold bg-clinical-dark/80 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
               <Crown className="w-2.5 h-2.5" /> Premium
@@ -156,12 +176,12 @@ export default function MenuCard({
       <div className="relative z-20 sm:-mt-10 flex-1 flex flex-col p-3 sm:p-5 gap-1.5 sm:gap-2.5 min-w-0">
         <div className="flex justify-between items-start gap-2">
           <Link to={`/dish/${item.slug}`} className="hover:underline flex-1 min-w-0">
-            <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white hover:text-clinical-gold transition-colors">
+            <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white hover:text-clinical-gold transition-colors line-clamp-2">
               {item.name}
             </h3>
           </Link>
           <div className="flex flex-col items-end shrink-0">
-            <span className="font-serif text-sm sm:text-lg font-medium text-clinical-gold tabular-nums">
+            <span className="font-mono tnm-data text-sm sm:text-lg font-medium text-clinical-gold tabular-nums">
               {hasVariants ? "from " : ""}{formatPrice(item.price)}
             </span>
             {!isLive && (
@@ -194,16 +214,16 @@ export default function MenuCard({
           return (
             <div className="my-3.5 flex gap-4 border-y border-dashed border-clinical-border/40 py-2.5 font-mono text-clinical-data text-white">
               <div className="flex flex-col">
-                <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
+                <span className="text-[12.5px] font-semibold font-mono tnm-data">{item.macros.calories}</span>
                 <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Kcal</span>
               </div>
               <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{item.macros.protein}g</span>
+                <span className="text-[12.5px] font-semibold font-mono tnm-data">{item.macros.protein}g</span>
                 <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Prot {proteinPct}%</span>
                 <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${proteinPct}%` }} />
               </div>
               <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{item.macros.carbs}g</span>
+                <span className="text-[12.5px] font-semibold font-mono tnm-data">{item.macros.carbs}g</span>
                 <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Carb {carbsPct}%</span>
                 <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${carbsPct}%` }} />
               </div>

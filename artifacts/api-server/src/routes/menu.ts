@@ -22,6 +22,9 @@ import {
 } from "../lib/menuCopy";
 import { recordOpsAction } from "../lib/opsAudit";
 import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { db, userPreferencesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const router: IRouter = Router();
 
@@ -45,6 +48,79 @@ router.get("/menu/public", async (_req: Request, res: Response) => {
     (d) => !d.rdReviewState || d.rdReviewState === "reviewed",
   );
   res.json({ dishes: safe });
+});
+
+router.get("/menu/ranked", async (req: Request, res: Response) => {
+  const profileId = typeof req.query.profile_id === "string" ? req.query.profile_id.trim() : "";
+  let prefsRow: any = null;
+
+  if (profileId) {
+    const rows = await db
+      .select()
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, profileId));
+    prefsRow = rows[0] ?? null;
+  }
+
+  const dishes = await getMergedCatalog();
+  const safe = dishes.filter(
+    (d) => !d.rdReviewState || d.rdReviewState === "reviewed",
+  );
+
+  const items = safe.map((dish) => {
+    const match = evaluateDishForPreferences(dish, prefsRow);
+    let fit_band: "high" | "moderate" | "neutral" | "conflict" = "neutral";
+    const reasons = match.reasons ?? [];
+    const warnings = match.warnings ?? [];
+
+    if (match.blocked) {
+      fit_band = "conflict";
+    } else if (prefsRow) {
+      const hasGoalMatch =
+        (prefsRow.goal === "lose_weight" && dish.macros.calories <= 450) ||
+        (prefsRow.goal === "gain_muscle" && dish.macros.protein >= 25);
+      if (hasGoalMatch && warnings.length === 0) {
+        fit_band = "high";
+      } else if (match.cuisineMatch || reasons.length > 0) {
+        fit_band = "moderate";
+      }
+    }
+
+    const rank_reason_codes: string[] = [];
+    if (prefsRow) {
+      if (prefsRow.goal === "lose_weight" && dish.macros.calories <= 450) {
+        rank_reason_codes.push("goal_match_calories");
+      }
+      if (prefsRow.goal === "gain_muscle" && dish.macros.protein >= 25) {
+        rank_reason_codes.push("goal_match_protein");
+      }
+      if (match.cuisineMatch) {
+        rank_reason_codes.push("cuisine_match");
+      }
+    }
+
+    return {
+      dish_id: dish.id,
+      fit_band,
+      rank_reason_codes,
+      nutrition_snapshot_id: `snap-${dish.id}-${dish.slug}`,
+      social_proof: dish.reviewCount && dish.reviewCount > 10
+        ? `${dish.averageRating}★ (${dish.reviewCount} reviews)`
+        : null,
+    };
+  });
+
+  // Sort: fit_band = high first (max 8)
+  const highBand = items.filter((it) => it.fit_band === "high").slice(0, 8);
+  const highBandIds = new Set(highBand.map((it) => it.dish_id));
+  const rest = items.filter((it) => !highBandIds.has(it.dish_id));
+
+  const sortedItems = [...highBand, ...rest].map((it, idx) => ({
+    ...it,
+    rank: idx + 1,
+  }));
+
+  res.json({ items: sortedItems });
 });
 
 router.get("/menu/items", async (req: Request, res: Response) => {

@@ -823,7 +823,11 @@ function TargetRow({ label, val, target, unit = "", pct = false }: any) {
       <span className="fine">{label}</span>
       <span className="mono" style={{ fontSize: 12 }}>
         {val}{unit} / <span className="fntc">{target}{unit}</span>
-        {pct && <span style={{ color: "var(--safb)" }}> ({p}%)</span>}
+        {pct && (
+          <span className="text-clinical-zinc/80 ml-1 font-sans text-[10px] tracking-normal lowercase">
+            ({p}% of daily {label.toLowerCase()})
+          </span>
+        )}
       </span>
     </div>
   );

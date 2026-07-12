@@ -7,6 +7,8 @@ import {
   CATEGORY_LABELS,
   getDishById,
   useMenuCatalog,
+  useRankedMenu,
+  type RankedMenuItem,
   type DishCategory,
   type DishKitchen,
   type DishData,
@@ -219,6 +221,7 @@ export default function V2Menu() {
   const { addItem, addBundleSlug } = useCart();
   const { open: openCart } = useCartDrawer();
   const { preferences, unauthorized } = usePreferences();
+  const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
   const [hasSavedAddress, setHasSavedAddress] = useState(false);
 
   useEffect(() => {
@@ -237,6 +240,14 @@ export default function V2Menu() {
 
   const { data: bundles } = useBundles();
   const { dishes: catalogDishes } = useMenuCatalog();
+  const { data: rankedItems, isLoading: rankedLoading } = useRankedMenu(preferences?.userId ?? null);
+  const rankedMap = useMemo(() => {
+    const map = new Map<number, RankedMenuItem>();
+    if (rankedItems) {
+      rankedItems.forEach((item) => map.set(item.dish_id, item));
+    }
+    return map;
+  }, [rankedItems]);
   const { enabled: clinicalMode, dietOrderId } = useClinicalMode();
   const dietOrder = DIET_ORDER_BY_ID.get(dietOrderId);
   const { orders } = useOrders();
@@ -289,9 +300,13 @@ export default function V2Menu() {
   };
 
   const handleQuickAddClick = (parent: ConsolidatedDish) => {
-    if (parent.optionGroups.length > 0) setCustomizingDish(parent);
-    else {
-      const original = catalogDishes.find((d: any) => d.id === parent.id);
+    const original = catalogDishes.find((d: any) => d.id === parent.id);
+    const match = original ? evaluateDishForPreferences(original, preferences) : null;
+    const isBlocked = match?.blocked;
+
+    if (parent.optionGroups.length > 0 || isBlocked) {
+      setCustomizingDish(parent);
+    } else {
       if (original) handleQuickAdd(original);
     }
   };
@@ -393,25 +408,63 @@ export default function V2Menu() {
       }
       return true;
     });
-    const ranked = rankDishesForPreferences(base, preferences);
-    // Healthy Mode forces off-plan (blocked) dishes to stay hidden even if the
-    // user un-hid conflicts — a pure goal/profile filter over existing ranking.
-    return hideBlocked || healthyMode ? ranked.filter((r: any) => !r.match.blocked) : ranked;
-  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, healthyMode, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters, excludedAllergens]);
+
+    const isAssessed = preferences && preferences.quizCompletedAt !== null;
+    let mapped: Array<{
+      dish: DishData;
+      match: DishMatchResult;
+      fit_band: "high" | "moderate" | "neutral" | "conflict";
+      rank: number;
+      social_proof: string | null;
+    }> = [];
+
+    if (isAssessed && rankedItems && rankedItems.length > 0) {
+      mapped = base.map((dish) => {
+        const match = evaluateDishForPreferences(dish, preferences);
+        const rInfo = rankedMap.get(dish.id);
+        return {
+          dish,
+          match,
+          fit_band: rInfo?.fit_band ?? "neutral",
+          rank: rInfo?.rank ?? 9999,
+          social_proof: rInfo?.social_proof ?? null,
+        };
+      });
+    } else {
+      const clientRanked = rankDishesForPreferences(base, preferences);
+      mapped = clientRanked.map((cr) => ({
+        ...cr,
+        fit_band: cr.match.blocked ? "conflict" : "neutral",
+        rank: 9999,
+        social_proof: null,
+      }));
+    }
+
+    const filteredRanked = hideBlocked || healthyMode
+      ? mapped.filter((r) => r.fit_band !== "conflict")
+      : mapped;
+
+    return [...filteredRanked].sort((a, b) => a.rank - b.rank);
+  }, [kitchen, category, diet, lifestyle, query, preferences, hideBlocked, healthyMode, catalogDishes, activeProtocol, clinicalMode, dietOrderId, quickFilters, excludedAllergens, rankedItems, rankedMap]);
 
   const consolidatedDishes = useMemo(() => {
     const grouped = groupCatalogDishes(filtered.map((f: any) => f.dish));
     const entries = grouped.map((parent) => {
       const rep = filtered.find((f: any) => f.dish.id === parent.id)!;
-      return { parent, dish: rep.dish as DishData, match: rep.match, hasVariants: parent.optionGroups.length > 0 };
+      return {
+        parent,
+        dish: rep.dish as DishData,
+        match: rep.match,
+        fit_band: rep.fit_band,
+        social_proof: rep.social_proof,
+        hasVariants: parent.optionGroups.length > 0,
+      };
     });
     if (sortBy === "recommended") return entries;
     if (sortBy === "price-asc" || sortBy === "price-desc") {
       const dir = sortBy === "price-asc" ? 1 : -1;
       return [...entries].sort((a, b) => dir * (a.parent.variants[0].price - b.parent.variants[0].price));
     }
-    // Macro sorts are honest: only dishes with VERIFIED macros are ranked by
-    // the numbers; provisional dishes sink to the end in recommended order.
     const verified = entries.filter((e) => !macrosAreProvisional(e.dish));
     const provisional = entries.filter((e) => macrosAreProvisional(e.dish));
     if (sortBy === "protein") verified.sort((a, b) => b.dish.macros.protein - a.dish.macros.protein);
@@ -745,29 +798,151 @@ export default function V2Menu() {
             </div>
           ) : (
             <>
-              {consolidatedDishes.slice(0, visibleCount).map(({ parent, dish: rep, match, hasVariants }, cardIndex) => {
-                const price = parent.variants[0].price;
-                const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
-                return (
-                  <DishCard
-                    key={parent.id}
-                    dish={rep}
-                    name={parent.name}
-                    price={price}
-                    match={match}
-                    scoreInfo={scoreInfo}
-                    hasVariants={hasVariants}
-                    isPremiumOnly={premiumSlugs.has(parent.slug)}
-                    isPremium={isPremium}
-                    lifestyleTag={lifestyleTag}
-                    showWearableTeaser={cardIndex === 0}
-                    canExpress={hasSavedAddress && !hasVariants}
-                    onAdd={() => handleQuickAddClick(parent)}
-                    onExpress={() => handleExpressBuy(rep)}
-                    onPremiumGate={() => navigate("/premium")}
-                  />
-                );
-              })}
+              {/* Onboarding Quiz banner for unassessed users */}
+              {!isAssessed && (
+                <div className="bg-stone-900 border border-stone-800/80 rounded-xl p-4 mb-4 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-xs leading-normal text-stone-100">
+                      Answer 5 questions (about 60 seconds) to rank this menu for you.
+                    </div>
+                  </div>
+                  <Link
+                    to="/preferences"
+                    className="btn btn-p shrink-0"
+                    style={{ padding: "6px 12px", height: "auto", fontSize: 11 }}
+                  >
+                    Start Quiz
+                  </Link>
+                </div>
+              )}
+
+              {category !== "all" ? (
+                // Flat grid when filtering by category
+                <div className="prodgrid">
+                  {consolidatedDishes.slice(0, visibleCount).map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, cardIndex) => {
+                    const price = parent.variants[0].price;
+                    const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
+                    return (
+                      <DishCard
+                        key={parent.id}
+                        dish={rep}
+                        name={parent.name}
+                        price={price}
+                        match={match}
+                        scoreInfo={scoreInfo}
+                        hasVariants={hasVariants}
+                        isPremiumOnly={premiumSlugs.has(parent.slug)}
+                        isPremium={isPremium}
+                        lifestyleTag={lifestyleTag}
+                        showWearableTeaser={cardIndex === 0}
+                        canExpress={hasSavedAddress && !hasVariants}
+                        fit_band={fit_band}
+                        social_proof={social_proof}
+                        onAdd={() => handleQuickAddClick(parent)}
+                        onExpress={() => handleExpressBuy(rep)}
+                        onPremiumGate={() => navigate("/premium")}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                // Sectioned rendering when category is "all"
+                (() => {
+                  const goalMatched = isAssessed
+                    ? consolidatedDishes.filter((e) => e.fit_band === "high").slice(0, 8)
+                    : [];
+                  const goalMatchedIds = new Set(goalMatched.map((e) => e.dish.id));
+                  const rest = consolidatedDishes.filter((e) => !goalMatchedIds.has(e.dish.id));
+
+                  let remainingLimit = visibleCount;
+
+                  return (
+                    <div className="flex flex-col gap-6">
+                      {/* Section 1: Goal Match */}
+                      {goalMatched.length > 0 && (
+                        <div>
+                          <h2 className="sh mb10 fx ac gap6 text-clinical-gold uppercase tracking-wider text-[11px] font-bold">
+                            <i className="ph-fill ph-sparkle text-clinical-gold text-xs" />
+                            Matched to your goal
+                          </h2>
+                          <div className="prodgrid">
+                            {goalMatched.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, idx) => {
+                              const price = parent.variants[0].price;
+                              const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
+                              return (
+                                <DishCard
+                                  key={parent.id}
+                                  dish={rep}
+                                  name={parent.name}
+                                  price={price}
+                                  match={match}
+                                  scoreInfo={scoreInfo}
+                                  hasVariants={hasVariants}
+                                  isPremiumOnly={premiumSlugs.has(parent.slug)}
+                                  isPremium={isPremium}
+                                  lifestyleTag={lifestyleTag}
+                                  showWearableTeaser={idx === 0}
+                                  canExpress={hasSavedAddress && !hasVariants}
+                                  fit_band={fit_band}
+                                  social_proof={social_proof}
+                                  onAdd={() => handleQuickAddClick(parent)}
+                                  onExpress={() => handleExpressBuy(rep)}
+                                  onPremiumGate={() => navigate("/premium")}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 2: Categories in RD-curated order */}
+                      {CATEGORY_TABS.map((cat) => {
+                        if (cat === "all") return null;
+                        const catDishes = rest.filter((e) => e.dish.category === cat);
+                        if (catDishes.length === 0 || remainingLimit <= 0) return null;
+
+                        const renderList = catDishes.slice(0, remainingLimit);
+                        remainingLimit -= renderList.length;
+
+                        return (
+                          <div key={cat}>
+                            <h2 className="sh mb10 uppercase tracking-wider text-[11px] font-bold text-clinical-zinc" style={{ textTransform: "capitalize" }}>
+                              {CATEGORY_LABELS[cat]}
+                            </h2>
+                            <div className="prodgrid">
+                              {renderList.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }) => {
+                                const price = parent.variants[0].price;
+                                const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
+                                return (
+                                  <DishCard
+                                    key={parent.id}
+                                    dish={rep}
+                                    name={parent.name}
+                                    price={price}
+                                    match={match}
+                                    scoreInfo={scoreInfo}
+                                    hasVariants={hasVariants}
+                                    isPremiumOnly={premiumSlugs.has(parent.slug)}
+                                    isPremium={isPremium}
+                                    lifestyleTag={lifestyleTag}
+                                    showWearableTeaser={false}
+                                    canExpress={hasSavedAddress && !hasVariants}
+                                    fit_band={fit_band}
+                                    social_proof={social_proof}
+                                    onAdd={() => handleQuickAddClick(parent)}
+                                    onExpress={() => handleExpressBuy(rep)}
+                                    onPremiumGate={() => navigate("/premium")}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()
+              )}
 
               {visibleCount < consolidatedDishes.length && (
                 <button className="btn btn-g btn-blk mt10" onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}>
@@ -829,10 +1004,49 @@ export default function V2Menu() {
               )}
             </div>
 
+            {/* Structured safety conflict/warning explanations */}
+            {(() => {
+              const original = catalogDishes.find((d: any) => d.id === activeVariant.id);
+              const m = original ? evaluateDishForPreferences(original, preferences) : null;
+              if (m?.blocked) {
+                return (
+                  <div className="mb14 p10 border rounded-lg fx ac gap8 bg-red-950/40 border-red-850/40 text-red-400 text-xs">
+                    <i className="ph-fill ph-warning-circle text-base" />
+                    <div>
+                      <span className="font-semibold block">Safety Conflict</span>
+                      Not recommended: Contains <b>{m.matchedAllergens.join(", ") || "conflict ingredients"}</b>.
+                    </div>
+                  </div>
+                );
+              }
+              if (m && m.warnings.length > 0) {
+                return (
+                  <div className="mb14 p10 border rounded-lg fx ac gap8 bg-amber-950/40 border-amber-800/40 text-amber-400 text-xs">
+                    <i className="ph-fill ph-warning text-base" />
+                    <div>
+                      <span className="font-semibold block">Plan Warning</span>
+                      {m.warnings[0]}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <div className="fx ac gap12">
               <button className="btn btn-g f1" onClick={() => setCustomizingDish(null)}>Cancel</button>
               <button
                 className="btn btn-p f1"
+                disabled={(() => {
+                  const original = catalogDishes.find((d: any) => d.id === activeVariant.id);
+                  const m = original ? evaluateDishForPreferences(original, preferences) : null;
+                  return m?.blocked;
+                })()}
+                style={(() => {
+                  const original = catalogDishes.find((d: any) => d.id === activeVariant.id);
+                  const m = original ? evaluateDishForPreferences(original, preferences) : null;
+                  return m?.blocked ? { opacity: 0.5, cursor: "not-allowed" } : undefined;
+                })()}
                 onClick={() => {
                   const original = catalogDishes.find((d: any) => d.id === activeVariant.id);
                   if (!original) return;
@@ -851,7 +1065,12 @@ export default function V2Menu() {
                   toast.success(`Added ${original.name} to your order`);
                 }}
               >
-                {premiumSlugs.has(activeVariant.slug) && !isPremium ? "Upgrade to Premium" : "Add to order"}
+                {(() => {
+                  const original = catalogDishes.find((d: any) => d.id === activeVariant.id);
+                  const m = original ? evaluateDishForPreferences(original, preferences) : null;
+                  if (m?.blocked) return "Blocked by safety plan";
+                  return premiumSlugs.has(activeVariant.slug) && !isPremium ? "Upgrade to Premium" : "Add to order";
+                })()}
               </button>
             </div>
           </div>
@@ -870,7 +1089,26 @@ function FilterRail({ label, children }: { label: string; children: any }) {
   );
 }
 
-function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumOnly, isPremium, lifestyleTag, showWearableTeaser, canExpress, onAdd, onExpress, onPremiumGate }: any) {
+function DishCard({
+  dish,
+  name,
+  price,
+  match,
+  scoreInfo,
+  hasVariants,
+  isPremiumOnly,
+  isPremium,
+  lifestyleTag,
+  showWearableTeaser,
+  canExpress,
+  fit_band,
+  social_proof,
+  onAdd,
+  onExpress,
+  onPremiumGate
+}: any) {
+  const { preferences } = usePreferences();
+  const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
   const isVeg = !!dish.isVeg;
   const gi = dish.glycaemicIndex || "medium";
   const giCls = gi === "low" ? "gi gi-low" : "gi gi-med";
@@ -879,22 +1117,77 @@ function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumO
   const warned = match?.warnings?.length > 0;
   const provisional = macrosAreProvisional(dish);
   const info: MatchScore = scoreInfo ?? { kind: "none" };
+
+  const handleLinkClick = (e: React.MouseEvent) => {
+    if (blocked) {
+      e.preventDefault();
+      onAdd();
+    }
+  };
+
   return (
     <div className="dcard" style={blocked ? { opacity: 0.6 } : undefined}>
       <div className="fx gap12">
         <div className="f1" style={{ minWidth: 0 }}>
-          <div className="fx ac g6 wrap">
+          <div className="fx ac g6 wrap mb6">
             <span className="vtag"><span className={isVeg ? "vd" : "vd nv"} />{isVeg ? "VEG" : "NON-VEG"}</span>
             <span className={giCls}>{giLabel}</span>
             {lifestyleTag && <span className="pill" style={{ fontSize: 9 }}>{lifestyleTag}</span>}
+            {isAssessed && fit_band === "high" && (
+              <span className="pill sg flex items-center gap-1 bg-clinical-sage/10 text-clinical-sage border border-clinical-sage/30 text-[9px] font-bold uppercase tracking-wider">
+                <i className="ph-fill ph-sparkle text-[9px]" /> Strong goal match
+              </span>
+            )}
             {dish.rdVerified && <span className="pill sg" style={{ marginLeft: "auto" }}><i className="ph-fill ph-seal-check" />RD</span>}
           </div>
-          <Link to={`/dish/${dish.slug}`} className="dtitle" style={{ display: "block" }}>{name}</Link>
-          <div className="fine"><span className="price" style={{ color: "var(--safb)" }}>{F(price)}</span>{hasVariants ? " · options" : ""} · <span style={{ textTransform: "capitalize" }}>{dish.category}</span></div>
+          <Link
+            to={`/dish/${dish.slug}`}
+            onClick={handleLinkClick}
+            className="dtitle line-clamp-2"
+            style={{ display: "block", fontSize: 15, fontWeight: 600, lineHeight: "1.25", height: "auto", maxHeight: "2.5em" }}
+          >
+            {name}
+          </Link>
+
+          {/* New macro/price tabular-monospace data line (Rule 3.2) */}
+          <div className="fine tnm-data font-mono flex items-center gap-1.5 mt-2 text-xs text-clinical-zinc/80 flex-wrap">
+            {!provisional ? (
+              <>
+                <span className="nowrap">{dish.macros.calories} kcal</span>
+                <span>·</span>
+                <span className="nowrap">{dish.macros.protein}g P</span>
+                <span>·</span>
+              </>
+            ) : (
+              <>
+                <span className="font-sans text-[10px] text-clinical-zinc/50 uppercase tracking-normal">Macros pending</span>
+                <span>·</span>
+              </>
+            )}
+            <span className="price text-clinical-gold font-semibold">{F(price)}</span>
+            {hasVariants && <span className="font-sans text-[10px] text-clinical-zinc/50"> · options</span>}
+            {social_proof && (
+              <span className="text-[10px] text-clinical-gold/90 font-sans ml-auto nowrap">
+                {social_proof}
+              </span>
+            )}
+          </div>
+
           {isPremiumOnly && <div className="pill mt6" style={{ background: "var(--safd)", color: "var(--safb)", width: "fit-content" }}><i className="ph-fill ph-crown" />Premium</div>}
+          {blocked && (
+            <div className="fine mt6 text-red-400 font-semibold flex items-center gap-1">
+              <i className="ph-bold ph-warning-circle" /> Contains {match?.matchedAllergens?.join(", ") || "conflict ingredients"}
+            </div>
+          )}
           {warned && !blocked && <div className="fine mt6" style={{ color: "var(--dgr)" }}><i className="ph-bold ph-warning" /> {match.warnings[0]}</div>}
         </div>
-        <Link to={`/dish/${dish.slug}`} className="dimg" aria-label={name}>
+        <Link
+          to={`/dish/${dish.slug}`}
+          onClick={handleLinkClick}
+          className="dimg aspect-square rounded-md overflow-hidden"
+          aria-label={name}
+          style={{ width: 92, height: 92, flex: "none", position: "relative" }}
+        >
           <picture>
             <source srcSet={localDishSrcset(dish.image, "avif")} type="image/avif" />
             <source srcSet={localDishSrcset(dish.image, "webp")} type="image/webp" />
@@ -921,10 +1214,18 @@ function DishCard({ dish, name, price, match, scoreInfo, hasVariants, isPremiumO
           )}
           <button
             className="addb"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (isPremiumOnly && !isPremium) { onPremiumGate(); return; } onAdd(); }}
-            aria-label={`Add ${name}`}
+            disabled={blocked}
+            style={blocked ? { opacity: 0.5, cursor: "not-allowed", pointerEvents: "auto" } : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (blocked) return;
+              if (isPremiumOnly && !isPremium) { onPremiumGate(); return; }
+              onAdd();
+            }}
+            aria-label={blocked ? "Blocked" : `Add ${name}`}
           >
-            {hasVariants ? "CUSTOMISE" : "ADD"}
+            {blocked ? "BLOCKED" : hasVariants ? "CUSTOMISE" : "ADD"}
           </button>
         </Link>
       </div>
