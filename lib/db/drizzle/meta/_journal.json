@@ -8,6 +8,13 @@
       "when": 1783810227946,
       "tag": "0000_good_cammi",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783854916815,
+      "tag": "0001_sprint56_mandates",
+      "breakpoints": true
     }
   ]
 }
