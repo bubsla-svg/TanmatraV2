@@ -18,7 +18,7 @@ import { ensureSafeViews } from "./lib/safeSql";
 import { seedComplianceLogsIfEmpty } from "./lib/complianceSeeder";
 import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
-import { purgeExpiredSessions } from "./lib/auth";
+import { purgeExpiredSessions, purgeDeletedAccountsJob } from "./lib/auth";
 import { sweepExpiredIdempotencyKeys } from "./middlewares/idempotency";
 import { sweepOrphanSlotReservations } from "./routes/fulfillment";
 import { drainOpsAuditOutbox } from "./lib/opsAudit";
@@ -127,6 +127,14 @@ const purgeTimer = setInterval(() => {
 }, HOUR);
 purgeTimer.unref();
 
+const DAY = 24 * 60 * 60 * 1000;
+const deletedAccountsPurgeTimer = setInterval(() => {
+ purgeDeletedAccountsJob().catch((err) =>
+  logger.error({ err }, "purgeDeletedAccountsJob failed"),
+ );
+}, DAY);
+deletedAccountsPurgeTimer.unref();
+
 // Reserve-and-create saga (Task #6) compensator runs on a SHORT cadence
 // so a connection drop that leaves a phantom slot reservation behind is
 // reclaimed within ~SLOT_RECLAIM_INTERVAL_MS + graceMs (≈90s with the
@@ -208,6 +216,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  clearInterval(purgeTimer);
  clearInterval(slotReclaimTimer);
  clearInterval(opsAuditOutboxTimer);
+ clearInterval(deletedAccountsPurgeTimer);
 
  // Drain one final tick of the outbox so override actions taken in
  // the last 500 ms still land in ops_actions before we close pools.

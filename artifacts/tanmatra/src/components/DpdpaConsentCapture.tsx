@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ShieldCheck,
   Lock,
@@ -6,12 +6,14 @@ import {
   Megaphone,
   Clock,
   CheckCircle2,
+  Heart,
 } from "lucide-react";
 
 export interface DpdpaConsentState {
   purposeClinicalDelivery: boolean;
   purposeMarketing: boolean;
   purposeAiPersonalization: boolean;
+  purposeHealthDataProcessing: boolean;
   consentVersion: string;
   grantedAt: string;
 }
@@ -38,10 +40,29 @@ export default function DpdpaConsentCapture({
   );
   const [purposeAiPersonalization, setPurposeAiPersonalization] =
     useState<boolean>(initialState?.purposeAiPersonalization ?? false);
+  const [purposeHealthDataProcessing, setPurposeHealthDataProcessing] =
+    useState<boolean>(initialState?.purposeHealthDataProcessing ?? false);
   const [submittedAt, setSubmittedAt] = useState<string | null>(
     initialState?.grantedAt ?? null,
   );
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialState) {
+      if (initialState.purposeMarketing !== undefined) {
+        setPurposeMarketing(initialState.purposeMarketing);
+      }
+      if (initialState.purposeAiPersonalization !== undefined) {
+        setPurposeAiPersonalization(initialState.purposeAiPersonalization);
+      }
+      if (initialState.purposeHealthDataProcessing !== undefined) {
+        setPurposeHealthDataProcessing(initialState.purposeHealthDataProcessing);
+      }
+      if (initialState.grantedAt !== undefined) {
+        setSubmittedAt(initialState.grantedAt);
+      }
+    }
+  }, [initialState]);
 
   const currentTimestamp = submittedAt ?? new Date().toISOString();
 
@@ -53,6 +74,7 @@ export default function DpdpaConsentCapture({
       purposeClinicalDelivery: true,
       purposeMarketing,
       purposeAiPersonalization,
+      purposeHealthDataProcessing,
       consentVersion: CONSENT_VERSION,
       grantedAt: timestamp,
     };
@@ -174,6 +196,54 @@ export default function DpdpaConsentCapture({
                   }
                   onClick={() =>
                     setPurposeAiPersonalization(!purposeAiPersonalization)
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Purpose 4: Health & Clinical Data Processing (Optional) */}
+          <div
+            className="p-4 rounded-xl space-y-3"
+            style={{ background: "var(--s1)", border: "1px solid var(--ln)" }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div
+                  className="p-2 rounded-lg shrink-0 mt-0.5"
+                  style={{ background: "var(--saged)", color: "var(--sage)" }}
+                >
+                  <Heart className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-base font-semibold" style={{ color: "var(--tx)" }}>
+                      Health & Clinical Data Processing
+                    </h4>
+                    <span className="pill sg" style={{ fontSize: 10, textTransform: "uppercase" }}>
+                      Optional Toggle
+                    </span>
+                  </div>
+                  <p className="fine leading-relaxed">
+                    Allows storage and processing of clinical markers, physical attributes (height, weight, HbA1c, PCOS history), and medical conditions to calculate clinical diet targets.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 pt-1">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={purposeHealthDataProcessing}
+                  aria-label="Toggle Health Data Processing consent"
+                  disabled={isLoading || isSubmitting}
+                  className={purposeHealthDataProcessing ? "sw on" : "sw"}
+                  style={
+                    isLoading || isSubmitting
+                      ? { opacity: 0.5, pointerEvents: "none" }
+                      : undefined
+                  }
+                  onClick={() =>
+                    setPurposeHealthDataProcessing(!purposeHealthDataProcessing)
                   }
                 />
               </div>

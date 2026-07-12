@@ -62,6 +62,7 @@ export const usersTable = pgTable("users", {
   whatsappUtilityConsentAt: timestamp("whatsapp_utility_consent_at", { withTimezone: true }),
   whatsappMarketingConsentAt: timestamp("whatsapp_marketing_consent_at", { withTimezone: true }),
   smsFallbackConsentAt: timestamp("sms_fallback_consent_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -24,6 +24,7 @@ export default [
       route("account/addresses", "pages/Addresses.tsx"),
       route("account/plan", "pages/PlanStub.tsx"),
       route("account/billing", "pages/Billing.tsx"),
+      route("account/health-information", "pages/HealthInformation.tsx"),
       route("vouchers", "pages/Vouchers.tsx"),
     ]),
     route("terms", "pages/Terms.tsx"),
