@@ -1,9 +1,10 @@
 import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, webhookInboxTable } from "@workspace/db";
+import { db, ordersTable, webhookInboxTable, usersTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
+import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 
 const router: IRouter = Router();
 
@@ -458,16 +459,21 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
       const razorpayOrderId = paymentEntity?.order_id ?? "";
       const capturedAmount = paymentEntity?.amount;
       if (razorpayOrderId) {
-        const [order] = await db
+        const rows = await db
           .select({
-            id: ordersTable.id,
-            status: ordersTable.status,
-            chargePaise: ordersTable.chargePaise,
-            totalPaise: ordersTable.totalPaise,
+            order: ordersTable,
+            user: {
+              firstName: usersTable.firstName,
+              lastName: usersTable.lastName,
+              email: usersTable.email,
+            },
           })
           .from(ordersTable)
+          .leftJoin(usersTable, eq(ordersTable.userId, usersTable.id))
           .where(eq(ordersTable.razorpayOrderId, razorpayOrderId))
           .limit(1);
+        const result = rows[0];
+        const order = result?.order;
         const expected = order ? order.chargePaise ?? order.totalPaise : null;
         // Reconcile the captured amount against the authoritative order total.
         // A mismatch is an integrity alarm — record it and do NOT promote.
@@ -488,6 +494,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             .returning({ id: ordersTable.id });
           if (updated[0]) {
             void sendOrderConfirmation(updated[0].id);
+            const fullName = [result.user?.firstName, result.user?.lastName]
+              .filter(Boolean)
+              .join(" ");
+            pushOrderToPetpooja(order, {
+              name: fullName || "Guest Customer",
+              email: result.user?.email || null,
+            }).catch((err) => {
+              req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
+            });
           } else if (order.status === "cancelled" || order.status === "failed") {
             req.log.error(
               { razorpayOrderId, orderId: order.id, status: order.status },

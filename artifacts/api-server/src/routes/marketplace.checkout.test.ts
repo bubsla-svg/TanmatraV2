@@ -96,7 +96,7 @@ async function makeUser(): Promise<TestUser> {
   return u;
 }
 
-async function makeItem(stock: number): Promise<{ id: number; price: number }> {
+async function makeItem(stock: number, supplierName?: string): Promise<{ id: number; price: number }> {
   const slug = `mkt-test-${randomUUID().slice(0, 8)}`;
   const [row] = await db
     .insert(marketplaceItemsTable)
@@ -107,6 +107,7 @@ async function makeItem(stock: number): Promise<{ id: number; price: number }> {
       pricePaise: 19900,
       stockQty: stock,
       isActive: true,
+      supplierName: supplierName ?? null,
     })
     .returning();
   CREATED_ITEM_IDS.push(row!.id);
@@ -182,6 +183,12 @@ test("marketplace checkout happy path decrements stock by qty", async () => {
     user,
   );
   assert.equal(r.status, 201);
+  const createdOrder = r.json.order;
+  assert.ok(createdOrder);
+  assert.equal(createdOrder.items.length, 1);
+  assert.equal(createdOrder.items[0].supplierName, "Unknown");
+  assert.equal(createdOrder.items[0].commissionPaise, 8955);
+  assert.equal(createdOrder.items[0].vendorPayoutPaise, 50745);
   const [after] = await db
     .select({ q: marketplaceItemsTable.stockQty })
     .from(marketplaceItemsTable)
@@ -581,4 +588,44 @@ test("sweeper leaves in-flight (recent) orphan rows alone", async () => {
     .from(deliverySlotsTable)
     .where(eq(deliverySlotsTable.id, slot!.id));
   assert.equal(after.rc, 1);
+});
+
+test("marketplace checkout splits third-party items and routes 15% commission but leaves first-party items with 0% commission", async () => {
+  const user = await makeUser();
+  
+  // 1. Third-party item (Supplier: Olivar de la Luz)
+  const item3P = await makeItem(10, "Olivar de la Luz");
+  // 2. First-party item (Supplier: Tanmatra Pantry)
+  const item1P = await makeItem(10, "Tanmatra Pantry");
+  
+  const r = await api(
+    "POST",
+    "/marketplace/checkout",
+    {
+      items: [
+        { itemId: item3P.id, qty: 2 },
+        { itemId: item1P.id, qty: 3 },
+      ],
+      deliveryMode: "ship",
+    },
+    user,
+  );
+  
+  assert.equal(r.status, 201);
+  const createdOrder = r.json.order;
+  assert.ok(createdOrder);
+  assert.equal(createdOrder.items.length, 2);
+  
+  const line3P = createdOrder.items.find((it: any) => it.itemId === item3P.id);
+  const line1P = createdOrder.items.find((it: any) => it.itemId === item1P.id);
+  
+  assert.ok(line3P);
+  assert.equal(line3P.supplierName, "Olivar de la Luz");
+  assert.equal(line3P.commissionPaise, 5970);
+  assert.equal(line3P.vendorPayoutPaise, 33830);
+  
+  assert.ok(line1P);
+  assert.equal(line1P.supplierName, "Tanmatra Pantry");
+  assert.equal(line1P.commissionPaise, 0);
+  assert.equal(line1P.vendorPayoutPaise, 59700);
 });

@@ -11,6 +11,42 @@ export interface PaymentIntentRequest {
 }
 
 /**
+ * Request payload for creating a marketplace payment checkout intent.
+ */
+export interface MarketplacePaymentIntentRequest {
+  order_id: string;
+  idempotency_key: string;
+  items: Array<{
+    itemId: number;
+    name: string;
+    supplierName: string;
+    pricePaise: number;
+    qty: number;
+  }>;
+  wallet_applied_amount: number;
+}
+
+/**
+ * Marketplace order financial state in the transaction database.
+ */
+export interface MarketplaceOrderFinancialState {
+  order_id: string;
+  intent_id: string;
+  idempotency_key: string;
+  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED';
+  items: Array<{
+    itemId: number;
+    name: string;
+    supplierName: string;
+    pricePaise: number;
+    qty: number;
+  }>;
+  wallet_debited: number;
+  net_payable_gateway: number;
+}
+
+
+/**
  * Immutable double-entry ledger journal record.
  */
 export interface DoubleEntryLedgerRecord {
@@ -45,6 +81,8 @@ export interface OrderFinancialState {
 export class FinancialPaymentsLedgerService {
   private activeIntents: Map<string, OrderFinancialState> = new Map(); // Keyed by idempotency_key
   private ordersById: Map<string, OrderFinancialState> = new Map();
+  private activeMarketplaceIntents: Map<string, MarketplaceOrderFinancialState> = new Map();
+  private marketplaceOrdersById: Map<string, MarketplaceOrderFinancialState> = new Map();
   private ledgerJournal: DoubleEntryLedgerRecord[] = [];
 
   /**
@@ -351,6 +389,154 @@ export class FinancialPaymentsLedgerService {
     }
 
     return {matchedCount, discrepancies};
+  }
+
+  /**
+   * Scenario 5: Process marketplace order checkout intent, calculating splits for third-party items.
+   */
+  public async processMarketplaceCheckout(req: MarketplacePaymentIntentRequest): Promise<{
+    isDuplicate: boolean;
+    intentId: string;
+    netPayable: number;
+  }> {
+    const existing = this.activeMarketplaceIntents.get(req.idempotency_key);
+    if (existing) {
+      return {
+        isDuplicate: true,
+        intentId: existing.intent_id,
+        netPayable: existing.net_payable_gateway,
+      };
+    }
+
+    let grossTotal = 0;
+    for (const it of req.items) {
+      grossTotal += it.pricePaise * it.qty;
+    }
+
+    const netPayableGateway = grossTotal - req.wallet_applied_amount;
+    const intentId = `pg_intent_mkt_${req.order_id}_${Date.now()}`;
+
+    const state: MarketplaceOrderFinancialState = {
+      order_id: req.order_id,
+      intent_id: intentId,
+      idempotency_key: req.idempotency_key,
+      status: 'PENDING',
+      items: req.items,
+      wallet_debited: req.wallet_applied_amount,
+      net_payable_gateway: netPayableGateway,
+    };
+
+    this.activeMarketplaceIntents.set(req.idempotency_key, state);
+    this.marketplaceOrdersById.set(req.order_id, state);
+
+    return {
+      isDuplicate: false,
+      intentId,
+      netPayable: netPayableGateway,
+    };
+  }
+
+  /**
+   * Scenario 5: Process marketplace gateway webhook, split platform cuts (15%) and supplier payouts (85%)
+   */
+  public async handleMarketplaceGatewayWebhook(payload: {
+    orderId: string;
+    intentId: string;
+    event: 'payment.captured' | 'payment.failed';
+    signature: string;
+  }): Promise<{
+    processed: boolean;
+    orderStatus: string;
+  }> {
+    if (!payload.signature || payload.signature === 'INVALID_HMAC') {
+      throw new Error('SECURITY FAULT: Invalid webhook HMAC-SHA256 signature.');
+    }
+
+    const order = this.marketplaceOrdersById.get(payload.orderId);
+    if (!order) {
+      throw new Error(`Marketplace order ${payload.orderId} not found.`);
+    }
+
+    if (order.status !== 'PENDING') {
+      return {
+        processed: false,
+        orderStatus: order.status,
+      };
+    }
+
+    if (payload.event === 'payment.captured') {
+      order.status = 'PAID';
+      const ts = new Date().toISOString();
+
+      // Post clearing account debits
+      if (order.net_payable_gateway > 0) {
+        this.ledgerJournal.push({
+          journal_id: `j_${Date.now()}_m1`,
+          order_id: order.order_id,
+          debit_account: 'ASSET_PG_CLEARING',
+          credit_account: 'REVENUE_CLEARING',
+          amount: order.net_payable_gateway,
+          timestamp: ts,
+        });
+      }
+      if (order.wallet_debited > 0) {
+        this.ledgerJournal.push({
+          journal_id: `j_${Date.now()}_m2`,
+          order_id: order.order_id,
+          debit_account: 'LIABILITY_USER_WALLET',
+          credit_account: 'REVENUE_CLEARING',
+          amount: order.wallet_debited,
+          timestamp: ts,
+        });
+      }
+
+      // Loop through items and split into 15% platform commission / 85% vendor payout
+      let i = 0;
+      for (const item of order.items) {
+        const itemTotal = item.pricePaise * item.qty;
+        const isFirstParty = item.supplierName.startsWith('Tanmatra');
+
+        if (isFirstParty) {
+          // First-party items go 100% to platform sales revenue
+          this.ledgerJournal.push({
+            journal_id: `j_${Date.now()}_m3_${i}_1p`,
+            order_id: order.order_id,
+            debit_account: 'REVENUE_CLEARING',
+            credit_account: 'REVENUE_MARKETPLACE_1P_SALES',
+            amount: itemTotal,
+            timestamp: ts,
+          });
+        } else {
+          // Third-party items split: 15% platform commission / 85% vendor payout
+          const commission = Number((itemTotal * 0.15).toFixed(0));
+          const vendorPayout = itemTotal - commission;
+
+          this.ledgerJournal.push({
+            journal_id: `j_${Date.now()}_m3_${i}_comm`,
+            order_id: order.order_id,
+            debit_account: 'REVENUE_CLEARING',
+            credit_account: 'REVENUE_MARKETPLACE_COMMISSION',
+            amount: commission,
+            timestamp: ts,
+          });
+
+          this.ledgerJournal.push({
+            journal_id: `j_${Date.now()}_m3_${i}_payout`,
+            order_id: order.order_id,
+            debit_account: 'REVENUE_CLEARING',
+            credit_account: 'LIABILITY_VENDOR_PAYOUT',
+            amount: vendorPayout,
+            timestamp: ts,
+          });
+        }
+        i++;
+      }
+
+      return { processed: true, orderStatus: 'PAID' };
+    } else {
+      order.status = 'EXPIRED';
+      return { processed: true, orderStatus: 'EXPIRED' };
+    }
   }
 
   public getLedgerJournal(): DoubleEntryLedgerRecord[] {
