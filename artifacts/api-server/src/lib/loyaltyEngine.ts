@@ -416,8 +416,10 @@ export const FIRST_ORDER_DISCOUNT_BPS = 2500;
 export const FIRST_ORDER_DISCOUNT_CAP_PAISE = 8_000;
 
 // Charge composition — must mirror the client cart display (cartMath.ts):
-// 18% GST, ₹50 delivery fee waived at/above a ₹500 subtotal.
-export const GST_BPS = 1800;
+// statutory GST split (prepared food 5% without ITC, delivery/platform
+// service 18%), ₹50 delivery fee waived at/above a ₹500 subtotal.
+export const FOOD_GST_BPS = 500; // 5% GST on prepared food (India, no ITC)
+export const DELIVERY_GST_BPS = 1800; // 18% GST on the delivery service
 export const DELIVERY_FEE_PAISE = 5_000;
 export const FREE_DELIVERY_THRESHOLD_PAISE = 50_000;
 
@@ -425,27 +427,33 @@ export const FREE_DELIVERY_THRESHOLD_PAISE = 50_000;
  * The single authoritative payable amount for an order, in paise.
  *
  *   charge = payable meal total (post-discount, post-credit)
- *          + 18% GST on that taxable value
+ *          + 5% GST on that taxable meal value
  *          + delivery fee (waived when the pre-discount subtotal clears the
  *            free-delivery threshold; always zero for pickup)
+ *          + 18% GST on the delivery fee
  *
  * This is the ONLY number the payment path may bill or reconcile against.
  * `subtotalPaise` is the pre-discount meal subtotal used purely for the
  * free-delivery threshold, so the fee tracks the same basis the cart's
- * free-delivery progress bar shows the customer.
+ * free-delivery progress bar shows the customer. `gstPaise` is the blended
+ * total (food + delivery) so the payment path stays a single scalar.
  */
 export function computeChargePaise(args: {
   finalPaise: number;
   subtotalPaise: number;
   fulfillmentType: "delivery" | "pickup";
 }): { chargePaise: number; gstPaise: number; deliveryFeePaise: number } {
-  const gstPaise = Math.round((args.finalPaise * GST_BPS) / 10_000);
   const deliveryFeePaise =
     args.fulfillmentType === "pickup" ||
     args.subtotalPaise === 0 ||
     args.subtotalPaise >= FREE_DELIVERY_THRESHOLD_PAISE
       ? 0
       : DELIVERY_FEE_PAISE;
+  const foodGstPaise = Math.round((args.finalPaise * FOOD_GST_BPS) / 10_000);
+  const deliveryGstPaise = Math.round(
+    (deliveryFeePaise * DELIVERY_GST_BPS) / 10_000,
+  );
+  const gstPaise = foodGstPaise + deliveryGstPaise;
   return {
     chargePaise: args.finalPaise + gstPaise + deliveryFeePaise,
     gstPaise,

@@ -9,14 +9,14 @@ test("Cart Calculation - Standard subtotal, taxes and delivery fee computations"
   ];
   // Subtotal = 35000 paise (Rs. 350)
   // Delivery Fee = 5000 paise (Rs. 50) because subtotal < 50000 paise
-  // Taxes = Math.round(35000 * 0.18) = 6300 paise (Rs. 63)
-  // Total = 35000 + 5000 + 6300 = 46300 paise (Rs. 463)
+  // Taxes = Food (Math.round(35000 * 0.05) = 1750) + Delivery (Math.round(5000 * 0.18) = 900) = 2650 paise (Rs. 26.50)
+  // Total = 35000 + 5000 + 2650 = 42650 paise (Rs. 426.50)
   const totals = calculateCartTotals(items);
 
   assert.equal(totals.subtotal, 35000);
   assert.equal(totals.deliveryFee, 5000);
-  assert.equal(totals.tax, 6300);
-  assert.equal(totals.total, 46300);
+  assert.equal(totals.tax, 2650);
+  assert.equal(totals.total, 42650);
   assert.equal(totals.amountToFreeDelivery, 15000);
 });
 

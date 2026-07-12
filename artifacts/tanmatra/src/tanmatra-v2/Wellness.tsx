@@ -78,7 +78,7 @@ function ManualLogSheet({ open, onClose, onSaved }: { open: boolean; onClose: ()
     finally { setSaving(false); }
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+    <div className="bg-black/60" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--s1)", borderRadius: "20px 20px 0 0", borderTop: "1px solid var(--ln2)", padding: 16, maxHeight: "85vh", overflowY: "auto" }}>
         <div className="fx ac jb mb10"><div className="h2" style={{ fontSize: 18 }}>Log a meal or snack</div><button className="iconbtn" onClick={onClose} aria-label="Close"><i className="ph-bold ph-x" /></button></div>
         <div className="lab mb6">What was it?</div>
@@ -142,7 +142,7 @@ function WearableCard({ data, refresh }: { data: WellnessTodayResponse; refresh:
       <div className="fine mt6" style={{ fontSize: 10 }}>We only read steps + active calories. <Link to="/privacy" style={{ color: "var(--safb)" }}>How wearable data is handled</Link>.</div>
 
       {pending && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setPending(null)}>
+        <div className="bg-black/60" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setPending(null)}>
           <div onClick={(e) => e.stopPropagation()} className="card" style={{ maxWidth: 400, width: "100%" }}>
             <div className="h2 mb6" style={{ fontSize: 17 }}>Connect {pending === "apple_health" ? "Apple Health" : "Google Fit / Health Connect"}</div>
             <div className="fine mb10">Before we connect, here's exactly what we read and how it's used.</div>
@@ -295,10 +295,10 @@ export default function V2Wellness() {
               <>
                 <div className="card">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, justifyItems: "center" }}>
-                    <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="#F4C430" icon="ph-flame" />
-                    <Ring label="Protein" value={data.totals.proteinGrams} target={data.targets.proteinTargetGrams} unit="g" color="#E7C766" icon="ph-barbell" />
-                    <Ring label="Fiber" value={data.totals.fiberGrams} target={data.targets.fiberTargetGrams} unit="g" color="#88AA84" icon="ph-plant" />
-                    <Ring label="Water" value={data.totals.waterMl} target={data.targets.waterTargetMl} unit="ml" color="#6BA3C8" icon="ph-drop" />
+                    <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="var(--color-clinical-gold)" icon="ph-flame" />
+                    <Ring label="Protein" value={data.totals.proteinGrams} target={data.targets.proteinTargetGrams} unit="g" color="var(--color-saffron-300)" icon="ph-barbell" />
+                    <Ring label="Fiber" value={data.totals.fiberGrams} target={data.targets.fiberTargetGrams} unit="g" color="var(--color-clinical-sage)" icon="ph-plant" />
+                    <Ring label="Water" value={data.totals.waterMl} target={data.targets.waterTargetMl} unit="ml" color="var(--color-clinical-blue)" icon="ph-drop" />
                   </div>
                   <div className="fx ac jc g6 mt10">
                     {WATER_PRESETS.map((ml) => <button key={ml} className="chip" onClick={() => logWater(ml)}>+{ml} ml</button>)}
@@ -320,10 +320,10 @@ export default function V2Wellness() {
               <div className="secrow"><span className="sh">Last 7 days</span></div>
               <div className="padx">
                 <div className="card">
-                  <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="#F4C430" label="Calories" unit="kcal" />
-                  <WeekBars data={week.days} field="proteinGrams" target={week.targets.proteinTargetGrams} color="#E7C766" label="Protein" unit="g" />
-                  <WeekBars data={week.days} field="fiberGrams" target={week.targets.fiberTargetGrams} color="#88AA84" label="Fiber" unit="g" />
-                  <WeekBars data={week.days} field="waterMl" target={week.targets.waterTargetMl} color="#6BA3C8" label="Water" unit="ml" />
+                  <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="var(--color-clinical-gold)" label="Calories" unit="kcal" />
+                  <WeekBars data={week.days} field="proteinGrams" target={week.targets.proteinTargetGrams} color="var(--color-saffron-300)" label="Protein" unit="g" />
+                  <WeekBars data={week.days} field="fiberGrams" target={week.targets.fiberTargetGrams} color="var(--color-clinical-sage)" label="Fiber" unit="g" />
+                  <WeekBars data={week.days} field="waterMl" target={week.targets.waterTargetMl} color="var(--color-clinical-blue)" label="Water" unit="ml" />
                 </div>
               </div>
             </>

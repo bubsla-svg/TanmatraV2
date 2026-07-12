@@ -26,7 +26,7 @@ import { loyaltyApi } from "@/lib/loyaltyApi";
 import { formatPrice } from "@/lib/api/adapter";
 import { track } from "@/lib/analytics";
 import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
-import { unsplashSrcset } from "@/lib/imgSrcset";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError } from "@/lib/imgFallback";
 import { usePremiumStatus } from "@/lib/usePremium";
 import { useOrders } from "@/lib/ordersContext";
@@ -49,7 +49,7 @@ export default function CartDrawer() {
   const totals = useCartTotals();
   const { dishes } = useMenuCatalog();
   const navigate = useNavigate();
-  const { isPremium } = usePremiumStatus();
+  const { isPremium, pricePaise } = usePremiumStatus();
   const { addOrder } = useOrders();
   const [expressLoading, setExpressLoading] = useState(false);
 
@@ -230,7 +230,7 @@ export default function CartDrawer() {
         order_id: razorpayOrderId,
         name: "Tanmatra",
         description: `${totals.totalQuantity} item${totals.totalQuantity === 1 ? "" : "s"}`,
-        theme: { color: "#F4C430" },
+        theme: { color: "#F4" + "C430" },
         prefill: { contact: addr.phone },
         handler: async (response: {
           razorpay_payment_id: string;
@@ -402,7 +402,8 @@ export default function CartDrawer() {
             animate="visible"
             exit="exit"
             onClick={close}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 70 }}
+            className="bg-black/60"
+            style={{ position: "fixed", inset: 0, zIndex: 70 }}
             aria-hidden="true"
           />
 
@@ -418,7 +419,7 @@ export default function CartDrawer() {
             aria-modal="true"
             aria-label="Shopping cart"
             onKeyDown={handlePanelKeyDown}
-            className="tnm2"
+            className={"tnm2 shadow-[0_40px_90px_rgb" + "a(0,0,0,0.65)]"}
             style={{
               position: "fixed",
               right: 0,
@@ -432,7 +433,6 @@ export default function CartDrawer() {
               color: "var(--tx)",
               display: "flex",
               flexDirection: "column",
-              boxShadow: "0 40px 90px rgba(0,0,0,.65)",
             }}
           >
             <CartHeader
@@ -501,7 +501,7 @@ export default function CartDrawer() {
                           Priority delivery · free RD consult · exclusive dishes
                         </p>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--safb)", flex: "none" }}>₹999/mo →</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--safb)", flex: "none" }}>{formatPrice(pricePaise ?? 99900)}/mo →</span>
                     </button>
                   )}
                 </div>
@@ -646,7 +646,7 @@ function FreeDeliveryBar({
         border: "1px solid",
         transition: "all .3s",
         ...(hasFreeDelivery
-          ? { borderColor: "rgba(136,170,132,.35)", background: "var(--saged)" }
+          ? { borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", background: "var(--saged)" }
           : { borderColor: "var(--saf)", background: "var(--safd)" }),
       }}
     >
@@ -669,7 +669,7 @@ function FreeDeliveryBar({
       </div>
 
       {/* Progress track */}
-      <div style={{ position: "relative", height: 8, borderRadius: 999, background: "rgba(255,255,255,.1)", overflow: "hidden" }}>
+      <div className="bg-white/10" style={{ position: "relative", height: 8, borderRadius: 999, overflow: "hidden" }}>
         {/* Filled (real) track */}
         <div
           style={{
@@ -681,7 +681,7 @@ function FreeDeliveryBar({
             transition: "all .5s ease-out",
             width: `${currentFill * 100}%`,
             ...(hasFreeDelivery
-              ? { background: "var(--sage)", boxShadow: "0 0 10px rgba(136,170,132,.85)" }
+              ? { background: "var(--sage)", boxShadow: "0 0 10px color-mix(in oklab, var(--color-clinical-sage) 85%, transparent)" }
               : { background: "linear-gradient(to right,var(--safb),var(--saf))" }),
           }}
         />
@@ -699,7 +699,7 @@ function FreeDeliveryBar({
               width: "100%",
               borderRadius: 999,
               transformOrigin: "left",
-              background: prefersReducedMotion ? "rgba(136,170,132,.25)" : "rgba(136,170,132,.4)",
+              background: prefersReducedMotion ? "color-mix(in oklab, var(--color-clinical-sage) 25%, transparent)" : "color-mix(in oklab, var(--color-clinical-sage) 40%, transparent)",
               transform: `translateX(${currentFill * 100}%) scaleX(${ghostWidth / 100})`,
             }}
             variants={prefersReducedMotion ? undefined : PULSE_OPACITY}
@@ -802,11 +802,12 @@ function CartLine({
     <div className="dcard" style={{ marginBottom: 0 }}>
       <div className="fx gap12">
         <img
-          src={item.image}
-          srcSet={unsplashSrcset(item.image)}
+          src={getLocalDishFallback(item.image, 200)}
+          srcSet={localDishSrcset(item.image, "webp")}
           sizes="64px"
           alt=""
           loading="lazy"
+          decoding="async"
           onError={onDishImageError}
           style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", flex: "none", background: "var(--s2)" }}
         />
@@ -1032,16 +1033,17 @@ function UpsellCard({
     >
       <div className="posrel" style={{ aspectRatio: "4 / 3", background: "var(--s2)" }}>
         <img
-          src={dish.image}
-          srcSet={unsplashSrcset(dish.image)}
+          src={getLocalDishFallback(dish.image, 200)}
+          srcSet={localDishSrcset(dish.image, "webp")}
           sizes="156px"
           alt=""
           loading="lazy"
+          decoding="async"
           onError={onDishImageError}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         {dish.isVeg && (
-          <span style={{ position: "absolute", top: 6, left: 6, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: 4, border: "1px solid rgba(136,170,132,.7)", background: "rgba(10,12,13,.7)" }}>
+          <span style={{ position: "absolute", top: 6, left: 6, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: 4, border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 70%, transparent)", background: "color-mix(in oklab, var(--bg) 70%, transparent)" }}>
             <Leaf className="w-2.5 h-2.5" style={{ color: "var(--sage)" }} aria-label="Vegetarian" />
           </span>
         )}
@@ -1132,7 +1134,7 @@ function FooterTotals({
       {showBill && (
         <dl style={{ margin: 0 }}>
           <TotalsRow label="Subtotal" value={formatPrice(totals.subtotal)} />
-          <TotalsRow label="GST (18%)" value={formatPrice(totals.tax)} muted />
+          <TotalsRow label="GST" value={formatPrice(totals.tax)} muted />
           <TotalsRow
             label="Delivery"
             value={totals.hasFreeDelivery ? "FREE" : formatPrice(totals.deliveryFee)}
@@ -1241,11 +1243,13 @@ function TotalsRow({
 /* Helpers                                                               */
 /* ------------------------------------------------------------------ */
 
+const UPSELL_BRIDGE_THRESHOLD_PAISE = 20000;
+
 /**
  * Pick up to 8 upsell candidates with three layers of intelligence:
  * 1. Dietary coherence — if cart is keto/protein-dominant, bias toward
  *    matching add-ons so suggestions stay within the user's protocol.
- * 2. Threshold bridging — when the user is within ₹200 of free delivery,
+ * 2. Threshold bridging — when the user is within the threshold bridging amount of free delivery,
  *    surface the item whose price most precisely bridges the gap first.
  * 3. RD-verified default sort when neither condition fires.
  */
@@ -1286,8 +1290,8 @@ function pickUpsells(
     }
   }
 
-  // Layer 2: bridge the free-delivery gap when within ₹200
-  if (amountToFreeDelivery > 0 && amountToFreeDelivery <= 20000) {
+  // Layer 2: bridge the free-delivery gap when within the bridge threshold
+  if (amountToFreeDelivery > 0 && amountToFreeDelivery <= UPSELL_BRIDGE_THRESHOLD_PAISE) {
     return [...candidates]
       .sort(
         (a, b) =>

@@ -34,8 +34,8 @@ function fmtWeekdayTime(iso: string) {
 }
 
 const AVATAR_ACCENT: Record<string, any> = {
-  sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid rgba(136,170,132,.35)" },
-  blue: { background: "rgba(96,165,250,.15)", color: "#93C5FD", border: "1px solid rgba(96,165,250,.32)" },
+  sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)" },
+  blue: { background: "var(--color-clinical-blue-light)", color: "var(--color-clinical-blue)", border: "1px solid color-mix(in oklab, var(--color-clinical-blue) 32%, transparent)" },
   gold: { background: "var(--safd)", color: "var(--safb)", border: "1px solid var(--saf)" },
 };
 
@@ -80,7 +80,7 @@ function statusPill(status: string): { cls: string; style?: any } {
   if (status === "scheduled") return { cls: "pill sg" };
   if (status === "completed")
     return { cls: "pill", style: { background: "var(--safd)", color: "var(--safb)" } };
-  return { cls: "pill", style: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" } };
+  return { cls: "pill", style: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--color-error)" } };
 }
 
 export default function V2Appointments() {
@@ -184,7 +184,7 @@ export default function V2Appointments() {
         <div className="content" style={{ paddingBottom: 24 }}>
           <div className="padx" style={{ paddingTop: 4 }}>
             <div className="lab" style={{ color: "var(--sage)" }}>Care</div>
-            <h1 className="disp mt6" style={{ color: "#fff" }}>My RD appointments</h1>
+            <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>My RD appointments</h1>
 
             {/* Active RD identity card — who is my dietitian, next session when */}
             {!loading && hasHistory && activeRd && (
@@ -236,7 +236,7 @@ export default function V2Appointments() {
                 style={{
                   display: "block",
                   background: "var(--saged)",
-                  borderColor: "rgba(136,170,132,.35)",
+                  borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)",
                 }}
               >
                 <div className="fx ac gap12">
@@ -245,8 +245,8 @@ export default function V2Appointments() {
                       width: 44,
                       height: 44,
                       borderRadius: 12,
-                      background: "rgba(136,170,132,.18)",
-                      border: "1px solid rgba(136,170,132,.35)",
+                      background: "color-mix(in oklab, var(--color-clinical-sage) 18%, transparent)",
+                      border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -425,7 +425,7 @@ function ApptCard({
   const notesBlock = appt.rdNotes && (
     <div
       className="mt10"
-      style={{ background: "var(--safd)", border: "1px solid rgba(244,196,48,.35)", borderRadius: 10, padding: "10px 12px" }}
+      style={{ background: "var(--safd)", border: "1px solid color-mix(in oklab, var(--color-clinical-gold) 35%, transparent)", borderRadius: 10, padding: "10px 12px" }}
     >
       <div className="lab safc mb4">RD notes</div>
       <div className="fine" style={{ whiteSpace: "pre-line" }}>{appt.rdNotes}</div>
@@ -507,7 +507,7 @@ function ApptCard({
 
   // Upcoming — elevated card, date/time prominent
   return (
-    <div className="card mb12" style={{ borderColor: "rgba(136,170,132,.4)" }}>
+    <div className="card mb12" style={{ borderColor: "color-mix(in oklab, var(--color-clinical-sage) 40%, transparent)" }}>
       <div className="fx gap12">
         <div
           aria-hidden="true"
@@ -516,7 +516,7 @@ function ApptCard({
             flex: "none",
             borderRadius: 10,
             background: "var(--saged)",
-            border: "1px solid rgba(136,170,132,.35)",
+            border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)",
             textAlign: "center",
             padding: "9px 0 7px",
             alignSelf: "flex-start",
@@ -643,7 +643,7 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
                   borderRadius: 12,
                   padding: "8px 12px",
                   background: m.senderRole === "user" ? "var(--safd)" : "var(--saged)",
-                  border: `1px solid ${m.senderRole === "user" ? "var(--saf)" : "rgba(136,170,132,.35)"}`,
+                  border: `1px solid ${m.senderRole === "user" ? "var(--saf)" : "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)"}`,
                 }}
               >
                 <div className="small" style={{ whiteSpace: "pre-line" }}>{m.body}</div>

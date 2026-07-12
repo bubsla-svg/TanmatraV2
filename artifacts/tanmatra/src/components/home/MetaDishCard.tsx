@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { F } from "@/tanmatra-v2/data";
 import { macrosAreProvisional, type DishData } from "@/lib/menuData";
+import { FREE_DELIVERY_THRESHOLD } from "@/lib/cartContext";
 
 /* Viewport 5 — Zomato-style meta card.
  * Cropped image (fixed height → CLS-safe) with a corner veg/non-veg dot and,
@@ -39,7 +40,7 @@ export default function MetaDishCard({
         <div className="mcard-meta">
           <span><i className="ph-bold ph-clock" /> 25–40 min</span>
           <span className="mcard-dot">·</span>
-          <span><i className="ph-bold ph-package" /> Free delivery over ₹500</span>
+          <span><i className="ph-bold ph-package" /> Free delivery over {F(FREE_DELIVERY_THRESHOLD)}</span>
         </div>
 
         <div className="macrobar">

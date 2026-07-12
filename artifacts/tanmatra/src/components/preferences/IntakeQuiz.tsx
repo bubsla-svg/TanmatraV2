@@ -606,7 +606,7 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
                     }));
                     toast.success("Targets calculated from your goal & activity");
                   }}
-                  className="w-full min-h-11 text-xs px-3 py-2.5 rounded-md bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 font-semibold"
+                  className="w-full min-h-11 text-xs px-3 py-2.5 rounded-md bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-semibold"
                 >
                   Calculate my targets
                 </button>
@@ -775,7 +775,7 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
               type="button"
               disabled={saving}
               onClick={onNext}
-              className="min-h-11 bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs font-semibold"
+              className="min-h-11 bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs font-semibold"
             >
               {step === STEPS.length - 1 ? "Save & see results" : "Next"}
             </Button>
@@ -788,7 +788,7 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
         surface card. Non-blocking; the results screen stays behind it. */}
     {showAccountNudge && (
       <div
-        className="tnm2"
+        className="tnm2 bg-black/60"
         role="dialog"
         aria-label="Create an account to keep your plan"
         onClick={() => setNudgeDismissed(true)}
@@ -796,7 +796,6 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
           position: "fixed",
           inset: 0,
           zIndex: 120,
-          background: "rgba(0,0,0,.6)",
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "center",
@@ -948,7 +947,7 @@ function ResultsStep({
           <Link
             to={`/plans/${recommendation.plan.slug}`}
             onClick={onClose}
-            className="min-h-11 inline-flex items-center justify-between gap-2 px-3 rounded-md bg-clinical-gold text-[#050505] text-xs font-semibold hover:bg-clinical-gold/90"
+            className="min-h-11 inline-flex items-center justify-between gap-2 px-3 rounded-md bg-clinical-gold text-action-text text-xs font-semibold hover:bg-clinical-gold/90"
           >
             <span>View {recommendation.plan.title}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

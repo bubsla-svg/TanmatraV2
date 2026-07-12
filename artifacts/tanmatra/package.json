@@ -8,7 +8,11 @@
     "build": "react-router build && node ./scripts/generate-sitemap.mjs",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:ssr": "node ./scripts/check-ssr.js"
+    "lint:colors": "tsx ../../scripts/lint-colors.ts",
+    "lint:prices": "tsx ../../scripts/lint-prices.ts",
+    "lint:geography": "tsx ../../scripts/lint-geography.ts",
+    "lint:gates": "pnpm run lint:colors && pnpm run lint:prices",
+    "test:ssr": "node ./scripts/check-ssr.cjs"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "^5.2.8",

@@ -141,6 +141,30 @@ function ActionCard({
   );
 }
 
+interface PromptChip {
+  label: string;
+  query: string;
+}
+
+const getPromptChips = (dishSlug?: string): PromptChip[] => {
+  if (dishSlug) {
+    const d = getDishBySlug(dishSlug);
+    if (d) {
+      return [
+        { label: "Show macros", query: `What are the exact macros for ${d.name}?` },
+        { label: "Is it spicy?", query: `What is the spice level of ${d.name}?` },
+        { label: "Safer swap?", query: `Is there a safer or higher-protein swap for ${d.name}?` },
+        { label: "Ingredients", query: `What are the key ingredients in ${d.name}?` }
+      ];
+    }
+  }
+  return [
+    { label: "High-protein options", query: "Show me high-protein options on the menu." },
+    { label: "Renal-safe meals", query: "Which meals are safe for kidney health / low potassium?" },
+    { label: "How to order?", query: "How does the subscription and delivery work?" }
+  ];
+};
+
 export default function CoachAgentWidget({
   dishSlug,
   trigger,
@@ -273,11 +297,13 @@ export default function CoachAgentWidget({
     navigate(a.href);
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || streaming) return;
+  const handleSend = async (overrideText?: string) => {
+    const textToSend = typeof overrideText === "string" ? overrideText : input;
+    const trimmed = textToSend.trim();
+    if (!trimmed || streaming) return;
     const userMsg: ChatMessage = {
       role: "user",
-      text: input.trim(),
+      text: trimmed,
       timestamp: new Date().toLocaleTimeString(),
     };
     let placeholderIdx = -1;
@@ -477,6 +503,24 @@ export default function CoachAgentWidget({
                 </div>
               </div>
             )}
+          {messages.length === 1 && !streaming && (
+            <div className="pt-2 flex flex-col gap-1.5">
+              <span className="text-[9px] uppercase tracking-wider text-clinical-zinc/50 font-semibold pl-1">Suggested Questions</span>
+              <div className="flex flex-wrap gap-1.5">
+                {getPromptChips(dishSlug).map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSend(chip.query)}
+                    className="chip hover:bg-clinical-gold/10 hover:border-clinical-gold/30 hover:text-clinical-gold"
+                    style={{ height: 28, padding: "0 10px", fontSize: 11, borderRadius: 8, cursor: "pointer" }}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -500,7 +544,7 @@ export default function CoachAgentWidget({
             type="button"
             className={`btn btn-p ${!input.trim() || streaming ? "dis" : ""}`}
             style={{ width: 46, padding: 0 }}
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!input.trim() || streaming}
             aria-label="Send message"
           >

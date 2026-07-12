@@ -68,7 +68,8 @@
 .tnm2 .qbtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--ln2);display:inline-flex;align-items:center;justify-content:center;font-size:15px;color:var(--tx);flex:none}
 .tnm2 .linkq{color:var(--safb);font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:5px}
 .tnm2 .card{background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:16px}
-.tnm2 .chip{height:34px;padding:0 14px;border-radius:20px;border:1px solid var(--ln);background:var(--s1);color:var(--mut);font-size:13px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all 150ms;flex:none}
+.tnm2 .chip{position:relative;height:34px;padding:0 14px;border-radius:20px;border:1px solid var(--ln);background:var(--s1);color:var(--mut);font-size:13px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all 150ms;flex:none}
+.tnm2 .chip::after{content:"";position:absolute;top:-5px;bottom:-5px;left:0;right:0}
 .tnm2 .chip.on{background:var(--safd);border-color:var(--saf);color:var(--safb)}
 .tnm2 .chiprow{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 10px;scrollbar-width:none}
 .tnm2 .ribbon{display:flex;border:1px solid var(--ln);border-radius:9px;overflow:hidden}

@@ -240,6 +240,31 @@ async function runIdempotency(
       }
       return runIdempotency(req, res, next);
     }
+    // Check for crash lock exhaustion: if the row has been in flight longer than IN_FLIGHT_TIMEOUT_MS,
+    // recover it atomically rather than locking callers out with 409.
+    if (
+      existing.statusCode == null &&
+      Date.now() - existing.createdAt.getTime() >= IN_FLIGHT_TIMEOUT_MS
+    ) {
+      const recovered = await db
+        .delete(idempotencyKeysTable)
+        .where(
+          and(
+            eq(idempotencyKeysTable.userId, userId),
+            eq(idempotencyKeysTable.key, key),
+            sql`${idempotencyKeysTable.statusCode} is null`,
+            lt(
+              idempotencyKeysTable.createdAt,
+              new Date(Date.now() - IN_FLIGHT_TIMEOUT_MS),
+            ),
+          ),
+        )
+        .returning();
+      if (recovered.length > 0) {
+        return runIdempotency(req, res, next);
+      }
+    }
+
     if (existing.requestHash !== requestHash) {
       res.status(409).json({
         error: "idempotency_key_mismatch",
@@ -248,29 +273,8 @@ async function runIdempotency(
       });
       return;
     }
-    if (existing.statusCode == null) {
-      // Check for crash lock exhaustion: if the row has been in flight longer than IN_FLIGHT_TIMEOUT_MS,
-      // recover it atomically rather than locking callers out with 409.
-      if (Date.now() - existing.createdAt.getTime() >= IN_FLIGHT_TIMEOUT_MS) {
-        const recovered = await db
-          .delete(idempotencyKeysTable)
-          .where(
-            and(
-              eq(idempotencyKeysTable.userId, userId),
-              eq(idempotencyKeysTable.key, key),
-              sql`${idempotencyKeysTable.statusCode} is null`,
-              lt(
-                idempotencyKeysTable.createdAt,
-                new Date(Date.now() - IN_FLIGHT_TIMEOUT_MS),
-              ),
-            ),
-          )
-          .returning();
-        if (recovered.length > 0) {
-          return runIdempotency(req, res, next);
-        }
-      }
 
+    if (existing.statusCode == null) {
       const completed = await waitForCompletion(userId, key);
       if (!completed) {
         const current = await loadRow(userId, key);

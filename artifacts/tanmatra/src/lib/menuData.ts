@@ -102,3 +102,30 @@ export function useMenuCatalog(): {
     isLive: q.isSuccess && Boolean(q.data) && q.data.length > 0,
   };
 }
+
+export interface RankedMenuItem {
+  dish_id: number;
+  rank: number;
+  fit_band: "high" | "moderate" | "neutral" | "conflict";
+  rank_reason_codes: string[];
+  nutrition_snapshot_id: string;
+  social_proof: string | null;
+}
+
+async function fetchRankedMenu(profileId: string | null): Promise<RankedMenuItem[]> {
+  if (!profileId) return [];
+  const res = await fetch(`${API_BASE}/menu/ranked?profile_id=${profileId}`, { credentials: "include" });
+  if (!res.ok) throw new Error(`menu/ranked ${res.status}`);
+  const json = (await res.json()) as { items: RankedMenuItem[] };
+  return json.items ?? [];
+}
+
+export function useRankedMenu(profileId: string | null) {
+  return useQuery<RankedMenuItem[]>({
+    queryKey: ["menu", "ranked", profileId],
+    queryFn: () => fetchRankedMenu(profileId),
+    enabled: !!profileId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+}
+

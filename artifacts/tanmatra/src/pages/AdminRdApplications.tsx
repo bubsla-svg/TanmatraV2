@@ -364,7 +364,7 @@ function ApplicationDetail({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
-            className="bg-[#050505] border-clinical-border text-xs"
+            className="bg-clinical-dark border-clinical-border text-xs"
             placeholder="Call summary, references, follow-ups…"
           />
           <Button
@@ -419,7 +419,7 @@ function ApplicationDetail({
               value={provisionSlug}
               onChange={(e) => setProvisionSlug(e.target.value)}
               placeholder="rd-slug-here"
-              className="bg-[#050505] border-clinical-border text-xs h-8 w-48"
+              className="bg-clinical-dark border-clinical-border text-xs h-8 w-48"
             />
             <Button
               size="sm"
@@ -434,7 +434,7 @@ function ApplicationDetail({
                   "Approved & provisioned",
                 )
               }
-              className="bg-clinical-sage text-[#050505] hover:bg-clinical-sage/90 text-xs h-8"
+              className="bg-clinical-sage text-stone-900 hover:bg-clinical-sage/90 text-xs h-8"
             >
               Approve &amp; provision
             </Button>

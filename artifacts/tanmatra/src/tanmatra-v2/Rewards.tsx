@@ -98,7 +98,7 @@ export default function V2Rewards() {
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="content padx tc" style={{ padding: "72px 24px" }}>
             <i className="ph-fill ph-wallet safc" style={{ fontSize: 40 }} />
-            <div className="h2 mt10" style={{ color: "#fff" }}>Sign in to see rewards</div>
+            <div className="h2 mt10" style={{ color: "var(--text-primary)" }}>Sign in to see rewards</div>
             <div className="fine mt6">
               Earn credits, refer friends, and unlock Chef's tier perks.
             </div>
@@ -220,7 +220,7 @@ export default function V2Rewards() {
           <div className="lab" style={{ color: "var(--safb)", display: "flex", alignItems: "center", gap: 6 }}>
             <i className="ph-fill ph-sparkle" />Rewards
           </div>
-          <h1 className="disp mt6" style={{ color: "#fff" }}>Refer, earn &amp; unlock perks</h1>
+          <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>Refer, earn &amp; unlock perks</h1>
           <p className="small mut mt6">
             Refer friends, earn credits, and unlock loyalty perks on every plan.
           </p>

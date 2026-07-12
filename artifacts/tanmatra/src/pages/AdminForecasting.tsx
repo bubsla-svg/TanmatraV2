@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_BASE } from "@/lib/apiBase";
+import { formatRupees } from "@/lib/rdPlans";
 
 const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
 
@@ -595,7 +596,7 @@ export default function AdminForecasting() {
                   void sendMessage(input);
                 }
               }}
-              placeholder='e.g. "draft a PO for 10kg chickpeas at ₹120/kg"'
+              placeholder={`e.g. "draft a PO for 10kg chickpeas at ${formatRupees(12000)}/kg"`}
               disabled={busy}
             />
             <Button onClick={() => void sendMessage(input)} disabled={busy}>

@@ -156,6 +156,10 @@ interface ScheduleDay {
 export default function V2Subscribe() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const { orders } = useOrders();
   const [policyModal, setPolicyModal] = useState<"pause" | "swap" | null>(null);
 
@@ -643,6 +647,19 @@ export default function V2Subscribe() {
     }
   };
 
+  if (!isMounted) {
+    return (
+      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: "72px 20px", textAlign: "center" }}>
+          <h1>Subscribe</h1>
+          <div style={{ marginTop: 24 }}>
+            <Link to="/menu" className="btn btn-p opacity-50 pointer-events-none">Browse Menu</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const activeSlotCount = SLOT_ORDER.filter((s) => slots[s]).length;
 
   return (
@@ -687,7 +704,7 @@ export default function V2Subscribe() {
                 </div>
                 <div className="f1" style={{ minWidth: 0 }}>
                   <div className="fx wrap ac gap8">
-                    <span className="h2" style={{ color: "#fff" }}>{effectivePlan.name}</span>
+                    <span className="h2" style={{ color: "var(--text-primary)" }}>{effectivePlan.name}</span>
                     {effectivePlan.badges.slice(0, 2).map((b) => (
                       <span key={b} className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>
                         {b}
@@ -726,7 +743,7 @@ export default function V2Subscribe() {
                   <i className="ph-bold ph-basket" />
                 </div>
                 <div className="f1">
-                  <p className="tt" style={{ color: "#fff" }}>Repeat your cart weekly</p>
+                  <p className="tt" style={{ color: "var(--text-primary)" }}>Repeat your cart weekly</p>
                   <p className="fine mt2">
                     {weekMeals} meal{weekMeals === 1 ? "" : "s"} from your cart, delivered on your schedule below.
                   </p>
@@ -910,7 +927,7 @@ export default function V2Subscribe() {
                               <span className="pill" style={{ fontSize: 9, background: "var(--safd)", color: "var(--safb)" }}>your pick</span>
                             )}
                           </div>
-                          <p className="small clamp1 mt2" style={{ fontWeight: 600, color: "#fff" }}>
+                          <p className="small clamp1 mt2" style={{ fontWeight: 600, color: "var(--text-primary)" }}>
                             {m.dish.name}
                           </p>
                           <p className="mono fntc" style={{ fontSize: 10 }}>
@@ -986,7 +1003,7 @@ export default function V2Subscribe() {
                 ))}
               </div>
               <p className="fine" style={{ fontSize: 10.5 }}>
-                Flat plan rate: ₹260/meal whichever dishes you pick. Swap any day up to 24h before its delivery — also later from My Plans.
+                Flat plan rate: {F(PER_MEAL_PAISE)}/meal whichever dishes you pick. Swap any day up to 24h before its delivery — also later from My Plans.
               </p>
             </div>
           )}
@@ -1008,7 +1025,7 @@ export default function V2Subscribe() {
                     }}
                   />
                   <div className="f1" style={{ minWidth: 0 }}>
-                    <p className="small clamp1" style={{ fontWeight: 600, color: "#fff" }}>{ci.name}</p>
+                    <p className="small clamp1" style={{ fontWeight: 600, color: "var(--text-primary)" }}>{ci.name}</p>
                     <p className="mono fntc" style={{ fontSize: 10 }}>×{ci.quantity}</p>
                   </div>
                 </div>
@@ -1118,7 +1135,7 @@ export default function V2Subscribe() {
                           key={a}
                           onClick={() => toggleAllergen(idx, a)}
                           className={on ? "chip on" : "chip"}
-                          style={on ? { borderColor: "var(--dgr)", color: "var(--dgr)", background: "rgba(201,124,112,.14)", textTransform: "capitalize" } : { textTransform: "capitalize" }}
+                          style={on ? { borderColor: "var(--dgr)", color: "var(--dgr)", background: "color-mix(in oklab, var(--color-error) 14%, transparent)", textTransform: "capitalize" } : { textTransform: "capitalize" }}
                         >
                           {a}
                         </button>
@@ -1223,7 +1240,7 @@ export default function V2Subscribe() {
                       style={{ flexDirection: "column", alignItems: "stretch" }}
                     >
                       <div className="fx ac jb w100">
-                        <span style={{ color: "#fff", fontWeight: 600 }}>
+                        <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
                           {CADENCE_LABEL[c]}
                         </span>
                         <span className="pill sg">Save {CADENCE_DISCOUNT_PCT[c]}%</span>
@@ -1264,8 +1281,8 @@ export default function V2Subscribe() {
                 <div className="mt6">
                   <p className="fine" style={{ fontSize: 10 }}>
                     {isTrial
-                      ? `${weekMeals} meals × ₹260 − 25% trial offer · one-off, does not auto-renew`
-                      : `${cycleMeals} meals × ₹260 − ${CADENCE_DISCOUNT_PCT[cadence]}% saving${effectivePlan && cycleWeeks > 1 ? ` (${F(weekPrice)}/week)` : ""}`}
+                      ? `${weekMeals} meals × ${F(PER_MEAL_PAISE)} − 25% trial offer · one-off, does not auto-renew`
+                      : `${cycleMeals} meals × ${F(PER_MEAL_PAISE)} − ${CADENCE_DISCOUNT_PCT[cadence]}% saving${effectivePlan && cycleWeeks > 1 ? ` (${F(weekPrice)}/week)` : ""}`}
                   </p>
                   <p className="fine mt2" style={{ fontSize: 10 }}>
                     📅 First delivery {firstDeliveryLabel} · {deliveryWindow}
@@ -1312,7 +1329,7 @@ export default function V2Subscribe() {
                 )}
               </div>
             </div>
-            <div className="fx wrap ac gap16 mt10" style={{ paddingTop: 10, borderTop: "1px solid rgba(244,196,48,.25)" }}>
+            <div className="fx wrap ac gap16 mt10" style={{ paddingTop: 10, borderTop: "1px solid color-mix(in oklab, var(--color-clinical-gold) 25%, transparent)" }}>
               <span className="fine fx ac g6" style={{ fontSize: 10 }}>
                 <i className="ph-bold ph-shield-check safc" /> Secured by Razorpay
               </span>
@@ -1343,8 +1360,8 @@ export default function V2Subscribe() {
         {/* Swap sheet */}
         {swapSheet !== null && (
           <div
-            className="tnm2"
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+            className="tnm2 bg-black/60"
+            style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
             onClick={() => setSwapSheet(null)}
           >
             <div
@@ -1355,7 +1372,7 @@ export default function V2Subscribe() {
               <div className="fx ac jb mb4">
                 <div>
                   <p className="lab safc">{SLOT_META[swapSheet.slot].label} · {swapSheet.dateLabel}</p>
-                  <p className="tt mt2" style={{ color: "#fff" }}>
+                  <p className="tt mt2" style={{ color: "var(--text-primary)" }}>
                     Swap “{swapSheet.current.name}”
                   </p>
                 </div>
@@ -1364,7 +1381,7 @@ export default function V2Subscribe() {
                 </button>
               </div>
               <p className="fine mb10" style={{ fontSize: 11 }}>
-                Same flat ₹260/meal rate whichever you pick.{preferences ? " Only allergen-safe options are shown." : ""}
+                Same flat {F(PER_MEAL_PAISE)}/meal rate whichever you pick.{preferences ? " Only allergen-safe options are shown." : ""}
               </p>
               {swapAlternatives.length === 0 ? (
                 <p className="fine" style={{ padding: "16px 0" }}>
@@ -1389,7 +1406,7 @@ export default function V2Subscribe() {
                       <span className={d.isVeg ? "vd" : "vd nv"} style={{ position: "absolute", bottom: 3, left: 3 }} />
                     </div>
                     <div className="f1" style={{ minWidth: 0 }}>
-                      <p className="small clamp1" style={{ fontWeight: 600, color: "#fff" }}>{d.name}</p>
+                      <p className="small clamp1" style={{ fontWeight: 600, color: "var(--text-primary)" }}>{d.name}</p>
                       <p className="mono fntc" style={{ fontSize: 10 }}>
                         {macrosAreProvisional(d)
                           ? "macros being verified"
@@ -1406,8 +1423,8 @@ export default function V2Subscribe() {
 
         {policyModal !== null && (
           <div
-            className="tnm2"
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            className="tnm2 bg-black/60"
+            style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => setPolicyModal(null)}
           >
             <div className="card" style={{ maxWidth: 448, width: "100%" }} onClick={(e) => e.stopPropagation()}>

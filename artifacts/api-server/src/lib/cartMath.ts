@@ -26,8 +26,10 @@ export function calculateCartTotals(items: CartItemCalculationInput[]): CartTota
     // Delivery fee: 5000 paise (Rs. 50)
     const deliveryFee = subtotal === 0 || subtotal >= 50000 ? 0 : 5000;
 
-    // Strict 18% GST (0.18) on subtotal
-    const tax = Math.round(subtotal * 0.18);
+    // Statutory GST: Food (5% -> 0.05) and Delivery service (18% -> 0.18)
+    const foodTax = Math.round(subtotal * 0.05);
+    const deliveryTax = Math.round(deliveryFee * 0.18);
+    const tax = foodTax + deliveryTax;
 
     const total = subtotal + deliveryFee + tax;
     const amountToFreeDelivery = Math.max(0, 50000 - subtotal);

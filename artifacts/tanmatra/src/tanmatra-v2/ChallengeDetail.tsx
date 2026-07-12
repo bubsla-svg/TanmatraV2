@@ -213,7 +213,7 @@ export default function V2ChallengeDetail() {
 
           {/* Header */}
           <div className="padx" style={{ paddingTop: 16 }}>
-            <h1 className="disp" style={{ color: "#fff" }}>{challenge.title}</h1>
+            <h1 className="disp" style={{ color: "var(--text-primary)" }}>{challenge.title}</h1>
             <p className="small mut mt6">{challenge.tagline}</p>
             <div className="fx ac wrap gap12 mt10">
               <span className="fine fx ac g6">
@@ -412,12 +412,12 @@ export default function V2ChallengeDetail() {
       {/* ------ Leave-challenge confirmation ------ */}
       {leaveConfirmOpen && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setLeaveConfirmOpen(false)}
         >
           <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt" style={{ color: "#fff" }}>
+            <div className="tt" style={{ color: "var(--text-primary)" }}>
               Leave this challenge?
             </div>
             <div className="fine mt6">
@@ -431,7 +431,7 @@ export default function V2ChallengeDetail() {
               </button>
               <button
                 className="btn"
-                style={{ background: "var(--dgr)", color: "#fff" }}
+                style={{ background: "var(--dgr)", color: "var(--text-primary)" }}
                 onClick={() => {
                   handleLeave();
                   setLeaveConfirmOpen(false);
@@ -447,12 +447,12 @@ export default function V2ChallengeDetail() {
       {/* ------ Post-join welcome — sets expectations for first-time joiners ------ */}
       {showWelcome && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setShowWelcome(false)}
         >
           <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt" style={{ color: "#fff" }}>
+            <div className="tt" style={{ color: "var(--text-primary)" }}>
               You're in — here's what's next
             </div>
             <div className="fine mt6">
@@ -462,14 +462,14 @@ export default function V2ChallengeDetail() {
               <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
                 <span className="safc fw7" style={{ marginTop: 2 }}>1.</span>
                 <span>
-                  <strong style={{ color: "#fff" }}>Starts {formatRelative(challenge.startsAt)}.</strong>
+                  <strong style={{ color: "var(--text-primary)" }}>Starts {formatRelative(challenge.startsAt)}.</strong>
                   {" "}You'll get a kickoff email with your day-1 plan.
                 </span>
               </li>
               <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
                 <span className="safc fw7" style={{ marginTop: 2 }}>2.</span>
                 <span>
-                  <strong style={{ color: "#fff" }}>Daily check-ins</strong> appear
+                  <strong style={{ color: "var(--text-primary)" }}>Daily check-ins</strong> appear
                   on this page once the challenge is live — log meals, mood,
                   and metrics in 30 seconds.
                 </span>
@@ -477,7 +477,7 @@ export default function V2ChallengeDetail() {
               <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
                 <span className="safc fw7" style={{ marginTop: 2 }}>3.</span>
                 <span>
-                  <strong style={{ color: "#fff" }}>Cohort feed</strong> below lets
+                  <strong style={{ color: "var(--text-primary)" }}>Cohort feed</strong> below lets
                   you ask questions and cheer on others. {challenge.rdName} drops
                   in a few times a week.
                 </span>
@@ -486,7 +486,7 @@ export default function V2ChallengeDetail() {
                 <li className="fx" style={{ alignItems: "flex-start", gap: 8 }}>
                   <span className="safc fw7" style={{ marginTop: 2 }}>4.</span>
                   <span>
-                    <strong style={{ color: "#fff" }}>Optional meal bundle</strong>{" "}
+                    <strong style={{ color: "var(--text-primary)" }}>Optional meal bundle</strong>{" "}
                     available below — RD-curated dishes that fit the protocol.
                   </span>
                 </li>

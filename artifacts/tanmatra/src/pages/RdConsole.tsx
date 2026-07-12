@@ -184,7 +184,7 @@ export default function RdConsole() {
         <Button
           onClick={claim}
           disabled={claiming || !adminToken.trim()}
-          className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs h-9 w-full"
+          className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-9 w-full"
         >
           Claim this RD seat
         </Button>
@@ -843,7 +843,7 @@ function UserDetail({
             <MessageCircle className="w-4 h-4 text-clinical-sage" />
             <p className="text-xs text-white font-medium">Conversation</p>
           </div>
-          <div className="space-y-2 max-h-[260px] overflow-y-auto rounded-md border border-clinical-border bg-[#050505] p-3">
+          <div className="space-y-2 max-h-[260px] overflow-y-auto rounded-md border border-clinical-border bg-clinical-dark p-3">
             {data.messages.length === 0 ? (
               <p className="text-[11px] text-clinical-zinc text-center py-6">
                 No messages yet.
@@ -883,12 +883,12 @@ function UserDetail({
               rows={2}
               maxLength={4000}
               placeholder="Reply as RD…"
-              className="bg-[#050505] border-clinical-border text-xs"
+              className="bg-clinical-dark border-clinical-border text-xs"
             />
             <Button
               onClick={sendReply}
               disabled={sending || !reply.trim()}
-              className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 self-end h-9"
+              className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 self-end h-9"
             >
               <Send className="w-3.5 h-3.5" />
             </Button>
@@ -961,7 +961,7 @@ function ApptEditor({
         value={joinUrl}
         onChange={(e) => setJoinUrl(e.target.value)}
         placeholder="Video room URL (paste from Zoom/Meet/etc.)"
-        className="bg-[#050505] border-clinical-border text-[11px] h-8"
+        className="bg-clinical-dark border-clinical-border text-[11px] h-8"
       />
       <Textarea
         value={notes}
@@ -969,13 +969,13 @@ function ApptEditor({
         placeholder="Private RD notes for this session — visible to the user."
         rows={3}
         maxLength={4000}
-        className="bg-[#050505] border-clinical-border text-[11px]"
+        className="bg-clinical-dark border-clinical-border text-[11px]"
       />
       <Button
         onClick={save}
         disabled={saving}
         size="sm"
-        className="h-7 text-[11px] bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90"
+        className="h-7 text-[11px] bg-clinical-gold text-action-text hover:bg-clinical-gold/90"
       >
         <Save className="w-3 h-3 mr-1" />
         Save

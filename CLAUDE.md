@@ -117,3 +117,7 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
 - **Combo cards on Menu**: Must be a single clickable card opening a Dialog listing constituent dishes (each linking to `/dish/:slug`) with an "Add Combo" CTA.
 - **Zod imports**: Use `zod/v4` (`import { z } from "zod/v4"`) — not the legacy `zod` entry.
 - **Package manager**: `pnpm` only. The root `preinstall` script rejects npm/yarn.
+
+## Multi-agent working agreement
+
+Before committing, read **`docs/AGENT_WORKING_AGREEMENT.md`** — branch base, one-concern-per-PR, the money-path lockstep rule, shared-file coordination, the no-hardcoded-path/color/price/secret lint gates, and the verify-before-push checklist.

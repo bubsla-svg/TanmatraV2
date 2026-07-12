@@ -9,8 +9,10 @@ import {
   type SubscriptionMember,
   type SubscriptionItem,
   type MealCredit,
+  type CreateSubscriptionInput,
 } from "@/lib/subscriptionsApi";
 import { loyaltyApi } from "@/lib/loyaltyApi";
+import { track } from "@/lib/analytics";
 import { useMenuCatalog } from "@/lib/menuData";
 import { whatsappLink } from "@/lib/support";
 import type { DishData } from "@/lib/menuData";
@@ -51,7 +53,7 @@ const STATUS_META: Record<
   cancelled: {
     label: "Cancelled",
     dot: "var(--dgr)",
-    pillStyle: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" },
+    pillStyle: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--dgr)" },
   },
 };
 
@@ -77,7 +79,7 @@ const DELIVERY_META: Record<
   },
   cancelled: {
     label: "Cancelled",
-    style: { background: "rgba(201,124,112,.16)", color: "var(--dgr)" },
+    style: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--dgr)" },
   },
 };
 
@@ -235,6 +237,62 @@ export default function V2Subscriptions() {
     }
   };
 
+  // ---------- Post-trial → recurring bridge (the conversion moment) ----------
+  // A trial is a one-off 3-day sampler. Rather than send the customer back to
+  // /plans to rebuild from scratch, carry the exact meals / eaters / window
+  // they sampled into a recurring weekly plan in one tap.
+  const [continuing, setContinuing] = useState(false);
+  const handleContinueTrial = useCallback(async () => {
+    if (!detail) return;
+    const { subscription: s, members, deliveries } = detail;
+    const sampledItems: SubscriptionItem[] =
+      deliveries.find((d) => d.items.length > 0)?.items ?? [];
+    const startDate = new Date(Date.now() + 86_400_000)
+      .toISOString()
+      .slice(0, 10); // tomorrow
+    const input: CreateSubscriptionInput = {
+      cadence: "weekly",
+      mealsPerDelivery: s.mealsPerDelivery,
+      deliveryWindow: s.deliveryWindow,
+      startDate,
+      planType: "standard",
+      addressLabel: s.addressLabel ?? undefined,
+      addressLine: s.addressLine ?? undefined,
+      city: s.city ?? undefined,
+      pincode: s.pincode ?? undefined,
+      phone: s.phone ?? undefined,
+      // Plain note (no "3-day pack" marker) so this recurring plan is never
+      // re-detected as a trial by isTrialSub / the server's trial matcher.
+      notes: "Recurring plan (continued from a trial)",
+      members: members.map((m) => ({
+        name: m.name,
+        diet: m.diet,
+        allergens: m.allergens,
+        lifestyle: m.lifestyle ?? undefined,
+        spiceLevel: m.spiceLevel ?? "medium",
+      })),
+      defaultItems: sampledItems,
+    };
+    track("post_trial_continue_clicked", {
+      trialSubscriptionId: s.id,
+      meals: s.mealsPerDelivery,
+    });
+    setContinuing(true);
+    try {
+      const { subscription: created } = await subscriptionsApi.create(input);
+      track("post_trial_continue_success", { newSubscriptionId: created.id });
+      toast.success("Your weekly plan is set — welcome aboard!");
+      await refreshList();
+      setActiveId(created.id);
+    } catch (err) {
+      toast.error("Couldn't start your plan", {
+        description: err instanceof Error ? err.message : "Error",
+      });
+    } finally {
+      setContinuing(false);
+    }
+  }, [detail, refreshList]);
+
   // ---------- Destructive-action safeguards ----------
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [skipConfirm, setSkipConfirm] = useState<{ deliveryId: number; date: string } | null>(null);
@@ -288,7 +346,7 @@ export default function V2Subscriptions() {
               className="ph-fill ph-sparkle"
               style={{ fontSize: 34, color: "var(--safb)" }}
             />
-            <div className="h2 mt10" style={{ color: "#fff" }}>
+            <div className="h2 mt10" style={{ color: "var(--text-primary)" }}>
               No active plans yet
             </div>
             <div className="fine mt6" style={{ maxWidth: 300, margin: "6px auto 0" }}>
@@ -316,7 +374,7 @@ export default function V2Subscriptions() {
       <div className="content" style={{ paddingBottom: 24 }}>
         {/* Hero + wallet */}
         <div className="padx" style={{ paddingTop: 4 }}>
-          <h1 className="h2" style={{ color: "#fff" }}>
+          <h1 className="h2" style={{ color: "var(--text-primary)" }}>
             Your subscriptions
           </h1>
           <div className="fine mt4">
@@ -408,6 +466,8 @@ export default function V2Subscriptions() {
               setReschedDate(new Date(d.scheduledFor).toISOString().slice(0, 10));
               setReschedWindow(d.deliveryWindow);
             }}
+            onContinueTrial={handleContinueTrial}
+            continuing={continuing}
           />
         )}
       </div>
@@ -432,12 +492,12 @@ export default function V2Subscriptions() {
       {/* Edit delivery window */}
       {windowEditOpen && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setWindowEditOpen(false)}
         >
           <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+            <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Update delivery window
             </div>
             <div className="fine mt6">
@@ -483,12 +543,12 @@ export default function V2Subscriptions() {
       {/* Reschedule delivery */}
       {reschedDelivery !== null && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setReschedDelivery(null)}
         >
           <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+            <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Reschedule delivery
             </div>
             <div className="mt12">
@@ -548,12 +608,12 @@ export default function V2Subscriptions() {
       {/* ------ Cancel confirmation (destructive) ------ */}
       {cancelConfirmOpen && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setCancelConfirmOpen(false)}
         >
           <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt" style={{ color: "#fff" }}>
+            <div className="tt" style={{ color: "var(--text-primary)" }}>
               Cancel this subscription?
             </div>
             <div className="fine mt6">
@@ -568,7 +628,7 @@ export default function V2Subscriptions() {
               </button>
               <button
                 className="btn"
-                style={{ ...ACT, background: "var(--dgr)", color: "#fff" }}
+                style={{ ...ACT, background: "var(--color-error)", color: "var(--color-stone-0)" }}
                 onClick={() => {
                   setCancelConfirmOpen(false);
                   if (detail) {
@@ -589,12 +649,12 @@ export default function V2Subscriptions() {
       {/* ------ Skip-delivery confirmation ------ */}
       {skipConfirm !== null && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSkipConfirm(null)}
         >
           <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt" style={{ color: "#fff" }}>
+            <div className="tt" style={{ color: "var(--text-primary)" }}>
               Skip this delivery?
             </div>
             <div className="fine mt6">
@@ -710,6 +770,8 @@ function DetailView({
   onSkip,
   onSwap,
   onReschedule,
+  onContinueTrial,
+  continuing,
 }: {
   detail: Detail;
   progress?: LoyaltyProgress;
@@ -721,6 +783,8 @@ function DetailView({
   onSkip: (d: SubscriptionDelivery) => void;
   onSwap: (d: SubscriptionDelivery) => void;
   onReschedule: (d: SubscriptionDelivery) => void;
+  onContinueTrial: () => void;
+  continuing: boolean;
 }) {
   const { subscription: s, members, deliveries } = detail;
   const meta = STATUS_META[s.status];
@@ -814,7 +878,7 @@ function DetailView({
             className="note mt12"
             style={{
               background: "var(--safd)",
-              borderColor: "rgba(244,196,48,.35)",
+              borderColor: "color-mix(in oklab, var(--color-warning) 35%, transparent)",
               color: "var(--safb)",
             }}
           >
@@ -840,21 +904,47 @@ function DetailView({
         </div>
       </div>
 
-      {/* Trial → recurring conversion (the revenue moment) */}
+      {/* Post-trial → recurring bridge (the conversion moment). Recaps exactly
+          what the customer sampled and continues the SAME setup in one tap,
+          instead of a rebuild-from-scratch on /plans. */}
       {trial && s.status !== "cancelled" && (
         <div
           className="card mt12"
           style={{ background: "var(--safd)", borderColor: "var(--saf)" }}
         >
-          <div className="tt" style={{ color: "#fff" }}>
-            Enjoying your trial?
+          <div className="tt" style={{ color: "var(--text-primary)" }}>
+            Keep your plan going
           </div>
           <div className="fine mt4">
-            Turn it into a recurring plan to lock your delivery window, save up to
-            15%, and earn a free meal every few deliveries.
+            You sampled {s.mealsPerDelivery} meals
+            {members.length > 0
+              ? ` for ${members.map((m) => m.name).join(", ")}`
+              : ""}
+            , delivered {s.deliveryWindow}. Continue the exact same setup as a
+            recurring <strong>weekly</strong> plan — lock your window, save up to
+            15%, and earn a free meal every few deliveries. Pause, swap or cancel
+            anytime.
           </div>
-          <Link className="btn btn-p btn-blk mt12" to="/plans">
-            Start a recurring plan <i className="ph-bold ph-arrow-right" />
+          <button
+            className="btn btn-p btn-blk mt12"
+            onClick={onContinueTrial}
+            disabled={continuing}
+          >
+            {continuing ? (
+              "Setting up your plan…"
+            ) : (
+              <>
+                Continue my plan — subscribe &amp; save{" "}
+                <i className="ph-bold ph-arrow-right" />
+              </>
+            )}
+          </button>
+          <Link
+            to="/plans"
+            className="fine mt10"
+            style={{ display: "block", textAlign: "center", color: "var(--safb)" }}
+          >
+            Or choose a different plan
           </Link>
         </div>
       )}
@@ -1056,8 +1146,8 @@ function SwapDialog({
 
   return (
     <div
-      className="tnm2"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      className="tnm2 bg-black/60"
+      style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={() => onClose()}
     >
       <div
@@ -1065,7 +1155,7 @@ function SwapDialog({
         style={{ maxWidth: 512, width: "100%" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+        <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
           <i className="ph-bold ph-swap safc" /> Choose dishes for this delivery
         </div>
 
@@ -1102,9 +1192,9 @@ function SwapDialog({
                     padding: 8,
                     borderRadius: 10,
                     marginBottom: 6,
-                    border: `1px solid ${blocked ? "rgba(201,124,112,.5)" : qty > 0 ? "var(--saf)" : "var(--ln)"}`,
+                    border: `1px solid ${blocked ? "color-mix(in oklab, var(--color-error) 50%, transparent)" : qty > 0 ? "var(--saf)" : "var(--ln)"}`,
                     background: blocked
-                      ? "rgba(201,124,112,.1)"
+                      ? "color-mix(in oklab, var(--color-error) 10%, transparent)"
                       : qty > 0
                         ? "var(--safd)"
                         : "transparent",
@@ -1142,7 +1232,7 @@ function SwapDialog({
                           className="lab"
                           style={{
                             color: "var(--dgr)",
-                            border: "1px solid rgba(201,124,112,.5)",
+                            border: "1px solid color-mix(in oklab, var(--color-error) 50%, transparent)",
                             padding: "1px 5px",
                             borderRadius: 5,
                           }}

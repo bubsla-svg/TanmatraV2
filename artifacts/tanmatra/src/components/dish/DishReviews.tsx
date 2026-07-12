@@ -262,7 +262,7 @@ export default function DishReviews({ slug }: DishReviewsProps) {
                 size="sm"
                 disabled={rating < 1 || submit.isPending}
                 onClick={() => submit.mutate()}
-                className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90"
+                className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90"
               >
                 {submit.isPending ? "Posting…" : "Post review"}
               </Button>

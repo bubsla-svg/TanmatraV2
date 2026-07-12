@@ -93,7 +93,7 @@ export default function StickyCheckoutBar() {
                   <div className="w-24 sm:w-32 h-2 rounded-full bg-white/10 overflow-hidden relative shrink-0">
                     <div 
                       className={`h-full transition-all duration-500 ease-out ${
-                        hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_8px_rgba(74,222,128,0.8)]" : "bg-gradient-to-r from-[#E7C766] to-clinical-gold"
+                        hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_8px_color-mix(in_oklab,var(--color-success)_80%,transparent)]" : "bg-gradient-to-r from-saffron-300 to-clinical-gold"
                       }`} 
                       style={{ width: `${freeDeliveryProgress}%` }}
                     />
@@ -113,7 +113,7 @@ export default function StickyCheckoutBar() {
                   <div className="relative shrink-0 grid place-items-center w-11 h-11 rounded-xl bg-clinical-gold/15 border border-clinical-gold/30 text-clinical-gold group-hover:scale-105 transition-transform">
                     <ShoppingCart className="w-5 h-5" weight="fill" aria-hidden />
                     <span
-                      className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-clinical-gold text-[#050505] text-[11px] font-extrabold leading-none grid place-items-center shadow-md"
+                      className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-clinical-gold text-action-text text-[11px] font-extrabold leading-none grid place-items-center shadow-md"
                     >
                       {totalQuantity}
                     </span>
@@ -136,7 +136,7 @@ export default function StickyCheckoutBar() {
                   type="button"
                   onClick={() => navigate("/checkout")}
                   aria-label={`Proceed to checkout · ${formatPrice(subtotal)} subtotal`}
-                  className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-clinical-gold px-5 py-3 text-xs sm:text-sm font-extrabold text-[#050505] shadow-[0_0_20px_rgba(244,196,48,0.35)] hover:bg-clinical-gold/90 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4C430]"
+                  className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-clinical-gold px-5 py-3 text-xs sm:text-sm font-extrabold text-action-text shadow-clinical-gold/35 hover:bg-clinical-gold/90 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-gold"
                 >
                   Checkout
                   <ArrowRight className="w-4 h-4" weight="bold" aria-hidden />

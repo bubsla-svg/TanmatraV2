@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ShieldCheck, Flame } from "lucide-react";
+import { usePreferences } from "@/lib/preferencesContext";
 
 export interface MacroData {
   protein: number;
@@ -18,6 +19,8 @@ interface MacroOverlayProps {
 }
 
 export default function MacroOverlay({ macros, rdVerified = false, compact = false, sodiumMg }: MacroOverlayProps) {
+  const { preferences } = usePreferences();
+  const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
   const total = macros.protein + macros.carbs + macros.fat;
   const proteinPct = total > 0 ? Math.round((macros.protein / total) * 100) : 0;
   const carbsPct = total > 0 ? Math.round((macros.carbs / total) * 100) : 0;
@@ -34,7 +37,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
 
     return (
       <div
-        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-[#050505]/85 border border-clinical-border/40 backdrop-blur-md shadow-clinical-lg"
+        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-clinical-dark/85 border border-clinical-border/40 backdrop-blur-md shadow-clinical-lg"
         role="group"
         aria-label="Macro nutrient distribution ratios"
       >
@@ -47,17 +50,17 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
               cy="18"
               r={r}
               fill="transparent"
-              stroke="rgba(255,255,255,0.05)"
+              className="stroke-white/5"
               strokeWidth="3"
             />
             {/* Protein segment */}
-            {lenP > 0 && (
+            {isAssessed && lenP > 0 && (
               <circle
                 cx="18"
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="#6BA3C8"
+                stroke="var(--color-clinical-blue)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenP} ${C}`}
                 strokeDashoffset="0"
@@ -66,13 +69,13 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
               />
             )}
             {/* Carbs segment */}
-            {lenC > 0 && (
+            {isAssessed && lenC > 0 && (
               <circle
                 cx="18"
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="#F4C430"
+                stroke="var(--color-clinical-gold)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenC} ${C}`}
                 strokeDashoffset={`-${lenP}`}
@@ -81,13 +84,13 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
               />
             )}
             {/* Fat segment */}
-            {lenF > 0 && (
+            {isAssessed && lenF > 0 && (
               <circle
                 cx="18"
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="#7D9E7E"
+                stroke="var(--color-clinical-sage)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenF} ${C}`}
                 strokeDashoffset={`-${lenP + lenC}`}
@@ -97,7 +100,7 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
             )}
           </svg>
           {/* Center Calorie Display */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-[#050505] dark:text-white">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
             <span className="text-[9px] font-bold leading-none tabular-nums">{macros.calories}</span>
             <span className="text-[6px] opacity-60 font-medium uppercase tracking-tight">kcal</span>
           </div>
@@ -109,19 +112,19 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
             <span className="w-1.5 h-1.5 rounded-full bg-clinical-blue" />
             <span className="text-clinical-blue-muted">P</span>
             <span className="tabular-nums">{macros.protein}g</span>
-            <span className="opacity-40 text-[8px]">({proteinPct}%)</span>
+            {isAssessed && <span className="opacity-40 text-[8px]">({proteinPct}%)</span>}
           </div>
           <div className="flex items-center gap-1.5 text-[9px] leading-none font-semibold text-white">
             <span className="w-1.5 h-1.5 rounded-full bg-clinical-gold" />
             <span className="text-clinical-gold-muted">C</span>
             <span className="tabular-nums">{macros.carbs}g</span>
-            <span className="opacity-40 text-[8px]">({carbsPct}%)</span>
+            {isAssessed && <span className="opacity-40 text-[8px]">({carbsPct}%)</span>}
           </div>
           <div className="flex items-center gap-1.5 text-[9px] leading-none font-semibold text-white">
             <span className="w-1.5 h-1.5 rounded-full bg-clinical-sage" />
             <span className="text-clinical-sage-muted">F</span>
             <span className="tabular-nums">{macros.fat}g</span>
-            <span className="opacity-40 text-[8px]">({fatPct}%)</span>
+            {isAssessed && <span className="opacity-40 text-[8px]">({fatPct}%)</span>}
           </div>
         </div>
 
@@ -160,10 +163,10 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
 
       {/* Macro bars */}
       <div className="space-y-2.5">
-        <MacroBar label="Protein" value={macros.protein} pct={proteinPct} barColor="bg-clinical-blue" unit="g" />
-        <MacroBar label="Carbs" value={macros.carbs} pct={carbsPct} barColor="bg-clinical-gold" unit="g" />
-        <MacroBar label="Fat" value={macros.fat} pct={fatPct} barColor="bg-clinical-sage" unit="g" />
-        <MacroBar label="Fiber" value={macros.fiber} pct={Math.min((macros.fiber / 30) * 100, 100)} barColor="bg-emerald-400" unit="g" />
+        <MacroBar label="Protein" value={macros.protein} pct={proteinPct} barColor="bg-clinical-blue" unit="g" isAssessed={isAssessed} />
+        <MacroBar label="Carbs" value={macros.carbs} pct={carbsPct} barColor="bg-clinical-gold" unit="g" isAssessed={isAssessed} />
+        <MacroBar label="Fat" value={macros.fat} pct={fatPct} barColor="bg-clinical-sage" unit="g" isAssessed={isAssessed} />
+        <MacroBar label="Fiber" value={macros.fiber} pct={Math.min((macros.fiber / 30) * 100, 100)} barColor="bg-emerald-400" unit="g" isAssessed={isAssessed} />
         {typeof sodiumMg === "number" && (
           <div className="flex items-center justify-between text-xs pt-1">
             <span className="text-clinical-zinc">Sodium</span>
@@ -186,18 +189,20 @@ function MacroBar({
   pct,
   barColor,
   unit,
+  isAssessed = true,
 }: {
   label: string;
   value: number;
   pct: number;
   barColor: string;
   unit: string;
+  isAssessed?: boolean;
 }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         <span className="text-clinical-zinc flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${barColor}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${isAssessed ? barColor : "bg-clinical-zinc/40"}`} />
           {label}
         </span>
         <span className="tabular-nums text-white font-medium">
@@ -207,8 +212,8 @@ function MacroBar({
       </div>
       <div className="h-1.5 bg-clinical-surface-elevated rounded-full overflow-hidden">
         <div
-          className={`h-full ${barColor} rounded-full transition-all duration-700 ease-out`}
-          style={{ width: `${Math.max(pct, 4)}%` }}
+          className={`h-full ${isAssessed ? barColor : "bg-clinical-zinc/20"} rounded-full transition-all duration-700 ease-out`}
+          style={{ width: isAssessed ? `${Math.max(pct, 4)}%` : "0%" }}
         />
       </div>
     </div>

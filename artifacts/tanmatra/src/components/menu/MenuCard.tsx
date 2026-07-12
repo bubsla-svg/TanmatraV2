@@ -72,18 +72,33 @@ export default function MenuCard({
     ? clinicalCategoryLabel(item.category, CATEGORY_LABELS[item.category])
     : `${CATEGORY_LABELS[item.category]} · ${item.kitchen}`;
 
+  const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
+  let fit_band: "high" | "moderate" | "neutral" | "conflict" = "neutral";
+  if (match.blocked) {
+    fit_band = "conflict";
+  } else if (preferences) {
+    const hasGoalMatch =
+      (preferences.goal === "lose_weight" && item.macros.calories <= 450) ||
+      (preferences.goal === "gain_muscle" && item.macros.protein >= 25);
+    if (hasGoalMatch && match.warnings.length === 0) {
+      fit_band = "high";
+    } else if (match.cuisineMatch || (match.reasons && match.reasons.length > 0)) {
+      fit_band = "moderate";
+    }
+  }
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.04 }}
       whileHover={{ y: -4 }}
-      className={`group relative flex flex-row sm:flex-col rounded-2xl overflow-hidden bg-clinical-surface-elevated border border-clinical-border hover:border-clinical-gold/50 hover:shadow-[0_8px_30px_rgba(244,196,48,0.12)] transition-all duration-300 ${
+      className={`group relative flex flex-row sm:flex-col rounded-md overflow-hidden bg-clinical-surface-elevated border border-clinical-border hover:border-clinical-gold/50 hover:shadow-[0_8px_30px_rgba(244,196,48,0.12)] transition-all duration-300 ${
         !item.isAvailable ? "opacity-50 grayscale" : ""
       } ${match.blocked ? "ring-1 ring-orange-500/40" : ""}`}
     >
-      {/* Image — square thumbnail on mobile, 4:3 full-width on sm+ */}
-      <Link to={`/dish/${item.slug}`} className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-[4/3] overflow-hidden block">
+      {/* Image — square thumbnail on mobile, square full-width on sm+ */}
+      <Link to={`/dish/${item.slug}`} className="relative shrink-0 w-28 aspect-square sm:w-full sm:aspect-square overflow-hidden block">
         <img
           src={item.image}
           srcSet={unsplashSrcset(item.image)}
@@ -126,17 +141,22 @@ export default function MenuCard({
               ★ RD Verified
             </span>
           )}
+          {isAssessed && fit_band === "high" && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full border border-clinical-sage/30 bg-clinical-sage/10 text-clinical-sage font-extrabold tracking-wider uppercase shadow-sm flex items-center gap-1">
+              <Sparkle className="w-2.5 h-2.5" /> Strong goal match
+            </span>
+          )}
           {isPremiumOnly && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-gold/50 text-clinical-gold bg-[#050505]/80 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-clinical-gold/50 text-clinical-gold bg-clinical-dark/80 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
               <Crown className="w-2.5 h-2.5" /> Premium
             </span>
           )}
           {match.blocked ? (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-red-500 text-red-400 bg-[#050505]/95 backdrop-blur-sm font-extrabold tracking-wider uppercase flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-red-500 text-red-400 bg-clinical-dark/95 backdrop-blur-sm font-extrabold tracking-wider uppercase flex items-center gap-1 shadow-[0_0_8px_color-mix(in_srgb,var(--color-error)_50%,transparent)]">
               <ShieldAlert className="w-3.5 h-3.5 text-red-400" /> Blocked
             </span>
           ) : match.warnings.length > 0 ? (
-            <span className="text-[9px] px-1.5 py-0.5 rounded border border-orange-500/50 text-orange-400 bg-[#050505]/85 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
+            <span className="text-[9px] px-1.5 py-0.5 rounded border border-orange-500/50 text-orange-400 bg-clinical-dark/85 backdrop-blur-sm font-bold tracking-wider uppercase flex items-center gap-1">
               <ShieldAlert className="w-3.5 h-3.5" /> Warning
             </span>
           ) : null}
@@ -145,7 +165,7 @@ export default function MenuCard({
         {/* Lifestyle tag (only when no premium overlay would conflict) */}
         {lifestyleTag && !showPremiumGate && (
           <div className="absolute top-3 right-3 z-10">
-            <span className="text-[9px] px-2 py-1 rounded border border-clinical-gold/40 text-clinical-gold bg-[#050505]/70 backdrop-blur-sm font-bold tracking-[0.12em] uppercase">
+            <span className="text-[9px] px-2 py-1 rounded border border-clinical-gold/40 text-clinical-gold bg-clinical-dark/70 backdrop-blur-sm font-bold tracking-[0.12em] uppercase">
               {lifestyleTag}
             </span>
           </div>
@@ -156,12 +176,12 @@ export default function MenuCard({
       <div className="relative z-20 sm:-mt-10 flex-1 flex flex-col p-3 sm:p-5 gap-1.5 sm:gap-2.5 min-w-0">
         <div className="flex justify-between items-start gap-2">
           <Link to={`/dish/${item.slug}`} className="hover:underline flex-1 min-w-0">
-            <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white hover:text-clinical-gold transition-colors">
+            <h3 className="font-serif text-sm sm:text-lg font-medium leading-tight text-white hover:text-clinical-gold transition-colors line-clamp-2">
               {item.name}
             </h3>
           </Link>
           <div className="flex flex-col items-end shrink-0">
-            <span className="font-serif text-sm sm:text-lg font-medium text-clinical-gold tabular-nums">
+            <span className="font-mono tnm-data text-sm sm:text-lg font-medium text-clinical-gold tabular-nums">
               {hasVariants ? "from " : ""}{formatPrice(item.price)}
             </span>
             {!isLive && (
@@ -194,16 +214,16 @@ export default function MenuCard({
           return (
             <div className="my-3.5 flex gap-4 border-y border-dashed border-clinical-border/40 py-2.5 font-mono text-clinical-data text-white">
               <div className="flex flex-col">
-                <span className="text-[12.5px] font-semibold">{item.macros.calories}</span>
+                <span className="text-[12.5px] font-semibold font-mono tnm-data">{item.macros.calories}</span>
                 <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Kcal</span>
               </div>
               <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{item.macros.protein}g</span>
+                <span className="text-[12.5px] font-semibold font-mono tnm-data">{item.macros.protein}g</span>
                 <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Prot {proteinPct}%</span>
                 <span className="mt-0.5 h-[3px] rounded-sm bg-macro-protein" style={{ width: `${proteinPct}%` }} />
               </div>
               <div className="flex flex-1 flex-col">
-                <span className="text-[12.5px] font-semibold">{item.macros.carbs}g</span>
+                <span className="text-[12.5px] font-semibold font-mono tnm-data">{item.macros.carbs}g</span>
                 <span className="text-[9px] tracking-wider text-clinical-zinc uppercase">Carb {carbsPct}%</span>
                 <span className="mt-0.5 h-[3px] rounded-sm bg-macro-carbs" style={{ width: `${carbsPct}%` }} />
               </div>
@@ -253,7 +273,7 @@ export default function MenuCard({
               Upgrade to Premium
             </Button>
           ) : cartItem && !hasVariants ? (
-            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-[#050505] font-sans text-xs font-extrabold shadow-[0_4px_15px_rgba(244,196,48,0.35)] transition-all duration-200">
+            <div className="flex-1 flex items-center justify-between min-h-[44px] sm:min-h-[40px] rounded-xl border border-clinical-gold bg-clinical-gold px-2 text-action-text font-sans text-xs font-extrabold shadow-[0_4px_15px] shadow-clinical-gold/35 transition-all duration-200">
               <button
                 type="button"
                 onClick={(e) => {
@@ -304,7 +324,7 @@ export default function MenuCard({
                     e.stopPropagation();
                     onExpressBuy?.(item);
                   }}
-                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px_rgba(244,196,48,0.3)] active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 h-11 sm:h-10 rounded-xl bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-[10px] sm:text-[11px] uppercase tracking-[0.08em] font-extrabold px-2 shadow-[0_4px_12px] shadow-clinical-gold/30 active:scale-95 transition-all truncate disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Buy Now
                 </button>
@@ -336,14 +356,14 @@ function StarRating({ value }: { value: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <svg key={i} className="w-3 h-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           {i <= full ? (
-            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#F4C430" />
+            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="var(--color-clinical-gold)" />
           ) : i === full + 1 && half ? (
             <>
-              <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3V1z" fill="#F4C430" />
-              <path d="M6 1v7.3L3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#3a3a3a" />
+              <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3V1z" fill="var(--color-clinical-gold)" />
+              <path d="M6 1v7.3L3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="var(--color-clinical-slate)" />
             </>
           ) : (
-            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="#3a3a3a" />
+            <path d="M6 1l1.4 2.9 3.2.5-2.3 2.2.5 3.2L6 8.3 3.2 9.8l.5-3.2L1.4 4.4l3.2-.5z" fill="var(--color-clinical-slate)" />
           )}
         </svg>
       ))}

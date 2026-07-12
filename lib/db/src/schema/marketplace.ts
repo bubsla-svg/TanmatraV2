@@ -63,6 +63,9 @@ export interface MarketplaceOrderLine {
   name: string;
   qty: number;
   unitPricePaise: number;
+  supplierName: string;
+  commissionPaise: number;
+  vendorPayoutPaise: number;
 }
 
 export const marketplaceOrdersTable = pgTable(

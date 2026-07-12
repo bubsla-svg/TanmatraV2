@@ -117,7 +117,7 @@ export default function V2RdPlans() {
           {/* Hero */}
           <div className="padx" style={{ paddingTop: 4 }}>
             <div className="lab" style={{ color: "var(--safb)" }}>RD-designed</div>
-            <h1 className="disp mt6" style={{ color: "#fff" }}>
+            <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>
               {activeProtocol
                 ? `${PROTOCOL_LABELS[activeProtocol]} Protocol — RD plans`
                 : "Plans curated by registered dietitians"}

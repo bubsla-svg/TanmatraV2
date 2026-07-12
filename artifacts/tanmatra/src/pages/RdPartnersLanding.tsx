@@ -99,7 +99,7 @@ export default function RdPartnersLanding() {
                   })
                 }
               >
-                <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 h-10 text-sm gap-2">
+                <Button className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-10 text-sm gap-2">
                   Start application
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -160,7 +160,7 @@ export default function RdPartnersLanding() {
                   })
                 }
               >
-                <Button className="w-full bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 h-9 text-xs">
+                <Button className="w-full bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-9 text-xs">
                   Apply in 5 minutes
                 </Button>
               </Link>
@@ -221,7 +221,7 @@ export default function RdPartnersLanding() {
                 })
               }
             >
-              <Button className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 h-10 text-sm gap-2">
+              <Button className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-10 text-sm gap-2">
                 I'm ready, start the application
                 <ArrowRight className="w-4 h-4" />
               </Button>

@@ -20,6 +20,7 @@ import { usePreferences } from "@/lib/preferencesContext";
 import {
   recommendPlansForPreferences,
   PLAN_GOAL_LABEL,
+  type PlanGoal,
 } from "@/lib/rdPlans";
 import DpdpaConsentCapture, {
   type DpdpaConsentState,
@@ -217,7 +218,7 @@ export default function V2Preferences() {
               <i className="ph-bold ph-sliders-horizontal" />
               Your profile
             </div>
-            <h1 className="disp mt6" style={{ color: "#fff" }}>
+            <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>
               Your Preferences
             </h1>
             <p className="small mut mt6">
@@ -279,7 +280,7 @@ export default function V2Preferences() {
                         className="pill"
                         style={{ background: "var(--safd)", color: "var(--safb)" }}
                       >
-                        {PLAN_GOAL_LABEL[plan.goal]}
+                        {PLAN_GOAL_LABEL[plan.goal as PlanGoal]}
                       </span>
                       <div className="dtitle">{plan.name}</div>
                       <div
@@ -554,9 +555,9 @@ function Chip({
         style={{
           ...(active
             ? {
-                background: "rgba(201,124,112,.14)",
-                borderColor: "var(--dgr)",
-                color: "var(--dgr)",
+                background: "color-mix(in oklab, var(--color-error) 14%, transparent)",
+                borderColor: "var(--color-error)",
+                color: "var(--color-error)",
               }
             : {}),
           ...style,

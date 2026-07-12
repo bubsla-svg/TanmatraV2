@@ -117,7 +117,7 @@ export default function Footer() {
             </Link>
             <span>&middot;</span>
             <span>
-              © 2024 Tanmatra Health Technologies Pvt. Ltd.
+              © 2026 Tanmatra Health Technologies Pvt. Ltd.
             </span>
           </div>
         </div>

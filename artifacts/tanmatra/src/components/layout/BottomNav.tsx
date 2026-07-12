@@ -320,7 +320,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-[#050505]/95 backdrop-blur-xl pb-[var(--safe-bottom)] min-h-[var(--bottom-nav-height)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-clinical-dark/95 backdrop-blur-xl pb-[var(--safe-bottom)] min-h-[var(--bottom-nav-height)]"
     >
       <ul className={cn("grid", isLoggedIn ? "grid-cols-5" : "grid-cols-4")}>
         {navItems.map((item) => {
@@ -348,7 +348,7 @@ export default function BottomNav() {
                 <span>{item.label}</span>
                 {showBadge && (
                   <Badge
-                    className="absolute top-1 right-[22%] h-4 min-w-4 px-1 text-[9px] bg-clinical-gold text-[#050505] border-0 font-bold leading-none"
+                    className="absolute top-1 right-[22%] h-4 min-w-4 px-1 text-[9px] bg-clinical-gold text-action-text border-0 font-bold leading-none"
                     aria-label={`${totalQuantity} items in cart`}
                   >
                     {totalQuantity}

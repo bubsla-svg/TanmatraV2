@@ -332,7 +332,7 @@ export default function RdPartnersWizard() {
             <Button
               onClick={next}
               disabled={!stepValid}
-              className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 h-9 text-xs gap-1"
+              className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-9 text-xs gap-1"
             >
               Continue
               <ArrowRight className="w-3.5 h-3.5" />
@@ -341,7 +341,7 @@ export default function RdPartnersWizard() {
             <Button
               onClick={submit}
               disabled={submitting}
-              className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 h-9 text-xs gap-1"
+              className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-9 text-xs gap-1"
             >
               {submitting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -455,7 +455,7 @@ function StepProfile({
         <Input
           value={draft.fullName}
           onChange={(e) => update({ fullName: e.target.value })}
-          className="bg-[#050505] border-clinical-border text-sm"
+          className="bg-clinical-dark border-clinical-border text-sm"
           placeholder="e.g. Dr. Anika Rao"
         />
       </Field>
@@ -465,7 +465,7 @@ function StepProfile({
             type="email"
             value={draft.email}
             onChange={(e) => update({ email: e.target.value })}
-            className="bg-[#050505] border-clinical-border text-sm"
+            className="bg-clinical-dark border-clinical-border text-sm"
             placeholder="you@clinic.com"
           />
         </Field>
@@ -478,7 +478,7 @@ function StepProfile({
                 yearsExperience: e.target.value.replace(/[^0-9]/g, ""),
               })
             }
-            className="bg-[#050505] border-clinical-border text-sm"
+            className="bg-clinical-dark border-clinical-border text-sm"
             placeholder="e.g. 7"
           />
         </Field>
@@ -487,7 +487,7 @@ function StepProfile({
         <Input
           value={draft.credentials}
           onChange={(e) => update({ credentials: e.target.value })}
-          className="bg-[#050505] border-clinical-border text-sm"
+          className="bg-clinical-dark border-clinical-border text-sm"
         />
       </Field>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -495,7 +495,7 @@ function StepProfile({
           <Input
             value={draft.registrationBody}
             onChange={(e) => update({ registrationBody: e.target.value })}
-            className="bg-[#050505] border-clinical-border text-sm"
+            className="bg-clinical-dark border-clinical-border text-sm"
             placeholder="e.g. IDA, ICDA"
           />
         </Field>
@@ -503,7 +503,7 @@ function StepProfile({
           <Input
             value={draft.registrationNumber}
             onChange={(e) => update({ registrationNumber: e.target.value })}
-            className="bg-[#050505] border-clinical-border text-sm"
+            className="bg-clinical-dark border-clinical-border text-sm"
           />
         </Field>
       </div>
@@ -537,7 +537,7 @@ function StepPractice({
           <Input
             value={draft.cityRegion}
             onChange={(e) => update({ cityRegion: e.target.value })}
-            className="bg-[#050505] border-clinical-border text-sm"
+            className="bg-clinical-dark border-clinical-border text-sm"
             placeholder="Noida, UP"
           />
         </Field>
@@ -547,7 +547,7 @@ function StepPractice({
             onChange={(e) =>
               update({ practiceSetting: e.target.value as PracticeSetting })
             }
-            className="bg-[#050505] border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full"
+            className="bg-clinical-dark border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full"
           >
             <option value="">Choose…</option>
             {settings.map((s) => (
@@ -566,7 +566,7 @@ function StepPractice({
               clientVolumeBucket: e.target.value as DraftState["clientVolumeBucket"],
             })
           }
-          className="bg-[#050505] border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
+          className="bg-clinical-dark border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
         >
           <option value="">Prefer not to say</option>
           <option value="lt10">Fewer than 10</option>
@@ -601,7 +601,7 @@ function StepPractice({
           value={draft.bio}
           onChange={(e) => update({ bio: e.target.value })}
           rows={4}
-          className="bg-[#050505] border-clinical-border text-sm"
+          className="bg-clinical-dark border-clinical-border text-sm"
           placeholder="Approach, populations, recent wins…"
         />
       </Field>
@@ -716,7 +716,7 @@ function StepWhatsapp({
         <Input
           value={draft.whatsappCountryCode}
           onChange={(e) => update({ whatsappCountryCode: e.target.value })}
-          className="bg-[#050505] border-clinical-border text-sm"
+          className="bg-clinical-dark border-clinical-border text-sm"
         />
         <Input
           value={draft.whatsappPhone}
@@ -727,7 +727,7 @@ function StepWhatsapp({
             })
           }
           placeholder="WhatsApp number"
-          className="bg-[#050505] border-clinical-border text-sm"
+          className="bg-clinical-dark border-clinical-border text-sm"
         />
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -757,12 +757,12 @@ function StepWhatsapp({
                 setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))
               }
               placeholder="6-digit code"
-              className="bg-[#050505] border-clinical-border text-sm w-32"
+              className="bg-clinical-dark border-clinical-border text-sm w-32"
             />
             <Button
               onClick={verify}
               disabled={verifying || code.length < 4 || draft.whatsappVerified}
-              className="bg-clinical-sage text-[#050505] hover:bg-clinical-sage/90 text-xs h-8"
+              className="bg-clinical-sage text-stone-900 hover:bg-clinical-sage/90 text-xs h-8"
             >
               {draft.whatsappVerified ? "Verified" : verifying ? "…" : "Verify"}
             </Button>
@@ -776,7 +776,7 @@ function StepWhatsapp({
         </p>
       )}
 
-      <div className="rounded-md border border-clinical-border bg-[#050505] p-3 space-y-3">
+      <div className="rounded-md border border-clinical-border bg-clinical-dark p-3 space-y-3">
         <label className="flex items-start gap-2 text-xs text-clinical-zinc cursor-pointer">
           <input
             type="checkbox"
@@ -797,7 +797,7 @@ function StepWhatsapp({
                 notifyPref: e.target.value as DraftState["notifyPref"],
               })
             }
-            className="bg-[#050505] border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
+            className="bg-clinical-dark border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
           >
             <option value="critical">Critical only</option>
             <option value="weekly">Weekly digest</option>
@@ -935,7 +935,7 @@ function StepDone({
           </>
         )}
       </p>
-      <div className="rounded-lg border border-clinical-border bg-[#050505] p-4 text-left text-xs space-y-2">
+      <div className="rounded-lg border border-clinical-border bg-clinical-dark p-4 text-left text-xs space-y-2">
         <p className="text-white text-sm font-medium">Want a head start?</p>
         <p className="text-clinical-zinc">
           Sign in (or create an account with the same email) to see your
@@ -945,7 +945,7 @@ function StepDone({
         <Button
           onClick={attachAccount}
           disabled={linking || linked}
-          className="bg-clinical-gold text-[#050505] hover:bg-clinical-gold/90 text-xs h-8"
+          className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-8"
         >
           {linked ? "Account attached" : linking ? "Attaching…" : "Attach my account"}
         </Button>

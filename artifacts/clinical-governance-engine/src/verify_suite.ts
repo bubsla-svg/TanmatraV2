@@ -450,6 +450,70 @@ async function runVerificationSuite() {
   );
   console.log();
 
+  console.log('   -> Marketplace Checkout Split Simulation:');
+  const mktCheckoutReq = {
+    order_id: 'ORD_MKT_9921',
+    idempotency_key: 'idemp_uuid_mkt_9921',
+    items: [
+      {
+        itemId: 1,
+        name: 'Cold-Pressed Extra Virgin Olive Oil',
+        supplierName: 'Olivar de la Luz',
+        pricePaise: 89900,
+        qty: 1,
+      },
+      {
+        itemId: 2,
+        name: 'Roasted Almond + Seed Mix',
+        supplierName: 'Tanmatra Pantry',
+        pricePaise: 39900,
+        qty: 2,
+      },
+    ],
+    wallet_applied_amount: 10000,
+  };
+
+  const attemptMkt = await finService.processMarketplaceCheckout(mktCheckoutReq);
+  console.log(
+    `      * Intent Created: ${attemptMkt.intentId} | Net Payable: ₹${attemptMkt.netPayable / 100}`,
+  );
+
+  await finService.handleMarketplaceGatewayWebhook({
+    orderId: 'ORD_MKT_9921',
+    intentId: attemptMkt.intentId,
+    event: 'payment.captured',
+    signature: 'valid_hmac_secret_sha256',
+  });
+
+  const journal = finService.getLedgerJournal();
+  const orderEntries = journal.filter(r => r.order_id === 'ORD_MKT_9921');
+  
+  let totalDebits = 0;
+  let totalCredits = 0;
+  
+  console.log('      * Double-Entry Journal Postings for ORD_MKT_9921:');
+  for (const entry of orderEntries) {
+    console.log(`        Dr ${entry.debit_account} / Cr ${entry.credit_account} | Amount: ₹${entry.amount / 100}`);
+    if (entry.debit_account === 'ASSET_PG_CLEARING' || entry.debit_account === 'LIABILITY_USER_WALLET') {
+      totalDebits += entry.amount;
+    }
+    if (
+      entry.credit_account === 'REVENUE_MARKETPLACE_1P_SALES' ||
+      entry.credit_account === 'REVENUE_MARKETPLACE_COMMISSION' ||
+      entry.credit_account === 'LIABILITY_VENDOR_PAYOUT'
+    ) {
+      totalCredits += entry.amount;
+    }
+  }
+
+  console.log(`      * Sum Debits: ₹${totalDebits / 100} | Sum Credits: ₹${totalCredits / 100}`);
+  if (totalDebits === totalCredits && totalDebits === 169700) {
+    console.log('      * Invariant check: SUM(Debits) - SUM(Credits) = 0 [PASSED]');
+  } else {
+    console.error('      * Invariant check: [FAILED]');
+  }
+  console.log();
+
   // Test 8: OWASP ASVS/MASVS Security Threat Mitigation & PII Redaction Simulation
   console.log(
     '--- [Test 8: OWASP ASVS/MASVS Threat Mitigation & PII Scrubbing Simulation] ---',

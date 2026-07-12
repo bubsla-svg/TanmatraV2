@@ -49,7 +49,7 @@ export default function GoalPlanChooser({
         <span className="lab" style={{ color: "var(--safb)" }}>
           Tanmatra Plans
         </span>
-        <h1 className="disp mt6" style={{ color: "#fff" }}>
+        <h1 className="disp mt6" style={{ color: "var(--color-stone-0)" }}>
           What&rsquo;s your goal?
         </h1>
         <p className="fine mt6">
@@ -112,19 +112,18 @@ export default function GoalPlanChooser({
                 </span>
               )}
             </div>
-            <div className="tt" style={{ color: "#fff" }}>
+            <div className="tt" style={{ color: "var(--color-stone-0)" }}>
               {plan.name}
             </div>
             <p className="fine clamp1 mt4">{plan.description}</p>
             {rd && <div className="lab mt6">By {rd.name}, RD</div>}
-            <button
-              type="button"
-              className="btn btn-g w100 mt10"
-              onClick={() => onSelect(plan.slug)}
+            <Link
+              to={`/subscribe?plan=${plan.slug}`}
+              className="btn btn-g w100 mt10 inline-flex items-center justify-center"
             >
               View this plan
               <i className="ph-bold ph-arrow-right" />
-            </button>
+            </Link>
           </div>
         );
       })}

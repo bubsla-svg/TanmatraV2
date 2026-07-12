@@ -176,7 +176,6 @@ export function PostCheckoutWizard({ orderId }: { orderId: string | undefined })
   const overlayStyle: React.CSSProperties = {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,.6)",
     zIndex: 120,
     display: "flex",
     alignItems: "flex-end",
@@ -198,7 +197,7 @@ export function PostCheckoutWizard({ orderId }: { orderId: string | undefined })
 
   return (
     <div
-      className="tnm2"
+      className="tnm2 bg-black/60"
       style={overlayStyle}
       onClick={() => close("skip")}
       role="dialog"

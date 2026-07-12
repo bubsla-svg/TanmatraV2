@@ -130,7 +130,7 @@ export default function V2Vouchers() {
           <div className="content padx">
             <div className="tc" style={{ padding: "56px 20px" }}>
               <i className="ph-bold ph-gift" style={{ fontSize: 34, color: "var(--safb)" }} />
-              <div className="h2 mt10" style={{ color: "#fff" }}>Wellness vouchers</div>
+              <div className="h2 mt10" style={{ color: "var(--text-primary)" }}>Wellness vouchers</div>
               <div className="fine mt6">
                 Sign in to buy a voucher for a friend or redeem a code into your wallet.
               </div>
@@ -160,7 +160,7 @@ export default function V2Vouchers() {
             <i className="ph-bold ph-gift" />
             Gift card
           </div>
-          <h1 className="disp mt6" style={{ color: "#fff" }}>Wellness vouchers</h1>
+          <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>Wellness vouchers</h1>
           <p className="small mut mt6">
             Buy a voucher for a friend or colleague — they redeem it as wallet credit at checkout.
           </p>

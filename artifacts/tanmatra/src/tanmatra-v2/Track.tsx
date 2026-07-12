@@ -202,7 +202,7 @@ export default function V2Track() {
         <div className="fx ac jb gap8">
           <div><div className="h2" style={{ fontSize: 20 }}>{order.orderId}</div><div className="fine mt2">Submitted {fmtTime(order.placedAt)}</div></div>
           {timeLeftMs !== null && (
-            <div className="pill" style={{ background: "rgba(201,124,112,.14)", border: "1px solid rgba(201,124,112,.4)", color: "var(--dgr)", flexDirection: "column", alignItems: "flex-start", padding: "6px 10px" }}>
+            <div className="pill" style={{ background: "color-mix(in oklab, var(--color-error) 14%, transparent)", border: "1px solid color-mix(in oklab, var(--color-error) 40%, transparent)", color: "var(--dgr)", flexDirection: "column", alignItems: "flex-start", padding: "6px 10px" }}>
               <span className="lab" style={{ fontSize: 8, color: "var(--dgr)" }}>STAT SLA</span>
               <span className="mono" style={{ fontWeight: 700 }}>{formatTimeLeft(timeLeftMs)}</span>
             </div>

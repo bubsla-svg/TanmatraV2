@@ -11,6 +11,8 @@ export default [
     ]),
     route("track", "pages/Track.tsx"),
     route("subscribe", "pages/Subscribe.tsx"),
+    route("trial/:id", "pages/TrialStub.tsx"),
+    route("order/confirmed/:orderId", "pages/OrderConfirmedStub.tsx"),
     layout("routes/UserAuthLayout.tsx", [
       route("meal-planner", "pages/WeeklyPlanner.tsx"),
       route("preferences", "pages/Preferences.tsx"),
@@ -19,6 +21,8 @@ export default [
       route("rewards", "pages/Rewards.tsx"),
       route("account", "pages/Account.tsx"),
       route("account/addresses", "pages/Addresses.tsx"),
+      route("account/plan", "pages/PlanStub.tsx"),
+      route("account/billing", "pages/BillingStub.tsx"),
       route("vouchers", "pages/Vouchers.tsx"),
     ]),
     route("terms", "pages/Terms.tsx"),
@@ -76,6 +80,7 @@ export default [
     route("premium", "pages/Premium.tsx"),
     route("marketplace", "pages/Marketplace.tsx"),
     route("marketplace/:slug", "pages/MarketplaceItem.tsx"),
+    route("profile", "pages/ProfileRedirect.tsx"),
     route("login", "pages/Login.tsx"),
     route("admin/login", "pages/AdminLogin.tsx"),
     route("*", "pages/not-found.tsx")

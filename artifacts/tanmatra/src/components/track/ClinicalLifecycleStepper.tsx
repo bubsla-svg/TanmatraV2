@@ -61,7 +61,7 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
       {isCancelled ? (
         <div
           className="flex items-center gap-2 text-xs"
-          style={{ borderRadius: 8, border: "1px solid rgba(201,124,112,.4)", background: "rgba(201,124,112,.12)", padding: "8px 12px", color: "var(--dgr)" }}
+          style={{ borderRadius: 8, border: "1px solid color-mix(in oklab, var(--color-error) 40%, transparent)", background: "color-mix(in oklab, var(--color-error) 12%, transparent)", padding: "8px 12px", color: "var(--color-error)" }}
           role="status"
         >
           <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
@@ -73,7 +73,7 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
       ) : !socketConnected ? (
         <div
           className="flex items-center gap-2 text-xs"
-          style={{ borderRadius: 8, border: "1px solid rgba(244,196,48,.4)", background: "var(--safd)", padding: "8px 12px", color: "var(--safb)" }}
+          style={{ borderRadius: 8, border: "1px solid color-mix(in oklab, var(--color-clinical-gold) 40%, transparent)", background: "var(--safd)", padding: "8px 12px", color: "var(--safb)" }}
           role="status"
         >
           <WifiOff className="w-4 h-4 shrink-0" aria-hidden />
@@ -115,7 +115,7 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
                   background: isCancelled ? "var(--s3)" : reached ? "var(--saf)" : "var(--s1)",
                   borderColor: isCancelled ? "var(--ln2)" : reached ? "var(--saf)" : "var(--ln2)",
                   color: isCancelled ? "var(--mut)" : reached ? "var(--onsaf)" : "var(--mut)",
-                  boxShadow: isCurrent ? "0 0 0 2px rgba(244,196,48,.5)" : undefined,
+                  boxShadow: isCurrent ? "0 0 0 2px color-mix(in oklab, var(--color-clinical-gold) 50%, transparent)" : undefined,
                 }}
               >
                 <Icon className="w-4 h-4" aria-hidden />
@@ -123,7 +123,7 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
               {idx < CLINICAL_STAGES.length - 1 && (
                 <div
                   className="absolute top-4 left-1/2 w-full h-0.5"
-                  style={{ background: !isCancelled && idx < currentIdx ? "rgba(244,196,48,.6)" : "var(--s3)" }}
+                  style={{ background: !isCancelled && idx < currentIdx ? "color-mix(in oklab, var(--color-clinical-gold) 60%, transparent)" : "var(--s3)" }}
                   aria-hidden
                 />
               )}

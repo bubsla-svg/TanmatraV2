@@ -533,8 +533,8 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
   return (
     <div
-      className="tnm2"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+      className="tnm2 bg-black/60"
+      style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
       onClick={() => onOpenChange(false)}
     >
       <div
@@ -744,8 +744,8 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
               {locating && mapsReady && (
                 <div
-                  className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full px-3 py-1.5"
-                  style={{ background: "rgba(0,0,0,.8)", border: "1px solid var(--ln)" }}
+                  className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full px-3 py-1.5 bg-clinical-dark/80"
+                  style={{ border: "1px solid var(--ln)" }}
                 >
                   <CircleNotch className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--safb)" }} />
                   <span className="text-[11px]" style={{ color: "var(--tx)" }}>Finding you…</span>

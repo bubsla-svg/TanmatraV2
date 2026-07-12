@@ -150,11 +150,11 @@ export default function SupportAgentWidget() {
       </Button>
 
       {isOpen && (
-        <Card className="fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-[#F4C430]/30 bg-[#050505]">
-          <CardHeader className="shrink-0 py-3 px-4 border-b bg-[#050505]">
+        <Card className="fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-clinical-gold/30 bg-clinical-surface">
+          <CardHeader className="shrink-0 py-3 px-4 border-b bg-clinical-surface">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#F4C430]/20 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-[#F4C430]" />
+              <div className="w-8 h-8 rounded-full bg-clinical-gold/20 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-clinical-gold" />
               </div>
               <div>
                 <CardTitle className="text-sm text-white">Support Agent</CardTitle>
@@ -171,13 +171,13 @@ export default function SupportAgentWidget() {
               {messages.map((msg, i) => (
                 <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "agent" && (
-                    <div className="w-6 h-6 rounded-full bg-[#F4C430]/10 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-3 h-3 text-[#F4C430]" />
+                    <div className="w-6 h-6 rounded-full bg-clinical-gold/10 flex items-center justify-center shrink-0 mt-1">
+                      <Bot className="w-3 h-3 text-clinical-gold" />
                     </div>
                   )}
                   <div
                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                      msg.role === "user" ? "bg-[#6BA3C8] text-white" : "bg-muted text-foreground"
+                      msg.role === "user" ? "bg-clinical-blue text-white" : "bg-muted text-foreground"
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -208,8 +208,8 @@ export default function SupportAgentWidget() {
                     <p className="text-[10px] opacity-60 mt-1 text-right">{msg.timestamp}</p>
                   </div>
                   {msg.role === "user" && (
-                    <div className="w-6 h-6 rounded-full bg-[#6BA3C8]/10 flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-3 h-3 text-[#6BA3C8]" />
+                    <div className="w-6 h-6 rounded-full bg-clinical-blue/10 flex items-center justify-center shrink-0 mt-1">
+                      <User className="w-3 h-3 text-clinical-blue" />
                     </div>
                   )}
                 </div>
@@ -217,8 +217,8 @@ export default function SupportAgentWidget() {
               {streaming &&
                 messages[streamingIndexRef.current ?? -1]?.text === "" && (
                   <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#F4C430]/10 flex items-center justify-center">
-                      <Bot className="w-3 h-3 text-[#F4C430] animate-bounce" />
+                    <div className="w-6 h-6 rounded-full bg-clinical-gold/10 flex items-center justify-center">
+                      <Bot className="w-3 h-3 text-clinical-gold animate-bounce" />
                     </div>
                     <div className="bg-muted rounded-lg px-3 py-2 text-sm text-muted-foreground">
                       Thinking...

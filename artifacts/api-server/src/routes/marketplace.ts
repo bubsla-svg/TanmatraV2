@@ -327,14 +327,22 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
             );
           }
         }
+        const isFirstParty = item.supplierName?.startsWith("Tanmatra") ?? false;
+        const lineTotal = item.pricePaise * it.qty;
+        const commissionPaise = isFirstParty ? 0 : Number((lineTotal * 0.15).toFixed(0));
+        const vendorPayoutPaise = lineTotal - commissionPaise;
+
         lines.push({
           itemId: item.id,
           slug: item.slug,
           name: item.name,
           qty: it.qty,
           unitPricePaise: item.pricePaise,
+          supplierName: item.supplierName || "Unknown",
+          commissionPaise,
+          vendorPayoutPaise,
         });
-        totalPaise += item.pricePaise * it.qty;
+        totalPaise += lineTotal;
       }
 
       let bundleWithOrderId: number | null = null;

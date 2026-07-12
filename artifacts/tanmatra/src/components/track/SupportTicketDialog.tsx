@@ -80,11 +80,10 @@ export default function SupportTicketDialog({
 
   return (
     <div
-      className="tnm2"
+      className="tnm2 bg-black/60"
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,.6)",
         zIndex: 60,
         display: "flex",
         alignItems: "center",
@@ -100,7 +99,7 @@ export default function SupportTicketDialog({
       >
         {done ? (
           <>
-            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+            <div className="tt fx ac gap8" style={{ color: "var(--color-stone-0)" }}>
               <CheckCircle2 className="w-5 h-5" style={{ color: "var(--sage)" }} />
               Care team is on it
             </div>
@@ -115,7 +114,7 @@ export default function SupportTicketDialog({
           </>
         ) : (
           <>
-            <div className="tt fx ac gap8" style={{ color: "#fff" }}>
+            <div className="tt fx ac gap8" style={{ color: "var(--color-stone-0)" }}>
               <LifeBuoy className="w-5 h-5" style={{ color: "var(--safb)" }} />
               Need help with this order?
             </div>

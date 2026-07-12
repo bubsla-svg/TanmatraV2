@@ -173,7 +173,7 @@ export default function V2CheckoutAppointment() {
 
           {/* Failure recovery block */}
           {lastError && (
-            <div className="note mt10" style={{ background: "rgba(201,124,112,.12)", borderColor: "rgba(201,124,112,.35)", color: "var(--dgr)" }} role="alert">
+            <div className="note mt10" style={{ background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" }} role="alert">
               <i className="ph-fill ph-warning-circle" />
               <div>
                 <div style={{ fontWeight: 600 }}>Booking didn't go through</div>
@@ -218,8 +218,8 @@ export default function V2CheckoutAppointment() {
       {/* Confirm-payment modal (v2 bottom-sheet) */}
       {confirmOpen && (
         <div
-          className="fx"
-          style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,.6)", alignItems: "flex-end", justifyContent: "center" }}
+          className="fx bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 90, alignItems: "flex-end", justifyContent: "center" }}
           onClick={() => { if (!processing) setConfirmOpen(false); }}
         >
           <div

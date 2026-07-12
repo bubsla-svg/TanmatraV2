@@ -271,7 +271,7 @@ export default function V2WeeklyPlanner() {
             <i className="ph-fill ph-sparkle" />
             AI-personalised
           </div>
-          <h1 className="disp mt6" style={{ color: "#fff" }}>
+          <h1 className="disp mt6" style={{ color: "var(--text-primary)" }}>
             Weekly meal planner
           </h1>
           <p className="small mut mt6">
@@ -468,8 +468,8 @@ export default function V2WeeklyPlanner() {
       {/* Swap dialog */}
       {swapDialog !== null && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSwapDialog(null)}
         >
           <div className="card" style={{ ...DIALOG_SURFACE, maxWidth: 520, width: "100%" }} onClick={(e) => e.stopPropagation()}>
@@ -554,8 +554,8 @@ export default function V2WeeklyPlanner() {
       {/* Settings dialog */}
       {settingsOpen && (
         <div
-          className="tnm2"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          className="tnm2 bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSettingsOpen(false)}
         >
           <div className="card" style={{ ...DIALOG_SURFACE, maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>

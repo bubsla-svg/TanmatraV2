@@ -13,7 +13,7 @@ const BENEFITS = [
   {
     icon: "ph-stethoscope",
     title: "1 free RD consult / month",
-    desc: "30-minute video session with a registered dietitian — typically ₹1,499 — included every billing period.",
+    desc: `30-minute video session with a registered dietitian — typically ${formatPrice(149900)} — included every billing period.`,
   },
   {
     icon: "ph-crown",

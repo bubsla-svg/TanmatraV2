@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics";
+import { formatRupees } from "@/lib/rdPlans";
 import { F } from "./data";
 import { useOrders } from "@/lib/ordersContext";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
@@ -17,6 +18,8 @@ import AssessmentNudge from "@/components/home/AssessmentNudge";
 import MetaDishCard from "@/components/home/MetaDishCard";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { toast } from "sonner";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 
 /* Full-parity re-port of the System-A Home (git 2507084, 955 lines) into v2. */
 
@@ -34,9 +37,9 @@ const HOW_STEPS = [
 ];
 
 const PLANS = [
-  { slug: "weight-loss-jumpstart", name: "Weight-Loss Jumpstart", desc: "1500 kcal, low-GI, fibre-forward. Lose weight without constant hunger spikes.", price: "₹5,490 / week", details: "1500 kcal · 90g protein · 25g+ fiber", badge: "Weight Loss" },
-  { slug: "lean-muscle-builder", name: "Lean Muscle Builder", desc: "2400 kcal, 160g protein. Fuel muscle growth and accelerate recovery.", price: "₹7,490 / week", details: "2400 kcal · 160g protein · recovery-focused", badge: "Lean Muscle" },
-  { slug: "pcos-balance", name: "PCOS Hormone Balance", desc: "Anti-inflammatory, low-GI, omega-3 forward. Manage insulin resistance.", price: "₹5,990 / week", details: "1700 kcal · 100g protein · hormone balance", badge: "Hormone Health" },
+  { slug: "weight-loss-jumpstart", name: "Weight-Loss Jumpstart", desc: "1500 kcal, low-GI, fibre-forward. Lose weight without constant hunger spikes.", price: 549000, details: "1500 kcal · 90g protein · 25g+ fiber", badge: "Weight Loss" },
+  { slug: "lean-muscle-builder", name: "Lean Muscle Builder", desc: "2400 kcal, 160g protein. Fuel muscle growth and accelerate recovery.", price: 749000, details: "2400 kcal · 160g protein · recovery-focused", badge: "Lean Muscle" },
+  { slug: "pcos-balance", name: "PCOS Hormone Balance", desc: "Anti-inflammatory, low-GI, omega-3 forward. Manage insulin resistance.", price: 599000, details: "1700 kcal · 100g protein · hormone balance", badge: "Hormone Health" },
 ];
 
 const PROTOCOLS = [
@@ -110,6 +113,7 @@ export default function V2Home() {
 
   return (
     <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <h1 className="sr-only">Tanmatra — Therapeutic Meal Delivery in Noida, Delhi & Gurgaon</h1>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         {/* ── Zomato-style conversion funnel ─────────────────────────────── */}
 
@@ -216,7 +220,7 @@ export default function V2Home() {
         <div className="padx">
           {PLANS.map((p) => (
             <div key={p.slug} className="card mb10">
-              <div className="fx ac jb"><span className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>{p.badge}</span><span className="mono fntc" style={{ fontSize: 12 }}>{p.price}</span></div>
+              <div className="fx ac jb"><span className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>{p.badge}</span><span className="mono fntc" style={{ fontSize: 12 }}>{formatRupees(p.price)} / week</span></div>
               <div className="tt mt6" style={{ fontSize: 15 }}>{p.name}</div>
               <div className="fine mt2">{p.desc}</div>
               <div className="mono mt6" style={{ fontSize: 11, color: "var(--safb)" }}>{p.details}</div>
@@ -256,7 +260,26 @@ export default function V2Home() {
             <div className="hrail">
               {daypartDishes.map((d: any) => (
                 <div key={d.id} className="hcard">
-                  <Link to={`/dish/${d.slug}`}><div className="himg plc" style={{ backgroundImage: `url(${d.image})`, backgroundSize: "cover", backgroundPosition: "center" }} /></Link>
+                  <Link to={`/dish/${d.slug}`}>
+                    <div className="himg plc" style={{ position: "relative", overflow: "hidden" }}>
+                      <picture>
+                        <source srcSet={localDishSrcset(d.image, "avif")} type="image/avif" />
+                        <source srcSet={localDishSrcset(d.image, "webp")} type="image/webp" />
+                        <img
+                          src={getLocalDishFallback(d.image, 200)}
+                          srcSet={localDishSrcset(d.image, "jpg")}
+                          sizes="152px"
+                          width="152"
+                          height="88"
+                          loading="lazy"
+                          decoding="async"
+                          alt={d.name}
+                          onError={onDishImageError}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      </picture>
+                    </div>
+                  </Link>
                   <div className="hbody">
                     <div className="fx ac g6 mb4"><span className={d.isVeg ? "vd" : "vd nv"} />{d.rdVerified && <span className="pill sg" style={{ padding: "2px 6px" }}><i className="ph-fill ph-seal-check" /></span>}</div>
                     <Link to={`/dish/${d.slug}`} className="small clamp1" style={{ fontWeight: 600, display: "block" }}>{d.name}</Link>

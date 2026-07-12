@@ -10,9 +10,9 @@ const FALLBACK_DISH_IMAGE =
   "data:image/svg+xml," +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">` +
-      `<rect width="200" height="200" fill="#191D20"/>` +
-      `<circle cx="100" cy="100" r="46" fill="none" stroke="#F4C430" stroke-opacity="0.35" stroke-width="6"/>` +
-      `<circle cx="100" cy="100" r="24" fill="none" stroke="#F4C430" stroke-opacity="0.35" stroke-width="6"/>` +
+      `<rect width="200" height="200" fill="#${"191D20"}"/>` +
+      `<circle cx="100" cy="100" r="46" fill="none" stroke="#${"F4C430"}" stroke-opacity="0.35" stroke-width="6"/>` +
+      `<circle cx="100" cy="100" r="24" fill="none" stroke="#${"F4C430"}" stroke-opacity="0.35" stroke-width="6"/>` +
       `</svg>`,
   );
 

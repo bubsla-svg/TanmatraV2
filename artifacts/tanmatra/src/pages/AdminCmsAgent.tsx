@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MenuPhotosPanel } from "@/components/cms/MenuPhotosPanel";
 import { API_BASE } from "@/lib/apiBase";
+import { formatRupees } from "@/lib/rdPlans";
 
 const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
 
@@ -193,7 +194,7 @@ const QUICK_ACTIONS: Array<{ label: string; message: string }> = [
   {
     label: "Create paneer wrap",
     message:
-      'Create a new menu item: "Paneer Wrap" at ₹220, category wraps, vegetarian, available only at lunch. Preview first.',
+      `Create a new menu item: "Paneer Wrap" at ${formatRupees(22000)}, category wraps, vegetarian, available only at lunch. Preview first.`,
   },
   {
     label: "86 all desserts at HSR",
@@ -202,7 +203,7 @@ const QUICK_ACTIONS: Array<{ label: string; message: string }> = [
   },
   {
     label: "Bump aglio-olio price",
-    message: "Update the price of aglio-olio-veg to ₹140. Preview first.",
+    message: `Update the price of aglio-olio-veg to ${formatRupees(14000)}. Preview first.`,
   },
   {
     label: "Bulk regenerate missing copy (wraps)",
@@ -221,7 +222,7 @@ export default function AdminCmsAgent() {
       id: newId(),
       role: "agent",
       text:
-        'CMS Assistant ready. Try "create a new paneer wrap at ₹220, vegetarian, available only at lunch" or "toggle off all desserts in HSR Kitchen for tonight". I always show a preview before committing any change.',
+        `CMS Assistant ready. Try "create a new paneer wrap at ${formatRupees(22000)}, vegetarian, available only at lunch" or "toggle off all desserts in HSR Kitchen for tonight". I always show a preview before committing any change.`,
       ts: new Date().toISOString(),
     },
   ]);
@@ -949,7 +950,7 @@ export default function AdminCmsAgent() {
                     void send();
                   }
                 }}
-                placeholder='e.g. "create a new paneer wrap at ₹220, lunch only"'
+                placeholder={`e.g. "create a new paneer wrap at ${formatRupees(22000)}, lunch only"`}
                 disabled={busy}
               />
               <Button onClick={() => void send()} disabled={busy}>
