@@ -45,6 +45,16 @@ export interface DishCustomOption {
     rdNote?: string;
     prepTime: string;
     macros: DishMacros;
+    /**
+     * Macros are ingredient-derived ESTIMATES (calculator, IFCT/USDA), not
+     * RD-verified lab values. The UI labels them "estimated from ingredients".
+     */
+    macrosEstimated?: boolean;
+    /**
+     * Macros are an unresolved placeholder (duplicated seed bucket with no
+     * reliable estimate). The UI gates them behind a "being verified" state.
+     */
+    macrosProvisional?: boolean;
     ingredients: string[];
     allergens: string[];
     glycaemicIndex: "low" | "medium" | "high";
@@ -85,7 +95,7 @@ export interface DishCustomOption {
     mediterranean: "Mediterranean",
   };
 
-  export const DISHES: DishData[] = [
+  const RAW_DISHES: DishData[] = [
   {
     "id": 1,
     "slug": "activated-charcoal-smoothie",
@@ -4328,6 +4338,41 @@ export interface DishCustomOption {
   }
 ];
 
+import { ESTIMATED_MACROS } from "./estimatedMacros";
+
+function _macroKey(m: DishMacros): string {
+  return `${m.protein}|${m.carbs}|${m.fat}|${m.fiber}|${m.calories}`;
+}
+
+// Placeholder detection runs on the RAW seed macros (before overlay) so a dish
+// that becomes the last remaining member of a placeholder bucket (once its
+// bucket-mates get estimates) is still correctly flagged.
+const _rawBucketCounts: Map<string, number> = (() => {
+  const counts = new Map<string, number>();
+  for (const d of RAW_DISHES) {
+    const k = _macroKey(d.macros);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  return counts;
+})();
+
+/**
+ * Public catalog. A dish whose seed macros were a duplicated placeholder bucket
+ * AND for which the ingredient calculator produced a HIGH-confidence estimate
+ * gets that estimate overlaid and is flagged `macrosEstimated` (the UI labels it
+ * "estimated from ingredients"). A placeholder dish with no estimate (e.g. an
+ * ingredient-less beverage) stays `macrosProvisional` so the UI still gates it.
+ * Curated distinct macros pass through unflagged (shown as-is).
+ */
+export const DISHES: DishData[] = RAW_DISHES.map((d) => {
+  const est = ESTIMATED_MACROS[d.slug];
+  if (est) {
+    return { ...d, macros: est, macrosEstimated: true, macrosProvisional: false };
+  }
+  const wasPlaceholder = (_rawBucketCounts.get(_macroKey(d.macros)) ?? 0) > 1;
+  return { ...d, macrosEstimated: false, macrosProvisional: wasPlaceholder };
+});
+
   export function getDishBySlug(slug: string): DishData | undefined {
     return DISHES.find((d) => d.slug === slug);
   }
@@ -4344,36 +4389,22 @@ export interface DishCustomOption {
   // ---------------------------------------------------------------------------
   // Macro data-integrity guard.
   //
-  // A large share of the seeded catalog carries copy-pasted placeholder macro
-  // "buckets": e.g. every beverage (including Diet Coke and a "Zero Calorie"
-  // mojito) shares 3P/22C/4F/140kcal, and Aglio Olio == Alfredo Pasta at
-  // 480kcal. Presenting those as confident per-dish nutrition is a data-
-  // integrity bug. We deliberately do NOT fabricate replacement numbers; we
-  // only DETECT the duplication so the UI can show an honest "macros being
-  // verified" state instead of a duplicated fake.
+  // A large share of the seeded catalog carried copy-pasted placeholder macro
+  // "buckets" (e.g. every beverage shared 3P/22C/4F/140kcal). Most are now
+  // resolved by ingredient-derived estimates (see the DISHES overlay above,
+  // flagged `macrosEstimated`). The remainder — placeholders with no reliable
+  // estimate — are flagged `macrosProvisional` at build time so the UI can show
+  // an honest "macros being verified" state instead of a duplicated fake. This
+  // never fabricates confident numbers.
   // ---------------------------------------------------------------------------
-  function _macroKey(m: DishMacros): string {
-    return `${m.protein}|${m.carbs}|${m.fat}|${m.fiber}|${m.calories}`;
-  }
-
-  const _macroBucketCounts: Map<string, number> = (() => {
-    const counts = new Map<string, number>();
-    for (const d of DISHES) {
-      const k = _macroKey(d.macros);
-      counts.set(k, (counts.get(k) ?? 0) + 1);
-    }
-    return counts;
-  })();
-
   /**
-   * True when this dish's macro block is shared verbatim by at least one other
-   * distinct dish in the catalog — i.e. a placeholder bucket rather than a
-   * measured, per-dish value. Such macros are provisional and must not be
-   * presented as confident nutrition. This never invents numbers; it only
-   * reports whether the block is a duplicated placeholder.
+   * True when this dish's macros are still an unresolved placeholder (no
+   * per-dish value and no reliable estimate). Reads the build-time flag set by
+   * the DISHES overlay. Estimated dishes return false (they carry a real, if
+   * estimated, value — the UI labels them separately via `macrosEstimated`).
    */
-  export function macrosAreProvisional(dish: Pick<DishData, "macros">): boolean {
-    return (_macroBucketCounts.get(_macroKey(dish.macros)) ?? 0) > 1;
+  export function macrosAreProvisional(dish: Pick<DishData, "macrosProvisional">): boolean {
+    return dish.macrosProvisional === true;
   }
 
 // ── Nutrition calculator ──────────────────────────────────────────────────────
