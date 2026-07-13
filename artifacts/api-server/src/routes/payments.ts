@@ -919,6 +919,20 @@ router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
     return;
   }
 
+  // Defense-in-depth: never charge a subscription that is not active. The mandate
+  // flip performed on cancel already makes the lookup above 404, but this closes
+  // the race where a gateway revoke lags a local cancel, or a stale active
+  // mandate row outlives its subscription.
+  const [subForGuard] = await db
+    .select({ status: subscriptionsTable.status })
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.id, subscriptionId))
+    .limit(1);
+  if (!subForGuard || subForGuard.status !== "active") {
+    res.status(409).json({ error: "subscription is not active", code: "subscription_inactive" });
+    return;
+  }
+
   const startOfDay = new Date(chargeDate);
   startOfDay.setUTCHours(0, 0, 0, 0);
   const endOfDay = new Date(chargeDate);
