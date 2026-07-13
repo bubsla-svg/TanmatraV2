@@ -56,6 +56,79 @@ test("mapPetpoojaItem maps standard item with allergens and nutrition", () => {
   });
 });
 
+test("mapPetpoojaItem captures extended clinical nutrition when Petpooja sends it", () => {
+  const item = {
+    itemid: "1",
+    item_categoryid: "500773",
+    active: "1",
+    in_stock: "2",
+    itemname: "Grilled Veggie Sandwich",
+    item_attributeid: "1",
+    price: "449",
+    nutrition: {
+      foodAmount: { amount: 275, unit: "g" },
+      calories: { amount: 420, unit: "kcal" },
+      protien: { amount: 18, unit: "g" },
+      carbohydrate: { amount: 44, unit: "g" },
+      totalFat: { amount: 16, unit: "g" },
+      fiber: { amount: 6, unit: "g" },
+      sodium: { amount: 640, unit: "mg" },
+      totalSugar: { amount: 9, unit: "g" },
+      addedSugar: { amount: 2, unit: "g" },
+      saturatedFat: { amount: 5, unit: "g" },
+      transFat: { amount: 0, unit: "g" },
+      cholesterol: { amount: 12, unit: "mg" },
+      servingInfo: "1to2people",
+    },
+  };
+  const categories = [{ categoryid: "500773", active: "1", categoryname: "Healthy Sandwiches" }];
+  const attributes = [{ attributeid: "1", attribute: "veg", active: "1" }];
+  const mapped = mapPetpoojaItem(item as any, categories, [], attributes);
+  assert.deepEqual(mapped.macros, {
+    kcal: 420,
+    proteinG: 18,
+    carbsG: 44,
+    fatG: 16,
+    fiberG: 6,
+    sodiumMg: 640,
+    totalSugarG: 9,
+    addedSugarG: 2,
+    saturatedFatG: 5,
+    transFatG: 0,
+    cholesterolMg: 12,
+    servingSize: { amount: 275, unit: "g" },
+    servingInfo: "1to2people",
+  });
+});
+
+test("mapPetpoojaItem maps empty/absent/all-zero nutrition to null macros (never phantom zeros)", () => {
+  const base = {
+    itemid: "1",
+    item_categoryid: "500773",
+    active: "1",
+    in_stock: "2",
+    itemname: "Garlic Bread",
+    item_attributeid: "1",
+    price: "140",
+  };
+  const categories = [{ categoryid: "500773", active: "1", categoryname: "Sides" }];
+  const attributes = [{ attributeid: "1", attribute: "veg", active: "1" }];
+  // Petpooja sends `nutrition: {}` for items whose panel is un-filled.
+  assert.equal(mapPetpoojaItem({ ...base, nutrition: {} } as any, categories, [], attributes).macros, null);
+  // Nutrition entirely absent.
+  assert.equal(mapPetpoojaItem(base as any, categories, [], attributes).macros, null);
+  // Present keys but all-zero amounts → still no real data.
+  assert.equal(
+    mapPetpoojaItem(
+      { ...base, nutrition: { calories: { amount: 0, unit: "kcal" }, protien: { amount: 0, unit: "g" } } } as any,
+      categories,
+      [],
+      attributes,
+    ).macros,
+    null,
+  );
+});
+
 test("mapPetpoojaItem maps variations to customizations single selection group", () => {
   const item = {
     itemid: "7765809",

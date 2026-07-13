@@ -49,6 +49,19 @@ export const menuItemsTable = pgTable(
       carbsG: number;
       fatG: number;
       fiberG?: number;
+      // Extended clinical nutrition (Petpooja push_menu `nutrition`). Optional
+      // because most sources only carry the base four. jsonb column, so adding
+      // these keys is a type-only change — no migration.
+      sodiumMg?: number;
+      totalSugarG?: number;
+      addedSugarG?: number;
+      saturatedFatG?: number;
+      transFatG?: number;
+      cholesterolMg?: number;
+      // Serving basis the values are measured against (never show a macro
+      // without the serving it belongs to — A4.1 denominator honesty).
+      servingSize?: { amount: number; unit: string };
+      servingInfo?: string;
     } | null>(),
     macrosAreEstimate: boolean("macros_are_estimate").notNull().default(true),
     rdVerified: boolean("rd_verified").notNull().default(false),

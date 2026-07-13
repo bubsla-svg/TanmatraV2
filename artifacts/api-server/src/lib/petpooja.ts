@@ -37,12 +37,23 @@ export interface PetpoojaItem {
     addon_item_selection_min: string;
     addon_item_selection_max: string;
   }>;
+  // Mirrors Petpooja's push_menu `nutrition` object verbatim — including their
+  // misspelled `protien` key. Do NOT "correct" the spelling: it must match the
+  // wire format or the value is silently dropped.
   nutrition?: {
+    foodAmount?: { amount: number; unit: string };
     calories?: { amount: number; unit: string };
     protien?: { amount: number; unit: string };
     carbohydrate?: { amount: number; unit: string };
     totalFat?: { amount: number; unit: string };
     fiber?: { amount: number; unit: string };
+    sodium?: { amount: number; unit: string };
+    totalSugar?: { amount: number; unit: string };
+    addedSugar?: { amount: number; unit: string };
+    saturatedFat?: { amount: number; unit: string };
+    transFat?: { amount: number; unit: string };
+    cholesterol?: { amount: number; unit: string };
+    servingInfo?: string;
     allergens?: Array<{ allergen: string; allergenDesc: string }>;
   };
 }
@@ -216,13 +227,40 @@ export function mapPetpoojaItem(
   const allergens =
     item.nutrition?.allergens?.map((a) => a.allergen) ?? [];
 
-  const macros = item.nutrition
+  // Petpooja sends `nutrition: {}` (empty) for items whose nutrition panel is
+  // un-filled — guard against that so it maps to null (→ "pending"), not a
+  // misleading all-zero macro row.
+  const n = item.nutrition;
+  const hasNutrition =
+    !!n &&
+    (Number(n.calories?.amount ?? 0) > 0 ||
+      Number(n.protien?.amount ?? 0) > 0 ||
+      Number(n.carbohydrate?.amount ?? 0) > 0 ||
+      Number(n.totalFat?.amount ?? 0) > 0);
+  // Base four (+fiber) always present; extended clinical fields only when
+  // Petpooja actually sends them — no phantom zeros polluting the row.
+  const macros = hasNutrition
     ? {
-        kcal: Number(item.nutrition.calories?.amount ?? 0),
-        proteinG: Number(item.nutrition.protien?.amount ?? 0),
-        carbsG: Number(item.nutrition.carbohydrate?.amount ?? 0),
-        fatG: Number(item.nutrition.totalFat?.amount ?? 0),
-        fiberG: Number(item.nutrition.fiber?.amount ?? 0),
+        kcal: Number(n!.calories?.amount ?? 0),
+        proteinG: Number(n!.protien?.amount ?? 0),
+        carbsG: Number(n!.carbohydrate?.amount ?? 0),
+        fatG: Number(n!.totalFat?.amount ?? 0),
+        fiberG: Number(n!.fiber?.amount ?? 0),
+        ...(n!.sodium ? { sodiumMg: Number(n!.sodium.amount ?? 0) } : {}),
+        ...(n!.totalSugar ? { totalSugarG: Number(n!.totalSugar.amount ?? 0) } : {}),
+        ...(n!.addedSugar ? { addedSugarG: Number(n!.addedSugar.amount ?? 0) } : {}),
+        ...(n!.saturatedFat ? { saturatedFatG: Number(n!.saturatedFat.amount ?? 0) } : {}),
+        ...(n!.transFat ? { transFatG: Number(n!.transFat.amount ?? 0) } : {}),
+        ...(n!.cholesterol ? { cholesterolMg: Number(n!.cholesterol.amount ?? 0) } : {}),
+        ...(n!.foodAmount
+          ? {
+              servingSize: {
+                amount: Number(n!.foodAmount.amount ?? 0),
+                unit: String(n!.foodAmount.unit ?? "g"),
+              },
+            }
+          : {}),
+        ...(n!.servingInfo ? { servingInfo: n!.servingInfo } : {}),
       }
     : null;
 
