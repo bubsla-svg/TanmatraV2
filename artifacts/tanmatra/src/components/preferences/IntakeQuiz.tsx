@@ -113,6 +113,7 @@ function suggestedTargets(goal: WellnessGoal, activity: ActivityLevel) {
 interface IntakeQuizProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialGoal?: WellnessGoal;
 }
 
 // `STEPS.length` is the form steps; once the user saves, we show a results
@@ -120,10 +121,14 @@ interface IntakeQuizProps {
 // conversion moment in the product.
 const RESULTS_STEP = STEPS.length;
 
-export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
+export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQuizProps) {
   const { preferences, update, unauthorized } = usePreferences();
   const [step, setStep] = useState(0);
-  const [state, setState] = useState<QuizState>(() => initialState(preferences));
+  const [state, setState] = useState<QuizState>(() => {
+    const init = initialState(preferences);
+    if (initialGoal) init.goal = initialGoal;
+    return init;
+  });
   const [saving, setSaving] = useState(false);
   // Once the assessment saves for a guest (unauthenticated) user, nudge them to
   // create an account so their plan survives a device change. Non-blocking:
@@ -166,7 +171,10 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
             ...initialState(preferences),
             ...draft.state,
           };
-          const restoredStep = Math.min(Math.max(0, draft.step), STEPS.length - 1);
+          if (initialGoal) {
+            mergedState.goal = initialGoal;
+          }
+          const restoredStep = initialGoal ? 0 : Math.min(Math.max(0, draft.step), STEPS.length - 1);
           setState(mergedState);
           setStep(restoredStep);
           setShowManualTargets(
@@ -195,6 +203,9 @@ export default function IntakeQuiz({ open, onOpenChange }: IntakeQuizProps) {
     // `update()` call below, no answers are silently lost when the
     // user closes the dialog mid-quiz.
     const initial = initialState(preferences);
+    if (initialGoal) {
+      initial.goal = initialGoal;
+    }
     setState(initial);
     let resumeAt = 0;
     if (preferences?.dietaryStyle) resumeAt = 1;

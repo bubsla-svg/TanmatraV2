@@ -12,6 +12,7 @@ const consentSchema = z.object({
   purposeClinicalDelivery: z.boolean().optional(),
   purposeMarketing: z.boolean().optional(),
   purposeAiPersonalization: z.boolean().optional(),
+  purposeHealthDataProcessing: z.boolean().optional(),
   consentVersion: z.string().trim().min(1).max(64).optional(),
   status: z.enum(["granted", "revoked", "expired"]).optional(),
 });
@@ -23,6 +24,7 @@ function serializeConsent(row: typeof userConsentsTable.$inferSelect) {
     purposeClinicalDelivery: row.purposeClinicalDelivery,
     purposeMarketing: row.purposeMarketing,
     purposeAiPersonalization: row.purposeAiPersonalization,
+    purposeHealthDataProcessing: row.purposeHealthDataProcessing,
     consentVersion: row.consentVersion,
     ipAddress: row.ipAddress ?? null,
     userAgent: row.userAgent ?? null,
@@ -79,7 +81,12 @@ async function upsertConsentHandler(req: Request, res: Response) {
 
     let row;
     const now = new Date();
-    const isRevoked = patch.status === "revoked" || (patch.purposeClinicalDelivery === false && patch.purposeAiPersonalization === false && patch.purposeMarketing === false);
+    const isRevoked =
+      patch.status === "revoked" ||
+      (patch.purposeClinicalDelivery === false &&
+        patch.purposeAiPersonalization === false &&
+        patch.purposeMarketing === false &&
+        patch.purposeHealthDataProcessing === false);
 
     if (existing) {
       [row] = await db
@@ -88,6 +95,7 @@ async function upsertConsentHandler(req: Request, res: Response) {
           purposeClinicalDelivery: patch.purposeClinicalDelivery ?? existing.purposeClinicalDelivery,
           purposeMarketing: patch.purposeMarketing ?? existing.purposeMarketing,
           purposeAiPersonalization: patch.purposeAiPersonalization ?? existing.purposeAiPersonalization,
+          purposeHealthDataProcessing: patch.purposeHealthDataProcessing ?? existing.purposeHealthDataProcessing,
           consentVersion: patch.consentVersion ?? existing.consentVersion,
           status: (patch.status as ConsentStatus) ?? (isRevoked ? "revoked" : existing.status),
           ipAddress: ipAddress || existing.ipAddress,
@@ -105,6 +113,7 @@ async function upsertConsentHandler(req: Request, res: Response) {
           purposeClinicalDelivery: patch.purposeClinicalDelivery ?? true,
           purposeMarketing: patch.purposeMarketing ?? false,
           purposeAiPersonalization: patch.purposeAiPersonalization ?? false,
+          purposeHealthDataProcessing: patch.purposeHealthDataProcessing ?? false,
           consentVersion: patch.consentVersion ?? "2023_DPDPA_v1",
           status: (patch.status as ConsentStatus) ?? (isRevoked ? "revoked" : "granted"),
           ipAddress,

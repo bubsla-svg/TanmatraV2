@@ -59,6 +59,10 @@ export const usersTable = pgTable("users", {
   marketingSmsConsentAt: timestamp("marketing_sms_consent_at", { withTimezone: true }),
   dpdpConsentAt: timestamp("dpdp_consent_at", { withTimezone: true }),
   tosAcceptedVersion: varchar("tos_accepted_version", { length: 16 }),
+  whatsappUtilityConsentAt: timestamp("whatsapp_utility_consent_at", { withTimezone: true }),
+  whatsappMarketingConsentAt: timestamp("whatsapp_marketing_consent_at", { withTimezone: true }),
+  smsFallbackConsentAt: timestamp("sms_fallback_consent_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

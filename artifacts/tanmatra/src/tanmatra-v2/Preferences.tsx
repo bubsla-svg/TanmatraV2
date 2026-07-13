@@ -48,6 +48,7 @@ export default function V2Preferences() {
     purposeClinicalDelivery: true,
     purposeMarketing: false,
     purposeAiPersonalization: false,
+    purposeHealthDataProcessing: false,
     consentVersion: "2023_DPDPA_v1",
   });
   const [consentLoading, setConsentLoading] = useState<boolean>(true);
@@ -61,6 +62,7 @@ export default function V2Preferences() {
             purposeClinicalDelivery: res.consent.purposeClinicalDelivery,
             purposeMarketing: res.consent.purposeMarketing,
             purposeAiPersonalization: res.consent.purposeAiPersonalization,
+            purposeHealthDataProcessing: res.consent.purposeHealthDataProcessing,
             consentVersion: res.consent.consentVersion,
             grantedAt: res.consent.grantedAt ?? undefined,
           });
@@ -78,6 +80,7 @@ export default function V2Preferences() {
           purposeClinicalDelivery: res.consent.purposeClinicalDelivery,
           purposeMarketing: res.consent.purposeMarketing,
           purposeAiPersonalization: res.consent.purposeAiPersonalization,
+          purposeHealthDataProcessing: res.consent.purposeHealthDataProcessing,
           consentVersion: res.consent.consentVersion,
           grantedAt: res.consent.grantedAt ?? undefined,
         });

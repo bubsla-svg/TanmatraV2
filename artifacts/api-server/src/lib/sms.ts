@@ -1,4 +1,6 @@
 import { logger } from "./logger";
+import { shouldDeferMessage } from "./quietHours";
+import { db, messageDispatchesTable } from "@workspace/db";
 
 /**
  * Thin wrapper around Twilio's Verify API for SMS OTPs. Used by the
@@ -106,7 +108,25 @@ async function twilioVerifyFetch(
   };
 }
 
-export async function sendSmsOtp(number: PhoneE164): Promise<SendOtpResult> {
+export async function sendSmsOtp(
+  number: PhoneE164,
+  bypassQuietHours = false,
+): Promise<SendOtpResult> {
+  if (!bypassQuietHours) {
+    const now = new Date();
+    const deferTime = shouldDeferMessage(now);
+    if (deferTime) {
+      const delayMs = deferTime.getTime() - now.getTime();
+      logger.info({ e164: maskE164(number.e164), deferTime, delayMs }, "sms.otp.deferred");
+      setTimeout(() => {
+        void sendSmsOtp(number, true).catch((err) => {
+          logger.error({ err, e164: number.e164 }, "sms.otp.deferred_send_failed");
+        });
+      }, delayMs);
+      return { ok: true };
+    }
+  }
+
   if (!hasTwilioCreds()) {
     if (!mockAllowed()) {
       logger.error(
@@ -153,6 +173,16 @@ export interface DeliveryDelaySmsResult {
   sent: boolean;
   /** Populated when `sent` is false, explaining why. */
   reason?: string;
+  discarded?: boolean;
+}
+
+export interface SendSmsOptions {
+  bypassQuietHours?: boolean;
+  dedupe?: {
+    userId: string;
+    templateId: string;
+    serviceDate: string;
+  };
 }
 
 /**
@@ -170,11 +200,59 @@ export interface DeliveryDelaySmsResult {
  * `{ sent: true }` only on a confirmed send. The call sites already reflect
  * whatever this returns, so they need no changes.
  */
-export async function sendDeliveryDelaySms(_params: {
-  orderId: number;
-  phone?: string | null;
-  message: string;
-}): Promise<DeliveryDelaySmsResult> {
+export async function sendDeliveryDelaySms(
+  params: {
+    orderId: number;
+    phone?: string | null;
+    message: string;
+  },
+  options?: SendSmsOptions,
+): Promise<DeliveryDelaySmsResult> {
+  if (options?.dedupe) {
+    const { userId, templateId, serviceDate } = options.dedupe;
+    const dedupeKey = `${userId}:${templateId}:${serviceDate}`;
+    try {
+      await db.insert(messageDispatchesTable).values({
+        userId,
+        templateId,
+        serviceDate,
+        dedupeKey,
+      });
+    } catch (e) {
+      if (
+        e &&
+        typeof e === "object" &&
+        "code" in e &&
+        (e as { code?: string }).code === "23505"
+      ) {
+        logger.info(
+          { userId, templateId, serviceDate, dedupeKey },
+          "sms.message.deduped"
+        );
+        return { sent: false, discarded: true, reason: "duplicate alert" };
+      }
+      throw e;
+    }
+  }
+
+  if (!options?.bypassQuietHours) {
+    const now = new Date();
+    const deferTime = shouldDeferMessage(now);
+    if (deferTime) {
+      const delayMs = deferTime.getTime() - now.getTime();
+      logger.info({ orderId: params.orderId, deferTime, delayMs }, "sms.delay.deferred");
+      setTimeout(() => {
+        void sendDeliveryDelaySms(params, {
+          ...options,
+          bypassQuietHours: true,
+        }).catch((err) => {
+          logger.error({ err, orderId: params.orderId }, "sms.delay.deferred_send_failed");
+        });
+      }, delayMs);
+      return { sent: true }; // Treat as successfully queued/deferred
+    }
+  }
+
   return { sent: false, reason: "no transactional SMS provider configured" };
 }
 

@@ -62,6 +62,7 @@ export async function payWithRazorpay(args: {
       body: JSON.stringify({
         amountPaise: args.amountPaise,
         receipt: args.receipt.slice(0, 40),
+        orderId: args.receipt,
       }),
     });
     if (!res.ok) return "unavailable";

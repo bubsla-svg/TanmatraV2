@@ -25,6 +25,8 @@ export type CreditReason =
   | "redemption"
   | "manual_grant";
 
+export type TrialState = "trial_purchased" | "trial_active" | "trial_bridge_eligible" | "trial_ended_undecided" | "converted" | "ended_abandoned";
+
 export interface SubscriptionItem {
   slug: string;
   name: string;
@@ -74,6 +76,7 @@ export const subscriptionsTable = pgTable(
       .default(0),
     dayPlan: jsonb("day_plan").$type<SubscriptionDayPlanEntry[] | null>(),
     notes: varchar("notes", { length: 512 }),
+    trialState: varchar("trial_state", { length: 32 }).$type<TrialState>(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -191,3 +194,58 @@ export type SubscriptionDelivery =
   typeof subscriptionDeliveriesTable.$inferSelect;
 
 export type MealCredit = typeof mealCreditsTable.$inferSelect;
+
+export const subscriptionMandatesTable = pgTable(
+  "subscription_mandates",
+  {
+    id: serial("id").primaryKey(),
+    subscriptionId: integer("subscription_id")
+      .notNull()
+      .references(() => subscriptionsTable.id, { onDelete: "cascade" }),
+    razorpayCustomerId: varchar("razorpay_customer_id", { length: 64 }).notNull(),
+    razorpayTokenId: varchar("razorpay_token_id", { length: 64 }).notNull(),
+    status: varchar("status", { length: 32 }).notNull().default("active"),
+    nextChargeAt: timestamp("next_charge_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("idx_subscription_mandates_sub").on(table.subscriptionId)],
+);
+
+export const preDebitNotificationsTable = pgTable(
+  "pre_debit_notifications",
+  {
+    id: serial("id").primaryKey(),
+    subscriptionId: integer("subscription_id")
+      .notNull()
+      .references(() => subscriptionsTable.id, { onDelete: "cascade" }),
+    scheduledChargeAt: timestamp("scheduled_charge_at", {
+      withTimezone: true,
+    }).notNull(),
+    dispatchedAt: timestamp("dispatched_at", { withTimezone: true }),
+    status: varchar("status", { length: 32 }).notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_pre_debit_notifications_sub").on(table.subscriptionId),
+  ],
+);
+
+export const insertSubscriptionMandateSchema = createInsertSchema(
+  subscriptionMandatesTable,
+).omit({ id: true, createdAt: true });
+export type InsertSubscriptionMandate = z.infer<
+  typeof insertSubscriptionMandateSchema
+>;
+export type SubscriptionMandate = typeof subscriptionMandatesTable.$inferSelect;
+
+export const insertPreDebitNotificationSchema = createInsertSchema(
+  preDebitNotificationsTable,
+).omit({ id: true, createdAt: true });
+export type InsertPreDebitNotification = z.infer<
+  typeof insertPreDebitNotificationSchema
+>;
+export type PreDebitNotification = typeof preDebitNotificationsTable.$inferSelect;

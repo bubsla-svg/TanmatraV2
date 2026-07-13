@@ -11,6 +11,7 @@ import {
   subscriptionsTable,
 } from "@workspace/db";
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { isCapacityHoldExpired } from "./subscriptions";
 import { z } from "zod/v4";
 import { issueCredit } from "../lib/loyaltyEngine";
 import { isOpsRequest } from "../lib/adminGate";
@@ -436,6 +437,12 @@ router.put(
           .for("update")
           .limit(1);
         if (!sub) throw new Error("subscription not found");
+
+        const isTrial = sub.trialState != null && sub.trialState !== "converted" && sub.trialState !== "ended_abandoned";
+        if (isTrial && isCapacityHoldExpired(sub.createdAt)) {
+          throw new Error("capacity hold expired");
+        }
+
         const previousSlotId = sub.preferredSlotId ?? null;
         if (previousSlotId === slotId) return sub;
 
@@ -493,7 +500,7 @@ router.put(
         res.status(404).json({ error: msg });
         return;
       }
-      if (msg === "delivery slot full") {
+      if (msg === "delivery slot full" || msg === "capacity hold expired") {
         res.status(409).json({ error: msg });
         return;
       }

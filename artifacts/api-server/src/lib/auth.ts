@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { type Request, type Response } from "express";
-import { db, type DrizzleDb, sessionsTable } from "@workspace/db";
+import { db, type DrizzleDb, sessionsTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import type { AuthUser } from "@workspace/api-zod";
 
@@ -109,4 +109,9 @@ export function getSessionId(req: Request): string | undefined {
  */
 export async function purgeExpiredSessions(): Promise<void> {
   await db.delete(sessionsTable).where(sql`${sessionsTable.expire} < now()`);
+}
+
+export async function purgeDeletedAccountsJob(): Promise<void> {
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  await db.delete(usersTable).where(sql`${usersTable.deletedAt} < ${cutoff}`);
 }
