@@ -1,0 +1,55 @@
+# Quality gates (PR gate). Turns the CRO-spec regression guards from
+# hand-run scripts into enforced CI checks:
+#   - no hardcoded color literals (design-token binding, spec A3)
+#   - no hardcoded ₹ price literals (spec A4.2)
+#   - no prohibited geography strings / stale copyright in the built bundle (spec A1)
+#   - every money-path manifest route serves real prerendered HTML with
+#     h1 + a progressive CTA anchor and no JS-required fallback (spec A1.4)
+# Complements e2e-pr.yml (funnel drive) and synthetic-prod-check.yml (post-deploy).
+name: Quality gates
+
+on:
+  pull_request:
+    paths:
+      - "artifacts/tanmatra/**"
+      - "scripts/lint-colors.ts"
+      - "scripts/lint-prices.ts"
+      - "scripts/lint-geography.ts"
+      - "lib/**"
+      - ".github/workflows/quality-gates.yml"
+  workflow_dispatch: {}
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # No explicit version — root package.json's packageManager pins pnpm.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # Source-scanning gates — no build needed.
+      - name: Lint — color literals (design tokens)
+        run: pnpm --filter "@workspace/tanmatra" run lint:colors
+
+      - name: Lint — hardcoded price literals
+        run: pnpm --filter "@workspace/tanmatra" run lint:prices
+
+      # Build once; the geography lint and SSR checker scan build/client.
+      - name: Build SPA
+        run: pnpm --filter "@workspace/tanmatra" run build
+
+      - name: Lint — geography / stale copyright (built bundle)
+        run: pnpm --filter "@workspace/tanmatra" run lint:geography
+
+      - name: SSR — money-path routes serve real HTML (no-JS)
+        run: pnpm --filter "@workspace/tanmatra" run test:ssr
