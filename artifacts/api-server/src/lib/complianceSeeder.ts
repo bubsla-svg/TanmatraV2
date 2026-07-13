@@ -2,7 +2,22 @@ import { db, complianceLogsTable } from "@workspace/db";
 import { logger } from "./logger";
 import { sql } from "drizzle-orm";
 
+/**
+ * Local/dev-only helper to populate an empty compliance_logs table with sample
+ * records so the admin console has something to render during development.
+ *
+ * ⚠️ This writes SYNTHETIC cold-storage temperatures and hygiene confirmations.
+ * It must NEVER run in production — falsified food-safety records are a
+ * regulatory and trust liability. It is now opt-in (no longer called on boot):
+ * a hard production guard makes it a no-op there even if invoked.
+ */
 export async function seedComplianceLogsIfEmpty(): Promise<void> {
+  if (process.env["NODE_ENV"] === "production") {
+    logger.warn(
+      "seedComplianceLogsIfEmpty skipped: synthetic compliance data must never be written to production",
+    );
+    return;
+  }
   try {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)::int` })
