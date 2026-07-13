@@ -107,7 +107,7 @@ type MatchTier = "hi" | "mid" | "low";
 export type MatchScore =
   | { kind: "none" }
   | { kind: "blocked" }
-  | { kind: "scored"; score: number; tier: MatchTier; phrase: string | null };
+  | { kind: "scored"; score: number; tier: MatchTier; phrase: string | null; differentiated: boolean };
 
 /** A short, general reason phrase tied to real preferences — never macro-precise. */
 function goalPhrase(prefs: UserPreferences | null): string | null {
@@ -159,11 +159,22 @@ export function computeMatchScore(
     score -= macroWarnings * 11;
   }
 
+  // Whether ANY real signal moved the score off the 76 seed. For a sparse
+  // profile (e.g. general_wellness, no cuisines/conditions) nothing fires and
+  // every dish stays at a flat 76 — showing a precise "76% match" there implies
+  // a precision the profile can't support (A4.1 / A8). In that case we suppress
+  // the number and fall back to the categorical tier instead.
+  const differentiated =
+    nonMacroReasons > 0 ||
+    dislikeHits > 0 ||
+    !match.cuisineMatch ||
+    (!provisional && (macroReasons > 0 || macroWarnings > 0));
+
   score = Math.max(46, Math.min(99, Math.round(score)));
   const tier: MatchTier = score >= 82 ? "hi" : score >= 64 ? "mid" : "low";
   const hasFit = reasons.length > 0 || score >= 78;
   const phrase = hasFit ? goalPhrase(prefs) : null;
-  return { kind: "scored", score, tier, phrase };
+  return { kind: "scored", score, tier, phrase, differentiated };
 }
 
 /** Static, honest glucose-curve placeholder — NOT live data. Purely decorative. */
@@ -818,7 +829,7 @@ export default function V2Menu() {
 
               {category !== "all" ? (
                 // Flat grid when filtering by category
-                <div className="prodgrid">
+                <div className="prodgrid onecol">
                   {consolidatedDishes.slice(0, visibleCount).map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, cardIndex) => {
                     const price = parent.variants[0].price;
                     const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
@@ -865,7 +876,7 @@ export default function V2Menu() {
                             <i className="ph-fill ph-sparkle text-clinical-gold text-xs" />
                             Matched to your goal
                           </h2>
-                          <div className="prodgrid">
+                          <div className="prodgrid onecol">
                             {goalMatched.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, idx) => {
                               const price = parent.variants[0].price;
                               const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
@@ -909,7 +920,7 @@ export default function V2Menu() {
                             <h2 className="sh mb10 uppercase tracking-wider text-[11px] font-bold text-clinical-zinc" style={{ textTransform: "capitalize" }}>
                               {CATEGORY_LABELS[cat]}
                             </h2>
-                            <div className="prodgrid">
+                            <div className="prodgrid onecol">
                               {renderList.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }) => {
                                 const price = parent.variants[0].price;
                                 const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
@@ -1204,7 +1215,7 @@ function DishCard({
               style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }}
             />
           </picture>
-          {info.kind === "scored" && (
+          {info.kind === "scored" && info.differentiated && (
             <span className={`mscore ${info.tier}`} aria-label={`Biometric match ${info.score} percent`}>
               {info.score}% match
             </span>

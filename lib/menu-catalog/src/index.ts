@@ -1632,7 +1632,7 @@ export interface DishCustomOption {
     "kitchen": "continental",
     "category": "beverages",
     "isVeg": true,
-    "rdVerified": true,
+    "rdVerified": false,
     "prepTime": "5 min",
     "macros": {
       "protein": 3,
@@ -1643,8 +1643,8 @@ export interface DishCustomOption {
     },
     "ingredients": [],
     "allergens": [],
-    "glycaemicIndex": "low",
-    "sugarPerServing": "8g (natural)",
+    "glycaemicIndex": "high",
+    "sugarPerServing": "35g (added)",
     "customizations": [],
     "isAvailable": true
   },
@@ -2079,7 +2079,7 @@ export interface DishCustomOption {
     "kitchen": "continental",
     "category": "beverages",
     "isVeg": true,
-    "rdVerified": true,
+    "rdVerified": false,
     "prepTime": "5 min",
     "macros": {
       "protein": 3,
@@ -2093,7 +2093,7 @@ export interface DishCustomOption {
     ],
     "allergens": [],
     "glycaemicIndex": "low",
-    "sugarPerServing": "8g (natural)",
+    "sugarPerServing": "0g (artificial sweetener)",
     "customizations": [],
     "isAvailable": true
   },
@@ -3863,7 +3863,7 @@ export interface DishCustomOption {
     "kitchen": "continental",
     "category": "beverages",
     "isVeg": true,
-    "rdVerified": true,
+    "rdVerified": false,
     "prepTime": "5 min",
     "macros": {
       "protein": 3,
@@ -3876,8 +3876,8 @@ export interface DishCustomOption {
       "Thums Up can – 1 (chilled)"
     ],
     "allergens": [],
-    "glycaemicIndex": "low",
-    "sugarPerServing": "8g (natural)",
+    "glycaemicIndex": "high",
+    "sugarPerServing": "35g (added)",
     "customizations": [],
     "isAvailable": true
   },
