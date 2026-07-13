@@ -207,9 +207,9 @@ export default function StickyBottomBar({
           onClick={onAddDish}
           disabled={disabled}
           className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-6 rounded-xl shrink-0"
-          style={{ height: 38 }}
+          style={{ height: 44 }}
         >
-          {isIncluded ? "Add Another" : "Add to Plan"}
+          {isIncluded ? "Add Another" : "Add to Order"}
         </button>
       </div>
     );
@@ -246,7 +246,7 @@ export default function StickyBottomBar({
           onClick={continueAction}
           disabled={disabled || loading}
           className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-6 rounded-xl flex items-center gap-1.5 shrink-0"
-          style={{ height: 38 }}
+          style={{ height: 44 }}
         >
           {loading ? "Processing…" : cta}
           {!loading && <ArrowRight className="w-3.5 h-3.5" weight="bold" />}
