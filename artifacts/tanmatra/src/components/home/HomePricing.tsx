@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { subscriptionsApi } from "@/lib/subscriptionsApi";
-import { formatPrice } from "@/lib/api/adapter";
+import { formatPriceRounded } from "@/lib/api/adapter";
 import { Check } from "@phosphor-icons/react";
 
 interface PricingPreset {
@@ -105,10 +105,10 @@ function PricingCard({ preset }: { preset: PricingPreset }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const displayPrice = quote ? formatPrice(quote.totalPaise) : null;
+  const displayPrice = quote ? formatPriceRounded(quote.totalPaise) : null;
   const weeklyEquivalent =
     preset.id === "six-week" && quote
-      ? formatPrice(Math.round(quote.totalPaise / 6))
+      ? formatPriceRounded(quote.totalPaise / 6)
       : null;
 
   return (
