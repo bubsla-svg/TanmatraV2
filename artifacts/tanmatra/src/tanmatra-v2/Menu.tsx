@@ -658,7 +658,7 @@ export default function V2Menu() {
                       </div>
                       <Link to={`/dish/${dish.slug}`} className="small clamp1" style={{ fontWeight: 600, display: "block" }}>{dish.name}</Link>
                       <div className="mono" style={{ fontSize: 10, color: "var(--fnt)" }}>
-                        {macrosAreProvisional(dish) ? "macros being verified" : `${dish.macros.calories} kcal · ${dish.macros.protein}g P`}
+                        {macrosAreProvisional(dish) ? "macros being verified" : `${dish.macrosEstimated ? "~" : ""}${dish.macros.calories} kcal · ${dish.macros.protein}g P${dish.macrosEstimated ? " · est" : ""}`}
                       </div>
                       <div className="fx ac jb mt6">
                         <span className="price" style={{ fontSize: 13, color: "var(--safb)" }}>{F(dish.price)}</span>
@@ -1251,8 +1251,8 @@ function DishCard({
           </div>
         </div>
       ) : (
-        <div className="ribbon cmp mt10" role="group" aria-label={`${dish.macros.calories} kcal, ${dish.macros.protein}g protein`}>
-          <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{dish.macros.calories}</span></div>
+        <div className="ribbon cmp mt10" role="group" aria-label={`${dish.macros.calories} kcal, ${dish.macros.protein}g protein${dish.macrosEstimated ? " (estimated from ingredients)" : ""}`}>
+          <div className="rc"><span className="rl">{dish.macrosEstimated ? "KCAL·EST" : "KCAL"}</span><span className="rv sf">{dish.macros.calories}</span></div>
           <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{dish.macros.protein}<i className="ru">g</i></span></div>
           <div className="rc"><span className="rl">CARBS</span><span className="rv">{dish.macros.carbs}<i className="ru">g</i></span></div>
           <div className="rc"><span className="rl">FAT</span><span className="rv">{dish.macros.fat}<i className="ru">g</i></span></div>

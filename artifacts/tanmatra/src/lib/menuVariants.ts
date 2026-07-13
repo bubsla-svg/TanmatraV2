@@ -21,6 +21,8 @@ export interface ConsolidatedVariant {
   isVeg: boolean;
   isAvailable: boolean;
   rdVerified: boolean;
+  macrosProvisional?: boolean;
+  macrosEstimated?: boolean;
   optionNames: string[]; // e.g. ["Veg"]
 }
 
@@ -135,6 +137,8 @@ export function groupCatalogDishes(dishes: DishData[]): ConsolidatedDish[] {
             isVeg: d.isVeg,
             isAvailable: d.isAvailable,
             rdVerified: d.rdVerified,
+            macrosProvisional: d.macrosProvisional,
+            macrosEstimated: d.macrosEstimated,
             optionNames: [],
           },
         ],
@@ -201,6 +205,8 @@ export function groupCatalogDishes(dishes: DishData[]): ConsolidatedDish[] {
           isVeg: d.isVeg,
           isAvailable: d.isAvailable,
           rdVerified: d.rdVerified,
+          macrosProvisional: d.macrosProvisional,
+          macrosEstimated: d.macrosEstimated,
           optionNames: [suffix],
         });
       });

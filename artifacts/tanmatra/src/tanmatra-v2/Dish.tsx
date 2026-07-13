@@ -30,7 +30,7 @@ import { API_BASE } from "@/lib/apiBase";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError, FALLBACK_DISH_IMAGE } from "@/lib/imgFallback";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
-import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning, Plus } from "@phosphor-icons/react";
+import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning, Plus, Calculator } from "@phosphor-icons/react";
 
 const GOAL_LABEL: Record<string, string> = {
   lose_weight: "weight-loss",
@@ -198,6 +198,7 @@ export default function V2Dish() {
   const gi: string = meal.glycaemicIndex || "medium";
   const isPremiumOnly = premiumSlugs.has(meal.slug);
   const macrosProvisional = macrosAreProvisional(meal);
+  const macrosEstimated = !!meal.macrosEstimated;
   const label = buildNutritionLabel(meal);
   const kitchenNote = getKitchenNoteForDish(meal);
   const rdNote = getRdNoteForDish(meal);
@@ -411,26 +412,37 @@ export default function V2Dish() {
 
           {/* 4.5 Nutrition Snapshot Chips */}
           {!macrosProvisional && calculatedMacros && (
-            <div className="grid grid-cols-4 gap-2 mt-4 bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
-              <div className="flex flex-col items-center">
-                <span className="text-[9px] font-mono text-white/45 uppercase">Calories</span>
-                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{calculatedMacros.calories}</span>
+            <>
+              <div className="grid grid-cols-4 gap-2 mt-4 bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
+                <div className="flex flex-col items-center">
+                  <span className="text-[9px] font-mono text-white/45 uppercase">Calories</span>
+                  <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{macrosEstimated ? "~" : ""}{calculatedMacros.calories}</span>
+                </div>
+                <div className="flex flex-col items-center border-l border-white/5">
+                  <span className="text-[9px] font-mono text-white/45 uppercase">Protein</span>
+                  <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{macrosEstimated ? "~" : ""}{calculatedMacros.protein}g</span>
+                </div>
+                <div className="flex flex-col items-center border-l border-white/5">
+                  <span className="text-[9px] font-mono text-white/45 uppercase">Glycemic</span>
+                  <span className="text-[10px] font-bold text-white/90 mt-0.5 uppercase">{gi}</span>
+                </div>
+                <div className="flex flex-col items-center border-l border-white/5">
+                  <span className="text-[9px] font-mono text-white/45 uppercase">{macrosEstimated ? "Source" : "RD Review"}</span>
+                  <span className="text-[9px] font-bold text-white/90 mt-1 uppercase flex items-center gap-0.5">
+                    {macrosEstimated ? (
+                      <><Calculator className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Est.</>
+                    ) : (
+                      <><Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Checked</>
+                    )}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col items-center border-l border-white/5">
-                <span className="text-[9px] font-mono text-white/45 uppercase">Protein</span>
-                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{calculatedMacros.protein}g</span>
-              </div>
-              <div className="flex flex-col items-center border-l border-white/5">
-                <span className="text-[9px] font-mono text-white/45 uppercase">Glycemic</span>
-                <span className="text-[10px] font-bold text-white/90 mt-0.5 uppercase">{gi}</span>
-              </div>
-              <div className="flex flex-col items-center border-l border-white/5">
-                <span className="text-[9px] font-mono text-white/45 uppercase">RD Review</span>
-                <span className="text-[9px] font-bold text-white/90 mt-1 uppercase flex items-center gap-0.5">
-                  <Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Checked
-                </span>
-              </div>
-            </div>
+              {macrosEstimated && (
+                <p className="text-[9px] text-white/40 mt-1.5 leading-snug px-1">
+                  Macros estimated from the ingredient list (IFCT 2017 / USDA) — a close approximation, not yet lab/RD-verified.
+                </p>
+              )}
+            </>
           )}
 
           {/* Variant switcher */}
