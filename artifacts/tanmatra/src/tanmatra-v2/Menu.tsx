@@ -671,7 +671,23 @@ export default function V2Menu() {
             </div>
           )}
 
-          {/* RD-curated combos */}
+          {/* RD-curated combos. useBundles has no placeholder, so on first paint
+              `bundles` is undefined and the whole block used to pop in AFTER the
+              grid had painted — translating the dish grid downward (the dominant
+              /menu CLS source). Reserve the block's height with a skeleton while
+              it loads so the grid lands in its final position on first paint. */}
+          {!groupCode && bundles === undefined && (
+            <div className="mb14" aria-hidden="true">
+              <div className="sh mb10"><i className="ph-bold ph-package" style={{ color: "var(--safb)" }} /> RD-curated combos</div>
+              {[0, 1].map((i) => (
+                <div key={i} className="card mb10" style={{ minHeight: 96 }}>
+                  <div style={{ height: 16, width: "55%", borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+                  <div className="mt10" style={{ height: 13, width: "38%", borderRadius: 6, background: "rgba(255,255,255,0.05)" }} />
+                  <div className="mt10" style={{ height: 24, width: "100%", borderRadius: 6, background: "rgba(255,255,255,0.04)" }} />
+                </div>
+              ))}
+            </div>
+          )}
           {bundles && bundles.length > 0 && !groupCode && (
             <div className="mb14">
               <div className="sh mb10"><i className="ph-bold ph-package" style={{ color: "var(--safb)" }} /> RD-curated combos</div>
