@@ -53,6 +53,7 @@ type EventName =
   | "assessment_started"
   | "pdp_viewed"
   | "pdp_gallery_swiped"
+  | "pdp_variant_switched"
   | "fit_explanation_expanded"
   | "full_nutrition_opened"
   | "customize_opened"
