@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
+import compression from "compression";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -36,12 +37,18 @@ app.use(
   }),
 );
 
-// The API server only emits JSON, never HTML, so a browser shouldn't
-// ever execute a response from us. CSP at the API layer is mostly
-// belt-and-braces — the SPA's own index.html ships its own CSP via
-// <meta http-equiv> for the document context. We still set Helmet's
-// other headers (HSTS, X-Frame-Options=DENY, X-Content-Type-Options,
-// Referrer-Policy, etc.) which DO apply to non-HTML responses.
+// gzip/brotli-compress API responses. Cheap win for the larger JSON payloads
+// (menu catalog, order lists). The SPA's static bundles are compressed by the
+// SPA server (artifacts/tanmatra/server/static-server.mjs), not here.
+app.use(compression());
+
+// The API server only emits JSON, never HTML, so a browser shouldn't ever
+// execute a response from us. CSP at the API layer is mostly belt-and-braces.
+// Note: the *browsing* document (the SPA's index.html + bundles) is served and
+// header-hardened by artifacts/tanmatra/server/static-server.mjs — it does NOT
+// ship a <meta http-equiv> CSP, so that server is where the document-context
+// CSP/HSTS live. Helmet here still sets HSTS, X-Frame-Options=DENY,
+// X-Content-Type-Options, Referrer-Policy, etc. on our JSON responses.
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -58,6 +65,13 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
+
+// Helmet 8 no longer sets Permissions-Policy; add it explicitly to deny powerful
+// features the API has no use for.
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  next();
+});
 
 const isProduction = process.env["NODE_ENV"] === "production";
 
