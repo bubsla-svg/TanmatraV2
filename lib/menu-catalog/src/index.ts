@@ -30,6 +30,21 @@ export interface DishCustomOption {
     | "mains";
   export type DishKitchen = "continental" | "indian" | "asian" | "mediterranean";
 
+  /**
+   * How a dish is meant to be served on arrival — drives the packaging/prep
+   * copy on the PDP. A single universal "reheat" template previously shipped on
+   * every dish, telling customers to heat cold-pressed smoothies (with ice) and
+   * raw salads. Serving copy is now derived from this enum so cold/raw items can
+   * never carry heating instructions.
+   *
+   * - `serve_chilled` — eat straight from the fridge, never heat (smoothies,
+   *   raw salads, curd bowls).
+   * - `reheat` — warm through before eating (hot mains, soups, pasta, rice bowls).
+   * - `ready_ambient` — ready to eat as delivered; no heating required (bakes,
+   *   sandwiches, wraps).
+   */
+  export type DishServeMode = "serve_chilled" | "reheat" | "ready_ambient";
+
   export interface DishData {
     id: number;
     slug: string;
@@ -44,6 +59,19 @@ export interface DishCustomOption {
     rdVerified: boolean;
     rdNote?: string;
     prepTime: string;
+    /**
+     * How the dish is served on arrival. Optional: when absent it is derived
+     * from `category` via `defaultServeModeForCategory` (cold categories never
+     * get heating copy). Set explicitly only to override the category default
+     * (e.g. a hot bake that lives in the `snacks` category → `"reheat"`).
+     */
+    serveMode?: DishServeMode;
+    /**
+     * Per-dish tasting note. When absent the UI falls back to a category-level
+     * default. Set this on any dish whose category default would misdescribe it
+     * (e.g. a sweet bake in the savoury `snacks` category).
+     */
+    tasteDescription?: string;
     macros: DishMacros;
     /**
      * Macros are ingredient-derived ESTIMATES (calculator, IFCT/USDA), not
@@ -108,6 +136,37 @@ export interface DishCustomOption {
     asian: "Asian",
     mediterranean: "Mediterranean",
   };
+
+  /**
+   * Category → default serving mode, used when a dish does not set `serveMode`
+   * explicitly. Cold categories (beverages, salads) resolve to `serve_chilled`
+   * so a smoothie or raw salad can NEVER inherit heating copy. Hot categories
+   * (soups, pasta, bowls, mains) resolve to `reheat`. The remainder default to
+   * `ready_ambient` (eat as delivered) — the safe choice, since the worst case
+   * is a hot bake told "no heating required" rather than a cold drink told to
+   * "heat for 2 minutes". Override per-dish via `DishData.serveMode`.
+   */
+  const SERVE_MODE_BY_CATEGORY: Record<DishCategory, DishServeMode> = {
+    beverages: "serve_chilled",
+    salads: "serve_chilled",
+    soups: "reheat",
+    pasta: "reheat",
+    bowls: "reheat",
+    mains: "reheat",
+    breakfast: "ready_ambient",
+    wraps: "ready_ambient",
+    snacks: "ready_ambient",
+  };
+
+  export function defaultServeModeForCategory(category: DishCategory): DishServeMode {
+    return SERVE_MODE_BY_CATEGORY[category];
+  }
+
+  /** Resolve a dish's serving mode: explicit `serveMode` if set, else the
+   * category default. Safe to call on partial DB rows that omit `serveMode`. */
+  export function getServeMode(dish: Pick<DishData, "serveMode" | "category">): DishServeMode {
+    return dish.serveMode ?? defaultServeModeForCategory(dish.category);
+  }
 
   const RAW_DISHES: DishData[] = [
   {
@@ -3667,9 +3726,11 @@ export interface DishCustomOption {
     "price": 11000,
     "kitchen": "indian",
     "category": "snacks",
-    "isVeg": false,
+    "isVeg": true,
     "rdVerified": true,
     "prepTime": "15-20 min",
+    "serveMode": "ready_ambient",
+    "tasteDescription": "Fudgy ragi-and-cocoa bake, naturally sweetened with dates — cakey crumb, gently earthy, no refined sugar.",
     "macros": {
       "protein": 6,
       "carbs": 30,
@@ -3687,7 +3748,6 @@ export interface DishCustomOption {
       "Milk – 60 ml"
     ],
     "allergens": [
-      "Eggs",
       "Dairy",
       "Gluten"
     ],
@@ -4490,3 +4550,12 @@ import { NUTRITION_TABLE as _NUTRITION_TABLE } from "./nutritionTable";
 export function computeCatalogMacros(longDescription: string): _DishMacrosResult {
   return _computeDishMacros(longDescription, _NUTRITION_TABLE);
 }
+
+// ── Dish-data integrity gate ──────────────────────────────────────────────────
+// Publish-time validation that catches contradictory allergen / diet / serving
+// data before it reaches the clinical surface. See ./dishIntegrity.ts.
+export {
+  findDishIntegrityViolations,
+  findCatalogIntegrityViolations,
+} from "./dishIntegrity";
+export type { DishIntegrityViolation } from "./dishIntegrity";

@@ -5,11 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/comp
 import { ForkKnife, Calendar, Package, UsersThree, UserCircle, List, X } from "@phosphor-icons/react";
 import Logo from "../layout/Logo";
 
-interface HomeHeaderProps {
-  onStartAssessment: () => void;
-}
-
-export default function HomeHeader({ onStartAssessment }: HomeHeaderProps) {
+export default function HomeHeader() {
   const navigate = useNavigate();
   const { unauthorized, loading } = usePreferences();
   const isLoggedIn = !unauthorized && !loading;
@@ -57,18 +53,6 @@ export default function HomeHeader({ onStartAssessment }: HomeHeaderProps) {
         </Link>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={onStartAssessment}
-            className="btn btn-p h-10 md:h-[46px] px-3.5 md:px-5 text-xs md:text-sm font-semibold rounded-lg flex items-center gap-1.5"
-            style={{
-              background: "var(--tnm-action)",
-              color: "black",
-              minHeight: 44,
-            }}
-          >
-            Find My Plan
-          </button>
-
           <button
             onClick={() => setMenuOpen(true)}
             className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white/80 hover:text-white hover:bg-white/5 transition-colors"

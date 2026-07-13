@@ -19,6 +19,7 @@ import {
   getDishVariants,
   matchesDosha,
   getTasteDescriptionForDish,
+  getServingInstructionForDish,
   getOptionMacroModifier,
 } from "@/lib/dishEnrichment";
 import { buildNutritionLabel } from "@/lib/nutritionLabel";
@@ -439,7 +440,7 @@ export default function V2Dish() {
             </span>
 
             <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/80 font-bold uppercase tracking-wider">
-              {gi === "low" ? "GI Low" : "GI Med"}
+              {gi === "low" ? "GI Low" : gi === "high" ? "GI High" : "GI Med"}
             </span>
 
             {meal.rdVerified && (
@@ -592,15 +593,8 @@ export default function V2Dish() {
             ) : (
               <div className="card bg-white/[0.01] border border-white/5 border-dashed p-4 rounded-xl text-center flex flex-col items-center gap-2.5">
                 <p className="text-xs text-white/60 leading-relaxed max-w-[280px]">
-                  Complete the metabolic assessment to see how this dish fits your calories, macros, and diet safety goals.
+                  Calories, protein and allergens for this dish are listed below. Tell us your goals any time and we'll show how each meal fits.
                 </p>
-                <Link
-                  to="/subscribe"
-                  className="btn btn-s btn-blk text-xs font-semibold px-4"
-                  style={{ height: 32 }}
-                >
-                  Start Assessment
-                </Link>
               </div>
             )}
           </div>
@@ -716,7 +710,7 @@ export default function V2Dish() {
               <div className="flex-1">
                 <h4 className="text-xs font-bold text-white/90">Clinical packaging</h4>
                 <p className="text-[11px] text-white/50 leading-relaxed mt-1">
-                  Arrives chilled in a double-insulated, tamper-evident thermal container. Ready to eat in 2 minutes of heating.
+                  {getServingInstructionForDish(meal)}
                 </p>
               </div>
             </div>

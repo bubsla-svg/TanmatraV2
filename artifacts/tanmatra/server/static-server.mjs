@@ -19,6 +19,7 @@ import tls from "node:tls";
 import net from "node:net";
 import fs from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "public");
@@ -49,6 +50,32 @@ const TYPES = {
   woff: "font/woff",
 };
 
+// Text asset types worth compressing. Binary/pre-compressed types (images,
+// woff2) are skipped — re-compressing them wastes CPU for ~no gain.
+const COMPRESSIBLE = new Set(["html", "js", "css", "json", "svg", "xml", "txt", "webmanifest"]);
+
+// Security headers for the document + asset context the SPA actually executes
+// in (Helmet on the API only protects JSON responses; the browsing context is
+// served here). The CSP is intentionally minimal — `frame-ancestors 'none'`
+// gives clickjacking protection without risking a broken hydration from a
+// too-strict resource policy on an existing SPA.
+const SECURITY_HEADERS = {
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "Content-Security-Policy": "frame-ancestors 'none'",
+};
+
+function pickEncoding(req, ext) {
+  if (!COMPRESSIBLE.has(ext)) return null;
+  const ae = String(req.headers["accept-encoding"] || "");
+  if (/\bbr\b/.test(ae)) return "br";
+  if (/\bgzip\b/.test(ae)) return "gzip";
+  return null;
+}
+
 function serveStatic(req, res) {
   const u = decodeURIComponent(req.url.split("?")[0]);
   let f = path.join(ROOT, u === "/" ? "/index.html" : u);
@@ -69,13 +96,28 @@ function serveStatic(req, res) {
   // forever) and WebKit requires an explicit script content-type + scope
   // header to pass its access-control checks.
   const isSw = u === "/sw.js";
+  const encoding = pickEncoding(req, ext);
   res.writeHead(200, {
     "Content-Type": TYPES[ext] || "application/octet-stream",
     "Cache-Control":
       ext === "html" || isSw ? "no-cache" : "public,max-age=31536000,immutable",
+    Vary: "Accept-Encoding",
+    ...SECURITY_HEADERS,
     ...(isSw ? { "Service-Worker-Allowed": "/" } : {}),
+    ...(encoding ? { "Content-Encoding": encoding } : {}),
   });
-  fs.createReadStream(f).pipe(res);
+  const source = fs.createReadStream(f);
+  source.on("error", () => {
+    if (!res.headersSent) res.writeHead(500);
+    res.end();
+  });
+  if (encoding === "br") {
+    source.pipe(zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 5 } })).pipe(res);
+  } else if (encoding === "gzip") {
+    source.pipe(zlib.createGzip({ level: 6 })).pipe(res);
+  } else {
+    source.pipe(res);
+  }
 }
 
 function clientIp(req) {

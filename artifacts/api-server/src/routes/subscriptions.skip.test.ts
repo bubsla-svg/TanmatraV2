@@ -26,8 +26,8 @@ import express, {
   type Response,
   type NextFunction,
 } from "express";
-import { inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, mealCreditsTable } from "@workspace/db";
+import { and, eq, inArray } from "drizzle-orm";
+import { db, usersTable, subscriptionsTable, mealCreditsTable, subscriptionDeliveriesTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 
@@ -182,6 +182,63 @@ test("skipping one day of a day-first weekly plan credits that day's meals, not 
   assert.equal(credits[0].amount, 2);
   assert.equal(credits[0].reason, "skipped_delivery");
   assert.equal(creditsRes.json.balance, 2);
+});
+
+test("skip is refused inside the 24h cutoff and issues no credit (B3a)", async () => {
+  const user = await makeUser();
+  const created = await api("POST", "/subscriptions", baseBody({ dayPlan: weekDayPlan([0, 1, 2, 3, 4, 5, 6]) }), user);
+  assert.equal(created.status, 201, JSON.stringify(created.json));
+  const target = created.json.deliveries[0];
+  // Move the delivery to 1 hour from now — inside the cutoff window.
+  await db
+    .update(subscriptionDeliveriesTable)
+    .set({ scheduledFor: new Date(Date.now() + 60 * 60 * 1000) })
+    .where(eq(subscriptionDeliveriesTable.id, target.id));
+
+  const skipRes = await api("POST", `/subscription-deliveries/${target.id}/skip`, {}, user);
+  assert.equal(skipRes.status, 409, JSON.stringify(skipRes.json));
+  assert.equal(skipRes.json.code, "past_cutoff");
+
+  // No credit may have been issued for a refused skip.
+  const credits = await db
+    .select()
+    .from(mealCreditsTable)
+    .where(eq(mealCreditsTable.deliveryId, target.id));
+  assert.equal(credits.length, 0, "a cutoff-refused skip must not credit");
+
+  // And the delivery must remain upcoming.
+  const [row] = await db
+    .select()
+    .from(subscriptionDeliveriesTable)
+    .where(eq(subscriptionDeliveriesTable.id, target.id));
+  assert.equal(row!.status, "upcoming");
+});
+
+test("concurrent double-skip credits exactly once (B3a TOCTOU guard)", async () => {
+  const user = await makeUser();
+  const created = await api("POST", "/subscriptions", baseBody({ dayPlan: weekDayPlan([0, 1, 2, 3, 4, 5, 6]) }), user);
+  assert.equal(created.status, 201, JSON.stringify(created.json));
+  const target = created.json.deliveries[0]; // 48h out — passes the cutoff
+
+  // Fire two skips for the same delivery simultaneously.
+  const [a, b] = await Promise.all([
+    api("POST", `/subscription-deliveries/${target.id}/skip`, {}, user),
+    api("POST", `/subscription-deliveries/${target.id}/skip`, {}, user),
+  ]);
+  const statuses = [a.status, b.status];
+  // Exactly one must succeed; the other is rejected — either at the pre-read
+  // status check (400, if it read the row after the winner committed) or at the
+  // guarded UPDATE (409 already_skipped, if both read 'upcoming' before either
+  // committed). Both paths are correct; what matters is it does NOT skip twice.
+  assert.equal(statuses.filter((s) => s === 200).length, 1, `exactly one skip must succeed, got ${JSON.stringify(statuses)}`);
+  assert.equal(statuses.filter((s) => s === 400 || s === 409).length, 1, `the other must be rejected, got ${JSON.stringify(statuses)}`);
+
+  // The load-bearing invariant: exactly one credit row for the delivery — never two.
+  const credits = await db
+    .select()
+    .from(mealCreditsTable)
+    .where(and(eq(mealCreditsTable.deliveryId, target.id), eq(mealCreditsTable.reason, "skipped_delivery")));
+  assert.equal(credits.length, 1, "double-submit must credit exactly once");
 });
 
 test("legacy delivery with no items falls back to mealsPerDelivery", async () => {

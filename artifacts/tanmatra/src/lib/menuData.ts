@@ -10,6 +10,8 @@ export {
   macrosAreProvisional,
   allergensAreReviewed,
   getAllergenDisclosure,
+  getServeMode,
+  defaultServeModeForCategory,
   type DishCategory,
   type DishKitchen,
   type DishData,
@@ -17,6 +19,7 @@ export {
   type DishCustomOption,
   type DishMacros,
   type AllergenDisclosure,
+  type DishServeMode,
 } from "@workspace/menu-catalog";
 
 import { API_BASE as API_BASE } from "./apiBase";

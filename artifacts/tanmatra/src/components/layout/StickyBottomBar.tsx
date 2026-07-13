@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useCart } from "@/lib/cartContext";
-import { usePersonalisationStore } from "@/lib/usePersonalisationStore";
 import { formatPrice } from "@/lib/api/adapter";
 import { ArrowRight, Warning, ShoppingCart } from "@phosphor-icons/react";
 
@@ -44,7 +43,6 @@ export default function StickyBottomBar({
 }: StickyBottomBarProps) {
   const navigate = useNavigate();
   const { items } = useCart();
-  const { hasCompletedOnboarding } = usePersonalisationStore();
 
   const cartHasItems = items.length > 0;
 
@@ -127,60 +125,11 @@ export default function StickyBottomBar({
     );
   }
 
+  // Homepage: the sticky bar reflects CART STATE only. An empty cart renders
+  // nothing — no unsolicited "Find My Plan" prompt. A non-empty cart is handled
+  // above by the `renderContext = "builder"` override (cart summary).
   if (renderContext === "homepage") {
-    if (hasCompletedOnboarding) {
-      return (
-        <div
-          role="status"
-          aria-live="polite"
-          style={stickyStyle}
-          className={`fixed bottom-0 inset-x-0 z-[900] ${barHeightClass} bg-[var(--tnm-surface-ink)] border-t border-white/5 px-4 flex items-center justify-between safe-bottom`}
-        >
-          <div className="flex flex-col min-w-0">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-white/40">
-              Assessment Completed
-            </span>
-            <span className="text-xs font-bold text-white/90 truncate">
-              Your personalized plan is ready
-            </span>
-          </div>
-          <Link
-            to="/subscribe"
-            className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-5 rounded-xl flex items-center gap-1 shrink-0"
-            style={{ height: 38 }}
-          >
-            View Recommendations
-            <ArrowRight className="w-3.5 h-3.5" weight="bold" />
-          </Link>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        role="status"
-        aria-live="polite"
-        style={stickyStyle}
-        className={`fixed bottom-0 inset-x-0 z-[900] ${barHeightClass} bg-[var(--tnm-surface-ink)] border-t border-white/5 px-4 flex items-center justify-between safe-bottom`}
-      >
-        <div className="flex flex-col min-w-0">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-white/40 font-mono">
-            Get Started
-          </span>
-          <span className="text-xs font-bold text-white/90 truncate">
-            Find your custom metabolic program
-          </span>
-        </div>
-        <Link
-          to="/subscribe"
-          className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-5 rounded-xl flex items-center gap-1 shrink-0"
-          style={{ height: 38 }}
-        >
-          Find My Plan
-          <ArrowRight className="w-3.5 h-3.5" weight="bold" />
-        </Link>
-      </div>
-    );
+    return null;
   }
 
   if (renderContext === "pdp") {
