@@ -4375,3 +4375,41 @@ export interface DishCustomOption {
   export function macrosAreProvisional(dish: Pick<DishData, "macros">): boolean {
     return (_macroBucketCounts.get(_macroKey(dish.macros)) ?? 0) > 1;
   }
+
+// ── Nutrition calculator ──────────────────────────────────────────────────────
+// Ingredient → macro engine + per-100g reference table. Powers both the one-off
+// backfill of the seed catalog and live ingest of new Petpooja/CMS items.
+// The calculator's own macro shape is re-exported as `ComputedMacros` to avoid
+// colliding with the catalog `DishMacros` interface above (different field names:
+// kcal/proteinG/… vs protein/calories/…).
+export {
+  parseQuantity,
+  toGrams,
+  normalizeName,
+  parseIngredientLine,
+  parseLongDescription,
+  lookup,
+  computeDishMacros,
+} from "./nutritionCalc";
+export type {
+  NutritionPer100g,
+  NutritionTable,
+  ParsedIngredient,
+  DishMacrosResult,
+  DishMacros as ComputedMacros,
+} from "./nutritionCalc";
+export { NUTRITION_TABLE } from "./nutritionTable";
+
+import { computeDishMacros as _computeDishMacros } from "./nutritionCalc";
+import type { DishMacrosResult as _DishMacrosResult } from "./nutritionCalc";
+import { NUTRITION_TABLE as _NUTRITION_TABLE } from "./nutritionTable";
+
+/**
+ * Compute a dish's macros from its ingredient longDescription using the bundled
+ * per-100g reference table. Returns the computed macros plus a coverage /
+ * confidence report — callers should only surface a result as verified when
+ * confidence is "high" (see DishMacrosResult).
+ */
+export function computeCatalogMacros(longDescription: string): _DishMacrosResult {
+  return _computeDishMacros(longDescription, _NUTRITION_TABLE);
+}
