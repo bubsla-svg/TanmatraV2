@@ -13,11 +13,12 @@ import { startAnomalyDigestSender } from "./lib/anomalyDigestSender";
 import { startReviewSummarizerScheduler } from "./lib/menuEngineeringScheduler";
 import { startMealPlanScheduler } from "./lib/mealPlanScheduler";
 import { startAnalyticsScheduler } from "./lib/analyticsScheduler";
+import { startPreDebitScheduler, stopPreDebitScheduler } from "./lib/preDebitScheduler";
 import { ensureSafeViews } from "./lib/safeSql";
 import { seedComplianceLogsIfEmpty } from "./lib/complianceSeeder";
 import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
-import { purgeExpiredSessions } from "./lib/auth";
+import { purgeExpiredSessions, purgeDeletedAccountsJob } from "./lib/auth";
 import { sweepExpiredIdempotencyKeys } from "./middlewares/idempotency";
 import { sweepOrphanSlotReservations } from "./routes/fulfillment";
 import { drainOpsAuditOutbox } from "./lib/opsAudit";
@@ -62,6 +63,7 @@ if (!schedulersDisabled) {
   startAnomalyDigestSender();
   startReviewSummarizerScheduler();
   startMealPlanScheduler();
+  startPreDebitScheduler();
   void resumeActiveSimulations();
 }
 
@@ -124,6 +126,14 @@ const purgeTimer = setInterval(() => {
  });
 }, HOUR);
 purgeTimer.unref();
+
+const DAY = 24 * 60 * 60 * 1000;
+const deletedAccountsPurgeTimer = setInterval(() => {
+ purgeDeletedAccountsJob().catch((err) =>
+  logger.error({ err }, "purgeDeletedAccountsJob failed"),
+ );
+}, DAY);
+deletedAccountsPurgeTimer.unref();
 
 // Reserve-and-create saga (Task #6) compensator runs on a SHORT cadence
 // so a connection drop that leaves a phantom slot reservation behind is
@@ -202,9 +212,11 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  } catch (err) {
  logger.error({ err }, "stopWorkers failed");
  }
+ stopPreDebitScheduler();
  clearInterval(purgeTimer);
  clearInterval(slotReclaimTimer);
  clearInterval(opsAuditOutboxTimer);
+ clearInterval(deletedAccountsPurgeTimer);
 
  // Drain one final tick of the outbox so override actions taken in
  // the last 500 ms still land in ops_actions before we close pools.

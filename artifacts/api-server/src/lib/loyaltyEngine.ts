@@ -498,6 +498,7 @@ export async function finalizeOrder(args: {
   fulfillmentType?: "delivery" | "pickup";
   ecoPackagingOptIn?: boolean;
   deliveryInstructions?: string | null;
+  subscriptionId?: number | null;
 }): Promise<{
   orderId: string;
   serverOrderId: number;
@@ -905,6 +906,27 @@ export async function finalizeOrder(args: {
         );
       if (!existingOrder) throw new Error("order persistence race");
       serverOrderId = existingOrder.id;
+    }
+
+    if (args.subscriptionId) {
+      const [firstDelivery] = await tx
+        .select()
+        .from(subscriptionDeliveriesTable)
+        .where(
+          and(
+            eq(subscriptionDeliveriesTable.subscriptionId, args.subscriptionId),
+            eq(subscriptionDeliveriesTable.status, "upcoming")
+          )
+        )
+        .orderBy(asc(subscriptionDeliveriesTable.scheduledFor))
+        .limit(1);
+
+      if (firstDelivery) {
+        await tx
+          .update(subscriptionDeliveriesTable)
+          .set({ orderId: serverOrderId })
+          .where(eq(subscriptionDeliveriesTable.id, firstDelivery.id));
+      }
     }
 
     // 2. Loyalty claim — same idempotency story as the order row.

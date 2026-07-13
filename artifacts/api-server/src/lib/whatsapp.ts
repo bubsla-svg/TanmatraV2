@@ -1,4 +1,6 @@
 import { logger } from "./logger";
+import { shouldDeferMessage } from "./quietHours";
+import { db, messageDispatchesTable } from "@workspace/db";
 
 /**
  * Thin wrapper around Twilio's Verify API for WhatsApp OTPs. When the
@@ -60,7 +62,23 @@ interface SendOtpResult {
 
 export async function sendWhatsappOtp(
   number: WhatsappE164,
+  bypassQuietHours = false,
 ): Promise<SendOtpResult> {
+  if (!bypassQuietHours) {
+    const now = new Date();
+    const deferTime = shouldDeferMessage(now);
+    if (deferTime) {
+      const delayMs = deferTime.getTime() - now.getTime();
+      logger.info({ e164: number.e164, deferTime, delayMs }, "whatsapp.otp.deferred");
+      setTimeout(() => {
+        void sendWhatsappOtp(number, true).catch((err) => {
+          logger.error({ err, e164: number.e164 }, "whatsapp.otp.deferred_send_failed");
+        });
+      }, delayMs);
+      return { ok: true };
+    }
+  }
+
   if (!hasTwilioCreds()) {
     if (!mockAllowed()) {
       logger.error(
@@ -125,12 +143,68 @@ export interface SendWhatsappMessageResult {
   mock?: boolean;
   sid?: string;
   error?: string;
+  discarded?: boolean;
+}
+
+export interface SendWhatsappMessageOptions {
+  bypassQuietHours?: boolean;
+  dedupe?: {
+    userId: string;
+    templateId: string;
+    serviceDate: string;
+  };
 }
 
 export async function sendWhatsappMessage(
   number: WhatsappE164,
   body: string,
+  options?: SendWhatsappMessageOptions,
 ): Promise<SendWhatsappMessageResult> {
+  if (options?.dedupe) {
+    const { userId, templateId, serviceDate } = options.dedupe;
+    const dedupeKey = `${userId}:${templateId}:${serviceDate}`;
+    try {
+      await db.insert(messageDispatchesTable).values({
+        userId,
+        templateId,
+        serviceDate,
+        dedupeKey,
+      });
+    } catch (e) {
+      if (
+        e &&
+        typeof e === "object" &&
+        "code" in e &&
+        (e as { code?: string }).code === "23505"
+      ) {
+        logger.info(
+          { userId, templateId, serviceDate, dedupeKey },
+          "whatsapp.message.deduped"
+        );
+        return { ok: true, discarded: true };
+      }
+      throw e;
+    }
+  }
+
+  if (!options?.bypassQuietHours) {
+    const now = new Date();
+    const deferTime = shouldDeferMessage(now);
+    if (deferTime) {
+      const delayMs = deferTime.getTime() - now.getTime();
+      logger.info({ e164: number.e164, deferTime, delayMs }, "whatsapp.message.deferred");
+      setTimeout(() => {
+        void sendWhatsappMessage(number, body, {
+          ...options,
+          bypassQuietHours: true,
+        }).catch((err) => {
+          logger.error({ err, e164: number.e164 }, "whatsapp.message.deferred_send_failed");
+        });
+      }, delayMs);
+      return { ok: true };
+    }
+  }
+
   const sid = process.env["TWILIO_ACCOUNT_SID"];
   const token = process.env["TWILIO_AUTH_TOKEN"];
   const from = process.env["TWILIO_WHATSAPP_FROM"];

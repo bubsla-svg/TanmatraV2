@@ -142,6 +142,7 @@ export const subscriptionsApi = {
       subscription: Subscription;
       members: SubscriptionMember[];
       deliveries: SubscriptionDelivery[];
+      mandate?: { id: number; status: string; nextChargeAt: string | null } | null;
     }>(`/subscriptions/${id}`),
   quote: (input: {
     cadence: SubscriptionCadence;
@@ -197,6 +198,11 @@ export const subscriptionsApi = {
       `/subscription-deliveries/${deliveryId}/skip`,
       { method: "POST" },
     ),
+  skipSubscription: (id: number) =>
+    request<{ delivery: SubscriptionDelivery }>(
+      `/subscriptions/${id}/skip`,
+      { method: "POST" },
+    ),
   swap: (deliveryId: number, items: SubscriptionItem[]) =>
     request<{ delivery: SubscriptionDelivery }>(
       `/subscription-deliveries/${deliveryId}/swap`,
@@ -214,6 +220,11 @@ export const subscriptionsApi = {
         body: JSON.stringify({ scheduledFor, deliveryWindow }),
       },
     ),
+  trialRecap: (id: number) =>
+    request<{
+      stats: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
+      holdExpiration: string;
+    }>(`/subscriptions/${id}/trial-recap`),
   credits: () =>
     request<{ credits: MealCredit[]; balance: number }>("/meal-credits"),
 };

@@ -50,6 +50,10 @@ const preferencesSchema = z.object({
   carbsTargetGrams: z.number().int().min(0).max(800).nullable().optional(),
   fatTargetGrams: z.number().int().min(0).max(300).nullable().optional(),
   markQuizComplete: z.boolean().optional(),
+  hba1cPct: z.number().min(0).max(30).nullable().optional(),
+  pcosHistory: z.boolean().nullable().optional(),
+  heightCm: z.number().int().min(50).max(300).nullable().optional(),
+  weightKg: z.number().min(10).max(500).nullable().optional(),
 });
 
 router.get("/preferences", async (req: Request, res: Response) => {
@@ -83,6 +87,10 @@ async function upsertPreferences(
     proteinTargetGrams: patch.proteinTargetGrams ?? null,
     carbsTargetGrams: patch.carbsTargetGrams ?? null,
     fatTargetGrams: patch.fatTargetGrams ?? null,
+    hba1cPct: patch.hba1cPct ?? null,
+    pcosHistory: patch.pcosHistory ?? null,
+    heightCm: patch.heightCm ?? null,
+    weightKg: patch.weightKg ?? null,
     quizCompletedAt: patch.markQuizComplete ? new Date() : null,
   };
   const updateSet: Record<string, unknown> = {};
@@ -107,6 +115,14 @@ async function upsertPreferences(
     updateSet["carbsTargetGrams"] = patch.carbsTargetGrams;
   if (patch.fatTargetGrams !== undefined)
     updateSet["fatTargetGrams"] = patch.fatTargetGrams;
+  if (patch.hba1cPct !== undefined)
+    updateSet["hba1cPct"] = patch.hba1cPct;
+  if (patch.pcosHistory !== undefined)
+    updateSet["pcosHistory"] = patch.pcosHistory;
+  if (patch.heightCm !== undefined)
+    updateSet["heightCm"] = patch.heightCm;
+  if (patch.weightKg !== undefined)
+    updateSet["weightKg"] = patch.weightKg;
   if (patch.markQuizComplete) updateSet["quizCompletedAt"] = new Date();
 
   if (Object.keys(updateSet).length === 0) {
@@ -149,5 +165,86 @@ async function preferencesWriteHandler(req: Request, res: Response) {
 
 router.put("/preferences", preferencesWriteHandler);
 router.patch("/preferences", preferencesWriteHandler);
+
+router.delete("/user/health-data/:field", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+
+  const field = req.params["field"];
+  if (typeof field !== "string") {
+    res.status(400).json({ error: "Invalid field parameter" });
+    return;
+  }
+  const allowedFields = ["hba1cPct", "pcosHistory", "heightCm", "weightKg", "medicalConditions"];
+  if (!allowedFields.includes(field)) {
+    res.status(400).json({ error: "Invalid field parameter" });
+    return;
+  }
+
+  let label = "";
+  if (field === "hba1cPct") {
+    label = "HbA1c";
+    await db
+      .update(userPreferencesTable)
+      .set({ hba1cPct: null })
+      .where(eq(userPreferencesTable.userId, userId));
+  } else if (field === "pcosHistory") {
+    label = "PCOS history";
+    await db
+      .update(userPreferencesTable)
+      .set({ pcosHistory: false })
+      .where(eq(userPreferencesTable.userId, userId));
+  } else if (field === "heightCm") {
+    label = "Height";
+    await db
+      .update(userPreferencesTable)
+      .set({ heightCm: null })
+      .where(eq(userPreferencesTable.userId, userId));
+  } else if (field === "weightKg") {
+    label = "Weight";
+    await db
+      .update(userPreferencesTable)
+      .set({ weightKg: null })
+      .where(eq(userPreferencesTable.userId, userId));
+  } else if (field === "medicalConditions") {
+    const { condition } = req.query;
+    if (typeof condition === "string" && condition.trim()) {
+      const condStr = condition.trim();
+      const lower = condStr.toLowerCase();
+      if (lower === "gerd") {
+        label = "GERD";
+      } else if (lower === "pcos") {
+        label = "PCOS";
+      } else {
+        const spaced = condStr.replace(/_/g, " ");
+        label = spaced.charAt(0).toUpperCase() + spaced.slice(1);
+      }
+
+      const [prefs] = await db
+        .select({ medicalConditions: userPreferencesTable.medicalConditions })
+        .from(userPreferencesTable)
+        .where(eq(userPreferencesTable.userId, userId));
+
+      const current = prefs?.medicalConditions ?? [];
+      const updated = current.filter((c) => c.toLowerCase() !== lower);
+
+      await db
+        .update(userPreferencesTable)
+        .set({ medicalConditions: updated })
+        .where(eq(userPreferencesTable.userId, userId));
+    } else {
+      label = "Medical conditions";
+      await db
+        .update(userPreferencesTable)
+        .set({ medicalConditions: [] })
+        .where(eq(userPreferencesTable.userId, userId));
+    }
+  }
+
+  invalidateUserBrief(userId);
+
+  const message = `${label} removed. Meal ranking will update and no longer use this value.`;
+  res.json({ success: true, message });
+});
 
 export default router;

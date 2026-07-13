@@ -34,6 +34,10 @@ export interface UserPreferences {
   proteinTargetGrams: number | null;
   carbsTargetGrams: number | null;
   fatTargetGrams: number | null;
+  hba1cPct: number | null;
+  pcosHistory: boolean | null;
+  heightCm: number | null;
+  weightKg: number | null;
   quizCompletedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -52,6 +56,10 @@ export interface PreferencesPatch {
   proteinTargetGrams?: number | null;
   carbsTargetGrams?: number | null;
   fatTargetGrams?: number | null;
+  hba1cPct?: number | null;
+  pcosHistory?: boolean | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
   markQuizComplete?: boolean;
 }
 
@@ -79,6 +87,18 @@ export const preferencesApi = {
     request<{ preferences: UserPreferences }>("/preferences", {
       method: "PATCH",
       body: JSON.stringify(patch),
+    }),
+  deleteHealthField: (field: string, condition?: string) => {
+    const path = condition
+      ? `/user/health-data/${field}?condition=${encodeURIComponent(condition)}`
+      : `/user/health-data/${field}`;
+    return request<{ success: boolean; message: string }>(path, {
+      method: "DELETE",
+    });
+  },
+  deleteAccount: () =>
+    request<{ success: boolean }>("/user/account", {
+      method: "DELETE",
     }),
 };
 

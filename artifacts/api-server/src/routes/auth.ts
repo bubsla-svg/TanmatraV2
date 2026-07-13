@@ -10,14 +10,15 @@ import {
   UpdateProfileInfoBody,
   UpdateProfileInfoResponse,
 } from "@workspace/api-zod";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable, sessionsTable } from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
 import {
   clearSession,
   createSession,
   getSession,
   getSessionId,
   updateSession,
+  deleteSession,
   SESSION_COOKIE,
   SESSION_TTL,
 } from "../lib/auth";
@@ -310,6 +311,31 @@ router.post("/logout", async (req: Request, res: Response): Promise<void> => {
   const sid = getSessionId(req);
   await clearSession(res, sid);
   res.json(LogoutResponse.parse({ success: true }));
+});
+
+router.delete("/user/account", async (req: Request, res: Response): Promise<void> => {
+  if (!req.isAuthenticated() || !req.user) {
+    res.status(401).json({ error: "not authenticated" });
+    return;
+  }
+  const userId = req.user.id;
+
+  await db
+    .update(usersTable)
+    .set({ deletedAt: new Date() })
+    .where(eq(usersTable.id, userId));
+
+  const userSessions = await db
+    .select({ sid: sessionsTable.sid })
+    .from(sessionsTable)
+    .where(sql`${sessionsTable.sess}->'user'->>'id' = ${userId}`);
+
+  for (const sess of userSessions) {
+    await deleteSession(sess.sid, db);
+  }
+
+  res.clearCookie(SESSION_COOKIE, { path: "/" });
+  res.json({ success: true });
 });
 
 // Legacy GET /login — the OIDC redirect is gone; bounce the browser to the
