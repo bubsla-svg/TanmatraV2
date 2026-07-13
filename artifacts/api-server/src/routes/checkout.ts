@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, userPreferencesTable } from "@workspace/db";
+import { db, ordersTable, userPreferencesTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
@@ -46,6 +46,15 @@ const placeOrderSchema = z.object({
     city: z.string().min(1).max(64),
     pincode: z.string().min(4).max(16),
   }),
+  // DPDP Act consent for storing/using health data to fulfil the order. Required
+  // to place an order — the buyflow (esp. guest checkout) must not proceed
+  // without an explicit, logged acknowledgement.
+  consent: z
+    .object({
+      accepted: z.boolean(),
+      policyVersion: z.string().min(1).max(64),
+    })
+    .optional(),
   // Optional dietary-safety declaration for GUEST checkout (authenticated users
   // are screened against their saved preferences). Lets an anonymous buyer
   // declare allergens/conditions so the same server-side safety gate runs.
@@ -86,7 +95,15 @@ router.post("/orders", async (req: Request, res: Response) => {
     return;
   }
 
-  const { externalOrderId, items, phone, address, guestPrefs, allergenAck } = parsed.data;
+  const { externalOrderId, items, phone, address, consent, guestPrefs, allergenAck } = parsed.data;
+
+  // DPDP consent gate: block order placement without an explicit acknowledgement.
+  // This is the enforcement point the buyflow was missing (guest checkout could
+  // place an order without ever consenting to health-data processing).
+  if (!consent || consent.accepted !== true || !consent.policyVersion) {
+    res.status(400).json({ error: "consent to the health-data policy is required to place an order", code: "consent_required" });
+    return;
+  }
 
   if (!isServiceablePincode(address.pincode)) {
     res.status(422).json({ error: "we do not deliver to this pincode yet", code: "unserviceable_pincode" });
@@ -204,6 +221,28 @@ router.post("/orders", async (req: Request, res: Response) => {
   }
 
   req.log.info({ externalOrderId, serverOrderId: row.id, totalPaise }, "guest order placed");
+
+  // Record the DPDP consent as an audit trail (policy version, IP, UA,
+  // timestamp). Authenticated users also get the consent stamped on their
+  // profile ledger; a per-order snapshot for durable guest audit is a
+  // follow-up migration.
+  const consentAt = new Date();
+  if (authUserId) {
+    await db.update(usersTable).set({ dpdpConsentAt: consentAt }).where(eq(usersTable.id, authUserId));
+  }
+  req.log.info(
+    {
+      code: "dpdp_consent",
+      serverOrderId: row.id,
+      policyVersion: consent.policyVersion,
+      ip: req.ip ?? null,
+      ua: String(req.headers["user-agent"] ?? "").slice(0, 512),
+      at: consentAt.toISOString(),
+      authenticated: authUserId != null,
+    },
+    "dpdp consent recorded at checkout",
+  );
+
   void sendOrderConfirmation(row.id);
 
   res.status(201).json({
