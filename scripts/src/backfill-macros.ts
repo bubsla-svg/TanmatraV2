@@ -1,0 +1,197 @@
+/**
+ * Nutrition backfill / coverage report.
+ *
+ * Runs the ingredient→macro calculator over every catalog dish's
+ * longDescription and reports, per dish, the computed macros next to the stored
+ * ones, plus a coverage/confidence score. The goal is to replace the placeholder
+ * macros (90%+ of the catalog is a duplicated placeholder bucket — see
+ * `macrosAreProvisional`) with values derived from the actual ingredient list
+ * and portion sizes, WITHOUT ever presenting a low-coverage estimate as truth.
+ *
+ * This script is read-only by default: it prints a report and writes a JSON
+ * proposal file. It never mutates the catalog. Wiring the accepted values into
+ * the seed data / DB is a deliberate, reviewed follow-up.
+ *
+ *   pnpm --filter @workspace/scripts exec tsx ./src/backfill-macros.ts
+ *   pnpm --filter @workspace/scripts exec tsx ./src/backfill-macros.ts --json out.json
+ *
+ * Flags:
+ *   --json <path>   write the full proposal (all dishes) to <path>
+ *   --min <conf>    only propose replacements at/above this confidence
+ *                   (high|med|low, default: high)
+ */
+
+import fs from "node:fs";
+import {
+  DISHES,
+  computeCatalogMacros,
+  macrosAreProvisional,
+  type DishData,
+  type DishMacrosResult,
+} from "@workspace/menu-catalog";
+
+type Conf = "high" | "med" | "low";
+const CONF_RANK: Record<Conf, number> = { low: 0, med: 1, high: 2 };
+
+function parseArgs(argv: string[]) {
+  let jsonPath: string | null = null;
+  let min: Conf = "high";
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === "--json") jsonPath = argv[++i] ?? null;
+    else if (argv[i] === "--min") {
+      const v = argv[++i];
+      if (v === "high" || v === "med" || v === "low") min = v;
+    }
+  }
+  return { jsonPath, min };
+}
+
+/** Map the calculator's macro shape onto the catalog's DishMacros field names. */
+function toCatalogMacros(r: DishMacrosResult) {
+  return {
+    protein: r.macros.proteinG,
+    carbs: r.macros.carbsG,
+    fat: r.macros.fatG,
+    fiber: r.macros.fiberG,
+    calories: r.macros.kcal,
+  };
+}
+
+interface Row {
+  id: number;
+  slug: string;
+  name: string;
+  provisional: boolean;
+  coverage: number;
+  confidence: Conf;
+  matchedCount: number;
+  totalCount: number;
+  unmatched: string[];
+  stored: DishData["macros"];
+  computed: ReturnType<typeof toCatalogMacros>;
+  sodiumMg: number;
+  sugarG: number;
+  proposeReplace: boolean;
+}
+
+function pad(s: string | number, n: number): string {
+  const str = String(s);
+  return str.length >= n ? str : str + " ".repeat(n - str.length);
+}
+
+function main() {
+  const { jsonPath, min } = parseArgs(process.argv.slice(2));
+
+  const rows: Row[] = DISHES.map((d) => {
+    const res = computeCatalogMacros(d.longDescription);
+    const computed = toCatalogMacros(res);
+    const provisional = macrosAreProvisional(d);
+    const confOk = CONF_RANK[res.confidence] >= CONF_RANK[min];
+    return {
+      id: d.id,
+      slug: d.slug,
+      name: d.name,
+      provisional,
+      coverage: res.coverage,
+      confidence: res.confidence,
+      matchedCount: res.matchedCount,
+      totalCount: res.totalCount,
+      unmatched: res.unmatched,
+      stored: d.macros,
+      computed,
+      sodiumMg: res.macros.sodiumMg,
+      sugarG: res.macros.sugarG,
+      // Only propose overwriting a stored value when it's a placeholder AND the
+      // computed value clears the confidence bar. Curated (non-placeholder)
+      // macros are left alone unless explicitly re-reviewed.
+      proposeReplace: provisional && confOk,
+    };
+  });
+
+  const total = rows.length;
+  const provisional = rows.filter((r) => r.provisional).length;
+  const byConf: Record<Conf, number> = { high: 0, med: 0, low: 0 };
+  for (const r of rows) byConf[r.confidence]++;
+  const proposed = rows.filter((r) => r.proposeReplace).length;
+  const provHigh = rows.filter((r) => r.provisional && r.confidence === "high").length;
+  const provMed = rows.filter((r) => r.provisional && r.confidence === "med").length;
+  const provLow = rows.filter((r) => r.provisional && r.confidence === "low").length;
+
+  console.log("=== Nutrition calculator — catalog backfill coverage report ===\n");
+  console.log(`Dishes:                 ${total}`);
+  console.log(
+    `Placeholder macros:     ${provisional} (${((provisional / total) * 100).toFixed(1)}%)`,
+  );
+  console.log(
+    `Coverage confidence:    high=${byConf.high}  med=${byConf.med}  low=${byConf.low}`,
+  );
+  console.log(
+    `Placeholder × confidence: high=${provHigh}  med=${provMed}  low=${provLow}`,
+  );
+  console.log(
+    `Proposed replacements:  ${proposed} (placeholder dishes at ≥${min} confidence)\n`,
+  );
+
+  // Show the dishes the calculator can NOT confidently fill — these need a
+  // human/data source, and must never be silently "filled".
+  const lowCov = rows
+    .filter((r) => r.confidence !== "high")
+    .sort((a, b) => a.coverage - b.coverage);
+  if (lowCov.length) {
+    console.log(`--- ${lowCov.length} dishes below HIGH confidence (need review / data) ---`);
+    for (const r of lowCov) {
+      const um = r.unmatched.length ? `  unmatched: ${r.unmatched.join(", ")}` : "";
+      console.log(
+        `  [${pad(r.confidence, 4)}] cov ${pad((r.coverage * 100).toFixed(0) + "%", 4)} ${pad(r.name, 42)}${um}`,
+      );
+    }
+    console.log("");
+  }
+
+  // Spot-check: a few proposed replacements, computed vs stored.
+  const sample = rows.filter((r) => r.proposeReplace).slice(0, 12);
+  if (sample.length) {
+    console.log("--- sample proposed replacements (computed vs stored) ---");
+    console.log(
+      `  ${pad("dish", 42)} ${pad("kcal", 12)} ${pad("protein", 12)} ${pad("carbs", 12)} ${pad("fat", 10)}`,
+    );
+    for (const r of sample) {
+      const c = r.computed;
+      const s = r.stored;
+      console.log(
+        `  ${pad(r.name, 42)} ${pad(`${c.calories}⟵${s.calories}`, 12)} ${pad(`${c.protein}⟵${s.protein}`, 12)} ${pad(`${c.carbs}⟵${s.carbs}`, 12)} ${pad(`${c.fat}⟵${s.fat}`, 10)}`,
+      );
+    }
+    console.log("");
+  }
+
+  if (jsonPath) {
+    const proposal = {
+      generatedFor: "catalog macro backfill",
+      minConfidence: min,
+      summary: { total, provisional, byConf, proposed },
+      dishes: rows.map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        provisional: r.provisional,
+        coverage: r.coverage,
+        confidence: r.confidence,
+        matched: `${r.matchedCount}/${r.totalCount}`,
+        unmatched: r.unmatched,
+        proposeReplace: r.proposeReplace,
+        stored: r.stored,
+        computed: r.computed,
+        // extended micros the calculator now also produces (not in DishMacros yet)
+        sodiumMg: r.sodiumMg,
+        sugarG: r.sugarG,
+      })),
+    };
+    fs.writeFileSync(jsonPath, JSON.stringify(proposal, null, 2));
+    console.log(`Wrote full proposal (${total} dishes) → ${jsonPath}`);
+  } else {
+    console.log("(pass --json <path> to write the full per-dish proposal for review)");
+  }
+}
+
+main();

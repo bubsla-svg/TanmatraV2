@@ -8,6 +8,7 @@
     "seed-ops-data": "tsx ./src/seed-ops-data.ts",
     "seed-menu-items": "tsx ./src/seed-menu-items.ts",
     "backfill-order-coords": "tsx ./src/backfill-order-coords.ts",
+    "backfill-macros": "tsx ./src/backfill-macros.ts",
     "verify-ledger": "tsx ./src/verify-ledger.ts",
     "verify-dpdpa": "tsx ./src/verify-dpdpa-kms.ts",
     "verify-allergen-gate": "tsx ./src/verify-allergen-gate.ts",
