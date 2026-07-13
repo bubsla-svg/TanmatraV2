@@ -19,6 +19,7 @@ import {
   getDishVariants,
   matchesDosha,
   getTasteDescriptionForDish,
+  getServingInstructionForDish,
   getOptionMacroModifier,
 } from "@/lib/dishEnrichment";
 import { buildNutritionLabel } from "@/lib/nutritionLabel";
@@ -417,7 +418,7 @@ export default function V2Dish() {
             </span>
 
             <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/80 font-bold uppercase tracking-wider">
-              {gi === "low" ? "GI Low" : "GI Med"}
+              {gi === "low" ? "GI Low" : gi === "high" ? "GI High" : "GI Med"}
             </span>
 
             {meal.rdVerified && (
@@ -696,7 +697,7 @@ export default function V2Dish() {
               <div className="flex-1">
                 <h4 className="text-xs font-bold text-white/90">Clinical packaging</h4>
                 <p className="text-[11px] text-white/50 leading-relaxed mt-1">
-                  Arrives chilled in a double-insulated, tamper-evident thermal container. Ready to eat in 2 minutes of heating.
+                  {getServingInstructionForDish(meal)}
                 </p>
               </div>
             </div>
