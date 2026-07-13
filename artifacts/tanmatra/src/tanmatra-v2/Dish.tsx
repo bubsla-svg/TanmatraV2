@@ -30,7 +30,7 @@ import { API_BASE } from "@/lib/apiBase";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError, FALLBACK_DISH_IMAGE } from "@/lib/imgFallback";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
-import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning } from "@phosphor-icons/react";
+import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning, Plus } from "@phosphor-icons/react";
 
 const GOAL_LABEL: Record<string, string> = {
   lose_weight: "weight-loss",
@@ -272,7 +272,35 @@ export default function V2Dish() {
     });
     track("add_committed", { source: "pdp", dishId: meal.id, name: meal.name, price: calculatedUnitPrice });
     openCart();
-    toast.success(`Added ${meal.name} to plan`);
+    toast.success(`Added ${meal.name} to order`);
+  };
+
+  // One-click add from the "Related meals" rail — adds the base dish (no
+  // customization) straight to the order. Runs the same allergen/diet safety
+  // gate as the main CTA so a quick-add can never bypass a block.
+  const handleAddUpsell = (u: any) => {
+    const um = evaluateDishForPreferences(u, preferences);
+    if (um?.blocked) {
+      toast.error(`${u.name} conflicts with your allergen/diet settings`);
+      return;
+    }
+    addItem({
+      dishId: u.id,
+      slug: u.slug,
+      name: u.name,
+      image: u.image,
+      basePrice: u.price,
+      unitPrice: u.price,
+      quantity: 1,
+      kitchen: u.kitchen,
+      isVeg: u.isVeg,
+      rdVerified: u.rdVerified,
+      macros: u.macros,
+      customizations: [],
+    });
+    track("add_committed", { source: "pdp_related", dishId: u.id, name: u.name, price: u.price });
+    openCart();
+    toast.success(`Added ${u.name} to order`);
   };
 
   return (
@@ -311,17 +339,22 @@ export default function V2Dish() {
 
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--tnm-surface-ink)] to-transparent z-10" />
 
-          {/* Dot Pagination */}
-          <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5 z-20">
+          {/* Dot Pagination — 44px tap targets (WCAG) with a small visual dot inside */}
+          <div className="absolute bottom-1 inset-x-0 flex justify-center z-20">
             {galleryImages.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setHeroActiveIdx(idx)}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  heroActiveIdx === idx ? "bg-[var(--tnm-action)] w-3" : "bg-white/40"
-                }`}
+                className="flex items-center justify-center h-11 w-8 shrink-0"
                 aria-label={`Go to slide ${idx + 1}`}
-              />
+                aria-current={heroActiveIdx === idx}
+              >
+                <span
+                  className={`h-1.5 rounded-full transition-all ${
+                    heroActiveIdx === idx ? "bg-[var(--tnm-action)] w-3" : "bg-white/40 w-1.5"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>
@@ -677,22 +710,30 @@ export default function V2Dish() {
               </span>
               <div className="flex flex-col gap-3">
                 {upsells.map((u: any) => (
-                  <Link
+                  <div
                     key={u.id}
-                    to={`/dish/${u.slug}`}
-                    className="flex items-center gap-3 bg-white/[0.02] border border-white/5 rounded-xl p-2.5 hover:bg-white/5 transition-all text-left"
+                    className="flex items-center gap-3 bg-white/[0.02] border border-white/5 rounded-xl p-2.5 hover:bg-white/5 transition-all"
                   >
-                    <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden shrink-0 border border-white/10">
-                      <img src={getLocalDishFallback(u.image, 200)} alt={u.name} className="w-full h-full object-cover" onError={onDishImageError} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold text-white/90 truncate">{u.name}</h4>
-                      <p className="tnm-data text-[10px] text-white/50 mt-1 font-mono">
-                        {u.macros?.calories || "—"} kcal &bull; {u.macros?.protein || "—"}g protein
-                      </p>
-                    </div>
-                    <CaretRight className="w-4 h-4 text-white/40 shrink-0" />
-                  </Link>
+                    <Link to={`/dish/${u.slug}`} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                      <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                        <img src={getLocalDishFallback(u.image, 200)} alt={u.name} className="w-full h-full object-cover" onError={onDishImageError} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold text-white/90 truncate">{u.name}</h4>
+                        <p className="tnm-data text-[10px] text-white/50 mt-1 font-mono">
+                          {u.macros?.calories || "—"} kcal &bull; {u.macros?.protein || "—"}g protein
+                        </p>
+                      </div>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleAddUpsell(u)}
+                      aria-label={`Add ${u.name} to order`}
+                      className="shrink-0 w-11 h-11 rounded-xl bg-[var(--tnm-action)]/10 border border-[var(--tnm-action)]/25 text-[var(--tnm-action)] flex items-center justify-center hover:bg-[var(--tnm-action)]/20 transition-all"
+                    >
+                      <Plus className="w-4 h-4" weight="bold" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
