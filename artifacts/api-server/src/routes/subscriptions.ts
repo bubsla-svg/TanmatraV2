@@ -19,6 +19,7 @@ import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
 import { resolveDishBySlug, makeBatchDishResolver } from "../lib/menuResolver";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
+import { cancelAutopayMandate } from "../lib/autopay";
 
 const router: IRouter = Router();
 
@@ -746,6 +747,11 @@ router.post(
           eq(subscriptionDeliveriesTable.status, "upcoming"),
         ),
       );
+    // Stop billing: revoke the Razorpay autopay mandate and purge scheduled
+    // charge notices. Without this, "cancel in one tap, no hidden fees" is false
+    // — the mandate stays active and the next cycle still debits the customer.
+    // Gateway errors are swallowed inside the helper; never fail cancel on them.
+    await cancelAutopayMandate(subId, req.log);
     res.json({ subscription: updated });
   },
 );
