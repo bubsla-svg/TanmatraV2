@@ -57,6 +57,20 @@ export interface DishCustomOption {
     macrosProvisional?: boolean;
     ingredients: string[];
     allergens: string[];
+    /**
+     * Whether the `allergens` list is a REVIEWED disclosure or unverified.
+     *
+     * Absent or `true` → the list is trustworthy; an empty array is an
+     * affirmative "RD-reviewed, no declared allergens" statement (the legacy
+     * curated catalog is all reviewed, so absence defaults to reviewed).
+     *
+     * `false` → allergen data is UNCHECKED ("None listed in system"): the
+     * source has no reviewed disclosure. An empty `allergens` here means
+     * "unknown", NOT "none" — it must never be surfaced as "no allergens",
+     * and the strict checkout gate refuses the dish (`unchecked_allergens`).
+     * This is the distinction between "reviewed → []" and "unknown → null".
+     */
+    allergensReviewed?: boolean;
     glycaemicIndex: "low" | "medium" | "high";
     sugarPerServing: string;
     customizations: DishCustomGroup[];
@@ -4384,6 +4398,38 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
   export function getDishAllergens(slug: string): string[] | null {
     const d = getDishBySlug(slug);
     return d ? d.allergens : null;
+  }
+
+  /**
+   * Whether a dish's `allergens` list is a REVIEWED disclosure. Absence
+   * defaults to reviewed — the legacy curated catalog is hand-reviewed, so an
+   * unset flag must not retroactively block it. Only an explicit
+   * `allergensReviewed === false` marks the list as unchecked/unknown.
+   */
+  export function allergensAreReviewed(
+    dish: Pick<DishData, "allergensReviewed">,
+  ): boolean {
+    return dish.allergensReviewed !== false;
+  }
+
+  /**
+   * Discriminated view of a dish's allergen disclosure — the single source of
+   * truth for both the PDP copy and the safety gate. It exists to stop an empty
+   * array from ever meaning two different things:
+   *  - `reviewed` + non-empty list → the dish contains those allergens.
+   *  - `reviewed` + empty list      → affirmatively "no declared allergens".
+   *  - `unchecked`                  → allergen data is UNKNOWN; callers must
+   *    never render "no allergens" and the strict gate refuses the dish.
+   */
+  export type AllergenDisclosure =
+    | { state: "reviewed"; allergens: string[] }
+    | { state: "unchecked" };
+
+  export function getAllergenDisclosure(
+    dish: Pick<DishData, "allergens" | "allergensReviewed">,
+  ): AllergenDisclosure {
+    if (dish.allergensReviewed === false) return { state: "unchecked" };
+    return { state: "reviewed", allergens: dish.allergens ?? [] };
   }
 
   // ---------------------------------------------------------------------------

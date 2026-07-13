@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { getDishBySlug, F } from "./data";
-import { useMenuCatalog, macrosAreProvisional, type DishData } from "@/lib/menuData";
+import { useMenuCatalog, macrosAreProvisional, getAllergenDisclosure, type DishData } from "@/lib/menuData";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
@@ -44,6 +44,28 @@ const PLAN_DISH_SLUGS: Set<string> = new Set(
 );
 
 const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+/**
+ * Allergen-safety value line. A single source of truth so the three PDP
+ * placements never disagree — and, critically, so unverified allergen data is
+ * never rendered as an affirmative "no allergens" claim. An empty list only
+ * reads as "No declared allergens" when it is a reviewed disclosure; when the
+ * data is unchecked the line turns into an alert-coloured "under review".
+ */
+function AllergenSummaryValue({ meal, className = "" }: { meal: any; className?: string }) {
+  const disclosure = getAllergenDisclosure(meal ?? { allergens: [] });
+  if (disclosure.state === "unchecked") {
+    return (
+      <span className={`${className} text-[var(--tnm-alert)] font-semibold`}>
+        Under review — not confirmed allergen-safe
+      </span>
+    );
+  }
+  const text = disclosure.allergens.length
+    ? disclosure.allergens.map((a: string) => capitalize(a)).join(", ")
+    : "No declared allergens";
+  return <span className={className}>{text}</span>;
+}
 
 function buildNarrative(dish: any, prefs: any): string {
   const goalLabel = prefs.goal ? GOAL_LABEL[prefs.goal] ?? prefs.goal : null;
@@ -431,9 +453,7 @@ export default function V2Dish() {
           {/* 4.4 Persistent Allergen summary line above fold */}
           <div className="mt-3 text-xs flex items-center gap-1.5 bg-white/[0.02] border border-white/5 rounded-xl px-3 py-2">
             <span className="text-[10px] uppercase font-extrabold tracking-wider text-[var(--tnm-alert)]">Allergen Safety:</span>
-            <span className="text-white/80 font-medium truncate">
-              {meal.allergens?.length ? meal.allergens.map((a: string) => capitalize(a)).join(", ") : "No allergens detected"}
-            </span>
+            <AllergenSummaryValue meal={meal} className="text-white/80 font-medium truncate" />
           </div>
 
           {/* 4.5 Nutrition Snapshot Chips */}
@@ -788,9 +808,7 @@ export default function V2Dish() {
         {/* 4.2 Persistent Allergen line pinned above bottom bar */}
         <div className="fixed bottom-[72px] inset-x-0 bg-[var(--tnm-surface-ink)]/95 backdrop-blur-md border-t border-white/5 py-2.5 px-4 z-[890] safe-bottom-allergen flex items-center gap-2">
           <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--tnm-alert)]">Allergen Safety:</span>
-          <span className="text-xs text-white/80 font-medium truncate">
-            {meal.allergens?.length ? meal.allergens.map((a: string) => capitalize(a)).join(", ") : "No allergens detected"}
-          </span>
+          <AllergenSummaryValue meal={meal} className="text-xs text-white/80 font-medium truncate" />
         </div>
 
         {/* 6. Consolidated sticky bottom bar (state machine context: pdp) */}
@@ -825,9 +843,7 @@ export default function V2Dish() {
                 <Warning className="w-4.5 h-4.5 text-[var(--tnm-alert)] shrink-0" weight="fill" />
                 <div className="text-[11px]">
                   <span className="font-bold text-[var(--tnm-alert)] mr-1">Allergen Warning:</span>
-                  <span className="text-white/80">
-                    {meal.allergens?.length ? meal.allergens.map((a: string) => capitalize(a)).join(", ") : "No allergens detected"}
-                  </span>
+                  <AllergenSummaryValue meal={meal} className="text-white/80" />
                 </div>
               </div>
 

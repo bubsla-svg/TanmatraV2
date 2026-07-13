@@ -681,9 +681,9 @@ export default function V2Menu() {
               <div className="sh mb10"><i className="ph-bold ph-package" style={{ color: "var(--safb)" }} /> RD-curated combos</div>
               {[0, 1].map((i) => (
                 <div key={i} className="card mb10" style={{ minHeight: 96 }}>
-                  <div style={{ height: 16, width: "55%", borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
-                  <div className="mt10" style={{ height: 13, width: "38%", borderRadius: 6, background: "rgba(255,255,255,0.05)" }} />
-                  <div className="mt10" style={{ height: 24, width: "100%", borderRadius: 6, background: "rgba(255,255,255,0.04)" }} />
+                  <div className="bg-white/[0.06]" style={{ height: 16, width: "55%", borderRadius: 6 }} />
+                  <div className="mt10 bg-white/5" style={{ height: 13, width: "38%", borderRadius: 6 }} />
+                  <div className="mt10 bg-white/[0.04]" style={{ height: 24, width: "100%", borderRadius: 6 }} />
                 </div>
               ))}
             </div>
