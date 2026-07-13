@@ -338,7 +338,7 @@ export default function V2Dish() {
             </div>
           )}
 
-          <h2 className="text-xl font-bold text-white/95 leading-tight">{meal.name}</h2>
+          <h1 className="text-xl font-bold text-white/95 leading-tight">{meal.name}</h1>
           
           {/* Taste line sensory description */}
           <p className="text-xs text-white/50 italic mt-1 leading-snug">

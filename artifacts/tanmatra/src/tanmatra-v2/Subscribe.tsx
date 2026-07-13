@@ -663,7 +663,38 @@ export default function V2Subscribe() {
     }
   };
 
-  if (!isMounted) return null;
+  if (!isMounted) {
+    // Server-rendered shell. A1 (money-path rendering doctrine): every
+    // manifest route must paint an h1 + a real progressive CTA anchor before
+    // hydration — never a blank JS-required screen. The interactive stepper
+    // replaces this on mount; the client's first render also hits this branch
+    // (isMounted starts false), so server and client markup match — no
+    // hydration mismatch.
+    return (
+      <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)] text-white">
+        <div className="max-w-[480px] mx-auto min-h-screen flex flex-col px-4 pt-16">
+          <h1 className="text-xl font-bold text-white/95 leading-tight">
+            Build your subscription
+          </h1>
+          <p className="fine text-white/60 mt-2 leading-relaxed">
+            Choose a dietitian-designed plan, set your delivery schedule, and
+            review the full price before you pay.
+          </p>
+          <Link
+            to="/plans"
+            className="btn btn-p btn-blk mt-6"
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+          >
+            Choose your plan
+          </Link>
+          <div className="mt-8 space-y-3" aria-hidden="true">
+            <div className="h-24 rounded-lg bg-white/5" />
+            <div className="h-24 rounded-lg bg-white/5" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Render S1 Recommendation (Step 0)
   const renderS1Recommendation = () => {
