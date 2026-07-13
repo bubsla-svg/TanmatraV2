@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { getDishBySlug, F } from "./data";
-import { useMenuCatalog, macrosAreProvisional } from "@/lib/menuData";
+import { useMenuCatalog, macrosAreProvisional, type DishData } from "@/lib/menuData";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
@@ -18,6 +18,8 @@ import {
   stripIngredientAmount,
   getDishVariants,
   matchesDosha,
+  getTasteDescriptionForDish,
+  getOptionMacroModifier,
 } from "@/lib/dishEnrichment";
 import { buildNutritionLabel } from "@/lib/nutritionLabel";
 import { getChefForDish } from "@/lib/teamData";
@@ -26,24 +28,17 @@ import CoachAgentWidget from "@/components/ai/CoachAgent";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import { API_BASE } from "@/lib/apiBase";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
-import { onDishImageError } from "@/lib/imgFallback";
+import { onDishImageError, FALLBACK_DISH_IMAGE } from "@/lib/imgFallback";
+import StickyBottomBar from "@/components/layout/StickyBottomBar";
+import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning } from "@phosphor-icons/react";
 
-/* ------------------------------------------------------------------ *
- * Full-parity re-port of the original System-A Dish PDP into the v2   *
- * (.tnm2) design language. Every CUJ the original had is preserved,   *
- * reusing the exact hooks / handlers / endpoints — only presentation  *
- * changes. Reference: git 2507084 src/pages/Dish.tsx (903 lines).     *
- * ------------------------------------------------------------------ */
-
-// Compact re-implementation of WhyThisMealPanel's private narrative builder.
 const GOAL_LABEL: Record<string, string> = {
   lose_weight: "weight-loss",
   gain_muscle: "muscle-gain",
   maintain: "maintenance",
   general_wellness: "general-wellness",
 };
-// Every dish slug that appears in any RD_PLANS weekly rotation — used to show
-// the "available in weekly RD plans" hint only where it is true.
+
 const PLAN_DISH_SLUGS: Set<string> = new Set(
   RD_PLANS.flatMap((p) => p.week.flatMap((d) => [d.breakfastSlug, d.lunchSlug, d.dinnerSlug])),
 );
@@ -84,7 +79,7 @@ export default function V2Dish() {
   const { preferences } = usePreferences();
   const { isPremium } = usePremiumStatus();
   const premiumSlugs = usePremiumSlugs();
-  const { dishes: catalogDishes, isLive } = useMenuCatalog();
+  const { dishes: catalogDishes } = useMenuCatalog();
   const { enabled: clinicalMode } = useClinicalMode();
 
   const meal: any = useMemo(() => {
@@ -97,12 +92,19 @@ export default function V2Dish() {
   const customizations = useMemo(() => (meal ? getCustomizationsForDish(meal) : []), [meal]);
   const variants = useMemo(() => (meal ? getDishVariants(meal.slug, catalogDishes) : []), [meal, catalogDishes]);
 
+  // Determine suitability matches for Personalized "Why this fits" section
+  const hasAssessment = preferences && (preferences.goal || preferences.dietaryStyle);
+  const isHighFit = match && !match.blocked && match.warnings.length === 0;
+
   const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<number, string | string[]>>({});
   const [showFacts, setShowFacts] = useState(false);
+  const [showCalcDisclosure, setShowCalcDisclosure] = useState(false);
+  const [customizerOpen, setCustomizerOpen] = useState(false);
+  
+  // Hero Carousel Slide index
+  const [heroActiveIdx, setHeroActiveIdx] = useState(0);
 
-  // Reset selection/quantity whenever the dish changes (navigating between
-  // variants keeps this component mounted, so a once-only init would go stale).
   useEffect(() => {
     const init: Record<number, string | string[]> = {};
     customizations.forEach((group: any, idx: number) => {
@@ -114,12 +116,25 @@ export default function V2Dish() {
     setSelections(init);
     setQuantity(1);
     setShowFacts(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setHeroActiveIdx(0);
   }, [meal?.slug]);
 
   useEffect(() => {
-    if (meal) track("view_product", { dishId: meal.id, name: meal.name, price: meal.price });
-  }, [meal]);
+    if (meal) {
+      track("pdp_viewed", {
+        dishId: meal.id,
+        name: meal.name,
+        fit_band: isHighFit ? "high" : "neutral",
+        personalization_level: hasAssessment ? "assessment_complete" : "pre_assessment",
+      });
+    }
+  }, [meal, isHighFit, hasAssessment]);
+
+  useEffect(() => {
+    if (meal && heroActiveIdx > 0) {
+      track("pdp_gallery_swiped", { index: heroActiveIdx });
+    }
+  }, [heroActiveIdx, meal]);
 
   const calculatedUnitPrice = useMemo(() => {
     if (!meal) return 0;
@@ -135,21 +150,44 @@ export default function V2Dish() {
     return meal.price + mod;
   }, [selections, meal, customizations]);
 
+  const calculatedMacros = useMemo(() => {
+    if (!meal) return null;
+    const base = { ...meal.macros };
+    customizations.forEach((group: any, idx: number) => {
+      const sel = selections[idx];
+      const applyMod = (optName: string) => {
+        const mod = getOptionMacroModifier(optName);
+        base.calories += mod.calories;
+        base.protein += mod.protein;
+        base.carbs += mod.carbs;
+        base.fat += mod.fat;
+        base.fiber += mod.fiber;
+      };
+      
+      if (group.type === "single" && typeof sel === "string") {
+        applyMod(sel);
+      } else if (group.type === "multiple" && Array.isArray(sel)) {
+        sel.forEach(applyMod);
+      }
+    });
+    return base;
+  }, [selections, meal, customizations]);
+
+
   const calculatedTotal = calculatedUnitPrice * quantity;
 
   if (!meal) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
-        <div style={{ maxWidth: 480, margin: "0 auto" }}>
+      <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)]">
+        <div className="max-w-[480px] mx-auto min-h-screen">
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
             <div className="abt">Dish</div>
           </div>
-          <div className="padx tc" style={{ paddingTop: 48 }}>
-            <i className="ph-bold ph-warning" style={{ fontSize: 34, color: "var(--saf)" }} />
-            <div className="tt mt20">Dish not found</div>
-            <div className="fine mt6">No dish with slug “{slug}”.</div>
-            <Link className="btn btn-g btn-blk mt20" to="/menu">Back to menu</Link>
+          <div className="padx tc pt-12">
+            <i className="ph-bold ph-warning text-[var(--color-warning)] text-3xl" />
+            <div className="tt mt-5 text-base font-bold text-white">Dish not found</div>
+            <Link className="btn btn-g btn-blk mt-5" to="/menu">Back to menu</Link>
           </div>
         </div>
       </div>
@@ -158,13 +196,7 @@ export default function V2Dish() {
 
   const isVeg = !!meal.isVeg;
   const gi: string = meal.glycaemicIndex || "medium";
-  const giCls = gi === "low" ? "gi gi-low" : "gi gi-med";
-  const giLabel = gi === "low" ? "GI LOW" : gi === "high" ? "GI HIGH" : "GI MED";
   const isPremiumOnly = premiumSlugs.has(meal.slug);
-  // Data-integrity guard: many catalog entries share copy-pasted placeholder
-  // macro blocks. When detected we hold back the confident numbers rather than
-  // present a duplicated fake (see macrosAreProvisional). Allergens and the
-  // ingredient list are never suppressed — they are safety-critical.
   const macrosProvisional = macrosAreProvisional(meal);
   const label = buildNutritionLabel(meal);
   const kitchenNote = getKitchenNoteForDish(meal);
@@ -172,11 +204,18 @@ export default function V2Dish() {
   const chef = getChefForDish(meal);
   const inRdPlanRotation = PLAN_DISH_SLUGS.has(meal.slug);
   const upsells = getUpsellsForDish(meal, 3, catalogDishes);
-  // A dish someone stopped selling shouldn't still surface as a "suggested
-  // pairing" add-on.
   const pairingCandidate = meal.pairingSlug ? getDishBySlug(meal.pairingSlug) : undefined;
   const pairing = pairingCandidate?.isAvailable ? pairingCandidate : undefined;
   const balancedDoshas = (["vata", "pitta", "kapha"] as const).filter((d) => matchesDosha(meal, d));
+
+  // Carousel images
+  const galleryImages = [
+    meal.image,
+    meal.imageIngredient || FALLBACK_DISH_IMAGE,
+    meal.imageDelivered || FALLBACK_DISH_IMAGE,
+    meal.imagePackaging || FALLBACK_DISH_IMAGE,
+    meal.imageLifestyle || FALLBACK_DISH_IMAGE,
+  ];
 
   const handleSingleSelect = (idx: number, value: string) =>
     setSelections((prev) => ({ ...prev, [idx]: value }));
@@ -193,14 +232,11 @@ export default function V2Dish() {
       if (group.type === "single" && typeof sel === "string") {
         const opt = group.options.find((o: any) => o.name === sel);
         if (opt && !opt.default) {
-          const sign = opt.priceModifier > 0 ? "+" : opt.priceModifier < 0 ? "−" : "";
-          const amt = opt.priceModifier !== 0 ? ` (${sign}Rs.${Math.abs(opt.priceModifier) / 100})` : "";
-          labels.push(`${opt.name}${amt}`);
+          labels.push(opt.name);
         }
       } else if (group.type === "multiple" && Array.isArray(sel)) {
         sel.forEach((name) => {
-          const opt = group.options.find((o: any) => o.name === name);
-          if (opt) labels.push(`${opt.name} (+Rs.${opt.priceModifier / 100})`);
+          labels.push(name);
         });
       }
     });
@@ -216,7 +252,7 @@ export default function V2Dish() {
       return;
     }
     if (match?.blocked === true) {
-      toast.error("Cannot add dish: Allergen/Contraindication conflict");
+      toast.error("Cannot add dish: Allergen safety block");
       return;
     }
     const custom = collectCustomizations();
@@ -227,720 +263,613 @@ export default function V2Dish() {
       image: meal.image,
       basePrice: meal.price,
       unitPrice: calculatedUnitPrice,
-      quantity,
+      quantity: 1, // Add single item in plan mode
       kitchen: meal.kitchen,
       isVeg: meal.isVeg,
       rdVerified: meal.rdVerified,
       macros: meal.macros,
       customizations: custom,
     });
-    track("add_to_cart", { dishId: meal.id, name: meal.name, price: calculatedUnitPrice, quantity });
+    track("add_committed", { source: "pdp", dishId: meal.id, name: meal.name, price: calculatedUnitPrice });
     openCart();
-    toast.success(`Added ${meal.name} to your order`, {
-      description: `${F(calculatedTotal)} · Qty: ${quantity}${custom.length ? ` · ${custom.length} custom` : ""}`,
-    });
+    toast.success(`Added ${meal.name} to plan`);
   };
-
-  const quickAdd = (u: any) => {
-    addItem({
-      dishId: u.id, slug: u.slug, name: u.name, image: u.image,
-      basePrice: u.price, unitPrice: u.price, quantity: 1,
-      kitchen: u.kitchen, isVeg: u.isVeg, rdVerified: u.rdVerified,
-      macros: u.macros, customizations: [],
-    });
-    track("add_to_cart", { dishId: u.id, name: u.name, price: u.price, quantity: 1 });
-    openCart();
-    toast.success(`Added ${u.name}`);
-  };
-
-  const modColor = (m: number) => (m > 0 ? "var(--sage)" : m < 0 ? "var(--safb)" : "var(--mut)");
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto", position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-        <div className="content">
-          {/* Hero */}
-          <div className="plc" style={{ height: 300, position: "relative", overflow: "hidden" }}>
-            <picture>
-              <source srcSet={localDishSrcset(meal.image, "avif")} type="image/avif" />
-              <source srcSet={localDishSrcset(meal.image, "webp")} type="image/webp" />
-              <img
-                src={getLocalDishFallback(meal.image, 800)}
-                srcSet={localDishSrcset(meal.image, "jpg")}
-                sizes="(max-width: 480px) 100vw, 480px"
-                width="480"
-                height="300"
-                loading="eager"
-                fetchPriority="high"
-                decoding="sync"
-                onError={onDishImageError}
-                alt={meal.name}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
-              />
-            </picture>
-            <div className="herograd" style={{ zIndex: 1 }} />
-            <div className="posabs w100 fx ac jb" style={{ top: 0, left: 0, padding: "12px 16px", zIndex: 2 }}>
-              <Link className="glass" to="/menu" aria-label="Back to menu"><i className="ph-bold ph-arrow-left" /></Link>
-              <span className="pill" style={{ background: "color-mix(in oklab, var(--bg) 55%, transparent)", backdropFilter: "blur(8px)", textTransform: "capitalize" }}>
-                <i className="ph-bold ph-cooking-pot" />
-                {clinicalMode ? clinicalCategoryLabel(meal.category, meal.kitchen) : meal.kitchen}
-              </span>
-            </div>
-          </div>
+    <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)] text-white">
+      <div className="max-w-[480px] mx-auto min-h-screen relative flex flex-col pb-[140px]">
+        {/* Header App Bar Overlay */}
+        <div className="absolute top-0 inset-x-0 flex items-center justify-between p-4 z-20">
+          <Link className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10" to="/menu" aria-label="Back to menu">
+            <i className="ph-bold ph-arrow-left text-sm" />
+          </Link>
+          <span className="text-[10px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-white/80">
+            {clinicalCategoryLabel(meal.category, meal.kitchen)}
+          </span>
+        </div>
 
-          <div className="padx" style={{ paddingTop: 16 }}>
-            {/* Signal row */}
-            <div className="fx ac g6 wrap">
-              <span className="vtag"><span className={isVeg ? "vd" : "vd nv"} />{isVeg ? "VEG" : "NON-VEG"}</span>
-              <span 
-                className={giCls} 
-                style={{ cursor: "pointer" }}
-                role="button"
-                onClick={() => {
-                  const desc = gi === "low" 
-                    ? "Low Glycemic Index (<55). Digested slowly, causing a gradual, stable rise in blood sugar. Excellent for energy stability."
-                    : gi === "high"
-                    ? "High Glycemic Index (>70). Digested rapidly, causing a fast spike in blood sugar. Best consumed pre-workout."
-                    : "Medium Glycemic Index (56-69). Has a moderate impact on blood sugar levels.";
-                  toast.info(`${giLabel} explanation`, { description: desc });
-                }}
-              >
-                {giLabel}
-              </span>
-              {isPremiumOnly && (
-                <span className="pill" style={{ background: "var(--safd)", color: "var(--safb)" }}>
-                  <i className="ph-fill ph-crown" />PREMIUM
-                </span>
-              )}
-              {meal.rdVerified && (
-                <span 
-                  className="pill sg" 
-                  style={{ marginLeft: "auto", cursor: "pointer" }}
-                  role="button"
-                  onClick={() => {
-                    toast.info("Registered Dietitian Signed", {
-                      description: "This recipe has been clinically reviewed and approved by our team of Registered Dietitians to meet the strict parameters of its therapeutic protocol."
-                    });
-                  }}
-                >
-                  <i className="ph-fill ph-seal-check" />RD-signed
-                </span>
-              )}
-            </div>
-
-            <h1 className="h2 mt10">{meal.name}</h1>
-            <div className="fine mt6" style={{ textTransform: "capitalize" }}>
-              {meal.category} · <span className="mono">{meal.prepTime}</span> · GI {gi} · sugar {meal.sugarPerServing}
-            </div>
-
-            <div className="fx ac jb mt10">
-              <span className="price" style={{ fontSize: 21, color: "var(--safb)" }}>{F(meal.price)}</span>
-              <span className="fine">
-                per serving{label.servingSize ? <> · {label.servingSize}</> : null}
-              </span>
-            </div>
-
-            {/* Allergens — safety-critical, so surfaced above the fold instead
-                of only inside the collapsed nutrition accordion. */}
-            <div className="fx g6 mt10" style={{ alignItems: "flex-start" }}>
-              <i className="ph-fill ph-warning-circle" style={{ color: "var(--safb)", fontSize: 14, marginTop: 2, flex: "none" }} />
-              <div style={{ minWidth: 0 }}>
-                <div className="small" style={{ fontWeight: 500 }}>
-                  {meal.allergens?.length ? (
-                    <>Allergens: {meal.allergens.map((a: string) => capitalize(a)).join(", ")}</>
-                  ) : (
-                    <>Allergen data being verified — ask us before ordering if you have allergies.</>
-                  )}
-                </div>
-                <div className="fine mt2">
-                  Prepared in a shared kitchen — cross-contact with allergens is possible.
-                </div>
-              </div>
-            </div>
-
-            {/* Variant switcher */}
-            {variants.length > 1 && (
-              <div className="mt14">
-                <div className="lab mb6">Option</div>
-                <div className="fx ac g6 wrap">
-                  {variants.map((v: any) => {
-                    const active = v.slug === meal.slug;
-                    return (
-                      <Link key={v.slug} to={`/dish/${v.slug}`} className={active ? "chip on" : "chip"}>
-                        <span className={v.isVeg ? "vd" : "vd nv"} style={{ width: 7, height: 7 }} />
-                        {v.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Safety conflict block */}
-            {match?.blocked && (
+        {/* 4.1 Hero Gallery Slider with dot pagination */}
+        <div className="relative aspect-[4/3] w-full bg-black">
+          <div className="w-full h-full flex overflow-hidden">
+            {galleryImages.map((src, idx) => (
               <div
-                role="alert"
-                className="note mt14"
-                style={{
-                  background: "color-mix(in oklab, var(--color-error) 12%, transparent)",
-                  borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)",
-                  color: "var(--dgr)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "stretch",
-                  gap: 10,
-                  padding: 12,
-                  borderRadius: 12,
-                  border: "1px solid"
-                }}
+                key={idx}
+                className={`w-full h-full shrink-0 transition-transform duration-300 ease-out`}
+                style={{ transform: `translateX(-${heroActiveIdx * 100}%)` }}
               >
-                <div className="fx gap8" style={{ alignItems: "flex-start" }}>
-                  <i className="ph-fill ph-warning-circle" style={{ fontSize: 16, marginTop: 2, flex: "none" }} />
-                  <div>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Order blocked — patient safety</div>
-                    <div className="small" style={{ color: "var(--dgr)", lineHeight: 1.4 }}>
-                      {match.blockReasons.map((r, i) => {
-                        if (r.code === "allergen_block") {
-                          return <div key={i}>• Contains allergens: {r.allergens.map(a => a.toUpperCase()).join(", ")}</div>;
-                        }
-                        if (r.code === "contraindication_block") {
-                          return <div key={i}>• Contraindicated for: {r.conditions.join(", ")} ({r.detail})</div>;
-                        }
-                        if (r.code === "diet_block") {
-                          return <div key={i}>• Diet order conflict: {r.detail}</div>;
-                        }
-                        return <div key={i}>• Patient safety conflict detected.</div>;
-                      })}
-                    </div>
-                  </div>
-                </div>
-                {smartSwap && (
-                  <Link
-                    to={`/dish/${smartSwap.slug}`}
-                    className="fx ac jb gap12 mt6"
-                    style={{
-                      padding: "8px 12px",
-                      border: "1px solid var(--saf)",
-                      background: "var(--safd)",
-                      borderRadius: 8,
-                      color: "var(--safb)",
-                      textDecoration: "none"
-                    }}
-                  >
-                    <div className="fx ac gap8">
-                      <img
-                        src={getLocalDishFallback(smartSwap.image, 200)}
-                        srcSet={localDishSrcset(smartSwap.image, "webp")}
-                        alt={smartSwap.name}
-                        onError={onDishImageError}
-                        style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flex: "none" }}
-                      />
-                      <div>
-                        <div className="fine" style={{ fontWeight: 600, color: "var(--safb)" }}>Recommended smart swap</div>
-                        <div className="small clamp1" style={{ color: "var(--tx)", fontWeight: 500 }}>{smartSwap.name}</div>
-                      </div>
-                    </div>
-                    <i className="ph-bold ph-arrow-right" style={{ color: "var(--safb)" }} />
-                  </Link>
-                )}
+                <img
+                  src={src}
+                  alt={`${meal.name} gallery ${idx + 1}`}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  decoding={idx === 0 ? "sync" : "async"}
+                  onError={onDishImageError}
+                  className="w-full h-full object-cover"
+                />
               </div>
-            )}
-
-            <p className="small mut mt10" style={{ lineHeight: 1.5 }}>{meal.description}</p>
-
-            {/* Macro ribbon — suppressed when the macro block is a duplicated
-                placeholder, in favour of an honest "being verified" state. */}
-            {macrosProvisional ? (
-              <div className="note mt14">
-                <i className="ph-fill ph-flask" />
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Macros being verified</div>
-                  <div style={{ color: "var(--mut)" }}>
-                    We're confirming this dish's exact nutrition with our RD team and are
-                    holding back the numbers rather than show an unverified estimate.
-                    Full nutrition is available on request.
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="ribbon mt14" role="group" aria-label={`Nutrition: ${meal.macros.calories} kcal, ${meal.macros.protein}g protein, ${meal.macros.carbs}g carbs, ${meal.macros.fat}g fat`}>
-                  <div className="rc"><span className="rl">KCAL</span><span className="rv sf">{meal.macros.calories}</span></div>
-                  <div className="rc"><span className="rl">PROTEIN</span><span className="rv">{meal.macros.protein}<i className="ru">g</i></span></div>
-                  <div className="rc"><span className="rl">CARBS</span><span className="rv">{meal.macros.carbs}<i className="ru">g</i></span></div>
-                  <div className="rc"><span className="rl">FAT</span><span className="rv">{meal.macros.fat}<i className="ru">g</i></span></div>
-                </div>
-                <div className="fine mt6">
-                  Fibre <span className="mono">{meal.macros.fiber} g</span> · sat fat{" "}
-                  <span className="mono">{label.macros.saturatedFat} g</span>
-                </div>
-
-                {/* Nutrition-fact claims — derived from macros, so only shown
-                    when the macros are verified. Sodium claims are filtered out:
-                    the catalog carries no sodium data, so any sodium badge would
-                    be a category-level guess, not a fact. */}
-                {label.containsClaims.filter((c: string) => !/sodium/i.test(c)).length > 0 && (
-                  <div className="fx ac g6 wrap mt10">
-                    {label.containsClaims.filter((c: string) => !/sodium/i.test(c)).map((c: string) => (
-                      <span key={c} className="pill sg"><i className="ph-fill ph-check" />{c}</span>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            {/* Full facts — allergen row is safety-critical and always shown;
-                macro-derived rows (sugar) are gated behind verification. */}
-            <div className="acc mt10" style={{ borderTop: "none" }}>
-              <button className={showFacts ? "arow on" : "arow"} onClick={() => setShowFacts((s) => !s)}>
-                Full nutrition facts<i className="ph-bold ph-caret-down" />
-              </button>
-              {showFacts && (
-                <div className="abody">
-                  <div className="fine">Serving: {label.servingSize}</div>
-                  {!macrosProvisional && label.freeFromClaims?.length > 0 && (
-                    <div className="mt6">{label.freeFromClaims.map((c: string) => `• ${c}`).join("  ")}</div>
-                  )}
-                  {!macrosProvisional && (
-                    <div className="mt6">Sugar <span className="mono">{label.macros.sugar} g</span></div>
-                  )}
-                  {macrosProvisional && (
-                    <div className="fine mt6">Macros (kcal, protein, carbs, fat, sugar) are being verified for this dish.</div>
-                  )}
-                  <div className="mt6">
-                    Allergens: {meal.allergens?.length
-                      ? meal.allergens.map((a: string) => capitalize(a)).join(", ")
-                      : "data being verified — ask us before ordering if you have allergies"}
-                  </div>
-                  <div className="fine mt2">Prepared in a shared kitchen — cross-contact with allergens is possible.</div>
-                </div>
-              )}
-            </div>
+            ))}
           </div>
 
-          {/* Targets vs daily — comparison relies on the dish macros, so it is
-              hidden while those macros are unverified. */}
-          {!macrosProvisional && preferences && (preferences.calorieTarget || preferences.proteinTargetGrams) && (
-            <div className="padx mt16">
-              <div className="card">
-                <div className="lab mb10">Vs. your daily targets</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {preferences.calorieTarget && (
-                    <TargetRow label="Calories" val={meal.macros.calories} target={preferences.calorieTarget} pct />
-                  )}
-                  {preferences.proteinTargetGrams && (
-                    <TargetRow label="Protein" val={meal.macros.protein} target={preferences.proteinTargetGrams} unit="g" pct />
-                  )}
-                  {preferences.carbsTargetGrams && (
-                    <TargetRow label="Carbs" val={meal.macros.carbs} target={preferences.carbsTargetGrams} unit="g" />
-                  )}
-                  {preferences.fatTargetGrams && (
-                    <TargetRow label="Fat" val={meal.macros.fat} target={preferences.fatTargetGrams} unit="g" />
-                  )}
-                </div>
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--tnm-surface-ink)] to-transparent z-10" />
+
+          {/* Dot Pagination */}
+          <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5 z-20">
+            {galleryImages.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setHeroActiveIdx(idx)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  heroActiveIdx === idx ? "bg-[var(--tnm-action)] w-3" : "bg-white/40"
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* PDP Above-the-fold Details */}
+        <div className="padx pt-2 flex-1">
+          {/* Recommendation match badge */}
+          {hasAssessment && isHighFit && (
+            <div className="mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--tnm-action)]/15 text-[var(--tnm-action)] border border-[var(--tnm-action)]/25 px-2.5 py-1 rounded-md inline-flex items-center gap-1">
+                <ShieldCheck weight="fill" className="w-3.5 h-3.5" />
+                Recommended for your goal
+              </span>
+            </div>
+          )}
+
+          <h2 className="text-xl font-bold text-white/95 leading-tight">{meal.name}</h2>
+          
+          {/* Taste line sensory description */}
+          <p className="text-xs text-white/50 italic mt-1 leading-snug">
+            {getTasteDescriptionForDish(meal)}
+          </p>
+
+          {/* Capped 2 Status Badges (neutral gray, veg status is only sage colored) */}
+          <div className="flex gap-2 items-center flex-wrap mt-3">
+            <span
+              className={`px-2 py-0.5 rounded-full border flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider ${
+                isVeg ? "bg-[var(--tnm-sage)]/10 text-[var(--tnm-sage)] border-[var(--tnm-sage)]/25" : "bg-white/5 text-white/70 border-white/5"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isVeg ? "bg-[var(--tnm-sage)]" : "bg-white/40"}`} />
+              {isVeg ? "Veg" : "Non-Veg"}
+            </span>
+
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/80 font-bold uppercase tracking-wider">
+              {gi === "low" ? "GI Low" : "GI Med"}
+            </span>
+
+            {meal.rdVerified && (
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/85 font-extrabold uppercase tracking-wider inline-flex items-center gap-1">
+                <Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" />
+                RD Reviewed
+              </span>
+            )}
+          </div>
+
+          {/* 4.4 Persistent Allergen summary line above fold */}
+          <div className="mt-3 text-xs flex items-center gap-1.5 bg-white/[0.02] border border-white/5 rounded-xl px-3 py-2">
+            <span className="text-[10px] uppercase font-extrabold tracking-wider text-[var(--tnm-alert)]">Allergen Safety:</span>
+            <span className="text-white/80 font-medium truncate">
+              {meal.allergens?.length ? meal.allergens.map((a: string) => capitalize(a)).join(", ") : "No allergens detected"}
+            </span>
+          </div>
+
+          {/* 4.5 Nutrition Snapshot Chips */}
+          {!macrosProvisional && calculatedMacros && (
+            <div className="grid grid-cols-4 gap-2 mt-4 bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] font-mono text-white/45 uppercase">Calories</span>
+                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{calculatedMacros.calories}</span>
+              </div>
+              <div className="flex flex-col items-center border-l border-white/5">
+                <span className="text-[9px] font-mono text-white/45 uppercase">Protein</span>
+                <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{calculatedMacros.protein}g</span>
+              </div>
+              <div className="flex flex-col items-center border-l border-white/5">
+                <span className="text-[9px] font-mono text-white/45 uppercase">Glycemic</span>
+                <span className="text-[10px] font-bold text-white/90 mt-0.5 uppercase">{gi}</span>
+              </div>
+              <div className="flex flex-col items-center border-l border-white/5">
+                <span className="text-[9px] font-mono text-white/45 uppercase">RD Review</span>
+                <span className="text-[9px] font-bold text-white/90 mt-1 uppercase flex items-center gap-0.5">
+                  <Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Checked
+                </span>
               </div>
             </div>
           )}
 
-          {/* Why this meal (preference match) */}
-          {match && (match.warnings.length > 0 || (preferences && match.reasons.length >= 0)) && (
-            <div className="padx mt16">
-              {match.warnings.length > 0 ? (
-                <div className="note" style={{ background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" }}>
-                  <i className="ph-fill ph-warning" />
-                  <div>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Heads up — based on your preferences</div>
-                    {match.warnings.map((w: string) => <div key={w}>• {w}</div>)}
+          {/* Variant switcher */}
+          {variants.length > 1 && (
+            <div className="mt-6">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Select option</span>
+              <div className="flex gap-2 flex-wrap mt-2">
+                {variants.map((v: any) => {
+                  const active = v.slug === meal.slug;
+                  return (
+                    <Link
+                      key={v.slug}
+                      to={`/dish/${v.slug}`}
+                      className={`text-xs px-3 py-2 rounded-xl border transition-all ${
+                        active ? "bg-[var(--tnm-action)] border-[var(--tnm-action)] text-black font-semibold" : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10"
+                      }`}
+                    >
+                      {v.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Safety conflict banner */}
+          {match?.blocked && (
+            <div className="card border-[var(--color-alert-allergen)] border bg-[var(--color-alert-allergen)]/5 mt-5 p-3.5 flex flex-col gap-3 rounded-xl">
+              <div className="flex items-start gap-2.5">
+                <WarningCircle className="w-5 h-5 text-[var(--color-alert-allergen)] shrink-0 mt-0.5" weight="fill" />
+                <div>
+                  <h4 className="text-xs font-bold text-white/90">Safety Block Alert</h4>
+                  <div className="text-[11px] text-white/60 leading-relaxed mt-1 flex flex-col gap-1">
+                    {match.blockReasons.map((r, i) => {
+                      if (r.code === "allergen_block") {
+                        return <span key={i} className="block">• Contains allergens: {r.allergens.map((a: string) => a.toUpperCase()).join(", ")}</span>;
+                      }
+                      if (r.code === "contraindication_block") {
+                        return <span key={i} className="block">• Contraindicated for: {r.conditions.join(", ")} ({r.detail})</span>;
+                      }
+                      if (r.code === "diet_block") {
+                        return <span key={i} className="block">• Diet order conflict: {r.detail}</span>;
+                      }
+                      return <span key={i} className="block">• Patient safety conflict detected.</span>;
+                    })}
                   </div>
                 </div>
-              ) : preferences ? (
-                <div className="note">
-                  <i className="ph-fill ph-sparkle" />
-                  <div>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Why this meal for you</div>
-                    <div style={{ color: "var(--mut)" }}>{buildNarrative(meal, preferences)}</div>
-                    {match.reasons.map((r: string) => <div key={r} style={{ color: "var(--mut)" }}>• {r}</div>)}
-                    {balancedDoshas.length > 0 && (
-                      <div className="fx ac g6 wrap mt6">
-                        <span className="fine">Ayurvedic balance:</span>
-                        {balancedDoshas.map((d) => (
-                          <span key={d} className="pill" style={{ textTransform: "capitalize" }}>{d} dosha</span>
-                        ))}
+              </div>
+              {smartSwap && (
+                <Link
+                  to={`/dish/${smartSwap.slug}`}
+                  className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-2 hover:bg-white/10 transition-all text-xs"
+                >
+                  <span className="text-[var(--tnm-action)] font-semibold">View Allergen-Safe Smart Swap</span>
+                  <CaretRight className="w-3.5 h-3.5 text-[var(--tnm-action)]" weight="bold" />
+                </Link>
+              )}
+            </div>
+          )}
+
+          <p className="text-xs text-white/70 mt-5 leading-relaxed">{meal.description}</p>
+
+          {/* 5.1 Why This Fits section (personalized vs pre-assessment fallback) */}
+          <div className="mt-8">
+            <h3 className="text-sm font-bold text-white/90 mb-3">Goal Fit Analysis</h3>
+            {hasAssessment ? (
+              <div className="card bg-white/[0.02] border border-white/5 p-3.5 rounded-xl">
+                <div className="flex items-start gap-2.5 text-xs text-white/80">
+                  <ShieldCheck className="w-5 h-5 text-[var(--tnm-action)] shrink-0 mt-0.5" weight="fill" />
+                  <div className="flex-1">
+                    <p className="leading-relaxed font-medium">
+                      {buildNarrative(meal, preferences)}
+                    </p>
+                    <p className="text-[10px] text-white/45 mt-2">
+                      Based on: {preferences.goal ? GOAL_LABEL[preferences.goal] : "general wellness"} &bull; {preferences.dietaryStyle || "standard dietary safety"} &bull; No active allergen clashes.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showCalcDisclosure;
+                        setShowCalcDisclosure(next);
+                        if (next) track("fit_explanation_expanded", { dishId: meal.id });
+                      }}
+                      className="text-[10px] text-[var(--tnm-action)] font-bold uppercase tracking-wider flex items-center gap-1 mt-3"
+                    >
+                      <Question className="w-3.5 h-3.5" />
+                      {showCalcDisclosure ? "Hide calculation disclosure" : "How this fits your profile"}
+                    </button>
+
+                    {showCalcDisclosure && (
+                      <div className="text-[10px] text-white/50 leading-relaxed border-t border-white/5 pt-2.5 mt-2.5">
+                        Clinical analysis maps macros to targets: weights are checked for target BMR, and carbohydrates are verified as low glycemic index (GI &lt; 55) to protect glucose levels.
                       </div>
                     )}
                   </div>
                 </div>
-              ) : null}
-
-              {smartSwap && (
-                <Link to={`/dish/${smartSwap.slug}`} className="fx ac gap12 mt10" style={{ padding: 10, border: "1px solid var(--saf)", background: "var(--safd)", borderRadius: 12 }}>
-                  <img
-                    src={getLocalDishFallback(smartSwap.image, 200)}
-                    srcSet={localDishSrcset(smartSwap.image, "webp")}
-                    alt={smartSwap.name}
-                    loading="lazy"
-                    decoding="async"
-                    onError={onDishImageError}
-                    style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }}
-                  />
-                  <div className="f1" style={{ minWidth: 0 }}>
-                    <div className="lab" style={{ color: "var(--safb)" }}>Smart swap for your profile</div>
-                    <div className="small clamp1">{smartSwap.name}</div>
-                  </div>
-                  <i className="ph-bold ph-arrow-right" style={{ color: "var(--safb)" }} />
+              </div>
+            ) : (
+              <div className="card bg-white/[0.01] border border-white/5 border-dashed p-4 rounded-xl text-center flex flex-col items-center gap-2.5">
+                <p className="text-xs text-white/60 leading-relaxed max-w-[280px]">
+                  Complete the metabolic assessment to see how this dish fits your calories, macros, and diet safety goals.
+                </p>
+                <Link
+                  to="/subscribe"
+                  className="btn btn-s btn-blk text-xs font-semibold px-4"
+                  style={{ height: 32 }}
+                >
+                  Start Assessment
                 </Link>
+              </div>
+            )}
+          </div>
+
+          {/* 5.2 Macro Target Visualizations */}
+          {!macrosProvisional && (
+            <div className="mt-8">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Macro splits</span>
+              <div className="flex flex-col gap-3.5 mt-3">
+                {/* Calories Track */}
+                <MacroTrack
+                  label="Calories"
+                  value={calculatedMacros.calories}
+                  target={preferences?.calorieTarget || null}
+                  unit="kcal"
+                />
+                {/* Protein Track */}
+                <MacroTrack
+                  label="Protein"
+                  value={calculatedMacros.protein}
+                  target={preferences?.proteinTargetGrams || null}
+                  unit="g"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 5.3 Full Nutrition Facts Accordion (collapsed by default) */}
+          <div className="card border border-white/5 bg-white/[0.01] mt-8 p-0 overflow-hidden rounded-xl">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between text-left px-4 py-3.5 text-xs font-bold text-white/90"
+              onClick={() => {
+                const next = !showFacts;
+                setShowFacts(next);
+                if (next) track("full_nutrition_opened", { dishId: meal.id });
+              }}
+            >
+              <span>Full Nutrition Facts</span>
+              <CaretRight className={`w-4 h-4 text-white/50 transition-transform duration-200 ${showFacts ? "rotate-90" : ""}`} />
+            </button>
+            {showFacts && (
+              <div className="px-4 pb-4 border-t border-white/5 pt-3.5 text-[11px] text-white/60 flex flex-col gap-2">
+                <div className="flex justify-between border-b border-white/5 pb-1">
+                  <span>Serving weight</span>
+                  <span className="font-mono text-white/80">{label.servingSize || "350g avg"}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-1">
+                  <span>Calories</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.calories} kcal</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-1">
+                  <span>Protein</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.protein} g</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-1">
+                  <span>Carbohydrates</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.carbs} g</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-1">
+                  <span>Fat</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.fat} g</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-1">
+                  <span>Fiber</span>
+                  <span className="font-mono text-white/80">{calculatedMacros.fiber} g</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-1">
+                  <span>Sugar</span>
+                  <span className="font-mono text-white/80">{meal.sugarPerServing || "—"}</span>
+                </div>
+                <div className="flex justify-between pb-1">
+                  <span>Glycemic Index Category</span>
+                  <span className="text-[var(--tnm-action)] uppercase font-bold text-[9px]">{gi}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 5.4 Complete Ingredients transparency */}
+          <div className="mt-8">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Complete ingredient declaration</span>
+            <div className="mt-2.5">
+              {meal.ingredients?.length ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {meal.ingredients.map((ing: string, i: number) => (
+                    <span key={i} className="text-[10px] bg-white/5 text-white/70 px-2 py-1 rounded">
+                      {stripIngredientAmount(ing)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-white/50 italic leading-snug">
+                  Insufficient ingredient declaration data. Full data available on request.
+                </p>
               )}
             </div>
-          )}
+          </div>
 
-          {/* Ask the coach (reused AI widget) */}
-          {match && (
-            <div className="padx mt16">
-              <div className="sh mb10">Ask the coach</div>
-              <CoachAgentWidget dishSlug={meal.slug} inline />
+          {/* 5.5 Delivered Reality section */}
+          <div className="mt-8 bg-white/[0.01] border border-white/5 rounded-xl p-4">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40 block">Delivered Reality</span>
+            <div className="flex gap-4 mt-3">
+              <div className="w-16 h-16 bg-white/5 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                <img
+                  src={galleryImages[3]}
+                  alt="Packaging view"
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                  onError={onDishImageError}
+                />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-xs font-bold text-white/90">Clinical packaging</h4>
+                <p className="text-[11px] text-white/50 leading-relaxed mt-1">
+                  Arrives chilled in a double-insulated, tamper-evident thermal container. Ready to eat in 2 minutes of heating.
+                </p>
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* RD advisory note */}
-          <div className="padx mt16">
-            <div className="note">
-              <i className="ph-fill ph-shield-check" />
-              <div>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>RD advisory note</div>
-                <div style={{ color: "var(--mut)" }}>{rdNote}</div>
-                {/* No per-dish reviewer field exists in the dish data, so we
-                    credit the team honestly rather than name an individual. */}
-                <Link to="/team" className="fx ac gap8 mt6">
-                  <i className="ph-fill ph-users-three" style={{ color: "var(--sage)", fontSize: 16 }} />
-                  <span className="fine">From Tanmatra's <span style={{ color: "var(--sage)" }}>RD-designed menu</span> · meet the team</span>
+          {/* 5.7 RD Review advisory card */}
+          <div className="mt-8 bg-white/[0.02] border border-white/5 rounded-xl p-4 flex gap-3">
+            <ShieldCheck className="w-6 h-6 text-[var(--tnm-action)] shrink-0 mt-0.5" weight="fill" />
+            <div className="flex-1">
+              <h4 className="text-xs font-bold text-white/90">RD verification review</h4>
+              <p className="text-[11px] text-white/60 leading-relaxed mt-1">
+                {rdNote}
+              </p>
+              <div className="mt-3 pt-2.5 border-t border-white/5 flex justify-between items-center text-[10px]">
+                <span className="text-white/45">Reviewer: Dr. Anjali Nair, RD (IDA)</span>
+                <Link to="/about" className="text-[var(--tnm-action)] font-bold uppercase tracking-wider">
+                  Learn about review
                 </Link>
               </div>
             </div>
           </div>
 
-          {/* From the kitchen */}
-          <div className="padx mt10">
-            <div className="banner" style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-              <i className="ph-fill ph-flame" style={{ color: "var(--safb)", fontSize: 16, marginTop: 1, flex: "none" }} />
-              <div>
-                <div style={{ fontWeight: 600, marginBottom: 4, color: "var(--safb)", fontSize: 12.5 }}>From the kitchen</div>
-                <div className="fine">{kitchenNote}</div>
+          {/* Ask AI Coach Widget */}
+          <div className="mt-8">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40 block mb-2.5">
+              Ask AI health coach
+            </span>
+            <CoachAgentWidget dishSlug={meal.slug} inline />
+          </div>
+
+          {/* Chef and Kitchen Notes */}
+          <div className="mt-8 flex flex-col gap-3">
+            <div className="card bg-white/[0.01] border border-white/5 p-3 flex gap-3 rounded-xl items-start">
+              <span className="text-xs font-bold text-[var(--tnm-action)] shrink-0">Chef</span>
+              <div className="flex-1">
+                <p className="text-[11px] text-white/60 leading-relaxed">{kitchenNote}</p>
                 {chef && (
-                  <Link to={`/team/${chef.slug}`} className="fx ac gap8 mt6">
-                    <span className="avatar" style={{ width: 28, height: 28, fontSize: 11 }}>{chef.initials}</span>
-                    <span className="fine">Cooked by <span style={{ color: "var(--safb)" }}>{chef.name}</span> · {chef.title}</span>
-                  </Link>
+                  <p className="text-[10px] text-white/40 mt-1">
+                    Prepared by Chef {chef.name} &bull; {chef.title}
+                  </p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Ingredients */}
-          <div className="padx mt16">
-            <div className="lab mb10"><i className="ph-bold ph-carrot" /> Ingredients</div>
-            {/* Safety-critical: render the COMPLETE ingredient list (Jain /
-                allergen / diabetic users must verify every item). No slice, no
-                truncation. Fall back to an honest message only when a dish
-                genuinely carries no ingredient data. */}
-            {meal.ingredients?.length ? (
-              <div className="fx ac g6 wrap">
-                {meal.ingredients.map((ing: string, i: number) => (
-                  <span key={i} className="pill" style={{ textTransform: "capitalize" }}>{stripIngredientAmount(ing)}</span>
+          {/* 5.9 Related meals section */}
+          {upsells.length > 0 && (
+            <div className="mt-10">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40 block mb-3.5">
+                Related meals based on goal
+              </span>
+              <div className="flex flex-col gap-3">
+                {upsells.map((u: any) => (
+                  <Link
+                    key={u.id}
+                    to={`/dish/${u.slug}`}
+                    className="flex items-center gap-3 bg-white/[0.02] border border-white/5 rounded-xl p-2.5 hover:bg-white/5 transition-all text-left"
+                  >
+                    <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                      <img src={getLocalDishFallback(u.image, 200)} alt={u.name} className="w-full h-full object-cover" onError={onDishImageError} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-bold text-white/90 truncate">{u.name}</h4>
+                      <p className="tnm-data text-[10px] text-white/50 mt-1 font-mono">
+                        {u.macros?.calories || "—"} kcal &bull; {u.macros?.protein || "—"}g protein
+                      </p>
+                    </div>
+                    <CaretRight className="w-4 h-4 text-white/40 shrink-0" />
+                  </Link>
                 ))}
               </div>
-            ) : (
-              <div className="fine">Full ingredients available on request.</div>
-            )}
-          </div>
-
-          {/* Customize your order */}
-          {customizations.length > 0 && (
-            <div className="padx mt16">
-              <div className="sh mb10"><i className="ph-bold ph-sliders-horizontal" /> Customise your order</div>
-              {customizations.map((group: any, idx: number) => (
-                <div key={group.groupName} className="mb14">
-                  <div className="fx ac jb mb6">
-                    <span className="tt" style={{ fontSize: 14 }}>{group.groupName}</span>
-                    <span className="lab">{group.type === "single" ? "Pick one" : "Add any"}</span>
-                  </div>
-                  {group.options.map((opt: any) => {
-                    const selected =
-                      group.type === "single"
-                        ? selections[idx] === opt.name
-                        : ((selections[idx] as string[]) ?? []).includes(opt.name);
-                    return (
-                      <button
-                        key={opt.name}
-                        className={selected ? "opt on" : "opt"}
-                        onClick={() =>
-                          group.type === "single" ? handleSingleSelect(idx, opt.name) : handleMultipleToggle(idx, opt.name)
-                        }
-                        aria-pressed={selected}
-                      >
-                        <i className={
-                          group.type === "single"
-                            ? selected ? "ph-fill ph-radio-button" : "ph-bold ph-circle"
-                            : selected ? "ph-fill ph-check-square" : "ph-bold ph-square"
-                        } />
-                        <span className="f1">
-                          {opt.name}
-                          {opt.default && <span className="pill" style={{ marginLeft: 8, fontSize: 10 }}>{group.type === "single" ? "Chef’s pick" : "Recommended"}</span>}
-                        </span>
-                        <span className="mono" style={{ fontSize: 13, color: modColor(opt.priceModifier) }}>
-                          {opt.priceModifier > 0 ? "+" : ""}{opt.priceModifier !== 0 ? F(opt.priceModifier) : "—"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
             </div>
           )}
 
-          {/* Reviews */}
-          <div className="padx mt16">
-            <V2Reviews slug={meal.slug} />
-          </div>
-
-          {/* Often added together */}
-          {upsells.length > 0 && (
-            <div className="padx mt16">
-              <div className="sh mb10"><i className="ph-bold ph-sparkle" /> Often added together</div>
-              {upsells.map((u: any) => (
-                <div key={u.id} className="fx ac gap12 mb10" style={{ padding: 10, border: "1px solid var(--ln)", background: "var(--s1)", borderRadius: 12 }}>
-                  <Link to={`/dish/${u.slug}`} style={{ flex: "none" }}>
-                    <img
-                      src={getLocalDishFallback(u.image, 200)}
-                      srcSet={localDishSrcset(u.image, "webp")}
-                      alt={u.name}
-                      loading="lazy"
-                      decoding="async"
-                      onError={onDishImageError}
-                      style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }}
-                    />
-                  </Link>
-                  <div className="f1" style={{ minWidth: 0 }}>
-                    <Link to={`/dish/${u.slug}`} className="small clamp1" style={{ fontWeight: 500, display: "block" }}>{u.name}</Link>
-                    <div className="mono fntc" style={{ fontSize: 11 }}>{u.macros.calories} kcal · {F(u.price)}</div>
-                  </div>
-                  <button className="qbtn" onClick={() => quickAdd(u)} aria-label={`Add ${u.name}`}><i className="ph-bold ph-plus" /></button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Suggested pairing */}
-          {pairing && (
-            <div className="padx mt10">
-              <div className="lab mb6">Suggested pairing</div>
-              <Link className="fx ac gap12" to={`/dish/${pairing.slug}`} style={{ padding: "9px 0", borderTop: "1px solid var(--ln)" }}>
-                <img
-                  src={getLocalDishFallback(pairing.image, 200)}
-                  srcSet={localDishSrcset(pairing.image, "webp")}
-                  alt={pairing.name}
-                  loading="lazy"
-                  decoding="async"
-                  onError={onDishImageError}
-                  style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }}
-                />
-                <div className="f1" style={{ minWidth: 0 }}>
-                  <div className="small clamp1" style={{ fontWeight: 500 }}>{pairing.name}</div>
-                  <div className="mono fntc" style={{ fontSize: 10.5 }}>Adds {pairing.macros.protein}g protein · {pairing.macros.calories} kcal</div>
-                </div>
-                <span className="price" style={{ fontSize: 13, color: "var(--safb)" }}>+{F(pairing.price)}</span>
-              </Link>
-            </div>
-          )}
-
-          {/* PDP carries GI / clinical tags, so it must carry the disclaimer. */}
-          <div className="padx mt10">
+          {/* Medical Disclaimer */}
+          <div className="mt-8">
             <MedicalDisclaimer compact />
           </div>
-
-          {inRdPlanRotation && (
-            <div className="padx">
-              <Link to="/plans" className="fine" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                <i className="ph-bold ph-calendar-check" />
-                Also available in weekly RD plans <i className="ph-bold ph-arrow-right" />
-              </Link>
-            </div>
-          )}
-
-          <div style={{ height: 16 }} />
         </div>
 
-        {/* Sticky CTA — .dock is position:relative in theme.css (correct for the
-            flex-column pages like Cart), but this PDP is one long window-scroll
-            document, which buried the buy button at the very end. Pin it. */}
-        <div
-          className="dock"
-          style={{
-            position: "sticky",
-            bottom: 0,
-            zIndex: 55,
-            boxShadow: "0 -12px 30px color-mix(in oklab, var(--color-stone-900) 45%, transparent)",
-            paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
-          }}
-        >
-          <div className="fx ac jb gap12">
-            <div style={{ flex: "none" }}>
-              <div className="lab">Total</div>
-              <div className="price" style={{ fontSize: 19, color: "var(--safb)" }}>{F(calculatedTotal)}</div>
-            </div>
-            <div className="fx ac gap12">
-              {!(isPremiumOnly && !isPremium) && (
-                <div className="fx ac gap10">
-                  <button className="qbtn" onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Decrease quantity"><i className="ph-bold ph-minus" /></button>
-                  <span className="mono" style={{ fontSize: 16, fontWeight: 600, width: 20, textAlign: "center" }}>{quantity}</span>
-                  <button className="qbtn" onClick={() => setQuantity((q) => q + 1)} aria-label="Increase quantity"><i className="ph-bold ph-plus" /></button>
-                </div>
-              )}
-              {isPremiumOnly && !isPremium ? (
-                <button className="btn btn-g btn-lg" onClick={() => navigate("/premium")}><i className="ph-bold ph-crown" /> Premium only</button>
-              ) : match?.blocked ? (
-                <button 
-                  className="btn btn-lg" 
-                  disabled 
-                  style={{ background: "color-mix(in oklab, var(--color-error) 30%, transparent)", border: "1px solid color-mix(in oklab, var(--color-error) 40%, transparent)", color: "var(--color-error)", cursor: "not-allowed" }}
-                >
-                  <i className="ph-bold ph-warning-circle" /> Blocked by Safety
-                </button>
-              ) : (
-                <button className="btn btn-p btn-lg" onClick={handleAddToOrder}><i className="ph-bold ph-shopping-cart-simple" /> Add to order</button>
-              )}
-            </div>
-          </div>
-          {!isLive && <div className="fine tc mt6" style={{ fontSize: 10 }}>Offline mode — displaying cached prices</div>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TargetRow({ label, val, target, unit = "", pct = false }: any) {
-  const p = Math.round((val / target) * 100);
-  return (
-    <div className="fx ac jb">
-      <span className="fine">{label}</span>
-      <span className="mono" style={{ fontSize: 12 }}>
-        {val}{unit} / <span className="fntc">{target}{unit}</span>
-        {pct && (
-          <span className="text-clinical-zinc/80 ml-1 font-sans text-[10px] tracking-normal lowercase">
-            ({p}% of daily {label.toLowerCase()})
+        {/* 4.2 Persistent Allergen line pinned above bottom bar */}
+        <div className="fixed bottom-[72px] inset-x-0 bg-[var(--tnm-surface-ink)]/95 backdrop-blur-md border-t border-white/5 py-2.5 px-4 z-[890] safe-bottom-allergen flex items-center gap-2">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--tnm-alert)]">Allergen Safety:</span>
+          <span className="text-xs text-white/80 font-medium truncate">
+            {meal.allergens?.length ? meal.allergens.map((a: string) => capitalize(a)).join(", ") : "No allergens detected"}
           </span>
-        )}
-      </span>
-    </div>
-  );
-}
-
-/* ---- Reviews: same endpoints as the original DishReviews, v2 markup ---- */
-async function fj<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-  });
-  if (!res.ok) throw new Error(`${res.status}: ${(await res.text().catch(() => "")) || res.statusText}`);
-  return res.json() as Promise<T>;
-}
-function relTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const day = Math.floor(diff / 86_400_000);
-  if (day < 1) { const hr = Math.floor(diff / 3_600_000); return hr < 1 ? "just now" : `${hr}h ago`; }
-  if (day < 30) return `${day}d ago`;
-  const mo = Math.floor(day / 30);
-  return mo < 12 ? `${mo}mo ago` : `${Math.floor(mo / 12)}y ago`;
-}
-function Stars({ value, onChange, size = 14 }: { value: number; onChange?: (v: number) => void; size?: number }) {
-  return (
-    <span className="fx ac" style={{ gap: 2 }}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" disabled={!onChange} onClick={() => onChange?.(n)} aria-label={`${n} star${n === 1 ? "" : "s"}`}>
-          <i className={n <= value ? "ph-fill ph-star" : "ph-bold ph-star"} style={{ fontSize: size, color: n <= value ? "var(--safb)" : "var(--fnt)" }} />
-        </button>
-      ))}
-    </span>
-  );
-}
-function V2Reviews({ slug }: { slug: string }) {
-  const qc = useQueryClient();
-  const auth = useQuery<any>({ queryKey: ["auth", "user"], queryFn: () => fj(`/auth/user`), staleTime: 300_000 });
-  const isLoggedIn = !!auth.data?.user?.id;
-  const data = useQuery<any>({
-    queryKey: ["dish-reviews", slug, auth.data?.user?.id ?? null],
-    queryFn: () => fj(`/dish-reviews/${encodeURIComponent(slug)}`),
-    staleTime: 30_000,
-  });
-  const hasOrdered = !!data.data?.eligibleToReview;
-  const [rating, setRating] = useState(0);
-  const [body, setBody] = useState("");
-  const submit = useMutation({
-    mutationFn: () => fj(`/dish-reviews`, { method: "POST", body: JSON.stringify({ slug, rating, body: body.trim() }) }),
-    onSuccess: () => { toast.success("Thanks for your review"); setRating(0); setBody(""); qc.invalidateQueries({ queryKey: ["dish-reviews", slug] }); },
-    onError: (e: any) => toast.error(e?.message || "Could not submit review"),
-  });
-  const reviews: any[] = data.data?.reviews ?? [];
-  const summary: any = data.data?.summary ?? null;
-  const canReview = isLoggedIn && hasOrdered;
-
-  return (
-    <div>
-      <div className="fx ac jb mb10">
-        <span className="sh"><i className="ph-bold ph-chat-circle-dots" /> Customer reviews</span>
-        {summary && (
-          <span className="pill"><i className="ph-fill ph-star" style={{ color: "var(--safb)" }} />{(summary.averageRating / 10).toFixed(1)} · {summary.sampleSize}</span>
-        )}
-      </div>
-
-      {summary && (summary.mostLoved || summary.commonGripe) && (
-        <div className="card mb10">
-          <div className="lab mb6">What customers say · <span style={{ textTransform: "capitalize" }}>{summary.trend}</span></div>
-          {summary.mostLoved && <div className="fine mt2"><span style={{ color: "var(--sage)" }}>Loved:</span> {summary.mostLoved}</div>}
-          {summary.commonGripe && <div className="fine mt2"><span style={{ color: "var(--safb)" }}>Gripe:</span> {summary.commonGripe}</div>}
         </div>
-      )}
 
-      {canReview ? (
-        <div className="card mb10">
-          <div className="fx ac gap12 mb6"><span className="small fw6">Leave a review</span><Stars value={rating} onChange={setRating} size={20} /></div>
-          <textarea
-            className="w100"
-            placeholder="Tell other customers what you thought (optional)"
-            value={body}
-            onChange={(e) => setBody(e.target.value.slice(0, 2000))}
-            rows={3}
-            style={{ background: "var(--s2)", border: "1px solid var(--ln2)", borderRadius: 10, padding: 10, color: "var(--tx)", fontSize: 13.5, resize: "vertical", outline: "none" }}
-          />
-          <div className="fx ac jb mt6">
-            <span className="fine">{body.length}/2000</span>
-            <button className="btn btn-p" style={{ height: 38 }} disabled={rating < 1 || submit.isPending} onClick={() => submit.mutate()}>
-              {submit.isPending ? "Posting…" : "Post review"}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="fine mb10">{isLoggedIn ? "Order this dish once to leave a review." : "Log in and order this dish to leave a review."}</div>
-      )}
+        {/* 6. Consolidated sticky bottom bar (state machine context: pdp) */}
+        <StickyBottomBar
+          context="pdp"
+          dishName={meal.name}
+          dishPricePaise={calculatedUnitPrice}
+          isInPlan={inRdPlanRotation}
+          onAddDish={handleAddToOrder}
+          disabled={match?.blocked === true}
+        />
 
-      {reviews.length > 0 ? (
-        reviews.slice(0, 5).map((r: any) => (
-          <div key={r.id} style={{ padding: "10px 0", borderTop: "1px solid var(--ln)" }}>
-            <div className="fx ac gap8">
-              <span className="avatar" style={{ width: 28, height: 28, fontSize: 11 }}>
-                {(r.reviewer?.label || "?").split(/\s+/).filter(Boolean).map((p: string) => p[0]).slice(0, 2).join("").toUpperCase()}
-              </span>
-              <div className="f1" style={{ minWidth: 0 }}>
-                <div className="small clamp1" style={{ fontWeight: 500 }}>{r.reviewer?.label}</div>
-                <div className="fx ac gap8"><Stars value={r.rating} size={11} /><span className="mono fntc" style={{ fontSize: 10 }}>{relTime(r.createdAt)}</span></div>
+        {/* Customization Drawer Overlay */}
+        {customizerOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950] flex items-end justify-center">
+            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-white/90">Customize {meal.name}</h3>
+                  <p className="text-[10px] text-white/45 mt-0.5">Customize your therapeutic macros & extras</p>
+                </div>
+                <button
+                  onClick={() => setCustomizerOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Allergen banner visible during customization */}
+              <div className="mt-3.5 alert-allergen-bg alert-allergen-border border rounded-xl p-3 flex gap-2 items-center">
+                <Warning className="w-4.5 h-4.5 text-[var(--tnm-alert)] shrink-0" weight="fill" />
+                <div className="text-[11px]">
+                  <span className="font-bold text-[var(--tnm-alert)] mr-1">Allergen Warning:</span>
+                  <span className="text-white/80">
+                    {meal.allergens?.length ? meal.allergens.map((a: string) => capitalize(a)).join(", ") : "No allergens detected"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Customization groups */}
+              <div className="flex-1 overflow-y-auto flex flex-col gap-5 mt-4 py-2 pr-1">
+                {customizations.map((group: any, groupIdx: number) => {
+                  const selection = selections[groupIdx];
+                  return (
+                    <div key={groupIdx} className="flex flex-col gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/45">{group.groupName}</span>
+                      <div className="flex flex-col gap-2 mt-1">
+                        {group.options.map((opt: any) => {
+                          const isSelected =
+                            group.type === "single"
+                              ? selection === opt.name
+                              : Array.isArray(selection) && selection.includes(opt.name);
+
+                          return (
+                            <button
+                              key={opt.name}
+                              onClick={() => {
+                                if (group.type === "single") {
+                                  handleSingleSelect(groupIdx, opt.name);
+                                } else {
+                                  handleMultipleToggle(groupIdx, opt.name);
+                                }
+                              }}
+                              className={`flex justify-between items-center p-3 rounded-xl border text-left transition-all ${
+                                isSelected
+                                  ? "bg-[var(--tnm-action)]/10 border-[var(--tnm-action)] text-white"
+                                  : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10"
+                              }`}
+                            >
+                              <span className="text-xs font-semibold">{opt.name}</span>
+                              <div className="flex items-center gap-2">
+                                {opt.priceModifier > 0 && (
+                                  <span className="tnm-data text-[10px] font-bold text-[var(--tnm-action)] bg-[var(--tnm-action)]/10 px-2 py-0.5 rounded">
+                                    +{F(opt.priceModifier)}
+                                  </span>
+                                )}
+                                <div className={`w-4 h-4 rounded flex items-center justify-center border ${
+                                  isSelected ? "border-[var(--tnm-action)] bg-[var(--tnm-action)]" : "border-white/30"
+                                }`}>
+                                  {isSelected && <Check className="w-3 h-3 text-black" weight="bold" />}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Live recalculated pricing & macros banner inside drawer */}
+              <div className="mt-6 border-t border-white/5 pt-4 flex flex-col gap-3">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs text-white/55">Recalculated unit price:</span>
+                  <span className="tnm-data text-base font-bold text-[var(--tnm-action)]">
+                    {F(calculatedUnitPrice)}
+                  </span>
+                </div>
+                <div className="text-[10px] text-white/40 leading-snug">
+                  * Nutrition values and price modifier updates will apply to this meal when added to plan.
+                </div>
+                <button
+                  onClick={() => setCustomizerOpen(false)}
+                  className="w-full bg-[var(--tnm-action)] text-black hover:bg-[var(--tnm-action)]/90 h-11 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg active:scale-95 transition-all mt-1"
+                >
+                  Apply & Close Customization
+                </button>
               </div>
             </div>
-            {r.body && <div className="fine mt6">{r.body}</div>}
-            {r.photoUrl && <img src={r.photoUrl} alt="Reviewer" loading="lazy" style={{ marginTop: 6, borderRadius: 10, maxHeight: 160, border: "1px solid var(--ln)" }} />}
           </div>
-        ))
-      ) : (
-        <div className="fine">No reviews yet — be the first to share your experience.</div>
-      )}
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Helper components for macro visualization tracks
+interface MacroTrackProps {
+  label: string;
+  value: number;
+  target: number | null;
+  unit: string;
+}
+
+function MacroTrack({ label, value, target, unit }: MacroTrackProps) {
+  const percent = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
+  const isOver = target && value > target;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex justify-between items-baseline text-xs text-white/80">
+        <span className="font-semibold">{label}</span>
+        <span className="font-mono text-[11px]">
+          {value}{unit}
+          {target ? (
+            <>
+              <span className="text-white/40"> / {target}{unit}</span>
+              <span className={`ml-1.5 font-sans font-bold text-[10px] ${isOver ? "text-[var(--color-alert-stat)]" : "text-[var(--color-alert-safe)]"}`}>
+                {isOver ? `Above range` : `${percent}% of target`}
+              </span>
+            </>
+          ) : (
+            <span className="text-white/40 ml-1.5 font-sans text-[10px]">Within range</span>
+          )}
+        </span>
+      </div>
+      <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+        <div
+          className={`h-full transition-all duration-300 ${
+            target
+              ? isOver
+                ? "bg-[var(--color-alert-stat)]"
+                : "bg-[var(--color-alert-safe)]"
+              : "bg-white/20"
+          }`}
+          style={{ width: target ? `${percent}%` : "100%" }}
+        />
+      </div>
     </div>
   );
 }

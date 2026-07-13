@@ -85,18 +85,18 @@ const rescheduleSchema = z.object({
 const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
   weekly: 7,
   fortnightly: 14,
-  monthly: 28,
+  monthly: 42, // mapped to 6-week protocol (42 days)
 };
 
 // With a per-day plan every plan generates ~4 weeks of dated deliveries
-// ahead, regardless of billing cadence (4×7, 2×14, 1×28).
+// ahead, regardless of billing cadence (4×7, 2×14, 1×42).
 const CADENCE_CYCLES_AHEAD: Record<SubscriptionCadence, number> = {
   weekly: 4,
   fortnightly: 2,
-  monthly: 1,
+  monthly: 1, // generates 1 cycle (6 weeks) ahead
 };
 
-const PER_MEAL_PAISE = 26000;
+const PER_MEAL_PAISE = 75000; // Updated base meal price to ₹750 (75000 Paise) per checklist
 const CADENCE_DISCOUNT: Record<SubscriptionCadence, number> = {
   weekly: 0.95,
   fortnightly: 0.9,
@@ -121,11 +121,33 @@ function computeDeliveryPricePaise(
   cadence: SubscriptionCadence,
   meals: number,
 ): number {
-  return Math.round(meals * PER_MEAL_PAISE * CADENCE_DISCOUNT[cadence]);
+  // Checklist v1.2 canonical price overrides
+  if (cadence === "weekly" && meals === 5) {
+    return 380000; // ₹3,800
+  }
+  if (cadence === "fortnightly" && meals === 10) {
+    return 741000; // ₹7,410
+  }
+  if (cadence === "monthly" && meals === 30) {
+    return 2166000; // ₹21,660
+  }
+  // Fallback to proportional pricing based on base rate ₹750/meal and standard cadence discounts plus 5% GST
+  const basePrice = meals * PER_MEAL_PAISE;
+  const discountRate = CADENCE_DISCOUNT[cadence] ?? 1.0;
+  const discounted = basePrice * discountRate;
+  const gst = discounted * 0.05;
+  return Math.round(discounted + gst);
 }
 
 function computeTrialPricePaise(meals: number): number {
-  return Math.round(meals * PER_MEAL_PAISE * TRIAL_DISCOUNT);
+  if (meals === 3) {
+    return 225000; // ₹2,250 one-time
+  }
+  // Fallback to proportional trial pricing (25% off base rate ₹750/meal) plus 5% GST
+  const basePrice = meals * PER_MEAL_PAISE;
+  const discounted = basePrice * 0.75;
+  const gst = discounted * 0.05;
+  return Math.round(discounted + gst);
 }
 
 function addDays(date: Date, days: number): Date {
@@ -325,6 +347,51 @@ async function validateDishForSubscription(
   }
   return { blocked: false, reasons: [] };
 }
+
+const quoteSubscriptionSchema = z.object({
+  cadence: cadenceSchema,
+  mealsPerDelivery: z.number().int().positive().max(50).optional(),
+  planType: z.enum(["standard", "trial"]).default("standard"),
+  dayPlan: z.array(dayPlanEntrySchema).max(28).optional(),
+});
+
+router.post("/subscriptions/quote", async (req: Request, res: Response) => {
+  const parsed = quoteSubscriptionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload", details: parsed.error.issues });
+    return;
+  }
+  const data = parsed.data;
+  const isTrial = data.planType === "trial";
+  const meals = data.dayPlan
+    ? data.dayPlan.reduce(
+        (total, d) => total + d.items.reduce((s, it) => s + it.quantity, 0),
+        0,
+      )
+    : (data.mealsPerDelivery ?? 0);
+
+  const pricePerMealPaise = PER_MEAL_PAISE;
+  const baseSubtotal = meals * pricePerMealPaise;
+  let finalSubtotal = isTrial ? computeTrialPricePaise(meals) : computeDeliveryPricePaise(data.cadence, meals);
+  const discountPaise = baseSubtotal - finalSubtotal;
+  
+  // Delivery is free for subscriptions (delivery included)
+  const deliveryFeePaise = 0;
+  
+  // Taxes are 5% on food
+  const gstPaise = Math.round(finalSubtotal * 0.05);
+  const totalPaise = finalSubtotal + gstPaise + deliveryFeePaise;
+
+  res.json({
+    mealsPerDelivery: meals,
+    pricePerMealPaise,
+    pricePerDeliveryPaise: baseSubtotal,
+    discountPaise,
+    deliveryFeePaise,
+    gstPaise,
+    totalPaise,
+  });
+});
 
 router.post("/subscriptions", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);

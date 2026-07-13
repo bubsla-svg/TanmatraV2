@@ -618,3 +618,78 @@ export function getDishVariants(currentSlug: string, allDishes: DishData[]): Dis
     })
     .filter(Boolean) as DishVariantOption[];
 }
+
+const TASTE_DESCRIPTIONS: Record<DishCategory, string> = {
+  beverages: "Refreshing, clean, with subtle natural sweetness and earthy undertones.",
+  breakfast: "Warm, savoury or mildly sweet toasted profile with fresh accents.",
+  salads: "Crisp, bright, with herbaceous dressings and zesty vinegar notes.",
+  soups: "Warm, comforting, slow-simmered savory notes with gentle spice finish.",
+  pasta: "Rich umami spiced sauce, roasted tender greens, medium warmth finish.",
+  wraps: "Savoury grilled envelope with crunchy raw greens and creamy spreads.",
+  bowls: "Complex spiced profiles, textured grains, earthy and aromatic layers.",
+  snacks: "Lightly crisped baked texture with standard dipping spice accents.",
+  mains: "Deeply layered slow-cooked gravy, aromatic spices, and protein balance.",
+};
+
+export function getTasteDescriptionForDish(dish: DishData): string {
+  return (dish as any).tasteDescription ?? TASTE_DESCRIPTIONS[dish.category];
+}
+
+export interface MacroModifier {
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  calories: number;
+}
+
+export function getOptionMacroModifier(optionName: string): MacroModifier {
+  const name = optionName.toLowerCase();
+  const modifier: MacroModifier = { protein: 0, carbs: 0, fat: 0, fiber: 0, calories: 0 };
+
+  if (name.includes("whey protein") || name.includes("extra protein scoop")) {
+    modifier.protein = 25;
+    modifier.calories = 110;
+    modifier.fat = 1;
+    modifier.carbs = 2;
+  } else if (name.includes("100 gm chicken") || name.includes("100gm chicken")) {
+    modifier.protein = 30;
+    modifier.calories = 165;
+    modifier.fat = 4;
+  } else if (name.includes("50gm chicken") || name.includes("50g chicken")) {
+    modifier.protein = 15;
+    modifier.calories = 80;
+    modifier.fat = 2;
+  } else if (name.includes("egg whites (3)")) {
+    modifier.protein = 11;
+    modifier.calories = 50;
+  } else if (name.includes("avocado")) {
+    modifier.fat = 10;
+    modifier.calories = 120;
+    modifier.fiber = 4;
+    modifier.carbs = 6;
+  } else if (name.includes("paneer")) {
+    modifier.protein = 14;
+    modifier.fat = 18;
+    modifier.calories = 230;
+    modifier.carbs = 3;
+  } else if (name.includes("tofu")) {
+    modifier.protein = 12;
+    modifier.fat = 6;
+    modifier.calories = 110;
+    modifier.carbs = 2;
+  } else if (name.includes("hummus")) {
+    modifier.fat = 7;
+    modifier.protein = 3;
+    modifier.carbs = 6;
+    modifier.calories = 100;
+  } else if (name.includes("chia seeds") || name.includes("flax seeds")) {
+    modifier.fat = 3;
+    modifier.fiber = 2;
+    modifier.calories = 40;
+    modifier.protein = 1;
+  }
+
+  return modifier;
+}
+
