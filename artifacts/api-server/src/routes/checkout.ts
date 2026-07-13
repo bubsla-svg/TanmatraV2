@@ -10,6 +10,17 @@ import { sendOrderConfirmation } from "../lib/orderNotification";
 
 const router: IRouter = Router();
 
+/**
+ * À-la-carte (single-meal, non-subscription) checkout gate. Defaults ENABLED to
+ * preserve current behaviour; set env ALC_CHECKOUT_ENABLED=false to enforce
+ * subscription-only ordering, at which point POST /orders refuses with 403.
+ * This is the server-authoritative enforcement point (the client should also
+ * hide the one-time CTA when disabled, but this refusal is what guarantees it).
+ */
+function alcCheckoutEnabled(): boolean {
+  return (process.env["ALC_CHECKOUT_ENABLED"] ?? "true").toLowerCase() !== "false";
+}
+
 const placeOrderSchema = z.object({
   externalOrderId: z.string().min(1).max(64),
   items: z
@@ -40,6 +51,14 @@ const placeOrderSchema = z.object({
  */
 
 router.post("/orders", async (req: Request, res: Response) => {
+  if (!alcCheckoutEnabled()) {
+    res.status(403).json({
+      error: "à-la-carte checkout is currently unavailable — please choose a plan",
+      code: "alc_checkout_disabled",
+    });
+    return;
+  }
+
   const parsed = placeOrderSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
