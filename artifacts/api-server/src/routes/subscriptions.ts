@@ -20,6 +20,7 @@ import { invalidateUserBrief } from "../lib/userBrief";
 import { resolveDishBySlug, makeBatchDishResolver } from "../lib/menuResolver";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { cancelAutopayMandate } from "../lib/autopay";
+import { SKIP_SWAP_CUTOFF_MS, isPastSkipCutoff } from "../lib/subscriptionRules";
 
 const router: IRouter = Router();
 
@@ -826,11 +827,17 @@ router.post(
       res.status(400).json({ error: "delivery is not upcoming" });
       return;
     }
-    const [updated] = await db
-      .update(subscriptionDeliveriesTable)
-      .set({ status: "skipped" })
-      .where(eq(subscriptionDeliveriesTable.id, deliveryId))
-      .returning();
+    // Enforce the advertised "skip up to 24h before delivery" cutoff. Without
+    // this a skip at T-1min succeeds while the kitchen is already packing, and
+    // the customer is credited for a meal they still receive.
+    if (isPastSkipCutoff(found.delivery.scheduledFor)) {
+      res.status(409).json({
+        error: "This delivery is too close to its delivery time to skip.",
+        code: "past_cutoff",
+        cutoffHours: SKIP_SWAP_CUTOFF_MS / 3_600_000,
+      });
+      return;
+    }
 
     const expiresAt = new Date();
     expiresAt.setUTCDate(expiresAt.getUTCDate() + 60);
@@ -842,14 +849,39 @@ router.post(
       (sum, item) => sum + item.quantity,
       0,
     );
-    await db.insert(mealCreditsTable).values({
-      userId,
-      subscriptionId: found.subscription.id,
-      deliveryId,
-      amount: skippedMeals > 0 ? skippedMeals : found.subscription.mealsPerDelivery,
-      reason: "skipped_delivery",
-      expiresAt,
+
+    // The status UPDATE is the atomic transition guard: keyed on
+    // status='upcoming', so of two concurrent skips exactly one flips the row
+    // (and returns it) while the loser gets zero rows. Credit is inserted in the
+    // SAME transaction only when the transition actually happened — this closes
+    // the double-submit double-credit race.
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(subscriptionDeliveriesTable)
+        .set({ status: "skipped" })
+        .where(
+          and(
+            eq(subscriptionDeliveriesTable.id, deliveryId),
+            eq(subscriptionDeliveriesTable.status, "upcoming"),
+          ),
+        )
+        .returning();
+      if (!row) return null;
+      await tx.insert(mealCreditsTable).values({
+        userId,
+        subscriptionId: found.subscription.id,
+        deliveryId,
+        amount: skippedMeals > 0 ? skippedMeals : found.subscription.mealsPerDelivery,
+        reason: "skipped_delivery",
+        expiresAt,
+      });
+      return row;
     });
+
+    if (!updated) {
+      res.status(409).json({ error: "delivery already skipped", code: "already_skipped" });
+      return;
+    }
 
     await recomputeNextDeliveryAt(
       found.subscription.id,
@@ -890,12 +922,14 @@ router.post(
       res.status(400).json({ error: "no upcoming delivery found" });
       return;
     }
-
-    const [updated] = await db
-      .update(subscriptionDeliveriesTable)
-      .set({ status: "skipped" })
-      .where(eq(subscriptionDeliveriesTable.id, delivery.id))
-      .returning();
+    if (isPastSkipCutoff(delivery.scheduledFor)) {
+      res.status(409).json({
+        error: "The next delivery is too close to its delivery time to skip.",
+        code: "past_cutoff",
+        cutoffHours: SKIP_SWAP_CUTOFF_MS / 3_600_000,
+      });
+      return;
+    }
 
     const expiresAt = new Date();
     expiresAt.setUTCDate(expiresAt.getUTCDate() + 60);
@@ -903,14 +937,37 @@ router.post(
       (sum, item) => sum + item.quantity,
       0,
     );
-    await db.insert(mealCreditsTable).values({
-      userId,
-      subscriptionId: subId,
-      deliveryId: delivery.id,
-      amount: skippedMeals > 0 ? skippedMeals : sub.mealsPerDelivery,
-      reason: "skipped_delivery",
-      expiresAt,
+
+    // Guarded transition + credit in one transaction (see delivery-level skip):
+    // concurrent skips can't both credit because only the winning UPDATE (keyed
+    // on status='upcoming') returns a row and inserts the credit.
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(subscriptionDeliveriesTable)
+        .set({ status: "skipped" })
+        .where(
+          and(
+            eq(subscriptionDeliveriesTable.id, delivery.id),
+            eq(subscriptionDeliveriesTable.status, "upcoming"),
+          ),
+        )
+        .returning();
+      if (!row) return null;
+      await tx.insert(mealCreditsTable).values({
+        userId,
+        subscriptionId: subId,
+        deliveryId: delivery.id,
+        amount: skippedMeals > 0 ? skippedMeals : sub.mealsPerDelivery,
+        reason: "skipped_delivery",
+        expiresAt,
+      });
+      return row;
     });
+
+    if (!updated) {
+      res.status(409).json({ error: "delivery already skipped", code: "already_skipped" });
+      return;
+    }
 
     await recomputeNextDeliveryAt(subId, sub.nextDeliveryAt);
     invalidateUserBrief(userId);
@@ -1008,6 +1065,14 @@ router.post(
       res.status(400).json({ error: "delivery is not upcoming" });
       return;
     }
+    if (isPastSkipCutoff(found.delivery.scheduledFor)) {
+      res.status(409).json({
+        error: "This delivery is too close to its delivery time to change.",
+        code: "past_cutoff",
+        cutoffHours: SKIP_SWAP_CUTOFF_MS / 3_600_000,
+      });
+      return;
+    }
     const parsed = swapItemsSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "invalid payload" });
@@ -1034,11 +1099,22 @@ router.post(
         }
       }
     }
+    // Guarded on status='upcoming' so a swap can't race a concurrent skip/swap
+    // and mutate a delivery that already left the upcoming state.
     const [updated] = await db
       .update(subscriptionDeliveriesTable)
       .set({ items: parsed.data.items })
-      .where(eq(subscriptionDeliveriesTable.id, deliveryId))
+      .where(
+        and(
+          eq(subscriptionDeliveriesTable.id, deliveryId),
+          eq(subscriptionDeliveriesTable.status, "upcoming"),
+        ),
+      )
       .returning();
+    if (!updated) {
+      res.status(409).json({ error: "delivery is no longer upcoming", code: "not_upcoming" });
+      return;
+    }
     invalidateUserBrief(userId);
     res.json({ delivery: updated });
   },

@@ -1,4 +1,4 @@
-import { DISHES, macrosAreProvisional, type DishCategory, type DishCustomGroup, type DishData } from "./menuData";
+import { DISHES, getServeMode, macrosAreProvisional, type DishCategory, type DishCustomGroup, type DishData, type DishServeMode } from "./menuData";
 
 export type Lifestyle =
   | "all"
@@ -623,20 +623,44 @@ export function getDishVariants(currentSlug: string, allDishes: DishData[]): Dis
     .filter(Boolean) as DishVariantOption[];
 }
 
+// Category-level fallback tasting notes. These are only used when a dish does
+// NOT provide its own `tasteDescription`. Keep them generic enough that they
+// can't misdescribe a dish in the category — the previous `snacks` default
+// ("standard dipping spice accents") read as a savoury snack and bled onto
+// sweet bakes like the ragi-dates brownie. Anything category-specific (a sweet
+// bake, a cold dessert) must set `tasteDescription` on the dish record.
 const TASTE_DESCRIPTIONS: Record<DishCategory, string> = {
   beverages: "Refreshing, clean, with subtle natural sweetness and earthy undertones.",
-  breakfast: "Warm, savoury or mildly sweet toasted profile with fresh accents.",
+  breakfast: "A fresh morning plate — balanced, lightly seasoned, with wholesome accents.",
   salads: "Crisp, bright, with herbaceous dressings and zesty vinegar notes.",
   soups: "Warm, comforting, slow-simmered savory notes with gentle spice finish.",
   pasta: "Rich umami spiced sauce, roasted tender greens, medium warmth finish.",
   wraps: "Savoury grilled envelope with crunchy raw greens and creamy spreads.",
   bowls: "Complex spiced profiles, textured grains, earthy and aromatic layers.",
-  snacks: "Lightly crisped baked texture with standard dipping spice accents.",
+  snacks: "Portion-controlled, baked-not-fried, with a clean and satisfying finish.",
   mains: "Deeply layered slow-cooked gravy, aromatic spices, and protein balance.",
 };
 
 export function getTasteDescriptionForDish(dish: DishData): string {
-  return (dish as any).tasteDescription ?? TASTE_DESCRIPTIONS[dish.category];
+  return dish.tasteDescription ?? TASTE_DESCRIPTIONS[dish.category];
+}
+
+// Serving / packaging copy keyed to the dish's serving mode. A single universal
+// "Ready to eat in 2 minutes of heating" template previously shipped on every
+// dish — including cold-pressed smoothies (with ice) and raw salads. Copy is now
+// derived from the dish's serving mode so cold/raw items never carry heating
+// instructions. See `DishServeMode` in @workspace/menu-catalog.
+const SERVING_INSTRUCTIONS: Record<DishServeMode, string> = {
+  serve_chilled:
+    "Arrives chilled in a double-insulated, tamper-evident thermal container. Serve straight from the fridge — do not heat.",
+  reheat:
+    "Arrives chilled in a double-insulated, tamper-evident thermal container. Ready to eat after about 2 minutes of gentle reheating.",
+  ready_ambient:
+    "Arrives in a tamper-evident, temperature-controlled container. Ready to eat as delivered — no heating required. Refrigerate if not eating right away.",
+};
+
+export function getServingInstructionForDish(dish: DishData): string {
+  return SERVING_INSTRUCTIONS[getServeMode(dish)];
 }
 
 export interface MacroModifier {

@@ -1,9 +1,9 @@
 import { type MetaFunction } from "react-router";
 import V2Home from "@/tanmatra-v2/Home";
 
-const TITLE = "Tanmatra — Therapeutic Meal Delivery in Noida, Delhi & Gurgaon";
+const TITLE = "Tanmatra — Dietitian-Designed Meal Delivery in Noida, Delhi & Gurgaon";
 const DESCRIPTION =
-  "Chef-crafted meals designed by registered dietitians with full macro transparency, delivered in 25–40 minutes across Noida, Delhi & Gurgaon. Designed to support your weight, fitness and clinical nutrition goals.";
+  "Dietitian-designed meals delivered fresh in 25–40 minutes across Noida, Delhi & Gurgaon. Calories, protein and allergens listed on every dish.";
 const IMAGE = "https://tanmatra.food/opengraph.jpg";
 const URL = "https://tanmatra.food/";
 

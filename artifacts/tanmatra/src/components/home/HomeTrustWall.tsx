@@ -19,23 +19,23 @@ const TRUST_ITEMS: TrustItem[] = [
   },
   {
     icon: ClipboardText,
-    title: "Registered Dietitians",
-    desc: "Every single recipe is formulated and approved by clinical nutritionists.",
+    title: "Designed by dietitians",
+    desc: "Every recipe is designed and approved by registered dietitians.",
   },
   {
     icon: Waves,
-    title: "Low-GI Indexing",
-    desc: "Carbohydrate ingredients tested and categorized for low glycemic load.",
+    title: "Steady energy",
+    desc: "Carbohydrates chosen for a gentler effect on blood sugar.",
   },
   {
     icon: CheckSquare,
-    title: "Audited Macros",
-    desc: "Lab tested and verified nutritional metrics for calorie and protein precision.",
+    title: "Macros on every dish",
+    desc: "Calories, protein and allergens are listed for every meal (ingredient-estimated where noted).",
   },
   {
     icon: Calendar,
-    title: "Pause or Skip Anytime",
-    desc: "Flexible digital portal controls to freeze deliveries up to 24h prior.",
+    title: "Pause or skip anytime",
+    desc: "Pause your subscription or skip individual days from your account.",
   },
 ];
 
@@ -44,9 +44,9 @@ export default function HomeTrustWall() {
     <section className="padx mt-12 bg-white/[0.02] py-8 border-y border-white/5">
       <div className="secrow px-0 flex flex-col items-center text-center gap-2 mb-6">
         <span className="sh text-base font-bold uppercase tracking-wider text-white/45">
-          Verifiable clinical safety
+          Why you can trust Tanmatra
         </span>
-        <h3 className="text-xl font-bold text-white/90">Our operational trust criteria</h3>
+        <h3 className="text-xl font-bold text-white/90">Food safety &amp; quality, verified</h3>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

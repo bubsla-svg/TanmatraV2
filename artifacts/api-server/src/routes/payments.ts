@@ -15,6 +15,7 @@ import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
+import { isCaptureAmountReconciled, resolvePayableAmountPaise } from "../lib/paymentIntegrity";
 
 const router: IRouter = Router();
 
@@ -51,7 +52,9 @@ const verifyPaymentSchema = z.object({
 });
 
 const upiIntentSchema = z.object({
-  amountPaise: z.number().int().positive(),
+  // Retained for backward compatibility and tamper detection only — the payment
+  // link is ALWAYS created for the server-stored charge, never this value.
+  amountPaise: z.number().int().positive().max(10_000_000).optional(),
   orderId: z.string().max(40),
   phone: z.string().max(20),
 });
@@ -506,7 +509,55 @@ router.post("/payments/upi/intent", async (req: Request, res: Response) => {
     return;
   }
 
-  const { amountPaise, orderId, phone } = parsed.data;
+  const { amountPaise: clientAmount, orderId, phone } = parsed.data;
+
+  // Resolve the order and its authoritative amount server-side. A payment link
+  // MUST be created for the server-stored charge, never a client-supplied
+  // number — otherwise a caller can pay ₹1 for any order. Mirrors the hardened
+  // /payments/razorpay/order path.
+  const [order] = await db
+    .select({
+      id: ordersTable.id,
+      userId: ordersTable.userId,
+      status: ordersTable.status,
+      chargePaise: ordersTable.chargePaise,
+      totalPaise: ordersTable.totalPaise,
+    })
+    .from(ordersTable)
+    .where(eq(ordersTable.externalOrderId, orderId))
+    .limit(1);
+
+  if (!order) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+
+  // Ownership: an order that belongs to a user may only be paid by that user.
+  // Guest orders (userId null) stay open for the guest-checkout flow.
+  if (order.userId) {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+    if (req.user.id !== order.userId) {
+      res.status(403).json({ error: "forbidden" });
+      return;
+    }
+  }
+
+  const authoritativePaise = resolvePayableAmountPaise(order);
+  if (authoritativePaise == null) {
+    res.status(409).json({ error: "order has no payable amount" });
+    return;
+  }
+  if (typeof clientAmount === "number" && clientAmount !== authoritativePaise) {
+    // Not fatal — we bill the authoritative amount regardless — but a divergence
+    // is worth surfacing (client math drift or a tamper attempt).
+    req.log.warn(
+      { orderId, clientAmount, authoritativePaise },
+      "upi intent amount mismatch — billing server amount",
+    );
+  }
 
   const rpRes = await fetch("https://api.razorpay.com/v1/payment_links", {
     method: "POST",
@@ -515,7 +566,7 @@ router.post("/payments/upi/intent", async (req: Request, res: Response) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      amount: amountPaise,
+      amount: authoritativePaise,
       currency: "INR",
       description: "Tanmatra Order",
       reference_id: orderId,
@@ -601,7 +652,14 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     return;
   }
 
-  let event: { id?: string; event?: string; payload?: { payment?: { entity?: { order_id?: string; id?: string; amount?: number } } } };
+  let event: {
+    id?: string;
+    event?: string;
+    payload?: {
+      payment?: { entity?: { order_id?: string; id?: string; amount?: number } };
+      payment_link?: { entity?: { id?: string; reference_id?: string; amount?: number; amount_paid?: number; status?: string } };
+    };
+  };
   try {
     event = JSON.parse(rawBody.toString("utf8"));
   } catch {
@@ -723,6 +781,64 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               const [kId, kSecret] = creds;
               await registerAutopayMandate(order.id, razorpayPaymentId, kId, kSecret, req.log);
             }
+          }
+        }
+      }
+    } else if (eventType === "payment_link.paid") {
+      // UPI Payment Link capture. A payment link carries no razorpay order_id, so
+      // it is matched to our order by `reference_id` (= externalOrderId). Without
+      // this branch link captures were never reconciled and the money moved
+      // silently. Reconcile against the authoritative amount and promote with the
+      // same guarded transition used for payment.captured.
+      const linkEntity = event.payload?.payment_link?.entity;
+      const referenceId = linkEntity?.reference_id ?? "";
+      const capturedAmount = paymentEntity?.amount ?? linkEntity?.amount_paid ?? null;
+      if (referenceId) {
+        const rows = await db
+          .select({
+            order: ordersTable,
+            user: {
+              firstName: usersTable.firstName,
+              lastName: usersTable.lastName,
+              email: usersTable.email,
+            },
+          })
+          .from(ordersTable)
+          .leftJoin(usersTable, eq(ordersTable.userId, usersTable.id))
+          .where(eq(ordersTable.externalOrderId, referenceId))
+          .limit(1);
+        const result = rows[0];
+        const order = result?.order;
+        const expected = order ? order.chargePaise ?? order.totalPaise : null;
+        if (order && !isCaptureAmountReconciled(expected, capturedAmount)) {
+          // Underpayment / tamper — record the integrity alarm and do NOT promote.
+          req.log.error(
+            { referenceId, capturedAmount, expected, orderId: order.id },
+            "webhook: payment link paid amount does not match order total — not confirming",
+          );
+        } else if (order) {
+          const razorpayPaymentId = paymentEntity?.id ?? null;
+          const updated = await db
+            .update(ordersTable)
+            .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
+            .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
+            .returning({ id: ordersTable.id });
+          if (updated[0]) {
+            void sendOrderConfirmation(updated[0].id);
+            const fullName = [result.user?.firstName, result.user?.lastName]
+              .filter(Boolean)
+              .join(" ");
+            pushOrderToPetpooja(order, {
+              name: fullName || "Guest Customer",
+              email: result.user?.email || null,
+            }).catch((err) => {
+              req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
+            });
+          } else if (order.status === "cancelled" || order.status === "failed") {
+            req.log.error(
+              { referenceId, orderId: order.id, status: order.status },
+              "webhook: payment link capture arrived for a cancelled/failed order — needs refund review",
+            );
           }
         }
       }

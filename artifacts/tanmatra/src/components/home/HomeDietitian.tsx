@@ -26,7 +26,7 @@ export default function HomeDietitian() {
                 <SealCheck className="w-4 h-4 text-[var(--tnm-action)]" weight="fill" />
               </h4>
               <p className="fine text-[var(--tnm-action)]/80 font-medium mt-0.5">
-                Lead Dietitian — Cardiometabolic Protocol
+                Lead Dietitian — Heart &amp; Diabetes Care
               </p>
             </div>
             <span className="text-[10px] uppercase font-bold text-white/45 bg-white/5 px-2 py-0.5 rounded tracking-wider self-start md:self-auto">
@@ -41,13 +41,13 @@ export default function HomeDietitian() {
           </div>
 
           <p className="fine text-white/60 mt-4 leading-relaxed">
-            Dr. Anjali oversees all clinical nutrition standards at Tanmatra. She reviews every dish recipe for saturated fat ratios, sodium caps, and glycemic thresholds to ensure meals match therapeutic profiles.
+            Dr. Anjali oversees nutrition standards at Tanmatra. She reviews every recipe for saturated fat, sodium, and blood-sugar impact so meals match your health goals.
           </p>
 
           <div className="card bg-white/[0.02] border border-white/5 mt-4 p-3 rounded-xl flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-[var(--tnm-action)] shrink-0" weight="fill" />
             <span className="text-xs text-white/80 leading-snug">
-              &ldquo;Every plate signed off for sodium limits, glycemic load, and healthy fat ratios before it leaves our kitchen.&rdquo;
+              &ldquo;Every plate signed off for sodium, blood-sugar impact, and healthy fats before it leaves our kitchen.&rdquo;
             </span>
           </div>
 

@@ -44,7 +44,7 @@ const PRICING_PRESETS: PricingPreset[] = [
   {
     id: "six-week",
     title: "6-Week Reset",
-    desc: "Complete metabolic reset protocol. 30 lunches, dietitian advisory, commitment discount.",
+    desc: "A six-week reset. 30 lunches, dietitian advisory, commitment discount.",
     meals: 30,
     cadence: "monthly",
     planType: "standard",
@@ -54,10 +54,13 @@ const PRICING_PRESETS: PricingPreset[] = [
   },
 ];
 
+// Copy freeze (§6): we only claim flexibility we actually enforce today. The
+// "24h swap cut-off" and "cancel stops billing in one tap" promises return once
+// their enforcement lands (subscription skip/swap cut-off + mandate cancellation).
 const FLEXIBILITY_ITEMS = [
-  "Swap meals up to 24h before delivery",
+  "Swap any dish for another in the catalog",
   "Pause or skip individual days online",
-  "No hidden fees, cancel in one tap",
+  "Taxes and delivery shown before you pay",
 ];
 
 export default function HomePricing() {
@@ -66,7 +69,7 @@ export default function HomePricing() {
       <div className="secrow px-0 text-center flex-col items-center gap-2">
         <span className="sh text-2xl">Simple, flexible pricing</span>
         <p className="fine max-w-[340px] text-white/60 mx-auto">
-          Choose a plan that fits your metabolic goals. Scale up or down as you go.
+          Choose a plan that fits your goals. Scale up or down as you go.
         </p>
       </div>
 
