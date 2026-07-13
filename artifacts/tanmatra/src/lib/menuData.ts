@@ -8,6 +8,8 @@ export {
   CATEGORY_LABELS,
   KITCHEN_LABELS,
   macrosAreProvisional,
+  allergensAreReviewed,
+  getAllergenDisclosure,
   getServeMode,
   defaultServeModeForCategory,
   type DishCategory,
@@ -16,6 +18,7 @@ export {
   type DishCustomGroup,
   type DishCustomOption,
   type DishMacros,
+  type AllergenDisclosure,
   type DishServeMode,
 } from "@workspace/menu-catalog";
 

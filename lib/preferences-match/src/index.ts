@@ -47,7 +47,8 @@ export type BlockReason =
   | { code: "diet_block"; style: DietaryStyle; detail: string }
   | { code: "ingredient_block"; ingredients: string[] }
   | { code: "keto_block"; carbs: number }
-  | { code: "unreviewed_dish"; state: string };
+  | { code: "unreviewed_dish"; state: string }
+  | { code: "unchecked_allergens" };
 
 export interface EvaluateOptions {
   /**
@@ -55,6 +56,7 @@ export interface EvaluateOptions {
    *  - disliked ingredients → `ingredient_block`
    *  - keto carb-cap exceeded → `keto_block`
    *  - dish.rdReviewState other than "reviewed" → `unreviewed_dish`
+   *  - dish.allergensReviewed === false → `unchecked_allergens`
    *
    * Server-side checkout always passes `strict: true` so the wire payload
    * a tampered/stale client sent cannot bypass any patient-safety rule.
@@ -184,6 +186,17 @@ export function evaluateDishForPreferences(
       result.blocked = true;
       result.blockReasons.push({ code: "unreviewed_dish", state });
       result.warnings.push(`Dish is ${state} — not approved for ordering`);
+    }
+    // Unchecked allergen data ("None listed in system") must never be treated
+    // as "no allergens". An empty allergens array is only safe when it is a
+    // reviewed disclosure; when allergensReviewed === false the list is
+    // unknown, so the dish is refused regardless of what the buyer declared.
+    if (dish.allergensReviewed === false) {
+      result.blocked = true;
+      result.blockReasons.push({ code: "unchecked_allergens" });
+      result.warnings.push(
+        "Allergen data has not been reviewed — not approved for ordering",
+      );
     }
   }
 
