@@ -13,7 +13,7 @@ import http from "node:http";
 
 import express, { type Express } from "express";
 import { and, eq, inArray } from "drizzle-orm";
-import { db, webhookInboxTable } from "@workspace/db";
+import { db, ordersTable, webhookInboxTable } from "@workspace/db";
 
 import paymentsRouter from "./payments";
 
@@ -124,6 +124,71 @@ test("webhook normal delivery is ingested and marked processed, subsequent deliv
     .from(webhookInboxTable)
     .where(and(eq(webhookInboxTable.source, "razorpay"), eq(webhookInboxTable.eventId, eventId)));
   assert.equal(rowAfter!.attempts, 1);
+});
+
+async function seedPlacedOrder(externalOrderId: string, totalPaise: number): Promise<number> {
+  const [row] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      externalOrderId,
+      status: "placed",
+      totalPaise,
+      addressLabel: "Test",
+      addressLine: "1 Test Rd",
+      city: "Noida",
+      pincode: "201301",
+      phone: "9999999999",
+      items: [{ id: 1, name: "Test Dish", qty: 1, price: totalPaise }],
+      fulfillmentType: "delivery",
+    })
+    .returning({ id: ordersTable.id });
+  return row!.id;
+}
+
+test("payment_link.paid: matching amount promotes the order (reconciled by reference_id)", async () => {
+  const externalOrderId = `ord_link_ok_${randomUUID()}`;
+  const eventId = `evt_link_ok_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const orderId = await seedPlacedOrder(externalOrderId, 45000);
+  try {
+    const payload = {
+      event: "payment_link.paid",
+      payload: {
+        payment_link: { entity: { id: "plink_ok", reference_id: externalOrderId, amount: 45000, amount_paid: 45000, status: "paid" } },
+        payment: { entity: { id: "pay_link_ok", amount: 45000 } },
+      },
+    };
+    const res = await postWebhook(payload, eventId);
+    assert.equal(res.status, 200);
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
+    assert.equal(order!.status, "preparing", "matching link payment must promote the order");
+    assert.equal(order!.razorpayPaymentId, "pay_link_ok");
+  } finally {
+    await db.delete(ordersTable).where(eq(ordersTable.id, orderId));
+  }
+});
+
+test("payment_link.paid: underpayment does NOT promote (the ₹1-for-any-order attack is blocked)", async () => {
+  const externalOrderId = `ord_link_bad_${randomUUID()}`;
+  const eventId = `evt_link_bad_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const orderId = await seedPlacedOrder(externalOrderId, 45000);
+  try {
+    const payload = {
+      event: "payment_link.paid",
+      payload: {
+        payment_link: { entity: { id: "plink_bad", reference_id: externalOrderId, amount: 100, amount_paid: 100, status: "paid" } },
+        payment: { entity: { id: "pay_link_bad", amount: 100 } },
+      },
+    };
+    const res = await postWebhook(payload, eventId);
+    assert.equal(res.status, 200, "webhook is still accepted (ingested) — but must not confirm");
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
+    assert.equal(order!.status, "placed", "underpaid link payment must NOT promote the order");
+  } finally {
+    await db.delete(ordersTable).where(eq(ordersTable.id, orderId));
+  }
 });
 
 test("webhook retry recovery: does not swallow retry if previous delivery failed during business logic", async () => {
