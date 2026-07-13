@@ -49,6 +49,19 @@
   --border: 43 17% 83%;          /* stone-200 HSL */
   --input: 43 17% 83%;
   --ring: 35 77% 52%;
+
+  /* Canonical .tnm2 design-token bindings (CRO spec Amendment A3).
+     Single semantic vocabulary — every "brand accent / sage / amber /
+     alert / surface / text" reference resolves here. Aliases point at the
+     base tokens above, so they inherit the light/dark overrides for free. */
+  --tnm-action: var(--action);                    /* saffron — sole primary-action hue */
+  --tnm-sage: var(--color-success-theme);         /* wellness + within-range status */
+  --tnm-caution: var(--color-warning-theme);      /* amber — near-boundary (icon+text paired) */
+  --tnm-alert: var(--color-error-theme);          /* red — blocking/safety only */
+  --tnm-surface-ink: var(--surface);              /* cart, sheets, success card */
+  --tnm-surface-ink-2: var(--surface-raised);     /* elevated layers */
+  --tnm-text-primary: var(--text-primary);
+  --tnm-text-secondary: var(--text-secondary);
 }
 
 .dark {

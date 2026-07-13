@@ -4,6 +4,14 @@
 // window.gtag when a vendor script is present — call sites never change.
 import { API_BASE } from "./apiBase";
 
+// Experimentation is deferred (CRO spec Amendment A6): v1 ships no
+// assignment service, so every event carries an EMPTY experiment map
+// (never null, never absent) plus the release cohort. When a platform
+// lands later it slots in here without an event-version bump — copy and
+// design iterations are read as `app_release` cohorts, not A/B splits.
+const EXPERIMENT_ASSIGNMENTS: Record<string, string> = {};
+const APP_RELEASE = "1.0.0";
+
 type EventName =
   | "view_home"
   | "view_menu"
@@ -85,6 +93,9 @@ export function track(event: EventName, props?: Record<string, unknown>): void {
         sessionId: sessionId(),
         path: typeof location !== "undefined" ? location.pathname : undefined,
         ts: Date.now(),
+        // A6: experimentation deferral — empty map + release cohort.
+        experiment_assignments: EXPERIMENT_ASSIGNMENTS,
+        app_release: APP_RELEASE,
       }),
     }).catch(() => undefined);
   } catch {
