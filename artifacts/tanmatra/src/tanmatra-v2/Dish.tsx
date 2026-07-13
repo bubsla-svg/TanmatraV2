@@ -82,10 +82,36 @@ export default function V2Dish() {
   const { dishes: catalogDishes } = useMenuCatalog();
   const { enabled: clinicalMode } = useClinicalMode();
 
+  // In-place variant switching: tapping a protein/base variant swaps the dish
+  // by updating local state (and the URL cosmetically via replaceState) instead
+  // of navigating to a new route — no blank reload, scroll position preserved.
+  // getDishVariants keys every family member, so the switcher stays intact after
+  // a switch. Resets whenever the route dish itself changes.
+  const [variantSlug, setVariantSlug] = useState<string | null>(null);
+  useEffect(() => {
+    setVariantSlug(null);
+  }, [slug]);
+  const activeSlug = variantSlug ?? slug;
+
   const meal: any = useMemo(() => {
-    if (!slug) return undefined;
-    return catalogDishes.find((d: any) => d.slug === slug) ?? getDishBySlug(slug);
-  }, [slug, catalogDishes]);
+    if (!activeSlug) return undefined;
+    return catalogDishes.find((d: any) => d.slug === activeSlug) ?? getDishBySlug(activeSlug);
+  }, [activeSlug, catalogDishes]);
+
+  const selectVariant = (nextSlug: string) => {
+    if (nextSlug === activeSlug) return;
+    // Preserve scroll across the in-place content swap so the switcher stays put
+    // under the user's thumb (a re-render can momentarily clamp scroll to 0).
+    const y = typeof window !== "undefined" ? window.scrollY : 0;
+    setVariantSlug(nextSlug);
+    // Keep the URL shareable/refreshable without a router navigation (which
+    // would remount and blank the page). replaceState = no extra history entry.
+    if (typeof window !== "undefined") {
+      window.history.replaceState(window.history.state, "", `/dish/${nextSlug}`);
+      requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, y)));
+    }
+    track("pdp_variant_switched", { to: nextSlug });
+  };
 
   const match = useMemo(() => (meal ? evaluateDishForPreferences(meal, preferences) : null), [meal, preferences]);
   const smartSwap = useMemo(() => (meal ? findSmartSwap(meal, preferences, catalogDishes) : null), [meal, preferences, catalogDishes]);
@@ -453,15 +479,17 @@ export default function V2Dish() {
                 {variants.map((v: any) => {
                   const active = v.slug === meal.slug;
                   return (
-                    <Link
+                    <button
                       key={v.slug}
-                      to={`/dish/${v.slug}`}
+                      type="button"
+                      onClick={() => selectVariant(v.slug)}
+                      aria-pressed={active}
                       className={`text-xs px-3 py-2 rounded-xl border transition-all ${
                         active ? "bg-[var(--tnm-action)] border-[var(--tnm-action)] text-black font-semibold" : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10"
                       }`}
                     >
                       {v.label}
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
