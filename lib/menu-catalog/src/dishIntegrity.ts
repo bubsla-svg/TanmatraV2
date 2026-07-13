@@ -38,6 +38,38 @@ const GLUTEN_INGREDIENT_RE =
 
 const NONVEG_ALLERGENS = new Set(["egg", "eggs", "fish", "shellfish", "crustacean", "crustaceans"]);
 
+// Word-boundary term matcher (optional plural). Self-contained on purpose: this
+// module must never import the preferences matcher, which depends on THIS
+// package — pulling it back in would create an import cycle.
+function ingredientHasTerm(text: string, term: string): boolean {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escaped}(?:s|es)?\\b`, "i").test(text);
+}
+
+// Unambiguous ingredient → allergen-family signals. Deliberately conservative:
+// only tokens whose presence reliably implies the family, so "coconut milk",
+// "peanut butter", or "rice flour" never trip the wrong one. Egg is handled
+// explicitly (in BOTH directions) by the checks above; these families are
+// gated in the hazard direction only — an undeclared allergen-bearing
+// ingredient. The reverse (a declared allergen whose source is a processed
+// item like "nutella"/"nachos" with no literal token) is too noisy to gate.
+const ALLERGEN_FAMILY_SIGNALS: {
+  family: string;
+  /** allergen-array tokens (lowercased) that satisfy the declaration. */
+  allergenTokens: string[];
+  /** ingredient/description terms that unambiguously imply the family. */
+  ingredientTerms: string[];
+}[] = [
+  { family: "Dairy", allergenTokens: ["dairy", "milk", "lactose"], ingredientTerms: ["paneer", "ghee", "cheese", "curd", "yogurt", "yoghurt", "khoya", "buttermilk", "mozzarella", "parmesan", "ricotta", "mascarpone"] },
+  { family: "Tree nuts", allergenTokens: ["tree nuts", "tree nut", "nuts", "nut"], ingredientTerms: ["almond", "cashew", "walnut", "pistachio", "hazelnut", "pecan", "macadamia"] },
+  { family: "Peanuts", allergenTokens: ["peanuts", "peanut", "groundnut", "groundnuts", "nuts", "nut"], ingredientTerms: ["peanut", "groundnut"] },
+  { family: "Gluten", allergenTokens: ["gluten", "wheat"], ingredientTerms: ["wheat", "maida", "barley", "rye", "semolina", "seitan", "couscous"] },
+  { family: "Soy", allergenTokens: ["soy", "soya"], ingredientTerms: ["tofu", "edamame", "soybean", "soybeans", "tempeh", "soya"] },
+  { family: "Shellfish", allergenTokens: ["shellfish", "crustacean", "crustaceans"], ingredientTerms: ["shrimp", "prawn", "crab", "lobster", "mussel", "clam", "oyster", "squid", "calamari"] },
+  { family: "Fish", allergenTokens: ["fish"], ingredientTerms: ["salmon", "tuna", "cod", "trout", "anchovy", "anchovies", "mackerel", "sardine", "basa"] },
+  { family: "Sesame", allergenTokens: ["sesame"], ingredientTerms: ["sesame", "tahini"] },
+];
+
 function lc(values: readonly string[]): string[] {
   return values.map((v) => v.toLowerCase().trim());
 }
@@ -110,6 +142,23 @@ export function findDishIntegrityViolations(dish: DishData): DishIntegrityViolat
   const mode = getServeMode(dish);
   if ((dish.category === "beverages" || dish.category === "salads") && mode === "reheat") {
     push("cold_category_reheat_mode", `"${dish.name}" is a ${dish.category} item but resolves to a "reheat" serving mode.`);
+  }
+
+  // 5. Every unambiguous allergen-bearing ingredient must be declared. This is
+  //    the dangerous direction: a nut / dairy / shellfish / gluten source in the
+  //    recipe that is missing from the allergen card can send an allergic
+  //    customer a dish that will hurt them. (Egg is covered in both directions
+  //    above.) Checked in the hazard direction only — see ALLERGEN_FAMILY_SIGNALS.
+  for (const fam of ALLERGEN_FAMILY_SIGNALS) {
+    const declared = fam.allergenTokens.some((t) => allergens.includes(t));
+    if (declared) continue;
+    const hit = fam.ingredientTerms.find((t) => ingredientHasTerm(ingredientText, t));
+    if (hit) {
+      push(
+        "undeclared_allergen_ingredient",
+        `"${dish.name}" lists ${hit} (a ${fam.family} source) but does not declare the ${fam.family} allergen.`,
+      );
+    }
   }
 
   return out;

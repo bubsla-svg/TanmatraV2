@@ -78,6 +78,50 @@ function selfTest() {
   };
   assert.ok(codes(underDeclared).includes("egg_ingredient_without_allergen"), "must catch undeclared egg allergen");
 
+  // Generalised under-declaration: a tree-nut ingredient with no nut allergen.
+  const hiddenCashew: DishData = {
+    ...BASE,
+    slug: "hidden-cashew-korma",
+    name: "Hidden Cashew Korma",
+    ingredients: ["Mixed vegetables – 150 g", "Cashew paste – 40 g"],
+    allergens: [],
+  };
+  assert.ok(
+    codes(hiddenCashew).includes("undeclared_allergen_ingredient"),
+    "must catch a cashew ingredient with no tree-nut allergen",
+  );
+
+  // A generic "Nuts" declaration satisfies the tree-nut gate → cleared.
+  const declaredCashew: DishData = { ...hiddenCashew, allergens: ["Nuts"] };
+  assert.ok(
+    !codes(declaredCashew).includes("undeclared_allergen_ingredient"),
+    "a declared nut allergen must clear the under-declaration gate",
+  );
+
+  // False-positive guard: "coconut milk" is not dairy — only unambiguous dairy
+  // tokens (paneer/ghee/cheese/…) count, so a bare "milk" must not trip it.
+  const coconut: DishData = {
+    ...BASE,
+    slug: "coconut-veg-curry",
+    name: "Coconut Veg Curry",
+    ingredients: ["Coconut milk – 100 ml", "Mixed vegetables – 120 g"],
+    allergens: [],
+  };
+  assert.deepStrictEqual(codes(coconut), [], "'coconut milk' must not false-positive as a dairy allergen");
+
+  // False-positive guard: paneer present AND Dairy declared → no violation.
+  const paneerDeclared: DishData = {
+    ...BASE,
+    slug: "palak-paneer-declared",
+    name: "Palak Paneer",
+    ingredients: ["Spinach – 150 g", "Paneer – 100 g"],
+    allergens: ["Dairy"],
+  };
+  assert.ok(
+    !codes(paneerDeclared).includes("undeclared_allergen_ingredient"),
+    "a declared Dairy allergen must clear paneer under-declaration",
+  );
+
   // Veg flag contradicted by a chicken ingredient.
   const fakeVeg: DishData = {
     ...BASE,
