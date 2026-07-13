@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { subscriptionsApi } from "@/lib/subscriptionsApi";
-import { formatPrice } from "@/lib/api/adapter";
+import { formatPriceRounded } from "@/lib/api/adapter";
 import { Sparkle, Barbell, Heart } from "@phosphor-icons/react";
 
 interface PlanPreset {
@@ -73,7 +73,7 @@ function PlanCard({ preset }: { preset: PlanPreset }) {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
-  const displayPrice = quote ? formatPrice(quote.totalPaise) : null;
+  const displayPrice = quote ? formatPriceRounded(quote.totalPaise) : null;
 
   return (
     <div

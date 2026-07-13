@@ -595,7 +595,11 @@ export function getDishVariants(currentSlug: string, allDishes: DishData[]): Dis
         label = "White Bread";
       } else if (slug.includes("brown") || dish.name.toLowerCase().includes("brown")) {
         label = "Brown Bread";
-      } else if (slug.includes("poached") || slug.includes("sunny") || dish.name.toLowerCase().includes("egg")) {
+      } else if (slug.includes("sunny") || dish.name.toLowerCase().includes("sunny")) {
+        label = "Sunny-Side Egg";
+      } else if (slug.includes("poached") || dish.name.toLowerCase().includes("poached")) {
+        label = "Poached Egg";
+      } else if (slug.includes("egg") || dish.name.toLowerCase().includes("egg")) {
         label = "With Egg";
       } else if (slug.includes("peri-peri") || dish.name.toLowerCase().includes("peri peri")) {
         label = "Peri Peri";

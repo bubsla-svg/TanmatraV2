@@ -166,7 +166,11 @@ export function groupCatalogDishes(dishes: DishData[]): ConsolidatedDish[] {
             suffix = "White Bread";
           } else if (d.slug.includes("brown") || d.name.toLowerCase().includes("brown")) {
             suffix = "Brown Bread";
-          } else if (d.slug.includes("poached") || d.slug.includes("sunny") || d.name.toLowerCase().includes("egg")) {
+          } else if (d.slug.includes("sunny") || d.name.toLowerCase().includes("sunny")) {
+            suffix = "Sunny-Side Egg";
+          } else if (d.slug.includes("poached") || d.name.toLowerCase().includes("poached")) {
+            suffix = "Poached Egg";
+          } else if (d.slug.includes("egg") || d.name.toLowerCase().includes("egg")) {
             suffix = "With Egg";
           } else if (d.slug.includes("boiled") && d.name.toLowerCase().includes("boiled")) {
             suffix = "Boiled";

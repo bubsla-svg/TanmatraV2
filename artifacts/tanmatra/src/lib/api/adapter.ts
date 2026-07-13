@@ -10,6 +10,17 @@ export function formatPrice(paise: number): string {
   })}`;
 }
 
+/**
+ * Whole-rupee price for headline ESTIMATE displays (plan cards, "/wk" figures).
+ * GST is a percentage, so a plan total is rarely a round hundred paise — showing
+ * "₹7,855.31 /wk" on a marketing card reads as broken math. This rounds to the
+ * nearest rupee for display only; the exact paise amount is still used at
+ * checkout for the actual "total payable" line (use formatPrice there).
+ */
+export function formatPriceRounded(paise: number): string {
+  return formatPrice(Math.round(paise / 100) * 100);
+}
+
 export interface MenuComboWithAvailability {
   id: number;
   name: string;
