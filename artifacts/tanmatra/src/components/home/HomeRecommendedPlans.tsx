@@ -19,7 +19,7 @@ const PLAN_PRESETS: PlanPreset[] = [
   {
     slug: "weight-loss-jumpstart",
     name: "Weight-Loss Jumpstart",
-    desc: "Low-GI, fiber-forward. Deficit macros designed for fat loss without hunger spikes.",
+    desc: "Lighter, high-fibre meals to support weight loss without feeling hungry.",
     badge: "Weight Loss",
     icon: Sparkle,
     meals: 5,
@@ -37,7 +37,7 @@ const PLAN_PRESETS: PlanPreset[] = [
   {
     slug: "pcos-balance",
     name: "PCOS Hormone Balance",
-    desc: "Anti-inflammatory, omega-3 forward and low glycemic load to manage insulin.",
+    desc: "Balanced, high-fibre meals designed to support steady blood sugar.",
     badge: "Hormone Health",
     icon: Heart,
     meals: 5,

@@ -185,7 +185,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div style={{ minHeight:"100vh", background:"var(--bg)", color:"var(--color-stone-0)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
             <strong style={{ color:"var(--color-clinical-gold)", fontSize:"1.25rem" }}>Tanmatra</strong>
             <p style={{ color:"var(--text-secondary)", fontSize:"0.875rem", maxWidth:"320px" }}>
-              Therapeutic meals designed by registered dietitians, delivered fresh
+              Dietitian-designed meals, delivered fresh
               across Noida, Delhi &amp; Gurgaon. This app needs JavaScript — or reach
               us directly:
             </p>

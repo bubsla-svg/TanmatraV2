@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { track } from "@/lib/analytics";
-import { type WellnessGoal } from "@/lib/preferencesApi";
 import IntakeQuiz from "@/components/preferences/IntakeQuiz";
 
 // Modularized Homepage Components
 import HomeHeader from "@/components/home/HomeHeader";
 import HomeHero from "@/components/home/HomeHero";
-import HomeGoalSelection from "@/components/home/HomeGoalSelection";
-import HomeAssessmentPreview from "@/components/home/HomeAssessmentPreview";
 import HomeRecommendedPlans from "@/components/home/HomeRecommendedPlans";
 import HomeMealsRail from "@/components/home/HomeMealsRail";
 import HomeTrustWall from "@/components/home/HomeTrustWall";
@@ -21,59 +19,48 @@ const HOW_STEPS = [
   {
     icon: "ph-clipboard-text",
     step: "01",
-    title: "RDs design every dish",
-    desc: "Registered dietitians formulate each recipe around a therapeutic goal — blood sugar control, protein synthesis, anti-inflammation. Never flavor-first.",
+    title: "Dietitians design every dish",
+    desc: "Registered dietitians build each recipe around a health goal — steady blood sugar, more protein, lighter meals — not flavour alone.",
   },
   {
     icon: "ph-seal-check",
     step: "02",
-    title: "Your profile shapes the menu",
-    desc: "Take the 60-second metabolic assessment and the menu re-ranks around your goal, restrictions, and micro targets.",
+    title: "Pick what fits you",
+    desc: "Browse the menu, filter by your goal, and see calories, protein and allergens on every dish before you add it.",
   },
   {
     icon: "ph-calendar",
     step: "03",
     title: "Delivered fresh daily",
-    desc: "Meals are prepared fresh in ISO 22000 kitchens and delivered in daily capacity-controlled scheduled windows across Noida, Delhi & Gurgaon.",
+    desc: "Meals are cooked fresh in an ISO 22000 kitchen and delivered in scheduled windows across Noida, Delhi & Gurgaon.",
   },
 ];
 
 export default function V2Home() {
+  const navigate = useNavigate();
+  // The assessment is optional and user-initiated — the single "Help me choose
+  // meals" entry point. No unsolicited modal opens on load.
   const [quizOpen, setQuizOpen] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<WellnessGoal | null>(null);
 
   useEffect(() => {
     track("view_home");
   }, []);
 
-  const handleSelectGoal = (goal: WellnessGoal, _condition?: string) => {
-    setSelectedGoal(goal);
-    setQuizOpen(true);
-  };
-
   return (
     <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)] text-white select-none">
       <h1 className="sr-only">
-        Tanmatra — Clinical-grade Therapeutic Meal Delivery in Noida, Delhi & Gurgaon
+        Tanmatra — Dietitian-designed meal delivery in Noida, Delhi & Gurgaon
       </h1>
 
-      {/* 2.1 Sticky scroll transition Header */}
-      <HomeHeader onStartAssessment={() => setQuizOpen(true)} />
+      {/* 2.1 Sticky scroll transition Header (no CTA — see §S1) */}
+      <HomeHeader />
 
       <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 88 }}>
-        {/* 2.2 Hero with headline, macro chips, and slide CTAs */}
+        {/* 2.2 Hero: one primary CTA (see the menu) + one optional text link */}
         <HomeHero
-          onStartAssessment={() => setQuizOpen(true)}
-          onExploreMeals={() => {
-            document.getElementById("dietitian-meals")?.scrollIntoView({ behavior: "smooth" });
-          }}
+          onSeeMenu={() => navigate("/menu")}
+          onHelpChoose={() => setQuizOpen(true)}
         />
-
-        {/* 2.3 Goal selection cards */}
-        <HomeGoalSelection onSelectGoal={handleSelectGoal} />
-
-        {/* 2.4 Assessment stage preview */}
-        <HomeAssessmentPreview onStart={() => setQuizOpen(true)} />
 
         {/* 2.5 Recommended plans rail */}
         <HomeRecommendedPlans />
@@ -85,7 +72,7 @@ export default function V2Home() {
         <section className="padx mt-10">
           <div className="secrow px-0">
             <span className="sh text-base font-bold text-white/95">
-              Not just a meal — a protocol on a plate
+              How Tanmatra works
             </span>
           </div>
           <div className="flex flex-col gap-3">
@@ -126,15 +113,11 @@ export default function V2Home() {
         <HomeFooter />
       </div>
 
-      {/* 6. Consolidated sticky bottom bar (state machine context: homepage) */}
-      <StickyBottomBar context="homepage" onContinue={() => setQuizOpen(true)} />
+      {/* 6. Sticky bottom bar — cart state only (empty cart renders nothing). */}
+      <StickyBottomBar context="homepage" />
 
-      {/* Metabolic Assessment Quiz Overlay */}
-      <IntakeQuiz
-        open={quizOpen}
-        onOpenChange={setQuizOpen}
-        initialGoal={selectedGoal || undefined}
-      />
+      {/* Optional, user-initiated "Help me choose meals" assessment. */}
+      <IntakeQuiz open={quizOpen} onOpenChange={setQuizOpen} />
     </div>
   );
 }

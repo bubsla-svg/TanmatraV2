@@ -9,7 +9,7 @@ interface FAQItem {
 const FAQS: FAQItem[] = [
   {
     q: "Is Tanmatra suitable for managing diabetes?",
-    a: "Yes. Our Diabetes and PCOS protocols are designed by registered dietitians specifically to manage insulin response. We cap glycemic load per meal, rely exclusively on low-GI complex carbohydrates (GI < 55), and maintain high fiber levels to prevent glucose spikes. While our meals support metabolic health, they are an adjunct to care and do not replace medical advice or treatments prescribed by your physician.",
+    a: "Yes. Our diabetes and PCOS meals are designed by registered dietitians to keep blood sugar steady — we favour slow-release carbohydrates, keep fast-digesting carbs low, and use plenty of fibre. Our meals support your health but are not a substitute for medical advice or treatment from your doctor.",
   },
   {
     q: "How do I pause or skip deliveries?",
@@ -17,7 +17,7 @@ const FAQS: FAQItem[] = [
   },
   {
     q: "Can I swap dishes in my weekly plan?",
-    a: "Absolutely. When your weekly menu is generated, you can review it and swap any dish for other options in our active catalog. Swapping is available up to 24 hours before delivery. If a swap changes the macro split or price, the differences are itemized clearly for your review before confirmation.",
+    a: "Absolutely. When your weekly menu is generated, you can review it and swap any dish for other options in our active catalog. If a swap changes the nutrition or price, the differences are itemized clearly for your review before confirmation.",
   },
   {
     q: "Is there a minimum commitment or auto-renewal?",
@@ -25,7 +25,7 @@ const FAQS: FAQItem[] = [
   },
   {
     q: "How do you handle dietary restrictions and allergens?",
-    a: "We flag common allergens (dairy, gluten, nuts, soy, eggs, shellfish) on every dish page. When you complete your assessment, our system filters out dishes containing your blocked allergens and flags near-matches. However, all meals are prepared in a kitchen that handles these ingredients, so cross-contact is possible.",
+    a: "We flag common allergens (dairy, gluten, nuts, soy, eggs, shellfish) on every dish page. When you tell us your allergens, we screen them against each dish and block anything that conflicts before you order. However, all meals are prepared in a kitchen that handles these ingredients, so cross-contact is possible.",
   },
 ];
 
