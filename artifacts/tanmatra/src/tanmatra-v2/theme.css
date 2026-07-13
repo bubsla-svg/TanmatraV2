@@ -169,6 +169,7 @@
 .tnm2 .b7 b{flex:1;background:var(--s3);border-radius:4px 4px 2px 2px;display:block}
 .tnm2 .b7 b.cur{background:var(--safd);border:1px solid var(--saf)}
 .tnm2 .prodgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tnm2 .prodgrid.onecol{grid-template-columns:minmax(0,1fr)}
 .tnm2 .banner{background:var(--safd);border:1px solid var(--saf);border-radius:12px;padding:14px}
 .tnm2 .note{background:var(--saged);border:1px solid rgba(136,170,132,.35);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--sage);display:flex;gap:8px;align-items:flex-start;line-height:1.45}
 .tnm2 .note i{flex:none;font-size:15px;margin-top:1px}

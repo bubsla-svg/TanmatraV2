@@ -829,7 +829,7 @@ export default function V2Menu() {
 
               {category !== "all" ? (
                 // Flat grid when filtering by category
-                <div className="prodgrid">
+                <div className="prodgrid onecol">
                   {consolidatedDishes.slice(0, visibleCount).map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, cardIndex) => {
                     const price = parent.variants[0].price;
                     const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
@@ -876,7 +876,7 @@ export default function V2Menu() {
                             <i className="ph-fill ph-sparkle text-clinical-gold text-xs" />
                             Matched to your goal
                           </h2>
-                          <div className="prodgrid">
+                          <div className="prodgrid onecol">
                             {goalMatched.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, idx) => {
                               const price = parent.variants[0].price;
                               const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
@@ -920,7 +920,7 @@ export default function V2Menu() {
                             <h2 className="sh mb10 uppercase tracking-wider text-[11px] font-bold text-clinical-zinc" style={{ textTransform: "capitalize" }}>
                               {CATEGORY_LABELS[cat]}
                             </h2>
-                            <div className="prodgrid">
+                            <div className="prodgrid onecol">
                               {renderList.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }) => {
                                 const price = parent.variants[0].price;
                                 const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
