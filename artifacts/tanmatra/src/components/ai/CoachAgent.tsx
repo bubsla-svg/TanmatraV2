@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useLocation } from "react-router";
 import {
   streamCoachAgentChat,
@@ -165,12 +166,34 @@ const getPromptChips = (dishSlug?: string): PromptChip[] => {
   ];
 };
 
+/**
+ * Shares the app-wide ["auth","user"] query cache (same key as Account/
+ * DishReviews/GroupOrder) so this adds no extra request. The coach chat endpoint
+ * is auth-gated (401 for anonymous), so we use this to render a "log in to chat"
+ * state instead of letting a logged-out user tap a control that silently fails.
+ */
+function useCoachAuthUser() {
+  return useQuery({
+    queryKey: ["auth", "user"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/auth/user`, { credentials: "include" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = (await res.json()) as { user: { id: string } | null };
+      return data.user;
+    },
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
 export default function CoachAgentWidget({
   dishSlug,
   trigger,
   inline = false,
   defaultOpen = false,
 }: CoachAgentWidgetProps = {}) {
+  const { data: authUser, isLoading: authLoading } = useCoachAuthUser();
+  const isAuthenticated = !!authUser;
   const [isOpen, setIsOpen] = useState(inline ? defaultOpen : false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -503,7 +526,7 @@ export default function CoachAgentWidget({
                 </div>
               </div>
             )}
-          {messages.length === 1 && !streaming && (
+          {messages.length === 1 && !streaming && isAuthenticated && (
             <div className="pt-2 flex flex-col gap-1.5">
               <span className="text-[9px] uppercase tracking-wider text-clinical-zinc/50 font-semibold pl-1">Suggested Questions</span>
               <div className="flex flex-wrap gap-1.5">
@@ -528,29 +551,48 @@ export default function CoachAgentWidget({
         className="shrink-0"
         style={{ padding: 12, borderTop: "1px solid var(--ln)" }}
       >
-        <div className="flex gap-2">
-          <input
-            className="inp"
-            style={{ flex: 1 }}
-            placeholder={
-              dishSlug ? "Ask about this dish..." : "Ask about macros, swaps, goals..."
-            }
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            aria-label="Coach chat input"
-          />
-          <button
-            type="button"
-            className={`btn btn-p ${!input.trim() || streaming ? "dis" : ""}`}
-            style={{ width: 46, padding: 0 }}
-            onClick={() => handleSend()}
-            disabled={!input.trim() || streaming}
-            aria-label="Send message"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
+        {isAuthenticated ? (
+          <div className="flex gap-2">
+            <input
+              className="inp"
+              style={{ flex: 1 }}
+              placeholder={
+                dishSlug ? "Ask about this dish..." : "Ask about macros, swaps, goals..."
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              aria-label="Coach chat input"
+            />
+            <button
+              type="button"
+              className={`btn btn-p ${!input.trim() || streaming ? "dis" : ""}`}
+              style={{ width: 46, padding: 0 }}
+              onClick={() => handleSend()}
+              disabled={!input.trim() || streaming}
+              aria-label="Send message"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          // The coach endpoint is auth-gated (401 for anonymous). Rather than
+          // show an input/chips that fail with a misleading "menu is down"
+          // error, invite a login. Suppress while the auth probe is in flight
+          // to avoid a flash of the logged-out state for signed-in users.
+          <div className="flex flex-col gap-2" style={{ opacity: authLoading ? 0 : 1 }}>
+            <span className="fine" style={{ color: "var(--mut)", textAlign: "center" }}>
+              Log in to chat with your nutrition coach.
+            </span>
+            <a
+              className="btn btn-p btn-blk text-center"
+              href={`/login?next=${encodeURIComponent(pathname)}`}
+              aria-label="Log in to chat with your nutrition coach"
+            >
+              Log in to chat
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
