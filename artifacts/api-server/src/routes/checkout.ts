@@ -4,7 +4,13 @@ import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import { calculateCartTotals } from "../lib/cartMath";
-import { evaluateDishForPreferences } from "@workspace/preferences-match";
+import type { DishData } from "@workspace/menu-catalog";
+import type { PreferencesForMatch } from "@workspace/preferences-match";
+import {
+  assessAllergenAck,
+  findDishSafetyBlock,
+  normalizeGuestPrefs,
+} from "../lib/checkoutSafety";
 import { isServiceablePincode, SERVICEABLE_PINCODES } from "@workspace/api-zod";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 
@@ -49,6 +55,21 @@ const placeOrderSchema = z.object({
       policyVersion: z.string().min(1).max(64),
     })
     .optional(),
+  // Optional dietary-safety declaration for GUEST checkout (authenticated users
+  // are screened against their saved preferences). Lets an anonymous buyer
+  // declare allergens/conditions so the same server-side safety gate runs.
+  guestPrefs: z
+    .object({
+      allergens: z.array(z.string().max(64)).max(30).optional(),
+      dislikedIngredients: z.array(z.string().max(64)).max(30).optional(),
+      medicalConditions: z.array(z.string().max(64)).max(30).optional(),
+      cuisines: z.array(z.string().max(64)).max(30).optional(),
+      dietaryStyle: z.enum(["omnivore", "vegetarian", "vegan", "pescatarian", "keto"]).optional(),
+    })
+    .optional(),
+  // Set true to acknowledge allergen risk when a guest declares no dietary info
+  // but the cart contains allergen/contraindication-flagged dishes.
+  allergenAck: z.boolean().optional(),
 });
 
 /**
@@ -74,7 +95,7 @@ router.post("/orders", async (req: Request, res: Response) => {
     return;
   }
 
-  const { externalOrderId, items, phone, address, consent } = parsed.data;
+  const { externalOrderId, items, phone, address, consent, guestPrefs, allergenAck } = parsed.data;
 
   // DPDP consent gate: block order placement without an explicit acknowledgement.
   // This is the enforcement point the buyflow was missing (guest checkout could
@@ -99,7 +120,8 @@ router.post("/orders", async (req: Request, res: Response) => {
   }
 
   const authUserId = (req as any).user?.id ?? null;
-  let authPrefs = null;
+  const isGuest = authUserId === null;
+  let authPrefs: PreferencesForMatch | null = null;
   if (authUserId) {
     const [pRow] = await db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, authUserId)).limit(1);
     if (pRow) {
@@ -113,8 +135,15 @@ router.post("/orders", async (req: Request, res: Response) => {
     }
   }
 
+  // Prefer saved authenticated prefs; otherwise fall back to a guest's declared
+  // prefs (may be null). The strict safety gate below runs on EVERY checkout —
+  // even with null prefs it enforces the RD-review gate — so a guest can no
+  // longer bypass allergen/condition screening simply by not logging in.
+  const effectivePrefs = authPrefs ?? normalizeGuestPrefs(guestPrefs);
+
   // Validate every item and build the server-authoritative cart.
   const validatedItems: Array<{ id: number; name: string; qty: number; price: number }> = [];
+  const resolvedDishes: DishData[] = [];
   for (const item of items) {
     const dish = resolver.byId(item.dishId);
     if (!dish) {
@@ -125,19 +154,32 @@ router.post("/orders", async (req: Request, res: Response) => {
       res.status(422).json({ error: `dish unavailable: ${dish.name}`, code: "dish_unavailable" });
       return;
     }
-    if (authPrefs) {
-      const match = evaluateDishForPreferences(dish, authPrefs, { strict: true });
-      if (match.blocked) {
-        res.status(422).json({
-          error: "Safety block",
-          code: "safety_block",
-          blocked: true,
-          reasons: match.blockReasons,
-        });
-        return;
-      }
+    const blockReasons = findDishSafetyBlock(dish, effectivePrefs);
+    if (blockReasons) {
+      res.status(422).json({
+        error: "Safety block",
+        code: "safety_block",
+        blocked: true,
+        reasons: blockReasons,
+      });
+      return;
     }
+    resolvedDishes.push(dish);
     validatedItems.push({ id: dish.id, name: dish.name, qty: item.qty, price: dish.price });
+  }
+
+  // Guest with no declared dietary info + a cart carrying allergen/contra dishes
+  // must explicitly acknowledge allergen risk before we accept the order. This
+  // turns a silent, structural skip into an informed decision.
+  const ack = assessAllergenAck({ isGuest, effectivePrefs, cartDishes: resolvedDishes, allergenAck });
+  if (ack.required) {
+    res.status(422).json({
+      error: "Please confirm you've reviewed the allergen information for this order.",
+      code: "allergen_ack_required",
+      allergens: ack.allergens,
+      dishes: ack.dishes,
+    });
+    return;
   }
 
   // Server-side price computation.

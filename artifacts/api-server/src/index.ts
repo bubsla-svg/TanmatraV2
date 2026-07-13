@@ -15,7 +15,6 @@ import { startMealPlanScheduler } from "./lib/mealPlanScheduler";
 import { startAnalyticsScheduler } from "./lib/analyticsScheduler";
 import { startPreDebitScheduler, stopPreDebitScheduler } from "./lib/preDebitScheduler";
 import { ensureSafeViews } from "./lib/safeSql";
-import { seedComplianceLogsIfEmpty } from "./lib/complianceSeeder";
 import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
 import { purgeExpiredSessions, purgeDeletedAccountsJob } from "./lib/auth";
@@ -86,13 +85,11 @@ async function start(): Promise<void> {
  httpServer.listen(port, "0.0.0.0", () => {
  logger.info({ port }, "Server listening on 0.0.0.0");
  ensureSafeViews()
- .then(async () => {
-   await seedComplianceLogsIfEmpty();
+ .then(() => {
    startAnalyticsScheduler();
  })
- .catch(async (err) => {
+ .catch((err) => {
    logger.error({ err }, "ensureSafeViews failed (continuing without safe layer)");
-   await seedComplianceLogsIfEmpty();
    startAnalyticsScheduler();
  });
  });

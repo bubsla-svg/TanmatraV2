@@ -8,12 +8,15 @@ export {
   CATEGORY_LABELS,
   KITCHEN_LABELS,
   macrosAreProvisional,
+  getServeMode,
+  defaultServeModeForCategory,
   type DishCategory,
   type DishKitchen,
   type DishData,
   type DishCustomGroup,
   type DishCustomOption,
   type DishMacros,
+  type DishServeMode,
 } from "@workspace/menu-catalog";
 
 import { API_BASE as API_BASE } from "./apiBase";
