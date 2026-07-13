@@ -9,7 +9,7 @@ export default function HomeFooter() {
         <div>
           <h4 className="text-sm font-bold text-white/80">Tanmatra</h4>
           <p className="fine mt-2 text-white/50 leading-relaxed">
-            Clinical-grade therapeutic meal delivery. Registered dietitian-calibrated menus for metabolic goals.
+            Dietitian-designed meals, delivered fresh. Calories, protein and allergens listed on every dish.
           </p>
         </div>
 

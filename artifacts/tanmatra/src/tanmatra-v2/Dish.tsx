@@ -573,15 +573,8 @@ export default function V2Dish() {
             ) : (
               <div className="card bg-white/[0.01] border border-white/5 border-dashed p-4 rounded-xl text-center flex flex-col items-center gap-2.5">
                 <p className="text-xs text-white/60 leading-relaxed max-w-[280px]">
-                  Complete the metabolic assessment to see how this dish fits your calories, macros, and diet safety goals.
+                  Calories, protein and allergens for this dish are listed below. Tell us your goals any time and we'll show how each meal fits.
                 </p>
-                <Link
-                  to="/subscribe"
-                  className="btn btn-s btn-blk text-xs font-semibold px-4"
-                  style={{ height: 32 }}
-                >
-                  Start Assessment
-                </Link>
               </div>
             )}
           </div>
