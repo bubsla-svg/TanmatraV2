@@ -15,6 +15,7 @@ on:
       - "scripts/lint-colors.ts"
       - "scripts/lint-prices.ts"
       - "scripts/lint-geography.ts"
+      - "scripts/src/verify-dish-integrity.ts"
       - "lib/**"
       - ".github/workflows/quality-gates.yml"
   workflow_dispatch: {}
@@ -43,6 +44,12 @@ jobs:
 
       - name: Lint — hardcoded price literals
         run: pnpm --filter "@workspace/tanmatra" run lint:prices
+
+      # Dish-data integrity: no contradictory allergen / diet / serving signals
+      # on the clinical surface (e.g. an "Eggless" dish declaring an egg allergen,
+      # or a cold smoothie carrying "reheat" copy). Source-scanning, no build.
+      - name: Gate — dish-data integrity
+        run: pnpm --filter "@workspace/scripts" run verify-dish-integrity
 
       # Build once; the geography lint and SSR checker scan build/client.
       - name: Build SPA
