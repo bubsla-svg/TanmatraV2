@@ -48,7 +48,8 @@ export type BlockReason =
   | { code: "ingredient_block"; ingredients: string[] }
   | { code: "keto_block"; carbs: number }
   | { code: "unreviewed_dish"; state: string }
-  | { code: "unchecked_allergens" };
+  | { code: "unchecked_allergens" }
+  | { code: "macros_pending"; detail: string };
 
 export interface EvaluateOptions {
   /**
@@ -197,6 +198,17 @@ export function evaluateDishForPreferences(
       result.warnings.push(
         "Allergen data has not been reviewed — not approved for ordering",
       );
+    }
+  }
+
+  if (dish.macrosProvisional === true || (dish as any).macrosPending === true) {
+    if (strict || (prefs && ((prefs.allergens?.length ?? 0) > 0 || (prefs.medicalConditions?.length ?? 0) > 0))) {
+      result.blocked = true;
+      result.blockReasons.push({
+        code: "macros_pending",
+        detail: "Nutritional profile pending verification — disabled for health safety",
+      });
+      result.warnings.push("Nutritional profile pending verification — disabled for health safety");
     }
   }
 
