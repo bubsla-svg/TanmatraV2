@@ -51,6 +51,14 @@ jobs:
       GCP_PROJECT: brand-tanmatra-tmg
       GCP_REGION: asia-south2
       SERVICE: wellness-foods
+    # Petpooja POS activation (see the Deploy step): the three
+    # brand-tanmatra-petpooja-* Secret Manager secrets referenced in
+    # --set-secrets MUST exist and be readable by the runtime service account
+    # before this deploy runs — gcloud fails the deploy on a missing secret.
+    # PETPOOJA_RESTAURANT_ID is a non-secret restaurant identifier inlined as a
+    # literal in --update-env-vars (like ALLOWED_ORIGINS); the integration
+    # activates once the three secrets above are present (petpoojaConfig()
+    # requires all four).
     steps:
       - uses: actions/checkout@v4
 
@@ -92,8 +100,8 @@ jobs:
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
-            --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest" \
+            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }};PETPOOJA_RESTAURANT_ID=cq5hnj3629" \
+            --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest,PETPOOJA_APP_KEY=brand-tanmatra-petpooja-app-key:latest,PETPOOJA_APP_SECRET=brand-tanmatra-petpooja-app-secret:latest,PETPOOJA_ACCESS_TOKEN=brand-tanmatra-petpooja-access-token:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --memory=1Gi \
             --cpu=1 \

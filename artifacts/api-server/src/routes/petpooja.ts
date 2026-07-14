@@ -186,7 +186,7 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
             zone: "default",
             status: "active",
           })
-          .returning({ id: ridersTable.id });
+          .returning();
       }
 
       if (rider) {
@@ -349,7 +349,7 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
             zone: "default",
             status: "active",
           })
-          .returning({ id: ridersTable.id });
+          .returning();
       }
 
       if (rider) {
