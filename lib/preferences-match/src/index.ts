@@ -49,7 +49,7 @@ export type BlockReason =
   | { code: "keto_block"; carbs: number }
   | { code: "unreviewed_dish"; state: string }
   | { code: "unchecked_allergens" }
-  | { code: "macros_pending"; detail: string };
+  | { code: "macros_pending" };
 
 export interface EvaluateOptions {
   /**
@@ -201,15 +201,19 @@ export function evaluateDishForPreferences(
     }
   }
 
-  if (dish.macrosProvisional === true || (dish as any).macrosPending === true) {
-    if (strict || (prefs && ((prefs.allergens?.length ?? 0) > 0 || (prefs.medicalConditions?.length ?? 0) > 0))) {
-      result.blocked = true;
-      result.blockReasons.push({
-        code: "macros_pending",
-        detail: "Nutritional profile pending verification — disabled for health safety",
-      });
-      result.warnings.push("Nutritional profile pending verification — disabled for health safety");
-    }
+  // A dish with unresolved placeholder macros (`macrosProvisional`) has no
+  // trustworthy nutritional profile. Refuse it in strict mode, or whenever the
+  // buyer has declared allergens/medical conditions the engine would otherwise
+  // need real macro/ingredient data to screen against.
+  if (
+    dish.macrosProvisional === true &&
+    (strict || (prefs && ((prefs.allergens?.length ?? 0) > 0 || (prefs.medicalConditions?.length ?? 0) > 0)))
+  ) {
+    result.blocked = true;
+    result.blockReasons.push({ code: "macros_pending" });
+    result.warnings.push(
+      "Nutritional profile pending verification — disabled for health safety",
+    );
   }
 
   if (!prefs) return result;
