@@ -728,7 +728,7 @@ export default function V2Subscribe() {
         <div className="card border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
           <div className="flex items-center gap-3 mb-4">
             <span className="text-[10px] uppercase font-bold tracking-wider bg-[var(--tnm-action)]/15 text-[var(--tnm-action)] border border-[var(--tnm-action)]/20 px-2 py-0.5 rounded">
-              Recommended Protocol
+              Recommended Plan
             </span>
           </div>
           <h2 className="text-lg font-bold text-white/90">{effectivePlan.name}</h2>
@@ -879,7 +879,7 @@ export default function V2Subscribe() {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h3 className="text-sm font-bold text-white/95">Select your protocol duration</h3>
+          <h3 className="text-sm font-bold text-white/95">Select your plan duration</h3>
           <p className="fine text-white/50 mt-1 leading-relaxed">
             Commit longer to optimize metabolic health adaptations.
           </p>
@@ -889,7 +889,7 @@ export default function V2Subscribe() {
         <div className="card bg-[var(--tnm-action)]/5 border border-[var(--tnm-action)]/20 p-4 rounded-xl flex gap-3">
           <Info className="w-5 h-5 text-[var(--tnm-action)] shrink-0 mt-0.5" />
           <p className="fine text-white/80 leading-relaxed font-medium">
-            You are in full control. Pause, skip, or cancel your protocol at any time in one tap. No contracts, no penalties. Unused weeks are refunded instantly.
+            You are in full control. Pause, skip, or cancel your plan at any time in one tap. No contracts, no penalties. Unused weeks are refunded instantly.
           </p>
         </div>
 
@@ -937,7 +937,7 @@ export default function V2Subscribe() {
           >
             <div>
               <div className="flex items-center gap-1.5">
-                <h4 className="text-sm font-bold text-white/95">6-Week Protocol</h4>
+                <h4 className="text-sm font-bold text-white/95">6-Week Plan</h4>
                 <span className="text-[9px] uppercase font-bold text-black bg-[var(--tnm-action)] px-1.5 py-0.5 rounded tracking-wide">
                   Best Value
                 </span>
@@ -1043,7 +1043,7 @@ export default function V2Subscribe() {
           >
             <div className="flex-1 pr-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-white/95">Pay Full 6-Week Protocol</span>
+                <span className="text-xs font-bold text-white/95">Pay Full 6-Week Plan</span>
                 <span className="text-[9px] uppercase font-bold text-black bg-[var(--tnm-action)] px-1.5 py-0.5 rounded tracking-wide">
                   Best Value
                 </span>
@@ -1346,7 +1346,7 @@ export default function V2Subscribe() {
               </span>
             </div>
             <p className="text-[10px] text-white/40 mt-1 leading-snug">
-              Your protocol stops after Week {activeCadence === "monthly" ? "6" : activeCadence === "fortnightly" ? "2" : "1"} unless you choose to continue.
+              Your plan stops after Week {activeCadence === "monthly" ? "6" : activeCadence === "fortnightly" ? "2" : "1"} unless you choose to continue.
             </p>
           </div>
         )}
@@ -1479,7 +1479,7 @@ export default function V2Subscribe() {
               </div>
               <div className="flex justify-between">
                 <span>Mandate Expiry:</span>
-                <span className="tnm-data font-mono text-white/95">At protocol end ({cycleWeeks} weeks)</span>
+                <span className="tnm-data font-mono text-white/95">At plan end ({cycleWeeks} weeks)</span>
               </div>
             </div>
             <p className="text-[10px] text-white/45 mt-1 leading-snug">

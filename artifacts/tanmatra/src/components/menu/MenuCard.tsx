@@ -136,11 +136,6 @@ export default function MenuCard({
             />
             {item.isVeg ? "VEG" : "NON-VEG"}
           </span>
-          {item.rdVerified && (
-            <span className="text-[9px] px-2 py-0.5 rounded-full border alert-safe-border alert-safe-text bg-clinical-dark/90 backdrop-blur-md font-extrabold tracking-wider uppercase shadow-sm">
-              ★ RD Verified
-            </span>
-          )}
           {isAssessed && fit_band === "high" && (
             <span className="text-[9px] px-2 py-0.5 rounded-full border border-clinical-sage/30 bg-clinical-sage/10 text-clinical-sage font-extrabold tracking-wider uppercase shadow-sm flex items-center gap-1">
               <Sparkle className="w-2.5 h-2.5" /> Strong goal match
