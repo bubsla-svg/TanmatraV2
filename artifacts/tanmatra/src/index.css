@@ -290,7 +290,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-  body { background-color: var(--color-clinical-dark); color: hsl(0 0% 98%); }
+  body { background-color: var(--bg); color: var(--text-primary); }
 
   /* ─── Type scale (the canonical sizes for every screen) ─── */
   .text-display {
