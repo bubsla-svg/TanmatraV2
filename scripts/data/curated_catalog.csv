@@ -1,0 +1,128 @@
+action,dish,category,qty,revenue,price,food_cost,gm_pct,margin_total,klass,reason
+KEEP-PUSH,Grilled Chicken With Sautéed Vegetable And Mash Potato High Protein,Non Veg Meals,166,55874.0,337,47.07,86.0,48060,STAR,"86.0% GM, 166 units — hero"
+KEEP-PUSH,Barbeque Chicken Burrito Wrap,Chicken Burrito Wraps,122,42730.0,350,50.0,85.7,36630,STAR,"85.7% GM, 122 units — hero"
+KEEP-PUSH,Healthy Whole Wheat Chicken Tikka Wrap,Healthy Wraps,104,35317.0,340,48.78,85.6,30244,STAR,"85.6% GM, 104 units — hero"
+KEEP-PUSH,Paneer Tikka Burrito Wrap,Veg Burrito Wraps,117,35275.0,301,52.78,82.5,29100,STAR,"82.5% GM, 117 units — hero"
+KEEP-PUSH,Grilled Chicken Breast [Single Serve],Appetizers,67,28920.0,432,45.0,89.6,25905,STAR,"89.6% GM, 67 units — hero"
+KEEP-PUSH,Barbeque Grilled Chicken Rice Bowl,Chicken Mexican Rice Bowls,66,23938.0,363,53.09,85.4,20434,STAR,"85.4% GM, 66 units — hero"
+KEEP-PUSH,Avocado Toast,Appetizers,49,23376.0,477,75.0,84.3,19701,STAR,"84.3% GM, 49 units — hero"
+KEEP-PUSH,Chipotle Grilled Chicken Rice Bowl,Chicken Mexican Rice Bowls,65,21715.0,334,45.16,86.5,18780,STAR,"86.5% GM, 65 units — hero"
+KEEP-PUSH,(2 Pc) Moong Dal Chilla With Curd,Healthy Breakfast,80,17922.0,224,26.97,88.0,15764,STAR,"88.0% GM, 80 units — hero"
+KEEP-PUSH,Grilled Veggie Sandwich With Ranch Yoghurt,Healthy Sandwiches,69,17768.0,258,32.0,87.6,15560,STAR,"87.6% GM, 69 units — hero"
+KEEP-PUSH,Boiled 3 Egg With Sautéed Veggies,Healthy Breakfast,79,17517.0,222,25.0,88.7,15542,STAR,"88.7% GM, 79 units — hero"
+KEEP-PUSH,High Protein Chicken Omelette (2 Egg),Healthy Breakfast,71,17269.0,243,39.13,83.9,14491,STAR,"83.9% GM, 71 units — hero"
+KEEP-PUSH,Chilli Chipotle Paneer Burrito Wrap,Veg Burrito Wraps,42,16498.0,393,47.46,87.9,14505,STAR,"87.9% GM, 42 units — hero"
+KEEP-PUSH,Crispy Mushroom Burrito Wrap,Veg Burrito Wraps,40,15650.0,391,59.97,84.7,13251,STAR,"84.7% GM, 40 units — hero"
+KEEP-PUSH,Chilli Chipotle Paneer Rice Bowl,Veg Mexican Rice Bowls,48,15504.0,323,44.16,86.3,13384,STAR,"86.3% GM, 48 units — hero"
+KEEP-PUSH,Boiled Chicken Breast [Single Serve],Appetizers,53,15137.0,286,32.0,88.8,13441,STAR,"88.8% GM, 53 units — hero"
+KEEP-PUSH,Hummus Pita Classic,Appetizers,51,14710.0,288,9.6,96.7,14220,STAR,"96.7% GM, 51 units — hero"
+KEEP-PUSH,Grilled Paneer With Sauteed Veggies,Veg Meals,47,12477.0,265,37.58,85.8,10711,STAR,"85.8% GM, 47 units — hero"
+KEEP-PUSH,Mix Berry Smoothie ( High Protein),Smoothies,44,10560.0,240,72.5,69.8,7370,STAR,"69.8% GM, 44 units — hero"
+KEEP-PUSH,Smoked Chicken Cheese Omelette (2 Egg),Healthy Breakfast,31,10175.0,328,55.33,83.1,8460,STAR,"83.1% GM, 31 units — hero"
+KEEP-PUSH,Spinach Mushroom Omelette (2 Egg),Healthy Breakfast,37,9343.0,253,32.0,87.3,8159,STAR,"87.3% GM, 37 units — hero"
+KEEP-PUSH,Grilled Chicken Club Sandwich,Healthy Sandwiches,23,8973.0,390,64.12,83.6,7498,STAR,"83.6% GM, 23 units — hero"
+KEEP-PUSH,Broccoli Lemon Chicken Salad,Non Veg Salads,22,8338.0,379,47.88,87.4,7285,STAR,"87.4% GM, 22 units — hero"
+KEEP-PUSH,Chicken Tikka Sandwich With Ranch Yoghurt,Healthy Sandwiches,23,7865.0,342,48.63,85.8,6747,STAR,"85.8% GM, 23 units — hero"
+KEEP-PUSH,Cream Of Mushroom Soup,Soups,22,6930.0,315,44.81,85.8,5944,STAR,"85.8% GM, 22 units — hero"
+KEEP-PUSH,Chicken Pita Pockets With Hummus,Pita Pockets,24,6755.0,281,36.0,87.2,5891,STAR,"87.2% GM, 24 units — hero"
+KEEP-PUSH,Healthy Whole Wheat Paneer Wrap,Healthy Wraps,21,6510.0,310,47.78,84.6,5507,STAR,"84.6% GM, 21 units — hero"
+KEEP-PUSH,Barbeque Paneer Rice Bowl,Veg Mexican Rice Bowls,17,6043.0,355,52.09,85.3,5157,STAR,"85.3% GM, 17 units — hero"
+KEEP-PUSH,Quinoa Khichdi,Millets & Quinoa,38,5510.0,145,22.07,84.8,4671,STAR,"84.8% GM, 38 units — hero"
+KEEP-PUSH,Grilled Paneer Sandwich With Ranch Yoghurt,Healthy Sandwiches,16,5000.0,312,47.63,84.8,4238,STAR,"84.8% GM, 16 units — hero"
+KEEP-PUSH,Grilled Paneer Salad,Veg Salads,16,4880.0,305,42.64,86.0,4198,STAR,"86.0% GM, 16 units — hero"
+KEEP-PUSH,Veg Loaded Bread Omelette (2 Egg),Healthy Breakfast,30,4782.0,159,25.33,84.1,4022,STAR,"84.1% GM, 30 units — hero"
+KEEP-PUSH,Chipotle Chicken Burrito Wrap,Chicken Burrito Wraps,13,4517.0,347,52.46,84.9,3835,STAR,"84.9% GM, 13 units — hero"
+KEEP-PUSH,Classic Bread Omelette (2 Egg),Healthy Breakfast,18,3782.0,210,20.33,90.3,3416,STAR,"90.3% GM, 18 units — hero"
+PROMOTE,Chicken Caesar Story Salad,Non Veg Salads,12,4788.0,399,62.2,84.4,4042,PUZZLE,84.4% GM but only 12 units — needs visibility
+PROMOTE,Mushroom Omelette (2 Egg),Healthy Breakfast,12,4004.0,334,30.33,90.9,3640,PUZZLE,90.9% GM but only 12 units — needs visibility
+KEEP,Crispy Mushroom Rice Bowl,Veg Mexican Rice Bowls,10,3848.0,385,58.97,84.7,3258,DOG,"84.7% GM, 10 units"
+KEEP,Aglio Olio Pasta (Veg),Millets Pasta,13,3835.0,295,63.03,78.6,3016,PLOWHORSE,"78.6% GM, acceptable"
+KEEP,Crispy Peri Peri Mushroom Rice Bowl,Veg Mexican Rice Bowls,10,3780.0,378,55.35,85.4,3226,DOG,"85.4% GM, 10 units"
+KEEP,French Omelette (sweet/savoury) (2 Egg),Healthy Breakfast,15,3735.0,249,31.63,87.3,3261,PLOWHORSE,"87.3% GM, acceptable"
+KEEP,Classic Vegetable Poha,Sides & Munchies,17,3655.0,215,24.97,88.4,3231,PLOWHORSE,"88.4% GM, acceptable"
+KEEP,Grilled Veg Club Sandwich,Healthy Sandwiches,11,3145.0,286,64.12,77.6,2440,DOG,"77.6% GM, 11 units"
+KEEP,Alfredo Pasta (Veg),Millets Pasta,9,2839.0,315,72.19,77.1,2189,DOG,"77.1% GM, 9 units"
+KEEP,Dates Banana Smoothie,Smoothies,11,2599.0,236,33.5,85.8,2230,DOG,"85.8% GM, 11 units"
+KEEP,Masala Bread Omelette (2 Egg),Healthy Breakfast,10,2170.0,217,25.33,88.3,1917,DOG,"88.3% GM, 10 units"
+KEEP,Power House Smoothie,Smoothies,11,2099.0,191,20.03,89.5,1879,DOG,"89.5% GM, 11 units"
+KEEP,Tomato Basil Soup,Soups,9,2061.0,229,22.0,90.4,1863,DOG,"90.4% GM, 9 units"
+HOLD-COST,Falafel Garden Salad,Veg Salads,100,29712.0,297,,,,,100 units but NO food cost — cost it before deciding
+HOLD-COST,Stuffed Chicken With Mashed Potato & Sautéed Green Beans,Non Veg Meals,36,15804.0,439,,,,,36 units but NO food cost — cost it before deciding
+HOLD-COST,Mutton Paya Soup,Soups,35,13475.0,385,,,,,35 units but NO food cost — cost it before deciding
+HOLD-COST,English Breakfast,Healthy Breakfast,33,12705.0,385,,,,,33 units but NO food cost — cost it before deciding
+HOLD-COST,Classic French Toast With Butter,Healthy Breakfast,30,7470.0,249,,,,,30 units but NO food cost — cost it before deciding
+HOLD-COST,Fruity Greek Yogurt,Desserts,34,6970.0,205,,,,,34 units but NO food cost — cost it before deciding
+HOLD-COST,Roasted Vegetable Quinoa Salad,Veg Salads,19,6175.0,325,,,,,19 units but NO food cost — cost it before deciding
+HOLD-COST,Four Boiled Egg,Healthy Breakfast,36,6020.0,167,,,,,36 units but NO food cost — cost it before deciding
+HOLD-COST,Falafal Hummus Wrap,Healthy Wraps,16,4820.0,301,,,,,16 units but NO food cost — cost it before deciding
+HOLD-COST,Abc Juice,Juices,24,3960.0,165,,,,,24 units but NO food cost — cost it before deciding
+HOLD-COST,Fruity Sprout Salad,Veg Salads,14,3850.0,275,,,,,14 units but NO food cost — cost it before deciding
+HOLD-COST,Healthy Tiramisu Box,Desserts,14,3570.0,255,,,,,14 units but NO food cost — cost it before deciding
+HOLD-COST,Arrabbiata Pasta (Veg),Millets Pasta,13,3315.0,255,,,,,13 units but NO food cost — cost it before deciding
+HOLD-COST,Ragi Dates Eggless Brownie (1) Pc,Desserts,22,3290.0,150,,,,,22 units but NO food cost — cost it before deciding
+HOLD-COST,Hummus Pita With Falafel,Appetizers,9,3105.0,345,,,,,9 units but NO food cost — cost it before deciding
+HOLD-COST,Mushroom & Caramelised Onion Sandwich,Healthy Sandwiches,8,2864.0,358,,,,,8 units but NO food cost — cost it before deciding
+HOLD-COST,Egg Shakshuka,Healthy Breakfast,13,2847.0,219,,,,,13 units but NO food cost — cost it before deciding
+HOLD-COST,Spinach & Corn Sandwich,Healthy Sandwiches,8,2250.0,281,,,,,8 units but NO food cost — cost it before deciding
+HOLD-COST,Tuscan Chicken With Bread/rice,Non Veg Meals,5,2075.0,415,,,,,5 units but NO food cost — cost it before deciding
+HOLD-COST,Grilled Chicken Salad,Non Veg Salads,4,1700.0,425,,,,,4 units but NO food cost — cost it before deciding
+HOLD-COST,Pumpkin Soup,Soups,7,1505.0,215,,,,,7 units but NO food cost — cost it before deciding
+HOLD-COST,Lemon Mint Ice Tea,Smoothies,7,1295.0,185,,,,,7 units but NO food cost — cost it before deciding
+HOLD-COST,Beetroot Salad With Balsamic Dressing,Veg Salads,4,1140.0,285,,,,,4 units but NO food cost — cost it before deciding
+HOLD-COST,Garlic Bread,Sides & Munchies,4,916.0,229,,,,,4 units but NO food cost — cost it before deciding
+CUT,Diet Coke Can,Cold Drinks,43,2795.0,65,,,,,off-brand: soft drinks on a clinical nutrition menu
+CUT,Veg Quesadilla,Cheesy Quesadillas,8,2632.0,329,,,,,"off-brand / non-core, negligible volume"
+CUT,Avocado Toast With Poached Boiled Egg (2 Egg),Healthy Breakfast,5,2625.0,525,87.0,83.4,2190,DOG,"dog: 5 units, Rs 2,190 margin"
+CUT,Cheese Omelette (2 Egg),Healthy Breakfast,8,2304.0,288,26.57,90.8,2091,DOG,"dog: 8 units, Rs 2,091 margin"
+CUT,Watermelon Mint Cooler,Coolers,14,2170.0,155,,,,,"off-brand / non-core, negligible volume"
+CUT,Antioxidant Detox,Smoothies,6,2130.0,355,53.0,85.1,1812,DOG,"dog: 6 units, Rs 1,812 margin"
+CUT,Blue Berry Smoothie,Smoothies,6,2094.0,349,72.5,79.2,1659,DOG,"dog: 6 units, Rs 1,659 margin"
+CUT,Falafal Pita Pockets With Hummus,Pita Pockets,6,1926.0,321,36.0,88.8,1710,DOG,"dog: 6 units, Rs 1,710 margin"
+CUT,Cheese Tomato Omelette (2 Egg),Healthy Breakfast,8,1912.0,239,27.0,88.7,1696,DOG,"dog: 8 units, Rs 1,696 margin"
+CUT,Hydrating Watermelon Juice,Juices,7,1646.0,235,10.0,95.7,1576,DOG,"dog: 7 units, Rs 1,576 margin"
+CUT,Avocado Toast With Sunny Side Up (2 Egg),Healthy Breakfast,3,1575.0,525,87.0,83.4,1314,DOG,only 3 units in 61 days
+CUT,Aam Panna,Coolers,7,1533.0,219,,,,,"off-brand / non-core, negligible volume"
+CUT,Exotic Egg Bhurji (2 Egg),Healthy Breakfast,5,1275.0,255,23.0,91.0,1160,DOG,"dog: 5 units, Rs 1,160 margin"
+CUT,Chilli Garlic Chicken Fried Rice,WTC,6,1254.0,209,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Crispy Peri Peri Chicken Burrito Wrap,Chicken Burrito Wraps,3,1209.0,403,71.65,82.2,994,DOG,only 3 units in 61 days
+CUT,Pesto Pasta (Veg),Millets Pasta,4,1180.0,295,71.78,75.7,893,DOG,"dog: 4 units, Rs 893 margin"
+CUT,Veg Caesar Story Salad,Veg Salads,4,1180.0,295,41.2,86.0,1015,DOG,"dog: 4 units, Rs 1,015 margin"
+CUT,Marry Me Mushroom With Bread / Rice,Veg Meals,3,1077.0,359,,,,,only 3 units in 61 days
+CUT,Alfredo Pasta (Chicken),Millets Pasta,3,1035.0,345,72.19,79.1,818,DOG,only 3 units in 61 days
+CUT,Crispy Peri Peri Chicken Rice Bowl,Chicken Mexican Rice Bowls,2,1028.0,514,69.15,86.5,890,DOG,only 2 units in 61 days
+CUT,Crispy Peri Peri Potato Burrito Wrap,Veg Burrito Wraps,3,899.0,300,71.65,76.1,684,DOG,only 3 units in 61 days
+CUT,Oats Banana Pancakes 4pc,Healthy Breakfast,3,885.0,295,,,,,only 3 units in 61 days
+CUT,Cheesy Delight Nachos,Sides & Munchies,3,885.0,295,40.0,86.4,765,DOG,only 3 units in 61 days
+CUT,Crispy Peri Peri Mushroom Burrito Wrap,Veg Burrito Wraps,2,860.0,430,58.4,86.4,743,DOG,only 2 units in 61 days
+CUT,Peanut Butter Banana Smoothie,Smoothies,2,790.0,395,,,,,only 2 units in 61 days
+CUT,Plain Omelette (2 Egg),Healthy Breakfast,4,786.0,196,26.33,86.6,681,DOG,"dog: 4 units, Rs 681 margin"
+CUT,Crispy Peri Peri Potato Rice Bowl,Veg Mexican Rice Bowls,2,778.0,389,70.86,81.8,636,DOG,only 2 units in 61 days
+CUT,Lichi Cooler,Coolers,3,765.0,255,,,,,"off-brand / non-core, negligible volume"
+CUT,Peri Peri Paneer Rice Bowl,Veg Mexican Rice Bowls,2,578.0,289,52.09,82.0,474,DOG,only 2 units in 61 days
+CUT,Chicken Fried Rice 750,WTC,2,518.0,259,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Veg Pan Fry Noodles,WTC,2,515.0,258,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Guava Chilli Cooler,Coolers,2,510.0,255,,,,,"off-brand / non-core, negligible volume"
+CUT,Zero Calorie Mint Mojito,Juices,3,507.0,169,23.75,85.9,436,DOG,only 3 units in 61 days
+CUT,Mutton Paya,WTC,2,500.0,250,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Manchow Soup (Veg),Soups,2,438.0,219,40.0,81.7,358,DOG,only 2 units in 61 days
+CUT,Kurkure Veg Momos,WTC,2,430.0,215,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Chia Lemonade Detox,Smoothies,2,430.0,215,,,,,only 2 units in 61 days
+CUT,Egg Chicken Noodle,WTC,2,418.0,209,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Chicken Hakka Noodles,WTC,2,398.0,199,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Egg Fried Rice,WTC,2,398.0,199,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Thums Up Can,Cold Drinks,6,390.0,65,,,,,off-brand: soft drinks on a clinical nutrition menu
+CUT,Non Veg Quesadilla,Cheesy Quesadillas,1,385.0,385,,,,,"off-brand / non-core, negligible volume"
+CUT,Gond Ka Tira Cooler,Coolers,1,339.0,339,,,,,"off-brand / non-core, negligible volume"
+CUT,Coke Can,Cold Drinks,5,325.0,65,,,,,off-brand: soft drinks on a clinical nutrition menu
+CUT,Manchow Soup (Chicken),Soups,1,305.0,305,40.0,86.9,265,DOG,only 1 units in 61 days
+CUT,Veg Manchurian Gravy,WTC,1,299.0,299,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Veg Manchurian Dry,WTC,1,289.0,289,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Kiwi Mint Cooler,Coolers,1,255.0,255,,,,,"off-brand / non-core, negligible volume"
+CUT,Chilli Garlic Veg Fried Rice,WTC,1,235.0,235,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Broccoli Almond Soup,Soups,1,229.0,229,27.08,88.2,202,DOG,only 1 units in 61 days
+CUT,Chicken Fried Rice 500,WTC,1,209.0,209,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Chilli Garlic Chicken Noodles,WTC,1,199.0,199,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Chicken Butter Garlic Noodles,WTC,1,199.0,199,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Tomato Basil Omelette (2 Egg),Healthy Breakfast,1,195.0,195,25.33,87.0,170,DOG,only 1 units in 61 days
+CUT,Veg Noodle,WTC,1,175.0,175,,,,,off-brand: Chinese SKUs from another kitchen brand
+CUT,Sirka Pyaaz,Sides & Munchies,1,129.0,129,,,,,only 1 units in 61 days
