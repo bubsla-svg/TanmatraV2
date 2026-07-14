@@ -55,13 +55,14 @@ export default function V2Home() {
       {/* 2.1 Sticky scroll transition Header (no CTA — see §S1) */}
       <HomeHeader />
 
-      <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 88 }}>
-        {/* 2.2 Hero: one primary CTA (see the menu) + one optional text link */}
-        <HomeHero
-          onSeeMenu={() => navigate("/menu")}
-          onHelpChoose={() => setQuizOpen(true)}
-        />
+      {/* 2.2 Full-width hero — lives OUTSIDE the 480px content column so the
+          desktop photo-split can breathe; it stacks on mobile. */}
+      <HomeHero
+        onSeeMenu={() => navigate("/menu")}
+        onHelpChoose={() => setQuizOpen(true)}
+      />
 
+      <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 88 }}>
         {/* 2.5 Recommended plans rail */}
         <HomeRecommendedPlans />
 
