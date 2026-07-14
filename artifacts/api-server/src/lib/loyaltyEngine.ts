@@ -23,6 +23,7 @@ import {
 } from "@workspace/db";
 import { inArray } from "drizzle-orm";
 import { makeBatchDishResolver } from "./menuResolver";
+import { computeBundleDiscountPaise } from "./bundlePricing";
 import {
   evaluateDishForPreferences,
   type PreferencesForMatch,
@@ -646,63 +647,31 @@ export async function finalizeOrder(args: {
   // satisfy two overlapping bundles. Unknown / unsatisfied bundles are
   // silently dropped — never throw, since stale client state shouldn't
   // block checkout.
-  let bundleDiscountPaise = 0;
-  // Preserve multiplicity: a client that bought the same combo twice
-  // sends the slug twice and gets two discounts (assuming the cart has
-  // enough stock). We dedupe only for the catalog lookup.
+  // Preserve multiplicity: a client that bought the same combo twice sends the
+  // slug twice and gets two discounts (assuming the cart has enough stock). We
+  // dedupe only for the catalog lookup. The fail-closed discount math lives in
+  // the pure `computeBundleDiscountPaise` (unit-tested without a DB).
   const requestedSlugs = (args.bundleSlugs ?? []).filter(
     (s) => typeof s === "string" && s.length > 0,
   );
+  let bundleDiscountPaise = 0;
   if (requestedSlugs.length > 0) {
     const uniqueSlugs = Array.from(new Set(requestedSlugs));
     const bundleRows = await db
       .select()
       .from(bundlesTable)
       .where(inArray(bundlesTable.slug, uniqueSlugs));
-    const bundleBySlug = new Map(bundleRows.map((b) => [b.slug, b]));
-    const remaining = new Map<number, number>();
-    for (const it of args.items) {
-      remaining.set(
-        it.id,
-        (remaining.get(it.id) ?? 0) + Math.max(0, Math.floor(it.qty)),
-      );
-    }
-    // Apply each requested instance independently. If a bundle row has
-    // duplicate dish IDs, the frequency map ensures we only accept it
-    // when the cart has enough of each component to cover the duplicates.
-    // Apply higher-savings bundles first so overlapping bundles resolve
-    // deterministically and in the user's favor.
-    const expanded = requestedSlugs
-      .map((s) => bundleBySlug.get(s))
-      .filter((b): b is NonNullable<typeof b> => Boolean(b));
-    expanded.sort(
-      (a, b) =>
-        (b.originalPricePaise - b.pricePaise) -
-        (a.originalPricePaise - a.pricePaise),
-    );
-    for (const b of expanded) {
-      const dishIds = Array.isArray(b.dishIds) ? b.dishIds : [];
-      if (dishIds.length === 0) continue;
-      const required = new Map<number, number>();
-      for (const id of dishIds) {
-        required.set(id, (required.get(id) ?? 0) + 1);
-      }
-      let satisfiable = true;
-      for (const [id, need] of required) {
-        if ((remaining.get(id) ?? 0) < need) {
-          satisfiable = false;
-          break;
-        }
-      }
-      if (!satisfiable) continue;
-      for (const [id, need] of required) {
-        remaining.set(id, (remaining.get(id) ?? 0) - need);
-      }
-      const saving = Math.max(0, b.originalPricePaise - b.pricePaise);
-      bundleDiscountPaise += saving;
-    }
-    // Cap so a malformed catalog can never push the order negative.
-    bundleDiscountPaise = Math.min(bundleDiscountPaise, grossPaise);
+    bundleDiscountPaise = computeBundleDiscountPaise({
+      requestedSlugs,
+      bundles: bundleRows.map((b) => ({
+        slug: b.slug,
+        dishIds: Array.isArray(b.dishIds) ? b.dishIds : [],
+        originalPricePaise: b.originalPricePaise,
+        pricePaise: b.pricePaise,
+      })),
+      items: args.items.map((it) => ({ id: it.id, qty: it.qty })),
+      grossPaise,
+    });
   }
   // Fulfillment invariants: a delivery order must reserve a real slot, and
   // a pickup order must point at an active partner location. We fail fast
