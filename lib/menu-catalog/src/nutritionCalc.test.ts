@@ -6,6 +6,7 @@ import {
   parseIngredientLine,
   parseLongDescription,
   computeDishMacros,
+  computeDishMacrosFromIngredients,
   type NutritionTable,
 } from "./nutritionCalc";
 
@@ -94,4 +95,62 @@ test("computeDishMacros ignores zero-weight (to taste) ingredients in coverage",
   assert.equal(r.macros.kcal, 34);
   assert.equal(r.totalCount, 1); // salt & pepper has 0 weight → not counted
   assert.equal(r.coverage, 1);
+});
+
+// ── Spoon/cup: dry vs liquid weights (from the kitchen MEASUREMENTS table) ────
+test("dry spoons/cups weigh less than liquid ones", () => {
+  // Dry solids: cup 120 g · tbsp 8 g · tsp 3 g
+  assert.equal(toGrams(1, "cup", "whole wheat flour"), 120);
+  assert.equal(toGrams(1, "tbsp", "cocoa powder"), 8);
+  assert.equal(toGrams(1, "tsp", "cinnamon powder"), 3);
+  // Liquids (name matches the liquid signal): cup 240 ml · tbsp 15 ml · tsp 5 ml
+  assert.equal(toGrams(1, "cup", "milk"), 240);
+  assert.equal(toGrams(2, "tbsp", "olive oil"), 30);
+  assert.equal(toGrams(1, "tsp", "honey"), 5);
+});
+
+// ── Leaf herbs counted by the leaf must not balloon (the 350 g curry-leaf bug) ─
+test("leaf herbs counted by the leaf weigh grams, not hundreds of grams", () => {
+  // "Curry leaves – 6–8" → 7 leaves × 0.3 g ≈ 2 g (was 7 × 50 g = 350 g).
+  assert.equal(parseIngredientLine("Curry leaves – 6–8")?.grams, 2);
+  assert.equal(parseIngredientLine("Mint leaves – 4–5")?.grams, 1);
+  assert.equal(parseIngredientLine("Basil – 4 leaves")?.grams, 2);
+  // A dish is no longer dominated by a garnish: basil is a rounding error next
+  // to the eggs, not the largest "ingredient".
+  const tbl: NutritionTable = {
+    ...STUB,
+    egg: { kcal: 143, proteinG: 13, carbsG: 0.7, fatG: 9.5, fiberG: 0, sodiumMg: 142, sugarG: 0.4 },
+    basil: { kcal: 23, proteinG: 3.2, carbsG: 2.6, fatG: 0.6, fiberG: 1.6, sodiumMg: 4, sugarG: 0.3 },
+  };
+  const r = computeDishMacros("Egg – 2 · Basil – 4 leaves", tbl);
+  assert.ok(r.macros.kcal < 300, `expected a 2-egg dish under 300 kcal, got ${r.macros.kcal}`);
+});
+
+// ── Atwater self-consistency guard ───────────────────────────────────────────
+test("computeDishMacros reports Atwater consistency and demotes incoherent rows", () => {
+  const good = computeDishMacros("Broccoli – 100 g · Olive oil – 1 tbsp", STUB);
+  assert.equal(good.atwaterConsistent, true);
+  assert.ok(good.atwaterDeltaPct <= 0.15);
+
+  // A table row whose kcal can't be reconciled with its macros (200 kcal stated,
+  // but 4·5 + 4·5 + 9·30 = 310) makes any dish built from it inconsistent, and
+  // its confidence is demoted below "high" even at full coverage.
+  const badTable: NutritionTable = {
+    "mystery fat": { kcal: 200, proteinG: 5, carbsG: 5, fatG: 30, fiberG: 0, sodiumMg: 0, sugarG: 0 },
+  };
+  const bad = computeDishMacros("Mystery fat – 100 g", badTable);
+  assert.equal(bad.coverage, 1);
+  assert.equal(bad.atwaterConsistent, false);
+  assert.notEqual(bad.confidence, "high");
+});
+
+// ── ingredients[] entry point ────────────────────────────────────────────────
+test("computeDishMacrosFromIngredients matches the middot-joined form", () => {
+  const fromList = computeDishMacrosFromIngredients(
+    ["Broccoli – 100 g", "Olive oil – 1 tbsp"],
+    STUB,
+  );
+  const fromStr = computeDishMacros("Broccoli – 100 g · Olive oil – 1 tbsp", STUB);
+  assert.deepEqual(fromList.macros, fromStr.macros);
+  assert.equal(fromList.matchedCount, 2);
 });

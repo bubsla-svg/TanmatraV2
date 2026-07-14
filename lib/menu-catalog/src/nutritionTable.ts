@@ -76,6 +76,7 @@ export const NUTRITION_TABLE: NutritionTable = {
   "flattened rice (poha)": { kcal: 346, proteinG: 6.6, carbsG: 77.3, fatG: 1.2, fiberG: 2.5, sodiumMg: 6, sugarG: 0 },
   "fresh cream": { kcal: 292, proteinG: 2.3, carbsG: 3.4, fatG: 30, fiberG: 0, sodiumMg: 32, sugarG: 3 },
   "fresh mint": { kcal: 48, proteinG: 4.8, carbsG: 5.8, fatG: 0.7, fiberG: 6.8, sodiumMg: 26, sugarG: 0 },
+  "fried noodles": { kcal: 450, proteinG: 8, carbsG: 58, fatG: 20, fiberG: 2, sodiumMg: 500, sugarG: 1.5 }, // deep-fried noodle garnish; low-confidence estimate
   "garlic": { kcal: 145, proteinG: 6.3, carbsG: 29, fatG: 0.5, fiberG: 4.9, sodiumMg: 17, sugarG: 1 },
   "ginger": { kcal: 80, proteinG: 2.3, carbsG: 17.8, fatG: 0.9, fiberG: 2.4, sodiumMg: 13, sugarG: 1.7 },
   "grapes": { kcal: 67, proteinG: 0.6, carbsG: 16.5, fatG: 0.3, fiberG: 0.9, sodiumMg: 2, sugarG: 15.5 },
@@ -88,6 +89,7 @@ export const NUTRITION_TABLE: NutritionTable = {
   "honey": { kcal: 304, proteinG: 0.3, carbsG: 82, fatG: 0, fiberG: 0, sodiumMg: 4, sugarG: 82 },
   "hummus": { kcal: 166, proteinG: 7.9, carbsG: 14.3, fatG: 9.6, fiberG: 6, sodiumMg: 379, sugarG: 0.4 },
   "hung curd": { kcal: 98, proteinG: 9, carbsG: 4, fatG: 5, fiberG: 0, sodiumMg: 40, sugarG: 4 },
+  "herbs": { kcal: 40, proteinG: 3, carbsG: 6, fatG: 0.7, fiberG: 4, sodiumMg: 30, sugarG: 0 }, // mixed fresh herbs; low-confidence estimate
   "ice cubes": { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0, sodiumMg: 0, sugarG: 0 },
   "jalapeños": { kcal: 29, proteinG: 0.9, carbsG: 6.5, fatG: 0.4, fiberG: 2.8, sodiumMg: 3, sugarG: 4.1 },
   "lemon juice": { kcal: 22, proteinG: 0.4, carbsG: 6.9, fatG: 0.2, fiberG: 0.3, sodiumMg: 1, sugarG: 2.5 },
@@ -98,6 +100,7 @@ export const NUTRITION_TABLE: NutritionTable = {
   "milk": { kcal: 62, proteinG: 3.2, carbsG: 4.7, fatG: 3.3, fiberG: 0, sodiumMg: 44, sugarG: 4.7 },
   "milk/cream": { kcal: 130, proteinG: 2.9, carbsG: 4.2, fatG: 11.5, fiberG: 0, sodiumMg: 40, sugarG: 4.2 }, // low-confidence estimate
   "millet flour": { kcal: 348, proteinG: 10.5, carbsG: 67, fatG: 4.2, fiberG: 8, sodiumMg: 5, sugarG: 1 },
+  "mixed vegetables": { kcal: 38, proteinG: 2, carbsG: 7.5, fatG: 0.3, fiberG: 3, sodiumMg: 40, sugarG: 3.5 }, // low-confidence estimate
   "mini pita breads": { kcal: 275, proteinG: 9, carbsG: 55, fatG: 1.2, fiberG: 2.2, sodiumMg: 530, sugarG: 1.5 },
   "mint chutney": { kcal: 80, proteinG: 3, carbsG: 12, fatG: 1.5, fiberG: 4, sodiumMg: 600, sugarG: 3 }, // low-confidence estimate
   "mint leaves": { kcal: 48, proteinG: 3.8, carbsG: 8, fatG: 0.7, fiberG: 6.8, sodiumMg: 30, sugarG: 0 },

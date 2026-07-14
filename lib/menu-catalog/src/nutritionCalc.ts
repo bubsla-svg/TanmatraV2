@@ -51,8 +51,17 @@ export interface DishMacrosResult {
   totalCount: number;
   /** ingredients that had weight but no table entry */
   unmatched: string[];
-  /** high ≥ .85 coverage, med ≥ .6, else low */
+  /** high ≥ .85 coverage, med ≥ .6, else low. Demoted a tier when the summed
+   * kcal disagrees with the Atwater estimate by > 20% (a mis-weighed row). */
   confidence: "high" | "med" | "low";
+  /** 4·protein + 4·carbs + 9·fat — the macros' own implied energy. */
+  atwaterKcal: number;
+  /** |atwaterKcal − kcal| / kcal (0 when there are no calories). A large value
+   * means the dish's stated energy can't be reconciled with its macros, which
+   * almost always signals a portion/parse error rather than a real result. */
+  atwaterDeltaPct: number;
+  /** atwaterDeltaPct ≤ 0.15 — the macro row is internally coherent. */
+  atwaterConsistent: boolean;
 }
 
 // ── Quantity parsing ────────────────────────────────────────────────────────
@@ -89,34 +98,72 @@ export function parseQuantity(token: string): number | null {
 
 // ── Unit → grams ─────────────────────────────────────────────────────────────
 
-const NEGLIGIBLE = /to taste|as needed|as required|optional|a pinch|pinch|garnish/i;
+const NEGLIGIBLE =
+  /to taste|as needed|as required|optional|a pinch|pinch|garnish|seasoning|light salt/i;
 
-/** Generic unit → grams multipliers (per 1 unit). */
-const UNIT_G: Record<string, number> = {
+/** Units whose gram/ml weight is fixed regardless of the ingredient. */
+const UNIT_FIXED: Record<string, number> = {
   g: 1,
   gm: 1,
   gms: 1,
   gram: 1,
   grams: 1,
-  ml: 1,
+  ml: 1, // 1 ml ≈ 1 g for the aqueous mixes in this catalog
   l: 1000,
   kg: 1000,
+  clove: 3,
+  cloves: 3,
+  pinch: 0.3,
+  inch: 8, // a "½ inch" knob of ginger ≈ 4 g
+  scoop: 30, // 1 scoop whey protein
+  can: 330, // a soft-drink can
+  sachet: 1, // a stevia/sweetener sachet
+};
+
+// Spoon/cup measures are volumetric, so their gram weight depends on whether the
+// ingredient is a dry solid or a liquid. These two tables come verbatim from the
+// kitchen's own MEASUREMENTS reference (Tanmatra Kitchen Data Collection Sheet):
+//   dry    → 1 cup 120 g · 1 tbsp 8 g · 1 tsp 3 g
+//   liquid → 1 cup 240 ml · 1 tbsp 15 ml · 1 tsp 5 ml
+// The previous single table treated every spoon as its *liquid* volume, which
+// overstated dry powders/flours/spices by ~1.7× (see nutritionCalc.test.ts).
+const SPOON_DRY: Record<string, number> = {
+  tbsp: 8,
+  tablespoon: 8,
+  tsp: 3,
+  teaspoon: 3,
+  cup: 120,
+  cups: 120,
+};
+const SPOON_LIQUID: Record<string, number> = {
   tbsp: 15,
   tablespoon: 15,
   tsp: 5,
   teaspoon: 5,
-  cup: 200,
-  cups: 200,
-  clove: 3,
-  cloves: 3,
-  pinch: 0.3,
+  cup: 240,
+  cups: 240,
 };
+
+/** Ingredients measured by the spoon/cup that pour like a liquid (use ml-weights). */
+const LIQUID_SIGNAL =
+  /oil|milk|cream|water|juice|honey|sauce|vinegar|stock|syrup|curd|yogurt|yoghurt|ketchup|mayo|dressing|puree|chutney|pesto|wine|extract|essence|coke|soda|tea|slurry|\bdip\b|salsa|hummus|nutella|butter/i;
 
 /**
  * Grams per "piece"/"medium"/"slice" for count-based ingredients, keyed by a
  * substring of the normalized name. Falls back to PIECE_DEFAULT.
  */
 const PIECE_G: Array<[RegExp, number]> = [
+  // Leaf herbs & aromatics counted by the leaf/sprig ("Curry leaves – 6–8",
+  // "Mint leaves – 4–5", "Basil – 4 leaves"). One leaf weighs a fraction of a
+  // gram — the old default of 50 g each turned an 8-leaf garnish into 400 g of
+  // phantom food (see nutritionCalc.test.ts). These MUST precede the broader
+  // fallbacks below so a leaf never resolves to PIECE_DEFAULT.
+  [/curry leaf|curry leave|curry/, 0.3],
+  [/mint/, 0.3],
+  [/basil/, 0.5],
+  [/coriander|cilantro/, 0.3],
+  [/parsley/, 0.3],
+  [/\bbay leaf\b|leaves|\bleaf\b/, 0.4],
   [/banana/, 118],
   [/\bapple/, 180],
   [/egg/, 50],
@@ -152,9 +199,15 @@ function pieceWeight(name: string): number {
 /** Resolve a parsed (qty, unit, name) into grams. */
 export function toGrams(qty: number, unit: string, name: string): number {
   const u = unit.trim().toLowerCase();
-  if (u in UNIT_G) return qty * UNIT_G[u]!;
+  if (u in UNIT_FIXED) return qty * UNIT_FIXED[u]!;
+  // Volumetric spoon/cup: pick the dry- or liquid-weight table by ingredient.
+  if (u in SPOON_DRY) {
+    const table = LIQUID_SIGNAL.test(name) ? SPOON_LIQUID : SPOON_DRY;
+    return qty * table[u]!;
+  }
   const pw = pieceWeight(name);
-  if (/^(slice|slices|pc|pcs|piece|pieces|nos?|medium)$/.test(u)) return qty * pw;
+  if (/^(slice|slices|pc|pcs|piece|pieces|nos?|medium|leaf|leaves)$/.test(u))
+    return qty * pw;
   if (/^large$/.test(u)) return qty * pw * 1.3;
   if (/^small$/.test(u)) return qty * pw * 0.7;
   // No/unknown unit: a small count reads as pieces, a big number as grams.
@@ -233,6 +286,21 @@ export function lookup(name: string, table: NutritionTable): NutritionPer100g | 
 }
 
 /**
+ * Compute a dish's macros from its full ingredient list — one "Name – Qty unit"
+ * string per element (the shape stored in `DishData.ingredients`). This is the
+ * preferred entry point: the abbreviated `longDescription` routinely drops
+ * ingredients (the cooking oil, the protein in a variant dish), which silently
+ * undercounts the result. Delegates to `computeDishMacros` by joining on the
+ * middot separator it already understands.
+ */
+export function computeDishMacrosFromIngredients(
+  ingredients: readonly string[],
+  table: NutritionTable,
+): DishMacrosResult {
+  return computeDishMacros((ingredients ?? []).join(" · "), table);
+}
+
+/**
  * Compute a dish's macros from its ingredient longDescription. Only ingredients
  * with a positive weight AND a table match contribute; coverage reflects the
  * share of weighed grams that were matched.
@@ -278,8 +346,22 @@ export function computeDishMacros(
     sugarG: Math.round(macros.sugarG),
   };
   const coverage = weighedGrams > 0 ? matchedGrams / weighedGrams : 0;
-  const confidence: DishMacrosResult["confidence"] =
+
+  // Atwater self-check: the summed kcal should agree with 4·P + 4·C + 9·F. A
+  // wide gap means a component was mis-weighed (e.g. a leaf garnish read as
+  // hundreds of grams), so we never present such a row as high confidence.
+  const atwaterKcal =
+    4 * rounded.proteinG + 4 * rounded.carbsG + 9 * rounded.fatG;
+  const atwaterDeltaPct =
+    rounded.kcal > 0 ? Math.abs(atwaterKcal - rounded.kcal) / rounded.kcal : 0;
+  const atwaterConsistent = atwaterDeltaPct <= 0.15;
+
+  let confidence: DishMacrosResult["confidence"] =
     coverage >= 0.85 ? "high" : coverage >= 0.6 ? "med" : "low";
+  // Demote a tier when the energy can't be reconciled with the macros.
+  if (atwaterDeltaPct > 0.2) {
+    confidence = confidence === "high" ? "med" : "low";
+  }
 
   return {
     macros: rounded,
@@ -288,5 +370,8 @@ export function computeDishMacros(
     totalCount: weighed.length,
     unmatched,
     confidence,
+    atwaterKcal,
+    atwaterDeltaPct: Math.round(atwaterDeltaPct * 100) / 100,
+    atwaterConsistent,
   };
 }

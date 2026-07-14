@@ -4537,7 +4537,10 @@ export type {
 } from "./nutritionCalc";
 export { NUTRITION_TABLE } from "./nutritionTable";
 
-import { computeDishMacros as _computeDishMacros } from "./nutritionCalc";
+import {
+  computeDishMacros as _computeDishMacros,
+  computeDishMacrosFromIngredients as _computeDishMacrosFromIngredients,
+} from "./nutritionCalc";
 import type { DishMacrosResult as _DishMacrosResult } from "./nutritionCalc";
 import { NUTRITION_TABLE as _NUTRITION_TABLE } from "./nutritionTable";
 
@@ -4550,6 +4553,22 @@ import { NUTRITION_TABLE as _NUTRITION_TABLE } from "./nutritionTable";
 export function computeCatalogMacros(longDescription: string): _DishMacrosResult {
   return _computeDishMacros(longDescription, _NUTRITION_TABLE);
 }
+
+/**
+ * Compute a dish's macros from its full `ingredients` list — the preferred entry
+ * point, since the abbreviated longDescription drops ingredients and undercounts.
+ * Used by the macro backfill (scripts/backfill-macros.ts) to regenerate
+ * ESTIMATED_MACROS from the RD-verified recipe list.
+ */
+export function computeCatalogMacrosFromIngredients(
+  ingredients: readonly string[],
+): _DishMacrosResult {
+  return _computeDishMacrosFromIngredients(ingredients, _NUTRITION_TABLE);
+}
+
+// Re-exported so the macro backfill can read the current estimate set and
+// regenerate it in place (scripts/backfill-macros.ts --emit-estimated).
+export { ESTIMATED_MACROS } from "./estimatedMacros";
 
 // ── Dish-data integrity gate ──────────────────────────────────────────────────
 // Publish-time validation that catches contradictory allergen / diet / serving
