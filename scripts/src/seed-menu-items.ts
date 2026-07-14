@@ -1,14 +1,59 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { db, menuItemsTable } from "@workspace/db";
 import { DISHES } from "@workspace/menu-catalog";
 import { sql } from "drizzle-orm";
 
+const APPLY = process.argv.includes("--apply");
+
+// Sheet-only fields (goal tags, meal timing) come from the RD-verified master
+// sheet — the catalog seed (DISHES) doesn't carry them. Joined by dish name.
+interface SheetDish {
+  name: string;
+  goalTags: string[];
+  mealTiming: string;
+}
+function normName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+/** Map the sheet's free-text meal timing onto the availability_window enum. */
+function availabilityWindow(mealTiming: string): string[] | null {
+  const t = (mealTiming || "").toLowerCase();
+  if (t.includes("breakfast")) return ["breakfast"];
+  if (t.includes("lunch") && t.includes("dinner")) return ["lunch", "dinner"];
+  if (t.includes("lunch")) return ["lunch"];
+  if (t.includes("dinner")) return ["dinner"];
+  if (t.includes("snack") || t.includes("beverage") || t.includes("anytime"))
+    return ["all_day"];
+  return null;
+}
+const sheetByName: Map<string, SheetDish> = (() => {
+  const path = resolve(process.cwd(), "data", "kitchen-data-collection.json");
+  const parsed = JSON.parse(readFileSync(path, "utf8")) as { dishes: SheetDish[] };
+  return new Map(parsed.dishes.map((d) => [normName(d.name), d]));
+})();
+
 async function main() {
-  console.log(`Seeding ${DISHES.length} dishes into menu_items...`);
+  console.log(
+    `Seeding ${DISHES.length} dishes into menu_items${APPLY ? "" : " (dry-run)"}...`,
+  );
 
   let inserted = 0;
   let updated = 0;
+  let taggedFromSheet = 0;
 
   for (const d of DISHES) {
+    const sheet = sheetByName.get(normName(d.name));
+    const tags = sheet && sheet.goalTags.length > 0 ? sheet.goalTags : null;
+    const availWindow = sheet ? availabilityWindow(sheet.mealTiming) : null;
+    if (tags) taggedFromSheet++;
+
     const values = {
       slug: d.slug,
       name: d.name,
@@ -21,6 +66,10 @@ async function main() {
       imageUrl: d.image,
       longDescription: d.longDescription,
       allergens: d.allergens.length > 0 ? d.allergens : null,
+      // Goal tags (LOW SODIUM, HIGH PROTEIN, LOW GI, …) and meal timing come
+      // from the master sheet — the CMS panel exposes both as editable fields.
+      tags,
+      availabilityWindow: availWindow,
       macros: {
         kcal: d.macros.calories,
         proteinG: d.macros.protein,
@@ -41,6 +90,8 @@ async function main() {
       allergenReviewState: "reviewed",
     } as const;
 
+    if (!APPLY) continue; // dry-run: build/validate values but write nothing
+
     const result = await db
       .insert(menuItemsTable)
       .values(values)
@@ -56,6 +107,9 @@ async function main() {
           isVeg: sql`excluded.is_veg`,
           longDescription: sql`coalesce(${menuItemsTable.longDescription}, excluded.long_description)`,
           allergens: sql`coalesce(${menuItemsTable.allergens}, excluded.allergens)`,
+          // Sheet-derived; fill only when the editor hasn't set them.
+          tags: sql`coalesce(${menuItemsTable.tags}, excluded.tags)`,
+          availabilityWindow: sql`coalesce(${menuItemsTable.availabilityWindow}, excluded.availability_window)`,
           imageUrl: sql`coalesce(${menuItemsTable.imageUrl}, excluded.image_url)`,
           rdVerified: sql`excluded.rd_verified`,
           rdNote: sql`coalesce(${menuItemsTable.rdNote}, excluded.rd_note)`,
@@ -81,7 +135,15 @@ async function main() {
     }
   }
 
-  console.log(`Seed complete: ${inserted} inserted, ${updated} refreshed.`);
+  if (!APPLY) {
+    console.log(
+      `Dry-run: ${DISHES.length} dishes prepared, ${taggedFromSheet} carry goal tags from the sheet. Pass --apply to write.`,
+    );
+    process.exit(0);
+  }
+  console.log(
+    `Seed complete: ${inserted} inserted, ${updated} refreshed (${taggedFromSheet} tagged from sheet).`,
+  );
   process.exit(0);
 }
 
