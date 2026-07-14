@@ -54,13 +54,14 @@ const PRICING_PRESETS: PricingPreset[] = [
   },
 ];
 
-// Copy freeze (§6): we only claim flexibility we actually enforce today. The
-// "24h swap cut-off" and "cancel stops billing in one tap" promises return once
-// their enforcement lands (subscription skip/swap cut-off + mandate cancellation).
-const FLEXIBILITY_ITEMS = [
-  "Swap any dish for another in the catalog",
-  "Pause or skip individual days online",
-  "Taxes and delivery shown before you pay",
+// Phase A2 — a plan costs more per meal than an à la carte bowl, so the cards
+// must make the *added value* explicit or the gap reads as pure markup. Every
+// item here is a subscription-only attribute — none of it is available when you
+// order a single dish à la carte. (Copy freeze §6: only claims we enforce today.)
+const SUBSCRIPTION_ONLY_ITEMS = [
+  "A registered dietitian plans your whole week — a rotating, goal-based menu, not a single dish you pick",
+  "Portions macro-targeted to your goal (protein / calories) — not one-size à la carte bowls",
+  "Delivered on a schedule you set — pause, skip, or swap any day online",
 ];
 
 export default function HomePricing() {
@@ -73,10 +74,13 @@ export default function HomePricing() {
         </p>
       </div>
 
-      {/* Flexibility Module */}
+      {/* What a plan adds over à la carte (Phase A2) */}
       <div className="card my-6 border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
+        <span className="block text-[11px] font-bold uppercase tracking-wider text-white/50 mb-3">
+          What a plan adds over à la carte
+        </span>
         <ul className="flex flex-col gap-2.5">
-          {FLEXIBILITY_ITEMS.map((item, idx) => (
+          {SUBSCRIPTION_ONLY_ITEMS.map((item, idx) => (
             <li key={idx} className="flex items-start gap-2.5 text-xs text-white/80 leading-snug">
               <span className="shrink-0 w-4 h-4 rounded-full bg-[var(--tnm-action)]/10 flex items-center justify-center mt-0.5">
                 <Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" />

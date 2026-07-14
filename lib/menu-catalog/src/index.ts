@@ -4447,6 +4447,49 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
   return { ...d, macrosEstimated: false, macrosProvisional: wasPlaceholder };
 });
 
+  // ── Phase B1 — à la carte hero set ─────────────────────────────────────────
+  // À la carte is NOT the full 117-dish catalog. It is the proven, high-margin,
+  // batch-friendly KEEP-PUSH heroes from the menu-engineering curation
+  // (scripts/data/curated_catalog.csv) — grilled proteins, wraps, rice bowls,
+  // high-protein omelettes. Only these are offered for scheduled à la carte
+  // ordering; everything else stays subscription/plan-only. Default: not
+  // enabled. 26 of the 34 KEEP-PUSH rows resolve to a catalog dish by exact
+  // name; the other 8 are renamed variants or live on the separate Petpooja
+  // menu — reconciled separately, never fuzzy-matched (per the E1.1 lesson).
+  export const AL_A_CARTE_HERO_SLUGS: ReadonlySet<string> = new Set([
+    "avocado-toast",
+    "barbeque-chicken-burrito-wrap",
+    "barbeque-grilled-chicken-rice-bowl",
+    "boiled-chicken-breast-single-serve",
+    "broccoli-lemon-chicken-salad",
+    "chicken-pita-pockets-with-hummus",
+    "chicken-tikka-sandwich-with-ranch-yoghurt",
+    "chilli-chipotle-paneer-burrito-wrap",
+    "chilli-chipotle-paneer-rice-bowl",
+    "chipotle-chicken-burrito-wrap",
+    "chipotle-grilled-chicken-rice-bowl",
+    "classic-bread-omelette-2-egg",
+    "crispy-mushroom-burrito-wrap",
+    "grilled-chicken-breast-single-serve",
+    "grilled-chicken-sauteed-veg-mash-potato",
+    "grilled-veggie-sandwich-ranch-yoghurt",
+    "healthy-whole-wheat-chicken-tikka-wrap",
+    "healthy-whole-wheat-paneer-wrap",
+    "high-protein-chicken-omelette",
+    "hummus-pita-classic",
+    "moong-dal-chilla-with-curd",
+    "paneer-tikka-burrito-wrap",
+    "quinoa-khichdi",
+    "smoked-chicken-cheese-omelette",
+    "spinach-mushroom-omelette",
+    "veg-loaded-bread-omelette-2-egg",
+  ]);
+
+  /** True when a dish is offered for scheduled à la carte ordering (a hero). */
+  export function isAlaCarteEnabled(dish: Pick<DishData, "slug">): boolean {
+    return AL_A_CARTE_HERO_SLUGS.has(dish.slug);
+  }
+
   export function getDishBySlug(slug: string): DishData | undefined {
     return DISHES.find((d) => d.slug === slug);
   }

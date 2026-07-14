@@ -142,6 +142,10 @@ export const loyaltyApi = {
     fulfillmentType?: "delivery" | "pickup";
     ecoPackagingOptIn?: boolean;
     deliveryInstructions?: string | null;
+    // Phase B2 — à la carte is windows-only: require an explicit future slot
+    // (no ASAP). The server maps a missing/expired/full slot to a 4xx the
+    // slot-picker surfaces inline.
+    requireScheduledSlot?: boolean;
   }) =>
     request<{
       orderId: string;

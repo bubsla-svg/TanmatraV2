@@ -36,6 +36,7 @@ import {
 } from "./notificationMail";
 import { invalidateUserBrief } from "./userBrief";
 import { geocodeAddress } from "./geocode";
+import { isDeliverySlotBookable } from "./deliverySlotBooking";
 
 type DbOrTx = typeof db | PgTransaction<any, any, any>;
 
@@ -496,6 +497,10 @@ export async function finalizeOrder(args: {
   deliverySlotId?: number | null;
   pickupLocationId?: number | null;
   fulfillmentType?: "delivery" | "pickup";
+  // Phase B2 — scheduled à la carte: when set, a delivery order MUST carry an
+  // explicit, still-open future slot (no "deliver now" ASAP auto-pick), and the
+  // order's scheduledFor is taken from that slot's window.
+  requireScheduledSlot?: boolean;
   ecoPackagingOptIn?: boolean;
   deliveryInstructions?: string | null;
   subscriptionId?: number | null;
@@ -705,9 +710,13 @@ export async function finalizeOrder(args: {
   // 4xx responses instead of a generic 500.
   const fulfillmentType = args.fulfillmentType === "pickup" ? "pickup" : "delivery";
   if (fulfillmentType === "delivery" && !args.deliverySlotId) {
-    // ASAP ("Deliver Now") orders arrive without a slot — the default
-    // checkout mode. Assign the earliest still-open window instead of
-    // rejecting the order; only fail when no window is open at all.
+    if (args.requireScheduledSlot) {
+      // Scheduled à la carte (Phase B2): windows-only, no "deliver now"
+      // fallback. A slot is mandatory — fail closed. The checkout slot-picker
+      // maps this to an inline "pick a delivery window" prompt.
+      throw new Error("delivery slot required");
+    }
+    // Legacy/non-scheduled callers: assign the earliest still-open window.
     const [asap] = await db
       .select({ id: deliverySlotsTable.id })
       .from(deliverySlotsTable)
@@ -729,11 +738,31 @@ export async function finalizeOrder(args: {
   }
   if (fulfillmentType === "delivery" && args.deliverySlotId) {
     const [slot] = await db
-      .select({ id: deliverySlotsTable.id })
+      .select({
+        id: deliverySlotsTable.id,
+        startsAt: deliverySlotsTable.startsAt,
+        endsAt: deliverySlotsTable.endsAt,
+        reservedCount: deliverySlotsTable.reservedCount,
+        capacity: deliverySlotsTable.capacity,
+      })
       .from(deliverySlotsTable)
       .where(eq(deliverySlotsTable.id, args.deliverySlotId))
       .limit(1);
     if (!slot) throw new Error("delivery slot not found");
+    if (args.requireScheduledSlot) {
+      // Gate on a still-open, non-full window; distinguish expired (re-pick)
+      // from full (choose another) so the picker can prompt correctly.
+      if (!isDeliverySlotBookable(slot, new Date())) {
+        throw new Error(
+          slot.reservedCount >= slot.capacity
+            ? "delivery slot full"
+            : "delivery slot required",
+        );
+      }
+      // orders.scheduledFor is the slot's window start — the single source of
+      // truth for the scheduled order (also triggers the pre-order discount).
+      args.scheduledFor = slot.startsAt;
+    }
   }
   // Pickup discount — choosing self-pickup at a partner location swaps the
   // rider hop for a flat per-order discount sourced from the location row.

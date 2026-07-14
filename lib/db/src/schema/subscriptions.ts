@@ -23,7 +23,10 @@ export type DeliveryStatus =
 export type CreditReason =
   | "skipped_delivery"
   | "redemption"
-  | "manual_grant";
+  | "manual_grant"
+  // Phase C2 — earned on a customer's first à la carte order, redeemable once
+  // against a trial purchase (one free meal). See lib/bridgeCredit.ts.
+  | "alacarte_bridge";
 
 export type TrialState = "trial_purchased" | "trial_active" | "trial_bridge_eligible" | "trial_ended_undecided" | "converted" | "ended_abandoned";
 

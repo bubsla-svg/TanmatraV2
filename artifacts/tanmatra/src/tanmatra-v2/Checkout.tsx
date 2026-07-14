@@ -870,6 +870,10 @@ export default function V2Checkout() {
         bundleSlugs: bundleSlugs.length > 0 ? bundleSlugs : undefined,
         fulfillmentType,
         deliverySlotId: fulfillmentType === "delivery" ? selectedSlotId : null,
+        // Phase B2 — à la carte delivery is windows-only: require an explicit
+        // future slot (no ASAP). The server 4xxs a missing/expired/full slot
+        // and the picker surfaces it inline.
+        requireScheduledSlot: fulfillmentType === "delivery",
         pickupLocationId: fulfillmentType === "pickup" ? selectedPickupId : null,
         ecoPackagingOptIn: fulfillmentType === "delivery" && ecoPackagingOptIn,
         deliveryInstructions: deliveryInstructions.trim() || null,

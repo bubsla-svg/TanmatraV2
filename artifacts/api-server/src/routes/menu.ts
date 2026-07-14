@@ -13,6 +13,7 @@ import {
 } from "../lib/menu";
 import { saveAssetBytes } from "../lib/imageStorage";
 import { getMergedCatalog } from "../lib/menuResolver";
+import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import {
   ALL_COPY_FIELDS,
   applyCopyToItem,
@@ -46,6 +47,19 @@ router.get("/menu/public", async (_req: Request, res: Response) => {
   const dishes = await getMergedCatalog();
   const safe = dishes.filter(
     (d) => !d.rdReviewState || d.rdReviewState === "reviewed",
+  );
+  res.json({ dishes: safe });
+});
+
+// Phase B1 — à la carte catalog. À la carte is NOT the full menu: only the
+// proven, high-margin, batch-friendly hero dishes are orderable one-off (the
+// rest are subscription/plan-only). Same patient-safety filter as /menu/public.
+router.get("/menu/alacarte", async (_req: Request, res: Response) => {
+  const dishes = await getMergedCatalog();
+  const safe = dishes.filter(
+    (d) =>
+      (!d.rdReviewState || d.rdReviewState === "reviewed") &&
+      isAlaCarteEnabled(d),
   );
   res.json({ dishes: safe });
 });

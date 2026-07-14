@@ -14,13 +14,19 @@ import {
   type SubscriptionItem,
   type SubscriptionDelivery,
 } from "@workspace/db";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { bridgeCreditDiscountPaise } from "../lib/bridgeCredit";
 import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
 import { resolveDishBySlug, makeBatchDishResolver } from "../lib/menuResolver";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { cancelAutopayMandate } from "../lib/autopay";
 import { SKIP_SWAP_CUTOFF_MS, isPastSkipCutoff } from "../lib/subscriptionRules";
+import {
+  PER_MEAL_PAISE,
+  computeTrialPricePaise,
+  computeDeliveryPricePaise,
+} from "../lib/subscriptionPricing";
 
 const router: IRouter = Router();
 
@@ -101,15 +107,8 @@ const CADENCE_CYCLES_AHEAD: Record<SubscriptionCadence, number> = {
   monthly: 1, // generates 1 cycle (6 weeks) ahead
 };
 
-const PER_MEAL_PAISE = 75000; // Updated base meal price to ₹750 (75000 Paise) per checklist
-const CADENCE_DISCOUNT: Record<SubscriptionCadence, number> = {
-  weekly: 0.95,
-  fortnightly: 0.9,
-  monthly: 0.85,
-};
-
-// First-order 3-day sampler: 25% off list (no cadence discount stacked).
-const TRIAL_DISCOUNT = 0.75;
+// Price math (PER_MEAL_PAISE, CADENCE_DISCOUNT, trial pricing) lives in the pure
+// ../lib/subscriptionPricing module so it can be unit-tested without a DB.
 // Canonical marker persisted in `notes` so downstream logic (block
 // recurring extension) can recognise a trial without a schema change.
 // The API accepts `planType: "trial"`; this string is an internal detail.
@@ -175,39 +174,6 @@ export async function updateTrialState(
   });
 }
 
-
-function computeDeliveryPricePaise(
-  cadence: SubscriptionCadence,
-  meals: number,
-): number {
-  // Checklist v1.2 canonical price overrides
-  if (cadence === "weekly" && meals === 5) {
-    return 380000; // ₹3,800
-  }
-  if (cadence === "fortnightly" && meals === 10) {
-    return 741000; // ₹7,410
-  }
-  if (cadence === "monthly" && meals === 30) {
-    return 2166000; // ₹21,660
-  }
-  // Fallback to proportional pricing based on base rate ₹750/meal and standard cadence discounts plus 5% GST
-  const basePrice = meals * PER_MEAL_PAISE;
-  const discountRate = CADENCE_DISCOUNT[cadence] ?? 1.0;
-  const discounted = basePrice * discountRate;
-  const gst = discounted * 0.05;
-  return Math.round(discounted + gst);
-}
-
-function computeTrialPricePaise(meals: number): number {
-  if (meals === 3) {
-    return 225000; // ₹2,250 one-time
-  }
-  // Fallback to proportional trial pricing (25% off base rate ₹750/meal) plus 5% GST
-  const basePrice = meals * PER_MEAL_PAISE;
-  const discounted = basePrice * 0.75;
-  const gst = discounted * 0.05;
-  return Math.round(discounted + gst);
-}
 
 function addDays(date: Date, days: number): Date {
   const out = new Date(date);
@@ -568,6 +534,37 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     })
     .returning();
 
+  // Phase C2 — redeem the à la carte → trial bridge credit as an explicit line
+  // item: it reduces the CHARGE the client bills, never the persisted base
+  // trial price. The WHERE guard (unconsumed + unexpired) makes double-redeem
+  // impossible even under concurrent trial creates; a consumed credit is linked
+  // back to this subscription for audit.
+  let bridgeCreditPaise = 0;
+  if (isTrial) {
+    const consumedRows = await db
+      .update(mealCreditsTable)
+      .set({ consumedAt: new Date(), subscriptionId: sub.id })
+      .where(
+        and(
+          eq(mealCreditsTable.userId, userId),
+          eq(mealCreditsTable.reason, "alacarte_bridge"),
+          isNull(mealCreditsTable.consumedAt),
+          or(
+            isNull(mealCreditsTable.expiresAt),
+            gt(mealCreditsTable.expiresAt, new Date()),
+          ),
+        ),
+      )
+      .returning({ amount: mealCreditsTable.amount });
+    if (consumedRows.length > 0 && consumedRows[0]) {
+      bridgeCreditPaise = bridgeCreditDiscountPaise(
+        consumedRows[0].amount,
+        mealsPerDelivery,
+        pricePerDeliveryPaise,
+      );
+    }
+  }
+
   if (data.members.length > 0) {
     await db.insert(subscriptionMembersTable).values(
       data.members.map((m) => ({
@@ -600,7 +597,7 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   }
 
   invalidateUserBrief(userId);
-  res.status(201).json({ subscription: sub, deliveries });
+  res.status(201).json({ subscription: sub, deliveries, bridgeCreditPaise });
 });
 
 router.get("/subscriptions", async (req: Request, res: Response) => {

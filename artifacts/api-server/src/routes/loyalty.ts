@@ -7,11 +7,16 @@ import { z } from "zod/v4";
 import {
   creditLedgerTable,
   db,
+  mealCreditsTable,
   notificationsTable,
   referralCodesTable,
   referralRedemptionsTable,
   userProfileTable,
 } from "@workspace/db";
+import {
+  BRIDGE_CREDIT_MEALS,
+  BRIDGE_CREDIT_EXPIRY_DAYS,
+} from "../lib/bridgeCredit";
 import { getPremiumSlugSet, userIsPremium } from "./premium";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import {
@@ -265,6 +270,10 @@ const finalizeOrderSchema = z.object({
   deliverySlotId: z.number().int().positive().nullable().optional(),
   pickupLocationId: z.number().int().positive().nullable().optional(),
   fulfillmentType: z.enum(["delivery", "pickup"]).optional(),
+  // Phase B2 — the web à la carte checkout sets this so a delivery order must
+  // carry an explicit future slot (windows-only; no ASAP). Other clients that
+  // omit it keep the legacy auto-pick, so this rolls out without breaking them.
+  requireScheduledSlot: z.boolean().optional(),
   ecoPackagingOptIn: z.boolean().optional(),
   deliveryInstructions: z.string().max(512).nullable().optional(),
   subscriptionId: z.number().int().positive().nullable().optional(),
@@ -349,6 +358,37 @@ router.post("/orders/finalize", idempotencyMiddleware, async (req: Request, res:
       ...rest,
       scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
     });
+    // Phase C2 — a customer's first à la carte order earns a one-time trial
+    // credit (one free meal, one per customer). Additive and best-effort: it
+    // never blocks or fails the order, and idempotent retries don't re-issue.
+    if (!out.duplicate) {
+      try {
+        const existing = await db
+          .select({ id: mealCreditsTable.id })
+          .from(mealCreditsTable)
+          .where(
+            and(
+              eq(mealCreditsTable.userId, userId),
+              eq(mealCreditsTable.reason, "alacarte_bridge"),
+            ),
+          )
+          .limit(1);
+        if (existing.length === 0) {
+          const expiresAt = new Date();
+          expiresAt.setUTCDate(
+            expiresAt.getUTCDate() + BRIDGE_CREDIT_EXPIRY_DAYS,
+          );
+          await db.insert(mealCreditsTable).values({
+            userId,
+            amount: BRIDGE_CREDIT_MEALS,
+            reason: "alacarte_bridge",
+            expiresAt,
+          });
+        }
+      } catch (e) {
+        req.log.warn({ e }, "bridge credit issuance failed");
+      }
+    }
     res.json(out);
   } catch (err) {
     req.log.error({ err }, "finalize order failed");

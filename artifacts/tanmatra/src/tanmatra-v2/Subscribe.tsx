@@ -614,7 +614,30 @@ export default function V2Subscribe() {
         dayPlan,
       });
 
-      const amountDue = result.subscription.pricePerDeliveryPaise;
+      // Phase C3 — funnel rung: the trial/subscription was created. Pairs with
+      // `alacarte_order_placed` so à-la-carte-buyer → trial conversion is
+      // queryable against cold-visitor conversion.
+      track(isTrial ? "trial_started" : "subscription_started", {
+        subscriptionId: result.subscription.id,
+        cadence: activeCadence,
+      });
+
+      // Phase C2 — à la carte → trial bridge credit. The server redeems the
+      // credit atomically inside POST /subscriptions and returns the paise it
+      // applied; the client subtracts it from the charge as an explicit line
+      // item (never folded into the base trial price). 0 when none redeemed.
+      const bridgeCreditPaise = result.bridgeCreditPaise ?? 0;
+      if (bridgeCreditPaise > 0) {
+        track("trial_credit_redeemed", {
+          subscriptionId: result.subscription.id,
+          creditPaise: bridgeCreditPaise,
+        });
+      }
+
+      const amountDue = Math.max(
+        0,
+        result.subscription.pricePerDeliveryPaise - bridgeCreditPaise,
+      );
       if (razorpayConfigured() && amountDue > 0) {
         track("payment_initiated", { total_amount: amountDue });
         const outcome = await payWithRazorpay({

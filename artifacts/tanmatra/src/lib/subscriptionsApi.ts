@@ -73,7 +73,11 @@ export interface MealCredit {
   subscriptionId: number | null;
   deliveryId: number | null;
   amount: number;
-  reason: "skipped_delivery" | "redemption" | "manual_grant";
+  reason:
+    | "skipped_delivery"
+    | "redemption"
+    | "manual_grant"
+    | "alacarte_bridge";
   expiresAt: string | null;
   consumedAt: string | null;
   createdAt: string;
@@ -163,7 +167,13 @@ export const subscriptionsApi = {
       body: JSON.stringify(input),
     }),
   create: (input: CreateSubscriptionInput, idempotencyKey?: string) =>
-    request<{ subscription: Subscription; deliveries: SubscriptionDelivery[] }>(
+    request<{
+      subscription: Subscription;
+      deliveries: SubscriptionDelivery[];
+      // Phase C2 — à la carte → trial credit applied to this trial (line item;
+      // the client subtracts it from the charge). 0 when none was redeemable.
+      bridgeCreditPaise?: number;
+    }>(
       "/subscriptions",
       {
         method: "POST",
