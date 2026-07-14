@@ -2,6 +2,8 @@ import { Link } from "react-router";
 import { F } from "@/tanmatra-v2/data";
 import { macrosAreProvisional, type DishData } from "@/lib/menuData";
 import { FREE_DELIVERY_THRESHOLD } from "@/lib/cartContext";
+import { localDishSrcset, unsplashSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
+import { onDishImageError } from "@/lib/imgFallback";
 
 /* Viewport 5 — Zomato-style meta card.
  * Cropped image (fixed height → CLS-safe) with a corner veg/non-veg dot. Real
@@ -18,13 +20,20 @@ export default function MetaDishCard({
 }) {
   const provisional = macrosAreProvisional(dish);
   const m = dish.macros;
+  const srcset = localDishSrcset(dish.image) ?? unsplashSrcset(dish.image);
 
   return (
     <div className="mcard">
-      <Link to={`/dish/${dish.slug}`} aria-label={dish.name} className="mcard-media plc">
-        <div
-          className="mcard-img"
-          style={{ backgroundImage: `url(${dish.image})`, backgroundSize: "cover", backgroundPosition: "center" }}
+      <Link to={`/dish/${dish.slug}`} aria-label={dish.name} className="mcard-media plc relative block overflow-hidden">
+        <img
+          src={getLocalDishFallback(dish.image, 400)}
+          srcSet={srcset}
+          sizes="(max-width: 480px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          alt={dish.name}
+          loading="lazy"
+          decoding="async"
+          onError={onDishImageError}
+          className="w-full h-full object-cover"
         />
         <span className={dish.isVeg ? "mcard-vd" : "mcard-vd nv"} aria-label={dish.isVeg ? "Veg" : "Non-veg"} />
       </Link>

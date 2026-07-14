@@ -398,19 +398,20 @@ export default function V2Dish() {
 
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--tnm-surface-ink)] to-transparent z-10" />
 
-          {/* Dot Pagination — 44px tap targets (WCAG) with a small visual dot inside */}
+          {/* Dot Pagination — 48px touch targets (WCAG 2.1 AAA) with a small visual dot inside */}
           <div className="absolute bottom-1 inset-x-0 flex justify-center z-20">
             {galleryImages.map((_, idx) => (
               <button
                 key={idx}
+                type="button"
                 onClick={() => setHeroActiveIdx(idx)}
-                className="flex items-center justify-center h-11 w-8 shrink-0"
+                className="touch-target-48 shrink-0"
                 aria-label={`Go to slide ${idx + 1}`}
                 aria-current={heroActiveIdx === idx}
               >
                 <span
                   className={`h-1.5 rounded-full transition-all ${
-                    heroActiveIdx === idx ? "bg-[var(--tnm-action)] w-3" : "bg-white/40 w-1.5"
+                    heroActiveIdx === idx ? "bg-[var(--tnm-action)] w-4" : "bg-white/40 w-1.5"
                   }`}
                 />
               </button>
@@ -463,7 +464,7 @@ export default function V2Dish() {
           {/* 4.5 Nutrition Snapshot Chips */}
           {!macrosProvisional && calculatedMacros && (
             <>
-              <div className="grid grid-cols-4 gap-2 mt-4 bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
+              <div className="grid grid-cols-2 min-[360px]:grid-cols-4 gap-2 mt-4 bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
                 <div className="flex flex-col items-center">
                   <span className="text-[9px] font-mono text-white/45 uppercase">Calories</span>
                   <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{macrosEstimated ? "~" : ""}{calculatedMacros.calories}</span>
@@ -508,7 +509,7 @@ export default function V2Dish() {
                       type="button"
                       onClick={() => selectVariant(v.slug)}
                       aria-pressed={active}
-                      className={`text-xs px-3 py-2 rounded-xl border transition-all ${
+                      className={`text-xs px-4 py-2.5 min-h-[48px] rounded-xl border transition-all inline-flex items-center justify-center ${
                         active ? "bg-[var(--tnm-action)] border-[var(--tnm-action)] text-black font-semibold" : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10"
                       }`}
                     >
@@ -821,15 +822,17 @@ export default function V2Dish() {
         {/* Customization Drawer Overlay */}
         {customizerOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950] flex items-end justify-center">
-            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-2xl max-h-[85dvh] max-h-[85vh] overflow-hidden flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
               <div className="flex justify-between items-center border-b border-white/5 pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-white/90">Customize {meal.name}</h3>
                   <p className="text-[10px] text-white/45 mt-0.5">Customize your therapeutic macros & extras</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setCustomizerOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10"
+                  aria-label="Close customization sheet"
+                  className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 touch-target-48"
                 >
                   <X className="w-4 h-4" />
                 </button>

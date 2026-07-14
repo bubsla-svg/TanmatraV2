@@ -5,7 +5,7 @@ import { API_BASE } from "@/lib/apiBase";
 import { Toaster } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { CartProvider } from "@/lib/cartContext";
+import { CartProvider, useCart } from "@/lib/cartContext";
 import { ThemeManager } from "@/lib/clinicalTheme";
 import { ThemeProvider } from "next-themes";
 import { OrdersProvider } from "@/lib/ordersContext";
@@ -220,20 +220,26 @@ export function HydrateFallback() {
   return null;
 }
 
-export default function Root() {
-  useEffect(() => {
-    window.__clearTanmatraLoader?.();
-  }, []);
+const STICKY_CHECKOUT_HIDE = [
+  /^\/cart\/?$/,
+  /^\/checkout(\/.*)?$/,
+  /^\/track(\/.*)?$/,
+  /^\/admin(\/.*)?$/,
+  /^\/rd-console(\/.*)?$/,
+  /^\/subscribe(\/.*)?$/,
+  /^\/subscriptions(\/.*)?$/,
+  /^\/subscription-plans(\/.*)?$/,
+  /^\/plans(\/.*)?$/,
+  /^\/dish\/.+/,
+  /^\/marketplace\/.+/,
+];
 
+function AppShellInner() {
   const matches = useMatches();
   const hideChrome = matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false);
   const currentPath = useLocation().pathname;
+  const { items } = useCart();
 
-  // V2 persistent bottom dock — route-conditional mount.
-  // It rides only on the primary BROWSE/dashboard routes and must never collide
-  // with a transaction screen's own sticky pay/action bar. Deny-list guards the
-  // transaction/auth/admin surfaces (checkout/cart/track/login/admin); the
-  // allow-list keeps unknown deep transaction paths hidden by default.
   const dockHidden = ["/checkout", "/cart", "/track", "/login", "/admin"].some(
     (deny) => currentPath === deny || currentPath.startsWith(deny + "/"),
   );
@@ -241,52 +247,64 @@ export default function Root() {
     (root) => currentPath === root || currentPath.startsWith(root + "/"),
   );
   const showDock = !dockHidden && (currentPath === "/" || dockShown);
+  const showCheckoutBar = items.length > 0 && !STICKY_CHECKOUT_HIDE.some((re) => re.test(currentPath));
+
+  const paddingBottomStyle = showDock && showCheckoutBar
+    ? "calc(138px + var(--safe-bottom, 0px))"
+    : showDock
+    ? "calc(60px + var(--safe-bottom, 0px))"
+    : showCheckoutBar
+    ? "calc(78px + var(--safe-bottom, 0px))"
+    : undefined;
+
+  return (
+    <div
+      className={`min-h-screen flex flex-col transition-colors duration-200 ${
+        hideChrome ? "text-foreground" : "bg-background text-foreground"
+      }`}
+      style={hideChrome ? { background: "var(--bg)" } : undefined}
+    >
+      {!hideChrome && <Header />}
+      {!hideChrome && <WelcomeOfferBanner />}
+      {!hideChrome && <OnboardingQuizGate />}
+      <main
+        className={hideChrome ? "flex-1" : "flex-1 pb-20 md:pb-0"}
+        style={paddingBottomStyle ? { paddingBottom: paddingBottomStyle } : undefined}
+      >
+        <Outlet />
+      </main>
+      {!hideChrome && <Footer />}
+      {!hideChrome && <BottomNav />}
+      {!hideChrome && <StickyCheckoutBar />}
+      {showDock && <BottomDock />}
+      <CartDrawer />
+    </div>
+  );
+}
+
+export default function Root() {
+  useEffect(() => {
+    window.__clearTanmatraLoader?.();
+  }, []);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <ErrorBoundary>
-            <QueryClientProvider client={queryClient}>
-              <TooltipProvider>
-                <CartProvider>
-                  <OrdersProvider>
-                    <PreferencesProvider>
-                      <ThemeManager />
-                      <ScrollToTop />
-                      <div
-                        className={`min-h-screen flex flex-col transition-colors duration-200 ${
-                          hideChrome ? "text-foreground" : "bg-background text-foreground"
-                        }`}
-                        style={hideChrome ? { background: "var(--bg)" } : undefined}
-                      >
-                        {!hideChrome && <Header />}
-                        {!hideChrome && <WelcomeOfferBanner />}
-                        {!hideChrome && <OnboardingQuizGate />}
-                        {/* On chrome-less v2 routes the bottom nav is hidden, so drop
-                            its pb-20 spacer — otherwise it paints a light band below
-                            the dark .tnm2 content. */}
-                        <main
-                          className={hideChrome ? "flex-1" : "flex-1 pb-20 md:pb-0"}
-                          // Reserve clearance so the fixed V2 dock never covers the
-                          // last row. Static per-route value → no layout shift (CLS-safe).
-                          style={showDock ? { paddingBottom: "calc(60px + var(--safe-bottom, 0px))" } : undefined}
-                        >
-                          <Outlet />
-                        </main>
-                        {!hideChrome && <Footer />}
-                        {!hideChrome && <BottomNav />}
-                        {!hideChrome && <StickyCheckoutBar />}
-                        {/* V2 persistent bottom navigation dock — fixed overlay,
-                            shown only on primary browse/dashboard routes. */}
-                        {showDock && <BottomDock />}
-                        <CartDrawer />
-                      </div>
-                      <Toaster theme="dark" position="top-center" richColors offset={72} />
-                    </PreferencesProvider>
-                  </OrdersProvider>
-                </CartProvider>
-              </TooltipProvider>
-            </QueryClientProvider>
-          </ErrorBoundary>
-        </ThemeProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <CartProvider>
+              <OrdersProvider>
+                <PreferencesProvider>
+                  <ThemeManager />
+                  <ScrollToTop />
+                  <AppShellInner />
+                  <Toaster theme="dark" position="top-center" richColors offset={72} />
+                </PreferencesProvider>
+              </OrdersProvider>
+            </CartProvider>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }

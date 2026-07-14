@@ -84,9 +84,9 @@ export default function Header() {
               type="button"
               onClick={() => palette.setOpen(true)}
               aria-label="Open command palette"
-              className="hidden md:inline-flex items-center gap-2 h-8 pl-2 pr-1.5 rounded-md border border-clinical-border bg-white/5 text-[11px] text-clinical-zinc hover:text-white hover:border-clinical-gold/40 transition-colors"
+              className="hidden md:inline-flex items-center gap-2 h-10 min-h-[48px] pl-2.5 pr-2 rounded-md border border-clinical-border bg-white/5 text-xs text-clinical-zinc hover:text-white hover:border-clinical-gold/40 transition-colors touch-target-48"
             >
-              <MagnifyingGlass className="w-3.5 h-3.5" aria-hidden />
+              <MagnifyingGlass className="w-4 h-4" aria-hidden />
               <span>Search</span>
               <kbd className="ml-1 inline-flex items-center gap-0.5 rounded bg-clinical-surface-elevated px-1.5 py-0.5 font-mono text-[10px] text-clinical-zinc">
                 ⌘K
@@ -97,7 +97,7 @@ export default function Header() {
               type="button"
               onClick={() => palette.setOpen(true)}
               aria-label="Open command palette"
-              className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-md text-clinical-zinc hover:text-clinical-gold hover:bg-clinical-gold/10 transition-colors"
+              className="md:hidden inline-flex items-center justify-center h-12 w-12 rounded-md text-clinical-zinc hover:text-clinical-gold hover:bg-clinical-gold/10 transition-colors touch-target-48"
             >
               <MagnifyingGlass className="w-5 h-5" aria-hidden />
             </button>
@@ -106,7 +106,7 @@ export default function Header() {
               type="button"
               onClick={openCart}
               aria-label={`Open cart${totalQuantity > 0 ? ` (${totalQuantity} items)` : ""}`}
-              className="relative inline-flex items-center justify-center h-10 w-10 sm:h-8 sm:w-auto sm:px-3 rounded-md text-clinical-zinc hover:text-clinical-gold hover:bg-clinical-gold/10 transition-colors"
+              className="relative inline-flex items-center justify-center h-12 w-12 sm:h-10 sm:w-auto sm:px-3 rounded-md text-clinical-zinc hover:text-clinical-gold hover:bg-clinical-gold/10 transition-colors touch-target-48"
             >
               <ShoppingCart className="w-5 h-5 sm:w-4 sm:h-4" aria-hidden />
               <span className="hidden sm:inline ml-1.5 text-xs">Cart</span>
@@ -117,9 +117,7 @@ export default function Header() {
               )}
             </button>
 
-            {/* Mobile-only "more" hamburger to open the full Explore sheet.
-                Account is reachable from the bottom nav, so we drop the
-                redundant /login icon to reduce header crowding on mobile. */}
+            {/* Mobile-only "more" hamburger to open the full Explore sheet. */}
             <span className="md:hidden">
               <MoreSheetTrigger />
             </span>
