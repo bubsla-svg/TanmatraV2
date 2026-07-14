@@ -87,7 +87,14 @@ async function main() {
       customizations:
         d.customizations.length > 0 ? d.customizations : null,
       pairingSlug: d.pairingSlug ?? null,
-      allergenReviewState: "reviewed",
+      // Propagate the catalog's fail-closed state to the DB gate. A dish whose
+      // allergens are UNCHECKED (`allergensReviewed === false` — an opaque,
+      // unclassifiable ingredient the deriver couldn't resolve) seeds as
+      // `pending_review` so the api-server checkout gate refuses it
+      // (`unreviewed_dish`). Everything else (curated or ingredient-derived)
+      // seeds `reviewed`. `d.allergens` already carries derived allergens via
+      // the DISHES overlay, so the corrected lists land here automatically.
+      allergenReviewState: d.allergensReviewed === false ? "pending_review" : "reviewed",
     } as const;
 
     if (!APPLY) continue; // dry-run: build/validate values but write nothing

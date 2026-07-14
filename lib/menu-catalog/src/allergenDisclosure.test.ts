@@ -34,3 +34,16 @@ test("an unchecked source fails closed even if it carried a list", () => {
   const d = dish({ allergens: ["Dairy"], allergensReviewed: false });
   assert.deepEqual(getAllergenDisclosure(d), { state: "unchecked" });
 });
+
+test("allergensDerived surfaces a 'derived' disclosure (auto-detected, not RD)", () => {
+  const d = dish({ allergens: ["Sesame"], allergensDerived: true });
+  assert.deepEqual(getAllergenDisclosure(d), {
+    state: "derived",
+    allergens: ["Sesame"],
+  });
+});
+
+test("allergensReviewed:false wins over allergensDerived (fail closed first)", () => {
+  const d = dish({ allergens: [], allergensDerived: true, allergensReviewed: false });
+  assert.deepEqual(getAllergenDisclosure(d), { state: "unchecked" });
+});

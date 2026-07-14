@@ -64,8 +64,17 @@ function AllergenSummaryValue({ meal, className = "" }: { meal: any; className?:
   }
   const text = disclosure.allergens.length
     ? disclosure.allergens.map((a: string) => capitalize(a)).join(", ")
-    : "No declared allergens";
-  return <span className={className}>{text}</span>;
+    : disclosure.state === "derived"
+      ? "No common allergens detected"
+      : "No declared allergens";
+  return (
+    <span className={className}>
+      {text}
+      {disclosure.state === "derived" ? (
+        <span className="opacity-60"> · auto-detected from ingredients</span>
+      ) : null}
+    </span>
+  );
 }
 
 function buildNarrative(dish: any, prefs: any): string {
