@@ -152,7 +152,7 @@ export default function SubscriptionPlansLanding() {
           </span>
         </h1>
         <p className="text-sm sm:text-base text-clinical-zinc max-w-lg mx-auto leading-relaxed">
-          Chef-made, clinical dietitian-approved meals on autopilot. Pause, skip, or swap anytime up to 4 PM the day before.
+          Chef-made, clinical dietitian-approved meals on autopilot. Pause, skip, or swap anytime up to 24 hours before delivery.
         </p>
         <div className="pt-2 flex justify-center">
           <a href="#all-kitchens">
@@ -558,7 +558,7 @@ export default function SubscriptionPlansLanding() {
             {[
               {
                 q: "Can I pause or skip deliveries?",
-                a: "Yes. Pause or skip any upcoming delivery from your subscriptions dashboard, up to 4:00 PM the day before.",
+                a: "Yes. Pause or skip any upcoming delivery from your subscriptions dashboard, up to 24 hours before your scheduled delivery.",
               },
               {
                 q: "Can I swap dishes in my plan?",
