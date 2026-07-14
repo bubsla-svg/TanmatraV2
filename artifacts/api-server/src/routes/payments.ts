@@ -874,6 +874,13 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     res.status(500).json({ error: "webhook business logic failed", eventId, processed: false });
     return;
   }
+  // ACK success. Razorpay treats a missing/non-2xx response as a failed
+  // delivery and retries the webhook indefinitely; without this the connection
+  // hangs until timeout on every event. The inbox row is already marked
+  // "processed" above, so any retry short-circuits via the dedup branch — this
+  // response is what actually stops the retry loop (and is what the webhook
+  // tests assert on the success path).
+  res.status(200).json({ ok: true, processed: true, eventId });
 });
 
 const chargeMandateSchema = z.object({
@@ -997,6 +1004,21 @@ router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
     return;
   }
 
+  // Money-path authority: debit the server-stored subscription price, never the
+  // caller-supplied `amountPaise`. The RBI pre-debit notice is implicitly for
+  // this price (the notification row carries no amount column), so charging any
+  // other value would debit an amount the customer was never notified of — and
+  // an unauthenticated/compromised scheduler call could otherwise charge an
+  // arbitrary sum against a live mandate. A divergent client amount is surfaced
+  // but never billed.
+  const authoritativePaise = sub.pricePerDeliveryPaise;
+  if (amountPaise !== authoritativePaise) {
+    req.log.warn(
+      { subscriptionId, clientAmount: amountPaise, authoritativePaise },
+      "charge-mandate amount mismatch — billing server subscription price",
+    );
+  }
+
   const rpRes = await fetch("https://api.razorpay.com/v1/payments/charge", {
     method: "POST",
     headers: {
@@ -1004,7 +1026,7 @@ router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      amount: amountPaise,
+      amount: authoritativePaise,
       currency: "INR",
       customer_id: mandate.razorpayCustomerId,
       token: mandate.razorpayTokenId,
