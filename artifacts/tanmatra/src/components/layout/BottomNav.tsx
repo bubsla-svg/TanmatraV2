@@ -178,7 +178,7 @@ export function MoreSheetTrigger({ className }: { className?: string }) {
         aria-label="Open all sections menu"
         className={
           className ??
-          "inline-flex items-center justify-center h-10 w-10 rounded-md text-clinical-zinc hover:text-clinical-gold hover:bg-clinical-gold/10 transition-colors"
+          "inline-flex items-center justify-center h-12 w-12 rounded-md text-clinical-zinc hover:text-clinical-gold hover:bg-clinical-gold/10 transition-colors touch-target-48"
         }
       >
         <DotsThree className="w-6 h-6" weight="bold" aria-hidden />

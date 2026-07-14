@@ -295,14 +295,14 @@
   /* ─── Type scale (the canonical sizes for every screen) ─── */
   .text-display {
     font-family: var(--font-serif);
-    font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem);
+    font-size: clamp(2.25rem, 1.5rem + 3.75vw, 4.5rem);
     font-weight: 400;
     letter-spacing: -0.02em;
     line-height: 1.02;
   }
-  .text-clinical-h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; font-family: var(--font-sans); }
-  .text-clinical-h2 { font-size: 1.875rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; font-family: var(--font-sans); }
-  .text-clinical-h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; font-family: var(--font-sans); }
+  .text-clinical-h1 { font-size: clamp(1.75rem, 1.51rem + 1.18vw, 2.5rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; font-family: var(--font-sans); }
+  .text-clinical-h2 { font-size: clamp(1.35rem, 1.18rem + 0.83vw, 1.875rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; font-family: var(--font-sans); }
+  .text-clinical-h3 { font-size: clamp(1.1rem, 1.05rem + 0.25vw, 1.25rem); font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; font-family: var(--font-sans); }
   .text-clinical-h4 { font-size: 1rem; font-weight: 600; letter-spacing: -0.005em; line-height: 1.35; font-family: var(--font-sans); }
   .text-body-lg { font-size: 1rem; line-height: 1.6; font-family: var(--font-sans); }
   .text-body { font-size: 0.875rem; line-height: 1.55; font-family: var(--font-sans); }
@@ -313,6 +313,36 @@
 
   .tabular-nums { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   .tnm-data { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+
+  /* ─── Touch target boundary utility (WCAG 2.1 AAA 48dp enforcement) ─── */
+  .touch-target-48 {
+    position: relative;
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .touch-target-48::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  /* ─── Landscape short-viewport chrome suppression ─── */
+  @media (max-height: 480px) and (orientation: landscape) {
+    .md\:hidden.fixed.bottom-0,
+    .tnm2.bdock,
+    .fixed.bottom-\\[72px\\] {
+      display: none !important;
+    }
+  }
 
 
   /* ─── Canonical focus ring (use on every interactive primitive) ─── */
