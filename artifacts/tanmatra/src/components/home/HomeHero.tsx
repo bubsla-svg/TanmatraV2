@@ -37,7 +37,7 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
         {/* Core Hero Card Container matching highlighted layout */}
         <div className="rounded-2xl border border-white/10 bg-[var(--tnm-surface-ink-2)] overflow-hidden shadow-2xl">
           {/* Top Hero Banner with Circular Dish Visual */}
-          <div className="relative p-6 pt-8 pb-6 text-center flex flex-col items-center bg-gradient-to-b from-[#1c2126] to-[var(--tnm-surface-ink-2)]">
+          <div className="relative p-6 pt-8 pb-6 text-center flex flex-col items-center bg-gradient-to-b from-[var(--tnm-surface-ink)] to-[var(--tnm-surface-ink-2)]">
             {/* Top Curved Dish Imagery */}
             <div className="relative w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden border-2 border-[var(--tnm-action)]/30 shadow-xl mb-5 ring-4 ring-black/40">
               <img
@@ -116,4 +116,3 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
     </section>
   );
 }
-

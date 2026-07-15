@@ -18,7 +18,7 @@ export const STITCH_FULL_APP_SCREENS: StitchScreenDef[] = [
     title: "Daily Clinical Feed & Homepage",
     description: "Personalized clinical browse surface with biometric match scores, category filters, and Zomato-style density cards.",
     keyFeatures: [
-      "Ink canvas (#0A0C0D) & Card container (#121517)",
+      "Ink canvas (--bg) & Card container (--surface)",
       "Biometric Match Score badge (e.g. 98% High Fit)",
       "Interactive dietary filters (High Protein, Low GI, Diabetes Mgmt, Kid Friendly, Heart Healthy, Keto)",
       "Cropped dish media cards with JetBrains Mono macro ribbons & saffron + ADD actions",
