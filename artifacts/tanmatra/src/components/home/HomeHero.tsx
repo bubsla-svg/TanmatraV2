@@ -59,8 +59,8 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
               Freshly prepared meals crafted by dietitians, delivered to your doorstep in Noida &amp; surrounding areas.
             </p>
 
-            {/* Saffron Full-Width Pill Action */}
-            <div className="mt-5 w-full max-w-[320px]">
+            {/* Primary CTAs */}
+            <div className="mt-5 w-full max-w-[320px] flex flex-col gap-3">
               <button
                 type="button"
                 onClick={onSeeMenu}
@@ -68,6 +68,13 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
               >
                 Browse Menu
                 <ArrowRight className="w-4 h-4" weight="bold" />
+              </button>
+              <button
+                type="button"
+                onClick={onHelpChoose}
+                className="w-full h-12 rounded-full font-bold text-sm tracking-wide border border-white/20 text-white hover:bg-white/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                Help me choose
               </button>
             </div>
           </div>
