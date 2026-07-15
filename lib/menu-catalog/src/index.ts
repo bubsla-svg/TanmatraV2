@@ -99,6 +99,15 @@ export interface DishCustomOption {
      * This is the distinction between "reviewed → []" and "unknown → null".
      */
     allergensReviewed?: boolean;
+    /**
+     * The `allergens` list was AUTO-DERIVED from `ingredients` (see
+     * `allergenDerive.ts`), not hand-reviewed by an RD. Derivation reliably
+     * detects allergens that are PRESENT (only ever adds warnings) but cannot
+     * certify absence, so the UI labels these "auto-detected from ingredients".
+     * Set by the `DISHES` overlay; mutually meaningful with `allergensReviewed`
+     * (a derived list is still refused when `allergensReviewed === false`).
+     */
+    allergensDerived?: boolean;
     glycaemicIndex: "low" | "medium" | "high";
     sugarPerServing: string;
     customizations: DishCustomGroup[];
@@ -4413,6 +4422,31 @@ export interface DishCustomOption {
 ];
 
 import { ESTIMATED_MACROS } from "./estimatedMacros";
+import { deriveAllergensFromIngredients } from "./allergenDerive";
+
+/**
+ * Overlay allergen provenance onto a dish from its `ingredients`.
+ *  - No curated list + an opaque ingredient the deriver can't classify → we
+ *    cannot assert the dish is allergen-safe, so fail it closed
+ *    (`allergensReviewed: false`; the strict checkout gate refuses it).
+ *  - Otherwise merge any DETECTED allergens (only ever additive/protective).
+ *    When the dish had no curated list, or derivation surfaced an allergen the
+ *    curated list missed, flag `allergensDerived` (UI: "auto-detected from
+ *    ingredients"). A complete, non-empty curated list passes through untouched
+ *    (kitchen review is trusted).
+ */
+function _deriveAllergens(d: DishData): DishData {
+  const { detected, ambiguous } = deriveAllergensFromIngredients(d.ingredients);
+  const curated = d.allergens ?? [];
+  const merged = Array.from(new Set<string>([...curated, ...detected]));
+  if (curated.length === 0 && ambiguous.length > 0) {
+    return { ...d, allergens: merged, allergensReviewed: false };
+  }
+  if (curated.length === 0 || merged.length > curated.length) {
+    return { ...d, allergens: merged, allergensDerived: true };
+  }
+  return d;
+}
 
 function _macroKey(m: DishMacros): string {
   return `${m.protein}|${m.carbs}|${m.fat}|${m.fiber}|${m.calories}`;
@@ -4440,11 +4474,14 @@ const _rawBucketCounts: Map<string, number> = (() => {
  */
 export const DISHES: DishData[] = RAW_DISHES.map((d) => {
   const est = ESTIMATED_MACROS[d.slug];
-  if (est) {
-    return { ...d, macros: est, macrosEstimated: true, macrosProvisional: false };
-  }
-  const wasPlaceholder = (_rawBucketCounts.get(_macroKey(d.macros)) ?? 0) > 1;
-  return { ...d, macrosEstimated: false, macrosProvisional: wasPlaceholder };
+  const withMacros = est
+    ? { ...d, macros: est, macrosEstimated: true, macrosProvisional: false }
+    : {
+        ...d,
+        macrosEstimated: false,
+        macrosProvisional: (_rawBucketCounts.get(_macroKey(d.macros)) ?? 0) > 1,
+      };
+  return _deriveAllergens(withMacros);
 });
 
   // ── Phase B1 — à la carte hero set ─────────────────────────────────────────
@@ -4526,12 +4563,16 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
    */
   export type AllergenDisclosure =
     | { state: "reviewed"; allergens: string[] }
+    | { state: "derived"; allergens: string[] }
     | { state: "unchecked" };
 
   export function getAllergenDisclosure(
-    dish: Pick<DishData, "allergens" | "allergensReviewed">,
+    dish: Pick<DishData, "allergens" | "allergensReviewed" | "allergensDerived">,
   ): AllergenDisclosure {
     if (dish.allergensReviewed === false) return { state: "unchecked" };
+    if (dish.allergensDerived) {
+      return { state: "derived", allergens: dish.allergens ?? [] };
+    }
     return { state: "reviewed", allergens: dish.allergens ?? [] };
   }
 

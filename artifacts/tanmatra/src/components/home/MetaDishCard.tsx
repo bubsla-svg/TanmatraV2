@@ -6,10 +6,10 @@ import { localDishSrcset, unsplashSrcset, getLocalDishFallback } from "@/lib/img
 import { onDishImageError } from "@/lib/imgFallback";
 
 /* Viewport 5 — Zomato-style meta card.
- * Cropped image (fixed height → CLS-safe) with a corner veg/non-veg dot and,
- * only when rdVerified, a "✓ RD Verified" pill. Real delivery meta. Macro bar
- * respects macrosAreProvisional — provisional dishes never show fabricated
- * numbers. The [ + ADD ] button reuses the caller's cart handler. */
+ * Cropped image (fixed height → CLS-safe) with a corner veg/non-veg dot. Real
+ * delivery meta. Macro bar respects macrosAreProvisional — provisional dishes
+ * never show fabricated numbers. The [ + ADD ] button reuses the caller's cart
+ * handler. */
 
 export default function MetaDishCard({
   dish,
@@ -36,11 +36,6 @@ export default function MetaDishCard({
           className="w-full h-full object-cover"
         />
         <span className={dish.isVeg ? "mcard-vd" : "mcard-vd nv"} aria-label={dish.isVeg ? "Veg" : "Non-veg"} />
-        {dish.rdVerified && (
-          <span className="mcard-rd">
-            <i className="ph-fill ph-seal-check" /> RD Verified
-          </span>
-        )}
       </Link>
 
       <div className="mcard-body">

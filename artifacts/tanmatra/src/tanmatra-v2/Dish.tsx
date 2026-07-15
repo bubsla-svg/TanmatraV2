@@ -64,8 +64,17 @@ function AllergenSummaryValue({ meal, className = "" }: { meal: any; className?:
   }
   const text = disclosure.allergens.length
     ? disclosure.allergens.map((a: string) => capitalize(a)).join(", ")
-    : "No declared allergens";
-  return <span className={className}>{text}</span>;
+    : disclosure.state === "derived"
+      ? "No common allergens detected"
+      : "No declared allergens";
+  return (
+    <span className={className}>
+      {text}
+      {disclosure.state === "derived" ? (
+        <span className="opacity-60"> · auto-detected from ingredients</span>
+      ) : null}
+    </span>
+  );
 }
 
 function buildNarrative(dish: any, prefs: any): string {
@@ -444,12 +453,6 @@ export default function V2Dish() {
               {gi === "low" ? "GI Low" : gi === "high" ? "GI High" : "GI Med"}
             </span>
 
-            {meal.rdVerified && (
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/85 font-extrabold uppercase tracking-wider inline-flex items-center gap-1">
-                <Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" />
-                RD Reviewed
-              </span>
-            )}
           </div>
 
           {/* 4.4 Persistent Allergen summary line above fold */}

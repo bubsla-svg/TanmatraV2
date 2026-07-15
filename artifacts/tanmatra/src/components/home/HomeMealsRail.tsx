@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { unsplashSrcset } from "@/lib/imgSrcset";
 import { onDishImageError } from "@/lib/imgFallback";
-import { Check, ShieldCheck } from "@phosphor-icons/react";
 
 export default function HomeMealsRail() {
   const { dishes: catalogDishes } = useMenuCatalog();
@@ -65,18 +64,6 @@ function DishSwipeCard({ dish }: { dish: DishData }) {
           className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide bg-white/10 text-white/80"
         >
           Non-Veg
-        </span>
-      );
-    }
-
-    if (dish.rdVerified) {
-      list.push(
-        <span
-          key="rd"
-          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide bg-white/10 text-white/80 flex items-center gap-0.5"
-        >
-          <ShieldCheck className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="fill" />
-          RD Reviewed
         </span>
       );
     }

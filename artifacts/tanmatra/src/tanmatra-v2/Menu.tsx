@@ -528,7 +528,7 @@ export default function V2Menu() {
         {/* App bar */}
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
-          <h1 className="abt">{activeProtocol ? `${PROTOCOL_LABELS[activeProtocol]} Protocol` : "Menu"}</h1>
+          <h1 className="abt">{activeProtocol ? `${PROTOCOL_LABELS[activeProtocol]} Program` : "Menu"}</h1>
           <button className="iconbtn" onClick={() => setShowSearch((s) => !s)} aria-label="Search"><i className="ph-bold ph-magnifying-glass" /></button>
         </div>
 
@@ -543,12 +543,12 @@ export default function V2Menu() {
         )}
 
         {/* Protocol chips */}
-        <div className="chiprow" role="group" aria-label="Filter by protocol">
+        <div className="chiprow" role="group" aria-label="Filter by program">
           {(["all", ...PROTOCOLS] as const).map((p) => {
             const active = p === "all" ? !activeProtocol : activeProtocol === p;
             return (
               <button key={p} className={active ? "chip on" : "chip"} onClick={() => setProtocol(p)} aria-pressed={active}>
-                {p === "all" ? "All protocols" : PROTOCOL_LABELS[p]}
+                {p === "all" ? "All programs" : PROTOCOL_LABELS[p]}
               </button>
             );
           })}
@@ -1165,7 +1165,6 @@ function DishCard({
                 <i className="ph-fill ph-sparkle text-[9px]" /> Strong goal match
               </span>
             )}
-            {dish.rdVerified && <span className="pill sg" style={{ marginLeft: "auto" }}><i className="ph-fill ph-seal-check" />RD</span>}
           </div>
           <Link
             to={`/dish/${dish.slug}`}

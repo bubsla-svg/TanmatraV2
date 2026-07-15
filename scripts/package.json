@@ -13,6 +13,8 @@
     "verify-dpdpa": "tsx ./src/verify-dpdpa-kms.ts",
     "verify-allergen-gate": "tsx ./src/verify-allergen-gate.ts",
     "verify-dish-integrity": "tsx ./src/verify-dish-integrity.ts",
+    "apply-menu-engineering": "tsx ./src/apply-menu-engineering.ts",
+    "test:menu-engineering": "node --test --import tsx ./src/lib/menuEngineeringPlan.test.ts",
     "test": "tsx ./src/verify-dish-integrity.ts",
     "stress-test-ledger": "tsx ./src/stress-test-ledger.ts",
     "optimize-images": "tsx ./src/optimize-dish-images.ts",

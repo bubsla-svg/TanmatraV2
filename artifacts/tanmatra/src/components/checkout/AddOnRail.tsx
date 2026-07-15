@@ -103,11 +103,6 @@ function AddonTile({
             <Crown className="w-2.5 h-2.5" /> PREMIUM
           </span>
         )}
-        {addon.rdVerified && !addon.premiumOnly && (
-          <span className="pill absolute top-1.5 left-1.5" style={{ fontSize: 9 }}>
-            RD
-          </span>
-        )}
       </div>
       <div className="p-2.5 space-y-1.5">
         <p className="text-[11px] font-medium leading-snug line-clamp-2 h-8" style={{ color: "var(--tx)" }}>

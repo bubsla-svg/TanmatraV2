@@ -1007,6 +1007,16 @@ router.post(
       res.status(409).json({ error: "no_upcoming_delivery" });
       return;
     }
+    // Same 24h cutoff as skip/swap/reschedule: once the next delivery is inside
+    // its window it's committed to the kitchen, so no items can be added to it.
+    if (isPastSkipCutoff(next.delivery.scheduledFor)) {
+      res.status(409).json({
+        error: "Your next delivery is too close to its delivery time to change.",
+        code: "past_cutoff",
+        cutoffHours: SKIP_SWAP_CUTOFF_MS / 3_600_000,
+      });
+      return;
+    }
     const dish = await resolveDishBySlug(parsed.data.slug);
     if (dish) {
       const match = await validateDishForSubscription(
@@ -1131,6 +1141,17 @@ router.post(
     }
     if (found.delivery.status !== "upcoming") {
       res.status(400).json({ error: "delivery is not upcoming" });
+      return;
+    }
+    // Same 24h cutoff the UI advertises for skip/swap: a delivery already inside
+    // its window is committed to the kitchen and can't be moved. Without this,
+    // "change up to 24h before" was enforced for skip/swap but not reschedule.
+    if (isPastSkipCutoff(found.delivery.scheduledFor)) {
+      res.status(409).json({
+        error: "This delivery is too close to its delivery time to reschedule.",
+        code: "past_cutoff",
+        cutoffHours: SKIP_SWAP_CUTOFF_MS / 3_600_000,
+      });
       return;
     }
     const parsed = rescheduleSchema.safeParse(req.body);

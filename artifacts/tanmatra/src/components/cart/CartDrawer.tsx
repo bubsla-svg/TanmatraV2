@@ -821,13 +821,6 @@ function CartLine({
                 {item.isVeg && (
                   <Leaf className="w-3 h-3" style={{ color: "var(--sage)" }} aria-label="Vegetarian" />
                 )}
-                {item.rdVerified && (
-                  <ShieldCheck
-                    className="w-3 h-3"
-                    style={{ color: "var(--safb)" }}
-                    aria-label="RD-verified"
-                  />
-                )}
                 <span className="mono" style={{ fontSize: 10 }}>
                   {item.macros.calories} kcal · P{item.macros.protein}g
                 </span>
