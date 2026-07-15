@@ -59,13 +59,27 @@ const COMPRESSIBLE = new Set(["html", "js", "css", "json", "svg", "xml", "txt", 
 // served here). The CSP is intentionally minimal — `frame-ancestors 'none'`
 // gives clickjacking protection without risking a broken hydration from a
 // too-strict resource policy on an existing SPA.
+const CSP_POLICY_RULES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://images.unsplash.com https://lh3.googleusercontent.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://images.unsplash.com https://lh3.googleusercontent.com https://tanmatra.food",
+  "connect-src 'self' https://api.petpooja.com https://api.razorpay.com",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "report-uri /api/v1/csp-report",
+].join("; ");
+
 const SECURITY_HEADERS = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
-  "Content-Security-Policy": "frame-ancestors 'none'",
+  "Content-Security-Policy": CSP_POLICY_RULES,
+  "Content-Security-Policy-Report-Only": CSP_POLICY_RULES,
 };
 
 function pickEncoding(req, ext) {
