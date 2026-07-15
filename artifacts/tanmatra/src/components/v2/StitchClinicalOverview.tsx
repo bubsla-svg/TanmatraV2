@@ -1,5 +1,5 @@
 import { STITCH_DESIGN_SYSTEM, getHealthFitChipStyle } from "@/lib/stitchDesignTokens";
-import { ShieldCheck, Plus } from "@phosphor-icons/react";
+import { Check, ShieldCheck, Plus } from "@phosphor-icons/react";
 
 interface StitchMealCardProps {
   name: string;
@@ -10,6 +10,7 @@ interface StitchMealCardProps {
   carbsG: number;
   fatG: number;
   isVeg: boolean;
+  rdVerified: boolean;
   matchScorePct?: number;
   onAdd?: () => void;
 }
@@ -23,6 +24,7 @@ export default function StitchClinicalMealCard({
   carbsG,
   fatG,
   isVeg,
+  rdVerified,
   matchScorePct = 98,
   onAdd,
 }: StitchMealCardProps) {
@@ -101,6 +103,11 @@ export default function StitchClinicalMealCard({
             >
               ₹{priceRupees}
             </span>
+            {rdVerified && (
+              <span className="text-[10px] text-[var(--color-clinical-sage)] font-semibold flex items-center gap-0.5">
+                <Check className="w-3 h-3" weight="bold" /> RD Verified
+              </span>
+            )}
           </div>
 
           <button

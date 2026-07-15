@@ -49,10 +49,12 @@ import eventsRouter from "./events";
 import complianceRouter from "./compliance";
 import petpoojaRouter from "./petpooja";
 import wearableRouter from "./wearable";
+import catalogRouter from "./catalog";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(catalogRouter);
 router.use(authRouter);
 router.use(adminAuthRouter);
 router.use(adminStatusRouter);
