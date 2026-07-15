@@ -113,10 +113,19 @@ app.use(cookieParser());
 // so we mount express.raw() for that path BEFORE the JSON parsers so
 // the JSON parser never consumes it.
 
-const jsonLarge = express.json({ limit: "15mb" });
+import {
+  concurrencyGuardMiddleware,
+  serverlessTimeoutGuard,
+} from "./middlewares/concurrencyGuard";
+
+// Step 3: Enforce 4.5MB Serverless / Platform Request Payload Ceiling
+const jsonLarge = express.json({ limit: "4.5mb" });
 const jsonAgent = express.json({ limit: "2mb" });
 const jsonDefault = express.json({ limit: "100kb" });
 const urlEncodedDefault = express.urlencoded({ extended: true, limit: "100kb" });
+
+// Step 1: Bulkhead Concurrency Control Middleware
+app.use(concurrencyGuardMiddleware(250));
 
 // Razorpay server-to-server webhook — raw body needed for HMAC.
 app.use("/api/payments/razorpay/webhook", express.raw({ type: "application/json" }));
@@ -124,14 +133,15 @@ app.use("/api/payments/razorpay/webhook", express.raw({ type: "application/json"
 // Web Vitals beacons arrive as text/plain from navigator.sendBeacon.
 app.use("/api/vitals", express.text({ type: "text/plain", limit: "4kb" }));
 
-// Image / asset upload endpoints — base64 dataURL payloads can hit several MB.
+// Image / asset upload endpoints — capped at 4.5MB platform payload ceiling
 app.use("/api/menu/uploads", jsonLarge);
 app.use("/api/menu-assets", jsonLarge);
-// AI agent chat endpoints carry conversation history.
-app.use("/api/cms-agent", jsonAgent);
-app.use("/api/coach-agent", jsonAgent);
-app.use("/api/ops-agent", jsonAgent);
-app.use("/api/support-agent", jsonAgent);
+
+// Step 2: AI agent endpoints — guarded by 8s serverless execution timeout watchdog
+app.use("/api/cms-agent", serverlessTimeoutGuard(8000), jsonAgent);
+app.use("/api/coach-agent", serverlessTimeoutGuard(8000), jsonAgent);
+app.use("/api/ops-agent", serverlessTimeoutGuard(8000), jsonAgent);
+app.use("/api/support-agent", serverlessTimeoutGuard(8000), jsonAgent);
 
 import {
   sanitizeInputMiddleware,
