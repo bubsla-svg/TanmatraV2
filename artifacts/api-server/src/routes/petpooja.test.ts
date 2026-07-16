@@ -38,7 +38,7 @@ before(async () => {
 });
 
 after(async () => {
-  await new Promise<void>((resolve) => server.close(resolve));
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
 test("POST /integrations/petpooja/push-menu rejects invalid payload with 400", async () => {
@@ -49,7 +49,7 @@ test("POST /integrations/petpooja/push-menu rejects invalid payload with 400", a
   });
 
   assert.equal(res.status, 400);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.success, "0");
   assert.match(json.message, /invalid payload/i);
 });
@@ -99,7 +99,7 @@ test("POST /integrations/petpooja/push-menu processes valid payload and returns 
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.success, "1");
   assert.equal(json.message, "Menu synchronized successfully");
 });
@@ -137,7 +137,7 @@ test("POST /integrations/petpooja/fetchmenu returns serialized menu payload", as
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.success, "1");
   assert.equal(json.items.length, 1);
   assert.equal(json.items[0].itemid, "7765809");
@@ -252,7 +252,7 @@ test("POST /integrations/petpooja/saveorder parses payload, inserts order, and r
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.success, "1");
   assert.equal(json.message, "Your order is saved.");
   assert.equal(json.restID, "rest123");
@@ -331,7 +331,7 @@ test("POST /integrations/petpooja/callback updates order status and rider info",
     body: JSON.stringify(payload),
   });
 
-  const json = await res.json();
+  const json: any = await res.json();
   if (res.status !== 200) {
     console.error("FAILED CALLBACK RESPONSE:", json);
   }
@@ -392,7 +392,7 @@ test("POST /integrations/petpooja/orderstatus cancels order and saves cancelReas
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.success, "1");
   assert.equal(json.message, "Order status updated successfully.");
   assert.equal(json.orderID, "26");
@@ -473,7 +473,7 @@ test("POST /integrations/petpooja/rider-info resolves order and registers/assign
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.code, "200");
   assert.equal(json.message, "Rider status saved successfully.");
   assert.equal(json.success, "success");
@@ -514,7 +514,7 @@ test("POST /integrations/petpooja/item_stock updates availability status of item
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.code, 200);
   assert.equal(json.status, "success");
   assert.equal(json.message, "Stock status updated successfully");
@@ -558,7 +558,7 @@ test("POST /integrations/petpooja/item_stock_off marks items as out of stock", a
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.code, 200);
   assert.equal(json.status, "success");
   assert.equal(json.message, "Stock status updated successfully");
@@ -577,7 +577,7 @@ test("POST /integrations/petpooja/get_store_status returns store operational sta
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.http_code, 200);
   assert.equal(json.status, "success");
   assert.equal(json.store_status, "1");
@@ -599,7 +599,7 @@ test("POST /integrations/petpooja/update_store_status updates operational status
   });
 
   assert.equal(res.status, 200);
-  const json = await res.json();
+  const json: any = await res.json();
   assert.equal(json.http_code, 200);
   assert.equal(json.status, "success");
   assert.equal(json.message, "Store Status updated successfully for store rest123");

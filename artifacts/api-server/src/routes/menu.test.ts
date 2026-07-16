@@ -33,7 +33,7 @@ async function get(path: string) {
   const res = await fetch(`${base}${path}`, {
     method: "GET",
   });
-  const json = await res.json().catch(() => ({}));
+  const json: any = await res.json().catch(() => ({}));
   return { status: res.status, json };
 }
 
