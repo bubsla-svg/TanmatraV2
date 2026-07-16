@@ -120,7 +120,7 @@ export default function V2GroupOrder() {
   // ---- No code ----
   if (!code) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
@@ -137,7 +137,7 @@ export default function V2GroupOrder() {
   // ---- Loading ----
   if (isLoading) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
@@ -164,7 +164,7 @@ export default function V2GroupOrder() {
   // ---- Error / not found ----
   if (error || !group) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
@@ -184,7 +184,7 @@ export default function V2GroupOrder() {
   const isOpen = group.status === "open";
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {/* App bar */}
         <div className="appbar">

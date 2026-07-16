@@ -10,7 +10,7 @@ export default function V2RecipeDetail() {
   // ---- loading ----
   if (isLoading) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/recipes" aria-label="Back to recipes"><i className="ph-bold ph-arrow-left" /></Link>
@@ -38,7 +38,7 @@ export default function V2RecipeDetail() {
   // ---- not found / empty ----
   if (!recipe) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/recipes" aria-label="Back to recipes"><i className="ph-bold ph-arrow-left" /></Link>
@@ -60,7 +60,7 @@ export default function V2RecipeDetail() {
   const goalLabel = (recipe.goal || "").replaceAll("_", " ");
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="content">
           {recipe.image ? (

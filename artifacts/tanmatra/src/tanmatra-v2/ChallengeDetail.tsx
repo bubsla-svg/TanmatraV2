@@ -74,7 +74,7 @@ export default function V2ChallengeDetail() {
 
   if (isLoading) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/challenges" aria-label="Back to challenges">
@@ -97,7 +97,7 @@ export default function V2ChallengeDetail() {
 
   if (!data) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/challenges" aria-label="Back to challenges">
@@ -170,7 +170,7 @@ export default function V2ChallengeDetail() {
   };
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/challenges" aria-label="Back to challenges">
@@ -412,7 +412,7 @@ export default function V2ChallengeDetail() {
       {/* ------ Leave-challenge confirmation ------ */}
       {leaveConfirmOpen && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setLeaveConfirmOpen(false)}
         >
@@ -447,7 +447,7 @@ export default function V2ChallengeDetail() {
       {/* ------ Post-join welcome — sets expectations for first-time joiners ------ */}
       {showWelcome && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setShowWelcome(false)}
         >
