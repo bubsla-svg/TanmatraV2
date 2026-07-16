@@ -5,16 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  ArrowRight, 
-  Compass, 
-  MapPin, 
-  Clock, 
-  CheckCircle, 
+import {
+  ArrowRight,
+  MapPin,
+  Clock,
+  CheckCircle,
   Coffee,
   Users,
-  UtensilsCrossed,
-  Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { onDishImageError } from "@/lib/imgFallback";
@@ -40,6 +37,7 @@ export default function MorningFitnessLanding() {
   const [contactName, setContactName] = useState("");
   const [city, setCity] = useState("Delhi NCR");
   const [membersCount, setMembersCount] = useState("20-50");
+  const [location, setLocation] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,8 +56,11 @@ export default function MorningFitnessLanding() {
       `Contact: ${contactName}`,
       `City: ${city}`,
       `Members: ${membersCount}`,
+      location ? `Meetup / finish point: ${location}` : null,
       `WhatsApp: ${whatsapp}`,
-    ].join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
     window.open(
       `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
       "_blank",
@@ -291,10 +292,12 @@ export default function MorningFitnessLanding() {
 
                   <div className="space-y-1.5">
                     <Label htmlFor="location" className="text-xs text-clinical-zinc">Meetup / Finish Point Coordinates or Landmarks</Label>
-                    <Input 
-                      id="location" 
+                    <Input
+                      id="location"
                       placeholder="e.g. Leisure Valley Park Gate 2, Gurgaon"
                       className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
                     />
                   </div>
 
