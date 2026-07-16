@@ -15,7 +15,12 @@
 .tnm2 i[class^="ph"],.tnm2 i[class*=" ph"]{display:inline-flex;line-height:1}
 
 /* ---- component system ---- */
-.tnm2{--bg:#0A0C0D;--s1:#121517;--s2:#191D20;--s3:#20262A;--tx:#E9ECEE;--mut:#8B9398;--fnt:#5C6367;--ln:rgba(255,255,255,.07);--ln2:rgba(255,255,255,.13);--saf:#F4C430;--safb:#FFD75A;--safd:rgba(244,196,48,.14);--onsaf:#141210;--sage:#88AA84;--saged:rgba(136,170,132,.16);--dgr:#C97C70;--dgrd:rgba(201,124,112,.14);--tnm-caution:#d97706;--tnm-alert:#dc2626;--e:cubic-bezier(.4,0,.2,1);color-scheme:dark;font-family:Inter,system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased;min-height:100%}
+/* Nocturnal Nourishment is now the ONLY palette. The base .tnm2 tokens are
+ * rebound to the NN design-system tokens (index.css @theme), so every legacy
+ * .tnm2 screen renders faithful NN with no per-screen `nn` class and no React
+ * changes. The old Clinical-Dark hex values are deleted. The `.tnm2.nn` block
+ * below is now a redundant no-op kept only so existing `nn` classnames are inert. */
+.tnm2{--bg:var(--color-nn-bg);--s1:var(--color-nn-surface);--s2:var(--color-nn-surface-high);--s3:var(--color-nn-surface-high);--tx:var(--color-nn-on-surface);--mut:var(--color-nn-secondary);--fnt:var(--color-nn-outline);--ln:rgba(255,255,255,.06);--ln2:rgba(255,255,255,.12);--saf:var(--color-nn-primary);--safb:var(--color-nn-primary);--safd:color-mix(in srgb,var(--color-nn-primary) 14%,transparent);--onsaf:var(--color-nn-on-primary);--sage:var(--color-clinical-sage);--saged:color-mix(in srgb,var(--color-clinical-sage) 16%,transparent);--dgr:var(--color-nn-error);--dgrd:color-mix(in srgb,var(--color-nn-error) 15%,transparent);--tnm-surface-ink:var(--color-nn-bg);--tnm-surface-ink-2:var(--color-nn-surface);--tnm-action:var(--color-nn-primary);--tnm-text-primary:var(--color-nn-on-surface);--tnm-text-secondary:var(--color-nn-secondary);--tnm-caution:#d97706;--tnm-alert:#dc2626;--e:cubic-bezier(.4,0,.2,1);color-scheme:dark;font-family:Inter,system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased;min-height:100%}
 .tnm2 .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
 .tnm2 .lab{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fnt);font-weight:500}
 .tnm2 .mut{color:var(--mut)}.fntc{color:var(--fnt)}.safc{color:var(--safb)}.sagec{color:var(--sage)}.dgrc{color:var(--dgr)}
