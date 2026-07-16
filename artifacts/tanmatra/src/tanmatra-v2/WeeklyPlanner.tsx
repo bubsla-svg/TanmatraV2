@@ -244,7 +244,7 @@ export default function V2WeeklyPlanner() {
   const isDraft = activePlan?.status === "draft";
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -468,7 +468,7 @@ export default function V2WeeklyPlanner() {
       {/* Swap dialog */}
       {swapDialog !== null && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSwapDialog(null)}
         >
@@ -554,7 +554,7 @@ export default function V2WeeklyPlanner() {
       {/* Settings dialog */}
       {settingsOpen && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSettingsOpen(false)}
         >
