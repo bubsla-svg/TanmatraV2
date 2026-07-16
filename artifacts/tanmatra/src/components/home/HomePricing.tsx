@@ -67,23 +67,23 @@ const SUBSCRIPTION_ONLY_ITEMS = [
 export default function HomePricing() {
   return (
     <section className="padx mt-12 mb-12">
-      <div className="secrow px-0 text-center flex-col items-center gap-2">
-        <span className="sh text-2xl">Simple, flexible pricing</span>
+      <div className="secrow px-0 text-center flex-col items-center gap-1.5">
+        <span className="text-2xl font-semibold tracking-tight text-white">Simple, flexible pricing</span>
         <p className="fine max-w-[340px] text-white/60 mx-auto">
           Choose a plan that fits your goals. Scale up or down as you go.
         </p>
       </div>
 
-      {/* What a plan adds over à la carte (Phase A2) */}
-      <div className="card my-6 border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
-        <span className="block text-[11px] font-bold uppercase tracking-wider text-white/50 mb-3">
+      {/* What a plan adds over à la carte */}
+      <div className="my-6 p-5 rounded-3xl bg-neutral-900/80 border border-white/[0.06] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+        <span className="block text-[10px] font-semibold uppercase tracking-widest text-amber-400 mb-3">
           What a plan adds over à la carte
         </span>
         <ul className="flex flex-col gap-2.5">
           {SUBSCRIPTION_ONLY_ITEMS.map((item, idx) => (
             <li key={idx} className="flex items-start gap-2.5 text-xs text-white/80 leading-snug">
-              <span className="shrink-0 w-4 h-4 rounded-full bg-[var(--tnm-action)]/10 flex items-center justify-center mt-0.5">
-                <Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" />
+              <span className="shrink-0 w-4 h-4 rounded-full bg-amber-400/10 flex items-center justify-center mt-0.5">
+                <Check className="w-2.5 h-2.5 text-amber-400" weight="bold" />
               </span>
               {item}
             </li>
@@ -120,31 +120,32 @@ function PricingCard({ preset }: { preset: PricingPreset }) {
 
   return (
     <div
-      className={`card flex flex-col justify-between relative border border-white/5 ${
-        preset.badge ? "border-[var(--tnm-action)] border-[1.5px]" : ""
+      className={`p-5 rounded-2xl relative border flex flex-col justify-between transition-all duration-300 ${
+        preset.badge
+          ? "border-amber-400/40 bg-amber-400/[0.03] shadow-[0_8px_32px_rgba(251,191,36,0.1)]"
+          : "border-white/[0.06] bg-neutral-900/80 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
       }`}
-      style={{ background: "var(--tnm-surface-ink-2)" }}
     >
       {preset.badge && (
         <span
-          className="absolute top-0 right-4 -translate-y-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[var(--tnm-action)] text-black"
+          className="absolute top-0 right-4 -translate-y-1/2 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-400 text-black shadow-[0_2px_8px_rgba(251,191,36,0.3)]"
         >
           {preset.badge}
         </span>
       )}
 
       <div>
-        <h4 className="text-base font-bold text-white/95">{preset.title}</h4>
-        <p className="fine mt-1.5 text-white/60 leading-relaxed">{preset.desc}</p>
+        <h4 className="text-base font-semibold tracking-tight text-white/95">{preset.title}</h4>
+        <p className="text-xs mt-1.5 text-white/60 leading-relaxed">{preset.desc}</p>
       </div>
 
-      <div className="mt-5 border-t border-white/5 pt-4 flex items-center justify-between">
+      <div className="mt-5 border-t border-white/[0.06] pt-4 flex items-center justify-between">
         <div className="flex flex-col">
           {isLoading ? (
-            <div className="w-20 h-6 bg-white/5 rounded animate-pulse" />
+            <div className="w-20 h-6 bg-white/5 rounded-lg animate-pulse" />
           ) : (
             <div className="flex flex-col">
-              <span className="price text-xl text-[var(--tnm-action)] font-bold leading-none">
+              <span className="price text-xl text-amber-400 font-extrabold tracking-tight leading-none">
                 {displayPrice}
                 <span className="text-[10px] text-white/55 font-normal ml-1">
                   {preset.priceLabel}
@@ -161,10 +162,11 @@ function PricingCard({ preset }: { preset: PricingPreset }) {
 
         <Link
           to={preset.to}
-          className={`btn btn-s text-xs font-bold px-5 ${
-            preset.badge ? "btn-p bg-[var(--tnm-action)] text-black" : "btn-blk"
+          className={`min-h-[38px] px-5 rounded-xl text-xs font-semibold flex items-center justify-center active:scale-[0.98] transition-transform duration-200 ${
+            preset.badge
+              ? "bg-amber-400 text-black font-bold hover:brightness-110 shadow-[0_4px_16px_rgba(251,191,36,0.2)]"
+              : "bg-white/10 hover:bg-white/15 border border-white/[0.06] text-white"
           }`}
-          style={{ height: 36 }}
         >
           {preset.ctaText}
         </Link>

@@ -72,7 +72,7 @@ export default function V2Home() {
         {/* 2.7 How It Works */}
         <section className="padx mt-10">
           <div className="secrow px-0">
-            <span className="sh text-base font-bold text-white/95">
+            <span className="sh text-base font-bold tracking-tight text-white/95">
               How Tanmatra works
             </span>
           </div>
@@ -80,17 +80,16 @@ export default function V2Home() {
             {HOW_STEPS.map((s) => (
               <div
                 key={s.step}
-                className="card flex gap-4 border border-white/5"
-                style={{ background: "var(--tnm-surface-ink-2)", padding: 14 }}
+                className="p-4 rounded-2xl bg-neutral-900/80 border border-white/[0.06] backdrop-blur-xl flex gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all"
               >
-                <div className="text-[var(--tnm-action)] shrink-0 mt-0.5">
+                <div className="text-amber-400 shrink-0 mt-0.5">
                   <i className={`ph-bold ${s.icon} text-lg`} />
                 </div>
-                <div className="f1">
-                  <div className="text-[10px] uppercase font-mono tracking-wider text-white/40">
+                <div className="flex-1">
+                  <div className="text-[10px] uppercase font-mono tracking-widest text-white/40">
                     Step {s.step}
                   </div>
-                  <div className="text-xs font-bold text-white/90 mt-1">{s.title}</div>
+                  <div className="text-xs font-semibold tracking-tight text-white/90 mt-1">{s.title}</div>
                   <div className="fine text-white/60 mt-1 leading-relaxed">{s.desc}</div>
                 </div>
               </div>

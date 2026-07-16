@@ -41,12 +41,12 @@ const TRUST_ITEMS: TrustItem[] = [
 
 export default function HomeTrustWall() {
   return (
-    <section className="padx mt-12 bg-white/[0.02] py-8 border-y border-white/5">
-      <div className="secrow px-0 flex flex-col items-center text-center gap-2 mb-6">
-        <span className="sh text-base font-bold uppercase tracking-wider text-white/45">
+    <section className="padx mt-12 bg-white/[0.02] py-10 border-y border-white/[0.06]">
+      <div className="secrow px-0 flex flex-col items-center text-center gap-1.5 mb-8">
+        <span className="text-[10px] uppercase font-mono tracking-widest text-white/45">
           Why you can trust Tanmatra
         </span>
-        <h3 className="text-xl font-bold text-white/90">Food safety &amp; quality, verified</h3>
+        <h3 className="text-xl font-semibold tracking-tight text-white/90">Food safety &amp; quality, verified</h3>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -55,15 +55,14 @@ export default function HomeTrustWall() {
           return (
             <div
               key={idx}
-              className="card flex flex-col gap-2.5 items-start"
-              style={{ background: "var(--s1)", borderColor: "var(--ln)", padding: "12px 14px" }}
+              className="p-4 rounded-2xl bg-neutral-900/80 border border-white/[0.06] backdrop-blur-xl flex flex-col gap-3 items-start shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all"
             >
-              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/70">
-                <Icon className="w-4.5 h-4.5" />
+              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/[0.06] flex items-center justify-center text-amber-400">
+                <Icon className="w-5 h-5" />
               </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-bold text-white/90 leading-tight">{item.title}</span>
-                <p className="text-[10px] text-white/50 leading-relaxed mt-1">{item.desc}</p>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-semibold tracking-tight text-white/95 leading-tight">{item.title}</span>
+                <p className="text-[11px] text-white/60 leading-relaxed mt-0.5">{item.desc}</p>
               </div>
             </div>
           );

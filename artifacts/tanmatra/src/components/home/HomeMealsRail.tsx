@@ -97,19 +97,18 @@ function DishSwipeCard({ dish }: { dish: DishData }) {
 
   return (
     <div
-      className="card snap-start shrink-0 w-[240px] flex flex-col justify-between border border-white/5"
-      style={{ background: "var(--tnm-surface-ink-2)", padding: 10 }}
+      className="snap-start shrink-0 w-[250px] p-2.5 rounded-2xl bg-neutral-900/80 border border-white/[0.06] backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-white/10 group"
     >
       <div>
-        <Link to={`/dish/${dish.slug}`} className="relative aspect-[4/3] rounded-lg overflow-hidden block">
+        <Link to={`/dish/${dish.slug}`} className="relative aspect-[4/3] rounded-xl overflow-hidden block border border-white/[0.06]">
           <img
             src={dish.image}
             srcSet={unsplashSrcset(dish.image)}
-            sizes="220px"
+            sizes="240px"
             alt={dish.name}
             loading="lazy"
             onError={onDishImageError}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
           />
           {/* Badge overlays */}
           <div className="absolute top-2 left-2 flex gap-1 items-center flex-wrap z-10">
@@ -117,9 +116,9 @@ function DishSwipeCard({ dish }: { dish: DishData }) {
           </div>
         </Link>
 
-        <div className="mt-3">
+        <div className="mt-3 px-1">
           <Link to={`/dish/${dish.slug}`} className="block">
-            <h4 className="text-sm font-bold text-white/95 leading-snug clamp2 hover:text-[var(--tnm-action)] transition-colors">
+            <h4 className="text-sm font-semibold tracking-tight text-white/95 leading-snug clamp2 group-hover:text-amber-400 transition-colors">
               {dish.name}
             </h4>
           </Link>
@@ -127,14 +126,13 @@ function DishSwipeCard({ dish }: { dish: DishData }) {
         </div>
       </div>
 
-      <div className="mt-4 pt-2.5 border-t border-white/5 flex flex-col gap-2.5">
+      <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-col gap-2.5 px-1 pb-1">
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-white/45 font-medium">{suitabilityText}</span>
         </div>
         <Link
           to={`/dish/${dish.slug}`}
-          className="btn btn-s btn-blk text-center text-xs font-semibold w-full"
-          style={{ height: 34 }}
+          className="w-full min-h-[38px] rounded-xl bg-white/5 hover:bg-white/10 border border-white/[0.06] text-center text-xs font-semibold text-white/90 flex items-center justify-center active:scale-[0.98] transition-transform duration-200"
         >
           View Details
         </Link>
