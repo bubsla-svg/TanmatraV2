@@ -22,6 +22,17 @@ interface RecapData {
   holdExpiration: string;
 }
 
+// Plan pricing (paise). The saving badge below is DERIVED from these so it can
+// never drift from the prices actually shown to the user. Weekly is the
+// flexible tier and has no discount baseline of its own, so it shows no saving
+// figure; fortnightly is genuinely cheaper per week than weekly, and that — and
+// only that — is what the badge states.
+const PLAN_WEEKLY_PAISE = 380000;
+const PLAN_FORTNIGHTLY_PAISE = 741000;
+const FORTNIGHTLY_SAVING_PCT = (
+  (1 - PLAN_FORTNIGHTLY_PAISE / 2 / PLAN_WEEKLY_PAISE) * 100
+).toFixed(1);
+
 export default function SubscriptionBridge() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -203,7 +214,7 @@ export default function SubscriptionBridge() {
             </span>
             <h3 className="h3 font-bold" style={{ color: "var(--tx)" }}>Keep the momentum going</h3>
             <p className="fine mt4">
-              Unlock maximum health outcomes with our <strong>5 meals/week plan</strong>. Autopay keeps it seamless.
+              Keep your delivery cadence consistent with our <strong>5 meals/week plan</strong>. Autopay keeps it seamless.
             </p>
             <div className="mt16 p-3 bg-stone-50 rounded-lg text-left fx ac jb">
               <div>
@@ -213,7 +224,7 @@ export default function SubscriptionBridge() {
                 <span className="fine text-stone-500">Weekly weekdays lunch drop</span>
               </div>
               <span className="price safc" style={{ fontSize: 14 }}>
-                {formatCurrency(380000)}<span className="fntc" style={{ fontSize: 10 }}>/wk</span>
+                {formatCurrency(PLAN_WEEKLY_PAISE)}<span className="fntc" style={{ fontSize: 10 }}>/wk</span>
               </span>
             </div>
           </div>
@@ -253,18 +264,18 @@ export default function SubscriptionBridge() {
               <div className="p-4 border rounded-xl" style={{ borderColor: "var(--saf)" }}>
                 <div className="fx ac jb">
                   <span className="font-bold" style={{ color: "var(--tx)" }}>Weekly Billing</span>
-                  <span className="pill sg">5% saving</span>
+                  <span className="pill sg">Flexible</span>
                 </div>
-                <p className="fine mt4">{formatCurrency(380000)} billed every week.</p>
+                <p className="fine mt4">{formatCurrency(PLAN_WEEKLY_PAISE)} billed every week.</p>
                 <p className="fine mt2 text-stone-500">Best for flexibility. Pause or edit anytime before Thursday cutoff.</p>
               </div>
 
               <div className="p-4 border rounded-xl" style={{ borderColor: "var(--ln)" }}>
                 <div className="fx ac jb">
                   <span className="font-bold text-stone-700">Fortnightly Billing</span>
-                  <span className="pill sg" style={{ background: "var(--safd)", color: "var(--safb)" }}>10% saving</span>
+                  <span className="pill sg" style={{ background: "var(--safd)", color: "var(--safb)" }}>Save {FORTNIGHTLY_SAVING_PCT}% vs weekly</span>
                 </div>
-                <p className="fine mt4">{formatCurrency(741000)} billed every 2 weeks.</p>
+                <p className="fine mt4">{formatCurrency(PLAN_FORTNIGHTLY_PAISE)} billed every 2 weeks.</p>
                 <p className="fine mt2 text-stone-500">Save more while retaining control. Skip individual weeks to earn credits.</p>
               </div>
             </div>
