@@ -29,7 +29,7 @@ describe("Multi-Tenant Isolation, Cache Scoping & Security Audit Engine", () => 
     // Protected multi-tenant route checking targeted tenant parameter
     app.get(
       "/tenants/:tenantId/dashboard",
-      tenantIsolationGuard((req) => req.params.tenantId),
+      tenantIsolationGuard((req) => req.params.tenantId as string),
       (req, res) => {
         res.json({ ok: true, data: `Private dashboard metrics for ${req.params.tenantId}` });
       }
