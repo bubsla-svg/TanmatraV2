@@ -3,6 +3,12 @@ import { type RouteConfig, index, route, layout } from "@react-router/dev/routes
 export default [
     index("pages/Home.tsx"),
     route("menu", "pages/Menu.tsx"),
+    // Stitch "Nocturnal Nourishment" design previews (direct-link, not in nav).
+    route("stitch/menu", "tanmatra-v2/StitchMenu.tsx"),
+    route("stitch/dish", "tanmatra-v2/StitchDishDetail.tsx"),
+    route("stitch/allergen-gate", "tanmatra-v2/StitchAllergenGate.tsx"),
+    route("stitch/checkout", "tanmatra-v2/StitchCheckout.tsx"),
+    route("stitch/subscribe", "tanmatra-v2/StitchSubscribe.tsx"),
     route("dish/:slug", "pages/Dish.tsx"),
     route("cart", "pages/Cart.tsx"),
     layout("routes/CheckoutLayout.tsx", [
