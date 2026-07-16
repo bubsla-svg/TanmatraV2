@@ -127,6 +127,8 @@ Legend: **✅ designed** · **◑ partial** (hub/state designed, a sub-screen mi
 
 ## 9. GAP LIST — app components/routes with NO Stitch design (the "not yet designed")
 
+> **These routes are all implemented and wired** (a v2 component or a `pages/*` wrapper serves each one, plus a working `pages/not-found.tsx` for `*`). The gap here is a **design + data-integrity** gap, not a missing screen: none has a dedicated Nocturnal Nourishment Stitch design, and — because they were never part of the Stitch porting — none has been through the honest-health-data rendering pass in §10. So the work to "close" these is (a) design them in Stitch and (b) verify/align them to the §10 standard, **not** build them from scratch. The only genuinely un-routed items are the design-ahead screens listed at the bottom.
+
 **Customer-facing:**
 1. `/subscription/bridge` — à la carte → trial bridge (Phase C2/C4)
 2. `/account/billing` — billing/invoices
