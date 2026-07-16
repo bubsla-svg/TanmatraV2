@@ -236,7 +236,9 @@ function recommendationFor(
     case "puzzle":
       return "reprice";
     case "plowhorse":
-      return "hold";
+      // A plowhorse is high-volume / low-margin. "hold" understates the leak on
+      // a menu bleeding margin to discounts — it needs a reprice or a recost.
+      return "reprice_or_recost";
     case "dog":
       return "retire";
   }

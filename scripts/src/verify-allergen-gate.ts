@@ -307,7 +307,38 @@ function runTests() {
   console.log("  ✔ Marketplace checkout clinical contraindication blocks verified successfully.\n");
   passed++;
 
-  console.log(`=== Allergen Gate Verification Suite Passed (${passed}/12 tests) ===`);
+  // Test 13: G9 — a dish with unreviewed/empty allergen data must FAIL closed.
+  // Server checkout evaluates with strict:true; it must NEVER clear a dish whose
+  // allergens were never verified. This is the exact regression that once shipped
+  // 54 dishes with `allergens: []` as "safe" — this tripwire stops it recurring.
+  console.log(
+    "[Test 13] G9 — dishes with unverified allergen data must fail the strict safety gate...",
+  );
+  const unreviewedDishes = DISHES.filter((d) => d.allergensReviewed === false);
+  assert.ok(
+    unreviewedDishes.length > 0,
+    "expected the catalog to contain at least one unreviewed dish to guard (fail-closed tripwire)",
+  );
+  for (const d of unreviewedDishes) {
+    const res = evaluateDishForPreferences(d, null, { strict: true });
+    assert.strictEqual(
+      res.blocked,
+      true,
+      `Unreviewed dish '${d.slug}' MUST be blocked under the strict gate (G9 fail-closed) — never cleared as safe`,
+    );
+    assert.ok(
+      res.blockReasons.some(
+        (r) => r.code === "unchecked_allergens" || r.code === "unreviewed_dish",
+      ),
+      `Unreviewed dish '${d.slug}' must block with an unchecked/unreviewed reason`,
+    );
+  }
+  console.log(
+    `  ✔ All ${unreviewedDishes.length} unreviewed dishes fail closed under strict evaluation.\n`,
+  );
+  passed++;
+
+  console.log(`=== Allergen Gate Verification Suite Passed (${passed}/13 tests) ===`);
 }
 
 runTests();

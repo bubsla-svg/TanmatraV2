@@ -126,5 +126,10 @@ export type MenuEngineeringDishStat =
 export type PricingSuggestion = typeof pricingSuggestionsTable.$inferSelect;
 
 export type DishClassification = "star" | "plowhorse" | "puzzle" | "dog";
-export type DishRecommendation = "promote" | "reprice" | "retire" | "hold";
+export type DishRecommendation =
+  | "promote"
+  | "reprice"
+  | "retire"
+  | "hold"
+  | "reprice_or_recost";
 export type PricingSuggestionStatus = "pending" | "approved" | "dismissed";
