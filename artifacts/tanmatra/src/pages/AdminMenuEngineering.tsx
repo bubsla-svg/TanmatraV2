@@ -2,11 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_BASE } from "@/lib/apiBase";
-
-const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
 
 interface RunRow {
   id: number;
@@ -84,11 +81,6 @@ function pct(x10: number): string {
 }
 
 export default function AdminMenuEngineering() {
-  const [adminToken, setAdminToken] = useState<string>(() =>
-    typeof window === "undefined"
-      ? ""
-      : (window.localStorage.getItem(ADMIN_TOKEN_KEY) ?? ""),
-  );
   const [run, setRun] = useState<RunRow | null>(null);
   const [stats, setStats] = useState<StatRow[]>([]);
   const [summaries, setSummaries] = useState<SummaryRow[]>([]);
@@ -97,16 +89,12 @@ export default function AdminMenuEngineering() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string>("");
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (adminToken) window.localStorage.setItem(ADMIN_TOKEN_KEY, adminToken);
-    else window.localStorage.removeItem(ADMIN_TOKEN_KEY);
-  }, [adminToken]);
-
   const headers = (): Record<string, string> => {
-    const h: Record<string, string> = { "content-type": "application/json" };
-    if (adminToken) h["x-admin-token"] = adminToken;
-    return h;
+    // Auth is the admin cookie session — every fetch below sends
+    // credentials:"include". No client-typed admin token: a long-lived shared
+    // secret typed into a consumer-bundle field would land in the DOM, React
+    // state, and any session-replay tooling. The cookie session supersedes it.
+    return { "content-type": "application/json" };
   };
 
   async function refresh() {
@@ -139,7 +127,7 @@ export default function AdminMenuEngineering() {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminToken]);
+  }, []);
 
   async function runMe() {
     setBusy(true);
@@ -266,12 +254,6 @@ export default function AdminMenuEngineering() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2 items-center">
-            <Input
-              placeholder="x-admin-token (or rely on OPS_USER_IDS allowlist)"
-              value={adminToken}
-              onChange={(e) => setAdminToken(e.target.value)}
-              className="max-w-md"
-            />
             <Button onClick={runMe} disabled={busy}>
               {busy ? "Running…" : "Run analysis (30d)"}
             </Button>
