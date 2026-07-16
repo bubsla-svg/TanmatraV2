@@ -249,7 +249,7 @@ export default function SoftGate() {
 
   return (
     <div
-      className="tnm2 tnm-softgate"
+      className="tnm2 nn tnm-softgate"
       role="dialog"
       aria-modal="true"
       aria-label="Quick personalisation"

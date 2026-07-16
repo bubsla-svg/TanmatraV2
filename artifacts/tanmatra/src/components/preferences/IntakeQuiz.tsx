@@ -799,7 +799,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
         surface card. Non-blocking; the results screen stays behind it. */}
     {showAccountNudge && (
       <div
-        className="tnm2 bg-black/60"
+        className="tnm2 nn bg-black/60"
         role="dialog"
         aria-label="Create an account to keep your plan"
         onClick={() => setNudgeDismissed(true)}

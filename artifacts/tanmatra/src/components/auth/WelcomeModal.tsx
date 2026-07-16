@@ -70,7 +70,7 @@ export function WelcomeModal({
 
   return (
     <div
-      className="tnm2 bg-black/60"
+      className="tnm2 nn bg-black/60"
       // Block dismiss-by-overlay-click while we're posting; otherwise allow
       // it (treated as "skip").
       style={{

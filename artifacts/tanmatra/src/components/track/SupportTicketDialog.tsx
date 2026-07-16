@@ -80,7 +80,7 @@ export default function SupportTicketDialog({
 
   return (
     <div
-      className="tnm2 bg-black/60"
+      className="tnm2 nn bg-black/60"
       style={{
         position: "fixed",
         inset: 0,

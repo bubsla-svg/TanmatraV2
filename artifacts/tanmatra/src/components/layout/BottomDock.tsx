@@ -55,7 +55,7 @@ export default function BottomDock() {
   const { pathname, search } = useLocation();
 
   return (
-    <nav className="tnm2 bdock" aria-label="Primary">
+    <nav className="tnm2 nn bdock" aria-label="Primary">
       <ul className="bdock-list">
         {ITEMS.map((item) => {
           const active = item.isActive(pathname, search);
