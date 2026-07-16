@@ -147,18 +147,23 @@ export default function StickyBottomBar({
           <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--tnm-action)] truncate">
             {dishName}
           </span>
-          <span className="tnm-data text-xs font-bold text-white/95 mt-0.5">
-            {isIncluded ? "Included in plan" : formattedPrice}
+          <span className="tnm-data text-xs font-bold text-white/95 mt-0.5 flex items-center gap-1.5">
+            {formattedPrice || (isIncluded ? "In your plan" : "")}
+            {isIncluded && formattedPrice && (
+              <span className="text-[9px] uppercase font-bold tracking-wide text-[var(--tnm-action)] bg-[var(--tnm-action)]/15 px-1.5 py-0.5 rounded">
+                In your plan
+              </span>
+            )}
           </span>
         </div>
         <button
           type="button"
           onClick={onAddDish}
           disabled={disabled}
-          className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-6 rounded-xl shrink-0"
+          className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-6 rounded-xl shrink-0 active:scale-[0.98] transition-transform"
           style={{ height: 44 }}
         >
-          {isIncluded ? "Add Another" : "Add to Order"}
+          {isIncluded ? "Add another" : "Add to Order"}
         </button>
       </div>
     );
