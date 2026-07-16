@@ -1,188 +1,257 @@
+import {Feather} from '@expo/vector-icons';
 import React, {useState} from 'react';
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
+/**
+ * Hyperlocal delivery-address header. Re-ported from a web/DOM prototype into
+ * real React Native primitives — the previous version used web DOM elements
+ * (<header>/<div>/<svg>) with Tailwind classNames, which are not valid RN
+ * components and would throw if rendered. Not yet wired into the app's
+ * navigation (see index.tsx); this is a valid, ready-to-use RN component.
+ */
 export const HyperlocalHeader: React.FC = () => {
   const [address, setAddress] = useState('Sector 62, Noida NCR');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [postalCode, setPostalCode] = useState('');
 
-  const handleSaveAddress = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveAddress = () => {
     if (searchQuery.trim() || postalCode.trim()) {
       setAddress(searchQuery || `PIN: ${postalCode}, Noida`);
       setIsModalOpen(false);
     }
   };
 
+  const useCurrentLocation = () => {
+    setAddress('Sector 62, Noida NCR');
+    setIsModalOpen(false);
+  };
+
   return (
     <>
-      <header className="w-full bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-emerald-500/20 sticky top-0 z-50">
-        <div className="flex items-center space-x-2">
-          <svg
-            className="w-5 h-5 text-emerald-400 animate-pulse"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Feather name="map-pin" size={18} color={COLORS.emerald400} />
+          <View>
+            <Text style={styles.deliveringTo}>DELIVERING TO</Text>
+            <Pressable
+              onPress={() => setIsModalOpen(true)}
+              style={styles.addressButton}
+              accessibilityRole="button"
+              accessibilityLabel="Change delivery address">
+              <Text style={styles.addressText}>{address}</Text>
+              <Feather name="chevron-down" size={14} color={COLORS.emerald400} />
+            </Pressable>
+          </View>
+        </View>
+        <View style={styles.etaPill}>
+          <View style={styles.etaDot} />
+          <Text style={styles.etaText}>32 MINS</Text>
+        </View>
+      </View>
+
+      <Modal
+        visible={isModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsModalOpen(false)}>
+        <View style={styles.overlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalTitleWrap}>
+                <Text style={styles.modalTitle}>Verify Your Delivery Location</Text>
+                <Text style={styles.modalSubtitle}>
+                  Tanmatra delivers fresh in 25–40 mins from ISO 22000 sterile
+                  cloud kitchens. Verify your sector below.
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setIsModalOpen(false)}
+                style={styles.closeButton}
+                accessibilityRole="button"
+                accessibilityLabel="Close">
+                <Feather name="x" size={20} color={COLORS.slate400} />
+              </Pressable>
+            </View>
+
+            <Text style={styles.fieldLabel}>Enter Delivery Address / Sector</Text>
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="e.g. Sector 62, Noida"
+              placeholderTextColor={COLORS.slate400}
+              style={styles.input}
             />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Text style={styles.fieldLabel}>Postal PIN Code</Text>
+            <TextInput
+              value={postalCode}
+              onChangeText={(t) => setPostalCode(t.replace(/\D/g, ''))}
+              placeholder="e.g. 201301"
+              placeholderTextColor={COLORS.slate400}
+              keyboardType="number-pad"
+              maxLength={6}
+              style={[styles.input, styles.inputPin]}
             />
-          </svg>
-          <div>
-            <p className="text-[9px] text-slate-400 font-bold tracking-wider uppercase">
-              DELIVERING TO
-            </p>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="text-xs font-semibold flex items-center focus:outline-none text-slate-100 hover:text-emerald-400 transition-colors duration-150">
-              <span>{address}</span>
-              <svg
-                className="w-3.5 h-3.5 ml-1 text-emerald-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className="text-right">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-ping"></span>
-            32 MINS
-          </span>
-        </div>
-      </header>
 
-      {/* Hyperlocal Address Verification Escape Hatch Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-100 transform transition-all scale-100">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-black text-slate-900">
-                    Verify Your Delivery Location
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Tanmatra delivers fresh in 25–40 mins from ISO 22000 sterile
-                    cloud kitchens. Verify your sector below.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors duration-150">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
+            <Pressable onPress={useCurrentLocation} style={styles.gpsButton}>
+              <Feather name="navigation" size={16} color={COLORS.emerald500} />
+              <Text style={styles.gpsButtonText}>Use Live Device GPS Location</Text>
+            </Pressable>
 
-              <form onSubmit={handleSaveAddress} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="searchQuery"
-                    className="text-[10px] font-bold uppercase text-slate-500 block mb-1.5">
-                    Enter Delivery Address / Sector
-                  </label>
-                  <input
-                    type="text"
-                    id="searchQuery"
-                    value={searchQuery}
-                    onChange={(e: any) => setSearchQuery(e.target.value)}
-                    placeholder="e.g. Sector 62, Noida"
-                    className="w-full px-4 py-3 border border-slate-200 focus:border-emerald-500 rounded-xl text-sm font-semibold outline-none transition-all duration-150 text-slate-900 placeholder:text-slate-400 bg-slate-50"
-                  />
-                </div>
-
-                <div className="relative flex py-2 items-center">
-                  <div className="flex-grow border-t border-slate-200"></div>
-                  <span className="flex-shrink mx-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                    or
-                  </span>
-                  <div className="flex-grow border-t border-slate-200"></div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="postalCode"
-                    className="text-[10px] font-bold uppercase text-slate-500 block mb-1.5">
-                    Postal PIN Code
-                  </label>
-                  <input
-                    type="text"
-                    id="postalCode"
-                    maxLength={6}
-                    value={postalCode}
-                    onChange={(e: any) =>
-                      setPostalCode(e.target.value.replace(/\D/g, ''))
-                    }
-                    placeholder="e.g. 201301"
-                    className="w-full px-4 py-3 border border-slate-200 focus:border-emerald-500 rounded-xl text-sm font-bold tracking-widest outline-none transition-all duration-150 text-slate-900 placeholder:text-slate-400 bg-slate-50"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddress('Sector 62, Noida NCR');
-                    setIsModalOpen(false);
-                  }}
-                  className="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center space-x-2 text-xs font-bold text-slate-700 transition-colors duration-150">
-                  <svg
-                    className="w-4 h-4 text-emerald-500"
-                    fill="currentColor"
-                    viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>Use Live Device GPS Location</span>
-                </button>
-
-                <div className="pt-2 border-t border-slate-100 flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-3 text-slate-600 font-bold text-xs hover:bg-slate-50 rounded-xl transition-colors duration-150">
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-3 bg-slate-900 text-white font-bold text-xs rounded-xl shadow-lg hover:bg-slate-800 transition-colors duration-150">
-                    Confirm Location
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+            <View style={styles.actionsRow}>
+              <Pressable
+                onPress={() => setIsModalOpen(false)}
+                style={[styles.actionButton, styles.cancelButton]}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSaveAddress}
+                style={[styles.actionButton, styles.confirmButton]}>
+                <Text style={styles.confirmButtonText}>Confirm Location</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
+
+const COLORS = {
+  slate900: '#0F172A',
+  slate700: '#334155',
+  slate600: '#475569',
+  slate500: '#64748B',
+  slate400: '#94A3B8',
+  slate200: '#E2E8F0',
+  slate100: '#F1F5F9',
+  slate50: '#F8FAFC',
+  white: '#FFFFFF',
+  emerald500: '#10B981',
+  emerald400: '#34D399',
+  overlay: 'rgba(2,6,23,0.8)',
+};
+
+const styles = StyleSheet.create({
+  header: {
+    width: '100%',
+    backgroundColor: COLORS.slate900,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(16,185,129,0.2)',
+  },
+  headerLeft: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  deliveringTo: {
+    fontSize: 9,
+    color: COLORS.slate400,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  addressButton: {flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1},
+  addressText: {fontSize: 12, fontWeight: '600', color: COLORS.slate100},
+  etaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(16,185,129,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.2)',
+  },
+  etaDot: {width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.emerald400},
+  etaText: {fontSize: 10, fontWeight: '700', color: COLORS.emerald400},
+
+  overlay: {
+    flex: 1,
+    backgroundColor: COLORS.overlay,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 24,
+  },
+  modalHeaderRow: {flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16},
+  modalTitleWrap: {flex: 1, paddingRight: 8},
+  modalTitle: {fontSize: 18, fontWeight: '800', color: COLORS.slate900},
+  modalSubtitle: {fontSize: 12, color: COLORS.slate500, marginTop: 4, lineHeight: 17},
+  closeButton: {padding: 4},
+  fieldLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    color: COLORS.slate500,
+    marginBottom: 6,
+  },
+  input: {
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: COLORS.slate200,
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.slate900,
+    backgroundColor: COLORS.slate50,
+  },
+  inputPin: {fontWeight: '700', letterSpacing: 4},
+  dividerRow: {flexDirection: 'row', alignItems: 'center', marginVertical: 14},
+  dividerLine: {flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: COLORS.slate200},
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 10,
+    color: COLORS.slate400,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  gpsButton: {
+    marginTop: 16,
+    width: '100%',
+    paddingVertical: 12,
+    backgroundColor: COLORS.slate100,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  gpsButtonText: {fontSize: 12, fontWeight: '700', color: COLORS.slate700},
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.slate100,
+  },
+  actionButton: {flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center'},
+  cancelButton: {backgroundColor: 'transparent'},
+  cancelButtonText: {fontSize: 12, fontWeight: '700', color: COLORS.slate600},
+  confirmButton: {backgroundColor: COLORS.slate900},
+  confirmButtonText: {fontSize: 12, fontWeight: '700', color: COLORS.white},
+});

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 
 export type ProtocolType = 'Wellness' | 'Performance' | 'Clinical';
 
@@ -7,123 +8,146 @@ interface ProtocolSwitcherProps {
   activeProtocol: ProtocolType;
 }
 
+const COLORS = {
+  white: '#FFFFFF',
+  slate700: '#334155',
+  slate500: '#64748B',
+  slate400: '#94A3B8',
+  slate200: '#E2E8F0',
+  slate100: '#F1F5F9',
+  slate50: '#F8FAFC',
+  emerald800: '#065F46',
+  emerald600: '#059669',
+  emerald500: '#10B981',
+  orange800: '#9A3412',
+  orange500: '#F97316',
+  blue800: '#1E40AF',
+  blue500: '#3B82F6',
+} as const;
+
+const TABS: {key: ProtocolType; caption: string}[] = [
+  {key: 'Wellness', caption: 'Longevity & Gut'},
+  {key: 'Performance', caption: 'Recovery & Build'},
+  {key: 'Clinical', caption: 'Therapeutic Care'},
+];
+
+const ACCENT: Record<ProtocolType, {border: string; bg: string; text: string}> = {
+  Wellness: {border: COLORS.emerald500, bg: 'rgba(16,185,129,0.08)', text: COLORS.emerald800},
+  Performance: {border: COLORS.orange500, bg: 'rgba(249,115,22,0.08)', text: COLORS.orange800},
+  Clinical: {border: COLORS.blue500, bg: 'rgba(59,130,246,0.08)', text: COLORS.blue800},
+};
+
+/**
+ * Protocol tab switcher. Re-ported from a web/DOM prototype into real React
+ * Native — the previous version used web DOM elements (<div>/<button>/<span>)
+ * with Tailwind classNames, which are not valid RN components and would throw
+ * if rendered. Not yet wired into the app's navigation (see index.tsx); this
+ * is a valid, ready-to-use RN component.
+ */
 export const ProtocolSwitcher: React.FC<ProtocolSwitcherProps> = ({
   onProtocolChange,
   activeProtocol,
 }) => {
   const [isCalibrating, setIsCalibrating] = useState(false);
-  const [calibratedTheme, setCalibratedTheme] = useState(
-    'border-emerald-500 bg-emerald-50/50 text-emerald-800',
-  );
 
   useEffect(() => {
-    // CRO-07: Trigger visible visual load feedback indicating menu recalibration
+    // Visible "menu recalibrating" feedback on protocol change.
     setIsCalibrating(true);
-    const timer = setTimeout(() => {
-      setIsCalibrating(false);
-    }, 850);
-
-    switch (activeProtocol) {
-      case 'Wellness':
-        setCalibratedTheme(
-          'border-emerald-500 bg-emerald-50/50 text-emerald-800',
-        );
-        break;
-      case 'Performance':
-        setCalibratedTheme('border-orange-500 bg-orange-50/50 text-orange-800');
-        break;
-      case 'Clinical':
-        setCalibratedTheme('border-blue-500 bg-blue-50/50 text-blue-800');
-        break;
-    }
-
+    const timer = setTimeout(() => setIsCalibrating(false), 850);
     return () => clearTimeout(timer);
   }, [activeProtocol]);
 
+  const activeAccent = ACCENT[activeProtocol];
+
   return (
-    <div className="w-full bg-white border-b border-slate-100 py-3 sticky top-14 z-40 shadow-sm transition-all duration-200">
-      <div className="flex justify-between px-4 space-x-2">
-        {/* Wellness Tab */}
-        <button
-          onClick={() => onProtocolChange('Wellness')}
-          className={`flex-1 py-2.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all duration-200 ${
-            activeProtocol === 'Wellness'
-              ? calibratedTheme
-              : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/20'
-          }`}>
-          <span className="text-[10px] font-bold tracking-wider uppercase">
-            Wellness
-          </span>
-          <span className="text-[8px] text-slate-400 font-semibold mt-0.5">
-            Longevity & Gut
-          </span>
-        </button>
+    <View style={styles.container}>
+      <View style={styles.tabsRow}>
+        {TABS.map(({key, caption}) => {
+          const isActive = activeProtocol === key;
+          const accent = ACCENT[key];
+          return (
+            <Pressable
+              key={key}
+              onPress={() => onProtocolChange(key)}
+              accessibilityRole="tab"
+              accessibilityState={{selected: isActive}}
+              style={[
+                styles.tab,
+                {
+                  borderColor: isActive ? accent.border : COLORS.slate200,
+                  backgroundColor: isActive ? accent.bg : COLORS.white,
+                },
+              ]}>
+              <Text style={[styles.tabTitle, {color: isActive ? accent.text : COLORS.slate700}]}>
+                {key}
+              </Text>
+              <Text style={styles.tabCaption}>{caption}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
-        {/* Performance Tab */}
-        <button
-          onClick={() => onProtocolChange('Performance')}
-          className={`flex-1 py-2.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all duration-200 ${
-            activeProtocol === 'Performance'
-              ? calibratedTheme
-              : 'border-slate-200 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/20'
-          }`}>
-          <span className="text-[10px] font-bold tracking-wider uppercase">
-            Performance
-          </span>
-          <span className="text-[8px] text-slate-400 font-semibold mt-0.5">
-            Recovery & Build
-          </span>
-        </button>
+      <View style={styles.syncBar}>
+        <View style={styles.syncLeft}>
+          <View style={styles.syncDot} />
+          <Text style={styles.syncText}>Garmin & Apple Watch Sync Active</Text>
+        </View>
+        <View style={styles.syncBadge}>
+          <Text style={styles.syncBadgeText}>Biometrics Updated: 11:00 AM</Text>
+        </View>
+      </View>
 
-        {/* Clinical Tab */}
-        <button
-          onClick={() => onProtocolChange('Clinical')}
-          className={`flex-1 py-2.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all duration-200 ${
-            activeProtocol === 'Clinical'
-              ? calibratedTheme
-              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/20'
-          }`}>
-          <span className="text-[10px] font-bold tracking-wider uppercase">
-            Clinical
-          </span>
-          <span className="text-[8px] text-slate-400 font-semibold mt-0.5">
-            Therapeutic Care
-          </span>
-        </button>
-      </div>
-
-      {/* Connected Sync Status Bar */}
-      <div className="mt-2.5 mx-4 flex items-center justify-between px-3 py-1.5 bg-slate-50 border border-slate-200/50 rounded-lg">
-        <div className="flex items-center space-x-1.5">
-          <div className="relative">
-            <span className="flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-          </div>
-          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
-            Garmin & Apple Watch Sync Active
-          </span>
-        </div>
-        <span className="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
-          Biometrics Updated: 11:00 AM
-        </span>
-      </div>
-
-      {/* Recalibration Pulse Loader */}
-      {isCalibrating && (
-        <div className="absolute inset-x-0 bottom-[-4px] h-[4px] bg-slate-100 overflow-hidden">
-          <div
-            className={`h-full ${
-              activeProtocol === 'Wellness'
-                ? 'bg-emerald-500'
-                : activeProtocol === 'Performance'
-                  ? 'bg-orange-500'
-                  : 'bg-blue-500'
-            } animate-pulse w-full`}
-            style={{animationDuration: '0.85s'}}></div>
-        </div>
-      )}
-    </div>
+      {isCalibrating ? (
+        <View style={[styles.calibrationBar, {backgroundColor: activeAccent.border}]} />
+      ) : null}
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.slate100,
+    paddingVertical: 12,
+  },
+  tabsRow: {flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, gap: 8},
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabTitle: {fontSize: 10, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase'},
+  tabCaption: {fontSize: 8, color: COLORS.slate400, fontWeight: '600', marginTop: 2},
+
+  syncBar: {
+    marginTop: 10,
+    marginHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: COLORS.slate50,
+    borderWidth: 1,
+    borderColor: 'rgba(226,232,240,0.5)',
+    borderRadius: 8,
+  },
+  syncLeft: {flexDirection: 'row', alignItems: 'center', gap: 6},
+  syncDot: {width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.emerald500},
+  syncText: {fontSize: 9, color: COLORS.slate500, fontWeight: '700', letterSpacing: 0.5},
+  syncBadge: {
+    backgroundColor: 'rgba(16,185,129,0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  syncBadgeText: {fontSize: 9, color: COLORS.emerald600, fontWeight: '700'},
+
+  calibrationBar: {height: 4, width: '100%', marginTop: 8},
+});

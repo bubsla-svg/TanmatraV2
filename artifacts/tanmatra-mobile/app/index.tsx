@@ -1,8 +1,10 @@
 import {createBaseEvent, trackEvent} from '@/lib/analytics/track';
 import {readTodayActivity, API_BASE} from '@/lib/activity';
+import {clearToken, loadToken, saveToken} from '@/lib/auth';
 import * as Haptics from 'expo-haptics';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -63,12 +65,26 @@ function Button({
   testID,
 }: {
   title: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
   testID?: string;
 }) {
+  // Guard against double-taps: while an async handler is in flight the button
+  // is disabled and shows a spinner, so a second tap can't fire a duplicate
+  // connect/sync/pair request.
+  const [pending, setPending] = useState(false);
+  const handlePress = useCallback(async () => {
+    if (pending) return;
+    setPending(true);
+    try {
+      await onPress();
+    } finally {
+      setPending(false);
+    }
+  }, [pending, onPress]);
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
+      disabled={pending}
       testID={testID}
       style={{
         backgroundColor: c.primary,
@@ -76,15 +92,20 @@ function Button({
         paddingHorizontal: 16,
         borderRadius: c.radius,
         alignItems: 'center',
+        opacity: pending ? 0.6 : 1,
       }}>
-      <Text
-        style={{
-          color: '#ffffff',
-          fontFamily: 'Inter_600SemiBold',
-          fontSize: 14,
-        }}>
-        {title}
-      </Text>
+      {pending ? (
+        <ActivityIndicator color="#ffffff" />
+      ) : (
+        <Text
+          style={{
+            color: '#ffffff',
+            fontFamily: 'Inter_600SemiBold',
+            fontSize: 14,
+          }}>
+          {title}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -111,7 +132,7 @@ function relativeTime(isoString?: string): string {
 
 export default function HomeScreen() {
   const [token, setTokenState] = useState<string | null>(null);
-  const [tokenReady, setTokenReady] = useState<boolean>(true);
+  const [tokenReady, setTokenReady] = useState<boolean>(false);
   const [tokenInput, setTokenInput] = useState<string>('');
   const [stepsInput, setStepsInput] = useState<string>('');
   const [kcalInput, setKcalInput] = useState<string>('');
@@ -145,6 +166,21 @@ export default function HomeScreen() {
     provider: providerForAnalytics,
   });
 
+  // Hydrate the persisted pairing token on cold start so a reload keeps the
+  // paired session instead of dumping the user back on the pairing screen.
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const stored = await loadToken();
+      if (!active) return;
+      if (stored) setTokenState(stored);
+      setTokenReady(true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (!tokenReady) return;
     if (!token) {
@@ -158,7 +194,19 @@ export default function HomeScreen() {
   }, [tokenReady, token, providerForAnalytics]);
 
   const setToken = useCallback(async (newToken: string | null) => {
-    setTokenState(newToken);
+    // Persist to (or clear from) the secure enclave so the session survives
+    // reloads. Both the pair flow and sign-out route through here.
+    if (newToken) {
+      await saveToken(newToken);
+      setTokenState(newToken);
+    } else {
+      // Clear persisted storage FIRST. If it throws (native delete failure) we
+      // deliberately do NOT flip to signed-out, so the UI keeps reflecting the
+      // still-authenticated reality and the user can retry — never a fake
+      // sign-out that leaves the token resurrectable on next cold start.
+      await clearToken();
+      setTokenState(null);
+    }
   }, []);
 
   const refreshAll = useCallback(async () => {
@@ -433,13 +481,26 @@ export default function HomeScreen() {
                 provider: providerForAnalytics,
               }),
             });
-            await setToken(null);
-            queryClient.clear();
+            try {
+              await setToken(null);
+              queryClient.clear();
+            } catch {
+              Alert.alert(
+                'Sign out incomplete',
+                "We couldn't clear your saved session from this device. Please try again.",
+              );
+            }
           },
         },
       ],
     );
   }, [setToken, queryClient, providerForAnalytics]);
+
+  // Don't flash the pairing screen at an already-paired user while the stored
+  // token is still hydrating from the secure store.
+  if (!tokenReady) {
+    return <View style={{flex: 1, backgroundColor: c.background}} />;
+  }
 
   if (!token) {
     return (

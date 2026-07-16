@@ -1,4 +1,6 @@
+import {Feather} from '@expo/vector-icons';
 import React, {useState} from 'react';
+import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 
 export interface MenuCardProps {
   id: string;
@@ -14,6 +16,15 @@ export interface MenuCardProps {
   tags: string;
 }
 
+type PurchaseTier = 'single' | 'trial' | 'weekly';
+
+/**
+ * Menu dish card. Re-ported from a web/DOM prototype into real React Native —
+ * the previous version used web DOM elements (<div>/<img>/<svg>) + Tailwind
+ * classNames, which are not valid RN components and would throw if rendered.
+ * Not yet wired into the app's navigation (see index.tsx); this is a valid,
+ * ready-to-use RN component.
+ */
 export const MenuCard: React.FC<MenuCardProps> = ({
   name,
   price,
@@ -25,239 +36,300 @@ export const MenuCard: React.FC<MenuCardProps> = ({
   imageUrl,
   protocol,
 }) => {
-  const [purchaseTier, setPurchaseTier] = useState<
-    'single' | 'trial' | 'weekly'
-  >('single');
+  const [purchaseTier, setPurchaseTier] = useState<PurchaseTier>('single');
   const [isAdded, setIsAdded] = useState(false);
 
-  // Apply D2C first-order discount metrics natively
-  const discountedTrialPrice = Math.round(price * 3 * 0.75); // 25% Off trial subscription
+  const discountedTrialPrice = Math.round(price * 3 * 0.75); // 25% off 3-day trial
   const weeklyPlanPrice =
-    protocol === 'Performance' ? 7490 : protocol === 'Clinical' ? 5990 : 5490; // Weekly subscription tiers
+    protocol === 'Performance' ? 7490 : protocol === 'Clinical' ? 5990 : 5490;
 
   const handleAddToCart = () => {
     setIsAdded(true);
-    setTimeout(() => {
-      setIsAdded(false);
-    }, 2000);
+    setTimeout(() => setIsAdded(false), 2000);
   };
 
+  const protocolColor =
+    protocol === 'Wellness'
+      ? COLORS.emerald500
+      : protocol === 'Performance'
+        ? COLORS.orange500
+        : COLORS.blue500;
+
+  const ctaLabel = isAdded
+    ? 'SUCCESSFULLY ADDED TO CART!'
+    : purchaseTier === 'single'
+      ? `ADD PORTION MEAL TO CART  ·  ₹${price}`
+      : purchaseTier === 'trial'
+        ? `ACTIVATE 3-DAY PROTOCOL TRIAL  ·  ₹${discountedTrialPrice}`
+        : `INITIATE SUBSCRIPTION AUTO-PAY  ·  ₹${weeklyPlanPrice}`;
+
   return (
-    <div className="mx-4 my-4 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
-      {/* Header Image and RD Advisory Board Trust Seal (CRO-06) */}
-      <div className="relative h-48 w-full bg-slate-100">
-        <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
-        <div className="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 flex items-center space-x-1 shadow-lg">
-          <svg
-            className="w-3.5 h-3.5 text-emerald-400"
-            fill="currentColor"
-            viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M2.166 4.9L10.9l7.834 4a2 2 0 011.166 1.8v5.6c0 4.14-3.36 7.5-7.5 7.5a7.48 7.48 0 01-7.5-7.5v-5.6c0-.72.466-1.36 1.166-1.8zM9 9a1 1 0 000 2h2a1 1 0 100-2H9z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <p className="text-[9px] text-white font-black tracking-wider uppercase">
-            RD Advisory Board Verified
-          </p>
-        </div>
+    <View style={styles.card}>
+      <View style={styles.imageWrap}>
+        <Image source={{uri: imageUrl}} style={styles.image} resizeMode="cover" />
+        <View style={styles.trustSeal}>
+          <Feather name="shield" size={12} color={COLORS.emerald400} />
+          <Text style={styles.trustSealText}>RD Advisory Board Verified</Text>
+        </View>
+        <View style={styles.protocolBadgeRow}>
+          <View style={[styles.protocolBadge, {backgroundColor: protocolColor}]}>
+            <Text style={styles.protocolBadgeText}>{protocol} Protocol</Text>
+          </View>
+        </View>
+      </View>
 
-        {/* Dynamic Protocol Badge */}
-        <div className="absolute bottom-3 left-3 flex space-x-1.5">
-          <span
-            className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider shadow-sm text-white ${
-              protocol === 'Wellness'
-                ? 'bg-emerald-500'
-                : protocol === 'Performance'
-                  ? 'bg-orange-500'
-                  : 'bg-blue-500'
-            }`}>
-            {protocol} Protocol
-          </span>
-        </div>
-      </div>
+      <View style={styles.body}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>{name}</Text>
+          <Text style={styles.price}>₹{price}</Text>
+        </View>
 
-      <div className="p-4 flex-1">
-        {/* Product Info */}
-        <div className="flex justify-between items-start mb-1.5">
-          <h3 className="text-sm font-extrabold text-slate-900 pr-4 leading-snug">
-            {name}
-          </h3>
-          <span className="text-sm font-black text-slate-900 whitespace-nowrap">
-            ₹{price}
-          </span>
-        </div>
+        <Text style={styles.description}>{description}</Text>
 
-        <p className="text-xs text-slate-500 leading-relaxed mb-3">
-          {description}
-        </p>
+        <View style={styles.macroRow}>
+          <MacroPill label="Calories" value={`${calories} kcal`} />
+          <MacroPill label="Protein" value={`${protein}g`} tint={COLORS.emerald700} labelTint={COLORS.emerald600} divider />
+          <MacroPill label="Carbs" value={`${carbs}g`} tint={COLORS.orange700} labelTint={COLORS.orange600} divider />
+          <MacroPill label="Fat" value={`${fat}g`} tint={COLORS.blue700} labelTint={COLORS.blue600} divider />
+        </View>
 
-        {/* Color-Coded Macronutrient Pills (CRO-04 overriding numeric cognitive density) */}
-        <div className="grid grid-cols-4 gap-1.5 py-2 px-2.5 bg-slate-50 rounded-xl mb-4 border border-slate-100/80 shadow-inner">
-          <div className="text-center">
-            <p className="text-[8px] text-slate-400 font-bold uppercase">
-              Calories
-            </p>
-            <p className="text-xs font-black text-slate-800">{calories} kcal</p>
-          </div>
-          <div className="text-center border-l border-slate-200">
-            <p className="text-[8px] text-emerald-600 font-bold uppercase">
-              Protein
-            </p>
-            <p className="text-xs font-black text-emerald-700">{protein}g</p>
-          </div>
-          <div className="text-center border-l border-slate-200">
-            <p className="text-[8px] text-orange-600 font-bold uppercase">
-              Carbs
-            </p>
-            <p className="text-xs font-black text-orange-700">{carbs}g</p>
-          </div>
-          <div className="text-center border-l border-slate-200">
-            <p className="text-[8px] text-blue-600 font-bold uppercase">Fat</p>
-            <p className="text-xs font-black text-blue-700">{fat}g</p>
-          </div>
-        </div>
+        <View style={styles.tierBlock}>
+          <Text style={styles.tierHeading}>SELECT PROGRAM PREFERENCE</Text>
 
-        {/* CRO-05: Multi-Tier Purchase Selection to maximize Average Order Value */}
-        <div className="space-y-2.5 mb-4 border-t border-b border-slate-100 py-3.5">
-          <p className="text-[10px] font-black tracking-wider text-slate-500 uppercase block">
-            SELECT PROGRAM PREFERENCE
-          </p>
+          <TierOption
+            selected={purchaseTier === 'single'}
+            onPress={() => setPurchaseTier('single')}
+            accent={COLORS.slate900}
+            title="Single Portion Meal"
+            subtitle="Includes baseline thermodynamic profile"
+            price={`₹${price}`}
+          />
+          <TierOption
+            selected={purchaseTier === 'trial'}
+            onPress={() => setPurchaseTier('trial')}
+            accent={COLORS.emerald500}
+            title="Start 3-Day Protocol Trial"
+            badge="25% OFF"
+            subtitle="Perfect clinical testing window"
+            price={`₹${discountedTrialPrice}`}
+          />
+          <TierOption
+            selected={purchaseTier === 'weekly'}
+            onPress={() => setPurchaseTier('weekly')}
+            accent={COLORS.indigo500}
+            title="Subscribe & Save (Weekly Protocol)"
+            subtitle="Same-day delivery, swap dishes anytime"
+            price={`₹${weeklyPlanPrice}/wk`}
+          />
+        </View>
 
-          <div className="space-y-2">
-            {/* Single Serving portion */}
-            <button
-              onClick={() => setPurchaseTier('single')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 text-left ${
-                purchaseTier === 'single'
-                  ? 'border-slate-900 bg-slate-50'
-                  : 'border-slate-100 bg-white hover:border-slate-200'
-              }`}>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  checked={purchaseTier === 'single'}
-                  onChange={() => setPurchaseTier('single')}
-                  className="accent-slate-900 h-4 w-4"
-                />
-                <div>
-                  <p className="text-xs font-bold text-slate-800">
-                    Single Portion Meal
-                  </p>
-                  <p className="text-[10px] text-slate-500">
-                    Includes baseline thermodynamic profile
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-extrabold text-slate-800">
-                ₹{price}
-              </span>
-            </button>
-
-            {/* 3-Day Trial Option */}
-            <button
-              onClick={() => setPurchaseTier('trial')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 text-left ${
-                purchaseTier === 'trial'
-                  ? 'border-emerald-500 bg-emerald-50/10'
-                  : 'border-slate-100 bg-white hover:border-slate-200'
-              }`}>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  checked={purchaseTier === 'trial'}
-                  onChange={() => setPurchaseTier('trial')}
-                  className="accent-emerald-500 h-4 w-4"
-                />
-                <div>
-                  <div className="flex items-center space-x-1.5">
-                    <p className="text-xs font-bold text-slate-800">
-                      Start 3-Day Protocol Trial
-                    </p>
-                    <span className="bg-emerald-500 text-white text-[8px] px-1 py-0.2 rounded font-black uppercase">
-                      25% OFF
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-500">
-                    Perfect clinical testing window
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-extrabold text-slate-800">
-                ₹{discountedTrialPrice}
-              </span>
-            </button>
-
-            {/* Weekly Recurring Program Subscription */}
-            <button
-              onClick={() => setPurchaseTier('weekly')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 text-left ${
-                purchaseTier === 'weekly'
-                  ? 'border-indigo-500 bg-indigo-50/10'
-                  : 'border-slate-100 bg-white hover:border-slate-200'
-              }`}>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  checked={purchaseTier === 'weekly'}
-                  onChange={() => setPurchaseTier('weekly')}
-                  className="accent-indigo-500 h-4 w-4"
-                />
-                <div>
-                  <p className="text-xs font-bold text-slate-800">
-                    Subscribe & Save (Weekly Protocol)
-                  </p>
-                  <p className="text-[10px] text-slate-500">
-                    Same-day delivery, swap dishes anytime
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-extrabold text-slate-800">
-                ₹{weeklyPlanPrice}/wk
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* CTA Button Action */}
-        <div className="space-y-2">
-          <button
-            onClick={handleAddToCart}
-            className={`w-full py-3.5 rounded-xl text-xs font-black tracking-wider transition-all duration-150 flex items-center justify-center shadow-lg ${
-              isAdded
-                ? 'bg-emerald-500 text-white shadow-emerald-500/10'
-                : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10'
-            }`}>
-            {isAdded ? (
-              <span className="flex items-center justify-center space-x-1.5 animate-bounce">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                <span>SUCCESSFULLY ADDED TO CART!</span>
-              </span>
-            ) : (
-              <span>
-                {purchaseTier === 'single' &&
-                  `ADD PORTION MEAL TO CART  ·  ₹${price}`}
-                {purchaseTier === 'trial' &&
-                  `ACTIVATE 3-DAY PROTOCOL TRIAL  ·  ₹${discountedTrialPrice}`}
-                {purchaseTier === 'weekly' &&
-                  `INITIATE SUBSCRIPTION AUTO-PAY  ·  ₹${weeklyPlanPrice}`}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
+        <Pressable
+          onPress={handleAddToCart}
+          style={[styles.cta, isAdded ? styles.ctaAdded : styles.ctaDefault]}>
+          {isAdded ? (
+            <View style={styles.ctaAddedRow}>
+              <Feather name="check" size={16} color={COLORS.white} />
+              <Text style={styles.ctaText}>{ctaLabel}</Text>
+            </View>
+          ) : (
+            <Text style={styles.ctaText}>{ctaLabel}</Text>
+          )}
+        </Pressable>
+      </View>
+    </View>
   );
 };
+
+function MacroPill({
+  label,
+  value,
+  tint,
+  labelTint,
+  divider,
+}: {
+  label: string;
+  value: string;
+  tint?: string;
+  labelTint?: string;
+  divider?: boolean;
+}) {
+  return (
+    <View style={[styles.macroPill, divider && styles.macroPillDivider]}>
+      <Text style={[styles.macroLabel, labelTint ? {color: labelTint} : null]}>
+        {label}
+      </Text>
+      <Text style={[styles.macroValue, tint ? {color: tint} : null]}>{value}</Text>
+    </View>
+  );
+}
+
+function TierOption({
+  selected,
+  onPress,
+  accent,
+  title,
+  subtitle,
+  price,
+  badge,
+}: {
+  selected: boolean;
+  onPress: () => void;
+  accent: string;
+  title: string;
+  subtitle: string;
+  price: string;
+  badge?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.tierOption,
+        {borderColor: selected ? accent : COLORS.slate100},
+        selected && styles.tierOptionSelected,
+      ]}>
+      <View style={styles.tierOptionLeft}>
+        <View style={[styles.radioOuter, {borderColor: selected ? accent : COLORS.slate300}]}>
+          {selected ? <View style={[styles.radioInner, {backgroundColor: accent}]} /> : null}
+        </View>
+        <View style={styles.tierOptionCopy}>
+          <View style={styles.tierTitleRow}>
+            <Text style={styles.tierTitle}>{title}</Text>
+            {badge ? (
+              <View style={styles.tierBadge}>
+                <Text style={styles.tierBadgeText}>{badge}</Text>
+              </View>
+            ) : null}
+          </View>
+          <Text style={styles.tierSubtitle}>{subtitle}</Text>
+        </View>
+      </View>
+      <Text style={styles.tierPrice}>{price}</Text>
+    </Pressable>
+  );
+}
+
+const COLORS = {
+  white: '#FFFFFF',
+  slate900: '#0F172A',
+  slate800: '#1E293B',
+  slate500: '#64748B',
+  slate400: '#94A3B8',
+  slate300: '#CBD5E1',
+  slate200: '#E2E8F0',
+  slate100: '#F1F5F9',
+  slate50: '#F8FAFC',
+  emerald700: '#047857',
+  emerald600: '#059669',
+  emerald500: '#10B981',
+  emerald400: '#34D399',
+  orange700: '#C2410C',
+  orange600: '#EA580C',
+  orange500: '#F97316',
+  blue700: '#1D4ED8',
+  blue600: '#2563EB',
+  blue500: '#3B82F6',
+  indigo500: '#6366F1',
+};
+
+const styles = StyleSheet.create({
+  card: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: COLORS.slate100,
+    overflow: 'hidden',
+  },
+  imageWrap: {height: 192, width: '100%', backgroundColor: COLORS.slate100},
+  image: {width: '100%', height: '100%'},
+  trustSeal: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15,23,42,0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  trustSealText: {fontSize: 9, color: COLORS.white, fontWeight: '800', letterSpacing: 0.5},
+  protocolBadgeRow: {position: 'absolute', bottom: 12, left: 12, flexDirection: 'row'},
+  protocolBadge: {paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8},
+  protocolBadgeText: {fontSize: 9, fontWeight: '700', color: COLORS.white, letterSpacing: 0.8},
+
+  body: {padding: 16},
+  titleRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6},
+  title: {flex: 1, fontSize: 14, fontWeight: '800', color: COLORS.slate900, paddingRight: 16, lineHeight: 18},
+  price: {fontSize: 14, fontWeight: '900', color: COLORS.slate900},
+  description: {fontSize: 12, color: COLORS.slate500, lineHeight: 18, marginBottom: 12},
+
+  macroRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.slate50,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.slate100,
+    marginBottom: 16,
+  },
+  macroPill: {flex: 1, alignItems: 'center'},
+  macroPillDivider: {borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: COLORS.slate200},
+  macroLabel: {fontSize: 8, fontWeight: '700', textTransform: 'uppercase', color: COLORS.slate400},
+  macroValue: {fontSize: 12, fontWeight: '900', color: COLORS.slate800, marginTop: 2},
+
+  tierBlock: {
+    marginBottom: 16,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COLORS.slate100,
+    gap: 8,
+  },
+  tierHeading: {fontSize: 10, fontWeight: '900', letterSpacing: 1, color: COLORS.slate500, marginBottom: 2},
+  tierOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    backgroundColor: COLORS.white,
+  },
+  tierOptionSelected: {backgroundColor: COLORS.slate50},
+  tierOptionLeft: {flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1},
+  radioOuter: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioInner: {width: 8, height: 8, borderRadius: 4},
+  tierOptionCopy: {flex: 1},
+  tierTitleRow: {flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'},
+  tierTitle: {fontSize: 12, fontWeight: '700', color: COLORS.slate800},
+  tierBadge: {backgroundColor: COLORS.emerald500, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4},
+  tierBadgeText: {color: COLORS.white, fontSize: 8, fontWeight: '900', letterSpacing: 0.5},
+  tierSubtitle: {fontSize: 10, color: COLORS.slate500, marginTop: 2},
+  tierPrice: {fontSize: 12, fontWeight: '800', color: COLORS.slate800, marginLeft: 8},
+
+  cta: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaDefault: {backgroundColor: COLORS.slate900},
+  ctaAdded: {backgroundColor: COLORS.emerald500},
+  ctaAddedRow: {flexDirection: 'row', alignItems: 'center', gap: 6},
+  ctaText: {fontSize: 12, fontWeight: '900', letterSpacing: 1, color: COLORS.white, textAlign: 'center'},
+});
