@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ShieldCheck, Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 import { usePreferences } from "@/lib/preferencesContext";
 
 export interface MacroData {
@@ -18,7 +17,10 @@ interface MacroOverlayProps {
   sodiumMg?: number;
 }
 
-export default function MacroOverlay({ macros, rdVerified = false, compact = false, sodiumMg }: MacroOverlayProps) {
+// NOTE: `rdVerified` is intentionally NOT rendered. No dish carries a reviewer
+// id / date record, so an "RD Verified" badge is an unbacked claim (audit T2.1).
+// The prop stays for caller compatibility until a real review record exists.
+export default function MacroOverlay({ macros, compact = false, sodiumMg }: MacroOverlayProps) {
   const { preferences } = usePreferences();
   const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
   const total = macros.protein + macros.carbs + macros.fat;
@@ -128,32 +130,12 @@ export default function MacroOverlay({ macros, rdVerified = false, compact = fal
           </div>
         </div>
 
-        {rdVerified && (
-          <div className="ml-auto pl-1 border-l border-clinical-border/20 flex items-center shrink-0">
-            <Badge
-              variant="outline"
-              className="h-6 px-1 text-[8px] border-clinical-sage/30 text-clinical-sage gap-0.5 bg-clinical-sage/15 rounded-md font-bold"
-              aria-label="Verified by Tanmatra Registered Dietitian advisory board"
-            >
-              <ShieldCheck className="w-2.5 h-2.5" aria-hidden="true" />
-              RD
-            </Badge>
-          </div>
-        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {/* RD Badge */}
-      {rdVerified && (
-        <Badge className="bg-clinical-sage/15 text-clinical-sage border-clinical-sage/30 hover:bg-clinical-sage/20 gap-1.5 text-[10px] h-6">
-          <ShieldCheck className="w-3 h-3" />
-          RD Advisory Board Verified
-        </Badge>
-      )}
-
       {/* Calorie badge */}
       <div className="flex items-center gap-2">
         <Flame className="w-4 h-4 text-orange-400" />

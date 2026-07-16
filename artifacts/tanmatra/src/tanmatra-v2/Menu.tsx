@@ -654,7 +654,6 @@ export default function V2Menu() {
                     <div className="hbody">
                       <div className="fx ac g6 mb4">
                         <span className="vtag"><span className={dish.isVeg ? "vd" : "vd nv"} />{dish.isVeg ? "VEG" : "NON-VEG"}</span>
-                        {dish.rdVerified && <span className="pill sg" style={{ padding: "2px 6px" }}><i className="ph-fill ph-seal-check" /></span>}
                       </div>
                       <Link to={`/dish/${dish.slug}`} className="small clamp1" style={{ fontWeight: 600, display: "block" }}>{dish.name}</Link>
                       <div className="mono" style={{ fontSize: 10, color: "var(--fnt)" }}>
