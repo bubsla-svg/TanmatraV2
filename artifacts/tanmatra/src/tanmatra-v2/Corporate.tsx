@@ -20,6 +20,14 @@ export default function V2Corporate() {
   const [budgetRupees, setBudgetRupees] = useState("3000");
   const [creating, setCreating] = useState(false);
   const [unauthorized, setUnauthorized] = useState(false);
+  // Marketing "Request Corporate Proposal" lead form (shown to unauthenticated
+  // visitors). No lead API exists yet, so it hands the inquiry to the
+  // partnerships WhatsApp line with the details pre-filled — the lead is never
+  // silently dropped.
+  const [leadName, setLeadName] = useState("");
+  const [leadCompany, setLeadCompany] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadHeadcount, setLeadHeadcount] = useState("10 - 50 employees");
 
   useEffect(() => {
     corporateApi
@@ -98,31 +106,48 @@ export default function V2Corporate() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  toast.success("Lead registered! Our enterprise team will email your proposal shortly.");
+                  if (!leadName.trim() || !leadCompany.trim() || !leadEmail.trim()) {
+                    toast.error("Please fill in all details");
+                    return;
+                  }
+                  const message = [
+                    "Corporate plan inquiry — Tanmatra",
+                    `Contact: ${leadName}`,
+                    `Company: ${leadCompany}`,
+                    `Work email: ${leadEmail}`,
+                    `Headcount: ${leadHeadcount}`,
+                  ].join("\n");
+                  window.open(
+                    `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
+                    "_blank",
+                    "noopener,noreferrer",
+                  );
+                  toast.success("Almost done — send the pre-filled WhatsApp message and our enterprise team will follow up.");
                 }}
               >
                 <div className="lab mb6">Contact Name</div>
                 <div className="inp mb12">
                   <i className="ph-bold ph-user" />
-                  <input placeholder="HR Manager / Admin" required />
+                  <input placeholder="HR Manager / Admin" required value={leadName} onChange={(e) => setLeadName(e.target.value)} />
                 </div>
 
                 <div className="lab mb6">Company Name</div>
                 <div className="inp mb12">
                   <i className="ph-bold ph-buildings" />
-                  <input placeholder="e.g. Acme Corp" required />
+                  <input placeholder="e.g. Acme Corp" required value={leadCompany} onChange={(e) => setLeadCompany(e.target.value)} />
                 </div>
 
                 <div className="lab mb6">Work Email</div>
                 <div className="inp mb12">
                   <i className="ph-bold ph-envelope-simple" />
-                  <input type="email" placeholder="hr@acme.com" required />
+                  <input type="email" placeholder="hr@acme.com" required value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} />
                 </div>
 
                 <div className="lab mb6">Estimated Headcount</div>
                 <select
                   className="mb12"
-                  defaultValue="10 - 50 employees"
+                  value={leadHeadcount}
+                  onChange={(e) => setLeadHeadcount(e.target.value)}
                   style={{
                     height: 46,
                     width: "100%",

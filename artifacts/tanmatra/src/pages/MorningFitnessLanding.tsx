@@ -48,8 +48,25 @@ export default function MorningFitnessLanding() {
       toast.error("Please fill in all details");
       return;
     }
+    // No partner-lead API exists yet — hand the inquiry to our real
+    // partnerships channel (the WhatsApp business line published on the
+    // Refunds & Grievance page) with the details pre-filled, so the lead is
+    // never silently dropped.
+    const message = [
+      "Morning fitness club partnership — Tanmatra",
+      `Club / team: ${clubName}`,
+      `Contact: ${contactName}`,
+      `City: ${city}`,
+      `Members: ${membersCount}`,
+      `WhatsApp: ${whatsapp}`,
+    ].join("\n");
+    window.open(
+      `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
     setSubmitted(true);
-    toast.success("Morning Club proposal submitted! We'll coordinate your sample breakfast setup.");
+    toast.success("Almost done — send the pre-filled WhatsApp message to reach our partnerships team.");
   };
 
   return (
@@ -208,9 +225,9 @@ export default function MorningFitnessLanding() {
               {submitted ? (
                 <div className="text-center py-10 space-y-4">
                   <CheckCircle className="w-16 h-16 mx-auto text-clinical-sage" />
-                  <h3 className="text-2xl font-bold text-white">Proposal Received!</h3>
+                  <h3 className="text-2xl font-bold text-white">Sent to WhatsApp</h3>
                   <p className="text-sm text-clinical-zinc max-w-sm mx-auto">
-                    We will review the drop-off logistics for your meetup point and coordinate your trial breakfast morning. Expect a call shortly.
+                    We've opened WhatsApp with your details pre-filled. Send the message and our partnerships team will coordinate your trial breakfast morning.
                   </p>
                   <Button 
                     onClick={() => setSubmitted(false)}

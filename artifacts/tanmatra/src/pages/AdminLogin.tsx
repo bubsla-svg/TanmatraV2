@@ -41,14 +41,6 @@ export default function AdminLogin() {
         error?: string;
       };
       if (!res.ok || !data.ok) {
-        if (username.toLowerCase() === "admin" || username.toLowerCase() === "ops" || password === "tanmatra" || password === "admin") {
-          try {
-            window.localStorage.setItem(ADMIN_KEY, "1");
-          } catch {}
-          toast.success("Signed in as Admin (demo mode)");
-          navigate(next, { replace: true });
-          return;
-        }
         const msg =
           data.error ||
           (res.status === 401
@@ -68,14 +60,6 @@ export default function AdminLogin() {
       toast.success("Welcome back, admin");
       navigate(next, { replace: true });
     } catch (err) {
-      if (username.toLowerCase() === "admin" || username.toLowerCase() === "ops" || password === "tanmatra" || password === "admin") {
-        try {
-          window.localStorage.setItem(ADMIN_KEY, "1");
-        } catch {}
-        toast.success("Signed in as Admin (demo mode)");
-        navigate(next, { replace: true });
-        return;
-      }
       const msg = err instanceof Error ? err.message : "Network error";
       setError(msg);
       toast.error(msg);
