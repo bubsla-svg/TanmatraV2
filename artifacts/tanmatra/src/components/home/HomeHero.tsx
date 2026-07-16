@@ -33,9 +33,17 @@ const TRUST_GRID: { icon: Icon; label: string }[] = [
 
 export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
   return (
-    <section className="w-full bg-[var(--tnm-surface-ink)] py-20 md:py-28 px-4 md:px-6 relative overflow-hidden">
-      {/* Background Radial Glow Mesh */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[var(--tnm-action)]/10 via-purple-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+    <section className="w-full bg-[var(--tnm-surface-ink)] pt-32 pb-20 md:pt-36 md:pb-28 px-4 md:px-6 relative overflow-hidden">
+      {/* Ambient food-imagery wash — rich but low-contrast so copy stays legible */}
+      <img
+        src="/hero-food.jpg"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover opacity-[0.07] blur-2xl scale-110 pointer-events-none select-none"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-[var(--tnm-surface-ink)]/40 via-transparent to-[var(--tnm-surface-ink)] pointer-events-none" />
+      {/* Single warm amber glow (no AI-purple mesh) */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[var(--tnm-action)]/12 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       <div className="mx-auto max-w-[540px] md:max-w-[820px] relative z-10">
         {/* Double-Bezel (Doppelrand) Outer Shell Container */}

@@ -154,6 +154,19 @@ interface ScheduleDay {
   rdTip?: string;
 }
 
+// Human step titles for the plan-builder header — no dev-speak ("Stepper —
+// Step 0"), so the buyer always knows where they are and what's next.
+const STEP_TITLES = [
+  "Your plan",
+  "Meals per week",
+  "Plan duration",
+  "Billing",
+  "Delivery schedule",
+  "Week-1 preview",
+  "Review order",
+  "Payment",
+] as const;
+
 // Persist the in-progress subscription build so the browser Back button, a
 // reload, or navigating away and returning does not wipe the buyer's config
 // (State-Amnesia remediation). Scoped to the tab session; cleared on success.
@@ -1713,13 +1726,26 @@ export default function V2Subscribe() {
             </Link>
           )}
           <div className="abt">
-            {step === 8
-              ? "Checkout Confirmed"
-              : isTrial
-              ? `Trial Checkout — Step ${step}`
-              : `Subscription Stepper — Step ${step + 1}`}
+            <span style={{ display: "block" }}>
+              {step === 8 ? "Order confirmed" : STEP_TITLES[step]}
+            </span>
+            {step < 8 && (
+              <span className="lab" style={{ display: "block", marginTop: 2 }}>
+                Step {step + 1} of 8{isTrial ? " · Trial" : ""}
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Wizard progress — always-visible sense of place (CRO: reduces
+            abandonment from "how much longer?" uncertainty). */}
+        {step < 8 && (
+          <div className="segs padx shrink-0" aria-hidden="true" style={{ marginTop: 2 }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span key={i} className={i <= step ? "seg on" : "seg"} />
+            ))}
+          </div>
+        )}
 
         <div className="content padx flex-1 pt-4">
           {step === 0 && renderS1Recommendation()}

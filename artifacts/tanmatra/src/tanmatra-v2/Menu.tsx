@@ -231,6 +231,7 @@ export default function V2Menu() {
 
   const { addItem, addBundleSlug } = useCart();
   const { open: openCart } = useCartDrawer();
+  const cartBadgeCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
   const { preferences, unauthorized } = usePreferences();
   const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
   const [hasSavedAddress, setHasSavedAddress] = useState(false);
@@ -530,6 +531,36 @@ export default function V2Menu() {
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
           <h1 className="abt">{activeProtocol ? `${PROTOCOL_LABELS[activeProtocol]} Program` : "Menu"}</h1>
           <button className="iconbtn" onClick={() => setShowSearch((s) => !s)} aria-label="Search"><i className="ph-bold ph-magnifying-glass" /></button>
+          <button
+            className="iconbtn"
+            style={{ position: "relative" }}
+            onClick={openCart}
+            aria-label={`Cart, ${cartBadgeCount} item${cartBadgeCount === 1 ? "" : "s"}`}
+          >
+            <i className="ph-bold ph-shopping-bag" />
+            {cartBadgeCount > 0 && (
+              <span
+                className="tnm-data"
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  right: 4,
+                  minWidth: 16,
+                  height: 16,
+                  padding: "0 4px",
+                  borderRadius: 999,
+                  background: "var(--saf)",
+                  color: "var(--onsaf)",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  lineHeight: "16px",
+                  textAlign: "center",
+                }}
+              >
+                {cartBadgeCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {showSearch && (
