@@ -9,7 +9,7 @@ const B = ({ children }: any) => <strong style={{ color: "var(--tx)", fontWeight
 
 export default function V2Privacy() {
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
         {/* App bar */}
         <div className="appbar">
