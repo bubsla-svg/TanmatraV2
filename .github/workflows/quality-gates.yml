@@ -16,6 +16,7 @@ on:
       - "scripts/lint-prices.ts"
       - "scripts/lint-geography.ts"
       - "scripts/src/verify-dish-integrity.ts"
+      - "scripts/src/verify-allergen-gate.ts"
       - "lib/**"
       - ".github/workflows/quality-gates.yml"
   workflow_dispatch: {}
@@ -50,6 +51,9 @@ jobs:
       # or a cold smoothie carrying "reheat" copy). Source-scanning, no build.
       - name: Gate — dish-data integrity
         run: pnpm --filter "@workspace/scripts" run verify-dish-integrity
+
+      - name: Gate — allergen fail-closed safety engine (G9 / REM-V1-01)
+        run: pnpm --filter "@workspace/scripts" run verify-allergen-gate
 
       # Build once; the geography lint and SSR checker scan build/client.
       - name: Build SPA
