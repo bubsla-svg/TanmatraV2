@@ -251,9 +251,13 @@
   --color-nn-on-surface-variant: #d3c5ac;
   --color-nn-primary: #fbbf24;          /* amber-saffron (primary-container) */
   --color-nn-on-primary: #402d00;
+  --color-nn-on-primary-container: #6c4f00;
+  --color-nn-secondary: #c6c6c7;
+  --color-nn-surface-low: #1b1b1b;      /* surface-container-low (sheets) */
   --color-nn-tertiary: #34daff;         /* electric cyan (tertiary-container) */
   --color-nn-outline: #9c8f79;
   --color-nn-error: #ffb4ab;
+  --color-nn-error-container: #93000a;  /* dark-red exclusion tints */
 
   /* ─── Motion tokens (mirrored in lib/motion.ts) ─── */
   --duration-instant: 80ms;
