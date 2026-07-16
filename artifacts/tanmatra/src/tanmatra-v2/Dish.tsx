@@ -810,14 +810,10 @@ export default function V2Dish() {
           </div>
         </div>
 
-        {/* 4.2 Persistent Allergen line pinned above bottom bar */}
-        <div
-          className="fixed inset-x-0 bg-[var(--tnm-surface-ink)]/95 backdrop-blur-md border-t border-white/5 py-2.5 px-4 z-[890] flex items-center gap-2"
-          style={{ bottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}
-        >
-          <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--tnm-alert)]">Allergen Safety:</span>
-          <AllergenSummaryValue meal={meal} className="text-xs text-white/80 font-medium truncate" />
-        </div>
+        {/* The allergen disclosure lives in the in-flow card near the title
+            (AllergenSummaryValue there is the honest, fail-closed source). A
+            second fixed copy pinned above the bottom bar duplicated it on every
+            PDP and fought the CTA for thumb-zone space — removed. */}
 
         {/* 6. Consolidated sticky bottom bar (state machine context: pdp) */}
         <StickyBottomBar
