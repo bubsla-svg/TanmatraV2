@@ -310,15 +310,23 @@ export default function Billing() {
 
       {/* Confirmation Modals */}
       {confirmModal && (
-        <div className="modal-backdrop">
-          <div className="bg-white w-full rounded-t-2xl p-6" style={{ maxWidth: 480, animation: "slideUp 0.2s ease-out" }}>
+        <div
+          className="tnm2 nn bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          onClick={() => setConfirmModal(null)}
+        >
+          <div
+            className="card w-full p-6"
+            style={{ maxWidth: 480, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="h3 font-bold mb10" style={{ color: "var(--tx)" }}>
               {confirmModal === "skip" && "Skip Next Week?"}
               {confirmModal === "pause" && "Pause Plan?"}
               {confirmModal === "cancel" && "Cancel Plan?"}
             </h3>
             
-            <p className="fine mb20 text-stone-500" style={{ fontSize: 12 }}>
+            <p className="fine mb20" style={{ fontSize: 12, color: "var(--mut)" }}>
               {confirmModal === "skip" && "Are you sure you want to skip next week's delivery? The skipped meals will be refunded to your account balance as credits."}
               {confirmModal === "pause" && "This will temporarily pause your active deliveries. You can resume them at any time from your settings."}
               {confirmModal === "cancel" && "Are you sure you want to cancel your plan? This action will stop all future recurring payments. Any remaining paid credits will stay in your wallet."}
@@ -338,7 +346,8 @@ export default function Billing() {
                 <button
                   disabled={actionLoading}
                   onClick={handlePause}
-                  className="btn w100 text-center py12 text-white bg-amber-600 hover:bg-amber-700"
+                  className="btn w100 text-center py12"
+                  style={{ background: "var(--safd)", color: "var(--safb)", border: "1px solid var(--saf)" }}
                 >
                   {actionLoading ? "Pausing..." : "Yes, pause plan (Confirm)"}
                 </button>
@@ -347,7 +356,8 @@ export default function Billing() {
                 <button
                   disabled={actionLoading}
                   onClick={handleCancel}
-                  className="btn w100 text-center py12 text-white bg-red-600 hover:bg-red-700"
+                  className="btn w100 text-center py12 dgrc"
+                  style={{ background: "var(--dgrd)", border: "1px solid var(--dgr)" }}
                 >
                   {actionLoading ? "Cancelling..." : "Yes, cancel plan (Confirm)"}
                 </button>
