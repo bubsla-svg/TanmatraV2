@@ -33,7 +33,7 @@ const TRUST_GRID: { icon: Icon; label: string }[] = [
 
 export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
   return (
-    <section className="w-full bg-[var(--tnm-surface-ink)] pt-24 pb-20 md:pt-32 md:pb-28 px-4 md:px-6 relative overflow-hidden">
+    <section className="w-full bg-[var(--tnm-surface-ink)] pt-32 pb-20 md:pt-36 md:pb-28 px-4 md:px-6 relative overflow-hidden">
       {/* Ambient food-imagery wash — rich but low-contrast so copy stays legible */}
       <img
         src="/hero-food.jpg"
