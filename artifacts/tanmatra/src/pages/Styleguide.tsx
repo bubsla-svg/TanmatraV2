@@ -31,6 +31,13 @@ const swatches = [
   { name: "clinical-sage", token: "--color-clinical-sage", value: toHex("7D9E7E") },
   { name: "clinical-slate", token: "--color-clinical-slate", value: toHex("334155") },
   { name: "clinical-zinc", token: "--color-clinical-zinc", value: toHex("A1A1AA") },
+  // ── Nocturnal Nourishment (Stitch design system) — approved brand tokens ──
+  { name: "nn-primary (amber)", token: "--color-nn-primary", value: toHex("fbbf24") },
+  { name: "nn-tertiary (cyan)", token: "--color-nn-tertiary", value: toHex("34daff") },
+  { name: "nn-bg", token: "--color-nn-bg", value: toHex("131313") },
+  { name: "nn-surface", token: "--color-nn-surface", value: toHex("1f1f1f") },
+  { name: "nn-on-surface", token: "--color-nn-on-surface", value: toHex("e2e2e2") },
+  { name: "nn-on-surface-variant", token: "--color-nn-on-surface-variant", value: toHex("d3c5ac") },
   { name: "destructive", token: "--color-destructive", value: toHsl("0 72% 51%") },
 ];
 
