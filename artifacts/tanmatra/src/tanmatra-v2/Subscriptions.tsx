@@ -144,7 +144,7 @@ function Shell({
   rightHref?: string;
 }) {
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -492,7 +492,7 @@ export default function V2Subscriptions() {
       {/* Edit delivery window */}
       {windowEditOpen && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setWindowEditOpen(false)}
         >
@@ -543,7 +543,7 @@ export default function V2Subscriptions() {
       {/* Reschedule delivery */}
       {reschedDelivery !== null && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setReschedDelivery(null)}
         >
@@ -608,7 +608,7 @@ export default function V2Subscriptions() {
       {/* ------ Cancel confirmation (destructive) ------ */}
       {cancelConfirmOpen && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setCancelConfirmOpen(false)}
         >
@@ -649,7 +649,7 @@ export default function V2Subscriptions() {
       {/* ------ Skip-delivery confirmation ------ */}
       {skipConfirm !== null && (
         <div
-          className="tnm2 bg-black/60"
+          className="tnm2 nn bg-black/60"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSkipConfirm(null)}
         >
@@ -1146,7 +1146,7 @@ function SwapDialog({
 
   return (
     <div
-      className="tnm2 bg-black/60"
+      className="tnm2 nn bg-black/60"
       style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={() => onClose()}
     >

@@ -523,7 +523,7 @@ export default function V2Menu() {
   const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length + excludedAllergens.length;
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
         {/* App bar */}
         <div className="appbar">

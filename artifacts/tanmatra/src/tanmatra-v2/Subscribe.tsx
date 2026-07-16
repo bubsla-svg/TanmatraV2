@@ -694,7 +694,7 @@ export default function V2Subscribe() {
     // (isMounted starts false), so server and client markup match — no
     // hydration mismatch.
     return (
-      <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)] text-white">
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white">
         <div className="max-w-[480px] mx-auto min-h-screen flex flex-col px-4 pt-16">
           <h1 className="text-xl font-bold text-white/95 leading-tight">
             Build your subscription
@@ -1595,7 +1595,7 @@ export default function V2Subscribe() {
   };
 
   return (
-    <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)] text-white select-none">
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white select-none">
       <div className="max-w-[480px] mx-auto min-h-screen flex flex-col pb-24">
         {/* Stepper App Header */}
         <div className="appbar shrink-0">

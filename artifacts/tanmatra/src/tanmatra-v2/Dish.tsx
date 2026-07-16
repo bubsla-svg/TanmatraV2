@@ -236,7 +236,7 @@ export default function V2Dish() {
 
   if (!meal) {
     return (
-      <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)]">
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)]">
         <div className="max-w-[480px] mx-auto min-h-screen">
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
@@ -363,7 +363,7 @@ export default function V2Dish() {
   };
 
   return (
-    <div className="tnm2 min-h-screen bg-[var(--tnm-surface-ink)] text-white">
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white">
       <div className="max-w-[480px] mx-auto min-h-screen relative flex flex-col pb-[140px]">
         {/* Header App Bar Overlay */}
         <div className="absolute top-0 inset-x-0 flex items-center justify-between p-4 z-20">
