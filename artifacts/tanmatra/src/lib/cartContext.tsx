@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { create } from "zustand";
 import { calculateCartTotals } from "./cartMath";
+import { track } from "./analytics";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface CartItem {
@@ -54,7 +55,12 @@ export const useCartStore = create<CartState>()(
       bundleSlugs: [],
       isDrawerOpen: false,
       addStatus: {},
-      addItem: (item) =>
+      addItem: (item) => {
+        track("add_to_cart", {
+          dishId: item.dishId,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+        });
         set((state) => {
           const existing = state.items.find(
             (p) =>
@@ -72,7 +78,8 @@ export const useCartStore = create<CartState>()(
           }
           const lineId = `line-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
           return { items: [...state.items, { ...item, lineId }] };
-        }),
+        });
+      },
       updateQty: (lineId, delta) =>
         set((state) => {
           const nextItems = state.items

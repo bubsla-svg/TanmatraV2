@@ -3,6 +3,7 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration, useMatches, useLocatio
 import type { LinksFunction, MetaFunction } from "react-router";
 import { API_BASE } from "@/lib/apiBase";
 import { Toaster } from "sonner";
+import NetworkStatusToast from "./components/NetworkStatusToast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider, useCart } from "@/lib/cartContext";
@@ -299,6 +300,7 @@ export default function Root() {
                   <ScrollToTop />
                   <AppShellInner />
                   <Toaster theme="dark" position="top-center" richColors offset={72} />
+                  <NetworkStatusToast />
                 </PreferencesProvider>
               </OrdersProvider>
             </CartProvider>
