@@ -34,6 +34,7 @@ import { track } from "@/lib/analytics";
  */
 
 const SHOWN_KEY_PREFIX = "tanmatra:postcheckout-wizard-shown:";
+const DRAFT_KEY_PREFIX = "tanmatra:postcheckout-wizard-draft:";
 
 const GOALS: WellnessGoal[] = [
   "lose_weight",
@@ -93,6 +94,43 @@ export function PostCheckoutWizard({ orderId }: { orderId: string | undefined })
   const [conditions, setConditions] = useState<string[]>([]);
   const [calorieTarget, setCalorieTarget] = useState("");
   const [proteinTarget, setProteinTarget] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+
+  // Rehydrate any draft from a prior (interrupted) visit for THIS order, so a
+  // user who left mid-wizard returns to their answers instead of a blank form.
+  useEffect(() => {
+    if (!orderId || hydrated || typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(DRAFT_KEY_PREFIX + orderId);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d.goal) setGoal(d.goal);
+        if (d.activityLevel) setActivityLevel(d.activityLevel);
+        if (d.dietaryStyle) setDietaryStyle(d.dietaryStyle);
+        if (Array.isArray(d.conditions)) setConditions(d.conditions);
+        if (typeof d.calorieTarget === "string") setCalorieTarget(d.calorieTarget);
+        if (typeof d.proteinTarget === "string") setProteinTarget(d.proteinTarget);
+        if (typeof d.step === "number" && d.step >= 1 && d.step <= TOTAL_STEPS) setStep(d.step);
+      }
+    } catch {
+      /* corrupt draft — ignore and start fresh */
+    }
+    setHydrated(true);
+  }, [orderId, hydrated]);
+
+  // Persist the draft as the user touches fields (post-hydration, so we never
+  // clobber a saved draft with the empty initial state).
+  useEffect(() => {
+    if (!orderId || !hydrated || typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(
+        DRAFT_KEY_PREFIX + orderId,
+        JSON.stringify({ goal, activityLevel, dietaryStyle, conditions, calorieTarget, proteinTarget, step }),
+      );
+    } catch {
+      /* private mode / quota — non-fatal */
+    }
+  }, [orderId, hydrated, goal, activityLevel, dietaryStyle, conditions, calorieTarget, proteinTarget, step]);
 
   // Decide once whether to surface the wizard for THIS order arrival.
   useEffect(() => {
@@ -108,12 +146,10 @@ export function PostCheckoutWizard({ orderId }: { orderId: string | undefined })
     if (alreadyShown) return;
     if (!profileIncomplete) return;
 
-    // Mark shown immediately so a re-render / back-forward nav won't re-trigger.
-    try {
-      window.sessionStorage.setItem(shownKey, "1");
-    } catch {
-      /* private mode — worst case it shows once more next mount */
-    }
+    // NOTE: the "shown" flag is written in close() (on an explicit dismiss/
+    // complete), NOT here. Marking shown on open used to permanently suppress
+    // the wizard after any mid-flow navigation and orphan the draft; deferring
+    // it lets an interrupted user return to a rehydrated wizard.
     setOpen(true);
     track("post_checkout_wizard_shown", { orderId });
   }, [orderId, loading, dismissed, profileIncomplete]);
@@ -123,6 +159,20 @@ export function PostCheckoutWizard({ orderId }: { orderId: string | undefined })
   const close = (reason: "skip" | "complete") => {
     setOpen(false);
     setDismissed(true);
+    // Only now (explicit dismiss/complete) do we mark it shown and drop the
+    // draft — so an interrupted user gets it back, but a resolved one doesn't.
+    if (orderId && typeof window !== "undefined") {
+      try {
+        window.sessionStorage.setItem(SHOWN_KEY_PREFIX + orderId, "1");
+      } catch {
+        /* private mode — worst case it shows once more next mount */
+      }
+      try {
+        window.sessionStorage.removeItem(DRAFT_KEY_PREFIX + orderId);
+      } catch {
+        /* ignore */
+      }
+    }
     if (reason === "skip") {
       track("post_checkout_wizard_skipped", { orderId, step });
     }
