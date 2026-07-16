@@ -143,7 +143,15 @@ app.use(urlEncodedDefault);
 
 // Step 2 & Step 3: Global XSS Sanitization Scrubber + Middleware Rate Awareness Guard
 app.use("/api", sanitizeInputMiddleware);
-app.use("/api", routeBurstGuard(30));
+// The per-IP/per-endpoint burst guard (30 req/s) blocks automated scrapers and
+// probes in production. It is disabled under NODE_ENV=test so the bulkhead
+// load-test — which deliberately fires >30 req/s from a single IP against
+// /api/delivery/dispatch/* to exercise connection-pool isolation — can reach
+// the pool it is meant to test instead of being 429'd at the edge. The guard
+// itself is unit-tested directly in requestValidationGuard.test.ts.
+if (process.env.NODE_ENV !== "test") {
+  app.use("/api", routeBurstGuard(30));
+}
 
 // --- Per-category rate limiting -------------------------------------------
 // Mounted before authMiddleware so unauthenticated scraping is also limited.
