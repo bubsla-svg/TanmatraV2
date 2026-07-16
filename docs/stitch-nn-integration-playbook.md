@@ -45,12 +45,31 @@ work on a broken baseline.
 
 ### Branch
 
-Do all work on the designated feature branch, cut from the latest `main`:
+All work goes on the designated feature branch: `claude/tanmatra-ux-clinical-audit-2nsutp`.
+How you *start* it depends on whether it already carries **unmerged work / an open PR**:
 
 ```bash
-git fetch origin main
+git fetch origin
+
+# CASE A — the branch is new, or its last PR is already MERGED:
+#   cut it fresh from the latest main.
 git checkout -B claude/tanmatra-ux-clinical-audit-2nsutp origin/main
+
+# CASE B — the branch already has an OPEN PR / unmerged commits on origin:
+#   check it out and rebase onto its OWN remote tip — do NOT reset it to main.
+git checkout claude/tanmatra-ux-clinical-audit-2nsutp
+git pull --rebase origin claude/tanmatra-ux-clinical-audit-2nsutp
 ```
+
+> ⚠️ **Never force‑push a branch that has an open PR.** `checkout -B … origin/main`
+> discards any commit on the remote branch that isn't yet in `main`. This actually
+> happened on this repo: a parallel session did exactly that and silently wiped the
+> foundation commits (the `.tnm2.nn` CSS itself), leaving twelve reskins as no‑ops.
+> If two sessions might touch this branch: `git fetch` + `git pull --rebase origin <branch>`
+> **before you commit**, then push with a plain (non‑force) push. If a push is rejected
+> as non‑fast‑forward, **rebase onto `origin/<branch>` and retry** — do not reach for
+> `--force` / `--force-with-lease` on a branch under review unless you are deliberately
+> reconciling and are certain no unmerged work is lost.
 
 One concern per PR. A single reskin (one screen, or one tightly‑related cluster like
 `cart` + `checkout`) is one PR.
@@ -119,6 +138,16 @@ screen is usually **one line**.
 
 4. Re‑screenshot until it matches the NN language (dark charcoal, amber primary, glass,
    rounded, Geist/Inter type).
+
+> **Mixed token families.** A few `.tnm2` screens — notably **Home** and its
+> `components/home/*` sections — paint from the parallel `--tnm-*` family
+> (`--tnm-surface-ink`, `--tnm-surface-ink-2`, `--tnm-action`, `--tnm-text-*`) instead
+> of `--bg`/`--saf`. The `.tnm2.nn` token block already rebinds `--tnm-*` to NN as well,
+> so the one‑line `nn` still reskins them whole. If a screen comes out half‑NN /
+> half‑old, grep it for the family it actually uses
+> (`grep -roE 'var\(--[a-z0-9-]+\)|clinical-[a-z-]+' the-file.tsx | sort -u`); if it's a
+> token family the skin doesn't yet cover, add that rebind to the `.tnm2.nn { … }` token
+> block (NN tokens only, no raw hex) rather than editing the component's markup.
 
 **Never** change markup structure, handlers, state, routes, or copy in a Mode‑A reskin.
 If a screen seems to *need* structural change to look right, that's a Mode‑C rebuild —

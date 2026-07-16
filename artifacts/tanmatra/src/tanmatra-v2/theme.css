@@ -295,6 +295,15 @@
   --safb: var(--color-nn-primary);
   --safd: color-mix(in srgb, var(--color-nn-primary) 14%, transparent);
   --onsaf: var(--color-nn-on-primary);
+  /* Some .tnm2 screens (Home and its section components) paint from the
+   * parallel --tnm-* token family (surface-ink / action / text) rather than
+   * the --bg/--saf set above. Rebind those to NN too, so a single `nn` class
+   * reskins the whole page — hero, rails, pricing, footer — coherently. */
+  --tnm-surface-ink: var(--color-nn-bg);
+  --tnm-surface-ink-2: var(--color-nn-surface);
+  --tnm-action: var(--color-nn-primary);
+  --tnm-text-primary: var(--color-nn-on-surface);
+  --tnm-text-secondary: var(--color-nn-secondary);
   font-family: "Inter", system-ui, sans-serif;
 }
 
