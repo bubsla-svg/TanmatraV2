@@ -158,7 +158,7 @@ export default function V2CorporateLunchPlanner() {
   const isScheduled = proposal?.status === "scheduled";
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div
         style={{
           maxWidth: 480,

@@ -41,7 +41,7 @@ export default function OrderConfirmedStub() {
 
   return (
     <div
-      className="tnm2"
+      className="tnm2 nn"
       style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
     >
       <div style={{ textAlign: "center", maxWidth: 420 }}>

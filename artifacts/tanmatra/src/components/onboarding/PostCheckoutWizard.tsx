@@ -197,7 +197,7 @@ export function PostCheckoutWizard({ orderId }: { orderId: string | undefined })
 
   return (
     <div
-      className="tnm2 bg-black/60"
+      className="tnm2 nn bg-black/60"
       style={overlayStyle}
       onClick={() => close("skip")}
       role="dialog"

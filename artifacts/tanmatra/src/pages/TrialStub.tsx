@@ -9,7 +9,7 @@ export const handle = { chrome: false };
 
 export default function TrialStub() {
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ textAlign: "center" }}>
         <h1>Trial Details</h1>
         <div style={{ marginTop: 24 }}>

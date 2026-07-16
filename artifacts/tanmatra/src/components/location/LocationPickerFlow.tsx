@@ -533,7 +533,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
   return (
     <div
-      className="tnm2 bg-black/60"
+      className="tnm2 nn bg-black/60"
       style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
       onClick={() => onOpenChange(false)}
     >

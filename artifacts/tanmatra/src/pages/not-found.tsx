@@ -13,7 +13,7 @@ export const handle = { chrome: false };
 export default function NotFound() {
   return (
     <div
-      className="tnm2"
+      className="tnm2 nn"
       style={{
         minHeight: "100vh",
         background: "var(--bg)",

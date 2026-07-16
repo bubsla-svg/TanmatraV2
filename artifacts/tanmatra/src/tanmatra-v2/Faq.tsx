@@ -57,7 +57,7 @@ export default function V2Faq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
         {/* App bar */}
         <div className="appbar">
