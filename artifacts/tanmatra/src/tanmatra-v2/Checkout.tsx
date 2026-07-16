@@ -960,15 +960,31 @@ export default function V2Checkout() {
         //    externalOrderId used in finalize (and later in verify) and include
         //    amountPaise only for the server's drift log — it is ignored for
         //    pricing.
-        const rpOrderRes = await fetch(
-          `${API_BASE}/payments/razorpay/order`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ orderId, amountPaise: out.chargePaise }),
-          },
-        );
+        // Bound the pre-modal order-create call so a hung gateway/backend can't
+        // leave the buyer stuck on a disabled "Processing…" button forever. Safe
+        // to abort+retry here: no payment has been taken yet, and the reused
+        // idempotency key makes a retry replay the same server order.
+        const rpCtrl = new AbortController();
+        const rpTimer = setTimeout(() => rpCtrl.abort(), 12_000);
+        let rpOrderRes: Response;
+        try {
+          rpOrderRes = await fetch(
+            `${API_BASE}/payments/razorpay/order`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ orderId, amountPaise: out.chargePaise }),
+              signal: rpCtrl.signal,
+            },
+          );
+        } catch (e) {
+          throw rpCtrl.signal.aborted
+            ? new Error("Payment is taking too long — please try again")
+            : e;
+        } finally {
+          clearTimeout(rpTimer);
+        }
         if (!rpOrderRes.ok)
           throw new Error(`razorpay/order ${rpOrderRes.status}`);
         const { razorpayOrderId } = (await rpOrderRes.json()) as {
