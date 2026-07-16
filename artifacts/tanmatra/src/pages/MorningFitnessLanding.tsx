@@ -5,16 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  ArrowRight, 
-  Compass, 
-  MapPin, 
-  Clock, 
-  CheckCircle, 
+import {
+  ArrowRight,
+  MapPin,
+  Clock,
+  CheckCircle,
   Coffee,
   Users,
-  UtensilsCrossed,
-  Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { onDishImageError } from "@/lib/imgFallback";
@@ -40,6 +37,7 @@ export default function MorningFitnessLanding() {
   const [contactName, setContactName] = useState("");
   const [city, setCity] = useState("Delhi NCR");
   const [membersCount, setMembersCount] = useState("20-50");
+  const [location, setLocation] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -48,12 +46,32 @@ export default function MorningFitnessLanding() {
       toast.error("Please fill in all details");
       return;
     }
+    // No partner-lead API exists yet — hand the inquiry to our real
+    // partnerships channel (the WhatsApp business line published on the
+    // Refunds & Grievance page) with the details pre-filled, so the lead is
+    // never silently dropped.
+    const message = [
+      "Morning fitness club partnership — Tanmatra",
+      `Club / team: ${clubName}`,
+      `Contact: ${contactName}`,
+      `City: ${city}`,
+      `Members: ${membersCount}`,
+      location ? `Meetup / finish point: ${location}` : null,
+      `WhatsApp: ${whatsapp}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    window.open(
+      `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
     setSubmitted(true);
-    toast.success("Morning Club proposal submitted! We'll coordinate your sample breakfast setup.");
+    toast.success("Almost done — send the pre-filled WhatsApp message to reach our partnerships team.");
   };
 
   return (
-    <div className="bg-clinical-dark text-white min-h-screen">
+    <div className="nn-clinical bg-clinical-dark text-white min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-clinical-border py-20 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 items-center">
@@ -208,9 +226,9 @@ export default function MorningFitnessLanding() {
               {submitted ? (
                 <div className="text-center py-10 space-y-4">
                   <CheckCircle className="w-16 h-16 mx-auto text-clinical-sage" />
-                  <h3 className="text-2xl font-bold text-white">Proposal Received!</h3>
+                  <h3 className="text-2xl font-bold text-white">Sent to WhatsApp</h3>
                   <p className="text-sm text-clinical-zinc max-w-sm mx-auto">
-                    We will review the drop-off logistics for your meetup point and coordinate your trial breakfast morning. Expect a call shortly.
+                    We've opened WhatsApp with your details pre-filled. Send the message and our partnerships team will coordinate your trial breakfast morning.
                   </p>
                   <Button 
                     onClick={() => setSubmitted(false)}
@@ -274,10 +292,12 @@ export default function MorningFitnessLanding() {
 
                   <div className="space-y-1.5">
                     <Label htmlFor="location" className="text-xs text-clinical-zinc">Meetup / Finish Point Coordinates or Landmarks</Label>
-                    <Input 
-                      id="location" 
+                    <Input
+                      id="location"
                       placeholder="e.g. Leisure Valley Park Gate 2, Gurgaon"
                       className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
                     />
                   </div>
 

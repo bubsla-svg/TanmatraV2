@@ -287,7 +287,7 @@ export default function RdPartnersWizard() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="nn-clinical max-w-3xl mx-auto px-4 py-8 space-y-6">
       <header className="space-y-2">
         <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
           RD Partner Application

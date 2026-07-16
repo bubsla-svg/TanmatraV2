@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra Clinical Console | RD Partner Review</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        
+        /* Custom Scrollbar for Nocturnal Aesthetic */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #131313; }
+        ::-webkit-scrollbar-thumb { background: #353535; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fbbf24; }
+
+        @keyframes pulse-amber {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+        .animate-pulse-amber {
+            animation: pulse-amber 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .glass-panel {
+            background: rgba(31, 31, 31, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-container": "#b4b5b5",
+                      "background": "#131313",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "primary": "#ffe1a7",
+                      "primary-container": "#fbbf24",
+                      "on-surface": "#e2e2e2",
+                      "surface-variant": "#353535",
+                      "surface-container-low": "#1b1b1b",
+                      "primary-fixed-dim": "#f9bd22",
+                      "on-primary-fixed": "#261a00",
+                      "surface-tint": "#f9bd22",
+                      "on-surface-variant": "#d3c5ac",
+                      "secondary-container": "#454747",
+                      "surface-container-high": "#2a2a2a",
+                      "surface-container-highest": "#353535",
+                      "on-tertiary-fixed": "#001f27",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "on-tertiary": "#003641",
+                      "surface-container": "#1f1f1f",
+                      "surface-dim": "#131313",
+                      "tertiary-container": "#34daff",
+                      "on-primary": "#402d00",
+                      "on-error": "#690005",
+                      "surface-bright": "#393939",
+                      "inverse-surface": "#e2e2e2",
+                      "tertiary-fixed": "#afecff",
+                      "on-tertiary-container": "#005c6e",
+                      "error": "#ffb4ab",
+                      "inverse-primary": "#795900",
+                      "primary-fixed": "#ffdf9f",
+                      "surface-container-lowest": "#0e0e0e",
+                      "on-background": "#e2e2e2",
+                      "error-container": "#93000a",
+                      "on-secondary": "#2f3131",
+                      "secondary-fixed": "#e2e2e2",
+                      "secondary": "#c6c6c7",
+                      "outline": "#9c8f79",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "inverse-on-surface": "#303030",
+                      "tertiary": "#b6edff",
+                      "on-primary-container": "#6c4f00",
+                      "surface": "#131313",
+                      "outline-variant": "#4f4633",
+                      "on-error-container": "#ffdad6",
+                      "on-secondary-fixed-variant": "#454747"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "padding-lateral": "16px",
+                      "gutter": "12px",
+                      "stack-sm": "4px",
+                      "stack-lg": "32px",
+                      "base": "8px",
+                      "stack-md": "16px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "micro-data": ["Geist"],
+                      "display-lg-mobile": ["Inter"],
+                      "label-caps": ["Geist"],
+                      "body-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-sm": ["15px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                      "display-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "micro-data": ["10px", {"lineHeight": "12px", "fontWeight": "500"}],
+                      "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                      "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface font-body-sm min-h-screen overflow-hidden">
+<!-- SIDE NAVIGATION SHELL -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col border-r border-surface-variant/20 backdrop-blur-xl bg-surface/80 border-r border-white/5 z-50">
+<div class="p-6">
+<h1 class="font-display-lg text-display-lg text-primary-container tracking-tighter">Tanmatra</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1 uppercase tracking-widest">Clinical Admin</p>
+</div>
+<nav class="flex-1 mt-4">
+<div class="flex items-center gap-3 text-on-secondary-container hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 py-3 px-4 cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</div>
+<div class="flex items-center gap-3 text-on-secondary-container hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 py-3 px-4 cursor-pointer">
+<span class="material-symbols-outlined">clinical_notes</span>
+<span class="font-label-caps text-label-caps">Applicant Queue</span>
+</div>
+<div class="flex items-center gap-3 bg-primary/10 text-primary border-r-2 border-primary py-3 px-4 transition-transform opacity-90">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-caps text-label-caps">Clinical Review</span>
+</div>
+<div class="flex items-center gap-3 text-on-secondary-container hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 py-3 px-4 cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-caps text-label-caps">Audit Logs</span>
+</div>
+<div class="flex items-center gap-3 text-on-secondary-container hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 py-3 px-4 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</div>
+<div class="flex items-center gap-3 text-on-secondary-container hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 py-3 px-4 cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</div>
+</nav>
+<div class="p-4 border-t border-surface-variant/20">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a clinical administrator in a modern office, cinematic lighting with amber rim highlights, high-end photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPvfp0PLoGacZrFS0iHF0gfEmCeg68tpwwi6GqMzQp1RsEeVsn1yKzSbhzXb11oVf_dSglRaZT65bAreTkW3ld7bPJ02ge5Wb-eYrQ-BQreGnaZsuh9HmKQbtU2ZB_je9Eo8h6JMQrt6B2ruXFA2bwegj84XrhkEesV39cGbAD5mI3qW3o2-Su6OiE63SM73nrNk3n4rYN6TZn7avOTWW-5-DRlmUam_vYV9qdagvOtp-_mW3LnOJWFf9M1vMmdMj_EHuNW7RrvA"/>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface">Dr. Marcus Vance</p>
+<p class="text-[10px] text-on-surface-variant">Lead Verifier</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TOP NAVIGATION SHELL -->
+<header class="fixed top-0 right-0 left-64 flex justify-between items-center px-padding-lateral h-16 z-40 backdrop-blur-xl bg-background/50 border-b border-white/5">
+<div class="flex items-center gap-6">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Tanmatra Console</span>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors text-sm">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-body-sm w-64 focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant transition-all outline-none" placeholder="Search RD-ID..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-surface-container-high cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">help_center</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Help Center</span>
+</div>
+<div class="flex items-center gap-4 border-l border-surface-variant/20 ml-2 pl-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-all">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-all">dark_mode</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-all">apps</span>
+</div>
+</div>
+</header>
+<!-- MAIN CONTENT AREA (DUAL PANE) -->
+<main class="ml-64 mt-16 h-[calc(100vh-64px)] flex overflow-hidden">
+<!-- LEFT PANE: APPLICANT QUEUE -->
+<section class="w-2/5 border-r border-surface-variant/20 flex flex-col">
+<div class="p-6 border-b border-surface-variant/10">
+<h2 class="font-headline-md text-headline-md text-on-surface">Applicant Queue</h2>
+<div class="flex items-center gap-2 mt-1">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Reviewing 12 pending clinical certifications</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+<!-- ACTIVE CARD -->
+<div class="glass-panel p-4 rounded-xl border-l-4 border-l-primary cursor-pointer ring-1 ring-primary/20 bg-primary/5">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline-md text-[18px] text-on-surface">Dr. Elena Rostova</h3>
+<p class="font-micro-data text-micro-data text-primary-container tabular-nums tracking-widest mt-0.5">RD-9902-X4-77</p>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-label-caps text-primary uppercase">Received</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mb-3">
+<span class="px-2 py-0.5 rounded-md bg-surface-container-highest border border-white/5 text-[10px] font-label-caps">Metabolic</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container-highest border border-white/5 text-[10px] font-label-caps">Diabetic</span>
+</div>
+<div class="flex justify-between items-center pt-3 border-t border-white/5">
+<span class="text-[11px] text-on-surface-variant tabular-nums">2023.10.24</span>
+<span class="material-symbols-outlined text-primary text-sm">arrow_forward_ios</span>
+</div>
+</div>
+<!-- QUEUE CARD 2 -->
+<div class="p-4 rounded-xl border border-white/5 hover:bg-surface-container-low transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline-md text-[18px] text-on-surface group-hover:text-primary transition-colors">Julian Thorne</h3>
+<p class="font-micro-data text-micro-data text-on-surface-variant tabular-nums tracking-widest mt-0.5">RD-8812-Y1-12</p>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container/50 border border-white/5 text-[10px] font-label-caps text-on-secondary-container uppercase">Verifying</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mb-3">
+<span class="px-2 py-0.5 rounded-md bg-surface-container-highest border border-white/5 text-[10px] font-label-caps">Athletic</span>
+</div>
+<div class="flex justify-between items-center pt-3 border-t border-white/5 opacity-60">
+<span class="text-[11px] text-on-surface-variant tabular-nums">2023.10.22</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">arrow_forward_ios</span>
+</div>
+</div>
+<!-- QUEUE CARD 3 -->
+<div class="p-4 rounded-xl border border-white/5 hover:bg-surface-container-low transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline-md text-[18px] text-on-surface group-hover:text-primary transition-colors">Maya Okonjo</h3>
+<p class="font-micro-data text-micro-data text-on-surface-variant tabular-nums tracking-widest mt-0.5">RD-4556-B8-33</p>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-label-caps text-primary uppercase">Received</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mb-3">
+<span class="px-2 py-0.5 rounded-md bg-surface-container-highest border border-white/5 text-[10px] font-label-caps">Metabolic</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container-highest border border-white/5 text-[10px] font-label-caps">Geriatric</span>
+</div>
+<div class="flex justify-between items-center pt-3 border-t border-white/5 opacity-60">
+<span class="text-[11px] text-on-surface-variant tabular-nums">2023.10.21</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">arrow_forward_ios</span>
+</div>
+</div>
+</div>
+</section>
+<!-- RIGHT PANE: VERIFICATION DETAIL -->
+<section class="flex-1 flex flex-col bg-surface-container-lowest">
+<!-- PROFILE HEADER -->
+<div class="p-8 border-b border-surface-variant/20 flex items-end justify-between bg-gradient-to-b from-primary/5 to-transparent">
+<div class="flex gap-6 items-center">
+<div class="w-24 h-24 rounded-2xl overflow-hidden border-2 border-primary/20 relative">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of Dr. Elena Rostova, a clinical professional, dark minimalist studio lighting with amber accents, cinematic photography, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDu8XF-aNhZcOT1NGgp4TTqnZN5aCwABQzJDHwoZFDi7QYBYJPR4Y_npfop4kpq_Ff-z0aXHu1V4hWu9mr7PvYjD9IjZA_QvPeLUanR2IdtoPkc7fMMO6_XEcCNciMtN1-7FwRPKkPAzVM8xFTRU9ldHtqMgIxCb8QSrAYTWNjbuNrYzEEulzLcFsVmlMiMDIRlxuNGKZNWxEGOdiBVrylykmvbyNcB6dxEIDyQoORrgUsECvBXdkn2jun_5Ytuez8p0ZAZ_Madvg"/>
+<div class="absolute bottom-0 right-0 p-1 bg-primary text-background rounded-tl-lg">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div>
+<div class="flex items-center gap-3">
+<h2 class="font-display-lg text-display-lg">Dr. Elena Rostova</h2>
+<span class="px-3 py-1 rounded-full bg-surface-container-highest border border-white/10 text-[11px] font-label-caps text-on-surface-variant tracking-wider">Metabolic Specialist</span>
+</div>
+<p class="font-micro-data text-[14px] text-on-surface-variant tabular-nums mt-1 tracking-[0.2em] uppercase">Credential ID: RD-9902-X4-77</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-container-high border border-white/5 hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined text-on-surface">mail</span>
+</button>
+<button class="p-2 rounded-lg bg-surface-container-high border border-white/5 hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined text-on-surface">more_vert</span>
+</button>
+</div>
+</div>
+<!-- DETAIL SCROLLABLE -->
+<div class="flex-1 overflow-y-auto p-8 space-y-10">
+<!-- CREDENTIAL CHECKLIST (FAIL-CLOSED LOGIC) -->
+<div>
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-4">Clinical Checklist</h4>
+<div class="space-y-3">
+<!-- Verified Item -->
+<div class="flex items-center justify-between p-4 glass-panel rounded-xl border-l-4 border-l-tertiary-container">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-tertiary-container" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<p class="font-body-lg text-on-surface">Registration Lookup</p>
+<p class="text-xs text-on-surface-variant">Validated against National RD Database</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary-container font-bold">VERIFIED</span>
+</div>
+<!-- Pending Item with Amber Pulse -->
+<div class="flex items-center justify-between p-4 glass-panel rounded-xl border-l-4 border-l-primary-container">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined text-primary-container">pending</span>
+<div class="absolute inset-0 bg-primary-container rounded-full blur-md opacity-20 animate-pulse-amber"></div>
+</div>
+<div>
+<p class="font-body-lg text-on-surface">Degree Document</p>
+<p class="text-xs text-on-surface-variant">MSc. Clinical Nutrition (Review required)</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-primary-container font-bold animate-pulse">PENDING</span>
+</div>
+<!-- Initial Item -->
+<div class="flex items-center justify-between p-4 glass-panel rounded-xl border-l-4 border-l-surface-variant">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant">radio_button_unchecked</span>
+<div>
+<p class="font-body-lg text-on-surface">Licence Document</p>
+<p class="text-xs text-on-surface-variant">State License #22019-90-X</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">INITIALIZING</span>
+</div>
+</div>
+</div>
+<!-- EVIDENCE VIEWER -->
+<div>
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-4">Evidence Archive</h4>
+<div class="grid grid-cols-2 gap-4">
+<div class="group relative aspect-[4/3] rounded-2xl overflow-hidden glass-panel border border-white/5 cursor-zoom-in">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105 opacity-60" data-alt="A scanned official university diploma document for a Master of Science in Nutrition, showing elegant typography and a gold seal, slightly blurred for privacy, professional legal scan look." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB9MlhJ0RhfT6jAEgSIV0X7kRVVZtYYrZDbhHQrn44rLDlQnai1HVdTnt0CF9mVwSPDG2T3tpTPVa4IX-WLWZvcKbaosiqjIYKYpFmuodzhAvANVJDLRGheL7J29NlcU7kx14dgWuCPbk0GnH-JYc_J2vaIYeunsOwY1tsQAuwzrV9Soq_3k4PPRKI8TC0ONR806c1IggerV1rWnyNM9AAo4xDbblhdQUJZOCAW4ZG-0TXD72-dC319zxcSm1JDeMsE-ujTpU1TzQ')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
+<p class="font-label-caps text-[10px] text-primary-container">MASTERS_DIPLOMA.pdf</p>
+<p class="text-[9px] text-on-surface-variant mt-0.5">8.2 MB • Uploaded Oct 24</p>
+</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-surface text-3xl">visibility</span>
+</div>
+</div>
+<div class="group relative aspect-[4/3] rounded-2xl overflow-hidden glass-panel border border-white/5 cursor-zoom-in">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105 opacity-60" data-alt="A scanned state medical board license card, displaying official government seals and registration numbers, nocturnal dark mode lighting aesthetic, professional legal scan." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCt-YxBu2lB7nsQKMH3Gm7qnjffbxDNxvV4zrZJChB8LQThTTEgBUoF44IntZGPS-Ud6NHk1hvdBi4hsEiFn2ThX31qN6p9_KNBXV_nDA-XC4JJk6rD-OxJfMf5duvT6Su-_3pSA2J6UY-vvEKno63BvoAA59deCUFFXb67stL43WP_uQHLkpVqL_CI10yM8Jtgsty28jC-A-ulTTC8Y68qBslJSa56KCy7uZ4rk9W2JUug3FYuUjm2McLsefQmKWdYazs-h4lqkQ')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
+<p class="font-label-caps text-[10px] text-primary-container">STATE_LICENSE.png</p>
+<p class="text-[9px] text-on-surface-variant mt-0.5">2.4 MB • Uploaded Oct 24</p>
+</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-surface text-3xl">visibility</span>
+</div>
+</div>
+</div>
+</div>
+<!-- REVIEWER NOTES -->
+<div>
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-4">Reviewer Internal Notes</h4>
+<textarea class="w-full h-32 bg-surface-container-low/30 border border-white/5 rounded-xl p-4 text-body-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-on-secondary-container" placeholder="Add notes for audit trail..."></textarea>
+</div>
+</div>
+<!-- FOOTER ACTIONS -->
+<footer class="p-6 border-t border-surface-variant/20 flex gap-4 items-center justify-end bg-background">
+<button class="px-6 py-3 rounded-xl border border-surface-variant/40 font-label-caps text-label-caps text-on-surface hover:bg-surface-container-high transition-all">
+                    REJECT WITH REASON
+                </button>
+<button class="px-8 py-3 rounded-xl bg-primary-container text-on-primary font-bold font-headline-md text-[16px] hover:brightness-110 shadow-[0px_8px_24px_rgba(251,191,36,0.2)] active:scale-95 transition-all">
+                    APPROVE APPLICATION
+                </button>
+</footer>
+</section>
+</main>
+<!-- FLOATING MICRO-INTERACTION ELEMENTS -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="w-14 h-14 rounded-full bg-primary-container text-on-primary shadow-xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+<script>
+        // Micro-interaction for queue selection
+        document.querySelectorAll('section.w-2\\/5 > div.overflow-y-auto > div').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('section.w-2\\/5 > div.overflow-y-auto > div').forEach(c => {
+                    c.classList.remove('ring-1', 'ring-primary/20', 'bg-primary/5', 'border-l-primary');
+                    c.classList.add('border-white/5');
+                });
+                card.classList.add('ring-1', 'ring-primary/20', 'bg-primary/5', 'border-l-primary');
+                card.classList.remove('border-white/5');
+                
+                // Simulated content switch animation
+                const detailPane = document.querySelector('section.flex-1');
+                detailPane.style.opacity = '0';
+                detailPane.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    detailPane.style.opacity = '1';
+                    detailPane.style.transform = 'translateY(0)';
+                }, 300);
+            });
+        });
+
+        // Hover tactile effect for primary button
+        const mainBtn = document.querySelector('button.bg-primary-container');
+        if(mainBtn) {
+            mainBtn.addEventListener('mousemove', (e) => {
+                const rect = mainBtn.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                mainBtn.style.setProperty('--x', `${x}px`);
+                mainBtn.style.setProperty('--y', `${y}px`);
+            });
+        }
+    </script>
+</body></html>

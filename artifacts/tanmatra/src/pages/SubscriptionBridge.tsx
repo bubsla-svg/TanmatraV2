@@ -251,8 +251,16 @@ export default function SubscriptionBridge() {
 
       {/* Comparison Modal/Popup */}
       {showComparison && (
-        <div className="modal-backdrop">
-          <div className="bg-white w-full rounded-t-2xl p-6" style={{ maxWidth: 480, animation: "slideUp 0.2s ease-out" }}>
+        <div
+          className="tnm2 nn bg-black/60"
+          style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          onClick={() => setShowComparison(false)}
+        >
+          <div
+            className="card w-full p-6"
+            style={{ maxWidth: 480, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="fx ac jb mb16">
               <h3 className="h3 font-bold" style={{ color: "var(--tx)" }}>Payment Schedules</h3>
               <button onClick={() => setShowComparison(false)} className="iconbtn" aria-label="Close">
@@ -261,22 +269,22 @@ export default function SubscriptionBridge() {
             </div>
             
             <div className="fx flex-col gap12 mb20">
-              <div className="p-4 border rounded-xl" style={{ borderColor: "var(--saf)" }}>
+              <div className="p-4 border rounded-xl" style={{ borderColor: "var(--saf)", background: "var(--s1)" }}>
                 <div className="fx ac jb">
                   <span className="font-bold" style={{ color: "var(--tx)" }}>Weekly Billing</span>
                   <span className="pill sg">Flexible</span>
                 </div>
                 <p className="fine mt4">{formatCurrency(PLAN_WEEKLY_PAISE)} billed every week.</p>
-                <p className="fine mt2 text-stone-500">Best for flexibility. Pause or edit anytime before Thursday cutoff.</p>
+                <p className="fine mt2" style={{ color: "var(--mut)" }}>Best for flexibility. Pause or edit anytime before Thursday cutoff.</p>
               </div>
 
-              <div className="p-4 border rounded-xl" style={{ borderColor: "var(--ln)" }}>
+              <div className="p-4 border rounded-xl" style={{ borderColor: "var(--ln)", background: "var(--s1)" }}>
                 <div className="fx ac jb">
-                  <span className="font-bold text-stone-700">Fortnightly Billing</span>
+                  <span className="font-bold" style={{ color: "var(--tx)" }}>Fortnightly Billing</span>
                   <span className="pill sg" style={{ background: "var(--safd)", color: "var(--safb)" }}>Save {FORTNIGHTLY_SAVING_PCT}% vs weekly</span>
                 </div>
                 <p className="fine mt4">{formatCurrency(PLAN_FORTNIGHTLY_PAISE)} billed every 2 weeks.</p>
-                <p className="fine mt2 text-stone-500">Save more while retaining control. Skip individual weeks to earn credits.</p>
+                <p className="fine mt2" style={{ color: "var(--mut)" }}>Save more while retaining control. Skip individual weeks to earn credits.</p>
               </div>
             </div>
 

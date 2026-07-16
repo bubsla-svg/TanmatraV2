@@ -15,7 +15,7 @@
 .tnm2 i[class^="ph"],.tnm2 i[class*=" ph"]{display:inline-flex;line-height:1}
 
 /* ---- component system ---- */
-.tnm2{--bg:#0A0C0D;--s1:#121517;--s2:#191D20;--s3:#20262A;--tx:#E9ECEE;--mut:#8B9398;--fnt:#5C6367;--ln:rgba(255,255,255,.07);--ln2:rgba(255,255,255,.13);--saf:#F4C430;--safb:#FFD75A;--safd:rgba(244,196,48,.14);--onsaf:#141210;--sage:#88AA84;--saged:rgba(136,170,132,.16);--dgr:#C97C70;--tnm-caution:#d97706;--tnm-alert:#dc2626;--e:cubic-bezier(.4,0,.2,1);color-scheme:dark;font-family:Inter,system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased;min-height:100%}
+.tnm2{--bg:#0A0C0D;--s1:#121517;--s2:#191D20;--s3:#20262A;--tx:#E9ECEE;--mut:#8B9398;--fnt:#5C6367;--ln:rgba(255,255,255,.07);--ln2:rgba(255,255,255,.13);--saf:#F4C430;--safb:#FFD75A;--safd:rgba(244,196,48,.14);--onsaf:#141210;--sage:#88AA84;--saged:rgba(136,170,132,.16);--dgr:#C97C70;--dgrd:rgba(201,124,112,.14);--tnm-caution:#d97706;--tnm-alert:#dc2626;--e:cubic-bezier(.4,0,.2,1);color-scheme:dark;font-family:Inter,system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased;min-height:100%}
 .tnm2 .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
 .tnm2 .lab{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fnt);font-weight:500}
 .tnm2 .mut{color:var(--mut)}.fntc{color:var(--fnt)}.safc{color:var(--safb)}.sagec{color:var(--sage)}.dgrc{color:var(--dgr)}
@@ -294,6 +294,7 @@
   --saf: var(--color-nn-primary);
   --safb: var(--color-nn-primary);
   --safd: color-mix(in srgb, var(--color-nn-primary) 14%, transparent);
+  --dgrd: color-mix(in srgb, var(--color-nn-error) 15%, transparent);
   --onsaf: var(--color-nn-on-primary);
   /* Some .tnm2 screens (Home and its section components) paint from the
    * parallel --tnm-* token family (surface-ink / action / text) rather than
@@ -360,5 +361,36 @@
  * can let the wrapper overflow — showing the amber pill in full. */
 .tnm2.nn .dimg {
   overflow: visible;
+}
+
+/* ============================================================================
+ * Nocturnal Nourishment skin for the legacy clinical-palette landing pages
+ * (.nn-clinical)
+ *
+ * A handful of marketing / lead-capture surfaces (RD partners, gyms, morning
+ * fitness, subscription plans) are built on the legacy `clinical-*` Tailwind
+ * utilities rather than the `.tnm2` component system, so the `.tnm2.nn` skin
+ * above cannot reach them. Tailwind v4's `@theme` (non-inline) compiles those
+ * utilities to `var(--color-clinical-*)` references, so scoping a remap of the
+ * clinical tokens to their NN equivalents restyles the entire page with zero
+ * markup churn — identical honest content, NN palette. Applied by adding
+ * `nn-clinical` to a page's root element.
+ *
+ * `clinical-sage` is left intact on purpose: it is the "verified / healthy"
+ * semantic accent, and the `.tnm2.nn` skin above likewise leaves --sage green.
+ * All colours resolve to NN tokens (or #fff via color-mix, already used above),
+ * so the no-hardcoded-hex gate — which exempts this file — stays satisfied.
+ * ==========================================================================*/
+.nn-clinical {
+  --color-clinical-gold: var(--color-nn-primary);
+  --color-clinical-gold-light: color-mix(in srgb, var(--color-nn-primary) 12%, transparent);
+  --color-clinical-blue: var(--color-nn-tertiary);
+  --color-clinical-blue-light: color-mix(in srgb, var(--color-nn-tertiary) 12%, transparent);
+  --color-clinical-zinc: var(--color-nn-secondary);
+  --color-clinical-zinc-muted: var(--color-nn-outline);
+  --color-clinical-border: color-mix(in srgb, #fff 10%, transparent);
+  --color-clinical-dark: var(--color-nn-bg);
+  --color-clinical-surface: var(--color-nn-surface);
+  --color-clinical-surface-elevated: var(--color-nn-surface-high);
 }
 

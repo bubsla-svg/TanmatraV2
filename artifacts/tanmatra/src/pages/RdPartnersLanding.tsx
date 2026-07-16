@@ -73,7 +73,7 @@ export default function RdPartnersLanding() {
   }, []);
 
   return (
-    <div className="bg-clinical-dark text-white">
+    <div className="nn-clinical bg-clinical-dark text-white">
       {/* hero */}
       <section className="border-b border-clinical-border">
         <div className="max-w-6xl mx-auto px-4 py-14 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 items-start">

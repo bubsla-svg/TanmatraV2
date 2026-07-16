@@ -27,6 +27,7 @@ import { getChefForDish } from "@/lib/teamData";
 import { RD_PLANS } from "@/lib/rdPlans";
 import CoachAgentWidget from "@/components/ai/CoachAgent";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
+import DishReviews from "@/components/dish/DishReviews";
 import { API_BASE } from "@/lib/apiBase";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError, FALLBACK_DISH_IMAGE } from "@/lib/imgFallback";
@@ -796,6 +797,12 @@ export default function V2Dish() {
               </div>
             </div>
           )}
+
+          {/* Customer reviews — server-verified eligibility; only real
+              ratings/summaries are shown (empty state never fakes a rating). */}
+          <div className="mt-8">
+            <DishReviews slug={meal.slug} />
+          </div>
 
           {/* Medical Disclaimer */}
           <div className="mt-8">

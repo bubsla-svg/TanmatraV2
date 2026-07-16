@@ -24,8 +24,6 @@ const routeToTestPath = (route) => {
       return '/subscribe';
     case '/checkout/*':
       return '/checkout';
-    case '/trial/*':
-      return '/trial/default';
     case '/order/confirmed/*':
       return '/order/confirmed/default';
     case '/account/plan':

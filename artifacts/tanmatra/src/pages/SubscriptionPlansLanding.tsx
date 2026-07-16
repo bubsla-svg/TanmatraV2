@@ -116,7 +116,7 @@ export default function SubscriptionPlansLanding() {
   });
 
   return (
-    <div className="bg-clinical-dark text-white min-h-screen pb-16">
+    <div className="nn-clinical bg-clinical-dark text-white min-h-screen pb-16">
       {/* Sticky Location Discovery Header */}
       <div className="sticky top-0 z-40 bg-clinical-dark/95 backdrop-blur-md border-b border-clinical-border px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">

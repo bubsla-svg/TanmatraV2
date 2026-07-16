@@ -1,4 +1,5 @@
-import { Link, type MetaFunction } from "react-router";
+import type { MetaFunction } from "react-router";
+import { Navigate, useLocation } from "react-router";
 
 export const meta: MetaFunction = () => [
   { title: "Your Plan | Tanmatra" },
@@ -7,15 +8,11 @@ export const meta: MetaFunction = () => [
 
 export const handle = { chrome: false };
 
+// Plan management lives at /subscriptions (with billing/mandates at
+// /account/billing). Forward the legacy /account/plan URL there instead of a
+// dead-end stub; /subscriptions is auth-gated by UserAuthLayout, so an
+// anonymous visitor is bounced to /login with the correct `next`.
 export default function PlanStub() {
-  return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ textAlign: "center" }}>
-        <h1>Your Plan</h1>
-        <div style={{ marginTop: 24 }}>
-          <Link to="/menu" className="btn btn-p">Back to Menu</Link>
-        </div>
-      </div>
-    </div>
-  );
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname: "/subscriptions", search, hash }} replace />;
 }

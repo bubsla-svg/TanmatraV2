@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clinical Admin Suite | Compliance Console</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Geist:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#454747",
+                    "primary-fixed": "#ffdf9f",
+                    "surface-tint": "#f9bd22",
+                    "on-primary-fixed": "#261a00",
+                    "on-surface-variant": "#d3c5ac",
+                    "background": "#131313",
+                    "on-secondary-container": "#b4b5b5",
+                    "inverse-on-surface": "#303030",
+                    "tertiary-fixed-dim": "#30d8fd",
+                    "surface": "#131313",
+                    "on-primary-fixed-variant": "#5c4300",
+                    "on-tertiary": "#003641",
+                    "secondary-fixed": "#e2e2e2",
+                    "outline-variant": "#4f4633",
+                    "on-secondary-fixed-variant": "#454747",
+                    "surface-container": "#1f1f1f",
+                    "inverse-surface": "#e2e2e2",
+                    "inverse-primary": "#795900",
+                    "surface-container-low": "#1b1b1b",
+                    "on-background": "#e2e2e2",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "tertiary-fixed": "#afecff",
+                    "surface-container-highest": "#353535",
+                    "on-primary": "#402d00",
+                    "on-error": "#690005",
+                    "surface-container-high": "#2a2a2a",
+                    "error-container": "#93000a",
+                    "tertiary": "#b6edff",
+                    "on-tertiary-fixed": "#001f27",
+                    "primary": "#ffe1a7",
+                    "tertiary-container": "#34daff",
+                    "on-surface": "#e2e2e2",
+                    "surface-dim": "#131313",
+                    "surface-container-lowest": "#0e0e0e",
+                    "outline": "#9c8f79",
+                    "surface-bright": "#393939",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab",
+                    "on-tertiary-container": "#005c6e",
+                    "surface-variant": "#353535",
+                    "on-tertiary-fixed-variant": "#004e5d",
+                    "primary-fixed-dim": "#f9bd22",
+                    "primary-container": "#fbbf24",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "on-secondary": "#2f3131",
+                    "on-primary-container": "#6c4f00",
+                    "secondary": "#c6c6c7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.8rem",
+                    "xl": "1rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter", "sans-serif"],
+                    "body-lg": ["Inter", "sans-serif"],
+                    "micro-data": ["Geist", "monospace"],
+                    "label-caps": ["Geist", "sans-serif"],
+                    "headline-md": ["Inter", "sans-serif"],
+                    "body-sm": ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body {
+            background-color: #131313;
+            background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+            background-attachment: fixed;
+        }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body-sm text-on-surface antialiased overflow-hidden">
+<!-- Side Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 z-50 flex flex-col bg-surface border-r border-on-surface-variant/10">
+<div class="p-6">
+<h1 class="font-display-lg text-[24px] text-primary-container tracking-tight leading-none">NutriCore Admin</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-2 opacity-60">Clinical Oversight</p>
+</div>
+<nav class="flex-1 px-2 space-y-1 mt-4">
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-headline-md text-[15px]">Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">clinical_notes</span>
+<span class="font-headline-md text-[15px]">Patient Records</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-primary bg-primary/10 border-r-2 border-primary rounded-r-none rounded-l-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+<span class="font-headline-md text-[15px]">System Logs</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-headline-md text-[15px]">Inventory</span>
+</div>
+</nav>
+<div class="p-4 border-t border-on-surface-variant/10 space-y-2">
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface text-sm cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">help_center</span>
+<span>Support</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface text-sm cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 left-64 h-16 z-40 flex justify-between items-center px-8 bg-surface/60 backdrop-blur-xl border-b border-on-surface-variant/10">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">Clinical Admin Suite</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary-container font-label-caps text-[10px]">v2.4.0-STABLE</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<input class="bg-surface-container-low border-none rounded-full px-4 py-1.5 text-sm w-64 focus:ring-1 focus:ring-primary/50 text-on-surface" placeholder="Search dish or SKU..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-2 text-[18px] opacity-40">search</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">history</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a senior medical administrator with salt-and-pepper hair, wearing a sleek modern lab coat, photographed in high-key cinematic lighting against a dark minimalist clinic background. The aesthetic is clinical and authoritative with a monochromatic palette and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoaPnaF4_ur_M0k6dr_gSt9GS8DnmsTKpWKgQ0n0vKw2qEIgOMCkHWLBwhFRDlfp5eT_-ywi6obM3ZrplCibE6B-iCwO7ahtrFrElt0bxYIihkLQ1yqIfVo7CNgLIkNxzi4jyMPx155CuKmEH8uvqJgI_oTsGAUkBeQavdPoJ-pwaN55nx_pP9rIYVXGz_nO5VAcBIqtcNbTviYdCaY3A36RtoxBzTCtb_7zFuLXfN3S89j24GnrFsRJXJ8F3QBO77vYVY9IJ_RA"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="mt-16 p-8 flex gap-8 h-[calc(100vh-64px)] overflow-hidden">
+<div class="flex-1 flex flex-col gap-8 overflow-y-auto pr-2 custom-scrollbar">
+<!-- Overview Header -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-surface">Compliance Dashboard</h2>
+<p class="text-on-surface-variant opacity-70">Inventory safety and allergen disclosure matrix.</p>
+</div>
+<button class="bg-primary hover:bg-primary-fixed-dim text-on-primary px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-[0px_8px_24px_rgba(251,191,36,0.25)]">
+<span class="material-symbols-outlined text-[20px]">file_export</span>
+                        Export Audit Ledger
+                    </button>
+</div>
+<!-- KPI Grid -->
+<div class="grid grid-cols-3 gap-6">
+<div class="glass-panel p-6 rounded-xl flex items-center justify-between">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Checks Passing</p>
+<h3 class="text-4xl font-bold text-tertiary-container tabular-nums mt-1">124</h3>
+<p class="text-xs text-tertiary-container/60 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> +2 from yesterday
+                            </p>
+</div>
+<div class="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl flex items-center justify-between border-primary/20 bg-primary/5">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Pending Review</p>
+<h3 class="text-4xl font-bold text-primary tabular-nums mt-1">14</h3>
+<p class="text-xs text-primary/60 mt-2">Requires manual override</p>
+</div>
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl flex items-center justify-between border-error/20">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Blocked Entities</p>
+<h3 class="text-4xl font-bold text-error tabular-nums mt-1">03</h3>
+<p class="text-xs text-error/60 mt-2">Distribution halted</p>
+</div>
+<div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">cancel</span>
+</div>
+</div>
+</div>
+<!-- Compliance Matrix -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+<div class="px-6 py-4 bg-surface-container-high/50 border-b border-on-surface-variant/10 flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface">Active Compliance Ledger</span>
+<div class="flex gap-2">
+<button class="text-xs font-label-caps px-3 py-1 rounded bg-surface-container-highest border border-on-surface-variant/10 text-on-surface">Filter: All</button>
+<button class="text-xs font-label-caps px-3 py-1 rounded bg-surface-container-highest border border-on-surface-variant/10 text-on-surface-variant">Sort: SKU</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-on-surface-variant font-label-caps text-[10px] border-b border-on-surface-variant/10">
+<th class="px-6 py-4">Dish Detail</th>
+<th class="px-6 py-4">Allergen State</th>
+<th class="px-6 py-4">Labeling</th>
+<th class="px-6 py-4">Last Audit</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-on-surface-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg overflow-hidden glass-panel flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A top-down aesthetic gourmet food photograph of Charcoal Sous-Vide Poultry, featuring blackened organic chicken breast slices arranged artfully with micro-greens on a dark slate plate. The lighting is moody and dramatic with a focus on textures. Dark minimalist kitchen atmosphere with golden amber highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaMMIZbN03sWEdnJRHrKpf4GYhYESYX4KWup_biBzhRrmi8KFQxqcIwxCF_3BlObQLz8sJexSsjHvbGqs8qxj9E6VBezr9iE5Btob_OiaGMdulLu3qT-N8ikOBojjEoYlRy0GCt__vMN-oId1E1k37RvgbiNEdKt9zFKQKBN9Rm6tN_aM6Nk7cCuWmEyPJERsBZS70f95Oi02e-daLODyB9AGHTDRIM0oThlRIuTe1gR7Bsj8TV0jVqAxO7qhHXIKcX36TbbjyfA"/>
+</div>
+<div>
+<div class="font-bold text-on-surface text-sm">Charcoal Sous-Vide Poultry</div>
+<div class="font-micro-data text-[10px] text-tertiary-container tabular-nums">SKU: NC-CVP-092</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-label-caps bg-tertiary-container/10 text-tertiary-container border border-tertiary-container/20">Reviewed</span>
+</td>
+<td class="px-6 py-4">
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">verified</span>
+</td>
+<td class="px-6 py-4 font-micro-data text-[11px] tabular-nums">2023.10.24 14:22</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(52,218,255,0.5)]"></div>
+<span class="text-xs font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<a class="text-primary text-[11px] font-label-caps hover:underline" href="#">View Evidence</a>
+</td>
+</tr>
+<!-- Row 2 - Warning -->
+<tr class="hover:bg-white/5 transition-colors bg-primary/5">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg overflow-hidden glass-panel flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A bright and crisp macro food photo of Precision Green Slaw, consisting of finely shredded kale, cabbage, and nutrient-dense seeds dressed in a light citrus vinaigrette. The colors are vibrant neon greens against a pure black ceramic bowl, shot in clinical high-resolution detail. Sophisticated and engineered appearance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZUB7Bm32uxRjWybXHuGQFYPjMicFoCLaQze7OwJF6gqrM1BGLo4k-P071bI5hCi6l8g9AArGu8Y2-J_yNHhIvno1RmWA7zFEEmdYMTWGLHw70byASpBQhWlqNbIV39Dqnu_TAYRgebWRYQeqqZIqimIRV6IIdIjrI9_DAmOisZz6KFLT02xFnXDrjBOIA_5zgfQKjacCjupR0yzvu9hfun3Tyucu4qt0i1GKon6shcV8lCKFzN1upObx79vIB4907IHmsAbzy0A"/>
+</div>
+<div>
+<div class="font-bold text-on-surface text-sm">Precision Green Slaw</div>
+<div class="font-micro-data text-[10px] text-primary tabular-nums">SKU: NC-PGS-411</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-label-caps bg-primary/10 text-primary border border-primary/20">Unchecked</span>
+</td>
+<td class="px-6 py-4">
+<span class="material-symbols-outlined text-primary text-[18px]">error</span>
+</td>
+<td class="px-6 py-4 font-micro-data text-[11px] tabular-nums">2023.10.25 09:15</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+<span class="text-xs font-medium text-primary">Pending</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<a class="text-primary text-[11px] font-label-caps hover:underline" href="#">Review Now</a>
+</td>
+</tr>
+<!-- Row 3 - Critical -->
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg overflow-hidden glass-panel flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A dark and decadent Midnight Espresso Tart, featuring a glossy dark chocolate ganache surface with gold leaf accents on a matte black plate. The tart has a sharp, engineered edge and is garnished with a single espresso bean. Dark cinematic lighting with sharp contrasts and high-end culinary appeal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEuDxbUVpVF1IwXvXg9B1ypIv98mwrmdWFJdJQBxILu2epwcyVIIiQy8xhpUUGuq8GR3Bvtj4GcwQOzFQ3PBe9gj3sIBTATqk6P-LoddbVmfg1lxGKYLWkpH88GaPtrVMWyEie9FVPj7am-Ch8otVE0sQxuaDiqwTjMnrCGIZAfTCqo1qMxk1uTVRzbM_wb_LlOw8Lqf0qXe4tp8wLUJBS7l6I_Qm3vENrjdlt5_As9ozMpqiD0srXCwBAu2r8msU6xoJvQa19MQ"/>
+</div>
+<div>
+<div class="font-bold text-on-surface text-sm">Midnight Espresso Tart</div>
+<div class="font-micro-data text-[10px] text-error tabular-nums">SKU: NC-MET-882</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-label-caps bg-error/10 text-error border border-error/20">Derived</span>
+</td>
+<td class="px-6 py-4">
+<span class="material-symbols-outlined text-error text-[18px]">cancel</span>
+</td>
+<td class="px-6 py-4 font-micro-data text-[11px] tabular-nums">2023.10.22 18:40</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-error"></div>
+<span class="text-xs font-medium text-error">Halted</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<a class="text-primary text-[11px] font-label-caps hover:underline" href="#">View Block</a>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg overflow-hidden glass-panel flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A futuristic nutritional bowl with spiraled vegetable ribbons and translucent protein cubes, illuminated by a soft cyan glow. The food looks mathematically perfect and clinical. High-speed culinary photography with a focus on precision and science. Minimalist dark aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi_O0KwremYEawvyItc8wyYJSEAojwCKb2d-8lCgSGHWXJ2hM8-PszuTvIR1aA2NC0Y8FaL1EgdDyoIpdcHHRjejosgI2m13gv9TAW8OFgI75tTZYaNGpT8rT70L7sIvU152tM4Xd0svupB2uDBgYOwwBbYXF-8aRBM65kF2FVAh0FQMFo-c66hif4bM7RKHQrXqPYx1Zk6ntMpZpBRlxyzyJGH90W_PEdzDToCMSCLrH1BdEblmP54xLoxXohJqfKIaNkO5O-Xw"/>
+</div>
+<div>
+<div class="font-bold text-on-surface text-sm">Synthetic Salmon Cubes</div>
+<div class="font-micro-data text-[10px] text-tertiary-container tabular-nums">SKU: NC-SSC-201</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-label-caps bg-tertiary-container/10 text-tertiary-container border border-tertiary-container/20">Reviewed</span>
+</td>
+<td class="px-6 py-4">
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">verified</span>
+</td>
+<td class="px-6 py-4 font-micro-data text-[11px] tabular-nums">2023.10.25 12:00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(52,218,255,0.5)]"></div>
+<span class="text-xs font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<a class="text-primary text-[11px] font-label-caps hover:underline" href="#">View Evidence</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Audit Log Sidebar -->
+<aside class="w-80 flex flex-col gap-6">
+<div class="glass-panel rounded-xl flex-1 flex flex-col overflow-hidden">
+<div class="px-6 py-4 border-b border-on-surface-variant/10">
+<h4 class="font-headline-md text-[16px] text-on-surface">Audit Log</h4>
+<p class="text-[10px] font-label-caps text-on-surface-variant">System Mutations</p>
+</div>
+<div class="flex-1 overflow-y-auto px-6 py-4 space-y-6 custom-scrollbar">
+<!-- Log Item 1 -->
+<div class="relative pl-6 border-l border-on-surface-variant/20">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(251,191,36,0.6)]"></div>
+<p class="text-[10px] font-micro-data text-primary tabular-nums">14:55:02</p>
+<p class="text-xs font-bold mt-1">Manual Override Initiated</p>
+<p class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">Dish ID: NC-PGS-411 transitioned to <span class="text-primary">PENDING</span> status.</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="font-label-caps text-[9px] px-2 py-0.5 rounded bg-surface-container-highest text-on-surface">DR. ARIS THORNE</span>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="relative pl-6 border-l border-on-surface-variant/20">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-tertiary-container"></div>
+<p class="text-[10px] font-micro-data text-on-surface-variant tabular-nums">12:10:45</p>
+<p class="text-xs font-bold mt-1">Automated Lab Sync</p>
+<p class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">Batch NC-2023-X successfully validated by bio-sensors.</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="font-label-caps text-[9px] px-2 py-0.5 rounded bg-surface-container-highest text-on-surface">SYSTEM-AUTO</span>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="relative pl-6 border-l border-on-surface-variant/20">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-error shadow-[0_0_8px_rgba(255,180,171,0.6)]"></div>
+<p class="text-[10px] font-micro-data text-on-surface-variant tabular-nums">09:30:11</p>
+<p class="text-xs font-bold mt-1 text-error">Compliance Breach Detected</p>
+<p class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">High caffeine levels in NC-MET-882 exceeded clinical threshold.</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="font-label-caps text-[9px] px-2 py-0.5 rounded bg-error/10 text-error">SYSTEM-ALERT</span>
+</div>
+</div>
+<!-- Log Item 4 -->
+<div class="relative pl-6 border-l border-on-surface-variant/20">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-on-surface-variant/40"></div>
+<p class="text-[10px] font-micro-data text-on-surface-variant tabular-nums">08:00:00</p>
+<p class="text-xs font-bold mt-1 opacity-60">System Heartbeat</p>
+<p class="text-[11px] text-on-surface-variant mt-1 leading-relaxed opacity-60">Routine diagnostic of compliance engine complete.</p>
+</div>
+</div>
+<div class="p-6 border-t border-on-surface-variant/10">
+<button class="w-full py-2 rounded border border-on-surface-variant/20 text-[11px] font-label-caps hover:bg-white/5 transition-colors">Load Full History</button>
+</div>
+</div>
+<!-- Secondary Control -->
+<div class="glass-panel p-6 rounded-xl space-y-4">
+<h5 class="text-xs font-bold text-on-surface">Quick Actions</h5>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-2 rounded hover:bg-white/5 cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px] text-tertiary-container">biotech</span>
+<span class="text-xs">Force Resync</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded hover:bg-white/5 cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px] text-primary">priority_high</span>
+<span class="text-xs">Emergency Lock</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">chevron_right</span>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Micro-Interactions Script -->
+<script>
+        // Simple hover effect for table rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.style.transform = 'translateX(4px)';
+                row.style.transition = 'transform 0.2s ease-out';
+            });
+            row.addEventListener('mouseleave', () => {
+                row.style.transform = 'translateX(0)';
+            });
+        });
+
+        // Search Bar Focus Effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-105');
+            searchInput.parentElement.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-105');
+        });
+    </script>
+</body></html>
