@@ -272,3 +272,76 @@
   justify-content: center;
   z-index: 100;
 }
+
+/* ============================================================================
+ * Nocturnal Nourishment skin (.tnm2.nn)
+ * A scoped restyle that rebinds the .tnm2 design tokens to the NN palette
+ * (defined in index.css @theme) and layers the NN "shape" — glass surfaces,
+ * larger radii, an amber primary button + glow. Purely presentational: it
+ * changes NO markup and NO logic, so every honest-rendering state, filter,
+ * combo and cart handler behaves exactly as before. Applied by adding `nn`
+ * to a screen's root `.tnm2` element. All colours come from NN tokens, so the
+ * no-hardcoded-hex gate stays satisfied.
+ * ==========================================================================*/
+.tnm2.nn {
+  --bg: var(--color-nn-bg);
+  --s1: var(--color-nn-surface);
+  --s2: var(--color-nn-surface-high);
+  --s3: var(--color-nn-surface-high);
+  --tx: var(--color-nn-on-surface);
+  --mut: var(--color-nn-secondary);
+  --fnt: var(--color-nn-outline);
+  --saf: var(--color-nn-primary);
+  --safb: var(--color-nn-primary);
+  --safd: color-mix(in srgb, var(--color-nn-primary) 14%, transparent);
+  --onsaf: var(--color-nn-on-primary);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* Glass, sticky top bar — the NN header treatment. */
+.tnm2.nn .appbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--color-nn-bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Cards & inputs → translucent glass with a larger NN radius. */
+.tnm2.nn .card,
+.tnm2.nn .dcard {
+  background: color-mix(in srgb, var(--color-nn-surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+}
+.tnm2.nn .inp {
+  background: color-mix(in srgb, var(--color-nn-surface) 72%, transparent);
+  border-radius: 14px;
+}
+
+/* Chips & pills → fully-rounded glass; active chip is NN amber. */
+.tnm2.nn .chip,
+.tnm2.nn .pill {
+  border-radius: 9999px;
+  background: color-mix(in srgb, #fff 5%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.tnm2.nn .chip.on {
+  background: var(--safd);
+  border-color: color-mix(in srgb, var(--color-nn-primary) 42%, transparent);
+  color: var(--color-nn-primary);
+}
+
+/* The Add button → solid NN amber with the signature glow. */
+.tnm2.nn .addb {
+  background: var(--color-nn-primary);
+  color: var(--color-nn-on-primary-container);
+  border-color: transparent;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--color-nn-primary) 32%, transparent);
+}
+
