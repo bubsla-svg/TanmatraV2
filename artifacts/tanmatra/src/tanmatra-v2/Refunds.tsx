@@ -4,7 +4,11 @@ import { Link } from "react-router";
  * (git 2507084) into the v2 (.tnm2) design language. Same links / content,
  * v2 UI. Phosphor icons only. */
 
-const LAST_UPDATED = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+// Fixed to the month this policy's content was last materially revised.
+// Must NOT be derived from `new Date()` — that would falsely re-stamp the
+// page as "updated this month" on every render (and break prerender
+// determinism). Bump this only when the policy text below actually changes.
+const LAST_UPDATED = "July 2026";
 
 export default function V2Refunds() {
   return (

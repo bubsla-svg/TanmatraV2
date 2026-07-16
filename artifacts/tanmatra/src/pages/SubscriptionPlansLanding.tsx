@@ -15,13 +15,12 @@ import {
   Clock,
   MapPin,
   ChevronDown,
-  Star,
   SlidersHorizontal,
   CalendarDays,
   Flame,
   ShieldCheck,
 } from "lucide-react";
-import { getDishBySlug } from "@/lib/menuData";
+import { DISHES, getDishBySlug } from "@/lib/menuData";
 import { onDishImageError } from "@/lib/imgFallback";
 
 export const meta: MetaFunction = () => [
@@ -209,7 +208,7 @@ export default function SubscriptionPlansLanding() {
                 <p className="text-xs text-clinical-zinc mt-1.5">Prepared fresh daily in temperature-controlled specialty kitchens.</p>
               </div>
               <div className="flex items-center gap-2 mt-4 pt-3 border-t border-clinical-border/50 text-xs text-clinical-gold font-semibold">
-                <Star className="w-4 h-4 fill-clinical-gold" /> 4.9★ Avg Partner Rating
+                <Stethoscope className="w-4 h-4" /> RD-partnered kitchen network
               </div>
             </CardContent>
           </Card>
@@ -324,6 +323,16 @@ export default function SubscriptionPlansLanding() {
           {PLANS.map((p) => {
             const Icon = p.icon;
             const { perDelivery } = priceFor(p.mealsPerWeek);
+            // Real catalog dishes with real macros — never hardcoded nutrition
+            // numbers. High-protein surfaces the actual top-protein dishes;
+            // Everyday surfaces veg dishes. Both read straight from the record.
+            const planDishes = (
+              p.id === "high-protein"
+                ? [...DISHES].sort(
+                    (a, b) => (b.macros.protein ?? 0) - (a.macros.protein ?? 0),
+                  )
+                : DISHES.filter((d) => d.isVeg)
+            ).slice(0, 3);
             return (
               <Card
                 key={p.id}
@@ -349,9 +358,6 @@ export default function SubscriptionPlansLanding() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 px-2.5 py-1 rounded-lg text-xs font-bold self-start">
-                      <Star className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" /> 4.9
-                    </div>
                   </div>
 
                   <p className="text-xs text-clinical-zinc leading-relaxed max-w-2xl">{p.desc}</p>
@@ -360,22 +366,22 @@ export default function SubscriptionPlansLanding() {
                   <div className="space-y-2 pt-1">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-clinical-zinc">Available dishes in rotation</p>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-                      {[
-                        { name: p.id === "everyday" ? "Signature Quinoa Salad" : "Broccoli Lemon Chicken Salad", cal: p.id === "everyday" ? 342 : 526, pro: p.id === "everyday" ? 25 : 34, veg: p.id === "everyday", img: p.id === "everyday" ? "/menu/quinoa-salad.jpg" : "/menu/chicken-salad.jpg" },
-                        { name: p.id === "everyday" ? "Moong Dal Chilla with Curd" : "Peri Peri Chicken Bowl", cal: p.id === "everyday" ? 380 : 560, pro: p.id === "everyday" ? 22 : 41, veg: p.id === "everyday", img: p.id === "everyday" ? "/menu/chilla.jpg" : "/menu/peri-peri.jpg" },
-                        { name: p.id === "everyday" ? "Palak Paneer & Multigrain Roti" : "Grilled Paneer & Veg Quinoa", cal: 445, pro: 28, veg: true, img: "/menu/paneer-bowl.jpg" },
-                      ].map((sample, idx) => (
-                        <div key={idx} className="shrink-0 w-44 sm:w-52 rounded-xl bg-clinical-dark border border-clinical-border/80 overflow-hidden flex flex-col justify-between group">
+                      {planDishes.map((dish) => (
+                        <div key={dish.slug} className="shrink-0 w-44 sm:w-52 rounded-xl bg-clinical-dark border border-clinical-border/80 overflow-hidden flex flex-col justify-between group">
                           <div className="h-28 bg-clinical-surface-elevated relative overflow-hidden flex items-center justify-center">
+                            {dish.image ? (
+                              <img src={dish.image} alt={dish.name} onError={onDishImageError} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <Flame className="w-8 h-8 text-clinical-gold/30 group-hover:scale-110 transition-transform" />
+                            )}
                             <div className="absolute top-2 left-2 z-10 bg-black/75 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10 text-[9px] font-bold flex items-center gap-1">
-                              <span className={`w-2 h-2 rounded-full ${sample.veg ? "bg-emerald-500" : "bg-red-500"}`} />
-                              {sample.veg ? "VEG" : "HIGH PRO"}
+                              <span className={`w-2 h-2 rounded-full ${dish.isVeg ? "bg-emerald-500" : "bg-red-500"}`} />
+                              {dish.isVeg ? "VEG" : "NON-VEG"}
                             </div>
-                            <Flame className="w-8 h-8 text-clinical-gold/30 group-hover:scale-110 transition-transform" />
                           </div>
                           <div className="p-2.5 space-y-1">
-                            <p className="text-xs font-bold text-white truncate">{sample.name}</p>
-                            <p className="text-[10px] text-clinical-zinc font-mono">{sample.cal}kcal • {sample.pro}g protein</p>
+                            <p className="text-xs font-bold text-white truncate">{dish.name}</p>
+                            <p className="text-[10px] text-clinical-zinc font-mono">{Math.round(dish.macros.calories)}kcal • {Math.round(dish.macros.protein)}g protein</p>
                           </div>
                         </div>
                       ))}
@@ -433,9 +439,6 @@ export default function SubscriptionPlansLanding() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 px-2.5 py-1 rounded-lg text-xs font-bold self-start">
-                      <Star className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" /> 4.9
-                    </div>
                   </div>
 
                   <p className="text-xs text-clinical-zinc leading-relaxed max-w-2xl">{p.description || p.tagline}</p>
