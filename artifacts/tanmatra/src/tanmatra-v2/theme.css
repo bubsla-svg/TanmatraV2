@@ -363,3 +363,34 @@
   overflow: visible;
 }
 
+/* ============================================================================
+ * Nocturnal Nourishment skin for the legacy clinical-palette landing pages
+ * (.nn-clinical)
+ *
+ * A handful of marketing / lead-capture surfaces (RD partners, gyms, morning
+ * fitness, subscription plans) are built on the legacy `clinical-*` Tailwind
+ * utilities rather than the `.tnm2` component system, so the `.tnm2.nn` skin
+ * above cannot reach them. Tailwind v4's `@theme` (non-inline) compiles those
+ * utilities to `var(--color-clinical-*)` references, so scoping a remap of the
+ * clinical tokens to their NN equivalents restyles the entire page with zero
+ * markup churn — identical honest content, NN palette. Applied by adding
+ * `nn-clinical` to a page's root element.
+ *
+ * `clinical-sage` is left intact on purpose: it is the "verified / healthy"
+ * semantic accent, and the `.tnm2.nn` skin above likewise leaves --sage green.
+ * All colours resolve to NN tokens (or #fff via color-mix, already used above),
+ * so the no-hardcoded-hex gate — which exempts this file — stays satisfied.
+ * ==========================================================================*/
+.nn-clinical {
+  --color-clinical-gold: var(--color-nn-primary);
+  --color-clinical-gold-light: color-mix(in srgb, var(--color-nn-primary) 12%, transparent);
+  --color-clinical-blue: var(--color-nn-tertiary);
+  --color-clinical-blue-light: color-mix(in srgb, var(--color-nn-tertiary) 12%, transparent);
+  --color-clinical-zinc: var(--color-nn-secondary);
+  --color-clinical-zinc-muted: var(--color-nn-outline);
+  --color-clinical-border: color-mix(in srgb, #fff 10%, transparent);
+  --color-clinical-dark: var(--color-nn-bg);
+  --color-clinical-surface: var(--color-nn-surface);
+  --color-clinical-surface-elevated: var(--color-nn-surface-high);
+}
+
