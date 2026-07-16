@@ -45,6 +45,7 @@ import {
   AuditLoggerGateway,
   PackingStationInterlockService,
   PrinterGateway,
+  SupervisorAuthGateway,
 } from './PackingStationInterlockService';
 import {
   GameDayTurbulenceParams,
@@ -216,10 +217,18 @@ async function runVerificationSuite() {
     logEvent: async (evt) =>
       console.log(`   [AuditLoggerGateway] Logged event: ${evt.event_type}`),
   };
+  // Credentials are verified out-of-band by the injected gateway — no PIN is
+  // embedded in the service. The mock authorises a single known supervisor so
+  // the override path can be exercised below.
+  const supervisorAuthMock: SupervisorAuthGateway = {
+    verifySupervisor: async (empId, pin) =>
+      empId === 'emp_qa_super_01' && pin === 'shift-issued-pin',
+  };
   const packingService = new PackingStationInterlockService(
     printerMock,
     alarmMock,
     auditMock,
+    supervisorAuthMock,
   );
   const safeDish: DishSpecification = {
     ...beetrootDish,
@@ -247,6 +256,41 @@ async function runVerificationSuite() {
     beetrootDish,
     'LOT_BEET_882',
     new Date().toISOString(),
+  );
+
+  // Supervisor override now routes through the injected auth gateway (no
+  // in-source PIN). Unauthorised credentials must be rejected...
+  try {
+    await packingService.supervisorOverrideReset(
+      'sess_101',
+      'emp_intruder_00',
+      'guessed-pin',
+      'CONTAINER_DISCARDED_AND_REPLACED',
+    );
+    console.log('   -> ❌ FAIL: unauthorised override was accepted');
+  } catch (err: any) {
+    // Assert on the REASON: it must be the auth rejection, not the earlier
+    // 'Invalid override state.' guard — otherwise a broken auth check could
+    // pass this test whenever the session simply wasn't locked.
+    if (err.message === 'Unauthorized supervisor credentials.') {
+      console.log(
+        `   -> Correctly rejected unauthorised override on auth: "${err.message}"`,
+      );
+    } else {
+      console.log(
+        `   -> ❌ FAIL: override rejected for the wrong reason: "${err.message}"`,
+      );
+    }
+  }
+  // ...and a shift-authorised supervisor can clear the interlock.
+  const reset = await packingService.supervisorOverrideReset(
+    'sess_101',
+    'emp_qa_super_01',
+    'shift-issued-pin',
+    'CONTAINER_DISCARDED_AND_REPLACED',
+  );
+  console.log(
+    `   -> Authorised supervisor cleared interlock; bay status = ${reset.status}`,
   );
   console.log();
 

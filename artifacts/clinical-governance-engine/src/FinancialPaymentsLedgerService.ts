@@ -1,3 +1,5 @@
+import {randomUUID} from 'crypto';
+
 /**
  * Request payload for creating a payment checkout intent with exact India GST breakdown.
  */
@@ -129,11 +131,18 @@ export class FinancialPaymentsLedgerService {
       req.delivery_taxable_amount +
       cgstDelivery +
       sgstDelivery;
-    const netPayableGateway = Number(
-      (grossTotal - req.wallet_applied_amount).toFixed(2),
+    // Clamp the applied wallet to [0, grossTotal] so a wallet balance larger
+    // than the order can never drive the gateway net payable negative (which
+    // the PG would reject) or over-debit the wallet ledger.
+    const walletApplied = Math.max(
+      0,
+      Math.min(req.wallet_applied_amount, grossTotal),
     );
+    const netPayableGateway = Number((grossTotal - walletApplied).toFixed(2));
 
-    const intentId = `pg_intent_${req.order_id}_${Date.now()}`;
+    // UUID (not Date.now()) so two intents for the same order in the same
+    // millisecond can't collide on the intent id.
+    const intentId = `pg_intent_${req.order_id}_${randomUUID()}`;
     const state: OrderFinancialState = {
       order_id: req.order_id,
       intent_id: intentId,
@@ -145,7 +154,7 @@ export class FinancialPaymentsLedgerService {
       sgst_food: sgstFood,
       cgst_delivery: cgstDelivery,
       sgst_delivery: sgstDelivery,
-      wallet_debited: req.wallet_applied_amount,
+      wallet_debited: walletApplied,
       net_payable_gateway: netPayableGateway,
       kds_ticket_printed: false,
     };
@@ -202,7 +211,7 @@ export class FinancialPaymentsLedgerService {
       const ts = new Date().toISOString();
       if (order.net_payable_gateway > 0) {
         this.ledgerJournal.push({
-          journal_id: `j_${Date.now()}_1`,
+          journal_id: `j_${randomUUID()}_1`,
           order_id: order.order_id,
           debit_account: 'ASSET_PG_CLEARING',
           credit_account: 'REVENUE_CLEARING',
@@ -212,7 +221,7 @@ export class FinancialPaymentsLedgerService {
       }
       if (order.wallet_debited > 0) {
         this.ledgerJournal.push({
-          journal_id: `j_${Date.now()}_2`,
+          journal_id: `j_${randomUUID()}_2`,
           order_id: order.order_id,
           debit_account: 'LIABILITY_USER_WALLET',
           credit_account: 'REVENUE_CLEARING',
@@ -221,7 +230,7 @@ export class FinancialPaymentsLedgerService {
         });
       }
       this.ledgerJournal.push({
-        journal_id: `j_${Date.now()}_3`,
+        journal_id: `j_${randomUUID()}_3`,
         order_id: order.order_id,
         debit_account: 'REVENUE_CLEARING',
         credit_account: 'REVENUE_FOOD_SALES',
@@ -229,7 +238,7 @@ export class FinancialPaymentsLedgerService {
         timestamp: ts,
       });
       this.ledgerJournal.push({
-        journal_id: `j_${Date.now()}_4`,
+        journal_id: `j_${randomUUID()}_4`,
         order_id: order.order_id,
         debit_account: 'REVENUE_CLEARING',
         credit_account: 'REVENUE_DELIVERY_FEES',
@@ -237,7 +246,7 @@ export class FinancialPaymentsLedgerService {
         timestamp: ts,
       });
       this.ledgerJournal.push({
-        journal_id: `j_${Date.now()}_5`,
+        journal_id: `j_${randomUUID()}_5`,
         order_id: order.order_id,
         debit_account: 'REVENUE_CLEARING',
         credit_account: 'LIABILITY_GST_CGST_OUTPUT',
@@ -245,7 +254,7 @@ export class FinancialPaymentsLedgerService {
         timestamp: ts,
       });
       this.ledgerJournal.push({
-        journal_id: `j_${Date.now()}_6`,
+        journal_id: `j_${randomUUID()}_6`,
         order_id: order.order_id,
         debit_account: 'REVENUE_CLEARING',
         credit_account: 'LIABILITY_GST_SGST_OUTPUT',
@@ -298,7 +307,7 @@ export class FinancialPaymentsLedgerService {
 
     // Post double-entry refund entries
     this.ledgerJournal.push({
-      journal_id: `j_${Date.now()}_r1`,
+      journal_id: `j_${randomUUID()}_r1`,
       order_id: orderId,
       debit_account: 'REVENUE_FOOD_SALES',
       credit_account: 'ASSET_PG_CLEARING',
@@ -307,7 +316,7 @@ export class FinancialPaymentsLedgerService {
       gst_credit_note_number: creditNoteNumber,
     });
     this.ledgerJournal.push({
-      journal_id: `j_${Date.now()}_r2`,
+      journal_id: `j_${randomUUID()}_r2`,
       order_id: orderId,
       debit_account: 'LIABILITY_GST_CGST_OUTPUT',
       credit_account: 'ASSET_PG_CLEARING',
@@ -316,7 +325,7 @@ export class FinancialPaymentsLedgerService {
       gst_credit_note_number: creditNoteNumber,
     });
     this.ledgerJournal.push({
-      journal_id: `j_${Date.now()}_r3`,
+      journal_id: `j_${randomUUID()}_r3`,
       order_id: orderId,
       debit_account: 'LIABILITY_GST_SGST_OUTPUT',
       credit_account: 'ASSET_PG_CLEARING',
