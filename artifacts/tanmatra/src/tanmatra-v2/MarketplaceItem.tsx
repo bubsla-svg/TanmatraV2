@@ -190,12 +190,6 @@ export default function V2MarketplaceItem() {
 
           {/* Badges */}
           <div className="fx ac wrap g6 mt14">
-            {item.rdVerified && (
-              <span className="pill sg">
-                <i className="ph-fill ph-seal-check" />
-                RD-curated
-              </span>
-            )}
             {item.badges.map((b) => (
               <span key={b} className="pill">
                 {b}

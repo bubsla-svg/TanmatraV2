@@ -478,12 +478,12 @@ export default function V2Dish() {
                   <span className="text-[10px] font-bold text-white/90 mt-0.5 uppercase">{gi}</span>
                 </div>
                 <div className="flex flex-col items-center border-l border-white/5">
-                  <span className="text-[9px] font-mono text-white/45 uppercase">{macrosEstimated ? "Source" : "RD Review"}</span>
+                  <span className="text-[9px] font-mono text-white/45 uppercase">Source</span>
                   <span className="text-[9px] font-bold text-white/90 mt-1 uppercase flex items-center gap-0.5">
                     {macrosEstimated ? (
                       <><Calculator className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Est.</>
                     ) : (
-                      <><Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Checked</>
+                      <><Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Measured</>
                     )}
                   </span>
                 </div>
