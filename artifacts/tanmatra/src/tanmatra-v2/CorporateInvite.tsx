@@ -41,7 +41,7 @@ export default function V2CorporateInvite() {
   };
 
   const Shell = ({ children }: any) => (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
       <div style={{ maxWidth: 420, width: "100%", margin: "0 auto", padding: 20 }}>{children}</div>
     </div>
   );
