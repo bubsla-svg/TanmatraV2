@@ -86,12 +86,107 @@ function clientIp(req: Request): string {
 
 // --- Routes -----------------------------------------------------------------
 
+import {
+  issueRefreshToken,
+  rotateRefreshToken,
+} from "../lib/refreshTokenRotation";
+
 router.get("/auth/user", (req: Request, res: Response) => {
   res.json(
     GetCurrentAuthUserResponse.parse({
       user: req.isAuthenticated() ? req.user : null,
     }),
   );
+});
+
+/**
+ * POST /auth/refresh
+ * Silent background token refresh endpoint.
+ * - Extends session TTL invisibly without interrupting user workflow.
+ * - Rotates refresh tokens on every call (Single-Use Token Rotation).
+ * - Detects token reuse compromise and revokes token family if replay attack occurs.
+ */
+router.post("/auth/refresh", async (req: Request, res: Response): Promise<void> => {
+  const presentedRefreshToken =
+    (req.body?.refreshToken as string) ??
+    (req.headers["x-refresh-token"] as string) ??
+    req.cookies?.["refreshToken"];
+
+  const sid = getSessionId(req);
+
+  // If no refresh token provided, try active session background touch
+  if (!presentedRefreshToken) {
+    if (sid) {
+      const session = await getSession(sid);
+      if (session) {
+        // Extend session TTL silently
+        await updateSession(sid, session);
+        setSessionCookie(res, sid);
+        res.json({ ok: true, user: session.user, refreshed: "session_extended" });
+        return;
+      }
+    }
+    // Graceful Failure Step 2: Session expired -> indicate preserveState to client
+    res.status(401).json({
+      error: "session expired",
+      code: "session_expired",
+      preserveState: true,
+      redirect: "/login",
+    });
+    return;
+  }
+
+  // Token Rotation & Reuse Check
+  const rotationResult = await rotateRefreshToken(presentedRefreshToken);
+
+  if (!rotationResult.success) {
+    if (rotationResult.reason === "reuse_compromise") {
+      // Step 3 Compromise Guard: Theft replay detected -> revoke session immediately
+      if (sid) await clearSession(res, sid);
+      res.status(401).json({
+        error: "security breach: token reuse detected",
+        code: "token_reuse_compromise",
+        action: "revoke_all_sessions",
+        redirect: "/login",
+      });
+      return;
+    }
+
+    // Standard expiry or not found
+    if (sid) await clearSession(res, sid);
+    res.status(401).json({
+      error: "refresh token invalid or expired",
+      code: "session_expired",
+      preserveState: true,
+      redirect: "/login",
+    });
+    return;
+  }
+
+  // Rotation Succeeded: Issue rotated refresh token & update session
+  const { newToken } = rotationResult;
+  res.cookie("refreshToken", newToken.token, {
+    httpOnly: true,
+    secure: !isInsecureLocalDev,
+    sameSite: sessionSameSite,
+    path: "/",
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  });
+
+  if (sid) {
+    const existing = await getSession(sid);
+    if (existing) {
+      await updateSession(sid, existing);
+      setSessionCookie(res, sid);
+    }
+  }
+
+  res.json({
+    ok: true,
+    refreshed: true,
+    refreshToken: newToken.token,
+    expiresAt: newToken.expiresAt.toISOString(),
+  });
 });
 
 router.post(

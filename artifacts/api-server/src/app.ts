@@ -133,8 +133,17 @@ app.use("/api/coach-agent", jsonAgent);
 app.use("/api/ops-agent", jsonAgent);
 app.use("/api/support-agent", jsonAgent);
 
+import {
+  sanitizeInputMiddleware,
+  routeBurstGuard,
+} from "./middlewares/requestValidationGuard";
+
 app.use(jsonDefault);
 app.use(urlEncodedDefault);
+
+// Step 2 & Step 3: Global XSS Sanitization Scrubber + Middleware Rate Awareness Guard
+app.use("/api", sanitizeInputMiddleware);
+app.use("/api", routeBurstGuard(30));
 
 // --- Per-category rate limiting -------------------------------------------
 // Mounted before authMiddleware so unauthenticated scraping is also limited.
