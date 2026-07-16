@@ -209,7 +209,7 @@ export function mapPetpoojaItem(
   categories: PetpoojaCategory[],
   addonGroups: PetpoojaAddonGroup[],
   attributes: PetpoojaAttribute[]
-): Omit<InsertMenuItem, "contraindications"> & { contraindications?: string[] } {
+): Omit<InsertMenuItem, "contraindications" | "macros"> & { contraindications?: string[]; macros: typeof menuItemsTable.$inferInsert["macros"] } {
   const slug = slugify(item.itemname);
 
   const cat = categories.find((c) => c.categoryid === item.item_categoryid);

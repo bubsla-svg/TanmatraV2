@@ -34,7 +34,7 @@ async function post(path: string, body: unknown, headers: Record<string, string>
     headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
-  const json = await res.json().catch(() => ({}));
+  const json: any = await res.json().catch(() => ({}));
   return { status: res.status, json };
 }
 
