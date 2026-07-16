@@ -51,12 +51,14 @@ import petpoojaRouter from "./petpooja";
 import wearableRouter from "./wearable";
 import catalogRouter from "./catalog";
 import cspReportRouter from "./cspReport";
+import openApiContractRouter from "./openApiContract";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(catalogRouter);
 router.use(cspReportRouter);
+router.use(openApiContractRouter);
 router.use(authRouter);
 router.use(adminAuthRouter);
 router.use(adminStatusRouter);
