@@ -777,6 +777,7 @@ export default function V2Checkout() {
   }
 
   const handleConfirmedPayment = async () => {
+    if (isProcessing) return; // re-entry guard: a queued double-tap can't fire a 2nd payment
     if (!activeAddr) {
       toast.error("Please select a delivery address");
       setConfirmOpen(false);
