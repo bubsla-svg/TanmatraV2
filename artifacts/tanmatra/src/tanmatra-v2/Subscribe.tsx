@@ -1808,7 +1808,7 @@ export default function V2Subscribe() {
               ? `Review meal customizations`
               : `Payable details checklist`
           }
-          pricePaise={quoteDetails?.total || undefined}
+          pricePaise={quoteDetails?.total || getCalculatedPricePaise(activeCadence, cycleMeals, isTrial)}
           ctaText={
             step === 0
               ? "Build plan"
