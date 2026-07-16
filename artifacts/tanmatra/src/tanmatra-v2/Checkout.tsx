@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/api/adapter";
-import { useCart, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
+import { useCart, useCartStore, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
 import { addonsApi } from "@/lib/marketplaceApi";
 import { useOrders, generateOrderId, submitOrderIdempotencyKey } from "@/lib/ordersContext";
 import { loyaltyApi } from "@/lib/loyaltyApi";
@@ -109,9 +109,21 @@ export default function V2Checkout() {
     setIsMounted(true);
   }, []);
   const { items, bundleSlugs, subtotal, clear } = useCart();
-  // Guard: redirect to menu if cart is empty (e.g. deep link, back-button after clear).
+  // Guard: bounce to the menu only when the cart is GENUINELY empty (deep link
+  // with nothing to buy, back-button after clear). On a refresh/deep-link the
+  // first hydration render can see an empty store even though the persisted
+  // cart is about to arrive (persist.hasHydrated() is true before the rehydrated
+  // items reach this component), which used to kick buyers with a full cart out
+  // of checkout. So: debounce, then re-check the LIVE store before redirecting;
+  // any real items appearing cancels the timer.
   useEffect(() => {
-    if (items.length === 0) navigate("/menu", { replace: true });
+    if (items.length > 0) return;
+    const t = setTimeout(() => {
+      if (useCartStore.getState().items.length === 0) {
+        navigate("/menu", { replace: true });
+      }
+    }, 600);
+    return () => clearTimeout(t);
   }, [items.length, navigate]);
   useEffect(() => {
     if (items.length > 0) {
