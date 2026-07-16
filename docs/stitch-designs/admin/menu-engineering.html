@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Menu Engineering Console</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Geist:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#34daff",
+                    "outline": "#9c8f79",
+                    "on-tertiary-container": "#005c6e",
+                    "surface-container-lowest": "#0e0e0e",
+                    "error": "#ffb4ab",
+                    "on-tertiary-fixed": "#001f27",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "on-error": "#690005",
+                    "secondary": "#c6c6c7",
+                    "on-primary-container": "#6c4f00",
+                    "surface-dim": "#131313",
+                    "surface": "#131313",
+                    "inverse-surface": "#e2e2e2",
+                    "outline-variant": "#4f4633",
+                    "on-primary-fixed-variant": "#5c4300",
+                    "inverse-primary": "#795900",
+                    "on-tertiary-fixed-variant": "#004e5d",
+                    "on-secondary": "#2f3131",
+                    "on-background": "#e2e2e2",
+                    "tertiary": "#b6edff",
+                    "primary-fixed-dim": "#f9bd22",
+                    "on-primary": "#402d00",
+                    "on-secondary-fixed-variant": "#454747",
+                    "error-container": "#93000a",
+                    "surface-container-high": "#2a2a2a",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary": "#003641",
+                    "surface-container": "#1f1f1f",
+                    "primary-fixed": "#ffdf9f",
+                    "surface-bright": "#393939",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "tertiary-fixed": "#afecff",
+                    "on-secondary-container": "#b4b5b5",
+                    "surface-container-low": "#1b1b1b",
+                    "on-surface": "#e2e2e2",
+                    "surface-tint": "#f9bd22",
+                    "on-surface-variant": "#d3c5ac",
+                    "surface-container-highest": "#353535",
+                    "primary-container": "#fbbf24",
+                    "secondary-container": "#454747",
+                    "surface-variant": "#353535",
+                    "tertiary-fixed-dim": "#30d8fd",
+                    "background": "#131313",
+                    "primary": "#ffe1a7",
+                    "secondary-fixed": "#e2e2e2",
+                    "on-primary-fixed": "#261a00",
+                    "inverse-on-surface": "#303030"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "padding-lateral": "16px",
+                    "gutter": "12px",
+                    "stack-sm": "4px",
+                    "stack-lg": "32px",
+                    "stack-md": "16px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter", "sans-serif"],
+                    "headline-md": ["Inter", "sans-serif"],
+                    "micro-data": ["Geist", "monospace"],
+                    "body-lg": ["Inter", "sans-serif"],
+                    "body-sm": ["Inter", "sans-serif"],
+                    "label-caps": ["Geist", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body {
+            background-color: #131313;
+            color: #e2e2e2;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        .quadrant-grid {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+    </style>
+</head>
+<body class="font-body-sm overflow-hidden h-screen flex">
+<!-- SideNavBar (Predicted from JSON) -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-white/5 flex flex-col py-stack-lg z-40 hidden md:flex">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-black text-primary tracking-tighter">Admin Console</h1>
+<p class="text-secondary-fixed-dim text-xs opacity-50 uppercase tracking-widest">Clinical Oversight</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:bg-surface-variant/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary bg-primary-container/10 border-r-2 border-primary transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-body-sm">Clinical Menus</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:bg-surface-variant/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">engineering</span>
+<span class="font-body-sm">Engineering</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:bg-surface-variant/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-sm">Performance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:bg-surface-variant/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">assignment_ind</span>
+<span class="font-body-sm">Patient Logs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:bg-surface-variant/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-body-sm">Inventory</span>
+</a>
+</nav>
+<div class="mt-auto px-4 space-y-4">
+<button class="w-full bg-primary-container text-on-primary-container font-bold py-3 rounded-lg shadow-lg active:scale-95 transition-transform">
+                Generate Report
+            </button>
+<div class="pt-6 border-t border-white/5 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-secondary-fixed-dim hover:bg-surface-variant/50 rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-sm">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-secondary-fixed-dim hover:bg-surface-variant/50 rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-sm">Sign Out</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-0 md:ml-64 flex flex-col h-full overflow-y-auto">
+<!-- TopAppBar (Predicted from JSON) -->
+<header class="fixed top-0 right-0 left-0 md:left-64 h-20 bg-background/80 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-padding-lateral z-30">
+<div class="flex items-center gap-6">
+<h2 class="font-display-lg text-[24px] font-bold text-primary tracking-tight">Menu Engineering</h2>
+<!-- Filters in Header -->
+<div class="hidden lg:flex items-center gap-3 ml-4">
+<div class="flex items-center glass-panel rounded-full px-4 py-1.5 gap-2 border border-white/10">
+<span class="material-symbols-outlined text-sm text-primary">restaurant</span>
+<select class="bg-transparent border-none text-xs font-label-caps focus:ring-0 cursor-pointer">
+<option class="bg-surface-dim">ALL CATEGORIES</option>
+<option class="bg-surface-dim">MAIN COURSE</option>
+<option class="bg-surface-dim">BEVERAGES</option>
+</select>
+</div>
+<div class="flex items-center glass-panel rounded-full px-4 py-1.5 gap-2 border border-white/10">
+<span class="material-symbols-outlined text-sm text-primary">location_on</span>
+<select class="bg-transparent border-none text-xs font-label-caps focus:ring-0 cursor-pointer">
+<option class="bg-surface-dim">NOIDA KITCHEN</option>
+<option class="bg-surface-dim">BANGALORE CENTRAL</option>
+</select>
+</div>
+<div class="flex items-center glass-panel rounded-full px-4 py-1.5 gap-2 border border-white/10">
+<span class="material-symbols-outlined text-sm text-primary">calendar_today</span>
+<span class="text-xs font-label-caps uppercase">Last 30 Days</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">emergency</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">settings</button>
+<div class="w-10 h-10 rounded-full border-2 border-primary/20 overflow-hidden ml-2">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a medical executive in a dark, minimalist setting with warm amber backlighting. The person has a focused, clinical expression, wearing a tailored charcoal suit against a black background. Sharp lighting highlights the contours of the face, suggesting a high-performance environment of culinary engineering." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEIQqY6Aco5e5P0fzPoxmzQyUWJEvmZRMpNjevnedFvL7PpCTCSqqDcBeFq3pI5WsHezx8VtFnH1E6E4ELMn1JSWMmZ4iHO_kK3OwQZzlS1bsO6W0c4m4jefC-76f4o3dgsIvuSURlLnmf0OGB0yjp2WS3tGJgtbsqYjAFrPXNWZznXEi8rlaMs3R2SKy1Wa4U8Xf4t2HEyU-cnFZe-vqFfhEvkF46xMTwX501j3NsN4I84DgvOPpslkBDT5o5Cuswh7MGDr4l0g"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="pt-24 px-6 pb-12 space-y-8">
+<!-- Quadrant Matrix Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Menu Matrix Analysis</h3>
+<p class="text-secondary-fixed-dim text-body-sm">Strategic placement based on volume and profitability</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-primary-container"></div>
+<span class="text-[10px] font-label-caps text-on-surface-variant">HIGH POPULARITY</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary-container"></div>
+<span class="text-[10px] font-label-caps text-on-surface-variant">HIGH MARGIN</span>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-xl h-[500px] relative overflow-hidden flex items-center justify-center">
+<!-- Matrix Grid Overlay -->
+<div class="absolute inset-0 quadrant-grid opacity-20"></div>
+<!-- X & Y Axes -->
+<div class="absolute bottom-10 left-10 right-10 h-px bg-white/20"></div>
+<div class="absolute left-10 top-10 bottom-10 w-px bg-white/20"></div>
+<!-- Quadrant Labels -->
+<div class="absolute top-12 left-12 text-tertiary font-black opacity-30 text-2xl font-display-lg italic">PUZZLES</div>
+<div class="absolute top-12 right-12 text-primary font-black opacity-30 text-2xl font-display-lg italic text-right">STARS</div>
+<div class="absolute bottom-12 left-12 text-secondary font-black opacity-30 text-2xl font-display-lg italic">DOGS</div>
+<div class="absolute bottom-12 right-12 text-primary font-black opacity-30 text-2xl font-display-lg italic text-right">PLOWHORSES</div>
+<!-- Axis Titles -->
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] font-label-caps text-on-surface-variant tracking-[0.2em]">POPULARITY (UNITS SOLD) →</div>
+<div class="absolute left-4 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-label-caps text-on-surface-variant tracking-[0.2em]">CONTRIBUTION MARGIN (%) →</div>
+<!-- Data Points (Visual Representation) -->
+<div class="relative w-full h-full">
+<!-- Points for Stars -->
+<div class="absolute top-[20%] right-[25%] w-4 h-4 bg-primary-container rounded-full shadow-[0_0_15px_rgba(251,191,36,0.5)] cursor-pointer group hover:scale-125 transition-transform">
+<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-surface-container-highest rounded text-xs whitespace-nowrap z-50">Salmon Risotto (82%)</div>
+</div>
+<div class="absolute top-[15%] right-[15%] w-3 h-3 bg-primary-container rounded-full shadow-[0_0_10px_rgba(251,191,36,0.4)] cursor-pointer group hover:scale-125 transition-transform">
+<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-surface-container-highest rounded text-xs whitespace-nowrap">Filet Mignon (75%)</div>
+</div>
+<!-- Points for Puzzles -->
+<div class="absolute top-[30%] left-[20%] w-3 h-3 bg-tertiary-container rounded-full shadow-[0_0_10px_rgba(52,218,255,0.4)] cursor-pointer group hover:scale-125 transition-transform">
+<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-surface-container-highest rounded text-xs whitespace-nowrap">Miso Seabass (91%)</div>
+</div>
+<!-- Points for Plowhorses -->
+<div class="absolute bottom-[25%] right-[30%] w-5 h-5 bg-primary/40 border border-primary/60 rounded-full cursor-pointer group hover:scale-125 transition-transform">
+<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-surface-container-highest rounded text-xs whitespace-nowrap">Chicken Caesar (42%)</div>
+</div>
+<!-- Points for Dogs -->
+<div class="absolute bottom-[20%] left-[15%] w-2 h-2 bg-white/20 rounded-full cursor-pointer group hover:scale-125 transition-transform">
+<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-surface-container-highest rounded text-xs whitespace-nowrap">Miso Tofu (18%)</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Table Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface">Dish Performance Detail</h3>
+<div class="flex gap-2">
+<button class="px-4 py-2 glass-panel rounded-lg text-xs font-label-caps border-white/10 hover:bg-white/10 transition-colors">EXPORT CSV</button>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<table class="w-full text-left">
+<thead class="bg-white/5 border-b border-white/10">
+<tr>
+<th class="px-6 py-4 text-[10px] font-label-caps tracking-widest text-on-surface-variant uppercase">Dish Name</th>
+<th class="px-6 py-4 text-[10px] font-label-caps tracking-widest text-on-surface-variant uppercase">Category</th>
+<th class="px-6 py-4 text-[10px] font-label-caps tracking-widest text-on-surface-variant uppercase text-right">Orders</th>
+<th class="px-6 py-4 text-[10px] font-label-caps tracking-widest text-on-surface-variant uppercase text-right">Margin (%)</th>
+<th class="px-6 py-4 text-[10px] font-label-caps tracking-widest text-on-surface-variant uppercase">Quadrant</th>
+<th class="px-6 py-4 text-[10px] font-label-caps tracking-widest text-on-surface-variant uppercase text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-body-sm font-semibold">Truffle Salmon Risotto</td>
+<td class="px-6 py-4 text-secondary-fixed-dim text-xs">Mains</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data">1,240</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data text-tertiary-fixed-dim">82.4%</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-primary-container/20 text-primary-fixed-dim text-[10px] font-label-caps rounded-full border border-primary/20">STAR</span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-xs font-bold text-primary hover:underline uppercase tracking-tight" onclick="openModal('Truffle Salmon Risotto', 'Maintain Presence')">Keep</button>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-body-sm font-semibold">Organic Chicken Caesar</td>
+<td class="px-6 py-4 text-secondary-fixed-dim text-xs">Salads</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data">2,110</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data text-on-surface-variant">42.1%</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-white/5 text-secondary-fixed-dim text-[10px] font-label-caps rounded-full border border-white/10">PLOWHORSE</span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-xs font-bold text-tertiary hover:underline uppercase tracking-tight" onclick="openModal('Organic Chicken Caesar', 'Recost Portion Sizes')">Recost</button>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-body-sm font-semibold">Miso Glazed Tofu</td>
+<td class="px-6 py-4 text-secondary-fixed-dim text-xs">Mains</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data">142</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data text-error">18.5%</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-error/10 text-error text-[10px] font-label-caps rounded-full border border-error/20">DOG</span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-xs font-bold text-error hover:underline uppercase tracking-tight" onclick="openModal('Miso Glazed Tofu', 'Retire Item')">Retire</button>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-body-sm font-semibold">Black Cod Miso</td>
+<td class="px-6 py-4 text-secondary-fixed-dim text-xs">Entree</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data">320</td>
+<td class="px-6 py-4 tabular-nums text-right font-micro-data text-tertiary-fixed-dim">91.2%</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-tertiary-container/20 text-tertiary-fixed-dim text-[10px] font-label-caps rounded-full border border-tertiary/20">PUZZLE</span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-xs font-bold text-tertiary-fixed-dim hover:underline uppercase tracking-tight" onclick="openModal('Black Cod Miso', 'Promote on Social')">Promote</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300" id="modal-overlay">
+<!-- Confirmation Dialog -->
+<div class="glass-panel w-full max-w-md rounded-2xl p-8 border border-white/10 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container">psychology</span>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-white" onclick="closeModal()">close</button>
+</div>
+<h4 class="font-headline-md text-headline-md text-white mb-2" id="modal-title">Apply Strategic Change</h4>
+<p class="text-secondary-fixed-dim text-body-sm mb-8" id="modal-desc">
+                This action will trigger an automated workflow to modify the menu profile for the Noida Kitchen hub.
+            </p>
+<div class="p-4 bg-white/5 border border-white/10 rounded-xl mb-8 space-y-3">
+<div class="flex justify-between">
+<span class="text-xs font-label-caps text-on-surface-variant">DISH</span>
+<span class="text-xs font-bold text-white" id="confirm-dish">Salmon Risotto</span>
+</div>
+<div class="flex justify-between">
+<span class="text-xs font-label-caps text-on-surface-variant">ACTION</span>
+<span class="text-xs font-bold text-primary" id="confirm-action">Keep / Promote</span>
+</div>
+<div class="flex justify-between">
+<span class="text-xs font-label-caps text-on-surface-variant">LOCATION</span>
+<span class="text-xs font-bold text-white">Noida Kitchen</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<button class="py-3 px-4 border border-white/10 rounded-xl text-xs font-label-caps hover:bg-white/5 transition-colors" onclick="closeModal()">CANCEL</button>
+<button class="py-3 px-4 bg-primary-container text-on-primary-container rounded-xl text-xs font-bold shadow-lg hover:shadow-primary/25 transition-all active:scale-95">CONFIRM ACTION</button>
+</div>
+</div>
+</div>
+<!-- Micro-Interactions Script -->
+<script>
+        function openModal(dish, action) {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            
+            document.getElementById('confirm-dish').innerText = dish;
+            document.getElementById('confirm-action').innerText = action;
+            
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-95');
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.add('scale-95');
+        }
+
+        // Handle Escape Key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body></html>

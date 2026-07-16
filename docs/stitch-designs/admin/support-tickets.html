@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra Admin | Ticket Console</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Geist:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Geist:wght@400;500;600&display=swap');
+        
+        body {
+            background-color: #131313;
+            color: #e2e2e2;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .glass-panel {
+            background: rgba(31, 31, 31, 0.6);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-pulse {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .active-ticket {
+            background: rgba(251, 191, 36, 0.08);
+            border-left: 3px solid #fbbf24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "surface-container": "#1f1f1f",
+                "on-tertiary-fixed": "#001f27",
+                "on-primary": "#402d00",
+                "secondary": "#c6c6c7",
+                "on-tertiary-fixed-variant": "#004e5d",
+                "on-surface": "#e2e2e2",
+                "on-primary-container": "#6c4f00",
+                "on-error-container": "#ffdad6",
+                "surface": "#131313",
+                "inverse-surface": "#e2e2e2",
+                "primary-fixed-dim": "#f9bd22",
+                "on-tertiary-container": "#005c6e",
+                "surface-tint": "#f9bd22",
+                "surface-dim": "#131313",
+                "surface-container-lowest": "#0e0e0e",
+                "on-secondary-fixed-variant": "#454747",
+                "primary": "#ffe1a7",
+                "surface-container-highest": "#353535",
+                "error-container": "#93000a",
+                "on-surface-variant": "#d3c5ac",
+                "tertiary-fixed": "#afecff",
+                "outline": "#9c8f79",
+                "outline-variant": "#4f4633",
+                "on-secondary-container": "#b4b5b5",
+                "on-primary-fixed-variant": "#5c4300",
+                "inverse-primary": "#795900",
+                "primary-container": "#fbbf24",
+                "surface-variant": "#353535",
+                "primary-fixed": "#ffdf9f",
+                "on-background": "#e2e2e2",
+                "on-tertiary": "#003641",
+                "error": "#ffb4ab",
+                "surface-container-high": "#2a2a2a",
+                "surface-container-low": "#1b1b1b",
+                "on-secondary": "#2f3131",
+                "surface-bright": "#393939",
+                "secondary-fixed-dim": "#c6c6c7",
+                "secondary-container": "#454747",
+                "tertiary-fixed-dim": "#30d8fd",
+                "tertiary-container": "#34daff",
+                "tertiary": "#b6edff",
+                "on-primary-fixed": "#261a00",
+                "inverse-on-surface": "#303030",
+                "secondary-fixed": "#e2e2e2",
+                "on-secondary-fixed": "#1a1c1c",
+                "on-error": "#690005",
+                "background": "#131313"
+              },
+              "borderRadius": {
+                "DEFAULT": "8px",
+                "lg": "12px",
+                "xl": "16px",
+                "full": "9999px"
+              },
+              "fontFamily": {
+                "label-caps": ["Geist"],
+                "body-lg": ["Inter"],
+                "micro-data": ["Geist"],
+                "display-lg": ["Inter"],
+                "headline-md": ["Inter"],
+                "body-sm": ["Inter"]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="h-screen flex">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full z-50 flex flex-col w-64 bg-surface border-r border-on-surface-variant/10">
+<div class="p-6">
+<h1 class="font-display-lg text-display-lg text-primary-container tracking-tight">NutriCore</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant/60 uppercase mt-1">Clinical Oversight</p>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-sm text-body-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary bg-primary/10 border-r-2 border-primary transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">confirmation_number</span>
+<span class="font-body-sm text-body-sm">Tickets</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">clinical_notes</span>
+<span class="font-body-sm text-body-sm">Patient Records</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">biotech</span>
+<span class="font-body-sm text-body-sm">Lab Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-body-sm text-body-sm">Inventory</span>
+</a>
+</nav>
+<div class="p-4 border-t border-on-surface-variant/10">
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-container-low mb-4">
+<img class="w-10 h-10 rounded-full border border-primary/20" data-alt="A professional medical administrator profile photo, medium shot, soft directional lighting, modern clinical environment, wearing a minimalist dark scrub uniform, serious yet approachable expression, high resolution photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfCw248xujhABhwGWPqZydVE2dWw8qc16LwIYT_1JOC6FXyH047qlKKubmmc9KWs7yBAHcpr64hJj9eI4IJEg7RMHclrE2uYbTMIbGDsoQoi3NXqXPJdJ4rdhvgoAnTe0E5x7gUmYEj3YqXHIl4d1SMfiQnAf1KZYCf5yVjK-7HCXTYHsAn3TTRJYln7ZnYzeX2pdwfrxuPO9iMxZ9CwYikOPkJ1O-aau4aKK8uW8v7JRrGfz2yZKMPXc1cwQGwgBHkJOxmdpyBw"/>
+<div class="overflow-hidden">
+<p class="text-on-surface font-semibold truncate text-sm">Dr. Aris Thorne</p>
+<p class="text-on-surface-variant text-xs truncate">Head of Operations</p>
+</div>
+</div>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="font-label-caps text-label-caps">System Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 flex flex-col h-full bg-background overflow-hidden relative">
+<!-- Header -->
+<header class="h-16 flex items-center justify-between px-6 bg-surface/60 backdrop-blur-xl border-b border-on-surface-variant/10 z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Support Console</h2>
+<div class="h-4 w-[1px] bg-outline-variant/30"></div>
+<div class="flex items-center gap-2 text-tertiary">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+<span class="font-label-caps text-label-caps tracking-widest">SYSTEM ONLINE</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-1 focus:ring-primary/50 transition-all text-on-surface" placeholder="Search IDs, Patients..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">history</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Console Grid -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Left: Ticket Queue (40%) -->
+<section class="w-[40%] border-r border-outline-variant/10 flex flex-col bg-surface-container-lowest">
+<div class="p-4 flex items-center justify-between border-b border-outline-variant/5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Active Queue (14)</span>
+<div class="flex gap-2">
+<button class="p-1.5 rounded bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+<button class="p-1.5 rounded bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined text-sm">sort</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<!-- Ticket STAT -->
+<div class="p-4 border-b border-outline-variant/10 active-ticket cursor-pointer transition-all hover:bg-primary/5 relative group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-primary tabular-nums">#TK-8842</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] bg-red-500/20 text-red-400 font-bold tracking-tighter stat-pulse">STAT</span>
+</div>
+<span class="font-micro-data text-micro-data text-red-400 tabular-nums font-bold">BREACH IN 04:19</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-body-sm text-body-sm text-on-surface font-semibold flex items-center gap-2">
+                                    Julianne V. 
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400" title="Diamond Tier"></span>
+</h3>
+<p class="text-xs text-on-surface-variant mt-1">Cold-chain alert: Sensor deviation detected (+4°C)</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-[10px] text-tertiary px-2 py-0.5 rounded-full bg-tertiary/10">OPEN</span>
+</div>
+</div>
+</div>
+<!-- Ticket Urgent -->
+<div class="p-4 border-b border-outline-variant/10 cursor-pointer transition-all hover:bg-surface-container-high">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant tabular-nums">#TK-8841</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-400 font-bold tracking-tighter">URGENT</span>
+</div>
+<span class="font-micro-data text-micro-data text-on-surface-variant tabular-nums">12m ago</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-body-sm text-body-sm text-on-surface font-semibold flex items-center gap-2">
+                                    Marcus Thorne 
+                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-400" title="Gold Tier"></span>
+</h3>
+<p class="text-xs text-on-surface-variant mt-1">Order #88219 - Missing electrolyte vial</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-[10px] text-amber-400 px-2 py-0.5 rounded-full bg-amber-400/10">WAITING</span>
+</div>
+</div>
+</div>
+<!-- Routine Tickets -->
+<div class="p-4 border-b border-outline-variant/10 cursor-pointer transition-all hover:bg-surface-container-high">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant tabular-nums">#TK-8839</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] bg-surface-container-highest text-on-surface-variant font-bold tracking-tighter">ROUTINE</span>
+</div>
+<span class="font-micro-data text-micro-data text-on-surface-variant tabular-nums">1h ago</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-body-sm text-body-sm text-on-surface font-semibold">Elena K.</h3>
+<p class="text-xs text-on-surface-variant mt-1">Bio-data sync error with Nutrify Pro</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-[10px] text-tertiary px-2 py-0.5 rounded-full bg-tertiary/10">OPEN</span>
+</div>
+</div>
+</div>
+<!-- Resolved -->
+<div class="p-4 border-b border-outline-variant/10 cursor-pointer transition-all hover:bg-surface-container-high opacity-60">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant tabular-nums">#TK-8835</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] bg-surface-container-highest text-on-surface-variant font-bold tracking-tighter">ROUTINE</span>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-body-sm text-body-sm text-on-surface font-semibold">David Zheng</h3>
+<p class="text-xs text-on-surface-variant mt-1">Account verification successful</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-[10px] text-outline px-2 py-0.5 rounded-full bg-outline/10">RESOLVED</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right: Detail Pane (60%) -->
+<section class="w-[60%] flex flex-col relative">
+<!-- Background Decoration -->
+<div class="absolute inset-0 z-0 opacity-20 pointer-events-none">
+
+</div>
+<div class="flex-1 flex flex-col z-10">
+<!-- Customer Summary Header -->
+<div class="p-6">
+<div class="glass-panel rounded-xl p-5 flex flex-col gap-4 shadow-2xl">
+<div class="flex justify-between items-start">
+<div class="flex gap-4">
+<img class="w-16 h-16 rounded-lg object-cover border border-outline-variant/20" data-alt="Close up of a luxury delivery box with medical-grade insulation and a digital temperature display showing '4 Celsius'. The box is branded with a minimalist geometric logo in amber against a matte black surface. Professional studio lighting with cold blue and warm amber rim lights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAYLI4v58KLjFE8DeQErs_97VBWA9k7VDe8VmvicnKdumqOB2EKtxKjcA4S6p5YOQhMJsTGlJbYLtzMmg_CPuEK25rQM11quIRl9V-KWPx-sRgRAIT6dVZxUPP-ZCBQ7GEQUhn5BZ69DHTo4LxzbNE0LV2rhskTotoXEo2LI5dB5NU6MOQ1J9CMBcmh8lyhHRcEajaIzgldml8UNHnHHgWUadeRWZ6o65JSyvkH6kueY96-WTr496owVPUkERToyckpKhaL7PW3g"/>
+<div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface">Julianne V.</h3>
+<div class="flex gap-3 mt-1">
+<span class="font-label-caps text-label-caps text-tertiary">#ORD-55291-TX</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant/60">EST. DEL: 14:00 Today</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Total Value</p>
+<p class="font-display-lg text-primary tabular-nums tracking-tighter">$482.50</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 border-t border-outline-variant/10 pt-4">
+<div class="space-y-1">
+<p class="font-label-caps text-[10px] text-on-surface-variant">SHIPMENT CONTENTS</p>
+<div class="text-xs space-y-1">
+<div class="flex justify-between tabular-nums">
+<span>2x Personalized Macronutrient Gel (A1)</span>
+<span class="text-on-surface-variant">$124.00</span>
+</div>
+<div class="flex justify-between tabular-nums">
+<span>1x Lipid Optimization Serum</span>
+<span class="text-on-surface-variant">$258.50</span>
+</div>
+<div class="flex justify-between tabular-nums">
+<span>1x Electrolyte Phase-2 Kit</span>
+<span class="text-on-surface-variant">$100.00</span>
+</div>
+</div>
+</div>
+<div class="space-y-1">
+<p class="font-label-caps text-[10px] text-on-surface-variant">COLD-CHAIN TELEMETRY</p>
+<div class="bg-surface-container-low/50 rounded-lg p-2 border border-red-500/10">
+<div class="flex justify-between items-center text-xs mb-1">
+<span class="text-red-400 font-semibold">Critical Temp Alert</span>
+<span class="tabular-nums text-red-400">+4.2°C</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-red-500 w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Conversation Thread -->
+<div class="flex-1 overflow-y-auto px-6 py-4 space-y-6 custom-scrollbar flex flex-col">
+<!-- System Event -->
+<div class="flex justify-center">
+<span class="font-label-caps text-[10px] bg-surface-container-low px-3 py-1 rounded-full text-on-surface-variant border border-outline-variant/10">TICKET ASSIGNED TO DR. THORNE • 14:22</span>
+</div>
+<!-- Customer Message -->
+<div class="flex flex-col items-start max-w-[80%]">
+<div class="bg-surface-container-high text-on-surface p-4 rounded-2xl rounded-bl-none border border-outline-variant/10 shadow-lg">
+<p class="text-sm leading-relaxed">Hello, I just received a notification on my portal that the temperature sensor in my shipment #55291-TX has recorded a spike above the safety threshold. This serum is time-sensitive. Can you confirm if the cargo integrity is still valid for clinical use?</p>
+</div>
+<span class="font-micro-data text-micro-data text-on-surface-variant/60 mt-2 px-1">14:23 • Julianne V.</span>
+</div>
+<!-- System Message -->
+<div class="flex justify-center">
+<span class="font-label-caps text-[10px] bg-red-500/10 px-3 py-1 rounded-full text-red-400 border border-red-500/20">TELEMETRY SYNC: TEMP SPIKE CONFIRMED @ 14:25 UTC</span>
+</div>
+<!-- Agent Message (Draft State) -->
+<div class="flex flex-col items-end self-end max-w-[80%]">
+<div class="bg-primary text-on-primary p-4 rounded-2xl rounded-br-none shadow-[0px_8px_24px_rgba(251,191,36,0.15)]">
+<p class="text-sm font-semibold leading-relaxed">Hello Julianne, I'm reviewing the real-time logs now. The deviation lasted for 12 minutes during the logistics transfer. While the internal buffer is rated for 20 minutes at that range, I am initiating a diagnostic check with the carrier to be 100% certain. Please do not open the package until I give the final clearance.</p>
+</div>
+<span class="font-micro-data text-micro-data text-on-surface-variant/60 mt-2 px-1">14:28 • Dr. Aris Thorne</span>
+</div>
+</div>
+<!-- Quick Actions Bar -->
+<div class="px-6 py-4 flex gap-3 border-t border-outline-variant/5 bg-surface/30">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant/20 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-highest hover:text-on-surface transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">payments</span>
+                            REFUND ITEM
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant/20 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-highest hover:text-on-surface transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">restart_alt</span>
+                            REPLACE ORDER
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant/20 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-highest hover:text-on-surface transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">account_balance_wallet</span>
+                            ADD CREDIT
+                        </button>
+<div class="flex-1"></div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-tertiary/10 border border-tertiary/20 text-tertiary font-label-caps text-label-caps hover:bg-tertiary/20 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">verified</span>
+                            RESOLVE TICKET
+                        </button>
+</div>
+<!-- Input Area -->
+<div class="p-6 bg-surface-container-low/80 border-t border-outline-variant/10">
+<div class="flex gap-4 items-end bg-surface-container-lowest rounded-xl p-2 border border-outline-variant/20 focus-within:border-primary/40 transition-colors">
+<div class="flex flex-col flex-1 px-2 py-1">
+<label class="font-label-caps text-[10px] text-on-surface-variant/40 mb-1">REPLYING AS CLINICAL LEAD</label>
+<textarea class="bg-transparent border-none focus:ring-0 text-sm text-on-surface resize-none h-12 py-0 custom-scrollbar" placeholder="Type clinical response..."></textarea>
+</div>
+<div class="flex items-center gap-1 pb-1">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">medical_services</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">attach_file</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">forum</span>
+</button>
+<button class="ml-2 bg-primary text-on-primary w-10 h-10 rounded-lg flex items-center justify-center active:scale-95 transition-transform shadow-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<script>
+        // Simple micro-interactions for the ticket queue
+        document.querySelectorAll('.cursor-pointer').forEach(ticket => {
+            ticket.addEventListener('click', () => {
+                document.querySelectorAll('.active-ticket').forEach(el => el.classList.remove('active-ticket'));
+                ticket.classList.add('active-ticket');
+            });
+        });
+
+        // Real-time breach countdown simulation
+        let timeLeft = 259; // 4:19 in seconds
+        const countdownEl = document.querySelector('.font-micro-data.text-red-400');
+        
+        setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                countdownEl.textContent = `BREACH IN ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    </script>
+</body></html>
