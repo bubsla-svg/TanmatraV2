@@ -1334,7 +1334,7 @@ export default function V2Checkout() {
     <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
-          <button type="button" className="iconbtn" onClick={() => navigate("/cart")} aria-label="Back to cart">
+          <button type="button" className="iconbtn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cart"))} aria-label="Back">
             <i className="ph-bold ph-arrow-left" />
           </button>
           <div className="abt">Checkout</div>

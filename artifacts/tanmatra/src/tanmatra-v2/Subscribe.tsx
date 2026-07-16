@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { DISHES, macrosAreProvisional, type DishData } from "@workspace/menu-catalog";
 import { useMenuCatalog } from "@/lib/menuData";
@@ -154,6 +154,29 @@ interface ScheduleDay {
   rdTip?: string;
 }
 
+// Persist the in-progress subscription build so the browser Back button, a
+// reload, or navigating away and returning does not wipe the buyer's config
+// (State-Amnesia remediation). Scoped to the tab session; cleared on success.
+const SUBSCRIBE_DRAFT_KEY = "tanmatra:subscribe-draft:v1";
+type SubscribeDraft = {
+  step?: number;
+  slots?: Record<MealSlot, boolean>;
+  daysMode?: DaysMode;
+  cadence?: SubscriptionCadence;
+  selectedBillingCadence?: SubscriptionCadence | null;
+  startDate?: string;
+  address?: { label: string; line: string; city: string; pincode: string; phone: string };
+};
+function readSubscribeDraft(): SubscribeDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(SUBSCRIBE_DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as SubscribeDraft) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function V2Subscribe() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -175,7 +198,10 @@ export default function V2Subscribe() {
   // 6: S7 Price Review
   // 7: S8 Payment
   // 8: Success Screen
-  const [step, setStep] = useState<number>(0);
+  const [step, setStep] = useState<number>(() => {
+    const s = readSubscribeDraft()?.step;
+    return typeof s === "number" && s >= 0 && s <= 8 ? s : 0;
+  });
 
   const planSlug = searchParams.get("plan");
   const directPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
@@ -255,6 +281,72 @@ export default function V2Subscribe() {
   const [addressPrefilled, setAddressPrefilled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
+
+  // ---- State-Amnesia remediation ------------------------------------------
+  // Rehydrate the saved build once on mount (the buyer's earlier selections),
+  // then keep the draft in sessionStorage in sync as they proceed.
+  useEffect(() => {
+    const d = readSubscribeDraft();
+    if (!d) return;
+    if (d.slots) setSlots(d.slots);
+    if (d.daysMode) setDaysMode(d.daysMode);
+    if (d.cadence) setCadence(d.cadence);
+    if (d.selectedBillingCadence !== undefined) setSelectedBillingCadence(d.selectedBillingCadence);
+    if (typeof d.startDate === "string") setStartDate(d.startDate);
+    if (d.address) setAddress(d.address);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (step === 8) {
+        // Order placed — the draft has served its purpose.
+        window.sessionStorage.removeItem(SUBSCRIBE_DRAFT_KEY);
+        return;
+      }
+      window.sessionStorage.setItem(
+        SUBSCRIBE_DRAFT_KEY,
+        JSON.stringify({ step, slots, daysMode, cadence, selectedBillingCadence, startDate, address }),
+      );
+    } catch {
+      /* private mode / quota — non-fatal, the flow still works in-memory */
+    }
+  }, [step, slots, daysMode, cadence, selectedBillingCadence, startDate, address]);
+
+  // Mirror `step` into the URL so the browser Back button walks back through the
+  // stepper instead of dropping the buyer out of the money flow. The draft above
+  // keeps every selection intact regardless of how they navigate. `setStep` is
+  // the single source of truth; this effect only reflects it into history, and a
+  // popstate listener reflects history back into `step` — no bidirectional loop
+  // because each guards on equality.
+  const stepUrlSynced = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!stepUrlSynced.current) {
+      stepUrlSynced.current = true; // skip the initial mount push
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (p.get("step") !== String(step)) p.set("step", String(step));
+        return p;
+      },
+      { replace: false },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  useEffect(() => {
+    const onPop = () => {
+      const raw = new URLSearchParams(window.location.search).get("step");
+      const n = raw !== null ? Number(raw) : 0;
+      setStep(Number.isInteger(n) && n >= 0 && n <= 8 ? n : 0);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const toggleSlot = (slot: MealSlot) => {
     setSlots((prev) => {
@@ -901,7 +993,11 @@ export default function V2Subscribe() {
               setSelectedBillingCadence("weekly");
               goToStep(3);
             }}
-            className="card text-left flex justify-between items-center bg-[var(--tnm-surface-ink-2)] border border-white/5 p-4 rounded-xl hover:border-white/10 hover:bg-white/5 transition-all w-full"
+            className={`card text-left flex justify-between items-center p-4 rounded-xl transition-all w-full border ${
+              selectedBillingCadence === "weekly"
+                ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
+                : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10 hover:bg-white/5"
+            }`}
           >
             <div>
               <h4 className="text-sm font-bold text-white/90">1-Week Commitment</h4>
@@ -917,7 +1013,11 @@ export default function V2Subscribe() {
               setSelectedBillingCadence("fortnightly");
               goToStep(3);
             }}
-            className="card text-left flex justify-between items-center bg-[var(--tnm-surface-ink-2)] border border-white/5 p-4 rounded-xl hover:border-white/10 hover:bg-white/5 transition-all w-full"
+            className={`card text-left flex justify-between items-center p-4 rounded-xl transition-all w-full border ${
+              selectedBillingCadence === "fortnightly"
+                ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
+                : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10 hover:bg-white/5"
+            }`}
           >
             <div>
               <h4 className="text-sm font-bold text-white/90">2-Week Commitment</h4>
@@ -933,7 +1033,11 @@ export default function V2Subscribe() {
               setSelectedBillingCadence("monthly");
               goToStep(3);
             }}
-            className="card text-left flex justify-between items-center bg-[var(--tnm-surface-ink-2)] border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/5 p-4 rounded-xl hover:bg-[var(--tnm-action)]/10 transition-all w-full"
+            className={`card text-left flex justify-between items-center p-4 rounded-xl transition-all w-full border ${
+              selectedBillingCadence === "monthly"
+                ? "border-[var(--tnm-action)] bg-[var(--tnm-action)]/10"
+                : "border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/5 hover:bg-[var(--tnm-action)]/10"
+            }`}
           >
             <div>
               <div className="flex items-center gap-1.5">
