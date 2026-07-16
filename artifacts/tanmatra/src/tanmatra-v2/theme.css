@@ -345,3 +345,11 @@
   box-shadow: 0 4px 16px color-mix(in srgb, var(--color-nn-primary) 32%, transparent);
 }
 
+/* The Add button is a floating pill at the image's bottom edge (bottom:-12px).
+ * The image wrapper clips overflow to round its corners, which cut off the
+ * button's lower half. The image self-rounds via its own border-radius, so we
+ * can let the wrapper overflow — showing the amber pill in full. */
+.tnm2.nn .dimg {
+  overflow: visible;
+}
+
