@@ -9,7 +9,7 @@ import {
   type DishData,
   type AllergenDisclosure,
 } from "@/lib/menuData";
-import { useStitchCart } from "./stitchCartStore";
+import { useCartStore } from "@/lib/cartContext";
 
 /**
  * Dish Detail (Customise) — Stitch "Tanmatra Premium Home" screen 9cde04bc… on
@@ -83,8 +83,9 @@ export default function StitchDishDetail() {
   const [portion, setPortion] = useState<(typeof PORTIONS)[number]["id"]>("standard");
   const [addons, setAddons] = useState<Set<string>>(new Set());
   const [removals, setRemovals] = useState<Set<string>>(new Set());
-  const cartCount = useStitchCart((s) => s.count);
-  const addToCart = useStitchCart((s) => s.add);
+  // Production cart — same store /cart and checkout read.
+  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
+  const addItem = useCartStore((s) => s.addItem);
 
   const disclosure = useMemo(
     () => getAllergenDisclosure(dish ?? { allergens: [] }),
@@ -274,7 +275,33 @@ export default function StitchDishDetail() {
               <div className="absolute bottom-0 inset-x-0 p-4 pt-8 bg-gradient-to-t from-nn-surface-low via-nn-surface-low to-transparent">
                 <button
                   onClick={() => {
-                    addToCart({ slug: dish.slug, name: dish.name, pricePaise: dish.price, kcal: totalKcal ?? 0 });
+                    addItem({
+                      dishId: dish.id,
+                      slug: dish.slug,
+                      name: dish.name,
+                      image: dish.image ?? "",
+                      basePrice: dish.price,
+                      unitPrice: dish.price,
+                      quantity: 1,
+                      kitchen: dish.kitchen,
+                      isVeg: dish.isVeg,
+                      rdVerified: dish.rdVerified,
+                      macros: {
+                        protein: dish.macros.protein,
+                        carbs: dish.macros.carbs,
+                        fat: dish.macros.fat,
+                        fiber: dish.macros.fiber,
+                        calories: dish.macros.calories,
+                      },
+                      // Carry the buyer's customise selections onto the cart line.
+                      customizations: [
+                        portion !== "standard"
+                          ? PORTIONS.find((p) => p.id === portion)?.label ?? ""
+                          : "",
+                        ...ADDONS.filter((a) => addons.has(a.id)).map((a) => `+ ${a.label}`),
+                        ...[...removals],
+                      ].filter(Boolean),
+                    });
                     setSheetOpen(false);
                   }}
                   className="w-full h-14 min-h-[44px] rounded-xl bg-nn-primary text-nn-on-primary-container flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(251,191,36,0.25)] hover:brightness-110 active:scale-[0.98] transition-all"

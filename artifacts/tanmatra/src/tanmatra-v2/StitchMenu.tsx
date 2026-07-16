@@ -10,7 +10,8 @@ import {
   macrosAreProvisional,
   type DishData,
 } from "@/lib/menuData";
-import { useStitchCart } from "./stitchCartStore";
+import { Link } from "react-router";
+import { useCartStore } from "@/lib/cartContext";
 
 /**
  * Menu (Asymmetric & iOS Refined) — Stitch "Tanmatra Premium Home" screen
@@ -22,7 +23,7 @@ import { useStitchCart } from "./stitchCartStore";
  * allergens through getAllergenDisclosure() — an empty/unreviewed list shows an
  * "unverified" dot, never "safe". Prices come from dish.price (paise). No macro
  * number or badge the record can't back is rendered. Motion: transform/opacity
- * spring only; Zustand for the shared cart.
+ * spring only; add-to-cart flows through the production cart (useCartStore).
  */
 
 const CATEGORIES = ["All Dishes", "High Protein", "Low GI", "Vegetarian", "Recovery"] as const;
@@ -64,8 +65,10 @@ function Media({ className = "", children }: { className?: string; children?: Re
 export default function StitchMenu() {
   const { dishes } = useMenuCatalog();
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All Dishes");
-  const cartCount = useStitchCart((s) => s.count);
-  const add = useStitchCart((s) => s.add);
+  // Production cart (server-authoritative) — the same store /cart and checkout
+  // read, so "Add" here flows through the real money path.
+  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
+  const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState<string | null>(null);
 
   const bento = useMemo(() => dishes.filter((d) => d.isAvailable !== false).slice(0, 4), [dishes]);
@@ -74,7 +77,26 @@ export default function StitchMenu() {
   const [feature, small1, small2, wide] = bento;
 
   const addDish = (d: DishData) => {
-    add({ slug: d.slug, name: d.name, pricePaise: d.price, kcal: macrosAreProvisional(d) ? 0 : d.macros.calories });
+    addItem({
+      dishId: d.id,
+      slug: d.slug,
+      name: d.name,
+      image: d.image ?? "",
+      basePrice: d.price,
+      unitPrice: d.price,
+      quantity: 1,
+      kitchen: d.kitchen,
+      isVeg: d.isVeg,
+      rdVerified: d.rdVerified,
+      macros: {
+        protein: d.macros.protein,
+        carbs: d.macros.carbs,
+        fat: d.macros.fat,
+        fiber: d.macros.fiber,
+        calories: d.macros.calories,
+      },
+      customizations: [],
+    });
     setAdded(d.slug);
     window.setTimeout(() => setAdded((a) => (a === d.slug ? null : a)), 1500);
   };
@@ -206,15 +228,15 @@ export default function StitchMenu() {
         ))}
       </nav>
 
-      {/* Floating cart (Zustand count) */}
-      <button aria-label="Cart" className="fixed bottom-24 right-4 z-50 w-14 h-14 min-h-[44px] rounded-2xl bg-nn-primary text-nn-on-primary-container flex items-center justify-center nn-amber-glow active:scale-90 transition-transform">
+      {/* Floating cart — opens the real /cart (live count from useCartStore) */}
+      <Link aria-label="Cart" to="/cart" className="fixed bottom-24 right-4 z-50 w-14 h-14 min-h-[44px] rounded-2xl bg-nn-primary text-nn-on-primary-container flex items-center justify-center nn-amber-glow active:scale-90 transition-transform">
         <span className="relative">
           <ShoppingBag size={24} />
           {cartCount > 0 && (
             <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-nn-on-surface text-nn-bg nn-micro-data font-bold flex items-center justify-center tabular-nums">{cartCount}</span>
           )}
         </span>
-      </button>
+      </Link>
     </div>
   );
 }

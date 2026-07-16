@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Warning, ShieldWarning, Grains, Drop, Plant, Info, ShieldCheck } from "@phosphor-icons/react";
 import { FADE_IN_UP, SPRING } from "@/lib/motion";
+import { usePreferences } from "@/lib/preferencesContext";
 
 /**
  * Clinical Allergen Gate — Stitch "Tanmatra Premium Home" screen 06df1304… on
@@ -9,28 +10,36 @@ import { FADE_IN_UP, SPRING } from "@/lib/motion";
  * buyer sees before the kitchen locks out unsafe ingredients — pairs with the
  * server-side fail-closed safety engine (G9 CI gate).
  *
- * Honest rendering: the exclusions are the buyer's OWN declared profile (demo
- * values here; wire to real `allergens`/`medicalConditions` next). Crucially,
- * an EMPTY profile is NOT rendered as "safe" — it shows a warning that nothing
- * will be locked out. Motion: transform/opacity spring only. ≥44px controls.
+ * Honest rendering: the exclusions are the buyer's OWN declared profile, read
+ * live from usePreferences() (server-authoritative `allergens`). Crucially, an
+ * EMPTY or still-loading profile is NOT rendered as "safe" — it shows a warning
+ * that nothing will be locked out. Motion: transform/opacity spring only.
+ * ≥44px controls.
  */
 
 interface Exclusion {
   icon: typeof Grains;
   label: string;
-  severity: string;
 }
 
-// Demo declared profile — replace with the buyer's real allergens/conditions.
-const DECLARED: Exclusion[] = [
-  { icon: Grains, label: "Gluten", severity: "Severe" },
-  { icon: Drop, label: "Dairy", severity: "Intolerance" },
-  { icon: Plant, label: "Soy", severity: "Allergy" },
-];
+// Map an allergen name to a representative icon (falls back to a warning).
+function allergenIcon(name: string): typeof Grains {
+  const n = name.toLowerCase();
+  if (/gluten|wheat|barley|rye|grain/.test(n)) return Grains;
+  if (/dairy|milk|lactose|cheese|butter/.test(n)) return Drop;
+  if (/soy|peanut|nut|sesame|legume|plant/.test(n)) return Plant;
+  return Warning;
+}
 
 export default function StitchAllergenGate() {
+  const { preferences, loading } = usePreferences();
   const [verified, setVerified] = useState(false);
-  const exclusions = DECLARED;
+  // The buyer's OWN declared allergen profile (server-authoritative). An empty
+  // or still-loading profile is never rendered as "safe".
+  const exclusions: Exclusion[] = (preferences?.allergens ?? []).map((label) => ({
+    icon: allergenIcon(label),
+    label,
+  }));
   const hasExclusions = exclusions.length > 0;
 
   return (
@@ -66,12 +75,17 @@ export default function StitchAllergenGate() {
             <button className="min-h-[44px] px-2 nn-label-caps text-nn-primary hover:opacity-80 transition-opacity">Edit</button>
           </div>
 
-          {hasExclusions ? (
+          {loading ? (
+            <div className="flex items-center gap-2 rounded-lg p-3 bg-white/5 border border-white/10">
+              <Info size={18} className="text-nn-on-surface-variant shrink-0" />
+              <span className="nn-body-sm text-nn-on-surface-variant">Loading your safety profile…</span>
+            </div>
+          ) : hasExclusions ? (
             <div className="flex flex-wrap gap-3">
-              {exclusions.map(({ icon: Icon, label, severity }) => (
+              {exclusions.map(({ icon: Icon, label }) => (
                 <span key={label} className="flex items-center gap-2 rounded-full px-4 py-2 bg-nn-error-container/20 border border-nn-error/30 backdrop-blur-md">
                   <Icon size={18} className="text-nn-error" />
-                  <span className="nn-body-sm text-nn-error">{label} ({severity})</span>
+                  <span className="nn-body-sm text-nn-error">{label}</span>
                 </span>
               ))}
             </div>
