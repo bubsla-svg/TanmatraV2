@@ -969,7 +969,7 @@ function MacroTrack({ label, value, target, unit }: MacroTrackProps) {
               ? isOver
                 ? "bg-[var(--color-alert-stat)]"
                 : "bg-[var(--color-alert-safe)]"
-              : "bg-white/20"
+              : "bg-[var(--color-nn-primary)]"
           }`}
           style={{ width: target ? `${percent}%` : "100%" }}
         />
