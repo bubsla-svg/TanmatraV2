@@ -89,7 +89,7 @@ export default function V2Cart() {
 
   if (items.length === 0) {
     return (
-      <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar"><Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link><div className="abt">Your order</div></div>
           <div className="padx tc" style={{ paddingTop: 60 }}>
@@ -104,7 +104,7 @@ export default function V2Cart() {
   }
 
   return (
-    <div className="tnm2" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
