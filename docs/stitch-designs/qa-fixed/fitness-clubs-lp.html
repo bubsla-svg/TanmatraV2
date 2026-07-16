@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>TANMATRA | Morning Fitness Clubs</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131313;
+            color: #e2e2e2;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass {
+            background: rgba(31, 31, 31, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .amber-glow {
+            box-shadow: 0px 8px 24px rgba(251, 191, 36, 0.15);
+        }
+        .tabular { font-variant-numeric: tabular-nums; }
+        
+        /* Smooth transition for active navigation states */
+        .nav-item-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#fbbf24",
+                      "surface-container-high": "#2a2a2a",
+                      "on-secondary-container": "#b4b5b5",
+                      "primary-fixed": "#ffdf9f",
+                      "on-primary": "#402d00",
+                      "tertiary": "#b6edff",
+                      "surface-bright": "#393939",
+                      "outline-variant": "#4f4633",
+                      "secondary": "#c6c6c7",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "inverse-on-surface": "#303030",
+                      "surface-container": "#1f1f1f",
+                      "secondary-fixed": "#e2e2e2",
+                      "on-surface": "#e2e2e2",
+                      "on-surface-variant": "#d3c5ac",
+                      "inverse-primary": "#795900",
+                      "on-tertiary": "#003641",
+                      "surface-container-highest": "#353535",
+                      "error-container": "#93000a",
+                      "on-error": "#690005",
+                      "on-error-container": "#ffdad6",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "primary": "#ffe1a7",
+                      "tertiary-fixed": "#afecff",
+                      "surface": "#131313",
+                      "secondary-container": "#454747",
+                      "on-secondary": "#2f3131",
+                      "background": "#131313",
+                      "tertiary-container": "#34daff",
+                      "surface-container-low": "#1b1b1b",
+                      "on-secondary-fixed-variant": "#454747",
+                      "on-background": "#e2e2e2",
+                      "inverse-surface": "#e2e2e2",
+                      "surface-variant": "#353535",
+                      "on-tertiary-container": "#005c6e",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "on-primary-container": "#6c4f00",
+                      "surface-tint": "#f9bd22",
+                      "outline": "#9c8f79",
+                      "on-primary-fixed": "#261a00",
+                      "surface-dim": "#131313",
+                      "primary-fixed-dim": "#f9bd22",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "on-tertiary-fixed": "#001f27",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "surface-container-lowest": "#0e0e0e",
+                      "error": "#ffb4ab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "padding-lateral": "16px",
+                      "base": "8px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "gutter": "12px",
+                      "stack-sm": "4px"
+              },
+              "fontFamily": {
+                      "label-caps": ["Geist"],
+                      "display-lg-mobile": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "micro-data": ["Geist"],
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                      "display-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                      "display-lg": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                      "micro-data": ["10px", { "lineHeight": "12px", "fontWeight": "500" }],
+                      "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                      "body-lg": ["17px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                      "body-sm": ["15px", { "lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400" }]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-padding-lateral h-14 w-full">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200 cursor-pointer">menu</span>
+</div>
+<div class="font-display-lg-mobile text-display-lg-mobile font-bold text-primary-container tracking-tighter uppercase">
+            TANMATRA
+        </div>
+<div class="flex items-center">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-white/10 overflow-hidden active:scale-95 transition-transform duration-200 cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A professional user profile avatar for a fitness community member, depicted as a clean-cut athlete silhouette in high-contrast cinematic lighting. The image adheres to the dark, nocturnal aesthetic of the Tanmatra brand, featuring deep blacks and a subtle amber rim light that highlights the profile against a dark, minimalist background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUpXqWb51xsy59KjQZZjWNRBuE6ijcZCEx4RG0p93cjiJ_aoMWPFtEV0Cpf3DfaZad7z9s158ncb9iE0heycr6B__-RfXUn8HZMnsJ3nw0YbQ3oUq1y4XvsIbQIvkEXqrBKYuMlzu_ahrPuqcSrgm28d6G_jdpdTVz3UbkO33O92cp8AR9N-aubAoV_pys_xNNZ-E4SM289jv9oyiOafR8raRYpGeADd4qVlZLS3nz1sQEBXEaQmASARQyTEJMvImA8Gf5IfjCaQ"/>
+</div>
+</div>
+</header>
+<main class="pt-14 pb-20">
+<!-- Hero Section -->
+<section class="relative h-[751px] flex items-end px-padding-lateral pb-stack-lg overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent z-10"></div>
+<div class="w-full h-full" data-alt="A high-fidelity cinematic shot of a modern runner finishing a session at a sleek, high-end fitness clubhouse at dawn. The scene is lit with cool blue morning light and warm amber highlights from the clubhouse windows. A perfectly prepared recovery meal sits on a glass table in the foreground, styled with professional precision in a premium nocturnal nourishment aesthetic. Deep shadows and vibrant primary amber accents create a mood of effortless discipline." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCkgdSRbPdl1JEk7eFqJQ0f-yPa4aqOwKQOFDtaYLnZpLWCXHgkZxVCKCo-MtWjBRUIAPe1SOiAG-kv4bZ1kHfXpyuoy7DehxwDxqy3_w9f6jA5ledW08EmX5v73_7qZ_bES4pYrHmk5cEfNn5Iz1_vPu7AW8dSalVsdnU0MzTsnicIkaaEahrPbIuVitEnf6zI-3heXEl-QO-cifBJig_XG9JKB0FPlLh0ulX7lIEPXYDKTAdspkGxdpO0iBIkVuV1F4Cm4C8E3Q')"></div>
+</div>
+<div class="relative z-20 w-full max-w-xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+<div class="inline-flex items-center px-2 py-1 mb-base rounded bg-primary-container/10 border border-primary-container/20">
+<span class="font-label-caps text-label-caps text-primary-container uppercase">Club Exclusive</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-white leading-tight mb-4">
+                    Post-workout recovery, delivered to your finish line.
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md">
+                    Recovery meals timed to your morning sessions. Clinical precision for high-performance communities.
+                </p>
+<div class="mt-8 flex gap-stack-md">
+<button class="bg-primary-container text-on-primary font-bold px-6 py-3 rounded-xl amber-glow active:scale-95 transition-transform">
+                        Find my club
+                    </button>
+</div>
+</div>
+</section>
+<!-- Section 1: How it works -->
+<section class="px-padding-lateral mt-stack-lg">
+<h2 class="font-headline-md text-headline-md text-primary-container mb-stack-lg">How it works for members</h2>
+<div class="space-y-gutter">
+<div class="glass p-stack-md rounded-2xl flex items-start gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center flex-shrink-0 text-primary-container font-bold">1</div>
+<div>
+<h3 class="font-body-lg text-body-lg font-semibold text-white">Join your club</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Activate your membership using a unique partner code provided by your fitness club or running group.</p>
+</div>
+</div>
+<div class="glass p-stack-md rounded-2xl flex items-start gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center flex-shrink-0 text-primary-container font-bold">2</div>
+<div>
+<h3 class="font-body-lg text-body-lg font-semibold text-white">Order by cutoff</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Select your precision recovery meal by the 10:30 PM cutoff the night before your session.</p>
+</div>
+</div>
+<div class="glass p-stack-md rounded-2xl flex items-start gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center flex-shrink-0 text-primary-container font-bold">3</div>
+<div>
+<h3 class="font-body-lg text-body-lg font-semibold text-white">Arrival sync</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Your meal waits for you at the clubhouse or finish point immediately after your session concludes.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Precision Recovery Menu -->
+<section class="px-padding-lateral mt-stack-lg">
+<div class="flex items-center justify-between mb-stack-lg">
+<h2 class="font-headline-md text-headline-md text-primary-container">Precision Recovery Menu</h2>
+<span class="font-label-caps text-label-caps text-tertiary uppercase">High Protein</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Meal 1 -->
+<div class="glass rounded-3xl overflow-hidden p-4">
+<div class="relative h-48 w-full rounded-2xl overflow-hidden mb-4">
+<img class="w-full h-full object-cover" data-alt="A top-down clinical food photography shot of a Grilled Salmon and Quinoa recovery bowl. The salmon has perfect sear marks, accompanied by vibrant greens and roasted root vegetables. The lighting is focused and high-contrast on a dark slate background, emphasizing the fresh textures and premium ingredients of a nocturnal nourishment meal plan. Minimalist and professional visual style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGQOT6bOEPHv96d6uZ06HWn5U3jDIiI0um_Eus_zi7S8NmFu7-wT2lhKdj7GIlvZKz1AQBy5VMPn7NSXuPE1waYb6G1MRjvtfL3P82RGsIy4iyWTHz4vOXY5O7m3K1tOZU5i_UJwNMYzgF-ac6DofotWzhcLQpd3bSqQudpsCSgheUG1eOE36vmkLMWdjhO6dxAgFNVd4omJ90pN1jRuFgEm80djlglEFgdAXF67t-EPb_t44NkmPb0LmVtBfIyp8fcQBUAWnlng"/>
+<div class="absolute top-2 right-2 bg-background/80 backdrop-blur-md border border-white/5 px-2 py-1 rounded-lg">
+<span class="font-micro-data text-micro-data text-tertiary tabular">GL 12</span>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg font-bold text-white">Omega-3 Power Bowl</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Slow-seared salmon, tri-color quinoa, charred kale.</p>
+<div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-2">
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Protein</p>
+<p class="font-body-sm text-body-sm text-primary tabular mt-1">~32g</p>
+</div>
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Carbs</p>
+<p class="font-body-sm text-body-sm text-on-surface tabular mt-1">~45g</p>
+</div>
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Fat</p>
+<p class="font-body-sm text-body-sm text-on-surface tabular mt-1">~18g</p>
+</div>
+</div>
+</div>
+<!-- Meal 2 -->
+<div class="glass rounded-3xl overflow-hidden p-4">
+<div class="relative h-48 w-full rounded-2xl overflow-hidden mb-4">
+<img class="w-full h-full object-cover" data-alt="A macro-photography shot of a high-protein Bison Steak breakfast wrap, sliced diagonally to reveal perfectly cooked steak, dark leafy greens, and a thin whole-wheat tortilla. Set against a dark, textured background with subtle amber highlights. The food is styled with precision to look like a nutritional utility tool. High-end, premium, and focused aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYhKBZzqQsztBb6nz11HwnR2LOF6I2u3FveYLDSFlVxG8s_55teh9-UKe3rXwUekI0BO71GA6_PGcXiAj0aNRQY2kSDXolsNCl1TADRLJ9cUqTGbjJDd5cmU0H7N1zqY5VWkdrKJsFgN9i-aqA7fsddmfBIgisb9nzeYoGezZBvuM0N0bTMN437j1LS8eTdWeQ2KnWzruAyiu-cksUC7AlVgrZsBKMSi_8hNBhn-moXVGDyV0SJFp_QTB8oZuUgS9NGuxnic5X5Q"/>
+<div class="absolute top-2 right-2 bg-background/80 backdrop-blur-md border border-white/5 px-2 py-1 rounded-lg">
+<span class="font-micro-data text-micro-data text-tertiary tabular">GL 15</span>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg font-bold text-white">Iron Peak Wrap</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Lean bison strips, sweet potato mash, baby spinach.</p>
+<div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-2">
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Protein</p>
+<p class="font-body-sm text-body-sm text-primary tabular mt-1">~38g</p>
+</div>
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Carbs</p>
+<p class="font-body-sm text-body-sm text-on-surface tabular mt-1">~42g</p>
+</div>
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Fat</p>
+<p class="font-body-sm text-body-sm text-on-surface tabular mt-1">~12g</p>
+</div>
+</div>
+</div>
+<!-- Meal 3 -->
+<div class="glass rounded-3xl overflow-hidden p-4">
+<div class="relative h-48 w-full rounded-2xl overflow-hidden mb-4">
+<img class="w-full h-full object-cover" data-alt="A clinical-grade studio shot of an Overnight Oat Fuel jar. The jar contains layers of steel-cut oats, almond butter, hemp seeds, and fresh dark berries. The composition is sleek and vertical, lit with cool laboratory-style lighting with deep black shadows. The focus is sharp on the texture of the seeds and berries, conveying nutritional density and discipline." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZBMzDFKoP66hINIVnXAaVOam9kb8QaAXbIwrhtI3sQZCS5_FLEEgfAhNLfY0ygVaDyIVhNUc05tChiZV_qSRyWhotvP3Bf5G5hko8CL1ZQndjqrjEag74JwfW-8imke3zjk0leeX66hXkZT-DIQxh6X42DKckbyPvgZyi5q4_ujDxzoBUF5g5dIa0sKUwP20e6Q4F7XW4gJ-iXKthOS5sIP3YsJoJdhaKOArHO_4mi8lnGZBs-bzUpt1IAiQIdc1b33HrX3u1KA"/>
+<div class="absolute top-2 right-2 bg-background/80 backdrop-blur-md border border-white/5 px-2 py-1 rounded-lg">
+<span class="font-micro-data text-micro-data text-tertiary tabular">GL 08</span>
+</div>
+</div>
+<h3 class="font-body-lg text-body-lg font-bold text-white">Steady-State Oats</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Cold-soaked steel-cut oats, hemp hearts, wild berries.</p>
+<div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-2">
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Protein</p>
+<p class="font-body-sm text-body-sm text-primary tabular mt-1">~24g</p>
+</div>
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Carbs</p>
+<p class="font-body-sm text-body-sm text-on-surface tabular mt-1">~54g</p>
+</div>
+<div class="text-center">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase">Fat</p>
+<p class="font-body-sm text-body-sm text-on-surface tabular mt-1">~09g</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Your club, partnered -->
+<section class="px-padding-lateral mt-stack-lg">
+<div class="glass p-stack-lg rounded-[32px] border-primary-container/20 border">
+<h2 class="font-headline-md text-headline-md text-white mb-2">Your club, partnered.</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">Enter your club's registration ID to access the exclusive morning recovery logistics network.</p>
+<div class="space-y-4">
+<div class="relative">
+<input class="w-full bg-transparent border-0 border-b border-white/10 text-primary-container font-headline-md py-4 focus:ring-0 focus:border-primary-container transition-colors placeholder:text-surface-variant" placeholder="Enter Join Code" type="text"/>
+</div>
+<button class="w-full bg-white text-black font-bold py-4 rounded-2xl active:scale-[0.98] transition-transform">
+                        Validate Code
+                    </button>
+</div>
+</div>
+</section>
+<!-- Section 4: Morning Logistics -->
+<section class="px-padding-lateral mt-stack-lg">
+<div class="flex items-center gap-2 mb-stack-lg">
+<span class="material-symbols-outlined text-primary-container">schedule</span>
+<h2 class="font-headline-md text-headline-md text-primary-container">Morning Logistics</h2>
+</div>
+<div class="glass rounded-3xl overflow-hidden divide-y divide-white/5">
+<div class="p-stack-md flex items-center justify-between">
+<div>
+<p class="font-body-lg text-body-lg font-semibold text-white">Early Bird Sessions</p>
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase tracking-widest mt-1">Slot A Delivery</p>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-headline-md text-tertiary tabular">06:00 - 07:30</p>
+</div>
+</div>
+<div class="p-stack-md flex items-center justify-between bg-primary-container/5">
+<div>
+<p class="font-body-lg text-body-lg font-semibold text-white">Post-Run Peak</p>
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase tracking-widest mt-1">Slot B Delivery</p>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-headline-md text-tertiary tabular">07:30 - 09:00</p>
+</div>
+</div>
+</div>
+<p class="mt-4 font-micro-data text-micro-data text-on-surface-variant italic text-center">
+                * All orders must be finalized prior to 22:30 PM for next-day logistics.
+            </p>
+</section>
+<!-- Section 5: Final CTA block -->
+<section class="px-padding-lateral mt-stack-lg mb-stack-lg text-center">
+<div class="py-stack-lg space-y-gutter">
+<button class="w-full bg-primary-container text-on-primary font-bold py-5 rounded-2xl text-lg hover:opacity-90 active:scale-95 transition-all">
+                    Find my club
+                </button>
+<button class="w-full bg-surface-container-high text-white font-semibold py-5 rounded-2xl text-lg border border-white/5 active:scale-95 transition-all">
+                    Partner your club
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-background/90 backdrop-blur-xl border-t border-white/5 shadow-[0px_-8px_24px_rgba(0,0,0,0.5)] pb-safe h-16 w-full flex justify-around items-center px-padding-lateral">
+<a class="flex flex-col items-center justify-center text-outline gap-stack-sm nav-item-transition hover:text-primary" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="font-label-caps text-label-caps uppercase">Fuel</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-container font-bold gap-stack-sm nav-item-transition" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-label-caps text-label-caps uppercase">Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline gap-stack-sm nav-item-transition hover:text-primary" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps uppercase">Track</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline gap-stack-sm nav-item-transition hover:text-primary" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps uppercase">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interactions for input focus
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('border-primary-container');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('border-primary-container');
+            });
+        });
+
+        // Scroll reveal animation logic
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-8');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
+            observer.observe(section);
+        });
+    </script>
+</body></html>

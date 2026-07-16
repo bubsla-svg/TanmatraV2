@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ZenTracker - Preparing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#131313",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "error": "#ffb4ab",
+                      "on-surface-variant": "#d3c5ac",
+                      "primary-container": "#fbbf24",
+                      "on-tertiary-container": "#005c6e",
+                      "on-tertiary": "#003641",
+                      "on-surface": "#e2e2e2",
+                      "surface-container-lowest": "#0e0e0e",
+                      "on-secondary": "#2f3131",
+                      "on-error": "#690005",
+                      "outline-variant": "#4f4633",
+                      "tertiary-fixed": "#afecff",
+                      "surface-container-highest": "#353535",
+                      "on-primary-fixed": "#261a00",
+                      "on-tertiary-fixed": "#001f27",
+                      "tertiary": "#b6edff",
+                      "surface-container-low": "#1b1b1b",
+                      "on-background": "#e2e2e2",
+                      "outline": "#9c8f79",
+                      "surface-bright": "#393939",
+                      "surface-tint": "#f9bd22",
+                      "on-secondary-container": "#b4b5b5",
+                      "on-primary": "#402d00",
+                      "surface-container-high": "#2a2a2a",
+                      "error-container": "#93000a",
+                      "secondary-fixed": "#e2e2e2",
+                      "background": "#131313",
+                      "primary": "#ffe1a7",
+                      "inverse-primary": "#795900",
+                      "secondary-container": "#454747",
+                      "inverse-on-surface": "#303030",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "surface-dim": "#131313",
+                      "primary-fixed": "#ffdf9f",
+                      "primary-fixed-dim": "#f9bd22",
+                      "on-error-container": "#ffdad6",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "tertiary-container": "#34daff",
+                      "inverse-surface": "#e2e2e2",
+                      "surface-container": "#1f1f1f",
+                      "on-primary-container": "#6c4f00",
+                      "on-secondary-fixed-variant": "#454747",
+                      "secondary": "#c6c6c7",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "surface-variant": "#353535"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "padding-lateral": "16px",
+                      "base": "8px",
+                      "stack-md": "16px",
+                      "gutter": "12px",
+                      "stack-sm": "4px",
+                      "stack-lg": "32px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Geist"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "display-lg-mobile": [
+                              "Inter"
+                      ],
+                      "micro-data": [
+                              "Geist"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "17px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "15px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "34px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "micro-data": [
+                              "10px",
+                              {
+                                      "lineHeight": "12px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "22px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "34px",
+                              {
+                                      "lineHeight": "41px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Geist:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Geist:wght@500;600&display=swap');
+        
+        .pulse-ring {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-black text-on-surface font-body-lg min-h-screen selection:bg-primary selection:text-black">
+<!-- Top Navigation Container (Suppressed for focused tracking journey, kept structural back button) -->
+<header class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/5 flex items-center px-padding-lateral h-16">
+<button class="flex items-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined mr-2" data-icon="arrow_back">arrow_back</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Back to Dashboard</span>
+</button>
+</header>
+<main class="pt-24 pb-32 px-padding-lateral max-w-lg mx-auto">
+<!-- Header -->
+<div class="mb-stack-lg text-center">
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-on-surface mb-stack-sm">Order #TM-8924</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Estimated Arrival: 12:45 PM - 1:15 PM</p>
+</div>
+<!-- Progress Visualizer (ZenTracker) -->
+<div class="relative mb-stack-lg p-6 bg-surface-container-low border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl">
+<!-- Decorative Glow -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-start justify-between relative z-10">
+<!-- Stage 1: Placed -->
+<div class="flex flex-col items-center z-10 flex-1">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center mb-2 z-10 border-2 border-black">
+<span class="material-symbols-outlined text-[16px] text-black" data-icon="check" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<span class="font-micro-data text-micro-data text-on-surface uppercase text-center mt-2">Order<br/>Placed</span>
+<span class="font-micro-data text-[8px] text-on-surface-variant mt-1 text-center">11:30 AM</span>
+</div>
+<!-- Track 1-2 -->
+<div class="absolute top-4 left-[15%] w-[35%] h-[2px] bg-primary z-0"></div>
+<!-- Stage 2: Preparing (ACTIVE) -->
+<div class="flex flex-col items-center z-10 flex-1">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center mb-2 z-10 border-2 border-black pulse-ring relative">
+<span class="material-symbols-outlined text-[16px] text-black" data-icon="skillet" data-weight="fill" style="font-variation-settings: 'FILL' 1;">skillet</span>
+</div>
+<span class="font-micro-data text-micro-data text-primary uppercase text-center font-bold mt-2">Preparing<br/>in Kitchen</span>
+<span class="font-micro-data text-[8px] text-primary mt-1 text-center">In Progress</span>
+</div>
+<!-- Track 2-3 -->
+<div class="absolute top-4 left-[50%] w-[35%] h-[2px] bg-white/10 z-0"></div>
+<!-- Stage 3: Out for Delivery -->
+<div class="flex flex-col items-center z-10 flex-1">
+<div class="w-8 h-8 rounded-full bg-surface-bright flex items-center justify-center mb-2 z-10 border-2 border-black">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="directions_bike">directions_bike</span>
+</div>
+<span class="font-micro-data text-micro-data text-on-surface-variant uppercase text-center mt-2 opacity-50">Out for<br/>Delivery</span>
+</div>
+</div>
+<!-- Contextual Message -->
+<div class="mt-8 bg-black/40 rounded-xl p-4 border border-white/5 flex items-center">
+<div class="w-10 h-10 rounded-full overflow-hidden mr-4 border border-primary/20 shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up professional headshot portrait of an Indian female clinical dietitian, wearing a white lab coat over a dark shirt, neutral expression, subtle cinematic lighting, modern premium medical aesthetic, pure black background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjFAFUqkZ4X_Ti2YVXiAOJjHFzzjGv74WugK5_y20XIXoaZGZyayjGCESSQYnLvglWeMy8sc0w2qZJZDpRq6gMnsRduMorQv_V5ls7-_SjuVob_oI-X1A-6X3EEEcDeuzBMJY4utbLsc2fikbez223pKUDq_bdYqjWIEyivjfNesYZQv_WbFxqQE2Ts-0GwfcegDRd8QO_XIMDUAZIrvFnUPf7DjrOAZWLrydHHDsrCYx7isWpNZHIkj3HsFg4nALEDWAYbHyS7w"/>
+</div>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface mb-1">Your macro-calculated meal is currently being portioned.</p>
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase tracking-widest mb-1">Portioned to your plan's macro targets</p><p class="font-mono text-micro-data text-tertiary-container font-bold tracking-wider">650kcal • 42g P • 48g F • 12g C</p>
+</div>
+</div>
+</div>
+<!-- Clinical Honesty Note -->
+<div class="mb-stack-lg flex items-start p-4 border-l-2 border-primary/50 bg-primary/5 rounded-r-lg">
+<span class="material-symbols-outlined text-primary mr-3 mt-1" data-icon="info">info</span>
+<div>
+<h4 class="font-label-caps text-label-caps text-primary uppercase mb-1">Clinical Honesty</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Freshly prepared in our ISO 22000 certified kitchen to exact nutritional specifications.</p>
+</div>
+</div>
+<!-- Order Summary Card (Collapsed View) -->
+<div class="bg-surface-container-low border border-white/5 rounded-2xl overflow-hidden p-6 backdrop-blur-xl">
+<h3 class="font-headline-md text-[18px] text-on-surface mb-4">Meal Details</h3>
+<div class="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-lg overflow-hidden border border-white/10 shrink-0">
+<img class="w-full h-full object-cover" data-alt="Overhead shot of a meticulously plated high-protein Keto meal. Sliced grilled salmon, dark leafy greens, and avocado. Plated on a matte black ceramic dish, dark moody lighting, cinematic food photography, highly detailed, sharp focus, pure black background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEnAuVO5omfdSk7XYEs3qED-NlFb7rTTBTmZaeY3jfcNKjXHHuaFx09kLlAr8EB0X63r_fbzgL4hhMMcZiT-rKhSfpg-79tLCph1gUmuvHPZIdQLfIvkJr98UkX3KALI6jETCZ5zoqFN4yZI5NsEagQAxifsHrAGYA95abPJV8I9F9KA07AXC3Ybjo9d5WXwsEzOSciF6GY5uhkKB74WreET4rGYGpZlLOd_hcVT1n8uNnQdN2cfdo3nFcTEM6v9PZYFDYJJgimg"/>
+</div>
+<div>
+<h4 class="font-body-sm text-body-sm text-on-surface font-semibold">Wild Salmon Keto Bowl</h4>
+<div class="flex gap-2 mt-1">
+<span class="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 font-micro-data text-micro-data text-on-surface-variant">Keto</span>
+<span class="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 font-micro-data text-micro-data text-on-surface-variant">42g Protein</span>
+</div>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">x1</span>
+</div>
+<div class="flex justify-between items-center text-body-sm">
+<span class="text-on-surface-variant">Total macros:</span>
+<span class="text-on-surface font-mono text-[14px]">650kcal • P:42g • C:12g • F:48g</span>
+</div>
+</div>
+</main>
+<!-- Support FAB -->
+<div class="fixed bottom-6 right-padding-lateral z-50">
+<button class="bg-surface-container-highest border border-white/10 text-on-surface h-12 px-6 rounded-full font-label-caps text-label-caps uppercase tracking-wider flex items-center shadow-2xl hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined mr-2" data-icon="support_agent">support_agent</span>
+            Support
+        </button>
+</div>
+</body></html>

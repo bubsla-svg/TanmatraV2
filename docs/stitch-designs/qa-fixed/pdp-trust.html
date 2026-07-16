@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Avocado Toast | Tanmatra</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600&amp;family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#93000a",
+                        "tertiary-container": "#34daff",
+                        "on-surface": "#e2e2e2",
+                        "primary": "#ffe1a7",
+                        "on-secondary": "#2f3131",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "on-tertiary-container": "#005c6e",
+                        "surface-tint": "#f9bd22",
+                        "secondary-fixed": "#e2e2e2",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "surface": "#131313",
+                        "on-primary": "#402d00",
+                        "on-error": "#690005",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-primary-fixed": "#261a00",
+                        "inverse-surface": "#e2e2e2",
+                        "primary-fixed-dim": "#f9bd22",
+                        "surface-bright": "#393939",
+                        "on-tertiary": "#003641",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "tertiary": "#b6edff",
+                        "surface-variant": "#353535",
+                        "secondary": "#c6c6c7",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "surface-container": "#1f1f1f",
+                        "outline-variant": "#4f4633",
+                        "on-background": "#e2e2e2",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary-container": "#454747",
+                        "primary-fixed": "#ffdf9f",
+                        "on-surface-variant": "#d3c5ac",
+                        "surface-dim": "#131313",
+                        "inverse-primary": "#795900",
+                        "on-tertiary-fixed": "#001f27",
+                        "on-primary-container": "#6c4f00",
+                        "inverse-on-surface": "#303030",
+                        "tertiary-fixed": "#afecff",
+                        "error": "#ffb4ab",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-highest": "#353535",
+                        "outline": "#9c8f79",
+                        "on-secondary-container": "#b4b5b5",
+                        "primary-container": "#fbbf24",
+                        "surface-container-low": "#1b1b1b",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "background": "#131313"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "4px",
+                        "stack-md": "16px",
+                        "base": "8px",
+                        "gutter": "12px",
+                        "padding-lateral": "16px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "micro-data": ["Geist"],
+                        "display-lg": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "label-caps": ["Geist"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["17px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "micro-data": ["10px", { "lineHeight": "12px", "fontWeight": "500" }],
+                        "display-lg": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "display-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["15px", { "lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            background-color: #131313;
+            background-image: radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-lg antialiased pb-[120px]">
+<!-- Top Navigation Area -->
+<div class="fixed top-0 w-full z-50 flex justify-between items-center px-padding-lateral pt-safe-top h-16 pointer-events-none">
+<button aria-label="Go back" class="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 pointer-events-auto hover:bg-black/60 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pointer-events-auto flex items-center gap-1.5">
+<span class="font-label-caps text-label-caps text-on-surface uppercase">Breakfast</span>
+</div>
+</div>
+<!-- Hero Image Area -->
+<div class="relative w-full h-[530px] md:h-[442px] max-w-3xl mx-auto">
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent z-10 h-full"></div>
+<img alt="Avocado Toast" class="w-full h-full object-cover rounded-b-3xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvIOuztn_RihbDw5j4TzHWrrHqbm73Av8SYolC8EAGD4DIrWefNujlVStb3GLv6fs4QQnct2iRx3NZqafdYkDCAHfTcdtS0jCeZ_vmC-dSTcBAqxTJq_ebk1iZRWJ-W2uVM9zOfyfQVutzT_7IQJOzSa09l6pqjU_PmxN2QYO-wotya1ff5Y1ucBK6dlyDndYXdcf6bEAb5qaFGMc5qG88ff5dzAEt3ZqQWuopGUP5toUagwL9v_K1rqUVAWWWkxITltR26-shtA"/>
+<div class="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+<div class="w-4 h-1 rounded-full bg-primary-container"></div>
+<div class="w-1 h-1 rounded-full bg-white/30"></div>
+<div class="w-1 h-1 rounded-full bg-white/30"></div>
+<div class="w-1 h-1 rounded-full bg-white/30"></div>
+<div class="w-1 h-1 rounded-full bg-white/30"></div>
+</div>
+</div>
+<!-- Main Content Container -->
+<main class="max-w-3xl mx-auto px-padding-lateral -mt-8 relative z-20 space-y-stack-lg">
+<!-- Header & Title -->
+<div class="space-y-stack-sm">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-container/10 border border-primary-container/20">
+<span class="material-symbols-outlined text-[14px] text-primary-container fill">verified</span>
+<span class="font-label-caps text-label-caps text-primary-container uppercase">Recommended for your goal</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-white">Avocado Toast</h1>
+<p class="font-body-sm text-body-sm text-secondary italic">A fresh morning plate — balanced, lightly seasoned, with wholesome accents.</p>
+<div class="flex gap-2 pt-2">
+<div class="flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container-high border border-white/5">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-micro-data text-micro-data text-on-surface uppercase">Veg</span>
+</div>
+<div class="flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container-high border border-white/5">
+<span class="font-micro-data text-micro-data text-on-surface uppercase">GI Med</span>
+</div>
+</div>
+</div>
+<!-- Allergen Warning -->
+<div class="bg-error-container/10 border border-error-container/20 rounded-lg p-3 flex items-start gap-3">
+<span class="font-label-caps text-label-caps text-error uppercase mt-0.5">Allergen Safety:</span>
+<span class="font-body-sm text-body-sm text-on-surface">Gluten</span>
+</div>
+<!-- Macro Summary Bento -->
+<div class="grid grid-cols-4 gap-px bg-white/5 rounded-xl overflow-hidden border border-white/10">
+<div class="bg-surface-container p-3 flex flex-col items-center justify-center text-center">
+<span class="font-micro-data text-micro-data text-secondary uppercase mb-1">Calories</span>
+<span class="font-headline-md text-headline-md text-white">260</span>
+</div>
+<div class="bg-surface-container p-3 flex flex-col items-center justify-center text-center">
+<span class="font-micro-data text-micro-data text-secondary uppercase mb-1">Protein</span>
+<span class="font-headline-md text-headline-md text-white">12g</span>
+</div>
+<div class="bg-surface-container p-3 flex flex-col items-center justify-center text-center">
+<span class="font-micro-data text-micro-data text-secondary uppercase mb-1">Glycemic</span>
+<span class="font-micro-data text-micro-data text-white uppercase mt-1">Medium</span>
+</div>
+<div class="bg-surface-container p-3 flex flex-col items-center justify-center text-center">
+<span class="font-micro-data text-micro-data text-secondary uppercase mb-1">Source</span>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-micro-data text-micro-data text-white uppercase">Measured</span>
+</div>
+</div>
+</div>
+<div class="flex justify-end -mt-4">
+<span class="font-micro-data text-micro-data text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">info</span> Verified nutrition profile</span>
+</div>
+<!-- Options Selector -->
+<div class="space-y-stack-md pt-4">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase">Select Option</h3>
+<div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 border-b border-white/10">
+<button class="pb-2 border-b-2 border-primary-container text-white font-body-lg whitespace-nowrap px-1">Classic</button>
+<button class="pb-2 border-b-2 border-transparent text-secondary font-body-lg whitespace-nowrap px-1 hover:text-white transition-colors">Sunny-Side Egg</button>
+<button class="pb-2 border-b-2 border-transparent text-secondary font-body-lg whitespace-nowrap px-1 hover:text-white transition-colors">Poached Egg</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Whole grain bread, Avocado, Lemon juice, and more.</p>
+</div>
+<!-- Goal Fit Analysis -->
+<div class="space-y-stack-md">
+<h3 class="font-label-caps text-label-caps text-white font-bold">Goal Fit Analysis</h3>
+<div class="bg-surface-container border border-white/10 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<div class="flex items-start gap-3 pl-2">
+<span class="material-symbols-outlined text-primary-container fill mt-0.5">verified_user</span>
+<div>
+<p class="font-body-sm text-body-sm text-white font-semibold">Picked for your general-wellness profile based on its macro split.</p>
+<p class="font-micro-data text-micro-data text-secondary mt-1">Based on: general-wellness • omnivore • No active allergen clashes.</p>
+</div>
+</div>
+<button class="flex items-center gap-1.5 pl-9 mt-1 text-primary-container hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-[16px]">help_outline</span>
+<span class="font-label-caps text-label-caps uppercase">How this fits your profile</span>
+</button>
+</div>
+</div>
+<!-- Macro Splits Detail -->
+<div class="space-y-stack-md">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase">Macro Splits</h3>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-sm text-body-sm text-white font-semibold">Calories</span>
+<div class="flex items-center gap-2">
+<span class="font-body-sm text-body-sm text-white font-semibold">260kcal</span>
+<span class="font-micro-data text-micro-data text-secondary">Within range</span>
+</div>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 65%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-sm text-body-sm text-white font-semibold">Protein</span>
+<div class="flex items-center gap-2">
+<span class="font-body-sm text-body-sm text-white font-semibold">12g</span>
+<span class="font-micro-data text-micro-data text-secondary">Within range</span>
+</div>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 40%;"></div>
+</div>
+</div>
+</div>
+<button class="w-full flex items-center justify-between p-4 bg-surface-container border border-white/5 rounded-xl hover:bg-surface-container-high transition-colors mt-4 group">
+<span class="font-body-lg text-body-lg text-white">Full Nutrition Facts</span>
+<span class="material-symbols-outlined text-secondary group-hover:text-white transition-colors">chevron_right</span>
+</button>
+</div>
+<!-- Ingredients -->
+<div class="space-y-stack-md">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase">Complete Ingredient Declaration</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 rounded-full bg-surface-container border border-white/5 font-micro-data text-micro-data text-on-surface">Whole grain bread</span>
+<span class="px-3 py-1.5 rounded-full bg-surface-container border border-white/5 font-micro-data text-micro-data text-on-surface">Avocado</span>
+<span class="px-3 py-1.5 rounded-full bg-surface-container border border-white/5 font-micro-data text-micro-data text-on-surface">Lemon juice</span>
+<span class="px-3 py-1.5 rounded-full bg-surface-container border border-white/5 font-micro-data text-micro-data text-on-surface">Salt &amp; black pepper</span>
+<span class="px-3 py-1.5 rounded-full bg-surface-container border border-white/5 font-micro-data text-micro-data text-on-surface">Olive oil</span>
+</div>
+</div>
+<!-- Delivered Reality -->
+<div class="space-y-stack-md">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase">Delivered Reality</h3>
+<div class="bg-surface-container border border-white/10 rounded-xl p-4 flex items-start gap-4">
+<div class="w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary">takeout_dining</span>
+</div>
+<div>
+<h4 class="font-body-lg text-body-lg text-white font-semibold mb-1">Clinical packaging</h4>
+<p class="font-body-sm text-body-sm text-secondary leading-relaxed">Arrives in a tamper-evident, temperature-controlled container. Ready to eat as delivered — no heating required. Refrigerate if not eating right away.</p>
+</div>
+</div>
+</div>
+<!-- Data Provenance Card -->
+<div class="space-y-stack-md">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase">Data Provenance</h3>
+<div class="bg-surface-container border border-white/10 rounded-xl divide-y divide-white/5 overflow-hidden">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary-container fill text-[20px]">check_circle</span>
+<span class="font-body-sm text-body-sm text-white">Allergen Disclosure</span>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary-container uppercase">Reviewed</span>
+</div>
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">analytics</span>
+<span class="font-body-sm text-body-sm text-white">Macro Source</span>
+</div>
+<span class="font-label-caps text-label-caps text-secondary uppercase">Measured</span>
+</div>
+<button class="w-full p-4 flex items-center justify-between hover:bg-surface-container-high transition-colors text-left group">
+<span class="font-body-sm text-body-sm text-primary-container">How we verify nutrition data</span>
+<span class="material-symbols-outlined text-primary-container group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- AI Coach -->
+<div class="space-y-stack-md">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase">Ask AI Health Coach</h3>
+<button class="w-full flex items-center justify-center gap-2 p-4 bg-surface-container border border-white/10 rounded-xl hover:bg-surface-container-high hover:border-primary-container/30 transition-all text-white group">
+<span class="material-symbols-outlined text-primary-container group-hover:scale-110 transition-transform">auto_awesome</span>
+<span class="font-body-lg text-body-lg font-semibold">Ask the coach about this dish</span>
+</button>
+<p class="font-body-sm text-body-sm text-secondary text-center">Ask about protein modifications, metabolic impacts, or allergen alternatives.</p>
+</div>
+<!-- Kitchen Note -->
+<div class="bg-surface-container border border-white/5 rounded-xl p-4 flex items-start gap-3">
+<span class="font-label-caps text-label-caps text-primary-container uppercase mt-1">Note</span>
+<div>
+<p class="font-body-sm text-body-sm text-secondary italic">Cooked à la minute on a brushed-oil flat-top. Eggs sourced from cage-free farms; grains soaked overnight for digestibility.</p>
+</div>
+</div>
+<!-- Related Meals -->
+<div class="space-y-stack-md pt-4 pb-8">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase">Related Meals Based On Goal</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-4 p-3 bg-surface-container border border-white/5 rounded-xl hover:bg-surface-container-high cursor-pointer transition-colors">
+<img alt="Tiramisu" class="w-14 h-14 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwdcZHZdAGYZkMjwZVqCBne4Lb-YIE9FgzxE4wVT951K0z6HT1kdkWCQUq8k38-I9DZ7kVfENRw2FUWqYKQnQHyXNs2B2XROWaU-2lZh0EagQ0EUum-SXT4PVkUDYj6rKu757BoYTYtDZzK3_QB7jajaGZnlpnjU3J2ZZYYEGE1YLw8D2igvFQIuUWcbmPuA5rT_ZUHZodpy1-y6-tV7Vtmi2jC1HjlHc_mjr2EgUGyvCNnNznrbN5RYgPwpBaFw953NoW0-S82g"/>
+<div class="flex-1">
+<h4 class="font-body-sm text-body-sm text-white font-semibold">Healthy Tiramisu Box</h4>
+<p class="font-micro-data text-micro-data text-secondary">460 kcal • 18g protein</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<div class="flex items-center gap-4 p-3 bg-surface-container border border-white/5 rounded-xl hover:bg-surface-container-high cursor-pointer transition-colors">
+<img alt="Smoothie" class="w-14 h-14 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMqTqxJO6YSnM_cBlgT6f9RJIwtDJRTJq2-uJRq7bhlSqag_JrD4cXrJEwr1aZTS8tzfNoyNjQDYV62tjOqIwSVtoycNU_QoLgIhMv2BCKVWJ5icLnQ5ijQCHlu_KhepAfbzbxucRUSuz1_kUgPYH-qDarBmV0gQ_AXyPadpu9qPEvji7CdMruLmGIJek64dJnAdruf5sMmzw3uZYBJ9yzU77rljCOQEVGPCmyr5PpsR1Gi8KXmSRvPdVZ9qGxOet0aTi2kA7obw"/>
+<div class="flex-1">
+<h4 class="font-body-sm text-body-sm text-white font-semibold">Dates Banana Smoothie</h4>
+<p class="font-micro-data text-micro-data text-secondary">140 kcal • 3g protein</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<p class="font-micro-data text-micro-data text-surface-variant flex items-start gap-1 pt-4 text-center justify-center">
+<span class="material-symbols-outlined text-[14px]">local_hospital</span>
+                Tanmatra meals support — they don't replace — medical care. Consult your physician before starting any therapeutic nutrition programme.
+            </p>
+</div>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<div class="fixed bottom-0 w-full z-50 bg-surface/95 backdrop-blur-xl border-t border-white/10 pb-safe">
+<div class="bg-error-container/20 border-b border-error-container/10 px-padding-lateral py-2 flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-error uppercase">Allergen Safety:</span>
+<span class="font-body-sm text-body-sm text-on-surface">Gluten</span>
+</div>
+<div class="px-padding-lateral py-4 flex items-center justify-between gap-4 max-w-3xl mx-auto w-full">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-primary-container uppercase">Avocado Toast</span>
+<span class="font-body-sm text-body-sm text-white font-semibold">Included in plan</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="min-w-[44px] min-h-[44px] px-4 py-2 rounded-lg bg-surface-container border border-white/10 text-white font-body-lg font-semibold hover:bg-surface-container-high transition-colors">
+                    Customise
+                </button>
+<button class="min-w-[44px] min-h-[44px] px-6 py-2 rounded-lg bg-primary-container text-black font-body-lg font-bold shadow-[0px_8px_24px_rgba(251,191,36,0.25)] hover:bg-primary-fixed-dim transition-colors relative overflow-hidden group">
+<div class="absolute inset-x-0 top-0 h-[1px] bg-white/40"></div>
+<span class="relative z-10">Add Another</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

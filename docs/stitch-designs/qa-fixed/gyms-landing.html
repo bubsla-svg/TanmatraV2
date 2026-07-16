@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TANMATRA | B2B Clinical Nutrition</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#d3c5ac",
+                    "surface-container-high": "#2a2a2a",
+                    "error-container": "#93000a",
+                    "surface": "#131313",
+                    "tertiary": "#34daff",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed-variant": "#004e5d",
+                    "surface-tint": "#fbbf24",
+                    "surface-container": "#1f1f1f",
+                    "primary-container": "#fbbf24",
+                    "tertiary-fixed-dim": "#30d8fd",
+                    "on-tertiary": "#003641",
+                    "error": "#ffb4ab",
+                    "inverse-primary": "#795900",
+                    "tertiary-container": "#34daff",
+                    "inverse-on-surface": "#303030",
+                    "on-secondary-container": "#b4b5b5",
+                    "surface-container-lowest": "#0e0e0e",
+                    "surface-container-low": "#1b1b1b",
+                    "on-secondary": "#2f3131",
+                    "outline-variant": "#4f4633",
+                    "on-primary": "#402d00",
+                    "on-surface": "#e2e2e2",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-highest": "#353535",
+                    "secondary-container": "#454747",
+                    "on-secondary-fixed-variant": "#454747",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "primary": "#ffe1a7",
+                    "on-tertiary-container": "#005c6e",
+                    "on-primary-fixed": "#261a00",
+                    "on-background": "#e2e2e2",
+                    "surface-bright": "#393939",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "secondary-fixed": "#e2e2e2",
+                    "inverse-surface": "#e2e2e2",
+                    "background": "#131313",
+                    "tertiary-fixed": "#afecff",
+                    "primary-fixed": "#ffdf9f",
+                    "outline": "#9c8f79",
+                    "surface-variant": "#353535",
+                    "on-primary-fixed-variant": "#5c4300",
+                    "surface-dim": "#131313",
+                    "secondary": "#c6c6c7",
+                    "primary-fixed-dim": "#fbbf24",
+                    "on-tertiary-fixed": "#001f27",
+                    "on-primary-container": "#402d00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "0.75rem",
+                    "xl": "1rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "stack-lg": "32px",
+                    "padding-lateral": "16px",
+                    "stack-md": "16px",
+                    "gutter": "12px",
+                    "stack-sm": "4px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter", "sans-serif"],
+                    "label-caps": ["Geist", "sans-serif"],
+                    "display-lg": ["Inter", "sans-serif"],
+                    "display-lg-mobile": ["Inter", "sans-serif"],
+                    "body-sm": ["Inter", "sans-serif"],
+                    "micro-data": ["Geist", "sans-serif"],
+                    "body-lg": ["Inter", "sans-serif"]
+            },
+            "fontSize": {
+                    "headline-md": [
+                            "22px",
+                            {
+                                    "lineHeight": "28px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-caps": [
+                            "11px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "34px",
+                            {
+                                    "lineHeight": "41px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "display-lg-mobile": [
+                            "28px",
+                            {
+                                    "lineHeight": "34px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-sm": [
+                            "15px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "micro-data": [
+                            "10px",
+                            {
+                                    "lineHeight": "12px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-lg": [
+                            "17px",
+                            {
+                                    "lineHeight": "24px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+            font-variant-numeric: tabular-nums;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-lg antialiased selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden">
+<!-- TopAppBar (Shared Component) -->
+<header class="fixed top-0 w-full z-50 bg-background/80 ios-blur border-b border-white/10 flex justify-between items-center px-padding-lateral h-16">
+<button class="text-primary-container hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg tracking-tight text-primary-container font-bold uppercase">
+            TANMATRA
+        </h1>
+<div class="h-8 w-8 rounded-full bg-surface-container-high border border-white/10 overflow-hidden flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="person">person</span>
+</div>
+</header>
+<main class="pt-16 pb-32">
+<!-- Hero Section -->
+<section class="relative min-h-[751px] flex flex-col justify-center px-padding-lateral md:px-8 xl:px-16 overflow-hidden">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center bg-no-repeat absolute inset-0" data-alt="A high-end, premium fitness facility featuring state-of-the-art equipment in the background, subtly out of focus. In the foreground, a sleek, minimalist black counter displays precision-crafted, chef-prepared post-workout meals in elegant glass containers." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCvI2AAtq3Qqb0_hkTUy64T_xI_sBQtJSloQs6gLvZ1p1KlEywzZyiCF91T0fk2mlh4dYxjjdQfgwRXfuYY6dgTrPja7DOIS6UUCGWbmKSSFDq3TNlKpCCs19UA33jZsf-9zdV9u0Ug6W7U0txwcIzkdpI5GWdxi_rnudHgwMBDNp1CemVmqrYq7qyb0rWBsoUrGxEQwhYR2LSukP3qnxsPc4QnhASdVcYQRRRoYnlKT0Fnce70sCkqIhsdwz89d77gIK_TLFXAog')"></div>
+<!-- Deep Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
+</div>
+<div class="relative z-10 max-w-3xl mt-12 md:mt-0">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 ios-blur mb-6">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">B2B Partnership</span>
+</div>
+<h2 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg md:text-[56px] md:leading-[64px] text-on-background mb-6">
+                    The Clinical Nutrition Partner for your Facility
+                </h2>
+<p class="font-body-lg text-body-lg md:text-xl text-on-surface-variant max-w-xl mb-10">
+                    Elevate member retention and optimize physical outcomes with precision-engineered, post-workout meal delivery integrated directly into your gym's ecosystem.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4">
+<button class="bg-primary-container text-on-primary font-headline-md text-headline-md text-[16px] px-8 py-4 rounded-lg shadow-[0px_8px_24px_rgba(251,191,36,0.25)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        Request Partnership
+                        <span class="material-symbols-outlined text-lg" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="bg-surface-container-high border border-white/10 text-on-background font-headline-md text-headline-md text-[16px] px-8 py-4 rounded-lg hover:bg-surface-container-highest active:scale-95 transition-all flex items-center justify-center gap-2">
+                        View Demo
+                    </button>
+</div>
+</div>
+</section>
+<!-- Member Benefits Section -->
+<section class="px-padding-lateral md:px-8 xl:px-16 py-stack-lg mt-12">
+<div class="mb-12 md:text-center">
+<h3 class="font-headline-md text-headline-md md:text-[32px] md:leading-[40px] text-on-background mb-4">Member Benefits</h3>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">Transform post-workout recovery into a seamless, high-performance ritual with customized culinary engineering.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+<!-- Large Feature Card -->
+<div class="md:col-span-2 relative rounded-2xl bg-surface-container-low border border-white/5 overflow-hidden group">
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700" data-alt="A close-up, highly detailed shot of a perfectly plated, clinical-grade post-workout meal." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuACL-8Vn-m_lmpe8GivHZsTPxbapGHvEVpej-7i1KoGm__Z72RW13SPL0zZ12utyolaEtlIQqULorBOur5fbotQf1wduP5auh1pRROhHfvspviSIQaDw_RqkNlzMeFZtMAuctwjwxyenkFh6-nCUPWO1TUl8K2V9AJRFfekF77572TO0dhjHyYBmyTr_vQVAe0NWcdNKHV0ZGS6jcxKprg0-PKU_B5txliZa3Iqkj7qh-Jmp_y5naiEuXl5Q-ekrl7_FvmfaiP2KA')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+</div>
+<div class="relative z-10 p-8 h-full flex flex-col justify-end min-h-[320px]">
+<div class="mb-4">
+<span class="inline-block px-2 py-1 rounded-md bg-white/10 ios-blur border border-white/10 font-micro-data text-micro-data text-primary-container uppercase tracking-wider">Precision Delivery</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-2">Customized Post-Workout Meals</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-md">Macronutrient-specific meals arriving exactly when your members finish their session. Automated scheduling based on class bookings.</p>
+</div>
+</div>
+<!-- Secondary Cards -->
+<div class="flex flex-col gap-6">
+<div class="flex-1 rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col justify-center">
+<span class="material-symbols-outlined text-tertiary text-4xl mb-4" data-icon="science">science</span>
+<h4 class="font-headline-md text-headline-md text-[18px] text-on-background mb-2">Clinical Grade</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Dietary programming formulated by licensed sports nutritionists to guarantee physiological adaptation.</p>
+</div>
+<div class="flex-1 rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col justify-center">
+<span class="material-symbols-outlined text-primary-container text-4xl mb-4" data-icon="trending_up">trending_up</span>
+<h4 class="font-headline-md text-headline-md text-[18px] text-on-background mb-2">Result Acceleration</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Members who consume precise macros within the optimal window see significantly enhanced recovery metrics.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Integration Section -->
+<section class="px-padding-lateral md:px-8 xl:px-16 py-stack-lg mt-12 bg-surface-container-lowest border-y border-white/5 relative overflow-hidden">
+<!-- Ambient Glow -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-container/5 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 relative z-10">
+<div class="flex-1 lg:pr-8">
+<h3 class="font-headline-md text-headline-md md:text-[32px] md:leading-[40px] text-on-background mb-4">Facility Integration Dashboard</h3>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-8">
+                        Provide your coaching staff with a centralized command center to track member nutritional adherence, revenue share, and delivery logistics in real-time.
+                    </p>
+<ul class="space-y-4">
+<li class="flex items-start gap-4">
+<div class="mt-1 w-6 h-6 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container text-[14px]" data-icon="check">check</span>
+</div>
+<div>
+<h5 class="font-headline-md text-headline-md text-[16px] text-on-background">Member Adherence Tracking</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Monitor which members are consistently hitting their nutritional targets.</p>
+</div>
+</li>
+<li class="flex items-start gap-4">
+<div class="mt-1 w-6 h-6 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container text-[14px]" data-icon="check">check</span>
+</div>
+<div>
+<h5 class="font-headline-md text-headline-md text-[16px] text-on-background">Automated Revenue Share</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Transparent financial reporting on the auxiliary revenue generated by meal sales.</p>
+</div>
+</li>
+</ul>
+</div>
+<!-- Refactored Dashboard Visual -->
+<div class="flex-1 w-full max-w-md lg:max-w-none">
+<div class="bg-surface-container-low/80 ios-blur border border-white/5 rounded-xl p-6 shadow-2xl relative overflow-hidden">
+<!-- Header -->
+<div class="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-md bg-surface-container-high border border-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="bar_chart">bar_chart</span>
+</div>
+<span class="font-headline-md text-headline-md text-[14px] text-on-background">Facility Analytics</span>
+</div>
+<span class="font-micro-data text-micro-data text-on-surface-variant bg-surface-container-high px-2 py-1 rounded">LIVE</span>
+</div>
+<!-- Metrics Row (Refactored) -->
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container p-4 rounded-lg border border-white/5">
+<span class="font-micro-data text-micro-data text-on-surface-variant uppercase tracking-wider block mb-1">Member Engagement</span>
+<span class="font-display-lg text-display-lg text-on-surface-variant/50">--</span>
+<div class="flex items-center gap-1 mt-2 text-on-surface-variant/30">
+<span class="font-micro-data text-micro-data italic">Pending Data</span>
+</div>
+</div>
+<div class="bg-surface-container p-4 rounded-lg border border-white/5 flex flex-col justify-between relative overflow-hidden">
+<div>
+<span class="font-micro-data text-micro-data text-on-surface-variant uppercase tracking-wider block mb-1">Retention Insights</span>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-on-surface-variant/40 text-sm" data-icon="lock">lock</span>
+<span class="font-micro-data text-micro-data text-on-surface-variant/60">Live after onboarding</span>
+</div>
+</div>
+<!-- Illustrative Graphic -->
+<div class="absolute bottom-0 right-0 w-1/2 h-8 opacity-20 bg-gradient-to-l from-tertiary/20 to-transparent blur-sm"></div>
+</div>
+</div>
+<!-- Activity Mockup (Cleaned) -->
+<div class="space-y-3 opacity-60 grayscale-[0.5]">
+<div class="flex justify-between items-center p-3 rounded-lg bg-white/[0.02] border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest"></div>
+<div>
+<div class="font-body-sm text-body-sm text-on-background font-medium">Active Member Session</div>
+<div class="font-micro-data text-micro-data text-on-surface-variant">Post-Workout Delivery Tracked</div>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-primary-container/40"></span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-lg bg-white/[0.02] border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest"></div>
+<div>
+<div class="font-body-sm text-body-sm text-on-background font-medium">Nutrition Plan Sync</div>
+<div class="font-micro-data text-micro-data text-on-surface-variant">Coach-Verified Update</div>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-tertiary/40"></span>
+</div>
+</div>
+<!-- Gradient Overlay -->
+<div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-surface-container-low to-transparent pointer-events-none"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="px-padding-lateral md:px-8 py-24 text-center">
+<h2 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-background mb-6 uppercase tracking-tight font-bold">Ready to upgrade your facility?</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl mx-auto mb-10">Join elite fitness centers utilizing TANMATRA culinary engineering to drive member results and auxiliary revenue.</p>
+<button class="bg-primary-container text-on-primary font-headline-md text-headline-md text-[16px] px-8 py-4 rounded-lg shadow-[0px_8px_24px_rgba(251,191,36,0.25)] hover:brightness-110 active:scale-95 transition-all inline-flex items-center justify-center gap-2">
+                Request Partnership
+                <span class="material-symbols-outlined text-lg" data-icon="handshake">handshake</span>
+</button>
+</section>
+</main>
+<footer class="border-t border-white/5 bg-background py-8 text-center px-padding-lateral">
+<p class="font-micro-data text-micro-data text-on-surface-variant uppercase tracking-widest">© 2024 TANMATRA Clinical Nutrition. B2B Division.</p>
+</footer>
+</body></html>

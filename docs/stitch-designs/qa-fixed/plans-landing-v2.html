@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Subscription Plans | NOCTURNAL NOURISHMENT</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Geist:wght@500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/npm/geist@1.0.3/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
+        }
+        
+        body {
+            background-color: #131313;
+            color: #e2e2e2;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .glass-chip {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .inner-glow-amber {
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3), 0 8px 24px rgba(251, 191, 36, 0.15);
+        }
+
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #fbbf24;
+        }
+        .toggle-checkbox:checked + .toggle-label .toggle-dot {
+            transform: translateX(100%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#fbbf24",
+                      "on-surface": "#e2e2e2",
+                      "background": "#131313",
+                      "surface": "#131313",
+                      "surface-container": "#1f1f1f",
+                      "on-surface-variant": "#d3c5ac",
+                      "outline": "#9c8f79",
+                      "on-background": "#e2e2e2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "12px",
+                      "2xl": "24px",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "padding-lateral": "16px",
+                      "stack-sm": "4px",
+                      "stack-lg": "32px",
+                      "stack-md": "16px",
+                      "gutter": "12px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "label-caps": ["Geist"],
+                      "micro-data": ["Geist"],
+                      "display-lg-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-sm": ["15px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                      "body-lg": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+                      "display-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "micro-data": ["10px", {"lineHeight": "12px", "fontWeight": "500"}],
+                      "display-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "700"}]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-lg text-on-surface pb-32">
+<!-- 1. Sticky Location Header -->
+<header class="fixed top-0 w-full z-[100] bg-background/80 backdrop-blur-xl border-b border-white/10">
+<div class="max-w-7xl mx-auto flex justify-between items-center h-16 px-padding-lateral">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]">location_on</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase text-on-surface-variant">Delivering across Noida - Delhi - Gurgaon</span>
+</div>
+<button class="bg-primary-container text-black font-label-caps text-[10px] px-3 py-1.5 rounded-full font-bold uppercase hover:opacity-90 active:scale-95 transition-all">
+                3-Day Trial
+            </button>
+</div>
+</header>
+<main class="mt-16 space-y-stack-lg">
+<!-- 2. Hero Section -->
+<section class="px-padding-lateral pt-12 pb-8 max-w-4xl mx-auto text-center">
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-4 text-white">
+                Healthy meals delivered daily
+            </h1>
+<p class="text-on-surface-variant font-body-lg max-w-xl mx-auto">
+                Pause, skip, or swap any dish up to 24h before delivery. Tailored nutrition for the nocturnal elite.
+            </p>
+</section>
+<!-- 3. Plan Benefit Cards -->
+<section class="px-padding-lateral max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="glass-card p-6 rounded-xl flex flex-col gap-4">
+<span class="material-symbols-outlined text-primary-container">lock_open</span>
+<h3 class="font-headline-md text-headline-md text-white">No lock-in contracts</h3>
+<p class="text-on-surface-variant font-body-sm">Freedom to start, stop, or pause your plan at any moment through our portal.</p>
+</div>
+<div class="glass-card p-6 rounded-xl flex flex-col gap-4">
+<span class="material-symbols-outlined text-primary-container">verified</span>
+<h3 class="font-headline-md text-headline-md text-white">FSSAI-licensed ISO 22000-aligned kitchens</h3>
+<p class="text-on-surface-variant font-body-sm">Surgical cleanliness and rigorous safety standards in every step of preparation.</p>
+</div>
+<div class="glass-card p-6 rounded-xl flex flex-col gap-4">
+<span class="material-symbols-outlined text-primary-container">clinical_notes</span>
+<h3 class="font-headline-md text-headline-md text-white">RD-partnered kitchen network</h3>
+<p class="text-on-surface-variant font-body-sm">Every recipe is engineered by Registered Dietitians for peak metabolic performance.</p>
+</div>
+</section>
+<!-- 4. 3-Day Trial Hero Card -->
+<section class="px-padding-lateral max-w-7xl mx-auto">
+<div class="relative overflow-hidden rounded-2xl p-8 md:p-12 border border-primary-container/20 bg-gradient-to-br from-primary-container/10 to-transparent">
+<div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+<div>
+<span class="font-label-caps text-label-caps text-primary-container bg-primary-container/10 px-2 py-1 rounded mb-4 inline-block">25% OFF LIMITED TIME</span>
+<h2 class="font-display-lg text-display-lg text-white mb-2">3-Day Metabolic Reset</h2>
+<p class="text-on-surface-variant font-body-lg">Perfect for testing the waters. One-off payment. No auto-renewal.</p>
+</div>
+<button class="bg-primary-container text-black font-bold px-8 py-4 rounded-xl inner-glow-amber hover:scale-105 transition-transform">
+                        Claim Trial — ₹899
+                    </button>
+</div>
+<div class="absolute -right-10 -bottom-10 opacity-10">
+<span class="material-symbols-outlined text-[240px]">bolt</span>
+</div>
+</div>
+</section>
+<!-- 5. Faceted Filter Bar -->
+<section class="sticky top-16 z-40 bg-background/95 backdrop-blur-md py-4 px-padding-lateral border-b border-white/5">
+<div class="max-w-7xl mx-auto flex flex-wrap items-center gap-4">
+<!-- Sort Dropdown -->
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">SORT</span>
+<select class="bg-surface-container border-none text-white font-label-caps py-1 pl-3 pr-8 rounded-lg focus:ring-1 focus:ring-primary-container appearance-none">
+<option>Popular</option>
+<option>High Protein</option>
+<option>Low Calorie</option>
+<option>Price</option>
+</select>
+</div>
+<!-- Mealtime Chips -->
+<div class="h-8 w-px bg-white/10 hidden md:block"></div>
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+<button class="glass-chip px-4 py-1.5 rounded-full font-label-caps text-primary-container border-primary-container/30">Breakfast</button>
+<button class="glass-chip px-4 py-1.5 rounded-full font-label-caps text-on-surface-variant">Lunch</button>
+<button class="glass-chip px-4 py-1.5 rounded-full font-label-caps text-on-surface-variant">Dinner</button>
+</div>
+<!-- Veg-only Toggle -->
+<div class="ml-auto flex items-center gap-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant">VEG-ONLY</span>
+<div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-transparent appearance-none cursor-pointer z-10" id="toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-container-highest cursor-pointer" for="toggle"></label>
+</div>
+<style>
+                        .toggle-dot { top: 0; left: 0; transition: all 0.3s; }
+                        .toggle-checkbox:checked { right: 0; left: auto; border-color: #fbbf24; }
+                        .toggle-checkbox { transition: all 0.3s; }
+                    </style>
+</div>
+</div>
+</section>
+<!-- 6. Clinical Plan Cards -->
+<section class="px-padding-lateral max-w-7xl mx-auto space-y-gutter">
+<!-- Plan 1 -->
+<div class="glass-card rounded-2xl overflow-hidden">
+<div class="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+<div class="md:w-1/3">
+<div class="flex items-center gap-2 mb-2">
+<h3 class="font-headline-md text-headline-md text-white">Lean Foundation</h3>
+<span class="bg-primary-container/10 text-primary-container font-label-caps text-[9px] px-2 py-0.5 rounded tracking-widest border border-primary-container/20">RD CLINICAL PLAN</span>
+</div>
+<p class="text-on-surface-variant font-body-sm mb-6">Optimized for sustained energy and fat oxidation without muscle loss.</p>
+<div class="space-y-4 mb-8">
+<div class="flex justify-between items-end border-b border-white/5 pb-2">
+<span class="font-label-caps text-on-surface-variant">PRICE PER MEAL</span>
+<span class="font-headline-md tabular-nums text-white">₹320</span>
+</div>
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-surface-variant">DELIVERY CADENCE</span>
+<div class="grid grid-cols-3 gap-2">
+<button class="border border-primary-container text-primary-container font-label-caps py-2 rounded-lg text-center">Weekly</button>
+<button class="border border-white/10 text-on-surface-variant font-label-caps py-2 rounded-lg text-center hover:border-white/20">Fortnightly</button>
+<button class="border border-white/10 text-on-surface-variant font-label-caps py-2 rounded-lg text-center hover:border-white/20">Monthly</button>
+</div>
+</div>
+</div>
+<button class="w-full bg-primary-container text-black font-bold py-3 rounded-xl uppercase tracking-wider font-label-caps">Select Plan</button>
+</div>
+<div class="md:w-2/3 border-l border-white/5 md:pl-8">
+<span class="font-label-caps text-on-surface-variant mb-4 block">THIS WEEK'S PREVIEW</span>
+<div class="flex gap-4 overflow-x-auto no-scrollbar">
+<!-- Dish 1 -->
+<div class="min-w-[200px] flex-shrink-0 group">
+<div class="w-full h-32 rounded-xl mb-3 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A professional culinary photograph of a sous-vide salmon fillet served with grilled asparagus and lemon zest. The lighting is dramatic and nocturnal with amber highlights reflecting off the plate. The composition is clean and minimalist, set against a deep black background, highlighting the premium quality of the ingredients." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhJ8OEk2tP4aFhOD74f2XiuP_GnkPF3yY-TS6q6jQes3QRMkQv7vp73LBeJzzPW18XEL8WeJ4qDY9M2yBltPvzgIoloirAvUXGTVRGlDozVIuOGk7z2dTaq_-PiJD_VClkvrQUNyA8ShrFRvoQUOJo8r6wX7pMi9jLUk_fX2SMuGPvzHUUrWpjw2qYbEKDTqclkjbMZ4GYrWeUUfAfCrFnDolFO-ugZX7mMaqLy6fsqPFLyZOeZT8ftXQmBiu-IG0ibn90hX9Vpw"/>
+</div>
+<h4 class="font-label-caps text-white mb-1 truncate">Sous-Vide Salmon</h4>
+<p class="font-micro-data tabular-nums text-on-surface-variant/60">420 kcal • 32g P • 12g F</p>
+</div>
+<!-- Dish 2 -->
+<div class="min-w-[200px] flex-shrink-0 group">
+<div class="w-full h-32 rounded-xl mb-3 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="High-end food photography of a vibrant Mediterranean quinoa bowl with roasted chickpeas, cucumber, and a drizzle of tahini. The scene is shot from a low angle with sharp focus and cinematic dark aesthetics. The amber-400 brand accent is reflected in the golden hue of the roasted chickpeas and soft ambient lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDO1W-EoPbWeuqoVMvpSW4ETkxeiHKUNl3hmFCOcaOLukj1t-3AQtUuk6TY5HC2oWNaPjiPBhQGGdtkNfnaoDv047Jstjp5HQkt3kiYn68jpdTW-TYXH9-mNcQ-EGAolOo221rncRXqliKfj_FxBWjuPcMjnUyLL95uHsWy24uqf4tHxCY1jbygyAh9p9hPuESdhNWcobQQh6DZfWvSXuPQ5wlE7UXfgyjuX-QpUhlUimb2NdWUxpNs12J-ls8FvONRH2qud6p19g"/>
+</div>
+<h4 class="font-label-caps text-white mb-1 truncate">Quinoa Power Bowl</h4>
+<p class="font-micro-data tabular-nums text-on-surface-variant/60">385 kcal • 28g P • 08g F</p>
+</div>
+<!-- Dish 3 -->
+<div class="min-w-[200px] flex-shrink-0 group">
+<div class="w-full h-32 rounded-xl mb-3 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="Close-up shot of grilled chicken breast medallions with a chimichurri herb sauce, presented on a dark slate plate. The atmosphere is sophisticated and moody, featuring a 'nocturnal nourishment' theme with deep shadows and warm amber light. Every texture of the succulent meat and fresh herbs is captured in high detail." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1bqPM6GpmxrJMjBUKyedJj4v15wp7WEliz0vBm5OHOABro8xXAo7ysISNYfXBGWMdzjJdmUP1NssGk8VjspUF0yPmdb8PfppCwEH5B5oSfZABldKK8NE9i4TRjl6nDRJ9DdXjNio-uIKxIJ5Iqx_BIHuvPnmcqfgnFfELvFWpYdQXirtJX9T4xVshrv40nK7zyk29EsbDdhClwjHJ9GrcnskJ-oYi3tRWioGlhWyXIi_L2O5FkzZnjigTEnCYYOjeBXoxOm15sg"/>
+</div>
+<h4 class="font-label-caps text-white mb-1 truncate">Herb Chimichurri Chicken</h4>
+<p class="font-micro-data tabular-nums text-on-surface-variant/60">445 kcal • 42g P • 10g F</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Plan 2 -->
+<div class="glass-card rounded-2xl overflow-hidden">
+<div class="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+<div class="md:w-1/3">
+<div class="flex items-center gap-2 mb-2">
+<h3 class="font-headline-md text-headline-md text-white">Hypertrophy Fuel</h3>
+<span class="bg-primary-container/10 text-primary-container font-label-caps text-[9px] px-2 py-0.5 rounded tracking-widest border border-primary-container/20">RD CLINICAL PLAN</span>
+</div>
+<p class="text-on-surface-variant font-body-sm mb-6">Calorie-surplus engineering designed for maximum muscle recovery and growth.</p>
+<div class="space-y-4 mb-8">
+<div class="flex justify-between items-end border-b border-white/5 pb-2">
+<span class="font-label-caps text-on-surface-variant">PRICE PER MEAL</span>
+<span class="font-headline-md tabular-nums text-white">₹395</span>
+</div>
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-surface-variant">DELIVERY CADENCE</span>
+<div class="grid grid-cols-3 gap-2">
+<button class="border border-white/10 text-on-surface-variant font-label-caps py-2 rounded-lg text-center hover:border-white/20">Weekly</button>
+<button class="border border-primary-container text-primary-container font-label-caps py-2 rounded-lg text-center">Fortnightly</button>
+<button class="border border-white/10 text-on-surface-variant font-label-caps py-2 rounded-lg text-center hover:border-white/20">Monthly</button>
+</div>
+</div>
+</div>
+<button class="w-full bg-primary-container text-black font-bold py-3 rounded-xl uppercase tracking-wider font-label-caps">Select Plan</button>
+</div>
+<div class="md:w-2/3 border-l border-white/5 md:pl-8">
+<span class="font-label-caps text-on-surface-variant mb-4 block">THIS WEEK'S PREVIEW</span>
+<div class="flex gap-4 overflow-x-auto no-scrollbar">
+<div class="min-w-[200px] flex-shrink-0 group">
+<div class="w-full h-32 rounded-xl mb-3 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="Top-down view of a hearty beef stroganoff with whole-grain pasta and wild mushrooms. Professional studio lighting with a warm, amber focus against a dark, minimalist backdrop. The food looks rich and protein-dense, consistent with a high-performance athlete's nutrition plan." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvx-JimyvGlb1jtpaKXwwiBaKUT2CM03EoWOPGT_3EfPf7ug5ysMDcvChfXnaSn1d1dluHHK6jRnlH18ciVMuH1kIvecJBNG0aIP68dsnz9S-WWKLgbKD7Tknb8zYcVCh9sRZIT1VB9ZuoX-v1sa-WamYjmjqkT03rlO6cJfGRRsx0Z-ddd9w8RY1mXRytuaIr6XqKB4Gu1h64du5GdX4JXSdNa7MThi0C7XD-ZOStQtBRf9iyhNl87OrrsIm-kbKopWMEzXxw8A"/>
+</div>
+<h4 class="font-label-caps text-white mb-1 truncate">Wild Mushroom Beef</h4>
+<p class="font-micro-data tabular-nums text-on-surface-variant/60">650 kcal • 48g P • 18g F</p>
+</div>
+<div class="min-w-[200px] flex-shrink-0 group">
+<div class="w-full h-32 rounded-xl mb-3 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A large portion of peri-peri flame-grilled chicken thighs with sweet potato mash and steamed broccoli. Cinematic food photography for a nocturnal aesthetic, featuring deep black tones and vibrant food colors highlighted by amber accent lighting. The composition emphasizes satiety and nutritional volume." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUYZ_pLkLEiwbct07jYOBuyzKQ4v_o8vHpUVOTq56UaMY_Nq7xvLPxb34OoRMXKqqIsz9sP-pydCXhk6BBgy7HZYCN8XaIs7lDreGaGcl_uReauFI5MW2p7paaLoh7rgPD99PUPpgTvM3IP6tz_K2__3xiTYOQZv_2hEnd6g1z0D4gbmnPb3fImk-UlCxXYO-0L3-tMVuxpxvD2YD24SuENWZLq_SxgkaOiiNaMzBiBl9GatUsZwnciX-wn5eOnR-TlM9cPaLJSQ"/>
+</div>
+<h4 class="font-label-caps text-white mb-1 truncate">Peri-Peri Thighs</h4>
+<p class="font-micro-data tabular-nums text-on-surface-variant/60">720 kcal • 52g P • 22g F</p>
+</div>
+<div class="min-w-[200px] flex-shrink-0 group">
+<div class="w-full h-32 rounded-xl mb-3 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A stack of high-protein blueberry pancakes served with a side of Greek yogurt and honey. The lighting is soft and professional, utilizing a dark mode theme with amber glowing highlights. The focus is sharp on the texture of the pancakes, suggesting a premium breakfast option for fitness enthusiasts." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnFoCz0FiX8JRuccDfIrm5UcnQHePILEpqeoRhc3WRGclevwRoBprqGBoSGNTqM6NU-pJd3h_mnH76SpQU-sZ5yEP3epdpg0-kH1ZSoVGcONFWdL-TEUM4yxt53ylBsIwvRE68stm4FnDZZ0buixICdA4aWfDC2tMqzzXFNOY7VD95u8aGBx4vNeHTK_O51ezcawJZYWgR6ahYkA3wfkPxUTuMj6ulS5oSs9xfzKsf7PBqgvaoJOjFszj0SuMYAc50DO3sYJ3png"/>
+</div>
+<h4 class="font-label-caps text-white mb-1 truncate">Protein Pancakes</h4>
+<p class="font-micro-data tabular-nums text-on-surface-variant/60">580 kcal • 35g P • 08g F</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 7. How it Works -->
+<section class="px-padding-lateral max-w-7xl mx-auto py-16">
+<h2 class="font-headline-md text-headline-md text-white mb-12 text-center">How it works</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+<!-- Line for desktop -->
+<div class="hidden md:block absolute top-12 left-[10%] right-[10%] h-[1px] bg-white/10 z-0"></div>
+<div class="relative z-10 text-center flex flex-col items-center">
+<div class="w-24 h-24 rounded-full glass-card border-primary-container/20 flex items-center justify-center mb-6 text-primary-container">
+<span class="material-symbols-outlined text-[40px]">architecture</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-white mb-2">1. Clinical Assessment</h4>
+<p class="text-on-surface-variant font-body-sm">Our RD algorithm analyzes your metabolic markers and goal targets to assign a precise nutritional shell.</p>
+</div>
+<div class="relative z-10 text-center flex flex-col items-center">
+<div class="w-24 h-24 rounded-full glass-card border-primary-container/20 flex items-center justify-center mb-6 text-primary-container">
+<span class="material-symbols-outlined text-[40px]">skillet</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-white mb-2">2. Precision Prep</h4>
+<p class="text-on-surface-variant font-body-sm">Culinary engineers prepare your meals in small batches, ensuring every macro gram is accounted for.</p>
+</div>
+<div class="relative z-10 text-center flex flex-col items-center">
+<div class="w-24 h-24 rounded-full glass-card border-primary-container/20 flex items-center justify-center mb-6 text-primary-container">
+<span class="material-symbols-outlined text-[40px]">delivery_dining</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-white mb-2">3. Nocturnal Delivery</h4>
+<p class="text-on-surface-variant font-body-sm">Fresh meals arrive at your door every morning before 7 AM, packaged in sustainable temperature-controlled kits.</p>
+</div>
+</div>
+</section>
+<!-- 8. FAQ Accordion -->
+<section class="px-padding-lateral max-w-3xl mx-auto py-16 border-t border-white/5">
+<h2 class="font-headline-md text-headline-md text-white mb-8">Frequently Asked Questions</h2>
+<div class="space-y-4">
+<details class="group glass-card rounded-xl overflow-hidden" open="">
+<summary class="flex justify-between items-center p-6 cursor-pointer list-none">
+<span class="font-headline-md text-headline-md text-white/90">Can I skip days or pause my plan?</span>
+<span class="material-symbols-outlined text-primary-container transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="px-6 pb-6 text-on-surface-variant font-body-sm">
+                        Yes, our dashboard allows complete flexibility. You can pause your subscription or skip specific days up to 24 hours before the scheduled delivery. The credits will remain in your account for future use.
+                    </div>
+</details>
+<details class="group glass-card rounded-xl overflow-hidden">
+<summary class="flex justify-between items-center p-6 cursor-pointer list-none">
+<span class="font-headline-md text-headline-md text-white/90">What time are meals delivered?</span>
+<span class="material-symbols-outlined text-primary-container transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="px-6 pb-6 text-on-surface-variant font-body-sm">
+                        Standard delivery takes place between 4:00 AM and 7:30 AM to ensure your breakfast is ready when you wake up. We use specialized cool-kits that maintain optimal temperature for up to 4 hours outside.
+                    </div>
+</details>
+<details class="group glass-card rounded-xl overflow-hidden">
+<summary class="flex justify-between items-center p-6 cursor-pointer list-none">
+<span class="font-headline-md text-headline-md text-white/90">Are the containers recyclable?</span>
+<span class="material-symbols-outlined text-primary-container transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="px-6 pb-6 text-on-surface-variant font-body-sm">
+                        We use 100% compostable bagasse containers and recyclable PET lids. Our outer delivery bags are reusable, and we collect them during your next delivery to reduce environmental impact.
+                    </div>
+</details>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-background/90 backdrop-blur-xl border-t border-white/10 pb-safe">
+<div class="flex justify-around items-center h-20 w-full px-base max-w-7xl mx-auto">
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 gap-stack-sm hover:text-primary-container/80 transition-colors" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="font-label-caps text-label-caps">Fuel</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-container font-bold gap-stack-sm transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-label-caps text-label-caps">Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 gap-stack-sm hover:text-primary-container/80 transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Track</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 gap-stack-sm hover:text-primary-container/80 transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</div>
+</nav>
+<script>
+        // Simple Micro-interactions
+        document.querySelectorAll('details').forEach((el) => {
+            el.addEventListener('click', (e) => {
+                if (el.open) return;
+                document.querySelectorAll('details').forEach((other) => {
+                    if (other !== el) other.removeAttribute('open');
+                });
+            });
+        });
+
+        // Plan Selector interaction
+        document.querySelectorAll('.cadence-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const parent = this.parentElement;
+                parent.querySelectorAll('.cadence-btn').forEach(b => {
+                    b.classList.remove('border-primary-container', 'text-primary-container');
+                    b.classList.add('border-white/10', 'text-on-surface-variant');
+                });
+                this.classList.add('border-primary-container', 'text-primary-container');
+                this.classList.remove('border-white/10', 'text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

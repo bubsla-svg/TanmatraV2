@@ -44,6 +44,16 @@ pnpm run typecheck && pnpm --filter @workspace/tanmatra run build
 4. If the design needs real structural/behavioural change (new data, new flow), that's a
    genuine Mode-C build — **stop and flag it to the owner**, don't fake it.
 
+## 2b. Pre-audit designs: trust elements are suspect until verified
+The original canvas designs predate the honesty standard, and QA
+(`stitch-design-qa.md`) found fabricated reviewers, "RD APPROVED" stamps, fake
+analytics, and unbacked process steps in them. **Rule: never port a badge,
+statistic, reviewer name, certification, or pipeline step verbatim — bind it to a
+real record or delete it.** Six designs were already fixed on the canvas; use the
+corrected references in `stitch-designs/qa-fixed/` (pdp-trust, gyms-landing,
+plans-landing-v2, fitness-clubs-lp, tracker-preparing, success-confirmation) —
+NOT their older canvas versions.
+
 ## 3. Honest health-data rules (non-negotiable — the designs already encode these)
 - **Allergens** fail closed: empty/unreviewed = "unverified", never "safe/none".
 - **Macros** hidden when provisional, `~`/"Est." when estimated. No number the record
@@ -87,6 +97,13 @@ a known non-regression). **Do not merge — the owner approves each design port.
 4. **D — RD console:** `/rd-console` (2 tabs)
 5. **E — admin consoles (desktop, HTML in repo):** menu-engineering, compliance,
    moderation, support-tickets, rd-applications
+6. **F — Mode-B holdouts** (`clinical-*`-rooted pages the `.nn` skin can't reach;
+   per-page NN token work, design references exist): `pages/GymsLanding.tsx`
+   (use `qa-fixed/gyms-landing.*`), `pages/MorningFitnessLanding.tsx` (use
+   `qa-fixed/fitness-clubs-lp.*` — new design), `pages/SubscriptionPlansLanding.tsx`
+   (use `qa-fixed/plans-landing-v2.*`), plus shared chrome:
+   `components/cart/StickyCheckoutBar.tsx`, `components/layout/Footer.tsx`,
+   `components/layout/SegmentToggle.tsx`, `components/layout/ErrorBoundary.tsx`.
 
 ## Hard rules
 - Port ≠ rewrite of logic. Presentation to the design; behaviour untouched.
