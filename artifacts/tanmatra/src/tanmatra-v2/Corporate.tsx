@@ -60,7 +60,7 @@ export default function V2Corporate() {
   // ── Marketing view (unauthenticated / 401) ────────────────────────────────
   if (unauthorized) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -79,7 +79,7 @@ export default function V2Corporate() {
 
             <div className="padx mt20">
               {BENEFITS.map((b) => (
-                <div key={b.title} className="card mb10">
+                <div key={b.title} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
                   <div className="tt">{b.title}</div>
                   <div className="fine mt4">{b.desc}</div>
                 </div>
@@ -152,8 +152,8 @@ export default function V2Corporate() {
                     height: 46,
                     width: "100%",
                     borderRadius: 10,
-                    background: "var(--s1)",
-                    border: "1px solid var(--ln2)",
+                    background: "var(--tnm-surface-ink-2)",
+                    border: "1px solid white/[0.08]",
                     color: "var(--tx)",
                     padding: "0 14px",
                     fontSize: "14.5px",
@@ -178,7 +178,7 @@ export default function V2Corporate() {
 
   // ── Authenticated console view ────────────────────────────────────────────
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -196,7 +196,7 @@ export default function V2Corporate() {
               <div className="skel mb10" style={{ height: 68, borderRadius: 12 }} />
             </>
           ) : companies.length === 0 ? (
-            <div className="card tc mb10" style={{ padding: "22px 16px" }}>
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 tc mb10">
               <i className="ph-bold ph-buildings" style={{ fontSize: 30, color: "var(--fnt)" }} />
               <div className="fine mt10">
                 You're not part of any company yet. Create one below or accept an invite from your admin.
@@ -218,7 +218,7 @@ export default function V2Corporate() {
           )}
 
           <div className="lab mt20 mb10">Create a company</div>
-          <div className="card">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
             <div className="lab mb6">Company name</div>
             <div className="inp mb12">
               <i className="ph-bold ph-buildings" />

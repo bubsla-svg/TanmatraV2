@@ -79,7 +79,7 @@ function ManualLogSheet({ open, onClose, onSaved }: { open: boolean; onClose: ()
   };
   return (
     <div className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--tnm-surface-ink-2)", borderRadius: "20px 20px 0 0", borderTop: "1px solid white/10", padding: 16, maxHeight: "85vh", overflowY: "auto" }}>
+      <div onClick={(e) => e.stopPropagation()} className="rounded-t-2xl bg-[var(--tnm-surface-ink-2)] border-x border-t border-white/[0.08] shadow-[0_-8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 480, width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
         <div className="fx ac jb mb10"><div className="h2" style={{ fontSize: 18 }}>Log a meal or snack</div><button className="iconbtn" onClick={onClose} aria-label="Close"><i className="ph-bold ph-x" /></button></div>
         <div className="lab mb6">What was it?</div>
         <div className="inp mb10"><input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="e.g. Greek yoghurt with berries" /></div>
@@ -135,7 +135,7 @@ function WearableCard({ data, refresh }: { data: WellnessTodayResponse; refresh:
     );
   };
   return (
-    <div className="card mb10">
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
       <div className="fx ac jb mb6"><div><div className="lab">Activity sync</div><div className="fine mt2">Wearables adjust your calorie target based on movement.</div></div><span className="pill" style={{ fontSize: 9 }}>Web preview</span></div>
       <Row name="Apple Health" provider="apple_health" link={apple} />
       <Row name="Google Fit" provider="google_fit" link={gfit} />
@@ -143,7 +143,7 @@ function WearableCard({ data, refresh }: { data: WellnessTodayResponse; refresh:
 
       {pending && (
         <div className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setPending(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="card" style={{ maxWidth: 400, width: "100%" }}>
+          <div onClick={(e) => e.stopPropagation()} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 400, width: "100%" }}>
             <div className="h2 mb6" style={{ fontSize: 17 }}>Connect {pending === "apple_health" ? "Apple Health" : "Google Fit / Health Connect"}</div>
             <div className="fine mb10">Before we connect, here's exactly what we read and how it's used.</div>
             <div className="fine" style={{ lineHeight: 1.6 }}>
@@ -190,7 +190,7 @@ function PairMobileCard() {
   const copy = async () => { if (!token) return; try { await navigator.clipboard.writeText(token); setCopied(true); toast.success("Token copied"); setTimeout(() => setCopied(false), 2000); } catch { toast.error("Copy failed — long-press to select"); } };
   const masked = token ? `${token.slice(0, 6)}${"•".repeat(16)}${token.slice(-4)}` : "";
   return (
-    <div className="card mb10">
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
       <div className="fx ac gap8 mb10"><i className="ph-bold ph-device-mobile" style={{ color: "var(--sage)" }} /><div><div className="lab">Pair Tanmatra mobile</div><div className="fine mt2">Stream Apple Health / Health Connect activity from your phone.</div></div></div>
       {!token ? (
         <div>
@@ -228,19 +228,19 @@ function ProtocolActions() {
   return (
     <div className="padx mt10">
       <div className="pill sg mb10"><i className="ph-fill ph-leaf" /> Wellness Protocol</div>
-      <Link to="/menu?protocol=wellness" className="card mb10" style={{ display: "block" }}>
+      <Link to="/menu?protocol=wellness" className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10 pointer" style={{ display: "block" }}>
         <div className="lab" style={{ color: "var(--sage)" }}><i className="ph-bold ph-fork-knife" /> Eat</div>
         <div className="tt mt6" style={{ fontSize: 15 }}>{dishCount} wellness-aligned dishes</div>
         <div className="fine mt2">High-fibre, low-glycaemic plates — the building blocks of preventive nutrition.</div>
         <div className="btn btn-s btn-blk mt10">See wellness dishes <i className="ph-bold ph-arrow-right" /></div>
       </Link>
-      <Link to="/plans?protocol=wellness" className="card mb10" style={{ display: "block" }}>
+      <Link to="/plans?protocol=wellness" className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10 pointer" style={{ display: "block" }}>
         <div className="lab" style={{ color: "var(--sage)" }}><i className="ph-bold ph-calendar-dots" /> Plan</div>
         <div className="tt mt6" style={{ fontSize: 15 }}>{planCount} curated weekly plans</div>
         {samplePlan && <div className="fine mt2">Featuring <b style={{ color: "var(--tx)" }}>{samplePlan.name}</b> — {samplePlan.calorieTargetPerDay} kcal · {samplePlan.proteinTargetGrams}g protein/day, from {F(samplePlan.pricePerWeekPaise)}/wk.</div>}
         <div className="btn btn-g btn-blk mt10">Browse wellness plans <i className="ph-bold ph-arrow-right" /></div>
       </Link>
-      <Link to="/rd?protocol=wellness" className="card mb10" style={{ display: "block" }}>
+      <Link to="/rd?protocol=wellness" className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10 pointer" style={{ display: "block" }}>
         <div className="lab" style={{ color: "var(--sage)" }}><i className="ph-bold ph-stethoscope" /> Talk</div>
         <div className="tt mt6" style={{ fontSize: 15 }}>{rds.length} {rds.length === 1 ? "RD" : "RDs"} for wellness coaching</div>
         {rds.length > 0 && <div className="fine mt2">{rds.slice(0, 2).map((rd: any) => teamBySlug.get(rd.slug)?.name ?? rd.slug).filter(Boolean).join(" · ")} — first 15-min consult is free.</div>}
@@ -286,14 +286,14 @@ export default function V2Wellness() {
 
           <div className="padx">
             {unauth ? (
-              <div className="card tc"><div className="fine mb10">Sign in to track your daily nutrition, water and streaks.</div><Link className="btn btn-p" to="/login?next=/wellness">Sign in</Link></div>
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 tc"><div className="fine mb10">Sign in to track your daily nutrition, water and streaks.</div><Link className="btn btn-p" to="/login?next=/wellness">Sign in</Link></div>
             ) : loadError ? (
-              <div className="card tc"><div className="fine mb10">Sign in to see your wellness dashboard — meals, macros and streaks live here.</div><div className="fx gap8 jc"><Link className="btn btn-p" to="/login?next=/wellness">Sign in</Link><button className="btn btn-g" onClick={refreshAll}>Retry</button></div></div>
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 tc"><div className="fine mb10">Sign in to see your wellness dashboard — meals, macros and streaks live here.</div><div className="fx gap8 jc"><Link className="btn btn-p" to="/login?next=/wellness">Sign in</Link><button className="btn btn-g" onClick={refreshAll}>Retry</button></div></div>
             ) : !data ? (
-              <div className="card"><div className="skel" style={{ height: 96 }} /><div className="skel mt10" style={{ height: 60 }} /></div>
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] p-4"><div className="skel" style={{ height: 96 }} /><div className="skel mt10" style={{ height: 60 }} /></div>
             ) : (
               <>
-                <div className="card">
+                <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, justifyItems: "center" }}>
                     <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="var(--tnm-action)" icon="ph-flame" />
                     <Ring label="Protein" value={data.totals.proteinGrams} target={data.targets.proteinTargetGrams} unit="g" color="var(--color-saffron-300)" icon="ph-barbell" />
@@ -307,9 +307,9 @@ export default function V2Wellness() {
                 </div>
 
                 <div className="fx gap12 mt10">
-                  <div className="card f1 tc"><div className="lab">Protein streak</div><div className="tt mt2">{data.streaks.protein?.currentDays ?? 0}d</div><div className="fine">best {data.streaks.protein?.bestDays ?? 0}d</div></div>
-                  <div className="card f1 tc"><div className="lab">Veg streak</div><div className="tt mt2">{data.streaks.veg?.currentDays ?? 0}d</div><div className="fine">best {data.streaks.veg?.bestDays ?? 0}d</div></div>
-                  <div className="card f1 tc"><div className="lab">Today's logs</div><div className="tt mt2">{data.logs.length}</div><div className="fine">{data.logs.filter((l: any) => l.source === "auto_order").length} auto</div></div>
+                  <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 f1 tc"><div className="lab">Protein streak</div><div className="tt mt2">{data.streaks.protein?.currentDays ?? 0}d</div><div className="fine">best {data.streaks.protein?.bestDays ?? 0}d</div></div>
+                  <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 f1 tc"><div className="lab">Veg streak</div><div className="tt mt2">{data.streaks.veg?.currentDays ?? 0}d</div><div className="fine">best {data.streaks.veg?.bestDays ?? 0}d</div></div>
+                  <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 f1 tc"><div className="lab">Today's logs</div><div className="tt mt2">{data.logs.length}</div><div className="fine">{data.logs.filter((l: any) => l.source === "auto_order").length} auto</div></div>
                 </div>
               </>
             )}
@@ -319,7 +319,7 @@ export default function V2Wellness() {
             <>
               <div className="secrow"><span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Last 7 days</span></div>
               <div className="padx">
-                <div className="card">
+                <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
                   <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="var(--tnm-action)" label="Calories" unit="kcal" />
                   <WeekBars data={week.days} field="proteinGrams" target={week.targets.proteinTargetGrams} color="var(--color-saffron-300)" label="Protein" unit="g" />
                   <WeekBars data={week.days} field="fiberGrams" target={week.targets.fiberTargetGrams} color="var(--color-clinical-sage)" label="Fiber" unit="g" />
@@ -333,7 +333,7 @@ export default function V2Wellness() {
             <>
               <div className="secrow"><span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Today's entries</span><button className="text-[var(--tnm-action)] font-semibold text-[13px] flex items-center gap-1 hover:text-white transition-colors" onClick={() => setLogOpen(true)}><i className="ph-bold ph-plus" /> Log</button></div>
               <div className="padx">
-                <div className="card mb10">
+                <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
                   {data.logs.length === 0 ? (
                     <div className="fine tc" style={{ padding: "16px 0" }}>Nothing logged yet today. Order a meal or add one manually.</div>
                   ) : (

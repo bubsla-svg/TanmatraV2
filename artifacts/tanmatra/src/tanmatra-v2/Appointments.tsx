@@ -40,10 +40,10 @@ const AVATAR_ACCENT: Record<string, any> = {
 };
 
 const TAB_CSS = `
-.tnm2 .apx-tabs{display:flex;gap:4px;background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:4px}
-.tnm2 .apx-tab{flex:1;min-width:0;height:38px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--mut);white-space:nowrap;transition:background 150ms,color 150ms}
+.tnm2 .apx-tabs{display:flex;gap:4px;background:var(--tnm-surface-ink-2);border:1px solid white/[0.08];border-radius:12px;padding:4px}
+.tnm2 .apx-tab{flex:1;min-width:0;height:38px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--tnm-text-secondary);white-space:nowrap;transition:background 150ms,color 150ms}
 .tnm2 .apx-tab i{font-size:15px;flex:none}
-.tnm2 .apx-tab.on{background:var(--safd);color:var(--safb);box-shadow:inset 0 0 0 1px var(--saf)}
+.tnm2 .apx-tab.on{background:color-mix(in srgb, var(--tnm-action) 14%, transparent);color:var(--tnm-action);box-shadow:inset 0 0 0 1px var(--tnm-action)}
 `;
 
 const taStyle: any = {
@@ -79,8 +79,8 @@ const TABS: Array<{ value: string; label: string; icon: string }> = [
 function statusPill(status: string): { cls: string; style?: any } {
   if (status === "scheduled") return { cls: "pill sg" };
   if (status === "completed")
-    return { cls: "pill", style: { background: "var(--safd)", color: "var(--safb)" } };
-  return { cls: "pill", style: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--color-error)" } };
+    return { cls: "pill", style: { background: "color-mix(in srgb, var(--tnm-action) 14%, transparent)", color: "var(--tnm-action)" } };
+  return { cls: "pill", style: { background: "color-mix(in srgb, var(--color-nn-error) 16%, transparent)", color: "var(--color-nn-error)" } };
 }
 
 export default function V2Appointments() {
@@ -128,7 +128,7 @@ export default function V2Appointments() {
 
   if (unauth) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/" aria-label="Home">
@@ -137,7 +137,7 @@ export default function V2Appointments() {
             <div className="abt">Appointments</div>
           </div>
           <div className="content padx">
-            <div className="card tc" style={{ marginTop: 20, padding: "44px 24px" }}>
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 tc" style={{ marginTop: 20, padding: "44px 24px" }}>
               <div
                 style={{
                   width: 56,
@@ -167,7 +167,7 @@ export default function V2Appointments() {
   }
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -188,7 +188,7 @@ export default function V2Appointments() {
 
             {/* Active RD identity card — who is my dietitian, next session when */}
             {!loading && hasHistory && activeRd && (
-              <div className="card mt16" style={{ padding: 14 }}>
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt16">
                 <div className="fx ac gap12">
                   <div
                     className="avatar big"
@@ -232,11 +232,9 @@ export default function V2Appointments() {
             {!loading && !nextUp && (
               <Link
                 to="/rd"
-                className="card mt12"
+                className="rounded-2xl border border-[var(--color-clinical-sage)]/30 bg-[var(--color-clinical-sage)]/10 p-4 mt12"
                 style={{
                   display: "block",
-                  background: "var(--saged)",
-                  borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)",
                 }}
               >
                 <div className="fx ac gap12">
@@ -245,8 +243,8 @@ export default function V2Appointments() {
                       width: 44,
                       height: 44,
                       borderRadius: 12,
-                      background: "color-mix(in oklab, var(--color-clinical-sage) 18%, transparent)",
-                      border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)",
+                      background: "color-mix(in srgb, var(--color-clinical-sage) 18%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--color-clinical-sage) 35%, transparent)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -334,7 +332,7 @@ function ScheduleTab({
     return (
       <div>
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="card mb12">
+          <div key={i} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] p-4 mb12">
             <div className="fx ac jb gap12">
               <div className="f1">
                 <div className="skel" style={{ height: 15, width: "55%" }} />
@@ -425,7 +423,7 @@ function ApptCard({
   const notesBlock = appt.rdNotes && (
     <div
       className="mt10"
-      style={{ background: "var(--safd)", border: "1px solid color-mix(in oklab, var(--color-clinical-gold) 35%, transparent)", borderRadius: 10, padding: "10px 12px" }}
+      style={{ background: "color-mix(in srgb, var(--tnm-action) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--tnm-action) 35%, transparent)", borderRadius: 10, padding: "10px 12px" }}
     >
       <div className="lab safc mb4">RD notes</div>
       <div className="fine" style={{ whiteSpace: "pre-line" }}>{appt.rdNotes}</div>
@@ -480,7 +478,7 @@ function ApptCard({
   if (!isUpcoming) {
     // Past / cancelled — muted compact row
     return (
-      <div className="card mb10" style={{ padding: "12px 14px", background: "transparent" }}>
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] mb10" style={{ padding: "12px 14px" }}>
         <div className="fx ac jb gap12">
           <div className="f1" style={{ minWidth: 0 }}>
             <div className="small clamp1" style={{ fontWeight: 600, color: "var(--tx)" }}>
@@ -507,7 +505,7 @@ function ApptCard({
 
   // Upcoming — elevated card, date/time prominent
   return (
-    <div className="card mb12" style={{ borderColor: "color-mix(in oklab, var(--color-clinical-sage) 40%, transparent)" }}>
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-[var(--color-clinical-sage)]/40 shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12">
       <div className="fx gap12">
         <div
           aria-hidden="true"
@@ -515,8 +513,8 @@ function ApptCard({
             width: 52,
             flex: "none",
             borderRadius: 10,
-            background: "var(--saged)",
-            border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)",
+            background: "color-mix(in srgb, var(--color-clinical-sage) 14%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-clinical-sage) 35%, transparent)",
             textAlign: "center",
             padding: "9px 0 7px",
             alignSelf: "flex-start",
@@ -595,7 +593,7 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
   const sendDisabled = sending || !body.trim();
 
   return (
-    <div className="card">
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
       <div className="fx ac gap10 mb12">
         {member ? (
           <div
@@ -642,8 +640,8 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
                   maxWidth: "78%",
                   borderRadius: 12,
                   padding: "8px 12px",
-                  background: m.senderRole === "user" ? "var(--safd)" : "var(--saged)",
-                  border: `1px solid ${m.senderRole === "user" ? "var(--saf)" : "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)"}`,
+                  background: m.senderRole === "user" ? "color-mix(in srgb, var(--tnm-action) 14%, transparent)" : "color-mix(in srgb, var(--color-clinical-sage) 14%, transparent)",
+                  border: `1px solid ${m.senderRole === "user" ? "var(--tnm-action)" : "color-mix(in srgb, var(--color-clinical-sage) 35%, transparent)"}`,
                 }}
               >
                 <div className="small" style={{ whiteSpace: "pre-line" }}>{m.body}</div>
@@ -736,7 +734,7 @@ function ProgressTab() {
 
   return (
     <div>
-      <div className="card mb12">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12">
         <div className="fx ac gap8 mb12">
           <i className="ph-bold ph-trend-up sagec" style={{ fontSize: 18 }} />
           <span className="tt">Log today</span>
@@ -778,7 +776,7 @@ function ProgressTab() {
         </button>
       </div>
 
-      <div className="card">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
         <div className="tt mb12">Recent logs</div>
         {logs.length === 0 ? (
           <div className="fine">
@@ -926,7 +924,7 @@ function LabsTab({ activeRdSlug }: { activeRdSlug: string }) {
 
   return (
     <div>
-      <div className="card mb12">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12">
         <div className="fx ac gap8 mb12">
           <i className="ph-bold ph-upload-simple sagec" style={{ fontSize: 18 }} />
           <span className="tt">Add a lab result</span>
@@ -993,7 +991,7 @@ function LabsTab({ activeRdSlug }: { activeRdSlug: string }) {
         </button>
       </div>
 
-      <div className="card">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
         <div className="tt mb12">Your labs</div>
         {labs.length === 0 ? (
           <div className="fine">Nothing uploaded yet.</div>

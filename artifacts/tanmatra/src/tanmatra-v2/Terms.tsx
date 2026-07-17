@@ -37,7 +37,7 @@ const SECTIONS = [
 
 export default function V2Terms() {
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/">
@@ -54,7 +54,7 @@ export default function V2Terms() {
 
         {/* Intro */}
         <div className="padx">
-          <div className="card">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
             <div className="small" style={{ color: "var(--tx)", lineHeight: 1.5 }}>
               Welcome to Tanmatra. By placing an order, signing in, or using any
               part of our service you agree to these terms.
@@ -65,12 +65,12 @@ export default function V2Terms() {
         {/* Sections */}
         <div className="padx mt12">
           {SECTIONS.map((s) => (
-            <div key={s.n} className="card mb10 fx gap12">
+            <div key={s.n} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10 fx gap12">
               <div className="lab" style={{ color: "var(--safb)", flex: "none", marginTop: 2 }}>
                 {s.n}
               </div>
               <div className="f1">
-                <div className="sh mb6">{s.title}</div>
+                <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mb6">{s.title}</div>
                 <div className="fine">{s.body}</div>
               </div>
             </div>

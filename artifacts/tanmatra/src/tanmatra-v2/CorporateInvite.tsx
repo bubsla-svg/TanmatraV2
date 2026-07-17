@@ -41,7 +41,7 @@ export default function V2CorporateInvite() {
   };
 
   const Shell = ({ children }: any) => (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+    <div className="tnm2 nn text-white antialiased" style={{ minHeight: "100vh", background: "var(--tnm-surface-ink)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
       <div style={{ maxWidth: 420, width: "100%", margin: "0 auto", padding: 20 }}>{children}</div>
     </div>
   );
@@ -54,7 +54,7 @@ export default function V2CorporateInvite() {
           <div className="h2">Loading invite…</div>
           <div className="fine mt6">Fetching your invitation details.</div>
         </div>
-        <div className="card">
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] p-4">
           <div className="skel" style={{ height: 16, width: "60%", marginBottom: 12 }} />
           <div className="skel" style={{ height: 12, width: "90%", marginBottom: 8 }} />
           <div className="skel" style={{ height: 12, width: "75%" }} />
@@ -71,7 +71,7 @@ export default function V2CorporateInvite() {
           <div className="h2">Invite unavailable</div>
           <div className="fine mt6">{error ?? "Invite not found or expired"}</div>
         </div>
-        <div className="card">
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] p-4">
           <div className="note" style={{ background: "var(--s3)", borderColor: "var(--ln2)", color: "var(--mut)" }}>
             <i className="ph-bold ph-info dgrc" />
             <span>This invitation link may have expired or already been used. Ask your company admin to send a fresh invite.</span>
@@ -92,7 +92,7 @@ export default function V2CorporateInvite() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
         <div className="fx ac gap12 mb14">
           <div className="avatar big" style={{ color: "var(--safb)" }}><i className="ph-bold ph-buildings" style={{ fontSize: 22 }} /></div>
           <div style={{ minWidth: 0 }}>

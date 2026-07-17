@@ -36,7 +36,7 @@ export default function V2MarketplaceItem() {
 
   if (q.isLoading)
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/marketplace" aria-label="Back to marketplace">
@@ -61,7 +61,7 @@ export default function V2MarketplaceItem() {
   const item = q.data?.item;
   if (!item) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/marketplace" aria-label="Back to marketplace">
@@ -153,8 +153,8 @@ export default function V2MarketplaceItem() {
 
   return (
     <div
-      className="tnm2 nn"
-      style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}
+      className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased"
+      style={{ display: "flex", flexDirection: "column" }}
     >
       <div
         style={{ maxWidth: 480, margin: "0 auto", width: "100%", flex: 1, display: "flex", flexDirection: "column" }}
@@ -288,7 +288,7 @@ export default function V2MarketplaceItem() {
           {deliveryMode === "bundle_with_meal" && recentOrders.length > 0 && (
             <select
               className="inp mb10"
-              style={{ cursor: "pointer" }}
+              style={{ cursor: "pointer", background: "var(--tnm-surface-ink-2)", border: "1px solid white/[0.08]" }}
               value={bundleOrderId ?? ""}
               onChange={(e) =>
                 setBundleOrderId(
@@ -317,8 +317,8 @@ export default function V2MarketplaceItem() {
           {/* Long description */}
           {item.longDescription && (
             <>
-              <div className="sh mt20 mb10">Details</div>
-              <div className="card">
+              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mt20 mb10">Details</div>
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
                 <p
                   className="fine"
                   style={{ whiteSpace: "pre-line", color: "var(--mut)" }}
@@ -333,7 +333,7 @@ export default function V2MarketplaceItem() {
         </div>
 
         {/* Buy dock */}
-        <div className="dock">
+        <div className="dock bg-[var(--tnm-surface-ink)] border-t border-white/[0.08]">
           <button
             className={"btn btn-p btn-lg btn-blk" + (buyDisabled ? " dis" : "")}
             onClick={handleCheckout}

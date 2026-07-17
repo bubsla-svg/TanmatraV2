@@ -78,7 +78,7 @@ export default function V2Premium() {
   const pricePaise = status.data?.pricePaise ?? 99900;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -104,7 +104,7 @@ export default function V2Premium() {
                 </p>
               </div>
 
-              <div className="card mt14" style={{ borderColor: "var(--saf)", background: "var(--safd)" }}>
+              <div className="rounded-2xl border border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/10 p-4 mt14">
                 <div className="fx gap8" style={{ alignItems: "baseline" }}>
                   <span className="disp safc">{formatPrice(pricePaise)}</span>
                   <span className="lab">/ month</span>
@@ -169,10 +169,10 @@ export default function V2Premium() {
                 </div>
               </div>
 
-              <div className="sh mt20 mb10">What's included</div>
+              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mt20 mb10">What's included</div>
               <div className="prodgrid">
                 {BENEFITS.map((b) => (
-                  <div key={b.title} className="card" style={{ padding: 14 }}>
+                  <div key={b.title} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
                     <span className="dic" style={{ background: "var(--safd)", color: "var(--safb)" }}>
                       <i className={"ph-bold " + b.icon} />
                     </span>

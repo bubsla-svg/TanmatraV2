@@ -57,7 +57,7 @@ export default function V2CorporateAdmin() {
 
   if (loading || !data) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/corporate" aria-label="All companies">
@@ -167,7 +167,7 @@ export default function V2CorporateAdmin() {
         : "var(--fnt)";
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/corporate" aria-label="All companies">
@@ -205,7 +205,7 @@ export default function V2CorporateAdmin() {
 
           {/* Per-employee budget (admin) */}
           {isAdmin && (
-            <div className="card mb14">
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb14">
               <div className="lab fx ac g6 mb10">
                 <i className="ph-bold ph-wallet safc" /> Per-employee monthly budget
               </div>
@@ -233,7 +233,7 @@ export default function V2CorporateAdmin() {
           )}
 
           {/* Members */}
-          <div className="card mb14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb14">
             <div className="lab fx ac g6 mb10">
               <i className="ph-bold ph-users safc" /> Members
             </div>
@@ -274,10 +274,10 @@ export default function V2CorporateAdmin() {
                         color: memberStatusColor(m.status),
                         background:
                           m.status === "active"
-                            ? "var(--saged)"
+                            ? "color-mix(in srgb, var(--color-clinical-sage) 14%, transparent)"
                             : m.status === "invited"
-                              ? "var(--safd)"
-                              : "var(--s3)",
+                              ? "color-mix(in srgb, var(--tnm-action) 14%, transparent)"
+                              : "var(--tnm-surface-ink-2)",
                       }}
                     >
                       {m.status}
@@ -321,7 +321,7 @@ export default function V2CorporateAdmin() {
           </div>
 
           {/* Office lunch */}
-          <div className="card">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
             <div className="fx ac jb gap8 mb10">
               <div className="lab fx ac g6">
                 <i className="ph-bold ph-calendar-check safc" /> Office lunch
