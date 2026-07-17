@@ -72,7 +72,7 @@ export default function AdminLogin() {
     <div className="mx-auto max-w-md px-4 py-12">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2 text-clinical-muted">
+          <div className="flex items-center gap-2 text-nn-secondary">
             <ShieldCheck size={22} />
             <span className="text-sm uppercase tracking-wide">Admin</span>
           </div>
@@ -111,7 +111,7 @@ export default function AdminLogin() {
             <Button type="submit" disabled={busy} className="w-full">
               {busy ? "Signing in…" : "Sign in"}
             </Button>
-            <p className="text-xs text-clinical-muted">
+            <p className="text-xs text-nn-secondary">
               Customers sign in with phone OTP from the regular login page.
               This screen is for the Tanmatra operations team.
             </p>

@@ -90,7 +90,7 @@ export default function AdminSalesAccount() {
   };
 
   if (loading || !company) {
-    return <div className="p-6 text-sm text-clinical-zinc">Loading…</div>;
+    return <div className="p-6 text-sm text-nn-on-surface-variant">Loading…</div>;
   }
 
   const drivers = health?.drivers;
@@ -100,11 +100,11 @@ export default function AdminSalesAccount() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{company.name}</h1>
-          <p className="text-sm text-clinical-zinc">/{company.slug}</p>
+          <p className="text-sm text-nn-on-surface-variant">/{company.slug}</p>
         </div>
         <Link
           to="/admin/sales-console"
-          className="text-sm text-clinical-zinc underline"
+          className="text-sm text-nn-on-surface-variant underline"
         >
           ← Back to console
         </Link>
@@ -130,7 +130,7 @@ export default function AdminSalesAccount() {
                 <Badge variant="outline" className="capitalize">
                   {health.riskLevel.replace("_", " ")}
                 </Badge>
-                <span className="text-xs text-clinical-zinc">
+                <span className="text-xs text-nn-on-surface-variant">
                   as of {health.snapshotDate}
                 </span>
               </div>
@@ -169,7 +169,7 @@ export default function AdminSalesAccount() {
               )}
             </>
           ) : (
-            <p className="text-sm text-clinical-zinc">
+            <p className="text-sm text-nn-on-surface-variant">
               No snapshot yet. Click Recompute.
             </p>
           )}
@@ -214,7 +214,7 @@ export default function AdminSalesAccount() {
           </div>
           {qbr ? (
             <div className="space-y-4">
-              <p className="text-xs text-clinical-zinc">
+              <p className="text-xs text-nn-on-surface-variant">
                 {qbr.periodStart} → {qbr.periodEnd} · status {qbr.status} ·{" "}
                 model {qbr.payload.modelId}
                 {qbr.editedBy ? ` · last edit by ${qbr.editedBy}` : ""}
@@ -257,7 +257,7 @@ export default function AdminSalesAccount() {
                           key={p.label}
                           className="flex items-center gap-2 text-xs"
                         >
-                          <span className="w-16 text-clinical-zinc">
+                          <span className="w-16 text-nn-on-surface-variant">
                             {p.label}
                           </span>
                           <div
@@ -266,7 +266,7 @@ export default function AdminSalesAccount() {
                               width: `${Math.min(100, p.value / 50)}%`,
                             }}
                           />
-                          <span className="text-clinical-zinc">
+                          <span className="text-nn-on-surface-variant">
                             {p.value} {c.unit}
                           </span>
                         </div>
@@ -277,7 +277,7 @@ export default function AdminSalesAccount() {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-clinical-zinc">
+            <p className="text-sm text-nn-on-surface-variant">
               No QBR yet. Click Generate to draft one for the current quarter.
             </p>
           )}
@@ -290,7 +290,7 @@ export default function AdminSalesAccount() {
 function Driver({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded border border-zinc-800 p-2">
-      <div className="text-[10px] uppercase tracking-wide text-clinical-zinc">
+      <div className="text-[10px] uppercase tracking-wide text-nn-on-surface-variant">
         {label}
       </div>
       <div className="text-sm">{value}</div>

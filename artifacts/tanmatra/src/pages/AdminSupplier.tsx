@@ -140,13 +140,13 @@ export default function AdminSupplier() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex items-center justify-between border-b border-clinical-border pb-4">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
         <div>
           <h1 className="text-2xl font-serif text-white flex items-center gap-2">
-            <ClipboardList className="w-6 h-6 text-clinical-gold" />
+            <ClipboardList className="w-6 h-6 text-nn-primary" />
             Supplier Crate Sourcing Portal
           </h1>
-          <p className="text-xs text-clinical-zinc mt-1">
+          <p className="text-xs text-nn-on-surface-variant mt-1">
             Supplier-side tracking panel. Mandatory harvest tracking for ISO-certified audit compliance.
           </p>
         </div>
@@ -159,7 +159,7 @@ export default function AdminSupplier() {
               setToken(e.target.value);
               localStorage.setItem(ADMIN_TOKEN_KEY, e.target.value);
             }}
-            className="w-48 bg-clinical-dark border-clinical-border text-white text-xs h-9"
+            className="w-48 bg-nn-bg border-white/[0.08] text-white text-xs h-9"
           />
           <Button size="sm" variant="outline" onClick={loadInventory} className="h-9">
             Sync Inventory
@@ -169,23 +169,23 @@ export default function AdminSupplier() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Side: Supplier Delivery Form */}
-        <Card className="bg-clinical-surface border-clinical-border">
-          <CardHeader className="border-b border-clinical-border/50 py-3 px-4">
+        <Card className="bg-nn-surface border-white/[0.08]">
+          <CardHeader className="border-b border-white/[0.04] py-3 px-4">
             <CardTitle className="text-sm font-semibold text-white flex items-center gap-2">
-              <PackagePlus className="w-4 h-4 text-clinical-gold" />
+              <PackagePlus className="w-4 h-4 text-nn-primary" />
               New Delivery Batch Intake
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
             <form onSubmit={handleGenerateBarcode} className="space-y-4">
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-clinical-zinc block mb-1">
+                <label className="text-[10px] uppercase tracking-wider text-nn-on-surface-variant block mb-1">
                   Product Name (must match inventory item)
                 </label>
                 <select
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
-                  className="w-full rounded-md border border-clinical-border bg-clinical-dark text-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-clinical-gold"
+                  className="w-full rounded-md border border-white/[0.08] bg-nn-bg text-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-nn-primary"
                 >
                   <option value="Spinach">Spinach</option>
                   <option value="Cucumber">Cucumber</option>
@@ -195,7 +195,7 @@ export default function AdminSupplier() {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-clinical-zinc block mb-1">
+                <label className="text-[10px] uppercase tracking-wider text-nn-on-surface-variant block mb-1">
                   Farm Origin (Traceability Source)
                 </label>
                 <Input
@@ -203,24 +203,24 @@ export default function AdminSupplier() {
                   placeholder="e.g. Organic Hills Farm, Lonavla"
                   value={farmOrigin}
                   onChange={(e) => setFarmOrigin(e.target.value)}
-                  className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                  className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider text-clinical-zinc block mb-1">
+                  <label className="text-[10px] uppercase tracking-wider text-nn-on-surface-variant block mb-1">
                     Harvest Date
                   </label>
                   <Input
                     type="date"
                     value={harvestDate}
                     onChange={(e) => setHarvestDate(e.target.value)}
-                    className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                    className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider text-clinical-zinc block mb-1">
+                  <label className="text-[10px] uppercase tracking-wider text-nn-on-surface-variant block mb-1">
                     Batch Code
                   </label>
                   <Input
@@ -228,13 +228,13 @@ export default function AdminSupplier() {
                     placeholder="e.g. SPN-260701-09"
                     value={batchCode}
                     onChange={(e) => setBatchCode(e.target.value)}
-                    className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                    className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-clinical-zinc block mb-1">
+                <label className="text-[10px] uppercase tracking-wider text-nn-on-surface-variant block mb-1">
                   Delivery Quantity (kg)
                 </label>
                 <Input
@@ -242,13 +242,13 @@ export default function AdminSupplier() {
                   placeholder="e.g. 20"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                  className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-9 bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-bold uppercase tracking-wider text-xs"
+                className="w-full h-9 bg-nn-primary text-action-text hover:bg-nn-primary/90 font-bold uppercase tracking-wider text-xs"
                 disabled={loading}
               >
                 {loading ? "Logging Batch..." : "Log Crate & Generate Barcode"}
@@ -260,7 +260,7 @@ export default function AdminSupplier() {
         {/* Right Side: Generated Barcode & Clerk Verification */}
         <div className="space-y-6">
           {activeBarcode ? (
-            <Card className="bg-clinical-surface border-clinical-sage border-2">
+            <Card className="bg-nn-surface border-clinical-sage border-2">
               <CardHeader className="bg-clinical-sage/5 border-b border-clinical-sage/20 py-3 px-4 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-white flex items-center gap-1.5">
                   <Barcode className="w-4 h-4 text-clinical-sage" />
@@ -275,18 +275,18 @@ export default function AdminSupplier() {
                   {/* Persisted crate barcode token. No QR renderer is bundled,
                       so we show the real token clerks type/scan rather than a
                       decorative code that encodes nothing. */}
-                  <span className="text-[9px] uppercase tracking-wider text-clinical-dark/60 font-semibold">
+                  <span className="text-[9px] uppercase tracking-wider text-nn-bg/60 font-semibold">
                     Scannable Crate Barcode Token
                   </span>
-                  <span className="text-sm font-mono text-clinical-dark font-bold tracking-widest break-all text-center select-all px-2">
+                  <span className="text-sm font-mono text-nn-bg font-bold tracking-widest break-all text-center select-all px-2">
                     {activeBarcode.barcodeToken}
                   </span>
-                  <span className="text-[9px] text-clinical-dark/50">
+                  <span className="text-[9px] text-nn-bg/50">
                     Enter this token at the receiving scanner to verify intake.
                   </span>
                 </div>
 
-                <div className="text-[11px] text-clinical-zinc leading-relaxed space-y-1 bg-clinical-dark/30 p-3 rounded">
+                <div className="text-[11px] text-nn-on-surface-variant leading-relaxed space-y-1 bg-nn-bg/30 p-3 rounded">
                   <div>
                     <span className="font-semibold text-white">Product:</span> {activeBarcode.product}
                   </div>
@@ -318,9 +318,9 @@ export default function AdminSupplier() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-dashed border-clinical-border bg-clinical-surface/50">
-              <CardContent className="p-12 text-center text-clinical-zinc flex flex-col items-center gap-2">
-                <Barcode className="w-10 h-10 text-clinical-border" />
+            <Card className="border-dashed border-white/[0.08] bg-nn-surface/50">
+              <CardContent className="p-12 text-center text-nn-on-surface-variant flex flex-col items-center gap-2">
+                <Barcode className="w-10 h-10 text-nn-outline" />
                 <p className="text-xs">Awaiting delivery batch entry from the supplier portal.</p>
               </CardContent>
             </Card>
@@ -328,9 +328,9 @@ export default function AdminSupplier() {
 
           {/* Active Inventory Check panel */}
           {inventoryList.length > 0 && (
-            <Card className="bg-clinical-surface border-clinical-border">
-              <CardHeader className="py-3 px-4 border-b border-clinical-border/50">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-clinical-zinc">
+            <Card className="bg-nn-surface border-white/[0.08]">
+              <CardHeader className="py-3 px-4 border-b border-white/[0.04]">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-nn-on-surface-variant">
                   Active Stock Level Check
                 </CardTitle>
               </CardHeader>
@@ -339,9 +339,9 @@ export default function AdminSupplier() {
                   {inventoryList
                     .filter((item) => ["spinach", "cucumber", "lettuce", "broccoli"].some(n => item.product.toLowerCase().includes(n)))
                     .map((item) => (
-                      <div key={item.id} className="flex justify-between items-center py-1 border-b border-clinical-border/30 last:border-b-0">
+                      <div key={item.id} className="flex justify-between items-center py-1 border-b border-white/[0.024] last:border-b-0">
                         <span className="text-white font-medium">{item.product}</span>
-                        <span className="text-clinical-zinc font-mono text-[10px]">{item.buyingQty || "0 kg"}</span>
+                        <span className="text-nn-on-surface-variant font-mono text-[10px]">{item.buyingQty || "0 kg"}</span>
                       </div>
                     ))}
                 </div>

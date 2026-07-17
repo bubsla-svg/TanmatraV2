@@ -129,10 +129,10 @@ export default function AdminCompliance() {
       </div>
 
       {/* Header section */}
-      <div className="border border-clinical-gold/40 bg-clinical-dark p-6 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:border-0 print:bg-white print:text-black">
+      <div className="border border-nn-primary/40 bg-nn-bg p-6 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:border-0 print:bg-white print:text-black">
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <ShieldCheck className="w-6 h-6 text-clinical-gold print:text-black" />
+            <ShieldCheck className="w-6 h-6 text-nn-primary print:text-black" />
             <h1 className="text-2xl font-serif font-semibold text-white print:text-black">
               ISO 22000 Compliance &amp; Food Safety Console
             </h1>
@@ -140,7 +140,7 @@ export default function AdminCompliance() {
               Sample data
             </Badge>
           </div>
-          <p className="text-xs text-clinical-zinc leading-relaxed print:text-black">
+          <p className="text-xs text-nn-on-surface-variant leading-relaxed print:text-black">
             FSSAI Licensed Facility &middot; <span className="font-semibold text-white print:text-black">Lic. No.: 22725926001018</span>
             <br />
             Demonstration of standard operating procedures modelled on the Codex Alimentarius principles for HACCP.
@@ -170,7 +170,7 @@ export default function AdminCompliance() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-xs text-clinical-zinc leading-relaxed">
+          <p className="text-xs text-nn-on-surface-variant leading-relaxed">
             These buttons demonstrate that the compliance log endpoints are write-protected by the API: edit and delete
             requests are rejected with an HTTP 403. This is server-side write protection at the route level — not a
             tamper-proof or cryptographically verifiable audit ledger.
@@ -205,19 +205,19 @@ export default function AdminCompliance() {
               Sample data
             </Badge>
           </CardTitle>
-          <p className="text-xs text-clinical-zinc print:text-black">
+          <p className="text-xs text-nn-on-surface-variant print:text-black">
             Illustrative sample records for demonstration. Temperatures, hygiene check-ins and batch traceability shown
             here are synthetic and are not captured from live sensors or field devices.
           </p>
         </CardHeader>
         <CardContent className="print:px-0">
           {loading ? (
-            <p className="text-sm text-clinical-zinc">Loading compliance database records...</p>
+            <p className="text-sm text-nn-on-surface-variant">Loading compliance database records...</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-clinical-border bg-clinical-surface-elevated text-clinical-zinc font-semibold print:bg-gray-100 print:text-black">
+                  <tr className="border-b border-white/[0.08] bg-nn-surface-high text-nn-on-surface-variant font-semibold print:bg-gray-100 print:text-black">
                     <th className="p-3">Log Date</th>
                     <th className="p-3">Cold Storage (°C)</th>
                     <th className="p-3">Daily Hygiene Checks</th>
@@ -226,13 +226,13 @@ export default function AdminCompliance() {
                 </thead>
                 <tbody>
                   {logs.map((log) => (
-                    <tr key={log.id} className="border-b border-clinical-border/50 hover:bg-clinical-surface/50 print:hover:bg-white print:text-black">
+                    <tr key={log.id} className="border-b border-white/[0.04] hover:bg-nn-surface/50 print:hover:bg-white print:text-black">
                       <td className="p-3 font-semibold font-mono text-white print:text-black">{log.logDate}</td>
                       <td className="p-3">
                         <span className={`font-semibold ${log.coldStorageTempCelsius > 4.0 ? 'text-amber-400' : 'text-emerald-400'} print:text-black`}>
                           {log.coldStorageTempCelsius.toFixed(1)}°C
                         </span>
-                        <span className="text-[10px] text-clinical-zinc ml-1 print:text-gray-500">(Target: &lt;5.0°C)</span>
+                        <span className="text-[10px] text-nn-on-surface-variant ml-1 print:text-gray-500">(Target: &lt;5.0°C)</span>
                       </td>
                       <td className="p-3">
                         <Badge className="bg-emerald-600/20 text-emerald-400 border-emerald-600/40 text-[10px] uppercase print:bg-emerald-100 print:text-emerald-800">
@@ -242,17 +242,17 @@ export default function AdminCompliance() {
                       <td className="p-3">
                         <div className="space-y-1.5">
                           {log.deliveryBatches.map((batch, bi) => (
-                            <div key={bi} className="bg-clinical-dark/60 p-2 rounded border border-clinical-border/40 text-[11px] print:bg-gray-50 print:border-gray-300">
+                            <div key={bi} className="bg-nn-bg/60 p-2 rounded border border-white/[0.032] text-[11px] print:bg-gray-50 print:border-gray-300">
                               <div className="font-semibold text-white print:text-black">{batch.product}</div>
-                              <div className="text-clinical-zinc print:text-gray-600">Origin: {batch.farmOrigin}</div>
-                              <div className="flex gap-4 mt-0.5 text-[10px] text-clinical-zinc-muted print:text-gray-500">
-                                <span>Code: <code className="font-mono text-clinical-gold print:text-black">{batch.batchCode}</code></span>
+                              <div className="text-nn-on-surface-variant print:text-gray-600">Origin: {batch.farmOrigin}</div>
+                              <div className="flex gap-4 mt-0.5 text-[10px] text-nn-secondary print:text-gray-500">
+                                <span>Code: <code className="font-mono text-nn-primary print:text-black">{batch.batchCode}</code></span>
                                 <span>Harvested: {batch.harvestDate}</span>
                               </div>
                             </div>
                           ))}
                           {log.deliveryBatches.length === 0 && (
-                            <span className="text-clinical-zinc-muted italic">No fresh batch deliveries processed this date</span>
+                            <span className="text-nn-secondary italic">No fresh batch deliveries processed this date</span>
                           )}
                         </div>
                       </td>
@@ -260,7 +260,7 @@ export default function AdminCompliance() {
                   ))}
                   {logs.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="p-8 text-center text-clinical-zinc-muted">
+                      <td colSpan={4} className="p-8 text-center text-nn-secondary">
                         No compliance sheets registered. Click refresh or ensure seeder is triggered on server launch.
                       </td>
                     </tr>

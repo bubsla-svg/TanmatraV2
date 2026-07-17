@@ -136,13 +136,13 @@ export default function AdminKds() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center justify-between border-b border-clinical-border pb-4">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
         <div>
           <h1 className="text-2xl font-serif text-white flex items-center gap-2">
-            <Scale className="w-6 h-6 text-clinical-gold" />
+            <Scale className="w-6 h-6 text-nn-primary" />
             Kitchen Display System (KDS) Simulator
           </h1>
-          <p className="text-xs text-clinical-zinc mt-1">
+          <p className="text-xs text-nn-on-surface-variant mt-1">
             ISO 22000 weight verification scale panel. Auto-locks packing if macro deviation D &gt; 2g.
           </p>
         </div>
@@ -155,7 +155,7 @@ export default function AdminKds() {
               setToken(e.target.value);
               localStorage.setItem(ADMIN_TOKEN_KEY, e.target.value);
             }}
-            className="w-48 bg-clinical-dark border-clinical-border text-white text-xs h-9"
+            className="w-48 bg-nn-bg border-white/[0.08] text-white text-xs h-9"
           />
           <Button size="sm" variant="outline" onClick={loadOrders} className="h-9">
             Refresh
@@ -173,11 +173,11 @@ export default function AdminKds() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-clinical-zinc text-xs">Loading orders...</div>
+        <div className="text-center py-12 text-nn-on-surface-variant text-xs">Loading orders...</div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-clinical-border rounded-xl">
-          <CheckCircle2 className="w-8 h-8 text-clinical-zinc/40 mx-auto mb-2" />
-          <p className="text-sm text-clinical-zinc">All orders cleared. No pending prep tickets.</p>
+        <div className="text-center py-12 border border-dashed border-white/[0.08] rounded-xl">
+          <CheckCircle2 className="w-8 h-8 text-nn-on-surface-variant/40 mx-auto mb-2" />
+          <p className="text-sm text-nn-on-surface-variant">All orders cleared. No pending prep tickets.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -191,8 +191,8 @@ export default function AdminKds() {
             const isDelayed = elapsedMin >= 20;
 
             return (
-              <Card key={order.id} className={`bg-clinical-surface flex flex-col justify-between ${isDelayed ? 'border-red-500/60 border-2 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'border-clinical-border'}`}>
-                <CardHeader className="border-b border-clinical-border/50 py-3 px-4 flex flex-row items-center justify-between">
+              <Card key={order.id} className={`bg-nn-surface flex flex-col justify-between ${isDelayed ? 'border-red-500/60 border-2 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'border-white/[0.08]'}`}>
+                <CardHeader className="border-b border-white/[0.04] py-3 px-4 flex flex-row items-center justify-between">
                   <div className="space-y-0.5">
                     <CardTitle className="text-sm font-semibold text-white flex items-center gap-2">
                       Order ID: {order.externalOrderId.slice(0, 8)}
@@ -200,7 +200,7 @@ export default function AdminKds() {
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
                       )}
                     </CardTitle>
-                    <span className="text-[10px] text-clinical-zinc flex items-center gap-1">
+                    <span className="text-[10px] text-nn-on-surface-variant flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {new Date(order.createdAt).toLocaleTimeString()}
                     </span>
@@ -211,7 +211,7 @@ export default function AdminKds() {
                         SLA Delay ({elapsedMin}m)
                       </Badge>
                     )}
-                    <Badge variant="outline" className="border-clinical-gold/30 text-clinical-gold text-[9px] uppercase">
+                    <Badge variant="outline" className="border-nn-primary/30 text-nn-primary text-[9px] uppercase">
                       {order.status}
                     </Badge>
                   </div>
@@ -233,14 +233,14 @@ export default function AdminKds() {
                     }
 
                     return (
-                      <div key={item.id} className="p-3 rounded-lg bg-clinical-dark/40 border border-clinical-border/50 space-y-3">
+                      <div key={item.id} className="p-3 rounded-lg bg-nn-bg/40 border border-white/[0.04] space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <h4 className="text-xs font-semibold text-white">{item.name}</h4>
-                            <span className="text-[10px] text-clinical-zinc">Qty: {item.qty}</span>
+                            <span className="text-[10px] text-nn-on-surface-variant">Qty: {item.qty}</span>
                           </div>
                           {dish && (
-                            <div className="text-[9px] font-mono text-clinical-zinc text-right">
+                            <div className="text-[9px] font-mono text-nn-on-surface-variant text-right">
                               Target Macros: {dish.macros.protein}P / {dish.macros.carbs}C / {dish.macros.fat}F
                             </div>
                           )}
@@ -248,10 +248,10 @@ export default function AdminKds() {
 
                         {dish && (
                           <div className="space-y-1.5">
-                            <span className="text-[9px] font-semibold uppercase tracking-wider text-clinical-zinc">
+                            <span className="text-[9px] font-semibold uppercase tracking-wider text-nn-on-surface-variant">
                               Gram Prep Instructions:
                             </span>
-                            <ul className="text-[10px] text-clinical-zinc leading-relaxed list-disc list-inside">
+                            <ul className="text-[10px] text-nn-on-surface-variant leading-relaxed list-disc list-inside">
                               {dish.ingredients.map((ing: string, i: number) => (
                                 <li key={i}>{ing}</li>
                               ))}
@@ -259,9 +259,9 @@ export default function AdminKds() {
                           </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-clinical-border/30">
+                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/[0.024]">
                           <div>
-                            <label className="text-[9px] uppercase tracking-wider text-clinical-zinc block mb-1">
+                            <label className="text-[9px] uppercase tracking-wider text-nn-on-surface-variant block mb-1">
                               Scale Weight (grams)
                             </label>
                             <div className="flex items-center gap-1.5">
@@ -275,16 +275,16 @@ export default function AdminKds() {
                                     [weightKey]: e.target.value,
                                   }));
                                 }}
-                                className="bg-clinical-dark border-clinical-border text-white text-xs h-7 w-24 tabular-nums"
+                                className="bg-nn-bg border-white/[0.08] text-white text-xs h-7 w-24 tabular-nums"
                               />
-                              <span className="text-[10px] text-clinical-zinc">g</span>
+                              <span className="text-[10px] text-nn-on-surface-variant">g</span>
                             </div>
                           </div>
 
                           <div className="flex flex-col justify-end">
                             {evalResult ? (
                               <div className="space-y-1 text-right">
-                                <span className="text-[9px] text-clinical-zinc block">
+                                <span className="text-[9px] text-nn-on-surface-variant block">
                                   Target: {evalResult.plannedWeight}g | Deviation:{" "}
                                   <span
                                     className={
@@ -307,7 +307,7 @@ export default function AdminKds() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-[10px] text-clinical-zinc/60 italic text-right self-end pb-1.5">
+                              <span className="text-[10px] text-nn-on-surface-variant/60 italic text-right self-end pb-1.5">
                                 Awaiting measured weight...
                               </span>
                             )}
@@ -329,7 +329,7 @@ export default function AdminKds() {
                     );
                   })}
                 </CardContent>
-                <div className="border-t border-clinical-border p-3 bg-clinical-dark/10 flex items-center gap-2">
+                <div className="border-t border-white/[0.08] p-3 bg-nn-bg/10 flex items-center gap-2">
                   <Button
                     size="sm"
                     variant="outline"
@@ -341,7 +341,7 @@ export default function AdminKds() {
                   </Button>
                   <Button
                     size="sm"
-                    className="flex-[2] h-9 bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-bold uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-[2] h-9 bg-nn-primary text-action-text hover:bg-nn-primary/90 font-bold uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!orderIsCalibrated || busyOrderId !== null}
                     onClick={() => handlePackReady(order.id)}
                   >

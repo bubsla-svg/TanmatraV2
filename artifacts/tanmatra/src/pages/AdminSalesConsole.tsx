@@ -65,7 +65,7 @@ export default function AdminSalesConsole() {
   };
 
   if (loading) {
-    return <div className="p-6 text-sm text-clinical-zinc">Loading…</div>;
+    return <div className="p-6 text-sm text-nn-on-surface-variant">Loading…</div>;
   }
 
   const byRisk = rows.reduce<Record<string, number>>((acc, r) => {
@@ -78,7 +78,7 @@ export default function AdminSalesConsole() {
     <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-8">
       <div>
         <h1 className="text-2xl font-semibold">Sales console</h1>
-        <p className="text-sm text-clinical-zinc">
+        <p className="text-sm text-nn-on-surface-variant">
           Accounts ranked by risk. Critical and at-risk land first so reps can
           act fast.
         </p>
@@ -86,7 +86,7 @@ export default function AdminSalesConsole() {
 
       <Card>
         <CardContent className="flex flex-col gap-2 p-4 md:flex-row md:items-center md:gap-3">
-          <label className="text-xs text-clinical-zinc md:w-40">
+          <label className="text-xs text-nn-on-surface-variant md:w-40">
             Admin token
           </label>
           <Input
@@ -96,7 +96,7 @@ export default function AdminSalesConsole() {
             onChange={(e) => saveAdminToken(e.target.value)}
             className="md:flex-1"
           />
-          <p className="text-xs text-clinical-zinc">
+          <p className="text-xs text-nn-on-surface-variant">
             Stored locally; sent as <code>x-admin-token</code> on /sales/* calls.
           </p>
         </CardContent>
@@ -112,7 +112,7 @@ export default function AdminSalesConsole() {
           </span>
         ))}
         {byRisk["unknown"] ? (
-          <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-clinical-zinc">
+          <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-nn-on-surface-variant">
             no snapshot: {byRisk["unknown"]}
           </span>
         ) : null}
@@ -120,11 +120,11 @@ export default function AdminSalesConsole() {
 
       <div className="space-y-3">
         {rows.length === 0 && (
-          <p className="text-sm text-clinical-zinc">No B2B accounts yet.</p>
+          <p className="text-sm text-nn-on-surface-variant">No B2B accounts yet.</p>
         )}
         {rows.map((row) => {
           const risk = row.health?.riskLevel ?? "unknown";
-          const cls = RISK_COLOR[risk] ?? "border-zinc-700 text-clinical-zinc";
+          const cls = RISK_COLOR[risk] ?? "border-zinc-700 text-nn-on-surface-variant";
           return (
             <Card key={row.company.id}>
               <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
@@ -146,11 +146,11 @@ export default function AdminSalesConsole() {
                     )}
                   </div>
                   {row.health ? (
-                    <p className="text-xs text-clinical-zinc">
+                    <p className="text-xs text-nn-on-surface-variant">
                       {row.health.commentary}
                     </p>
                   ) : (
-                    <p className="text-xs text-clinical-zinc">
+                    <p className="text-xs text-nn-on-surface-variant">
                       No snapshot — recompute to see drivers.
                     </p>
                   )}

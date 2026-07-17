@@ -198,7 +198,7 @@ function ResultChart({ chartSpec, rows }: { chartSpec: ChartSpec; rows: Record<s
                   <R.XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
                   <R.YAxis tick={{ fontSize: 11 }} />
                   <R.Tooltip />
-                  <R.Bar dataKey={yKey} fill="var(--color-clinical-blue)" />
+                  <R.Bar dataKey={yKey} fill="var(--color-nn-tertiary)" />
                 </R.BarChart>
               )}
             </R.ResponsiveContainer>
@@ -567,7 +567,7 @@ function VocTab() {
                             render={(R) => (
                               <R.ResponsiveContainer width="100%" height="100%">
                                 <R.LineChart data={trend}>
-                                  <R.Line type="monotone" dataKey="mentions" stroke="var(--color-clinical-blue)" strokeWidth={2} dot={false} />
+                                  <R.Line type="monotone" dataKey="mentions" stroke="var(--color-nn-tertiary)" strokeWidth={2} dot={false} />
                                 </R.LineChart>
                               </R.ResponsiveContainer>
                             )}

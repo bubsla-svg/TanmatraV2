@@ -139,20 +139,20 @@ export default function AdminModeration() {
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <header>
         <h1 className="font-serif text-3xl text-white">Moderation queue</h1>
-        <p className="text-sm text-clinical-zinc">
+        <p className="text-sm text-nn-on-surface-variant">
           Hide or restore recent dish reviews and challenge posts. Hidden items
           disappear from public views immediately.
         </p>
       </header>
 
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-4 flex flex-wrap items-center gap-3">
-          <label className="text-xs text-clinical-zinc">Admin token</label>
+          <label className="text-xs text-nn-on-surface-variant">Admin token</label>
           <input
             value={token}
             onChange={(e) => saveToken(e.target.value)}
             placeholder="x-admin-token"
-            className="bg-clinical-dark border border-clinical-border rounded px-2 py-1 text-sm text-white flex-1 min-w-[200px]"
+            className="bg-nn-bg border border-white/[0.08] rounded px-2 py-1 text-sm text-white flex-1 min-w-[200px]"
           />
           <Button onClick={() => void refresh()} disabled={loading}>
             {loading ? "Refreshing..." : "Refresh"}
@@ -182,12 +182,12 @@ export default function AdminModeration() {
       {tab === "reviews" && (
         <div className="space-y-3">
           {reviews.length === 0 && (
-            <p className="text-sm text-clinical-zinc">No reviews to moderate.</p>
+            <p className="text-sm text-nn-on-surface-variant">No reviews to moderate.</p>
           )}
           {reviews.map((r) => (
             <Card
               key={r.id}
-              className="bg-clinical-surface border-clinical-border"
+              className="bg-nn-surface border-white/[0.08]"
             >
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -200,18 +200,18 @@ export default function AdminModeration() {
                   >
                     {r.hidden ? "Hidden" : "Visible"}
                   </Badge>
-                  <Badge className="bg-clinical-surface-elevated text-clinical-zinc border-0 text-[10px]">
+                  <Badge className="bg-nn-surface-high text-nn-on-surface-variant border-0 text-[10px]">
                     {r.slug}
                   </Badge>
-                  <Badge className="bg-clinical-surface-elevated text-clinical-zinc border-0 text-[10px]">
+                  <Badge className="bg-nn-surface-high text-nn-on-surface-variant border-0 text-[10px]">
                     {r.rating}★
                   </Badge>
-                  <span className="text-[10px] text-clinical-zinc ml-auto">
+                  <span className="text-[10px] text-nn-on-surface-variant ml-auto">
                     {new Date(r.createdAt).toLocaleString()}
                   </span>
                 </div>
                 <p className="text-sm text-white whitespace-pre-wrap">
-                  {r.body || <span className="text-clinical-zinc">(no body)</span>}
+                  {r.body || <span className="text-nn-on-surface-variant">(no body)</span>}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -236,12 +236,12 @@ export default function AdminModeration() {
       {tab === "posts" && (
         <div className="space-y-3">
           {posts.length === 0 && (
-            <p className="text-sm text-clinical-zinc">No posts to moderate.</p>
+            <p className="text-sm text-nn-on-surface-variant">No posts to moderate.</p>
           )}
           {posts.map((p) => (
             <Card
               key={p.id}
-              className="bg-clinical-surface border-clinical-border"
+              className="bg-nn-surface border-white/[0.08]"
             >
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -254,13 +254,13 @@ export default function AdminModeration() {
                   >
                     {p.hidden ? "Hidden" : "Visible"}
                   </Badge>
-                  <Badge className="bg-clinical-surface-elevated text-clinical-zinc border-0 text-[10px]">
+                  <Badge className="bg-nn-surface-high text-nn-on-surface-variant border-0 text-[10px]">
                     {p.challengeTitle}
                   </Badge>
-                  <Badge className="bg-clinical-surface-elevated text-clinical-zinc border-0 text-[10px]">
+                  <Badge className="bg-nn-surface-high text-nn-on-surface-variant border-0 text-[10px]">
                     {p.authorName}
                   </Badge>
-                  <span className="text-[10px] text-clinical-zinc ml-auto">
+                  <span className="text-[10px] text-nn-on-surface-variant ml-auto">
                     {new Date(p.createdAt).toLocaleString()}
                   </span>
                 </div>

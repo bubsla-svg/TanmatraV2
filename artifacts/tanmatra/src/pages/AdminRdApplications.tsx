@@ -50,7 +50,7 @@ const STATUS_FILTERS: { id: "all" | Status; label: string }[] = [
 ];
 
 const STATUS_STYLES: Record<Status, string> = {
-  new: "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/40",
+  new: "bg-nn-primary/15 text-nn-primary border-nn-primary/40",
   contacted: "bg-blue-500/15 text-blue-300 border-blue-500/40",
   approved: "bg-clinical-sage/15 text-clinical-sage border-clinical-sage/40",
   rejected: "bg-red-500/15 text-red-300 border-red-500/40",
@@ -122,11 +122,11 @@ export default function AdminRdApplications() {
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-5">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+          <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
             Partner Ops
           </Badge>
           <h1 className="font-serif text-3xl text-white mt-2">RD applications</h1>
-          <p className="text-xs text-clinical-zinc mt-1">
+          <p className="text-xs text-nn-on-surface-variant mt-1">
             Review onboarding submissions, capture call notes, and provision RD
             seats once approved.
           </p>
@@ -136,7 +136,7 @@ export default function AdminRdApplications() {
           value={token}
           onChange={(e) => saveToken(e.target.value)}
           placeholder="x-admin-token"
-          className="bg-clinical-surface border-clinical-border text-xs h-9 w-full sm:w-64"
+          className="bg-nn-surface border-white/[0.08] text-xs h-9 w-full sm:w-64"
         />
       </header>
 
@@ -148,12 +148,12 @@ export default function AdminRdApplications() {
             onClick={() => setFilter(f.id)}
             className={`text-xs px-3 h-8 rounded-full border ${
               filter === f.id
-                ? "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/40"
-                : "border-clinical-border text-clinical-zinc hover:border-clinical-gold/30"
+                ? "bg-nn-primary/15 text-nn-primary border-nn-primary/40"
+                : "border-white/[0.08] text-nn-on-surface-variant hover:border-nn-primary/30"
             }`}
           >
             {f.label}
-            <span className="ml-2 text-[10px] text-clinical-zinc">
+            <span className="ml-2 text-[10px] text-nn-on-surface-variant">
               {f.id === "all"
                 ? Object.values(counts).reduce((s, n) => s + n, 0)
                 : counts[f.id] ?? 0}
@@ -169,19 +169,19 @@ export default function AdminRdApplications() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-5">
-        <Card className="bg-clinical-surface border-clinical-border">
+        <Card className="bg-nn-surface border-white/[0.08]">
           <CardContent className="p-0">
             {loading && rows.length === 0 ? (
-              <div className="p-8 text-center text-xs text-clinical-zinc">
+              <div className="p-8 text-center text-xs text-nn-on-surface-variant">
                 <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
                 Loading…
               </div>
             ) : rows.length === 0 ? (
-              <div className="p-8 text-center text-xs text-clinical-zinc">
+              <div className="p-8 text-center text-xs text-nn-on-surface-variant">
                 No applications yet.
               </div>
             ) : (
-              <div className="divide-y divide-clinical-border">
+              <div className="divide-y divide-white/[0.08]">
                 {rows.map((r) => (
                   <button
                     key={r.id}
@@ -189,7 +189,7 @@ export default function AdminRdApplications() {
                     onClick={() => setSelected(r)}
                     className={`w-full text-left p-4 transition-colors ${
                       selected?.id === r.id
-                        ? "bg-clinical-gold/5"
+                        ? "bg-nn-primary/5"
                         : "hover:bg-white/5"
                     }`}
                   >
@@ -203,10 +203,10 @@ export default function AdminRdApplications() {
                         {r.status}
                       </Badge>
                     </div>
-                    <p className="text-[11px] text-clinical-zinc truncate">
+                    <p className="text-[11px] text-nn-on-surface-variant truncate">
                       {r.credentials} · {r.cityRegion} · {r.path}
                     </p>
-                    <p className="text-[10px] text-clinical-zinc tabular-nums mt-1">
+                    <p className="text-[10px] text-nn-on-surface-variant tabular-nums mt-1">
                       {new Date(r.createdAt).toLocaleString("en-IN")}
                     </p>
                   </button>
@@ -229,8 +229,8 @@ export default function AdminRdApplications() {
             }}
           />
         ) : (
-          <Card className="bg-clinical-surface border-clinical-border">
-            <CardContent className="p-8 text-center text-xs text-clinical-zinc">
+          <Card className="bg-nn-surface border-white/[0.08]">
+            <CardContent className="p-8 text-center text-xs text-nn-on-surface-variant">
               Select an application to review.
             </CardContent>
           </Card>
@@ -294,26 +294,26 @@ function ApplicationDetail({
     `${application.whatsappCountryCode}${application.whatsappPhone}`;
 
   return (
-    <Card className="bg-clinical-surface border-clinical-border">
+    <Card className="bg-nn-surface border-white/[0.08]">
       <CardContent className="p-5 space-y-5">
         <div>
           <h2 className="font-serif text-2xl text-white">
             {application.fullName}
           </h2>
-          <p className="text-xs text-clinical-zinc">
+          <p className="text-xs text-nn-on-surface-variant">
             {application.credentials} · {application.yearsExperience}y ·{" "}
             {application.cityRegion}
           </p>
           <div className="flex flex-wrap items-center gap-3 mt-2 text-xs">
             <a
               href={`mailto:${application.email}`}
-              className="inline-flex items-center gap-1 text-clinical-gold hover:underline"
+              className="inline-flex items-center gap-1 text-nn-primary hover:underline"
             >
               <Mail className="w-3.5 h-3.5" />
               {application.email}
             </a>
             {wa && (
-              <span className="inline-flex items-center gap-1 text-clinical-zinc">
+              <span className="inline-flex items-center gap-1 text-nn-on-surface-variant">
                 <Phone className="w-3.5 h-3.5" />
                 {wa}{" "}
                 {application.whatsappVerifiedAt && (
@@ -357,28 +357,28 @@ function ApplicationDetail({
         </div>
 
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+          <p className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant">
             Internal notes
           </p>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
-            className="bg-clinical-dark border-clinical-border text-xs"
+            className="bg-nn-bg border-white/[0.08] text-xs"
             placeholder="Call summary, references, follow-ups…"
           />
           <Button
             size="sm"
             onClick={() => patch({ adminNotes: notes }, "Notes saved")}
             disabled={busy === "Notes saved"}
-            className="bg-clinical-gold/15 text-clinical-gold hover:bg-clinical-gold/25 text-xs h-8"
+            className="bg-nn-primary/15 text-nn-primary hover:bg-nn-primary/25 text-xs h-8"
           >
             Save notes
           </Button>
         </div>
 
-        <div className="space-y-2 border-t border-clinical-border pt-4">
-          <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+        <div className="space-y-2 border-t border-white/[0.08] pt-4">
+          <p className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant">
             Status
           </p>
           <div className="flex flex-wrap gap-2">
@@ -389,7 +389,7 @@ function ApplicationDetail({
                 onClick={() => patch({ status: s }, `Marked ${s}`)}
                 disabled={application.status === s || busy === `Marked ${s}`}
                 variant="outline"
-                className="border-clinical-border text-xs h-8"
+                className="border-white/[0.08] text-xs h-8"
               >
                 Mark {s}
               </Button>
@@ -397,19 +397,19 @@ function ApplicationDetail({
           </div>
         </div>
 
-        <div className="space-y-2 border-t border-clinical-border pt-4">
-          <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+        <div className="space-y-2 border-t border-white/[0.08] pt-4">
+          <p className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant">
             Provision RD seat (on approve)
           </p>
           {application.linkedUserId ? (
-            <p className="text-[11px] text-clinical-zinc">
+            <p className="text-[11px] text-nn-on-surface-variant">
               Linked to user{" "}
               <span className="font-mono text-white">
                 {application.linkedUserId.slice(0, 12)}…
               </span>
             </p>
           ) : (
-            <p className="text-[11px] text-clinical-zinc">
+            <p className="text-[11px] text-nn-on-surface-variant">
               Applicant has not attached an account yet — share the wizard
               "Attach my account" link in your reply, then provision below.
             </p>
@@ -419,7 +419,7 @@ function ApplicationDetail({
               value={provisionSlug}
               onChange={(e) => setProvisionSlug(e.target.value)}
               placeholder="rd-slug-here"
-              className="bg-clinical-dark border-clinical-border text-xs h-8 w-48"
+              className="bg-nn-bg border-white/[0.08] text-xs h-8 w-48"
             />
             <Button
               size="sm"
@@ -454,7 +454,7 @@ function ApplicationDetail({
 function KV({ k, v, full }: { k: string; v: string; full?: boolean }) {
   return (
     <div className={full ? "col-span-2" : ""}>
-      <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+      <p className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant">
         {k}
       </p>
       <p className="text-white whitespace-pre-line break-words">{v}</p>
