@@ -74,9 +74,14 @@ export default function V2Orders() {
 
         <div className="content padx" style={{ paddingTop: 4, paddingBottom: 24 }}>
           {orders.length === 0 ? (
-            <div className="tc" style={{ padding: "52px 20px" }}>
-              <i className="ph-bold ph-package" style={{ fontSize: 32, color: "var(--fnt)" }} />
-              <div className="tt mt10">No orders yet</div>
+            <div className="tc" style={{ padding: "56px 20px" }}>
+              <div
+                className="fx ac jc"
+                style={{ width: 72, height: 72, margin: "0 auto", borderRadius: 999, background: "var(--safd)", border: "1px solid var(--saf)" }}
+              >
+                <i className="ph-bold ph-package" style={{ fontSize: 30, color: "var(--safb)" }} />
+              </div>
+              <div className="tt mt14">No orders yet</div>
               <div className="fine mt6">Place your first clinical-grade meal and it will appear here.</div>
               <div className="fx ac jc wrap gap8 mt20">
                 <Link className="btn btn-p" to="/menu">Browse menu</Link>
