@@ -49,14 +49,17 @@ if (!rawPort) {
 
 const schedulersDisabled = process.env["DISABLE_SCHEDULERS"] === "true";
 
-if (!schedulersDisabled) {
-  assertRedisAvailableInProduction();
-}
+// The order-pipeline worker is core infrastructure: fail closed in
+// production whenever Redis is missing, even when the periodic
+// schedulers are disabled.
+assertRedisAvailableInProduction();
 
 const httpServer = createServer(app);
 initRealtime(httpServer);
+// startWorkers self-guards (warns and no-ops when Redis is not
+// configured); only the periodic schedulers honor DISABLE_SCHEDULERS.
+startWorkers();
 if (!schedulersDisabled) {
-  startWorkers();
   startLoyaltyScheduler();
   startAnomalyScheduler();
   startAnomalyDigestSender();

@@ -23,7 +23,8 @@
     "evals:menu-copy": "tsx ./src/lib/menuCopy.eval.ts",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:redis-config": "node --test --import tsx ./src/lib/queue.redisConfig.test.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.67",

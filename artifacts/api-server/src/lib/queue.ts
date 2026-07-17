@@ -1,5 +1,5 @@
 import { Queue, Worker, type Processor } from "bullmq";
-import IORedis, { type Redis } from "ioredis";
+import IORedis, { type Redis, type RedisOptions } from "ioredis";
 import { logger } from "./logger";
 import { db, deliveryEventsTable, ordersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -19,24 +19,93 @@ let orderPipelineQueue: Queue<OrderPipelineJob> | null = null;
 let workersStarted = false;
 let activeWorker: Worker<OrderPipelineJob> | null = null;
 
+type RedisTarget =
+  | { kind: "url"; url: string }
+  | { kind: "options"; options: RedisOptions };
+
+let warnedBadRedisUrl = false;
+let warnedBadRedisPort = false;
+
+/**
+ * Optional BullMQ key prefix so multiple environments (dev workspace,
+ * Cloud Run prod) can share one Redis instance without stealing each
+ * other's jobs. Unset -> BullMQ default ("bull").
+ */
+function bullPrefix(): string | undefined {
+  const p = process.env["BULLMQ_PREFIX"]?.trim();
+  return p || undefined;
+}
+
+/**
+ * Resolve Redis connection config from either REDIS_URL (a full redis:// or
+ * rediss:// URL) or the component vars REDIS_HOST / REDIS_PORT /
+ * REDIS_PASSWORD (plus optional REDIS_USERNAME, REDIS_TLS="true").
+ * Component config exists because providers like Redis Cloud surface
+ * host/port/password as separate fields and hand-assembling a URL has
+ * proven error-prone during setup.
+ */
+export function resolveRedisTarget(): RedisTarget | null {
+  const raw = process.env["REDIS_URL"]?.trim();
+  if (raw && /^rediss?:\/\//i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      if (parsed.hostname) {
+        return { kind: "url", url: raw };
+      }
+      // no hostname (e.g. "redis://") — fall through to component config
+    } catch {
+      // invalid despite the scheme — fall through to component config
+    }
+  }
+  if (raw && !warnedBadRedisUrl) {
+    warnedBadRedisUrl = true;
+    logger.warn(
+      "REDIS_URL is set but is not a valid redis:// or rediss:// URL — ignoring it and using REDIS_HOST/REDIS_PORT/REDIS_PASSWORD if present",
+    );
+  }
+  const host = process.env["REDIS_HOST"]?.trim();
+  if (!host) return null;
+  const portRaw = process.env["REDIS_PORT"]?.trim();
+  const parsedPort = portRaw ? Number(portRaw) : 6379;
+  if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+    if (!warnedBadRedisPort) {
+      warnedBadRedisPort = true;
+      logger.warn({ portRaw }, "REDIS_PORT is not a valid port (1-65535) — treating Redis as not configured");
+    }
+    return null;
+  }
+  const username = process.env["REDIS_USERNAME"]?.trim() || "default";
+  const password = process.env["REDIS_PASSWORD"] || undefined;
+  const options: RedisOptions = {
+    host,
+    port: parsedPort,
+    ...(password ? { username, password } : {}),
+    ...(process.env["REDIS_TLS"] === "true" ? { tls: {} } : {}),
+  };
+  return { kind: "options", options };
+}
+
 export function isRedisConfigured(): boolean {
-  return !!process.env["REDIS_URL"];
+  return resolveRedisTarget() !== null;
 }
 
 function getConnection(): Redis | null {
   if (connection) return connection;
-  const url = process.env["REDIS_URL"];
-  if (!url) return null;
-  connection = new IORedis(url, { maxRetriesPerRequest: null });
+  const target = resolveRedisTarget();
+  if (!target) return null;
+  connection =
+    target.kind === "url"
+      ? new IORedis(target.url, { maxRetriesPerRequest: null })
+      : new IORedis({ ...target.options, maxRetriesPerRequest: null });
   connection.on("error", (err) => logger.error({ err }, "redis connection error"));
   return connection;
 }
 
 /**
  * Probe BullMQ's Redis connection. Returns "ok" when a `PING` succeeds,
- * "down" when the client errors out, and "disabled" when REDIS_URL was
+ * "down" when the client errors out, and "disabled" when Redis was
  * never configured (dev-only path — production refuses to boot without
- * REDIS_URL; see `assertRedisAvailableInProduction`).
+ * Redis config; see `assertRedisAvailableInProduction`).
  */
 export async function probeRedis(): Promise<"ok" | "down" | "disabled"> {
   if (!isRedisConfigured()) return "disabled";
@@ -59,10 +128,23 @@ export async function probeRedis(): Promise<"ok" | "down" | "disabled"> {
  * never advance, never dispatch, and never log nutrition — a clinical
  * data integrity issue, not just a reliability one. Refuse to boot.
  */
+const LOCAL_REDIS_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
 export function assertRedisAvailableInProduction(): void {
-  if (process.env["NODE_ENV"] === "production" && !isRedisConfigured()) {
+  if (process.env["NODE_ENV"] !== "production") return;
+  const target = resolveRedisTarget();
+  if (!target) {
     throw new Error(
-      "REDIS_URL must be set in production: order pipeline worker would otherwise be silently disabled.",
+      "Redis must be configured in production (set REDIS_URL, or REDIS_HOST + REDIS_PORT + REDIS_PASSWORD): order pipeline worker would otherwise be silently disabled.",
+    );
+  }
+  if (
+    target.kind === "options" &&
+    !target.options.password &&
+    !LOCAL_REDIS_HOSTS.has(String(target.options.host))
+  ) {
+    throw new Error(
+      "REDIS_HOST points at a remote Redis but REDIS_PASSWORD is not set — refusing to boot production with unauthenticated remote Redis config.",
     );
   }
 }
@@ -71,7 +153,10 @@ export function getOrderPipelineQueue(): Queue<OrderPipelineJob> | null {
   if (orderPipelineQueue) return orderPipelineQueue;
   const conn = getConnection();
   if (!conn) return null;
-  orderPipelineQueue = new Queue<OrderPipelineJob>(QUEUE_NAMES.orderPipeline, { connection: conn });
+  orderPipelineQueue = new Queue<OrderPipelineJob>(QUEUE_NAMES.orderPipeline, {
+    connection: conn,
+    ...(bullPrefix() ? { prefix: bullPrefix() } : {}),
+  });
   return orderPipelineQueue;
 }
 
@@ -137,13 +222,14 @@ export function startWorkers(): void {
   const conn = getConnection();
   if (!conn) {
     logger.warn(
-      "REDIS_URL not set — BullMQ queue and worker disabled. Background jobs will be skipped.",
+      "Redis not configured (set REDIS_URL or REDIS_HOST/REDIS_PORT/REDIS_PASSWORD) — BullMQ queue and worker disabled. Background jobs will be skipped.",
     );
     return;
   }
   workersStarted = true;
   const concurrency = Number(process.env["ORDER_PIPELINE_CONCURRENCY"] ?? 4);
   const worker = new Worker<OrderPipelineJob>(QUEUE_NAMES.orderPipeline, orderPipelineProcessor, {
+    ...(bullPrefix() ? { prefix: bullPrefix() } : {}),
     connection: conn,
     concurrency: Number.isFinite(concurrency) && concurrency > 0 ? concurrency : 4,
   });
