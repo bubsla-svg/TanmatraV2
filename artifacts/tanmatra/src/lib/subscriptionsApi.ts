@@ -91,11 +91,14 @@ async function request<T>(
 ): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
+    ...init,
+    // headers merged AFTER ...init so a caller passing custom headers (e.g.
+    // Idempotency-Key) can never clobber Content-Type — losing it makes
+    // express.json() skip the body and Zod reject with "received undefined".
     headers: {
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },
-    ...init,
   });
   if (res.status === 401) {
     throw new Error("unauthorized");
