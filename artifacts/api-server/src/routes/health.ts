@@ -54,8 +54,6 @@ router.get("/healthz", async (req: Request, res: Response) => {
   }
   if (!dbOk) failures.push("db");
 
-  const schedulersDisabled = process.env["DISABLE_SCHEDULERS"] === "true";
-
   if (isRedisConfigured()) {
     let redisOk = false;
     try {
@@ -65,7 +63,7 @@ router.get("/healthz", async (req: Request, res: Response) => {
       req.log.error({ err }, "healthz redis probe failed");
     }
     if (!redisOk) failures.push("redis");
-  } else if (process.env["NODE_ENV"] === "production" && !schedulersDisabled) {
+  } else if (process.env["NODE_ENV"] === "production") {
     failures.push("redis");
   }
 
