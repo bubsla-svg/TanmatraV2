@@ -101,7 +101,7 @@ export default function V2RdPlans() {
   }
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -143,7 +143,7 @@ export default function V2RdPlans() {
           {preferences && recommendations.length > 0 && (
             <>
               <div className="secrow">
-                <span className="sh fx ac gap8">
+                <span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 fx ac gap8">
                   <i className="ph-fill ph-sparkle safc" />
                   Top matches for your profile
                 </span>
@@ -154,12 +154,10 @@ export default function V2RdPlans() {
                   return (
                     <Link
                       key={plan.slug}
-                      className="card pointer mb10"
+                      className="rounded-2xl border border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/10 p-4 pointer mb10"
                       to={`/plans/${plan.slug}`}
                       style={{
                         display: "block",
-                        background: "var(--safd)",
-                        borderColor: "var(--saf)",
                       }}
                     >
                       <div className="fx ac jb gap8">
@@ -193,7 +191,7 @@ export default function V2RdPlans() {
 
           {/* Filters */}
           <div className="secrow">
-            <span className="sh fx ac gap8">
+            <span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 fx ac gap8">
               <i className="ph-bold ph-funnel fntc" />
               Filter plans
             </span>
@@ -249,7 +247,7 @@ export default function V2RdPlans() {
               filtered.map((plan) => {
                 const rd = getRdAuthor(plan);
                 return (
-                  <div key={plan.slug} className="card mb12">
+                  <div key={plan.slug} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12">
                     <div className="fx jb gap12">
                       <div className="f1" style={{ minWidth: 0 }}>
                         <span className="pill" style={goalPillStyle}>
