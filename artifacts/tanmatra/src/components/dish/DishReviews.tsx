@@ -105,8 +105,8 @@ function StarRow({
             style={{ width: size, height: size }}
             className={
               n <= value
-                ? "fill-clinical-gold text-clinical-gold"
-                : "text-clinical-zinc-muted"
+                ? "fill-nn-primary text-nn-primary"
+                : "text-nn-secondary"
             }
           />
         </button>
@@ -187,30 +187,30 @@ export default function DishReviews({ slug }: DishReviewsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <MessageSquare className="w-4 h-4 text-clinical-gold" />
+        <MessageSquare className="w-4 h-4 text-nn-primary" />
         <p className="text-clinical-label">Customer reviews</p>
         {summary && (
           <Badge
             variant="outline"
-            className="border-clinical-border text-clinical-zinc text-[10px] gap-1 ml-auto tabular-nums"
+            className="border-white/[0.08] text-nn-on-surface-variant text-[10px] gap-1 ml-auto tabular-nums"
           >
-            <Star className="w-3 h-3 fill-clinical-gold text-clinical-gold" />
+            <Star className="w-3 h-3 fill-nn-primary text-nn-primary" />
             {(summary.averageRating / 10).toFixed(1)} · {summary.sampleSize}
           </Badge>
         )}
       </div>
 
       {summary && (summary.mostLoved || summary.commonGripe) && (
-        <Card className="bg-clinical-surface border-clinical-border">
+        <Card className="bg-nn-surface border-white/[0.08]">
           <CardContent className="p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-clinical-gold" />
-              <p className="text-[10px] uppercase tracking-[0.12em] text-clinical-zinc-muted font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-nn-primary" />
+              <p className="text-[10px] uppercase tracking-[0.12em] text-nn-secondary font-semibold">
                 What customers say
               </p>
               <Badge
                 variant="outline"
-                className="border-clinical-border text-clinical-zinc text-[10px] ml-auto gap-1 capitalize"
+                className="border-white/[0.08] text-nn-on-surface-variant text-[10px] ml-auto gap-1 capitalize"
               >
                 {trendIcon}
                 {summary.trend}
@@ -219,13 +219,13 @@ export default function DishReviews({ slug }: DishReviewsProps) {
             {summary.mostLoved && (
               <div className="flex items-start gap-2">
                 <span className="text-[11px] text-clinical-sage font-medium shrink-0">Loved:</span>
-                <p className="text-xs text-clinical-zinc">{summary.mostLoved}</p>
+                <p className="text-xs text-nn-on-surface-variant">{summary.mostLoved}</p>
               </div>
             )}
             {summary.commonGripe && (
               <div className="flex items-start gap-2">
-                <span className="text-[11px] text-clinical-gold font-medium shrink-0">Gripe:</span>
-                <p className="text-xs text-clinical-zinc">{summary.commonGripe}</p>
+                <span className="text-[11px] text-nn-primary font-medium shrink-0">Gripe:</span>
+                <p className="text-xs text-nn-on-surface-variant">{summary.commonGripe}</p>
               </div>
             )}
           </CardContent>
@@ -233,11 +233,11 @@ export default function DishReviews({ slug }: DishReviewsProps) {
       )}
 
       {canReview && (
-        <Card className="bg-clinical-surface border-clinical-border">
+        <Card className="bg-nn-surface border-white/[0.08]">
           <CardContent className="p-4 space-y-3">
             <p className="text-xs font-medium text-white">Leave a review</p>
             <div className="flex items-center gap-3">
-              <span className="text-[11px] text-clinical-zinc">Your rating</span>
+              <span className="text-[11px] text-nn-on-surface-variant">Your rating</span>
               <StarRow value={rating} onChange={setRating} size={20} />
             </div>
             <Textarea
@@ -245,24 +245,24 @@ export default function DishReviews({ slug }: DishReviewsProps) {
               value={body}
               onChange={(e) => setBody(e.target.value.slice(0, 2000))}
               rows={3}
-              className="bg-clinical-dark border-clinical-border text-xs"
+              className="bg-nn-bg border-white/[0.08] text-xs"
             />
             <input
               type="url"
               placeholder="Optional photo URL"
               value={photoUrl}
               onChange={(e) => setPhotoUrl(e.target.value.slice(0, 1024))}
-              className="w-full bg-clinical-dark border border-clinical-border rounded-md px-3 py-2 text-xs text-white placeholder:text-clinical-zinc-muted focus:outline-none focus:border-clinical-gold/40"
+              className="w-full bg-nn-bg border border-white/[0.08] rounded-md px-3 py-2 text-xs text-white placeholder:text-nn-secondary focus:outline-none focus:border-nn-primary/40"
             />
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-clinical-zinc-muted">
+              <span className="text-[10px] text-nn-secondary">
                 {body.length}/2000
               </span>
               <Button
                 size="sm"
                 disabled={rating < 1 || submit.isPending}
                 onClick={() => submit.mutate()}
-                className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90"
+                className="bg-nn-primary text-action-text hover:bg-nn-primary/90"
               >
                 {submit.isPending ? "Posting…" : "Post review"}
               </Button>
@@ -272,7 +272,7 @@ export default function DishReviews({ slug }: DishReviewsProps) {
       )}
 
       {!canReview && (
-        <p className="text-[11px] text-clinical-zinc">
+        <p className="text-[11px] text-nn-on-surface-variant">
           {isLoggedIn
             ? "Order this dish once to leave a review."
             : "Log in and order this dish to leave a review."}
@@ -283,16 +283,16 @@ export default function DishReviews({ slug }: DishReviewsProps) {
         <div className="space-y-3">
           {reviews.slice(0, 5).map((r, idx) => (
             <div key={r.id}>
-              {idx > 0 && <Separator className="bg-clinical-surface-elevated mb-3" />}
+              {idx > 0 && <Separator className="bg-nn-surface-high mb-3" />}
               <div className="flex items-center gap-2.5">
-                <Avatar className="h-7 w-7 border border-clinical-border">
+                <Avatar className="h-7 w-7 border border-white/[0.08]">
                   {r.reviewer.avatarUrl && (
                     <AvatarImage
                       src={r.reviewer.avatarUrl}
                       alt={r.reviewer.label}
                     />
                   )}
-                  <AvatarFallback className="bg-clinical-dark text-[10px] text-clinical-zinc">
+                  <AvatarFallback className="bg-nn-bg text-[10px] text-nn-on-surface-variant">
                     {reviewerInitials(r.reviewer.label)}
                   </AvatarFallback>
                 </Avatar>
@@ -302,14 +302,14 @@ export default function DishReviews({ slug }: DishReviewsProps) {
                   </p>
                   <div className="flex items-center gap-2">
                     <StarRow value={r.rating} size={12} />
-                    <span className="text-[10px] text-clinical-zinc tabular-nums">
+                    <span className="text-[10px] text-nn-on-surface-variant tabular-nums">
                       {formatRelative(r.createdAt)}
                     </span>
                   </div>
                 </div>
               </div>
               {r.body && (
-                <p className="text-xs text-clinical-zinc leading-relaxed mt-2">
+                <p className="text-xs text-nn-on-surface-variant leading-relaxed mt-2">
                   {r.body}
                 </p>
               )}
@@ -318,14 +318,14 @@ export default function DishReviews({ slug }: DishReviewsProps) {
                   src={r.photoUrl}
                   alt="Reviewer photo"
                   loading="lazy"
-                  className="mt-2 rounded-md max-h-40 w-auto object-cover border border-clinical-border"
+                  className="mt-2 rounded-md max-h-40 w-auto object-cover border border-white/[0.08]"
                 />
               )}
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-clinical-zinc">
+        <p className="text-[11px] text-nn-on-surface-variant">
           No reviews yet — be the first to share your experience.
         </p>
       )}

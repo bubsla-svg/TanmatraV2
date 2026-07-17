@@ -179,7 +179,7 @@ export default function RiderMap({ orderId, initial, destination }: Props) {
           <Polyline
             positions={trail}
             pathOptions={{
-              color: "var(--color-clinical-gold)",
+              color: "var(--color-nn-primary)",
               weight: 3,
               opacity: 0.85,
               dashArray: "6 6",

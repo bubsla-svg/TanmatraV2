@@ -69,13 +69,13 @@ export default function StickyCheckoutBar() {
           className="fixed inset-x-0 z-45 px-3 sm:px-6 bottom-[calc(var(--bottom-nav-height)+var(--safe-bottom))] md:bottom-6 pointer-events-none"
         >
           <div className="mx-auto max-w-3xl pointer-events-auto">
-            <div className="flex flex-col rounded-2xl border border-clinical-gold/40 bg-clinical-dark/95 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(244,196,48,0.15)] overflow-hidden">
+            <div className="flex flex-col rounded-2xl border border-nn-primary/40 bg-nn-bg/95 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(244,196,48,0.15)] overflow-hidden">
               
               {/* Dynamic Threshold Progress Tracker (AOV Booster) */}
               {subtotal > 0 && showProgress && (
                 <div 
                   onClick={openCart}
-                  className="cursor-pointer bg-gradient-to-r from-clinical-surface-elevated to-clinical-surface border-b border-white/10 flex items-center justify-between px-4 py-2 text-xs transition-all duration-300 hover:bg-white/5"
+                  className="cursor-pointer bg-gradient-to-r from-nn-surface-high to-nn-surface border-b border-white/10 flex items-center justify-between px-4 py-2 text-xs transition-all duration-300 hover:bg-white/5"
                 >
                   {hasFreeDelivery ? (
                     <span className="alert-safe-text font-bold flex items-center gap-1.5 tracking-wide">
@@ -84,16 +84,16 @@ export default function StickyCheckoutBar() {
                     </span>
                   ) : (
                     <div className="flex items-center gap-2 flex-1 min-w-0 mr-3">
-                      <Zap className="w-3.5 h-3.5 text-clinical-gold shrink-0 fill-clinical-gold" />
+                      <Zap className="w-3.5 h-3.5 text-nn-primary shrink-0 fill-nn-primary" />
                       <span className="text-zinc-300 truncate font-sans">
-                        Add <span className="font-bold text-clinical-gold">₹{amountNeededRupees}</span> more for free delivery
+                        Add <span className="font-bold text-nn-primary">₹{amountNeededRupees}</span> more for free delivery
                       </span>
                     </div>
                   )}
                   <div className="w-24 sm:w-32 h-2 rounded-full bg-white/10 overflow-hidden relative shrink-0">
                     <div 
                       className={`h-full transition-all duration-500 ease-out ${
-                        hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_8px_color-mix(in_oklab,var(--color-success)_80%,transparent)]" : "bg-gradient-to-r from-saffron-300 to-clinical-gold"
+                        hasFreeDelivery ? "bg-[var(--color-alert-safe)] shadow-[0_0_8px_color-mix(in_oklab,var(--color-success)_80%,transparent)]" : "bg-gradient-to-r from-saffron-300 to-nn-primary"
                       }`} 
                       style={{ width: `${freeDeliveryProgress}%` }}
                     />
@@ -110,20 +110,20 @@ export default function StickyCheckoutBar() {
                   className="flex items-center gap-3 flex-1 min-w-0 text-left group focus:outline-none"
                   aria-label="Open sliding cart drawer"
                 >
-                  <div className="relative shrink-0 grid place-items-center w-11 h-11 rounded-xl bg-clinical-gold/15 border border-clinical-gold/30 text-clinical-gold group-hover:scale-105 transition-transform">
+                  <div className="relative shrink-0 grid place-items-center w-11 h-11 rounded-xl bg-nn-primary/15 border border-nn-primary/30 text-nn-primary group-hover:scale-105 transition-transform">
                     <ShoppingCart className="w-5 h-5" weight="fill" aria-hidden />
                     <span
-                      className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-clinical-gold text-action-text text-[11px] font-extrabold leading-none grid place-items-center shadow-md"
+                      className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-nn-primary text-action-text text-[11px] font-extrabold leading-none grid place-items-center shadow-md"
                     >
                       {totalQuantity}
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-clinical-zinc group-hover:text-zinc-200 transition-colors">
+                    <div className="flex items-center gap-1.5 text-nn-on-surface-variant group-hover:text-zinc-200 transition-colors">
                       <p className="font-mono text-[10px] tracking-wider uppercase font-semibold leading-none">
                         {totalQuantity === 1 ? "1 item" : `${totalQuantity} items`} · View Cart
                       </p>
-                      <CaretUp className="w-3.5 h-3.5 text-clinical-gold animate-bounce" weight="bold" />
+                      <CaretUp className="w-3.5 h-3.5 text-nn-primary animate-bounce" weight="bold" />
                     </div>
                     <p className="font-display text-base sm:text-lg text-white font-bold leading-tight mt-1 tabular-nums">
                       {formatPrice(subtotal)}
@@ -136,7 +136,7 @@ export default function StickyCheckoutBar() {
                   type="button"
                   onClick={() => navigate("/checkout")}
                   aria-label={`Proceed to checkout · ${formatPrice(subtotal)} subtotal`}
-                  className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-clinical-gold px-5 py-3 text-xs sm:text-sm font-extrabold text-action-text shadow-clinical-gold/35 hover:bg-clinical-gold/90 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-gold"
+                  className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-nn-primary px-5 py-3 text-xs sm:text-sm font-extrabold text-action-text shadow-nn-primary/35 hover:bg-nn-primary/90 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nn-primary"
                 >
                   Checkout
                   <ArrowRight className="w-4 h-4" weight="bold" aria-hidden />

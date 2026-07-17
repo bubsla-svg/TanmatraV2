@@ -55,7 +55,7 @@ export default function StatCancelDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-md bg-clinical-surface border-red-500/40"
+        className="sm:max-w-md bg-nn-surface border-red-500/40"
         aria-describedby="stat-cancel-desc"
         onKeyDown={(e) => {
           if (e.key === "Enter" && document.activeElement === confirmRef.current) {
@@ -69,9 +69,9 @@ export default function StatCancelDialog({
             <ShieldAlert className="w-5 h-5 text-red-400" aria-hidden />
             STAT cancel order
           </DialogTitle>
-          <DialogDescription id="stat-cancel-desc" className="text-clinical-zinc">
+          <DialogDescription id="stat-cancel-desc" className="text-[var(--color-nn-on-surface-variant)]">
             <span className="block">
-              Cancel order <span className="font-mono text-clinical-gold">{orderDisplayId}</span>
+              Cancel order <span className="font-mono text-nn-primary">{orderDisplayId}</span>
               {patientName ? (
                 <>
                   {" "}for patient <span className="text-white font-medium">{patientName}</span>
@@ -95,7 +95,7 @@ export default function StatCancelDialog({
                 className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs cursor-pointer transition-colors ${
                   reason === r.value
                     ? "border-red-500/60 bg-red-500/10 text-white"
-                    : "border-clinical-border text-clinical-zinc hover:border-red-500/40"
+                    : "border-white/[0.08] text-[var(--color-nn-on-surface-variant)] hover:border-red-500/40"
                 }`}
               >
                 <input
@@ -117,7 +117,7 @@ export default function StatCancelDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={submitting}
-            className="border-clinical-border text-clinical-zinc"
+            className="border-white/[0.08] text-[var(--color-nn-on-surface-variant)]"
           >
             Keep order
           </Button>

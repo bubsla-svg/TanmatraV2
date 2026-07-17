@@ -192,7 +192,7 @@ export default function ConflictsPanel({
                       letterSpacing: ".1em",
                       gap: 4,
                       color: "var(--safb)",
-                      borderColor: "color-mix(in oklab, var(--color-clinical-gold) 40%, transparent)",
+                      borderColor: "color-mix(in oklab, var(--color-nn-primary) 40%, transparent)",
                     }}
                   >
                     <ArrowRightLeft className="w-3 h-3" aria-hidden />

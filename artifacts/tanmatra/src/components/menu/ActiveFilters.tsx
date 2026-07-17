@@ -16,7 +16,7 @@ export default function ActiveFilters({ filters, onClearAll }: ActiveFiltersProp
   if (filters.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[10px] uppercase tracking-[0.18em] text-clinical-zinc font-semibold pr-1">
+      <span className="text-[10px] uppercase tracking-[0.18em] text-nn-on-surface-variant font-semibold pr-1">
         Active
       </span>
       <AnimatePresence initial={false}>
@@ -30,7 +30,7 @@ export default function ActiveFilters({ filters, onClearAll }: ActiveFiltersProp
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.15 }}
             whileHover={{ y: -1 }}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-clinical-gold/40 bg-clinical-gold/10 text-clinical-gold text-[11px] font-semibold uppercase tracking-[0.1em] hover:bg-clinical-gold/15 transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-nn-primary/40 bg-nn-primary/10 text-nn-primary text-[11px] font-semibold uppercase tracking-[0.1em] hover:bg-nn-primary/15 transition-colors"
             aria-label={`Remove filter ${f.label}`}
           >
             {f.label}
@@ -42,7 +42,7 @@ export default function ActiveFilters({ filters, onClearAll }: ActiveFiltersProp
         <button
           type="button"
           onClick={onClearAll}
-          className="text-[11px] text-clinical-zinc hover:text-clinical-gold underline-offset-2 hover:underline ml-1"
+          className="text-[11px] text-nn-on-surface-variant hover:text-nn-primary underline-offset-2 hover:underline ml-1"
         >
           Clear all
         </button>

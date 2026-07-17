@@ -29,39 +29,39 @@ export default function NutritionLabelModal({ dish }: Props) {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 text-[11px] border-clinical-border text-clinical-zinc hover:text-clinical-gold hover:border-clinical-gold/40"
+          className="h-8 gap-1.5 text-[11px] border-white/[0.08] text-nn-on-surface-variant hover:text-nn-primary hover:border-nn-primary/40"
         >
           <ScrollText className="w-3.5 h-3.5" />
           Full nutrition label & sourcing
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl bg-clinical-surface border-clinical-border max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl bg-nn-surface border-white/[0.08] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">{dish.name}</DialogTitle>
-          <DialogDescription className="text-xs text-clinical-zinc">
+          <DialogDescription className="text-xs text-nn-on-surface-variant">
             Nutrition Facts &middot; Serving size: {label.servingSize}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
           {/* Calories banner */}
-          <div className="rounded-lg border-2 border-clinical-gold/40 bg-clinical-gold/5 p-4 flex items-baseline justify-between">
-            <span className="text-xs uppercase tracking-widest text-clinical-zinc font-semibold">
+          <div className="rounded-lg border-2 border-nn-primary/40 bg-nn-primary/5 p-4 flex items-baseline justify-between">
+            <span className="text-xs uppercase tracking-widest text-nn-on-surface-variant font-semibold">
               Calories
             </span>
-            <span className="tabular-nums text-3xl font-bold text-clinical-gold">
+            <span className="tabular-nums text-3xl font-bold text-nn-primary">
               {label.calories}
             </span>
           </div>
 
           {/* Macros table */}
-          <div className="rounded-lg border border-clinical-border overflow-hidden">
-            <div className="bg-clinical-surface-elevated px-3 py-2 flex items-center justify-between text-[10px] uppercase tracking-widest text-clinical-zinc font-semibold">
+          <div className="rounded-lg border border-white/[0.08] overflow-hidden">
+            <div className="bg-nn-surface-high px-3 py-2 flex items-center justify-between text-[10px] uppercase tracking-widest text-nn-on-surface-variant font-semibold">
               <span>Macros &amp; key nutrients</span>
               <span>Per serving</span>
             </div>
             <table className="w-full text-xs">
-              <tbody className="divide-y divide-clinical-border">
+              <tbody className="divide-y divide-white/[0.08]">
                 <NutRow label="Total fat" value={`${label.macros.fat} g`} />
                 <NutRow
                   label="Saturated fat"
@@ -79,31 +79,31 @@ export default function NutritionLabelModal({ dish }: Props) {
 
           {/* Micros */}
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-clinical-zinc-muted font-semibold mb-2">
+            <p className="text-[10px] uppercase tracking-widest text-nn-secondary font-semibold mb-2">
               Micronutrients (estimated)
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {label.micros.map((mn) => (
                 <div
                   key={mn.key}
-                  className="rounded-md border border-clinical-border bg-clinical-surface-elevated px-3 py-2"
+                  className="rounded-md border border-white/[0.08] bg-nn-surface-high px-3 py-2"
                 >
-                  <p className="text-[10px] uppercase tracking-wide text-clinical-zinc">
+                  <p className="text-[10px] uppercase tracking-wide text-nn-on-surface-variant">
                     {mn.label}
                   </p>
                   <p className="tabular-nums text-sm text-white font-semibold">
                     {mn.value}
-                    <span className="text-[10px] text-clinical-zinc font-normal ml-0.5">
+                    <span className="text-[10px] text-nn-on-surface-variant font-normal ml-0.5">
                       {mn.unit}
                     </span>
                   </p>
-                  <p className="text-[10px] text-clinical-gold tabular-nums">
+                  <p className="text-[10px] text-nn-primary tabular-nums">
                     {mn.dailyTargetPct}% DV
                   </p>
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-clinical-zinc-muted mt-2 leading-relaxed">
+            <p className="text-[10px] text-nn-secondary mt-2 leading-relaxed">
               % Daily Value based on a 2,000 kcal reference diet. Micronutrient values
               estimated from ingredient composition; precise values are batch-tested
               monthly.
@@ -135,10 +135,10 @@ export default function NutritionLabelModal({ dish }: Props) {
                 </div>
               )}
               {label.freeFromClaims.length > 0 && (
-                <div className="rounded-lg border border-clinical-blue/30 bg-clinical-blue/5 p-3">
+                <div className="rounded-lg border border-nn-tertiary/30 bg-nn-tertiary/5 p-3">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Leaf className="w-3.5 h-3.5 text-clinical-blue" />
-                    <p className="text-[10px] uppercase tracking-widest text-clinical-blue font-semibold">
+                    <Leaf className="w-3.5 h-3.5 text-nn-tertiary" />
+                    <p className="text-[10px] uppercase tracking-widest text-nn-tertiary font-semibold">
                       Free from
                     </p>
                   </div>
@@ -147,7 +147,7 @@ export default function NutritionLabelModal({ dish }: Props) {
                       <Badge
                         key={c}
                         variant="outline"
-                        className="border-clinical-blue/40 text-clinical-blue bg-clinical-blue/10 text-[10px]"
+                        className="border-nn-tertiary/40 text-nn-tertiary bg-nn-tertiary/10 text-[10px]"
                       >
                         {c}
                       </Badge>
@@ -167,28 +167,28 @@ export default function NutritionLabelModal({ dish }: Props) {
               </p>
             </div>
             {label.allergens.length > 0 ? (
-              <p className="text-xs text-clinical-zinc">
+              <p className="text-xs text-nn-on-surface-variant">
                 Contains: {label.allergens.join(", ")}.
               </p>
             ) : (
-              <p className="text-xs text-clinical-zinc">
+              <p className="text-xs text-nn-on-surface-variant">
                 No common allergens reported in this dish.
               </p>
             )}
-            <p className="text-[10px] text-clinical-zinc-muted mt-1 leading-relaxed">
+            <p className="text-[10px] text-nn-secondary mt-1 leading-relaxed">
               Prepared in a kitchen that also handles dairy, gluten, soy, and tree nuts.
               Cross-contact is possible.
             </p>
           </div>
 
-          <Separator className="bg-clinical-surface-elevated" />
+          <Separator className="bg-nn-surface-high" />
 
           {/* Ingredients */}
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-clinical-zinc-muted font-semibold mb-2">
+            <p className="text-[10px] uppercase tracking-widest text-nn-secondary font-semibold mb-2">
               Ingredients (in descending order)
             </p>
-            <p className="text-xs text-clinical-zinc leading-relaxed">
+            <p className="text-xs text-nn-on-surface-variant leading-relaxed">
               {dish.ingredients.join(" · ")}.
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function NutritionLabelModal({ dish }: Props) {
           <div>
             <div className="flex items-center gap-1.5 mb-2">
               <Sprout className="w-3.5 h-3.5 text-clinical-sage" />
-              <p className="text-[10px] uppercase tracking-widest text-clinical-zinc-muted font-semibold">
+              <p className="text-[10px] uppercase tracking-widest text-nn-secondary font-semibold">
                 Sourcing &amp; preparation
               </p>
             </div>
@@ -205,7 +205,7 @@ export default function NutritionLabelModal({ dish }: Props) {
               {sourcing.map((s) => (
                 <li
                   key={s.area}
-                  className="text-xs text-clinical-zinc leading-relaxed"
+                  className="text-xs text-nn-on-surface-variant leading-relaxed"
                 >
                   <span className="text-white font-medium">{s.area}: </span>
                   {s.detail}
@@ -219,7 +219,7 @@ export default function NutritionLabelModal({ dish }: Props) {
           <DialogClose asChild>
             <Button
               variant="outline"
-              className="border-clinical-border text-clinical-zinc hover:text-white"
+              className="border-white/[0.08] text-nn-on-surface-variant hover:text-white"
             >
               Close
             </Button>
@@ -244,7 +244,7 @@ function NutRow({
   return (
     <tr>
       <td
-        className={`px-3 py-2 ${indented ? "pl-8 text-clinical-zinc" : "text-white"} ${
+        className={`px-3 py-2 ${indented ? "pl-8 text-nn-on-surface-variant" : "text-white"} ${
           bold ? "font-semibold" : ""
         }`}
       >
@@ -252,7 +252,7 @@ function NutRow({
       </td>
       <td
         className={`px-3 py-2 text-right tabular-nums ${
-          bold ? "text-white font-semibold" : "text-clinical-zinc"
+          bold ? "text-white font-semibold" : "text-nn-on-surface-variant"
         }`}
       >
         {value}

@@ -63,21 +63,21 @@ export default function WelcomeOfferBanner() {
   };
 
   return (
-    <div className="relative bg-gradient-to-r from-clinical-gold/15 via-clinical-gold/10 to-clinical-sage/10 border-b border-clinical-gold/30">
+    <div className="relative bg-gradient-to-r from-nn-primary/15 via-nn-primary/10 to-clinical-sage/10 border-b border-nn-primary/30">
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs">
-        <Gift className="w-4 h-4 text-clinical-gold shrink-0" aria-hidden />
+        <Gift className="w-4 h-4 text-nn-primary shrink-0" aria-hidden />
         <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="font-semibold text-white">
             First order?{" "}
-            <span className="text-clinical-gold">{offerLabel}</span>
+            <span className="text-nn-primary">{offerLabel}</span>
           </span>
-          <span className="text-clinical-zinc hidden sm:inline">
+          <span className="text-nn-on-surface-variant hidden sm:inline">
             · auto-applied at checkout, no code needed
           </span>
         </div>
         <Link
           to={`/menu`}
-          className="hidden sm:inline-flex items-center gap-1 text-clinical-gold hover:text-white font-semibold whitespace-nowrap min-h-9"
+          className="hidden sm:inline-flex items-center gap-1 text-nn-primary hover:text-white font-semibold whitespace-nowrap min-h-9"
         >
           Browse menu <ArrowRight className="w-3 h-3" />
         </Link>
@@ -85,7 +85,7 @@ export default function WelcomeOfferBanner() {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss welcome offer"
-          className="shrink-0 w-9 h-9 -mr-2 rounded-md text-clinical-zinc hover:text-white hover:bg-white/5 flex items-center justify-center"
+          className="shrink-0 w-9 h-9 -mr-2 rounded-md text-nn-on-surface-variant hover:text-white hover:bg-white/5 flex items-center justify-center"
         >
           <X className="w-3.5 h-3.5" />
         </button>

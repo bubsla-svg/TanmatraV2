@@ -39,7 +39,7 @@ export default function MacroOverlay({ macros, compact = false, sodiumMg }: Macr
 
     return (
       <div
-        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-clinical-dark/85 border border-clinical-border/40 backdrop-blur-md shadow-clinical-lg"
+        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-nn-bg/85 border border-white/[0.032] backdrop-blur-md shadow-clinical-lg"
         role="group"
         aria-label="Macro nutrient distribution ratios"
       >
@@ -62,7 +62,7 @@ export default function MacroOverlay({ macros, compact = false, sodiumMg }: Macr
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="var(--color-clinical-blue)"
+                stroke="var(--color-nn-tertiary)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenP} ${C}`}
                 strokeDashoffset="0"
@@ -77,7 +77,7 @@ export default function MacroOverlay({ macros, compact = false, sodiumMg }: Macr
                 cy="18"
                 r={r}
                 fill="transparent"
-                stroke="var(--color-clinical-gold)"
+                stroke="var(--color-nn-primary)"
                 strokeWidth="3.5"
                 strokeDasharray={`${lenC} ${C}`}
                 strokeDashoffset={`-${lenP}`}
@@ -111,13 +111,13 @@ export default function MacroOverlay({ macros, compact = false, sodiumMg }: Macr
         {/* Precise Nutrient Breakdown Column */}
         <div className="flex flex-col gap-0.5 justify-center">
           <div className="flex items-center gap-1.5 text-[9px] leading-none font-semibold text-white">
-            <span className="w-1.5 h-1.5 rounded-full bg-clinical-blue" />
+            <span className="w-1.5 h-1.5 rounded-full bg-nn-tertiary" />
             <span className="text-clinical-blue-muted">P</span>
             <span className="tabular-nums">{macros.protein}g</span>
             {isAssessed && <span className="opacity-40 text-[8px]">({proteinPct}%)</span>}
           </div>
           <div className="flex items-center gap-1.5 text-[9px] leading-none font-semibold text-white">
-            <span className="w-1.5 h-1.5 rounded-full bg-clinical-gold" />
+            <span className="w-1.5 h-1.5 rounded-full bg-nn-primary" />
             <span className="text-clinical-gold-muted">C</span>
             <span className="tabular-nums">{macros.carbs}g</span>
             {isAssessed && <span className="opacity-40 text-[8px]">({carbsPct}%)</span>}
@@ -145,16 +145,16 @@ export default function MacroOverlay({ macros, compact = false, sodiumMg }: Macr
 
       {/* Macro bars */}
       <div className="space-y-2.5">
-        <MacroBar label="Protein" value={macros.protein} pct={proteinPct} barColor="bg-clinical-blue" unit="g" isAssessed={isAssessed} />
-        <MacroBar label="Carbs" value={macros.carbs} pct={carbsPct} barColor="bg-clinical-gold" unit="g" isAssessed={isAssessed} />
+        <MacroBar label="Protein" value={macros.protein} pct={proteinPct} barColor="bg-nn-tertiary" unit="g" isAssessed={isAssessed} />
+        <MacroBar label="Carbs" value={macros.carbs} pct={carbsPct} barColor="bg-nn-primary" unit="g" isAssessed={isAssessed} />
         <MacroBar label="Fat" value={macros.fat} pct={fatPct} barColor="bg-clinical-sage" unit="g" isAssessed={isAssessed} />
         <MacroBar label="Fiber" value={macros.fiber} pct={Math.min((macros.fiber / 30) * 100, 100)} barColor="bg-emerald-400" unit="g" isAssessed={isAssessed} />
         {typeof sodiumMg === "number" && (
           <div className="flex items-center justify-between text-xs pt-1">
-            <span className="text-clinical-zinc">Sodium</span>
+            <span className="text-nn-on-surface-variant">Sodium</span>
             <span className="tabular-nums text-white font-medium">
               {sodiumMg}mg
-              <span className="text-clinical-zinc-muted text-[10px] ml-1">
+              <span className="text-nn-secondary text-[10px] ml-1">
                 ({Math.round((sodiumMg / 2300) * 100)}% DV)
               </span>
             </span>
@@ -183,8 +183,8 @@ function MacroBar({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-clinical-zinc flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${isAssessed ? barColor : "bg-clinical-zinc/40"}`} />
+        <span className="text-nn-on-surface-variant flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${isAssessed ? barColor : "bg-nn-on-surface-variant/40"}`} />
           {label}
         </span>
         <span className="tabular-nums text-white font-medium">
@@ -192,9 +192,9 @@ function MacroBar({
           {unit}
         </span>
       </div>
-      <div className="h-1.5 bg-clinical-surface-elevated rounded-full overflow-hidden">
+      <div className="h-1.5 bg-nn-surface-high rounded-full overflow-hidden">
         <div
-          className={`h-full ${isAssessed ? barColor : "bg-clinical-zinc/20"} rounded-full transition-all duration-700 ease-out`}
+          className={`h-full ${isAssessed ? barColor : "bg-nn-on-surface-variant/20"} rounded-full transition-all duration-700 ease-out`}
           style={{ width: isAssessed ? `${Math.max(pct, 4)}%` : "0%" }}
         />
       </div>
