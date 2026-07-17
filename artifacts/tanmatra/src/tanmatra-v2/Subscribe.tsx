@@ -201,8 +201,6 @@ export default function V2Subscribe() {
     setIsMounted(true);
   }, []);
 
-  const [policyModal, setPolicyModal] = useState<"pause" | "swap" | null>(null);
-
   // Stepper step state
   // 0: S1 Recommendation
   // 1: S2 Frequency
@@ -1121,15 +1119,17 @@ export default function V2Subscribe() {
             <span className="text-[10px] uppercase font-bold text-white/45 mb-2 block">Pincode check</span>
             <input
               type="text"
+              inputMode="numeric"
               maxLength={6}
               value={address.pincode}
-              onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
+              onChange={(e) => setAddress({ ...address, pincode: e.target.value.replace(/\D/g, "") })}
               placeholder="e.g. 201301"
-              className="inp w-full font-mono"
+              className="inp w-full font-mono focus-ring-clinical"
             />
             {address.pincode.length === 6 && pincodeCheck.state === "unserviceable" && (
-              <p className="fine text-[var(--tnm-alert)] font-semibold mt-1.5 leading-snug">
-                ⚠️ Pincode unserviceable. Currently delivering to selected sectors in Noida, Delhi, and Gurgaon.
+              <p className="fine text-[var(--tnm-alert)] font-semibold mt-1.5 leading-snug flex items-start gap-1.5">
+                <Warning className="w-3.5 h-3.5 shrink-0 mt-0.5" weight="fill" />
+                Pincode unserviceable. Currently delivering to selected sectors in Noida, Delhi, and Gurgaon.
               </p>
             )}
             {pincodeCheck.state === "serviceable" && (
@@ -1146,7 +1146,7 @@ export default function V2Subscribe() {
               value={startDate}
               min={new Date().toISOString().slice(0, 10)}
               onChange={(e) => setStartDate(e.target.value)}
-              className="inp w-full"
+              className="inp w-full focus-ring-clinical"
             />
             <p className="fine text-white/50 mt-2">
               {cutoffWarning}
@@ -1275,7 +1275,7 @@ export default function V2Subscribe() {
                         })
                       }
                       className="btn btn-s text-[10px] font-bold px-3 py-1 bg-white/5 border border-white/10 hover:bg-white/10"
-                      style={{ height: 28 }}
+                      style={{ height: 44, minWidth: 44 }}
                     >
                       Swap
                     </button>
@@ -1441,6 +1441,8 @@ export default function V2Subscribe() {
           </ul>
         </div>
 
+        <MedicalDisclaimer compact />
+
         {/* Address and Address Complete fields */}
         <div className="card flex flex-col gap-3 border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
           <h4 className="text-xs font-bold text-white/90">Eater & Delivery Address Details</h4>
@@ -1451,17 +1453,18 @@ export default function V2Subscribe() {
               value={members[0]?.name || ""}
               onChange={(e) => updateMember(0, { name: e.target.value })}
               placeholder="Primary Eater Name"
-              className="inp w-full"
+              className="inp w-full focus-ring-clinical"
             />
           </div>
           <div className="flex flex-col gap-1.5 mt-2">
             <span className="text-[10px] text-white/45 font-mono">Mobile Contact Phone</span>
             <input
-              type="text"
+              type="tel"
+              inputMode="tel"
               value={address.phone}
               onChange={(e) => setAddress({ ...address, phone: e.target.value })}
               placeholder="e.g. +91 92892 13115"
-              className="inp w-full"
+              className="inp w-full focus-ring-clinical"
             />
           </div>
           <div className="flex flex-col gap-1.5 mt-2">
@@ -1471,7 +1474,7 @@ export default function V2Subscribe() {
               value={address.line}
               onChange={(e) => setAddress({ ...address, line: e.target.value })}
               placeholder="e.g. Sector 62, Noida"
-              className="inp w-full"
+              className="inp w-full focus-ring-clinical"
             />
           </div>
         </div>
@@ -1594,7 +1597,7 @@ export default function V2Subscribe() {
         <div className="card w-full flex flex-col gap-3 text-left border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
           <div className="flex justify-between text-xs border-b border-white/5 pb-2">
             <span className="text-white/45">Order Reference ID:</span>
-            <span className="tnm-data text-white/90 font-bold">{successOrderId || "sub-228392"}</span>
+            <span className="tnm-data text-white/90 font-bold">{successOrderId || "—"}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-white/45">Amount Paid Today:</span>
@@ -1723,7 +1726,8 @@ export default function V2Subscribe() {
                 </div>
                 <button
                   onClick={() => setSwapSheet(null)}
-                  className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white"
+                  aria-label="Close"
+                  className="w-11 h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white"
                 >
                   &times;
                 </button>
