@@ -183,7 +183,7 @@ export default function StickyBottomBar({
         role="status"
         aria-live="polite"
         style={stickyStyle}
-        className={`fixed bottom-0 inset-x-0 z-[900] ${barHeightClass} bg-[var(--tnm-surface-ink)] border-t border-white/5 px-4 flex items-center justify-between safe-bottom`}
+        className={`fixed bottom-0 inset-x-0 z-[900] ${barHeightClass} bg-[color-mix(in_srgb,var(--tnm-surface-ink)_92%,transparent)] backdrop-blur-xl border-t border-white/10 px-4 flex items-center justify-between gap-3 safe-bottom`}
       >
         <div className="flex flex-col min-w-0">
           <span className="text-[10px] uppercase font-bold tracking-wider text-white/40 truncate">
@@ -200,11 +200,11 @@ export default function StickyBottomBar({
           type="button"
           onClick={continueAction}
           disabled={disabled || loading}
-          className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-6 rounded-xl flex items-center gap-1.5 shrink-0"
-          style={{ height: 44 }}
+          className="inline-flex items-center gap-2 bg-[var(--tnm-action)] text-black text-sm font-bold px-6 rounded-xl shrink-0 shadow-[0_6px_20px_rgba(251,191,36,0.28)] active:scale-[0.97] transition-transform disabled:opacity-40 disabled:pointer-events-none"
+          style={{ height: 48, minWidth: 44 }}
         >
           {loading ? "Processing…" : cta}
-          {!loading && <ArrowRight className="w-3.5 h-3.5" weight="bold" />}
+          {!loading && <ArrowRight className="w-4 h-4" weight="bold" />}
         </button>
       </div>
     );
