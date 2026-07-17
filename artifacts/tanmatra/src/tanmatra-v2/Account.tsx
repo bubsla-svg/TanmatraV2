@@ -402,13 +402,14 @@ function ThemeToggleCard() {
               role="radio"
               aria-checked={active}
               onClick={() => themeOverrideStore.set(o.value)}
-              className="card pointer"
+              className="pointer"
               style={{
-                padding: "10px 10px",
+                padding: "10px",
+                minHeight: 48,
                 borderRadius: 10,
-                ...(active
-                  ? { background: "var(--safd)", borderColor: "var(--saf)" }
-                  : {}),
+                textAlign: "left",
+                border: `1px solid ${active ? "var(--saf)" : "var(--ln2)"}`,
+                background: active ? "var(--safd)" : "var(--s2)",
               }}
             >
               <div

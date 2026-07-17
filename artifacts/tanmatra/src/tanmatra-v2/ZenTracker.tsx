@@ -148,8 +148,8 @@ function PostPurchaseUpsell() {
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="qbtn posabs"
-          style={{ top: 10, right: 10, width: 28, height: 28 }}
+          className="qbtn posabs touch-target-48"
+          style={{ top: 6, right: 6, width: 36, height: 36 }}
           aria-label="Dismiss"
         >
           <i className="ph-bold ph-x" style={{ fontSize: 13 }} />
@@ -335,8 +335,10 @@ export default function V2ZenTracker() {
           )}
         </main>
 
-        {/* Bottom status bar */}
-        <footer style={{ padding: "16px", borderTop: "1px solid var(--ln)" }}>
+        {/* Bottom status bar — announced to assistive tech as the order
+            progresses (the ring is decorative/aria-hidden, so this is the
+            screen-reader channel for live status). */}
+        <footer role="status" aria-live="polite" aria-atomic="true" style={{ padding: "16px", borderTop: "1px solid var(--ln)" }}>
           <AnimatePresence mode="wait">
             <motion.div key={status} {...FADE} className="lab tc" style={{ letterSpacing: ".14em", color: "var(--mut)" }}>
               {status === "prep" && "Kitchen is preparing your order"}
