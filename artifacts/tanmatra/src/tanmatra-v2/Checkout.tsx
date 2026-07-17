@@ -2106,7 +2106,7 @@ export default function V2Checkout() {
               );
             })()}
 
-            <div className="fx jb" style={{ alignItems: "baseline" }}>
+            <div className="fx jb" style={{ alignItems: "baseline" }} role="status" aria-live="polite" aria-atomic="true">
               <span className="sh">Total</span>
               <div className="tl">
                 <span className="price" style={{ fontSize: 20, color: "var(--safb)" }}>{formatPrice(razorpayTotal)}</span>
