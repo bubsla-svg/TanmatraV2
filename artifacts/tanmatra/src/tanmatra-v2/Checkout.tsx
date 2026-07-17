@@ -285,6 +285,8 @@ export default function V2Checkout() {
   const [guestDevCode, setGuestDevCode] = useState<string | null>(null);
   const [guestIsSending, setGuestIsSending] = useState(false);
   const [guestIsVerifying, setGuestIsVerifying] = useState(false);
+  const [guestOtpError, setGuestOtpError] = useState<string | null>(null);
+  const [otpShakeOn, setOtpShakeOn] = useState(false);
   const [guestResendIn, setGuestResendIn] = useState(0);
   const [guestFirstName, setGuestFirstName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -404,6 +406,11 @@ export default function V2Checkout() {
       const phoneNumberE164 = `${guestCountryCode}${digits}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumberE164, recaptchaVerifierRef.current);
       setConfirmationResult(confirmation);
+      // Fresh code incoming — clear any stale OTP input/error/shake from a
+      // previous attempt so the code step starts clean (also covers Resend).
+      setGuestOtpCode("");
+      setGuestOtpError(null);
+      setOtpShakeOn(false);
       setGuestAuthStep("code");
       setGuestResendIn(30);
       toast.success(`Verification code sent to ${guestCountryCode} ${guestPhone}`);
@@ -423,9 +430,14 @@ export default function V2Checkout() {
     }
   };
 
+  const failOtpInline = (message: string) => {
+    setGuestOtpError(message);
+    setOtpShakeOn(true);
+  };
+
   const handleVerifyGuestOtp = async () => {
     if (guestOtpCode.replace(/\D/g, "").length < 6) {
-      toast.error("Enter the 6-digit verification code");
+      failOtpInline("Enter the full 6-digit code");
       return;
     }
     if (!confirmationResult) {
@@ -451,7 +463,7 @@ export default function V2Checkout() {
       });
       const data = (await res.json().catch(() => ({}))) as VerifyOtpResponse;
       if (!res.ok || !data.ok || !data.user) {
-        toast.error(data.error ?? "Incorrect verification code");
+        failOtpInline(data.error ?? "Incorrect verification code — try again");
         return;
       }
 
@@ -462,7 +474,7 @@ export default function V2Checkout() {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Verification failed: " + (err as Error).message);
+      failOtpInline("That code didn't match — check it and try again");
     } finally {
       setGuestIsVerifying(false);
     }
@@ -2209,16 +2221,25 @@ export default function V2Checkout() {
                       <div style={{ width: 64, height: 46, borderRadius: 10, background: "var(--s3)", border: "1px solid var(--ln2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "var(--tx)", userSelect: "none", flex: "none" }}>
                         {guestCountryCode}
                       </div>
-                      <input
-                        id="guest-phone-input"
-                        placeholder="Enter 10-digit mobile number"
-                        value={guestPhone}
-                        onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                        inputMode="tel"
-                        autoComplete="tel-national"
-                        className="inp"
-                        style={{ flex: 1 }}
-                      />
+                      <div className="posrel" style={{ flex: 1 }}>
+                        <input
+                          id="guest-phone-input"
+                          placeholder="Enter 10-digit mobile number"
+                          value={guestPhone}
+                          onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                          inputMode="tel"
+                          autoComplete="tel-national"
+                          className="inp"
+                          style={{ width: "100%", paddingRight: 36, ...(guestPhone.length === 10 ? { borderColor: "var(--sage)" } : {}) }}
+                        />
+                        {guestPhone.length === 10 && (
+                          <i
+                            className="ph-fill ph-check-circle"
+                            aria-hidden="true"
+                            style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--sage)", fontSize: 18, pointerEvents: "none" }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                   <button
@@ -2239,14 +2260,25 @@ export default function V2Checkout() {
                       id="guest-otp-input"
                       placeholder="Enter 6-digit OTP"
                       value={guestOtpCode}
-                      onChange={(e) => setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onChange={(e) => {
+                        setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        setGuestOtpError(null);
+                      }}
+                      onAnimationEnd={() => setOtpShakeOn(false)}
                       inputMode="numeric"
                       pattern="[0-9]*"
                       autoComplete="one-time-code"
                       maxLength={6}
-                      className="inp mono"
-                      style={{ textAlign: "center", letterSpacing: ".4em" }}
+                      aria-invalid={guestOtpError ? true : undefined}
+                      aria-describedby={guestOtpError ? "guest-otp-error" : undefined}
+                      className={otpShakeOn ? "inp mono animate-shake" : "inp mono"}
+                      style={{ textAlign: "center", letterSpacing: ".4em", ...(guestOtpError ? { borderColor: "var(--dgr)" } : {}) }}
                     />
+                    {guestOtpError && (
+                      <p id="guest-otp-error" role="alert" className="fine" style={{ color: "var(--dgr)" }}>
+                        {guestOtpError}
+                      </p>
+                    )}
                   </div>
                   <div className="fx ac jb fine">
                     <span>Didn't receive code?</span>
@@ -2260,7 +2292,13 @@ export default function V2Checkout() {
                   </div>
                   <div className="grid gap8" style={{ gridTemplateColumns: "1fr 1fr" }}>
                     <button
-                      onClick={() => setGuestAuthStep("phone")}
+                      onClick={() => {
+                        // Leaving the code step — drop transient OTP state so a
+                        // return visit doesn't show a stale error/shake.
+                        setGuestOtpError(null);
+                        setOtpShakeOn(false);
+                        setGuestAuthStep("phone");
+                      }}
                       disabled={guestIsVerifying}
                       className="btn btn-g"
                     >
@@ -2268,8 +2306,8 @@ export default function V2Checkout() {
                     </button>
                     <button
                       onClick={handleVerifyGuestOtp}
-                      disabled={guestIsVerifying || guestOtpCode.length < 4}
-                      className={guestIsVerifying || guestOtpCode.length < 4 ? "btn btn-p dis" : "btn btn-p"}
+                      disabled={guestIsVerifying || guestOtpCode.length < 6}
+                      className={guestIsVerifying || guestOtpCode.length < 6 ? "btn btn-p dis" : "btn btn-p"}
                     >
                       {guestIsVerifying ? "Verifying…" : "Verify & Continue"}
                     </button>

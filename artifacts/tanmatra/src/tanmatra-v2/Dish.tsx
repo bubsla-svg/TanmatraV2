@@ -32,7 +32,7 @@ import { API_BASE } from "@/lib/apiBase";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError, FALLBACK_DISH_IMAGE } from "@/lib/imgFallback";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
-import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning, Plus, Calculator } from "@phosphor-icons/react";
+import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning, Plus, Calculator, Timer, SealCheck } from "@phosphor-icons/react";
 
 const GOAL_LABEL: Record<string, string> = {
   lose_weight: "weight-loss",
@@ -559,6 +559,23 @@ export default function V2Dish() {
 
           <p className="text-xs text-white/70 mt-5 leading-relaxed">{meal.description}</p>
 
+          {/* Trust strip — real claims only: ETA matches the menu banner, the
+              FSSAI licence is the same one shown in the footer/compliance. */}
+          <div className="mt-5 grid grid-cols-3 gap-2" role="group" aria-label="Delivery and kitchen assurance">
+            <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-2 py-3 text-center">
+              <Timer className="w-4.5 h-4.5 text-[var(--tnm-action)]" weight="bold" aria-hidden />
+              <span className="text-[10px] font-semibold text-white/75 leading-tight">Fresh in 25–40 min</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-2 py-3 text-center">
+              <SealCheck className="w-4.5 h-4.5 text-[var(--tnm-action)]" weight="bold" aria-hidden />
+              <span className="text-[10px] font-semibold text-white/75 leading-tight">FSSAI-licensed kitchen</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-2 py-3 text-center">
+              <ShieldCheck className="w-4.5 h-4.5 text-[var(--tnm-action)]" weight="bold" aria-hidden />
+              <span className="text-[10px] font-semibold text-white/75 leading-tight">RD-designed recipe</span>
+            </div>
+          </div>
+
           {/* 5.1 Why This Fits section (personalized vs pre-assessment fallback) */}
           <div className="mt-8">
             <h3 className="text-sm font-bold text-white/90 mb-3">Goal Fit Analysis</h3>
@@ -828,7 +845,8 @@ export default function V2Dish() {
         {/* Customization Drawer Overlay */}
         {customizerOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950] flex items-end justify-center">
-            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-2xl max-h-[85dvh] max-h-[85vh] overflow-hidden flex flex-col p-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-[var(--radius-sheet)] max-h-[85dvh] max-h-[85vh] overflow-hidden flex flex-col p-4 pb-[calc(1rem+var(--safe-bottom))] shadow-2xl animate-in slide-in-from-bottom duration-200">
+              <div className="mx-auto h-1.5 w-10 rounded-full bg-white/15 mb-3 shrink-0" aria-hidden="true" />
               <div className="flex justify-between items-center border-b border-white/5 pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-white/90">Customize {meal.name}</h3>

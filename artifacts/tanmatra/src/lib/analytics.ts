@@ -20,6 +20,7 @@ type EventName =
   | "cart_open"
   | "upsell_focus"
   | "upsell_add"
+  | "empty_cart_starter_add"
   | "free_delivery_unlocked"
   | "checkout_start"
   | "order_created"

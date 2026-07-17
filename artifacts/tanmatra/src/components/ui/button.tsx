@@ -5,8 +5,8 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" +
-" hover-elevate active-elevate-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-btn)] text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" +
+" hover-elevate active-elevate-2 press-spring",
   {
     variants: {
       variant: {
@@ -28,11 +28,13 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-       
-        default: "min-h-9 px-4 py-2",
-        sm: "min-h-8 rounded-md px-3 text-xs",
-        lg: "min-h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        /* 44px minimum tap targets (iOS HIG) enforced on coarse pointers
+           (touch); fine-pointer desktop keeps compact density so dense
+           admin/ops toolbars and explicit h-* overrides still work */
+        default: "min-h-10 px-5 py-2 pointer-coarse:min-h-11",
+        sm: "min-h-8 rounded-[10px] px-3.5 text-xs pointer-coarse:min-h-11",
+        lg: "min-h-12 px-7 text-base",
+        icon: "h-10 w-10 pointer-coarse:h-11 pointer-coarse:w-11",
       },
     },
     defaultVariants: {

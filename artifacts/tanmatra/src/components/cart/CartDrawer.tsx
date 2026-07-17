@@ -442,7 +442,7 @@ export default function CartDrawer() {
             />
 
             {isEmpty ? (
-              <EmptyState onClose={close} />
+              <EmptyState onClose={close} dishes={dishes} onAdd={addUpsell} />
             ) : (
               <>
                 <div
@@ -569,9 +569,22 @@ function CartHeader({
 /* EmptyState                                                            */
 /* ------------------------------------------------------------------ */
 
-function EmptyState({ onClose }: { onClose: () => void }) {
+function EmptyState({
+  onClose,
+  dishes,
+  onAdd,
+}: {
+  onClose: () => void;
+  dishes: DishData[];
+  onAdd: (dish: DishData) => void;
+}) {
+  // Guide, don't dead-end: surface a few real starter dishes (RD-verified
+  // first — no fabricated "bestseller" claims) with one-tap add.
+  const verified = dishes.filter((d) => d.rdVerified);
+  const picks = (verified.length >= 3 ? verified : dishes).slice(0, 3);
+
   return (
-    <div className="f1 col ac jc tc" style={{ padding: "0 32px", gap: 16 }}>
+    <div className="f1 col ac jc tc" style={{ padding: "0 24px", gap: 16, overflowY: "auto" }}>
       <div className="avatar big" style={{ background: "var(--safd)", color: "var(--safb)" }}>
         <ShoppingBag className="w-7 h-7" aria-hidden />
       </div>
@@ -581,12 +594,52 @@ function EmptyState({ onClose }: { onClose: () => void }) {
           Browse the menu and add dishes designed by registered dietitians.
         </div>
       </div>
+
+      {picks.length > 0 && (
+        <div style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="lab" style={{ textAlign: "center" }}>Start with these</div>
+          {picks.map((dish) => (
+            <div
+              key={dish.id}
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 14, background: "var(--s2)", border: "1px solid var(--ln)", textAlign: "left" }}
+            >
+              <img
+                src={getLocalDishFallback(dish.image, 200)}
+                srcSet={localDishSrcset(dish.image, "webp")}
+                sizes="44px"
+                alt=""
+                loading="lazy"
+                decoding="async"
+                onError={onDishImageError}
+                style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flex: "none", background: "var(--s3)" }}
+              />
+              <div className="f1" style={{ minWidth: 0 }}>
+                <p className="small" style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</p>
+                <p className="fine mono" style={{ marginTop: 2 }}>{formatPrice(dish.price)}</p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-p"
+                style={{ height: 40, minWidth: 64, fontSize: 12, flex: "none" }}
+                onClick={() => {
+                  track("empty_cart_starter_add", { dishId: dish.id, dishName: dish.name });
+                  onAdd(dish);
+                }}
+                aria-label={`Add ${dish.name} to cart`}
+              >
+                Add
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <Link
         to="/menu"
         onClick={onClose}
-        className="btn btn-p"
+        className="btn btn-g"
       >
-        Browse menu
+        Browse full menu
       </Link>
     </div>
   );
