@@ -52,12 +52,12 @@ function PackagingReturnCard({ orderServerId, delivered }: { orderServerId: numb
     finally { setBusy(false); }
   };
   return (
-    <div className="card mb10" style={{ borderLeft: "3px solid var(--sage)" }}>
-      <div className="lab mb6" style={{ color: "var(--sage)" }}><i className="ph-fill ph-leaf" /> Reusable eco packaging</div>
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10" style={{ borderLeft: "3px solid var(--color-clinical-sage)" }}>
+      <div className="lab mb6" style={{ color: "var(--color-clinical-sage)" }}><i className="ph-fill ph-leaf" /> Reusable eco packaging</div>
       {status === "credited" ? (
-        <div className="fine" style={{ color: "var(--sage)" }}>₹{(credit / 100).toFixed(0)} credit applied to your account. Thanks for closing the loop.</div>
+        <div className="fine" style={{ color: "var(--color-clinical-sage)" }}>₹{(credit / 100).toFixed(0)} credit applied to your account. Thanks for closing the loop.</div>
       ) : status === "returned" ? (
-        <div className="fine" style={{ color: "var(--sage)" }}>Return logged — credit will appear shortly.</div>
+        <div className="fine" style={{ color: "var(--color-clinical-sage)" }}>Return logged — credit will appear shortly.</div>
       ) : (
         <>
           <div className="fine">Hand the clean container to the rider on your next order, or drop it at a partner pickup point. We'll add ₹{(credit / 100).toFixed(0)} to your wallet.</div>
@@ -159,7 +159,7 @@ export default function V2Track() {
   }, [order, updateStatus, numericOrderId]);
 
   const shell = (body: any) => (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>{body}</div>
     </div>
   );
@@ -202,8 +202,8 @@ export default function V2Track() {
         <div className="fx ac jb gap8">
           <div><div className="h2" style={{ fontSize: 20 }}>{order.orderId}</div><div className="fine mt2">Submitted {fmtTime(order.placedAt)}</div></div>
           {timeLeftMs !== null && (
-            <div className="pill" style={{ background: "color-mix(in oklab, var(--color-error) 14%, transparent)", border: "1px solid color-mix(in oklab, var(--color-error) 40%, transparent)", color: "var(--dgr)", flexDirection: "column", alignItems: "flex-start", padding: "6px 10px" }}>
-              <span className="lab" style={{ fontSize: 8, color: "var(--dgr)" }}>STAT SLA</span>
+            <div className="pill" style={{ background: "color-mix(in srgb, var(--color-nn-error) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--color-nn-error) 40%, transparent)", color: "var(--color-nn-error)", flexDirection: "column", alignItems: "flex-start", padding: "6px 10px" }}>
+              <span className="lab" style={{ fontSize: 8, color: "var(--color-nn-error)" }}>STAT SLA</span>
               <span className="mono" style={{ fontWeight: 700 }}>{formatTimeLeft(timeLeftMs)}</span>
             </div>
           )}
@@ -223,11 +223,11 @@ export default function V2Track() {
         </div>
 
         {/* Lifecycle stepper (reused) */}
-        <div className="card mt10"><ClinicalLifecycleStepper order={order} socketConnected={socketConnected} /></div>
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10"><ClinicalLifecycleStepper order={order} socketConnected={socketConnected} /></div>
 
         {/* Live rider map */}
         {showRiderCard && numericOrderId > 0 && (
-          <div className="card mt10">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10">
             <div className="lab mb10"><i className="ph-bold ph-navigation-arrow" style={{ color: "var(--safb)" }} /> Live rider location</div>
             <Suspense fallback={<div className="skel" style={{ height: 240 }} />}>
               <RiderMap orderId={numericOrderId} destination={dynamicEta?.dropLat != null && dynamicEta?.dropLng != null ? { lat: dynamicEta.dropLat, lng: dynamicEta.dropLng, label: order?.address?.label ?? "Delivery address" } : undefined} />
@@ -237,7 +237,7 @@ export default function V2Track() {
 
         {/* Rider card */}
         {showRiderCard ? (
-          <div className="card mt10">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10">
             <div className="fx ac jb">
               <div className="fx ac gap12">
                 <div className="dic"><i className="ph-bold ph-user" /></div>
@@ -252,11 +252,11 @@ export default function V2Track() {
             </div>
           </div>
         ) : (
-          <div className="card mt10 fx ac gap8" style={{ borderStyle: "dashed" }}><i className="ph-bold ph-cooking-pot" style={{ color: "var(--safb)" }} /><span className="fine">Kitchen is preparing your order. A rider will be assigned once it's ready.</span></div>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10 fx ac gap8" style={{ borderStyle: "dashed" }}><i className="ph-bold ph-cooking-pot" style={{ color: "var(--safb)" }} /><span className="fine">Kitchen is preparing your order. A rider will be assigned once it's ready.</span></div>
         )}
 
         {/* Address */}
-        <div className="card mt10">
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10">
           <div className="lab mb6">{order.fulfillmentType === "pickup" ? <><i className="ph-bold ph-storefront" /> Pickup at</> : <><i className="ph-bold ph-map-pin" /> Delivery address</>}</div>
           {order.fulfillmentType === "pickup" && order.pickupLocationName && <div className="small" style={{ fontWeight: 600 }}>{order.pickupLocationName}</div>}
           <div className="small" style={{ fontWeight: 600 }}>{order.address.label}</div>
@@ -269,7 +269,7 @@ export default function V2Track() {
         {order.ecoPackagingOptIn && <div className="mt10"><PackagingReturnCard orderServerId={order.serverOrderId} delivered={order.status === "delivered"} /></div>}
 
         {/* Timeline */}
-        <div className="card mt10">
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10">
           <div className="lab mb10"><i className="ph-bold ph-clock" /> Delivery timeline</div>
           {isLoading ? (
             <div className="skel" style={{ height: 60 }} />
@@ -289,7 +289,7 @@ export default function V2Track() {
         </div>
 
         {/* Items */}
-        <div className="card mt10">
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10">
           <div className="lab mb10"><i className="ph-bold ph-receipt" /> Order items</div>
           {order.items.map((item: any) => (
             <div key={item.lineId} className="fx ac gap12" style={{ padding: "6px 0" }}>
@@ -302,7 +302,7 @@ export default function V2Track() {
 
         {/* Dev panel */}
         {showDevPanel && (
-          <div className="card mt10" style={{ borderStyle: "dashed" }}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10" style={{ borderStyle: "dashed" }}>
             <div className="lab mb10"><i className="ph-bold ph-warning" /> Developer controls · ?dev=1</div>
             <div className="fx ac g6 wrap">
               {["rider_en_route_to_kitchen", "rider_at_kitchen", "order_picked_up", "rider_en_route_to_customer", "delivered"].map((evt) => (
