@@ -141,13 +141,13 @@ export default function StickyBottomBar({
         role="status"
         aria-live="polite"
         style={stickyStyle}
-        className={`fixed bottom-0 inset-x-0 z-[900] ${barHeightClass} bg-[var(--tnm-surface-ink)] border-t border-white/5 px-4 flex items-center justify-between safe-bottom`}
+        className={`fixed bottom-0 inset-x-0 z-[900] ${barHeightClass} bg-[color-mix(in_srgb,var(--tnm-surface-ink)_92%,transparent)] backdrop-blur-xl border-t border-white/10 px-4 flex items-center justify-between gap-3 safe-bottom`}
       >
         <div className="flex flex-col min-w-0">
           <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--tnm-action)] truncate">
             {dishName}
           </span>
-          <span className="tnm-data text-xs font-bold text-white/95 mt-0.5 flex items-center gap-1.5">
+          <span className="tnm-data text-[17px] font-extrabold text-white leading-tight mt-0.5 flex items-center gap-1.5">
             {formattedPrice || (isIncluded ? "In your plan" : "")}
             {isIncluded && formattedPrice && (
               <span className="text-[9px] uppercase font-bold tracking-wide text-[var(--tnm-action)] bg-[var(--tnm-action)]/15 px-1.5 py-0.5 rounded">
@@ -160,10 +160,11 @@ export default function StickyBottomBar({
           type="button"
           onClick={onAddDish}
           disabled={disabled}
-          className="btn btn-s btn-p bg-[var(--tnm-action)] text-black text-xs font-bold px-6 rounded-xl shrink-0 active:scale-[0.98] transition-transform"
-          style={{ height: 44 }}
+          className="inline-flex items-center gap-2 bg-[var(--tnm-action)] text-black text-sm font-bold px-6 rounded-xl shrink-0 shadow-[0_6px_20px_rgba(251,191,36,0.28)] active:scale-[0.97] transition-transform disabled:opacity-40 disabled:pointer-events-none"
+          style={{ height: 48, minWidth: 44 }}
         >
-          {isIncluded ? "Add another" : "Add to Order"}
+          <ShoppingCart size={18} weight="bold" />
+          {isIncluded ? "Add another" : "Add to cart"}
         </button>
       </div>
     );
