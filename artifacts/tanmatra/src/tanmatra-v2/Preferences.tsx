@@ -165,7 +165,7 @@ export default function V2Preferences() {
 
   if (loading) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/" aria-label="Home">
@@ -199,7 +199,7 @@ export default function V2Preferences() {
   const recommendations = recommendPlansForPreferences(preferences, 3);
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -233,8 +233,7 @@ export default function V2Preferences() {
           {unauthorized && preferences?.quizCompletedAt && (
             <div className="padx mt16">
               <div
-                className="card"
-                style={{ background: "var(--safd)", borderColor: "var(--saf)" }}
+                className="rounded-2xl border border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/10 p-4"
               >
                 <div className="fx ac jb gap12 wrap">
                   <div style={{ minWidth: 0 }}>
@@ -256,11 +255,7 @@ export default function V2Preferences() {
           {preferences && recommendations.length > 0 && (
             <div className="padx mt16">
               <div
-                className="card"
-                style={{
-                  background: "var(--safd)",
-                  borderColor: "var(--saf)",
-                }}
+                className="rounded-2xl border border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/10 p-4"
               >
                 <div className="fx ac jb gap8 wrap mb10">
                   <span className="sh fx ac gap8">
@@ -275,9 +270,9 @@ export default function V2Preferences() {
                   {recommendations.map(({ plan, reasons }: any) => (
                     <Link
                       key={plan.slug}
-                      className="card pointer"
+                      className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 pointer"
                       to={`/plans/${plan.slug}`}
-                      style={{ display: "block", background: "var(--s1)" }}
+                      style={{ display: "block" }}
                     >
                       <span
                         className="pill"
@@ -315,7 +310,7 @@ export default function V2Preferences() {
 
           {/* Main preferences form */}
           <div className="padx mt16">
-            <div className="card">
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
               <Field title="Dietary style">
                 <div className="fx wrap gap8">
                   {(Object.keys(DIETARY_STYLE_LABEL) as DietaryStyle[]).map((d) => (
@@ -471,7 +466,7 @@ export default function V2Preferences() {
 
           {/* How we use this */}
           <div className="padx mt16">
-            <div className="card">
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
               <div className="fx ac gap8 safc mb8">
                 <i className="ph-fill ph-sparkle" />
                 <span className="tt">How we use this</span>
@@ -492,8 +487,8 @@ export default function V2Preferences() {
           style={{
             position: "sticky",
             bottom: 0,
-            background: "var(--s1)",
-            borderTop: "1px solid var(--ln)",
+            background: "var(--tnm-surface-ink)",
+            borderTop: "1px solid white/[0.08]",
             padding: "12px 16px",
             zIndex: 10,
           }}
@@ -558,9 +553,9 @@ function Chip({
         style={{
           ...(active
             ? {
-                background: "color-mix(in oklab, var(--color-error) 14%, transparent)",
-                borderColor: "var(--color-error)",
-                color: "var(--color-error)",
+                background: "color-mix(in srgb, var(--color-nn-error) 14%, transparent)",
+                borderColor: "var(--color-nn-error)",
+                color: "var(--color-nn-error)",
               }
             : {}),
           ...style,

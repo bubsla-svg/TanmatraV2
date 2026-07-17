@@ -175,7 +175,7 @@ export default function V2Account() {
   };
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -190,7 +190,7 @@ export default function V2Account() {
           </p>
 
           {/* Profile / sign-in card */}
-          <div className="card mb14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb14">
             {auth.isLoading ? (
               <div className="fx ac gap12">
                 <div className="skel round" style={{ width: 56, height: 56, flex: "none" }} />
@@ -316,7 +316,7 @@ export default function V2Account() {
           <ThemeToggleCard />
 
           {/* Sign-out / trust card */}
-          <div className="card mt14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt14">
             {isAuthenticated ? (
               <>
                 <div className="fx ac jb gap12">
@@ -372,7 +372,7 @@ function ThemeToggleCard() {
     { value: "default", label: "Default", sub: "Marketing-friendly visuals" },
   ];
   return (
-    <div className="card mt14">
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt14">
       <div className="fx gap12" style={{ alignItems: "flex-start" }}>
         <span className="dic" style={{ flex: "none" }}>
           <i className="ph-bold ph-shield-check" aria-hidden />
@@ -408,13 +408,13 @@ function ThemeToggleCard() {
                 minHeight: 48,
                 borderRadius: 10,
                 textAlign: "left",
-                border: `1px solid ${active ? "var(--saf)" : "var(--ln2)"}`,
-                background: active ? "var(--safd)" : "var(--s2)",
+                border: `1px solid ${active ? "var(--tnm-action)" : "white/[0.08]"}`,
+                background: active ? "color-mix(in srgb, var(--tnm-action) 14%, transparent)" : "var(--tnm-surface-ink)",
               }}
             >
               <div
                 className="fs13 fw6"
-                style={{ color: active ? "var(--safb)" : "var(--tx)" }}
+                style={{ color: active ? "var(--tnm-action)" : "var(--tnm-text-primary)" }}
               >
                 {o.label}
               </div>
@@ -443,7 +443,7 @@ function StatTile({
   to: string;
 }) {
   return (
-    <Link className="card pointer" to={to} style={{ display: "block" }}>
+    <Link className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 pointer" to={to} style={{ display: "block" }}>
       <div className="lab fx ac g6">
         <i className={`ph-bold ${icon} safc`} aria-hidden />
         {label}
