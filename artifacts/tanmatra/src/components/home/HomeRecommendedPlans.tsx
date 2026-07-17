@@ -103,18 +103,25 @@ function PlanCard({ preset }: { preset: PlanPreset }) {
           {isLoading ? (
             <span className="w-16 h-5 rounded bg-white/5 animate-pulse" />
           ) : (
-            <span className="price text-sm text-[var(--tnm-action)] font-semibold">
-              {displayPrice} <span className="text-[10px] text-white/50 font-normal">/wk</span>
+            <span className="flex flex-col items-end">
+              <span className="price text-sm text-[var(--tnm-action)] font-semibold">
+                {displayPrice} <span className="text-[10px] text-white/50 font-normal">/wk</span>
+              </span>
+              {quote ? (
+                <span className="text-[10px] text-white/45 font-normal">
+                  ≈ {formatPriceRounded(quote.totalPaise / preset.meals)}/meal
+                </span>
+              ) : null}
             </span>
           )}
         </div>
 
         <Link
           to={`/subscribe?plan=${preset.slug}`}
-          className="btn btn-s btn-blk text-center text-xs font-semibold"
+          className="btn btn-p btn-blk text-center text-xs font-bold"
           style={{ height: 38 }}
         >
-          View Plan
+          Start This Program
         </Link>
       </div>
     </div>
