@@ -297,7 +297,7 @@ export default function V2Wellness() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, justifyItems: "center" }}>
                     <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="var(--tnm-action)" icon="ph-flame" />
                     <Ring label="Protein" value={data.totals.proteinGrams} target={data.targets.proteinTargetGrams} unit="g" color="var(--color-saffron-300)" icon="ph-barbell" />
-                    <Ring label="Fiber" value={data.totals.fiberGrams} target={data.targets.fiberTargetGrams} unit="g" color="var(--color-clinical-sage)" icon="ph-plant" />
+                    <Ring label="Fiber" value={data.totals.fiberGrams} target={data.targets.fiberTargetGrams} unit="g" color="var(--sage)" icon="ph-plant" />
                     <Ring label="Water" value={data.totals.waterMl} target={data.targets.waterTargetMl} unit="ml" color="var(--color-nn-tertiary)" icon="ph-drop" />
                   </div>
                   <div className="fx ac jc g6 mt10">
@@ -322,7 +322,7 @@ export default function V2Wellness() {
                 <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
                   <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="var(--tnm-action)" label="Calories" unit="kcal" />
                   <WeekBars data={week.days} field="proteinGrams" target={week.targets.proteinTargetGrams} color="var(--color-saffron-300)" label="Protein" unit="g" />
-                  <WeekBars data={week.days} field="fiberGrams" target={week.targets.fiberTargetGrams} color="var(--color-clinical-sage)" label="Fiber" unit="g" />
+                  <WeekBars data={week.days} field="fiberGrams" target={week.targets.fiberTargetGrams} color="var(--sage)" label="Fiber" unit="g" />
                   <WeekBars data={week.days} field="waterMl" target={week.targets.waterTargetMl} color="var(--color-nn-tertiary)" label="Water" unit="ml" />
                 </div>
               </div>

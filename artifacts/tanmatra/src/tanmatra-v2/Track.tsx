@@ -52,12 +52,12 @@ function PackagingReturnCard({ orderServerId, delivered }: { orderServerId: numb
     finally { setBusy(false); }
   };
   return (
-    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10" style={{ borderLeft: "3px solid var(--color-clinical-sage)" }}>
-      <div className="lab mb6" style={{ color: "var(--color-clinical-sage)" }}><i className="ph-fill ph-leaf" /> Reusable eco packaging</div>
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10" style={{ borderLeft: "3px solid var(--sage)" }}>
+      <div className="lab mb6" style={{ color: "var(--sage)" }}><i className="ph-fill ph-leaf" /> Reusable eco packaging</div>
       {status === "credited" ? (
-        <div className="fine" style={{ color: "var(--color-clinical-sage)" }}>₹{(credit / 100).toFixed(0)} credit applied to your account. Thanks for closing the loop.</div>
+        <div className="fine" style={{ color: "var(--sage)" }}>₹{(credit / 100).toFixed(0)} credit applied to your account. Thanks for closing the loop.</div>
       ) : status === "returned" ? (
-        <div className="fine" style={{ color: "var(--color-clinical-sage)" }}>Return logged — credit will appear shortly.</div>
+        <div className="fine" style={{ color: "var(--sage)" }}>Return logged — credit will appear shortly.</div>
       ) : (
         <>
           <div className="fine">Hand the clean container to the rider on your next order, or drop it at a partner pickup point. We'll add ₹{(credit / 100).toFixed(0)} to your wallet.</div>

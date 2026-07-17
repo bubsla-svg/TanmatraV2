@@ -1562,7 +1562,7 @@ export default function V2Checkout() {
                 </div>
 
                 {deliveryMode === "now" ? (
-                  <div className="note" style={{ flexDirection: "column", alignItems: "flex-start", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
+                  <div className="note" style={{ flexDirection: "column", alignItems: "flex-start", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--sage) 35%, transparent)", color: "var(--sage)" }}>
                     <div className="fx ac gap8" style={{ width: "100%" }}>
                       <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--sage)", flex: "none" }} />
                       <span className="small fw6" style={{ color: "var(--tx)" }}>Deliver ASAP</span>
@@ -1646,7 +1646,7 @@ export default function V2Checkout() {
                       </p>
                     )}
                     {isPreorderSlot && (
-                      <p className="note" style={{ background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
+                      <p className="note" style={{ background: "var(--saged)", borderColor: "color-mix(in oklab, var(--sage) 35%, transparent)", color: "var(--sage)" }}>
                         <Tag className="w-3.5 h-3.5" />
                         <span>Pre-order discount active: 5% off meals applied!</span>
                       </p>
@@ -1691,7 +1691,7 @@ export default function V2Checkout() {
             )}
 
             {fulfillmentType === "delivery" && (
-              <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
+              <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--sage) 35%, transparent)", color: "var(--sage)" }}>
                 <div className="fx gap8" style={{ minWidth: 0, alignItems: "flex-start" }}>
                   <Leaf className="w-4 h-4" style={{ color: "var(--sage)", flexShrink: 0, marginTop: 2 }} />
                   <div style={{ minWidth: 0 }}>
@@ -1964,7 +1964,7 @@ export default function V2Checkout() {
                 </div>
               )}
               {creditBalance > 0 && (
-                <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
+                <div className="note" style={{ alignItems: "center", justifyContent: "space-between", background: "var(--saged)", borderColor: "color-mix(in oklab, var(--sage) 35%, transparent)", color: "var(--sage)" }}>
                   <div className="fx ac gap8" style={{ minWidth: 0 }}>
                     <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--sage)", flexShrink: 0 }} />
                     <div style={{ minWidth: 0 }}>
@@ -2072,7 +2072,7 @@ export default function V2Checkout() {
                 subsidyAvailable;
               if (totalSavings <= 0) return null;
               return (
-                <details className="note" style={{ display: "block", padding: 0, background: "var(--saged)", borderColor: "color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)", color: "var(--sage)" }}>
+                <details className="note" style={{ display: "block", padding: 0, background: "var(--saged)", borderColor: "color-mix(in oklab, var(--sage) 35%, transparent)", color: "var(--sage)" }}>
                   <summary className="fx ac jb" style={{ padding: "8px 12px", cursor: "pointer", listStyle: "none" }}>
                     <span className="fx ac gap8">
                       <Tag className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
@@ -2082,7 +2082,7 @@ export default function V2Checkout() {
                     </span>
                     <ChevronDown className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
                   </summary>
-                  <div className="col gap6" style={{ padding: "4px 12px 10px", borderTop: "1px solid color-mix(in oklab, var(--color-clinical-sage) 20%, transparent)", fontSize: 11, color: "var(--mut)" }}>
+                  <div className="col gap6" style={{ padding: "4px 12px 10px", borderTop: "1px solid color-mix(in oklab, var(--sage) 20%, transparent)", fontSize: 11, color: "var(--mut)" }}>
                     {preorderDiscount > 0 && (
                       <div className="fx jb">
                         <span>Pre-order discount (5%)</span>

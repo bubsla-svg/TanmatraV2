@@ -270,7 +270,7 @@ function MoreSheet({
               +91 92892 13115
             </div>
             <div className="flex items-center gap-2 pt-1">
-              <ShieldCheck className="w-3 h-3 text-[var(--color-clinical-sage)]" />
+              <ShieldCheck className="w-3 h-3 text-[var(--tnm-sage)]" />
               ISO 22000 · FSSAI Lic. 22725926001018
             </div>
             <div className="flex items-center gap-3 pt-1 text-[10px] text-white/45">
@@ -282,7 +282,7 @@ function MoreSheet({
                 Terms
               </Link>
             </div>
-            <p className="pt-1 text-[10px] text-clinical-zinc-muted">
+            <p className="pt-1 text-[10px] text-[var(--tnm-text-secondary)]">
               © {new Date().getFullYear()} Tanmatra Health Technologies
             </p>
           </div>

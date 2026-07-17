@@ -1192,7 +1192,7 @@ function DishCard({
             <span className={giCls}>{giLabel}</span>
             {lifestyleTag && <span className="pill" style={{ fontSize: 9 }}>{lifestyleTag}</span>}
             {isAssessed && fit_band === "high" && (
-              <span className="pill sg flex items-center gap-1 bg-[var(--color-clinical-sage)]/10 text-[var(--color-clinical-sage)] border border-[var(--color-clinical-sage)]/30 text-[9px] font-bold uppercase tracking-wider">
+              <span className="pill sg flex items-center gap-1 bg-[var(--sage)]/10 text-[var(--sage)] border border-[var(--sage)]/30 text-[9px] font-bold uppercase tracking-wider">
                 <i className="ph-fill ph-sparkle text-[9px]" /> Strong goal match
               </span>
             )}
