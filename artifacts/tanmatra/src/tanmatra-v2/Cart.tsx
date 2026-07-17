@@ -249,7 +249,7 @@ export default function V2Cart() {
         <div className="dock">
           {checkoutBlocked && blockReason && <div className="fine tc mb6" style={{ color: "var(--dgr)" }} role="alert">{blockReason}</div>}
           <div className="fx ac jb gap12">
-            <div style={{ flex: "none" }}>
+            <div style={{ flex: "none" }} role="status" aria-live="polite" aria-atomic="true">
               <div className="lab">{totalQuantity} item{totalQuantity === 1 ? "" : "s"} · {deliveryFee === 0 ? "FREE delivery" : `+${F(deliveryFee)}`}</div>
               <div className="price" style={{ fontSize: 19, color: "var(--safb)" }}>{F(grandTotal)}</div>
             </div>
