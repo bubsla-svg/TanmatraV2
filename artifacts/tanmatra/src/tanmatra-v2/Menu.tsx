@@ -524,7 +524,7 @@ export default function V2Menu() {
   const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length + excludedAllergens.length;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
         {/* App bar */}
         <div className="appbar">
@@ -857,7 +857,7 @@ export default function V2Menu() {
             <>
               {/* Onboarding Quiz banner for unassessed users */}
               {!isAssessed && (
-                <div className="bg-stone-900 border border-stone-800/80 rounded-xl p-4 mb-4 flex items-center justify-between gap-4">
+                <div className="bg-[var(--tnm-surface-ink-2)] border border-white/[0.06] rounded-xl p-4 mb-4 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-xs leading-normal text-stone-100">
                       Answer 5 questions (about 60 seconds) to rank this menu for you.
@@ -918,8 +918,8 @@ export default function V2Menu() {
                       {/* Section 1: Goal Match */}
                       {goalMatched.length > 0 && (
                         <div>
-                          <h2 className="sh mb10 fx ac gap6 text-clinical-gold uppercase tracking-wider text-[11px] font-bold">
-                            <i className="ph-fill ph-sparkle text-clinical-gold text-xs" />
+                          <h2 className="sh mb10 fx ac gap6 text-[var(--tnm-action)] uppercase tracking-[0.06em] text-[11px] font-semibold">
+                            <i className="ph-fill ph-sparkle text-[var(--tnm-action)] text-xs" />
                             Matched to your goal
                           </h2>
                           <div className="prodgrid onecol">
@@ -963,7 +963,7 @@ export default function V2Menu() {
 
                         return (
                           <div key={cat}>
-                            <h2 className="sh mb10 uppercase tracking-wider text-[11px] font-bold text-clinical-zinc" style={{ textTransform: "capitalize" }}>
+                            <h2 className="sh mb10 uppercase tracking-[0.06em] text-[11px] font-semibold text-white/50" style={{ textTransform: "uppercase" }}>
                               {CATEGORY_LABELS[cat]}
                             </h2>
                             <div className="prodgrid onecol">
@@ -1014,8 +1014,8 @@ export default function V2Menu() {
 
       {/* Customization sheet */}
       {customizingDish && activeVariant && (
-        <div className="bg-black/60" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setCustomizingDish(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--s1)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", borderTop: "1px solid var(--ln2)", padding: 16, paddingBottom: "calc(16px + var(--safe-bottom))", maxHeight: "min(85vh, 85dvh)", overflowY: "auto" }}>
+        <div className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setCustomizingDish(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--tnm-surface-ink-2)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", borderTop: "1px solid white/[0.08]", padding: 16, paddingBottom: "calc(16px + var(--safe-bottom))", maxHeight: "min(85vh, 85dvh)", overflowY: "auto" }}>
             <div style={{ margin: "0 auto 10px", height: 6, width: 40, borderRadius: 999, background: "var(--ln2)" }} aria-hidden="true" />
             <div className="fx ac jb mb10">
               <div className="h2" style={{ fontSize: 18 }}>Customise {customizingDish.name}</div>
@@ -1068,7 +1068,7 @@ export default function V2Menu() {
               const m = original ? evaluateDishForPreferences(original, preferences) : null;
               if (m?.blocked) {
                 return (
-                  <div className="mb14 p10 border rounded-lg fx ac gap8 bg-red-950/40 border-red-850/40 text-red-400 text-xs">
+                  <div className="mb14 p10 border rounded-lg fx ac gap8 bg-[color-mix(in_srgb,var(--color-nn-error)_10%,transparent)] border-[color-mix(in_srgb,var(--color-nn-error)_20%,transparent)] text-[var(--color-nn-error)] text-xs">
                     <i className="ph-fill ph-warning-circle text-base" />
                     <div>
                       <span className="font-semibold block">Safety Conflict</span>
@@ -1079,7 +1079,7 @@ export default function V2Menu() {
               }
               if (m && m.warnings.length > 0) {
                 return (
-                  <div className="mb14 p10 border rounded-lg fx ac gap8 bg-amber-950/40 border-amber-800/40 text-amber-400 text-xs">
+                  <div className="mb14 p10 border rounded-lg fx ac gap8 bg-[color-mix(in_srgb,var(--tnm-action)_8%,transparent)] border-[color-mix(in_srgb,var(--tnm-action)_20%,transparent)] text-[var(--tnm-action)] text-xs">
                     <i className="ph-fill ph-warning text-base" />
                     <div>
                       <span className="font-semibold block">Plan Warning</span>
@@ -1192,7 +1192,7 @@ function DishCard({
             <span className={giCls}>{giLabel}</span>
             {lifestyleTag && <span className="pill" style={{ fontSize: 9 }}>{lifestyleTag}</span>}
             {isAssessed && fit_band === "high" && (
-              <span className="pill sg flex items-center gap-1 bg-clinical-sage/10 text-clinical-sage border border-clinical-sage/30 text-[9px] font-bold uppercase tracking-wider">
+              <span className="pill sg flex items-center gap-1 bg-[var(--color-clinical-sage)]/10 text-[var(--color-clinical-sage)] border border-[var(--color-clinical-sage)]/30 text-[9px] font-bold uppercase tracking-wider">
                 <i className="ph-fill ph-sparkle text-[9px]" /> Strong goal match
               </span>
             )}
@@ -1207,7 +1207,7 @@ function DishCard({
           </Link>
 
           {/* New macro/price tabular-monospace data line (Rule 3.2) */}
-          <div className="fine tnm-data font-mono flex items-center gap-1.5 mt-2 text-xs text-clinical-zinc/80 flex-wrap">
+          <div className="fine tnm-data font-mono flex items-center gap-1.5 mt-2 text-[12px] text-white/50 flex-wrap">
             {!provisional ? (
               <>
                 <span className="nowrap">{dish.macros.calories} kcal</span>
@@ -1217,14 +1217,14 @@ function DishCard({
               </>
             ) : (
               <>
-                <span className="font-sans text-[10px] text-clinical-zinc/50 uppercase tracking-normal">Macros pending</span>
+                <span className="font-sans text-[10px] text-white/45 uppercase tracking-normal">Macros pending</span>
                 <span>·</span>
               </>
             )}
-            <span className="price text-clinical-gold font-semibold">{F(price)}</span>
-            {hasVariants && <span className="font-sans text-[10px] text-clinical-zinc/50"> · options</span>}
+            <span className="price text-[var(--tnm-action)] font-semibold">{F(price)}</span>
+            {hasVariants && <span className="font-sans text-[10px] text-white/45"> · options</span>}
             {social_proof && (
-              <span className="text-[10px] text-clinical-gold/90 font-sans ml-auto nowrap">
+              <span className="text-[10px] text-[var(--tnm-action)]/90 font-sans ml-auto nowrap">
                 {social_proof}
               </span>
             )}
@@ -1232,7 +1232,7 @@ function DishCard({
 
           {isPremiumOnly && <div className="pill mt6" style={{ background: "var(--safd)", color: "var(--safb)", width: "fit-content" }}><i className="ph-fill ph-crown" />Premium</div>}
           {blocked && (
-            <div className="fine mt6 text-red-400 font-semibold flex items-center gap-1">
+            <div className="fine mt6 text-[var(--color-nn-error)] font-semibold flex items-center gap-1">
               <i className="ph-bold ph-warning-circle" /> Contains {match?.matchedAllergens?.join(", ") || "conflict ingredients"}
             </div>
           )}
@@ -1241,7 +1241,7 @@ function DishCard({
         <Link
           to={`/dish/${dish.slug}`}
           onClick={handleLinkClick}
-          className="dimg aspect-square rounded-md overflow-hidden"
+          className="dimg aspect-square rounded-xl"
           aria-label={name}
           style={{ width: 92, height: 92, flex: "none", position: "relative" }}
         >
