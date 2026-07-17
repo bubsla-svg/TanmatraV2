@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Check,
   MagnifyingGlass,
+  ArrowRight,
 } from "@phosphor-icons/react";
 
 // Zomato-grade two-tier header: a location-first top row (deliver-to city,
@@ -44,6 +45,7 @@ export default function HomeHeader() {
   const [cityOpen, setCityOpen] = useState(false);
   const [city, setCity] = useState<string>("Noida");
   const [hintIdx, setHintIdx] = useState(0);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     try {
@@ -60,6 +62,16 @@ export default function HomeHeader() {
     const t = setInterval(() => setHintIdx((i) => (i + 1) % SEARCH_HINTS.length), 3500);
     return () => clearInterval(t);
   }, []);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Fall back to the currently displayed hint (unquoted) rather than
+    // discarding the user's tap on an empty field — they were shown a
+    // concrete example, so honor it as the query instead of dumping them
+    // onto an unfiltered menu (impeccable critique P1, 2026-07-17).
+    const term = query.trim() || SEARCH_HINTS[hintIdx].replace(/^"|"$/g, "");
+    navigate(`/menu?q=${encodeURIComponent(term)}`);
+  };
 
   const pickCity = (c: string) => {
     setCity(c);
@@ -167,18 +179,30 @@ export default function HomeHeader() {
           </div>
 
           {/* Tier 2 — search, straight into discovery */}
-          <button
-            type="button"
-            onClick={() => navigate("/menu")}
-            className="w-full flex items-center gap-2.5 h-11 px-3.5 rounded-xl bg-white/[0.07] border border-white/12 backdrop-blur-md text-left hover:bg-white/10 hover:border-white/20 active:scale-[0.99] transition-all"
+          <form
+            role="search"
+            onSubmit={submitSearch}
+            className="w-full flex items-center gap-2.5 h-11 px-3.5 rounded-xl bg-white/[0.07] border border-white/12 backdrop-blur-md hover:bg-white/10 hover:border-white/20 transition-all focus-within:bg-white/10 focus-within:border-white/25"
             style={{ minHeight: 44 }}
-            aria-label="Search dishes — opens the menu"
           >
             <MagnifyingGlass size={18} weight="bold" className="text-[var(--tnm-action)] shrink-0" />
-            <span className="text-[13.5px] text-white/55 font-medium truncate">
-              Search {SEARCH_HINTS[hintIdx]}
-            </span>
-          </button>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={`Search ${SEARCH_HINTS[hintIdx]}`}
+              aria-label="Search dishes"
+              enterKeyHint="search"
+              className="flex-1 min-w-0 bg-transparent text-[13.5px] text-white placeholder:text-white/55 placeholder:font-medium truncate outline-none"
+            />
+            <button
+              type="submit"
+              aria-label="Search"
+              className="shrink-0 inline-flex items-center justify-center text-white/60 hover:text-white transition-colors"
+              style={{ minHeight: 44, minWidth: 32 }}
+            >
+              <ArrowRight size={16} weight="bold" />
+            </button>
+          </form>
         </div>
       </header>
 

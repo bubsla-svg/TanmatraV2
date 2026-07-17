@@ -88,6 +88,12 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
           setPreferences(null);
         }
       } else {
+        // Network/server failure: we cannot confirm the session is valid,
+        // so fail closed rather than defaulting `unauthorized` to false —
+        // that previously left a fetch timeout or 500 rendering the header
+        // avatar as logged-in for a session that was never confirmed
+        // (impeccable critique P0, 2026-07-17).
+        setUnauthorized(true);
         setPreferences(null);
       }
     } finally {

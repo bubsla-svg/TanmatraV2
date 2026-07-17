@@ -5,14 +5,20 @@
  */
 
 /* ---- reset ---- */
-.tnm2, .tnm2 *{box-sizing:border-box}
-/* Zero-specificity (:where) resets so they act as defaults every v2 class and
- * every embedded System-A component (shadcn buttons/inputs) can override —
- * a bare `.tnm2 button` reset would otherwise beat single-class utilities. */
-:where(.tnm2 h1),:where(.tnm2 h2),:where(.tnm2 h3),:where(.tnm2 p),:where(.tnm2 ul),:where(.tnm2 li),:where(.tnm2 figure){margin:0;padding:0}
-:where(.tnm2 button){font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
-:where(.tnm2 input){font:inherit;color:inherit;background:none;border:none;outline:none;min-width:0}
-.tnm2 i[class^="ph"],.tnm2 i[class*=" ph"]{display:inline-flex;line-height:1}
+/* Layered into Tailwind's `base` (established by `@import "tailwindcss"` in
+ * index.css, loaded before this file in root.tsx) so Tailwind's `utilities`
+ * layer always wins over it in the cascade. Unlayered author CSS beats
+ * layered utilities regardless of specificity — :where()'s zero specificity
+ * only helped against other unlayered rules, not against Tailwind classes,
+ * which is why every `.tnm2 button`'s bg/border/color/font utilities were
+ * being silently discarded (impeccable critique P0, 2026-07-17). */
+@layer base {
+  .tnm2, .tnm2 *{box-sizing:border-box}
+  :where(.tnm2 h1),:where(.tnm2 h2),:where(.tnm2 h3),:where(.tnm2 p),:where(.tnm2 ul),:where(.tnm2 li),:where(.tnm2 figure){margin:0;padding:0}
+  :where(.tnm2 button){font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
+  :where(.tnm2 input){font:inherit;color:inherit;background:none;border:none;outline:none;min-width:0}
+  .tnm2 i[class^="ph"],.tnm2 i[class*=" ph"]{display:inline-flex;line-height:1}
+}
 
 /* ---- component system ---- */
 /* Nocturnal Nourishment is now the ONLY palette. The base .tnm2 tokens are

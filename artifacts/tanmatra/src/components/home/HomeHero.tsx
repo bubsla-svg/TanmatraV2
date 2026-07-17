@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import {
   ArrowRight,
   Leaf,
@@ -6,7 +7,7 @@ import {
   ShieldCheck,
   Scales,
   Barbell,
-  Plant,
+  Drop,
   Heart,
   Sparkle,
   type Icon,
@@ -17,10 +18,12 @@ interface HomeHeroProps {
   onHelpChoose: () => void;
 }
 
+// Slugs must match a real plan in lib/rdPlans.ts — no fabricated programs.
+// ("Keto Reset" was dropped; no keto plan exists in the catalog.)
 const PROGRAM_CHIPS: { icon: Icon; label: string; planSlug: string }[] = [
   { icon: Scales, label: "Weight Loss", planSlug: "weight-loss-jumpstart" },
   { icon: Barbell, label: "Muscle Gain", planSlug: "lean-muscle-builder" },
-  { icon: Plant, label: "Keto Reset", planSlug: "keto-reset" },
+  { icon: Drop, label: "Diabetic Friendly", planSlug: "diabetic-friendly" },
   { icon: Heart, label: "PCOS Care", planSlug: "pcos-balance" },
 ];
 
@@ -32,6 +35,7 @@ const TRUST_GRID: { icon: Icon; label: string }[] = [
 ];
 
 export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
+  const navigate = useNavigate();
   return (
     <section className="w-full bg-[var(--tnm-surface-ink)] pt-32 pb-20 md:pt-36 md:pb-28 px-4 md:px-6 relative overflow-hidden">
       {/* Ambient food-imagery wash — rich but low-contrast so copy stays legible */}
@@ -116,7 +120,7 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
                   <button
                     key={p.label}
                     type="button"
-                    onClick={onHelpChoose}
+                    onClick={() => navigate(`/plans/${p.planSlug}`)}
                     className="p-1 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-[var(--tnm-action)]/30 hover:bg-white/[0.08] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group text-left"
                   >
                     <div className="p-3 rounded-[calc(1rem-0.25rem)] bg-black/20 flex flex-col items-center justify-center text-center">
