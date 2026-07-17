@@ -22,7 +22,7 @@ const CFG: Record<Key, {
   heroImg?: string;
 }> = {
   performance: {
-    name: "Performance Protocol", accent: "var(--color-clinical-blue)", accentBg: "var(--color-clinical-blue-light)", icon: "ph-lightning",
+    name: "Performance Protocol", accent: "var(--color-nn-tertiary)", accentBg: "color-mix(in srgb, var(--color-nn-tertiary) 12%, transparent)", icon: "ph-lightning",
     headline: "Athletic nutrition for", accentWord: "peak output",
     desc: "Evidence-based sports nutrition engineered for muscle protein synthesis, glycogen replenishment and rapid recovery. Macro ratios validated by exercise-physiology research.",
     pillars: [
@@ -36,7 +36,7 @@ const CFG: Record<Key, {
     heroImg: "/dishes/buddha-bowl.jpg",
   },
   clinical: {
-    name: "Clinical Protocol", accent: "var(--color-clinical-gold)", accentBg: "var(--safd)", icon: "ph-heartbeat",
+    name: "Clinical Protocol", accent: "var(--tnm-action)", accentBg: "var(--safd)", icon: "ph-heartbeat",
     headline: "Therapeutic nutrition,", accentWord: "RD-supervised",
     desc: "Evidence-based medical nutrition therapy for diabetes, cardiovascular, renal and post-surgical recovery — precise nutrient restrictions, every menu RD-signed.",
     pillars: [
@@ -49,7 +49,7 @@ const CFG: Record<Key, {
     dishBadge: (d) => `GI ${d.glycaemicIndex}`,
   },
   wellness: {
-    name: "Wellness Protocol", accent: "var(--color-clinical-sage)", accentBg: "var(--saged)", icon: "ph-leaf",
+    name: "Wellness Protocol", accent: "var(--color-clinical-sage)", accentBg: "color-mix(in srgb, var(--color-clinical-sage) 12%, transparent)", icon: "ph-leaf",
     headline: "Preventive nutrition for", accentWord: "everyday vitality",
     desc: "Balanced, RD-portioned meals for daily energy, immunity and gut health.",
     pillars: [
@@ -77,7 +77,7 @@ export default function V2Protocol({ which }: { which: Key }) {
   const heroImg = cfg.heroImg ?? featured[0]?.image;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       {which === "clinical" && <EnableClinical />}
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="content" style={{ paddingBottom: 24 }}>
@@ -87,7 +87,7 @@ export default function V2Protocol({ which }: { which: Key }) {
             <div className="posabs" style={{ top: 12, left: 16, zIndex: 2 }}><Link className="glass" to="/challenges" aria-label="Community"><i className="ph-bold ph-arrow-left" /></Link></div>
             <div className="posabs padx" style={{ left: 0, right: 0, bottom: 16, zIndex: 2 }}>
               <span className="pill" style={{ background: cfg.accentBg, color: cfg.accent }}><i className={`ph-fill ${cfg.icon}`} /> {cfg.name}</span>
-              <h1 className="disp mt10" style={{ fontSize: 26, color: "var(--color-stone-0)" }}>{cfg.headline} <span style={{ color: cfg.accent }}>{cfg.accentWord}</span></h1>
+              <h1 className="disp mt10" style={{ fontSize: 26, color: "white" }}>{cfg.headline} <span style={{ color: cfg.accent }}>{cfg.accentWord}</span></h1>
             </div>
           </div>
 
@@ -109,16 +109,16 @@ export default function V2Protocol({ which }: { which: Key }) {
             </div>
 
             {/* Pillars */}
-            <div className="sh mt20 mb10">The science</div>
+            <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mt20 mb10">The science</div>
             {cfg.pillars.map((p) => (
-              <div key={p.title} className="card mb10 fx gap12">
+              <div key={p.title} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10 fx gap12">
                 <div className="dic" style={{ color: cfg.accent, background: cfg.accentBg }}><i className={`ph-bold ${p.icon}`} /></div>
                 <div className="f1"><div className="small" style={{ fontWeight: 600 }}>{p.title}</div><div className="fine mt2">{p.desc}</div></div>
               </div>
             ))}
 
             {/* Featured dishes */}
-            <div className="secrow" style={{ padding: 0 }}><span className="sh">{cfg.featuredLabel}</span><Link to={`/menu?protocol=${which}`} className="fine" style={{ color: cfg.accent }}>All {qualifying.length} →</Link></div>
+            <div className="secrow" style={{ padding: 0 }}><span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">{cfg.featuredLabel}</span><Link to={`/menu?protocol=${which}`} className="fine" style={{ color: cfg.accent }}>All {qualifying.length} →</Link></div>
             <div className="fine mb10">{cfg.featuredSub}</div>
             {featured.length === 0 ? (
               <div className="fine">No qualifying dishes are live right now — check back soon.</div>
@@ -136,9 +136,9 @@ export default function V2Protocol({ which }: { which: Key }) {
             {/* Plans */}
             {plans.length > 0 && (
               <>
-                <div className="sh mt20 mb10">{cfg.name.split(" ")[0]} RD plans</div>
+                <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mt20 mb10">{cfg.name.split(" ")[0]} RD plans</div>
                 {plans.map((plan: any) => (
-                  <Link key={plan.slug} to={`/plans/${plan.slug}`} className="card mb10" style={{ display: "block" }}>
+                  <Link key={plan.slug} to={`/plans/${plan.slug}`} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10" style={{ display: "block" }}>
                     <div className="fx ac jb"><span className="pill" style={{ background: cfg.accentBg, color: cfg.accent }}>{plan.calorieTargetPerDay} kcal · {plan.proteinTargetGrams}g</span><span className="price" style={{ color: cfg.accent }}>{F(plan.pricePerWeekPaise)}<span className="fntc" style={{ fontSize: 10 }}>/wk</span></span></div>
                     <div className="tt mt6" style={{ fontSize: 15 }}>{plan.name}</div>
                     <div className="fine mt2 clamp1">{plan.tagline}</div>
@@ -150,11 +150,11 @@ export default function V2Protocol({ which }: { which: Key }) {
             {/* RDs */}
             {rds.length > 0 && (
               <>
-                <div className="sh mt20 mb10">Talk to a {cfg.name.split(" ")[0].toLowerCase()} RD</div>
+                <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mt20 mb10">Talk to a {cfg.name.split(" ")[0].toLowerCase()} RD</div>
                 {rds.map((rd: any) => {
                   const m: any = teamBySlug.get(rd.slug);
                   return (
-                    <div key={rd.slug} className="card mb10">
+                    <div key={rd.slug} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
                       <div className="fx ac gap12">
                         <span className="avatar" style={{ background: cfg.accentBg, color: cfg.accent }}>{m?.initials ?? "RD"}</span>
                         <div className="f1" style={{ minWidth: 0 }}><div className="small" style={{ fontWeight: 600 }}>{m?.name ?? rd.slug}</div><div className="fine">{m?.title}</div></div>

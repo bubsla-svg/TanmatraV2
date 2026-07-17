@@ -16,7 +16,7 @@ import { F } from "./data";
 const ACCENT: Record<string, { text: string; bg: string; border: string }> = {
   gold: { text: "var(--safb)", bg: "var(--safd)", border: "var(--saf)" },
   sage: { text: "var(--sage)", bg: "var(--saged)", border: "var(--sage)" },
-  blue: { text: "var(--color-clinical-blue)", bg: "var(--color-clinical-blue-light)", border: "color-mix(in oklab, var(--color-clinical-blue) 55%, transparent)" },
+  blue: { text: "var(--color-nn-tertiary)", bg: "color-mix(in srgb, var(--color-nn-tertiary) 12%, transparent)", border: "color-mix(in srgb, var(--color-nn-tertiary) 55%, transparent)" },
 };
 
 export default function V2TeamMember() {
