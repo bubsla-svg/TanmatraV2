@@ -67,7 +67,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
     if (this.props.fallback) return this.props.fallback;
     return (
-      <div className="min-h-screen flex items-center justify-center bg-clinical-dark px-6">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-nn-bg)] px-6">
         <div className="max-w-md w-full text-center space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-8">
           <h1 className="text-xl font-semibold text-white">
             Something went wrong

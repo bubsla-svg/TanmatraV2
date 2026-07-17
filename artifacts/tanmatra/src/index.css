@@ -373,7 +373,7 @@
   .text-body-sm { font-size: 0.8125rem; line-height: 1.5; font-family: var(--font-sans); }
   .text-caption { font-size: 0.75rem; line-height: 1.4; font-family: var(--font-sans); }
   .text-clinical-data { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.875rem; letter-spacing: -0.02em; }
-  .text-clinical-label { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-clinical-zinc); }
+  .text-clinical-label { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-nn-on-surface-variant); }
 
   .tabular-nums { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
 
@@ -429,7 +429,7 @@
   .focus-ring-clinical:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 2px var(--color-clinical-dark),
+      0 0 0 2px var(--color-nn-bg),
       0 0 0 4px rgba(212, 175, 55, 0.55);
   }
 
@@ -438,10 +438,10 @@
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--color-clinical-slate); border-radius: 9999px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-clinical-zinc); }
+  ::-webkit-scrollbar-thumb { background: var(--color-nn-outline); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-nn-on-surface-variant); }
 
-  ::selection { background: var(--color-clinical-gold-light); color: var(--color-clinical-gold); }
+  ::selection { background: color-mix(in srgb, var(--color-nn-primary) 12%, transparent); color: var(--color-nn-primary); }
 
   /* ─── Canonical alert utilities (clinical surfaces) ─── */
   /* Use these in place of bg-red-500/* / text-red-300 / bg-orange-500/*
@@ -506,10 +506,10 @@
      layer; existing `text-clinical-zinc` / `bg-clinical-surface*`
      consumers re-render with the AAA-friendly values automatically. */
   .theme-clinical {
-    --color-clinical-zinc: #D4D4D8;          /* lighter — AAA on dark */
-    --color-clinical-surface: #06060A;        /* darker chrome */
-    --color-clinical-surface-elevated: #0C0C10;
-    --color-clinical-slate: #4B5563;          /* visible borders */
+    --color-clinical-zinc: var(--color-nn-on-surface);          /* lighter — AAA on dark */
+    --color-clinical-surface: var(--color-nn-bg);        /* darker chrome */
+    --color-clinical-surface-elevated: var(--color-nn-surface-low);
+    --color-clinical-slate: var(--color-nn-outline);          /* visible borders */
   }
 
   /* Hide decorative imagery / avatars on clinical surfaces. Mark any

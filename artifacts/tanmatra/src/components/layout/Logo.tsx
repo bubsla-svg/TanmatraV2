@@ -13,7 +13,7 @@ interface LogoProps {
  * vitality" — the literal meaning of तन्मात्र). Wordmark inherits `currentColor`
  * so it adapts to whatever surface it sits on (light on the Clinical Dark
  * theme, muted in the footer). Palette is the approved set only:
- * gold (clinical-gold) · sage (clinical-sage).
+ * gold (nn-primary) · sage (clinical-sage).
  */
 export default function Logo({
   className,
@@ -30,14 +30,14 @@ export default function Logo({
       <defs>
         <linearGradient id="tm-leaf" x1="24" y1="6" x2="24" y2="42" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor={"#" + "E7C766"} />
-          <stop offset="0.55" stopColor="var(--color-clinical-gold)" />
+          <stop offset="0.55" stopColor="var(--color-nn-primary)" />
           <stop offset="1" stopColor="var(--color-clinical-sage)" />
         </linearGradient>
       </defs>
       {/* clinical hexagon */}
       <path
         d="M24 3.5 L41.8 13.75 V34.25 L24 44.5 L6.2 34.25 V13.75 Z"
-        className="stroke-clinical-gold fill-clinical-gold/[0.06]"
+        className="stroke-nn-primary fill-nn-primary/[0.06]"
         strokeWidth="2.2"
         strokeLinejoin="round"
       />
@@ -95,7 +95,7 @@ export default function Logo({
       {/* precision underscore — a hairline gold rule under the wordmark */}
       <path
         d="M58 38 H150"
-        className="stroke-clinical-gold/50"
+        className="stroke-nn-primary/50"
         strokeWidth="1.4"
         strokeLinecap="round"
       />

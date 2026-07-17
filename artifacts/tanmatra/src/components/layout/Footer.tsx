@@ -27,19 +27,19 @@ const FOOTER_LINKS = {
 
 export default function Footer() {
   return (
-    <footer className="hidden md:block border-t border-clinical-border bg-clinical-surface">
+    <footer className="hidden md:block border-t border-white/[0.08] bg-nn-surface">
       {/* Main footer */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand column */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-clinical-gold/15 flex items-center justify-center border border-clinical-gold/25">
-                <FlaskConical className="w-4 h-4 text-clinical-gold" />
+              <div className="w-8 h-8 rounded-lg bg-nn-primary/15 flex items-center justify-center border border-nn-primary/25">
+                <FlaskConical className="w-4 h-4 text-nn-primary" />
               </div>
               <div>
                 <span className="text-sm font-semibold text-white">Tanmatra</span>
-                <span className="text-[9px] text-clinical-zinc tracking-widest uppercase block">Clinical Nutrition</span>
+                <span className="text-[9px] text-nn-outline tracking-widest uppercase block">Clinical Nutrition</span>
               </div>
             </div>
             <p className="text-xs text-white leading-relaxed max-w-xs">
@@ -48,26 +48,26 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3 pt-1">
               <div className="flex items-center gap-1.5 text-white">
-                <Mail className="w-3 h-3 text-clinical-gold" />
+                <Mail className="w-3 h-3 text-nn-primary" />
                 <span className="text-xs">care@tanmatra.health</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 text-white">
-              <Phone className="w-3 h-3 text-clinical-gold" />
+              <Phone className="w-3 h-3 text-nn-primary" />
               <span className="text-xs">+91 92892 13115</span>
             </div>
             <div className="flex items-center gap-1.5 text-white">
-              <MapPin className="w-3 h-3 text-clinical-gold" />
+              <MapPin className="w-3 h-3 text-nn-primary" />
               <span className="text-xs">Noida, Uttar Pradesh, India</span>
             </div>
           </div>
 
           {/* Links */}
           <div className="hidden sm:block space-y-3">
-            <p className="text-clinical-label text-white">Platform</p>
+            <p className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-white">Platform</p>
             <div className="space-y-2">
               {FOOTER_LINKS.platform.map((link) => (
-                <Link key={link.href} to={link.href} className="block text-xs text-white hover:text-clinical-gold transition-colors">
+                <Link key={link.href} to={link.href} className="block text-xs text-white hover:text-nn-primary transition-colors">
                   {link.label}
                 </Link>
               ))}
@@ -75,10 +75,10 @@ export default function Footer() {
           </div>
 
           <div className="hidden sm:block space-y-3">
-            <p className="text-clinical-label text-white">Protocols</p>
+            <p className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-white">Protocols</p>
             <div className="space-y-2">
               {FOOTER_LINKS.protocols.map((link) => (
-                <Link key={link.href} to={link.href} className="block text-xs text-white hover:text-clinical-gold transition-colors">
+                <Link key={link.href} to={link.href} className="block text-xs text-white hover:text-nn-primary transition-colors">
                   {link.label}
                 </Link>
               ))}
@@ -86,10 +86,10 @@ export default function Footer() {
           </div>
 
           <div className="hidden sm:block space-y-3">
-            <p className="text-clinical-label text-white">Clinical</p>
+            <p className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-white">Clinical</p>
             <div className="space-y-2">
               {FOOTER_LINKS.clinical.map((link) => (
-                <Link key={link.href} to={link.href} className="block text-xs text-white hover:text-clinical-gold transition-colors">
+                <Link key={link.href} to={link.href} className="block text-xs text-white hover:text-nn-primary transition-colors">
                   {link.label}
                 </Link>
               ))}
@@ -98,7 +98,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <Separator className="bg-clinical-surface-elevated" />
+      <Separator className="bg-nn-surface-high" />
 
       {/* Bottom bar */}
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -108,11 +108,11 @@ export default function Footer() {
             <span className="text-[10px] text-white">ISO 22000 Certified Kitchens &middot; FSSAI Lic. No.: 22725926001018</span>
           </div>
           <div className="flex items-center gap-4 text-[10px] text-white">
-            <Link to="/privacy" className="hover:text-clinical-gold transition-colors">
+            <Link to="/privacy" className="hover:text-nn-primary transition-colors">
               Privacy Policy
             </Link>
             <span>&middot;</span>
-            <Link to="/terms" className="hover:text-clinical-gold transition-colors">
+            <Link to="/terms" className="hover:text-nn-primary transition-colors">
               Terms of Service
             </Link>
             <span>&middot;</span>
@@ -124,10 +124,10 @@ export default function Footer() {
       </div>
 
       {/* Medical Disclaimer */}
-      <div className="border-t border-clinical-border bg-clinical-dark">
+      <div className="border-t border-white/[0.08] bg-nn-bg">
         <div className="max-w-7xl mx-auto px-4 pt-3 pb-20 md:pb-3">
           <p className="text-[10px] text-white text-center leading-relaxed">
-            <strong className="text-clinical-gold">Medical Disclaimer:</strong> Tanmatra meals are designed as adjuncts to medical treatment
+            <strong className="text-nn-primary">Medical Disclaimer:</strong> Tanmatra meals are designed as adjuncts to medical treatment
             and should not replace prescribed therapies. Always consult your physician or registered dietitian
             before beginning any therapeutic nutrition program. Individual results may vary.
           </p>

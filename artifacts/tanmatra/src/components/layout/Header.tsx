@@ -67,7 +67,7 @@ export default function Header() {
                     to={item.path}
                     className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                       active
-                        ? "bg-clinical-gold text-black shadow-[0_2px_8px_rgba(251,191,36,0.3)]"
+                        ? "bg-[var(--color-nn-primary)] text-black shadow-[0_2px_8px_rgba(251,191,36,0.3)]"
                         : "text-white/70 hover:text-white hover:bg-white/10"
                     }`}
                     aria-current={onExactPath ? "page" : undefined}
@@ -112,7 +112,7 @@ export default function Header() {
                 <ShoppingCart className="w-4 h-4" aria-hidden />
                 <span className="hidden sm:inline ml-1.5 text-xs font-medium">Cart</span>
                 {totalQuantity > 0 && (
-                  <Badge className="absolute -top-1 -right-1 sm:static sm:ml-1.5 h-4 min-w-4 px-1 text-[10px] bg-clinical-gold text-black border-0 font-bold leading-none rounded-full">
+                  <Badge className="absolute -top-1 -right-1 sm:static sm:ml-1.5 h-4 min-w-4 px-1 text-[10px] bg-[var(--color-nn-primary)] text-black border-0 font-bold leading-none rounded-full">
                     {totalQuantity}
                   </Badge>
                 )}

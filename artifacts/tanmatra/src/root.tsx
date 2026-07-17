@@ -99,12 +99,12 @@ const LOADER_STYLE = `
     align-items: center; justify-content: center; gap: 20px;
   }
   #__tanmatra-loader.hidden { display: none; }
-  .__tl-wordmark { color: var(--color-clinical-gold); font-size: 1.25rem; font-weight: 600; letter-spacing: 0.08em; font-family: serif; }
+  .__tl-wordmark { color: var(--color-nn-primary); font-size: 1.25rem; font-weight: 600; letter-spacing: 0.08em; font-family: serif; }
   .__tl-sub { color: var(--text-secondary); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.12em; }
   .__tl-bar { width: 120px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .__tl-bar-inner { height: 100%; width: 0%; background: var(--color-clinical-gold); animation: __tl-slide 1.4s ease-in-out infinite; }
+  .__tl-bar-inner { height: 100%; width: 0%; background: var(--color-nn-primary); animation: __tl-slide 1.4s ease-in-out infinite; }
   @keyframes __tl-slide { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
-  .__tl-retry { display: none; margin-top: 8px; background: transparent; border: 1px solid var(--color-clinical-gold); color: var(--color-clinical-gold);
+  .__tl-retry { display: none; margin-top: 8px; background: transparent; border: 1px solid var(--color-nn-primary); color: var(--color-nn-primary);
     padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
 `.trim();
 
@@ -185,23 +185,23 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
         <noscript>
           <div style={{ minHeight:"100vh", background:"var(--bg)", color:"var(--color-stone-0)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
-            <strong style={{ color:"var(--color-clinical-gold)", fontSize:"1.25rem" }}>Tanmatra</strong>
+            <strong style={{ color:"var(--color-nn-primary)", fontSize:"1.25rem" }}>Tanmatra</strong>
             <p style={{ color:"var(--text-secondary)", fontSize:"0.875rem", maxWidth:"320px" }}>
               Dietitian-designed meals, delivered fresh
               across Noida, Delhi &amp; Gurgaon. This app needs JavaScript — or reach
               us directly:
             </p>
             <p style={{ fontSize:"0.875rem" }}>
-              <a href="mailto:care@tanmatra.health" style={{ color:"var(--color-clinical-gold)" }}>care@tanmatra.health</a>
+              <a href="mailto:care@tanmatra.health" style={{ color:"var(--color-nn-primary)" }}>care@tanmatra.health</a>
             </p>
             <p style={{ color:"var(--text-secondary)", fontSize:"0.8125rem", maxWidth:"320px" }}>
-              <a href="/menu" style={{ color:"var(--color-clinical-gold)" }}>Menu</a>
+              <a href="/menu" style={{ color:"var(--color-nn-primary)" }}>Menu</a>
               {" · "}
-              <a href="/plans" style={{ color:"var(--color-clinical-gold)" }}>Meal plans</a>
+              <a href="/plans" style={{ color:"var(--color-nn-primary)" }}>Meal plans</a>
               {" · "}
-              <a href="/faq" style={{ color:"var(--color-clinical-gold)" }}>FAQ</a>
+              <a href="/faq" style={{ color:"var(--color-nn-primary)" }}>FAQ</a>
               {" · "}
-              <a href="/refunds" style={{ color:"var(--color-clinical-gold)" }}>Refunds</a>
+              <a href="/refunds" style={{ color:"var(--color-nn-primary)" }}>Refunds</a>
             </p>
           </div>
         </noscript>

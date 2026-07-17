@@ -37,7 +37,7 @@ export default function UserAuthLayout() {
 
   if (state === "checking") {
     return (
-      <div className="px-4 py-12 text-center text-sm text-clinical-zinc" style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+      <div className="px-4 py-12 text-center text-sm text-[var(--color-nn-on-surface-variant)]" style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
         <h1>Checking session…</h1>
         <div style={{ marginTop: 8 }}>
           <a href="/login" className="btn btn-p">Go to Login</a>

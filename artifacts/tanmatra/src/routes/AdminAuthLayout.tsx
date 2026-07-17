@@ -43,7 +43,7 @@ export default function AdminAuthLayout() {
   const state = useAdminAuth();
   if (state === "checking") {
     return (
-      <div className="px-4 py-12 text-center text-sm text-clinical-muted">
+      <div className="px-4 py-12 text-center text-sm text-[var(--color-nn-secondary)]">
         Checking admin session…
       </div>
     );

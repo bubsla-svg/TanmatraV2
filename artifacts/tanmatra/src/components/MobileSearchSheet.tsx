@@ -213,7 +213,7 @@ export default function MobileSearchSheet({
           e.preventDefault();
           inputRef.current?.focus();
         }}
-        className="h-[92dvh] max-h-[92dvh] w-full bg-clinical-dark border-t border-clinical-border p-0 flex flex-col rounded-t-2xl overflow-hidden focus:outline-none [&>button]:hidden"
+        className="h-[92dvh] max-h-[92dvh] w-full bg-[var(--color-nn-bg)] border-t border-white/[0.08] p-0 flex flex-col rounded-t-2xl overflow-hidden focus:outline-none [&>button]:hidden"
       >
         <SheetTitle className="sr-only">Mobile search</SheetTitle>
         <SheetDescription className="sr-only">
@@ -221,12 +221,12 @@ export default function MobileSearchSheet({
         </SheetDescription>
 
         {/* Visual drag indicator */}
-        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-clinical-border shrink-0" />
+        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/[0.08] shrink-0" />
 
         {/* Search Header */}
-        <div className="px-4 pt-2 pb-3 border-b border-clinical-border/80 flex items-center gap-3 shrink-0">
-          <div className="relative flex-1 flex items-center bg-white/5 border border-clinical-border rounded-xl px-3 h-11 focus-within:border-clinical-gold/50 focus-within:bg-white/[0.07] transition-all">
-            <MagnifyingGlass className="w-5 h-5 text-clinical-zinc shrink-0 mr-2.5" />
+        <div className="px-4 pt-2 pb-3 border-b border-white/[0.064] flex items-center gap-3 shrink-0">
+          <div className="relative flex-1 flex items-center bg-white/5 border border-white/[0.08] rounded-xl px-3 h-11 focus-within:border-[color-mix(in_srgb,var(--color-nn-primary)_50%,transparent)] focus-within:bg-white/[0.07] transition-all">
+            <MagnifyingGlass className="w-5 h-5 text-[var(--color-nn-on-surface-variant)] shrink-0 mr-2.5" />
             <input
               ref={inputRef}
               autoFocus
@@ -239,14 +239,14 @@ export default function MobileSearchSheet({
                 }
               }}
               placeholder="Search dishes, protocols, pages…"
-              className="w-full bg-transparent text-sm text-white placeholder:text-clinical-zinc-muted focus:outline-none"
+              className="w-full bg-transparent text-sm text-white placeholder:text-[var(--color-nn-secondary)] focus:outline-none"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
                 aria-label="Clear search query"
-                className="p-1 text-clinical-zinc hover:text-white"
+                className="p-1 text-[var(--color-nn-on-surface-variant)] hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -256,15 +256,15 @@ export default function MobileSearchSheet({
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="text-sm font-medium text-clinical-zinc hover:text-white px-2 py-2 shrink-0 transition-colors"
+            className="text-sm font-medium text-[var(--color-nn-on-surface-variant)] hover:text-white px-2 py-2 shrink-0 transition-colors"
           >
             Cancel
           </button>
         </div>
 
         {/* Protocol Filter Pills */}
-        <div className="overflow-x-auto no-scrollbar py-2.5 px-4 flex items-center gap-2 border-b border-clinical-border/60 shrink-0 bg-clinical-surface/40">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-clinical-zinc-muted mr-1 shrink-0">
+        <div className="overflow-x-auto no-scrollbar py-2.5 px-4 flex items-center gap-2 border-b border-white/[0.048] shrink-0 bg-[color-mix(in_srgb,var(--color-nn-surface)_40%,transparent)]">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--color-nn-secondary)] mr-1 shrink-0">
             Filter:
           </span>
           <button
@@ -272,8 +272,8 @@ export default function MobileSearchSheet({
             onClick={() => setSelectedProtocol(null)}
             className={`min-h-[34px] px-3.5 rounded-full text-xs font-medium transition-all shrink-0 ${
               selectedProtocol === null
-                ? "bg-clinical-gold text-action-text font-semibold shadow-sm"
-                : "bg-white/5 text-clinical-zinc border border-clinical-border hover:text-white hover:bg-white/10"
+                ? "bg-[var(--color-nn-primary)] text-action-text font-semibold shadow-sm"
+                : "bg-white/5 text-[var(--color-nn-on-surface-variant)] border border-white/[0.08] hover:text-white hover:bg-white/10"
             }`}
           >
             All
@@ -287,8 +287,8 @@ export default function MobileSearchSheet({
                 onClick={() => setSelectedProtocol(active ? null : proto)}
                 className={`min-h-[34px] px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all shrink-0 ${
                   active
-                    ? "bg-clinical-gold text-action-text font-semibold shadow-sm"
-                    : "bg-white/5 text-clinical-zinc border border-clinical-border hover:text-white hover:bg-white/10"
+                    ? "bg-[var(--color-nn-primary)] text-action-text font-semibold shadow-sm"
+                    : "bg-white/5 text-[var(--color-nn-on-surface-variant)] border border-white/[0.08] hover:text-white hover:bg-white/10"
                 }`}
               >
                 {getProtocolIcon(proto)}
@@ -304,13 +304,13 @@ export default function MobileSearchSheet({
           {!query && recentSearches.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2 px-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-clinical-zinc-muted">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-nn-secondary)]">
                   Recent Searches
                 </span>
                 <button
                   type="button"
                   onClick={clearAllRecentSearches}
-                  className="text-[11px] text-clinical-zinc hover:text-clinical-gold transition-colors"
+                  className="text-[11px] text-[var(--color-nn-on-surface-variant)] hover:text-[var(--color-nn-primary)] transition-colors"
                 >
                   Clear all
                 </button>
@@ -320,15 +320,15 @@ export default function MobileSearchSheet({
                   <div
                     key={item}
                     onClick={() => setQuery(item)}
-                    className="group inline-flex items-center gap-2 min-h-[36px] pl-3 pr-2 rounded-lg bg-white/5 border border-clinical-border/80 text-xs text-clinical-zinc hover:text-white hover:border-clinical-gold/40 cursor-pointer transition-all active:scale-95"
+                    className="group inline-flex items-center gap-2 min-h-[36px] pl-3 pr-2 rounded-lg bg-white/5 border border-white/[0.064] text-xs text-[var(--color-nn-on-surface-variant)] hover:text-white hover:border-[color-mix(in_srgb,var(--color-nn-primary)_40%,transparent)] cursor-pointer transition-all active:scale-95"
                   >
-                    <ClockCounterClockwise className="w-3.5 h-3.5 text-clinical-gold/80 shrink-0" />
+                    <ClockCounterClockwise className="w-3.5 h-3.5 text-[color-mix(in_srgb,var(--color-nn-primary)_80%,transparent)] shrink-0" />
                     <span>{item}</span>
                     <button
                       type="button"
                       onClick={(e) => removeRecentSearch(item, e)}
                       aria-label={`Remove recent search ${item}`}
-                      className="p-1 rounded hover:bg-white/10 text-clinical-zinc-muted hover:text-white transition-colors"
+                      className="p-1 rounded hover:bg-white/10 text-[var(--color-nn-secondary)] hover:text-white transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -342,18 +342,18 @@ export default function MobileSearchSheet({
           {protocolActionRoute && (
             <div
               onClick={() => go(protocolActionRoute.to, protocolActionRoute.label)}
-              className="p-3.5 rounded-xl bg-gradient-to-r from-clinical-gold/15 via-clinical-gold/10 to-transparent border border-clinical-gold/30 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform"
+              className="p-3.5 rounded-xl bg-gradient-to-r from-[color-mix(in_srgb,var(--color-nn-primary)_15%,transparent)] via-[color-mix(in_srgb,var(--color-nn-primary)_10%,transparent)] to-transparent border border-[color-mix(in_srgb,var(--color-nn-primary)_30%,transparent)] flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform"
             >
               <div>
-                <p className="text-sm font-semibold text-clinical-gold flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-[var(--color-nn-primary)] flex items-center gap-1.5">
                   {getProtocolIcon(selectedProtocol!)}
                   {protocolActionRoute.label}
                 </p>
-                <p className="text-xs text-clinical-zinc mt-0.5 line-clamp-1">
+                <p className="text-xs text-[var(--color-nn-on-surface-variant)] mt-0.5 line-clamp-1">
                   {protocolActionRoute.tagline}
                 </p>
               </div>
-              <span className="text-xs font-bold text-clinical-gold ml-2 shrink-0">
+              <span className="text-xs font-bold text-[var(--color-nn-primary)] ml-2 shrink-0">
                 Explore →
               </span>
             </div>
@@ -362,7 +362,7 @@ export default function MobileSearchSheet({
           {/* Dishes List */}
           {dishItems.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-clinical-zinc-muted mb-2 px-1">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-nn-secondary)] mb-2 px-1">
                 Dishes {selectedProtocol ? `(${PROTOCOL_LABELS[selectedProtocol]})` : ""}
               </p>
               <ul className="space-y-1">
@@ -382,14 +382,14 @@ export default function MobileSearchSheet({
                           : "hover:bg-white/5 active:bg-white/10 text-white"
                       )}
                     >
-                      <div className="h-9 w-9 rounded-lg bg-clinical-surface-elevated border border-clinical-border flex items-center justify-center text-clinical-gold shrink-0">
+                      <div className="h-9 w-9 rounded-lg bg-[var(--color-nn-surface-high)] border border-white/[0.08] flex items-center justify-center text-[var(--color-nn-primary)] shrink-0">
                         <ForkKnife className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium leading-tight truncate">
                           {d.name}
                         </p>
-                        <p className="text-[11px] text-clinical-zinc capitalize mt-0.5">
+                        <p className="text-[11px] text-[var(--color-nn-on-surface-variant)] capitalize mt-0.5">
                           {d.kitchen} kitchen
                         </p>
                       </div>
@@ -398,7 +398,7 @@ export default function MobileSearchSheet({
                           [BLOCKED]
                         </span>
                       ) : (
-                        <span className="text-xs text-clinical-zinc-muted capitalize shrink-0">
+                        <span className="text-xs text-[var(--color-nn-secondary)] capitalize shrink-0">
                           {d.kitchen}
                         </span>
                       )}
@@ -412,7 +412,7 @@ export default function MobileSearchSheet({
           {/* Route Groups */}
           {Object.entries(filteredRouteGroups).map(([groupName, items]) => (
             <div key={groupName}>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-clinical-zinc-muted mb-2 px-1">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-nn-secondary)] mb-2 px-1">
                 {groupName}
               </p>
               <ul className="space-y-1">
@@ -425,7 +425,7 @@ export default function MobileSearchSheet({
                         onClick={() => go(r.to, r.label)}
                         className="w-full min-h-[48px] px-3 py-2.5 rounded-xl flex items-center gap-3 text-left text-white hover:bg-white/5 active:bg-white/10 transition-colors"
                       >
-                        <div className="h-9 w-9 rounded-lg bg-clinical-surface-elevated border border-clinical-border flex items-center justify-center text-clinical-gold shrink-0">
+                        <div className="h-9 w-9 rounded-lg bg-[var(--color-nn-surface-high)] border border-white/[0.08] flex items-center justify-center text-[var(--color-nn-primary)] shrink-0">
                           <RouteIcon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -444,14 +444,14 @@ export default function MobileSearchSheet({
           {/* Empty State */}
           {dishItems.length === 0 && Object.keys(filteredRouteGroups).length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-sm text-clinical-zinc">
+              <p className="text-sm text-[var(--color-nn-on-surface-variant)]">
                 No matches found{query ? ` for "${query}"` : ""}.
               </p>
               {selectedProtocol && (
                 <button
                   type="button"
                   onClick={() => setSelectedProtocol(null)}
-                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-clinical-gold hover:underline"
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-nn-primary)] hover:underline"
                 >
                   Clear {PROTOCOL_LABELS[selectedProtocol]} protocol filter
                 </button>
