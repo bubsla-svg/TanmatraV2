@@ -94,7 +94,7 @@ export default function V2Rewards() {
 
   if (unauthorized) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="content padx tc" style={{ padding: "72px 24px" }}>
             <i className="ph-fill ph-wallet safc" style={{ fontSize: 40 }} />
@@ -111,7 +111,7 @@ export default function V2Rewards() {
 
   if (loading) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -208,7 +208,7 @@ export default function V2Rewards() {
   const redeemedCount = referral?.redemptions.length ?? 0;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -226,7 +226,7 @@ export default function V2Rewards() {
           </p>
 
           {/* Referral code */}
-          <div className="card mt16">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt16">
             <div className="fx ac gap8 mb10">
               <i className="ph-fill ph-gift safc" style={{ fontSize: 17 }} />
               <span className="tt">Your referral code</span>
@@ -262,7 +262,7 @@ export default function V2Rewards() {
           </div>
 
           {/* Credit balance */}
-          <div className="card mt12">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt12">
             <div className="fx ac gap8 mb6">
               <i className="ph-fill ph-wallet sagec" style={{ fontSize: 17 }} />
               <span className="tt">Credit balance</span>
@@ -272,7 +272,7 @@ export default function V2Rewards() {
           </div>
 
           {/* Redeem a code */}
-          <div className="card mt12">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt12">
             <div className="fx ac gap8 mb10">
               <i className="ph-fill ph-ticket safc" style={{ fontSize: 17 }} />
               <span className="tt">Have a code?</span>
@@ -296,7 +296,7 @@ export default function V2Rewards() {
           </div>
 
           {/* Inbox */}
-          <div className="card mt12">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt12">
             <div className="fx ac jb wrap gap8 mb10">
               <div className="fx ac gap8">
                 <i className="ph-fill ph-bell safc" style={{ fontSize: 17 }} />
@@ -323,13 +323,10 @@ export default function V2Rewards() {
                 return (
                   <div
                     key={n.id}
-                    className="fx gap12 mb8"
+                    className="fx gap12 mb8 rounded-xl border border-white/[0.06] bg-white/[0.02]"
                     style={{
                       alignItems: "flex-start",
                       padding: 12,
-                      borderRadius: 10,
-                      border: "1px solid var(--ln)",
-                      background: "var(--s2)",
                     }}
                   >
                     <div
@@ -357,7 +354,7 @@ export default function V2Rewards() {
           </div>
 
           {/* Birthday & anniversary */}
-          <div className="card mt12">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt12">
             <div className="fx ac gap8 mb6">
               <i className="ph-fill ph-cake" style={{ color: "var(--dgr)", fontSize: 17 }} />
               <span className="tt">Birthday &amp; anniversary</span>
@@ -402,7 +399,7 @@ export default function V2Rewards() {
           </div>
 
           {/* Credit history */}
-          <div className="card mt12">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt12">
             <div className="fx ac gap8 mb10">
               <i className="ph-fill ph-receipt fntc" style={{ fontSize: 17 }} />
               <span className="tt">Credit history</span>
