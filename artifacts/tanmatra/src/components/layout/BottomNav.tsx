@@ -178,7 +178,7 @@ export function MoreSheetTrigger({ className }: { className?: string }) {
         aria-label="Open all sections menu"
         className={
           className ??
-          "inline-flex items-center justify-center h-12 w-12 rounded-md text-clinical-zinc hover:text-clinical-gold hover:bg-clinical-gold/10 transition-colors touch-target-48"
+          "inline-flex items-center justify-center h-12 w-12 rounded-md text-white/45 hover:text-[var(--tnm-action)] hover:bg-[var(--tnm-action)]/10 transition-colors touch-target-48"
         }
       >
         <DotsThree className="w-6 h-6" weight="bold" aria-hidden />
@@ -199,14 +199,14 @@ function MoreSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-[88vw] max-w-sm bg-clinical-surface border-clinical-border p-0 flex flex-col"
+        className="w-[88vw] max-w-sm bg-[var(--tnm-surface-ink-2)] border-white/10 p-0 flex flex-col"
       >
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-clinical-border">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-white/10">
           <SheetTitle className="text-white text-base font-serif flex items-center justify-between">
             Explore Tanmatra
             <SheetClose
               aria-label="Close menu"
-              className="text-clinical-zinc hover:text-white -mr-1 inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-clinical-gold/40"
+              className="text-white/45 hover:text-white -mr-1 inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-[var(--tnm-action)]/40"
             >
               <X className="w-4 h-4" />
             </SheetClose>
@@ -217,12 +217,12 @@ function MoreSheet({
           <Link
             to="/login"
             onClick={() => onOpenChange(false)}
-            className="flex items-center gap-3 rounded-lg border border-clinical-gold/30 bg-clinical-gold/10 px-4 py-3 min-h-[52px] active:bg-clinical-gold/15"
+            className="flex items-center gap-3 rounded-lg border border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/10 px-4 py-3 min-h-[52px] active:bg-[var(--tnm-action)]/15"
           >
-            <SignIn className="w-4 h-4 text-clinical-gold" />
+            <SignIn className="w-4 h-4 text-[var(--tnm-action)]" />
             <div className="flex-1">
               <p className="text-sm text-white font-medium">Sign in</p>
-              <p className="text-[11px] text-clinical-zinc">
+              <p className="text-[11px] text-white/45">
                 Save preferences, track orders, earn rewards
               </p>
             </div>
@@ -230,7 +230,7 @@ function MoreSheet({
 
           {MORE_GROUPS.map((group) => (
             <div key={group.title}>
-              <p className="text-[10px] uppercase tracking-widest text-clinical-zinc-muted mb-2 px-1">
+              <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2 px-1">
                 {group.title}
               </p>
               <ul className="space-y-1">
@@ -243,11 +243,11 @@ function MoreSheet({
                         onClick={() => onOpenChange(false)}
                         className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-md text-white hover:bg-white/5 active:bg-white/10 transition-colors"
                       >
-                        <Icon className="w-4 h-4 text-clinical-gold shrink-0" />
+                        <Icon className="w-4 h-4 text-[var(--tnm-action)] shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm leading-tight">{item.label}</p>
                           {item.desc && (
-                            <p className="text-[11px] text-clinical-zinc leading-tight mt-0.5">
+                            <p className="text-[11px] text-white/45 leading-tight mt-0.5">
                               {item.desc}
                             </p>
                           )}
@@ -260,25 +260,25 @@ function MoreSheet({
             </div>
           ))}
 
-          <div className="pt-4 mt-2 border-t border-clinical-border space-y-2 text-[11px] text-clinical-zinc">
+          <div className="pt-4 mt-2 border-t border-white/10 space-y-2 text-[11px] text-white/45">
             <div className="flex items-center gap-2">
-              <EnvelopeSimple className="w-3 h-3 text-clinical-gold" />
+              <EnvelopeSimple className="w-3 h-3 text-[var(--tnm-action)]" />
               care@tanmatra.health
             </div>
             <div className="flex items-center gap-2">
-              <Phone className="w-3 h-3 text-clinical-gold" />
+              <Phone className="w-3 h-3 text-[var(--tnm-action)]" />
               +91 92892 13115
             </div>
             <div className="flex items-center gap-2 pt-1">
-              <ShieldCheck className="w-3 h-3 text-clinical-sage" />
+              <ShieldCheck className="w-3 h-3 text-[var(--color-clinical-sage)]" />
               ISO 22000 · FSSAI Lic. 22725926001018
             </div>
-            <div className="flex items-center gap-3 pt-1 text-[10px] text-clinical-zinc-muted">
-              <Link to="/privacy" onClick={() => onOpenChange(false)} className="hover:text-clinical-gold">
+            <div className="flex items-center gap-3 pt-1 text-[10px] text-white/45">
+              <Link to="/privacy" onClick={() => onOpenChange(false)} className="hover:text-[var(--tnm-action)]">
                 Privacy
               </Link>
               <span>&middot;</span>
-              <Link to="/terms" onClick={() => onOpenChange(false)} className="hover:text-clinical-gold">
+              <Link to="/terms" onClick={() => onOpenChange(false)} className="hover:text-[var(--tnm-action)]">
                 Terms
               </Link>
             </div>
@@ -320,7 +320,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-clinical-border bg-clinical-dark/95 backdrop-blur-xl pb-[var(--safe-bottom)] min-h-[var(--bottom-nav-height)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-[color-mix(in_srgb,var(--tnm-surface-ink)_96%,transparent)] backdrop-blur-xl pb-[var(--safe-bottom)] min-h-[var(--bottom-nav-height)]"
     >
       <ul className={cn("grid", isLoggedIn ? "grid-cols-5" : "grid-cols-4")}>
         {navItems.map((item) => {
@@ -336,8 +336,8 @@ export default function BottomNav() {
                 aria-current={active ? "page" : undefined}
                 className={`relative flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-1.5 text-[10px] font-medium tracking-wide transition-colors ${
                   active
-                    ? "text-clinical-gold"
-                    : "text-clinical-zinc hover:text-white"
+                    ? "text-[var(--tnm-action)]"
+                    : "text-white/45 hover:text-white/70"
                 }`}
               >
                 <Icon
@@ -348,14 +348,14 @@ export default function BottomNav() {
                 <span>{item.label}</span>
                 {showBadge && (
                   <Badge
-                    className="absolute top-1 right-[22%] h-4 min-w-4 px-1 text-[9px] bg-clinical-gold text-action-text border-0 font-bold leading-none"
+                    className="absolute top-1 right-[22%] h-4 min-w-4 px-1 text-[9px] bg-[var(--tnm-action)] text-black border-0 font-bold leading-none"
                     aria-label={`${totalQuantity} items in cart`}
                   >
                     {totalQuantity}
                   </Badge>
                 )}
                 {active && (
-                  <span className="absolute top-0 inset-x-6 h-0.5 rounded-b bg-clinical-gold" />
+                  <span className="absolute top-0 inset-x-6 h-0.5 rounded-b bg-[var(--tnm-action)]" />
                 )}
               </Link>
             </li>
