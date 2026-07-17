@@ -867,30 +867,24 @@ export default function V2Dish() {
 
       {/* ── Fixed Bottom Action Bar ──────────────────────────────────── */}
       <div className="fixed bottom-0 w-full z-50 backdrop-blur-xl border-t border-white/10" style={{ background: "color-mix(in srgb, var(--tnm-surface-ink) 95%, transparent)" }}>
-        {/* allergen safety strip */}
-        <div className="px-4 py-2 flex items-center gap-2 border-b"
-          style={{ background: "color-mix(in srgb, var(--pdp-error-container) 20%, transparent)", borderColor: "color-mix(in srgb, var(--pdp-error-container) 10%, transparent)" }}>
-          <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-on-error)] uppercase shrink-0" style={{ fontFamily: "Geist, sans-serif" }}>
-            Allergen Safety:
-          </span>
-          <AllergenSummaryValue meal={meal} className="text-[15px] leading-5 text-[var(--pdp-on-surface)] truncate" />
-        </div>
         {/* CTA row */}
-        <div className="px-4 py-4 flex items-center justify-between gap-4 max-w-3xl mx-auto">
-          <div className="flex flex-col min-w-0">
-            <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--tnm-action)] uppercase truncate" style={{ fontFamily: "Geist, sans-serif" }}>
-              {meal.name}
+        <div className="px-4 py-3 flex items-center gap-3 max-w-3xl mx-auto">
+          {/* price block */}
+          <div className="flex flex-col justify-center w-[88px] shrink-0">
+            <span className="text-[11px] leading-4 font-medium text-[var(--pdp-secondary)] uppercase tracking-wide" style={{ fontFamily: "Geist, sans-serif" }}>
+              {inRdPlanRotation ? "In plan" : "Price"}
             </span>
-            <span className="text-[15px] leading-5 text-white font-semibold">
-              {inRdPlanRotation ? "Included in plan" : F(calculatedUnitPrice)}
+            <span className="text-[20px] leading-6 text-white font-bold mt-0.5">
+              {inRdPlanRotation ? "—" : F(calculatedUnitPrice)}
             </span>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          {/* buttons — fill remaining width */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             {customizations.length > 0 && (
               <button
                 type="button"
                 onClick={() => setCustomizerOpen(true)}
-                className="min-w-[44px] min-h-[44px] px-4 py-2 rounded-lg border border-white/10 text-white font-semibold text-[17px] leading-6 hover:bg-white/10 transition-colors"
+                className="h-[52px] px-5 rounded-xl border border-white/10 text-white font-semibold text-[15px] leading-5 hover:bg-white/10 transition-colors shrink-0"
                 style={{ background: "var(--tnm-surface-ink-2)" }}
               >
                 Customise
@@ -900,10 +894,10 @@ export default function V2Dish() {
               type="button"
               onClick={handleAddToOrder}
               disabled={match?.blocked === true}
-              className="min-w-[44px] min-h-[44px] px-6 py-2 rounded-lg text-black font-bold text-[17px] leading-6 relative overflow-hidden group transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              className="h-[52px] flex-1 min-w-0 rounded-xl text-black font-bold text-[17px] leading-6 relative overflow-hidden transition-colors disabled:opacity-40 disabled:pointer-events-none"
               style={{
                 background: "var(--tnm-action)",
-                boxShadow: "0px 8px 24px color-mix(in srgb, var(--tnm-action) 25%, transparent)",
+                boxShadow: "0px 6px 20px color-mix(in srgb, var(--tnm-action) 25%, transparent)",
               }}
             >
               <div className="absolute inset-x-0 top-0 h-px bg-white/40" />
