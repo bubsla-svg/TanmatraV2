@@ -231,12 +231,19 @@
   --radius-btn: 12px;
   --radius-card: 16px;
   --radius-input: 11px;
+  --radius-sheet: 24px;
   --radius-pill: 999px;
 
+  /* ─── Elevation (soft, layered; never paired with heavy borders) ─── */
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.22);
+  --shadow-overlay: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 14px rgba(0, 0, 0, 0.32);
+  --shadow-sheet: 0 -6px 14px rgba(0, 0, 0, 0.4);
+
   /* ─── Typography Visual Pairing ─── */
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
 
   /* ─── Nocturnal Nourishment (Stitch design system · assets/106b16df…) ───
      Approved brand tokens ("Faithful Stitch") for the Stitch-designed screens.
@@ -269,6 +276,7 @@
   --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0, 1);
   --ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1); /* iOS sheet curve */
 
   /* ─── Z-index scale ─── */
   --z-base: 0;
@@ -312,6 +320,41 @@
     text-rendering: optimizeLegibility;
   }
   body { background-color: var(--bg); color: var(--text-primary); }
+
+  h1, h2, h3 { text-wrap: balance; }
+
+  /* ─── Elevate overlays (referenced by button/badge primitives) ─── */
+  .hover-elevate, .active-elevate-2 { position: relative; }
+  .hover-elevate::after, .active-elevate-2::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+  .hover-elevate:hover::after { opacity: 0.06; }
+  .active-elevate-2:active::after { opacity: 0.11; }
+
+  /* ─── Spring press state (apply to every tappable primitive) ─── */
+  @media (prefers-reduced-motion: no-preference) {
+    .press-spring { transition: transform var(--duration-fast) var(--ease-spring); }
+    .press-spring:active { transform: scale(0.97); }
+  }
+
+  /* ─── Inline-validation shake (reduced-motion safe; re-armed via onAnimationEnd) ─── */
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes shake-x {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); }
+    }
+    .animate-shake { animation: shake-x 320ms ease-in-out; }
+  }
 
   /* ─── Type scale (the canonical sizes for every screen) ─── */
   .text-display {

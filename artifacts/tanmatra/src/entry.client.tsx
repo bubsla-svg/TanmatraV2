@@ -17,8 +17,11 @@ startTransition(() => {
       <HydratedRouter />
     </StrictMode>
   );
-  // Belt-and-suspenders: also cleared by useEffect in Root after mount
-  window.__clearTanmatraLoader?.();
+  // NOTE: do NOT clear the splash loader here. This callback runs before
+  // hydration commits, so mutating the loader's class ("hidden") makes the
+  // server-rendered DOM disagree with React's expected attributes and logs a
+  // hydration-mismatch warning on every page load. Root's useEffect clears it
+  // right after mount; the inline script's 15s auto-dismiss is the fallback.
 });
 
 // Register service worker for offline support and "Add to Home Screen" eligibility.

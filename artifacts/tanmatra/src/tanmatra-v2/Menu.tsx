@@ -1015,7 +1015,8 @@ export default function V2Menu() {
       {/* Customization sheet */}
       {customizingDish && activeVariant && (
         <div className="bg-black/60" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setCustomizingDish(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--s1)", borderRadius: "20px 20px 0 0", borderTop: "1px solid var(--ln2)", padding: 16, maxHeight: "85vh", overflowY: "auto" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--s1)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", borderTop: "1px solid var(--ln2)", padding: 16, paddingBottom: "calc(16px + var(--safe-bottom))", maxHeight: "min(85vh, 85dvh)", overflowY: "auto" }}>
+            <div style={{ margin: "0 auto 10px", height: 6, width: 40, borderRadius: 999, background: "var(--ln2)" }} aria-hidden="true" />
             <div className="fx ac jb mb10">
               <div className="h2" style={{ fontSize: 18 }}>Customise {customizingDish.name}</div>
               <button className="iconbtn" onClick={() => setCustomizingDish(null)} aria-label="Close"><i className="ph-bold ph-x" /></button>
