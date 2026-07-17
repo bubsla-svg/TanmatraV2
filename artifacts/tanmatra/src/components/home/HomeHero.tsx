@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   ArrowRight,
@@ -10,6 +11,7 @@ import {
   Drop,
   Heart,
   Sparkle,
+  Lightning,
   type Icon,
 } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
@@ -19,8 +21,9 @@ interface HomeHeroProps {
   onHelpChoose: () => void;
 }
 
+const CITY_KEY = "tanmatra:deliver-city";
+
 // Slugs must match a real plan in lib/rdPlans.ts — no fabricated programs.
-// ("Keto Reset" was dropped; no keto plan exists in the catalog.)
 const PROGRAM_CHIPS: { icon: Icon; label: string; planSlug: string }[] = [
   { icon: Scales, label: "Weight Loss", planSlug: "weight-loss-jumpstart" },
   { icon: Barbell, label: "Muscle Gain", planSlug: "lean-muscle-builder" },
@@ -28,150 +31,162 @@ const PROGRAM_CHIPS: { icon: Icon; label: string; planSlug: string }[] = [
   { icon: Heart, label: "PCOS Care", planSlug: "pcos-balance" },
 ];
 
-// Hard, verifiable credentials only — same claims published in HomeTrustWall
-// (ISO cert + FSSAI licence). No vague filler like "Safe & Hygienic".
-const TRUST_GRID: { icon: Icon; label: string }[] = [
-  { icon: Leaf, label: "Dietitian Designed" },
-  { icon: ShieldCheck, label: "ISO 22000:2018 Kitchen" },
-  { icon: SealCheck, label: "FSSAI Licensed" },
-  { icon: Truck, label: "Delivered Fresh Daily" },
+const FEATURE_CHIPS: { icon: Icon; label: string }[] = [
+  { icon: SealCheck, label: "Dietitian Designed" },
+  { icon: Leaf, label: "Freshly Prepared" },
+  { icon: Lightning, label: "Low GI" },
+  { icon: ShieldCheck, label: "ISO 22000 Kitchen" },
+  { icon: Truck, label: "NCR Delivery" },
 ];
 
 export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
   const navigate = useNavigate();
+  const [city, setCity] = useState("Noida");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CITY_KEY);
+      if (saved) setCity(saved);
+    } catch {
+      /* private mode — default city */
+    }
+  }, []);
+
   return (
-    <section className="w-full bg-[var(--tnm-surface-ink)] pt-32 pb-20 md:pt-36 md:pb-28 px-4 md:px-6 relative overflow-hidden">
-      {/* Ambient food-imagery wash — rich but low-contrast so copy stays legible */}
-      <img
-        src="/hero-food.jpg"
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover opacity-[0.07] blur-2xl scale-110 pointer-events-none select-none"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-[var(--tnm-surface-ink)]/40 via-transparent to-[var(--tnm-surface-ink)] pointer-events-none" />
-      {/* Single warm amber glow (no AI-purple mesh) */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[var(--tnm-action)]/12 to-transparent rounded-full blur-3xl pointer-events-none" />
+    <section className="w-full">
+      {/* ── 1. Full-bleed hero image ──────────────────────────────────── */}
+      <div className="relative h-[400px] overflow-hidden -mx-0 mt-[88px]">
+        <img
+          src="/hero-food.jpg"
+          alt="Fresh clinical meals"
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+        />
+        {/* Dark gradient — top for legibility, bottom fade into bg */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/20 to-[var(--tnm-surface-ink)]" />
 
-      <div className="mx-auto max-w-[540px] md:max-w-[820px] relative z-10">
-        {/* Double-Bezel (Doppelrand) Outer Shell Container */}
-        <div className="p-2 rounded-[2.5rem] bg-white/[0.04] border border-white/10 shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
-          {/* Inner Core Enclosure */}
-          <div className="rounded-[calc(2.5rem-0.5rem)] border border-white/10 bg-gradient-to-b from-[var(--tnm-surface-ink)] via-[var(--tnm-surface-ink-2)] to-black/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden">
-            {/* Top Hero Content */}
-            <div className="p-8 md:p-12 text-center flex flex-col items-center">
-              {/* Eyebrow Badge Tag */}
-              <div className="mb-6 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--tnm-action)] flex items-center gap-1.5 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
-                <Sparkle size={12} weight="fill" className="text-[var(--tnm-action)] shrink-0" />
-                <span>Clinical Nutrition Engine</span>
-              </div>
+        {/* Hero copy — city-aware headline */}
+        <div className="absolute inset-0 flex flex-col justify-center px-5 pt-8">
+          <p className="text-[var(--tnm-action)] font-bold text-[13px] leading-4 mb-2 uppercase tracking-wide">
+            Now serving {city}
+          </p>
+          <h1 className="text-[30px] font-extrabold text-white tracking-tight leading-[1.1]">
+            Clinical nutrition,
+            <br />delivered fresh daily.
+          </h1>
+          <p className="mt-2 text-[14px] text-white/70 font-normal leading-5 max-w-[280px]">
+            Dietitian-designed meals for your health goal — cooked in an ISO kitchen, delivered to your door.
+          </p>
+        </div>
+      </div>
 
-              {/* Top Curved Dish Imagery with Nested Ring Bezel */}
-              <div className="relative p-1.5 rounded-full bg-white/5 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] mb-8 group">
-                <div className="relative w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden border border-white/20 ring-4 ring-black/40">
-                  <img
-                    src="/hero-food.jpg"
-                    alt="Dietitian designed therapeutic meal bowl"
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                    loading="eager"
-                  />
-                </div>
-              </div>
+      <div className="px-4">
+        {/* ── 2. CTA row ────────────────────────────────────────────────── */}
+        <div className="mt-5 flex flex-col gap-3">
+          {/* Primary: Browse Menu — amber pill, full width */}
+          <button
+            type="button"
+            onClick={() => {
+              track("home_cta_click", { cta: "browse_menu", source: "hero" });
+              onSeeMenu();
+            }}
+            className="w-full min-h-[52px] rounded-full font-semibold text-[15px] leading-5 text-black flex items-center justify-between px-6 active:scale-[0.98] transition-all"
+            style={{
+              background: "var(--tnm-action)",
+              boxShadow: "0 4px 20px color-mix(in srgb, var(--tnm-action) 35%, transparent)",
+            }}
+          >
+            <span>Browse Menu</span>
+            <span
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: "color-mix(in srgb, black 15%, transparent)" }}
+            >
+              <ArrowRight className="w-4 h-4 text-black" weight="bold" />
+            </span>
+          </button>
 
-              {/* Headline & Sub-headline */}
-              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white leading-[1.1] max-w-xl">
-                Healthy meals,
-                <br />
-                <span className="bg-gradient-to-r from-[var(--tnm-action)] via-amber-200 to-[var(--tnm-action)] bg-clip-text text-transparent">
-                  engineered for you.
-                </span>
-              </h1>
+          {/* Secondary: Help Me Choose — ghost pill */}
+          <button
+            type="button"
+            onClick={() => {
+              track("home_cta_click", { cta: "help_choose", source: "hero" });
+              onHelpChoose();
+            }}
+            className="w-full min-h-[52px] rounded-full font-semibold text-[15px] leading-5 text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all border border-white/15"
+            style={{ background: "color-mix(in srgb, var(--tnm-surface-ink-2) 60%, transparent)" }}
+          >
+            <Sparkle className="w-4 h-4 text-[var(--tnm-action)]" weight="fill" />
+            <span>Help Me Choose</span>
+          </button>
+        </div>
 
-              <p className="mt-4 text-sm md:text-base text-white/70 leading-relaxed max-w-md font-normal">
-                Precision-balanced clinical meals designed by dietitians, cooked fresh daily, and delivered direct to your door.
-              </p>
+        {/* ── 3. Clinical Programs 2×2 grid ─────────────────────────────── */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <span
+              className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/50"
+              style={{ fontFamily: "Geist, sans-serif" }}
+            >
+              Clinical Health Programs
+            </span>
+            <button
+              type="button"
+              onClick={() => navigate("/plans")}
+              className="text-[12px] font-semibold text-[var(--tnm-action)] hover:underline"
+            >
+              See All
+            </button>
+          </div>
 
-              {/* Primary CTAs — trial is THE money action; menu is the
-                  secondary path; the quiz demotes to a tertiary text link. */}
-              <div className="mt-8 w-full max-w-md flex flex-col sm:flex-row gap-3.5">
+          <div className="grid grid-cols-2 gap-3">
+            {PROGRAM_CHIPS.map((p) => {
+              const Icon = p.icon;
+              return (
                 <button
+                  key={p.label}
                   type="button"
                   onClick={() => {
-                    track("home_cta_click", { cta: "start_trial", source: "hero" });
-                    navigate("/subscribe?trial=1");
+                    track("home_program_tap", { program: p.planSlug });
+                    navigate(`/plans/${p.planSlug}`);
                   }}
-                  className="group relative flex-1 min-h-[52px] px-6 py-3.5 rounded-full font-bold text-sm tracking-wide bg-[var(--tnm-action)] text-black hover:brightness-110 active:scale-[0.98] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex items-center justify-between shadow-[0_8px_24px_rgba(251,191,36,0.2)]"
+                  className="flex flex-col items-center justify-center text-center gap-3 p-5 rounded-xl border border-white/[0.08] hover:border-[var(--tnm-action)]/30 hover:bg-white/5 active:scale-[0.97] transition-all group"
+                  style={{ background: "var(--tnm-surface-ink-2)" }}
                 >
-                  <span className="pl-2">Start 3-Day Trial</span>
-                  <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center group-hover:translate-x-1 group-hover:-translate-y-[1px] transition-transform duration-300">
-                    <ArrowRight className="w-4 h-4 text-black" weight="bold" />
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={onSeeMenu}
-                  className="flex-1 min-h-[52px] px-6 py-3.5 rounded-full font-semibold text-sm tracking-wide border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:border-white/25 active:scale-[0.98] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex items-center justify-center"
-                >
-                  Browse Menu
-                </button>
-              </div>
-
-              {/* Honest anchor (catalog's own framing) + tertiary quiz path */}
-              <p className="mt-3.5 text-xs text-white/55 font-medium">
-                One-time pack · sample before you subscribe
-              </p>
-              <button
-                type="button"
-                onClick={onHelpChoose}
-                className="mt-2 text-xs font-semibold text-white/70 underline decoration-white/25 underline-offset-4 hover:text-white transition-colors"
-              >
-                Not sure? Help me choose
-              </button>
-            </div>
-
-            {/* Programs Section */}
-            <div className="p-6 md:p-8 border-t border-white/5 bg-black/30 backdrop-blur-xl">
-              <span className="text-[10px] font-semibold text-white/50 uppercase tracking-[0.2em] block mb-4">
-                Clinical Health Programs
-              </span>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {PROGRAM_CHIPS.map((p) => (
-                  <button
-                    key={p.label}
-                    type="button"
-                    onClick={() => navigate(`/plans/${p.planSlug}`)}
-                    className="p-1 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-[var(--tnm-action)]/30 hover:bg-white/[0.08] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group text-left"
-                  >
-                    <div className="p-3 rounded-[calc(1rem-0.25rem)] bg-black/20 flex flex-col items-center justify-center text-center">
-                      <p.icon className="w-6 h-6 text-[var(--tnm-action)] mb-2 group-hover:scale-110 transition-transform duration-300" weight="bold" />
-                      <span className="text-xs font-semibold text-white/90 leading-tight">
-                        {p.label}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2x2 Trust Grid */}
-            <div className="p-6 md:p-8 border-t border-white/5 bg-black/50">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {TRUST_GRID.map((t) => (
                   <div
-                    key={t.label}
-                    className="p-1 rounded-xl bg-white/[0.02] border border-white/5 flex items-center"
+                    className="w-11 h-11 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                    style={{
+                      background: "color-mix(in srgb, var(--tnm-action) 12%, transparent)",
+                    }}
                   >
-                    <div className="w-full p-2.5 rounded-[calc(0.75rem-0.25rem)] bg-white/[0.02] flex items-center gap-2.5">
-                      <t.icon className="w-4 h-4 text-[var(--tnm-action)] shrink-0" weight="bold" />
-                      <span className="text-xs font-medium text-white/80 leading-tight">
-                        {t.label}
-                      </span>
-                    </div>
+                    <Icon
+                      className="w-5 h-5 text-[var(--tnm-action)]"
+                      weight="bold"
+                    />
                   </div>
-                ))}
-              </div>
-            </div>
+                  <span className="text-[13px] font-semibold text-white leading-tight">
+                    {p.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
+        </div>
+
+        {/* ── 4. Feature highlight chips ────────────────────────────────── */}
+        <div className="mt-5 flex flex-wrap gap-2 pb-2">
+          {FEATURE_CHIPS.map((chip) => {
+            const Icon = chip.icon;
+            return (
+              <div
+                key={chip.label}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/[0.08]"
+                style={{ background: "var(--tnm-surface-ink-2)" }}
+              >
+                <Icon className="w-3.5 h-3.5 text-[var(--tnm-action)] shrink-0" weight="bold" />
+                <span className="text-[12px] font-medium text-white/80">{chip.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
