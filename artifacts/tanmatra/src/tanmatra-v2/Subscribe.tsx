@@ -156,11 +156,13 @@ interface ScheduleDay {
 
 // Human step titles for the plan-builder header — no dev-speak ("Stepper —
 // Step 0"), so the buyer always knows where they are and what's next.
+// Duration and billing cadence were the same axis (weekly/fortnightly/monthly),
+// so the old 8-step flow made the buyer pick it twice. Merged into one
+// "Choose your plan" step → 7 steps total, one cadence decision.
 const STEP_TITLES = [
   "Your plan",
   "Meals per week",
-  "Plan duration",
-  "Billing",
+  "Choose your plan",
   "Delivery schedule",
   "Week-1 preview",
   "Review order",
@@ -313,7 +315,7 @@ export default function V2Subscribe() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      if (step === 8) {
+      if (step === 7) {
         // Order placed — the draft has served its purpose.
         window.sessionStorage.removeItem(SUBSCRIBE_DRAFT_KEY);
         return;
@@ -782,7 +784,7 @@ export default function V2Subscribe() {
       });
 
       setSuccessOrderId(`sub-${result.subscription.id}`);
-      goToStep(8); // success screen step
+      goToStep(7); // success screen step
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       toast.error("Could not create subscription", { description: message });
@@ -872,7 +874,7 @@ export default function V2Subscribe() {
             onClick={() => {
               setIsTrial(true);
               setSlots({ breakfast: true, lunch: true, dinner: true });
-              goToStep(4); // Land straight on scheduling/checkout for Trial
+              goToStep(3); // Land straight on scheduling/checkout for Trial
             }}
             className="btn btn-s btn-blk w-full text-xs font-semibold"
             style={{ height: 40 }}
@@ -984,12 +986,26 @@ export default function V2Subscribe() {
 
   // Render S3 Duration (Step 2)
   const renderS3Duration = () => {
+    const priceFor = (c: SubscriptionCadence) =>
+      F_Paise(getCalculatedPricePaise(c, cycleMeals, false));
+    const OPTIONS: {
+      cad: SubscriptionCadence;
+      title: string;
+      desc: string;
+      unit: string;
+      best: boolean;
+      badge: string | null;
+    }[] = [
+      { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", unit: "/week", best: false, badge: null },
+      { cad: "fortnightly", title: "2-Week Plan", desc: "Billed bi-weekly · save 10% · stops after Week 2.", unit: "/2 weeks", best: false, badge: null },
+      { cad: "monthly", title: "6-Week Plan", desc: "Prepaid · save 15% · stops after Week 6.", unit: "/6 weeks", best: true, badge: "Best Value" },
+    ];
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h3 className="text-sm font-bold text-white/95">Select your plan duration</h3>
+          <h3 className="text-sm font-bold text-white/95">Choose your plan</h3>
           <p className="fine text-white/50 mt-1 leading-relaxed">
-            Commit longer to optimize metabolic health adaptations.
+            Your commitment length sets your billing cadence — one choice, no surprises. Longer plans save more.
           </p>
         </div>
 
@@ -1002,87 +1018,52 @@ export default function V2Subscribe() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {/* Card 1: 1 Week */}
-          <button
-            onClick={() => {
-              setCadence("weekly");
-              setSelectedBillingCadence("weekly");
-              goToStep(3);
-            }}
-            className={`card text-left flex justify-between items-center p-4 rounded-xl transition-all w-full border ${
-              selectedBillingCadence === "weekly"
-                ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
-                : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10 hover:bg-white/5"
-            }`}
-            style={{
-              borderColor: selectedBillingCadence === "weekly" ? "var(--saf)" : undefined,
-              background: selectedBillingCadence === "weekly" ? "var(--safd)" : undefined,
-            }}
-          >
-            <div>
-              <h4 className="text-sm font-bold text-white/90">1-Week Commitment</h4>
-              <p className="fine text-white/50 mt-1">Stops after Week 1 unless you choose to continue.</p>
-            </div>
-            <CaretRight className="w-4 h-4 text-white/40" />
-          </button>
-
-          {/* Card 2: 2 Weeks */}
-          <button
-            onClick={() => {
-              setCadence("fortnightly");
-              setSelectedBillingCadence("fortnightly");
-              goToStep(3);
-            }}
-            className={`card text-left flex justify-between items-center p-4 rounded-xl transition-all w-full border ${
-              selectedBillingCadence === "fortnightly"
-                ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
-                : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10 hover:bg-white/5"
-            }`}
-            style={{
-              borderColor: selectedBillingCadence === "fortnightly" ? "var(--saf)" : undefined,
-              background: selectedBillingCadence === "fortnightly" ? "var(--safd)" : undefined,
-            }}
-          >
-            <div>
-              <h4 className="text-sm font-bold text-white/90">2-Week Commitment</h4>
-              <p className="fine text-white/50 mt-1">Stops after Week 2 unless you choose to continue.</p>
-            </div>
-            <CaretRight className="w-4 h-4 text-white/40" />
-          </button>
-
-          {/* Card 3: 6-Week Protocol (monthly cadence) */}
-          <button
-            onClick={() => {
-              setCadence("monthly");
-              setSelectedBillingCadence("monthly");
-              goToStep(3);
-            }}
-            className={`card text-left flex justify-between items-center p-4 rounded-xl transition-all w-full border ${
-              selectedBillingCadence === "monthly"
-                ? "border-[var(--tnm-action)] bg-[var(--tnm-action)]/10"
-                : "border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/5 hover:bg-[var(--tnm-action)]/10"
-            }`}
-            style={{
-              borderColor: "var(--saf)",
-              background: selectedBillingCadence === "monthly"
-                ? "color-mix(in srgb, var(--saf) 12%, transparent)"
-                : "var(--safd)",
-            }}
-          >
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h4 className="text-sm font-bold text-white/95">6-Week Plan</h4>
-                <span className="text-[9px] uppercase font-bold text-black bg-[var(--tnm-action)] px-1.5 py-0.5 rounded tracking-wide">
-                  Best Value
-                </span>
-              </div>
-              <p className="fine text-white/60 mt-1">Stops after Week 6 unless you choose to continue.</p>
-            </div>
-            <CaretRight className="w-4 h-4 text-[var(--tnm-action)]" />
-          </button>
+          {OPTIONS.map((o) => {
+            const on = selectedBillingCadence === o.cad;
+            return (
+              <button
+                key={o.cad}
+                aria-pressed={on}
+                onClick={() => {
+                  setCadence(o.cad);
+                  setSelectedBillingCadence(o.cad);
+                  goToStep(3);
+                }}
+                className="text-left flex justify-between items-center gap-3 p-4 rounded-xl transition-all w-full border active:scale-[0.99]"
+                style={{
+                  borderColor: on ? "var(--saf)" : o.best ? "color-mix(in srgb, var(--saf) 30%, transparent)" : "var(--ln2)",
+                  background: on || o.best ? "var(--safd)" : "var(--s2)",
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h4 className="text-sm font-bold text-white/95">{o.title}</h4>
+                    {o.badge && (
+                      <span className="text-[9px] uppercase font-bold text-black bg-[var(--tnm-action)] px-1.5 py-0.5 rounded tracking-wide">
+                        {o.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="fine text-white/55 mt-1">{o.desc}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="tnm-data text-sm font-bold text-white/95 font-mono">{priceFor(o.cad)}</div>
+                  <div className="fine text-[10px] text-white/45">{o.unit}</div>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="flex gap-3 mt-6">
+        {/* UPI Autopay mandate disclosure verbatim (carried from the merged billing step) */}
+        <div className="card bg-white/[0.02] border border-white/5 p-4 rounded-xl flex gap-3 text-xs leading-relaxed text-white/80">
+          <Info className="w-5 h-5 text-[var(--tnm-action)] shrink-0 mt-0.5" />
+          <p className="fine">
+            Weekly and bi-weekly plans use UPI Autopay. You'll get a notification at least 24 hours before each charge, and you can pause or cancel anytime in one tap. Setting up Autopay is free.
+          </p>
+        </div>
+
+        <div className="flex gap-3 mt-2">
           <button
             onClick={() => goToStep(1)}
             className="btn btn-s btn-blk px-5"
@@ -1095,136 +1076,7 @@ export default function V2Subscribe() {
     );
   };
 
-  // Render S4 Billing (Step 3) - No option preselected by default
-  const renderS4Billing = () => {
-    const weeklyPricePaise = getCalculatedPricePaise("weekly", cycleMeals, false);
-    const fortnightlyPricePaise = getCalculatedPricePaise("fortnightly", cycleMeals, false);
-    const monthlyPricePaise = getCalculatedPricePaise("monthly", cycleMeals, false);
-
-    const weeklyPriceStr = F_Paise(weeklyPricePaise);
-    const fortnightlyPriceStr = F_Paise(fortnightlyPricePaise);
-    const monthlyPriceStr = F_Paise(monthlyPricePaise);
-    
-    return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h3 className="text-sm font-bold text-white/95">Choose your billing interval</h3>
-          <p className="fine text-white/50 mt-1 leading-relaxed">
-            Select a cadence to set up your billing authorization. All plans remain flexible.
-          </p>
-        </div>
-
-        {/* UPI Autopay mandate disclosure verbatim */}
-        <div className="card bg-white/[0.02] border border-white/5 p-4 rounded-xl flex gap-3 text-xs leading-relaxed text-white/80">
-          <Info className="w-5 h-5 text-[var(--tnm-action)] shrink-0 mt-0.5" />
-          <p className="fine">
-            Weekly and bi-weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge, and you can pause or cancel anytime in one tap. Setting up Autopay is free.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {/* Option 1: Weekly Billing */}
-          <button
-            onClick={() => setSelectedBillingCadence("weekly")}
-            className={`card text-left p-4 rounded-xl border transition-all w-full flex items-center justify-between ${
-              selectedBillingCadence === "weekly"
-                ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
-                : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10"
-            }`}
-            style={{
-              borderColor: selectedBillingCadence === "weekly" ? "var(--saf)" : undefined,
-              background: selectedBillingCadence === "weekly" ? "var(--safd)" : undefined,
-            }}
-          >
-            <div className="flex-1 pr-3">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-bold text-white/90">Pay Weekly</span>
-                <span className="text-[9px] uppercase font-bold text-[var(--tnm-action)]/80 bg-[var(--tnm-action)]/10 px-1.5 py-0.5 rounded tracking-wide">
-                  Recommended for flexibility
-                </span>
-              </div>
-              <p className="fine text-white/45 mt-1">Pay every 7 days via UPI Autopay.</p>
-              <p className="fine text-[9px] text-[var(--tnm-action)]/85 mt-2 leading-relaxed">
-                Weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge, and you can pause or cancel anytime in one tap. Setting up Autopay is free.
-              </p>
-            </div>
-            <span className="tnm-data text-sm font-bold text-white/90 font-mono shrink-0">{weeklyPriceStr}</span>
-          </button>
-
-          {/* Option 2: Fortnightly Billing */}
-          <button
-            onClick={() => setSelectedBillingCadence("fortnightly")}
-            className={`card text-left p-4 rounded-xl border transition-all w-full flex items-center justify-between ${
-              selectedBillingCadence === "fortnightly"
-                ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
-                : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10"
-            }`}
-            style={{
-              borderColor: selectedBillingCadence === "fortnightly" ? "var(--saf)" : undefined,
-              background: selectedBillingCadence === "fortnightly" ? "var(--safd)" : undefined,
-            }}
-          >
-            <div className="flex-1 pr-3">
-              <span className="text-xs font-bold text-white/90">Pay Bi-Weekly</span>
-              <p className="fine text-white/45 mt-1">Prepay 10 meals (Save 10% total).</p>
-              <p className="fine text-[9px] text-[var(--tnm-action)]/85 mt-2 leading-relaxed">
-                Bi-weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge, and you can pause or cancel anytime in one tap. Setting up Autopay is free.
-              </p>
-            </div>
-            <span className="tnm-data text-sm font-bold text-white/90 font-mono shrink-0">{fortnightlyPriceStr}</span>
-          </button>
-
-          {/* Option 3: 6-Week Protocol Billing */}
-          <button
-            onClick={() => setSelectedBillingCadence("monthly")}
-            className={`card text-left p-4 rounded-xl border transition-all w-full flex items-center justify-between ${
-              selectedBillingCadence === "monthly"
-                ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
-                : "bg-[var(--tnm-surface-ink-2)] border-[var(--tnm-action)]/30 hover:bg-[var(--tnm-action)]/10"
-            }`}
-            style={{
-              borderColor: selectedBillingCadence === "monthly" ? "var(--saf)" : undefined,
-              background: selectedBillingCadence === "monthly" ? "var(--safd)" : undefined,
-            }}
-          >
-            <div className="flex-1 pr-3">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-white/95">Pay Full 6-Week Plan</span>
-                <span className="text-[9px] uppercase font-bold text-black bg-[var(--tnm-action)] px-1.5 py-0.5 rounded tracking-wide">
-                  Best Value
-                </span>
-              </div>
-              <p className="fine text-white/50 mt-1">One-time prepaid intent (Save 15% overall).</p>
-            </div>
-            <span className="tnm-data text-sm font-bold text-white/95 font-mono shrink-0">{monthlyPriceStr}</span>
-          </button>
-        </div>
-
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={() => goToStep(2)}
-            className="btn btn-s btn-blk px-5"
-            style={{ height: 44 }}
-          >
-            Back
-          </button>
-          <button
-            disabled={!selectedBillingCadence}
-            onClick={() => goToStep(4)}
-            className={`btn btn-p flex-1 flex items-center justify-center gap-1.5 font-bold ${
-              !selectedBillingCadence ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            style={{ height: 44 }}
-          >
-            Continue to schedule
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // Render S5 Schedule (Step 4)
+  // Render S5 Schedule (now Step 3 — Duration+Billing merged into Step 2)
   const renderS5Schedule = () => {
     return (
       <div className="flex flex-col gap-6">
@@ -1295,7 +1147,7 @@ export default function V2Subscribe() {
 
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() => goToStep(isTrial ? 0 : 3)}
+            onClick={() => goToStep(isTrial ? 0 : 2)}
             className="btn btn-s btn-blk px-5"
             style={{ height: 44 }}
           >
@@ -1303,7 +1155,7 @@ export default function V2Subscribe() {
           </button>
           <button
             disabled={!address.pincode || pincodeCheck.state !== "serviceable"}
-            onClick={() => goToStep(5)}
+            onClick={() => goToStep(4)}
             className={`btn btn-p flex-1 flex items-center justify-center gap-1.5 font-bold ${
               !address.pincode || pincodeCheck.state !== "serviceable" ? "opacity-50 cursor-not-allowed" : ""
             }`}
@@ -1408,14 +1260,14 @@ export default function V2Subscribe() {
 
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() => goToStep(4)}
+            onClick={() => goToStep(3)}
             className="btn btn-s btn-blk px-5"
             style={{ height: 44 }}
           >
             Back
           </button>
           <button
-            onClick={() => goToStep(6)}
+            onClick={() => goToStep(5)}
             className="btn btn-p flex-1 flex items-center justify-center gap-1.5 font-bold"
             style={{ height: 44 }}
           >
@@ -1568,7 +1420,7 @@ export default function V2Subscribe() {
 
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() => goToStep(5)}
+            onClick={() => goToStep(4)}
             className="btn btn-s btn-blk px-5"
             style={{ height: 44 }}
           >
@@ -1576,7 +1428,7 @@ export default function V2Subscribe() {
           </button>
           <button
             disabled={submitting || !addressComplete}
-            onClick={() => goToStep(7)} // Payment Step
+            onClick={() => goToStep(6)} // Payment Step
             className={`btn btn-p flex-1 flex items-center justify-center gap-1.5 font-bold ${
               submitting || !addressComplete ? "opacity-50 cursor-not-allowed" : ""
             }`}
@@ -1648,7 +1500,7 @@ export default function V2Subscribe() {
 
           <button
             type="button"
-            onClick={() => goToStep(6)}
+            onClick={() => goToStep(5)}
             className="btn btn-s btn-blk text-xs font-semibold"
             style={{ height: 40 }}
           >
@@ -1708,7 +1560,7 @@ export default function V2Subscribe() {
           <button
             type="button"
             onClick={() => {
-              goToStep(6); // Return to review to update fields
+              goToStep(5); // Return to review to update fields
               toast.info("Update contact or street details in the details card.");
             }}
             className="text-xs text-[var(--tnm-action)] font-bold uppercase tracking-wider"
@@ -1745,7 +1597,7 @@ export default function V2Subscribe() {
       <div className="max-w-[480px] mx-auto min-h-screen flex flex-col pb-24">
         {/* Stepper App Header */}
         <div className="appbar shrink-0">
-          {step > 0 && step < 8 ? (
+          {step > 0 && step < 7 ? (
             <button className="iconbtn" onClick={() => setStep(step - 1)} aria-label="Previous step">
               <ArrowLeft className="w-4 h-4" />
             </button>
@@ -1756,11 +1608,11 @@ export default function V2Subscribe() {
           )}
           <div className="abt">
             <span style={{ display: "block" }}>
-              {step === 8 ? "Order confirmed" : STEP_TITLES[step]}
+              {step === 7 ? "Order confirmed" : STEP_TITLES[step]}
             </span>
-            {step < 8 && (
+            {step < 7 && (
               <span className="lab" style={{ display: "block", marginTop: 2 }}>
-                Step {step + 1} of 8{isTrial ? " · Trial" : ""}
+                Step {step + 1} of 7{isTrial ? " · Trial" : ""}
               </span>
             )}
           </div>
@@ -1768,9 +1620,9 @@ export default function V2Subscribe() {
 
         {/* Wizard progress — always-visible sense of place (CRO: reduces
             abandonment from "how much longer?" uncertainty). */}
-        {step < 8 && (
+        {step < 7 && (
           <div className="segs padx shrink-0" aria-hidden="true" style={{ marginTop: 2 }}>
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 7 }).map((_, i) => (
               <span key={i} className={i <= step ? "seg on" : "seg"} />
             ))}
           </div>
@@ -1780,12 +1632,11 @@ export default function V2Subscribe() {
           {step === 0 && renderS1Recommendation()}
           {step === 1 && renderS2Frequency()}
           {step === 2 && renderS3Duration()}
-          {step === 3 && renderS4Billing()}
-          {step === 4 && renderS5Schedule()}
-          {step === 5 && renderS6Preview()}
-          {step === 6 && renderS7Review()}
-          {step === 7 && renderS8Payment()}
-          {step === 8 && renderSuccess()}
+          {step === 3 && renderS5Schedule()}
+          {step === 4 && renderS6Preview()}
+          {step === 5 && renderS7Review()}
+          {step === 6 && renderS8Payment()}
+          {step === 7 && renderSuccess()}
         </div>
 
         {/* Swap sheet modal overlay */}
@@ -1844,7 +1695,7 @@ export default function V2Subscribe() {
       </div>
 
       {/* Global StickyBottomBar integration (Step-locked wizard modes) */}
-      {step < 8 && (
+      {step < 7 && (
         <StickyBottomBar
           context="builder"
           step={step}
@@ -1854,12 +1705,10 @@ export default function V2Subscribe() {
               : step === 1
               ? `${weekMeals} meals configured`
               : step === 2
-              ? `Duration commitment setup`
+              ? `Plan & billing selected`
               : step === 3
-              ? `Billing selection interval`
-              : step === 4
               ? `Delivery starting ${firstDeliveryLabel}`
-              : step === 5
+              : step === 4
               ? `Review meal customizations`
               : `Payable details checklist`
           }
@@ -1867,7 +1716,7 @@ export default function V2Subscribe() {
           ctaText={
             step === 0
               ? "Build plan"
-              : step === 6
+              : step === 5
               ? `Pay & start`
               : "Continue"
           }
@@ -1878,14 +1727,13 @@ export default function V2Subscribe() {
             else if (step === 3) setStep(4);
             else if (step === 4) setStep(5);
             else if (step === 5) setStep(6);
-            else if (step === 6) setStep(7);
-            else if (step === 7) submit();
+            else if (step === 6) submit();
           }}
           disabled={
             (step === 1 && weekMeals < 3) ||
-            (step === 3 && !selectedBillingCadence) ||
-            (step === 4 && pincodeCheck.state !== "serviceable") ||
-            (step === 6 && !addressComplete)
+            (step === 2 && !selectedBillingCadence) ||
+            (step === 3 && pincodeCheck.state !== "serviceable") ||
+            (step === 5 && !addressComplete)
           }
           loading={submitting}
         />

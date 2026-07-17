@@ -88,7 +88,10 @@ export default function StickyBottomBar({
   const cartTotalPricePaise = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
   // Height transitions dynamically: 88px on checkout/payment transition, else 72px
-  const isCheckoutStep = context === "builder" && step === 6;
+  // Subscribe's wizard collapsed Duration+Billing into one step (7 steps
+  // total now); Review moved from index 6 to index 5 — keep this in sync with
+  // Subscribe.tsx's STEP_TITLES/goToStep numbering.
+  const isCheckoutStep = context === "builder" && step === 5;
   const barHeightClass = isCheckoutStep ? "h-[88px]" : "h-[72px]";
 
   // Style helper for scroll translation & motion settings
