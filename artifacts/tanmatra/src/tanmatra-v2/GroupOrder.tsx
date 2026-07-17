@@ -120,7 +120,7 @@ export default function V2GroupOrder() {
   // ---- No code ----
   if (!code) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
@@ -137,20 +137,20 @@ export default function V2GroupOrder() {
   // ---- Loading ----
   if (isLoading) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
             <div className="abt">Group order</div>
           </div>
           <div className="content padx" style={{ paddingTop: 4 }}>
-            <div className="card mb10">
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] p-4 mb10">
               <div className="skel mb10" style={{ height: 16, width: 96 }} />
               <div className="skel mb10" style={{ height: 28, width: "70%" }} />
               <div className="skel" style={{ height: 14, width: "50%" }} />
             </div>
             <div className="skel mb10" style={{ height: 64, width: "100%" }} />
-            <div className="card">
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] p-4">
               <div className="skel mb10" style={{ height: 18, width: "40%" }} />
               <div className="skel mb10" style={{ height: 56, width: "100%" }} />
               <div className="skel" style={{ height: 56, width: "100%" }} />
@@ -164,7 +164,7 @@ export default function V2GroupOrder() {
   // ---- Error / not found ----
   if (error || !group) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
@@ -184,7 +184,7 @@ export default function V2GroupOrder() {
   const isOpen = group.status === "open";
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {/* App bar */}
         <div className="appbar">
@@ -197,7 +197,7 @@ export default function V2GroupOrder() {
 
         <div className="content padx" style={{ paddingTop: 4, paddingBottom: isOpen ? 132 : 24 }}>
           {/* Header card: code, status, host, participants */}
-          <div className="card mb10">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
             <div className="lab mb6">Group order</div>
             <div className="fx ac gap8" style={{ minWidth: 0 }}>
               <i className="ph-bold ph-users" style={{ fontSize: 22, color: "var(--safb)", flex: "none" }} />
@@ -226,7 +226,7 @@ export default function V2GroupOrder() {
 
           {/* Add-your-items door (open only) */}
           {isOpen && (
-            <div className="card mb10 fx ac jb gap12">
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10 fx ac jb gap12">
               <div style={{ minWidth: 0 }}>
                 <div className="tt" style={{ fontSize: 14 }}>Add your items</div>
                 <div className="fine mt2">Browse the menu, then come back to add to this group.</div>
@@ -239,19 +239,19 @@ export default function V2GroupOrder() {
 
           {/* Items in this group */}
           <div className="fx ac jb mb10 mt14">
-            <span className="sh">Items in this group</span>
+            <span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Items in this group</span>
             <span className="lab">{group.items.length} line{group.items.length === 1 ? "" : "s"}</span>
           </div>
 
           {group.items.length === 0 ? (
-            <div className="card tc" style={{ padding: "28px 16px" }}>
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 tc">
               <i className="ph-bold ph-shopping-bag" style={{ fontSize: 28, color: "var(--fnt)" }} />
               <div className="fine mt6">No items yet. Share the code with friends to get started.</div>
             </div>
           ) : (
             <>
               {group.items.map((it) => (
-                <div key={it.lineId} className="dcard" style={{ padding: 12, marginBottom: 8 }}>
+                <div key={it.lineId} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb-3">
                   <div className="fx ac gap12">
                     <div className="dimg" style={{ width: 52, height: 52, borderRadius: 10, backgroundImage: `url(${it.image})`, backgroundSize: "cover", backgroundPosition: "center", flex: "none" }} aria-label={it.name} />
                     <div className="f1" style={{ minWidth: 0 }}>
@@ -278,7 +278,7 @@ export default function V2GroupOrder() {
               ))}
 
               {/* Subtotal */}
-              <div className="card mt10">
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10">
                 <div className="billrow tot" style={{ borderTop: "none", marginTop: 0, paddingTop: 0 }}>
                   <span>Group subtotal</span>
                   <span className="price" style={{ fontSize: 17, color: "var(--safb)" }}>{formatPrice(subtotal)}</span>
@@ -298,7 +298,7 @@ export default function V2GroupOrder() {
 
         {/* Sticky dock — close & checkout (open only) */}
         {isOpen && (
-          <div className="dock">
+          <div className="dock bg-[var(--tnm-surface-ink)] border-t border-white/[0.08]">
             <div className="fx ac gap12">
               <button className="btn btn-g" style={{ flex: "none" }} onClick={copyShare} aria-label="Copy group link">
                 <i className={copied ? "ph-bold ph-check" : "ph-bold ph-copy"} />

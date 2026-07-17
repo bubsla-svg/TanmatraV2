@@ -29,7 +29,7 @@ export default function V2TeamMember() {
 
   if (!member) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/team"><i className="ph-bold ph-arrow-left" /></Link>
@@ -51,7 +51,7 @@ export default function V2TeamMember() {
   const isRd = member.role === "rd";
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {/* App bar */}
         <div className="appbar">
@@ -62,7 +62,7 @@ export default function V2TeamMember() {
         <div className="content">
           {/* Profile header card */}
           <div className="padx">
-            <div className="card tc">
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 tc">
               <div
                 className="avatar"
                 style={{
@@ -130,7 +130,7 @@ export default function V2TeamMember() {
               </div>
               <div className="prodgrid">
                 {ownedDishes.map((d: any) => (
-                  <Link key={d.id} to={`/dish/${d.slug}`} className="card" style={{ padding: 0, overflow: "hidden", display: "block" }}>
+                  <Link key={d.id} to={`/dish/${d.slug}`} className="rounded-xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_4px_16px_color-mix(in_srgb,black_20%,transparent)] p-0 overflow-hidden pointer" style={{ display: "block" }}>
                     <div
                       className="plc"
                       style={{ aspectRatio: "1 / 1", backgroundImage: `url(${d.image})`, backgroundSize: "cover", backgroundPosition: "center" }}

@@ -43,7 +43,7 @@ export default function V2CheckoutAppointment() {
 
   if (!booking || !booking.rdSlug) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <button className="iconbtn" onClick={() => navigate("/rd")}><i className="ph-bold ph-arrow-left" /></button>
@@ -123,7 +123,7 @@ export default function V2CheckoutAppointment() {
   }
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <button className="iconbtn" onClick={() => navigate(-1)}><i className="ph-bold ph-arrow-left" /></button>
@@ -135,7 +135,7 @@ export default function V2CheckoutAppointment() {
           <div className="fine mb10">Reusing the same secure checkout as your meal orders. Your RD confirms and shares a join link in your appointments.</div>
 
           {/* Session / RD / When summary */}
-          <div className="card mb10">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
             <div className="lab mb10"><i className="ph-bold ph-calendar-check" /> Session</div>
             <div className="tt">{meta.label}</div>
             <div className="fine mt4">{meta.description}</div>
@@ -161,7 +161,7 @@ export default function V2CheckoutAppointment() {
           </div>
 
           {/* Price breakdown */}
-          <div className="card">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
             <div className="lab mb10"><i className="ph-bold ph-receipt" /> Payment</div>
             <div className="billrow"><span>Session fee</span><span className="mono" style={{ color: "var(--tx)" }}>{formatRupees(booking.pricePaise)}</span></div>
             <div className="billrow tot"><span>Total to pay</span><span className="price" style={{ fontSize: 17, color: "var(--safb)" }}>{formatRupees(booking.pricePaise)}</span></div>
@@ -173,7 +173,7 @@ export default function V2CheckoutAppointment() {
 
           {/* Failure recovery block */}
           {lastError && (
-            <div className="note mt10" style={{ background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" }} role="alert">
+            <div className="note mt10" style={{ background: "color-mix(in srgb, var(--color-nn-error) 12%, transparent)", borderColor: "color-mix(in srgb, var(--color-nn-error) 35%, transparent)", color: "var(--color-nn-error)" }} role="alert">
               <i className="ph-fill ph-warning-circle" />
               <div>
                 <div style={{ fontWeight: 600 }}>Booking didn't go through</div>
@@ -202,7 +202,7 @@ export default function V2CheckoutAppointment() {
         </div>
 
         {/* Sticky checkout dock */}
-        <div className="dock">
+        <div className="dock bg-[var(--tnm-surface-ink)] border-t border-white/[0.08]">
           <div className="fx ac jb gap12">
             <div style={{ flex: "none" }}>
               <div className="lab">Total to pay</div>
@@ -218,13 +218,13 @@ export default function V2CheckoutAppointment() {
       {/* Confirm-payment modal (v2 bottom-sheet) */}
       {confirmOpen && (
         <div
-          className="fx bg-black/60"
+          className="tnm2 nn fx bg-[color-mix(in srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 90, alignItems: "flex-end", justifyContent: "center" }}
           onClick={() => { if (!processing) setConfirmOpen(false); }}
         >
           <div
-            className="card"
-            style={{ width: "100%", maxWidth: 480, borderRadius: "18px 18px 0 0", padding: 20, animation: "scr 220ms var(--e)" }}
+            className="rounded-t-2xl bg-[var(--tnm-surface-ink-2)] border-x border-t border-white/[0.08] shadow-[0_-8px_32px_color-mix(in_srgb,black_40%,transparent)] p-5"
+            style={{ width: "100%", maxWidth: 480, animation: "scr 220ms var(--e)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="tt"><i className="ph-bold ph-credit-card" /> Confirm payment</div>

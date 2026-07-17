@@ -144,7 +144,7 @@ export default function V2Login() {
   );
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+    <div className="tnm2 nn text-white antialiased" style={{ minHeight: "100vh", background: "var(--tnm-surface-ink)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
       <div style={{ maxWidth: 420, width: "100%", margin: "0 auto", padding: 20 }}>
         <div className="tc mb20">
           <div className="dic" style={{ width: 48, height: 48, margin: "0 auto 12px", color: "var(--safb)", fontSize: 24 }}><i className="ph-bold ph-flask" /></div>
@@ -152,13 +152,13 @@ export default function V2Login() {
           <div className="fine mt6">{step === "phone" ? "Sign in with your phone number — we'll text you a code." : `Enter the 6-digit code we sent to ${countryCode} ${phone}.`}</div>
         </div>
 
-        <div className="card">
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
           {step === "phone" ? (
             <>
               <div className="lab mb6">Phone number</div>
               <div className="fx ac gap8">
                 <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} aria-label="Country code"
-                  style={{ height: 46, background: "var(--s2)", border: "1px solid var(--ln2)", borderRadius: 10, color: "var(--tx)", fontSize: 14, padding: "0 8px", width: 96 }}>
+                  style={{ height: 46, background: "var(--tnm-surface-ink-2)", border: "1px solid white/[0.08]", borderRadius: 10, color: "var(--tx)", fontSize: 14, padding: "0 8px", width: 96 }}>
                   <option value="+91">🇮🇳 +91</option><option value="+1">🇺🇸 +1</option><option value="+44">🇬🇧 +44</option>
                   <option value="+61">🇦🇺 +61</option><option value="+971">🇦🇪 +971</option><option value="+65">🇸🇬 +65</option>
                 </select>

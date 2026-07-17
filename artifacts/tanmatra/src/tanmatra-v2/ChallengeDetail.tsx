@@ -74,7 +74,7 @@ export default function V2ChallengeDetail() {
 
   if (isLoading) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/challenges" aria-label="Back to challenges">
@@ -97,7 +97,7 @@ export default function V2ChallengeDetail() {
 
   if (!data) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/challenges" aria-label="Back to challenges">
@@ -170,7 +170,7 @@ export default function V2ChallengeDetail() {
   };
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/challenges" aria-label="Back to challenges">
@@ -279,7 +279,7 @@ export default function V2ChallengeDetail() {
           {joined && upcomingCheckIns.length > 0 && (
             <>
               <div className="secrow">
-                <span className="sh fx ac gap8">
+                <span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 fx ac gap8">
                   <i className="ph-fill ph-video-camera safc" />
                   Upcoming RD check-ins
                 </span>
@@ -290,7 +290,7 @@ export default function V2ChallengeDetail() {
                   const ms = new Date(ci.scheduledAt).getTime() - Date.now();
                   const soon = ms > 0 && ms <= SOON_MS;
                   return (
-                    <div key={ci.id} className="card mb10">
+                    <div key={ci.id} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
                       <div className="fx ac jb gap12">
                         <div className="f1" style={{ minWidth: 0 }}>
                           <div className="fx ac wrap g6">
@@ -332,7 +332,7 @@ export default function V2ChallengeDetail() {
 
           {/* Cohort feed */}
           <div className="secrow">
-            <span className="sh fx ac gap8">
+            <span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 fx ac gap8">
               <i className="ph-fill ph-chat-circle safc" />
               Cohort feed
             </span>
@@ -342,7 +342,7 @@ export default function V2ChallengeDetail() {
           </div>
           <div className="padx">
             {joined ? (
-              <div className="card">
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
                 <textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value.slice(0, 1000))}
@@ -385,7 +385,7 @@ export default function V2ChallengeDetail() {
             ) : (
               <div className="mt12">
                 {posts.map((p: any) => (
-                  <div key={p.id} className="card mb10">
+                  <div key={p.id} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
                     <div className="fx ac jb">
                       <div className="fx ac gap8" style={{ minWidth: 0 }}>
                         <span className="avatar" style={{ width: 30, height: 30, fontSize: 11 }}>
@@ -412,11 +412,11 @@ export default function V2ChallengeDetail() {
       {/* ------ Leave-challenge confirmation ------ */}
       {leaveConfirmOpen && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setLeaveConfirmOpen(false)}
         >
-          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="tt" style={{ color: "var(--text-primary)" }}>
               Leave this challenge?
             </div>
@@ -447,11 +447,11 @@ export default function V2ChallengeDetail() {
       {/* ------ Post-join welcome — sets expectations for first-time joiners ------ */}
       {showWelcome && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setShowWelcome(false)}
         >
-          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="tt" style={{ color: "var(--text-primary)" }}>
               You're in — here's what's next
             </div>
