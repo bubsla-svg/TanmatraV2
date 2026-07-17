@@ -13,6 +13,7 @@ import HomePricing from "@/components/home/HomePricing";
 import HomeDietitian from "@/components/home/HomeDietitian";
 import HomeFAQ from "@/components/home/HomeFAQ";
 import HomeFooter from "@/components/home/HomeFooter";
+import HomeFeaturedMeal from "@/components/home/HomeFeaturedMeal";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
 
 const HOW_STEPS = [
@@ -68,6 +69,9 @@ export default function V2Home() {
 
         {/* 2.6 Dietitian-selected meals rail */}
         <HomeMealsRail />
+
+        {/* 2.6b Featured meal teaser card */}
+        <HomeFeaturedMeal />
 
         {/* 2.7 How It Works */}
         <section className="padx mt-10">

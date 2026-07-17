@@ -39,6 +39,7 @@ type EventName =
   | "post_checkout_wizard_completed"
   | "post_checkout_wizard_skipped"
   | "home_cta_click"
+  | "home_program_tap"
   // Phase C — à la carte → trial → subscription bridge funnel.
   | "alacarte_order_placed"
   | "bridge_cta_shown"
