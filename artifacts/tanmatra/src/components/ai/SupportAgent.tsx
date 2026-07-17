@@ -142,19 +142,19 @@ export default function SupportAgentWidget() {
     <>
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed ${triggerPositionClass} right-3 sm:right-4 md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-clinical-surface border border-clinical-gold/40 text-white hover:bg-white/10`}
+        className={`fixed ${triggerPositionClass} right-3 sm:right-4 md:right-6 z-50 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-lg bg-nn-surface border border-nn-primary/40 text-white hover:bg-white/10`}
         aria-label={isOpen ? "Close support chat" : "Open support chat"}
         title={isOpen ? "Close support chat" : "Need help? Chat with our support agent"}
       >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6 text-clinical-gold" />}
+        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6 text-nn-primary" />}
       </Button>
 
       {isOpen && (
-        <Card className="fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-clinical-gold/30 bg-clinical-surface">
-          <CardHeader className="shrink-0 py-3 px-4 border-b bg-clinical-surface">
+        <Card className="fixed bottom-[calc(var(--bottom-nav-height)+12px+var(--safe-bottom))] md:bottom-24 right-3 md:right-6 left-3 md:left-auto z-50 w-auto md:w-[380px] max-h-[65vh] md:max-h-[560px] flex flex-col shadow-2xl border-2 border-nn-primary/30 bg-nn-surface">
+          <CardHeader className="shrink-0 py-3 px-4 border-b bg-nn-surface">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-clinical-gold/20 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-clinical-gold" />
+              <div className="w-8 h-8 rounded-full bg-nn-primary/20 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-nn-primary" />
               </div>
               <div>
                 <CardTitle className="text-sm text-white">Support Agent</CardTitle>
@@ -171,13 +171,13 @@ export default function SupportAgentWidget() {
               {messages.map((msg, i) => (
                 <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "agent" && (
-                    <div className="w-6 h-6 rounded-full bg-clinical-gold/10 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-3 h-3 text-clinical-gold" />
+                    <div className="w-6 h-6 rounded-full bg-nn-primary/10 flex items-center justify-center shrink-0 mt-1">
+                      <Bot className="w-3 h-3 text-nn-primary" />
                     </div>
                   )}
                   <div
                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                      msg.role === "user" ? "bg-clinical-blue text-white" : "bg-muted text-foreground"
+                      msg.role === "user" ? "bg-nn-tertiary text-white" : "bg-muted text-foreground"
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -208,8 +208,8 @@ export default function SupportAgentWidget() {
                     <p className="text-[10px] opacity-60 mt-1 text-right">{msg.timestamp}</p>
                   </div>
                   {msg.role === "user" && (
-                    <div className="w-6 h-6 rounded-full bg-clinical-blue/10 flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-3 h-3 text-clinical-blue" />
+                    <div className="w-6 h-6 rounded-full bg-nn-tertiary/10 flex items-center justify-center shrink-0 mt-1">
+                      <User className="w-3 h-3 text-nn-tertiary" />
                     </div>
                   )}
                 </div>
@@ -217,8 +217,8 @@ export default function SupportAgentWidget() {
               {streaming &&
                 messages[streamingIndexRef.current ?? -1]?.text === "" && (
                   <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-clinical-gold/10 flex items-center justify-center">
-                      <Bot className="w-3 h-3 text-clinical-gold animate-bounce" />
+                    <div className="w-6 h-6 rounded-full bg-nn-primary/10 flex items-center justify-center">
+                      <Bot className="w-3 h-3 text-nn-primary animate-bounce" />
                     </div>
                     <div className="bg-muted rounded-lg px-3 py-2 text-sm text-muted-foreground">
                       Thinking...

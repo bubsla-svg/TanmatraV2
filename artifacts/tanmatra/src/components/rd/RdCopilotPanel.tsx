@@ -187,15 +187,15 @@ export function RdCopilotPanel({
 
   return (
     <div className="space-y-4">
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+              <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
                 AI Client Summary
               </Badge>
               {summary && (
-                <p className="text-[10px] text-clinical-zinc mt-1">
+                <p className="text-[10px] text-nn-on-surface-variant mt-1">
                   Drafted {fmtDate(summary.draftedAt)} · model{" "}
                   {summary.model ?? "—"}
                 </p>
@@ -212,21 +212,21 @@ export function RdCopilotPanel({
             </Button>
           </div>
           {summary ? (
-            <pre className="text-[12px] text-clinical-zinc whitespace-pre-wrap font-sans">
+            <pre className="text-[12px] text-nn-on-surface-variant whitespace-pre-wrap font-sans">
               {summary.summary}
             </pre>
           ) : (
-            <p className="text-[11px] text-clinical-zinc">
+            <p className="text-[11px] text-nn-on-surface-variant">
               No summary yet — generate one before the next consult.
             </p>
           )}
         </CardContent>
       </Card>
 
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-5 space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+            <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
               Plan Proposal
             </Badge>
             <div className="flex items-center gap-2">
@@ -234,13 +234,13 @@ export function RdCopilotPanel({
                 type="date"
                 value={weekStart}
                 onChange={(e) => setWeekStart(e.target.value)}
-                className="bg-clinical-bg border border-clinical-border text-xs rounded-md px-2 h-8 text-white"
+                className="bg-nn-bg border border-white/[0.08] text-xs rounded-md px-2 h-8 text-white"
               />
               <Button
                 size="sm"
                 onClick={draftPlan}
                 disabled={proposalBusy}
-                className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-8"
+                className="bg-nn-primary text-action-text hover:bg-nn-primary/90 text-xs h-8"
               >
                 Draft AI plan
               </Button>
@@ -249,8 +249,8 @@ export function RdCopilotPanel({
 
           {proposal ? (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-[11px] text-clinical-zinc">
-                <Badge className="bg-clinical-bg border-clinical-border text-clinical-zinc">
+              <div className="flex items-center gap-2 text-[11px] text-nn-on-surface-variant">
+                <Badge className="bg-nn-bg border-white/[0.08] text-nn-on-surface-variant">
                   {proposal.status}
                 </Badge>
                 <span>Week of {proposal.weekStartDate}</span>
@@ -263,7 +263,7 @@ export function RdCopilotPanel({
               </div>
 
               {proposal.aiRationale && (
-                <p className="text-[12px] text-clinical-zinc italic">
+                <p className="text-[12px] text-nn-on-surface-variant italic">
                   {proposal.aiRationale}
                 </p>
               )}
@@ -272,7 +272,7 @@ export function RdCopilotPanel({
                 {proposal.days.map((d) => (
                   <div
                     key={d.date}
-                    className="rounded-md border border-clinical-border p-2 text-[11px] text-clinical-zinc"
+                    className="rounded-md border border-white/[0.08] p-2 text-[11px] text-nn-on-surface-variant"
                   >
                     <div className="text-white text-xs mb-1">{d.date}</div>
                     <div>B: {d.breakfast?.name ?? "—"}</div>
@@ -286,7 +286,7 @@ export function RdCopilotPanel({
                 value={rdNotes}
                 onChange={(e) => setRdNotes(e.target.value)}
                 placeholder="RD notes — clinical reasoning, edits to discuss with client…"
-                className="bg-clinical-bg border-clinical-border text-xs"
+                className="bg-nn-bg border-white/[0.08] text-xs"
                 rows={3}
               />
 
@@ -308,7 +308,7 @@ export function RdCopilotPanel({
                   size="sm"
                   onClick={approve}
                   disabled={proposalBusy || proposal.status === "rd_approved"}
-                  className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-8"
+                  className="bg-nn-primary text-action-text hover:bg-nn-primary/90 text-xs h-8"
                 >
                   Approve & send to client
                 </Button>
@@ -328,7 +328,7 @@ export function RdCopilotPanel({
               </div>
             </div>
           ) : (
-            <p className="text-[11px] text-clinical-zinc">
+            <p className="text-[11px] text-nn-on-surface-variant">
               Pick a week and let the planner draft a proposal for your
               review.
             </p>
@@ -336,10 +336,10 @@ export function RdCopilotPanel({
         </CardContent>
       </Card>
 
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+            <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
               Plan Adherence
             </Badge>
             {adherence?.escalateRecommended && (
@@ -350,7 +350,7 @@ export function RdCopilotPanel({
           </div>
 
           {!adherence?.mealPlanId && (
-            <p className="text-[11px] text-clinical-zinc">
+            <p className="text-[11px] text-nn-on-surface-variant">
               No RD-approved plan in flight — adherence tracking starts after
               you approve a proposal.
             </p>
@@ -358,7 +358,7 @@ export function RdCopilotPanel({
 
           {adherence?.mealPlanId && (
             <>
-              <p className="text-[11px] text-clinical-zinc">
+              <p className="text-[11px] text-nn-on-surface-variant">
                 Tracking week {adherence.weekStartDate} ·{" "}
                 {adherence.scan?.daysScanned ?? 0}/
                 {adherence.scan?.totalDays ?? 0} days scanned · {totalDrift}{" "}
@@ -373,7 +373,7 @@ export function RdCopilotPanel({
                   ).map(([k, v]) => (
                     <span
                       key={k}
-                      className="px-2 py-1 rounded border border-clinical-border text-clinical-zinc"
+                      className="px-2 py-1 rounded border border-white/[0.08] text-nn-on-surface-variant"
                     >
                       {DRIFT_LABEL[k]}: {v}
                     </span>
@@ -382,22 +382,22 @@ export function RdCopilotPanel({
               )}
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                 {adherence.events.length === 0 && (
-                  <p className="text-[11px] text-clinical-zinc">
+                  <p className="text-[11px] text-nn-on-surface-variant">
                     No drift detected yet — client is on plan.
                   </p>
                 )}
                 {adherence.events.map((ev) => (
                   <div
                     key={ev.id}
-                    className="rounded-md border border-clinical-border p-2 flex items-start justify-between gap-2"
+                    className="rounded-md border border-white/[0.08] p-2 flex items-start justify-between gap-2"
                   >
-                    <div className="text-[11px] text-clinical-zinc">
+                    <div className="text-[11px] text-nn-on-surface-variant">
                       <div className="text-white text-xs">
                         {DRIFT_LABEL[ev.kind]} · {ev.dayDate}
                       </div>
                       <div>severity {ev.severity}</div>
                       {ev.nudgeSentAt && (
-                        <div className="text-clinical-gold/80">
+                        <div className="text-nn-primary/80">
                           nudge sent {fmtDate(ev.nudgeSentAt)}
                         </div>
                       )}
@@ -419,26 +419,26 @@ export function RdCopilotPanel({
         </CardContent>
       </Card>
 
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-5 space-y-2">
-          <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+          <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
             AI Audit Log
           </Badge>
           <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
             {audit.length === 0 && (
-              <p className="text-[11px] text-clinical-zinc">
+              <p className="text-[11px] text-nn-on-surface-variant">
                 No copilot activity for this client yet.
               </p>
             )}
             {audit.map((e) => (
               <div
                 key={e.id}
-                className="text-[11px] text-clinical-zinc flex justify-between gap-2"
+                className="text-[11px] text-nn-on-surface-variant flex justify-between gap-2"
               >
                 <span>
                   <span className="text-white">{e.kind}</span> · {e.actor}
                 </span>
-                <span className="text-clinical-zinc-muted">
+                <span className="text-nn-secondary">
                   {new Date(e.createdAt).toLocaleString("en-IN")}
                 </span>
               </div>

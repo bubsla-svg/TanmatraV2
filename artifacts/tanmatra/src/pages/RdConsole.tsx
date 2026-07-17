@@ -138,7 +138,7 @@ export default function RdConsole() {
 
   if (unauth) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 text-center text-clinical-zinc text-sm">
+      <div className="max-w-2xl mx-auto px-4 py-12 text-center text-nn-on-surface-variant text-sm">
         Sign in to view the RD console.
       </div>
     );
@@ -146,7 +146,7 @@ export default function RdConsole() {
 
   if (loadingMe) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 text-center text-clinical-zinc text-sm">
+      <div className="max-w-2xl mx-auto px-4 py-12 text-center text-nn-on-surface-variant text-sm">
         Loading…
       </div>
     );
@@ -155,18 +155,18 @@ export default function RdConsole() {
   if (!rdSlug) {
     return (
       <div className="max-w-md mx-auto px-4 py-12 space-y-4">
-        <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+        <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
           RD Console
         </Badge>
         <h1 className="font-serif text-2xl text-white">Claim your RD seat</h1>
-        <p className="text-xs text-clinical-zinc">
+        <p className="text-xs text-nn-on-surface-variant">
           Each RD slug binds to one account. Provisioning is privileged —
           enter the operator-issued admin token alongside your RD slug.
         </p>
         <select
           value={claimSlug}
           onChange={(e) => setClaimSlug(e.target.value)}
-          className="bg-clinical-surface border border-clinical-border text-xs rounded-md px-3 h-9 text-white w-full"
+          className="bg-nn-surface border border-white/[0.08] text-xs rounded-md px-3 h-9 text-white w-full"
         >
           {rds.map(({ profile, member: m }) => (
             <option key={profile.slug} value={profile.slug}>
@@ -179,12 +179,12 @@ export default function RdConsole() {
           placeholder="Admin token"
           value={adminToken}
           onChange={(e) => setAdminToken(e.target.value)}
-          className="bg-clinical-surface border border-clinical-border text-xs rounded-md px-3 h-9 text-white w-full"
+          className="bg-nn-surface border border-white/[0.08] text-xs rounded-md px-3 h-9 text-white w-full"
         />
         <Button
           onClick={claim}
           disabled={claiming || !adminToken.trim()}
-          className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-9 w-full"
+          className="bg-nn-primary text-action-text hover:bg-nn-primary/90 text-xs h-9 w-full"
         >
           Claim this RD seat
         </Button>
@@ -194,7 +194,7 @@ export default function RdConsole() {
 
   if (forbidden) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 text-center text-clinical-zinc text-sm">
+      <div className="max-w-2xl mx-auto px-4 py-12 text-center text-nn-on-surface-variant text-sm">
         You are signed in as a different RD account. Sign in with the right
         account to view this console.
       </div>
@@ -205,13 +205,13 @@ export default function RdConsole() {
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px] mb-2">
+          <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px] mb-2">
             RD Console
           </Badge>
           <h1 className="font-serif text-3xl text-white">
             {member?.name ?? rdSlug}
           </h1>
-          <p className="text-xs text-clinical-zinc mt-1">
+          <p className="text-xs text-nn-on-surface-variant mt-1">
             Internal view — appointment list, per-user notes, and inbox.
           </p>
         </div>
@@ -221,16 +221,16 @@ export default function RdConsole() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4">
         {/* Appointment column */}
-        <Card className="bg-clinical-surface border-clinical-border">
+        <Card className="bg-nn-surface border-white/[0.08]">
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-clinical-gold" />
+              <CalendarDays className="w-4 h-4 text-nn-primary" />
               <p className="text-xs text-white font-medium">
                 Upcoming ({upcoming.length})
               </p>
             </div>
             {upcoming.length === 0 && (
-              <p className="text-[11px] text-clinical-zinc">
+              <p className="text-[11px] text-nn-on-surface-variant">
                 No scheduled sessions.
               </p>
             )}
@@ -242,14 +242,14 @@ export default function RdConsole() {
                   onClick={() => setSelectedUserId(a.userId)}
                   className={`w-full text-left rounded-md border p-3 transition-colors ${
                     selectedUserId === a.userId
-                      ? "border-clinical-gold/50 bg-clinical-gold/10"
-                      : "border-clinical-border hover:border-clinical-gold/30"
+                      ? "border-nn-primary/50 bg-nn-primary/10"
+                      : "border-white/[0.08] hover:border-nn-primary/30"
                   }`}
                 >
                   <p className="text-xs text-white tabular-nums">
                     {fmtDateTime(a.startAt)}
                   </p>
-                  <p className="text-[11px] text-clinical-zinc">
+                  <p className="text-[11px] text-nn-on-surface-variant">
                     {APPOINTMENT_KIND_META[a.kind].label} · user{" "}
                     {a.userId.slice(0, 8)}…
                   </p>
@@ -257,8 +257,8 @@ export default function RdConsole() {
               ))}
             </div>
 
-            <div className="pt-2 border-t border-clinical-border">
-              <p className="text-[10px] uppercase tracking-widest text-clinical-zinc mb-2">
+            <div className="pt-2 border-t border-white/[0.08]">
+              <p className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant mb-2">
                 All clients
               </p>
               <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
@@ -269,15 +269,15 @@ export default function RdConsole() {
                     onClick={() => setSelectedUserId(uid)}
                     className={`w-full text-left text-[11px] rounded px-2 py-1.5 ${
                       selectedUserId === uid
-                        ? "bg-clinical-gold/15 text-clinical-gold"
-                        : "text-clinical-zinc hover:bg-white/5 hover:text-white"
+                        ? "bg-nn-primary/15 text-nn-primary"
+                        : "text-nn-on-surface-variant hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     user {uid.slice(0, 12)}…
                   </button>
                 ))}
                 {userIds.length === 0 && (
-                  <p className="text-[11px] text-clinical-zinc">
+                  <p className="text-[11px] text-nn-on-surface-variant">
                     No clients yet.
                   </p>
                 )}
@@ -303,8 +303,8 @@ export default function RdConsole() {
               />
             </>
           ) : (
-            <Card className="bg-clinical-surface border-clinical-border">
-              <CardContent className="p-6 text-center text-xs text-clinical-zinc">
+            <Card className="bg-nn-surface border-white/[0.08]">
+              <CardContent className="p-6 text-center text-xs text-nn-on-surface-variant">
                 Pick a session or client to see their full record.
               </CardContent>
             </Card>
@@ -509,7 +509,7 @@ function ActivePatientOrdersPanel() {
   );
 
   return (
-    <Card className="bg-clinical-surface border-clinical-border">
+    <Card className="bg-nn-surface border-white/[0.08]">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
@@ -524,7 +524,7 @@ function ActivePatientOrdersPanel() {
                 Live updates paused — reconnecting…
               </span>
             )}
-            <p className="text-[10px] text-clinical-zinc">
+            <p className="text-[10px] text-nn-on-surface-variant">
               STAT cancel notifies kitchen and rider instantly.
             </p>
           </div>
@@ -533,7 +533,7 @@ function ActivePatientOrdersPanel() {
           <p className="text-[11px] alert-allergen-text">{error}</p>
         )}
         {active.length === 0 ? (
-          <p className="text-[11px] text-clinical-zinc">
+          <p className="text-[11px] text-nn-on-surface-variant">
             No active patient orders right now.
           </p>
         ) : (
@@ -615,17 +615,17 @@ function ActivePatientOrderRow({
   );
 
   return (
-    <div className="rounded-md border border-clinical-border p-3 space-y-2">
+    <div className="rounded-md border border-white/[0.08] p-3 space-y-2">
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div>
-          <p className="font-mono text-[11px] text-clinical-gold">
+          <p className="font-mono text-[11px] text-nn-primary">
             {order.externalOrderId}
           </p>
-          <p className="text-[10px] text-clinical-zinc">
+          <p className="text-[10px] text-nn-on-surface-variant">
             Patient ID: {order.patientUserId ?? "unknown"}
           </p>
           {order.addressLabel && (
-            <p className="text-[10px] text-clinical-zinc">
+            <p className="text-[10px] text-nn-on-surface-variant">
               Drop: {order.addressLabel}
             </p>
           )}
@@ -642,8 +642,8 @@ function ActivePatientOrderRow({
             key={s.key}
             className={
               i <= stageIndex
-                ? "text-clinical-gold"
-                : "text-clinical-zinc-muted"
+                ? "text-nn-primary"
+                : "text-nn-secondary"
             }
           >
             {s.shortLabel}
@@ -688,8 +688,8 @@ function UserDetail({
 
   if (!data) {
     return (
-      <Card className="bg-clinical-surface border-clinical-border">
-        <CardContent className="p-6 text-xs text-clinical-zinc">
+      <Card className="bg-nn-surface border-white/[0.08]">
+        <CardContent className="p-6 text-xs text-nn-on-surface-variant">
           Loading…
         </CardContent>
       </Card>
@@ -713,7 +713,7 @@ function UserDetail({
 
   return (
     <>
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-4 space-y-3">
           <p className="text-xs text-white font-medium">
             Sessions with user {userId.slice(0, 12)}…
@@ -731,7 +731,7 @@ function UserDetail({
               />
             ))}
             {data.appointments.length === 0 && (
-              <p className="text-[11px] text-clinical-zinc">
+              <p className="text-[11px] text-nn-on-surface-variant">
                 No appointments with this user.
               </p>
             )}
@@ -740,20 +740,20 @@ function UserDetail({
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-clinical-surface border-clinical-border">
+        <Card className="bg-nn-surface border-white/[0.08]">
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-clinical-sage" />
               <p className="text-xs text-white font-medium">Progress</p>
             </div>
             {data.progress.length === 0 ? (
-              <p className="text-[11px] text-clinical-zinc">No logs.</p>
+              <p className="text-[11px] text-nn-on-surface-variant">No logs.</p>
             ) : (
               <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                 {data.progress.map((l) => (
                   <div
                     key={l.id}
-                    className="rounded-md border border-clinical-border p-2 text-[11px] text-clinical-zinc"
+                    className="rounded-md border border-white/[0.08] p-2 text-[11px] text-nn-on-surface-variant"
                   >
                     <p className="text-white text-xs tabular-nums">
                       {new Date(l.loggedAt).toLocaleDateString("en-IN", {
@@ -786,7 +786,7 @@ function UserDetail({
                       )}
                     </div>
                     {l.note && (
-                      <p className="italic mt-1 text-clinical-zinc">
+                      <p className="italic mt-1 text-nn-on-surface-variant">
                         {l.note}
                       </p>
                     )}
@@ -797,14 +797,14 @@ function UserDetail({
           </CardContent>
         </Card>
 
-        <Card className="bg-clinical-surface border-clinical-border">
+        <Card className="bg-nn-surface border-white/[0.08]">
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-clinical-gold" />
+              <FileText className="w-4 h-4 text-nn-primary" />
               <p className="text-xs text-white font-medium">Labs shared</p>
             </div>
             {data.labs.length === 0 ? (
-              <p className="text-[11px] text-clinical-zinc">
+              <p className="text-[11px] text-nn-on-surface-variant">
                 Nothing shared.
               </p>
             ) : (
@@ -812,18 +812,18 @@ function UserDetail({
                 {data.labs.map((l) => (
                   <div
                     key={l.id}
-                    className="rounded-md border border-clinical-border p-2 text-[11px] text-clinical-zinc"
+                    className="rounded-md border border-white/[0.08] p-2 text-[11px] text-nn-on-surface-variant"
                   >
                     <a
                       href={l.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-white hover:text-clinical-gold inline-flex items-center gap-1"
+                      className="text-xs text-white hover:text-nn-primary inline-flex items-center gap-1"
                     >
                       {l.fileName}
                       <ExternalLink className="w-3 h-3" />
                     </a>
-                    <p className="text-[10px] text-clinical-zinc mt-0.5 tabular-nums">
+                    <p className="text-[10px] text-nn-on-surface-variant mt-0.5 tabular-nums">
                       {new Date(l.createdAt).toLocaleDateString("en-IN")}
                       {" · "}
                       {l.mimeType}
@@ -837,15 +837,15 @@ function UserDetail({
         </Card>
       </div>
 
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-clinical-sage" />
             <p className="text-xs text-white font-medium">Conversation</p>
           </div>
-          <div className="space-y-2 max-h-[260px] overflow-y-auto rounded-md border border-clinical-border bg-clinical-dark p-3">
+          <div className="space-y-2 max-h-[260px] overflow-y-auto rounded-md border border-white/[0.08] bg-nn-bg p-3">
             {data.messages.length === 0 ? (
-              <p className="text-[11px] text-clinical-zinc text-center py-6">
+              <p className="text-[11px] text-nn-on-surface-variant text-center py-6">
                 No messages yet.
               </p>
             ) : (
@@ -857,12 +857,12 @@ function UserDetail({
                   <div
                     className={`max-w-[78%] rounded-lg px-3 py-2 text-xs whitespace-pre-line ${
                       m.senderRole === "rd"
-                        ? "bg-clinical-gold/15 text-white border border-clinical-gold/30"
+                        ? "bg-nn-primary/15 text-white border border-nn-primary/30"
                         : "bg-clinical-sage/10 text-white border border-clinical-sage/30"
                     }`}
                   >
                     <p>{m.body}</p>
-                    <p className="text-[10px] text-clinical-zinc mt-1 tabular-nums">
+                    <p className="text-[10px] text-nn-on-surface-variant mt-1 tabular-nums">
                       {m.senderRole.toUpperCase()} ·{" "}
                       {new Date(m.createdAt).toLocaleString("en-IN", {
                         day: "numeric",
@@ -883,12 +883,12 @@ function UserDetail({
               rows={2}
               maxLength={4000}
               placeholder="Reply as RD…"
-              className="bg-clinical-dark border-clinical-border text-xs"
+              className="bg-nn-bg border-white/[0.08] text-xs"
             />
             <Button
               onClick={sendReply}
               disabled={sending || !reply.trim()}
-              className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 self-end h-9"
+              className="bg-nn-primary text-action-text hover:bg-nn-primary/90 self-end h-9"
             >
               <Send className="w-3.5 h-3.5" />
             </Button>
@@ -931,13 +931,13 @@ function ApptEditor({
   }
 
   return (
-    <div className="rounded-md border border-clinical-border p-3 space-y-2">
+    <div className="rounded-md border border-white/[0.08] p-3 space-y-2">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs text-white tabular-nums">
             {fmtDateTime(appt.startAt)}
           </p>
-          <p className="text-[11px] text-clinical-zinc">
+          <p className="text-[11px] text-nn-on-surface-variant">
             {APPOINTMENT_KIND_META[appt.kind].label} ·{" "}
             {formatRupees(appt.pricePaise)}
           </p>
@@ -946,14 +946,14 @@ function ApptEditor({
           className={`text-[10px] uppercase ${
             appt.status === "scheduled"
               ? "bg-clinical-sage/15 text-clinical-sage border-clinical-sage/30"
-              : "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30"
+              : "bg-nn-primary/15 text-nn-primary border-nn-primary/30"
           }`}
         >
           {appt.status}
         </Badge>
       </div>
       {appt.userQuestion && (
-        <p className="text-[11px] text-clinical-zinc italic">
+        <p className="text-[11px] text-nn-on-surface-variant italic">
           “{appt.userQuestion}”
         </p>
       )}
@@ -961,7 +961,7 @@ function ApptEditor({
         value={joinUrl}
         onChange={(e) => setJoinUrl(e.target.value)}
         placeholder="Video room URL (paste from Zoom/Meet/etc.)"
-        className="bg-clinical-dark border-clinical-border text-[11px] h-8"
+        className="bg-nn-bg border-white/[0.08] text-[11px] h-8"
       />
       <Textarea
         value={notes}
@@ -969,13 +969,13 @@ function ApptEditor({
         placeholder="Private RD notes for this session — visible to the user."
         rows={3}
         maxLength={4000}
-        className="bg-clinical-dark border-clinical-border text-[11px]"
+        className="bg-nn-bg border-white/[0.08] text-[11px]"
       />
       <Button
         onClick={save}
         disabled={saving}
         size="sm"
-        className="h-7 text-[11px] bg-clinical-gold text-action-text hover:bg-clinical-gold/90"
+        className="h-7 text-[11px] bg-nn-primary text-action-text hover:bg-nn-primary/90"
       >
         <Save className="w-3 h-3 mr-1" />
         Save

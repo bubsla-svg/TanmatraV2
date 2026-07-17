@@ -73,18 +73,18 @@ export default function RdPartnersLanding() {
   }, []);
 
   return (
-    <div className="nn-clinical bg-clinical-dark text-white">
+    <div className="nn-clinical bg-nn-bg text-white">
       {/* hero */}
-      <section className="border-b border-clinical-border">
+      <section className="border-b border-white/[0.08]">
         <div className="max-w-6xl mx-auto px-4 py-14 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 items-start">
           <div className="space-y-5">
-            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+            <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
               For Registered Dietitians
             </Badge>
             <h1 className="font-serif text-3xl sm:text-5xl leading-tight">
               Practise where the meals come from.
             </h1>
-            <p className="text-base text-clinical-zinc max-w-xl leading-relaxed">
+            <p className="text-base text-nn-on-surface-variant max-w-xl leading-relaxed">
               Tanmatra is opening its kitchen and member base to RDs who want
               to grow a clinical practice without building the back-office.
               Run sessions, ship plans, and see your protocols on the plate.
@@ -99,19 +99,19 @@ export default function RdPartnersLanding() {
                   })
                 }
               >
-                <Button className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-10 text-sm gap-2">
+                <Button className="bg-nn-primary text-action-text hover:bg-nn-primary/90 h-10 text-sm gap-2">
                   Start application
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
               <a
                 href="#how-it-works"
-                className="text-xs text-clinical-zinc hover:text-white"
+                className="text-xs text-nn-on-surface-variant hover:text-white"
               >
                 What's involved →
               </a>
             </div>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 text-[11px] text-clinical-zinc">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 text-[11px] text-nn-on-surface-variant">
               <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-clinical-sage" />
                 FSSAI Lic. 22725926001018 &amp; ISO 22000 kitchens
@@ -127,27 +127,27 @@ export default function RdPartnersLanding() {
             </div>
           </div>
 
-          <Card className="bg-clinical-surface border-clinical-border">
+          <Card className="bg-nn-surface border-white/[0.08]">
             <CardContent className="p-5 space-y-4">
-              <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+              <p className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant">
                 The deal, in one card
               </p>
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="rounded-md border border-clinical-border p-3">
-                  <p className="text-clinical-gold font-semibold">70 / 30</p>
-                  <p className="text-clinical-zinc">RD / platform split on follow-ups</p>
+                <div className="rounded-md border border-white/[0.08] p-3">
+                  <p className="text-nn-primary font-semibold">70 / 30</p>
+                  <p className="text-nn-on-surface-variant">RD / platform split on follow-ups</p>
                 </div>
-                <div className="rounded-md border border-clinical-border p-3">
-                  <p className="text-clinical-gold font-semibold">Free</p>
-                  <p className="text-clinical-zinc">15-min intro covered by Tanmatra</p>
+                <div className="rounded-md border border-white/[0.08] p-3">
+                  <p className="text-nn-primary font-semibold">Free</p>
+                  <p className="text-nn-on-surface-variant">15-min intro covered by Tanmatra</p>
                 </div>
-                <div className="rounded-md border border-clinical-border p-3">
-                  <p className="text-clinical-gold font-semibold">Monthly</p>
-                  <p className="text-clinical-zinc">Direct payout, no minimums</p>
+                <div className="rounded-md border border-white/[0.08] p-3">
+                  <p className="text-nn-primary font-semibold">Monthly</p>
+                  <p className="text-nn-on-surface-variant">Direct payout, no minimums</p>
                 </div>
-                <div className="rounded-md border border-clinical-border p-3">
-                  <p className="text-clinical-gold font-semibold">Owned</p>
-                  <p className="text-clinical-zinc">Your client list stays yours</p>
+                <div className="rounded-md border border-white/[0.08] p-3">
+                  <p className="text-nn-primary font-semibold">Owned</p>
+                  <p className="text-nn-on-surface-variant">Your client list stays yours</p>
                 </div>
               </div>
               <Link
@@ -160,7 +160,7 @@ export default function RdPartnersLanding() {
                   })
                 }
               >
-                <Button className="w-full bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-9 text-xs">
+                <Button className="w-full bg-nn-primary text-action-text hover:bg-nn-primary/90 h-9 text-xs">
                   Apply in 5 minutes
                 </Button>
               </Link>
@@ -170,16 +170,16 @@ export default function RdPartnersLanding() {
       </section>
 
       {/* value props */}
-      <section className="border-b border-clinical-border">
+      <section className="border-b border-white/[0.08]">
         <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {VALUE_PROPS.map(({ icon: Icon, title, body }) => (
             <div
               key={title}
-              className="rounded-xl border border-clinical-border bg-clinical-surface p-5"
+              className="rounded-xl border border-white/[0.08] bg-nn-surface p-5"
             >
-              <Icon className="w-5 h-5 text-clinical-gold mb-3" />
+              <Icon className="w-5 h-5 text-nn-primary mb-3" />
               <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
-              <p className="text-xs text-clinical-zinc leading-relaxed">
+              <p className="text-xs text-nn-on-surface-variant leading-relaxed">
                 {body}
               </p>
             </div>
@@ -188,7 +188,7 @@ export default function RdPartnersLanding() {
       </section>
 
       {/* how it works */}
-      <section id="how-it-works" className="border-b border-clinical-border">
+      <section id="how-it-works" className="border-b border-white/[0.08]">
         <div className="max-w-4xl mx-auto px-4 py-12 space-y-6">
           <div>
             <Badge className="bg-clinical-sage/15 text-clinical-sage border-clinical-sage/30 uppercase tracking-widest text-[10px] mb-2">
@@ -202,9 +202,9 @@ export default function RdPartnersLanding() {
             {STEPS.map((step, i) => (
               <li
                 key={step}
-                className="flex gap-3 rounded-lg border border-clinical-border bg-clinical-surface p-4"
+                className="flex gap-3 rounded-lg border border-white/[0.08] bg-nn-surface p-4"
               >
-                <span className="w-7 h-7 rounded-full bg-clinical-gold/15 text-clinical-gold border border-clinical-gold/30 flex items-center justify-center text-xs font-semibold">
+                <span className="w-7 h-7 rounded-full bg-nn-primary/15 text-nn-primary border border-nn-primary/30 flex items-center justify-center text-xs font-semibold">
                   {i + 1}
                 </span>
                 <p className="text-sm text-white pt-0.5">{step}</p>
@@ -221,12 +221,12 @@ export default function RdPartnersLanding() {
                 })
               }
             >
-              <Button className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-10 text-sm gap-2">
+              <Button className="bg-nn-primary text-action-text hover:bg-nn-primary/90 h-10 text-sm gap-2">
                 I'm ready, start the application
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <p className="text-[11px] text-clinical-zinc mt-2">
+            <p className="text-[11px] text-nn-on-surface-variant mt-2">
               Already submitted? We reply by email — no need to apply again.
             </p>
           </div>
@@ -237,8 +237,8 @@ export default function RdPartnersLanding() {
       <section>
         <div className="max-w-4xl mx-auto px-4 py-12 space-y-4">
           <h2 className="font-serif text-xl text-white">Common questions</h2>
-          <div className="space-y-3 text-xs text-clinical-zinc">
-            <div className="rounded-lg border border-clinical-border bg-clinical-surface p-4">
+          <div className="space-y-3 text-xs text-nn-on-surface-variant">
+            <div className="rounded-lg border border-white/[0.08] bg-nn-surface p-4">
               <p className="text-white text-sm font-medium mb-1">
                 Do I have to leave my current practice?
               </p>
@@ -246,14 +246,14 @@ export default function RdPartnersLanding() {
               ask for at least 4 booking hours per week to keep response times
               honest with members.
             </div>
-            <div className="rounded-lg border border-clinical-border bg-clinical-surface p-4">
+            <div className="rounded-lg border border-white/[0.08] bg-nn-surface p-4">
               <p className="text-white text-sm font-medium mb-1">
                 Who handles the meals?
               </p>
               We do — formulation, sourcing, kitchen, last-mile. You own the
               clinical relationship; we own the cold chain.
             </div>
-            <div className="rounded-lg border border-clinical-border bg-clinical-surface p-4">
+            <div className="rounded-lg border border-white/[0.08] bg-nn-surface p-4">
               <p className="text-white text-sm font-medium mb-1">
                 What's "advisory" vs "partner"?
               </p>

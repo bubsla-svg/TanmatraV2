@@ -157,10 +157,10 @@ export function getOwnedDishesForMember(member: TeamMember, catalog: DishData[] 
 
 export const ACCENT_CLASSES: Record<TeamMember["accent"], { ring: string; text: string; bg: string; chip: string }> = {
   gold: {
-    ring: "ring-clinical-gold/30",
-    text: "text-clinical-gold",
-    bg: "bg-clinical-gold/10",
-    chip: "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30",
+    ring: "ring-nn-primary/30",
+    text: "text-nn-primary",
+    bg: "bg-nn-primary/10",
+    chip: "bg-nn-primary/15 text-nn-primary border-nn-primary/30",
   },
   sage: {
     ring: "ring-clinical-sage/30",
@@ -169,9 +169,9 @@ export const ACCENT_CLASSES: Record<TeamMember["accent"], { ring: string; text: 
     chip: "bg-clinical-sage/15 text-clinical-sage border-clinical-sage/30",
   },
   blue: {
-    ring: "ring-clinical-blue/30",
-    text: "text-clinical-blue",
-    bg: "bg-clinical-blue/10",
-    chip: "bg-clinical-blue/15 text-clinical-blue border-clinical-blue/30",
+    ring: "ring-nn-tertiary/30",
+    text: "text-nn-tertiary",
+    bg: "bg-nn-tertiary/10",
+    chip: "bg-nn-tertiary/15 text-nn-tertiary border-nn-tertiary/30",
   },
 };
