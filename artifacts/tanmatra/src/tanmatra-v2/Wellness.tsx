@@ -78,8 +78,8 @@ function ManualLogSheet({ open, onClose, onSaved }: { open: boolean; onClose: ()
     finally { setSaving(false); }
   };
   return (
-    <div className="bg-black/60" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--s1)", borderRadius: "20px 20px 0 0", borderTop: "1px solid var(--ln2)", padding: 16, maxHeight: "85vh", overflowY: "auto" }}>
+    <div className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--tnm-surface-ink-2)", borderRadius: "20px 20px 0 0", borderTop: "1px solid white/10", padding: 16, maxHeight: "85vh", overflowY: "auto" }}>
         <div className="fx ac jb mb10"><div className="h2" style={{ fontSize: 18 }}>Log a meal or snack</div><button className="iconbtn" onClick={onClose} aria-label="Close"><i className="ph-bold ph-x" /></button></div>
         <div className="lab mb6">What was it?</div>
         <div className="inp mb10"><input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="e.g. Greek yoghurt with berries" /></div>
@@ -142,7 +142,7 @@ function WearableCard({ data, refresh }: { data: WellnessTodayResponse; refresh:
       <div className="fine mt6" style={{ fontSize: 10 }}>We only read steps + active calories. <Link to="/privacy" style={{ color: "var(--safb)" }}>How wearable data is handled</Link>.</div>
 
       {pending && (
-        <div className="bg-black/60" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setPending(null)}>
+        <div className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setPending(null)}>
           <div onClick={(e) => e.stopPropagation()} className="card" style={{ maxWidth: 400, width: "100%" }}>
             <div className="h2 mb6" style={{ fontSize: 17 }}>Connect {pending === "apple_health" ? "Apple Health" : "Google Fit / Health Connect"}</div>
             <div className="fine mb10">Before we connect, here's exactly what we read and how it's used.</div>
@@ -266,7 +266,7 @@ export default function V2Wellness() {
   const week: any = weekQ.data;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/challenges" aria-label="Community"><i className="ph-bold ph-arrow-left" /></Link>
@@ -282,7 +282,7 @@ export default function V2Wellness() {
         <div className="content" style={{ paddingBottom: 24 }}>
           <ProtocolActions />
 
-          <div className="secrow"><span className="sh">Today's nutrition</span><button className="fine" style={{ color: "var(--safb)" }} onClick={() => setLogOpen(true)}><i className="ph-bold ph-plus" /> Log meal</button></div>
+          <div className="secrow"><span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Today's nutrition</span><button className="text-[var(--tnm-action)] font-semibold text-[13px] flex items-center gap-1 hover:text-white transition-colors" onClick={() => setLogOpen(true)}><i className="ph-bold ph-plus" /> Log meal</button></div>
 
           <div className="padx">
             {unauth ? (
@@ -295,10 +295,10 @@ export default function V2Wellness() {
               <>
                 <div className="card">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, justifyItems: "center" }}>
-                    <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="var(--color-clinical-gold)" icon="ph-flame" />
+                    <Ring label="Calories" value={data.totals.calories} target={data.targets.effectiveCalorieTarget ?? data.targets.calorieTarget} unit="kcal" color="var(--tnm-action)" icon="ph-flame" />
                     <Ring label="Protein" value={data.totals.proteinGrams} target={data.targets.proteinTargetGrams} unit="g" color="var(--color-saffron-300)" icon="ph-barbell" />
                     <Ring label="Fiber" value={data.totals.fiberGrams} target={data.targets.fiberTargetGrams} unit="g" color="var(--color-clinical-sage)" icon="ph-plant" />
-                    <Ring label="Water" value={data.totals.waterMl} target={data.targets.waterTargetMl} unit="ml" color="var(--color-clinical-blue)" icon="ph-drop" />
+                    <Ring label="Water" value={data.totals.waterMl} target={data.targets.waterTargetMl} unit="ml" color="var(--color-nn-tertiary)" icon="ph-drop" />
                   </div>
                   <div className="fx ac jc g6 mt10">
                     {WATER_PRESETS.map((ml) => <button key={ml} className="chip" onClick={() => logWater(ml)}>+{ml} ml</button>)}
@@ -317,13 +317,13 @@ export default function V2Wellness() {
 
           {data && week && (
             <>
-              <div className="secrow"><span className="sh">Last 7 days</span></div>
+              <div className="secrow"><span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Last 7 days</span></div>
               <div className="padx">
                 <div className="card">
-                  <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="var(--color-clinical-gold)" label="Calories" unit="kcal" />
+                  <WeekBars data={week.days} field="calories" target={week.targets.effectiveCalorieTarget ?? week.targets.calorieTarget} color="var(--tnm-action)" label="Calories" unit="kcal" />
                   <WeekBars data={week.days} field="proteinGrams" target={week.targets.proteinTargetGrams} color="var(--color-saffron-300)" label="Protein" unit="g" />
                   <WeekBars data={week.days} field="fiberGrams" target={week.targets.fiberTargetGrams} color="var(--color-clinical-sage)" label="Fiber" unit="g" />
-                  <WeekBars data={week.days} field="waterMl" target={week.targets.waterTargetMl} color="var(--color-clinical-blue)" label="Water" unit="ml" />
+                  <WeekBars data={week.days} field="waterMl" target={week.targets.waterTargetMl} color="var(--color-nn-tertiary)" label="Water" unit="ml" />
                 </div>
               </div>
             </>
@@ -331,7 +331,7 @@ export default function V2Wellness() {
 
           {data && (
             <>
-              <div className="secrow"><span className="sh">Today's entries</span><button className="fine" style={{ color: "var(--safb)" }} onClick={() => setLogOpen(true)}><i className="ph-bold ph-plus" /> Log</button></div>
+              <div className="secrow"><span className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Today's entries</span><button className="text-[var(--tnm-action)] font-semibold text-[13px] flex items-center gap-1 hover:text-white transition-colors" onClick={() => setLogOpen(true)}><i className="ph-bold ph-plus" /> Log</button></div>
               <div className="padx">
                 <div className="card mb10">
                   {data.logs.length === 0 ? (
