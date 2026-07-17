@@ -144,7 +144,7 @@ function Shell({
   rightHref?: string;
 }) {
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -382,7 +382,7 @@ export default function V2Subscriptions() {
             credit{credits.balance === 1 ? "" : "s"} in your wallet
           </div>
 
-          <div className="card fx ac jb gap12 mt12">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 fx ac jb gap12 mt12">
             <div className="fx ac gap10">
               <div className="dic" style={{ color: "var(--safb)" }}>
                 <i className="ph-fill ph-wallet" />
@@ -492,11 +492,11 @@ export default function V2Subscriptions() {
       {/* Edit delivery window */}
       {windowEditOpen && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setWindowEditOpen(false)}
         >
-          <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Update delivery window
             </div>
@@ -543,11 +543,11 @@ export default function V2Subscriptions() {
       {/* Reschedule delivery */}
       {reschedDelivery !== null && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setReschedDelivery(null)}
         >
-          <div className="card" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Reschedule delivery
             </div>
@@ -608,11 +608,11 @@ export default function V2Subscriptions() {
       {/* ------ Cancel confirmation (destructive) ------ */}
       {cancelConfirmOpen && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setCancelConfirmOpen(false)}
         >
-          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="tt" style={{ color: "var(--text-primary)" }}>
               Cancel this subscription?
             </div>
@@ -649,11 +649,11 @@ export default function V2Subscriptions() {
       {/* ------ Skip-delivery confirmation ------ */}
       {skipConfirm !== null && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSkipConfirm(null)}
         >
-          <div className="card" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="tt" style={{ color: "var(--text-primary)" }}>
               Skip this delivery?
             </div>
@@ -698,7 +698,7 @@ function LoyaltyStrip({ pr }: { pr: LoyaltyProgress }) {
   const premPct = Math.min(100, (pr.deliveredCount / pr.premiumUnlockAt) * 100);
   return (
     <div className="fx gap12 mt12">
-      <div className="card f1">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 f1">
         <div className="fx ac jb">
           <span className="lab">Next free meal</span>
           <span className="mono fine">
@@ -706,14 +706,14 @@ function LoyaltyStrip({ pr }: { pr: LoyaltyProgress }) {
           </span>
         </div>
         <div className="pbar mt8">
-          <b style={{ width: `${cyclePct}%`, background: "var(--saf)" }} />
+          <b style={{ width: `${cyclePct}%`, background: "var(--tnm-action)" }} />
         </div>
         <div className="fine sagec mt6">
           {pr.deliveriesUntilFree} more deliver
           {pr.deliveriesUntilFree === 1 ? "y" : "ies"} to a free meal
         </div>
       </div>
-      <div className="card f1">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 f1">
         <div className="fx ac jb">
           <span className="lab">Chef's tier</span>
           <span className="mono fine">
@@ -796,7 +796,7 @@ function DetailView({
   return (
     <div className="padx" style={{ paddingTop: 14 }}>
       {/* Plan summary + economics */}
-      <div className="card">
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
         <div className="fx ac wrap g6">
           <span className="tt">{planTitle(s)}</span>
           <span className="pill" style={meta.pillStyle}>
@@ -909,8 +909,7 @@ function DetailView({
           instead of a rebuild-from-scratch on /plans. */}
       {trial && s.status !== "cancelled" && (
         <div
-          className="card mt12"
-          style={{ background: "var(--safd)", borderColor: "var(--saf)" }}
+          className="rounded-2xl border border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/10 p-4 mt12"
         >
           <div className="tt" style={{ color: "var(--text-primary)" }}>
             Keep your plan going
@@ -956,7 +955,7 @@ function DetailView({
       {nextDelivery && (
         <>
           <div className="lab mt20 mb10">Next delivery</div>
-          <div className="card" style={{ borderColor: "var(--saf)" }}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-[var(--tnm-action)] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4">
             <div className="fx ac gap12">
               <DateBox iso={nextDelivery.scheduledFor} big />
               <div className="f1" style={{ minWidth: 0 }}>
@@ -1010,7 +1009,7 @@ function DetailView({
             const dm = DELIVERY_META[d.status];
             const isUpcoming = d.status === "upcoming";
             return (
-              <div key={d.id} className="card mb10">
+              <div key={d.id} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
                 <div className="fx ac jb gap8">
                   <div className="fx ac gap12">
                     <DateBox iso={d.scheduledFor} />
@@ -1146,12 +1145,12 @@ function SwapDialog({
 
   return (
     <div
-      className="tnm2 nn bg-black/60"
+      className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
       style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={() => onClose()}
     >
       <div
-        className="card"
+        className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
         style={{ maxWidth: 512, width: "100%" }}
         onClick={(e) => e.stopPropagation()}
       >

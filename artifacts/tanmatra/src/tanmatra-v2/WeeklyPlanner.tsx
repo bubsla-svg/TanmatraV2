@@ -244,7 +244,7 @@ export default function V2WeeklyPlanner() {
   const isDraft = activePlan?.status === "draft";
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -346,7 +346,7 @@ export default function V2WeeklyPlanner() {
           ) : (
             <>
               {/* Week calendar */}
-              <div className="card mb12 mt16">
+              <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12 mt16">
                 <div className="fx ac gap8 mb10">
                   <i className="ph-bold ph-calendar-dots fntc" />
                   <span className="fine">
@@ -392,7 +392,7 @@ export default function V2WeeklyPlanner() {
 
               <PlanSummary plan={activePlan} />
 
-              <div className="sh mt20 mb10">Your 7 days</div>
+              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mt20 mb10">Your 7 days</div>
               {activePlan.days.map((day, idx) => (
                 <DayCard
                   key={day.date}
@@ -445,7 +445,7 @@ export default function V2WeeklyPlanner() {
 
               {plans.length > 1 ? (
                 <>
-                  <div className="sh mt20 mb10">Recent plans</div>
+                  <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50 mt20 mb10">Recent plans</div>
                   <div className="fx wrap g6">
                     {plans.map((p) => (
                       <button
@@ -468,11 +468,11 @@ export default function V2WeeklyPlanner() {
       {/* Swap dialog */}
       {swapDialog !== null && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSwapDialog(null)}
         >
-          <div className="card" style={{ ...DIALOG_SURFACE, maxWidth: 520, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ ...DIALOG_SURFACE, maxWidth: 520, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="h2" style={{ color: "var(--tx)" }}>
               Swap {swapDialog ? SLOT_LABEL[swapDialog.slot] : ""}
             </div>
@@ -554,11 +554,11 @@ export default function V2WeeklyPlanner() {
       {/* Settings dialog */}
       {settingsOpen && (
         <div
-          className="tnm2 nn bg-black/60"
+          className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSettingsOpen(false)}
         >
-          <div className="card" style={{ ...DIALOG_SURFACE, maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ ...DIALOG_SURFACE, maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <div className="h2" style={{ color: "var(--tx)" }}>
               Meal planner settings
             </div>
@@ -668,7 +668,7 @@ function PlanSummary({ plan }: { plan: MealPlan }) {
     c.dailyCalorieTarget != null ||
     c.dailyProteinTargetGrams != null;
   return (
-    <div className="card mb12 mt16">
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12 mt16">
       <div className="fx ac jb gap12 mb10">
         <div style={{ minWidth: 0 }}>
           <div className="lab">Week of</div>
@@ -752,7 +752,7 @@ function DayCard({
   onSwap: (slot: MealPlanSlot) => void;
 }) {
   return (
-    <div className="card mb12">
+    <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12">
       <div className="fx ac jb mb10">
         <div className="tt">{formatDay(day.date)}</div>
         {editable ? (
