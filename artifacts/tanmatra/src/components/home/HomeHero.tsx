@@ -2,9 +2,9 @@ import { useNavigate } from "react-router";
 import {
   ArrowRight,
   Leaf,
-  CookingPot,
   Truck,
   ShieldCheck,
+  SealCheck,
   Scales,
   Barbell,
   Drop,
@@ -12,6 +12,7 @@ import {
   Sparkle,
   type Icon,
 } from "@phosphor-icons/react";
+import { track } from "@/lib/analytics";
 
 interface HomeHeroProps {
   onSeeMenu: () => void;
@@ -27,11 +28,13 @@ const PROGRAM_CHIPS: { icon: Icon; label: string; planSlug: string }[] = [
   { icon: Heart, label: "PCOS Care", planSlug: "pcos-balance" },
 ];
 
+// Hard, verifiable credentials only — same claims published in HomeTrustWall
+// (ISO cert + FSSAI licence). No vague filler like "Safe & Hygienic".
 const TRUST_GRID: { icon: Icon; label: string }[] = [
   { icon: Leaf, label: "Dietitian Designed" },
-  { icon: CookingPot, label: "Freshly Prepared" },
-  { icon: Truck, label: "Delivered Fresh" },
-  { icon: ShieldCheck, label: "Safe & Hygienic" },
+  { icon: ShieldCheck, label: "ISO 22000:2018 Kitchen" },
+  { icon: SealCheck, label: "FSSAI Licensed" },
+  { icon: Truck, label: "Delivered Fresh Daily" },
 ];
 
 export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
@@ -87,26 +90,42 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
                 Precision-balanced clinical meals designed by dietitians, cooked fresh daily, and delivered direct to your door.
               </p>
 
-              {/* Primary CTAs with Button-in-Button Trailing Icon Architecture */}
+              {/* Primary CTAs — trial is THE money action; menu is the
+                  secondary path; the quiz demotes to a tertiary text link. */}
               <div className="mt-8 w-full max-w-md flex flex-col sm:flex-row gap-3.5">
                 <button
                   type="button"
-                  onClick={onSeeMenu}
+                  onClick={() => {
+                    track("home_cta_click", { cta: "start_trial", source: "hero" });
+                    navigate("/subscribe?trial=1");
+                  }}
                   className="group relative flex-1 min-h-[52px] px-6 py-3.5 rounded-full font-bold text-sm tracking-wide bg-[var(--tnm-action)] text-black hover:brightness-110 active:scale-[0.98] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex items-center justify-between shadow-[0_8px_24px_rgba(251,191,36,0.2)]"
                 >
-                  <span className="pl-2">Browse Menu</span>
+                  <span className="pl-2">Start 3-Day Trial</span>
                   <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center group-hover:translate-x-1 group-hover:-translate-y-[1px] transition-transform duration-300">
                     <ArrowRight className="w-4 h-4 text-black" weight="bold" />
                   </div>
                 </button>
                 <button
                   type="button"
-                  onClick={onHelpChoose}
+                  onClick={onSeeMenu}
                   className="flex-1 min-h-[52px] px-6 py-3.5 rounded-full font-semibold text-sm tracking-wide border border-white/15 bg-white/5 text-white hover:bg-white/10 hover:border-white/25 active:scale-[0.98] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex items-center justify-center"
                 >
-                  Help Me Choose
+                  Browse Menu
                 </button>
               </div>
+
+              {/* Honest anchor (catalog's own framing) + tertiary quiz path */}
+              <p className="mt-3.5 text-xs text-white/55 font-medium">
+                One-time pack · sample before you subscribe
+              </p>
+              <button
+                type="button"
+                onClick={onHelpChoose}
+                className="mt-2 text-xs font-semibold text-white/70 underline decoration-white/25 underline-offset-4 hover:text-white transition-colors"
+              >
+                Not sure? Help me choose
+              </button>
             </div>
 
             {/* Programs Section */}
