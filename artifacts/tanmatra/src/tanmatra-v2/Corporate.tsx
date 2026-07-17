@@ -28,6 +28,10 @@ export default function V2Corporate() {
   const [leadCompany, setLeadCompany] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadHeadcount, setLeadHeadcount] = useState("10 - 50 employees");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadMessage, setLeadMessage] = useState("");
+  const [submittingInquiry, setSubmittingInquiry] = useState(false);
+  const [submittedInquiry, setSubmittedInquiry] = useState(false);
 
   useEffect(() => {
     corporateApi
@@ -100,75 +104,177 @@ export default function V2Corporate() {
               <span className="sh">Request Corporate Proposal</span>
             </div>
             <div className="padx">
-              <p className="fine mb14">
-                Fill in details and our enterprise specialist will share customized plan tiers.
-              </p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!leadName.trim() || !leadCompany.trim() || !leadEmail.trim()) {
-                    toast.error("Please fill in all details");
-                    return;
-                  }
-                  const message = [
-                    "Corporate plan inquiry — Tanmatra",
-                    `Contact: ${leadName}`,
-                    `Company: ${leadCompany}`,
-                    `Work email: ${leadEmail}`,
-                    `Headcount: ${leadHeadcount}`,
-                  ].join("\n");
-                  window.open(
-                    `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
-                    "_blank",
-                    "noopener,noreferrer",
-                  );
-                  toast.success("Almost done — send the pre-filled WhatsApp message and our enterprise team will follow up.");
-                }}
-              >
-                <div className="lab mb6">Contact Name</div>
-                <div className="inp mb12">
-                  <i className="ph-bold ph-user" />
-                  <input placeholder="HR Manager / Admin" required value={leadName} onChange={(e) => setLeadName(e.target.value)} />
+              {submittedInquiry ? (
+                <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-clinical-sage/10 text-clinical-sage flex items-center justify-center mx-auto mb-4 border border-clinical-sage/20">
+                    <i className="ph-bold ph-check" style={{ fontSize: 24 }} />
+                  </div>
+                  <div className="tt">Inquiry Received</div>
+                  <p className="fine mt8 leading-relaxed">
+                    Inquiry sent! Our corporate wellness lead will contact you within 24 hours.
+                  </p>
                 </div>
+              ) : (
+                <>
+                  <p className="fine mb14">
+                    Fill in details and our enterprise specialist will share customized plan tiers.
+                  </p>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (
+                        !leadName.trim() ||
+                        !leadCompany.trim() ||
+                        !leadEmail.trim() ||
+                        !leadPhone.trim() ||
+                        !leadMessage.trim()
+                      ) {
+                        toast.error("Please fill in all details");
+                        return;
+                      }
+                      if (!/.+@.+\..+/.test(leadEmail)) {
+                        toast.error("Please enter a valid email");
+                        return;
+                      }
+                      setSubmittingInquiry(true);
+                      try {
+                        const body = {
+                          companyName: leadCompany.trim(),
+                          contactPerson: leadName.trim(),
+                          email: leadEmail.trim().toLowerCase(),
+                          phone: leadPhone.trim(),
+                          size: leadHeadcount,
+                          message: leadMessage.trim(),
+                        };
+                        const res = await fetch("/api/corporate/inquiries", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(body),
+                        });
+                        if (!res.ok) {
+                          const j = (await res.json().catch(() => ({}))) as {
+                            error?: string;
+                          };
+                          throw new Error(j.error ?? `HTTP ${res.status}`);
+                        }
+                        setSubmittedInquiry(true);
+                        toast.success("Inquiry sent successfully!");
+                      } catch (err) {
+                        toast.error("Submission failed", {
+                          description:
+                            (err as Error).message ??
+                            "Please check your network and try again.",
+                        });
+                      } finally {
+                        setSubmittingInquiry(false);
+                      }
+                    }}
+                  >
+                    <div className="lab mb6">Contact Name</div>
+                    <div className="inp mb12">
+                      <i className="ph-bold ph-user" />
+                      <input
+                        placeholder="HR Manager / Admin"
+                        required
+                        value={leadName}
+                        onChange={(e) => setLeadName(e.target.value)}
+                        disabled={submittingInquiry}
+                      />
+                    </div>
 
-                <div className="lab mb6">Company Name</div>
-                <div className="inp mb12">
-                  <i className="ph-bold ph-buildings" />
-                  <input placeholder="e.g. Acme Corp" required value={leadCompany} onChange={(e) => setLeadCompany(e.target.value)} />
-                </div>
+                    <div className="lab mb6">Company Name</div>
+                    <div className="inp mb12">
+                      <i className="ph-bold ph-buildings" />
+                      <input
+                        placeholder="e.g. Acme Corp"
+                        required
+                        value={leadCompany}
+                        onChange={(e) => setLeadCompany(e.target.value)}
+                        disabled={submittingInquiry}
+                      />
+                    </div>
 
-                <div className="lab mb6">Work Email</div>
-                <div className="inp mb12">
-                  <i className="ph-bold ph-envelope-simple" />
-                  <input type="email" placeholder="hr@acme.com" required value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} />
-                </div>
+                    <div className="lab mb6">Work Email</div>
+                    <div className="inp mb12">
+                      <i className="ph-bold ph-envelope-simple" />
+                      <input
+                        type="email"
+                        placeholder="hr@acme.com"
+                        required
+                        value={leadEmail}
+                        onChange={(e) => setLeadEmail(e.target.value)}
+                        disabled={submittingInquiry}
+                      />
+                    </div>
 
-                <div className="lab mb6">Estimated Headcount</div>
-                <select
-                  className="mb12"
-                  value={leadHeadcount}
-                  onChange={(e) => setLeadHeadcount(e.target.value)}
-                  style={{
-                    height: 46,
-                    width: "100%",
-                    borderRadius: 10,
-                    background: "var(--tnm-surface-ink-2)",
-                    border: "1px solid white/[0.08]",
-                    color: "var(--tx)",
-                    padding: "0 14px",
-                    fontSize: "14.5px",
-                  }}
-                >
-                  <option>10 - 50 employees</option>
-                  <option>50 - 200 employees</option>
-                  <option>200 - 1000 employees</option>
-                  <option>1000+ employees</option>
-                </select>
+                    <div className="lab mb6">Phone Number</div>
+                    <div className="inp mb12">
+                      <i className="ph-bold ph-phone" />
+                      <input
+                        type="tel"
+                        placeholder="+91 XXXXX XXXXX"
+                        required
+                        value={leadPhone}
+                        onChange={(e) => setLeadPhone(e.target.value)}
+                        disabled={submittingInquiry}
+                      />
+                    </div>
 
-                <button type="submit" className="btn btn-p btn-lg btn-blk mt6">
-                  Request Proposals
-                </button>
-              </form>
+                    <div className="lab mb6">Estimated Headcount</div>
+                    <select
+                      className="mb12"
+                      value={leadHeadcount}
+                      onChange={(e) => setLeadHeadcount(e.target.value)}
+                      disabled={submittingInquiry}
+                      style={{
+                        height: 46,
+                        width: "100%",
+                        borderRadius: 10,
+                        background: "var(--tnm-surface-ink-2)",
+                        border: "1px solid white/[0.08]",
+                        color: "var(--tx)",
+                        padding: "0 14px",
+                        fontSize: "14.5px",
+                      }}
+                    >
+                      <option>10 - 50 employees</option>
+                      <option>50 - 200 employees</option>
+                      <option>200 - 1000 employees</option>
+                      <option>1000+ employees</option>
+                    </select>
+
+                    <div className="lab mb6">Inquiry details / Message</div>
+                    <div className="inp mb12" style={{ height: "auto" }}>
+                      <textarea
+                        placeholder="Describe your requirements (e.g. daily lunch, wellness seminars, dietitian consulting)..."
+                        required
+                        value={leadMessage}
+                        onChange={(e) => setLeadMessage(e.target.value)}
+                        disabled={submittingInquiry}
+                        style={{
+                          width: "100%",
+                          background: "transparent",
+                          border: "none",
+                          color: "white",
+                          padding: "10px 0",
+                          fontSize: "14px",
+                          outline: "none",
+                          minHeight: "80px",
+                          resize: "vertical",
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="btn btn-p btn-lg btn-blk mt6"
+                      disabled={submittingInquiry}
+                    >
+                      {submittingInquiry ? "Submitting..." : "Request Proposals"}
+                    </button>
+                  </form>
+                </>
+              )}
             </div>
           </div>
         </div>
