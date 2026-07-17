@@ -53,3 +53,6 @@ export const adminModerationRateLimit = rateLimitMiddleware("admin:moderation", 
 
 /** User address mutations — prevents address enumeration/abuse. */
 export const addressRateLimit = rateLimitMiddleware("user:addresses", 30, 60_000);
+
+/** Public corporate lead form — matches the rd-partners application limit. */
+export const corporateInquiryRateLimit = rateLimitMiddleware("corporate:inquiry", 5, 24 * 60 * 60_000);

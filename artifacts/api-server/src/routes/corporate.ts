@@ -13,6 +13,9 @@ import {
   type OfficeOrderPick,
 } from "@workspace/db";
 import { resolveDishById, makeBatchDishResolver } from "../lib/menuResolver";
+import { corporateInquiryRateLimit } from "../middlewares/rateLimitMiddleware";
+import { sendMail } from "../lib/mail";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -912,5 +915,79 @@ router.post("/vouchers/redeem", async (req: Request, res: Response) => {
     res.status(500).json({ error: "redeem failed" });
   }
 });
+
+// ---------- public: corporate lead inquiries ----------
+//
+// No dedicated table yet — this is a lead-capture form, not an
+// authenticated resource. Persisted storage (mirroring rd_applications)
+// is a natural follow-up but needs a schema migration applied against
+// production Postgres; until then this notifies ops by email (same
+// mechanism rd_applications uses) so a submission is never silently
+// dropped even though it isn't durably stored server-side yet.
+
+const corporateInquirySchema = z.object({
+  companyName: z.string().min(1).max(200),
+  contactPerson: z.string().min(1).max(200),
+  email: z.email().max(200),
+  phone: z.string().min(1).max(40),
+  size: z.string().min(1).max(64),
+  message: z.string().min(1).max(4000),
+});
+
+router.post(
+  "/corporate/inquiries",
+  corporateInquiryRateLimit,
+  async (req: Request, res: Response) => {
+    const parsed = corporateInquirySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "invalid payload",
+        issues: parsed.error.issues.map((i) => ({
+          path: i.path.join("."),
+          message: i.message,
+        })),
+      });
+      return;
+    }
+    const d = parsed.data;
+    const to = process.env["CORPORATE_OPS_INBOX_EMAIL"] ?? process.env["RD_OPS_INBOX_EMAIL"] ?? null;
+    let notify: { delivered: boolean; reason?: string } = {
+      delivered: false,
+      reason: "no ops inbox configured",
+    };
+    if (to) {
+      const lines = [
+        `New corporate inquiry — ${d.companyName}`,
+        ``,
+        `Contact: ${d.contactPerson}`,
+        `Email: ${d.email}`,
+        `Phone: ${d.phone}`,
+        `Estimated headcount: ${d.size}`,
+        ``,
+        `Message:`,
+        d.message,
+      ];
+      const text = lines.join("\n");
+      notify = await sendMail({
+        to,
+        subject: `Corporate inquiry: ${d.companyName}`,
+        text,
+        html: `<pre style="font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap">${text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")}</pre>`,
+      });
+    }
+    logger.info(
+      {
+        companyName: d.companyName,
+        contactEmail: d.email,
+        size: d.size,
+        notify,
+      },
+      "corporate.inquiry.submitted",
+    );
+    res.status(200).json({ ok: true });
+  },
+);
 
 export default router;
