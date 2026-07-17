@@ -40,23 +40,25 @@ export default function CheckoutStepper({
                 <motion.div
                   initial={false}
                   animate={{
-                    backgroundColor: done
-                      ? "var(--saf)"
-                      : active
-                        ? "var(--safd)"
-                        : "var(--s3)",
-                    borderColor: accent ? "var(--saf)" : "var(--ln2)",
+                    backgroundColor: active
+                      ? "var(--tnm-action)"
+                      : "transparent",
+                    borderColor: active
+                      ? "var(--tnm-action)"
+                      : done
+                        ? "transparent"
+                        : "color-mix(in srgb, white 20%, transparent)",
                   }}
                   transition={{ duration: 0.25 }}
                   className="w-7 h-7 rounded-full border flex items-center justify-center shrink-0"
                   aria-current={active ? "step" : undefined}
                 >
                   {done ? (
-                    <Check className="w-3.5 h-3.5" style={{ color: "var(--onsaf)" }} />
+                    <Check className="w-4 h-4 text-[var(--tnm-action)]" strokeWidth={3} />
                   ) : (
                     <span
                       className="text-[11px] font-bold tabular-nums"
-                      style={{ color: active ? "var(--safb)" : "var(--mut)" }}
+                      style={{ color: active ? "black" : "color-mix(in srgb, white 40%, transparent)" }}
                     >
                       {step.index}
                     </span>
@@ -64,19 +66,19 @@ export default function CheckoutStepper({
                 </motion.div>
                 <span
                   className="text-[11px] uppercase tracking-[0.12em] font-semibold truncate"
-                  style={{ color: accent ? "var(--safb)" : "var(--mut)" }}
+                  style={{ color: accent ? "white" : "color-mix(in srgb, white 40%, transparent)" }}
                 >
                   {step.label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className="relative flex-1 h-px overflow-hidden" style={{ background: "var(--ln2)" }}>
+                <div className="relative flex-1 h-px overflow-hidden bg-white/10">
                   <motion.div
                     initial={false}
                     animate={{ width: i < currentIdx ? "100%" : "0%" }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
                     className="absolute inset-y-0 left-0"
-                    style={{ background: "var(--saf)" }}
+                    style={{ background: "var(--tnm-action)" }}
                   />
                 </div>
               )}

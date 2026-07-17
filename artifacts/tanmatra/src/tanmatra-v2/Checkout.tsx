@@ -1047,7 +1047,7 @@ export default function V2Checkout() {
               order_id: razorpayOrderId,
               name: "Tanmatra",
               description: `Order ${orderId}`,
-              theme: { color: "var(--color-clinical-gold)" },
+              theme: { color: "var(--tnm-action)" },
               prefill: {
                 contact: activeAddr?.phone ?? "",
               },
@@ -1372,7 +1372,7 @@ export default function V2Checkout() {
       : selectedPickupId !== null);
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <button type="button" className="iconbtn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cart"))} aria-label="Back">
@@ -1401,10 +1401,10 @@ export default function V2Checkout() {
           </div>
 
           {/* Delivery Address */}
-          <div className="card col gap16 mb14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4">
             <div className="fx ac gap8">
               <MapPin className="w-4 h-4" style={{ color: "var(--safb)" }} />
-              <div className="sh">Delivery Address</div>
+              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Delivery Address</div>
             </div>
 
             <div className="col gap8">
@@ -1487,11 +1487,11 @@ export default function V2Checkout() {
           </div>
 
           {/* Fulfillment */}
-          <div id="checkout-fulfillment" className="card col gap16 mb14 scroll-mt-24">
+          <div id="checkout-fulfillment" className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 scroll-mt-24 p-4">
             <div className="fx ac jb gap8">
               <div className="fx ac gap8">
                 <Truck className="w-4 h-4" style={{ color: "var(--safb)" }} />
-                <div className="sh">Get it your way</div>
+                <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Get it your way</div>
               </div>
               {etaMinutes != null && fulfillmentType === "delivery" && !preorderTomorrow && (
                 <span className="pill sg">
@@ -1711,10 +1711,10 @@ export default function V2Checkout() {
           </div>
 
           {/* Tip for Rider */}
-          <div className="card col gap16 mb14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4">
             <div className="fx ac gap8">
               <Bike className="w-4 h-4" style={{ color: "var(--safb)" }} />
-              <div className="sh">Tip for Rider</div>
+              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Tip for Rider</div>
               <span className="fine" style={{ marginLeft: "auto" }}>100% goes to your delivery partner</span>
             </div>
 
@@ -1781,17 +1781,17 @@ export default function V2Checkout() {
           </div>
 
           {/* Payment */}
-          <div className="card col gap12 mb14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap12 mb14 p-4">
             <div className="fx ac gap8">
               <CreditCard className="w-4 h-4" style={{ color: "var(--safb)" }} />
-              <div className="sh">Payment</div>
+              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Payment</div>
             </div>
             <div
               className="fx ac gap12"
               style={{ padding: 12, borderRadius: 10, border: "1px solid var(--saf)", background: "var(--safd)" }}
               title="Razorpay handles your payment securely. Tanmatra never sees your card or UPI details."
             >
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--color-clinical-gold-light)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "color-mix(in srgb, var(--tnm-action) 12%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
                 <CreditCard className="w-4 h-4" style={{ color: "var(--safb)" }} />
               </div>
               <div className="f1">
@@ -1853,10 +1853,10 @@ export default function V2Checkout() {
           )}
 
           {/* Order Summary (desktop bill column) */}
-          <div className="card col gap16 mb14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4">
             <div className="fx ac gap8">
               <ClipboardList className="w-4 h-4" style={{ color: "var(--safb)" }} />
-              <div className="sh">Order Summary</div>
+              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Order Summary</div>
             </div>
 
             <div className="col gap12">
@@ -1991,7 +1991,7 @@ export default function V2Checkout() {
               )}
 
               {subsidy?.active && subsidy.company && (
-                <div className="card" style={{ padding: 10 }}>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02]" style={{ padding: 10 }}>
                   <div className="fx ac jb gap8">
                     <div className="fx ac gap6 small" style={{ color: "var(--tx)" }}>
                       <Building2Icon className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
@@ -2020,7 +2020,7 @@ export default function V2Checkout() {
                 </div>
               )}
 
-              <div className="card" style={{ padding: 10 }}>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02]" style={{ padding: 10 }}>
                 <div className="fx ac gap6 small" style={{ color: "var(--tx)" }}>
                   <Ticket className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
                   <span className="fw6">Have a voucher?</span>
@@ -2119,9 +2119,9 @@ export default function V2Checkout() {
             })()}
 
             <div className="fx jb" style={{ alignItems: "baseline" }} role="status" aria-live="polite" aria-atomic="true">
-              <span className="sh">Total</span>
+              <span className="text-[15px] font-semibold text-white/90">Total</span>
               <div className="tl">
-                <span className="price" style={{ fontSize: 20, color: "var(--safb)" }}>{formatPrice(razorpayTotal)}</span>
+                <span className="price" style={{ fontSize: 20, color: "var(--tnm-action)" }}>{formatPrice(razorpayTotal)}</span>
                 <p className="fine">Inclusive of all taxes</p>
               </div>
             </div>
@@ -2196,11 +2196,11 @@ export default function V2Checkout() {
         {/* Guest Phone + OTP Verification Modal */}
         {showGuestAuthDialog && (
           <div
-            className="bg-black/60"
+            className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
             style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!guestIsVerifying) setShowGuestAuthDialog(false); }}
           >
-            <div className="card" style={{ maxWidth: 360, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 360, width: "100%" }} onClick={(e) => e.stopPropagation()}>
               <div className="fx ac gap8">
                 <Phone className="w-5 h-5" style={{ color: "var(--safb)" }} />
                 <div className="h2" style={{ fontSize: 18 }}>
@@ -2362,11 +2362,11 @@ export default function V2Checkout() {
         {/* Payment confirmation modal */}
         {confirmOpen && (
           <div
-            className="bg-black/60"
+            className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
             style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!isProcessing) setConfirmOpen(false); }}
           >
-            <div className="card" style={{ maxWidth: 400, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 400, width: "100%" }} onClick={(e) => e.stopPropagation()}>
               <div className="fx ac gap8">
                 <ShieldCheck className="w-5 h-5" style={{ color: "var(--sage)" }} />
                 <div className="h2" style={{ fontSize: 18 }}>Confirm Payment</div>
@@ -2375,7 +2375,7 @@ export default function V2Checkout() {
                 You will be charged <span className="safc fw7 mono">{formatPrice(razorpayTotal)}</span> via Razorpay.
                 Your rider will contact you on <span style={{ color: "var(--tx)" }}>{activeAddr?.phone}</span> after pickup.
               </p>
-              <div className="card mt14" style={{ background: "var(--s2)", padding: 12 }}>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] mt14" style={{ padding: 12 }}>
                 <div className="billrow" style={{ padding: "4px 0" }}>
                   <span>Subtotal ({items.length} item{items.length === 1 ? "" : "s"})</span>
                   <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(subtotal)}</span>
@@ -2562,7 +2562,7 @@ function V2MobilePayBar({
   return (
     <div style={{ position: "fixed", left: 0, right: 0, zIndex: 30, padding: "0 12px 8px", bottom: "calc(4rem + env(safe-area-inset-bottom))" }}>
       {open && (
-        <div className="card col gap6" style={{ marginBottom: 8, padding: 12, fontSize: 11 }}>
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap6" style={{ marginBottom: 8, padding: 12, fontSize: 11 }}>
           <div className="billrow" style={{ padding: 0 }}>
             <span>Subtotal</span>
             <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(subtotal)}</span>
@@ -2615,7 +2615,7 @@ function V2MobilePayBar({
       <p className="fine tc" style={{ fontSize: 10, color: "var(--mut)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", background: "var(--s1)", border: "1px solid var(--ln)", borderRadius: 8, padding: "4px 10px", marginBottom: 6 }}>
         FSSAI-licensed kitchen · RD-designed menu · Allergens disclosed per dish
       </p>
-      <div className="card fx ac gap12" style={{ padding: 12 }}>
+      <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] fx ac gap12" style={{ padding: 12 }}>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
