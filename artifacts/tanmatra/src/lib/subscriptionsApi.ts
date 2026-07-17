@@ -89,16 +89,18 @@ async function request<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  // Normalize any HeadersInit shape (plain object, Headers instance, tuple
+  // array) — object-spreading a Headers instance silently yields {} and would
+  // drop custom headers like Idempotency-Key.
+  const headers = new Headers(init.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     ...init,
-    // headers merged AFTER ...init so a caller passing custom headers (e.g.
-    // Idempotency-Key) can never clobber Content-Type — losing it makes
-    // express.json() skip the body and Zod reject with "received undefined".
-    headers: {
-      "Content-Type": "application/json",
-      ...(init.headers ?? {}),
-    },
+    // headers applied AFTER ...init so a caller can never clobber Content-Type —
+    // losing it makes express.json() skip the body and Zod reject with
+    // "received undefined".
+    headers,
   });
   if (res.status === 401) {
     throw new Error("unauthorized");

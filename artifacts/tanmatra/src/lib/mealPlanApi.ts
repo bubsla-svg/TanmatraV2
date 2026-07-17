@@ -1,15 +1,16 @@
 import { API_BASE as API_BASE } from "./apiBase";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // Normalize any HeadersInit shape (plain object, Headers instance, tuple
+  // array) — object-spreading a Headers instance silently yields {}.
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     ...init,
-    // headers merged AFTER ...init so caller-supplied headers can never
+    // headers applied AFTER ...init so caller-supplied headers can never
     // clobber Content-Type (body would arrive unparsed as undefined).
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
+    headers,
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
