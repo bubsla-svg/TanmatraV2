@@ -507,9 +507,17 @@ export default function V2Subscribe() {
     total: number;
     nextBillingAmount: number;
   } | null>(null);
+  // Transparent-ledger guard: distinguish "still loading" from "failed to
+  // load" so the Review/Payment screens can show an honest skeleton or a
+  // retryable error instead of a plausible-but-wrong hardcoded price at the
+  // exact moment the buyer is about to commit to paying.
+  const [quoteError, setQuoteError] = useState(false);
+  const [quoteRetryTick, setQuoteRetryTick] = useState(0);
+  const retryQuote = () => setQuoteRetryTick((t) => t + 1);
 
   useEffect(() => {
     let alive = true;
+    setQuoteError(false);
     subscriptionsApi
       .quote({
         cadence: activeCadence,
@@ -528,11 +536,12 @@ export default function V2Subscribe() {
       })
       .catch((err) => {
         console.error("Quote fetch error", err);
+        if (alive) setQuoteError(true);
       });
     return () => {
       alive = false;
     };
-  }, [activeCadence, cycleMeals, isTrial, members.length]);
+  }, [activeCadence, cycleMeals, isTrial, members.length, quoteRetryTick]);
 
   const F_Paise = (paise: number) => F(paise);
 
@@ -828,8 +837,27 @@ export default function V2Subscribe() {
 
   // Render S1 Recommendation (Step 0)
   const renderS1Recommendation = () => {
+    // Bare entry (no ?plan= and no ?fromCart=1): a goal-first plan chooser
+    // instead of a blank step 0 — was computed (`showChooser`) but never
+    // rendered, so anyone landing on /subscribe directly saw nothing.
+    if (showChooser) {
+      return (
+        <GoalPlanChooser
+          preferences={preferences}
+          onSelect={(slug) =>
+            setSearchParams((prev) => {
+              const p = new URLSearchParams(prev);
+              p.set("plan", slug);
+              return p;
+            })
+          }
+        />
+      );
+    }
     if (!effectivePlan) return null;
-    const estPrice = quoteDetails?.total ? F_Paise(quoteDetails.total) : `${F(380000)}/week`;
+    const estPrice = quoteDetails?.total
+      ? F_Paise(quoteDetails.total)
+      : `${F_Paise(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial))}/week`;
     return (
       <div className="flex flex-col gap-6">
         <div className="card border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
@@ -1281,11 +1309,11 @@ export default function V2Subscribe() {
 
   // Render S7 Price Review (Step 6)
   const renderS7Review = () => {
-    const subtotal = quoteDetails?.subtotal ? F_Paise(quoteDetails.subtotal) : F(375000);
-    const taxes = quoteDetails?.taxes ? F_Paise(quoteDetails.taxes) : F(20000);
-    const savings = quoteDetails?.savings ? F_Paise(quoteDetails.savings) : F(15000);
-    const total = quoteDetails?.total ? F_Paise(quoteDetails.total) : F(380000);
-    
+    const subtotal = quoteDetails ? F_Paise(quoteDetails.subtotal) : null;
+    const taxes = quoteDetails ? F_Paise(quoteDetails.taxes) : null;
+    const savings = quoteDetails ? F_Paise(quoteDetails.savings) : null;
+    const total = quoteDetails ? F_Paise(quoteDetails.total) : null;
+
     const nextChargeDate = new Date();
     nextChargeDate.setDate(nextChargeDate.getDate() + 7);
     const nextDateLabel = DATE_FMT.format(nextChargeDate);
@@ -1299,32 +1327,62 @@ export default function V2Subscribe() {
           </p>
         </div>
 
-        {/* Itemized bill panel */}
-        <div className="card flex flex-col gap-3" style={{ background: "var(--s2)", borderColor: "var(--ln)" }}>
-          <h4 className="text-xs font-bold text-white/90">Pre-checkout invoice</h4>
-          <div className="flex justify-between text-xs text-white/60 pt-2 border-t border-white/5">
-            <span>{cycleMeals} meal deliveries</span>
-            <span className="font-mono text-white/80">{subtotal}</span>
-          </div>
-          <div className="flex justify-between text-xs text-white/60">
-            <span>GST Taxes (18% clinical catering)</span>
-            <span className="font-mono text-white/80">{taxes}</span>
-          </div>
-          <div className="flex justify-between text-xs text-white/60">
-            <span>Delivery service charge</span>
-            <span className="text-[var(--color-alert-safe)] font-semibold">FREE</span>
-          </div>
-          {quoteDetails?.savings !== undefined && quoteDetails.savings > 0 && (
-            <div className="flex justify-between text-xs text-[var(--color-alert-safe)] font-semibold">
-              <span>Cadence saving discounts</span>
-              <span className="font-mono">-{savings}</span>
+        {/* Itemized bill panel — transparent ledger: never show a fabricated
+            breakdown. Skeleton while the server quote loads, a retryable
+            error if it fails, real numbers only once verified. */}
+        {quoteError ? (
+          <div className="card flex flex-col gap-2.5" style={{ background: "var(--s2)", borderColor: "var(--tnm-alert)" }}>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[var(--tnm-alert)]">
+              <Warning className="w-4 h-4 shrink-0" />
+              Couldn't load your price
             </div>
-          )}
-          <div className="flex justify-between text-sm font-bold text-white/90 pt-3 border-t border-white/10">
-            <span>Payable Today</span>
-            <span className="tnm-data font-mono text-[var(--tnm-action)]">{total}</span>
+            <p className="fine text-white/60">We couldn't reach our pricing service. Nothing has been charged.</p>
+            <button
+              type="button"
+              onClick={retryQuote}
+              className="btn btn-s self-start"
+              style={{ height: 36, paddingLeft: 14, paddingRight: 14 }}
+            >
+              Retry
+            </button>
           </div>
-        </div>
+        ) : !quoteDetails ? (
+          <div className="card flex flex-col gap-3" style={{ background: "var(--s2)", borderColor: "var(--ln)" }}>
+            <h4 className="text-xs font-bold text-white/90">Pre-checkout invoice</h4>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex justify-between items-center pt-2 border-t border-white/5">
+                <div className="h-3 rounded bg-white/5" style={{ width: 120 }} />
+                <div className="h-3 rounded bg-white/5" style={{ width: 60 }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="card flex flex-col gap-3" style={{ background: "var(--s2)", borderColor: "var(--ln)" }}>
+            <h4 className="text-xs font-bold text-white/90">Pre-checkout invoice</h4>
+            <div className="flex justify-between text-xs text-white/60 pt-2 border-t border-white/5">
+              <span>{cycleMeals} meal deliveries</span>
+              <span className="font-mono text-white/80">{subtotal}</span>
+            </div>
+            <div className="flex justify-between text-xs text-white/60">
+              <span>GST Taxes (18% clinical catering)</span>
+              <span className="font-mono text-white/80">{taxes}</span>
+            </div>
+            <div className="flex justify-between text-xs text-white/60">
+              <span>Delivery service charge</span>
+              <span className="text-[var(--color-alert-safe)] font-semibold">FREE</span>
+            </div>
+            {quoteDetails.savings > 0 && (
+              <div className="flex justify-between text-xs text-[var(--color-alert-safe)] font-semibold">
+                <span>Cadence saving discounts</span>
+                <span className="font-mono">-{savings}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm font-bold text-white/90 pt-3 border-t border-white/10">
+              <span>Payable Today</span>
+              <span className="tnm-data font-mono text-[var(--tnm-action)]">{total}</span>
+            </div>
+          </div>
+        )}
 
         {/* Next payment details immediately below */}
         {!isTrial && (
@@ -1335,7 +1393,7 @@ export default function V2Subscribe() {
             </div>
             <div className="flex justify-between text-white/50">
               <span>Next Renewal Charge:</span>
-              <span className="font-medium text-[var(--tnm-action)]">{total}</span>
+              <span className="font-medium text-[var(--tnm-action)]">{total ?? "—"}</span>
             </div>
             <div className="flex justify-between text-white/50">
               <span>Commitment Length:</span>
@@ -1427,14 +1485,14 @@ export default function V2Subscribe() {
             Back
           </button>
           <button
-            disabled={submitting || !addressComplete}
+            disabled={submitting || !addressComplete || !quoteDetails}
             onClick={() => goToStep(6)} // Payment Step
             className={`btn btn-p flex-1 flex items-center justify-center gap-1.5 font-bold ${
-              submitting || !addressComplete ? "opacity-50 cursor-not-allowed" : ""
+              submitting || !addressComplete || !quoteDetails ? "opacity-50 cursor-not-allowed" : ""
             }`}
             style={{ height: 44 }}
           >
-            Proceed to Payment ({total})
+            {quoteDetails ? `Proceed to Payment (${total})` : "Verifying price…"}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -1444,7 +1502,9 @@ export default function V2Subscribe() {
 
   // Render S8 Payment (Step 7)
   const renderS8Payment = () => {
-    const payableAmount = quoteDetails?.total ? F_Paise(quoteDetails.total) : F(380000);
+    const payableAmount = quoteDetails?.total
+      ? F_Paise(quoteDetails.total)
+      : F_Paise(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial));
     return (
       <div className="flex flex-col gap-6">
         <div>
@@ -1513,7 +1573,9 @@ export default function V2Subscribe() {
 
   // Render Success Screen (Step 8) - No confetti, clean 280ms anim
   const renderSuccess = () => {
-    const paidVal = quoteDetails?.total ? F_Paise(quoteDetails.total) : F(380000);
+    const paidVal = quoteDetails?.total
+      ? F_Paise(quoteDetails.total)
+      : F_Paise(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial));
     return (
       <div className="flex flex-col items-center text-center gap-6 py-12 px-4">
         {/* Animate-in subtle checkmark icon (sage-tinted) */}
@@ -1733,7 +1795,7 @@ export default function V2Subscribe() {
             (step === 1 && weekMeals < 3) ||
             (step === 2 && !selectedBillingCadence) ||
             (step === 3 && pincodeCheck.state !== "serviceable") ||
-            (step === 5 && !addressComplete)
+            (step === 5 && (!addressComplete || !quoteDetails))
           }
           loading={submitting}
         />
