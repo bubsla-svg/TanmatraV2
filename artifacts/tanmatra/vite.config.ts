@@ -44,8 +44,6 @@ export default defineConfig({
           if (id.includes("embla-carousel")) return "carousel";
 
           // Icon libraries split by vendor so routes only fetch needed icons
-          if (id.includes("lucide-react")) return "icons-lucide";
-          if (id.includes("@phosphor-icons")) return "icons-phosphor";
           if (id.includes("react-icons")) return "icons-react";
         },
       },

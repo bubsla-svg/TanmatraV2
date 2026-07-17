@@ -18,18 +18,11 @@ export const meta: MetaFunction = () => [
   {
     "script:ld+json": {
       "@context": "https://schema.org",
-      "@type": "ItemList",
-      "name": "Tanmatra Team",
-      "url": "https://tanmatra.food/team",
-      "itemListElement": TEAM.map((member, i) => ({
-        "@type": "ListItem",
-        "position": i + 1,
-        "item": {
-          "@type": "Person",
-          "name": member.name,
-          "jobTitle": member.title,
-          "url": `https://tanmatra.food/team/${member.slug}`,
-        },
+      "@graph": TEAM.map((member) => ({
+        "@type": "Person",
+        "name": member.name,
+        "jobTitle": member.title,
+        "worksFor": { "@type": "Organization", "name": "Tanmatra" },
       })),
     },
   },

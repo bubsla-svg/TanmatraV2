@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router";
 import { track } from "@/lib/analytics";
-import IntakeQuiz from "@/components/preferences/IntakeQuiz";
+const IntakeQuiz = lazy(() => import("@/components/preferences/IntakeQuiz"));
 
 // Modularized Homepage Components
 import HomeHeader from "@/components/home/HomeHeader";
@@ -121,7 +121,11 @@ export default function V2Home() {
       <StickyBottomBar context="homepage" />
 
       {/* Optional, user-initiated "Help me choose meals" assessment. */}
-      <IntakeQuiz open={quizOpen} onOpenChange={setQuizOpen} />
+      {quizOpen && (
+              <Suspense fallback={null}>
+                <IntakeQuiz open={quizOpen} onOpenChange={setQuizOpen} />
+              </Suspense>
+            )}
     </div>
   );
 }

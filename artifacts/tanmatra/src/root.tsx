@@ -24,20 +24,21 @@ import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { installErrorTelemetry } from "@/lib/errorTelemetry";
 import "./index.css";
 import "./tanmatra-v2/theme.css";
+import interFontUrl from "@fontsource-variable/inter/files/inter-latin-standard-normal.woff2?url";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://images.unsplash.com" },
-  // Phosphor icon weights for the v2 screens (self-hosted under /public).
-  { rel: "stylesheet", href: "/phosphor/regular/style.css" },
-  { rel: "stylesheet", href: "/phosphor/fill/style.css" },
-  { rel: "stylesheet", href: "/phosphor/bold/style.css" },
+  // Phosphor icon weights for the v2 screens (loaded asynchronously to avoid render blocking).
+  { rel: "stylesheet", href: "/phosphor/regular/style.css", media: "print", id: "ph-regular-css" },
+  { rel: "stylesheet", href: "/phosphor/fill/style.css", media: "print", id: "ph-fill-css" },
+  { rel: "stylesheet", href: "/phosphor/bold/style.css", media: "print", id: "ph-bold-css" },
   // Critical font — Inter Variable latin subset is the first face the browser
   // needs. Without this hint it discovers the URL only after CSS is parsed.
   {
     rel: "preload",
     as: "font",
     type: "font/woff2",
-    href: "/@fontsource-variable/inter/files/inter-latin-standard-normal.woff2",
+    href: interFontUrl,
     crossOrigin: "anonymous",
   },
   // PWA manifest — enables "Add to Home Screen" prompt on Android Chrome.
@@ -141,6 +142,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <Meta />
         <Links />
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
         {/* Inline loader styles so they apply before any stylesheet downloads */}
         <style dangerouslySetInnerHTML={{ __html: LOADER_STYLE }} />
         <script
@@ -286,6 +288,11 @@ function AppShellInner() {
 export default function Root() {
   useEffect(() => {
     window.__clearTanmatraLoader?.();
+    // Enable phosphor styles after hydration
+    ["ph-regular-css", "ph-fill-css", "ph-bold-css"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute("media", "all");
+    });
   }, []);
 
   return (

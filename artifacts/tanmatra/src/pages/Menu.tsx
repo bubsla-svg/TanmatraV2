@@ -7,6 +7,7 @@ export const meta: MetaFunction = () => [
   { name: "description", content: "Browse Tanmatra's curated clinical menu — therapeutic meals formulated by registered dietitians for wellness, performance, and clinical protocols." },
   { property: "og:title", content: "Clinical Menu | Tanmatra" },
   { property: "og:description", content: "Therapeutic meals for every goal — weight management, gut health, metabolic balance, and more. Designed by RDs, delivered fresh." },
+  { property: "og:type", content: "website" },
   { property: "og:image", content: "https://tanmatra.food/opengraph.jpg" },
   { property: "og:url", content: "https://tanmatra.food/menu" },
   { name: "twitter:card", content: "summary_large_image" },
