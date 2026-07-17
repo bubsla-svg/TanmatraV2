@@ -11,8 +11,8 @@ import {
 } from "@/lib/protocols";
 
 const ACCENT: Record<string, { background: string; color: string; border: string }> = {
-  sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)" },
-  blue: { background: "var(--color-clinical-blue-light)", color: "var(--color-clinical-blue)", border: "1px solid color-mix(in oklab, var(--color-clinical-blue) 32%, transparent)" },
+  sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid color-mix(in srgb, var(--color-clinical-sage) 35%, transparent)" },
+  blue: { background: "color-mix(in srgb, var(--color-nn-tertiary) 12%, transparent)", color: "var(--color-nn-tertiary)", border: "1px solid color-mix(in srgb, var(--color-nn-tertiary) 32%, transparent)" },
   gold: { background: "var(--safd)", color: "var(--safb)", border: "1px solid var(--saf)" },
 };
 
@@ -47,7 +47,7 @@ export default function V2RdDirectory() {
   }
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -104,7 +104,7 @@ export default function V2RdDirectory() {
               {rds.map(({ profile, member }) => {
                 const accent = ACCENT[member.accent] ?? ACCENT.gold;
                 return (
-                  <div key={profile.slug} className="card mb10">
+                  <div key={profile.slug} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb10">
                     <div className="fx gap12" style={{ alignItems: "flex-start" }}>
                       <div className="avatar" style={accent}>{member.initials}</div>
                       <div className="f1" style={{ minWidth: 0 }}>
@@ -148,7 +148,7 @@ export default function V2RdDirectory() {
             </div>
           )}
 
-          <div className="card mt14">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt14">
             <div className="fx ac gap8 mb6">
               <i className="ph-bold ph-calendar-check safc" style={{ fontSize: 18 }} />
               <span className="tt">Already booked?</span>

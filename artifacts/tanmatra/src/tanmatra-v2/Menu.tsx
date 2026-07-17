@@ -859,7 +859,7 @@ export default function V2Menu() {
               {!isAssessed && (
                 <div className="bg-[var(--tnm-surface-ink-2)] border border-white/[0.06] rounded-xl p-4 mb-4 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-xs leading-normal text-stone-100">
+                    <div className="font-semibold text-xs leading-normal text-white/90">
                       Answer 5 questions (about 60 seconds) to rank this menu for you.
                     </div>
                   </div>
