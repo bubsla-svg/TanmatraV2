@@ -905,11 +905,13 @@ export default function V2Subscribe() {
                   <button
                     key={slot}
                     onClick={() => toggleSlot(slot)}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                      on
-                        ? "bg-[var(--tnm-action)] border-[var(--tnm-action)] text-black"
-                        : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
-                    }`}
+                    aria-pressed={on}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98]"
+                    style={{
+                      background: on ? "var(--saf)" : "var(--s3)",
+                      borderColor: on ? "var(--saf)" : "var(--ln2)",
+                      color: on ? "var(--onsaf)" : "var(--mut)",
+                    }}
                   >
                     {SLOT_META[slot].label}
                   </button>
@@ -921,26 +923,27 @@ export default function V2Subscribe() {
           <div className="flex flex-col pt-2 border-t border-white/5">
             <span className="text-[10px] uppercase font-bold text-white/45 mb-2">Delivery days each week</span>
             <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setDaysMode("everyday")}
-                className={`py-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                  daysMode === "everyday"
-                    ? "bg-[var(--tnm-action)] border-[var(--tnm-action)] text-black"
-                    : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
-                }`}
-              >
-                Every day (7 days)
-              </button>
-              <button
-                onClick={() => setDaysMode("weekdays")}
-                className={`py-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                  daysMode === "weekdays"
-                    ? "bg-[var(--tnm-action)] border-[var(--tnm-action)] text-black"
-                    : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
-                }`}
-              >
-                Weekdays only (5 days)
-              </button>
+              {([
+                ["everyday", "Every day (7 days)"],
+                ["weekdays", "Weekdays only (5 days)"],
+              ] as const).map(([mode, label]) => {
+                const on = daysMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setDaysMode(mode)}
+                    aria-pressed={on}
+                    className="py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98]"
+                    style={{
+                      background: on ? "var(--saf)" : "var(--s3)",
+                      borderColor: on ? "var(--saf)" : "var(--ln2)",
+                      color: on ? "var(--onsaf)" : "var(--mut)",
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1011,6 +1014,10 @@ export default function V2Subscribe() {
                 ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
                 : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10 hover:bg-white/5"
             }`}
+            style={{
+              borderColor: selectedBillingCadence === "weekly" ? "var(--saf)" : undefined,
+              background: selectedBillingCadence === "weekly" ? "var(--safd)" : undefined,
+            }}
           >
             <div>
               <h4 className="text-sm font-bold text-white/90">1-Week Commitment</h4>
@@ -1031,6 +1038,10 @@ export default function V2Subscribe() {
                 ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
                 : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10 hover:bg-white/5"
             }`}
+            style={{
+              borderColor: selectedBillingCadence === "fortnightly" ? "var(--saf)" : undefined,
+              background: selectedBillingCadence === "fortnightly" ? "var(--safd)" : undefined,
+            }}
           >
             <div>
               <h4 className="text-sm font-bold text-white/90">2-Week Commitment</h4>
@@ -1051,6 +1062,12 @@ export default function V2Subscribe() {
                 ? "border-[var(--tnm-action)] bg-[var(--tnm-action)]/10"
                 : "border-[var(--tnm-action)]/30 bg-[var(--tnm-action)]/5 hover:bg-[var(--tnm-action)]/10"
             }`}
+            style={{
+              borderColor: "var(--saf)",
+              background: selectedBillingCadence === "monthly"
+                ? "color-mix(in srgb, var(--saf) 12%, transparent)"
+                : "var(--safd)",
+            }}
           >
             <div>
               <div className="flex items-center gap-1.5">
@@ -1114,6 +1131,10 @@ export default function V2Subscribe() {
                 ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
                 : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10"
             }`}
+            style={{
+              borderColor: selectedBillingCadence === "weekly" ? "var(--saf)" : undefined,
+              background: selectedBillingCadence === "weekly" ? "var(--safd)" : undefined,
+            }}
           >
             <div className="flex-1 pr-3">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -1138,6 +1159,10 @@ export default function V2Subscribe() {
                 ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
                 : "bg-[var(--tnm-surface-ink-2)] border-white/5 hover:border-white/10"
             }`}
+            style={{
+              borderColor: selectedBillingCadence === "fortnightly" ? "var(--saf)" : undefined,
+              background: selectedBillingCadence === "fortnightly" ? "var(--safd)" : undefined,
+            }}
           >
             <div className="flex-1 pr-3">
               <span className="text-xs font-bold text-white/90">Pay Bi-Weekly</span>
@@ -1157,6 +1182,10 @@ export default function V2Subscribe() {
                 ? "bg-[var(--tnm-action)]/5 border-[var(--tnm-action)]"
                 : "bg-[var(--tnm-surface-ink-2)] border-[var(--tnm-action)]/30 hover:bg-[var(--tnm-action)]/10"
             }`}
+            style={{
+              borderColor: selectedBillingCadence === "monthly" ? "var(--saf)" : undefined,
+              background: selectedBillingCadence === "monthly" ? "var(--safd)" : undefined,
+            }}
           >
             <div className="flex-1 pr-3">
               <div className="flex items-center gap-1.5">
