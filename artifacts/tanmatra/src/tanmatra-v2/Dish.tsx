@@ -32,7 +32,11 @@ import { API_BASE } from "@/lib/apiBase";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError, FALLBACK_DISH_IMAGE } from "@/lib/imgFallback";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
-import { Check, ShieldCheck, Heart, WarningCircle, CaretRight, Question, X, Warning, Plus, Calculator, Timer, SealCheck } from "@phosphor-icons/react";
+import {
+  Check, ShieldCheck, WarningCircle, CaretRight, Question, X, Warning,
+  Plus, Calculator, Timer, SealCheck, CheckCircle, Sparkle, ChartBar,
+  Info, Package, FirstAid, ArrowLeft,
+} from "@phosphor-icons/react";
 
 const GOAL_LABEL: Record<string, string> = {
   lose_weight: "weight-loss",
@@ -363,632 +367,677 @@ export default function V2Dish() {
     toast.success(`Added ${u.name} to order`);
   };
 
+  // ─── colour palette — pixel-matches the reference design spec ───────────
+  // primary-container = #fbbf24 (amber) = var(--tnm-action)
+  // surface-container = #1f1f1f  surface-container-high = #2a2a2a
+  // error-container   = #93000a  secondary = #c6c6c7
+  // tertiary-container= #34daff  (teal, data-provenance "Reviewed" icon)
+
+  const allergenDisclosure = getAllergenDisclosure(meal ?? { allergens: [] });
+  const hasAllergens = allergenDisclosure.state !== "unchecked" && allergenDisclosure.allergens.length > 0;
+
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white">
-      <div className="max-w-[480px] mx-auto min-h-screen relative flex flex-col pb-[140px]">
-        {/* Header App Bar Overlay */}
-        <div className="absolute top-0 inset-x-0 flex items-center justify-between p-4 z-20">
-          <Link className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/10" to="/menu" aria-label="Back to menu">
-            <i className="ph-bold ph-arrow-left text-sm" />
-          </Link>
-          <span className="text-[10px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-white/80">
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-[var(--pdp-on-surface)] antialiased pb-[120px]">
+
+      {/* ── Fixed Top Nav ──────────────────────────────────────────────── */}
+      <div className="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16 pointer-events-none">
+        <Link
+          to="/menu"
+          aria-label="Go back"
+          className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 pointer-events-auto hover:bg-black/60 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" weight="bold" />
+        </Link>
+        <div className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pointer-events-auto flex items-center gap-1.5">
+          <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-on-surface)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
             {clinicalCategoryLabel(meal.category, meal.kitchen)}
           </span>
         </div>
+      </div>
 
-        {/* 4.1 Hero Gallery Slider with dot pagination */}
-        <div className="relative aspect-[4/3] w-full bg-black">
-          <div className="w-full h-full flex overflow-hidden">
-            {galleryImages.map((src, idx) => (
-              <div
-                key={idx}
-                className={`w-full h-full shrink-0 transition-transform duration-300 ease-out`}
-                style={{ transform: `translateX(-${heroActiveIdx * 100}%)` }}
-              >
-                <img
-                  src={src}
-                  alt={`${meal.name} gallery ${idx + 1}`}
-                  loading={idx === 0 ? "eager" : "lazy"}
-                  decoding={idx === 0 ? "sync" : "async"}
-                  onError={onDishImageError}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
+      {/* ── Hero Image ─────────────────────────────────────────────────── */}
+      <div className="relative w-full h-[530px] md:h-[442px] max-w-3xl mx-auto overflow-hidden">
+        {/* gradient scrim */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--tnm-surface-ink)] via-transparent to-transparent z-10 h-full" />
 
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--tnm-surface-ink)] to-transparent z-10" />
-
-          {/* Dot Pagination — 48px touch targets (WCAG 2.1 AAA) with a small visual dot inside */}
-          <div className="absolute bottom-1 inset-x-0 flex justify-center z-20">
-            {galleryImages.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setHeroActiveIdx(idx)}
-                className="touch-target-48 shrink-0"
-                aria-label={`Go to slide ${idx + 1}`}
-                aria-current={heroActiveIdx === idx}
-              >
-                <span
-                  className={`h-1.5 rounded-full transition-all ${
-                    heroActiveIdx === idx ? "bg-[var(--tnm-action)] w-4" : "bg-white/40 w-1.5"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
+        {/* gallery slides — drag/swipe support via translateX */}
+        <div className="w-full h-full flex" style={{ overflow: "hidden" }}>
+          {galleryImages.map((src, idx) => (
+            <div
+              key={idx}
+              className="w-full h-full shrink-0 transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${heroActiveIdx * 100}%)` }}
+            >
+              <img
+                src={src}
+                alt={idx === 0 ? meal.name : `${meal.name} view ${idx + 1}`}
+                loading={idx === 0 ? "eager" : "lazy"}
+                decoding={idx === 0 ? "sync" : "async"}
+                onError={onDishImageError}
+                className="w-full h-full object-cover rounded-b-3xl"
+              />
+            </div>
+          ))}
         </div>
 
-        {/* PDP Above-the-fold Details */}
-        <div className="padx pt-2 flex-1">
-          {/* Recommendation match badge */}
+        {/* dot pagination — active = wide amber pill, rest = white/30 circle */}
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+          {galleryImages.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setHeroActiveIdx(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+              aria-current={heroActiveIdx === idx}
+              className="flex items-center justify-center"
+              style={{ width: heroActiveIdx === idx ? 16 : 8, height: 16 }}
+            >
+              <span
+                className="rounded-full transition-all duration-200"
+                style={{
+                  width: heroActiveIdx === idx ? 16 : 4,
+                  height: 4,
+                  backgroundColor: heroActiveIdx === idx ? "var(--tnm-action)" : "color-mix(in srgb, white 30%, transparent)",
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Main Content ───────────────────────────────────────────────── */}
+      <main className="max-w-3xl mx-auto px-4 -mt-8 relative z-20 space-y-8">
+
+        {/* ① Header & Title */}
+        <div className="space-y-1">
+          {/* "Recommended for your goal" badge — only when assessment complete + high fit */}
           {hasAssessment && isHighFit && (
-            <div className="mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-[var(--tnm-action)]/15 text-[var(--tnm-action)] border border-[var(--tnm-action)]/25 px-2.5 py-1 rounded-md inline-flex items-center gap-1">
-                <ShieldCheck weight="fill" className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md mb-1"
+              style={{ background: "color-mix(in srgb, var(--tnm-action) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--tnm-action) 20%, transparent)" }}>
+              <ShieldCheck className="w-3.5 h-3.5 text-[var(--tnm-action)]" weight="fill" />
+              <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--tnm-action)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
                 Recommended for your goal
               </span>
             </div>
           )}
 
-          <h1 className="text-xl font-bold text-white/95 leading-tight">{meal.name}</h1>
-          
-          {/* Taste line sensory description */}
-          <p className="text-xs text-white/50 italic mt-1 leading-snug">
+          <h1 className="text-[28px] leading-[34px] font-bold text-white">{meal.name}</h1>
+
+          <p className="text-[15px] leading-5 text-[var(--pdp-secondary)] italic">
             {getTasteDescriptionForDish(meal)}
           </p>
 
-          {/* Capped 2 Status Badges (neutral gray, veg status is only sage colored) */}
-          <div className="flex gap-2 items-center flex-wrap mt-3">
-            <span
-              className={`px-2 py-0.5 rounded-full border flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider ${
-                isVeg ? "bg-[var(--tnm-sage)]/10 text-[var(--tnm-sage)] border-[var(--tnm-sage)]/25" : "bg-white/5 text-white/70 border-white/5"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isVeg ? "bg-[var(--tnm-sage)]" : "bg-white/40"}`} />
-              {isVeg ? "Veg" : "Non-Veg"}
-            </span>
-
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-white/80 font-bold uppercase tracking-wider">
-              {gi === "low" ? "GI Low" : gi === "high" ? "GI High" : "GI Med"}
-            </span>
-
+          {/* Veg + GI chips */}
+          <div className="flex gap-2 pt-2">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md border border-white/5" style={{ background: "var(--pdp-chip-surface)" }}>
+              <span className={`w-2 h-2 rounded-full ${isVeg ? "bg-green-500" : "bg-orange-400"}`} />
+              <span className="text-[10px] leading-3 font-medium text-[var(--pdp-on-surface)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+                {isVeg ? "Veg" : "Non-Veg"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md border border-white/5" style={{ background: "var(--pdp-chip-surface)" }}>
+              <span className="text-[10px] leading-3 font-medium text-[var(--pdp-on-surface)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+                GI {gi === "low" ? "Low" : gi === "high" ? "High" : "Med"}
+              </span>
+            </div>
           </div>
+        </div>
 
-          {/* 4.4 Persistent Allergen summary line above fold */}
-          <div className="mt-3 text-xs flex items-center gap-1.5 bg-white/[0.02] border border-white/5 rounded-xl px-3 py-2">
-            <span className="text-[10px] uppercase font-extrabold tracking-wider text-[var(--tnm-alert)]">Allergen Safety:</span>
-            <AllergenSummaryValue meal={meal} className="text-white/80 font-medium truncate" />
-          </div>
+        {/* ② Allergen Warning */}
+        <div className="rounded-lg p-3 flex items-start gap-3"
+          style={{ background: "color-mix(in srgb, var(--pdp-error-container) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--pdp-error-container) 20%, transparent)" }}>
+          <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-on-error)] uppercase mt-0.5 shrink-0" style={{ fontFamily: "Geist, sans-serif" }}>
+            Allergen Safety:
+          </span>
+          <AllergenSummaryValue meal={meal} className="text-[15px] leading-5 text-[var(--pdp-on-surface)]" />
+        </div>
 
-          {/* 4.5 Nutrition Snapshot Chips */}
-          {!macrosProvisional && calculatedMacros && (
-            <>
-              <div className="grid grid-cols-2 min-[360px]:grid-cols-4 gap-2 mt-4 bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
-                <div className="flex flex-col items-center">
-                  <span className="text-[9px] font-mono text-white/45 uppercase">Calories</span>
-                  <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{macrosEstimated ? "~" : ""}{calculatedMacros.calories}</span>
-                </div>
-                <div className="flex flex-col items-center border-l border-white/5">
-                  <span className="text-[9px] font-mono text-white/45 uppercase">Protein</span>
-                  <span className="tnm-data text-xs font-bold text-white/90 mt-0.5">{macrosEstimated ? "~" : ""}{calculatedMacros.protein}g</span>
-                </div>
-                <div className="flex flex-col items-center border-l border-white/5">
-                  <span className="text-[9px] font-mono text-white/45 uppercase">Glycemic</span>
-                  <span className="text-[10px] font-bold text-white/90 mt-0.5 uppercase">{gi}</span>
-                </div>
-                <div className="flex flex-col items-center border-l border-white/5">
-                  <span className="text-[9px] font-mono text-white/45 uppercase">Source</span>
-                  <span className="text-[9px] font-bold text-white/90 mt-1 uppercase flex items-center gap-0.5">
-                    {macrosEstimated ? (
-                      <><Calculator className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Est.</>
-                    ) : (
-                      <><Check className="w-2.5 h-2.5 text-[var(--tnm-action)]" weight="bold" /> Measured</>
-                    )}
+        {/* ③ Macro Summary Bento */}
+        {calculatedMacros && (
+          <div>
+            <div className="grid grid-cols-4 rounded-xl overflow-hidden border border-white/10"
+              style={{ gap: "1px", background: "color-mix(in srgb, white 5%, transparent)" }}>
+              {/* Calories */}
+              <div className="flex flex-col items-center justify-center text-center p-3" style={{ background: "var(--tnm-surface-ink-2)" }}>
+                <span className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] uppercase mb-1" style={{ fontFamily: "Geist, sans-serif" }}>Calories</span>
+                <span className="text-[22px] leading-7 font-semibold tracking-[-0.01em] text-white">{calculatedMacros.calories}</span>
+              </div>
+              {/* Protein */}
+              <div className="flex flex-col items-center justify-center text-center p-3" style={{ background: "var(--tnm-surface-ink-2)" }}>
+                <span className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] uppercase mb-1" style={{ fontFamily: "Geist, sans-serif" }}>Protein</span>
+                <span className="text-[22px] leading-7 font-semibold tracking-[-0.01em] text-white">{calculatedMacros.protein}g</span>
+              </div>
+              {/* Glycemic */}
+              <div className="flex flex-col items-center justify-center text-center p-3" style={{ background: "var(--tnm-surface-ink-2)" }}>
+                <span className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] uppercase mb-1" style={{ fontFamily: "Geist, sans-serif" }}>Glycemic</span>
+                <span className="text-[10px] leading-3 font-medium text-white uppercase mt-1" style={{ fontFamily: "Geist, sans-serif" }}>
+                  {gi === "low" ? "Low" : gi === "high" ? "High" : "Medium"}
+                </span>
+              </div>
+              {/* Source */}
+              <div className="flex flex-col items-center justify-center text-center p-3" style={{ background: "var(--tnm-surface-ink-2)" }}>
+                <span className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] uppercase mb-1" style={{ fontFamily: "Geist, sans-serif" }}>Source</span>
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-[10px] leading-3 font-medium text-white uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+                    {macrosEstimated ? "Estimated" : "Measured"}
                   </span>
                 </div>
               </div>
-              {macrosEstimated && (
-                <p className="text-[9px] text-white/40 mt-1.5 leading-snug px-1">
-                  Macros estimated from the ingredient list (IFCT 2017 / USDA) — a close approximation, not yet lab/RD-verified.
-                </p>
-              )}
-            </>
-          )}
-
-          {/* Variant switcher */}
-          {variants.length > 1 && (
-            <div className="mt-6">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Select option</span>
-              <div className="flex gap-2 flex-wrap mt-2">
-                {variants.map((v: any) => {
-                  const active = v.slug === meal.slug;
-                  return (
-                    <button
-                      key={v.slug}
-                      type="button"
-                      onClick={() => selectVariant(v.slug)}
-                      aria-pressed={active}
-                      className={`text-xs px-4 py-2.5 min-h-[48px] rounded-xl border transition-all inline-flex items-center justify-center ${
-                        active ? "bg-[var(--tnm-action)] border-[var(--tnm-action)] text-black font-semibold" : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10"
-                      }`}
-                    >
-                      {v.label}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
-          )}
-
-          {/* Safety conflict banner */}
-          {match?.blocked && (
-            <div className="card border-[var(--color-alert-allergen)] border bg-[var(--color-alert-allergen)]/5 mt-5 p-3.5 flex flex-col gap-3 rounded-xl">
-              <div className="flex items-start gap-2.5">
-                <WarningCircle className="w-5 h-5 text-[var(--color-alert-allergen)] shrink-0 mt-0.5" weight="fill" />
-                <div>
-                  <h4 className="text-xs font-bold text-white/90">Safety Block Alert</h4>
-                  <div className="text-[11px] text-white/60 leading-relaxed mt-1 flex flex-col gap-1">
-                    {match.blockReasons.map((r, i) => {
-                      if (r.code === "allergen_block") {
-                        return <span key={i} className="block">• Contains allergens: {r.allergens.map((a: string) => a.toUpperCase()).join(", ")}</span>;
-                      }
-                      if (r.code === "contraindication_block") {
-                        return <span key={i} className="block">• Contraindicated for: {r.conditions.join(", ")} ({r.detail})</span>;
-                      }
-                      if (r.code === "diet_block") {
-                        return <span key={i} className="block">• Diet order conflict: {r.detail}</span>;
-                      }
-                      return <span key={i} className="block">• Patient safety conflict detected.</span>;
-                    })}
-                  </div>
-                </div>
-              </div>
-              {smartSwap && (
-                <Link
-                  to={`/dish/${smartSwap.slug}`}
-                  className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-2 hover:bg-white/10 transition-all text-xs"
-                >
-                  <span className="text-[var(--tnm-action)] font-semibold">View Allergen-Safe Smart Swap</span>
-                  <CaretRight className="w-3.5 h-3.5 text-[var(--tnm-action)]" weight="bold" />
-                </Link>
-              )}
-            </div>
-          )}
-
-          <p className="text-xs text-white/70 mt-5 leading-relaxed">{meal.description}</p>
-
-          {/* Trust strip — real claims only: ETA matches the menu banner, the
-              FSSAI licence is the same one shown in the footer/compliance. */}
-          <div className="mt-5 grid grid-cols-3 gap-2" role="group" aria-label="Delivery and kitchen assurance">
-            <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-2 py-3 text-center">
-              <Timer className="w-4.5 h-4.5 text-[var(--tnm-action)]" weight="bold" aria-hidden />
-              <span className="text-[10px] font-semibold text-white/75 leading-tight">Fresh in 25–40 min</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-2 py-3 text-center">
-              <SealCheck className="w-4.5 h-4.5 text-[var(--tnm-action)]" weight="bold" aria-hidden />
-              <span className="text-[10px] font-semibold text-white/75 leading-tight">FSSAI-licensed kitchen</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-2 py-3 text-center">
-              <ShieldCheck className="w-4.5 h-4.5 text-[var(--tnm-action)]" weight="bold" aria-hidden />
-              <span className="text-[10px] font-semibold text-white/75 leading-tight">RD-designed recipe</span>
+            {/* "Verified nutrition profile" footnote */}
+            <div className="flex justify-end mt-1">
+              <span className="flex items-center gap-1 text-[10px] leading-3 font-medium text-[var(--pdp-secondary)]" style={{ fontFamily: "Geist, sans-serif" }}>
+                <Info className="w-3 h-3" />
+                {macrosEstimated ? "Estimated nutrition profile" : "Verified nutrition profile"}
+              </span>
             </div>
           </div>
+        )}
 
-          {/* 5.1 Why This Fits section (personalized vs pre-assessment fallback) */}
-          <div className="mt-8">
-            <h3 className="text-sm font-bold text-white/90 mb-3">Goal Fit Analysis</h3>
-            {hasAssessment ? (
-              <div className="card bg-white/[0.02] border border-white/5 p-3.5 rounded-xl">
-                <div className="flex items-start gap-2.5 text-xs text-white/80">
-                  <ShieldCheck className="w-5 h-5 text-[var(--tnm-action)] shrink-0 mt-0.5" weight="fill" />
-                  <div className="flex-1">
-                    <p className="leading-relaxed font-medium">
-                      {buildNarrative(meal, preferences)}
-                    </p>
-                    <p className="text-[10px] text-white/45 mt-2">
-                      Based on: {preferences.goal ? GOAL_LABEL[preferences.goal] : "general wellness"} &bull; {preferences.dietaryStyle || "standard dietary safety"} &bull; No active allergen clashes.
-                    </p>
+        {/* ④ Options / Variant Selector */}
+        {variants.length > 1 && (
+          <div className="space-y-4">
+            <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+              Select Option
+            </h3>
+            {/* scrollable underline tab bar — matches reference exactly */}
+            <div className="flex gap-4 overflow-x-auto pb-2 border-b border-white/10" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+              {variants.map((v: any) => {
+                const active = v.slug === activeSlug;
+                return (
+                  <button
+                    key={v.slug}
+                    type="button"
+                    onClick={() => selectVariant(v.slug)}
+                    aria-pressed={active}
+                    style={{ borderBottom: active ? "2px solid var(--tnm-action)" : "2px solid transparent" }}
+                    className={`pb-2 font-normal text-[17px] leading-6 whitespace-nowrap px-1 transition-colors ${
+                      active ? "text-white" : "text-[var(--pdp-secondary)] hover:text-white"
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[15px] leading-5 text-[var(--pdp-outline-variant)]">{meal.description}</p>
+          </div>
+        )}
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = !showCalcDisclosure;
-                        setShowCalcDisclosure(next);
-                        if (next) track("fit_explanation_expanded", { dishId: meal.id });
-                      }}
-                      className="text-[10px] text-[var(--tnm-action)] font-bold uppercase tracking-wider flex items-center gap-1 mt-3"
-                    >
-                      <Question className="w-3.5 h-3.5" />
-                      {showCalcDisclosure ? "Hide calculation disclosure" : "How this fits your profile"}
-                    </button>
-
-                    {showCalcDisclosure && (
-                      <div className="text-[10px] text-white/50 leading-relaxed border-t border-white/5 pt-2.5 mt-2.5">
-                        Clinical analysis maps macros to targets: weights are checked for target BMR, and carbohydrates are verified as low glycemic index (GI &lt; 55) to protect glucose levels.
-                      </div>
-                    )}
-                  </div>
+        {/* Safety conflict banner — blocked allergen/diet */}
+        {match?.blocked && (
+          <div className="rounded-xl p-3.5 flex flex-col gap-3 border"
+            style={{ background: "color-mix(in srgb, var(--pdp-error-container) 8%, transparent)", borderColor: "color-mix(in srgb, var(--pdp-error-container) 30%, transparent)" }}>
+            <div className="flex items-start gap-2.5">
+              <WarningCircle className="w-5 h-5 text-[var(--pdp-on-error)] shrink-0 mt-0.5" weight="fill" />
+              <div>
+                <h4 className="text-[15px] leading-5 font-semibold text-white">Safety Block Alert</h4>
+                <div className="text-[13px] text-white/60 leading-relaxed mt-1 flex flex-col gap-1">
+                  {match.blockReasons.map((r, i) => {
+                    if (r.code === "allergen_block")
+                      return <span key={i}>• Contains allergens: {r.allergens.map((a: string) => a.toUpperCase()).join(", ")}</span>;
+                    if (r.code === "diet_block")
+                      return <span key={i}>• Diet order conflict: {r.detail}</span>;
+                    return <span key={i}>• Patient safety conflict detected.</span>;
+                  })}
                 </div>
               </div>
-            ) : (
-              <div className="card bg-white/[0.01] border border-white/5 border-dashed p-4 rounded-xl text-center flex flex-col items-center gap-2.5">
-                <p className="text-xs text-white/60 leading-relaxed max-w-[280px]">
-                  Calories, protein and allergens for this dish are listed below. Tell us your goals any time and we'll show how each meal fits.
-                </p>
-              </div>
+            </div>
+            {smartSwap && (
+              <Link
+                to={`/dish/${smartSwap.slug}`}
+                className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-2 hover:bg-white/10 transition-all text-[13px]"
+              >
+                <span className="text-[var(--tnm-action)] font-semibold">View Allergen-Safe Smart Swap</span>
+                <CaretRight className="w-3.5 h-3.5 text-[var(--tnm-action)]" weight="bold" />
+              </Link>
             )}
           </div>
+        )}
 
-          {/* 5.2 Macro Target Visualizations */}
-          {!macrosProvisional && (
-            <div className="mt-8">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Macro splits</span>
-              <div className="flex flex-col gap-3.5 mt-3">
-                {/* Calories Track */}
-                <MacroTrack
-                  label="Calories"
-                  value={calculatedMacros.calories}
-                  target={preferences?.calorieTarget || null}
-                  unit="kcal"
-                />
-                {/* Protein Track */}
-                <MacroTrack
-                  label="Protein"
-                  value={calculatedMacros.protein}
-                  target={preferences?.proteinTargetGrams || null}
-                  unit="g"
-                />
+        {/* ⑤ Goal Fit Analysis */}
+        <div className="space-y-4">
+          <h3 className="text-[11px] leading-4 tracking-[0.05em] font-bold text-white uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+            Goal Fit Analysis
+          </h3>
+          <div className="rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden border border-white/10"
+            style={{ background: "var(--tnm-surface-ink-2)" }}>
+            {/* left amber accent bar */}
+            <div className="absolute top-0 left-0 w-1 h-full" style={{ background: "var(--tnm-action)" }} />
+            <div className="flex items-start gap-3 pl-2">
+              <ShieldCheck className="w-5 h-5 text-[var(--tnm-action)] shrink-0 mt-0.5" weight="fill" />
+              <div>
+                <p className="text-[15px] leading-5 text-white font-semibold">
+                  {hasAssessment && preferences
+                    ? buildNarrative(meal, preferences)
+                    : `Balanced macro split (${meal.macros.protein}P / ${meal.macros.carbs}C / ${meal.macros.fat}F) and a clean ingredient list.`}
+                </p>
+                <p className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] mt-1" style={{ fontFamily: "Geist, sans-serif" }}>
+                  Based on: {preferences?.goal ? GOAL_LABEL[preferences.goal] ?? "general-wellness" : "general-wellness"} &bull;{" "}
+                  {preferences?.dietaryStyle || "omnivore"} &bull; No active allergen clashes.
+                </p>
               </div>
             </div>
-          )}
-
-          {/* 5.3 Full Nutrition Facts Accordion (collapsed by default) */}
-          <div className="card border border-white/5 bg-white/[0.01] mt-8 p-0 overflow-hidden rounded-xl">
             <button
               type="button"
-              className="w-full flex items-center justify-between text-left px-4 py-3.5 text-xs font-bold text-white/90"
+              onClick={() => {
+                const next = !showCalcDisclosure;
+                setShowCalcDisclosure(next);
+                if (next) track("fit_explanation_expanded", { dishId: meal.id });
+              }}
+              className="flex items-center gap-1.5 pl-9 mt-1 text-[var(--tnm-action)] hover:text-[var(--pdp-on-surface)] transition-colors"
+            >
+              <Question className="w-4 h-4" />
+              <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+                {showCalcDisclosure ? "Hide calculation disclosure" : "How this fits your profile"}
+              </span>
+            </button>
+            {showCalcDisclosure && (
+              <p className="pl-9 text-[13px] text-white/50 leading-relaxed border-t border-white/5 pt-2.5 mt-1">
+                Clinical analysis maps macros to targets: weights are checked for target BMR, and carbohydrates are verified as low glycemic index (GI &lt; 55) to protect glucose levels.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ⑥ Macro Splits Detail + Full Nutrition Facts */}
+        {calculatedMacros && (
+          <div className="space-y-4">
+            <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+              Macro Splits
+            </h3>
+            <div className="space-y-4">
+              {/* Calories bar */}
+              <MacroTrack
+                label="Calories"
+                value={calculatedMacros.calories}
+                target={preferences?.calorieTarget || null}
+                unit="kcal"
+                fillPercent={Math.min(100, (calculatedMacros.calories / 400) * 100)}
+              />
+              {/* Protein bar */}
+              <MacroTrack
+                label="Protein"
+                value={calculatedMacros.protein}
+                target={preferences?.proteinTargetGrams || null}
+                unit="g"
+                fillPercent={Math.min(100, (calculatedMacros.protein / 30) * 100)}
+              />
+            </div>
+
+            {/* Full Nutrition Facts accordion row */}
+            <button
+              type="button"
+              className="w-full flex items-center justify-between p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-colors mt-4 group"
+              style={{ background: "var(--tnm-surface-ink-2)" }}
               onClick={() => {
                 const next = !showFacts;
                 setShowFacts(next);
                 if (next) track("full_nutrition_opened", { dishId: meal.id });
               }}
             >
-              <span>Full Nutrition Facts</span>
-              <CaretRight className={`w-4 h-4 text-white/50 transition-transform duration-200 ${showFacts ? "rotate-90" : ""}`} />
+              <span className="text-[17px] leading-6 text-white">Full Nutrition Facts</span>
+              <CaretRight className={`w-5 h-5 text-[var(--pdp-secondary)] group-hover:text-white transition-all duration-200 ${showFacts ? "rotate-90" : ""}`} />
             </button>
+
             {showFacts && (
-              <div className="px-4 pb-4 border-t border-white/5 pt-3.5 text-[11px] text-white/60 flex flex-col gap-2">
-                <div className="flex justify-between border-b border-white/5 pb-1">
-                  <span>Serving weight</span>
-                  <span className="font-mono text-white/80">{label.servingSize || "350g avg"}</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-1">
-                  <span>Calories</span>
-                  <span className="font-mono text-white/80">{calculatedMacros.calories} kcal</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-1">
-                  <span>Protein</span>
-                  <span className="font-mono text-white/80">{calculatedMacros.protein} g</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-1">
-                  <span>Carbohydrates</span>
-                  <span className="font-mono text-white/80">{calculatedMacros.carbs} g</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-1">
-                  <span>Fat</span>
-                  <span className="font-mono text-white/80">{calculatedMacros.fat} g</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-1">
-                  <span>Fiber</span>
-                  <span className="font-mono text-white/80">{calculatedMacros.fiber} g</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-1">
-                  <span>Sugar</span>
-                  <span className="font-mono text-white/80">{meal.sugarPerServing || "—"}</span>
-                </div>
-                <div className="flex justify-between pb-1">
-                  <span>Glycemic Index Category</span>
-                  <span className="text-[var(--tnm-action)] uppercase font-bold text-[9px]">{gi}</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 5.4 Complete Ingredients transparency */}
-          <div className="mt-8">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Complete ingredient declaration</span>
-            <div className="mt-2.5">
-              {meal.ingredients?.length ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {meal.ingredients.map((ing: string, i: number) => (
-                    <span key={i} className="text-[10px] bg-white/5 text-white/70 px-2 py-1 rounded">
-                      {stripIngredientAmount(ing)}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-white/50 italic leading-snug">
-                  Insufficient ingredient declaration data. Full data available on request.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* 5.5 Delivered Reality section */}
-          <div className="mt-8 bg-white/[0.01] border border-white/5 rounded-xl p-4">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40 block">Delivered Reality</span>
-            <div className="flex gap-4 mt-3">
-              <div className="w-16 h-16 bg-white/5 rounded-lg overflow-hidden shrink-0 border border-white/10">
-                <img
-                  src={galleryImages[3]}
-                  alt="Packaging view"
-                  loading="lazy"
-                  className="w-full h-full object-cover"
-                  onError={onDishImageError}
-                />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-xs font-bold text-white/90">Clinical packaging</h4>
-                <p className="text-[11px] text-white/50 leading-relaxed mt-1">
-                  {getServingInstructionForDish(meal)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 5.7 RD Review advisory card */}
-          <div className="mt-8 bg-white/[0.02] border border-white/5 rounded-xl p-4 flex gap-3">
-            <ShieldCheck className="w-6 h-6 text-[var(--tnm-action)] shrink-0 mt-0.5" weight="fill" />
-            <div className="flex-1">
-              <h4 className="text-xs font-bold text-white/90">RD verification review</h4>
-              <p className="text-[11px] text-white/60 leading-relaxed mt-1">
-                {rdNote}
-              </p>
-              <div className="mt-3 pt-2.5 border-t border-white/5 flex justify-between items-center text-[10px]">
-                <span className="text-white/45">Reviewer: Dr. Anjali Nair, RD (IDA)</span>
-                <Link to="/about" className="text-[var(--tnm-action)] font-bold uppercase tracking-wider">
-                  Learn about review
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Ask AI Coach Widget */}
-          <div className="mt-8">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40 block mb-2.5">
-              Ask AI health coach
-            </span>
-            <CoachAgentWidget dishSlug={meal.slug} inline />
-          </div>
-
-          {/* Chef and Kitchen Notes */}
-          <div className="mt-8 flex flex-col gap-3">
-            <div className="card bg-white/[0.01] border border-white/5 p-3 flex gap-3 rounded-xl items-start">
-              <span className="text-xs font-bold text-[var(--tnm-action)] shrink-0">Chef</span>
-              <div className="flex-1">
-                <p className="text-[11px] text-white/60 leading-relaxed">{kitchenNote}</p>
-                {chef && (
-                  <p className="text-[10px] text-white/40 mt-1">
-                    Prepared by Chef {chef.name} &bull; {chef.title}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 5.9 Related meals section */}
-          {upsells.length > 0 && (
-            <div className="mt-10">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40 block mb-3.5">
-                Related meals based on goal
-              </span>
-              <div className="flex flex-col gap-3">
-                {upsells.map((u: any) => (
+              <div className="rounded-xl border border-white/5 overflow-hidden" style={{ background: "var(--tnm-surface-ink-2)" }}>
+                {[
+                  ["Serving weight", label.servingSize || "350g avg"],
+                  ["Calories", `${calculatedMacros.calories} kcal`],
+                  ["Protein", `${calculatedMacros.protein} g`],
+                  ["Carbohydrates", `${calculatedMacros.carbs} g`],
+                  ["Fat", `${calculatedMacros.fat} g`],
+                  ["Fiber", `${calculatedMacros.fiber} g`],
+                  ["Sugar", meal.sugarPerServing || "—"],
+                  ["Glycemic Index", gi.charAt(0).toUpperCase() + gi.slice(1)],
+                ].map(([k, v], i, arr) => (
                   <div
-                    key={u.id}
-                    className="flex items-center gap-3 bg-white/[0.02] border border-white/5 rounded-xl p-2.5 hover:bg-white/5 transition-all"
+                    key={k}
+                    className="flex justify-between px-4 py-3 text-[15px] leading-5"
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid color-mix(in srgb, white 5%, transparent)" : "none" }}
                   >
-                    <Link to={`/dish/${u.slug}`} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                      <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden shrink-0 border border-white/10">
-                        <img src={getLocalDishFallback(u.image, 200)} alt={u.name} className="w-full h-full object-cover" onError={onDishImageError} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-bold text-white/90 truncate">{u.name}</h4>
-                        <p className="tnm-data text-[10px] text-white/50 mt-1 font-mono">
-                          {u.macros?.calories || "—"} kcal &bull; {u.macros?.protein || "—"}g protein
-                        </p>
-                      </div>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleAddUpsell(u)}
-                      aria-label={`Add ${u.name} to order`}
-                      className="shrink-0 w-11 h-11 rounded-xl bg-[var(--tnm-action)]/10 border border-[var(--tnm-action)]/25 text-[var(--tnm-action)] flex items-center justify-center hover:bg-[var(--tnm-action)]/20 transition-all"
-                    >
-                      <Plus className="w-4 h-4" weight="bold" />
-                    </button>
+                    <span className="text-[var(--pdp-secondary)]">{k}</span>
+                    <span className="text-white font-semibold">{v}</span>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Customer reviews — server-verified eligibility; only real
-              ratings/summaries are shown (empty state never fakes a rating). */}
-          <div className="mt-8">
-            <DishReviews slug={meal.slug} />
+            )}
           </div>
+        )}
 
-          {/* Medical Disclaimer */}
-          <div className="mt-8">
-            <MedicalDisclaimer compact />
+        {/* ⑦ Ingredients */}
+        <div className="space-y-4">
+          <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+            Complete Ingredient Declaration
+          </h3>
+          {meal.ingredients?.length ? (
+            <div className="flex flex-wrap gap-2">
+              {meal.ingredients.map((ing: string, i: number) => (
+                <span
+                  key={i}
+                  className="px-3 py-1.5 rounded-full text-[10px] leading-3 font-medium text-[var(--pdp-on-surface)]"
+                  style={{ background: "var(--tnm-surface-ink-2)", border: "1px solid color-mix(in srgb, white 5%, transparent)", fontFamily: "Geist, sans-serif" }}
+                >
+                  {stripIngredientAmount(ing)}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[15px] leading-5 text-[var(--pdp-secondary)] italic">
+              Full ingredient declaration available on request.
+            </p>
+          )}
+        </div>
+
+        {/* ⑧ Delivered Reality */}
+        <div className="space-y-4">
+          <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+            Delivered Reality
+          </h3>
+          <div className="rounded-xl p-4 flex items-start gap-4 border border-white/10" style={{ background: "var(--tnm-surface-ink-2)" }}>
+            {/* 48×48 icon box, black bg, border */}
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border border-white/10" style={{ background: "black" }}>
+              <Package className="w-5 h-5 text-[var(--pdp-secondary)]" />
+            </div>
+            <div>
+              <h4 className="text-[17px] leading-6 text-white font-semibold mb-1">Clinical packaging</h4>
+              <p className="text-[15px] leading-5 text-[var(--pdp-secondary)] leading-relaxed">
+                {getServingInstructionForDish(meal)}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* The allergen disclosure lives in the in-flow card near the title
-            (AllergenSummaryValue there is the honest, fail-closed source). A
-            second fixed copy pinned above the bottom bar duplicated it on every
-            PDP and fought the CTA for thumb-zone space — removed. */}
-
-        {/* 6. Consolidated sticky bottom bar (state machine context: pdp) */}
-        <StickyBottomBar
-          context="pdp"
-          dishName={meal.name}
-          dishPricePaise={calculatedUnitPrice}
-          isInPlan={inRdPlanRotation}
-          onAddDish={handleAddToOrder}
-          disabled={match?.blocked === true}
-        />
-
-        {/* Customization Drawer Overlay */}
-        {customizerOpen && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950] flex items-end justify-center">
-            <div className="w-full max-w-[480px] bg-[var(--tnm-surface-ink-2)] border-t border-white/10 rounded-t-[var(--radius-sheet)] max-h-[85dvh] max-h-[85vh] overflow-hidden flex flex-col p-4 pb-[calc(1rem+var(--safe-bottom))] shadow-2xl animate-in slide-in-from-bottom duration-200">
-              <div className="mx-auto h-1.5 w-10 rounded-full bg-white/15 mb-3 shrink-0" aria-hidden="true" />
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                <div>
-                  <h3 className="text-sm font-bold text-white/90">Customize {meal.name}</h3>
-                  <p className="text-[10px] text-white/45 mt-0.5">Customize your therapeutic macros & extras</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCustomizerOpen(false)}
-                  aria-label="Close customization sheet"
-                  className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 touch-target-48"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+        {/* ⑨ Data Provenance */}
+        <div className="space-y-4">
+          <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+            Data Provenance
+          </h3>
+          <div className="rounded-xl border border-white/10 overflow-hidden divide-y divide-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
+            {/* Allergen Disclosure row */}
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-[var(--pdp-teal)]" weight="fill" />
+                <span className="text-[15px] leading-5 text-white">Allergen Disclosure</span>
               </div>
-
-              {/* Allergen banner visible during customization */}
-              <div className="mt-3.5 alert-allergen-bg alert-allergen-border border rounded-xl p-3 flex gap-2 items-center">
-                <Warning className="w-4.5 h-4.5 text-[var(--tnm-alert)] shrink-0" weight="fill" />
-                <div className="text-[11px]">
-                  <span className="font-bold text-[var(--tnm-alert)] mr-1">Allergen Warning:</span>
-                  <AllergenSummaryValue meal={meal} className="text-white/80" />
-                </div>
-              </div>
-
-              {/* Customization groups */}
-              <div className="flex-1 overflow-y-auto flex flex-col gap-5 mt-4 py-2 pr-1">
-                {customizations.map((group: any, groupIdx: number) => {
-                  const selection = selections[groupIdx];
-                  return (
-                    <div key={groupIdx} className="flex flex-col gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/45">{group.groupName}</span>
-                      <div className="flex flex-col gap-2 mt-1">
-                        {group.options.map((opt: any) => {
-                          const isSelected =
-                            group.type === "single"
-                              ? selection === opt.name
-                              : Array.isArray(selection) && selection.includes(opt.name);
-
-                          return (
-                            <button
-                              key={opt.name}
-                              onClick={() => {
-                                if (group.type === "single") {
-                                  handleSingleSelect(groupIdx, opt.name);
-                                } else {
-                                  handleMultipleToggle(groupIdx, opt.name);
-                                }
-                              }}
-                              className={`flex justify-between items-center p-3 rounded-xl border text-left transition-all ${
-                                isSelected
-                                  ? "bg-[var(--tnm-action)]/10 border-[var(--tnm-action)] text-white"
-                                  : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10"
-                              }`}
-                            >
-                              <span className="text-xs font-semibold">{opt.name}</span>
-                              <div className="flex items-center gap-2">
-                                {opt.priceModifier > 0 && (
-                                  <span className="tnm-data text-[10px] font-bold text-[var(--tnm-action)] bg-[var(--tnm-action)]/10 px-2 py-0.5 rounded">
-                                    +{F(opt.priceModifier)}
-                                  </span>
-                                )}
-                                <div className={`w-4 h-4 rounded flex items-center justify-center border ${
-                                  isSelected ? "border-[var(--tnm-action)] bg-[var(--tnm-action)]" : "border-white/30"
-                                }`}>
-                                  {isSelected && <Check className="w-3 h-3 text-black" weight="bold" />}
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Live recalculated pricing & macros banner inside drawer */}
-              <div className="mt-6 border-t border-white/5 pt-4 flex flex-col gap-3">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-white/55">Recalculated unit price:</span>
-                  <span className="tnm-data text-base font-bold text-[var(--tnm-action)]">
-                    {F(calculatedUnitPrice)}
-                  </span>
-                </div>
-                <div className="text-[10px] text-white/40 leading-snug">
-                  * Nutrition values and price modifier updates will apply to this meal when added to plan.
-                </div>
-                <button
-                  onClick={() => setCustomizerOpen(false)}
-                  className="w-full bg-[var(--tnm-action)] text-black hover:bg-[var(--tnm-action)]/90 h-11 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg active:scale-95 transition-all mt-1"
-                >
-                  Apply & Close Customization
-                </button>
-              </div>
+              <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-teal)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+                {allergenDisclosure.state === "reviewed" ? "Reviewed" : allergenDisclosure.state === "derived" ? "Derived" : "Pending"}
+              </span>
             </div>
+            {/* Macro Source row */}
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <ChartBar className="w-5 h-5 text-[var(--pdp-secondary)]" />
+                <span className="text-[15px] leading-5 text-white">Macro Source</span>
+              </div>
+              <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+                {macrosEstimated ? "Estimated" : "Measured"}
+              </span>
+            </div>
+            {/* "How we verify" link row */}
+            <Link
+              to="/about"
+              className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors text-left group"
+            >
+              <span className="text-[15px] leading-5 text-[var(--tnm-action)]">How we verify nutrition data</span>
+              <CaretRight className="w-5 h-5 text-[var(--tnm-action)] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        </div>
+
+        {/* ⑩ Ask AI Health Coach */}
+        <div className="space-y-4">
+          <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+            Ask AI Health Coach
+          </h3>
+          <CoachAgentWidget dishSlug={meal.slug} inline />
+          <p className="text-[15px] leading-5 text-[var(--pdp-secondary)] text-center">
+            Ask about protein modifications, metabolic impacts, or allergen alternatives.
+          </p>
+        </div>
+
+        {/* ⑪ Kitchen / Chef Note */}
+        <div className="rounded-xl p-4 flex items-start gap-3 border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
+          <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--tnm-action)] uppercase mt-1 shrink-0" style={{ fontFamily: "Geist, sans-serif" }}>
+            Note
+          </span>
+          <div>
+            <p className="text-[15px] leading-5 text-[var(--pdp-secondary)] italic">
+              {kitchenNote}
+            </p>
+            {chef && (
+              <p className="text-[10px] text-white/40 mt-1.5" style={{ fontFamily: "Geist, sans-serif" }}>
+                Prepared by Chef {chef.name} &bull; {chef.title}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ⑫ Related Meals */}
+        {upsells.length > 0 && (
+          <div className="space-y-4 pt-4 pb-8">
+            <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
+              Related Meals Based On Goal
+            </h3>
+            <div className="space-y-3">
+              {upsells.map((u: any) => (
+                <div
+                  key={u.id}
+                  className="flex items-center gap-4 p-3 rounded-xl border border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
+                  style={{ background: "var(--tnm-surface-ink-2)" }}
+                >
+                  <Link to={`/dish/${u.slug}`} className="flex-1 flex items-center gap-4 min-w-0">
+                    <img
+                      alt={u.name}
+                      className="w-14 h-14 rounded-lg object-cover shrink-0"
+                      src={getLocalDishFallback(u.image, 200)}
+                      onError={onDishImageError}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[15px] leading-5 text-white font-semibold truncate">{u.name}</h4>
+                      <p className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] mt-1" style={{ fontFamily: "Geist, sans-serif" }}>
+                        {u.macros?.calories || "—"} kcal &bull; {u.macros?.protein || "—"}g protein
+                      </p>
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleAddUpsell(u)}
+                    aria-label={`Add ${u.name} to order`}
+                    className="w-10 h-10 flex items-center justify-center text-[var(--pdp-secondary)] hover:text-white transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Medical disclaimer line */}
+            <p className="text-[10px] leading-4 text-white/20 flex items-start gap-1 pt-4 text-center justify-center" style={{ fontFamily: "Geist, sans-serif" }}>
+              <FirstAid className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              Tanmatra meals support — they don't replace — medical care. Consult your physician before starting any therapeutic nutrition programme.
+            </p>
           </div>
         )}
+
+        {/* Customer reviews — server-verified, never faked */}
+        <DishReviews slug={meal.slug} />
+      </main>
+
+      {/* ── Fixed Bottom Action Bar ──────────────────────────────────── */}
+      <div className="fixed bottom-0 w-full z-50 backdrop-blur-xl border-t border-white/10" style={{ background: "color-mix(in srgb, var(--tnm-surface-ink) 95%, transparent)" }}>
+        {/* allergen safety strip */}
+        <div className="px-4 py-2 flex items-center gap-2 border-b"
+          style={{ background: "color-mix(in srgb, var(--pdp-error-container) 20%, transparent)", borderColor: "color-mix(in srgb, var(--pdp-error-container) 10%, transparent)" }}>
+          <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-on-error)] uppercase shrink-0" style={{ fontFamily: "Geist, sans-serif" }}>
+            Allergen Safety:
+          </span>
+          <AllergenSummaryValue meal={meal} className="text-[15px] leading-5 text-[var(--pdp-on-surface)] truncate" />
+        </div>
+        {/* CTA row */}
+        <div className="px-4 py-4 flex items-center justify-between gap-4 max-w-3xl mx-auto">
+          <div className="flex flex-col min-w-0">
+            <span className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--tnm-action)] uppercase truncate" style={{ fontFamily: "Geist, sans-serif" }}>
+              {meal.name}
+            </span>
+            <span className="text-[15px] leading-5 text-white font-semibold">
+              {inRdPlanRotation ? "Included in plan" : F(calculatedUnitPrice)}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {customizations.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setCustomizerOpen(true)}
+                className="min-w-[44px] min-h-[44px] px-4 py-2 rounded-lg border border-white/10 text-white font-semibold text-[17px] leading-6 hover:bg-white/10 transition-colors"
+                style={{ background: "var(--tnm-surface-ink-2)" }}
+              >
+                Customise
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleAddToOrder}
+              disabled={match?.blocked === true}
+              className="min-w-[44px] min-h-[44px] px-6 py-2 rounded-lg text-black font-bold text-[17px] leading-6 relative overflow-hidden group transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              style={{
+                background: "var(--tnm-action)",
+                boxShadow: "0px 8px 24px color-mix(in srgb, var(--tnm-action) 25%, transparent)",
+              }}
+            >
+              <div className="absolute inset-x-0 top-0 h-px bg-white/40" />
+              <span className="relative z-10">{inRdPlanRotation ? "Add Another" : "Add to Order"}</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* ── Customization Drawer ─────────────────────────────────────── */}
+      {customizerOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950] flex items-end justify-center">
+          <div className="w-full max-w-[480px] border-t border-white/10 rounded-t-2xl max-h-[85dvh] overflow-hidden flex flex-col p-4 shadow-2xl"
+            style={{ background: "var(--tnm-surface-ink-2)" }}>
+            <div className="mx-auto h-1.5 w-10 rounded-full bg-white/15 mb-3 shrink-0" />
+            <div className="flex justify-between items-center border-b border-white/5 pb-3">
+              <div>
+                <h3 className="text-[17px] leading-6 font-semibold text-white">Customize {meal.name}</h3>
+                <p className="text-[10px] text-white/45 mt-0.5" style={{ fontFamily: "Geist, sans-serif" }}>Adjust macros & extras</p>
+              </div>
+              <button type="button" onClick={() => setCustomizerOpen(false)} aria-label="Close"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white/70 hover:bg-white/10">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* allergen banner inside drawer */}
+            <div className="mt-3.5 rounded-xl p-3 flex gap-2 items-center border"
+              style={{ background: "color-mix(in srgb, var(--pdp-error-container) 10%, transparent)", borderColor: "color-mix(in srgb, var(--pdp-error-container) 20%, transparent)" }}>
+              <Warning className="w-4 h-4 text-[var(--pdp-on-error)] shrink-0" weight="fill" />
+              <div className="text-[13px]">
+                <span className="font-bold text-[var(--pdp-on-error)] mr-1">Allergen Warning:</span>
+                <AllergenSummaryValue meal={meal} className="text-white/80" />
+              </div>
+            </div>
+
+            {/* customization groups */}
+            <div className="flex-1 overflow-y-auto flex flex-col gap-5 mt-4 py-2 pr-1">
+              {customizations.map((group: any, groupIdx: number) => {
+                const selection = selections[groupIdx];
+                return (
+                  <div key={groupIdx} className="flex flex-col gap-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-white/45" style={{ fontFamily: "Geist, sans-serif" }}>{group.groupName}</span>
+                    <div className="flex flex-col gap-2">
+                      {group.options.map((opt: any) => {
+                        const isSelected = group.type === "single"
+                          ? selection === opt.name
+                          : Array.isArray(selection) && selection.includes(opt.name);
+                        return (
+                          <button
+                            key={opt.name}
+                            onClick={() => group.type === "single" ? handleSingleSelect(groupIdx, opt.name) : handleMultipleToggle(groupIdx, opt.name)}
+                            className={`flex justify-between items-center p-3 rounded-xl border text-left transition-all ${
+                              isSelected ? "border-[var(--tnm-action)] text-white" : "border-white/5 text-white/70 hover:bg-white/10"
+                            }`}
+                            style={{ background: isSelected ? "color-mix(in srgb, var(--tnm-action) 10%, transparent)" : "color-mix(in srgb, white 3%, transparent)" }}
+                          >
+                            <span className="text-[15px] leading-5 font-semibold">{opt.name}</span>
+                            <div className="flex items-center gap-2">
+                              {opt.priceModifier > 0 && (
+                                <span className="text-[10px] font-bold text-[var(--tnm-action)] px-2 py-0.5 rounded"
+                                  style={{ background: "color-mix(in srgb, var(--tnm-action) 10%, transparent)", fontFamily: "Geist, sans-serif" }}>
+                                  +{F(opt.priceModifier)}
+                                </span>
+                              )}
+                              <div className={`w-4 h-4 rounded flex items-center justify-center border ${
+                                isSelected ? "bg-[var(--tnm-action)] border-[var(--tnm-action)]" : "border-white/30"
+                              }`}>
+                                {isSelected && <Check className="w-3 h-3 text-black" weight="bold" />}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* live price banner */}
+            <div className="mt-4 border-t border-white/5 pt-4 flex flex-col gap-3">
+              <div className="flex justify-between items-baseline">
+                <span className="text-[13px] text-white/55">Recalculated unit price</span>
+                <span className="text-[17px] font-bold text-[var(--tnm-action)]">{F(calculatedUnitPrice)}</span>
+              </div>
+              <button
+                onClick={() => setCustomizerOpen(false)}
+                className="w-full h-11 rounded-xl text-black text-[15px] font-bold uppercase tracking-wide shadow-lg active:scale-95 transition-all"
+                style={{ background: "var(--tnm-action)" }}
+              >
+                Apply & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// Helper components for macro visualization tracks
+// ─── MacroTrack ──────────────────────────────────────────────────────────────
 interface MacroTrackProps {
   label: string;
   value: number;
   target: number | null;
   unit: string;
+  fillPercent: number; // 0–100 override for display when no target
 }
 
-function MacroTrack({ label, value, target, unit }: MacroTrackProps) {
-  const percent = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
-  const isOver = target && value > target;
+function MacroTrack({ label, value, target, unit, fillPercent }: MacroTrackProps) {
+  const percent = target ? Math.min(100, Math.round((value / target) * 100)) : fillPercent;
+  const isOver = target ? value > target : false;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex justify-between items-baseline text-xs text-white/80">
-        <span className="font-semibold">{label}</span>
-        <span className="font-mono text-[11px]">
-          {value}{unit}
-          {target ? (
-            <>
-              <span className="text-white/40"> / {target}{unit}</span>
-              <span className={`ml-1.5 font-sans font-bold text-[10px] ${isOver ? "text-[var(--color-alert-stat)]" : "text-[var(--color-alert-safe)]"}`}>
-                {isOver ? `Above range` : `${percent}% of target`}
-              </span>
-            </>
-          ) : (
-            <span className="text-white/40 ml-1.5 font-sans text-[10px]">Within range</span>
-          )}
-        </span>
+    <div>
+      <div className="flex justify-between items-end mb-2">
+        <span className="text-[15px] leading-5 text-white font-semibold">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[15px] leading-5 text-white font-semibold">
+            {value}{unit === "kcal" ? "kcal" : unit}
+          </span>
+          <span className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)]" style={{ fontFamily: "Geist, sans-serif" }}>
+            {target ? (isOver ? "Above range" : `${percent}% of target`) : "Within range"}
+          </span>
+        </div>
       </div>
-      <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+      <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "var(--pdp-chip-surface)" }}>
         <div
-          className={`h-full transition-all duration-300 ${
-            target
-              ? isOver
-                ? "bg-[var(--color-alert-stat)]"
-                : "bg-[var(--color-alert-safe)]"
-              : "bg-[var(--color-nn-primary)]"
-          }`}
-          style={{ width: target ? `${percent}%` : "100%" }}
+          className="h-full rounded-full transition-all duration-300"
+          style={{
+            width: `${percent}%`,
+            background: isOver ? "var(--color-alert-stat)" : "var(--tnm-action)",
+          }}
         />
       </div>
     </div>

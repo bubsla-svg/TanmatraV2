@@ -403,5 +403,14 @@
   --color-clinical-dark: var(--color-nn-bg);
   --color-clinical-surface: var(--color-nn-surface);
   --color-clinical-surface-elevated: var(--color-nn-surface-high);
+
+  /* PDP reference design tokens — used by Dish.tsx; excluded from color lint */
+  --pdp-error-container: #93000a;
+  --pdp-on-error: #ffb4ab;
+  --pdp-secondary: #c6c6c7;
+  --pdp-on-surface: #e2e2e2;
+  --pdp-teal: #34daff;
+  --pdp-chip-surface: #2a2a2a;
+  --pdp-outline-variant: #d3c5ac;
 }
 
