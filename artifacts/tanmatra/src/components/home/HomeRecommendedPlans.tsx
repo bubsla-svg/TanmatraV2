@@ -102,16 +102,19 @@ function PlanCard({ preset }: { preset: PlanPreset }) {
           </span>
           {isLoading ? (
             <span className="w-16 h-5 rounded bg-white/5 animate-pulse" />
-          ) : (
+          ) : quote ? (
             <span className="flex flex-col items-end">
               <span className="price text-sm text-[var(--tnm-action)] font-semibold">
                 {displayPrice} <span className="text-[10px] text-white/50 font-normal">/wk</span>
               </span>
-              {quote ? (
-                <span className="text-[10px] text-white/45 font-normal">
-                  ≈ {formatPriceRounded(quote.totalPaise / preset.meals)}/meal
-                </span>
-              ) : null}
+              <span className="text-[10px] text-white/45 font-normal">
+                ≈ {formatPriceRounded(quote.totalPaise / preset.meals)}/meal
+              </span>
+            </span>
+          ) : (
+            // Quote fetch failed — honest fallback, never a blank "/wk".
+            <span className="text-[10px] text-white/45 font-normal">
+              Live price at checkout
             </span>
           )}
         </div>
