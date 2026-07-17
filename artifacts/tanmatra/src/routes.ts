@@ -39,6 +39,7 @@ export default [
     route("wellness", "pages/Wellness.tsx"),
     route("performance", "pages/Performance.tsx"),
     route("clinical", "pages/Clinical.tsx"),
+    route("about", "pages/About.tsx"),
     route("team", "pages/Team.tsx"),
     route("team/:slug", "pages/TeamMember.tsx"),
     route("plans", "pages/RdPlans.tsx"),

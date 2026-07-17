@@ -58,6 +58,7 @@ const Privacy = lazy(() => import("@/pages/Privacy"));
 const Wellness = lazy(() => import("@/pages/Wellness"));
 const Performance = lazy(() => import("@/pages/Performance"));
 const Clinical = lazy(() => import("@/pages/Clinical"));
+const About = lazy(() => import("@/pages/About"));
 // RD / appointment surfaces
 const Team = lazy(() => import("@/pages/Team"));
 const TeamMember = lazy(() => import("@/pages/TeamMember"));
@@ -237,6 +238,7 @@ export default function App() {
                     <Route path="/wellness" element={<Wellness />} />
                     <Route path="/performance" element={<Performance />} />
                     <Route path="/clinical" element={<Clinical />} />
+                    <Route path="/about" element={<About />} />
                     <Route path="/team" element={<Team />} />
                     <Route path="/team/:slug" element={<TeamMember />} />
                     <Route path="/plans" element={<RdPlans />} />

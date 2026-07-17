@@ -25,6 +25,7 @@ const MARKETING_PATHS = [
   "/wellness",
   "/performance",
   "/clinical",
+  "/about",
   "/faq",
   "/premium",
   "/corporate",
