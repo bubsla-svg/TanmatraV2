@@ -19,7 +19,7 @@ const STATUS_BADGE: Record<PastOrder["status"], { label: string; cls: string; st
   ready: { label: "In Preparation", cls: "pill", style: { background: "var(--s3)", color: "var(--tx)" } },
   out_for_delivery: { label: "Out for Delivery", cls: "pill", style: { background: "var(--safd)", color: "var(--safb)" } },
   delivered: { label: "Delivered", cls: "pill sg" },
-  cancelled: { label: "Cancelled", cls: "pill", style: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--color-error)" } },
+  cancelled: { label: "Cancelled", cls: "pill", style: { background: "color-mix(in srgb, var(--color-nn-error) 16%, transparent)", color: "var(--color-nn-error)" } },
 };
 
 // Clinical-mode wording, shown only when the user has clinical mode on.
@@ -60,7 +60,7 @@ export default function V2Orders() {
   };
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -106,7 +106,7 @@ export default function V2Orders() {
                     (clinicalMode && CLINICAL_STATUS_LABELS[order.status]) || badge.label;
                   const active = order.status !== "delivered" && order.status !== "cancelled";
                   return (
-                    <div key={order.orderId} className="card mb12">
+                    <div key={order.orderId} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb12">
                       {/* Header row */}
                       <div className="fx jb gap8" style={{ alignItems: "flex-start" }}>
                         <div style={{ minWidth: 0 }}>

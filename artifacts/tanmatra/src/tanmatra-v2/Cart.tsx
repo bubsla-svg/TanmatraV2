@@ -89,7 +89,7 @@ export default function V2Cart() {
 
   if (items.length === 0) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar"><Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link><div className="abt">Your order</div></div>
           <div className="padx tc" style={{ paddingTop: 60 }}>
@@ -104,7 +104,7 @@ export default function V2Cart() {
   }
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
@@ -120,7 +120,7 @@ export default function V2Cart() {
 
           {/* Aggregate conflict banner */}
           {conflictCount > 0 && (
-            <div className="note mb10" style={allergenCount > 0 ? { background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" } : undefined}>
+            <div className="note mb10" style={allergenCount > 0 ? { background: "color-mix(in srgb, var(--color-nn-error) 12%, transparent)", borderColor: "color-mix(in srgb, var(--color-nn-error) 35%, transparent)", color: "var(--color-nn-error)" } : undefined}>
               <i className={allergenCount > 0 ? "ph-fill ph-warning-circle" : "ph-fill ph-shield-warning"} />
               <span>
                 {allergenCount > 0
@@ -152,7 +152,7 @@ export default function V2Cart() {
             const hasAllergen = c?.matchedAllergens?.length > 0;
             const hasDiet = c?.dietConflictReason;
             return (
-              <div key={item.lineId} className="dcard">
+              <div key={item.lineId} className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mb-3">
                 <div className="fx gap12">
                   <Link to={`/dish/${item.slug}`} className="dimg" style={{ backgroundImage: `url(${item.image})`, backgroundSize: "cover", backgroundPosition: "center" }} aria-label={item.name} />
                   <div className="f1" style={{ minWidth: 0 }}>
@@ -200,7 +200,7 @@ export default function V2Cart() {
 
                     {/* Per-line conflict block */}
                     {c && (
-                      <div className="note mt10" style={(hasAllergen || hasDiet) ? { background: "color-mix(in oklab, var(--color-error) 12%, transparent)", borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)", color: "var(--color-error)" } : { background: "var(--s2)", borderColor: "var(--ln2)", color: "var(--mut)" }}>
+                      <div className="note mt10" style={(hasAllergen || hasDiet) ? { background: "color-mix(in srgb, var(--color-nn-error) 12%, transparent)", borderColor: "color-mix(in srgb, var(--color-nn-error) 35%, transparent)", color: "var(--color-nn-error)" } : { background: "var(--tnm-surface-ink-2)", borderColor: "white/[0.08]", color: "var(--tnm-text-secondary)" }}>
                         <i className="ph-fill ph-warning" />
                         <div>
                           {hasAllergen && <div style={{ fontWeight: 600 }}>Contains {c.matchedAllergens.join(", ")}</div>}
@@ -221,7 +221,7 @@ export default function V2Cart() {
           })}
 
           {/* Order summary */}
-          <div className="card mt10">
+          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt-3">
             <div className="lab mb10"><i className="ph-bold ph-receipt" /> Order summary</div>
             <div className="billrow"><span>Subtotal ({totalQuantity} items)</span><span className="mono" style={{ color: "var(--tx)" }}>{F(subtotal)}</span></div>
             {tax > 0 && <div className="billrow"><span>GST</span><span className="mono" style={{ color: "var(--tx)" }}>{F(tax)}</span></div>}
@@ -246,7 +246,7 @@ export default function V2Cart() {
         </div>
 
         {/* Sticky checkout dock */}
-        <div className="dock">
+        <div className="dock bg-[var(--tnm-surface-ink)] border-t border-white/[0.08]">
           {checkoutBlocked && blockReason && <div className="fine tc mb6" style={{ color: "var(--dgr)" }} role="alert">{blockReason}</div>}
           <div className="fx ac jb gap12">
             <div style={{ flex: "none" }} role="status" aria-live="polite" aria-atomic="true">
