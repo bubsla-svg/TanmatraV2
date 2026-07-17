@@ -908,9 +908,9 @@ export default function V2Subscribe() {
                     aria-pressed={on}
                     className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98]"
                     style={{
-                      background: on ? "var(--saf)" : "rgba(255,255,255,0.05)",
-                      borderColor: on ? "var(--saf)" : "rgba(255,255,255,0.08)",
-                      color: on ? "var(--onsaf)" : "rgba(255,255,255,0.65)",
+                      background: on ? "var(--saf)" : "var(--s3)",
+                      borderColor: on ? "var(--saf)" : "var(--ln2)",
+                      color: on ? "var(--onsaf)" : "var(--mut)",
                     }}
                   >
                     {SLOT_META[slot].label}
@@ -935,9 +935,9 @@ export default function V2Subscribe() {
                     aria-pressed={on}
                     className="py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98]"
                     style={{
-                      background: on ? "var(--saf)" : "rgba(255,255,255,0.05)",
-                      borderColor: on ? "var(--saf)" : "rgba(255,255,255,0.08)",
-                      color: on ? "var(--onsaf)" : "rgba(255,255,255,0.65)",
+                      background: on ? "var(--saf)" : "var(--s3)",
+                      borderColor: on ? "var(--saf)" : "var(--ln2)",
+                      color: on ? "var(--onsaf)" : "var(--mut)",
                     }}
                   >
                     {label}
