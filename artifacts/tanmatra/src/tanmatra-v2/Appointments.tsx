@@ -35,7 +35,7 @@ function fmtWeekdayTime(iso: string) {
 
 const AVATAR_ACCENT: Record<string, any> = {
   sage: { background: "var(--saged)", color: "var(--sage)", border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)" },
-  blue: { background: "var(--color-clinical-blue-light)", color: "var(--color-clinical-blue)", border: "1px solid color-mix(in oklab, var(--color-clinical-blue) 32%, transparent)" },
+  blue: { background: "color-mix(in srgb, var(--color-nn-tertiary) 12%, transparent)", color: "var(--color-nn-tertiary)", border: "1px solid color-mix(in oklab, var(--color-nn-tertiary) 32%, transparent)" },
   gold: { background: "var(--safd)", color: "var(--safb)", border: "1px solid var(--saf)" },
 };
 

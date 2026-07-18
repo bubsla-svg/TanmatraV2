@@ -744,7 +744,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
               {locating && mapsReady && (
                 <div
-                  className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full px-3 py-1.5 bg-clinical-dark/80"
+                  className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full px-3 py-1.5 bg-nn-bg/80"
                   style={{ border: "1px solid var(--ln)" }}
                 >
                   <CircleNotch className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--safb)" }} />

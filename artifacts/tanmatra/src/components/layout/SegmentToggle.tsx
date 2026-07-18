@@ -23,7 +23,7 @@ export default function SegmentToggle() {
                 to={seg.path}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border ${
                   isActive
-                    ? `${seg.bg} ${seg.color} ${seg.border} shadow-clinical`
+                    ? `${seg.bg} ${seg.color} ${seg.border}`
                     : "bg-transparent text-[var(--color-nn-on-surface-variant)] border-transparent hover:bg-white/5 hover:text-white"
                 }`}
               >
