@@ -28,6 +28,9 @@ export function validateEnv(): void {
     if (!process.env["RAZORPAY_WEBHOOK_SECRET"]) {
       warnings.push("RAZORPAY_WEBHOOK_SECRET unset — Razorpay webhooks cannot be verified");
     }
+    if (!process.env["GOOGLE_API_KEY"]) {
+      warnings.push("GOOGLE_API_KEY unset — Gemini AI agents (coach/support/ops/reorder/CMS) and server-side geocoding return errors");
+    }
   }
 
   // Petpooja: warn if partially configured (a common footgun — the integration

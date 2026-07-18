@@ -49,7 +49,7 @@ const ENV_SPEC: Array<Omit<EnvCheck, "set">> = [
   { name: "FIREBASE_DOMAIN", required: false, hint: "Frontend domain used for absolute links in transactional emails / WhatsApp." },
   { name: "TWILIO_ACCOUNT_SID", required: false, hint: "OTP SMS provider. Without it, OTPs go to console.log only (mock mode)." },
   { name: "TWILIO_AUTH_TOKEN", required: false, hint: "Pairs with TWILIO_ACCOUNT_SID." },
-  { name: "TWILIO_VERIFY_SID", required: false, hint: "Verify-service SID for phone OTP." },
+  { name: "TWILIO_VERIFY_SERVICE_SID", required: false, hint: "Verify-service SID for phone OTP (the name sms.ts actually reads — VAxx…)." },
   { name: "RAZORPAY_KEY_ID", required: false, hint: "Razorpay publishable key. Without it, payment falls back to mark-as-paid (dev mode)." },
   { name: "RAZORPAY_KEY_SECRET", required: false, hint: "Pairs with RAZORPAY_KEY_ID; never exposed to the browser." },
 ];
