@@ -289,11 +289,11 @@ export default function RdPartnersWizard() {
   return (
     <div className="nn-clinical max-w-3xl mx-auto px-4 py-8 space-y-6">
       <header className="space-y-2">
-        <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px]">
+        <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px]">
           RD Partner Application
         </Badge>
         <h1 className="font-serif text-3xl text-white">Join the Tanmatra clinical bench</h1>
-        <p className="text-xs text-clinical-zinc">
+        <p className="text-xs text-nn-on-surface-variant">
           About 5 minutes. We save your progress as you go — close the tab and
           come back any time.
         </p>
@@ -301,7 +301,7 @@ export default function RdPartnersWizard() {
 
       <Stepper step={step} />
 
-      <Card className="bg-clinical-surface border-clinical-border">
+      <Card className="bg-nn-surface border-white/[0.08]">
         <CardContent className="p-6 space-y-5">
           {step === 0 && <StepPath value={draft.path} onPick={(p) => update({ path: p })} />}
           {step === 1 && <StepProfile draft={draft} update={update} />}
@@ -323,7 +323,7 @@ export default function RdPartnersWizard() {
           <Button
             variant="ghost"
             onClick={step === 0 ? () => navigate("/rd-partners") : back}
-            className="text-xs text-clinical-zinc hover:text-white gap-1"
+            className="text-xs text-nn-on-surface-variant hover:text-white gap-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             {step === 0 ? "Back to overview" : "Previous"}
@@ -332,7 +332,7 @@ export default function RdPartnersWizard() {
             <Button
               onClick={next}
               disabled={!stepValid}
-              className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-9 text-xs gap-1"
+              className="bg-nn-primary text-action-text hover:bg-nn-primary/90 h-9 text-xs gap-1"
             >
               Continue
               <ArrowRight className="w-3.5 h-3.5" />
@@ -341,7 +341,7 @@ export default function RdPartnersWizard() {
             <Button
               onClick={submit}
               disabled={submitting}
-              className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-9 text-xs gap-1"
+              className="bg-nn-primary text-action-text hover:bg-nn-primary/90 h-9 text-xs gap-1"
             >
               {submitting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -372,17 +372,17 @@ function Stepper({ step }: { step: number }) {
                 done
                   ? "bg-clinical-sage/15 text-clinical-sage border-clinical-sage/40"
                   : active
-                    ? "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/40"
-                    : "bg-transparent text-clinical-zinc border-clinical-border"
+                    ? "bg-nn-primary/15 text-nn-primary border-nn-primary/40"
+                    : "bg-transparent text-nn-on-surface-variant border-white/[0.08]"
               }`}
             >
               {done ? <CheckCircle2 className="w-3 h-3" /> : i + 1}
             </div>
-            <span className={active ? "text-white" : "text-clinical-zinc"}>
+            <span className={active ? "text-white" : "text-nn-on-surface-variant"}>
               {label}
             </span>
             {i < STEPS.length - 1 && (
-              <span className="text-clinical-zinc-muted">·</span>
+              <span className="text-nn-secondary">·</span>
             )}
           </div>
         );
@@ -428,12 +428,12 @@ function StepPath({
             onClick={() => onPick(o.id)}
             className={`text-left rounded-lg border p-4 transition-colors ${
               value === o.id
-                ? "border-clinical-gold/60 bg-clinical-gold/10"
-                : "border-clinical-border hover:border-clinical-gold/30"
+                ? "border-nn-primary/60 bg-nn-primary/10"
+                : "border-white/[0.08] hover:border-nn-primary/30"
             }`}
           >
             <p className="text-sm text-white font-semibold">{o.title}</p>
-            <p className="text-xs text-clinical-zinc mt-1">{o.body}</p>
+            <p className="text-xs text-nn-on-surface-variant mt-1">{o.body}</p>
           </button>
         ))}
       </div>
@@ -455,7 +455,7 @@ function StepProfile({
         <Input
           value={draft.fullName}
           onChange={(e) => update({ fullName: e.target.value })}
-          className="bg-clinical-dark border-clinical-border text-sm"
+          className="bg-nn-bg border-white/[0.08] text-sm"
           placeholder="e.g. Dr. Anika Rao"
         />
       </Field>
@@ -465,7 +465,7 @@ function StepProfile({
             type="email"
             value={draft.email}
             onChange={(e) => update({ email: e.target.value })}
-            className="bg-clinical-dark border-clinical-border text-sm"
+            className="bg-nn-bg border-white/[0.08] text-sm"
             placeholder="you@clinic.com"
           />
         </Field>
@@ -478,7 +478,7 @@ function StepProfile({
                 yearsExperience: e.target.value.replace(/[^0-9]/g, ""),
               })
             }
-            className="bg-clinical-dark border-clinical-border text-sm"
+            className="bg-nn-bg border-white/[0.08] text-sm"
             placeholder="e.g. 7"
           />
         </Field>
@@ -487,7 +487,7 @@ function StepProfile({
         <Input
           value={draft.credentials}
           onChange={(e) => update({ credentials: e.target.value })}
-          className="bg-clinical-dark border-clinical-border text-sm"
+          className="bg-nn-bg border-white/[0.08] text-sm"
         />
       </Field>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -495,7 +495,7 @@ function StepProfile({
           <Input
             value={draft.registrationBody}
             onChange={(e) => update({ registrationBody: e.target.value })}
-            className="bg-clinical-dark border-clinical-border text-sm"
+            className="bg-nn-bg border-white/[0.08] text-sm"
             placeholder="e.g. IDA, ICDA"
           />
         </Field>
@@ -503,7 +503,7 @@ function StepProfile({
           <Input
             value={draft.registrationNumber}
             onChange={(e) => update({ registrationNumber: e.target.value })}
-            className="bg-clinical-dark border-clinical-border text-sm"
+            className="bg-nn-bg border-white/[0.08] text-sm"
           />
         </Field>
       </div>
@@ -537,7 +537,7 @@ function StepPractice({
           <Input
             value={draft.cityRegion}
             onChange={(e) => update({ cityRegion: e.target.value })}
-            className="bg-clinical-dark border-clinical-border text-sm"
+            className="bg-nn-bg border-white/[0.08] text-sm"
             placeholder="Noida, UP"
           />
         </Field>
@@ -547,7 +547,7 @@ function StepPractice({
             onChange={(e) =>
               update({ practiceSetting: e.target.value as PracticeSetting })
             }
-            className="bg-clinical-dark border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full"
+            className="bg-nn-bg border border-white/[0.08] text-sm rounded-md h-9 px-3 text-white w-full"
           >
             <option value="">Choose…</option>
             {settings.map((s) => (
@@ -566,7 +566,7 @@ function StepPractice({
               clientVolumeBucket: e.target.value as DraftState["clientVolumeBucket"],
             })
           }
-          className="bg-clinical-dark border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
+          className="bg-nn-bg border border-white/[0.08] text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
         >
           <option value="">Prefer not to say</option>
           <option value="lt10">Fewer than 10</option>
@@ -601,7 +601,7 @@ function StepPractice({
           value={draft.bio}
           onChange={(e) => update({ bio: e.target.value })}
           rows={4}
-          className="bg-clinical-dark border-clinical-border text-sm"
+          className="bg-nn-bg border-white/[0.08] text-sm"
           placeholder="Approach, populations, recent wins…"
         />
       </Field>
@@ -708,7 +708,7 @@ function StepWhatsapp({
   return (
     <div className="space-y-4">
       <h2 className="text-sm text-white font-medium">WhatsApp updates</h2>
-      <p className="text-xs text-clinical-zinc">
+      <p className="text-xs text-nn-on-surface-variant">
         Optional — but it's how the clinical team flags new bookings, lab
         uploads and case alerts. We never share your number.
       </p>
@@ -716,7 +716,7 @@ function StepWhatsapp({
         <Input
           value={draft.whatsappCountryCode}
           onChange={(e) => update({ whatsappCountryCode: e.target.value })}
-          className="bg-clinical-dark border-clinical-border text-sm"
+          className="bg-nn-bg border-white/[0.08] text-sm"
         />
         <Input
           value={draft.whatsappPhone}
@@ -727,7 +727,7 @@ function StepWhatsapp({
             })
           }
           placeholder="WhatsApp number"
-          className="bg-clinical-dark border-clinical-border text-sm"
+          className="bg-nn-bg border-white/[0.08] text-sm"
         />
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -737,7 +737,7 @@ function StepWhatsapp({
             sending || draft.whatsappPhone.length < 6 || resendIn > 0
           }
           variant="outline"
-          className="border-clinical-gold/40 text-clinical-gold hover:bg-clinical-gold/10 text-xs h-8"
+          className="border-nn-primary/40 text-nn-primary hover:bg-nn-primary/10 text-xs h-8"
         >
           {sending ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -757,7 +757,7 @@ function StepWhatsapp({
                 setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))
               }
               placeholder="6-digit code"
-              className="bg-clinical-dark border-clinical-border text-sm w-32"
+              className="bg-nn-bg border-white/[0.08] text-sm w-32"
             />
             <Button
               onClick={verify}
@@ -770,19 +770,19 @@ function StepWhatsapp({
         )}
       </div>
       {devCode && !draft.whatsappVerified && (
-        <p className="text-[11px] text-clinical-zinc">
+        <p className="text-[11px] text-nn-on-surface-variant">
           Dev mode is on (no Twilio creds) — paste{" "}
           <span className="font-mono text-white">{devCode}</span> to continue.
         </p>
       )}
 
-      <div className="rounded-md border border-clinical-border bg-clinical-dark p-3 space-y-3">
-        <label className="flex items-start gap-2 text-xs text-clinical-zinc cursor-pointer">
+      <div className="rounded-md border border-white/[0.08] bg-nn-bg p-3 space-y-3">
+        <label className="flex items-start gap-2 text-xs text-nn-on-surface-variant cursor-pointer">
           <input
             type="checkbox"
             checked={draft.whatsappOptIn}
             onChange={(e) => update({ whatsappOptIn: e.target.checked })}
-            className="mt-0.5 accent-clinical-gold"
+            className="mt-0.5 accent-nn-primary"
           />
           <span>
             I agree to receive case alerts and operational updates from
@@ -797,7 +797,7 @@ function StepWhatsapp({
                 notifyPref: e.target.value as DraftState["notifyPref"],
               })
             }
-            className="bg-clinical-dark border border-clinical-border text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
+            className="bg-nn-bg border border-white/[0.08] text-sm rounded-md h-9 px-3 text-white w-full md:w-1/2"
           >
             <option value="critical">Critical only</option>
             <option value="weekly">Weekly digest</option>
@@ -806,7 +806,7 @@ function StepWhatsapp({
         </Field>
       </div>
 
-      <p className="text-[11px] text-clinical-zinc">
+      <p className="text-[11px] text-nn-on-surface-variant">
         Don't want to share WhatsApp? Skip — we'll just email you. You can
         add a number from the console later.
       </p>
@@ -844,24 +844,24 @@ function StepReview({ draft }: { draft: DraftState }) {
   return (
     <div className="space-y-4">
       <h2 className="text-sm text-white font-medium">Review &amp; submit</h2>
-      <p className="text-xs text-clinical-zinc">
+      <p className="text-xs text-nn-on-surface-variant">
         Please double-check — once submitted, edits go through ops.
       </p>
-      <dl className="rounded-md border border-clinical-border divide-y divide-clinical-border text-xs">
+      <dl className="rounded-md border border-white/[0.08] divide-y divide-white/[0.08] text-xs">
         {rows.map(([k, v]) => (
           <div key={k} className="flex items-start gap-3 px-3 py-2">
-            <dt className="w-32 text-clinical-zinc">{k}</dt>
+            <dt className="w-32 text-nn-on-surface-variant">{k}</dt>
             <dd className="flex-1 text-white break-words">{v || "—"}</dd>
           </div>
         ))}
       </dl>
       {draft.bio && (
-        <div className="rounded-md border border-clinical-border p-3 text-xs">
-          <p className="text-clinical-zinc mb-1">About</p>
+        <div className="rounded-md border border-white/[0.08] p-3 text-xs">
+          <p className="text-nn-on-surface-variant mb-1">About</p>
           <p className="text-white whitespace-pre-line">{draft.bio}</p>
         </div>
       )}
-      <p className="text-[11px] text-clinical-zinc inline-flex items-start gap-1.5">
+      <p className="text-[11px] text-nn-on-surface-variant inline-flex items-start gap-1.5">
         <ShieldCheck className="w-3.5 h-3.5 text-clinical-sage mt-0.5" />
         We use these details only for partner review and never share them with
         third parties.
@@ -925,7 +925,7 @@ function StepDone({
       <h2 className="text-xl text-white font-serif">
         Application #{id} received
       </h2>
-      <p className="text-xs text-clinical-zinc max-w-md mx-auto">
+      <p className="text-xs text-nn-on-surface-variant max-w-md mx-auto">
         Thanks — our partner ops team will review and reply by email to{" "}
         <span className="text-white">{email}</span> within 3 working days.
         {notifyTo && (
@@ -935,9 +935,9 @@ function StepDone({
           </>
         )}
       </p>
-      <div className="rounded-lg border border-clinical-border bg-clinical-dark p-4 text-left text-xs space-y-2">
+      <div className="rounded-lg border border-white/[0.08] bg-nn-bg p-4 text-left text-xs space-y-2">
         <p className="text-white text-sm font-medium">Want a head start?</p>
-        <p className="text-clinical-zinc">
+        <p className="text-nn-on-surface-variant">
           Sign in (or create an account with the same email) to see your
           application status, and we'll attach this submission so you can
           step into the RD console the moment we approve.
@@ -945,7 +945,7 @@ function StepDone({
         <Button
           onClick={attachAccount}
           disabled={linking || linked}
-          className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs h-8"
+          className="bg-nn-primary text-action-text hover:bg-nn-primary/90 text-xs h-8"
         >
           {linked ? "Account attached" : linking ? "Attaching…" : "Attach my account"}
         </Button>
@@ -956,13 +956,13 @@ function StepDone({
           target="_blank"
           rel="noopener noreferrer"
           download
-          className="text-clinical-gold hover:text-clinical-gold/80 underline"
+          className="text-nn-primary hover:text-nn-primary/80 underline"
         >
           Download partner brochure (PDF)
         </a>
         <Link
           to="/rd-partners"
-          className="text-clinical-zinc hover:text-white"
+          className="text-nn-on-surface-variant hover:text-white"
         >
           Back to partners overview
         </Link>
@@ -980,7 +980,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+      <Label className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant">
         {label}
       </Label>
       {children}
@@ -1008,8 +1008,8 @@ function Chips({
             onClick={() => onToggle(o)}
             className={`text-xs px-3 h-7 rounded-full border transition-colors ${
               on
-                ? "bg-clinical-gold/15 text-clinical-gold border-clinical-gold/40"
-                : "border-clinical-border text-clinical-zinc hover:border-clinical-gold/30 hover:text-white"
+                ? "bg-nn-primary/15 text-nn-primary border-nn-primary/40"
+                : "border-white/[0.08] text-nn-on-surface-variant hover:border-nn-primary/30 hover:text-white"
             }`}
           >
             {o}

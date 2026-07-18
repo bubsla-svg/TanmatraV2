@@ -71,32 +71,32 @@ export default function MorningFitnessLanding() {
   };
 
   return (
-    <div className="nn-clinical bg-clinical-dark text-white min-h-screen">
+    <div className="nn-clinical bg-nn-bg text-white min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-clinical-border py-20 px-4">
+      <section className="relative overflow-hidden border-b border-white/[0.08] py-20 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 items-center">
           <div className="space-y-6">
-            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30 uppercase tracking-widest text-[10px] px-3 py-1">
+            <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30 uppercase tracking-widest text-[10px] px-3 py-1">
               MORNING RUNNING & CYCLING CLUBS
             </Badge>
             <h1 className="font-serif text-4xl sm:text-6xl leading-tight">
-              Post-workout recovery, <span className="text-clinical-gold">delivered to your finish line.</span>
+              Post-workout recovery, <span className="text-nn-primary">delivered to your finish line.</span>
             </h1>
-            <p className="text-base sm:text-lg text-clinical-zinc max-w-xl leading-relaxed">
+            <p className="text-base sm:text-lg text-nn-on-surface-variant max-w-xl leading-relaxed">
               Ditch the sugary tea stall stops. Coordinate fresh, dietitian-approved post-workout breakfasts delivered warm directly to your meetup, park, or trail finish line by 7:00 AM.
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <a href="#propose-club">
-                <Button className="bg-clinical-gold text-action-text hover:bg-clinical-gold/90 h-11 px-6 text-sm font-medium gap-2">
+                <Button className="bg-nn-primary text-action-text hover:bg-nn-primary/90 h-11 px-6 text-sm font-medium gap-2">
                   Register Your Club
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </a>
-              <a href="#how-it-works" className="text-xs text-clinical-zinc hover:text-white transition-colors">
+              <a href="#how-it-works" className="text-xs text-nn-on-surface-variant hover:text-white transition-colors">
                 How Delivery Works →
               </a>
             </div>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 text-xs text-clinical-zinc">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 text-xs text-nn-on-surface-variant">
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-clinical-sage" />
                 Delivered by 7:00 AM
@@ -109,58 +109,58 @@ export default function MorningFitnessLanding() {
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-tr from-clinical-gold/10 to-transparent blur-3xl -z-10 rounded-full" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-nn-primary/10 to-transparent blur-3xl -z-10 rounded-full" />
             <img 
               src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800&q=80" 
               alt="Running club outdoors"
-              className="rounded-2xl border border-clinical-border w-full object-cover max-h-[400px] shadow-2xl"
+              className="rounded-2xl border border-white/[0.08] w-full object-cover max-h-[400px] shadow-2xl"
             />
           </div>
         </div>
       </section>
 
       {/* Benefits */}
-      <section id="how-it-works" className="py-16 border-b border-clinical-border px-4">
+      <section id="how-it-works" className="py-16 border-b border-white/[0.08] px-4">
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <h2 className="font-serif text-3xl sm:text-4xl">Fueling runners and cyclists across NCR</h2>
-            <p className="text-sm text-clinical-zinc">
+            <p className="text-sm text-nn-on-surface-variant">
               We coordinate bulk, site-specific drop-offs so your group can rehydrate and refuel together instantly.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-clinical-surface border-clinical-border">
+            <Card className="bg-nn-surface border-white/[0.08]">
               <CardContent className="p-6 space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-clinical-gold/15 flex items-center justify-center border border-clinical-gold/25">
-                  <Clock className="w-5 h-5 text-clinical-gold" />
+                <div className="w-10 h-10 rounded-lg bg-nn-primary/15 flex items-center justify-center border border-nn-primary/25">
+                  <Clock className="w-5 h-5 text-nn-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-white">7:00 AM Delivery Guarantee</h3>
-                <p className="text-xs text-clinical-zinc leading-relaxed">
+                <p className="text-xs text-nn-on-surface-variant leading-relaxed">
                   We schedule dispatch to meet you immediately after your cooldown. No late deliveries, no cold food. Kept warm in specialized insulated carrier boxes.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-clinical-surface border-clinical-border">
+            <Card className="bg-nn-surface border-white/[0.08]">
               <CardContent className="p-6 space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-clinical-gold/15 flex items-center justify-center border border-clinical-gold/25">
-                  <Coffee className="w-5 h-5 text-clinical-gold" />
+                <div className="w-10 h-10 rounded-lg bg-nn-primary/15 flex items-center justify-center border border-nn-primary/25">
+                  <Coffee className="w-5 h-5 text-nn-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-white">Clean Recovery Macros</h3>
-                <p className="text-xs text-clinical-zinc leading-relaxed">
+                <p className="text-xs text-nn-on-surface-variant leading-relaxed">
                   Menu items like *Boiled Egg Plates*, *Buckwheat Mung Khichdi*, and *High-Protein Berry Smoothies* replenish glycogen and repair muscle fibers instantly without sugars.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-clinical-surface border-clinical-border">
+            <Card className="bg-nn-surface border-white/[0.08]">
               <CardContent className="p-6 space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-clinical-gold/15 flex items-center justify-center border border-clinical-gold/25">
-                  <Users className="w-5 h-5 text-clinical-gold" />
+                <div className="w-10 h-10 rounded-lg bg-nn-primary/15 flex items-center justify-center border border-nn-primary/25">
+                  <Users className="w-5 h-5 text-nn-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-white">Group Subscriptions</h3>
-                <p className="text-xs text-clinical-zinc leading-relaxed">
+                <p className="text-xs text-nn-on-surface-variant leading-relaxed">
                   Members configure their own meal preferences online. Club admins get a single dispatch manifest, or we deploy a local courier setup directly at your park drop-off.
                 </p>
               </CardContent>
@@ -170,11 +170,11 @@ export default function MorningFitnessLanding() {
       </section>
 
       {/* Menu Highlight */}
-      <section className="py-16 border-b border-clinical-border bg-clinical-surface/10 px-4">
+      <section className="py-16 border-b border-white/[0.08] bg-nn-surface/10 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <h2 className="font-serif text-3xl">Perfect Post-Run Fuel</h2>
-            <p className="text-xs text-clinical-zinc">A sneak peek at our popular recovery breakfast options.</p>
+            <p className="text-xs text-nn-on-surface-variant">A sneak peek at our popular recovery breakfast options.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -198,12 +198,12 @@ export default function MorningFitnessLanding() {
                 img: "/dishes/buckwheat_mung_khichdi_1782971061215.jpg"
               }
             ].map((d) => (
-              <Card key={d.name} className="bg-clinical-surface border-clinical-border overflow-hidden">
+              <Card key={d.name} className="bg-nn-surface border-white/[0.08] overflow-hidden">
                 <img src={d.img} alt={d.name} onError={onDishImageError} className="w-full h-40 object-cover" />
                 <CardContent className="p-4 space-y-2">
                   <h4 className="text-sm font-semibold text-white">{d.name}</h4>
-                  <p className="text-[10px] text-clinical-gold font-mono">{d.macros}</p>
-                  <p className="text-[11px] text-clinical-zinc leading-relaxed">{d.desc}</p>
+                  <p className="text-[10px] text-nn-primary font-mono">{d.macros}</p>
+                  <p className="text-[11px] text-nn-on-surface-variant leading-relaxed">{d.desc}</p>
                 </CardContent>
               </Card>
             ))}
@@ -216,24 +216,24 @@ export default function MorningFitnessLanding() {
         <div className="max-w-2xl mx-auto space-y-8">
           <div className="text-center space-y-3">
             <h2 className="font-serif text-3xl sm:text-4xl">Get Your Club Onboarded</h2>
-            <p className="text-xs text-clinical-zinc">
+            <p className="text-xs text-nn-on-surface-variant">
               Tell us where your group trains. We will coordinate a trial delivery morning complete with complimentary protein shakes and sample menus for your next group session.
             </p>
           </div>
 
-          <Card className="bg-clinical-surface border-clinical-border">
+          <Card className="bg-nn-surface border-white/[0.08]">
             <CardContent className="p-6">
               {submitted ? (
                 <div className="text-center py-10 space-y-4">
                   <CheckCircle className="w-16 h-16 mx-auto text-clinical-sage" />
                   <h3 className="text-2xl font-bold text-white">Sent to WhatsApp</h3>
-                  <p className="text-sm text-clinical-zinc max-w-sm mx-auto">
+                  <p className="text-sm text-nn-on-surface-variant max-w-sm mx-auto">
                     We've opened WhatsApp with your details pre-filled. Send the message and our partnerships team will coordinate your trial breakfast morning.
                   </p>
                   <Button 
                     onClick={() => setSubmitted(false)}
                     variant="outline" 
-                    className="border-clinical-border text-white hover:text-white"
+                    className="border-white/[0.08] text-white hover:text-white"
                   >
                     Submit another location
                   </Button>
@@ -242,21 +242,21 @@ export default function MorningFitnessLanding() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="club" className="text-xs text-clinical-zinc">Club / Team Name</Label>
+                      <Label htmlFor="club" className="text-xs text-nn-on-surface-variant">Club / Team Name</Label>
                       <Input 
                         id="club" 
                         placeholder="e.g. Noida Runners Club"
-                        className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                        className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                         value={clubName}
                         onChange={(e) => setClubName(e.target.value)}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="contact" className="text-xs text-clinical-zinc">Lead Coordinator Name</Label>
+                      <Label htmlFor="contact" className="text-xs text-nn-on-surface-variant">Lead Coordinator Name</Label>
                       <Input 
                         id="contact" 
                         placeholder="e.g. Vikramaditya"
-                        className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                        className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
                       />
@@ -265,20 +265,20 @@ export default function MorningFitnessLanding() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5 sm:col-span-2">
-                      <Label htmlFor="whatsapp" className="text-xs text-clinical-zinc">WhatsApp Number for Coordination</Label>
+                      <Label htmlFor="whatsapp" className="text-xs text-nn-on-surface-variant">WhatsApp Number for Coordination</Label>
                       <Input 
                         id="whatsapp" 
                         placeholder="e.g. +91 98111 22222"
-                        className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                        className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                         value={whatsapp}
                         onChange={(e) => setWhatsapp(e.target.value)}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="size" className="text-xs text-clinical-zinc">Active Group Size</Label>
+                      <Label htmlFor="size" className="text-xs text-nn-on-surface-variant">Active Group Size</Label>
                       <select 
                         id="size"
-                        className="w-full bg-clinical-dark border border-clinical-border rounded-md px-3 text-white text-xs h-9 focus:outline-none"
+                        className="w-full bg-nn-bg border border-white/[0.08] rounded-md px-3 text-white text-xs h-9 focus:outline-none"
                         value={membersCount}
                         onChange={(e) => setMembersCount(e.target.value)}
                       >
@@ -291,11 +291,11 @@ export default function MorningFitnessLanding() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="location" className="text-xs text-clinical-zinc">Meetup / Finish Point Coordinates or Landmarks</Label>
+                    <Label htmlFor="location" className="text-xs text-nn-on-surface-variant">Meetup / Finish Point Coordinates or Landmarks</Label>
                     <Input
                       id="location"
                       placeholder="e.g. Leisure Valley Park Gate 2, Gurgaon"
-                      className="bg-clinical-dark border-clinical-border text-white text-xs h-9"
+                      className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                     />
@@ -303,7 +303,7 @@ export default function MorningFitnessLanding() {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-medium text-xs h-10 mt-2"
+                    className="w-full bg-nn-primary text-action-text hover:bg-nn-primary/90 font-medium text-xs h-10 mt-2"
                   >
                     Request Trial Breakfast Drop-off
                   </Button>

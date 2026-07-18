@@ -528,14 +528,14 @@ export default function CoachAgentWidget({
             )}
           {messages.length === 1 && !streaming && isAuthenticated && (
             <div className="pt-2 flex flex-col gap-1.5">
-              <span className="text-[9px] uppercase tracking-wider text-clinical-zinc/50 font-semibold pl-1">Suggested Questions</span>
+              <span className="text-[9px] uppercase tracking-wider text-nn-on-surface-variant/50 font-semibold pl-1">Suggested Questions</span>
               <div className="flex flex-wrap gap-1.5">
                 {getPromptChips(dishSlug).map((chip, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => handleSend(chip.query)}
-                    className="chip hover:bg-clinical-gold/10 hover:border-clinical-gold/30 hover:text-clinical-gold"
+                    className="chip hover:bg-nn-primary/10 hover:border-nn-primary/30 hover:text-nn-primary"
                     style={{ height: 28, padding: "0 10px", fontSize: 11, borderRadius: 8, cursor: "pointer" }}
                   >
                     {chip.label}

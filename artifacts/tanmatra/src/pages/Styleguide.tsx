@@ -21,23 +21,23 @@ import { DURATION, EASE, FADE_IN_UP } from "@/lib/motion";
 const toHex = (val: string) => "#" + val;
 const toHsl = (val: string) => "hs" + "l(" + val + ")";
 
+// Nocturnal Nourishment is the current (and only) palette. The deprecated
+// Clinical Dark swatches were dropped during the design-system migration —
+// their NN equivalents are listed here instead. `clinical-sage` is retained
+// as the one legacy accent colour still in use.
 const swatches = [
   { name: "background", token: "--color-background", value: toHsl("0 0% 2%") },
-  { name: "clinical-dark", token: "--color-clinical-dark", value: toHex("050505") },
-  { name: "clinical-surface", token: "--color-clinical-surface", value: toHex("0A0A0C") },
-  { name: "clinical-surface-elevated", token: "--color-clinical-surface-elevated", value: toHex("111114") },
-  { name: "clinical-gold", token: "--color-clinical-gold", value: toHex("F4C430") },
-  { name: "clinical-blue", token: "--color-clinical-blue", value: toHex("6BA3C8") },
-  { name: "clinical-sage", token: "--color-clinical-sage", value: toHex("7D9E7E") },
-  { name: "clinical-slate", token: "--color-clinical-slate", value: toHex("334155") },
-  { name: "clinical-zinc", token: "--color-clinical-zinc", value: toHex("A1A1AA") },
-  // ── Nocturnal Nourishment (Stitch design system) — approved brand tokens ──
-  { name: "nn-primary (amber)", token: "--color-nn-primary", value: toHex("fbbf24") },
-  { name: "nn-tertiary (cyan)", token: "--color-nn-tertiary", value: toHex("34daff") },
+  // ── Nocturnal Nourishment (Stitch design system) — the current palette ──
   { name: "nn-bg", token: "--color-nn-bg", value: toHex("131313") },
   { name: "nn-surface", token: "--color-nn-surface", value: toHex("1f1f1f") },
+  { name: "nn-surface-high", token: "--color-nn-surface-high", value: toHex("2a2a2a") },
+  { name: "nn-primary (amber)", token: "--color-nn-primary", value: toHex("fbbf24") },
+  { name: "nn-tertiary (cyan)", token: "--color-nn-tertiary", value: toHex("34daff") },
   { name: "nn-on-surface", token: "--color-nn-on-surface", value: toHex("e2e2e2") },
   { name: "nn-on-surface-variant", token: "--color-nn-on-surface-variant", value: toHex("d3c5ac") },
+  { name: "nn-secondary", token: "--color-nn-secondary", value: toHex("c6c6c7") },
+  { name: "nn-outline", token: "--color-nn-outline", value: toHex("9c8f79") },
+  { name: "clinical-sage (accent)", token: "--color-clinical-sage", value: toHex("7D9E7E") },
   { name: "destructive", token: "--color-destructive", value: toHsl("0 72% 51%") },
 ];
 
@@ -65,7 +65,7 @@ function Section({ title, kicker, children }: { title: string; kicker?: string; 
         {kicker && <p className="text-clinical-label">{kicker}</p>}
         <h2 className="text-clinical-h2 text-white mt-1">{title}</h2>
       </div>
-      <Separator className="bg-clinical-surface-elevated" />
+      <Separator className="bg-nn-surface-high" />
       <div>{children}</div>
     </section>
   );
@@ -74,7 +74,7 @@ function Section({ title, kicker, children }: { title: string; kicker?: string; 
 // ---------------------------------------------------------------------------
 // Contrast helpers — sRGB → relative luminance → WCAG ratio.
 // Used by AlertPaletteGrid to print a live ratio for every text token
-// over the clinical-dark background, so reviewers can verify AAA at a
+// over the nn-bg page background, so reviewers can verify AAA at a
 // glance instead of trusting a comment.
 // ---------------------------------------------------------------------------
 function hexToRgb(hex: string): [number, number, number] {
@@ -111,9 +111,9 @@ const ALERTS = [
 ];
 
 function AlertPaletteGrid() {
-  const bg = toHex("050505");
+  const bg = toHex("131313");
   // Automated AAA assertion — every text token must clear ≥7:1 on the
-  // clinical-dark background. If a future palette tweak silently breaks
+  // nn-bg page background. If a future palette tweak silently breaks
   // contrast, this banner flips to a loud red FAIL row that shows up in
   // any visual regression sweep of /__styleguide.
   const textRatios = ALERTS.map((a) => ({
@@ -134,14 +134,14 @@ function AlertPaletteGrid() {
         }`}
       >
         {allPass
-          ? `AAA assertion: PASS · ${textRatios.length}/${textRatios.length} text tokens ≥ 7:1 on ${toHex("050505")}`
+          ? `AAA assertion: PASS · ${textRatios.length}/${textRatios.length} text tokens ≥ 7:1 on ${toHex("131313")}`
           : `AAA assertion: FAIL · ${failures
               .map((f) => `${f.token} (${f.ratio.toFixed(2)}:1)`)
               .join(", ")}`}
       </div>
-      <p className="text-body-sm text-clinical-zinc">
+      <p className="text-body-sm text-nn-on-surface-variant">
         Each alert has an accent (chip background, border) and a text variant
-        tuned for ≥7:1 contrast on the clinical-dark background. The ratios
+        tuned for ≥7:1 contrast on the nn-bg page background. The ratios
         below are computed live in the browser.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -152,25 +152,25 @@ function AlertPaletteGrid() {
           return (
             <div
               key={a.token}
-              className="rounded-lg border border-clinical-border bg-clinical-surface overflow-hidden"
+              className="rounded-lg border border-white/[0.08] bg-nn-surface overflow-hidden"
             >
               <div className="flex">
                 <div className="h-20 w-20 shrink-0" style={{ background: a.accent }} />
                 <div className="h-20 w-20 shrink-0" style={{ background: a.text }} />
                 <div className="p-3 min-w-0 flex-1">
                   <p className="text-caption text-white font-medium">{a.name}</p>
-                  <p className="text-[10px] text-clinical-zinc font-mono mt-0.5">
+                  <p className="text-[10px] text-nn-on-surface-variant font-mono mt-0.5">
                     --color-{a.token} · {a.accent}
                   </p>
-                  <p className="text-[10px] text-clinical-zinc font-mono">
+                  <p className="text-[10px] text-nn-on-surface-variant font-mono">
                     --color-{a.token}-text · {a.text}
                   </p>
                 </div>
               </div>
-              <div className="px-3 py-2 border-t border-clinical-border bg-clinical-dark">
+              <div className="px-3 py-2 border-t border-white/[0.08] bg-nn-bg">
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                   <div>
-                    <p className="text-clinical-zinc">Text on dark</p>
+                    <p className="text-nn-on-surface-variant">Text on dark</p>
                     <p
                       className="font-mono tabular-nums"
                       style={{ color: a.text }}
@@ -188,7 +188,7 @@ function AlertPaletteGrid() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-clinical-zinc">Accent on dark</p>
+                    <p className="text-nn-on-surface-variant">Accent on dark</p>
                     <p
                       className="font-mono tabular-nums"
                       style={{ color: a.accent }}
@@ -221,19 +221,19 @@ function AlertPaletteGrid() {
 
 export default function Styleguide() {
   return (
-    <div className="min-h-screen bg-clinical-dark">
+    <div className="min-h-screen bg-nn-bg">
       {/* Hero */}
-      <div className="border-b border-clinical-border bg-gradient-to-b from-clinical-gold/5 to-transparent">
+      <div className="border-b border-white/[0.08] bg-gradient-to-b from-nn-primary/5 to-transparent">
         <div className="max-w-5xl mx-auto px-6 py-16">
-          <p className="text-clinical-label text-clinical-gold">Tanmatra · Design System</p>
+          <p className="text-clinical-label text-nn-primary">Tanmatra · Design System</p>
           <h1 className="text-display text-white mt-3">
             Clinical, calm, <span className="italic">precise.</span>
           </h1>
-          <p className="text-body-lg text-clinical-zinc mt-5 max-w-2xl">
+          <p className="text-body-lg text-nn-on-surface-variant mt-5 max-w-2xl">
             The visual language behind Tanmatra. Every token here is wired into both Tailwind utilities and JS motion helpers so screens stay in lockstep.
           </p>
-          <div className="flex items-center gap-2 mt-6 text-caption text-clinical-zinc">
-            <kbd className="rounded bg-clinical-surface-elevated px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+          <div className="flex items-center gap-2 mt-6 text-caption text-nn-on-surface-variant">
+            <kbd className="rounded bg-nn-surface-high px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
             <span>opens the command palette anywhere in the app</span>
           </div>
         </div>
@@ -267,11 +267,11 @@ export default function Styleguide() {
               <p className="text-clinical-label">.text-body-lg / .text-body / .text-body-sm</p>
               <p className="text-body-lg text-white mt-1">Body large · the calm reading size for editorial passages.</p>
               <p className="text-body text-white mt-1">Body default · used everywhere by default.</p>
-              <p className="text-body-sm text-clinical-zinc mt-1">Body small · captions, micro-context, helper text.</p>
+              <p className="text-body-sm text-nn-on-surface-variant mt-1">Body small · captions, micro-context, helper text.</p>
             </div>
             <div>
               <p className="text-clinical-label">.text-clinical-data</p>
-              <p className="text-clinical-data text-clinical-gold mt-1">412 kcal · 38 g protein · 24 g carbs</p>
+              <p className="text-clinical-data text-nn-primary mt-1">412 kcal · 38 g protein · 24 g carbs</p>
             </div>
             <div>
               <p className="text-clinical-label">.text-clinical-label</p>
@@ -281,17 +281,17 @@ export default function Styleguide() {
         </Section>
 
         {/* Color */}
-        <Section title="Color tokens" kicker="Clinical Dark palette">
+        <Section title="Color tokens" kicker="Nocturnal Nourishment palette">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {swatches.map((s) => (
               <div
                 key={s.token}
-                className="rounded-lg border border-clinical-border bg-clinical-surface overflow-hidden"
+                className="rounded-lg border border-white/[0.08] bg-nn-surface overflow-hidden"
               >
                 <div className="h-16" style={{ background: `var(${s.token})` }} />
                 <div className="p-3">
                   <p className="text-caption text-white font-medium">{s.name}</p>
-                  <p className="text-[10px] text-clinical-zinc font-mono mt-0.5">{s.value}</p>
+                  <p className="text-[10px] text-nn-on-surface-variant font-mono mt-0.5">{s.value}</p>
                 </div>
               </div>
             ))}
@@ -304,15 +304,15 @@ export default function Styleguide() {
             {radii.map((r) => (
               <div
                 key={r.name}
-                className="flex flex-col items-center gap-2 p-4 border border-clinical-border bg-clinical-surface"
+                className="flex flex-col items-center gap-2 p-4 border border-white/[0.08] bg-nn-surface"
                 style={{ borderRadius: `var(--radius-${r.name})` }}
               >
                 <div
-                  className="w-16 h-16 bg-clinical-gold/15"
+                  className="w-16 h-16 bg-nn-primary/15"
                   style={{ borderRadius: `var(--radius-${r.name})` }}
                 />
                 <p className="text-caption text-white font-mono">{r.name}</p>
-                <p className="text-[10px] text-clinical-zinc">{r.value}</p>
+                <p className="text-[10px] text-nn-on-surface-variant">{r.value}</p>
               </div>
             ))}
           </div>
@@ -326,16 +326,16 @@ export default function Styleguide() {
                 key={m.name}
                 whileHover={{ y: -4, scale: 1.02 }}
                 transition={{ duration: DURATION.base, ease: EASE.standard }}
-                className="rounded-lg border border-clinical-border bg-clinical-surface p-4 cursor-default"
+                className="rounded-lg border border-white/[0.08] bg-nn-surface p-4 cursor-default"
               >
                 <p className="text-clinical-label">{m.name}</p>
-                <p className="text-clinical-data text-clinical-gold mt-1">{m.value}</p>
+                <p className="text-clinical-data text-nn-primary mt-1">{m.value}</p>
               </motion.div>
             ))}
           </div>
           <motion.div
             {...FADE_IN_UP}
-            className="mt-6 rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 px-4 py-3"
+            className="mt-6 rounded-lg border border-nn-primary/30 bg-nn-primary/5 px-4 py-3"
           >
             <p className="text-body-sm text-white">
               FADE_IN_UP entrance — apply to hero/copy blocks for the same fade-rise rhythm everywhere.
@@ -345,19 +345,19 @@ export default function Styleguide() {
 
         {/* Iconography */}
         <Section title="Iconography" kicker="Phosphor (primary) · Lucide (legacy)">
-          <Card className="bg-clinical-surface border-clinical-border p-5">
-            <p className="text-body-sm text-clinical-zinc mb-4">
+          <Card className="bg-nn-surface border-white/[0.08] p-5">
+            <p className="text-body-sm text-nn-on-surface-variant mb-4">
               Use <strong className="text-white">Phosphor</strong> for nav, anchor screens, and new components — its rounded geometry pairs with Inter Variable. <strong className="text-white">Lucide</strong> remains available for legacy admin/RD console screens already using it.
             </p>
             <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
               {[ForkKnife, Calendar, Stethoscope, UsersThree, UserCircle, Sparkle, HandHeart, ShieldCheck].map((Icon, i) => (
-                <div key={i} className="aspect-square rounded-md border border-clinical-border bg-clinical-dark flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-clinical-gold" weight="regular" />
+                <div key={i} className="aspect-square rounded-md border border-white/[0.08] bg-nn-bg flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-nn-primary" weight="regular" />
                 </div>
               ))}
               {[Heart, Activity, Flame, Leaf, Dumbbell].map((Icon, i) => (
-                <div key={`l-${i}`} className="aspect-square rounded-md border border-clinical-border bg-clinical-dark flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-clinical-zinc" />
+                <div key={`l-${i}`} className="aspect-square rounded-md border border-white/[0.08] bg-nn-bg flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-nn-on-surface-variant" />
                 </div>
               ))}
             </div>
@@ -382,9 +382,9 @@ export default function Styleguide() {
             <Badge>Default</Badge>
             <Badge variant="secondary">Secondary</Badge>
             <Badge variant="outline">Outline</Badge>
-            <Badge className="bg-clinical-gold/15 text-clinical-gold border-clinical-gold/30">Clinical Gold</Badge>
+            <Badge className="bg-nn-primary/15 text-nn-primary border-nn-primary/30">Clinical Gold</Badge>
             <Badge className="bg-clinical-sage/15 text-clinical-sage border-clinical-sage/30">Sage</Badge>
-            <Badge className="bg-clinical-blue/15 text-clinical-blue border-clinical-blue/30">Blue</Badge>
+            <Badge className="bg-nn-tertiary/15 text-nn-tertiary border-nn-tertiary/30">Blue</Badge>
           </div>
         </Section>
 
@@ -398,10 +398,10 @@ export default function Styleguide() {
 
         {/* Focus rings */}
         <Section title="Focus rings" kicker="a11y · keyboard">
-          <Card className="p-6 bg-clinical-surface border-clinical-border">
-            <p className="text-body-sm text-clinical-zinc mb-4">
+          <Card className="p-6 bg-nn-surface border-white/[0.08]">
+            <p className="text-body-sm text-nn-on-surface-variant mb-4">
               Every interactive primitive uses the same canonical focus ring:{" "}
-              <code className="text-clinical-data text-clinical-gold">
+              <code className="text-clinical-data text-nn-primary">
                 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background
               </code>
               . Tab through the controls below to see it.
@@ -418,27 +418,27 @@ export default function Styleguide() {
         {/* Cards */}
         <Section title="Surface elevations">
           <div className="grid sm:grid-cols-3 gap-3">
-            <div className="rounded-lg border border-clinical-border bg-clinical-dark p-5">
-              <p className="text-clinical-label">L0 · clinical-dark</p>
+            <div className="rounded-lg border border-white/[0.08] bg-nn-bg p-5">
+              <p className="text-clinical-label">L0 · nn-bg</p>
               <p className="text-body text-white mt-2">Page background</p>
             </div>
-            <div className="rounded-lg border border-clinical-border bg-clinical-surface p-5">
-              <p className="text-clinical-label">L1 · clinical-surface</p>
+            <div className="rounded-lg border border-white/[0.08] bg-nn-surface p-5">
+              <p className="text-clinical-label">L1 · nn-surface</p>
               <p className="text-body text-white mt-2">Cards, sheets, footer</p>
             </div>
-            <div className="rounded-lg border border-clinical-border bg-clinical-surface-elevated p-5 shadow-clinical">
-              <p className="text-clinical-label">L2 · surface-elevated</p>
+            <div className="rounded-lg border border-white/[0.08] bg-nn-surface-high p-5 shadow-clinical">
+              <p className="text-clinical-label">L2 · nn-surface-high</p>
               <p className="text-body text-white mt-2">Popovers, dialogs</p>
             </div>
           </div>
         </Section>
 
         {/* Canonical alert palette + AAA contrast readouts */}
-        <Section title="Alert palette" kicker={`Canonical · WCAG AAA on ${toHex("050505")}`}>
+        <Section title="Alert palette" kicker={`Canonical · WCAG AAA on ${toHex("131313")}`}>
           <AlertPaletteGrid />
         </Section>
 
-        <div className="pt-8 pb-16 text-center text-caption text-clinical-zinc">
+        <div className="pt-8 pb-16 text-center text-caption text-nn-on-surface-variant">
           Internal-only · keep this page in sync with `src/index.css` and `src/lib/motion.ts`.
         </div>
       </div>

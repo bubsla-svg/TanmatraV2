@@ -8,7 +8,7 @@
  * are introduced (see CLAUDE.md: "Clinical Dark palette is locked ... No new
  * base colors without explicit approval"). `boneText`, `primarySaffron`, and
  * `alertError` below are exact hex matches to existing tokens
- * (`--text-primary`, `--color-clinical-gold`, `--color-error`); the rest are
+ * (`--text-primary`, `--color-nn-primary`, `--color-error`); the rest are
  * the closest existing tier in the same surface/text/border hierarchy.
  */
 
@@ -17,17 +17,17 @@ export const STITCH_DESIGN_SYSTEM = {
   title: "Tanmatra Reimagined UX/UI",
   themeName: "Clinical Vitality",
   colors: {
-    background: "var(--color-clinical-dark)",
-    surfaceContainer: "var(--color-clinical-surface)",
-    surfaceRaised: "var(--color-clinical-surface-elevated)",
-    surfaceHigh: "var(--color-clinical-surface-elevated)",
-    primarySaffron: "var(--color-clinical-gold)",
+    background: "var(--color-nn-bg)",
+    surfaceContainer: "var(--color-nn-surface)",
+    surfaceRaised: "var(--color-nn-surface-high)",
+    surfaceHigh: "var(--color-nn-surface-high)",
+    primarySaffron: "var(--color-nn-primary)",
     statusSage: "var(--color-clinical-sage)",
     boneText: "var(--text-primary)",
-    mutedText: "var(--color-clinical-zinc)",
+    mutedText: "var(--color-nn-on-surface-variant)",
     alertError: "var(--color-error)",
-    borderOutline: "var(--color-clinical-border)",
-    borderStrong: "var(--color-clinical-border)",
+    borderOutline: "var(--color-nn-outline)",
+    borderStrong: "var(--color-nn-outline)",
   },
   typography: {
     headlineFont: "var(--font-display)",
@@ -64,8 +64,8 @@ export function getHealthFitChipStyle(isHighFit: boolean): { bg: string; color: 
     };
   }
   return {
-    bg: "var(--color-clinical-gold-light)",
-    color: "var(--color-clinical-gold)",
-    border: "1px solid var(--color-clinical-gold)",
+    bg: "color-mix(in srgb, var(--color-nn-primary) 12%, transparent)",
+    color: "var(--color-nn-primary)",
+    border: "1px solid var(--color-nn-primary)",
   };
 }
