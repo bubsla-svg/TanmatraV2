@@ -326,14 +326,14 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] max-h-[92vh] overflow-y-auto bg-clinical-surface border-clinical-border sm:w-full">
+      <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] max-h-[92vh] overflow-y-auto bg-nn-surface border-white/[0.08] sm:w-full">
         <DialogHeader>
           <DialogTitle className="text-white font-serif">
             {step === RESULTS_STEP
               ? "You're set up — here's what's next"
               : `Metabolic assessment · Step ${step + 1} of ${STEPS.length}`}
           </DialogTitle>
-          <DialogDescription className="text-clinical-zinc text-xs">
+          <DialogDescription className="text-nn-on-surface-variant text-xs">
             {step === RESULTS_STEP
               ? "Your menu and recommendations are personalized to your goal."
               : `${STEPS[step]} — RD-validated, ~2 minutes. Edit any time from Preferences.`}
@@ -362,8 +362,8 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                       onClick={() => setState((s) => ({ ...s, dietaryStyle: d }))}
                       className={`text-left text-xs px-3 py-2 rounded-md border flex items-center gap-2 ${
                         active
-                          ? "border-clinical-gold/60 bg-clinical-gold/10 text-clinical-gold"
-                          : "border-clinical-border text-clinical-zinc hover:text-white"
+                          ? "border-nn-primary/60 bg-nn-primary/10 text-nn-primary"
+                          : "border-white/[0.08] text-nn-on-surface-variant hover:text-white"
                       }`}
                     >
                       {active && (
@@ -402,8 +402,8 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         onClick={() => setState((s) => ({ ...s, goal: g }))}
                         className={`text-xs px-3 py-2 rounded-md border inline-flex items-center justify-center gap-1.5 ${
                           active
-                            ? "border-clinical-gold/60 bg-clinical-gold/10 text-clinical-gold"
-                            : "border-clinical-border text-clinical-zinc hover:text-white"
+                            ? "border-nn-primary/60 bg-nn-primary/10 text-nn-primary"
+                            : "border-white/[0.08] text-nn-on-surface-variant hover:text-white"
                         }`}
                       >
                         {active && (
@@ -437,8 +437,8 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         }
                         className={`text-xs px-3 py-2 rounded-md border inline-flex items-center justify-center gap-1.5 ${
                           active
-                            ? "border-clinical-gold/60 bg-clinical-gold/10 text-clinical-gold"
-                            : "border-clinical-border text-clinical-zinc hover:text-white"
+                            ? "border-nn-primary/60 bg-nn-primary/10 text-nn-primary"
+                            : "border-white/[0.08] text-nn-on-surface-variant hover:text-white"
                         }`}
                       >
                         {active && (
@@ -474,8 +474,8 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         onClick={() => toggleArr("cuisines", c)}
                         className={`text-xs px-3 py-1.5 rounded-full border capitalize inline-flex items-center gap-1.5 ${
                           active
-                            ? "border-clinical-gold/60 bg-clinical-gold/10 text-clinical-gold"
-                            : "border-clinical-border text-clinical-zinc hover:text-white"
+                            ? "border-nn-primary/60 bg-nn-primary/10 text-nn-primary"
+                            : "border-white/[0.08] text-nn-on-surface-variant hover:text-white"
                         }`}
                       >
                         {active && (
@@ -507,8 +507,8 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         onClick={() => setState((st) => ({ ...st, spiceLevel: s }))}
                         className={`text-xs px-2 py-2 rounded-md border inline-flex items-center justify-center gap-1 ${
                           active
-                            ? "border-clinical-gold/60 bg-clinical-gold/10 text-clinical-gold"
-                            : "border-clinical-border text-clinical-zinc hover:text-white"
+                            ? "border-nn-primary/60 bg-nn-primary/10 text-nn-primary"
+                            : "border-white/[0.08] text-nn-on-surface-variant hover:text-white"
                         }`}
                       >
                         {active && (
@@ -550,7 +550,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         className={`text-xs px-3 py-1.5 rounded-full border capitalize inline-flex items-center gap-1.5 ${
                           active
                             ? "border-orange-500/60 bg-orange-500/10 text-orange-400"
-                            : "border-clinical-border text-clinical-zinc hover:text-white"
+                            : "border-white/[0.08] text-nn-on-surface-variant hover:text-white"
                         }`}
                       >
                         {/* Icon makes the "blocked" state distinguishable
@@ -583,7 +583,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                       dislikedIngredients: e.target.value,
                     }))
                   }
-                  className="bg-clinical-surface-elevated border-clinical-border text-sm"
+                  className="bg-nn-surface-high border-white/[0.08] text-sm"
                 />
               </div>
             </div>
@@ -591,14 +591,14 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
 
           {step === 4 && (
             <div className="space-y-4">
-              <div className="rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 p-3 space-y-2">
+              <div className="rounded-lg border border-nn-primary/30 bg-nn-primary/5 p-3 space-y-2">
                 <div className="flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-clinical-gold mt-0.5 shrink-0" aria-hidden="true" />
+                  <Sparkles className="w-4 h-4 text-nn-primary mt-0.5 shrink-0" aria-hidden="true" />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-white leading-tight">
                       Recommended for you
                     </p>
-                    <p className="text-[11px] text-clinical-zinc leading-tight mt-0.5">
+                    <p className="text-[11px] text-nn-on-surface-variant leading-tight mt-0.5">
                       Daily targets based on your goal &amp; activity level —
                       tap to apply.
                     </p>
@@ -617,7 +617,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                     }));
                     toast.success("Targets calculated from your goal & activity");
                   }}
-                  className="w-full min-h-11 text-xs px-3 py-2.5 rounded-md bg-clinical-gold text-action-text hover:bg-clinical-gold/90 font-semibold"
+                  className="w-full min-h-11 text-xs px-3 py-2.5 rounded-md bg-nn-primary text-action-text hover:bg-nn-primary/90 font-semibold"
                 >
                   Calculate my targets
                 </button>
@@ -629,14 +629,14 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                       ["C g", state.carbsTargetGrams],
                       ["F g", state.fatTargetGrams],
                     ].map(([k, v]) => (
-                      <div key={k} className="text-center rounded bg-clinical-surface-elevated/60 py-1">
-                        <div className="text-clinical-gold font-bold leading-none">{v || "—"}</div>
-                        <div className="text-clinical-zinc leading-none mt-0.5">{k}</div>
+                      <div key={k} className="text-center rounded bg-nn-surface-high/60 py-1">
+                        <div className="text-nn-primary font-bold leading-none">{v || "—"}</div>
+                        <div className="text-nn-on-surface-variant leading-none mt-0.5">{k}</div>
                       </div>
                     ))}
                   </div>
                 )}
-                <p className="text-[10px] text-clinical-zinc-muted leading-snug">
+                <p className="text-[10px] text-nn-secondary leading-snug">
                   Estimated against an average 70 kg adult — refine in Preferences once you add weight, height &amp; age for a true Mifflin-St Jeor calculation.
                 </p>
               </div>
@@ -645,7 +645,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                 type="button"
                 onClick={() => setShowManualTargets((v) => !v)}
                 aria-expanded={showManualTargets}
-                className="w-full text-[11px] text-clinical-zinc hover:text-white inline-flex items-center justify-center gap-1.5 py-2"
+                className="w-full text-[11px] text-nn-on-surface-variant hover:text-white inline-flex items-center justify-center gap-1.5 py-2"
               >
                 {showManualTargets ? "Hide" : "Customize manually"}
                 <span aria-hidden>{showManualTargets ? "▲" : "▼"}</span>
@@ -673,7 +673,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                             carbsTargetGrams: e.target.value,
                           }))
                         }
-                        className="bg-clinical-surface-elevated border-clinical-border text-sm"
+                        className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
                     <div className="space-y-2">
@@ -695,7 +695,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                             fatTargetGrams: e.target.value,
                           }))
                         }
-                        className="bg-clinical-surface-elevated border-clinical-border text-sm"
+                        className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
                   </div>
@@ -716,7 +716,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         onChange={(e) =>
                           setState((s) => ({ ...s, calorieTarget: e.target.value }))
                         }
-                        className="bg-clinical-surface-elevated border-clinical-border text-sm"
+                        className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
                     <div className="space-y-2">
@@ -738,13 +738,13 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                             proteinTargetGrams: e.target.value,
                           }))
                         }
-                        className="bg-clinical-surface-elevated border-clinical-border text-sm"
+                        className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
                   </div>
                   <p
                     id={targetsHintId}
-                    className="text-[11px] text-clinical-zinc-muted"
+                    className="text-[11px] text-nn-secondary"
                   >
                     Optional — leave blank if you're not tracking macros yet.
                     Out-of-range values are clamped on save (kcal 800-6000,
@@ -778,7 +778,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                 }
                 setStep(step - 1);
               }}
-              className="min-h-11 text-xs text-clinical-zinc"
+              className="min-h-11 text-xs text-nn-on-surface-variant"
             >
               {step === 0 ? "Skip for now" : "Back"}
             </Button>
@@ -786,7 +786,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
               type="button"
               disabled={saving}
               onClick={onNext}
-              className="min-h-11 bg-clinical-gold text-action-text hover:bg-clinical-gold/90 text-xs font-semibold"
+              className="min-h-11 bg-nn-primary text-action-text hover:bg-nn-primary/90 text-xs font-semibold"
             >
               {step === STEPS.length - 1 ? "Save & see results" : "Next"}
             </Button>
@@ -926,15 +926,15 @@ function ResultsStep({
       {/* Outcome stat row — makes the personalization tangible */}
       {(calorieTarget || proteinTarget) && (
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-md bg-clinical-gold/10 border border-clinical-gold/30 p-3 text-center">
-            <div className="text-[10px] uppercase tracking-wider text-clinical-zinc">Daily kcal</div>
-            <div className="text-xl font-bold text-clinical-gold tabular-nums leading-tight">
+          <div className="rounded-md bg-nn-primary/10 border border-nn-primary/30 p-3 text-center">
+            <div className="text-[10px] uppercase tracking-wider text-nn-on-surface-variant">Daily kcal</div>
+            <div className="text-xl font-bold text-nn-primary tabular-nums leading-tight">
               {calorieTarget ?? "—"}
             </div>
           </div>
-          <div className="rounded-md bg-clinical-gold/10 border border-clinical-gold/30 p-3 text-center">
-            <div className="text-[10px] uppercase tracking-wider text-clinical-zinc">Protein</div>
-            <div className="text-xl font-bold text-clinical-gold tabular-nums leading-tight">
+          <div className="rounded-md bg-nn-primary/10 border border-nn-primary/30 p-3 text-center">
+            <div className="text-[10px] uppercase tracking-wider text-nn-on-surface-variant">Protein</div>
+            <div className="text-xl font-bold text-nn-primary tabular-nums leading-tight">
               {proteinTarget ?? "—"}<span className="text-sm">g</span>
             </div>
           </div>
@@ -942,15 +942,15 @@ function ResultsStep({
       )}
 
       {/* Primary recommendation — protocol + plan match */}
-      <div className="rounded-lg border border-clinical-gold/30 bg-clinical-gold/5 p-4 space-y-3">
+      <div className="rounded-lg border border-nn-primary/30 bg-nn-primary/5 p-4 space-y-3">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-clinical-zinc">
+          <p className="text-[10px] uppercase tracking-widest text-nn-on-surface-variant">
             Matched to your goal
           </p>
           <p className="text-sm font-semibold text-white mt-0.5">
             {recommendation.label}
           </p>
-          <p className="text-xs text-clinical-zinc leading-snug mt-1">
+          <p className="text-xs text-nn-on-surface-variant leading-snug mt-1">
             {recommendation.summary}
           </p>
         </div>
@@ -958,7 +958,7 @@ function ResultsStep({
           <Link
             to={`/plans/${recommendation.plan.slug}`}
             onClick={onClose}
-            className="min-h-11 inline-flex items-center justify-between gap-2 px-3 rounded-md bg-clinical-gold text-action-text text-xs font-semibold hover:bg-clinical-gold/90"
+            className="min-h-11 inline-flex items-center justify-between gap-2 px-3 rounded-md bg-nn-primary text-action-text text-xs font-semibold hover:bg-nn-primary/90"
           >
             <span>View {recommendation.plan.title}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -966,7 +966,7 @@ function ResultsStep({
           <Link
             to={recommendation.protocolHref}
             onClick={onClose}
-            className="min-h-11 inline-flex items-center justify-between gap-2 px-3 rounded-md border border-clinical-border text-xs text-white hover:bg-white/5"
+            className="min-h-11 inline-flex items-center justify-between gap-2 px-3 rounded-md border border-white/[0.08] text-xs text-white hover:bg-white/5"
           >
             <span>Read about the {recommendation.label.split(" ")[0]} protocol</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -985,7 +985,7 @@ function ResultsStep({
           <p className="text-xs font-semibold text-white leading-tight">
             Talk to an RD — first 15 min free
           </p>
-          <p className="text-[11px] text-clinical-zinc leading-tight mt-0.5">
+          <p className="text-[11px] text-nn-on-surface-variant leading-tight mt-0.5">
             Validate your plan with a registered dietitian.
           </p>
         </div>
@@ -996,7 +996,7 @@ function ResultsStep({
       <Link
         to="/menu?personalized=1"
         onClick={onClose}
-        className="block text-center text-[11px] text-clinical-zinc hover:text-white py-2"
+        className="block text-center text-[11px] text-nn-on-surface-variant hover:text-white py-2"
       >
         Or browse the personalized menu →
       </Link>

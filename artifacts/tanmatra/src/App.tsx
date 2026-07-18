@@ -162,7 +162,7 @@ function AdminGate({ children }: { children: React.ReactNode }) {
   const state = useAdminAuth();
   if (state === "checking") {
     return (
-      <div className="px-4 py-12 text-center text-sm text-clinical-muted">
+      <div className="px-4 py-12 text-center text-sm text-nn-secondary">
         Checking admin session…
       </div>
     );
@@ -190,7 +190,7 @@ function RdGate({ children }: { children: React.ReactNode }) {
   if (rdFlag === "1") return <>{children}</>;
   if (adminState === "checking") {
     return (
-      <div className="px-4 py-12 text-center text-sm text-clinical-muted">
+      <div className="px-4 py-12 text-center text-sm text-nn-secondary">
         Checking session…
       </div>
     );
@@ -215,7 +215,7 @@ export default function App() {
             <BrowserRouter basename={basename}>
               <ThemeManager />
               <ScrollToTop />
-              <div className="min-h-screen flex flex-col bg-clinical-dark">
+              <div className="min-h-screen flex flex-col bg-nn-bg">
                 <Header />
                 <OnboardingQuizGate />
                 <main className="flex-1 pb-20 md:pb-0">

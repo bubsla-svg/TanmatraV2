@@ -39,7 +39,7 @@ export default function MacroOverlay({ macros, compact = false, sodiumMg }: Macr
 
     return (
       <div
-        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-nn-bg/85 border border-white/[0.032] backdrop-blur-md shadow-clinical-lg"
+        className="flex items-center gap-2.5 p-1.5 rounded-xl bg-nn-bg/85 border border-white/[0.032] backdrop-blur-md"
         role="group"
         aria-label="Macro nutrient distribution ratios"
       >
@@ -112,19 +112,19 @@ export default function MacroOverlay({ macros, compact = false, sodiumMg }: Macr
         <div className="flex flex-col gap-0.5 justify-center">
           <div className="flex items-center gap-1.5 text-[9px] leading-none font-semibold text-white">
             <span className="w-1.5 h-1.5 rounded-full bg-nn-tertiary" />
-            <span className="text-clinical-blue-muted">P</span>
+            <span>P</span>
             <span className="tabular-nums">{macros.protein}g</span>
             {isAssessed && <span className="opacity-40 text-[8px]">({proteinPct}%)</span>}
           </div>
           <div className="flex items-center gap-1.5 text-[9px] leading-none font-semibold text-white">
             <span className="w-1.5 h-1.5 rounded-full bg-nn-primary" />
-            <span className="text-clinical-gold-muted">C</span>
+            <span>C</span>
             <span className="tabular-nums">{macros.carbs}g</span>
             {isAssessed && <span className="opacity-40 text-[8px]">({carbsPct}%)</span>}
           </div>
           <div className="flex items-center gap-1.5 text-[9px] leading-none font-semibold text-white">
             <span className="w-1.5 h-1.5 rounded-full bg-clinical-sage" />
-            <span className="text-clinical-sage-muted">F</span>
+            <span>F</span>
             <span className="tabular-nums">{macros.fat}g</span>
             {isAssessed && <span className="opacity-40 text-[8px]">({fatPct}%)</span>}
           </div>

@@ -426,7 +426,7 @@ export default function Styleguide() {
               <p className="text-clinical-label">L1 · nn-surface</p>
               <p className="text-body text-white mt-2">Cards, sheets, footer</p>
             </div>
-            <div className="rounded-lg border border-white/[0.08] bg-nn-surface-high p-5 shadow-clinical">
+            <div className="rounded-lg border border-white/[0.08] bg-nn-surface-high p-5">
               <p className="text-clinical-label">L2 · nn-surface-high</p>
               <p className="text-body text-white mt-2">Popovers, dialogs</p>
             </div>
