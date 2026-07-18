@@ -762,12 +762,16 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
-            pushOrderToPetpooja(order, {
-              name: fullName || "Guest Customer",
-              email: result.user?.email || null,
-            }).catch((err) => {
-              req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
-            });
+            // Marketplace (shelf-stable goods) orders never go through the
+            // kitchen — only meal orders get pushed to Petpooja.
+            if (order.orderKind !== "marketplace") {
+              pushOrderToPetpooja(order, {
+                name: fullName || "Guest Customer",
+                email: result.user?.email || null,
+              }).catch((err) => {
+                req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
+              });
+            }
           } else if (order.status === "cancelled" || order.status === "failed") {
             req.log.error(
               { razorpayOrderId, orderId: order.id, status: order.status },
@@ -828,12 +832,14 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
-            pushOrderToPetpooja(order, {
-              name: fullName || "Guest Customer",
-              email: result.user?.email || null,
-            }).catch((err) => {
-              req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
-            });
+            if (order.orderKind !== "marketplace") {
+              pushOrderToPetpooja(order, {
+                name: fullName || "Guest Customer",
+                email: result.user?.email || null,
+              }).catch((err) => {
+                req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
+              });
+            }
           } else if (order.status === "cancelled" || order.status === "failed") {
             req.log.error(
               { referenceId, orderId: order.id, status: order.status },

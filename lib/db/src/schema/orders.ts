@@ -7,11 +7,23 @@ import { ridersTable } from "./riders";
 import { deliverySlotsTable } from "./deliverySlots";
 import { pickupLocationsTable } from "./pickupLocations";
 
+export const orderKindValues = ["meal", "marketplace"] as const;
+export type OrderKind = (typeof orderKindValues)[number];
+
 export const ordersTable = pgTable(
   "orders",
   {
     id: serial("id").primaryKey(),
     userId: varchar("user_id").references(() => usersTable.id),
+    // Discriminator: 'meal' = kitchen-prepared delivery order (dispatch,
+    // Petpooja push, delivery-slot/rider fields all apply). 'marketplace' =
+    // shelf-stable goods order (catalog in lib/db/src/schema/marketplace.ts).
+    // payments.ts's Razorpay create/webhook/capture logic works on either
+    // kind unchanged (keyed on externalOrderId / razorpayOrderId), but
+    // dispatch.ts and the Petpooja push MUST filter to orderKind = 'meal'
+    // so a grocery order never gets a rider assigned or pushed to the
+    // kitchen POS.
+    orderKind: varchar("order_kind", { length: 16 }).notNull().default("meal"),
     externalOrderId: varchar("external_order_id", { length: 64 }),
     razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
     // The captured Razorpay payment id (set at verify / webhook capture).
@@ -43,7 +55,24 @@ export const ordersTable = pgTable(
     // in for historical rows.
     dropLat: doublePrecision("drop_lat"),
     dropLng: doublePrecision("drop_lng"),
-    items: jsonb("items").notNull().$type<Array<{ id: number; name: string; qty: number; price: number }>>(),
+    // Meal orders store {id,name,qty,price} lines. Marketplace orders store
+    // the full MarketplaceOrderLine shape (adds slug/supplierName/
+    // commissionPaise/vendorPayoutPaise for the vendor-payout audit trail
+    // that used to live in the now-retired marketplace_orders.items).
+    // Discriminate on orderKind before reading line-item fields.
+    items: jsonb("items").notNull().$type<
+      | Array<{ id: number; name: string; qty: number; price: number }>
+      | Array<{
+          itemId: number;
+          slug: string;
+          name: string;
+          qty: number;
+          unitPricePaise: number;
+          supplierName: string;
+          commissionPaise: number;
+          vendorPayoutPaise: number;
+        }>
+    >(),
     riderId: integer("rider_id").references(() => ridersTable.id, { onDelete: "set null" }),
     scheduledFor: timestamp("scheduled_for", { withTimezone: true }),
     deliverySlotId: integer("delivery_slot_id").references(() => deliverySlotsTable.id, { onDelete: "set null" }),
@@ -61,6 +90,14 @@ export const ordersTable = pgTable(
     // an idempotency guard so the breach event fires exactly once even
     // when the dispatch loop runs many times per minute.
     slaBreachAt: timestamp("sla_breach_at", { withTimezone: true }),
+    // --- marketplace-kind-only fields (null for orderKind = 'meal') ---
+    // 'ship' (courier to customer) or 'bundle_with_meal' (ride along with
+    // an existing meal delivery). Mirrors marketplaceOrdersTable's old
+    // deliveryMode column.
+    marketplaceDeliveryMode: varchar("marketplace_delivery_mode", { length: 24 }),
+    // Self-reference: the meal order this marketplace order is bundled
+    // with, when marketplaceDeliveryMode = 'bundle_with_meal'.
+    bundleWithOrderId: integer("bundle_with_order_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
@@ -90,6 +127,16 @@ export const ordersTable = pgTable(
       "orders_priority_chk",
       sql`${table.priority} in ('routine','urgent','stat')`,
     ),
+    // Same guard for the new discriminator — keeps raw SQL / backfill
+    // scripts from writing a value dispatch.ts and the Petpooja gate
+    // don't understand.
+    check(
+      "orders_order_kind_chk",
+      sql`${table.orderKind} in ('meal','marketplace')`,
+    ),
+    // Speeds up dispatch.ts's live-order scans, which now must filter to
+    // orderKind = 'meal' on every query.
+    index("idx_orders_kind_status").on(table.orderKind, table.status),
   ],
 );
 

@@ -27,12 +27,11 @@ import express, {
   type Response,
   type NextFunction,
 } from "express";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   db,
   deliverySlotsTable,
   marketplaceItemsTable,
-  marketplaceOrdersTable,
   slotReservationsTable,
   usersTable,
 } from "@workspace/db";
@@ -152,9 +151,17 @@ after(async () => {
     server.close((err) => (err ? reject(err) : resolve())),
   );
   if (CREATED_USER_IDS.length > 0) {
+    // Marketplace orders now live in ordersTable (orderKind = 'marketplace')
+    // — must be deleted before the owning users or the FK on
+    // ordersTable.userId blocks the user delete below.
     await db
-      .delete(marketplaceOrdersTable)
-      .where(inArray(marketplaceOrdersTable.userId, CREATED_USER_IDS));
+      .delete(ordersTable)
+      .where(
+        and(
+          inArray(ordersTable.userId, CREATED_USER_IDS),
+          eq(ordersTable.orderKind, "marketplace"),
+        ),
+      );
     await db
       .delete(slotReservationsTable)
       .where(inArray(slotReservationsTable.userId, CREATED_USER_IDS));
@@ -213,9 +220,9 @@ test("marketplace checkout returns 409 with stock unchanged when over-requested"
   assert.equal(after.q, 2, "rollback must restore stock");
   // No order persisted.
   const orders = await db
-    .select({ id: marketplaceOrdersTable.id })
-    .from(marketplaceOrdersTable)
-    .where(eq(marketplaceOrdersTable.userId, user.id));
+    .select({ id: ordersTable.id })
+    .from(ordersTable)
+    .where(and(eq(ordersTable.userId, user.id), eq(ordersTable.orderKind, "marketplace")));
   assert.equal(orders.length, 0);
 });
 
@@ -247,9 +254,9 @@ test("marketplace checkout rolls back the FIRST item's stock when the SECOND ite
   assert.equal(map.get(itemA.id), 10, "item A stock must be restored");
   assert.equal(map.get(itemB.id), 0, "item B stock unchanged");
   const orders = await db
-    .select({ id: marketplaceOrdersTable.id })
-    .from(marketplaceOrdersTable)
-    .where(eq(marketplaceOrdersTable.userId, user.id));
+    .select({ id: ordersTable.id })
+    .from(ordersTable)
+    .where(and(eq(ordersTable.userId, user.id), eq(ordersTable.orderKind, "marketplace")));
   assert.equal(orders.length, 0, "no orphan order persisted");
 });
 
