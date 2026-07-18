@@ -211,21 +211,11 @@
   --color-warning: var(--color-warning-theme);
   --color-info: var(--color-info-theme);
 
-  /* ─── Legacy Clinical Overrides (mapped to new variables) ─── */
-  --color-clinical-gold: #F4C430;
-  --color-clinical-gold-light: rgba(212, 175, 55, 0.12);
-  --color-clinical-blue: #6BA3C8;
-  --color-clinical-blue-light: rgba(107, 163, 200, 0.12);
+  /* ─── Clinical sage accent — the "verified / healthy" semantic accent,
+     deliberately retained. The rest of the legacy clinical palette was
+     migrated to nn-* tokens; its now-consumerless definitions were retired. ─── */
   --color-clinical-sage: #7D9E7E;
   --color-clinical-sage-light: rgba(125, 158, 126, 0.12);
-  --color-clinical-slate: #334155;
-  --color-clinical-zinc: #A1A1AA;
-  --color-clinical-zinc-muted: #828289;
-  
-  --color-clinical-border: var(--border);
-  --color-clinical-dark: var(--bg);
-  --color-clinical-surface: var(--surface);
-  --color-clinical-surface-elevated: var(--surface-raised);
 
   /* ─── Refined Radii Scale ─── */
   --radius-btn: 12px;
@@ -497,19 +487,6 @@
   .theme-clinical [class*="bg-gradient-"],
   .theme-clinical [class*="from-clinical-gold/"][class*="bg-gradient-"] {
     background-image: none !important;
-  }
-
-  /* Theme-token overrides — when the clinical theme is active, push
-     surfaces darker and zinc lighter so chrome/text/border meet AAA
-     consistently across screens (not only the alert palette). This
-     promotes `theme-clinical` from a behavior tweak into a real token
-     layer; existing `text-clinical-zinc` / `bg-clinical-surface*`
-     consumers re-render with the AAA-friendly values automatically. */
-  .theme-clinical {
-    --color-clinical-zinc: var(--color-nn-on-surface);          /* lighter — AAA on dark */
-    --color-clinical-surface: var(--color-nn-bg);        /* darker chrome */
-    --color-clinical-surface-elevated: var(--color-nn-surface-low);
-    --color-clinical-slate: var(--color-nn-outline);          /* visible borders */
   }
 
   /* Hide decorative imagery / avatars on clinical surfaces. Mark any
