@@ -31,6 +31,21 @@ export function validateEnv(): void {
     if (!process.env["GOOGLE_API_KEY"]) {
       warnings.push("GOOGLE_API_KEY unset — Gemini AI agents (coach/support/ops/reorder/CMS) and server-side geocoding return errors");
     }
+
+    // Twilio Verify OTP: phone-login OTP is the customer auth entry point in
+    // prod. Without the full trio, sms.ts falls back to mock mode and no real
+    // OTP SMS is sent — a fail-closed login for real users.
+    const twilioKeys = ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID"];
+    const twilioSet = twilioKeys.filter((k) => process.env[k]);
+    if (twilioSet.length < twilioKeys.length) {
+      warnings.push(
+        `Twilio OTP not fully configured (${twilioSet.length}/${twilioKeys.length}) — phone OTP falls back to mock mode and real OTP SMS will not send; set ${twilioKeys.join(", ")}`,
+      );
+    }
+
+    if (!process.env["PRIVATE_OBJECT_DIR"]) {
+      warnings.push("PRIVATE_OBJECT_DIR unset — menu-asset / dish-image uploads to object storage are disabled");
+    }
   }
 
   // Petpooja: warn if partially configured (a common footgun — the integration
