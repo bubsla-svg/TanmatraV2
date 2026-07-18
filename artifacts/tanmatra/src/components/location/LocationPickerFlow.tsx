@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import {
   MapPin,
   Target,
@@ -15,6 +15,13 @@ import {
 import { toast } from "sonner";
 import { checkPincode } from "@/lib/serviceablePincodes";
 import { API_BASE } from "@/lib/apiBase";
+
+// Default map centre — Noida Sector 18 (our core serviceable NCR area).
+const DEFAULT_CENTER = { lat: 28.5708, lng: 77.326 } as const;
+
+// Leaflet touches `window` at import time, which crashes the SSR prerender
+// (react-router build). Load the map only on the client, mirroring RiderMap.
+const PickerMap = lazy(() => import("./PickerMap"));
 
 interface LocationPickerFlowProps {
   open: boolean;
@@ -68,7 +75,14 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   const [pincode, setPincode] = useState("");
   const [locating, setLocating] = useState(false);
   const [resolving, setResolving] = useState(false);
-  const [locSource, setLocSource] = useState<"gps" | "search" | null>(null);
+  const [locSource, setLocSource] = useState<"gps" | "search" | "pin" | null>(null);
+
+  // Map pin position + a bump counter that tells the map to recentre (only
+  // GPS/search bump it; dragging the map does not, so the map never fights
+  // the user). lastResolvedRef dedupes reverse-geocodes for the same spot.
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>({ ...DEFAULT_CENTER });
+  const [recenterSeq, setRecenterSeq] = useState(0);
+  const lastResolvedRef = useRef<string>("");
 
   // Search state (Places REST — no Maps JS involved)
   const [searchQuery, setSearchQuery] = useState("");
@@ -114,6 +128,8 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       setSuggestions([]);
       setSearchHint(null);
       setLocSource(null);
+      setCoords({ ...DEFAULT_CENTER });
+      lastResolvedRef.current = "";
     }
     if (!open) {
       setLocating(false);
@@ -227,7 +243,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       const res = await fetch(`https://places.googleapis.com/v1/places/${sg.id}`, {
         headers: {
           "X-Goog-Api-Key": MAPS_API_KEY,
-          "X-Goog-FieldMask": "formattedAddress,addressComponents",
+          "X-Goog-FieldMask": "location,formattedAddress,addressComponents",
         },
       });
       if (!res.ok) {
@@ -245,6 +261,14 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       if (cityStr) setCity(cityStr);
       if (pinStr) setPincode(pinStr);
       setLocSource("search");
+      // Recentre the map on the chosen place so the pin lands there.
+      const lat = place.location?.latitude;
+      const lng = place.location?.longitude;
+      if (typeof lat === "number" && typeof lng === "number") {
+        lastResolvedRef.current = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+        setCoords({ lat, lng });
+        setRecenterSeq((s) => s + 1);
+      }
     } catch {
       // leave whatever we had
     } finally {
@@ -263,6 +287,47 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     searchDebounceRef.current = setTimeout(() => queryPlacesRest(v), 300);
   };
 
+  // Reverse-geocode a lat/lng into the address fields — shared by GPS and by
+  // dragging the map pin. Deduped so a settle-in-place doesn't refetch. On a
+  // failure it never dead-ends: for user-initiated calls it nudges toward
+  // manual entry; silent (auto-locate) calls stay quiet.
+  const resolveByCoords = async (
+    lat: number,
+    lng: number,
+    opts: { userInitiated: boolean; source: "gps" | "pin" },
+  ) => {
+    const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    if (key === lastResolvedRef.current) return;
+    lastResolvedRef.current = key;
+    setResolving(true);
+    try {
+      const res = await fetch(`${API_BASE}/geo/reverse?lat=${lat.toFixed(6)}&lng=${lng.toFixed(6)}`);
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; formattedAddress?: string; city?: string; pincode?: string }
+        | null;
+      if (res.ok && data?.ok && data.formattedAddress) {
+        setLocality(data.formattedAddress);
+        if (data.city) setCity(data.city);
+        if (data.pincode) setPincode(data.pincode);
+        setLocSource(opts.source);
+      } else if (opts.userInitiated) {
+        toast.info("Couldn't name that spot — nudge the pin, search, or enter details manually");
+      }
+    } catch {
+      if (opts.userInitiated) {
+        toast.info("Couldn't resolve that location — search your area or enter it manually");
+      }
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  // Dragging the map re-places the pin → reverse-geocode the new centre.
+  const handleMapDragEnd = (lat: number, lng: number) => {
+    setCoords({ lat, lng });
+    void resolveByCoords(lat, lng, { userInitiated: true, source: "pin" });
+  };
+
   // ── GPS → server reverse geocode (no Maps JS) ─────────────────────────
   // `userInitiated` distinguishes an explicit tap (surface errors) from the
   // silent auto-locate on open (permission granted ≠ position obtainable —
@@ -278,32 +343,13 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     }
     setLocating(true);
 
-    const onPosition = async (position: GeolocationPosition) => {
+    const onPosition = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
-      try {
-        const res = await fetch(
-          `${API_BASE}/geo/reverse?lat=${latitude.toFixed(6)}&lng=${longitude.toFixed(6)}`,
-        );
-        const data = (await res.json().catch(() => null)) as
-          | { ok?: boolean; formattedAddress?: string; city?: string; pincode?: string }
-          | null;
-        if (res.ok && data?.ok && data.formattedAddress) {
-          setLocality(data.formattedAddress);
-          if (data.city) setCity(data.city);
-          if (data.pincode) setPincode(data.pincode);
-          setLocSource("gps");
-        } else if (userInitiated) {
-          // Reverse geocode unavailable — keep the flow alive by nudging the
-          // user to search/manual instead of dead-ending (explicit taps only).
-          toast.info("Found you, but couldn't name the spot — search your area or enter it manually");
-        }
-      } catch {
-        if (userInitiated) {
-          toast.info("Couldn't resolve your location — search your area instead");
-        }
-      } finally {
-        setLocating(false);
-      }
+      setLocating(false);
+      // Recentre the map on the fix and reverse-geocode it.
+      setCoords({ lat: latitude, lng: longitude });
+      setRecenterSeq((s) => s + 1);
+      void resolveByCoords(latitude, longitude, { userInitiated, source: "gps" });
     };
 
     const HIGH_ACCURACY: PositionOptions = { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 };
@@ -532,6 +578,21 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                   </>
                 )}
               </button>
+
+              {/* Drag-to-position map — OpenStreetMap tiles via Leaflet (no
+                  Google Maps JS, which is disabled on the frontend key),
+                  lazy-loaded client-side. Drag the map to move the pin. */}
+              <div className="relative rounded-lg overflow-hidden" style={{ height: 240, border: "1px solid var(--ln)" }}>
+                <Suspense
+                  fallback={
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: "var(--s2)" }}>
+                      <CircleNotch className="w-5 h-5 animate-spin" style={{ color: "var(--safb)" }} />
+                    </div>
+                  }
+                >
+                  <PickerMap coords={coords} recenterSeq={recenterSeq} onDragEnd={handleMapDragEnd} />
+                </Suspense>
+              </div>
 
               {/* Resolved location card */}
               {locality && (

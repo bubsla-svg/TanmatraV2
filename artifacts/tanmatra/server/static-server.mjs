@@ -64,7 +64,10 @@ const CSP_POLICY_RULES = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://images.unsplash.com https://lh3.googleusercontent.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://images.unsplash.com https://lh3.googleusercontent.com https://tanmatra.food",
+  // *.tile.openstreetmap.org: Leaflet map tiles for the address picker's
+  // drag-to-position map and the order-tracking RiderMap (both use OSM, not
+  // Google Maps JS). Tiles load as <img>, so they're governed by img-src.
+  "img-src 'self' data: blob: https://images.unsplash.com https://lh3.googleusercontent.com https://tanmatra.food https://*.tile.openstreetmap.org",
   "connect-src 'self' https://api.petpooja.com https://api.razorpay.com",
   "frame-src 'none'",
   "object-src 'none'",
