@@ -33,9 +33,14 @@ import { inArray } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
-
-const PER_MEAL_PAISE = 26000;
-const CADENCE_DISCOUNT = { weekly: 0.95 } as const;
+// Price expectations come from the canonical pricing module — the same pure
+// functions the route bills through (Checklist v1.2: ₹750/meal base, cadence
+// discounts, 5% GST). Deriving them here asserts the route's wiring (trial vs
+// cadence pricing) without going stale on a price change.
+import {
+  computeDeliveryPricePaise,
+  computeTrialPricePaise,
+} from "../lib/subscriptionPricing";
 
 interface TestUser {
   id: string;
@@ -143,7 +148,7 @@ test("planType:trial prices 25% off list and generates one delivery", async () =
   const user = await makeUser();
   const r = await api("POST", "/subscriptions", baseBody({ planType: "trial" }), user);
   assert.equal(r.status, 201, JSON.stringify(r.json));
-  const expected = Math.round(9 * PER_MEAL_PAISE * 0.75);
+  const expected = computeTrialPricePaise(9);
   assert.equal(
     r.json.subscription.pricePerDeliveryPaise,
     expected,
@@ -156,7 +161,7 @@ test("planType:standard prices by cadence and generates the recurring set", asyn
   const user = await makeUser();
   const r = await api("POST", "/subscriptions", baseBody({ planType: "standard" }), user);
   assert.equal(r.status, 201, JSON.stringify(r.json));
-  const expected = Math.round(9 * PER_MEAL_PAISE * CADENCE_DISCOUNT.weekly);
+  const expected = computeDeliveryPricePaise("weekly", 9);
   assert.equal(r.json.subscription.pricePerDeliveryPaise, expected);
   assert.ok(r.json.deliveries.length > 1, "standard generates a recurring set");
 });
@@ -179,7 +184,7 @@ test("legacy RD-plan trial marker in notes is still treated as a trial", async (
     user,
   );
   assert.equal(r.status, 201, JSON.stringify(r.json));
-  const expected = Math.round(9 * PER_MEAL_PAISE * 0.75);
+  const expected = computeTrialPricePaise(9);
   assert.equal(r.json.subscription.pricePerDeliveryPaise, expected);
   assert.equal(r.json.deliveries.length, 1);
 });
@@ -188,6 +193,6 @@ test("default planType is standard when omitted", async () => {
   const user = await makeUser();
   const r = await api("POST", "/subscriptions", baseBody({}), user);
   assert.equal(r.status, 201, JSON.stringify(r.json));
-  const expected = Math.round(9 * PER_MEAL_PAISE * CADENCE_DISCOUNT.weekly);
+  const expected = computeDeliveryPricePaise("weekly", 9);
   assert.equal(r.json.subscription.pricePerDeliveryPaise, expected);
 });

@@ -33,8 +33,11 @@ import { inArray } from "drizzle-orm";
 import { db, usersTable, subscriptionsTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
-
-const PER_MEAL_PAISE = 26000;
+// Price expectations come from the canonical pricing module — the same pure
+// functions the route bills through (Checklist v1.2: ₹750/meal base, cadence
+// discounts, 5% GST). Deriving them here asserts the route's wiring and
+// server-side meal-count math without going stale on a price change.
+import { computeDeliveryPricePaise } from "../lib/subscriptionPricing";
 
 interface TestUser {
   id: string;
@@ -172,7 +175,7 @@ test("weekly dayPlan: dated delivery per day, server-priced meal count", async (
   assert.equal(subscription.mealsPerDelivery, 14);
   assert.equal(
     subscription.pricePerDeliveryPaise,
-    Math.round(14 * PER_MEAL_PAISE * 0.95),
+    computeDeliveryPricePaise("weekly", 14),
   );
   // 4 weekly cycles × 7 days.
   assert.equal(deliveries.length, 28);
@@ -217,7 +220,7 @@ test("fortnightly dayPlan: full-cycle meals at 10% off, 2 cycles ahead", async (
   assert.equal(subscription.mealsPerDelivery, 28);
   assert.equal(
     subscription.pricePerDeliveryPaise,
-    Math.round(28 * PER_MEAL_PAISE * 0.9),
+    computeDeliveryPricePaise("fortnightly", 28),
   );
   assert.equal(deliveries.length, 28); // 2 cycles × 14 days
 });
