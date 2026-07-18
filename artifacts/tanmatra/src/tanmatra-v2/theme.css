@@ -403,8 +403,19 @@
   --color-clinical-dark: var(--color-nn-bg);
   --color-clinical-surface: var(--color-nn-surface);
   --color-clinical-surface-elevated: var(--color-nn-surface-high);
+}
 
-  /* PDP reference design tokens — used by Dish.tsx; excluded from color lint */
+/* ============================================================================
+ * PDP (product-detail) reference-design tokens — consumed by tanmatra-v2/
+ * Dish.tsx, whose root element is `.tnm2 .nn` (NOT `.nn-clinical`). These were
+ * previously defined only under `.nn-clinical`, so on the live /dish/:slug page
+ * — which has no `.nn-clinical` ancestor — every `var(--pdp-*)` resolved to
+ * nothing: chip surfaces, allergen-error tints and secondary text silently fell
+ * back to inherited/transparent. Scoping them to `.tnm2` (the actual PDP
+ * ancestor) makes them resolve as designed. Raw hex is intentional and
+ * lint-exempt in this file.
+ * ==========================================================================*/
+.tnm2 {
   --pdp-error-container: #93000a;
   --pdp-on-error: #ffb4ab;
   --pdp-secondary: #c6c6c7;
