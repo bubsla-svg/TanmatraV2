@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingBag, Trash2, X, Leaf, ShieldCheck, Loader2, Check, Zap, Crown } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X, Leaf, ShieldCheck, Check, Zap, Crown } from "lucide-react";
 import { toast } from "sonner";
 import {
   useCart,
@@ -20,17 +20,13 @@ import {
   type CartItem,
 } from "@/lib/cartContext";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
-import { addressesApi } from "@/lib/userAddressesApi";
-import { API_BASE } from "@/lib/apiBase";
-import { loyaltyApi } from "@/lib/loyaltyApi";
 import { formatPrice } from "@/lib/api/adapter";
 import { track } from "@/lib/analytics";
 import { PANEL_SLIDE, BACKDROP, PULSE_OPACITY } from "@/lib/motion";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError } from "@/lib/imgFallback";
 import { usePremiumStatus } from "@/lib/usePremium";
-import { useOrders } from "@/lib/ordersContext";
-import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
+import { subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Suppress unused-import warning — DELIVERY_FEE is used in the comment context only,
 // the actual constant is pulled from cartContext which re-exports it.
@@ -50,8 +46,6 @@ export default function CartDrawer() {
   const { dishes } = useMenuCatalog();
   const navigate = useNavigate();
   const { isPremium, pricePaise } = usePremiumStatus();
-  const { addOrder } = useOrders();
-  const [expressLoading, setExpressLoading] = useState(false);
 
   // Ghost-math state
   const [ghostItem, setGhostItemState] = useState<DishData | null>(null);
@@ -123,185 +117,6 @@ export default function CartDrawer() {
   }, [isOpen, dishes]);
   const inCartIds = useMemo(() => new Set(items.map((i) => i.dishId)), [items]);
 
-  // Express UPI checkout — finalize-then-pay, mirroring the Checkout page:
-  // the server order is created (safety gates, discounts, ASAP slot) BEFORE
-  // any money moves, so a charge can never exist without a kitchen order.
-  // Falls back to /checkout when any step needs the full page's UI.
-  const handleExpressUPI = useCallback(async () => {
-    const rpKey = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
-    if (!rpKey) { navigate("/checkout"); return; }
-    // Cancel any previous in-flight request before starting a new one.
-    expressAbortRef.current?.abort();
-    expressAbortRef.current = new AbortController();
-    setExpressLoading(true);
-    const localOrderId = `TAN-${Date.now()}`;
-    try {
-      // 1. Resolve default address
-      const { addresses } = await addressesApi.list();
-      const addr = addresses.find((a) => a.isDefault) ?? addresses[0];
-      if (!addr) { navigate("/checkout"); return; }
-
-      // 2. Create the server order FIRST — runs the allergen safety gate,
-      //    applies the first-order discount, and reserves an ASAP slot.
-      //    Any rejection (safety block, auth, serviceability) sends the
-      //    user to /checkout where the full error UI lives — unpaid.
-      const out = await loyaltyApi.finalizeOrder({
-        idempotencyKey: `idem-express-${localOrderId}`,
-        orderId: localOrderId,
-        items: items.map((it) => ({
-          id: it.dishId,
-          name: it.name,
-          qty: it.quantity,
-          price: it.unitPrice,
-        })),
-        address: {
-          label: addr.label,
-          line: [addr.line1, addr.line2].filter(Boolean).join(", "),
-          city: addr.city,
-          pincode: addr.pincode,
-          phone: addr.phone,
-        },
-        // Pass accepted combo bundles so the server applies the discount the
-        // user saw — omitting them silently charged full price for bundles.
-        bundleSlugs: bundleSlugs.length > 0 ? bundleSlugs : undefined,
-        fulfillmentType: "delivery",
-        deliverySlotId: null,
-      });
-
-      // 3. Charge EXACTLY the server-authoritative amount (meal-after-discount
-      //    + GST + delivery fee, computed once server-side). Never recompute
-      //    the total on the client.
-      const chargeTotal = out.chargePaise;
-
-      const cancelServerOrder = () => {
-        void fetch(`${API_BASE}/orders/${encodeURIComponent(localOrderId)}/cancel`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason: "Payment cancelled by user" }),
-        }).catch(() => undefined);
-      };
-
-      // 4. Create the Razorpay order for the reconciled amount.
-      const rpRes = await fetch(`${API_BASE}/payments/razorpay/order`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        // The server prices the gateway order from the stored charge; we send
-        // only the order id (amount included for server-side drift detection).
-        body: JSON.stringify({ orderId: localOrderId, amountPaise: chargeTotal }),
-      });
-      if (!rpRes.ok) { cancelServerOrder(); navigate("/checkout"); return; }
-      const { razorpayOrderId } = (await rpRes.json()) as { razorpayOrderId: string };
-
-      // 5. Load Razorpay script lazily (5 s timeout → fallback to /checkout)
-      await new Promise<void>((resolve, reject) => {
-        if ((window as { Razorpay?: unknown }).Razorpay) { resolve(); return; }
-        const timer = window.setTimeout(() => reject(new Error("timeout")), 5000);
-        if (!document.getElementById("__rzp_script")) {
-          const s = document.createElement("script");
-          s.id = "__rzp_script";
-          s.src = "https://checkout.razorpay.com/v1/checkout.js";
-          s.async = true;
-          s.onload = () => { window.clearTimeout(timer); resolve(); };
-          s.onerror = () => { window.clearTimeout(timer); reject(new Error("load-failed")); };
-          document.head.appendChild(s);
-        } else {
-          window.clearTimeout(timer);
-          resolve();
-        }
-      }).catch((err) => { cancelServerOrder(); throw err; });
-
-      // 6. Open modal
-      savePendingTransaction({
-        orderId: localOrderId,
-        idempotencyKey: `idem-express-${localOrderId}`,
-        initiatedAt: Date.now(),
-        amount: chargeTotal,
-        provider: "razorpay",
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const RazorpayClass = (window as any).Razorpay;
-      if (!RazorpayClass) { cancelServerOrder(); navigate("/checkout"); return; }
-      const rzp = new RazorpayClass({
-        key: rpKey,
-        amount: chargeTotal,
-        currency: "INR",
-        order_id: razorpayOrderId,
-        name: "Tanmatra",
-        description: `${totals.totalQuantity} item${totals.totalQuantity === 1 ? "" : "s"}`,
-        theme: { color: "#F4" + "C430" },
-        prefill: { contact: addr.phone },
-        handler: async (response: {
-          razorpay_payment_id: string;
-          razorpay_order_id: string;
-          razorpay_signature: string;
-        }) => {
-          try {
-            const vres = await fetch(`${API_BASE}/payments/razorpay/verify`, {
-              method: "POST",
-              credentials: "include",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: localOrderId,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature,
-              }),
-            });
-            // Only clear the recovery marker when the server actually confirmed
-            // the payment. On a non-OK verify (e.g. 400 bad signature) keep the
-            // pending tx so the webhook/recovery poller can reconcile it — a
-            // 4xx must never be treated as a successful payment.
-            if (vres.ok) {
-              removePendingTransaction(localOrderId);
-            }
-          } catch { /* non-fatal; webhook + pending-tx recovery reconcile server-side */ }
-          // Record the order locally so it appears in /orders and the Track
-          // page can resolve `/track/:id`.
-          const nowMs = Date.now();
-          addOrder({
-            orderId: localOrderId,
-            placedAt: new Date(nowMs).toISOString(),
-            etaAt: new Date(nowMs + 40 * 60 * 1000).toISOString(),
-            status: "placed",
-            items: [...items],
-            subtotal: out.finalPaise,
-            deliveryFee: out.deliveryFeePaise,
-            tip: 0,
-            total: chargeTotal,
-            serverOrderId: out.serverOrderId,
-            fulfillmentType: "delivery",
-            address: {
-              label: addr.label,
-              line1: addr.line1,
-              line2: addr.line2,
-              city: addr.city,
-              pincode: addr.pincode,
-              phone: addr.phone,
-            },
-          });
-          clear();
-          close();
-          navigate(`/track/${localOrderId}`);
-        },
-        modal: {
-          ondismiss: () => {
-            // The unpaid server order must not sit in the kitchen queue.
-            cancelServerOrder();
-            removePendingTransaction(localOrderId);
-            setExpressLoading(false);
-            toast.info("Payment cancelled — your cart is safe");
-          },
-        },
-      });
-      rzp.open();
-    } catch {
-      navigate("/checkout");
-    } finally {
-      setExpressLoading(false);
-    }
-  }, [totals, items, addOrder, navigate, close, clear]);
   const isEmpty = items.length === 0;
 
   // Body scroll lock
@@ -336,10 +151,6 @@ export default function CartDrawer() {
   // Focus trap refs
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  // Abort any in-flight express-checkout fetch when the component unmounts
-  // (e.g., user navigates away while the order-creation request is pending).
-  const expressAbortRef = useRef<AbortController | null>(null);
-  useEffect(() => () => { expressAbortRef.current?.abort(); }, []);
 
   useEffect(() => {
     // CartDrawer is globally mounted, so this listener runs whether or not the
@@ -511,8 +322,6 @@ export default function CartDrawer() {
                   totals={totals}
                   items={items}
                   onClose={close}
-                  onExpressUPI={handleExpressUPI}
-                  expressLoading={expressLoading}
                 />
               </>
             )}
@@ -1135,14 +944,10 @@ function FooterTotals({
   totals,
   items,
   onClose,
-  onExpressUPI,
-  expressLoading,
 }: {
   totals: ReturnType<typeof useCartTotals>;
   items: CartItem[];
   onClose: () => void;
-  onExpressUPI: () => void;
-  expressLoading: boolean;
 }) {
   const cartMacros = useMemo(
     () =>
@@ -1158,7 +963,6 @@ function FooterTotals({
     [items],
   );
 
-  const hasExpressUPI = Boolean(import.meta.env.VITE_RAZORPAY_KEY_ID);
   // Collapsed by default so the tall bill breakdown doesn't push the upsell rail
   // + Premium banner (above, in the scroll area) below the fold. Full breakdown
   // is always available on the checkout page; here it's one tap away.
@@ -1222,32 +1026,16 @@ function FooterTotals({
         <span><span style={{ color: "var(--tx)" }}>{cartMacros.fat}g</span> fat</span>
       </div>
 
-      {/* Express UPI — bypasses checkout entirely when Razorpay key is set */}
-      {hasExpressUPI && (
-        <button
-          type="button"
-          onClick={onExpressUPI}
-          disabled={expressLoading}
-          className={expressLoading ? "btn btn-g btn-blk dis" : "btn btn-g btn-blk"}
-          style={{ color: "var(--safb)", borderColor: "var(--saf)" }}
-        >
-          {expressLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <Zap className="w-3.5 h-3.5" />
-              Pay now · UPI / Cards
-            </>
-          )}
-        </button>
-      )}
-
+      {/* Single CTA — the checkout page owns address, auth, and payment.
+          The old "Pay now · UPI / Cards" express button silently fell back
+          to /checkout behind the still-open drawer for guests (dead-button
+          feel) and duplicated this CTA — removed. */}
       <Link
         to="/checkout"
         onClick={onClose}
         className="btn btn-p btn-blk"
       >
-        {hasExpressUPI ? "Checkout →" : `Checkout · ${formatPrice(totals.total)}`}
+        Checkout · {formatPrice(totals.total)}
       </Link>
     </div>
   );
