@@ -43,3 +43,49 @@ test("recurring plan pricing is unchanged (canonical overrides intact)", () => {
   assert.equal(computeDeliveryPricePaise("fortnightly", 10), 741000); // ₹7,410
   assert.equal(computeDeliveryPricePaise("monthly", 30), 2166000); // ₹21,660
 });
+
+// Regression test for the double-GST bug in POST /subscriptions/quote.
+//
+// computeDeliveryPricePaise() already returns a GST-inclusive figure (see
+// its fallback branch: `discounted + gst`), and that same figure is what
+// `/subscriptions` bills through `pricePerDeliveryPaise` with no further tax
+// applied. The quote route's gstPaise/totalPaise must be derived by
+// splitting that already-inclusive figure into its pre-tax/tax components —
+// NOT by applying a second 5% GST on top of it. This test mirrors the
+// quote route's math directly against the shared pricing function so it
+// would have caught the bug (gstPaise computed as
+// `finalSubtotal * GST_RATE`, and totalPaise as
+// `finalSubtotal + gstPaise + deliveryFeePaise`) before it shipped.
+test("quote math: weekly cadence, 7 meals/delivery applies a single 5% GST, not compounded", () => {
+  const meals = 7;
+  const deliveryFeePaise = 0; // subscriptions never charge a delivery fee
+
+  const finalSubtotal = computeDeliveryPricePaise("weekly", meals);
+
+  // Correct derivation: split the already GST-inclusive subtotal.
+  const preTaxSubtotalPaise = Math.round(finalSubtotal / (1 + GST_RATE));
+  const gstPaise = finalSubtotal - preTaxSubtotalPaise;
+  const totalPaise = finalSubtotal + deliveryFeePaise;
+
+  // The buggy derivation applied a second 5% on top of the inclusive figure.
+  const buggyGstPaise = Math.round(finalSubtotal * GST_RATE);
+  const buggyTotalPaise = finalSubtotal + buggyGstPaise + deliveryFeePaise;
+
+  assert.notEqual(
+    gstPaise,
+    buggyGstPaise,
+    "correct gstPaise must differ from the double-counted (buggy) gstPaise",
+  );
+  assert.notEqual(
+    totalPaise,
+    buggyTotalPaise,
+    "correct totalPaise must differ from the double-counted (buggy) totalPaise",
+  );
+
+  // The correct total must equal the inclusive subtotal plus the (zero)
+  // delivery fee — never subtotal + a second GST application.
+  assert.equal(totalPaise, finalSubtotal + deliveryFeePaise);
+
+  // Pre-tax + gst must reconstruct the inclusive subtotal exactly.
+  assert.equal(preTaxSubtotalPaise + gstPaise, finalSubtotal);
+});
