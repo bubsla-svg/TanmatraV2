@@ -59,17 +59,26 @@ const COMPRESSIBLE = new Set(["html", "js", "css", "json", "svg", "xml", "txt", 
 // served here). The CSP is intentionally minimal — `frame-ancestors 'none'`
 // gives clickjacking protection without risking a broken hydration from a
 // too-strict resource policy on an existing SPA.
+// Third-party origins the live checkout/auth paths require:
+//   • Razorpay Checkout — checkout.js (script), the payment modal iframe
+//     (api/checkout.razorpay.com), telemetry (lumberjack), instrument logos
+//     (cdn). Without these the payment modal cannot load or render.
+//   • Firebase phone-OTP — RecaptchaVerifier loads reCAPTCHA from
+//     google.com/gstatic.com and renders its challenge in a google.com
+//     frame; the SDK talks to identitytoolkit/securetoken over connect-src.
+//   • Google Places (New) REST — the picker's direct autocomplete/details
+//     (the server /geo/search fallback covers the blocked case, but allowing
+//     it restores the faster first-party path).
+//   • *.tile.openstreetmap.org — Leaflet map tiles (picker map + RiderMap),
+//     loaded as <img>, so governed by img-src.
 const CSP_POLICY_RULES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://images.unsplash.com https://lh3.googleusercontent.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://images.unsplash.com https://lh3.googleusercontent.com https://checkout.razorpay.com https://www.google.com https://www.gstatic.com https://apis.google.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  // *.tile.openstreetmap.org: Leaflet map tiles for the address picker's
-  // drag-to-position map and the order-tracking RiderMap (both use OSM, not
-  // Google Maps JS). Tiles load as <img>, so they're governed by img-src.
-  "img-src 'self' data: blob: https://images.unsplash.com https://lh3.googleusercontent.com https://tanmatra.food https://*.tile.openstreetmap.org",
-  "connect-src 'self' https://api.petpooja.com https://api.razorpay.com",
-  "frame-src 'none'",
+  "img-src 'self' data: blob: https://images.unsplash.com https://lh3.googleusercontent.com https://tanmatra.food https://*.tile.openstreetmap.org https://cdn.razorpay.com",
+  "connect-src 'self' https://api.petpooja.com https://api.razorpay.com https://lumberjack.razorpay.com https://places.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com",
+  "frame-src https://api.razorpay.com https://checkout.razorpay.com https://www.google.com",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "report-uri /api/v1/csp-report",
