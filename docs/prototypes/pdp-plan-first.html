@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Almond Chicken Salad · Tanmatra — Plan-First PDP Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TANMATRA · PLAN-FIRST PDP · .tnm2 TOKEN LAYER
+   Saffron #E89A3E is the confirmed System-B action hue.
+   sage / caution / alert / ink values below are PLACEHOLDERS
+   under the correct token names — swap to theme.css values.
+   ============================================================ */
+:root{
+  --tnm-backdrop:        #0A0D0F;   /* desktop page behind the frame */
+  --tnm-surface-ink:     #10161A;   /* PLACEHOLDER · page surface */
+  --tnm-surface-ink-2:   #171F25;   /* PLACEHOLDER · elevated cards/sheets */
+  --tnm-surface-ink-3:   #1E2830;   /* PLACEHOLDER · chips, wells */
+  --tnm-border:          rgba(255,255,255,.09);
+  --tnm-border-strong:   rgba(255,255,255,.16);
+
+  --tnm-text-primary:    #F1EEE8;   /* ≥ 4.5:1 on ink */
+  --tnm-text-secondary:  #A9B2B7;   /* ≥ 4.5:1 on ink */
+  --tnm-text-faint:      #77828A;
+
+  --tnm-action:          #E89A3E;   /* CONFIRMED · sole action hue */
+  --tnm-action-ink:      #221302;   /* text on saffron */
+  --tnm-action-dim:      rgba(232,154,62,.14);
+
+  --tnm-sage:            #8CBB9B;   /* PLACEHOLDER · veg / within-range / success */
+  --tnm-sage-dim:        rgba(140,187,155,.14);
+  --tnm-caution:         #E2B54B;   /* PLACEHOLDER · near-boundary, icon+text always */
+  --tnm-caution-dim:     rgba(226,181,75,.13);
+  --tnm-alert:           #E4685D;   /* PLACEHOLDER · blocking/safety, icon+text always */
+  --tnm-alert-dim:       rgba(228,104,93,.14);
+
+  --tnm-mark-nonveg:     #B4552F;   /* FSSAI non-veg mark */
+
+  --tnm-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --tnm-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  --tnm-r-sm: 8px; --tnm-r-md: 12px; --tnm-r-lg: 16px; --tnm-r-pill: 999px;
+  --tnm-cta-h: 92px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--tnm-backdrop);
+  color:var(--tnm-text-primary);
+  font-family:var(--tnm-font-sans);
+  font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--tnm-action);outline-offset:2px;border-radius:4px}
+
+/* clinical readout utility — every numeral on the page */
+.tnm-data{font-family:var(--tnm-font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* ---------- app frame ---------- */
+#app{
+  max-width:430px;margin:0 auto;min-height:100dvh;position:relative;
+  background:var(--tnm-surface-ink);
+  padding-bottom:calc(var(--tnm-cta-h) + env(safe-area-inset-bottom,0px) + 16px);
+}
+@media(min-width:520px){
+  #app{box-shadow:0 0 0 1px var(--tnm-border),0 32px 80px rgba(0,0,0,.55);
+       margin:24px auto;min-height:calc(100dvh - 48px);border-radius:20px;overflow:clip}
+}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 16px 10px;position:sticky;top:0;z-index:30;
+  background:linear-gradient(var(--tnm-surface-ink) 72%,transparent);
+}
+.topbar .back{
+  width:38px;height:38px;border-radius:var(--tnm-r-pill);
+  background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border);
+  display:grid;place-items:center;flex:none;
+}
+.topbar .crumb{font-size:12px;color:var(--tnm-text-secondary);letter-spacing:.02em}
+.topbar .cat{
+  margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tnm-text-secondary);background:var(--tnm-surface-ink-2);
+  border:1px solid var(--tnm-border);padding:6px 12px;border-radius:var(--tnm-r-pill);
+}
+
+/* ---------- gallery ---------- */
+.gallery{position:relative}
+.gallery-track{
+  display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
+}
+.gallery-track::-webkit-scrollbar{display:none}
+.gallery-slide{
+  flex:0 0 100%;scroll-snap-align:center;aspect-ratio:1/1;/* CLS-safe: 1024×1024 source */
+  background:var(--tnm-surface-ink-2);position:relative;
+}
+.gallery-slide img{width:100%;height:100%;object-fit:cover}
+.gallery-slide.img-fallback{
+  background:
+    radial-gradient(120% 90% at 20% 10%,rgba(232,154,62,.12),transparent 55%),
+    radial-gradient(100% 80% at 85% 90%,rgba(140,187,155,.10),transparent 60%),
+    var(--tnm-surface-ink-2);
+}
+.gallery-slide.img-fallback::after{
+  content:attr(data-label);position:absolute;inset:0;display:grid;place-items:center;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tnm-text-faint);
+}
+.gallery-dots{
+  position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:6px;
+}
+.gallery-dots span{
+  width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);transition:all .25s;
+}
+.gallery-dots span.on{background:var(--tnm-action);width:16px;border-radius:var(--tnm-r-pill)}
+.oos-veil{
+  position:absolute;inset:0;background:rgba(10,13,15,.55);backdrop-filter:saturate(.35);
+  display:none;place-items:center;
+}
+body.is-oos .oos-veil{display:grid}
+.oos-veil .tag{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  background:var(--tnm-surface-ink);border:1px solid var(--tnm-border-strong);
+  padding:8px 16px;border-radius:var(--tnm-r-pill);color:var(--tnm-text-primary);
+}
+
+/* ---------- section scaffolding ---------- */
+.wrap{padding:0 16px}
+.sec{margin-top:26px}
+.sec-label{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--tnm-text-faint);margin-bottom:10px;
+}
+.card{
+  background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border);
+  border-radius:var(--tnm-r-lg);padding:16px;
+}
+
+/* ---------- title block ---------- */
+.title-block{padding-top:16px}
+.title-row{display:flex;align-items:flex-start;gap:10px}
+h1{font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-.01em;flex:1}
+.fssai-mark{
+  flex:none;width:20px;height:20px;border:2px solid var(--tnm-mark-nonveg);
+  display:grid;place-items:center;margin-top:4px;border-radius:3px;
+}
+.fssai-mark i{
+  width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+  border-bottom:9px solid var(--tnm-mark-nonveg);display:block;
+}
+.dish-desc{color:var(--tnm-text-secondary);margin-top:6px;font-size:14px}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:500;color:var(--tnm-text-secondary);
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  padding:7px 12px;border-radius:var(--tnm-r-pill);
+}
+.chip svg{flex:none}
+.chip.alert-on{
+  color:var(--tnm-alert);background:var(--tnm-alert-dim);border-color:var(--tnm-alert);
+}
+
+/* ---------- OOS banner ---------- */
+.oos-banner{
+  display:none;align-items:flex-start;gap:10px;margin-top:16px;
+  background:var(--tnm-caution-dim);border:1px solid var(--tnm-caution);
+  border-radius:var(--tnm-r-md);padding:12px 14px;font-size:13px;color:var(--tnm-text-primary);
+}
+body.is-oos .oos-banner{display:flex}
+.oos-banner svg{flex:none;margin-top:1px}
+
+/* ============================================================
+   GOAL FIT GATE — the signature element
+   ============================================================ */
+.gate .card{padding:0;overflow:clip}
+.gate-head{
+  display:flex;align-items:center;gap:8px;padding:14px 16px;
+  border-bottom:1px solid var(--tnm-border);
+}
+.gate-head .t{font-size:14px;font-weight:600}
+.gate-head .provenance{
+  margin-left:auto;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tnm-text-faint);
+}
+
+/* --- locked state --- */
+.gate-locked{position:relative;padding:18px 16px 20px}
+.ghost-ribbon{filter:blur(7px);opacity:.5;pointer-events:none;user-select:none}
+.ghost-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0}
+.ghost-row + .ghost-row{border-top:1px solid var(--tnm-border)}
+.ghost-row .k{font-size:13px;color:var(--tnm-text-secondary)}
+.ghost-row .v{font-size:15px}
+.gate-lock-layer{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:20px;gap:10px;
+  background:linear-gradient(180deg,rgba(23,31,37,.35),rgba(23,31,37,.88) 70%);
+}
+.lock-ico{
+  width:44px;height:44px;border-radius:var(--tnm-r-pill);
+  background:var(--tnm-action-dim);border:1px solid var(--tnm-action);
+  display:grid;place-items:center;
+}
+.gate-lock-layer h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.gate-lock-layer p{font-size:13px;color:var(--tnm-text-secondary);max-width:290px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:0 22px;border-radius:var(--tnm-r-md);
+  font-size:14px;font-weight:600;transition:transform .12s,opacity .12s;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--tnm-action);color:var(--tnm-action-ink);
+  box-shadow:0 8px 24px rgba(232,154,62,.25),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-ghost{border:1px solid var(--tnm-border-strong);color:var(--tnm-text-primary)}
+.btn-ghost-action{border:1px solid var(--tnm-action);color:var(--tnm-action)}
+.why-gate{margin-top:2px}
+.why-gate>button{
+  font-size:12px;color:var(--tnm-text-faint);text-decoration:underline;
+  text-underline-offset:3px;padding:6px;
+}
+.why-gate .why-copy{
+  display:none;font-size:12px;color:var(--tnm-text-secondary);max-width:290px;margin-top:4px;
+}
+.why-gate.open .why-copy{display:block}
+
+/* --- unlocked state --- */
+.gate-unlocked{display:none;padding:16px}
+body.is-unlocked .gate-locked{display:none}
+body.is-unlocked .gate-unlocked{display:block}
+.fit-verdict{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  border-radius:var(--tnm-r-md);padding:12px 14px;margin-bottom:14px;
+}
+.fit-verdict svg{flex:none;margin-top:2px}
+.fit-verdict .vt{font-size:13.5px;font-weight:600}
+.fit-verdict .vb{font-size:12.5px;color:var(--tnm-text-secondary);margin-top:2px}
+.macro-row{
+  display:grid;grid-template-columns:82px 1fr auto;align-items:center;gap:10px;
+  padding:11px 0;border-top:1px solid var(--tnm-border);
+  opacity:0;transform:translateY(6px);animation:rise .4s forwards;
+}
+.macro-row:first-of-type{border-top:none}
+.macro-row:nth-of-type(1){animation-delay:.05s}.macro-row:nth-of-type(2){animation-delay:.12s}
+.macro-row:nth-of-type(3){animation-delay:.19s}.macro-row:nth-of-type(4){animation-delay:.26s}
+.macro-row:nth-of-type(5){animation-delay:.33s}
+@keyframes rise{to{opacity:1;transform:none}}
+.macro-row .mk{font-size:12.5px;color:var(--tnm-text-secondary)}
+.macro-row .mv{font-size:17px;font-weight:600}
+.macro-row .mv small{font-size:11px;color:var(--tnm-text-faint);font-weight:400;margin-left:2px}
+.status{
+  display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+  padding:5px 10px;border-radius:var(--tnm-r-pill);letter-spacing:.02em;
+}
+.status.sage{color:var(--tnm-sage);background:var(--tnm-sage-dim)}
+.status.caution{color:var(--tnm-caution);background:var(--tnm-caution-dim)}
+.status.alert{color:var(--tnm-alert);background:var(--tnm-alert-dim)}
+.macro-note{font-size:11.5px;color:var(--tnm-text-faint);grid-column:1/-1;margin-top:-4px}
+.gate-secondary{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;
+  border-top:1px dashed var(--tnm-border-strong);
+}
+.mini-stat{
+  flex:1;min-width:90px;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  border-radius:var(--tnm-r-md);padding:10px 12px;
+}
+.mini-stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint)}
+.mini-stat .v{font-size:14px;font-weight:600;margin-top:3px}
+.based-on{
+  margin-top:14px;font-size:11.5px;color:var(--tnm-text-faint);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.based-on button{color:var(--tnm-action);font-size:12px;font-weight:600;padding:4px}
+
+/* ---------- macro ring gauges (Stitch DS, re-tokened) ---------- */
+.ring-strip{display:flex;gap:12px;margin:2px 0 14px}
+.ring{position:relative;width:74px;height:74px}
+.ring svg{display:block}
+.ring .rv{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  font-size:12.5px;font-weight:600;line-height:1.1}
+.ring .rv small{display:block;font-size:7.5px;letter-spacing:.12em;color:var(--tnm-text-faint);font-weight:600}
+
+/* ---------- reviewer block ---------- */
+.reviewer .card{padding:0;overflow:clip}
+.reviewer-main{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px}
+.rd-avatar{
+  flex:none;width:44px;height:44px;border-radius:var(--tnm-r-pill);
+  background:var(--tnm-sage-dim);border:1px solid var(--tnm-sage);
+  display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--tnm-sage);
+}
+.reviewer-main .who{flex:1;min-width:0}
+.reviewer-main .who .n{font-size:14px;font-weight:600}
+.reviewer-main .who .r{font-size:12px;color:var(--tnm-text-secondary);margin-top:1px}
+.reviewer-main .chev{transition:transform .25s;color:var(--tnm-text-faint);flex:none}
+.reviewer.open .chev{transform:rotate(180deg)}
+.reviewer-detail{
+  display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease;
+}
+.reviewer.open .reviewer-detail{grid-template-rows:1fr}
+.reviewer-detail>div{overflow:hidden}
+.reviewer-detail .inner{padding:0 16px 16px;border-top:1px solid var(--tnm-border)}
+.cred-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.cred{
+  font-size:11px;font-weight:500;color:var(--tnm-text-secondary);
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  padding:5px 10px;border-radius:var(--tnm-r-pill);
+}
+.rd-quote{
+  margin-top:14px;padding-left:12px;border-left:2px solid var(--tnm-sage);
+  font-size:13px;color:var(--tnm-text-secondary);font-style:italic;
+}
+.rd-consult{
+  margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  border-radius:var(--tnm-r-md);padding:12px 14px;
+}
+.rd-consult .fee .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint)}
+.rd-consult .fee .v{font-size:12.5px;margin-top:2px}
+.rd-consult a{
+  font-size:12.5px;font-weight:600;color:var(--tnm-action);text-decoration:none;
+  border:1px solid var(--tnm-action);padding:9px 14px;border-radius:var(--tnm-r-md);white-space:nowrap;
+}
+
+/* ---------- ingredients ---------- */
+.ing-row{display:flex;flex-wrap:wrap;gap:8px}
+.ing{
+  font-size:12.5px;color:var(--tnm-text-secondary);
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  padding:7px 12px;border-radius:var(--tnm-r-pill);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.ing.flagged{color:var(--tnm-alert);background:var(--tnm-alert-dim);border-color:var(--tnm-alert);font-weight:600}
+.ing.flagged svg{display:block}
+.ing svg{display:none}
+.ing.removed{opacity:.45;text-decoration:line-through}
+.allergen-line{
+  display:none;margin-top:12px;gap:9px;align-items:flex-start;
+  background:var(--tnm-alert-dim);border:1px solid var(--tnm-alert);
+  border-radius:var(--tnm-r-md);padding:11px 13px;font-size:12.5px;
+}
+body.is-allergen .allergen-line{display:flex}
+.allergen-line svg{flex:none;margin-top:1px}
+.allergen-line b{color:var(--tnm-alert)}
+.allergen-resolved{
+  display:none;margin-top:12px;gap:9px;align-items:flex-start;
+  background:var(--tnm-sage-dim);border:1px solid var(--tnm-sage);
+  border-radius:var(--tnm-r-md);padding:11px 13px;font-size:12.5px;
+}
+body.is-allergen-resolved .allergen-resolved{display:flex}
+.allergen-resolved svg{flex:none;margin-top:1px}
+
+/* ---------- packaging / provenance / chef / coach ---------- */
+.pack-card{display:flex;gap:12px;align-items:flex-start}
+.pack-ico{
+  flex:none;width:40px;height:40px;border-radius:var(--tnm-r-md);
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  display:grid;place-items:center;
+}
+.pack-card h4{font-size:13.5px;font-weight:600}
+.pack-card p{font-size:12.5px;color:var(--tnm-text-secondary);margin-top:3px}
+.prov-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prov{
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  border-radius:var(--tnm-r-md);padding:11px 13px;
+}
+.prov .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint)}
+.prov .v{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-top:4px}
+.prov .v.sage-t{color:var(--tnm-sage)}
+.prov-link{display:inline-block;margin-top:10px;font-size:12px;color:var(--tnm-text-faint);
+  text-decoration:underline;text-underline-offset:3px}
+.chef-note p{font-size:13px;color:var(--tnm-text-secondary)}
+.chef-note .by{margin-top:10px;font-size:11.5px;color:var(--tnm-text-faint)}
+.coach-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.coach-chip{
+  font-size:12px;color:var(--tnm-text-primary);background:var(--tnm-surface-ink-3);
+  border:1px solid var(--tnm-border-strong);padding:8px 13px;border-radius:var(--tnm-r-pill);
+}
+.coach-sub{font-size:12.5px;color:var(--tnm-text-secondary);margin-top:4px}
+
+/* ---------- related ---------- */
+.rel-track{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.rel-track::-webkit-scrollbar{display:none}
+.rel-card{
+  flex:0 0 150px;background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border);
+  border-radius:var(--tnm-r-md);padding:12px;text-decoration:none;
+}
+.rel-card .n{font-size:12.5px;font-weight:600;line-height:1.35}
+.rel-card .m{font-size:11px;color:var(--tnm-text-secondary);margin-top:8px}
+
+/* ---------- disclaimer ---------- */
+.disclaimer{
+  font-size:11.5px;color:var(--tnm-text-faint);text-align:center;
+  padding:0 24px;margin-top:28px;
+}
+
+/* ---------- sticky CTA bar ---------- */
+.cta-zone{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:min(430px,100%);z-index:40;
+}
+.cta-msg{
+  display:none;align-items:flex-start;gap:8px;margin:0 12px 8px;
+  border-radius:var(--tnm-r-md);padding:10px 12px;font-size:12px;line-height:1.45;
+  backdrop-filter:blur(8px);
+}
+.cta-msg svg{flex:none;margin-top:1px}
+.cta-msg.show{display:flex}
+.cta-msg.tone-alert{background:rgba(228,104,93,.16);border:1px solid var(--tnm-alert);color:var(--tnm-text-primary)}
+.cta-msg.tone-caution{background:rgba(226,181,75,.14);border:1px solid var(--tnm-caution);color:var(--tnm-text-primary)}
+.cta-bar{
+  display:flex;gap:10px;align-items:stretch;
+  padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(transparent,rgba(16,22,26,.9) 26%);
+}
+.cta-bar .btn{flex:1;min-height:54px;border-radius:14px}
+.cta-bar .btn .sub{display:block;font-size:10.5px;font-weight:500;opacity:.75;letter-spacing:.02em}
+#btnAddOnce{flex:0 0 42%}
+#btnAddOnce .price{font-size:14px;font-weight:600}
+#btnCustomise{
+  flex:0 0 auto;width:54px;min-height:54px;border-radius:14px;
+  border:1px solid var(--tnm-border-strong);display:grid;place-items:center;
+}
+body.is-oos #btnAddPlan, body.is-oos #btnAddOnce, body.is-oos #btnCustomise{display:none}
+#btnNotify{display:none;flex:1}
+body.is-oos #btnNotify{display:inline-flex}
+
+/* ---------- sheets ---------- */
+.backdrop{
+  position:fixed;inset:0;background:rgba(6,8,10,.6);opacity:0;pointer-events:none;
+  transition:opacity .25s;z-index:60;
+}
+.backdrop.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;bottom:0;left:50%;transform:translate(-50%,105%);
+  width:min(430px,100%);max-height:88dvh;overflow-y:auto;
+  background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border-strong);border-bottom:none;
+  border-radius:20px 20px 0 0;z-index:70;transition:transform .32s cubic-bezier(.32,.72,.33,1);
+  padding:10px 16px calc(20px + env(safe-area-inset-bottom,0px));
+}
+.sheet.show{transform:translate(-50%,0)}
+.sheet-grip{width:36px;height:4px;border-radius:var(--tnm-r-pill);background:var(--tnm-border-strong);margin:2px auto 14px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.sheet-head h3{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.sheet-close{
+  width:34px;height:34px;border-radius:var(--tnm-r-pill);
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  display:grid;place-items:center;color:var(--tnm-text-secondary);
+}
+.sheet-sub{font-size:13px;color:var(--tnm-text-secondary)}
+
+/* assessment */
+.steps-dots{display:flex;gap:6px;margin:16px 0 18px}
+.steps-dots i{height:3px;flex:1;border-radius:var(--tnm-r-pill);background:var(--tnm-surface-ink-3)}
+.steps-dots i.done{background:var(--tnm-action)}
+.q-label{font-size:14px;font-weight:600;margin-bottom:12px}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{
+  border:1px solid var(--tnm-border-strong);border-radius:var(--tnm-r-md);
+  padding:14px 12px;text-align:left;transition:border-color .15s,background .15s;
+}
+.opt .t{font-size:13.5px;font-weight:600}
+.opt .d{font-size:11.5px;color:var(--tnm-text-secondary);margin-top:3px}
+.opt.sel{border-color:var(--tnm-action);background:var(--tnm-action-dim)}
+.opt.sel .t{color:var(--tnm-action)}
+.assess-foot{display:flex;gap:10px;margin-top:20px}
+.assess-foot .btn{flex:1}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.assess-step{display:none}
+.assess-step.on{display:block}
+
+/* modifier sheet */
+.mod-group{margin-top:18px}
+.mod-group .g-label{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--tnm-text-faint);margin-bottom:10px}
+.mod-opt{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  border:1px solid var(--tnm-border-strong);border-radius:var(--tnm-r-md);
+  padding:13px 14px;margin-bottom:8px;transition:border-color .15s,background .15s;
+}
+.mod-opt.sel{border-color:var(--tnm-action);background:var(--tnm-action-dim)}
+.mod-opt .radio{
+  flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--tnm-border-strong);
+  display:grid;place-items:center;
+}
+.mod-opt.sel .radio{border-color:var(--tnm-action)}
+.mod-opt.sel .radio::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--tnm-action)}
+.mod-opt .info{flex:1}
+.mod-opt .info .t{font-size:13.5px;font-weight:600}
+.mod-opt .info .d{font-size:11.5px;color:var(--tnm-text-secondary);margin-top:2px}
+.mod-opt .delta{font-size:13px;color:var(--tnm-text-secondary)}
+.mod-safe .info .d{color:var(--tnm-sage)}
+.mod-hint{
+  display:none;gap:8px;align-items:flex-start;margin-top:4px;
+  font-size:12px;color:var(--tnm-text-secondary);
+  background:var(--tnm-caution-dim);border:1px solid var(--tnm-caution);
+  border-radius:var(--tnm-r-md);padding:10px 12px;
+}
+body.is-allergen .mod-hint{display:flex}
+.mod-total{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:18px;padding-top:16px;border-top:1px solid var(--tnm-border);
+}
+.mod-total .k{font-size:13px;color:var(--tnm-text-secondary)}
+.mod-total .v{font-size:18px;font-weight:600}
+.mod-total .v small{font-size:10.5px;color:var(--tnm-text-faint);font-weight:400;margin-left:6px}
+
+/* success sheet */
+.success-hero{display:grid;place-items:center;padding:18px 0 6px}
+.success-ring{
+  width:72px;height:72px;border-radius:50%;
+  background:var(--tnm-sage-dim);border:1.5px solid var(--tnm-sage);
+  display:grid;place-items:center;animation:pop .45s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.success-body{text-align:center;padding:0 8px}
+.success-body h3{font-size:19px;font-weight:700;margin-top:10px}
+.success-body .line{font-size:13px;color:var(--tnm-text-secondary);margin-top:6px}
+.slot-card{
+  margin-top:16px;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  border-radius:var(--tnm-r-md);padding:13px 15px;display:flex;justify-content:space-between;
+  align-items:center;gap:10px;text-align:left;
+}
+.slot-card .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint)}
+.slot-card .v{font-size:13.5px;font-weight:600;margin-top:3px}
+.success-tip{
+  display:flex;gap:8px;align-items:flex-start;margin-top:12px;text-align:left;
+  font-size:12px;color:var(--tnm-text-secondary);
+  background:var(--tnm-surface-ink-3);border:1px dashed var(--tnm-border-strong);
+  border-radius:var(--tnm-r-md);padding:10px 12px;
+}
+.success-cta{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:calc(var(--tnm-cta-h) + 24px);transform:translate(-50%,16px);
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border-strong);
+  color:var(--tnm-text-primary);font-size:13px;padding:11px 18px;border-radius:var(--tnm-r-pill);
+  opacity:0;pointer-events:none;transition:all .3s;z-index:90;white-space:nowrap;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ============================================================
+   SKELETON (frame: loading-skeleton) — geometry mirrors the live
+   layout exactly; nothing mounts after paint, CLS 0 by design.
+   ============================================================ */
+#skeleton{position:absolute;inset:0;z-index:50;background:var(--tnm-surface-ink);
+  padding:14px 16px;transition:opacity .35s}
+#skeleton.gone{opacity:0;pointer-events:none}
+.sk{background:var(--tnm-surface-ink-2);border-radius:var(--tnm-r-md);position:relative;overflow:hidden}
+.sk::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%);
+  animation:shimmer 1.3s infinite;
+}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){
+  .sk::after{animation:none}
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+
+/* ============================================================
+   DEV FRAME STRIP — tooling, not product chrome
+   ============================================================ */
+#dev{
+  position:fixed;top:14px;left:14px;z-index:120;
+  font-family:var(--tnm-font-mono);font-size:10px;
+}
+#devPill{
+  background:var(--tnm-backdrop);border:1px dashed var(--tnm-text-faint);
+  color:var(--tnm-text-faint);padding:7px 11px;border-radius:var(--tnm-r-pill);
+  font-family:inherit;font-size:10px;letter-spacing:.08em;
+}
+#devPanel{
+  display:none;margin-top:8px;width:196px;
+  background:var(--tnm-backdrop);border:1px dashed var(--tnm-text-faint);
+  border-radius:10px;padding:10px;
+}
+#dev.open #devPanel{display:block}
+#devPanel .dv-label{color:var(--tnm-text-faint);letter-spacing:.1em;margin-bottom:8px}
+#devPanel button.dv{
+  display:block;width:100%;text-align:left;font-family:inherit;font-size:10.5px;
+  color:var(--tnm-text-secondary);padding:6px 8px;border-radius:6px;margin-bottom:2px;
+}
+#devPanel button.dv:hover{background:var(--tnm-surface-ink-2);color:var(--tnm-text-primary)}
+#devPanel button.dv.active{color:var(--tnm-action)}
+#devPanel .dv-state{
+  margin-top:8px;padding-top:8px;border-top:1px dashed var(--tnm-border-strong);
+  color:var(--tnm-text-faint);font-size:9.5px;line-height:1.6;word-break:break-word;
+}
+@media(min-width:900px){#dev{left:calc(50% - 215px - 220px)}}
+@media(max-width:899px){#dev.open #devPanel{max-height:60dvh;overflow-y:auto}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ DEV FRAME STRIP (not product UI) ═══════════ -->
+<div id="dev">
+  <button id="devPill" aria-expanded="false" aria-controls="devPanel">⚙ FRAMES</button>
+  <div id="devPanel" role="group" aria-label="Prototype frame states">
+    <div class="dv-label">DEV · FRAME STATES</div>
+    <button class="dv" data-frame="loading-skeleton">1 · loading-skeleton ↺</button>
+    <button class="dv" data-frame="default-gated">2 · default-gated</button>
+    <button class="dv" data-frame="goal-fit-entry">3 · goal-fit-entry</button>
+    <button class="dv" data-frame="goal-fit-result-unlocked">4 · result-unlocked</button>
+    <button class="dv" data-frame="modifier-sheet">5 · modifier-sheet</button>
+    <button class="dv" data-frame="allergen-flagged">6 · allergen-flagged ⇄</button>
+    <button class="dv" data-frame="added-to-plan-success">7 · added-to-plan</button>
+    <button class="dv" data-frame="out-of-stock">8 · out-of-stock ⇄</button>
+    <button class="dv" data-frame="reviewer-block-detail">9 · reviewer-detail</button>
+    <div class="dv-state" id="devState">state: —</div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ═══════════ SKELETON ═══════════ -->
+  <div id="skeleton" aria-hidden="true">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+      <div class="sk" style="width:38px;height:38px;border-radius:999px"></div>
+      <div class="sk" style="width:90px;height:12px"></div>
+      <div class="sk" style="width:64px;height:26px;border-radius:999px;margin-left:auto"></div>
+    </div>
+    <div class="sk" style="aspect-ratio:1/1;border-radius:16px"></div>
+    <div class="sk" style="width:70%;height:22px;margin-top:18px"></div>
+    <div class="sk" style="width:92%;height:13px;margin-top:10px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <div class="sk" style="width:96px;height:30px;border-radius:999px"></div>
+      <div class="sk" style="width:150px;height:30px;border-radius:999px"></div>
+    </div>
+    <div class="sk" style="height:190px;margin-top:26px;border-radius:16px"></div>
+    <div class="sk" style="height:72px;margin-top:14px;border-radius:16px"></div>
+  </div>
+
+  <!-- ═══════════ TOP BAR ═══════════ -->
+  <header class="topbar">
+    <a class="back" href="https://tanmatra.food/menu" aria-label="Back to menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </a>
+    <span class="crumb">/menu</span>
+    <span class="cat">Salad</span>
+  </header>
+
+  <!-- ═══════════ GALLERY ═══════════ -->
+  <section class="gallery" aria-label="Dish photos">
+    <div class="gallery-track" id="galleryTrack">
+      <div class="gallery-slide" data-label="Plated"><img src="https://tanmatra.food/images/dishes/almond-chicken-salad.jpg" alt="Almond Chicken Salad, plated" onerror="this.parentElement.classList.add('img-fallback');this.remove()"></div>
+      <div class="gallery-slide" data-label="Ingredients"><img src="https://tanmatra.food/images/dishes/almond-chicken-salad-ingredient.jpg" alt="Raw ingredients" loading="lazy" onerror="this.parentElement.classList.add('img-fallback');this.remove()"></div>
+      <div class="gallery-slide" data-label="Delivered"><img src="https://tanmatra.food/images/dishes/almond-chicken-salad-delivered.jpg" alt="As delivered" loading="lazy" onerror="this.parentElement.classList.add('img-fallback');this.remove()"></div>
+      <div class="gallery-slide" data-label="Packaging"><img src="https://tanmatra.food/images/dishes/almond-chicken-salad-packaging.jpg" alt="Thermal packaging" loading="lazy" onerror="this.parentElement.classList.add('img-fallback');this.remove()"></div>
+      <div class="gallery-slide" data-label="Lifestyle"><img src="https://tanmatra.food/images/dishes/almond-chicken-salad-lifestyle.jpg" alt="Lifestyle" loading="lazy" onerror="this.parentElement.classList.add('img-fallback');this.remove()"></div>
+    </div>
+    <div class="gallery-dots" id="galleryDots" aria-hidden="true">
+      <span class="on"></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="oos-veil"><span class="tag">Sold out today</span></div>
+  </section>
+
+  <!-- ═══════════ TITLE ═══════════ -->
+  <div class="wrap title-block">
+    <div class="title-row">
+      <h1>Almond Chicken Salad</h1>
+      <span class="fssai-mark" role="img" aria-label="Non-vegetarian"><i></i></span>
+    </div>
+    <p class="dish-desc">Crisp, bright, with herbaceous dressings and zesty vinegar notes.</p>
+    <div class="chip-row">
+      <span class="chip" id="chipAllergen">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        Allergen safety · Tree nuts
+      </span>
+      <span class="chip">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+        RD reviewed
+      </span>
+    </div>
+
+    <div class="oos-banner">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-caution)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span><b>Sold out for today.</b> Back on tomorrow's menu — prep starts <span class="tnm-data">11:30 AM</span>. Tap Notify Me and we'll ping you the moment it's live.</span>
+    </div>
+  </div>
+
+  <!-- ═══════════ GOAL FIT GATE ═══════════ -->
+  <div class="wrap sec gate" id="gateSec">
+    <div class="card">
+      <div class="gate-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-action)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+        <span class="t">Goal Fit Analysis</span>
+        <span class="provenance">Ingredient-estimated</span>
+      </div>
+
+      <!-- LOCKED (frame: default-gated) -->
+      <div class="gate-locked" id="gateLocked">
+        <div class="ghost-ribbon" aria-hidden="true">
+          <div class="ghost-row"><span class="k">Calories</span><span class="v tnm-data">472 kcal</span></div>
+          <div class="ghost-row"><span class="k">Protein</span><span class="v tnm-data">43 g</span></div>
+          <div class="ghost-row"><span class="k">Carbohydrates</span><span class="v tnm-data">10 g</span></div>
+          <div class="ghost-row"><span class="k">Fat</span><span class="v tnm-data">30 g</span></div>
+          <div class="ghost-row"><span class="k">Glycaemic index</span><span class="v tnm-data">Low</span></div>
+        </div>
+        <div class="gate-lock-layer">
+          <span class="lock-ico">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-action)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <h3>See how this fits your goal</h3>
+          <p>Macros, glycaemic index and sugar per serving unlock after a <span class="tnm-data">30</span>-second Goal Fit check.</p>
+          <button class="btn btn-primary" id="btnStartAssess">Start assessment</button>
+          <div class="why-gate" id="whyGate">
+            <button id="btnWhyGate" aria-expanded="false">Why we gate this</button>
+            <p class="why-copy">Numbers without context mislead. We show every macro against your goal — not in isolation.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- UNLOCKED (frame: goal-fit-result-unlocked) -->
+      <div class="gate-unlocked" id="gateUnlocked">
+        <div class="fit-verdict" id="fitVerdict"><!-- js --></div>
+        <div class="ring-strip" id="ringStrip" aria-hidden="true"><!-- js --></div>
+        <div id="macroRows"><!-- js --></div>
+        <div class="gate-secondary">
+          <div class="mini-stat"><div class="k">Glycaemic index</div><div class="v tnm-data" id="giVal">Low</div></div>
+          <div class="mini-stat"><div class="k">Sugar / serving</div><div class="v tnm-data">4 g <small style="font-size:10px;color:var(--tnm-text-faint)">est.</small></div></div>
+          <div class="mini-stat"><div class="k">Fibre / serving</div><div class="v tnm-data">5 g <small style="font-size:10px;color:var(--tnm-text-faint)">est.</small></div></div>
+        </div>
+        <div class="based-on">
+          <span id="basedOn">Based on: —</span>
+          <button id="btnRetake">Retake</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ REVIEWER (frame: reviewer-block-detail) ═══════════ -->
+  <div class="wrap sec reviewer" id="reviewerSec">
+    <div class="sec-label">Clinical governance</div>
+    <div class="card">
+      <button class="reviewer-main" id="btnReviewer" aria-expanded="false" aria-controls="reviewerDetail">
+        <span class="rd-avatar" aria-hidden="true">AN</span>
+        <span class="who">
+          <span class="n" style="display:block">Reviewed by Dr. Anjali Nair, Registered Dietitian</span>
+          <span class="r" style="display:block">Lead Dietitian — Heart &amp; Diabetes Care · <span class="tnm-data">17</span> yrs</span>
+        </span>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="reviewer-detail" id="reviewerDetail">
+        <div><div class="inner">
+          <div class="cred-row">
+            <span class="cred">PhD, AIIMS</span>
+            <span class="cred">Registered Dietitian (IDA)</span>
+            <span class="cred">ADA Diabetes Educator</span>
+          </div>
+          <p class="rd-quote">"Every plate signed off for sodium, blood-sugar impact, and healthy fats before it leaves our kitchen."</p>
+          <div class="rd-consult">
+            <div class="fee">
+              <div class="k">Consultation</div>
+              <div class="v">Free <span class="tnm-data">15</span>-min intro · <span class="tnm-data">₹1,200</span>/<span class="tnm-data">30</span>m follow-up</div>
+            </div>
+            <a href="https://tanmatra.food/rd/rd-anjali-nair">Book consult</a>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ INGREDIENTS (frame: allergen-flagged) ═══════════ -->
+  <div class="wrap sec">
+    <div class="sec-label">Complete ingredient declaration</div>
+    <div class="card">
+      <div class="ing-row" id="ingRow">
+        <span class="ing">Grilled chicken breast</span>
+        <span class="ing">Lettuce</span>
+        <span class="ing">Cucumber</span>
+        <span class="ing">Cherry tomatoes</span>
+        <span class="ing" id="ingAlmonds">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          Almonds
+        </span>
+        <span class="ing">Olive oil</span>
+        <span class="ing">Lemon juice</span>
+        <span class="ing">Salt &amp; pepper</span>
+      </div>
+      <div class="allergen-line" role="alert">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-alert)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <span><b>Contains tree nuts</b> — flagged in your profile. Remove almonds in Customise, or choose another dish.</span>
+      </div>
+      <div class="allergen-resolved">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-sage)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+        <span><b style="color:var(--tnm-sage)">Almonds removed</b> — no active allergen clash with your profile.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DELIVERED REALITY ═══════════ -->
+  <div class="wrap sec">
+    <div class="sec-label">Delivered reality</div>
+    <div class="card pack-card">
+      <span class="pack-ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-text-secondary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+      </span>
+      <div>
+        <h4>Clinical packaging</h4>
+        <p>Arrives chilled in a double-insulated, tamper-evident thermal container. Serve straight from the fridge — do not heat.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DATA PROVENANCE ═══════════ -->
+  <div class="wrap sec">
+    <div class="sec-label">Data provenance</div>
+    <div class="prov-grid">
+      <div class="prov">
+        <div class="k">Allergen disclosure</div>
+        <div class="v sage-t">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+          Reviewed
+        </div>
+      </div>
+      <div class="prov">
+        <div class="k">Macro source</div>
+        <div class="v">Estimated</div>
+      </div>
+    </div>
+    <a class="prov-link" href="https://tanmatra.food/about">How we verify nutrition data</a>
+  </div>
+
+  <!-- ═══════════ CHEF NOTE ═══════════ -->
+  <div class="wrap sec">
+    <div class="sec-label">Kitchen note</div>
+    <div class="card chef-note">
+      <p>Greens triple-washed and spun within the hour of plating. Dressings are emulsified in-house with cold-pressed oils.</p>
+      <p class="by">Prepared by Chef Arjun Kapoor · Head Chef — Continental</p>
+    </div>
+  </div>
+
+  <!-- ═══════════ COACH ═══════════ -->
+  <div class="wrap sec">
+    <div class="sec-label">Ask AI Health Coach</div>
+    <div class="card">
+      <p class="coach-sub">Ask about protein modifications, metabolic impacts, or allergen alternatives.</p>
+      <div class="coach-chips">
+        <button class="coach-chip" data-coach>Higher-protein version?</button>
+        <button class="coach-chip" data-coach>Fits a diabetic plan?</button>
+        <button class="coach-chip" data-coach>Nut-free alternative?</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ RELATED ═══════════ -->
+  <div class="wrap sec">
+    <div class="sec-label">Related meals based on goal</div>
+    <div class="rel-track">
+      <a class="rel-card" href="https://tanmatra.food/dish/amaranth-porridge-with-blueberry-sauce">
+        <div class="n">Amaranth Porridge with Blueberry Sauce</div>
+        <div class="m tnm-data">260 kcal · 8g protein</div>
+      </a>
+      <a class="rel-card" href="https://tanmatra.food/dish/dates-banana-smoothie">
+        <div class="n">Dates Banana Smoothie</div>
+        <div class="m tnm-data">241 kcal · 3g protein</div>
+      </a>
+      <a class="rel-card" href="https://tanmatra.food/dish/tomato-basil-omelette">
+        <div class="n">Tomato Basil Omelette</div>
+        <div class="m tnm-data">195 kcal · 13g protein</div>
+      </a>
+    </div>
+  </div>
+
+  <p class="disclaimer">Tanmatra meals support — they don't replace — medical care. Consult your physician before starting any therapeutic nutrition programme.</p>
+
+</div><!-- /app -->
+
+<!-- ═══════════ STICKY CTA ═══════════ -->
+<div class="cta-zone">
+  <div class="cta-msg tone-alert" id="ctaAllergenMsg">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-alert)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+    <span>Contains <b>tree nuts</b> — flagged in your profile. Remove almonds in Customise before adding.</span>
+  </div>
+  <div class="cta-msg tone-caution" id="ctaDietMsg">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-caution)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span>Non-veg dish — your Goal Fit profile is set to vegetarian.</span>
+  </div>
+  <div class="cta-bar">
+    <button class="btn" id="btnCustomise" aria-label="Customise dish">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-text-primary)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></svg>
+    </button>
+    <button class="btn btn-ghost" id="btnAddOnce">
+      <span>Add once<span class="sub"><span class="price tnm-data" id="priceOnce">₹155</span> · incl. 5% GST</span></span>
+    </button>
+    <button class="btn btn-primary" id="btnAddPlan">
+      <span>Add to Plan<span class="sub">Wednesday · lunch slot</span></span>
+    </button>
+    <button class="btn btn-ghost-action" id="btnNotify">
+      <span>Notify me<span class="sub">back tomorrow · <span class="tnm-data">11:30 AM</span></span></span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════ SHEETS ═══════════ -->
+<div class="backdrop" id="backdrop"></div>
+
+<!-- assessment (frame: goal-fit-entry) -->
+<div class="sheet" id="sheetAssess" role="dialog" aria-modal="true" aria-labelledby="assessTitle">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h3 id="assessTitle">Goal Fit check</h3>
+    <button class="sheet-close" data-close aria-label="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <p class="sheet-sub">Three taps. We hold this profile for every dish you open.</p>
+  <div class="steps-dots"><i id="dot1" class="done"></i><i id="dot2"></i><i id="dot3"></i></div>
+
+  <div class="assess-step on" id="step1">
+    <div class="q-label">What's the goal?</div>
+    <div class="opt-grid">
+      <button class="opt" data-goal="weight-loss"><span class="t">Weight loss</span><span class="d">Lighter, high-fibre lunches</span></button>
+      <button class="opt" data-goal="lean-muscle"><span class="t">Lean muscle</span><span class="d">Surplus + <span class="tnm-data">40g</span>+ protein</span></button>
+      <button class="opt" data-goal="general-wellness"><span class="t">General wellness</span><span class="d">Balanced, steady energy</span></button>
+      <button class="opt" data-goal="pcos"><span class="t">PCOS care</span><span class="d">Low-GI, hormone-steady</span></button>
+    </div>
+  </div>
+
+  <div class="assess-step" id="step2">
+    <div class="q-label">How do you eat?</div>
+    <div class="opt-grid">
+      <button class="opt" data-diet="omnivore"><span class="t">Non-veg</span><span class="d">Everything on the menu</span></button>
+      <button class="opt" data-diet="veg"><span class="t">Vegetarian</span><span class="d">Veg-marked dishes only</span></button>
+      <button class="opt" data-diet="eggetarian"><span class="t">Eggetarian</span><span class="d">Veg + eggs</span></button>
+    </div>
+  </div>
+
+  <div class="assess-step" id="step3">
+    <div class="q-label">Any allergens we should watch?</div>
+    <div class="opt-grid">
+      <button class="opt" data-alg="tree-nuts"><span class="t">Tree nuts</span><span class="d">Almonds, cashews, walnuts</span></button>
+      <button class="opt" data-alg="dairy"><span class="t">Dairy</span><span class="d">Milk, curd, paneer</span></button>
+      <button class="opt" data-alg="gluten"><span class="t">Gluten</span><span class="d">Wheat, barley, rye</span></button>
+      <button class="opt" data-alg="none"><span class="t">None</span><span class="d">No allergen watch</span></button>
+    </div>
+  </div>
+
+  <div class="assess-foot">
+    <button class="btn btn-ghost" id="btnAssessBack" style="display:none">Back</button>
+    <button class="btn btn-primary" id="btnAssessNext" disabled>Continue</button>
+  </div>
+</div>
+
+<!-- modifier (frame: modifier-sheet) -->
+<div class="sheet" id="sheetMod" role="dialog" aria-modal="true" aria-labelledby="modTitle">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h3 id="modTitle">Customise</h3>
+    <button class="sheet-close" data-close aria-label="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <p class="sheet-sub">Almond Chicken Salad · changes apply to this add only.</p>
+
+  <div class="mod-group">
+    <div class="g-label">Protein</div>
+    <button class="mod-opt sel" data-mod="protein" data-val="single">
+      <span class="radio"></span>
+      <span class="info"><span class="t">Grilled chicken breast</span><span class="d">Included · <span class="tnm-data">43g</span> protein</span></span>
+      <span class="delta tnm-data">₹0</span>
+    </button>
+    <button class="mod-opt" data-mod="protein" data-val="double">
+      <span class="radio"></span>
+      <span class="info"><span class="t">Double chicken</span><span class="d">Recovery pick · ~<span class="tnm-data">68g</span> protein</span></span>
+      <span class="delta tnm-data">+₹49</span>
+    </button>
+  </div>
+
+  <div class="mod-group">
+    <div class="g-label">Almonds</div>
+    <div class="mod-hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-caution)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+      <span>Your profile flags tree nuts — we suggest removing almonds.</span>
+    </div>
+    <button class="mod-opt sel" data-mod="almonds" data-val="include">
+      <span class="radio"></span>
+      <span class="info"><span class="t">Include almonds</span><span class="d">As designed · adds crunch + healthy fats</span></span>
+      <span class="delta tnm-data">₹0</span>
+    </button>
+    <button class="mod-opt mod-safe" data-mod="almonds" data-val="remove">
+      <span class="radio"></span>
+      <span class="info"><span class="t">Remove almonds</span><span class="d">Allergen-safe · clears the tree-nut clash</span></span>
+      <span class="delta tnm-data">₹0</span>
+    </button>
+  </div>
+
+  <div class="mod-group">
+    <div class="g-label">Dressing</div>
+    <button class="mod-opt sel" data-mod="dressing" data-val="tossed">
+      <span class="radio"></span>
+      <span class="info"><span class="t">Tossed in</span><span class="d">Emulsified in-house, cold-pressed oils</span></span>
+      <span class="delta tnm-data">₹0</span>
+    </button>
+    <button class="mod-opt" data-mod="dressing" data-val="side">
+      <span class="radio"></span>
+      <span class="info"><span class="t">On the side</span><span class="d">Control the pour</span></span>
+      <span class="delta tnm-data">₹0</span>
+    </button>
+  </div>
+
+  <div class="mod-total">
+    <span class="k">Total</span>
+    <span class="v tnm-data" id="modTotal">₹155 <small>incl. 5% GST</small></span>
+  </div>
+  <div style="margin-top:14px">
+    <button class="btn btn-primary" id="btnApplyMods" style="width:100%">Apply changes</button>
+  </div>
+</div>
+
+<!-- success (frame: added-to-plan-success) -->
+<div class="sheet" id="sheetSuccess" role="dialog" aria-modal="true" aria-labelledby="succTitle">
+  <div class="sheet-grip"></div>
+  <div class="success-hero">
+    <span class="success-ring">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-sage)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </span>
+  </div>
+  <div class="success-body">
+    <h3 id="succTitle">Added to your plan</h3>
+    <p class="line">Almond Chicken Salad<span id="succMods"></span></p>
+    <div class="slot-card">
+      <div>
+        <div class="k">Slot</div>
+        <div class="v">Wednesday · Lunch</div>
+      </div>
+      <div style="text-align:right">
+        <div class="k">Window</div>
+        <div class="v tnm-data">12:30–1:15 PM</div>
+      </div>
+    </div>
+    <div class="slot-card">
+      <div>
+        <div class="k">This week</div>
+        <div class="v"><span class="tnm-data">3 of 5</span> lunches planned</div>
+      </div>
+      <div style="text-align:right">
+        <div class="k">This add</div>
+        <div class="v tnm-data" id="succPrice">₹155</div>
+      </div>
+    </div>
+    <div class="success-tip" id="succTip" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-action)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>Tip: run Goal Fit to see how this lands against your target.</span>
+    </div>
+  </div>
+  <div class="success-cta">
+    <a class="btn btn-primary" href="https://tanmatra.food/subscriptions" style="text-decoration:none">View my plan</a>
+    <button class="btn btn-ghost" data-close>Keep browsing</button>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   STATE — one object, frames derive from it
+   ════════════════════════════════════════════════════════════ */
+const BASE_PRICE = 155;
+const S = {
+  frame: 'loading-skeleton',
+  unlocked: false,
+  profile: null,                       // {goal, diet, allergens[]}
+  allergenForced: false,               // dev override
+  oos: false,
+  mods: { protein:'single', almonds:'include', dressing:'tossed' },
+};
+
+const GOALS = {
+  'weight-loss': {
+    label:'Weight loss',
+    verdict:{tone:'caution', t:'Workable pick — watch the calorie ceiling.',
+      b:'Protein is strong for satiety; the plate sits in the upper half of a weight-loss lunch window.'},
+    rows:[
+      {k:'Calories', v:'472', u:'kcal', tone:'caution', s:'Near boundary', note:'Upper half of your 350–520 lunch window — pair with a lighter dinner.'},
+      {k:'Protein',  v:'43',  u:'g', tone:'sage', s:'Within range', note:'Well above your 25 g floor — strong satiety.'},
+      {k:'Carbs',    v:'10',  u:'g', tone:'sage', s:'Within range'},
+      {k:'Fat',      v:'30',  u:'g', tone:'caution', s:'Near boundary', note:'Mostly olive oil and almonds — unsaturated, but calorie-dense.'},
+    ]},
+  'lean-muscle': {
+    label:'Lean muscle',
+    verdict:{tone:'sage', t:'Strong fit for your build phase.',
+      b:'Clears the 40 g protein target inside your calorie window. Add a carb side on training days.'},
+    rows:[
+      {k:'Calories', v:'472', u:'kcal', tone:'sage', s:'Within range', note:'Inside your 450–700 build window.'},
+      {k:'Protein',  v:'43',  u:'g', tone:'sage', s:'Within range', note:'Clears your 40 g per-meal target.'},
+      {k:'Carbs',    v:'10',  u:'g', tone:'caution', s:'Near boundary', note:'Low-carb — add a carb side on training days.'},
+      {k:'Fat',      v:'30',  u:'g', tone:'sage', s:'Within range'},
+    ]},
+  'general-wellness': {
+    label:'General wellness',
+    verdict:{tone:'sage', t:'Balanced macro split and a clean ingredient list.',
+      b:'Whole-food protein, low glycaemic load, unsaturated fats — a steady everyday lunch.'},
+    rows:[
+      {k:'Calories', v:'472', u:'kcal', tone:'sage', s:'Within range'},
+      {k:'Protein',  v:'43',  u:'g', tone:'sage', s:'Within range'},
+      {k:'Carbs',    v:'10',  u:'g', tone:'sage', s:'Within range'},
+      {k:'Fat',      v:'30',  u:'g', tone:'sage', s:'Within range', note:'Olive oil + almonds — predominantly unsaturated.'},
+    ]},
+  'pcos': {
+    label:'PCOS care',
+    verdict:{tone:'sage', t:'Low glycaemic load — gentle on blood sugar.',
+      b:'Minimal carbs and steady protein keep the post-meal curve flat.'},
+    rows:[
+      {k:'Calories', v:'472', u:'kcal', tone:'sage', s:'Within range'},
+      {k:'Protein',  v:'43',  u:'g', tone:'sage', s:'Within range'},
+      {k:'Carbs',    v:'10',  u:'g', tone:'sage', s:'Within range', note:'~4 g sugar — minimal glycaemic load.'},
+      {k:'Fat',      v:'30',  u:'g', tone:'sage', s:'Within range'},
+    ]},
+};
+
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const money = n => '₹' + n.toLocaleString('en-IN');
+/* 2px macro gauge — arc color follows status tone */
+function ring(label,val,pct,tone){
+  pct=Math.max(.06,Math.min(pct||0,1));
+  const R=30,C=2*Math.PI*R,dash=(C*pct).toFixed(1);
+  const col=tone==='caution'?'var(--tnm-caution)':'var(--tnm-sage)';
+  return '<div class="ring"><svg viewBox="0 0 74 74" width="74" height="74" aria-hidden="true">'
+    +'<circle cx="37" cy="37" r="30" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="2"/>'
+    +'<circle cx="37" cy="37" r="30" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-dasharray="'+dash+' '+C.toFixed(1)+'" transform="rotate(-90 37 37)"/></svg>'
+    +'<span class="rv tnm-data">'+val+'<small>'+label+'</small></span></div>';
+}
+
+/* ════════════ derived state + render ════════════ */
+function allergenClash(){
+  const profileFlag = S.profile && S.profile.allergens.includes('tree-nuts');
+  const active = (S.allergenForced || profileFlag) && S.mods.almonds === 'include';
+  const resolved = (S.allergenForced || profileFlag) && S.mods.almonds === 'remove';
+  return {active, resolved};
+}
+function dietClash(){ return S.profile && S.profile.diet === 'veg'; }
+function total(){ return BASE_PRICE + (S.mods.protein === 'double' ? 49 : 0); }
+
+function render(){
+  const {active:alg, resolved} = allergenClash();
+  document.body.classList.toggle('is-unlocked', S.unlocked);
+  document.body.classList.toggle('is-oos', S.oos);
+  document.body.classList.toggle('is-allergen', alg);
+  document.body.classList.toggle('is-allergen-resolved', resolved);
+
+  /* header allergen chip */
+  $('#chipAllergen').classList.toggle('alert-on', alg);
+
+  /* almonds ingredient chip */
+  const ingA = $('#ingAlmonds');
+  ingA.classList.toggle('flagged', alg);
+  ingA.classList.toggle('removed', S.mods.almonds === 'remove');
+
+  /* CTA messages — one at a time, alert wins */
+  $('#ctaAllergenMsg').classList.toggle('show', alg && !S.oos);
+  $('#ctaDietMsg').classList.toggle('show', !alg && !S.oos && !!dietClash());
+
+  /* prices */
+  $('#priceOnce').textContent = money(total());
+  $('#modTotal').innerHTML = money(total()) + ' <small>incl. 5% GST</small>';
+  $('#succPrice').textContent = money(total());
+
+  /* unlocked panel */
+  if (S.unlocked){
+    const g = GOALS[(S.profile && S.profile.goal) || 'general-wellness'];
+    const v = g.verdict;
+    const ic = v.tone === 'sage'
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-sage)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tnm-caution)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+    $('#fitVerdict').innerHTML = ic + '<div><div class="vt">'+v.t+'</div><div class="vb">'+v.b+'</div></div>';
+
+    const gk=(S.profile && S.profile.goal) || 'general-wellness';
+    const KMAX={'weight-loss':520,'lean-muscle':700,'general-wellness':650,'pcos':550};
+    const PREF={'weight-loss':35,'lean-muscle':45,'general-wellness':35,'pcos':35};
+    $('#ringStrip').innerHTML =
+        ring('KCAL','472',472/KMAX[gk],g.rows[0].tone)
+      + ring('PROTEIN','43g',43/PREF[gk],g.rows[1].tone)
+      + ring('GI','Low',0.3,'sage');
+
+    $('#macroRows').innerHTML = g.rows.map(r=>{
+      const sic = r.tone === 'sage'
+        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+        : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+      return '<div class="macro-row">'
+        +'<span class="mk">'+r.k+'</span>'
+        +'<span class="mv tnm-data">'+r.v+'<small>'+r.u+'</small></span>'
+        +'<span class="status '+r.tone+'">'+sic+r.s+'</span>'
+        +(r.note ? '<span class="macro-note">'+r.note+'</span>' : '')
+        +'</div>';
+    }).join('');
+
+    const p = S.profile || {goal:'general-wellness', diet:'omnivore', allergens:[]};
+    const algTxt = alg ? '1 allergen watch: tree nuts'
+                 : resolved ? 'tree-nut clash resolved'
+                 : 'no active allergen clashes';
+    $('#basedOn').textContent = 'Based on: ' + (GOALS[p.goal].label.toLowerCase()) + ' · ' + p.diet + ' · ' + algTxt;
+  }
+
+  /* dev readout */
+  $('#devState').textContent = 'frame: ' + S.frame
+    + '\nunlocked: ' + S.unlocked
+    + '\nprofile: ' + (S.profile ? S.profile.goal + '/' + S.profile.diet + '/[' + S.profile.allergens.join(',') + ']' : 'none')
+    + '\nallergen: ' + (alg ? 'CLASH' : resolved ? 'resolved' : 'clear')
+    + (S.allergenForced ? ' (forced)' : '')
+    + '\noos: ' + S.oos
+    + '\nmods: ' + S.mods.protein + '/' + S.mods.almonds + '/' + S.mods.dressing
+    + '\ntotal: ' + money(total());
+  $$('#devPanel .dv').forEach(b => b.classList.toggle('active', b.dataset.frame === S.frame));
+}
+
+/* ════════════ toast ════════════ */
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ════════════ sheets ════════════ */
+let openSheet = null;
+function sheet(id, open=true){
+  const bd = $('#backdrop');
+  if (openSheet && openSheet !== id) $('#'+openSheet).classList.remove('show');
+  if (open){
+    $('#'+id).classList.add('show'); bd.classList.add('show'); openSheet = id;
+  } else {
+    $('#'+id).classList.remove('show'); bd.classList.remove('show'); openSheet = null;
+  }
+}
+$('#backdrop').addEventListener('click', ()=> openSheet && sheet(openSheet,false));
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && openSheet) sheet(openSheet,false); });
+$$('[data-close]').forEach(b => b.addEventListener('click', ()=> openSheet && sheet(openSheet,false)));
+
+/* ════════════ skeleton ════════════ */
+function runSkeleton(){
+  S.frame = 'loading-skeleton'; render();
+  const sk = $('#skeleton');
+  sk.classList.remove('gone'); sk.style.display = '';
+  setTimeout(()=>{
+    sk.classList.add('gone');
+    setTimeout(()=>{ sk.style.display = 'none'; }, 380);
+    S.frame = S.unlocked ? 'goal-fit-result-unlocked' : 'default-gated'; render();
+  }, 1400);
+}
+
+/* ════════════ gallery dots ════════════ */
+const track = $('#galleryTrack'), dots = $$('#galleryDots span');
+track.addEventListener('scroll', ()=>{
+  const i = Math.round(track.scrollLeft / track.clientWidth);
+  dots.forEach((d,x)=> d.classList.toggle('on', x===i));
+}, {passive:true});
+
+/* ════════════ why-gate microcopy ════════════ */
+$('#btnWhyGate').addEventListener('click', ()=>{
+  const w = $('#whyGate'); w.classList.toggle('open');
+  $('#btnWhyGate').setAttribute('aria-expanded', w.classList.contains('open'));
+});
+
+/* ════════════ assessment flow ════════════ */
+const A = { step:1, goal:null, diet:null, allergens:new Set() };
+function assessRender(){
+  [1,2,3].forEach(n=>{
+    $('#step'+n).classList.toggle('on', A.step===n);
+    $('#dot'+n).classList.toggle('done', A.step>=n);
+  });
+  $('#btnAssessBack').style.display = A.step>1 ? '' : 'none';
+  const ready = (A.step===1 && A.goal) || (A.step===2 && A.diet) || (A.step===3 && A.allergens.size>0);
+  const next = $('#btnAssessNext');
+  next.disabled = !ready;
+  next.textContent = A.step===3 ? 'See my fit' : 'Continue';
+}
+function openAssess(){
+  A.step = 1;
+  if (S.profile){ A.goal=S.profile.goal; A.diet=S.profile.diet; A.allergens=new Set(S.profile.allergens.length?S.profile.allergens:['none']); }
+  syncOptChips(); assessRender();
+  S.frame='goal-fit-entry'; render();
+  sheet('sheetAssess');
+}
+function syncOptChips(){
+  $$('[data-goal]').forEach(b=> b.classList.toggle('sel', b.dataset.goal===A.goal));
+  $$('[data-diet]').forEach(b=> b.classList.toggle('sel', b.dataset.diet===A.diet));
+  $$('[data-alg]').forEach(b=> b.classList.toggle('sel', A.allergens.has(b.dataset.alg)));
+}
+$$('[data-goal]').forEach(b=> b.addEventListener('click', ()=>{ A.goal=b.dataset.goal; syncOptChips(); assessRender(); }));
+$$('[data-diet]').forEach(b=> b.addEventListener('click', ()=>{ A.diet=b.dataset.diet; syncOptChips(); assessRender(); }));
+$$('[data-alg]').forEach(b=> b.addEventListener('click', ()=>{
+  const v = b.dataset.alg;
+  if (v==='none'){ A.allergens.clear(); A.allergens.add('none'); }
+  else { A.allergens.delete('none'); A.allergens.has(v) ? A.allergens.delete(v) : A.allergens.add(v); }
+  syncOptChips(); assessRender();
+}));
+$('#btnAssessBack').addEventListener('click', ()=>{ A.step=Math.max(1,A.step-1); assessRender(); });
+$('#btnAssessNext').addEventListener('click', ()=>{
+  if (A.step<3){ A.step++; assessRender(); return; }
+  S.profile = { goal:A.goal, diet:A.diet, allergens:[...A.allergens].filter(x=>x!=='none') };
+  S.unlocked = true;
+  S.allergenForced = false;                 // real profile supersedes dev force
+  sheet('sheetAssess', false);
+  S.frame='goal-fit-result-unlocked'; render();
+  $('#gateSec').scrollIntoView({behavior:'smooth', block:'start'});
+});
+$('#btnStartAssess').addEventListener('click', openAssess);
+$('#btnRetake').addEventListener('click', openAssess);
+
+/* ════════════ modifier sheet ════════════ */
+$$('.mod-opt').forEach(b=> b.addEventListener('click', ()=>{
+  const g = b.dataset.mod;
+  $$('.mod-opt[data-mod="'+g+'"]').forEach(x=> x.classList.remove('sel'));
+  b.classList.add('sel');
+  S.mods[g] = b.dataset.val;
+  render();
+}));
+$('#btnCustomise').addEventListener('click', ()=>{ S.frame='modifier-sheet'; render(); sheet('sheetMod'); });
+$('#btnApplyMods').addEventListener('click', ()=>{
+  sheet('sheetMod', false);
+  const {resolved} = allergenClash();
+  toast(resolved ? 'Almonds removed — clash cleared' : 'Customisation applied · ' + money(total()));
+  S.frame = S.unlocked ? 'goal-fit-result-unlocked' : 'default-gated'; render();
+});
+
+/* ════════════ CTA actions ════════════ */
+function modsLine(){
+  const m = [];
+  if (S.mods.protein==='double') m.push('double chicken');
+  if (S.mods.almonds==='remove') m.push('no almonds');
+  if (S.mods.dressing==='side') m.push('dressing on the side');
+  return m.length ? ' · ' + m.join(' · ') : '';
+}
+$('#btnAddPlan').addEventListener('click', ()=>{
+  const {active} = allergenClash();
+  if (active){
+    toast('Resolve the tree-nut clash first — open Customise');
+    $('#btnCustomise').focus();
+    return;
+  }
+  $('#succMods').textContent = modsLine();
+  $('#succTip').style.display = S.unlocked ? 'none' : 'flex';
+  S.frame='added-to-plan-success'; render();
+  sheet('sheetSuccess');
+});
+$('#btnAddOnce').addEventListener('click', ()=>{
+  const {active} = allergenClash();
+  if (active){ toast('Resolve the tree-nut clash first — open Customise'); return; }
+  toast('Added to today\'s order · ' + money(total()));
+});
+$('#btnNotify').addEventListener('click', ()=>{
+  toast('We\'ll ping you when it\'s back — tomorrow 11:30 AM');
+});
+
+/* ════════════ reviewer ════════════ */
+function reviewerOpen(open){
+  const r = $('#reviewerSec');
+  r.classList.toggle('open', open);
+  $('#btnReviewer').setAttribute('aria-expanded', open);
+  if (open){ S.frame='reviewer-block-detail'; render(); }
+}
+$('#btnReviewer').addEventListener('click', ()=> reviewerOpen(!$('#reviewerSec').classList.contains('open')));
+
+/* ════════════ coach chips (prototype-inert) ════════════ */
+$$('[data-coach]').forEach(b=> b.addEventListener('click', ()=>
+  toast('Coach is wired in production — outside prototype scope')));
+
+/* ════════════ dev strip ════════════ */
+$('#devPill').addEventListener('click', ()=>{
+  const d = $('#dev'); d.classList.toggle('open');
+  $('#devPill').setAttribute('aria-expanded', d.classList.contains('open'));
+});
+$$('#devPanel .dv').forEach(b=> b.addEventListener('click', ()=>{
+  const f = b.dataset.frame;
+  if (openSheet) sheet(openSheet,false);
+  switch(f){
+    case 'loading-skeleton':
+      runSkeleton(); break;
+    case 'default-gated':
+      S.unlocked=false; S.profile=null; S.allergenForced=false;
+      S.frame=f; render();
+      $('#gateSec').scrollIntoView({behavior:'smooth'}); break;
+    case 'goal-fit-entry':
+      openAssess(); break;
+    case 'goal-fit-result-unlocked':
+      if (!S.profile) S.profile={goal:'general-wellness', diet:'omnivore', allergens:[]};
+      S.unlocked=true; S.frame=f; render();
+      $('#gateSec').scrollIntoView({behavior:'smooth'}); break;
+    case 'modifier-sheet':
+      S.frame=f; render(); sheet('sheetMod'); break;
+    case 'allergen-flagged':
+      S.allergenForced = !S.allergenForced;
+      if (S.allergenForced && S.mods.almonds==='remove') S.mods.almonds='include';
+      S.frame = S.allergenForced ? f : (S.unlocked?'goal-fit-result-unlocked':'default-gated');
+      render();
+      if (S.allergenForced) $('#ingRow').scrollIntoView({behavior:'smooth', block:'center'});
+      toast('Allergen flag ' + (S.allergenForced?'ON':'OFF')); break;
+    case 'added-to-plan-success':
+      $('#succMods').textContent = modsLine();
+      $('#succTip').style.display = S.unlocked ? 'none' : 'flex';
+      S.frame=f; render(); sheet('sheetSuccess'); break;
+    case 'out-of-stock':
+      S.oos = !S.oos;
+      S.frame = S.oos ? f : (S.unlocked?'goal-fit-result-unlocked':'default-gated');
+      render();
+      if (S.oos) window.scrollTo({top:0, behavior:'smooth'});
+      toast('Out of stock ' + (S.oos?'ON':'OFF')); break;
+    case 'reviewer-block-detail':
+      reviewerOpen(true);
+      $('#reviewerSec').scrollIntoView({behavior:'smooth', block:'center'}); break;
+  }
+}));
+
+/* ════════════ boot ════════════ */
+render();
+runSkeleton();
+</script>
+</body>
+</html>
