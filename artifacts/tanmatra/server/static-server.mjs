@@ -77,7 +77,12 @@ const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  // geolocation=(self): the checkout address picker calls
+  // navigator.geolocation on this document. With geolocation=() the browser
+  // denies instantly and never shows the permission prompt — allow it on our
+  // own origin. payment=(self): Razorpay's checkout uses the Payment Request
+  // API. camera/microphone stay denied — nothing here uses them.
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=(self)",
   "Content-Security-Policy": CSP_POLICY_RULES,
   "Content-Security-Policy-Report-Only": CSP_POLICY_RULES,
 };
