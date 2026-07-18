@@ -25,7 +25,8 @@ interface LocationPickerFlowProps {
 
 // ── Canvas-free location picker ─────────────────────────────────────────
 //
-// The previous flow rendered a Google Maps JS canvas (ECL + gmp-map). The
+// The previous flow rendered a Google Maps JS canvas via the Extended
+// Component Library map/loader custom elements. The
 // frontend Maps key does not have the Maps JavaScript API enabled, so the
 // canvas could never boot in production — users saw "Map tiles couldn't
 // load" and a dead pin. Rebuilt without any Maps JS dependency:
@@ -43,10 +44,19 @@ interface LocationPickerFlowProps {
 const MAPS_API_KEY =
   (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) ?? "";
 
+interface GeoPlace {
+  formattedAddress: string;
+  city: string;
+  pincode: string;
+}
+
 interface Suggestion {
   id: string;
   main: string;
   secondary: string;
+  // Present when the suggestion came from the server geocoder fallback
+  // (/geo/search) — selecting it fills the address directly, no details call.
+  place?: GeoPlace;
 }
 
 export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: LocationPickerFlowProps) {
@@ -63,6 +73,9 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   // Search state (Places REST — no Maps JS involved)
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  // Inline status under the search box (no-matches / unavailable) so the box
+  // is never a silent dead-end. Null = no message.
+  const [searchHint, setSearchHint] = useState<string | null>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Form details
@@ -99,6 +112,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       setLandmark("");
       setSearchQuery("");
       setSuggestions([]);
+      setSearchHint(null);
       setLocSource(null);
     }
     if (!open) {
@@ -107,9 +121,57 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     }
   }, [open, initialData]);
 
-  // ── Places (New) REST search ──────────────────────────────────────────
+  // ── Search: Places (New) REST, with a server-geocoder fallback ────────
+  // The box must NEVER accept typing and do nothing. If the frontend Places
+  // key is missing or its call fails, we fall back to our own server
+  // (/geo/search, server GOOGLE_API_KEY); if THAT is unconfigured we show an
+  // inline hint instead of silently swallowing the query.
+  const SEARCH_UNAVAILABLE_HINT =
+    "Search is unavailable right now — use your location or enter the address manually.";
+
+  const queryServerSearch = async (input: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/geo/search?q=${encodeURIComponent(input.trim())}`);
+      if (res.status === 503) {
+        setSuggestions([]);
+        setSearchHint(SEARCH_UNAVAILABLE_HINT);
+        return;
+      }
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; results?: GeoPlace[] }
+        | null;
+      if (res.ok && data?.ok && Array.isArray(data.results)) {
+        if (data.results.length === 0) {
+          setSuggestions([]);
+          setSearchHint("No matches — try a nearby landmark or sector.");
+          return;
+        }
+        setSearchHint(null);
+        setSuggestions(
+          data.results.slice(0, 6).map((r, i) => ({
+            id: `srv-${i}`,
+            main: r.formattedAddress.split(",")[0]?.trim() || r.formattedAddress,
+            secondary: r.formattedAddress,
+            place: r,
+          })),
+        );
+        return;
+      }
+      setSuggestions([]);
+      setSearchHint(SEARCH_UNAVAILABLE_HINT);
+    } catch {
+      setSuggestions([]);
+      setSearchHint(SEARCH_UNAVAILABLE_HINT);
+    }
+  };
+
   const queryPlacesRest = async (input: string) => {
-    if (!MAPS_API_KEY || input.trim().length < 3) return;
+    if (input.trim().length < 3) return;
+    // No frontend Places key → straight to the server geocoder.
+    if (!MAPS_API_KEY) {
+      await queryServerSearch(input);
+      return;
+    }
     try {
       const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
         method: "POST",
@@ -120,31 +182,49 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
           locationBias: { circle: { center: { latitude: 28.55, longitude: 77.25 }, radius: 50000 } },
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        await queryServerSearch(input);
+        return;
+      }
       const data = (await res.json()) as any;
-      setSuggestions(
-        (data.suggestions ?? [])
-          .map((sg: any) => sg.placePrediction)
-          .filter(Boolean)
-          .slice(0, 6)
-          .map((pp: any) => ({
-            id: pp.placeId as string,
-            main: pp.structuredFormat?.mainText?.text ?? pp.text?.text ?? "",
-            secondary: pp.structuredFormat?.secondaryText?.text ?? "",
-          })),
-      );
+      const mapped: Suggestion[] = (data.suggestions ?? [])
+        .map((sg: any) => sg.placePrediction)
+        .filter(Boolean)
+        .slice(0, 6)
+        .map((pp: any) => ({
+          id: pp.placeId as string,
+          main: pp.structuredFormat?.mainText?.text ?? pp.text?.text ?? "",
+          secondary: pp.structuredFormat?.secondaryText?.text ?? "",
+        }));
+      if (mapped.length === 0) {
+        // Places found nothing — try the server geocoder before giving up.
+        await queryServerSearch(input);
+        return;
+      }
+      setSearchHint(null);
+      setSuggestions(mapped);
     } catch {
-      // network/deny — user can still enter the address manually
+      await queryServerSearch(input);
     }
   };
 
-  const choosePlace = async (placeId: string, label: string) => {
+  const choosePlace = async (sg: Suggestion) => {
     setSuggestions([]);
-    setSearchQuery(label);
+    setSearchHint(null);
+    setSearchQuery(sg.main);
+    // Server-fallback result already carries the resolved address — fill
+    // directly, no Places details call needed.
+    if (sg.place) {
+      if (sg.place.formattedAddress) setLocality(sg.place.formattedAddress);
+      if (sg.place.city) setCity(sg.place.city);
+      if (sg.place.pincode) setPincode(sg.place.pincode);
+      setLocSource("search");
+      return;
+    }
     if (!MAPS_API_KEY) return;
     setResolving(true);
     try {
-      const res = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+      const res = await fetch(`https://places.googleapis.com/v1/places/${sg.id}`, {
         headers: {
           "X-Goog-Api-Key": MAPS_API_KEY,
           "X-Goog-FieldMask": "formattedAddress,addressComponents",
@@ -177,50 +257,82 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     if (v.trim().length < 3) {
       setSuggestions([]);
+      setSearchHint(null);
       return;
     }
     searchDebounceRef.current = setTimeout(() => queryPlacesRest(v), 300);
   };
 
   // ── GPS → server reverse geocode (no Maps JS) ─────────────────────────
-  const handleUseCurrentLocation = () => {
+  // `userInitiated` distinguishes an explicit tap (surface errors) from the
+  // silent auto-locate on open (permission granted ≠ position obtainable —
+  // never toast a banner the user didn't ask for). Explicit taps also get a
+  // retry ladder: high-accuracy first, then one low-accuracy retry, since
+  // high-accuracy fixes routinely time out on desktops/VPNs.
+  const handleUseCurrentLocation = (userInitiated = true) => {
     if (!navigator.geolocation) {
-      toast.error("Location is not supported by your browser — search your area instead");
+      if (userInitiated) {
+        toast.error("Location is not supported by your browser — search your area instead");
+      }
       return;
     }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const res = await fetch(
-            `${API_BASE}/geo/reverse?lat=${latitude.toFixed(6)}&lng=${longitude.toFixed(6)}`,
-          );
-          const data = (await res.json().catch(() => null)) as
-            | { ok?: boolean; formattedAddress?: string; city?: string; pincode?: string }
-            | null;
-          if (res.ok && data?.ok && data.formattedAddress) {
-            setLocality(data.formattedAddress);
-            if (data.city) setCity(data.city);
-            if (data.pincode) setPincode(data.pincode);
-            setLocSource("gps");
-          } else {
-            // Reverse geocode unavailable — keep the coordinates flow alive
-            // by dropping the user into search/manual instead of dead-ending.
-            toast.info("Found you, but couldn't name the spot — search your area or enter it manually");
-          }
-        } catch {
-          toast.info("Couldn't resolve your location — search your area instead");
-        } finally {
-          setLocating(false);
+
+    const onPosition = async (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      try {
+        const res = await fetch(
+          `${API_BASE}/geo/reverse?lat=${latitude.toFixed(6)}&lng=${longitude.toFixed(6)}`,
+        );
+        const data = (await res.json().catch(() => null)) as
+          | { ok?: boolean; formattedAddress?: string; city?: string; pincode?: string }
+          | null;
+        if (res.ok && data?.ok && data.formattedAddress) {
+          setLocality(data.formattedAddress);
+          if (data.city) setCity(data.city);
+          if (data.pincode) setPincode(data.pincode);
+          setLocSource("gps");
+        } else if (userInitiated) {
+          // Reverse geocode unavailable — keep the flow alive by nudging the
+          // user to search/manual instead of dead-ending (explicit taps only).
+          toast.info("Found you, but couldn't name the spot — search your area or enter it manually");
         }
-      },
-      () => {
+      } catch {
+        if (userInitiated) {
+          toast.info("Couldn't resolve your location — search your area instead");
+        }
+      } finally {
         setLocating(false);
+      }
+    };
+
+    const HIGH_ACCURACY: PositionOptions = { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 };
+    const LOW_ACCURACY: PositionOptions = { enableHighAccuracy: false, timeout: 8000, maximumAge: 300_000 };
+
+    const onError = (err: GeolocationPositionError, isRetry: boolean) => {
+      // PERMISSION_DENIED is never retryable — distinct, actionable copy.
+      if (err.code === err.PERMISSION_DENIED) {
+        setLocating(false);
+        if (userInitiated) {
+          toast.info(
+            "Location permission is off for this site — allow it in your browser settings, or search your area instead",
+          );
+        }
+        return;
+      }
+      // TIMEOUT / POSITION_UNAVAILABLE: retry once at low accuracy, keeping
+      // the spinner up, before surfacing anything.
+      if (!isRetry) {
+        navigator.geolocation.getCurrentPosition(onPosition, (e) => onError(e, true), LOW_ACCURACY);
+        return;
+      }
+      setLocating(false);
+      if (userInitiated) {
         toast.info("Couldn't get your location — search your area or enter the address manually");
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
-    );
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(onPosition, (e) => onError(e, false), HIGH_ACCURACY);
   };
 
   // Auto-pick: when the flow opens for a NEW address and the browser has
@@ -242,7 +354,8 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
         if (cancelled || autoLocatedRef.current) return;
         if (status.state === "granted") {
           autoLocatedRef.current = true;
-          handleUseCurrentLocation();
+          // Silent: a failed auto-locate must not toast an unprompted banner.
+          handleUseCurrentLocation(false);
         }
       })
       .catch(() => {
@@ -375,7 +488,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                       <button
                         key={sg.id}
                         type="button"
-                        onClick={() => choosePlace(sg.id, sg.main)}
+                        onClick={() => choosePlace(sg)}
                         className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left"
                         style={{ borderBottom: "1px solid var(--ln)" }}
                       >
@@ -392,10 +505,17 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
                 )}
               </div>
 
+              {/* Inline search status — the box is never a silent dead-end. */}
+              {searchHint && suggestions.length === 0 && (
+                <p className="fine -mt-1" style={{ color: "var(--mut)" }}>
+                  {searchHint}
+                </p>
+              )}
+
               {/* GPS */}
               <button
                 type="button"
-                onClick={handleUseCurrentLocation}
+                onClick={() => handleUseCurrentLocation(true)}
                 disabled={locating}
                 className={`btn btn-g btn-blk ${locating ? "dis" : ""}`}
                 style={{ color: "var(--safb)", borderColor: "var(--saf)" }}

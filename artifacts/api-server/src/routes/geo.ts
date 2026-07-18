@@ -19,11 +19,15 @@ import { logger } from "../lib/logger";
 const router: IRouter = Router();
 
 const REVERSE_TIMEOUT_MS = 4_000;
+const SEARCH_TIMEOUT_MS = 4_000;
 const CACHE_MAX = 500;
 // ~11m grid — a GPS fix twice from the same spot hits the cache.
-const cache = new Map<string, ReverseResult>();
+const cache = new Map<string, GeoPlace>();
+// Normalized-query cache for /geo/search — the same typed area re-searched
+// (debounced keystrokes) only costs one upstream call.
+const searchCache = new Map<string, GeoPlace[]>();
 
-interface ReverseResult {
+interface GeoPlace {
   formattedAddress: string;
   city: string;
   pincode: string;
@@ -33,12 +37,34 @@ function cacheKey(lat: number, lng: number): string {
   return `${lat.toFixed(4)},${lng.toFixed(4)}`;
 }
 
-function remember(key: string, value: ReverseResult): void {
+function remember(key: string, value: GeoPlace): void {
   if (cache.size >= CACHE_MAX) {
     const oldest = cache.keys().next().value;
     if (typeof oldest === "string") cache.delete(oldest);
   }
   cache.set(key, value);
+}
+
+function rememberSearch(key: string, value: GeoPlace[]): void {
+  if (searchCache.size >= CACHE_MAX) {
+    const oldest = searchCache.keys().next().value;
+    if (typeof oldest === "string") searchCache.delete(oldest);
+  }
+  searchCache.set(key, value);
+}
+
+/** Pull locality + postal_code out of a Google address_components array. */
+function placeFrom(result: {
+  formatted_address?: string;
+  address_components?: Array<{ long_name: string; types: string[] }>;
+}): GeoPlace {
+  let city = "";
+  let pincode = "";
+  for (const comp of result.address_components ?? []) {
+    if (comp.types.includes("locality")) city = comp.long_name;
+    else if (comp.types.includes("postal_code")) pincode = comp.long_name;
+  }
+  return { formattedAddress: result.formatted_address ?? "", city, pincode };
 }
 
 router.get("/geo/reverse", async (req: Request, res: Response) => {
@@ -101,22 +127,84 @@ router.get("/geo/reverse", async (req: Request, res: Response) => {
       res.json({ ok: true, formattedAddress: "", city: "", pincode: "" });
       return;
     }
-    const first = json.results[0];
-    let city = "";
-    let pincode = "";
-    for (const comp of first.address_components ?? []) {
-      if (comp.types.includes("locality")) city = comp.long_name;
-      else if (comp.types.includes("postal_code")) pincode = comp.long_name;
-    }
-    const value: ReverseResult = {
-      formattedAddress: first.formatted_address ?? "",
-      city,
-      pincode,
-    };
+    const value = placeFrom(json.results[0]);
     remember(key, value);
     res.json({ ok: true, ...value });
   } catch (err) {
     logger.warn({ err }, "geo/reverse: request failed/timed out");
+    res.status(502).json({ ok: false, error: "geocoder unavailable" });
+  } finally {
+    clearTimeout(timer);
+  }
+});
+
+/**
+ * `/geo/search` — server-proxied forward geocoding (query → candidate
+ * addresses) for the picker's search box. Same doctrine as /geo/reverse:
+ * this is the fallback the picker uses when the browser Places (New) REST
+ * key is absent or its call fails, so the search box is never a silent
+ * dead-end. Constrained to India (region=in + components=country:IN) and
+ * per-IP rate limited so it can't be used as a free geocoding proxy.
+ */
+router.get("/geo/search", async (req: Request, res: Response) => {
+  const q = String(req.query["q"] ?? "").trim();
+  if (q.length < 3) {
+    res.status(400).json({ ok: false, error: "q must be at least 3 characters" });
+    return;
+  }
+
+  const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+  const allowed = await rateLimit(`geo:search:${ip}`, 60_000, 20);
+  if (!allowed) {
+    res.status(429).json({ ok: false, error: "rate limited" });
+    return;
+  }
+
+  const norm = q.toLowerCase().replace(/\s+/g, " ");
+  const hit = searchCache.get(norm);
+  if (hit) {
+    res.json({ ok: true, results: hit, cached: true });
+    return;
+  }
+
+  const apiKey = process.env["GOOGLE_API_KEY"];
+  if (!apiKey) {
+    res.status(503).json({ ok: false, error: "geocoding not configured" });
+    return;
+  }
+
+  const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+  url.searchParams.set("address", q);
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("region", "in");
+  url.searchParams.set("components", "country:IN");
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), SEARCH_TIMEOUT_MS);
+  try {
+    const gres = await fetch(url.toString(), { signal: ctrl.signal });
+    if (!gres.ok) {
+      logger.warn({ status: gres.status }, "geo/search: google non-200");
+      res.status(502).json({ ok: false, error: "geocoder unavailable" });
+      return;
+    }
+    const json = (await gres.json()) as {
+      status?: string;
+      results?: Array<{
+        formatted_address?: string;
+        address_components?: Array<{ long_name: string; types: string[] }>;
+      }>;
+    };
+    if (json.status !== "OK" || !json.results?.length) {
+      // ZERO_RESULTS is a normal "no matches" outcome — not an error.
+      res.json({ ok: true, results: [] });
+      return;
+    }
+    const results = json.results.slice(0, 6).map(placeFrom);
+    rememberSearch(norm, results);
+    res.json({ ok: true, results });
+  } catch (err) {
+    logger.warn({ err }, "geo/search: request failed/timed out");
     res.status(502).json({ ok: false, error: "geocoder unavailable" });
   } finally {
     clearTimeout(timer);
