@@ -54,7 +54,6 @@ import {
   Building2,
   ShieldCheck,
   ClipboardList,
-  IndianRupee,
   Phone,
   AlertTriangle,
   CalendarClock,
@@ -95,12 +94,6 @@ interface VerifyOtpResponse {
   user: { id: string; firstName: string | null } | null;
   error?: string;
 }
-
-// Order matters — the first preset is what users see "first" and most
-// successful tip UIs lead with a positive amount instead of zero, so
-// "No tip" is moved to the end and styled less prominently. Per UX
-// audit finding C6.
-const TIP_PRESETS = [2000, 5000, 10000, 0];
 
 export default function V2Checkout() {
   const navigate = useNavigate();
@@ -224,13 +217,6 @@ export default function V2Checkout() {
     }, 0);
   }, [selectedAddons, addonsQuery.data]);
   const [showNewAddressFlow, setShowNewAddressFlow] = useState(false);
-  const [tipAmount, setTipAmount] = useState(0);
-  const [customTip, setCustomTip] = useState("");
-  // Replaces the old `tipAmount === -1` sentinel — that pattern was
-  // fragile because -1 silently meant "custom" everywhere it appeared.
-  // A boolean separates "is the user typing a custom amount" from
-  // "what's the selected preset" cleanly.
-  const [isCustomTip, setIsCustomTip] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   // Holds the Idempotency-Key AND the orderId for the in-flight
@@ -644,9 +630,9 @@ export default function V2Checkout() {
     };
   }, []);
 
-  const effectiveTip = isCustomTip
-    ? Math.round((parseFloat(customTip) || 0) * 100)
-    : tipAmount;
+  // No tip selector is offered (see checkout form) — there is no
+  // server-side capture path for a tip, so it must never be non-zero here.
+  const effectiveTip = 0;
   const selectedPickup =
     fulfillmentType === "pickup"
       ? pickupLocations.find((p) => p.id === selectedPickupId) ?? null
@@ -678,7 +664,12 @@ export default function V2Checkout() {
   const hasFreeDelivery = fulfillmentType === "pickup" || deliveryFee === 0;
   // Statutory GST split: prepared food 5% (no ITC) + delivery service 18%.
   const gst = Math.round(discountedSubtotal * 0.05) + Math.round(deliveryFee * 0.18);
-  const grossTotal = discountedSubtotal + gst + deliveryFee + effectiveTip + addonTotal;
+  // grossTotal (and razorpayTotal below) intentionally EXCLUDE addonTotal:
+  // add-ons are not part of the Razorpay-captured amount (chargePaise) — they
+  // are recorded separately via POST /addons/attach after payment succeeds.
+  // Folding them into the number shown on the "Pay" button / Razorpay modal
+  // would show the customer a total higher than what's actually charged.
+  const grossTotal = discountedSubtotal + gst + deliveryFee + effectiveTip;
   // Server only redeems against the (discounted) meal subtotal; cap here too
   // so the UI total matches the server final total exactly.
   const creditApplied =
@@ -937,18 +928,20 @@ export default function V2Checkout() {
       serverSubtotalPaise = out.finalPaise;
       serverDeliveryFeePaise = out.deliveryFeePaise;
       // Bill EXACTLY the server-computed charge, never a client recomputation.
-      // Tip and add-ons are checkout-only extras not modeled in the server
-      // order total, so they are the only things added ON TOP of chargePaise
-      // (GST / delivery / discounts / credits are already inside chargePaise —
-      // do NOT re-add them here or the customer is double-charged).
-      const tipPaise = effectiveTip;
-      const addonPaise = addonTotal;
+      // Tip and add-ons are NOT part of this charge: there is no rider-tip
+      // capture path at all, and add-ons are only recorded via a separate
+      // post-payment bookkeeping call (POST /addons/attach) that does not
+      // add to the Razorpay-captured amount. The Razorpay order itself is
+      // priced server-side from out.chargePaise only (GST / delivery /
+      // discounts / credits are already inside chargePaise — do NOT re-add
+      // them here or the customer is double-charged), so the amount we show
+      // in the modal / "Pay" button must match that exactly.
       // Corporate subsidy is a client/corporate-side reduction that the server
       // order total does NOT model: the company is billed `subsidyApplied` and
       // the customer's card is charged the remainder. Cap it to the payable so
       // the card charge can never go negative, and bill the company exactly the
       // amount that reduced the card charge (avoids over-collecting).
-      const grossPayable = out.chargePaise + tipPaise + addonPaise;
+      const grossPayable = out.chargePaise;
       subsidyApplied = Math.min(Math.max(0, subsidyAvailable), grossPayable);
       const finalCharge = Math.max(0, grossPayable - subsidyApplied);
 
@@ -1138,16 +1131,18 @@ export default function V2Checkout() {
       }
 
       // Payment confirmed. The recorded local total is the amount actually
-      // charged (chargePaise + tip + add-ons). The server's finalPaise/​
-      // deliveryFeePaise are recorded separately for the order breakdown.
+      // charged via Razorpay (chargePaise, net of subsidy). The server's
+      // finalPaise/deliveryFeePaise are recorded separately for the order
+      // breakdown.
       finalTotal = finalCharge;
       setCreditBalance(out.balancePaise);
       referralAwarded = out.referral.awarded;
       serverOrderIdFromFinalize = out.serverOrderId;
       // Attach add-ons (drinks/snacks/supplements) to the freshly-created
       // server order. Failures here should not block the order itself —
-      // the user already paid. The add-on amount is already inside finalCharge
-      // (billed above), so we do NOT add r.addedPaise to the total again.
+      // the user already paid. Add-ons are NOT part of finalCharge (never
+      // billed via Razorpay); this call only records them for
+      // fulfillment/bookkeeping on the already-placed order.
       if (out.serverOrderId && selectedAddons.size > 0) {
         try {
           const items = Array.from(selectedAddons.entries()).map(
@@ -1310,7 +1305,9 @@ export default function V2Checkout() {
       items: [...items],
       // Server-authoritative breakdown: subtotal is the server's post-discount
       // meal total (finalPaise) and deliveryFee is the server's fee. total is
-      // the amount actually charged (chargePaise + tip + add-ons).
+      // the amount actually charged via Razorpay (chargePaise, net of
+      // subsidy) — it excludes tip (never charged) and add-ons (recorded
+      // separately, not part of the Razorpay charge).
       subtotal: serverSubtotalPaise,
       deliveryFee: serverDeliveryFeePaise,
       tip: effectiveTip,
@@ -1710,75 +1707,11 @@ export default function V2Checkout() {
             )}
           </div>
 
-          {/* Tip for Rider */}
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4">
-            <div className="fx ac gap8">
-              <Bike className="w-4 h-4" style={{ color: "var(--safb)" }} />
-              <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Tip for Rider</div>
-              <span className="fine" style={{ marginLeft: "auto" }}>100% goes to your delivery partner</span>
-            </div>
-
-            <div className="fx gap8">
-              {TIP_PRESETS.map((tip) => {
-                const selected = !isCustomTip && tipAmount === tip;
-                return (
-                  <button
-                    key={tip}
-                    className={selected ? "btn btn-s f1" : "btn btn-g f1"}
-                    style={{ height: 44, fontSize: 12 }}
-                    onClick={() => {
-                      setTipAmount(tip);
-                      setCustomTip("");
-                      setIsCustomTip(false);
-                    }}
-                  >
-                    {tip === 0 ? "No Tip" : `+₹${(tip / 100).toFixed(0)}`}
-                  </button>
-                );
-              })}
-              <button
-                className={isCustomTip ? "btn btn-s" : "btn btn-g"}
-                style={{ height: 44, fontSize: 12, padding: "0 12px" }}
-                onClick={() => {
-                  setIsCustomTip(true);
-                  setTipAmount(0);
-                }}
-              >
-                Custom
-              </button>
-            </div>
-
-            {isCustomTip && (
-              <div className="inp">
-                <IndianRupee className="w-4 h-4" style={{ color: "var(--fnt)" }} />
-                <input
-                  placeholder="Enter custom tip amount"
-                  type="text"
-                  inputMode="decimal"
-                  value={customTip}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/[^0-9.]/g, "");
-                    const parts = raw.split(".");
-                    const cleaned =
-                      parts.length > 1
-                        ? `${parts[0]}.${parts[1].slice(0, 2)}`
-                        : raw;
-                    setCustomTip(cleaned);
-                  }}
-                  min="0"
-                  autoFocus
-                  aria-label="Custom tip amount in rupees"
-                />
-              </div>
-            )}
-
-            {effectiveTip > 0 && (
-              <p className="fine sagec fx ac gap6">
-                <ShieldCheck className="w-3 h-3" />
-                Your rider will receive ₹{(effectiveTip / 100).toFixed(0)} extra
-              </p>
-            )}
-          </div>
+          {/* Rider tip is intentionally not offered here: there is no
+              server-side capture path for it (Razorpay only ever bills
+              chargePaise), so presenting a tip selector would collect an
+              amount that's never actually charged. Re-add once a real
+              capture mechanism exists. */}
 
           {/* Payment */}
           <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap12 mb14 p-4">
@@ -2404,24 +2337,12 @@ export default function V2Checkout() {
                     <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
                   </div>
                 )}
-                {addonTotal > 0 && (
-                  <div className="billrow" style={{ padding: "4px 0" }}>
-                    <span>Add-ons</span>
-                    <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(addonTotal)}</span>
-                  </div>
-                )}
                 <div className="billrow" style={{ padding: "4px 0" }}>
                   <span>{fulfillmentType === "pickup" ? "Pickup" : "Delivery"}</span>
                   <span className={deliveryFee === 0 ? "sagec" : "mono"} style={deliveryFee === 0 ? undefined : { color: "var(--tx)" }}>
                     {fulfillmentType === "pickup" ? "Self-collect" : deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
                   </span>
                 </div>
-                {effectiveTip > 0 && (
-                  <div className="billrow" style={{ padding: "4px 0" }}>
-                    <span>Rider Tip</span>
-                    <span className="mono safc">{formatPrice(effectiveTip)}</span>
-                  </div>
-                )}
                 {creditApplied > 0 && (
                   <div className="billrow" style={{ padding: "4px 0" }}>
                     <span>Loyalty credits</span>
@@ -2436,9 +2357,15 @@ export default function V2Checkout() {
                 )}
                 <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: "4px 0" }} />
                 <div className="billrow" style={{ padding: "4px 0", color: "var(--tx)", fontWeight: 600 }}>
-                  <span>Total</span>
+                  <span>Charged via Razorpay</span>
                   <span className="mono safc">{formatPrice(razorpayTotal)}</span>
                 </div>
+                {addonTotal > 0 && (
+                  <div className="billrow" style={{ padding: "4px 0 0", color: "var(--mut)", fontSize: 12 }}>
+                    <span>Add-ons (billed separately, not charged now)</span>
+                    <span className="mono" style={{ color: "var(--mut)" }}>{formatPrice(addonTotal)}</span>
+                  </div>
+                )}
                 <div className="fx ac jc gap16" style={{ fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--mut)", fontWeight: 600, marginTop: 14, padding: "8px 0 0", borderTop: "1px solid var(--ln)" }}>
                   <span className="fx ac gap6">
                     <ShieldCheck className="w-3.5 h-3.5" style={{ color: "var(--sage)" }} />
@@ -2573,12 +2500,6 @@ function V2MobilePayBar({
               <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(gst)}</span>
             </div>
           )}
-          {addonTotal > 0 && (
-            <div className="billrow" style={{ padding: 0 }}>
-              <span>Add-ons</span>
-              <span className="mono" style={{ color: "var(--tx)" }}>{formatPrice(addonTotal)}</span>
-            </div>
-          )}
           <div className="billrow" style={{ padding: 0 }}>
             <span>{fulfillmentType === "pickup" ? "Pickup" : "Delivery"}</span>
             <span className="mono">
@@ -2602,14 +2523,17 @@ function V2MobilePayBar({
           {subsidyAvailable > 0 && (
             <div className="billrow" style={{ padding: 0 }}><span>Company subsidy</span><span className="mono sagec">-{formatPrice(subsidyAvailable)}</span></div>
           )}
-          {effectiveTip > 0 && (
-            <div className="billrow" style={{ padding: 0 }}><span>Rider tip</span><span className="mono safc">+{formatPrice(effectiveTip)}</span></div>
-          )}
           <hr style={{ border: "none", borderTop: "1px solid var(--ln)", margin: "4px 0" }} />
           <div className="billrow" style={{ padding: 0, color: "var(--tx)", fontWeight: 600 }}>
-            <span>Total</span>
+            <span>Charged via Razorpay</span>
             <span className="mono safc">{formatPrice(razorpayTotal)}</span>
           </div>
+          {addonTotal > 0 && (
+            <div className="billrow" style={{ padding: "6px 0 0", color: "var(--mut)", fontSize: 12 }}>
+              <span>Add-ons (billed separately, not charged now)</span>
+              <span className="mono" style={{ color: "var(--mut)" }}>{formatPrice(addonTotal)}</span>
+            </div>
+          )}
         </div>
       )}
       <p className="fine tc" style={{ fontSize: 10, color: "var(--mut)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", background: "var(--s1)", border: "1px solid var(--ln)", borderRadius: 8, padding: "4px 10px", marginBottom: 6 }}>
