@@ -64,7 +64,7 @@ router.post("/admin/login", async (req: Request, res: Response) => {
   const passOk = verifyPassword(password, expectedHash);
   const userOk = username === expectedUser;
   if (!userOk || !passOk) {
-    res.status(401).json({ ok: false, error: "invalid credentials" });
+    res.status(401).json({ ok: false, error: "invalid_credentials" });
     return;
   }
 
