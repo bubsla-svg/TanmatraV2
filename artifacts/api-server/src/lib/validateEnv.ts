@@ -32,14 +32,17 @@ export function validateEnv(): void {
       warnings.push("GOOGLE_API_KEY unset — Gemini AI agents (coach/support/ops/reorder/CMS) and server-side geocoding return errors");
     }
 
-    // Twilio Verify OTP: phone-login OTP is the customer auth entry point in
-    // prod. Without the full trio, sms.ts falls back to mock mode and no real
-    // OTP SMS is sent — a fail-closed login for real users.
+    // Twilio powers OPTIONAL server-sent SMS only: delivery-delay alerts,
+    // WhatsApp updates, and a fallback SMS-OTP path. The primary customer OTP
+    // is Firebase phone-auth (client-side signInWithPhoneNumber + backend
+    // verifyIdToken), which needs no Twilio — so a Firebase-OTP deployment can
+    // leave Twilio fully unset without breaking login. Warn only on a *partial*
+    // config (a footgun: the SMS features stay inert until the trio completes).
     const twilioKeys = ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID"];
     const twilioSet = twilioKeys.filter((k) => process.env[k]);
-    if (twilioSet.length < twilioKeys.length) {
+    if (twilioSet.length > 0 && twilioSet.length < twilioKeys.length) {
       warnings.push(
-        `Twilio OTP not fully configured (${twilioSet.length}/${twilioKeys.length}) — phone OTP falls back to mock mode and real OTP SMS will not send; set ${twilioKeys.join(", ")}`,
+        `Twilio partially configured (${twilioSet.length}/${twilioKeys.length}) — optional SMS features (delivery alerts, WhatsApp, SMS-OTP fallback) stay off until all of ${twilioKeys.join(", ")} are set. Primary OTP is Firebase and needs no Twilio.`,
       );
     }
 
