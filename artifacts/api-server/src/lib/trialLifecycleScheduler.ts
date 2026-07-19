@@ -106,6 +106,12 @@ async function findTrialCompletionAnchor(
  * Finalize an abandoned trial: flip trialState + status, cancel any
  * still-upcoming deliveries, and revoke autopay billing.
  *
+ * Deliberately not routed through routes/subscriptions.ts's
+ * cancelSubscriptionById(): that helper only flips `status`, but abandonment
+ * needs to atomically set `trialState: "ended_abandoned"` alongside it in
+ * the same update. The remaining two steps (cancel upcoming deliveries,
+ * revoke the autopay mandate) intentionally mirror it exactly.
+ *
  * Trial subscriptions never get a Razorpay autopay mandate in the intended
  * flow (a trial's one-off charge doesn't need one) — but the /payments
  * create-order `isRecurring` gate only checks `cadence === "weekly" ||

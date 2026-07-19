@@ -59,6 +59,26 @@ jobs:
       - name: Gate — honest claims (no unbacked "RD Verified" dish badge, T2.1)
         run: pnpm --filter "@workspace/scripts" run verify-honest-claims
 
+      # Schema/migration drift guard. Every change to the Drizzle schema must
+      # ship with a committed migration: `drizzle-kit generate` writes a new
+      # migration file whenever the schema is ahead of the committed snapshot,
+      # so a dirty tree here means a migration was forgotten. Catches the
+      # "schema changed but the migration to apply it was never committed"
+      # class. (It does NOT verify prod has applied the migrations — that's the
+      # job of a deploy-time `drizzle-kit migrate` step.) The dummy DATABASE_URL
+      # only satisfies drizzle.config.ts; `generate` diffs offline and never
+      # connects.
+      - name: Gate — Drizzle schema has a committed migration (no drift)
+        run: |
+          DATABASE_URL="postgres://drift:guard@127.0.0.1:5432/drift_guard" \
+            pnpm --filter "@workspace/db" exec drizzle-kit generate --config ./drizzle.config.ts --name ci_drift_guard
+          if [ -n "$(git status --porcelain lib/db/drizzle)" ]; then
+            echo "::error::Drizzle schema changed without a committed migration. Run 'pnpm --filter @workspace/db exec drizzle-kit generate' locally and commit lib/db/drizzle/*."
+            git --no-pager status --short lib/db/drizzle
+            exit 1
+          fi
+          echo "Drizzle schema and committed migrations are in sync."
+
       # Build once; the geography lint and SSR checker scan build/client.
       - name: Build SPA
         run: pnpm --filter "@workspace/tanmatra" run build

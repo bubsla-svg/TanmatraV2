@@ -3,7 +3,7 @@ import {
   forecastSnapshotsTable,
   ordersTable,
 } from "@workspace/db";
-import { and, gte, ne, sql } from "drizzle-orm";
+import { and, eq, gte, ne, sql } from "drizzle-orm";
 
 export type Daypart = "breakfast" | "lunch" | "snacks" | "dinner";
 export type Granularity = "daypart" | "hour";
@@ -75,6 +75,7 @@ export async function computeForecast(opts: {
   const conditions = [
     gte(ordersTable.createdAt, since),
     ne(ordersTable.status, "cancelled"),
+    eq(ordersTable.orderKind, "meal"),
   ];
 
   const rows = await db
@@ -190,6 +191,7 @@ export async function backfillActuals(opts: {
       and(
         gte(ordersTable.createdAt, since),
         ne(ordersTable.status, "cancelled"),
+        eq(ordersTable.orderKind, "meal"),
       ),
     );
   // (date, daypart, zone, slug) -> qty
