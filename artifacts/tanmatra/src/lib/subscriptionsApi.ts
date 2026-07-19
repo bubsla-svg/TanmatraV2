@@ -49,7 +49,21 @@ export interface Subscription {
   pincode: string | null;
   phone: string | null;
   pricePerDeliveryPaise: number;
+  // Present only on day-first plans (one dated delivery per planned day per
+  // cycle) — when set, mealsPerDelivery is server-derived from these items
+  // and can't be changed independently via change-plan.
+  dayPlan?: SubscriptionDayPlanEntry[] | null;
   notes: string | null;
+  // A requested cadence/mealsPerDelivery change (POST /change-plan), applied
+  // at the NEXT billing cycle — never mid-cycle. See subscriptionsApi.changePlan.
+  pendingCadence: SubscriptionCadence | null;
+  pendingMealsPerDelivery: number | null;
+  pendingPricePerDeliveryPaise: number | null;
+  pendingChangeRequestedAt: string | null;
+  // true while a price-increasing change is waiting on a fresh Razorpay OTP
+  // re-authorisation (changePlanReauthOrder + changePlanConfirm) before it is
+  // even eligible to apply at the next cycle.
+  pendingChangeReauthRequired: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -204,9 +218,51 @@ export const subscriptionsApi = {
       { method: "POST", body: JSON.stringify({ deliveryWindow }) },
     ),
   generateNext: (id: number) =>
-    request<{ deliveries: SubscriptionDelivery[] }>(
+    request<{ deliveries: SubscriptionDelivery[]; planChangeApplied?: boolean }>(
       `/subscriptions/${id}/generate-next`,
       { method: "POST" },
+    ),
+  /**
+   * Requests a cadence and/or mealsPerDelivery change, effective at the NEXT
+   * billing cycle (never mid-cycle). The server always recomputes the price
+   * itself — `clientQuotedPricePerDeliveryPaise` is accepted for
+   * tamper-detection logging only and never trusted.
+   *
+   * `requiresReauth: true` means the change is a price increase against a
+   * live autopay mandate: it is stored as pending but will NOT take effect
+   * until `changePlanReauthOrder` + `changePlanConfirm` complete.
+   */
+  changePlan: (
+    id: number,
+    input: {
+      cadence?: SubscriptionCadence;
+      mealsPerDelivery?: number;
+      clientQuotedPricePerDeliveryPaise?: number;
+    },
+  ) =>
+    request<{
+      subscription: Subscription;
+      requiresReauth: boolean;
+      currentPricePerDeliveryPaise: number;
+      newPricePerDeliveryPaise: number;
+    }>(`/subscriptions/${id}/change-plan`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  /** Creates the Razorpay order + recurring token for a pending plan-change re-authorisation. */
+  changePlanReauthOrder: (id: number) =>
+    request<{ razorpayOrderId: string; amount: number; currency: string; keyId: string }>(
+      `/subscriptions/${id}/change-plan/reauth-order`,
+      { method: "POST" },
+    ),
+  /** Confirms a plan-change re-authorisation after the Razorpay modal completes. */
+  changePlanConfirm: (
+    id: number,
+    payment: { razorpayPaymentId: string; razorpayOrderId: string; razorpaySignature: string },
+  ) =>
+    request<{ subscription: Subscription; requiresReauth: boolean }>(
+      `/subscriptions/${id}/change-plan/confirm`,
+      { method: "POST", body: JSON.stringify(payment) },
     ),
   skip: (deliveryId: number) =>
     request<{ delivery: SubscriptionDelivery }>(

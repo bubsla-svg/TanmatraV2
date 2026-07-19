@@ -18,20 +18,15 @@ import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 import { isCaptureAmountReconciled, resolvePayableAmountPaise } from "../lib/paymentIntegrity";
 import { requireOps } from "../lib/adminGate";
 import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
+import {
+  razorpayCredentials,
+  razorpayBasicAuth,
+  getOrCreateRazorpayCustomer,
+  fetchRazorpayPayment,
+  upsertActiveMandate,
+} from "../lib/razorpayRecurring";
 
 const router: IRouter = Router();
-
-/** Returns [keyId, keySecret] or null when either env var is absent. */
-function razorpayCredentials(): [string, string] | null {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  if (!keyId || !keySecret) return null;
-  return [keyId, keySecret];
-}
-
-function razorpayBasicAuth(keyId: string, keySecret: string): string {
-  return Buffer.from(`${keyId}:${keySecret}`).toString("base64");
-}
 
 // ---------------------------------------------------------------------------
 // Schema definitions
@@ -60,65 +55,6 @@ const upiIntentSchema = z.object({
   orderId: z.string().max(40),
   phone: z.string().max(20),
 });
-
-async function getOrCreateRazorpayCustomer(
-  userId: string,
-  keyId: string,
-  keySecret: string,
-  log: any
-): Promise<string> {
-  const [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, userId))
-    .limit(1);
-
-  if (!user) {
-    throw new Error("user not found");
-  }
-
-  const rpRes = await fetch("https://api.razorpay.com/v1/customers", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Subscription Customer",
-      email: user.email || undefined,
-      contact: user.phoneE164 || undefined,
-      fail_existing: 0,
-    }),
-  });
-
-  if (!rpRes.ok) {
-    const body = await rpRes.text();
-    log.error({ status: rpRes.status, body }, "Razorpay customer creation failed");
-    throw new Error("Razorpay customer creation failed");
-  }
-
-  const customer = (await rpRes.json()) as { id: string };
-  return customer.id;
-}
-
-async function fetchRazorpayPayment(
-  paymentId: string,
-  keyId: string,
-  keySecret: string
-): Promise<any> {
-  const res = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`failed to fetch payment from Razorpay: ${res.statusText}`);
-  }
-
-  return res.json();
-}
 
 async function registerAutopayMandate(
   orderId: number,
@@ -158,44 +94,7 @@ async function registerAutopayMandate(
     return null;
   }
 
-  const days = subDelivery.cadence === "weekly" ? 7 : subDelivery.cadence === "fortnightly" ? 14 : 30;
-  const nextChargeAt = new Date();
-  nextChargeAt.setDate(nextChargeAt.getDate() + days);
-
-  await db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select()
-      .from(subscriptionMandatesTable)
-      .where(eq(subscriptionMandatesTable.subscriptionId, subDelivery.subscriptionId))
-      .limit(1);
-
-    if (existing) {
-      await tx
-        .update(subscriptionMandatesTable)
-        .set({
-          razorpayCustomerId: customerId,
-          razorpayTokenId: tokenId,
-          status: "active",
-          nextChargeAt,
-        })
-        .where(eq(subscriptionMandatesTable.id, existing.id));
-    } else {
-      await tx
-        .insert(subscriptionMandatesTable)
-        .values({
-          subscriptionId: subDelivery.subscriptionId,
-          razorpayCustomerId: customerId,
-          razorpayTokenId: tokenId,
-          status: "active",
-          nextChargeAt,
-        });
-    }
-
-    await tx
-      .update(subscriptionsTable)
-      .set({ status: "active", updatedAt: new Date() })
-      .where(eq(subscriptionsTable.id, subDelivery.subscriptionId));
-  });
+  await upsertActiveMandate(subDelivery.subscriptionId, subDelivery.cadence, customerId, tokenId);
 
   return {
     autopayDisclaimer: "Weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge..."

@@ -29,6 +29,13 @@
       "when": 1784410072879,
       "tag": "0003_add_marketplace_order_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784470275802,
+      "tag": "0004_striped_lockheed",
+      "breakpoints": true
     }
   ]
 }

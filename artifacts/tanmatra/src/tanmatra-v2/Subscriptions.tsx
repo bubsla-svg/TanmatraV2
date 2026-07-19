@@ -5,6 +5,7 @@ import {
   subscriptionsApi,
   CADENCE_LABEL,
   type Subscription,
+  type SubscriptionCadence,
   type SubscriptionDelivery,
   type SubscriptionMember,
   type SubscriptionItem,
@@ -18,6 +19,7 @@ import { whatsappLink } from "@/lib/support";
 import type { DishData } from "@/lib/menuData";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
+import { openRazorpayCheckout, razorpayConfigured } from "@/lib/razorpayClient";
 
 interface LoyaltyProgress {
   subscriptionId: number;
@@ -181,6 +183,8 @@ export default function V2Subscriptions() {
   const [windowEditOpen, setWindowEditOpen] = useState(false);
   const [pendingWindow, setPendingWindow] = useState(TIME_WINDOWS[1]);
   const [swapDelivery, setSwapDelivery] = useState<SubscriptionDelivery | null>(null);
+  const [changePlanOpen, setChangePlanOpen] = useState(false);
+  const [changePlanInitialStep, setChangePlanInitialStep] = useState<"picker" | "reauth">("picker");
 
   const refreshList = useCallback(async () => {
     try {
@@ -459,6 +463,14 @@ export default function V2Subscriptions() {
                 "Added 4 more deliveries",
               )
             }
+            onChangePlan={() => {
+              setChangePlanInitialStep("picker");
+              setChangePlanOpen(true);
+            }}
+            onReauthorize={() => {
+              setChangePlanInitialStep("reauth");
+              setChangePlanOpen(true);
+            }}
             onSkip={(d) => setSkipConfirm({ deliveryId: d.id, date: d.scheduledFor })}
             onSwap={(d) => setSwapDelivery(d)}
             onReschedule={(d) => {
@@ -488,6 +500,18 @@ export default function V2Subscriptions() {
           }}
         />
       )}
+
+      {/* Change plan (cadence / mealsPerDelivery) */}
+      <ChangePlanDialog
+        subscription={detail?.subscription ?? null}
+        open={changePlanOpen}
+        initialStep={changePlanInitialStep}
+        onClose={() => setChangePlanOpen(false)}
+        onChanged={async () => {
+          if (activeId !== null) await refreshDetail(activeId);
+          await refreshList();
+        }}
+      />
 
       {/* Edit delivery window */}
       {windowEditOpen && (
@@ -767,6 +791,8 @@ function DetailView({
   onCancel,
   onEditWindow,
   onGenerateMore,
+  onChangePlan,
+  onReauthorize,
   onSkip,
   onSwap,
   onReschedule,
@@ -780,6 +806,8 @@ function DetailView({
   onCancel: () => void;
   onEditWindow: () => void;
   onGenerateMore: () => void;
+  onChangePlan: () => void;
+  onReauthorize: () => void;
   onSkip: (d: SubscriptionDelivery) => void;
   onSwap: (d: SubscriptionDelivery) => void;
   onReschedule: (d: SubscriptionDelivery) => void;
@@ -861,6 +889,11 @@ function DetailView({
               <i className="ph-bold ph-arrows-clockwise" /> Add 4 more
             </button>
           )}
+          {!trial && s.status === "active" && (
+            <button className="btn btn-g" style={ACT} onClick={onChangePlan}>
+              <i className="ph-bold ph-sliders-horizontal" /> Change plan
+            </button>
+          )}
           {s.status !== "cancelled" && (
             <button
               className="btn btn-g"
@@ -884,6 +917,54 @@ function DetailView({
           >
             <i className="ph-bold ph-pause-circle" />
             <span>This plan is paused — no deliveries or charges until you resume.</span>
+          </div>
+        )}
+
+        {/* Pending plan change — never applied mid-cycle, see backend note.
+            Two distinct states: still needs a fresh autopay authorisation
+            (price increase), or already eligible and just waiting for the
+            next cycle to roll over. */}
+        {s.pendingCadence != null && (
+          <div
+            className="note mt12"
+            style={
+              s.pendingChangeReauthRequired
+                ? {
+                    background: "color-mix(in oklab, var(--color-warning) 14%, transparent)",
+                    borderColor: "color-mix(in oklab, var(--color-warning) 45%, transparent)",
+                    color: "var(--safb)",
+                  }
+                : { background: "var(--s2)", borderColor: "var(--ln2)", color: "var(--mut)" }
+            }
+          >
+            <i className={`ph-bold ${s.pendingChangeReauthRequired ? "ph-warning-circle" : "ph-info"}`} />
+            <div className="f1">
+              {s.pendingChangeReauthRequired ? (
+                <>
+                  <span>
+                    Action needed: re-authorise autopay to switch to{" "}
+                    <strong>{CADENCE_LABEL[s.pendingCadence]}</strong>
+                    {s.pendingMealsPerDelivery != null ? `, ${s.pendingMealsPerDelivery} meals` : ""} at{" "}
+                    {s.pendingPricePerDeliveryPaise != null ? formatPrice(s.pendingPricePerDeliveryPaise) : ""}
+                    /delivery. This won't take effect until you confirm.
+                  </span>
+                  <button
+                    className="btn btn-p mt10"
+                    style={{ ...ACT, display: "inline-flex" }}
+                    onClick={onReauthorize}
+                  >
+                    <i className="ph-bold ph-shield-check" /> Re-authorise now
+                  </button>
+                </>
+              ) : (
+                <span>
+                  Switching to <strong>{CADENCE_LABEL[s.pendingCadence]}</strong>
+                  {s.pendingMealsPerDelivery != null ? `, ${s.pendingMealsPerDelivery} meals` : ""} at{" "}
+                  {s.pendingPricePerDeliveryPaise != null ? formatPrice(s.pendingPricePerDeliveryPaise) : ""}
+                  /delivery, starting your next cycle.
+                </span>
+              )}
+            </div>
           </div>
         )}
 
@@ -1312,6 +1393,338 @@ function SwapDialog({
               {saving ? "Saving…" : "Save delivery"}
             </button>
           </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Change plan (cadence / mealsPerDelivery) ────────────────────────────
+// Mirrors Subscribe.tsx's cadence picker (weekly/fortnightly/monthly, priced
+// via the same /subscriptions/quote call) in a simplified, single-step form
+// scoped to an EXISTING subscription. A change is never applied immediately —
+// see the backend's applyPendingPlanChangeIfReady — so the only thing this
+// dialog does is: preview a price, submit the request, and — when the price
+// increases against a live autopay mandate — walk the customer through a
+// fresh Razorpay re-authorisation before the change is even eligible to take
+// effect at the next cycle.
+//
+// Standard four states: default (picker with a live quote), loading (quote
+// skeleton / "Saving…" / "Opening secure checkout…" busy labels), empty
+// (selection matches the current plan — Save disabled with a note), error
+// (quote failed → inline retry; save/reauth failed → inline banner, never a
+// silent failure).
+function ChangePlanDialog({
+  subscription,
+  open,
+  initialStep,
+  onClose,
+  onChanged,
+}: {
+  subscription: Subscription | null;
+  open: boolean;
+  initialStep: "picker" | "reauth";
+  onClose: () => void;
+  onChanged: () => void | Promise<void>;
+}) {
+  const [phase, setPhase] = useState<"picker" | "reauth">("picker");
+  const [busy, setBusy] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cadence, setCadence] = useState<SubscriptionCadence>("weekly");
+  const [meals, setMeals] = useState(5);
+  const [quote, setQuote] = useState<{ pricePerDeliveryPaise: number } | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(false);
+  const [quoteRetryTick, setQuoteRetryTick] = useState(0);
+  const [reauthInfo, setReauthInfo] = useState<{ current: number; next: number } | null>(null);
+
+  const hasDayPlan = Boolean(subscription?.dayPlan && subscription.dayPlan.length > 0);
+
+  // Reset to a fresh state every time the dialog opens (or the underlying
+  // subscription changes) — including jumping straight to the reauth step
+  // when opened via the DetailView banner's "Re-authorise now" button.
+  useEffect(() => {
+    if (!open || !subscription) return;
+    setErrorMessage(null);
+    setBusy(false);
+    setCadence(subscription.cadence);
+    setMeals(subscription.mealsPerDelivery);
+    if (
+      initialStep === "reauth" &&
+      subscription.pendingChangeReauthRequired &&
+      subscription.pendingPricePerDeliveryPaise != null
+    ) {
+      setPhase("reauth");
+      setReauthInfo({
+        current: subscription.pricePerDeliveryPaise,
+        next: subscription.pendingPricePerDeliveryPaise,
+      });
+    } else {
+      setPhase("picker");
+      setReauthInfo(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, subscription?.id, initialStep]);
+
+  // Live price preview — the SAME /subscriptions/quote call Subscribe.tsx
+  // uses, so the number shown here can never drift from how the platform
+  // prices a plan elsewhere. This is a preview only: change-plan always
+  // recomputes the real price server-side regardless of what this shows.
+  useEffect(() => {
+    if (!open || phase !== "picker" || !subscription || hasDayPlan) return;
+    let alive = true;
+    setQuoteLoading(true);
+    setQuoteError(false);
+    subscriptionsApi
+      .quote({ cadence, mealsPerDelivery: meals, planType: "standard" })
+      .then((q) => {
+        if (alive) setQuote({ pricePerDeliveryPaise: q.pricePerDeliveryPaise });
+      })
+      .catch(() => {
+        if (alive) setQuoteError(true);
+      })
+      .finally(() => {
+        if (alive) setQuoteLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open, phase, cadence, meals, subscription?.id, hasDayPlan, quoteRetryTick]);
+
+  if (!open || !subscription) return null;
+
+  const isNoop = cadence === subscription.cadence && meals === subscription.mealsPerDelivery;
+
+  async function handleSave() {
+    if (!subscription) return;
+    setBusy(true);
+    setErrorMessage(null);
+    try {
+      const res = await subscriptionsApi.changePlan(subscription.id, {
+        cadence,
+        mealsPerDelivery: meals,
+        clientQuotedPricePerDeliveryPaise: quote?.pricePerDeliveryPaise,
+      });
+      if (res.requiresReauth) {
+        setReauthInfo({ current: res.currentPricePerDeliveryPaise, next: res.newPricePerDeliveryPaise });
+        setPhase("reauth");
+        // Refresh the parent now (not just on close) so the DetailView
+        // banner reflects the pending-reauth state even if the customer
+        // closes this dialog without finishing re-authorisation.
+        await onChanged();
+      } else {
+        toast.success("Plan change saved — it starts your next cycle.");
+        await onChanged();
+        onClose();
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Could not save your plan change.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleReauthorize() {
+    if (!subscription) return;
+    setBusy(true);
+    setErrorMessage(null);
+    try {
+      const order = await subscriptionsApi.changePlanReauthOrder(subscription.id);
+      const opened = await openRazorpayCheckout({
+        razorpayOrderId: order.razorpayOrderId,
+        amountPaise: order.amount,
+        description: "Tanmatra plan change — re-authorise autopay",
+        contact: subscription.phone ?? undefined,
+      });
+      if (opened.outcome !== "paid") {
+        if (opened.outcome === "cancelled") {
+          toast.info("Re-authorisation cancelled — your requested change is still saved. Try again anytime.");
+        } else {
+          setErrorMessage("Payment gateway is unavailable right now. Please try again shortly.");
+        }
+        return;
+      }
+      await subscriptionsApi.changePlanConfirm(subscription.id, opened.payment);
+      toast.success("Autopay re-authorised — your new plan starts next cycle.");
+      await onChanged();
+      onClose();
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Could not complete re-authorisation.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
+      style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={() => !busy && onClose()}
+    >
+      <div
+        className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+        style={{ maxWidth: 480, width: "100%", maxHeight: "88vh", overflowY: "auto" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
+          <i className="ph-bold ph-sliders-horizontal safc" />
+          {phase === "picker" ? "Change plan" : "Re-authorise autopay"}
+        </div>
+
+        {phase === "picker" && (
+          <>
+            <p className="fine mt6">
+              Takes effect on your next billing cycle — the deliveries already
+              scheduled for this cycle are untouched.
+            </p>
+
+            <div className="lab mt16 mb8">Cadence</div>
+            <div className="fx wrap gap8">
+              {(["weekly", "fortnightly", "monthly"] as SubscriptionCadence[]).map((c) => (
+                <button
+                  key={c}
+                  aria-pressed={cadence === c}
+                  onClick={() => setCadence(c)}
+                  disabled={busy}
+                  className="btn btn-g"
+                  style={{
+                    ...ACT,
+                    borderColor: cadence === c ? "var(--saf)" : "var(--ln2)",
+                    background: cadence === c ? "var(--safd)" : "var(--s2)",
+                    color: cadence === c ? "var(--safb)" : "var(--tx)",
+                  }}
+                >
+                  {CADENCE_LABEL[c]}
+                </button>
+              ))}
+            </div>
+
+            <div className="lab mt16 mb8">Meals per delivery</div>
+            {hasDayPlan ? (
+              <div className="fine">
+                This plan's meals are set by your day-by-day schedule — edit
+                individual deliveries to change what you eat. You can still
+                change the cadence above.
+              </div>
+            ) : (
+              <div className="fx ac gap12">
+                <button
+                  className="qbtn"
+                  style={{ width: 34, height: 34 }}
+                  onClick={() => setMeals((m) => Math.max(1, m - 1))}
+                  aria-label="Fewer meals"
+                  disabled={busy}
+                >
+                  <i className="ph-bold ph-minus" />
+                </button>
+                <span className="mono" style={{ minWidth: 28, textAlign: "center", fontWeight: 600 }}>
+                  {meals}
+                </span>
+                <button
+                  className="qbtn"
+                  style={{ width: 34, height: 34 }}
+                  onClick={() => setMeals((m) => Math.min(50, m + 1))}
+                  aria-label="More meals"
+                  disabled={busy}
+                >
+                  <i className="ph-bold ph-plus" />
+                </button>
+              </div>
+            )}
+
+            <div className="mt16 rounded-xl bg-[var(--s2)] p-3">
+              {quoteLoading ? (
+                <div className="skel" style={{ height: 18, width: "60%" }} />
+              ) : quoteError ? (
+                <div className="fx ac jb gap8">
+                  <span className="fine dgrc">Couldn't load a price preview.</span>
+                  <button className="btn btn-g" style={ACT} onClick={() => setQuoteRetryTick((t) => t + 1)}>
+                    Retry
+                  </button>
+                </div>
+              ) : isNoop ? (
+                <span className="fine">This matches your current plan.</span>
+              ) : (
+                <div className="fx ac jb">
+                  <span className="fine">New price per delivery</span>
+                  <span className="price" style={{ fontSize: 16 }}>
+                    {quote ? formatPrice(quote.pricePerDeliveryPaise) : "—"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {errorMessage && (
+              <div
+                className="note mt12"
+                style={{ background: "color-mix(in oklab, var(--color-error) 12%, transparent)", color: "var(--dgr)" }}
+              >
+                <i className="ph-bold ph-warning-circle" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button className="btn btn-g" style={ACT} onClick={onClose} disabled={busy}>
+                Cancel
+              </button>
+              <button
+                className={`btn btn-p${isNoop || busy || quoteLoading || quoteError ? " dis" : ""}`}
+                style={ACT}
+                onClick={handleSave}
+              >
+                <i className="ph-bold ph-check" />
+                {busy ? "Saving…" : "Save plan change"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {phase === "reauth" && reauthInfo && (
+          <>
+            <p className="fine mt6">
+              Your new price is higher than what your autopay mandate was last
+              authorised for. For your protection, we need a quick one-time
+              UPI Autopay confirmation before this change can take effect —
+              you'll see a secure Razorpay screen next.
+            </p>
+            <div className="mt12 rounded-xl bg-[var(--s2)] p-3">
+              <div className="fx ac jb">
+                <span className="fine">Current price</span>
+                <span className="mono">{formatPrice(reauthInfo.current)}</span>
+              </div>
+              <div className="fx ac jb mt6">
+                <span className="fine">New price</span>
+                <span className="price" style={{ fontSize: 16 }}>
+                  {formatPrice(reauthInfo.next)}
+                </span>
+              </div>
+            </div>
+
+            {errorMessage && (
+              <div
+                className="note mt12"
+                style={{ background: "color-mix(in oklab, var(--color-error) 12%, transparent)", color: "var(--dgr)" }}
+              >
+                <i className="ph-bold ph-warning-circle" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+              <button className="btn btn-g" style={ACT} onClick={onClose} disabled={busy}>
+                I'll do this later
+              </button>
+              <button
+                className={`btn btn-p${busy ? " dis" : ""}`}
+                style={ACT}
+                onClick={handleReauthorize}
+              >
+                <i className="ph-bold ph-shield-check" />
+                {busy ? "Opening secure checkout…" : "Re-authorise now"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
