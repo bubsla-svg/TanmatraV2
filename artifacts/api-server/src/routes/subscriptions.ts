@@ -816,6 +816,38 @@ router.post(
   },
 );
 
+// Core cancel logic, factored out so callers other than the HTTP route (e.g.
+// the subscription-abandonment sweep in ../lib/subscriptionAbandonmentScheduler)
+// can cancel a subscription — flip status, cancel its upcoming deliveries, and
+// revoke its autopay mandate — without duplicating any of these three steps.
+// Returns null if the subscription id does not exist (nothing to cancel).
+export async function cancelSubscriptionById(
+  subId: number,
+  log: Parameters<typeof cancelAutopayMandate>[1],
+): Promise<typeof subscriptionsTable.$inferSelect | null> {
+  const [updated] = await db
+    .update(subscriptionsTable)
+    .set({ status: "cancelled" })
+    .where(eq(subscriptionsTable.id, subId))
+    .returning();
+  if (!updated) return null;
+  await db
+    .update(subscriptionDeliveriesTable)
+    .set({ status: "cancelled" })
+    .where(
+      and(
+        eq(subscriptionDeliveriesTable.subscriptionId, subId),
+        eq(subscriptionDeliveriesTable.status, "upcoming"),
+      ),
+    );
+  // Stop billing: revoke the Razorpay autopay mandate and purge scheduled
+  // charge notices. Without this, "cancel in one tap, no hidden fees" is false
+  // — the mandate stays active and the next cycle still debits the customer.
+  // Gateway errors are swallowed inside the helper; never fail cancel on them.
+  await cancelAutopayMandate(subId, log);
+  return updated;
+}
+
 router.post(
   "/subscriptions/:id/cancel",
   async (req: Request, res: Response) => {
@@ -832,26 +864,8 @@ router.post(
       res.status(409).json({ error: "subscription already cancelled" });
       return;
     }
-    const [updated] = await db
-      .update(subscriptionsTable)
-      .set({ status: "cancelled" })
-      .where(eq(subscriptionsTable.id, subId))
-      .returning();
+    const updated = await cancelSubscriptionById(subId, req.log);
     invalidateUserBrief(userId);
-    await db
-      .update(subscriptionDeliveriesTable)
-      .set({ status: "cancelled" })
-      .where(
-        and(
-          eq(subscriptionDeliveriesTable.subscriptionId, subId),
-          eq(subscriptionDeliveriesTable.status, "upcoming"),
-        ),
-      );
-    // Stop billing: revoke the Razorpay autopay mandate and purge scheduled
-    // charge notices. Without this, "cancel in one tap, no hidden fees" is false
-    // — the mandate stays active and the next cycle still debits the customer.
-    // Gateway errors are swallowed inside the helper; never fail cancel on them.
-    await cancelAutopayMandate(subId, req.log);
     res.json({ subscription: updated });
   },
 );
