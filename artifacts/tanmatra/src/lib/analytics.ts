@@ -85,7 +85,11 @@ type EventName =
   | "mandate_created"
   | "mandate_authorization_failed"
   | "predebit_notified"
-  | "mandate_revoked";
+  | "mandate_revoked"
+  // Trial → subscription bridge (SubscriptionBridge.tsx recap screen).
+  | "trial_bridge_viewed"
+  | "trial_bridge_cta"
+  | "trial_bridge_outcome";
 
 // Health-adjacent or personal keys never leave the device — the server
 // scrubs them again, but the first line of defence is here.

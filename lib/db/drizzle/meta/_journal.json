@@ -43,6 +43,13 @@
       "when": 1784490356921,
       "tag": "0005_subscription_plan_change_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784492673804,
+      "tag": "0006_subscription_member_macro_targets",
+      "breakpoints": true
     }
   ]
 }

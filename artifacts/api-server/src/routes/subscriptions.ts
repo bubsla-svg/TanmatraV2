@@ -16,7 +16,7 @@ import {
   type SubscriptionItem,
   type SubscriptionDelivery,
 } from "@workspace/db";
-import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, lt, isNull, or, sql } from "drizzle-orm";
 import { bridgeCreditDiscountPaise } from "../lib/bridgeCredit";
 import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
@@ -51,6 +51,10 @@ const memberInputSchema = z.object({
   dislikedIngredients: z.array(z.string()).default([]),
   lifestyle: z.string().max(32).optional(),
   spiceLevel: z.enum(["mild", "medium", "hot"]).default("medium"),
+  // Optional — see the schema-level comment on subscriptionMembersTable for
+  // when this is populated automatically vs. left null.
+  dailyCalorieTarget: z.number().int().positive().max(10000).optional(),
+  dailyProteinTargetGrams: z.number().int().positive().max(500).optional(),
 });
 
 const itemSchema = z.object({
@@ -507,6 +511,96 @@ async function validateDishForSubscription(
   return { blocked: false, reasons: [] };
 }
 
+// A swap is capped only against calories — protein below a per-meal floor is
+// surfaced as a delta, never blocking, since a single lower-protein meal
+// choice isn't inherently unsafe the way exceeding a calorie ceiling is
+// treated here. Only enforced when the target member has a
+// dailyCalorieTarget set (see subscriptionMembersTable's schema comment for
+// when that's populated) — a member with no target skips this check
+// entirely rather than fabricating one.
+const MACRO_CAP_TOLERANCE = 0.15;
+
+function utcDayBounds(d: Date): { start: Date; end: Date } {
+  const start = new Date(d);
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end };
+}
+
+/**
+ * Checks whether swapping in `newItems` for `deliveryId` would push any
+ * targeted member's single-meal calorie share above their daily cap. The
+ * daily target is spread evenly across however many meals that member has
+ * scheduled on the same calendar day (including the delivery being
+ * swapped) — not compared against the sum of everything else already
+ * ordered that day, which would require re-resolving every other item's
+ * dish data on every swap call.
+ */
+async function validateMacroCapForSwap(
+  subscriptionId: number,
+  deliveryId: number,
+  scheduledFor: Date,
+  newItems: SubscriptionItem[],
+): Promise<{ blocked: boolean; reasons: any[] }> {
+  const memberIds = Array.from(
+    new Set(newItems.map((it) => it.memberId).filter((id): id is number => id != null)),
+  );
+  if (memberIds.length === 0) return { blocked: false, reasons: [] };
+
+  const members = await db
+    .select({
+      id: subscriptionMembersTable.id,
+      dailyCalorieTarget: subscriptionMembersTable.dailyCalorieTarget,
+    })
+    .from(subscriptionMembersTable)
+    .where(eq(subscriptionMembersTable.subscriptionId, subscriptionId));
+  const targetById = new Map(members.map((m) => [m.id, m.dailyCalorieTarget]));
+
+  const { start, end } = utcDayBounds(scheduledFor);
+  const sameDayDeliveries = await db
+    .select({ id: subscriptionDeliveriesTable.id, items: subscriptionDeliveriesTable.items })
+    .from(subscriptionDeliveriesTable)
+    .where(
+      and(
+        eq(subscriptionDeliveriesTable.subscriptionId, subscriptionId),
+        gt(subscriptionDeliveriesTable.scheduledFor, new Date(start.getTime() - 1)),
+        lt(subscriptionDeliveriesTable.scheduledFor, end),
+      ),
+    );
+
+  const reasons: any[] = [];
+  for (const memberId of memberIds) {
+    const dailyCalorieTarget = targetById.get(memberId);
+    if (!dailyCalorieTarget) continue; // no target set — skip, don't fabricate one
+
+    let mealsThatDay = 0;
+    for (const d of sameDayDeliveries) {
+      const items = d.id === deliveryId ? newItems : (d.items as SubscriptionItem[]);
+      mealsThatDay += items.filter((it) => it.memberId === memberId).length;
+    }
+    const perMealAllowance = dailyCalorieTarget / Math.max(mealsThatDay, 1);
+    const cap = perMealAllowance * (1 + MACRO_CAP_TOLERANCE);
+
+    for (const item of newItems) {
+      if (item.memberId !== memberId) continue;
+      const dish = await resolveDishBySlug(item.slug);
+      if (!dish) continue;
+      if (dish.macros.calories > cap) {
+        reasons.push({
+          code: "macro_cap_exceeded",
+          message: `Exceeds your plan's macro caps · Unavailable`,
+          memberId,
+          slug: item.slug,
+          dishCalories: dish.macros.calories,
+          perMealAllowanceCalories: Math.round(perMealAllowance),
+        });
+      }
+    }
+  }
+  return { blocked: reasons.length > 0, reasons };
+}
+
 const quoteSubscriptionSchema = z.object({
   cadence: cadenceSchema,
   mealsPerDelivery: z.number().int().positive().max(50).optional(),
@@ -651,6 +745,24 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     }
   }
 
+  // A single-member subscription's sole member unambiguously IS the account
+  // holder, so it's safe to backfill their macro-cap target from their own
+  // onboarding quiz answers. A multi-member subscription's guests have no
+  // independent profile to backfill from and are left null unless the
+  // caller sets them explicitly — see the schema comment on
+  // subscriptionMembersTable.dailyCalorieTarget.
+  let accountHolderTargets: { calorieTarget: number | null; proteinTargetGrams: number | null } | null = null;
+  if (data.members.length === 1) {
+    const [prefs] = await db
+      .select({
+        calorieTarget: userPreferencesTable.calorieTarget,
+        proteinTargetGrams: userPreferencesTable.proteinTargetGrams,
+      })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, userId));
+    if (prefs) accountHolderTargets = prefs;
+  }
+
   // Subscription creation, delivery generation, and the linked first-cycle
   // order all commit atomically — a partial write here would either leave a
   // subscription with no billable order (the original bug) or an order
@@ -720,6 +832,9 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
           dislikedIngredients: m.dislikedIngredients,
           lifestyle: m.lifestyle,
           spiceLevel: m.spiceLevel,
+          dailyCalorieTarget: m.dailyCalorieTarget ?? accountHolderTargets?.calorieTarget ?? null,
+          dailyProteinTargetGrams:
+            m.dailyProteinTargetGrams ?? accountHolderTargets?.proteinTargetGrams ?? null,
         })),
       );
     }
@@ -1355,6 +1470,21 @@ router.post(
           return;
         }
       }
+    }
+    const macroMatch = await validateMacroCapForSwap(
+      found.subscription.id,
+      deliveryId,
+      found.delivery.scheduledFor,
+      parsed.data.items,
+    );
+    if (macroMatch.blocked) {
+      res.status(422).json({
+        error: "Macro cap exceeded",
+        code: "macro_cap_exceeded",
+        blocked: true,
+        reasons: macroMatch.reasons,
+      });
+      return;
     }
     // Guarded on status='upcoming' so a swap can't race a concurrent skip/swap
     // and mutate a delivery that already left the upcoming state.
