@@ -21,7 +21,7 @@ export const FAQS = [
   },
   {
     q: "How do I check if Tanmatra delivers to my area?",
-    a: "Enter your pincode on the home or checkout page. Delivery is currently available across Noida, Delhi, and Gurgaon; we are expanding regularly. If your area is not yet served, you can join the waitlist.",
+    a: "Enter your pincode on the home or checkout page. Delivery is currently available across Noida; we are expanding regularly. If your area is not yet served, you can join the waitlist.",
   },
   {
     q: "What are the delivery timings?",

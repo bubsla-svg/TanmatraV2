@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tanmatra — Storefront Prototype v1 (money path + subscription core)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   TANMATRA · STOREFRONT PROTOTYPE · .tnm2 TOKEN LAYER
+   --tnm-action #E89A3E  → CONFIRMED System-B saffron
+   --tnm-alert  #DC8773  → error value per Stitch brief §1 extract
+   ink / sage / caution  → PLACEHOLDERS under correct token names;
+   swap against theme.css (see wiring guide W5).
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --tnm-backdrop:#0A0D0F;
+  --tnm-surface-ink:#10161A;        /* PLACEHOLDER */
+  --tnm-surface-ink-2:#171F25;      /* PLACEHOLDER */
+  --tnm-surface-ink-3:#1E2830;      /* PLACEHOLDER */
+  --tnm-border:rgba(255,255,255,.09);
+  --tnm-border-strong:rgba(255,255,255,.17);
+  --tnm-text-primary:#F1EEE8;
+  --tnm-text-secondary:#A9B2B7;
+  --tnm-text-faint:#77828A;
+  --tnm-action:#E89A3E;             /* CONFIRMED */
+  --tnm-action-ink:#221302;
+  --tnm-action-dim:rgba(232,154,62,.14);
+  --tnm-sage:#8CBB9B;               /* PLACEHOLDER */
+  --tnm-sage-dim:rgba(140,187,155,.14);
+  --tnm-caution:#E2B54B;            /* PLACEHOLDER */
+  --tnm-caution-dim:rgba(226,181,75,.13);
+  --tnm-alert:#DC8773;              /* per brief §1 */
+  --tnm-alert-dim:rgba(220,135,115,.15);
+  --tnm-mark-veg:#3E8E5A;           /* FSSAI veg */
+  --tnm-mark-nonveg:#B4552F;        /* FSSAI non-veg */
+  --tnm-font-sans:'Inter',system-ui,sans-serif;
+  --tnm-font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-pill:999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--tnm-backdrop);color:var(--tnm-text-primary);
+  font-family:var(--tnm-font-sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit;text-decoration:none}
+input{font:inherit;color:inherit;background:none;border:none;outline:none;width:100%}
+:focus-visible{outline:2px solid var(--tnm-action);outline-offset:2px;border-radius:4px}
+.tnm-data{font-family:var(--tnm-font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.hide{display:none!important}
+
+#app{max-width:430px;margin:0 auto;min-height:100dvh;background:var(--tnm-surface-ink);
+  position:relative;display:flex;flex-direction:column}
+@media(min-width:520px){#app{box-shadow:0 0 0 1px var(--tnm-border),0 32px 80px rgba(0,0,0,.55);
+  margin:24px auto;min-height:calc(100dvh - 48px);border-radius:20px;overflow:clip}}
+#view{flex:1;padding-bottom:120px}
+
+/* ── top bar ── */
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;position:sticky;top:0;z-index:30;
+  background:linear-gradient(var(--tnm-surface-ink) 78%,transparent)}
+.tb-btn{width:38px;height:38px;border-radius:var(--r-pill);background:var(--tnm-surface-ink-2);
+  border:1px solid var(--tnm-border);display:grid;place-items:center;flex:none;position:relative}
+.brand{font-weight:800;letter-spacing:-.02em;font-size:16px}
+.brand small{display:block;font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--tnm-text-faint)}
+.cart-badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:var(--r-pill);
+  background:var(--tnm-action);color:var(--tnm-action-ink);font-size:10px;font-weight:700;
+  display:grid;place-items:center;padding:0 4px}
+.pin-chip{margin-left:auto;font-size:11px;color:var(--tnm-text-secondary);background:var(--tnm-surface-ink-2);
+  border:1px solid var(--tnm-border);padding:7px 12px;border-radius:var(--r-pill);display:inline-flex;gap:5px;align-items:center}
+
+/* ── shared ── */
+.wrap{padding:0 16px}
+.sec{margin-top:24px}
+.sec-label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--tnm-text-faint);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.sec-label a,.sec-label button{font-size:11px;color:var(--tnm-action);letter-spacing:.06em;font-weight:600}
+.card{background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border);border-radius:var(--r-lg);padding:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;
+  border-radius:var(--r-md);font-size:14px;font-weight:600;transition:transform .12s,opacity .12s;text-align:center}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--tnm-action);color:var(--tnm-action-ink);
+  box-shadow:0 8px 24px rgba(232,154,62,.25),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-ghost{border:1px solid var(--tnm-border-strong)}
+.btn-ghost-action{border:1px solid var(--tnm-action);color:var(--tnm-action)}
+.btn[disabled]{opacity:.42;pointer-events:none}
+.btn .sub{display:block;font-size:10.5px;font-weight:500;opacity:.75}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--tnm-text-secondary);background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  padding:7px 12px;border-radius:var(--r-pill)}
+.chip.sel{color:var(--tnm-action);background:var(--tnm-action-dim);border-color:var(--tnm-action)}
+.fssai{flex:none;width:15px;height:15px;border:1.6px solid var(--m);border-radius:3px;display:grid;place-items:center}
+.fssai.veg{--m:var(--tnm-mark-veg)}.fssai.nonveg{--m:var(--tnm-mark-nonveg)}
+.fssai i{width:7px;height:7px;border-radius:50%;background:var(--m)}
+.fssai.nonveg i{width:0;height:0;border-radius:0;background:none;
+  border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:7px solid var(--m)}
+.notice{display:flex;gap:9px;align-items:flex-start;border-radius:var(--r-md);padding:11px 13px;font-size:12.5px;line-height:1.5}
+.notice svg{flex:none;margin-top:1px}
+.notice.alert{background:var(--tnm-alert-dim);border:1px solid var(--tnm-alert)}
+.notice.caution{background:var(--tnm-caution-dim);border:1px solid var(--tnm-caution)}
+.notice.sage{background:var(--tnm-sage-dim);border:1px solid var(--tnm-sage)}
+.status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:5px 10px;border-radius:var(--r-pill)}
+.status.sage{color:var(--tnm-sage);background:var(--tnm-sage-dim)}
+.status.caution{color:var(--tnm-caution);background:var(--tnm-caution-dim)}
+.status.alert{color:var(--tnm-alert);background:var(--tnm-alert-dim)}
+
+/* ── skeleton (CLS law: exact final boxes) ── */
+.sk{background:var(--tnm-surface-ink-2);border-radius:var(--r-md);position:relative;overflow:hidden}
+.sk::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%);
+  animation:shimmer 1.3s infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.sk::after{animation:none}
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* ── HOME ── */
+.hero-doors{display:grid;gap:12px;margin-top:8px}
+.door{position:relative;border-radius:var(--r-lg);overflow:clip;border:1px solid var(--tnm-border);
+  min-height:150px;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;text-align:left}
+.door .bg{position:absolute;inset:0;z-index:0}
+.door .bg img{width:100%;height:100%;object-fit:cover;opacity:.5}
+.door .bg::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(16,22,26,.15),rgba(16,22,26,.92))}
+.door>*:not(.bg){position:relative;z-index:1}
+.door .eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--tnm-action)}
+.door h2{font-size:21px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+.door p{font-size:12.5px;color:var(--tnm-text-secondary);margin-top:4px}
+.door .go{margin-top:12px;align-self:flex-start}
+.door.plan .eyebrow{color:var(--tnm-sage)}
+.trust-strip{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:10.5px;
+  color:var(--tnm-text-faint);letter-spacing:.04em;padding:14px 8px;border-top:1px solid var(--tnm-border);
+  border-bottom:1px solid var(--tnm-border);margin-top:24px}
+.trust-strip b{color:var(--tnm-text-secondary);font-weight:600}
+.proof-band{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.proof-band::-webkit-scrollbar{display:none}
+.proof{flex:0 0 auto;background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border);
+  border-radius:var(--r-md);padding:11px 14px}
+.proof .v{font-size:16px;font-weight:700}
+.proof .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint);margin-top:2px}
+.prog{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none}
+.prog::-webkit-scrollbar{display:none}
+.prog-card{flex:0 0 200px;background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border);
+  border-radius:var(--r-lg);padding:14px;text-align:left}
+.prog-card .tag{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--tnm-sage)}
+.prog-card h4{font-size:14.5px;font-weight:700;margin-top:6px}
+.prog-card .m{font-size:11px;color:var(--tnm-text-secondary);margin-top:6px}
+.pincode-row{display:flex;gap:8px;margin-top:12px}
+.pincode-row .field{flex:1;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border-strong);
+  border-radius:var(--r-md);padding:0 14px;display:flex;align-items:center;min-height:48px}
+.resume-strip{display:flex;align-items:center;gap:12px;background:var(--tnm-sage-dim);
+  border:1px solid var(--tnm-sage);border-radius:var(--r-lg);padding:13px 15px}
+.resume-strip .t{flex:1;font-size:13px}
+.resume-strip .t b{display:block;font-size:13.5px}
+
+/* ── MENU ── */
+.filter-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-row .chip{flex:none}
+.menu-grid{display:grid;gap:12px;margin-top:14px}
+.dish-card{display:grid;grid-template-columns:96px 1fr;gap:12px;background:var(--tnm-surface-ink-2);
+  border:1px solid var(--tnm-border);border-radius:var(--r-lg);padding:12px;align-items:center;min-height:120px}
+.dish-card .ph{width:96px;height:96px;border-radius:var(--r-md);overflow:clip;background:var(--tnm-surface-ink-3);position:relative}
+.dish-card .ph img{width:100%;height:100%;object-fit:cover}
+.dish-card .ph.img-fallback::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 20% 10%,rgba(232,154,62,.14),transparent 55%),
+  radial-gradient(100% 80% at 85% 90%,rgba(140,187,155,.12),transparent 60%)}
+.dish-card .info{min-width:0}
+.dish-card .nm{display:flex;align-items:flex-start;gap:7px}
+.dish-card .nm h4{font-size:13.5px;font-weight:600;line-height:1.3}
+.dish-card .macros{font-size:11px;color:var(--tnm-text-secondary);margin-top:5px}
+.dish-card .row2{display:flex;align-items:center;justify-content:space-between;margin-top:9px;gap:8px}
+.dish-card .pr{font-size:14px;font-weight:600}
+.add-btn{min-height:44px;min-width:76px;border-radius:10px;border:1px solid var(--tnm-action);
+  color:var(--tnm-action);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.add-btn.in{background:var(--tnm-action);color:var(--tnm-action-ink)}
+.menu-empty{text-align:center;padding:40px 20px;color:var(--tnm-text-secondary);font-size:13px}
+
+/* ── PDP (condensed plan-first) ── */
+.pdp-hero{aspect-ratio:1/1;background:var(--tnm-surface-ink-2);position:relative;overflow:clip}
+.pdp-hero img{width:100%;height:100%;object-fit:cover}
+.pdp-hero.img-fallback::after{content:attr(data-label);position:absolute;inset:0;display:grid;place-items:center;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tnm-text-faint)}
+h1{font-size:23px;line-height:1.2;font-weight:800;letter-spacing:-.015em}
+.gate-locked{position:relative;padding:16px}
+.ghost{filter:blur(7px);opacity:.5;pointer-events:none;user-select:none}
+.g-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:var(--tnm-text-secondary)}
+.g-row+.g-row{border-top:1px solid var(--tnm-border)}
+.lock-layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:9px;padding:18px;
+  background:linear-gradient(180deg,rgba(23,31,37,.4),rgba(23,31,37,.9) 70%)}
+.lock-layer h3{font-size:15.5px;font-weight:700}
+.lock-layer p{font-size:12.5px;color:var(--tnm-text-secondary);max-width:280px}
+.macro-row{display:grid;grid-template-columns:76px 1fr auto;align-items:center;gap:10px;padding:10px 0;
+  border-top:1px solid var(--tnm-border)}
+.macro-row:first-child{border-top:none}
+.macro-row .mk{font-size:12.5px;color:var(--tnm-text-secondary)}
+.macro-row .mv{font-size:16px;font-weight:600}
+.macro-row .mv small{font-size:11px;color:var(--tnm-text-faint);font-weight:400}
+.ing{font-size:12px;color:var(--tnm-text-secondary);background:var(--tnm-surface-ink-3);
+  border:1px solid var(--tnm-border);padding:6px 11px;border-radius:var(--r-pill)}
+.ing.flag{color:var(--tnm-alert);background:var(--tnm-alert-dim);border-color:var(--tnm-alert);font-weight:600}
+
+/* ── BUILDER ── */
+.stepper{display:flex;gap:6px;margin:14px 0 4px}
+.stepper i{height:3px;flex:1;border-radius:var(--r-pill);background:var(--tnm-surface-ink-3)}
+.stepper i.done{background:var(--tnm-action)}
+.axis-grid{display:grid;gap:10px;margin-top:12px}
+.axis-opt{border:1px solid var(--tnm-border-strong);border-radius:var(--r-md);padding:14px;text-align:left;
+  background:var(--tnm-surface-ink-2);display:flex;align-items:center;gap:12px;transition:border-color .15s,box-shadow .15s}
+.axis-opt.sel{border-color:var(--tnm-action);box-shadow:0 0 0 1px var(--tnm-action)}
+.axis-opt .t{font-size:14px;font-weight:700}
+.axis-opt .d{font-size:11.5px;color:var(--tnm-text-secondary);margin-top:2px}
+.axis-opt .pm{margin-left:auto;text-align:right}
+.axis-opt .pm .v{font-size:15px;font-weight:700}
+.axis-opt .pm .k{font-size:9.5px;color:var(--tnm-text-faint);letter-spacing:.08em;text-transform:uppercase}
+.axis-opt .rec{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-action)}
+.quote-tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint)}
+.ribbon{display:flex;gap:8px}
+.ribbon .cell{flex:1;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  border-radius:var(--r-md);padding:10px;text-align:center}
+.ribbon .cell .v{font-size:15px;font-weight:700}
+.ribbon .cell .k{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint);margin-top:2px}
+.pause-note{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--tnm-text-secondary);
+  background:var(--tnm-surface-ink-3);border:1px dashed var(--tnm-border-strong);border-radius:var(--r-md);padding:11px 13px}
+.wa-nudge{display:flex;align-items:center;gap:11px;background:var(--tnm-sage-dim);border:1px solid var(--tnm-sage);
+  border-radius:var(--r-md);padding:12px 14px;font-size:12.5px}
+.testimonial{font-size:13px;color:var(--tnm-text-secondary);font-style:italic;border-left:2px solid var(--tnm-sage);
+  padding-left:12px}
+.testimonial .who{display:block;font-style:normal;font-size:11px;color:var(--tnm-text-faint);margin-top:6px}
+
+/* ── CART ── */
+.line-item{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:13px 0;
+  border-top:1px solid var(--tnm-border)}
+.line-item:first-child{border-top:none}
+.line-item .ph{width:52px;height:52px;border-radius:10px;overflow:clip;background:var(--tnm-surface-ink-3)}
+.line-item .ph img{width:100%;height:100%;object-fit:cover}
+.line-item h5{font-size:13px;font-weight:600;line-height:1.3}
+.line-item .mods{font-size:10.5px;color:var(--tnm-text-faint);margin-top:2px}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--tnm-action);border-radius:10px;overflow:clip;margin-top:7px}
+.qty button{width:34px;height:34px;color:var(--tnm-action);font-size:16px;font-weight:700;display:grid;place-items:center}
+.qty .n{min-width:30px;text-align:center;font-size:13px;font-weight:700;color:var(--tnm-action)}
+.line-item .lp{font-size:13.5px;font-weight:600;text-align:right}
+.bill .b-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;color:var(--tnm-text-secondary)}
+.bill .b-row .v{color:var(--tnm-text-primary)}
+.bill .b-row.total{border-top:1px solid var(--tnm-border);margin-top:6px;padding-top:12px;font-size:15px;
+  font-weight:700;color:var(--tnm-text-primary)}
+.flash{animation:flash .5s}
+@keyframes flash{0%{color:var(--tnm-action)}100%{}}
+.aov-rail{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none}
+.aov-rail::-webkit-scrollbar{display:none}
+.aov{flex:0 0 132px;background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border);
+  border-radius:var(--r-md);padding:10px}
+.aov .n{font-size:11.5px;font-weight:600;line-height:1.3;min-height:30px}
+.aov .p{font-size:11px;color:var(--tnm-text-secondary);margin:6px 0 8px}
+.empty-state{text-align:center;padding:52px 24px}
+.empty-state h3{font-size:17px;font-weight:700;margin-top:14px}
+.empty-state p{font-size:13px;color:var(--tnm-text-secondary);margin:6px 0 18px}
+
+/* ── CHECKOUT ── */
+.co-stepper{display:flex;gap:0;margin:6px 0 4px}
+.co-step{flex:1;text-align:center;font-size:11px;font-weight:600;letter-spacing:.04em;
+  color:var(--tnm-text-faint);padding-bottom:9px;border-bottom:2px solid var(--tnm-surface-ink-3)}
+.co-step.on{color:var(--tnm-action);border-color:var(--tnm-action)}
+.co-step.done{color:var(--tnm-text-secondary);border-color:var(--tnm-text-faint)}
+.addr-card{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--tnm-border-strong);
+  border-radius:var(--r-md);padding:13px;background:var(--tnm-surface-ink-2);text-align:left;width:100%}
+.addr-card.sel{border-color:var(--tnm-action);box-shadow:0 0 0 1px var(--tnm-action)}
+.addr-card .t{font-size:13px;font-weight:700}
+.addr-card .d{font-size:11.5px;color:var(--tnm-text-secondary);margin-top:2px}
+.toggle2{display:flex;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);
+  border-radius:var(--r-md);padding:3px;gap:3px}
+.toggle2 button{flex:1;min-height:40px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--tnm-text-secondary)}
+.toggle2 button.on{background:var(--tnm-action);color:var(--tnm-action-ink)}
+.slot-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.otp-row{display:flex;gap:8px;justify-content:center;margin:14px 0}
+.otp-box{width:44px;height:52px;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border-strong);
+  border-radius:10px;text-align:center;font-family:var(--tnm-font-mono);font-size:20px;font-weight:600}
+.otp-box:focus{border-color:var(--tnm-action)}
+.pay-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  border:1px solid var(--tnm-border-strong);border-radius:var(--r-md);padding:13px 14px;background:var(--tnm-surface-ink-2)}
+.pay-opt.sel{border-color:var(--tnm-action);box-shadow:0 0 0 1px var(--tnm-action)}
+.pay-opt .t{font-size:13.5px;font-weight:600}
+.pay-opt .d{font-size:11px;color:var(--tnm-text-secondary);margin-top:1px}
+.upi-apps{display:flex;gap:8px;margin-top:10px}
+.upi-app{flex:1;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);border-radius:10px;
+  padding:9px 4px;font-size:10.5px;font-weight:600;color:var(--tnm-text-secondary);text-align:center}
+.tip-chips{display:flex;gap:8px}
+.tip-chips .chip{flex:1;justify-content:center;min-height:42px;font-size:13px;font-weight:700}
+.voucher-row{display:flex;gap:8px}
+.voucher-row .field{flex:1;background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border-strong);
+  border-radius:var(--r-md);padding:0 14px;display:flex;align-items:center;min-height:46px;
+  font-family:var(--tnm-font-mono);text-transform:uppercase;letter-spacing:.08em;font-size:13px}
+.co-trust{font-size:10px;color:var(--tnm-text-faint);text-align:center;letter-spacing:.05em;margin-bottom:8px}
+.co-trust b{color:var(--tnm-text-secondary);font-weight:600}
+.spinner{width:38px;height:38px;border-radius:50%;border:3px solid var(--tnm-surface-ink-3);
+  border-top-color:var(--tnm-action);animation:spin .8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TRACK ── */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:'';position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--tnm-surface-ink-3)}
+.tl-item{position:relative;padding:0 0 22px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-26px;top:2px;width:18px;height:18px;border-radius:50%;
+  background:var(--tnm-surface-ink-3);border:2px solid var(--tnm-border-strong);display:grid;place-items:center}
+.tl-item.done .tl-dot{background:var(--tnm-sage-dim);border-color:var(--tnm-sage)}
+.tl-item.on .tl-dot{background:var(--tnm-action-dim);border-color:var(--tnm-action)}
+.tl-item .t{font-size:13.5px;font-weight:600;color:var(--tnm-text-faint)}
+.tl-item.done .t,.tl-item.on .t{color:var(--tnm-text-primary)}
+.tl-item .d{font-size:11.5px;color:var(--tnm-text-secondary);margin-top:2px}
+.rider{display:flex;align-items:center;gap:12px}
+.rider .av{width:42px;height:42px;border-radius:var(--r-pill);background:var(--tnm-action-dim);
+  border:1px solid var(--tnm-action);display:grid;place-items:center;font-weight:700;color:var(--tnm-action);font-size:13px}
+.zen{position:fixed;inset:0;z-index:100;background:var(--tnm-surface-ink);display:none;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px}
+body.is-zen .zen{display:flex}
+.zen .breathe{width:130px;height:130px;border-radius:50%;border:1.5px solid var(--tnm-action);
+  display:grid;place-items:center;animation:breathe 4.5s ease-in-out infinite;margin-bottom:30px}
+.zen .breathe .core{width:70px;height:70px;border-radius:50%;background:var(--tnm-action-dim)}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.12);opacity:1}}
+.zen h2{font-size:19px;font-weight:700}
+.zen .eta{font-size:14px;color:var(--tnm-text-secondary);margin-top:8px}
+.zen .exit{position:absolute;bottom:34px;font-size:12px;color:var(--tnm-text-faint);text-decoration:underline;text-underline-offset:3px}
+
+/* ── success ── */
+.success-hero{display:grid;place-items:center;padding:22px 0 8px}
+.success-ring{width:74px;height:74px;border-radius:50%;background:var(--tnm-sage-dim);
+  border:1.5px solid var(--tnm-sage);display:grid;place-items:center;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.5);opacity:0}}
+.kv-card{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);border-radius:var(--r-md);padding:13px 15px}
+.kv-card .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint)}
+.kv-card .v{font-size:13.5px;font-weight:600;margin-top:3px}
+
+/* ── CTA zone ── */
+.cta-zone{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);z-index:40}
+.cta-msg{display:flex;gap:8px;align-items:flex-start;margin:0 12px 8px;border-radius:var(--r-md);
+  padding:10px 12px;font-size:12px;line-height:1.45;backdrop-filter:blur(8px)}
+.cta-bar{display:flex;gap:10px;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(transparent,rgba(16,22,26,.92) 26%)}
+.cta-bar .btn{flex:1;min-height:54px;border-radius:14px}
+.cta-bar .btn.pay{min-height:68px}   /* payment law: 68px sticky */
+
+/* ── stitch-derived patterns (re-tokened to .tnm2) ── */
+.feat-card{position:relative;border:1px solid var(--tnm-border);border-radius:24px;overflow:clip;
+  background:var(--tnm-surface-ink-2)}
+.feat-card .img{aspect-ratio:16/10;border-radius:14px;margin:6px;overflow:clip;position:relative;
+  background:var(--tnm-surface-ink-3)}
+.feat-card .img img{width:100%;height:100%;object-fit:cover}
+.feat-card .img.img-fallback::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 20% 10%,rgba(232,154,62,.14),transparent 55%)}
+.feat-card .scrim{position:absolute;inset:0;border-radius:14px;
+  background:linear-gradient(180deg,transparent 42%,rgba(10,13,15,.86))}
+.glass-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;
+  color:var(--tnm-text-primary);background:rgba(23,31,37,.55);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.14);padding:5px 10px;border-radius:var(--r-pill)}
+.glass-chip.alert-on{color:var(--tnm-alert);border-color:var(--tnm-alert);background:rgba(220,135,115,.22)}
+.feat-card .ov{position:absolute;left:16px;right:16px;bottom:14px;display:flex;gap:6px;flex-wrap:wrap}
+.feat-card .meta{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px 14px}
+.feat-card .meta h4{font-size:15px;font-weight:700}
+.strike{text-decoration:line-through;color:var(--tnm-text-faint);font-size:11px;font-weight:400;margin-right:4px}
+.save-tag{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--tnm-action);
+  background:var(--tnm-action-dim);border:1px solid var(--tnm-action);padding:2px 7px;border-radius:var(--r-pill)}
+.intro-tag{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--tnm-sage);
+  background:var(--tnm-sage-dim);border:1px solid var(--tnm-sage);padding:2px 7px;border-radius:var(--r-pill)}
+.ring-strip{display:flex;gap:12px;margin:2px 0 12px}
+.ring{position:relative;width:74px;height:74px}
+.ring svg{display:block}
+.ring .rv{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  font-size:12.5px;font-weight:700;line-height:1.1}
+.ring .rv small{display:block;font-size:7.5px;letter-spacing:.12em;color:var(--tnm-text-faint);font-weight:600}
+.eta-big{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.zen-rings{position:relative;width:180px;height:180px;margin-bottom:30px}
+.zen-rings .r{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(232,154,62,.16)}
+.zen-rings .r2{inset:18px;border-color:rgba(232,154,62,.26)}
+.zen-rings .r3{inset:36px;border-color:rgba(140,187,155,.22)}
+.zen-rings .arc{position:absolute;inset:8px;border-radius:50%;
+  background:conic-gradient(from 0deg,var(--tnm-action) 0 14%,transparent 14% 100%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));
+  animation:orbit 3.2s linear infinite}
+.zen-rings .core{position:absolute;inset:52px;border-radius:50%;background:var(--tnm-action-dim);
+  animation:breathe 4.5s ease-in-out infinite}
+@keyframes orbit{to{transform:rotate(360deg)}}
+/* /plans · weekly planner (Stitch 175/23/153/190) */
+.day-card{display:flex;align-items:center;gap:10px;background:var(--tnm-surface-ink-2);
+  border:1px solid var(--tnm-border);border-radius:var(--r-md);padding:11px 12px}
+.day-card.skipped{opacity:.62}
+.day-tag{flex:none;width:36px;font-size:10px;font-weight:600;letter-spacing:.08em;
+  color:var(--tnm-text-faint);text-transform:uppercase}
+.mini-act{font-size:11px;font-weight:700;color:var(--tnm-action);border:1px solid var(--tnm-action);
+  border-radius:8px;padding:0 10px;min-height:32px}
+.swap-row{display:flex;gap:10px;align-items:center;border:1px solid var(--tnm-border-strong);
+  border-radius:var(--r-md);padding:12px;margin-top:8px;text-align:left;width:100%;
+  background:var(--tnm-surface-ink-2)}
+.swap-row.capped{opacity:.5;pointer-events:none}
+.delta{font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:6px;
+  background:var(--tnm-surface-ink-3);border:1px solid var(--tnm-border);color:var(--tnm-text-secondary)}
+.match-tag{font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--tnm-sage);
+  background:var(--tnm-sage-dim);border:1px solid var(--tnm-sage);padding:3px 7px;border-radius:var(--r-pill)}
+
+/* ── sheets / toast / dev ── */
+.backdrop{position:fixed;inset:0;background:rgba(6,8,10,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.backdrop.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;bottom:0;left:50%;transform:translate(-50%,105%);width:min(430px,100%);max-height:88dvh;
+  overflow-y:auto;background:var(--tnm-surface-ink-2);border:1px solid var(--tnm-border-strong);border-bottom:none;
+  border-radius:20px 20px 0 0;z-index:70;transition:transform .32s cubic-bezier(.32,.72,.33,1);
+  padding:10px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet.show{transform:translate(-50%,0)}
+.sheet-grip{width:36px;height:4px;border-radius:var(--r-pill);background:var(--tnm-border-strong);margin:2px auto 14px}
+.sheet h3{font-size:17px;font-weight:700}
+#toast{position:fixed;left:50%;bottom:110px;transform:translate(-50%,16px);background:var(--tnm-surface-ink-3);
+  border:1px solid var(--tnm-border-strong);font-size:13px;padding:11px 18px;border-radius:var(--r-pill);
+  opacity:0;pointer-events:none;transition:all .3s;z-index:90;white-space:nowrap;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#dev{position:fixed;top:14px;left:14px;z-index:120;font-family:var(--tnm-font-mono);font-size:10px}
+#devPill{background:var(--tnm-backdrop);border:1px dashed var(--tnm-text-faint);color:var(--tnm-text-faint);
+  padding:7px 11px;border-radius:var(--r-pill);font-family:inherit;font-size:10px;letter-spacing:.08em}
+#devPanel{display:none;margin-top:8px;width:206px;background:var(--tnm-backdrop);
+  border:1px dashed var(--tnm-text-faint);border-radius:10px;padding:10px}
+#dev.open #devPanel{display:block;max-height:76dvh;overflow-y:auto}
+#devPanel .dv-label{color:var(--tnm-text-faint);letter-spacing:.1em;margin:8px 0 6px}
+#devPanel .dv-label:first-child{margin-top:0}
+#devPanel button.dv{display:block;width:100%;text-align:left;font-family:inherit;font-size:10.5px;
+  color:var(--tnm-text-secondary);padding:5px 8px;border-radius:6px}
+#devPanel button.dv:hover{background:var(--tnm-surface-ink-2);color:var(--tnm-text-primary)}
+#devPanel button.dv.active{color:var(--tnm-action)}
+#devPanel .dv-state{margin-top:8px;padding-top:8px;border-top:1px dashed var(--tnm-border-strong);
+  color:var(--tnm-text-faint);font-size:9.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+@media(min-width:900px){#dev{left:calc(50% - 215px - 230px)}}
+</style>
+</head>
+<body>
+
+<div id="dev">
+  <button id="devPill" aria-expanded="false">⚙ FRAMES</button>
+  <div id="devPanel">
+    <div class="dv-label">ROUTES</div>
+    <button class="dv" data-go="/">/ home</button>
+    <button class="dv" data-go="/menu">/menu</button>
+    <button class="dv" data-go="/dish/almond-chicken-salad">/dish/:slug</button>
+    <button class="dv" data-go="/subscribe">/subscribe</button>
+    <button class="dv" data-go="/cart">/cart</button>
+    <button class="dv" data-go="/checkout">/checkout</button>
+    <button class="dv" data-go="/plans">/plans</button>
+    <button class="dv" data-go="/track">/track</button>
+    <div class="dv-label">STATE TOGGLES</div>
+    <button class="dv" data-tgl="allergen">allergen-flagged ⇄</button>
+    <button class="dv" data-tgl="oos">out-of-stock ⇄</button>
+    <button class="dv" data-tgl="svcFail">serviceability-fail ⇄</button>
+    <button class="dv" data-tgl="tamper">price-tamper demo ⇄</button>
+    <button class="dv" data-tgl="payFail">payment-failed ⇄</button>
+    <button class="dv" data-tgl="delayed">delivery-delayed ⇄</button>
+    <button class="dv" data-act="emptyCart">empty cart</button>
+    <button class="dv" data-act="seedCart">seed cart ×2</button>
+    <button class="dv" data-act="trackAdv">advance order status →</button>
+    <button class="dv" data-act="trialBridge">trial-bridge sheet (A2)</button>
+    <button class="dv" data-act="zen">zen tracker ⇄</button>
+    <button class="dv" data-act="resetAll">reset all</button>
+    <div class="dv-state" id="devState">—</div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="topbar" id="topbar"></header>
+  <main id="view"></main>
+</div>
+
+<div class="cta-zone" id="ctaZone"></div>
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="zen" id="zenLayer"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA — PROTOTYPE LITERALS
+   Prices: ₹155 (ACS) is live-verified; all others are PROTO
+   estimates → bind to Petpooja catalog (wiring W-menu).
+   Plan per-meal figures are ₹[quote] class — server-quoted in prod.
+   ═══════════════════════════════════════════════════════════════ */
+const IMG = s => 'https://tanmatra.food/images/dishes/' + s + '.jpg';
+const DB = {
+  dishes: [
+    {id:'almond-chicken-salad', name:'Almond Chicken Salad', price:155, veg:false, gi:'Low',
+     kcal:472, p:43, c:10, f:30, allergens:['tree-nuts'], goal:['lean-muscle','general-wellness','pcos'],
+     desc:'Crisp, bright, with herbaceous dressings and zesty vinegar notes.',
+     ings:['Grilled chicken breast','Lettuce','Cucumber','Cherry tomatoes','Almonds','Olive oil','Lemon juice','Salt & pepper']},
+    {id:'grilled-chicken-veg-mash', name:'Grilled Chicken, Sautéed Veg & Mash', price:249, veg:false, gi:'Low',
+     kcal:520, p:46, c:32, f:18, allergens:[], goal:['lean-muscle','general-wellness'],
+     desc:'The house best-seller — clean protein, slow carbs, real comfort.',
+     ings:['Chicken breast','Seasonal vegetables','Potato mash','Olive oil','Herbs']},
+    {id:'wheat-chicken-tikka-wrap', name:'Whole Wheat Chicken Tikka Wrap', price:189, veg:false, gi:'Medium',
+     kcal:438, p:34, c:44, f:12, allergens:['gluten'], goal:['general-wellness','lean-muscle'],
+     desc:'Tandoor-spiced tikka in a whole-wheat wrap with mint slaw.',
+     ings:['Whole wheat roti','Chicken tikka','Mint chutney','Onion slaw','Curd']},
+    {id:'grilled-veggie-sandwich', name:'Grilled Veggie Sandwich', price:149, veg:true, gi:'Medium',
+     kcal:392, p:14, c:52, f:13, allergens:['gluten','dairy'], goal:['general-wellness','weight-loss'],
+     desc:'Char-grilled vegetables and herbed hung curd on multigrain.',
+     ings:['Multigrain bread','Zucchini','Bell peppers','Hung curd','Basil']},
+    {id:'tomato-basil-omelette', name:'Tomato Basil Omelette', price:129, veg:false, gi:'Low',
+     kcal:195, p:13, c:6, f:13, allergens:['egg'], goal:['weight-loss','pcos','general-wellness'],
+     desc:'Three-egg omelette folded with roasted tomato and fresh basil.',
+     ings:['Eggs','Cherry tomatoes','Basil','Olive oil','Black pepper']},
+    {id:'amaranth-porridge-with-blueberry-sauce', name:'Amaranth Porridge, Blueberry Sauce', price:139, veg:true, gi:'Low',
+     kcal:260, p:8, c:45, f:6, allergens:[], goal:['weight-loss','pcos'],
+     desc:'Slow-cooked amaranth with a no-added-sugar blueberry compote.',
+     ings:['Amaranth','Milk','Blueberries','Chia','Cinnamon']},
+    {id:'apple-cinnamon-smoothie', name:'Apple Cinnamon Smoothie', price:119, veg:true, gi:'Medium',
+     kcal:204, p:4, c:42, f:4, allergens:['dairy'], goal:['general-wellness'],
+     desc:'Stewed apple, curd and cinnamon — dessert energy, clinical math.',
+     ings:['Apple','Curd','Cinnamon','Dates','Oats']},
+    {id:'antioxidant-detox', name:'Antioxidant Detox Bowl', price:169, veg:true, gi:'Medium',
+     kcal:484, p:15, c:96, f:5, allergens:[], goal:['general-wellness'],
+     desc:'Beet, pomegranate and citrus over black rice.',
+     ings:['Black rice','Beetroot','Pomegranate','Orange','Pumpkin seeds']},
+  ],
+  aov: ['apple-cinnamon-smoothie','amaranth-porridge-with-blueberry-sauce','tomato-basil-omelette'],
+  goals: {
+    'weight-loss':{label:'Weight loss', avg:'Avg 32g P · 25g+ fibre'},
+    'lean-muscle':{label:'Lean muscle', avg:'Avg 45g P · 30g+ fibre'},
+    'general-wellness':{label:'General wellness', avg:'Balanced · steady energy'},
+    'pcos':{label:'PCOS care', avg:'Avg 34g P · Low GI'},
+  },
+  /* plan pricing — ₹[quote] class literals, server-quoted in prod */
+  planPricing:{ trial:{label:'3-Day Trial', meals:3,  perMeal:133, note:'No auto-renewal'},
+                week:{ label:'1 Week',      meals:5,  perMeal:179, note:'Renews weekly'},
+                sixwk:{label:'6-Week Reset',meals:30, perMeal:149, note:'Commitment discount'} },
+  dinnerPerMeal:{trial:133, week:169, sixwk:141},
+  serviceable: p => /^(2013|1220|1100|110|122)/.test(p) && p.length===6,
+  slots:['12:30–1:15 PM','1:15–2:00 PM','7:30–8:15 PM'],
+};
+const dish = id => DB.dishes.find(d=>d.id===id);
+const money = n => '₹' + n.toLocaleString('en-IN');
+
+/* ═══════════ STATE ═══════════ */
+const S0 = () => ({
+  pincode:null, serviceable:null,
+  profile:null, unlocked:false,
+  cart:[],                                   /* {id, qty, price(client), mods[]} */
+  builder:{step:1, duration:null, meals:null, pref:null},
+  plan:null,                                 /* committed plan */
+  co:{step:1, addr:null, mode:'now', slot:null, phase:'phone', phone:'', pay:'upi', tip:20, voucher:0},
+  order:null, statusIdx:0,
+  flags:{allergen:false, oos:false, svcFail:false, tamper:false, payFail:false, delayed:false},
+});
+let S = S0();
+
+/* ═══════════ helpers ═══════════ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let toastT;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
+function go(path){location.hash = path;}
+function cartCount(){return S.cart.reduce((s,i)=>s+i.qty,0);}
+function clientTotal(){return S.cart.reduce((s,i)=>s+i.price*i.qty,0);}
+/* W1 · SERVER PRICE AUTHORITY (simulated /orders/quote):
+   recomputes from the server catalog — never trusts client line prices */
+function serverQuote(){return S.cart.reduce((s,i)=>s+dish(i.id).price*i.qty,0);}
+function gst(sub){return Math.round(sub*0.05);}                 /* 5% prepared food */
+function delivery(sub){return sub>=199||sub===0?0:30;}
+function grand(sub){return sub+gst(sub)+delivery(sub)-S.co.voucher+(S.co.step===3?S.co.tip:0);}
+function allergenActive(d){
+  const flag = S.flags.allergen || (S.profile && S.profile.allergens.some(a=>d.allergens.includes(a)));
+  return !!flag;
+}
+const icons = {
+  check:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  warn:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  info:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+  lock:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  back:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+  bag:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>',
+  clock:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  phone:'<svg width="__S" height="__S" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+};
+const ic = (n,s=14) => icons[n].split('__S').join(s);
+const fssai = v => '<span class="fssai '+(v?'veg':'nonveg')+'" role="img" aria-label="'+(v?'Vegetarian':'Non-vegetarian')+'"><i></i></span>';
+const ph = (d,cls,label) => '<div class="'+cls+'" data-label="'+(label||'')+'"><img src="'+IMG(d.id)+'" alt="'+d.name+'" loading="lazy" onerror="this.parentElement.classList.add(\'img-fallback\');this.remove()"></div>';
+/* 2px macro gauge — Stitch DS "Progress Gauges", arc color follows status tone */
+function ring(label,val,pct,tone){
+  pct=Math.max(.06,Math.min(pct||0,1));
+  const R=30,C=2*Math.PI*R,dash=(C*pct).toFixed(1);
+  const col=tone==='caution'?'var(--tnm-caution)':tone==='alert'?'var(--tnm-alert)':'var(--tnm-sage)';
+  return '<div class="ring"><svg viewBox="0 0 74 74" width="74" height="74" aria-hidden="true">'
+    +'<circle cx="37" cy="37" r="30" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="2"/>'
+    +'<circle cx="37" cy="37" r="30" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-dasharray="'+dash+' '+C.toFixed(1)+'" transform="rotate(-90 37 37)"/></svg>'
+    +'<span class="rv tnm-data">'+val+'<small>'+label+'</small></span></div>';
+}
+
+/* ═══════════ chrome ═══════════ */
+function renderTopbar(route){
+  const backable = route!=='/'
+    ? '<button class="tb-btn" data-act="back" aria-label="Back">'+ic('back')+'</button>'
+    : '';
+  $('#topbar').innerHTML = backable
+    + '<a href="#/" class="brand">Tanmatra<small>Clinical Nutrition</small></a>'
+    + '<span class="pin-chip">'+ic('clock',11)+' '+(S.pincode ? '<span class="tnm-data">'+S.pincode+'</span>' : 'Noida NCR')+'</span>'
+    + '<button class="tb-btn" data-act="goCart" aria-label="Cart">'+ic('bag')
+    + (cartCount()? '<span class="cart-badge tnm-data">'+cartCount()+'</span>':'')+'</button>';
+}
+function setCTA(html){$('#ctaZone').innerHTML = html || '';}
+let openSheetFlag=false;
+function sheet(html){
+  const sh=$('#sheet'), bd=$('#backdrop');
+  if(html===false){sh.classList.remove('show');bd.classList.remove('show');openSheetFlag=false;return;}
+  sh.innerHTML='<div class="sheet-grip"></div>'+html;
+  sh.classList.add('show');bd.classList.add('show');openSheetFlag=true;
+}
+$('#backdrop').addEventListener('click',()=>sheet(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&openSheetFlag)sheet(false);});
+
+/* ═══════════════════════════════════════════════════════════════
+   SCREENS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── HOME · frames: hero-two-doors / first-visit-serviceability /
+      social-proof-band / plan-pitch-section / returning-user ── */
+function screenHome(){
+  const svcBlock = S.serviceable===null
+    ? '<div class="card"><div style="font-size:13.5px;font-weight:600">Do we deliver to you?</div>'
+      +'<p style="font-size:12px;color:var(--tnm-text-secondary);margin-top:3px">Fresh windows across Noida, Delhi &amp; Gurgaon.</p>'
+      +'<div class="pincode-row"><div class="field"><input id="pinInput" inputmode="numeric" maxlength="6" placeholder="Pincode" class="tnm-data" aria-label="Pincode"></div>'
+      +'<button class="btn btn-primary" data-act="checkPin">Check</button></div></div>'
+    : S.serviceable
+    ? '<div class="notice sage">'+ic('check')+'<span><b style="color:var(--tnm-sage)">Delivering to '+S.pincode+'</b> — next window <span class="tnm-data">12:30–1:15 PM</span>.</span></div>'
+    : '<div class="notice caution">'+ic('warn')+'<span><b>Not in '+S.pincode+' yet.</b> We\'re expanding sector by sector — join the waitlist and we\'ll ping you first.</span></div>';
+
+  const resume = S.plan
+    ? '<div class="wrap sec"><div class="resume-strip">'+ic('check',16)
+      +'<span class="t"><b>Your '+S.plan.label+' is live</b>'+S.plan.summary+'</span>'
+      +'<button class="btn btn-ghost-action" style="min-height:40px;padding:0 14px" data-act="goPlanTrack">Resume</button></div></div>'
+    : '';
+
+  $('#view').innerHTML = resume
+  + '<div class="wrap sec" style="margin-top:'+(S.plan?'14px':'6px')+'">'+svcBlock+'</div>'
+
+  + '<div class="wrap sec"><div class="hero-doors">'
+  +   '<button class="door" data-go="/menu"><span class="bg">'+ph(dish('grilled-chicken-veg-mash'),'','')+'</span>'
+  +     '<span class="eyebrow">Order today</span><h2>Dietitian-designed lunch, at your door in 40 min</h2>'
+  +     '<p>Full menu · macros on every dish</p><span class="btn btn-primary go">Browse menu</span></button>'
+  +   '<button class="door plan" data-go="/subscribe"><span class="bg">'+ph(dish('almond-chicken-salad'),'','')+'</span>'
+  +     '<span class="eyebrow">Weekday plan</span><h2>An RD plans your whole week</h2>'
+  +     '<p>Goal-based rotation · pause or skip anytime</p><span class="btn btn-ghost go" style="border:1px solid var(--tnm-border-strong)">Build my plan</span></button>'
+  + '</div></div>'
+
+  + '<div class="trust-strip"><span><b>FSSAI 22725926001018</b></span><span><b>ISO 22000:2018</b> kitchen</span><span><b>RD-formulated</b> menu</span></div>'
+
+  + '<div class="wrap sec"><div class="sec-label">Last month, measured</div><div class="proof-band">'
+  +   '<div class="proof"><div class="v tnm-data">1,400+</div><div class="k">orders delivered</div></div>'
+  +   '<div class="proof"><div class="v tnm-data">117</div><div class="k">RD-reviewed dishes</div></div>'
+  +   '<div class="proof"><div class="v tnm-data">25–40<span style="font-size:11px"> min</span></div><div class="k">delivery window</div></div>'
+  +   '<div class="proof"><div class="v tnm-data">43g</div><div class="k">top-pick protein</div></div>'
+  + '</div></div>'
+
+  + '<div class="wrap sec"><div class="sec-label">Clinical health programs<button data-go="/subscribe">See all</button></div><div class="prog">'
+  +   ['weight-loss','lean-muscle','pcos'].map(g=>'<button class="prog-card" data-go="/subscribe">'
+        +'<span class="tag">'+DB.goals[g].label+'</span><h4>'+({'weight-loss':'Weight-Loss Jumpstart','lean-muscle':'Lean Muscle Builder','pcos':'PCOS Hormone Balance'})[g]+'</h4>'
+        +'<div class="m tnm-data">'+DB.goals[g].avg+'</div></button>').join('')
+  + '</div></div>'
+
+  + '<div class="wrap sec"><div class="sec-label">Why a plan beats à la carte</div><div class="card" style="display:grid;gap:10px">'
+  +   ['A registered dietitian plans your rotation — a goal-based week, not one dish you pick.',
+       'Portions macro-targeted to your goal, not one-size bowls.',
+       'Aggregator commission stays in your food, not the platform.'].map(t=>
+        '<div style="display:flex;gap:9px;font-size:13px;color:var(--tnm-text-secondary)"><span style="color:var(--tnm-sage)">'+ic('check',14)+'</span>'+t+'</div>').join('')
+  + '</div></div>'
+  + '<p style="font-size:11.5px;color:var(--tnm-text-faint);text-align:center;padding:26px 24px 8px">Tanmatra meals support — they don\'t replace — medical care.</p>';
+  setCTA('');
+}
+
+/* ── MENU · frames: loading-skeleton / default / filtered / empty-filter ── */
+let menuLoaded=false, menuFilter={goal:null, veg:false, healthy:false};
+function screenMenu(){
+  if(!menuLoaded){
+    /* CLS law: skeleton occupies the EXACT final card boxes */
+    $('#view').innerHTML = '<div class="wrap sec" style="margin-top:8px">'
+      +'<div style="display:flex;gap:8px">'+'<div class="sk" style="width:92px;height:33px;border-radius:999px"></div>'.repeat(4)+'</div>'
+      +'<div class="menu-grid">'+ '<div class="sk" style="height:120px;border-radius:16px"></div>'.repeat(6) +'</div></div>';
+    setCTA(''); setTimeout(()=>{menuLoaded=true; if(current==='/menu') screenMenu();},900);
+    return;
+  }
+  let list = DB.dishes.filter(d =>
+    (!menuFilter.veg || d.veg) &&
+    (!menuFilter.goal || d.goal.includes(menuFilter.goal)) &&
+    (!menuFilter.healthy || d.kcal<=420));
+  $('#view').innerHTML = '<div class="wrap sec" style="margin-top:8px">'
+  + '<div class="filter-row">'
+  +   '<button class="chip'+(menuFilter.veg?' sel':'')+'" data-act="fVeg">'+fssai(true)+' Veg only</button>'
+  +   Object.keys(DB.goals).map(g=>'<button class="chip'+(menuFilter.goal===g?' sel':'')+'" data-fgoal="'+g+'">'+DB.goals[g].label+'</button>').join('')
+  +   '<button class="chip'+(menuFilter.healthy?' sel':'')+'" data-act="fHealthy">Healthy mode ≤<span class="tnm-data">420</span> kcal</button>'
+  + '</div>'
+  + (list.length
+    ? (function(){
+        const feat=list[0], rest=list.slice(1);
+        const fc=S.cart.find(i=>i.id===feat.id);
+        const featHtml='<div class="feat-card">'
+          +'<a href="#/dish/'+feat.id+'"><div class="img"><img src="'+IMG(feat.id)+'" alt="'+feat.name+'" onerror="this.parentElement.classList.add(\'img-fallback\');this.remove()"><span class="scrim"></span></div>'
+          +'<span class="ov"><span class="glass-chip">'+fssai(feat.veg)+' '+(feat.veg?'Veg':'Non-veg')+'</span>'
+          +'<span class="glass-chip tnm-data">'+feat.kcal+' kcal · '+feat.p+'g P</span>'
+          +'<span class="glass-chip">GI '+feat.gi+'</span></span></a>'
+          +'<div class="meta"><span><h4>'+feat.name+'</h4><span style="font-size:11px;color:var(--tnm-text-faint)">Dietitian\'s pick today</span></span>'
+          +'<span style="display:flex;align-items:center;gap:10px"><span class="pr tnm-data">'+money(feat.price)+'</span>'
+          +'<button class="add-btn'+(fc?' in':'')+'" data-add="'+feat.id+'">'+(fc?('✓ '+fc.qty):'Add +')+'</button></span></div></div>';
+        return '<div class="menu-grid">'+featHtml+rest.map(d=>{
+        const inCart = S.cart.find(i=>i.id===d.id);
+        return '<div class="dish-card">'+ph(d,'ph')
+        +'<div class="info"><div class="nm">'+fssai(d.veg)+'<h4><a href="#/dish/'+d.id+'">'+d.name+'</a></h4></div>'
+        +'<div class="macros tnm-data">'+d.kcal+' kcal · '+d.p+'g P · '+d.c+'g C · '+d.f+'g F</div>'
+        +'<div class="row2"><span class="pr tnm-data">'+money(d.price)+'</span>'
+        +'<button class="add-btn'+(inCart?' in':'')+'" data-add="'+d.id+'">'+(inCart?('✓ '+inCart.qty):'Add +')+'</button></div>'
+        +'</div></div>';}).join('')+'</div>';})()
+    : '<div class="menu-empty">No dishes match those filters.<br><button class="btn btn-ghost-action" style="margin-top:14px" data-act="clearFilters">Clear filters</button></div>')
+  + '</div>';
+  setCTA(cartCount()
+    ? '<div class="cta-bar"><button class="btn btn-primary" data-go="/cart"><span>View cart · <span class="tnm-data">'+cartCount()+'</span> item'+(cartCount()>1?'s':'')+'<span class="sub tnm-data">'+money(clientTotal())+' + taxes</span></span></button></div>'
+    : '');
+}
+
+/* ── PDP (condensed plan-first) · gated / unlocked / allergen / oos ── */
+function screenDish(slug){
+  const d = dish(slug) || dish('almond-chicken-salad');
+  const alg = allergenActive(d);
+  const gate = !S.unlocked
+    ? '<div class="gate-locked"><div class="ghost">'
+      +'<div class="g-row"><span>Calories</span><span class="tnm-data">'+d.kcal+' kcal</span></div>'
+      +'<div class="g-row"><span>Protein</span><span class="tnm-data">'+d.p+' g</span></div>'
+      +'<div class="g-row"><span>Glycaemic index</span><span class="tnm-data">'+d.gi+'</span></div></div>'
+      +'<div class="lock-layer"><span style="color:var(--tnm-action)">'+ic('lock',20)+'</span>'
+      +'<h3>See how this fits your goal</h3><p>Macros, GI and sugar/serving unlock after a <span class="tnm-data">30</span>-second Goal Fit check.</p>'
+      +'<button class="btn btn-primary" data-act="openAssess">Start assessment</button></div></div>'
+    : (function(){
+        const g = S.profile.goal;
+        const kc = g==='weight-loss'&&d.kcal>420 ? ['caution','Near boundary'] : ['sage','Within range'];
+        const pr = g==='lean-muscle'&&d.p<40 ? ['caution','Below 40g target'] : ['sage','Within range'];
+        const KMAX={'weight-loss':520,'lean-muscle':700,'general-wellness':650,'pcos':550};
+        const PREF={'weight-loss':35,'lean-muscle':45,'general-wellness':35,'pcos':35};
+        return '<div style="padding:16px">'
+        +'<div class="notice sage" style="margin-bottom:12px">'+ic('check')+'<span><b style="color:var(--tnm-sage)">Fits your '+DB.goals[g].label.toLowerCase()+' profile.</b> '+d.desc+'</span></div>'
+        +'<div class="ring-strip">'+ring('KCAL',d.kcal,d.kcal/KMAX[g],kc[0])+ring('PROTEIN',d.p+'g',d.p/PREF[g],pr[0])+ring('GI',d.gi,d.gi==='Low'?0.3:0.62,'sage')+'</div>'
+        +'<div class="macro-row"><span class="mk">Calories</span><span class="mv tnm-data">'+d.kcal+'<small> kcal</small></span><span class="status '+kc[0]+'">'+ic(kc[0]==='sage'?'check':'warn',11)+kc[1]+'</span></div>'
+        +'<div class="macro-row"><span class="mk">Protein</span><span class="mv tnm-data">'+d.p+'<small> g</small></span><span class="status '+pr[0]+'">'+ic(pr[0]==='sage'?'check':'warn',11)+pr[1]+'</span></div>'
+        +'<div class="macro-row"><span class="mk">Carbs</span><span class="mv tnm-data">'+d.c+'<small> g</small></span><span class="status sage">'+ic('check',11)+'Within range</span></div>'
+        +'<div class="macro-row"><span class="mk">Fat</span><span class="mv tnm-data">'+d.f+'<small> g</small></span><span class="status sage">'+ic('check',11)+'Within range</span></div>'
+        +'<div style="margin-top:10px;font-size:11.5px;color:var(--tnm-text-faint);display:flex;justify-content:space-between"><span>GI '+d.gi+' · ingredient-estimated</span><button data-act="openAssess" style="color:var(--tnm-action);font-weight:600">Retake</button></div></div>';})();
+
+  $('#view').innerHTML =
+    '<div style="position:relative">'+ph(d,'pdp-hero',d.name)
+  + '<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 44%,rgba(16,22,26,.94))"></div>'
+  + '<div style="position:absolute;left:16px;right:16px;bottom:14px">'
+  +   '<div style="display:flex;gap:10px;align-items:flex-end"><h1 style="flex:1;text-shadow:0 2px 12px rgba(0,0,0,.5)">'+d.name+'</h1>'+fssai(d.veg)+'</div>'
+  +   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">'
+  +     '<span class="glass-chip">'+ic('check',11)+' RD reviewed</span>'
+  +     (d.allergens.length? '<span class="glass-chip'+(alg?' alert-on':'')+'">'+ic('warn',11)+' '+d.allergens.join(', ').replace('-',' ')+'</span>':'')
+  +   '</div></div></div>'
+  + '<div class="wrap" style="padding-top:14px">'
+  +   '<p style="color:var(--tnm-text-secondary);font-size:13.5px">'+d.desc+'</p>'
+  +   (S.flags.oos? '<div class="notice caution" style="margin-top:14px">'+ic('clock')+'<span><b>Sold out for today.</b> Back on tomorrow\'s menu — prep starts <span class="tnm-data">11:30 AM</span>.</span></div>':'')
+  + '</div>'
+  + '<div class="wrap sec"><div class="card" style="padding:0;overflow:clip">'
+  +   '<div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--tnm-border)"><span style="color:var(--tnm-action)">'+ic('info',14)+'</span><b style="font-size:13.5px">Goal Fit Analysis</b><span style="margin-left:auto;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint)">Estimated</span></div>'
+  +   gate + '</div></div>'
+  + '<div class="wrap sec"><div class="sec-label">Complete ingredient declaration</div><div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px">'
+  +   d.ings.map(i=>'<span class="ing'+((alg&&/almond/i.test(i))?' flag':'')+'">'+i+'</span>').join('')+'</div>'
+  +   (alg? '<div class="notice alert" style="margin-top:12px">'+ic('warn')+'<span><b style="color:var(--tnm-alert)">Contains '+d.allergens.join(', ').replace('-',' ')+'</b> — flagged in your profile. Choose another dish or customise at cart.</span></div>':'')
+  + '</div></div>'
+  + '<div class="wrap sec"><div class="card" style="display:flex;gap:12px;font-size:12.5px;color:var(--tnm-text-secondary)"><span style="color:var(--tnm-text-secondary)">'+ic('check',16)+'</span><span><b style="color:var(--tnm-text-primary)">Reviewed by Dr. Anjali Nair, RD</b> — Lead Dietitian, Heart &amp; Diabetes Care · full 9-frame PDP lives in <span class="tnm-data">tanmatra-pdp-plan-first.html</span></span></div></div>'
+  + '<p style="font-size:11.5px;color:var(--tnm-text-faint);text-align:center;padding:24px 24px 4px">Tanmatra meals support — they don\'t replace — medical care.</p>';
+
+  setCTA(
+    (alg&&!S.flags.oos? '<div class="cta-msg notice alert">'+ic('warn')+'<span>Contains <b>'+d.allergens.join(', ').replace('-',' ')+'</b> — flagged in your profile.</span></div>':'')
+  + '<div class="cta-bar">'
+  + (S.flags.oos
+      ? '<button class="btn btn-ghost-action" data-act="notify"><span>Notify me<span class="sub">back tomorrow · <span class="tnm-data">11:30 AM</span></span></span></button>'
+      : '<button class="btn btn-ghost" data-add="'+d.id+'" data-stay="1"><span>Add once<span class="sub tnm-data">'+money(d.price)+' · incl. 5% GST</span></span></button>'
+        +'<button class="btn btn-primary" data-act="addToPlan" data-id="'+d.id+'"><span>Add to Plan<span class="sub">'+(S.plan?'this week\'s rotation':'start a plan')+'</span></span></button>')
+  + '</div>');
+}
+
+/* ── BUILDER · /subscribe · axes → summary ── */
+function screenSubscribe(){
+  const B=S.builder, P=DB.planPricing;
+  const per = key => B.meals==='2' ? DB.dinnerPerMeal[key] : P[key].perMeal;
+  const base = per('week');
+  const axis1 = ['trial','week','sixwk'].map(k=>{
+    const save = k==='sixwk' ? Math.round((1-per(k)/base)*100) : 0;
+    const tag  = k==='trial' ? ' <span class="intro-tag">INTRO</span>'
+               : save        ? ' <span class="save-tag">SAVE '+save+'%</span>' : '';
+    return '<button class="axis-opt'+(B.duration===k?' sel':'')+'" data-bdur="'+k+'">'
+    +'<span><span class="t">'+P[k].label+(k==='week'?' <span class="rec">· Recommended</span>':'')+tag+'</span><span class="d" style="display:block">'+P[k].note+' · <span class="tnm-data">'+P[k].meals+'</span>'+(B.meals==='2'?'×2':'')+' meals</span></span>'
+    +'<span class="pm"><span class="v tnm-data">'+(save?'<span class="strike tnm-data">'+money(base)+'</span>':'')+money(per(k))+'</span><span class="k">per meal <span class="quote-tag">· quoted</span></span></span></button>';}).join('');
+  const axis2 = [['1','Lunch only','One dietitian-built lunch, weekdays'],['2','Lunch + Dinner','Two windows — full-day coverage']]
+    .map(a=>'<button class="axis-opt'+(B.meals===a[0]?' sel':'')+'" data-bmeals="'+a[0]+'"><span><span class="t">'+a[1]+'</span><span class="d" style="display:block">'+a[2]+'</span></span></button>').join('');
+  const axis3 = [['veg','Vegetarian','Sage-marked dishes only'],['mixed','Mixed','Veg + non-veg rotation'],['hp','High-protein non-veg','Muscle-first rotation']]
+    .map(a=>'<button class="axis-opt'+(B.pref===a[0]?' sel':'')+'" data-bpref="'+a[0]+'"><span><span class="t">'+a[1]+'</span><span class="d" style="display:block">'+a[2]+'</span></span></button>').join('');
+
+  const step = B.step;
+  const goalKey = (S.profile&&S.profile.goal)||'general-wellness';
+  const totalMeals = B.duration? P[B.duration].meals * (B.meals==='2'?2:1) : 0;
+  const planTotal = B.duration? totalMeals * per(B.duration) : 0;
+
+  $('#view').innerHTML = '<div class="wrap" style="padding-top:10px">'
+  + '<h1 style="font-size:20px">Build your plan</h1>'
+  + '<p style="font-size:12.5px;color:var(--tnm-text-secondary);margin-top:4px">Per-meal price drops with commitment — commission we don\'t pay aggregators goes back into your food.</p>'
+  + '<div class="stepper"><i class="'+(step>=1?'done':'')+'"></i><i class="'+(step>=2?'done':'')+'"></i><i class="'+(step>=3?'done':'')+'"></i><i class="'+(step>=4?'done':'')+'"></i></div>'
+  + '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--tnm-text-faint);margin-top:8px">Step '+step+' of 4 · '+['Duration','Meals per day','Preference','Review'][step-1]+'</div>'
+  + '<div class="axis-grid">'
+  + (step===1? axis1 : step===2? axis2 : step===3? axis3 :
+     /* review */
+     '<div class="card"><div class="sec-label" style="margin-bottom:12px">Your plan</div>'
+     +'<div class="kv-card"><div><div class="k">Plan</div><div class="v">'+P[B.duration].label+' · '+({'1':'Lunch','2':'Lunch + Dinner'})[B.meals]+' · '+({veg:'Veg',mixed:'Mixed',hp:'High-protein'})[B.pref]+'</div></div></div>'
+     +'<div class="kv-card" style="margin-top:8px"><div><div class="k">Meals</div><div class="v tnm-data">'+totalMeals+'</div></div><div style="text-align:right"><div class="k">Per meal · quoted</div><div class="v tnm-data">'+money(per(B.duration))+'</div></div></div>'
+     +'<div class="kv-card" style="margin-top:8px"><div><div class="k">Plan total</div><div class="v tnm-data" style="font-size:16px">'+money(planTotal)+'</div></div><div style="text-align:right"><div class="k">Billing</div><div class="v">'+P[B.duration].note+'</div></div></div>'
+     +'<div style="margin-top:14px"><div class="sec-label">This rotation targets</div><div class="ribbon">'
+       +'<div class="cell"><div class="v tnm-data">'+({'weight-loss':'32g','lean-muscle':'45g','pcos':'34g','general-wellness':'34g'})[goalKey]+'</div><div class="k">avg protein</div></div>'
+       +'<div class="cell"><div class="v tnm-data">'+({'weight-loss':'25g+','lean-muscle':'30g+','pcos':'Low GI','general-wellness':'25g+'})[goalKey]+'</div><div class="k">'+(goalKey==='pcos'?'glycaemic':'fibre')+'</div></div>'
+       +'<div class="cell"><div class="v">'+DB.goals[goalKey].label+'</div><div class="k">goal</div></div></div>'
+       +(S.profile?'':'<div style="font-size:11px;color:var(--tnm-text-faint);margin-top:6px">Defaulting to general wellness — run Goal Fit on any dish to tune this.</div>')+'</div>'
+     +'<div class="pause-note" style="margin-top:14px">'+ic('info')+'<span><b>Travelling?</b> Pause or skip any day from your account — unused meals roll forward. No lock-in on the trial.</span></div>'
+     +'</div>'
+     +'<div class="wa-nudge" style="margin-top:12px">'+ic('check',15)+'<span><b>Not sure which rotation?</b> WhatsApp our RD desk — free <span class="tnm-data">15</span>-min intro.</span></div>'
+     +'<div class="testimonial" style="margin-top:16px">"Down <span class="tnm-data">4.5 kg</span> in the 6-week reset without thinking about a single lunch."<span class="who">Verified subscriber · Noida Sec 62 · result varies by adherence</span></div>')
+  + '</div></div>';
+
+  const ready = (step===1&&B.duration)||(step===2&&B.meals)||(step===3&&B.pref)||step===4;
+  setCTA('<div class="cta-bar">'
+    +(step>1?'<button class="btn btn-ghost" data-act="bBack" style="flex:0 0 30%">Back</button>':'')
+    +(step<4
+      ? '<button class="btn btn-primary" data-act="bNext" '+(ready?'':'disabled')+'>Continue</button>'
+      : '<button class="btn btn-primary" data-act="bCommit"><span>Start plan · <span class="tnm-data">'+money(planTotal)+'</span><span class="sub">explicit confirmation — nothing converts silently</span></span></button>')
+    +'</div>');
+}
+
+/* ── CART · frames: default / empty / min-order-nudge /
+      serviceability-warning / (skeleton via menu pattern) ── */
+function screenCart(){
+  if(!S.cart.length){
+    $('#view').innerHTML='<div class="empty-state">'
+      +'<span style="color:var(--tnm-text-faint)">'+ic('bag',34)+'</span>'
+      +'<h3>Your cart is empty</h3><p>Every dish lists calories, protein and allergens before you add it.</p>'
+      +'<button class="btn btn-primary" data-go="/menu">Browse menu</button></div>';
+    setCTA('');return;
+  }
+  const sub=clientTotal();
+  $('#view').innerHTML='<div class="wrap" style="padding-top:10px"><h1 style="font-size:20px">Cart</h1>'
+  + (S.flags.svcFail? '<div class="notice caution" style="margin-top:12px">'+ic('warn')+'<span><b>'+(S.pincode||'Your pincode')+' just went out of window.</b> Switch address at checkout or schedule tomorrow\'s slot.</span></div>':'')
+  + '<div class="card sec" style="padding:6px 16px">'
+  +   S.cart.map((i,x)=>{const d=dish(i.id);return '<div class="line-item">'+ph(d,'ph')
+      +'<div><h5>'+d.name+'</h5>'+(i.mods&&i.mods.length?'<div class="mods">'+i.mods.join(' · ')+'</div>':'')
+      +'<div class="qty"><button data-qty="-1" data-x="'+x+'" aria-label="Decrease">−</button><span class="n tnm-data">'+i.qty+'</span><button data-qty="1" data-x="'+x+'" aria-label="Increase">+</button></div></div>'
+      +'<div class="lp tnm-data" data-bill>'+money(i.price*i.qty)+'</div></div>';}).join('')
+  + '</div>'
+  + (sub<199? '<div class="notice caution sec">'+ic('info')+'<span>Add <b class="tnm-data">'+money(199-sub)+'</b> more for free delivery — a smoothie gets you there.</span></div>':'')
+  + '<div class="sec"><div class="sec-label">Pairs well · adds protein</div><div class="aov-rail">'
+  +   DB.aov.filter(id=>!S.cart.find(i=>i.id===id)).map(id=>{const d=dish(id);
+      return '<div class="aov">'+ph(d,'ph','')+'<div class="n" style="margin-top:8px">'+d.name+'</div><div class="p tnm-data">'+d.kcal+' kcal · '+money(d.price)+'</div><button class="add-btn" style="width:100%" data-add="'+id+'" data-stay="1">Add +</button></div>';}).join('')
+  + '</div></div>'
+  + '<div class="card sec bill">'
+  +   '<div class="b-row"><span>Item total</span><span class="v tnm-data" data-bill>'+money(sub)+'</span></div>'
+  +   '<div class="b-row"><span>GST · <span class="tnm-data">5%</span> prepared food</span><span class="v tnm-data" data-bill>'+money(gst(sub))+'</span></div>'
+  +   '<div class="b-row"><span>Delivery'+(delivery(sub)===0?' · free ≥ <span class="tnm-data">₹199</span>':'')+'</span><span class="v tnm-data" data-bill>'+(delivery(sub)===0?'₹0':money(delivery(sub)))+'</span></div>'
+  +   '<div class="b-row total"><span>To pay</span><span class="tnm-data" data-bill>'+money(sub+gst(sub)+delivery(sub))+'</span></div>'
+  + '</div></div>';
+  setCTA('<div class="cta-bar"><button class="btn btn-primary" data-go="/checkout"><span>Checkout · <span class="tnm-data">'+money(sub+gst(sub)+delivery(sub))+'</span><span class="sub">Review → Delivery → Payment</span></span></button></div>');
+}
+
+/* ── CHECKOUT · 3-step stepper per Wave-1 spec (15 frames) ── */
+function screenCheckout(){
+  if(!S.cart.length){go('/cart');return;}
+  const C=S.co, sub=clientTotal();
+  const srv=serverQuote();
+  const mismatch = S.flags.tamper || srv!==sub;   /* W1 demo: server is authority */
+
+  const stepper='<div class="co-stepper">'
+    +['Review','Delivery','Payment'].map((l,i)=>'<div class="co-step '+(C.step===i+1?'on':C.step>i+1?'done':'')+'">'+l+'</div>').join('')+'</div>';
+
+  let body='', cta='';
+  if(C.step===1){ /* review-default */
+    body='<div class="card sec" style="padding:6px 16px">'
+    + S.cart.map((i,x)=>{const d=dish(i.id);return '<div class="line-item">'+ph(d,'ph')
+      +'<div><h5>'+d.name+'</h5><div class="qty"><button data-qty="-1" data-x="'+x+'">−</button><span class="n tnm-data">'+i.qty+'</span><button data-qty="1" data-x="'+x+'">+</button></div></div>'
+      +'<div class="lp tnm-data">'+money(i.price*i.qty)+'</div></div>';}).join('')+'</div>'
+    +'<div class="card sec bill">'
+    +'<div class="b-row"><span>Item total</span><span class="v tnm-data">'+money(sub)+'</span></div>'
+    +'<div class="b-row"><span>GST · <span class="tnm-data">5%</span></span><span class="v tnm-data">'+money(gst(sub))+'</span></div>'
+    +'<div class="b-row"><span>Delivery</span><span class="v tnm-data">'+(delivery(sub)===0?'₹0':money(delivery(sub)))+'</span></div>'
+    +'<div class="b-row total"><span>To pay</span><span class="tnm-data">'+money(sub+gst(sub)+delivery(sub))+'</span></div></div>';
+    cta='<button class="btn btn-primary" data-act="coNext">Continue to delivery</button>';
+  }
+  else if(C.step===2){ /* delivery-* / guest-* */
+    if(C.phase==='phone'){
+      body='<div class="card sec"><b style="font-size:14px">Sign in to deliver</b>'
+      +'<p style="font-size:12px;color:var(--tnm-text-secondary);margin-top:3px">Guest-first — phone only, OTP auto-fills.</p>'
+      +'<div class="pincode-row"><div class="field"><span class="tnm-data" style="color:var(--tnm-text-faint);margin-right:8px">+91</span><input id="phoneInput" inputmode="numeric" maxlength="10" placeholder="Phone number" class="tnm-data" value="'+C.phone+'"></div></div></div>';
+      cta='<button class="btn btn-primary" data-act="sendOtp">Get OTP</button>';
+    } else if(C.phase==='otp'){ /* guest-otp: 6 mono boxes */
+      body='<div class="card sec" style="text-align:center"><b style="font-size:14px">Enter the code</b>'
+      +'<p style="font-size:12px;color:var(--tnm-text-secondary);margin-top:3px">Sent to <span class="tnm-data">+91 '+C.phone+'</span> · WebOTP auto-fill in prod</p>'
+      +'<div class="otp-row">'+Array.from({length:6},(_,i)=>'<input class="otp-box" data-otp="'+i+'" inputmode="numeric" maxlength="1">').join('')+'</div>'
+      +'<button style="font-size:12px;color:var(--tnm-action);font-weight:600" data-act="sendOtp">Resend</button></div>';
+      cta='<button class="btn btn-primary" data-act="verifyOtp" id="btnVerify" disabled>Verify</button>';
+    } else {
+      /* delivery-first-time absorbs nothing silently:
+         disabled Continue carries an explicit reason (old P0) */
+      const addrs=[{t:'Home',d:'B-42, Sector 62, Noida 201301'},{t:'Work',d:'Tower C, Sector 16, Noida 201301'}];
+      body='<div class="sec"><div class="sec-label">Deliver to</div><div style="display:grid;gap:8px">'
+      + addrs.map((a,i)=>'<button class="addr-card'+(C.addr===i?' sel':'')+'" data-addr="'+i+'"><span style="color:'+(C.addr===i?'var(--tnm-action)':'var(--tnm-text-faint)')+'">'+ic(C.addr===i?'check':'info',15)+'</span><span><span class="t" style="display:block">'+a.t+'</span><span class="d">'+a.d+'</span></span></button>').join('')
+      +'<button class="btn btn-ghost" data-act="fakeAddAddr">+ Add new address</button></div></div>'
+      +'<div class="sec"><div class="sec-label">When</div><div class="toggle2">'
+      +'<button class="'+(C.mode==='now'?'on':'')+'" data-mode="now">Now · <span class="tnm-data">25–40</span> min</button>'
+      +'<button class="'+(C.mode==='sched'?'on':'')+'" data-mode="sched">Schedule</button></div>'
+      +(C.mode==='sched'? '<div class="slot-chips">'+DB.slots.map(s=>'<button class="chip'+(C.slot===s?' sel':'')+'" data-slot="'+s+'"><span class="tnm-data">'+s+'</span></button>').join('')+'</div>':'')
+      +'</div>';
+      const blocked = C.addr===null || (C.mode==='sched'&&!C.slot);
+      cta=(blocked? '<div class="cta-msg notice caution">'+ic('info')+'<span>'+(C.addr===null?'Select a delivery address to continue.':'Pick a delivery slot to continue.')+'</span></div>':'')
+        +'<button class="btn btn-primary" data-act="coNext" '+(blocked?'disabled':'')+'>Continue to payment</button>';
+      cta='<div class="cta-wrapper">'+cta+'</div>';
+    }
+  }
+  else { /* payment-* */
+    const total=grand(srv);      /* server figure drives Pay */
+    if(C.phase==='processing'){
+      body='<div class="card sec" style="text-align:center;padding:34px 16px"><div class="spinner"></div>'
+      +'<b style="display:block;margin-top:16px;font-size:14px">Waiting for your UPI app…</b>'
+      +'<p style="font-size:12px;color:var(--tnm-text-secondary);margin-top:4px">Order <span class="tnm-data">TNM-'+(S.order?S.order.id:'—')+'</span> · don\'t close this screen</p></div>';
+      cta='';
+    } else if(C.phase==='failed'){
+      body='<div class="notice alert sec">'+ic('warn')+'<span><b style="color:var(--tnm-alert)">Payment didn\'t go through.</b> Your money is safe — any debit auto-reverses in <span class="tnm-data">3–5</span> days.</span></div>';
+      cta='<button class="btn btn-ghost" data-act="switchMethod" style="flex:0 0 42%">Change method</button>'
+         +'<button class="btn btn-primary" data-act="payNow">Retry payment</button>';
+    } else {
+      body=(mismatch? '<div class="notice alert sec">'+ic('warn')+'<span><b style="color:var(--tnm-alert)">Price check failed.</b> Cart said <span class="tnm-data">'+money(sub)+'</span>; server-verified total is <span class="tnm-data">'+money(srv)+'</span>. Amounts are always recomputed server-side before Razorpay. <button data-act="resync" style="color:var(--tnm-action);font-weight:700;text-decoration:underline">Refresh cart</button></span></div>':'')
+      +'<div class="sec"><div class="sec-label">Pay with</div><div style="display:grid;gap:8px">'
+      +'<button class="pay-opt'+(C.pay==='upi'?' sel':'')+'" data-pay="upi"><span style="color:var(--tnm-action)">'+ic('check',15)+'</span><span><span class="t" style="display:block">UPI · intent-first</span><span class="d">Opens your UPI app directly</span>'
+      +'<span class="upi-apps"><span class="upi-app">GPay</span><span class="upi-app">PhonePe</span><span class="upi-app">Paytm</span><span class="upi-app">BHIM</span></span></span></button>'
+      +'<button class="pay-opt'+(C.pay==='card'?' sel':'')+'" data-pay="card"><span style="color:var(--tnm-text-faint)">'+ic('info',15)+'</span><span><span class="t" style="display:block">Cards &amp; netbanking</span><span class="d">Via Razorpay</span></span></button></div></div>'
+      +'<div class="sec"><div class="sec-label">Tip your rider</div><div class="tip-chips">'
+      +[20,30,50].map(t=>'<button class="chip'+(C.tip===t?' sel':'')+'" data-tip="'+t+'"><span class="tnm-data">₹'+t+'</span></button>').join('')
+      +'<button class="chip'+(C.tip===0?' sel':'')+'" data-tip="0">No tip</button></div></div>'
+      +'<div class="sec"><div class="sec-label">Voucher</div><div class="voucher-row"><div class="field"><input id="voucherInput" placeholder="TNM50" maxlength="8"></div><button class="btn btn-ghost-action" data-act="applyVoucher">Apply</button></div>'
+      +(C.voucher? '<div class="notice sage" style="margin-top:8px">'+ic('check')+'<span><b style="color:var(--tnm-sage)">TNM50 applied</b> — <span class="tnm-data">−₹50</span> off this order.</span></div>':'')+'</div>'
+      +'<div class="card sec bill">'
+      +'<div class="b-row"><span>Server-verified subtotal</span><span class="v tnm-data">'+money(srv)+'</span></div>'
+      +'<div class="b-row"><span>GST <span class="tnm-data">5%</span> + delivery</span><span class="v tnm-data">'+money(gst(srv)+delivery(srv))+'</span></div>'
+      +(C.voucher?'<div class="b-row"><span>Voucher</span><span class="v tnm-data" style="color:var(--tnm-sage)">−'+money(C.voucher)+'</span></div>':'')
+      +'<div class="b-row"><span>Tip</span><span class="v tnm-data">'+money(C.tip)+'</span></div>'
+      +'<div class="b-row total"><span>Pay now</span><span class="tnm-data">'+money(total)+'</span></div></div>';
+      /* trust strip law: one quiet line DIRECTLY above the Pay action */
+      cta='<div class="co-trust"><b>FSSAI 22725926001018</b> · <b>ISO 22000</b> kitchen · <b>RD-formulated</b></div>'
+        +'<button class="btn btn-primary pay" data-act="payNow" '+(mismatch?'disabled':'')+'><span>Pay '+money(total)+'<span class="sub">'+(mismatch?'blocked — refresh cart to re-sync prices':'UPI intent · secured by Razorpay')+'</span></span></button>';
+    }
+  }
+  $('#view').innerHTML='<div class="wrap" style="padding-top:8px"><h1 style="font-size:20px">Checkout</h1>'+stepper+body+'</div>';
+  setCTA(cta?'<div class="cta-bar" style="flex-direction:column">'+cta+'</div>':'');
+}
+
+/* ── PLANS · /plans · frames: empty / active / paused / day-skipped /
+      swap-sheet / skip-confirm  (Stitch 175, 7, 23, 153, 190) ── */
+function screenPlans(){
+  if(!S.plan){
+    $('#view').innerHTML='<div class="empty-state">'
+      +'<span style="color:var(--tnm-text-faint)">'+ic('clock',34)+'</span>'
+      +'<h3>No active plan</h3><p>A dietitian-designed week, matched to your goal. No manual daily ordering.</p>'
+      +'<div style="display:grid;gap:10px;max-width:250px;margin:0 auto">'
+      +'<button class="btn btn-primary" data-go="/subscribe">Build my plan</button>'
+      +'<button class="btn btn-ghost" data-act="openAssess">Run Goal Fit first</button></div></div>';
+    setCTA('');return;
+  }
+  const gk=(S.profile&&S.profile.goal)||'general-wellness';
+  const wk=S.plan.week||[];
+  const avgP=Math.round(wk.reduce((s,d)=>s+dish(d.id).p,0)/(wk.length||1));
+  const avgK=Math.round(wk.reduce((s,d)=>s+dish(d.id).kcal,0)/(wk.length||1));
+  const PREF={'weight-loss':35,'lean-muscle':45,'general-wellness':35,'pcos':35}[gk];
+  const KMAX={'weight-loss':520,'lean-muscle':700,'general-wellness':650,'pcos':550}[gk];
+  $('#view').innerHTML='<div class="wrap" style="padding-top:10px">'
+  +'<div style="display:flex;align-items:center;gap:10px"><h1 style="font-size:20px;flex:1">My plan</h1>'
+  +'<span class="status '+(S.plan.paused?'caution':'sage')+'">'+ic(S.plan.paused?'clock':'check',11)+(S.plan.paused?'Paused':'Active')+'</span></div>'
+  +'<p style="font-size:12.5px;color:var(--tnm-text-secondary);margin-top:3px">'+S.plan.label+S.plan.summary+'</p>'
+  +(S.plan.paused?'<div class="notice caution sec">'+ic('info')+'<span><b>Plan paused.</b> Deliveries resume when you do — credits hold, nothing is lost.</span></div>':'')
+  +'<div class="card sec" style="display:flex;gap:14px;align-items:center">'
+  +'<div class="ring-strip" style="margin:0">'
+  +   ring('AVG KCAL',avgK,avgK/KMAX,avgK>KMAX*.92?'caution':'sage')
+  +   ring('AVG P',avgP+'g',avgP/PREF,avgP>=PREF*.9?'sage':'caution')+'</div>'
+  +'<div style="font-size:12px;color:var(--tnm-text-secondary)">This week\'s rotation vs your <b style="color:var(--tnm-text-primary)">'+DB.goals[gk].label.toLowerCase()+'</b> targets. Every dish RD-approved.</div></div>'
+  +'<div class="sec"><div class="sec-label">This week<button data-act="pPause">'+(S.plan.paused?'Resume plan':'Pause plan')+'</button></div>'
+  +'<div style="display:grid;gap:8px">'+wk.map((d,x)=>{
+      const dd=dish(d.id), st=d.status;
+      const pill= st==='delivered' ? '<span class="status sage">'+ic('check',10)+'Delivered</span>'
+        : st==='skipped' ? '<span class="status caution">'+ic('info',10)+'Skipped</span>'
+        : '<span class="status" style="color:var(--tnm-text-faint);background:var(--tnm-surface-ink-3)">Upcoming</span>';
+      return '<div class="day-card'+(st==='skipped'?' skipped':'')+'">'
+      +'<span class="day-tag tnm-data">'+d.day+'</span>'
+      +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="font-size:13px">'+dd.name+'</b><span style="color:var(--tnm-sage)" title="RD approved">'+ic('check',11)+'</span>'+(d.swapped?'<span style="font-size:9.5px;color:var(--tnm-text-faint)">· swapped</span>':'')+'</div>'
+      +'<div class="tnm-data" style="font-size:10.5px;color:var(--tnm-text-secondary)">'+dd.kcal+' kcal · '+dd.p+'g P · GI '+dd.gi+'</div></div>'
+      + pill
+      +(st==='upcoming'&&!S.plan.paused
+          ? '<span style="display:flex;gap:6px"><button class="mini-act" data-act="pSwap" data-x="'+x+'">Swap</button><button class="mini-act" data-act="pSkip" data-x="'+x+'">Skip</button></span>'
+          : st==='skipped' ? '<button class="mini-act" data-act="pSkipUndo" data-x="'+x+'">Undo</button>' : '')
+      +'</div>';}).join('')+'</div></div>'
+  +'<div class="pause-note sec">'+ic('info')+'<span>Changes to medical restrictions require an RD consult. Pause, skip and swap are self-serve — unused credits roll forward.</span></div>'
+  +'<button class="btn btn-ghost" style="width:100%;margin-top:14px" data-act="pModify">Modify commitment</button>'
+  +'</div>';
+  setCTA('<div class="cta-bar"><button class="btn btn-primary" data-go="/menu"><span>Add extras from the menu<span class="sub">one-off dishes bill separately</span></span></button></div>');
+}
+
+/* ── TRACK · 8 status frames + zen mode ── */
+const STATUSES=[
+  {t:'Order placed',d:'Kitchen accepted · payment confirmed'},
+  {t:'Preparing',d:'Portioned to your plan\'s macro targets — fresh-cook window'},
+  {t:'Quality check',d:'Macros verified against the RD spec sheet'},
+  {t:'Out for delivery',d:'rider'},
+  {t:'Delivered',d:'Rate the dish · reorder in one tap'}];
+function screenTrack(){
+  if(!S.order){
+    $('#view').innerHTML='<div class="empty-state"><span style="color:var(--tnm-text-faint)">'+ic('clock',34)+'</span><h3>No live order</h3><p>Place an order and live tracking appears here.</p><button class="btn btn-primary" data-go="/menu">Browse menu</button></div>';
+    setCTA('');return;
+  }
+  const idx=Math.min(S.statusIdx,4);
+  $('#view').innerHTML='<div class="wrap" style="padding-top:10px"><h1 style="font-size:20px">Order <span class="tnm-data">TNM-'+S.order.id+'</span></h1>'
+  +(idx<4
+    ? '<div style="margin-top:8px"><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tnm-text-faint)">Arriving</div><div class="eta-big tnm-data">'+(S.flags.delayed?'1:28':'1:04')+'<span style="font-size:15px;font-weight:500;color:var(--tnm-text-secondary)"> PM</span></div></div>'
+    : '<p style="font-size:12.5px;color:var(--tnm-text-secondary);margin-top:3px">Delivered · enjoy</p>')
+  +(S.flags.delayed&&idx<4? '<div class="notice caution sec">'+ic('clock')+'<span><b>Running ~<span class="tnm-data">15</span> min late.</b> Rider hit the Sector 62 signal — honest ETA above, meal stays chilled.</span></div>':'')
+  +'<div class="card sec"><div class="tl">'
+  + STATUSES.map((s,i)=>'<div class="tl-item '+(i<idx?'done':i===idx?'on':'')+'"><span class="tl-dot">'+(i<idx?'<span style="color:var(--tnm-sage)">'+ic('check',9)+'</span>':'')+'</span>'
+    +'<div class="t">'+s.t+'</div>'
+    +(s.d==='rider'&&i===idx? '<div class="rider" style="margin-top:8px;width:100%"><span class="av">RK</span><span style="flex:1"><b style="font-size:13px;display:block">Ravi K.</b><span style="font-size:11px;color:var(--tnm-text-secondary)">ETA <span class="tnm-data">'+(S.flags.delayed?'24':'12')+' min</span> · <span class="tnm-data">1.8 km</span> out</span></span><button class="tb-btn" data-act="callRider" aria-label="Call rider">'+ic('phone',15)+'</button></div>'
+      : '<div class="d">'+(s.d==='rider'?'Rider assigned at dispatch':s.d)+'</div>')
+    +'</div>').join('')
+  +'</div></div>'
+  +(idx===4? '<div class="cta-bar" style="position:static;padding:16px 0 0"><button class="btn btn-ghost-action" data-act="seedCart">Reorder</button><button class="btn btn-primary" data-act="rate">Rate the dish</button></div>':'')
+  +'</div>';
+  setCTA(idx<4? '<div class="cta-bar"><button class="btn btn-ghost" data-act="zen"><span>Zen mode<span class="sub">chrome-free tracking</span></span></button></div>':'');
+  renderZen();
+}
+function renderZen(){
+  const idx=Math.min(S.statusIdx,4);
+  $('#zenLayer').innerHTML = S.order
+    ? '<div class="zen-rings"><span class="r"></span><span class="r r2"></span><span class="r r3"></span><span class="arc"></span><span class="core"></span></div><h2>'+STATUSES[idx].t+'</h2>'
+      +'<div class="eta tnm-data">'+(idx<4?(S.flags.delayed?'1:28 PM':'1:04 PM'):'Delivered')+'</div>'
+      +'<button class="exit" data-act="zen">back to standard view</button>'
+    : '';
+}
+
+/* ═══════════ SHEETS ═══════════ */
+function openAssess(){
+  const goals=Object.keys(DB.goals);
+  sheet('<h3>Goal Fit check</h3><p style="font-size:12.5px;color:var(--tnm-text-secondary);margin-top:4px">Two taps — held for every dish and your plan rotation.</p>'
+  +'<div class="sec-label" style="margin-top:16px">Goal</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+  + goals.map(g=>'<button class="chip aGoal" data-ag="'+g+'" style="justify-content:center;min-height:46px">'+DB.goals[g].label+'</button>').join('')
+  +'</div><div class="sec-label" style="margin-top:16px">Allergen watch</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+  + [['tree-nuts','Tree nuts'],['dairy','Dairy'],['gluten','Gluten'],['none','None']].map(a=>'<button class="chip aAlg" data-aa="'+a[0]+'" style="justify-content:center;min-height:46px">'+a[1]+'</button>').join('')
+  +'</div><button class="btn btn-primary" id="btnFinishAssess" style="width:100%;margin-top:18px" disabled>See my fit</button>');
+}
+let A={goal:null,algs:new Set()};
+let pendAdd=null;
+let pendDay=null;
+/* Clinical Allergen Gate — explicit consent, safe action is primary */
+function openAllergenAck(d){
+  sheet('<h3 style="display:flex;gap:9px;align-items:center"><span style="color:var(--tnm-alert)">'+ic('warn',19)+'</span>Contains '+d.allergens.join(', ').replace('-',' ')+'</h3>'
+  +'<p class="sheet-sub" style="margin-top:6px">Your Goal Fit profile flags this. The declaration below is complete — flagged items in error tone.</p>'
+  +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">'
+  + d.ings.map(i=>'<span class="ing'+(/almond|paneer|curd|milk|wheat|roti|bread|egg/i.test(i)&&d.allergens.length?' flag':'')+'">'+i+'</span>').join('')+'</div>'
+  +'<div class="notice caution" style="margin-top:14px">'+ic('info')+'<span>Cross-contact controls are in place, but this dish is prepared with the flagged ingredient. Acknowledged orders are logged for kitchen visibility.</span></div>'
+  +'<div style="display:grid;gap:10px;margin-top:18px">'
+  +'<button class="btn btn-primary" data-act="ackBack">Choose another dish</button>'
+  +'<button class="btn btn-ghost" data-act="ackAdd">I understand — add anyway</button></div>');
+}
+/* Trial Recap & Upgrade Bridge (A2): recap → offer → explicit choice, nothing silent */
+function openTrialBridge(){
+  sheet('<h3>Your 3-day trial, measured</h3>'
+  +'<div class="ribbon" style="margin-top:14px">'
+  +'<div class="cell"><div class="v tnm-data">3/3</div><div class="k">delivered on time</div></div>'
+  +'<div class="cell"><div class="v tnm-data">41g</div><div class="k">avg protein</div></div>'
+  +'<div class="cell"><div class="v tnm-data">Low</div><div class="k">avg GI</div></div></div>'
+  +'<div class="card" style="margin-top:12px;padding:12px 14px;display:grid;gap:8px">'
+  + [['Almond Chicken Salad','472 kcal · 43g P'],['Grilled Chicken, Veg & Mash','520 kcal · 46g P'],['Tomato Basil Omelette','195 kcal · 13g P']]
+    .map(m=>'<div style="display:flex;justify-content:space-between;font-size:12.5px"><span>'+m[0]+'</span><span class="tnm-data" style="color:var(--tnm-text-secondary)">'+m[1]+'</span></div>').join('')+'</div>'
+  +'<div class="card" style="margin-top:12px;border-color:var(--tnm-action)">'
+  +'<b style="font-size:14px">Keep the rotation going — Weekly Plan</b>'
+  +'<p style="font-size:12px;color:var(--tnm-text-secondary);margin-top:3px"><span class="tnm-data">₹179</span>/meal <span class="quote-tag">· quoted</span> · pause or skip any day · same UPI offered as default, never reused silently</p></div>'
+  +'<div style="display:grid;gap:10px;margin-top:16px">'
+  +'<button class="btn btn-primary" data-act="bridgeStart"><span>Start weekly plan<span class="sub">renews weekly · explicit tap required</span></span></button>'
+  +'<button class="btn btn-ghost" data-act="closeSheet">Decide later</button></div>');
+}
+/* /plans helpers — Stitch 175/23/153 */
+function seedWeek(){
+  const gk=(S.profile&&S.profile.goal)||'general-wellness';
+  const pool=DB.dishes.filter(d=>d.goal.includes(gk)&&(S.builder.pref!=='veg'||d.veg));
+  const src=pool.length?pool:DB.dishes;
+  return ['Mon','Tue','Wed','Thu','Fri'].map((dy,x)=>({day:dy,id:src[x%src.length].id,status:x===0?'delivered':'upcoming'}));
+}
+function openSwapSheet(x){
+  pendDay=x;
+  const cur=dish(S.plan.week[x].id);
+  const gk=(S.profile&&S.profile.goal)||'general-wellness';
+  const CAP={'weight-loss':520,'lean-muscle':700,'general-wellness':650,'pcos':550}[gk];
+  const pool=DB.dishes.filter(d=>d.id!==cur.id&&d.goal.includes(gk));
+  const heavy=DB.dishes.filter(d=>d.id!==cur.id&&!pool.includes(d)).sort((a,b)=>b.kcal-a.kcal)[0];
+  const alts=[...pool.slice(0,3),...(heavy?[heavy]:[])];
+  sheet('<h3>Clinically compatible swaps</h3>'
+  +'<p class="sheet-sub" style="margin-top:4px">Swapping out <b>'+cur.name+'</b> · '+S.plan.week[x].day+'. Alternatives stay inside your '+DB.goals[gk].label.toLowerCase()+' caps.</p>'
+  + alts.map(a=>{
+      const dk=a.kcal-cur.kcal, dp=a.p-cur.p, capped=a.kcal>CAP*0.92;
+      const match=Math.max(62,100-Math.round(Math.abs(dk)/cur.kcal*100+Math.abs(dp)*1.2));
+      return '<button class="swap-row'+(capped?' capped':'')+'"'+(capped?'':' data-act="pSwapPick" data-id="'+a.id+'"')+'>'
+      +'<span style="flex:1;min-width:0"><b style="font-size:13px;display:block">'+a.name+'</b>'
+      +'<span style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'
+      +(capped?'':'<span class="match-tag tnm-data">'+match+'% match</span>')
+      +'<span class="delta tnm-data">P '+(dp>=0?'+':'')+dp+'g</span><span class="delta tnm-data">kcal '+(dk>=0?'+':'')+dk+'</span></span>'
+      +(capped?'<span style="display:block;font-size:10.5px;color:var(--tnm-caution);margin-top:6px">'+ic('warn',10)+' Exceeds your plan\'s macro caps · Unavailable</span>':'')
+      +'</span>'+(capped?'':'<span style="color:var(--tnm-action);font-size:12px;font-weight:700">Select</span>')+'</button>';}).join('')
+  +'<button class="btn btn-ghost" style="width:100%;margin-top:14px" data-act="closeSheet">Cancel</button>');
+}
+function openSkipSheet(x){
+  pendDay=x;
+  const d=S.plan.week[x];
+  sheet('<h3>Skip '+d.day+'\'s lunch?</h3>'
+  +'<div class="notice sage" style="margin-top:14px">'+ic('check')+'<span><b style="color:var(--tnm-sage)">Credit rolls forward.</b> The meal credit returns to your plan — your week extends by one day.</span></div>'
+  +'<div class="notice caution" style="margin-top:8px">'+ic('info')+'<span>Your streak pauses for the day; protein baseline stays intact.</span></div>'
+  +'<div style="display:grid;gap:10px;margin-top:16px">'
+  +'<button class="btn btn-primary" data-act="pSkipConfirm">Confirm skip</button>'
+  +'<button class="btn btn-ghost" data-act="closeSheet">Cancel</button></div>'
+  +'<p style="font-size:10px;color:var(--tnm-text-faint);text-align:center;margin-top:12px">Action logged for kitchen planning.</p>');
+}
+function orderSuccessSheet(kind, total){
+  const id=Math.floor(1000+Math.random()*9000);
+  if(kind==='order'){S.order={id};S.statusIdx=0;}
+  sheet('<div class="success-hero"><span class="success-ring"><span style="color:var(--tnm-sage)">'+ic('check',30)+'</span></span></div>'
+  +'<div style="text-align:center;padding:0 8px"><h3 style="font-size:19px">'+(kind==='order'?'Order confirmed':'Plan started')+'</h3>'
+  +'<p style="font-size:13px;color:var(--tnm-text-secondary);margin-top:5px">'+(kind==='order'?('Order <span class="tnm-data">TNM-'+id+'</span> · paid <span class="tnm-data">'+money(total)+'</span>'):'First delivery Monday · pause or skip anytime')+'</p>'
+  +'<div class="kv-card" style="margin-top:16px;text-align:left"><div><div class="k">'+(kind==='order'?'Window':'Slot')+'</div><div class="v tnm-data">12:30–1:15 PM</div></div><div style="text-align:right"><div class="k">Kitchen</div><div class="v">Noida Sec 63</div></div></div></div>'
+  +'<div style="display:grid;gap:10px;margin-top:20px">'
+  +(kind==='order'?'<button class="btn btn-primary" data-act="goTrack">Track live</button>':'<button class="btn btn-primary" data-go="/plans" data-closesheet="1">View my week</button>')
+  +'<button class="btn btn-ghost" data-act="closeSheet">Keep browsing</button></div>');
+}
+
+/* ═══════════ ROUTER ═══════════ */
+let current='/';
+function route(){
+  const h=(location.hash.slice(1)||'/');
+  current=h;
+  const parts=h.split('/').filter(Boolean);
+  renderTopbar(h);
+  window.scrollTo(0,0);
+  if(h==='/'||h==='') screenHome();
+  else if(h==='/menu') screenMenu();
+  else if(parts[0]==='dish') screenDish(parts[1]);
+  else if(h==='/subscribe') screenSubscribe();
+  else if(h==='/cart') screenCart();
+  else if(h==='/checkout') screenCheckout();
+  else if(h==='/plans') screenPlans();
+  else if(h==='/track') screenTrack();
+  else screenHome();
+  devSync();
+}
+window.addEventListener('hashchange',route);
+
+/* ═══════════ EVENT DELEGATION ═══════════ */
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-go],[data-act],[data-add],[data-qty],[data-fgoal],[data-bdur],[data-bmeals],[data-bpref],[data-addr],[data-mode],[data-slot],[data-pay],[data-tip],[data-ag],[data-aa],[data-tgl]');
+  if(!el)return;
+  const D=el.dataset;
+
+  if(D.closesheet)sheet(false);
+  if(D.go){go(D.go);return;}
+  if(D.tgl){S.flags[D.tgl]=!S.flags[D.tgl];toast(D.tgl+' '+(S.flags[D.tgl]?'ON':'OFF'));route();return;}
+
+  switch(D.act){
+    case 'back': history.length>1?history.back():go('/'); return;
+    case 'goCart': go('/cart'); return;
+    case 'checkPin': {
+      const v=($('#pinInput')||{}).value||'';
+      if(!/^\d{6}$/.test(v)){toast('Enter a 6-digit pincode');return;}
+      S.pincode=v; S.serviceable=DB.serviceable(v)&&!S.flags.svcFail; route(); return;}
+    case 'clearFilters': menuFilter={goal:null,veg:false,healthy:false}; route(); return;
+    case 'fVeg': menuFilter.veg=!menuFilter.veg; route(); return;
+    case 'fHealthy': menuFilter.healthy=!menuFilter.healthy; route(); return;
+    case 'openAssess': A={goal:S.profile?S.profile.goal:null, algs:new Set(S.profile?S.profile.allergens:[])}; openAssess(); syncAssess(); return;
+    case 'notify': toast('We\'ll ping you when it\'s back — 11:30 AM'); return;
+    case 'addToPlan': {
+      const d=dish(D.id);
+      if(allergenActive(d)){pendAdd={id:D.id,stay:true,mode:'plan'};openAllergenAck(d);return;}
+      if(!S.plan){go('/subscribe');toast('Build the plan this dish joins');return;}
+      toast('Added to this week\'s rotation'); return;}
+    case 'bBack': S.builder.step=Math.max(1,S.builder.step-1); route(); return;
+    case 'bNext': S.builder.step=Math.min(4,S.builder.step+1); route(); return;
+    case 'bCommit': {
+      const P=DB.planPricing[S.builder.duration];
+      S.plan={label:P.label, paused:false, week:seedWeek(), summary:' · '+({'1':'lunch','2':'lunch + dinner'})[S.builder.meals]+' · '+({veg:'veg',mixed:'mixed',hp:'high-protein'})[S.builder.pref]+' rotation'};
+      orderSuccessSheet('plan',0); return;}
+    case 'coNext': S.co.step=Math.min(3,S.co.step+1); route(); return;
+    case 'sendOtp': S.co.phone=($('#phoneInput')||{}).value||S.co.phone;
+      if(!/^\d{10}$/.test(S.co.phone)){toast('Enter a 10-digit number');return;}
+      S.co.phase='otp'; route(); setTimeout(()=>{const b=$('.otp-box');b&&b.focus();},60); return;
+    case 'verifyOtp': S.co.phase='address'; route(); return;
+    case 'fakeAddAddr': toast('Address form — pincode-first, serviceability inline (Wave-2 /account/addresses)'); return;
+    case 'applyVoucher': {
+      const v=(($('#voucherInput')||{}).value||'').trim().toUpperCase();
+      if(v==='TNM50'){S.co.voucher=50;toast('TNM50 applied — ₹50 off');}
+      else toast('Code not recognised'); route(); return;}
+    case 'payNow': {
+      if(S.flags.tamper){toast('Blocked — server price authority');return;}
+      S.co.phase='processing'; S.order={id:Math.floor(1000+Math.random()*9000)}; route();
+      setTimeout(()=>{
+        if(S.flags.payFail){S.co.phase='failed'; route(); return;}
+        const paid=grand(serverQuote());
+        S.cart=[]; S.co.phase='pay'; S.co.step=1; S.statusIdx=0;
+        route(); orderSuccessSheet('order',paid);
+      },1600); return;}
+    case 'switchMethod': S.co.phase='pay'; S.flags.payFail=false; route(); return;
+    case 'resync': S.flags.tamper=false; S.cart.forEach(i=>i.price=dish(i.id).price); toast('Prices re-synced from server'); route(); return;
+    case 'goTrack': sheet(false); go('/track'); return;
+    case 'trialBridge': openTrialBridge(); return;
+    case 'goPlanTrack': go('/plans'); return;
+    case 'pPause': S.plan.paused=!S.plan.paused; toast(S.plan.paused?'Plan paused — credits hold':'Plan resumed'); route(); return;
+    case 'pSwap': openSwapSheet(+D.x); return;
+    case 'pSwapPick': {const w=S.plan.week[pendDay]; w.id=D.id; w.swapped=true; pendDay=null; sheet(false); toast('Swapped — macros stay on target'); route(); return;}
+    case 'pSkip': openSkipSheet(+D.x); return;
+    case 'pSkipConfirm': S.plan.week[pendDay].status='skipped'; pendDay=null; sheet(false); toast('Skipped — credit rolls forward'); route(); return;
+    case 'pSkipUndo': S.plan.week[+D.x].status='upcoming'; toast('Restored'); route(); return;
+    case 'pModify': go('/subscribe'); toast('Adjust duration — savings recalc live'); return;
+    case 'rate': toast('Thanks — review posts after moderation'); return;
+    case 'zen': S.flags.zen=!S.flags.zen; document.body.classList.toggle('is-zen',S.flags.zen); renderZen(); return;
+    case 'closeSheet': sheet(false); return;
+    case 'ackBack': pendAdd=null; sheet(false); go('/menu'); return;
+    case 'ackAdd': {
+      if(!pendAdd){sheet(false);return;}
+      sheet(false);
+      if(pendAdd.mode==='plan'){
+        if(!S.plan){go('/subscribe');toast('Build the plan this dish joins');}
+        else toast('Added to rotation — allergen acknowledgment logged');
+      } else {
+        addToCart(pendAdd.id);
+        toast('Added — allergen acknowledgment logged');
+        if(!pendAdd.stay)go('/cart'); else route();
+      }
+      pendAdd=null; return;}
+    case 'bridgeStart':
+      S.plan={label:'Weekly Plan',summary:' · lunch · mixed rotation',paused:false,week:seedWeek()};
+      orderSuccessSheet('plan',0); return;
+    case 'callRider': toast('Calling rider — masked number in prod'); return;
+    /* dev acts */
+    case 'emptyCart': S.cart=[]; toast('Cart emptied'); route(); return;
+    case 'seedCart': addToCart('almond-chicken-salad'); addToCart('grilled-chicken-veg-mash'); toast('Cart seeded'); route(); return;
+    case 'trackAdv': if(!S.order){S.order={id:4271};} S.statusIdx=Math.min(4,S.statusIdx+1); if(current!=='/track')go('/track');else route(); return;
+    case 'resetAll': S=S0(); menuLoaded=false; menuFilter={goal:null,veg:false,healthy:false}; document.body.classList.remove('is-zen'); sheet(false); go('/'); route(); return;
+  }
+
+  if(D.add){
+    const dd=dish(D.add);
+    if(allergenActive(dd)){pendAdd={id:D.add,stay:!!D.stay,mode:'once'};openAllergenAck(dd);return;}
+    addToCart(D.add); if(!D.stay)go('/cart'); else route(); return;}
+  if(D.qty){const i=S.cart[+D.x]; i.qty+=+D.qty; if(i.qty<=0)S.cart.splice(+D.x,1); route();
+    $$('#view [data-bill]').forEach(n=>{n.classList.remove('flash');void n.offsetWidth;n.classList.add('flash');}); return;}
+  if(D.fgoal){menuFilter.goal=menuFilter.goal===D.fgoal?null:D.fgoal; route(); return;}
+  if(D.bdur){S.builder.duration=D.bdur; route(); return;}
+  if(D.bmeals){S.builder.meals=D.bmeals; route(); return;}
+  if(D.bpref){S.builder.pref=D.bpref; route(); return;}
+  if(D.addr!==undefined){S.co.addr=+D.addr; route(); return;}
+  if(D.mode){S.co.mode=D.mode; if(D.mode==='now')S.co.slot=null; route(); return;}
+  if(D.slot){S.co.slot=D.slot; route(); return;}
+  if(D.pay){S.co.pay=D.pay; route(); return;}
+  if(D.tip!==undefined){S.co.tip=+D.tip; route(); return;}
+  if(D.ag){A.goal=D.ag; syncAssess(); return;}
+  if(D.aa){const v=D.aa;
+    if(v==='none'){A.algs.clear();A.algs.add('none');}
+    else{A.algs.delete('none'); A.algs.has(v)?A.algs.delete(v):A.algs.add(v);}
+    syncAssess(); return;}
+});
+function addToCart(id){
+  const i=S.cart.find(x=>x.id===id);
+  if(i)i.qty++;
+  else S.cart.push({id, qty:1, price:dish(id).price, mods:[]});
+  if(S.flags.tamper)S.cart[0].price=1;     /* tamper demo persists */
+  toast('Added — '+dish(id).name);
+}
+function syncAssess(){
+  $$('.aGoal').forEach(b=>b.classList.toggle('sel',b.dataset.ag===A.goal));
+  $$('.aAlg').forEach(b=>b.classList.toggle('sel',A.algs.has(b.dataset.aa)));
+  const btn=$('#btnFinishAssess'); if(btn)btn.disabled=!(A.goal&&A.algs.size);
+}
+document.addEventListener('click',e=>{
+  if(e.target.id==='btnFinishAssess'&&!e.target.disabled){
+    S.profile={goal:A.goal, allergens:[...A.algs].filter(x=>x!=='none')};
+    S.unlocked=true; sheet(false); route();
+  }
+});
+/* OTP boxes: auto-advance */
+document.addEventListener('input',e=>{
+  if(e.target.classList.contains('otp-box')){
+    e.target.value=e.target.value.replace(/\D/g,'').slice(0,1);
+    if(e.target.value){const n=e.target.parentElement.querySelector('[data-otp="'+(+e.target.dataset.otp+1)+'"]');n&&n.focus();}
+    const full=$$('.otp-box').every(b=>b.value);
+    const v=$('#btnVerify'); if(v)v.disabled=!full;
+  }
+  if(e.target.id==='pinInput'||e.target.id==='phoneInput')
+    e.target.value=e.target.value.replace(/\D/g,'');
+});
+
+/* ═══════════ DEV STRIP ═══════════ */
+$('#devPill').addEventListener('click',()=>{
+  $('#dev').classList.toggle('open');
+  $('#devPill').setAttribute('aria-expanded',$('#dev').classList.contains('open'));
+});
+function devSync(){
+  $$('#devPanel [data-go]').forEach(b=>b.classList.toggle('active',b.dataset.go===current));
+  const f=S.flags;
+  $('#devState').textContent='route: '+current
+    +'\ncart: '+cartCount()+' · '+money(clientTotal())+' (srv '+money(serverQuote())+')'
+    +'\nprofile: '+(S.profile?S.profile.goal+'/['+S.profile.allergens.join(',')+']':'none')
+    +'\nplan: '+(S.plan?S.plan.label:'none')
+    +'\nco: step '+S.co.step+' · '+S.co.phase
+    +'\norder: '+(S.order?'TNM-'+S.order.id+' @'+S.statusIdx:'none')
+    +'\nflags: '+Object.keys(f).filter(k=>f[k]).join(',')||'—';
+}
+
+/* boot */
+route();
+</script>
+</body>
+</html>

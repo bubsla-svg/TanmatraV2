@@ -236,7 +236,7 @@ export default function HomeHeader() {
               </button>
             ))}
             <p className="px-4 py-3 text-[11px] text-white/40 leading-relaxed">
-              Fresh daily delivery across Noida, Delhi &amp; Gurgaon. Exact serviceability is
+              Fresh daily delivery across Noida. Exact serviceability is
               confirmed at checkout by pincode.
             </p>
           </nav>

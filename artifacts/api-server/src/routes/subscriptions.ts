@@ -25,6 +25,7 @@ import { cancelAutopayMandate } from "../lib/autopay";
 import { SKIP_SWAP_CUTOFF_MS, isPastSkipCutoff } from "../lib/subscriptionRules";
 import {
   PER_MEAL_PAISE,
+  GST_RATE,
   computeTrialPricePaise,
   computeDeliveryPricePaise,
 } from "../lib/subscriptionPricing";
@@ -484,9 +485,14 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
   // Delivery is free for subscriptions (delivery included)
   const deliveryFeePaise = 0;
   
-  // Taxes are 5% on food
-  const gstPaise = Math.round(finalSubtotal * 0.05);
-  const totalPaise = finalSubtotal + gstPaise + deliveryFeePaise;
+  // finalSubtotal is already GST-inclusive (computeDeliveryPricePaise /
+  // computeTrialPricePaise both bake in 5% GST). Derive the GST component for
+  // display by splitting finalSubtotal into its pre-tax/post-tax parts —
+  // do NOT apply a second 5% on top, or the quote double-counts tax versus
+  // what /subscriptions actually bills via /payments/charge-mandate.
+  const preTaxSubtotalPaise = Math.round(finalSubtotal / (1 + GST_RATE));
+  const gstPaise = finalSubtotal - preTaxSubtotalPaise;
+  const totalPaise = finalSubtotal + deliveryFeePaise;
 
   res.json({
     mealsPerDelivery: meals,
