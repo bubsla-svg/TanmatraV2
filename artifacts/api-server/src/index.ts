@@ -15,6 +15,7 @@ import { startMealPlanScheduler } from "./lib/mealPlanScheduler";
 import { startAnalyticsScheduler } from "./lib/analyticsScheduler";
 import { startPreDebitScheduler, stopPreDebitScheduler } from "./lib/preDebitScheduler";
 import { startTrialLifecycleScheduler, stopTrialLifecycleScheduler } from "./lib/trialLifecycleScheduler";
+import { startChargeMandateScheduler, stopChargeMandateScheduler } from "./lib/chargeMandateScheduler";
 import {
   startSubscriptionAbandonmentScheduler,
   stopSubscriptionAbandonmentScheduler,
@@ -72,6 +73,7 @@ if (!schedulersDisabled) {
   startMealPlanScheduler();
   startPreDebitScheduler();
   startTrialLifecycleScheduler();
+  startChargeMandateScheduler();
   startSubscriptionAbandonmentScheduler();
   void resumeActiveSimulations();
 }
@@ -221,6 +223,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  }
  stopPreDebitScheduler();
  stopTrialLifecycleScheduler();
+ stopChargeMandateScheduler();
  stopSubscriptionAbandonmentScheduler();
  clearInterval(purgeTimer);
  clearInterval(slotReclaimTimer);

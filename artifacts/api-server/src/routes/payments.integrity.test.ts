@@ -132,6 +132,11 @@ after(async () => {
       .where(inArray(subscriptionsTable.id, CREATED_SUBSCRIPTION_IDS));
   }
   if (CREATED_USER_IDS.length > 0) {
+    // Some tests (e.g. the charge-mandate flow) cause the server to persist
+    // its own orders-table ledger row that was never tracked in
+    // CREATED_ORDER_IDS; delete any leftover orders by userId first since
+    // orders.user_id has no cascade.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
 });
@@ -241,14 +246,15 @@ async function seedChargeableSubscription(pricePerDeliveryPaise: number): Promis
   const subscriptionId = sub!.id;
   CREATED_SUBSCRIPTION_IDS.push(subscriptionId);
 
+  const scheduledChargeDate = new Date();
   await db.insert(subscriptionMandatesTable).values({
     subscriptionId,
     razorpayCustomerId: `cust_${RUN}`,
     razorpayTokenId: `tok_${RUN}`,
     status: "active",
+    nextChargeAt: scheduledChargeDate,
   });
 
-  const scheduledChargeDate = new Date();
   const dispatchedAt = new Date(Date.now() - 25 * 60 * 60 * 1000); // > 24h ago
   await db.insert(preDebitNotificationsTable).values({
     subscriptionId,
@@ -614,32 +620,64 @@ test("charge-mandate bills the subscription's pricePerDeliveryPaise, ignoring a 
 
   const { subscriptionId, scheduledChargeDate } = await seedChargeableSubscription(authoritativePaise);
 
-  const { result: res, calls } = await withMockedRazorpayFetch(
-    "api.razorpay.com/v1/payments/charge",
-    (body) => ({ id: `pay_mock_${RUN}`, status: "captured", amount: body.amount }),
-    async () => {
-      const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-admin-token": ADMIN_TOKEN },
-        body: JSON.stringify({
-          subscriptionId,
-          amountPaise: tamperedClientAmount,
-          scheduledChargeDate: scheduledChargeDate.toISOString(),
-        }),
+  // The recurring-charge gateway flow is two calls: create an order, then
+  // charge the stored token against it (see lib/chargeMandate.ts's module
+  // header for why the old single-call /v1/payments/charge mock no longer
+  // applies).
+  const orderCalls: any[] = [];
+  const recurringCalls: any[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: any, init?: any) => {
+    const url = typeof input === "string" ? input : input.url;
+    if (typeof url === "string" && url.includes("api.razorpay.com/v1/orders")) {
+      const body = init?.body ? JSON.parse(init.body as string) : undefined;
+      orderCalls.push(body);
+      return new Response(JSON.stringify({ id: `order_mock_${RUN}` }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
       });
-      const json = (await r.json()) as any;
-      return { status: r.status, json };
-    },
-  );
+    }
+    if (typeof url === "string" && url.includes("api.razorpay.com/v1/payments/create/recurring")) {
+      const body = init?.body ? JSON.parse(init.body as string) : undefined;
+      recurringCalls.push(body);
+      return new Response(
+        JSON.stringify({ id: `pay_mock_${RUN}`, status: "captured", amount: body.amount }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+    return realFetch(input, init);
+  }) as typeof fetch;
+
+  let res: { status: number; json: any };
+  try {
+    const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-token": ADMIN_TOKEN },
+      body: JSON.stringify({
+        subscriptionId,
+        amountPaise: tamperedClientAmount,
+        scheduledChargeDate: scheduledChargeDate.toISOString(),
+      }),
+    });
+    res = { status: r.status, json: await r.json() };
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 
   assert.equal(res.status, 200, JSON.stringify(res.json));
-  assert.equal(calls.length, 1, "exactly one Razorpay mandate-charge call must have been made");
+  assert.equal(orderCalls.length, 1, "exactly one Razorpay order-creation call must have been made");
+  assert.equal(recurringCalls.length, 1, "exactly one Razorpay recurring-charge call must have been made");
   assert.equal(
-    calls[0].amount,
+    orderCalls[0].amount,
     authoritativePaise,
-    "the outbound Razorpay mandate-charge request must carry sub.pricePerDeliveryPaise, not the tampered client value",
+    "the outbound Razorpay order must carry sub.pricePerDeliveryPaise, not the tampered client value",
   );
-  assert.notEqual(calls[0].amount, tamperedClientAmount);
+  assert.equal(
+    recurringCalls[0].amount,
+    authoritativePaise,
+    "the outbound Razorpay recurring-charge request must carry sub.pricePerDeliveryPaise, not the tampered client value",
+  );
+  assert.notEqual(recurringCalls[0].amount, tamperedClientAmount);
   assert.equal(
     res.json.amount,
     authoritativePaise,

@@ -95,7 +95,10 @@ const rescheduleSchema = z.object({
 // "monthly" is a 4-week cycle (28 days) so a weekly menu pattern always
 // divides evenly — a true 30-day month would drift against day-of-week
 // plans by 2 days every cycle.
-const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
+// Exported so the recurring-charge driver (lib/chargeMandate.ts) can
+// replenish the upcoming-deliveries pool using the exact same cadence-day
+// mapping this router uses everywhere else — never a second, drifting copy.
+export const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
   weekly: 7,
   fortnightly: 14,
   monthly: 42, // mapped to 6-week protocol (42 days)
@@ -103,7 +106,7 @@ const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
 
 // With a per-day plan every plan generates ~4 weeks of dated deliveries
 // ahead, regardless of billing cadence (4×7, 2×14, 1×42).
-const CADENCE_CYCLES_AHEAD: Record<SubscriptionCadence, number> = {
+export const CADENCE_CYCLES_AHEAD: Record<SubscriptionCadence, number> = {
   weekly: 4,
   fortnightly: 2,
   monthly: 1, // generates 1 cycle (6 weeks) ahead
@@ -177,7 +180,7 @@ export async function updateTrialState(
 }
 
 
-function addDays(date: Date, days: number): Date {
+export function addDays(date: Date, days: number): Date {
   const out = new Date(date);
   out.setUTCDate(out.getUTCDate() + days);
   return out;
@@ -270,7 +273,11 @@ async function recomputeNextDeliveryAt(
 // callback param — lets callers run this inside an existing transaction.
 type DbExecutor = Pick<typeof db, "select" | "insert" | "update">;
 
-async function generateDeliveriesForSubscription(
+// Exported: lib/chargeMandate.ts reuses this exact function (rather than a
+// second copy) to replenish the upcoming-deliveries pool when a recurring
+// charge succeeds and finds no un-fulfilled delivery left to bill against —
+// mirrors POST /subscriptions/:id/generate-next below.
+export async function generateDeliveriesForSubscription(
   subscriptionId: number,
   cadence: SubscriptionCadence,
   startFrom: Date,
