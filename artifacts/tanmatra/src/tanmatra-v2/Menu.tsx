@@ -845,9 +845,12 @@ export default function V2Menu() {
             </label>
           </div>
 
-          {/* Empty state */}
+          {/* Empty state — reserves a fixed block instead of collapsing to
+              its content height, so clearing a filter (which re-mounts the
+              populated grid in this same slot) can't shift anything above
+              or below it. */}
           {consolidatedDishes.length === 0 ? (
-            <div className="tc" style={{ padding: "40px 20px" }}>
+            <div className="tc" style={{ padding: "40px 20px", minHeight: 320 }}>
               <i className="ph-bold ph-warning" style={{ fontSize: 32, color: "var(--saf)" }} />
               <div className="tt mt10">No dishes match your filters</div>
               <div className="fine mt6">Try loosening a filter or clearing the search.</div>
