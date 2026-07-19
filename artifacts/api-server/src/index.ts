@@ -28,7 +28,6 @@ import { sweepExpiredIdempotencyKeys } from "./middlewares/idempotency";
 import { sweepOrphanSlotReservations } from "./routes/fulfillment";
 import { drainOpsAuditOutbox } from "./lib/opsAudit";
 import { pool, overridePool } from "@workspace/db";
-import { migrateToLatest } from "@workspace/db/migrate";
 import { validateEnv } from "./lib/validateEnv";
 import { ensureRectificationSchema } from "./lib/ensureRectificationSchema";
 
@@ -88,18 +87,6 @@ async function start(): Promise<void> {
  logger.error({ err }, "Error listening on port");
  process.exit(1);
  });
-
- // Apply any pending Drizzle migrations BEFORE anything else touches the
- // DB. Fail-fast on error — an instance must never serve traffic against a
- // schema older than what this build expects (this is what let the
- // verify-otp "internal error" reach prod: the DB had drifted behind the
- // code with no automated step to catch up).
- try {
-   await migrateToLatest();
- } catch (err) {
-   logger.fatal({ err }, "migrateToLatest failed — exiting");
-   process.exit(1);
- }
 
  // Additive, idempotent schema ensure (vendor batch + wearable ingestion).
  // Runs BEFORE the port binds so new tables/columns exist before any request
