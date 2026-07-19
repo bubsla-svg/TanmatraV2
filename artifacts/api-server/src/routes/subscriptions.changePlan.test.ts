@@ -36,6 +36,7 @@ import {
   usersTable,
   subscriptionsTable,
   subscriptionMandatesTable,
+  ordersTable,
 } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
@@ -442,6 +443,12 @@ after(async () => {
   if (server) await new Promise<void>((r) => server.close(() => r()));
   globalThis.fetch = realFetch;
   if (CREATED_USER_IDS.length > 0) {
+    // Subscription creation inserts an `orders` row for the first billing
+    // cycle (see routes/subscriptions.ts), and orders.user_id has no
+    // ON DELETE CASCADE (unlike almost every other users-FK in the schema —
+    // an order must never silently vanish when an account is deleted). Clean
+    // those up first or the users delete below violates that FK.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
 });
