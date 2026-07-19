@@ -29,18 +29,31 @@ function deriveSocketTarget(): { url: string | undefined; path: string } {
 export function getSocket(): Socket {
   if (socket) return socket;
   const { url, path } = deriveSocketTarget();
+  // Bounded reconnection: socket.io-client's default is unbounded retries
+  // (with backoff, so not a tight CPU spin, but a persistently-down socket
+  // server means indefinite background reconnect attempts forever with no
+  // way for the UI to ever say "give up and tell the user"). Capping this
+  // and listening for `reconnect_failed` (fired once attempts are
+  // exhausted) is what lets useSocketStatus expose a real give-up state.
+  const reconnectionOptions = {
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+  };
   socket = url
     ? io(url, {
         path,
         transports: ["websocket", "polling"],
         autoConnect: true,
         withCredentials: true,
+        ...reconnectionOptions,
       })
     : io({
         path,
         transports: ["polling"],
         autoConnect: true,
         withCredentials: true,
+        ...reconnectionOptions,
       });
   return socket;
 }

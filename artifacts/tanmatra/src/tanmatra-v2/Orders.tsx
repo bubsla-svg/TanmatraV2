@@ -32,7 +32,7 @@ export default function V2Orders() {
   const navigate = useNavigate();
   const { orders } = useOrders();
   const { addItem } = useCart();
-  const { connected: socketConnected } = useSocketStatus();
+  const { connected: socketConnected, giveUp: socketGaveUp } = useSocketStatus();
   const { enabled: clinicalMode } = useClinicalMode();
   const [reportFor, setReportFor] = useState<PastOrder | null>(null);
 
@@ -133,6 +133,7 @@ export default function V2Orders() {
                         <ClinicalLifecycleStepper
                           order={order}
                           socketConnected={socketConnected}
+                          socketGaveUp={socketGaveUp}
                           compact
                         />
                       </div>

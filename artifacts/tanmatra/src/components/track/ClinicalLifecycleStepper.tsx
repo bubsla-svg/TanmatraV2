@@ -44,10 +44,11 @@ function stageActor(order: PastOrder, stage: ClinicalStage): string | undefined 
 interface Props {
   order: PastOrder;
   socketConnected: boolean;
+  socketGaveUp?: boolean;
   compact?: boolean;
 }
 
-export function ClinicalLifecycleStepper({ order, socketConnected, compact = false }: Props) {
+export function ClinicalLifecycleStepper({ order, socketConnected, socketGaveUp = false, compact = false }: Props) {
   const isCancelled = order.status === "cancelled";
   const currentStage = statusToClinicalStage(order.status, !!order.verifiedAt);
   const currentIdx = isCancelled ? -1 : clinicalStageIndex(currentStage);
@@ -77,7 +78,11 @@ export function ClinicalLifecycleStepper({ order, socketConnected, compact = fal
           role="status"
         >
           <WifiOff className="w-4 h-4 shrink-0" aria-hidden />
-          <span>Live updates paused — reconnecting. Status shown may be stale.</span>
+          <span>
+            {socketGaveUp
+              ? "Live updates unavailable — refresh this page for the latest status."
+              : "Live updates paused — reconnecting. Status shown may be stale."}
+          </span>
         </div>
       ) : (
         <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--sage)" }} aria-live="polite">

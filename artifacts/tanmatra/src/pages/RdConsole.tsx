@@ -354,7 +354,7 @@ interface DeliveryEventPayload {
 }
 
 function ActivePatientOrdersPanel() {
-  const { connected } = useSocketStatus();
+  const { connected, giveUp } = useSocketStatus();
   const [data, setData] = useState<ActiveOrdersResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -521,7 +521,7 @@ function ActivePatientOrdersPanel() {
           <div className="flex items-center gap-3">
             {!connected && (
               <span className="text-[10px] alert-stat-text">
-                Live updates paused — reconnecting…
+                {giveUp ? "Live updates unavailable — refresh to retry" : "Live updates paused — reconnecting…"}
               </span>
             )}
             <p className="text-[10px] text-nn-on-surface-variant">
