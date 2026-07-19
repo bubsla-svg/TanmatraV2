@@ -188,7 +188,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <strong style={{ color:"var(--color-nn-primary)", fontSize:"1.25rem" }}>Tanmatra</strong>
             <p style={{ color:"var(--text-secondary)", fontSize:"0.875rem", maxWidth:"320px" }}>
               Dietitian-designed meals, delivered fresh
-              across Noida, Delhi &amp; Gurgaon. This app needs JavaScript — or reach
+              across Noida. This app needs JavaScript — or reach
               us directly:
             </p>
             <p style={{ fontSize:"0.875rem" }}>

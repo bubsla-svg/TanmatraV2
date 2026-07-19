@@ -761,6 +761,11 @@ export default function V2Subscribe() {
             ? "Tanmatra 3-Day Trial Pack"
             : `Tanmatra ${CADENCE_LABEL[activeCadence]} plan — first cycle`,
           contact: address.phone,
+          // Required so the server can attach a recurring UPI Autopay token
+          // to this gateway order for weekly/fortnightly plans — without it
+          // POST /payments/razorpay/order never enters its recurring branch
+          // and no autopay mandate is ever registered.
+          subscriptionId: result.subscription.id,
         });
         if (outcome === "cancelled") {
           await subscriptionsApi.cancel(result.subscription.id).catch(() => undefined);
@@ -1129,7 +1134,7 @@ export default function V2Subscribe() {
             {address.pincode.length === 6 && pincodeCheck.state === "unserviceable" && (
               <p className="fine text-[var(--tnm-alert)] font-semibold mt-1.5 leading-snug flex items-start gap-1.5">
                 <Warning className="w-3.5 h-3.5 shrink-0 mt-0.5" weight="fill" />
-                Pincode unserviceable. Currently delivering to selected sectors in Noida, Delhi, and Gurgaon.
+                Pincode unserviceable. Currently delivering to selected sectors in Noida.
               </p>
             )}
             {pincodeCheck.state === "serviceable" && (
@@ -1364,7 +1369,7 @@ export default function V2Subscribe() {
               <span className="font-mono text-white/80">{subtotal}</span>
             </div>
             <div className="flex justify-between text-xs text-white/60">
-              <span>GST Taxes (18% clinical catering)</span>
+              <span>GST Taxes (5%)</span>
               <span className="font-mono text-white/80">{taxes}</span>
             </div>
             <div className="flex justify-between text-xs text-white/60">

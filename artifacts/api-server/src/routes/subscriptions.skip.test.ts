@@ -27,7 +27,7 @@ import express, {
   type NextFunction,
 } from "express";
 import { and, eq, inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, mealCreditsTable, subscriptionDeliveriesTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, mealCreditsTable, subscriptionDeliveriesTable, ordersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 
@@ -281,6 +281,10 @@ after(async () => {
     await db
       .delete(mealCreditsTable)
       .where(inArray(mealCreditsTable.userId, CREATED_USER_IDS));
+    // orders.user_id has no cascade (financial records must not silently
+    // vanish on user delete) — POST /subscriptions now creates a linked
+    // first-cycle order, so it must be cleared before the user row.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db
       .delete(subscriptionsTable)
       .where(inArray(subscriptionsTable.userId, CREATED_USER_IDS));
