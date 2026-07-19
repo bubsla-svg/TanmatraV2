@@ -30,6 +30,11 @@ import {
 import subscriptionsRouter from "./subscriptions";
 import paymentsRouter from "./payments";
 
+// /payments/charge-mandate is ops-gated (see routes/payments.ts) — set the
+// same shared secret the route reads so the suite is self-contained.
+const ADMIN_TOKEN = "test_admin_tok_cancel";
+process.env["RD_ADMIN_TOKEN"] = ADMIN_TOKEN;
+
 interface TestUser { id: string }
 let server: http.Server;
 let baseUrl = "";
@@ -63,10 +68,20 @@ async function makeUser(): Promise<TestUser> {
   return u;
 }
 
-async function api(method: string, path: string, body: unknown, user?: TestUser) {
+async function api(
+  method: string,
+  path: string,
+  body: unknown,
+  user?: TestUser,
+  extraHeaders?: Record<string, string>,
+) {
   const res = await fetch(`${baseUrl}${path}`, {
     method,
-    headers: { "Content-Type": "application/json", ...(user ? { "x-test-user-id": user.id } : {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(user ? { "x-test-user-id": user.id } : {}),
+      ...extraHeaders,
+    },
     body: body == null ? undefined : JSON.stringify(body),
   });
   const text = await res.text();
@@ -150,7 +165,7 @@ test("charge-mandate refuses after the mandate is revoked (404) — billing stop
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: futureISO(1),
-  });
+  }, undefined, { "x-admin-token": ADMIN_TOKEN });
   assert.equal(res.status, 404, JSON.stringify(res.json));
 });
 
@@ -167,9 +182,39 @@ test("charge-mandate refuses a cancelled subscription even if a mandate row ling
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: futureISO(1),
-  });
+  }, undefined, { "x-admin-token": ADMIN_TOKEN });
   assert.equal(res.status, 409, JSON.stringify(res.json));
   assert.equal(res.json.code, "subscription_inactive");
+});
+
+test("charge-mandate: request without the x-admin-token credential is rejected (403), never reaches business logic", async () => {
+  const user = await makeUser();
+  const subId = await seedActiveSubscription(user);
+  await seedMandate(subId, "active");
+
+  const body = {
+    subscriptionId: subId,
+    amountPaise: 380000,
+    scheduledChargeDate: futureISO(1),
+  };
+
+  // No credential — a plain customer session must not be able to trigger a
+  // mandate charge, even for their own subscription.
+  const noToken = await api("POST", "/payments/charge-mandate", body, user);
+  assert.equal(noToken.status, 403, JSON.stringify(noToken.json));
+
+  // Wrong token — must not be accepted.
+  const wrongToken = await api("POST", "/payments/charge-mandate", body, user, {
+    "x-admin-token": "not-the-real-token",
+  });
+  assert.equal(wrongToken.status, 403, JSON.stringify(wrongToken.json));
+
+  // The mandate must be untouched — no gateway charge occurred.
+  const [mandate] = await db
+    .select()
+    .from(subscriptionMandatesTable)
+    .where(eq(subscriptionMandatesTable.subscriptionId, subId));
+  assert.equal(mandate!.status, "active");
 });
 
 after(async () => {
