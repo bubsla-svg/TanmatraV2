@@ -30,7 +30,7 @@ import express, {
   type NextFunction,
 } from "express";
 import { inArray } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, ordersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 // Price expectations come from the canonical pricing module — the same pure
@@ -138,7 +138,11 @@ await new Promise<void>((resolve) => {
 
 after(async () => {
   if (CREATED_USER_IDS.length > 0) {
-    // subscriptions + members + deliveries cascade on user delete (FK).
+    // subscriptions + members + deliveries cascade on user delete (FK), but
+    // orders.user_id does not (financial records must not silently vanish on
+    // user delete) — POST /subscriptions now creates a linked first-cycle
+    // order, so it must be cleared before the user row.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
   await new Promise<void>((resolve) => server.close(() => resolve()));

@@ -5,7 +5,7 @@ import { type AddressInfo } from "node:net";
 import http from "node:http";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { and, eq, inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, preDebitNotificationsTable, subscriptionMandatesTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, preDebitNotificationsTable, subscriptionMandatesTable, ordersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 import paymentsRouter from "./payments";
@@ -110,6 +110,10 @@ await new Promise<void>((resolve) => {
 
 after(async () => {
   if (CREATED_USER_IDS.length > 0) {
+    // orders.user_id has no cascade (financial records must not silently
+    // vanish on user delete) — POST /subscriptions now creates a linked
+    // first-cycle order, so it must be cleared before the user row.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
   await new Promise<void>((resolve) => server.close(() => resolve()));
