@@ -70,7 +70,13 @@ router.get("/orders/active", async (req: Request, res: Response) => {
     return;
   }
   const callerIsClinician = await isClinician(req.user.id);
-  const baseWhere = inArray(ordersTable.status, ACTIVE_STATUSES);
+  // This is a clinical patient-order feed (STAT cancel from RdConsole) —
+  // marketplace rows have no clinical/delivery-slot meaning and shouldn't
+  // appear next to real patient meal orders here.
+  const baseWhere = and(
+    inArray(ordersTable.status, ACTIVE_STATUSES),
+    eq(ordersTable.orderKind, "meal"),
+  );
   const where = callerIsClinician
     ? baseWhere
     : and(baseWhere, eq(ordersTable.userId, req.user.id));

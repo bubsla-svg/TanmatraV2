@@ -155,6 +155,7 @@ export async function aggregateDishStats(
       and(
         gte(ordersTable.createdAt, opts.windowStart),
         sql`${ordersTable.createdAt} < ${opts.windowEnd}`,
+        eq(ordersTable.orderKind, "meal"),
       ),
     );
   const priced = await loadPricedItems();
@@ -504,6 +505,7 @@ async function buildDishSuggestions(
       and(
         gte(ordersTable.createdAt, windowStart),
         sql`${ordersTable.createdAt} < ${windowEnd}`,
+        eq(ordersTable.orderKind, "meal"),
       ),
     );
   const slices = new Map<string, { count: number; zone: string; daypart: Daypart }>();

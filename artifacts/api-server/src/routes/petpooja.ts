@@ -163,6 +163,14 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
       res.status(404).json({ success: "0", message: `order with external ID ${payload.orderID} not found` });
       return;
     }
+    // Petpooja is the kitchen POS — it only ever tracks meal orders. Guard
+    // against its numeric orderID/externalOrderId lookups ever landing on a
+    // marketplace row (e.g. an id collision) and overwriting its status with
+    // a kitchen-prep status it has no business having.
+    if (order.orderKind !== "meal") {
+      res.status(404).json({ success: "0", message: `order with external ID ${payload.orderID} not found` });
+      return;
+    }
 
     const mappedStatus = mapPetpoojaStatus(payload.status);
     const updateFields: any = {
@@ -251,6 +259,10 @@ router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Resp
       res.status(404).json({ success: "0", message: `order with external ID ${payload.clientorderID} not found` });
       return;
     }
+    if (order.orderKind !== "meal") {
+      res.status(404).json({ success: "0", message: `order with external ID ${payload.clientorderID} not found` });
+      return;
+    }
 
     const mappedStatus = mapPetpoojaStatus(payload.status);
     const updateFields: any = {
@@ -323,6 +335,10 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
     }
 
     if (!order) {
+      res.status(404).json({ success: "fail", message: `order with ID ${orderIdStr} not found` });
+      return;
+    }
+    if (order.orderKind !== "meal") {
       res.status(404).json({ success: "fail", message: `order with ID ${orderIdStr} not found` });
       return;
     }
