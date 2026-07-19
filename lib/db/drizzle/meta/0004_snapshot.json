@@ -1,6 +1,6 @@
 {
-  "id": "fe19bf8c-f74f-4451-919c-c41b09e1a2a3",
-  "prevId": "9093a6db-19e2-4936-b878-6003a7d8d18d",
+  "id": "86e3e435-1c33-4cef-984e-19e868e1ffb3",
+  "prevId": "fe19bf8c-f74f-4451-919c-c41b09e1a2a3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2505,6 +2505,43 @@
         "trial_state": {
           "name": "trial_state",
           "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pending_cadence": {
+          "name": "pending_cadence",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pending_meals_per_delivery": {
+          "name": "pending_meals_per_delivery",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pending_price_per_delivery_paise": {
+          "name": "pending_price_per_delivery_paise",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pending_change_requested_at": {
+          "name": "pending_change_requested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pending_change_reauth_required": {
+          "name": "pending_change_reauth_required",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "pending_change_razorpay_order_id": {
+          "name": "pending_change_razorpay_order_id",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false
         },
