@@ -1,5 +1,10 @@
 export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly";
-export type SubscriptionStatus = "active" | "paused" | "cancelled";
+// "halted" = billing gave up after repeated consecutive charge failures (see
+// api-server's chargeMandate.ts MAX_CONSECUTIVE_CHARGE_FAILURES). Distinct
+// from "paused" (the customer's own choice, no billing implication) — a
+// halted subscription needs the customer to retry/update payment before it
+// resumes. Recoverable via subscriptionsApi.reactivateBilling.
+export type SubscriptionStatus = "active" | "paused" | "cancelled" | "halted";
 export type DeliveryStatus =
   | "upcoming"
   | "skipped"
@@ -196,6 +201,16 @@ export const subscriptionsApi = {
     }),
   cancel: (id: number) =>
     request<{ subscription: Subscription }>(`/subscriptions/${id}/cancel`, {
+      method: "POST",
+    }),
+  // Recovers a "halted" subscription (billing stopped after repeated
+  // consecutive charge failures) — reuses the existing Razorpay mandate,
+  // resets the failure counter, and resumes on the normal cadence.
+  reactivateBilling: (id: number) =>
+    request<{
+      subscription: Subscription;
+      mandate: { id: number; status: string; nextChargeAt: string | null } | null;
+    }>(`/subscriptions/${id}/reactivate-billing`, {
       method: "POST",
     }),
   updateDeliveryWindow: (id: number, deliveryWindow: string) =>

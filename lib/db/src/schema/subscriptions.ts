@@ -13,7 +13,16 @@ import { z } from "zod/v4";
 import { usersTable } from "./auth";
 
 export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly";
-export type SubscriptionStatus = "active" | "paused" | "cancelled";
+// "halted" mirrors a real Razorpay native subscription's `subscription.halted`
+// terminal state: billing gave up after MAX_CONSECUTIVE_CHARGE_FAILURES
+// consecutive failed debits (see chargeMandate.ts's failCharge) and will not
+// retry again until the customer reactivates via
+// POST /subscriptions/:id/reactivate-billing. Deliberately distinct from
+// "paused" (customer-initiated, no billing implication) so ops/customer UI
+// can tell "you paused this" from "we stopped trying to charge your card".
+// Plain varchar(16) column below, no DB-level CHECK/enum constraint — adding
+// this value is TypeScript-only, not a schema migration.
+export type SubscriptionStatus = "active" | "paused" | "cancelled" | "halted";
 export type DeliveryStatus =
   | "upcoming"
   | "skipped"

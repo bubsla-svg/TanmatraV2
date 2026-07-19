@@ -55,6 +55,15 @@ const STATUS_META: Record<
     dot: "var(--dgr)",
     pillStyle: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--dgr)" },
   },
+  // Billing gave up after repeated consecutive charge failures (see
+  // api-server's chargeMandate.ts MAX_CONSECUTIVE_CHARGE_FAILURES) — distinct
+  // from a customer-initiated "paused", so it gets the alert color, not the
+  // caution one.
+  halted: {
+    label: "Billing halted",
+    dot: "var(--dgr)",
+    pillStyle: { background: "color-mix(in oklab, var(--color-error) 16%, transparent)", color: "var(--dgr)" },
+  },
 };
 
 const DELIVERY_META: Record<
@@ -448,6 +457,12 @@ export default function V2Subscriptions() {
             onResume={() =>
               wrap(subscriptionsApi.resume(detail.subscription.id), "Subscription resumed")
             }
+            onReactivateBilling={() =>
+              wrap(
+                subscriptionsApi.reactivateBilling(detail.subscription.id),
+                "Billing reactivated — you'll be charged on the normal schedule",
+              )
+            }
             onCancel={() => setCancelConfirmOpen(true)}
             onEditWindow={() => {
               setPendingWindow(detail.subscription.deliveryWindow);
@@ -764,6 +779,7 @@ function DetailView({
   progress,
   onPause,
   onResume,
+  onReactivateBilling,
   onCancel,
   onEditWindow,
   onGenerateMore,
@@ -777,6 +793,7 @@ function DetailView({
   progress?: LoyaltyProgress;
   onPause: () => void;
   onResume: () => void;
+  onReactivateBilling: () => void;
   onCancel: () => void;
   onEditWindow: () => void;
   onGenerateMore: () => void;
@@ -847,6 +864,15 @@ function DetailView({
               <i className="ph-bold ph-play" /> Resume
             </button>
           )}
+          {s.status === "halted" && (
+            <button
+              className="btn btn-g"
+              style={{ ...ACT, color: "var(--dgr)" }}
+              onClick={onReactivateBilling}
+            >
+              <i className="ph-bold ph-arrow-clockwise" /> Retry billing
+            </button>
+          )}
           {!trial && (
             <button className="btn btn-g" style={ACT} onClick={onEditWindow}>
               <i className="ph-bold ph-clock" /> Edit window
@@ -872,6 +898,27 @@ function DetailView({
             </button>
           )}
         </div>
+
+        {/* Billing gave up after repeated consecutive charge failures — an
+            honest, distinct treatment from "paused" so the customer knows
+            this wasn't their choice and nothing will resume until they act. */}
+        {s.status === "halted" && (
+          <div
+            className="note mt12"
+            style={{
+              background: "var(--dgrd)",
+              borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)",
+              color: "var(--dgr)",
+            }}
+          >
+            <i className="ph-bold ph-warning-circle" />
+            <span>
+              We couldn't charge your payment method after several attempts, so billing has
+              stopped and deliveries are paused. Retry billing once your payment method is
+              up to date.
+            </span>
+          </div>
+        )}
 
         {s.status === "paused" && (
           <div
