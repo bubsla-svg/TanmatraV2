@@ -136,6 +136,24 @@ export default function Billing() {
     }
   };
 
+  const handleReactivateBilling = async () => {
+    if (!activeSub) return;
+    setActionLoading(true);
+    try {
+      await subscriptionsApi.reactivateBilling(activeSub.id);
+      toast.success("Billing reactivated", {
+        description: "You'll be charged on the normal schedule.",
+      });
+      await fetchActiveSubscription();
+    } catch (err) {
+      toast.error("Failed to reactivate billing", {
+        description: err instanceof Error ? err.message : "",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleCancel = async () => {
     if (!activeSub) return;
     setActionLoading(true);
@@ -269,6 +287,26 @@ export default function Billing() {
                 </button>
               </div>
 
+              {/* Billing gave up after repeated consecutive charge failures —
+                  an honest, distinct treatment from "paused" (customer's own
+                  choice): nothing resumes until the customer retries. */}
+              {activeSub.status === "halted" && (
+                <div
+                  className="note mb16"
+                  style={{
+                    background: "var(--dgrd)",
+                    borderColor: "color-mix(in oklab, var(--color-error) 35%, transparent)",
+                    color: "var(--dgr)",
+                  }}
+                >
+                  <i className="ph-bold ph-warning-circle" />
+                  <span>
+                    We couldn't charge your payment method after several attempts, so billing
+                    has stopped. Retry billing below once your payment method is up to date.
+                  </span>
+                </div>
+              )}
+
               {/* Self-Serve Controls Card */}
               <div className="card mb16">
                 <div className="lab fx ac gap8 mb14" style={{ fontSize: 13 }}>
@@ -298,6 +336,15 @@ export default function Billing() {
                       className="btn btn-p w100 py10 text-center"
                     >
                       Resume plan
+                    </button>
+                  ) : activeSub.status === "halted" ? (
+                    <button
+                      disabled={actionLoading}
+                      onClick={handleReactivateBilling}
+                      className="btn btn-p w100 py10 text-center"
+                      style={{ background: "var(--dgr)" }}
+                    >
+                      Retry billing
                     </button>
                   ) : null}
 

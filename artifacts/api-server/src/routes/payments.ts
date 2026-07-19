@@ -7,15 +7,15 @@ import {
   usersTable,
   subscriptionsTable,
   subscriptionMandatesTable,
-  preDebitNotificationsTable,
   subscriptionDeliveriesTable,
 } from "@workspace/db";
-import { and, eq, gte, lte, asc } from "drizzle-orm";
+import { and, eq, asc } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 import { isCaptureAmountReconciled, resolvePayableAmountPaise } from "../lib/paymentIntegrity";
+import { chargeMandateCore } from "../lib/chargeMandate";
 import { requireOps } from "../lib/adminGate";
 import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
 import {
@@ -802,25 +802,19 @@ const chargeMandateSchema = z.object({
  * attach-only (it never rejects an unauthenticated request), so the gate
  * below is the sole enforcement point.
  *
- * Meant to be called by the (separately wired-up) subscription-billing
- * scheduler, not end users. Gated via `requireOps` — the same ops-scope
- * gate used by every other internal/ops-only route in this codebase
- * (see `src/lib/adminGate.ts`). Any ONE of the following satisfies it:
- *   - HTTP header `x-admin-token` equal to env `RD_ADMIN_TOKEN` (the
- *     credential the future cron/scheduler process should send), or
+ * Meant to be called by the subscription-billing scheduler
+ * (`chargeMandateScheduler.ts`, in-process — never over HTTP, so it is
+ * unaffected by this gate either way) or manually by ops. Gated via
+ * `requireOps` — the same ops-scope gate used by every other internal/ops-only
+ * route in this codebase (see `src/lib/adminGate.ts`). Any ONE of the
+ * following satisfies it:
+ *   - HTTP header `x-admin-token` equal to env `RD_ADMIN_TOKEN`, or
  *   - a signed admin-session cookie (POST /admin/login), or
  *   - an authenticated user whose id is in env `OPS_USER_IDS` (comma-separated).
  * Missing/invalid credentials → 403 "ops scope required".
  */
 router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
   if (!requireOps(req, res)) return;
-  const creds = razorpayCredentials();
-  if (!creds) {
-    res.status(503).json({ error: "payment gateway not configured" });
-    return;
-  }
-  const [keyId, keySecret] = creds;
-
   const parsed = chargeMandateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -834,162 +828,13 @@ router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
     return;
   }
 
-  const [mandate] = await db
-    .select()
-    .from(subscriptionMandatesTable)
-    .where(
-      and(
-        eq(subscriptionMandatesTable.subscriptionId, subscriptionId),
-        eq(subscriptionMandatesTable.status, "active")
-      )
-    )
-    .limit(1);
-
-  if (!mandate) {
-    res.status(404).json({ error: "active subscription mandate not found" });
-    return;
-  }
-
-  // Defense-in-depth: never charge a subscription that is not active. The mandate
-  // flip performed on cancel already makes the lookup above 404, but this closes
-  // the race where a gateway revoke lags a local cancel, or a stale active
-  // mandate row outlives its subscription.
-  const [subForGuard] = await db
-    .select({ status: subscriptionsTable.status })
-    .from(subscriptionsTable)
-    .where(eq(subscriptionsTable.id, subscriptionId))
-    .limit(1);
-  if (!subForGuard || subForGuard.status !== "active") {
-    res.status(409).json({ error: "subscription is not active", code: "subscription_inactive" });
-    return;
-  }
-
-  const startOfDay = new Date(chargeDate);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-  const endOfDay = new Date(chargeDate);
-  endOfDay.setUTCHours(23, 59, 59, 999);
-
-  const [notification] = await db
-    .select()
-    .from(preDebitNotificationsTable)
-    .where(
-      and(
-        eq(preDebitNotificationsTable.subscriptionId, subscriptionId),
-        gte(preDebitNotificationsTable.scheduledChargeAt, startOfDay),
-        lte(preDebitNotificationsTable.scheduledChargeAt, endOfDay)
-      )
-    )
-    .limit(1);
-
-  if (!notification) {
-    req.log.warn({ subscriptionId, chargeDate }, "charge-mandate: pre-debit notification record not found");
-    res.status(400).json({ error: "pre-debit notification not found for this charge date" });
-    return;
-  }
-
-  if (notification.status !== "sent") {
-    req.log.warn({ subscriptionId, notificationId: notification.id, status: notification.status }, "charge-mandate: pre-debit notification status is not 'sent'");
-    res.status(400).json({ error: "pre-debit notification has not been sent yet" });
-    return;
-  }
-
-  if (!notification.dispatchedAt) {
-    req.log.warn({ subscriptionId, notificationId: notification.id }, "charge-mandate: pre-debit notification has no dispatch time");
-    res.status(400).json({ error: "pre-debit notification has no dispatch timestamp" });
-    return;
-  }
-
-  const hoursSinceDispatch = (Date.now() - new Date(notification.dispatchedAt).getTime()) / (1000 * 60 * 60);
-  if (hoursSinceDispatch < 24) {
-    req.log.warn({ subscriptionId, notificationId: notification.id, hoursSinceDispatch }, "charge-mandate: pre-debit notification dispatched less than 24 hours ago");
-    res.status(400).json({ error: "pre-debit notification must be sent at least 24 hours before debiting" });
-    return;
-  }
-
-  const [sub] = await db
-    .select()
-    .from(subscriptionsTable)
-    .where(eq(subscriptionsTable.id, subscriptionId))
-    .limit(1);
-
-  if (!sub) {
-    res.status(404).json({ error: "subscription not found" });
-    return;
-  }
-
-  const [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, sub.userId))
-    .limit(1);
-
-  if (!user) {
-    res.status(404).json({ error: "user not found" });
-    return;
-  }
-
-  // Money-path authority: debit the server-stored subscription price, never the
-  // caller-supplied `amountPaise`. The RBI pre-debit notice is implicitly for
-  // this price (the notification row carries no amount column), so charging any
-  // other value would debit an amount the customer was never notified of — and
-  // an unauthenticated/compromised scheduler call could otherwise charge an
-  // arbitrary sum against a live mandate. A divergent client amount is surfaced
-  // but never billed.
-  const authoritativePaise = sub.pricePerDeliveryPaise;
-  if (amountPaise !== authoritativePaise) {
-    req.log.warn(
-      { subscriptionId, clientAmount: amountPaise, authoritativePaise },
-      "charge-mandate amount mismatch — billing server subscription price",
-    );
-  }
-
-  const rpRes = await fetch("https://api.razorpay.com/v1/payments/charge", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      amount: authoritativePaise,
-      currency: "INR",
-      customer_id: mandate.razorpayCustomerId,
-      token: mandate.razorpayTokenId,
-      email: user.email || undefined,
-      contact: user.phoneE164 || undefined,
-      description: `Charge for subscription #${subscriptionId} delivery on ${chargeDate.toISOString().slice(0, 10)}`,
-    }),
+  const result = await chargeMandateCore({
+    subscriptionId,
+    amountPaiseHint: amountPaise,
+    requestedChargeDate: chargeDate,
+    log: req.log,
   });
-
-  if (!rpRes.ok) {
-    let body: unknown;
-    try {
-      body = await rpRes.json();
-    } catch {
-      body = await rpRes.text();
-    }
-    req.log.error({ status: rpRes.status, body, subscriptionId }, "Razorpay mandate charge failed");
-    res.status(502).json({ error: "payment gateway charge failed", details: body });
-    return;
-  }
-
-  const charge = (await rpRes.json()) as { id: string; status: string; amount: number };
-
-  const days = sub.cadence === "weekly" ? 7 : sub.cadence === "fortnightly" ? 14 : 30;
-  const nextChargeAt = new Date();
-  nextChargeAt.setDate(nextChargeAt.getDate() + days);
-
-  await db
-    .update(subscriptionMandatesTable)
-    .set({ nextChargeAt })
-    .where(eq(subscriptionMandatesTable.id, mandate.id));
-
-  res.json({
-    success: true,
-    paymentId: charge.id,
-    status: charge.status,
-    amount: charge.amount,
-    nextChargeAt: nextChargeAt.toISOString(),
-  });
+  res.status(result.httpStatus).json(result.body);
 });
 
 /**

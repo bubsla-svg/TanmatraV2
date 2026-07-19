@@ -103,7 +103,10 @@ const rescheduleSchema = z.object({
 // "monthly" is a 4-week cycle (28 days) so a weekly menu pattern always
 // divides evenly — a true 30-day month would drift against day-of-week
 // plans by 2 days every cycle.
-const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
+// Exported so the recurring-charge driver (lib/chargeMandate.ts) can
+// replenish the upcoming-deliveries pool using the exact same cadence-day
+// mapping this router uses everywhere else — never a second, drifting copy.
+export const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
   weekly: 7,
   fortnightly: 14,
   monthly: 42, // mapped to 6-week protocol (42 days)
@@ -111,7 +114,7 @@ const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
 
 // With a per-day plan every plan generates ~4 weeks of dated deliveries
 // ahead, regardless of billing cadence (4×7, 2×14, 1×42).
-const CADENCE_CYCLES_AHEAD: Record<SubscriptionCadence, number> = {
+export const CADENCE_CYCLES_AHEAD: Record<SubscriptionCadence, number> = {
   weekly: 4,
   fortnightly: 2,
   monthly: 1, // generates 1 cycle (6 weeks) ahead
@@ -185,7 +188,7 @@ export async function updateTrialState(
 }
 
 
-function addDays(date: Date, days: number): Date {
+export function addDays(date: Date, days: number): Date {
   const out = new Date(date);
   out.setUTCDate(out.getUTCDate() + days);
   return out;
@@ -315,7 +318,11 @@ async function applyPendingPlanChangeIfReady(
   return { cadence, mealsPerDelivery };
 }
 
-async function generateDeliveriesForSubscription(
+// Exported: lib/chargeMandate.ts reuses this exact function (rather than a
+// second copy) to replenish the upcoming-deliveries pool when a recurring
+// charge succeeds and finds no un-fulfilled delivery left to bill against —
+// mirrors POST /subscriptions/:id/generate-next below.
+export async function generateDeliveriesForSubscription(
   subscriptionId: number,
   cadence: SubscriptionCadence,
   startFrom: Date,
@@ -794,6 +801,37 @@ router.get("/subscriptions/:id", async (req: Request, res: Response) => {
   res.json({ subscription: sub, members, deliveries, mandate });
 });
 
+// Shared "upcoming → paused" delivery transition. Used by the customer-
+// initiated /pause route below AND by chargeMandate.ts's failCharge when
+// billing halts after MAX_CONSECUTIVE_CHARGE_FAILURES — a halted
+// subscription shouldn't keep dispatching deliveries nobody's paying for,
+// so it reuses exactly the same delivery-state change a manual pause does.
+export async function pauseUpcomingDeliveries(subId: number): Promise<void> {
+  await db
+    .update(subscriptionDeliveriesTable)
+    .set({ status: "paused" })
+    .where(
+      and(
+        eq(subscriptionDeliveriesTable.subscriptionId, subId),
+        eq(subscriptionDeliveriesTable.status, "upcoming"),
+      ),
+    );
+}
+
+// Inverse of pauseUpcomingDeliveries — shared by /resume and
+// /reactivate-billing (both put a subscription back into normal dispatch).
+export async function resumeUpcomingDeliveries(subId: number): Promise<void> {
+  await db
+    .update(subscriptionDeliveriesTable)
+    .set({ status: "upcoming" })
+    .where(
+      and(
+        eq(subscriptionDeliveriesTable.subscriptionId, subId),
+        eq(subscriptionDeliveriesTable.status, "paused"),
+      ),
+    );
+}
+
 router.post("/subscriptions/:id/pause", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
@@ -814,15 +852,7 @@ router.post("/subscriptions/:id/pause", async (req: Request, res: Response) => {
     .where(eq(subscriptionsTable.id, subId))
     .returning();
   invalidateUserBrief(userId);
-  await db
-    .update(subscriptionDeliveriesTable)
-    .set({ status: "paused" })
-    .where(
-      and(
-        eq(subscriptionDeliveriesTable.subscriptionId, subId),
-        eq(subscriptionDeliveriesTable.status, "upcoming"),
-      ),
-    );
+  await pauseUpcomingDeliveries(subId);
   res.json({ subscription: updated });
 });
 
@@ -848,16 +878,75 @@ router.post(
       .where(eq(subscriptionsTable.id, subId))
       .returning();
     invalidateUserBrief(userId);
-    await db
-      .update(subscriptionDeliveriesTable)
-      .set({ status: "upcoming" })
-      .where(
-        and(
-          eq(subscriptionDeliveriesTable.subscriptionId, subId),
-          eq(subscriptionDeliveriesTable.status, "paused"),
-        ),
-      );
+    await resumeUpcomingDeliveries(subId);
     res.json({ subscription: updated });
+  },
+);
+
+// ─────────────────────────────────────────────────────────────────────────
+// Recovery path for a subscription whose billing was halted after
+// MAX_CONSECUTIVE_CHARGE_FAILURES consecutive failed debits (see
+// chargeMandate.ts's failCharge). Mirrors what happens when a real Razorpay
+// native subscription customer clears a `subscription.halted` state: the
+// EXISTING Razorpay customer_id/token is reused as-is (the common case is a
+// temporary decline — expired-card-this-cycle, insufficient funds — not a
+// permanently revoked token); this route does not re-register a new mandate.
+// If the token itself has actually been revoked by Razorpay, the next charge
+// attempt will simply fail again and re-halt after MAX_CONSECUTIVE_CHARGE_FAILURES
+// — re-registering a fresh token is out of scope for this route.
+//
+// Folded in as its own endpoint (rather than reusing /resume) because the
+// preconditions and the mandate-side reset are meaningfully different from
+// a customer-initiated pause: /resume only ever flips subscriptionsTable
+// (a paused subscription's mandate was never touched), whereas recovering
+// from "halted" must also un-halt subscriptionMandatesTable and reset its
+// failure counter — conflating the two into one route/precondition would
+// make both harder to reason about.
+router.post(
+  "/subscriptions/:id/reactivate-billing",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+    const sub = await loadSubscriptionForUser(subId, userId);
+    if (!sub) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (sub.status !== "halted") {
+      res.status(409).json({ error: "subscription is not halted" });
+      return;
+    }
+
+    // Resume on the normal cadence, not instantly: land nextChargeAt in the
+    // middle of the pre-debit sweep's [now+24h, now+26h) lookahead window
+    // (see preDebitScheduler.ts, hourly tick) so the very next tick sends a
+    // fresh pre-debit notice and the customer gets the RBI-mandated >=24h
+    // notice before being charged, rather than being billed same-day.
+    const nextChargeAt = new Date(Date.now() + 25 * 60 * 60 * 1000);
+
+    const [updatedSub] = await db
+      .update(subscriptionsTable)
+      .set({ status: "active" })
+      .where(eq(subscriptionsTable.id, subId))
+      .returning();
+
+    const [updatedMandate] = await db
+      .update(subscriptionMandatesTable)
+      .set({
+        status: "active",
+        chargeFailureCount: 0,
+        nextChargeAt,
+      })
+      .where(eq(subscriptionMandatesTable.subscriptionId, subId))
+      .returning();
+
+    invalidateUserBrief(userId);
+    // Billing resuming means deliveries should too — mirrors /resume.
+    await resumeUpcomingDeliveries(subId);
+
+    res.json({ subscription: updatedSub, mandate: updatedMandate ?? null });
   },
 );
 

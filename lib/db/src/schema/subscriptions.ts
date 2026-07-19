@@ -14,7 +14,16 @@ import { z } from "zod/v4";
 import { usersTable } from "./auth";
 
 export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly";
-export type SubscriptionStatus = "active" | "paused" | "cancelled";
+// "halted" mirrors a real Razorpay native subscription's `subscription.halted`
+// terminal state: billing gave up after MAX_CONSECUTIVE_CHARGE_FAILURES
+// consecutive failed debits (see chargeMandate.ts's failCharge) and will not
+// retry again until the customer reactivates via
+// POST /subscriptions/:id/reactivate-billing. Deliberately distinct from
+// "paused" (customer-initiated, no billing implication) so ops/customer UI
+// can tell "you paused this" from "we stopped trying to charge your card".
+// Plain varchar(16) column below, no DB-level CHECK/enum constraint — adding
+// this value is TypeScript-only, not a schema migration.
+export type SubscriptionStatus = "active" | "paused" | "cancelled" | "halted";
 export type DeliveryStatus =
   | "upcoming"
   | "skipped"
@@ -225,6 +234,8 @@ export type SubscriptionDelivery =
 
 export type MealCredit = typeof mealCreditsTable.$inferSelect;
 
+export type MandateChargeStatus = "succeeded" | "failed";
+
 export const subscriptionMandatesTable = pgTable(
   "subscription_mandates",
   {
@@ -236,6 +247,16 @@ export const subscriptionMandatesTable = pgTable(
     razorpayTokenId: varchar("razorpay_token_id", { length: 64 }).notNull(),
     status: varchar("status", { length: 32 }).notNull().default("active"),
     nextChargeAt: timestamp("next_charge_at", { withTimezone: true }),
+    // Minimal charge-attempt bookkeeping (recurring-billing driver). Full
+    // dunning/backoff policy is an explicit follow-up — these four columns
+    // only need to answer "was an attempt made, did it work, and how many
+    // times in a row has it failed", and double as the claim/lock token that
+    // stops the same due mandate being charged twice by an overlapping
+    // scheduler tick and an ops-triggered HTTP call.
+    lastChargeAttemptAt: timestamp("last_charge_attempt_at", { withTimezone: true }),
+    lastChargeStatus: varchar("last_charge_status", { length: 16 }).$type<MandateChargeStatus>(),
+    lastChargeError: varchar("last_charge_error", { length: 256 }),
+    chargeFailureCount: integer("charge_failure_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

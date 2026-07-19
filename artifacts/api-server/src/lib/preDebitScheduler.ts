@@ -20,14 +20,29 @@ export function formatIstDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export async function runPreDebitNotificationsSweep(): Promise<{
+export async function runPreDebitNotificationsSweep(opts?: {
+  now?: Date;
+}): Promise<{
   processed: number;
   sent: number;
   errors: number;
 }> {
-  const now = new Date();
+  const now = opts?.now ?? new Date();
+  // Window width MUST match how often this sweep runs (see
+  // startPreDebitScheduler below — hourly by default). A mandate's
+  // nextChargeAt time-of-day is fixed (it only ever moves in whole-cadence-
+  // day steps), so 24 consecutive, non-overlapping 1h-wide windows — one per
+  // hourly tick — guarantee every mandate is caught by exactly one tick per
+  // day, regardless of what time of day it's due. The previous version ran
+  // once daily at a fixed hour with a 2h window, so only mandates whose
+  // nextChargeAt time-of-day happened to fall in that one daily slice were
+  // ever notified — everyone else's notice never fired and
+  // /payments/charge-mandate then permanently 400s them (no "sent" notice
+  // dispatched >=24h before the charge day). Widening this window without
+  // also running more often (or narrowing it without running more often)
+  // reopens that coverage gap.
   const startWindow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const endWindow = new Date(now.getTime() + 26 * 60 * 60 * 1000);
+  const endWindow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
   logger.info(
     { startWindow: startWindow.toISOString(), endWindow: endWindow.toISOString() },
@@ -177,18 +192,13 @@ export async function runPreDebitNotificationsSweep(): Promise<{
   return { processed, sent, errors };
 }
 
-let timer: ReturnType<typeof setTimeout> | null = null;
+let timer: ReturnType<typeof setInterval> | null = null;
 let running = false;
 
-function msUntilNextPreDebitSweep(now: Date): number {
-  const next = new Date(now);
-  // 10:00 IST is 04:30 UTC
-  next.setUTCHours(4, 30, 0, 0);
-  if (next.getTime() <= now.getTime()) {
-    next.setUTCDate(next.getUTCDate() + 1);
-  }
-  return next.getTime() - now.getTime();
-}
+// Hourly by default — matches the 1h-wide rolling window above, see the
+// coverage-gap explanation on runPreDebitNotificationsSweep. Overridable for
+// tests / ops via PRE_DEBIT_SCHEDULER_INTERVAL_MS (pre-existing env var).
+const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
 
 async function tick(): Promise<void> {
   if (running) return;
@@ -204,21 +214,15 @@ async function tick(): Promise<void> {
 
 export function startPreDebitScheduler(): void {
   if (timer) return;
-  if (process.env["PRE_DEBIT_SCHEDULER_INTERVAL_MS"]) {
-    const intervalMs = Number(process.env["PRE_DEBIT_SCHEDULER_INTERVAL_MS"]);
-    timer = setInterval(() => void tick(), intervalMs);
-    logger.info({ intervalMs }, "pre-debit scheduler started with interval override");
-    return;
-  }
-  const schedule = (): void => {
-    const wait = msUntilNextPreDebitSweep(new Date());
-    timer = setTimeout(async () => {
-      await tick();
-      schedule();
-    }, wait);
-  };
-  schedule();
-  logger.info("pre-debit scheduler started (runs daily at 10:00 IST)");
+  const intervalMs = Number(
+    process.env["PRE_DEBIT_SCHEDULER_INTERVAL_MS"] ?? DEFAULT_INTERVAL_MS,
+  );
+  timer = setInterval(() => void tick(), intervalMs);
+  if (typeof timer.unref === "function") timer.unref();
+  // Fire an immediate tick too so a restart doesn't sit idle for a full
+  // interval before the first sweep runs.
+  void tick();
+  logger.info({ intervalMs }, "pre-debit scheduler started (hourly rolling window)");
 }
 
 export function stopPreDebitScheduler(): void {
