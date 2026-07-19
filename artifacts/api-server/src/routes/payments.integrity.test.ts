@@ -13,6 +13,12 @@
  * Harness mirrors payments.webhook.test.ts (test express app, RAZORPAY_* env,
  * HMAC signing, seed/clean DB rows).
  *
+ *   - the three money-moving *creation* endpoints (razorpay/order,
+ *     upi/intent, charge-mandate) each bill a server-derived amount and
+ *     silently ignore a tampered client `amountPaise` — proven end-to-end by
+ *     intercepting the outbound Razorpay HTTP call and asserting on the
+ *     amount actually sent to the gateway.
+ *
  * Run with:
  *   node --test --import tsx ./src/routes/payments.integrity.test.ts
  */
@@ -25,7 +31,15 @@ import http from "node:http";
 
 import express, { type Express } from "express";
 import { eq, inArray } from "drizzle-orm";
-import { db, ordersTable, webhookInboxTable } from "@workspace/db";
+import {
+  db,
+  ordersTable,
+  webhookInboxTable,
+  usersTable,
+  subscriptionsTable,
+  subscriptionMandatesTable,
+  preDebitNotificationsTable,
+} from "@workspace/db";
 
 import paymentsRouter from "./payments";
 
@@ -35,15 +49,23 @@ import paymentsRouter from "./payments";
 const KEY_ID = "rzp_test_x";
 const KEY_SECRET = "secret_test";
 const WEBHOOK_SECRET = "whsec_test";
+// POST /payments/charge-mandate is gated by requireOps() (see lib/adminGate.ts)
+// — hasAdminToken() short-circuits isOpsRequest() before it ever touches
+// req.isAuthenticated(), so the test app's minimal mock req doesn't need an
+// isAuthenticated() stub as long as this header/env pair matches.
+const ADMIN_TOKEN = "test-ops-token";
 
 process.env["RAZORPAY_KEY_ID"] = KEY_ID;
 process.env["RAZORPAY_KEY_SECRET"] = KEY_SECRET;
 process.env["RAZORPAY_WEBHOOK_SECRET"] = WEBHOOK_SECRET;
+process.env["RD_ADMIN_TOKEN"] = ADMIN_TOKEN;
 
 let server: http.Server;
 let baseUrl = "";
 const CREATED_ORDER_IDS: number[] = [];
 const CREATED_EVENT_IDS: string[] = [];
+const CREATED_USER_IDS: string[] = [];
+const CREATED_SUBSCRIPTION_IDS: number[] = [];
 
 // Unique per-run suffix so externalOrderIds / razorpayOrderIds never collide
 // with a concurrent run or a leftover row.
@@ -98,6 +120,25 @@ after(async () => {
       .delete(webhookInboxTable)
       .where(inArray(webhookInboxTable.eventId, CREATED_EVENT_IDS));
   }
+  if (CREATED_SUBSCRIPTION_IDS.length > 0) {
+    await db
+      .delete(subscriptionMandatesTable)
+      .where(inArray(subscriptionMandatesTable.subscriptionId, CREATED_SUBSCRIPTION_IDS));
+    await db
+      .delete(preDebitNotificationsTable)
+      .where(inArray(preDebitNotificationsTable.subscriptionId, CREATED_SUBSCRIPTION_IDS));
+    await db
+      .delete(subscriptionsTable)
+      .where(inArray(subscriptionsTable.id, CREATED_SUBSCRIPTION_IDS));
+  }
+  if (CREATED_USER_IDS.length > 0) {
+    // Some tests (e.g. the charge-mandate flow) cause the server to persist
+    // its own orders-table ledger row that was never tracked in
+    // CREATED_ORDER_IDS; delete any leftover orders by userId first since
+    // orders.user_id has no cascade.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
+    await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -134,6 +175,95 @@ async function orderStatus(id: number): Promise<string> {
     .where(eq(ordersTable.id, id))
     .limit(1);
   return row!.status;
+}
+
+/**
+ * Intercepts global fetch for the duration of `fn`, routing any call whose
+ * URL contains `urlSubstring` to `handler` (which returns the JSON body
+ * the mocked Razorpay endpoint would send back) and recording every
+ * intercepted request body in the returned `calls` array. Restores the
+ * original fetch afterwards even if `fn` throws.
+ */
+async function withMockedRazorpayFetch<T>(
+  urlSubstring: string,
+  handler: (body: any) => unknown,
+  fn: () => Promise<T>,
+): Promise<{ result: T; calls: any[] }> {
+  const calls: any[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: any, init?: any) => {
+    const url = typeof input === "string" ? input : input.url;
+    if (typeof url === "string" && url.includes(urlSubstring)) {
+      const body = init?.body ? JSON.parse(init.body as string) : undefined;
+      calls.push(body);
+      const payload = handler(body);
+      return new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return realFetch(input, init);
+  }) as typeof fetch;
+
+  try {
+    const result = await fn();
+    return { result, calls };
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+/** Seed an active user + subscription + active mandate + a valid, dispatched
+ * pre-debit notification, so /payments/charge-mandate can be exercised
+ * end-to-end without also testing the pre-debit guard rails. */
+async function seedChargeableSubscription(pricePerDeliveryPaise: number): Promise<{
+  subscriptionId: number;
+  scheduledChargeDate: Date;
+}> {
+  const userId = randomUUID();
+  await db.insert(usersTable).values({
+    id: userId,
+    email: `payments-integrity-${userId}@example.test`,
+    firstName: "Integrity",
+    lastName: "Tester",
+  });
+  CREATED_USER_IDS.push(userId);
+
+  const startDate = new Date();
+  const [sub] = await db
+    .insert(subscriptionsTable)
+    .values({
+      userId,
+      cadence: "weekly",
+      mealsPerDelivery: 5,
+      deliveryWindow: "12:00-14:00",
+      status: "active",
+      startDate,
+      nextDeliveryAt: startDate,
+      pricePerDeliveryPaise,
+    })
+    .returning({ id: subscriptionsTable.id });
+  const subscriptionId = sub!.id;
+  CREATED_SUBSCRIPTION_IDS.push(subscriptionId);
+
+  const scheduledChargeDate = new Date();
+  await db.insert(subscriptionMandatesTable).values({
+    subscriptionId,
+    razorpayCustomerId: `cust_${RUN}`,
+    razorpayTokenId: `tok_${RUN}`,
+    status: "active",
+    nextChargeAt: scheduledChargeDate,
+  });
+
+  const dispatchedAt = new Date(Date.now() - 25 * 60 * 60 * 1000); // > 24h ago
+  await db.insert(preDebitNotificationsTable).values({
+    subscriptionId,
+    scheduledChargeAt: scheduledChargeDate,
+    dispatchedAt,
+    status: "sent",
+  });
+
+  return { subscriptionId, scheduledChargeDate };
 }
 
 /** Razorpay's client-side signature: HMAC-SHA256("<orderId>|<paymentId>", key_secret). */
@@ -383,5 +513,174 @@ test("webhook payment.failed marks a placed order failed but never flips a prepa
     await orderStatus(preparingId),
     "preparing",
     "a paid (preparing) order must NOT be flipped to failed by a late payment.failed",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 7. POST /payments/razorpay/order bills the server-derived amount, not a
+//    tampered client amountPaise
+// ---------------------------------------------------------------------------
+
+test("razorpay/order bills the order's authoritative chargePaise, ignoring a tampered client amountPaise", async () => {
+  const externalOrderId = ext("tamper-order");
+  const authoritativePaise = 63400; // ₹634 — the real, server-priced total
+  const tamperedClientAmount = 1; // attacker tries to open the modal for ₹0.01
+
+  await seedOrder({
+    externalOrderId,
+    status: "placed",
+    chargePaise: authoritativePaise,
+  });
+
+  const { result: res, calls } = await withMockedRazorpayFetch(
+    "api.razorpay.com/v1/orders",
+    (body) => ({ id: `order_mock_${RUN}`, amount: body.amount, currency: "INR" }),
+    async () => {
+      const r = await fetch(`${baseUrl}/payments/razorpay/order`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ orderId: externalOrderId, amountPaise: tamperedClientAmount }),
+      });
+      const json = (await r.json()) as any;
+      return { status: r.status, json };
+    },
+  );
+
+  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(calls.length, 1, "exactly one Razorpay order-creation call must have been made");
+  assert.equal(
+    calls[0].amount,
+    authoritativePaise,
+    "the outbound Razorpay order request must carry the server-derived amount, not the tampered client value",
+  );
+  assert.notEqual(calls[0].amount, tamperedClientAmount);
+  assert.equal(
+    res.json.amount,
+    authoritativePaise,
+    "the response must echo the server-derived amount, not the tampered client value",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 8. POST /payments/upi/intent bills the server-derived amount, not a
+//    tampered client amountPaise
+// ---------------------------------------------------------------------------
+
+test("upi/intent bills the order's authoritative payable amount, ignoring a tampered client amountPaise", async () => {
+  const externalOrderId = ext("tamper-upi");
+  const authoritativePaise = 78900; // ₹789 — the real, server-priced total
+  const tamperedClientAmount = 1;
+
+  await seedOrder({
+    externalOrderId,
+    status: "placed",
+    totalPaise: authoritativePaise,
+  });
+
+  const { result: res, calls } = await withMockedRazorpayFetch(
+    "api.razorpay.com/v1/payment_links",
+    () => ({
+      id: `plink_mock_${RUN}`,
+      short_url: "https://rzp.io/i/mock",
+      expire_by: Math.floor(Date.now() / 1000) + 1800,
+    }),
+    async () => {
+      const r = await fetch(`${baseUrl}/payments/upi/intent`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          orderId: externalOrderId,
+          amountPaise: tamperedClientAmount,
+          phone: "+919999999999",
+        }),
+      });
+      const json = (await r.json()) as any;
+      return { status: r.status, json };
+    },
+  );
+
+  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(calls.length, 1, "exactly one Razorpay payment-link call must have been made");
+  assert.equal(
+    calls[0].amount,
+    authoritativePaise,
+    "the outbound Razorpay payment-link request must carry the server-derived amount, not the tampered client value",
+  );
+  assert.notEqual(calls[0].amount, tamperedClientAmount);
+});
+
+// ---------------------------------------------------------------------------
+// 9. POST /payments/charge-mandate bills sub.pricePerDeliveryPaise, not a
+//    tampered client amountPaise
+// ---------------------------------------------------------------------------
+
+test("charge-mandate bills the subscription's pricePerDeliveryPaise, ignoring a tampered client amountPaise", async () => {
+  const authoritativePaise = 45600; // real per-delivery price
+  const tamperedClientAmount = 1;
+
+  const { subscriptionId, scheduledChargeDate } = await seedChargeableSubscription(authoritativePaise);
+
+  // The recurring-charge gateway flow is two calls: create an order, then
+  // charge the stored token against it (see lib/chargeMandate.ts's module
+  // header for why the old single-call /v1/payments/charge mock no longer
+  // applies).
+  const orderCalls: any[] = [];
+  const recurringCalls: any[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: any, init?: any) => {
+    const url = typeof input === "string" ? input : input.url;
+    if (typeof url === "string" && url.includes("api.razorpay.com/v1/orders")) {
+      const body = init?.body ? JSON.parse(init.body as string) : undefined;
+      orderCalls.push(body);
+      return new Response(JSON.stringify({ id: `order_mock_${RUN}` }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    if (typeof url === "string" && url.includes("api.razorpay.com/v1/payments/create/recurring")) {
+      const body = init?.body ? JSON.parse(init.body as string) : undefined;
+      recurringCalls.push(body);
+      return new Response(
+        JSON.stringify({ id: `pay_mock_${RUN}`, status: "captured", amount: body.amount }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+    return realFetch(input, init);
+  }) as typeof fetch;
+
+  let res: { status: number; json: any };
+  try {
+    const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-token": ADMIN_TOKEN },
+      body: JSON.stringify({
+        subscriptionId,
+        amountPaise: tamperedClientAmount,
+        scheduledChargeDate: scheduledChargeDate.toISOString(),
+      }),
+    });
+    res = { status: r.status, json: await r.json() };
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(orderCalls.length, 1, "exactly one Razorpay order-creation call must have been made");
+  assert.equal(recurringCalls.length, 1, "exactly one Razorpay recurring-charge call must have been made");
+  assert.equal(
+    orderCalls[0].amount,
+    authoritativePaise,
+    "the outbound Razorpay order must carry sub.pricePerDeliveryPaise, not the tampered client value",
+  );
+  assert.equal(
+    recurringCalls[0].amount,
+    authoritativePaise,
+    "the outbound Razorpay recurring-charge request must carry sub.pricePerDeliveryPaise, not the tampered client value",
+  );
+  assert.notEqual(recurringCalls[0].amount, tamperedClientAmount);
+  assert.equal(
+    res.json.amount,
+    authoritativePaise,
+    "the response must echo the server-derived amount, not the tampered client value",
   );
 });

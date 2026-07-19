@@ -30,7 +30,7 @@ import express, {
   type NextFunction,
 } from "express";
 import { inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, ordersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 // Price expectations come from the canonical pricing module — the same pure
@@ -267,6 +267,10 @@ test("generate-next extends the per-day pattern from the next cycle", async () =
 after(async () => {
   if (server) await new Promise<void>((r) => server.close(() => r()));
   if (CREATED_USER_IDS.length > 0) {
+    // orders.user_id has no cascade (financial records must not silently
+    // vanish on user delete) — POST /subscriptions now creates a linked
+    // first-cycle order, so it must be cleared before the user row.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db
       .delete(subscriptionsTable)
       .where(inArray(subscriptionsTable.userId, CREATED_USER_IDS));

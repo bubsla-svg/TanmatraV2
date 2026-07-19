@@ -121,10 +121,19 @@ function weatherBump(): number {
 }
 
 async function kitchenQueueDepth(): Promise<number> {
+  // Marketplace orders (orderKind = 'marketplace') are never kitchen-prepared
+  // and don't move through preparing/ready/rider_assigned/out_for_delivery in
+  // the meal sense — exclude them so the ETA model's queue-depth feature
+  // reflects actual kitchen load, not marketplace fulfillment volume.
   const [row] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(ordersTable)
-    .where(inArray(ordersTable.status, ACTIVE_STATUSES));
+    .where(
+      and(
+        inArray(ordersTable.status, ACTIVE_STATUSES),
+        eq(ordersTable.orderKind, "meal"),
+      ),
+    );
   return row?.n ?? 0;
 }
 

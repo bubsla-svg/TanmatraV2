@@ -1,5 +1,5 @@
 {
-  "id": "e148f234-e3af-418a-bd38-a2fb49ec12ef",
+  "id": "fe19bf8c-f74f-4451-919c-c41b09e1a2a3",
   "prevId": "b20e1fb7-ddfb-442a-b520-8c4b6390906c",
   "version": "7",
   "dialect": "postgresql",
@@ -363,6 +363,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "order_kind": {
+          "name": "order_kind",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'meal'"
+        },
         "external_order_id": {
           "name": "external_order_id",
           "type": "varchar(64)",
@@ -505,6 +512,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "marketplace_delivery_mode": {
+          "name": "marketplace_delivery_mode",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bundle_with_order_id": {
+          "name": "bundle_with_order_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -630,6 +649,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "idx_orders_kind_status": {
+          "name": "idx_orders_kind_status",
+          "columns": [
+            {
+              "expression": "order_kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -693,6 +733,10 @@
         "orders_priority_chk": {
           "name": "orders_priority_chk",
           "value": "\"orders\".\"priority\" in ('routine','urgent','stat')"
+        },
+        "orders_order_kind_chk": {
+          "name": "orders_order_kind_chk",
+          "value": "\"orders\".\"order_kind\" in ('meal','marketplace')"
         }
       },
       "isRLSEnabled": false
@@ -2188,31 +2232,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "last_charge_attempt_at": {
-          "name": "last_charge_attempt_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_charge_status": {
-          "name": "last_charge_status",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_charge_error": {
-          "name": "last_charge_error",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "charge_failure_count": {
-          "name": "charge_failure_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
         },
         "created_at": {
           "name": "created_at",

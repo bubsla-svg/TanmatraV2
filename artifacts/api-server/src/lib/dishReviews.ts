@@ -110,7 +110,13 @@ export async function userHasOrderedSlug(
     .where(
       and(
         eq(ordersTable.userId, userId),
+        eq(ordersTable.orderKind, "meal"),
         ne(ordersTable.status, "cancelled"),
+        // Marketplace order items use a different id space
+        // (marketplace_items.id, not menu_items.id) — without the
+        // orderKind filter above, a numeric collision between a
+        // marketplace item id and a dish id would wrongly make a user
+        // "eligible" to review a dish they never ate.
         sql`exists (
           select 1
           from jsonb_array_elements(${ordersTable.items}) as it

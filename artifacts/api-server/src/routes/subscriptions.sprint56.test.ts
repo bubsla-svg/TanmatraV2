@@ -5,13 +5,18 @@ import { type AddressInfo } from "node:net";
 import http from "node:http";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { and, eq, inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, preDebitNotificationsTable, subscriptionMandatesTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, preDebitNotificationsTable, subscriptionMandatesTable, ordersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 import paymentsRouter from "./payments";
 
 process.env["RAZORPAY_KEY_ID"] = "rzp_test_sprint56";
 process.env["RAZORPAY_KEY_SECRET"] = "secret_test_sprint56";
+
+// /payments/charge-mandate is ops-gated (see routes/payments.ts) — set the
+// same shared secret the route reads so the suite is self-contained.
+const ADMIN_TOKEN = "test_admin_tok_sprint56";
+process.env["RD_ADMIN_TOKEN"] = ADMIN_TOKEN;
 
 interface TestUser {
   id: string;
@@ -69,12 +74,14 @@ async function api(
   path: string,
   body: unknown,
   user?: TestUser,
+  extraHeaders?: Record<string, string>,
 ): Promise<{ status: number; json: any }> {
   const res = await fetch(`${baseUrl}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       ...(user ? { "x-test-user-id": user.id } : {}),
+      ...extraHeaders,
     },
     body: body == null ? undefined : JSON.stringify(body),
   });
@@ -110,6 +117,10 @@ await new Promise<void>((resolve) => {
 
 after(async () => {
   if (CREATED_USER_IDS.length > 0) {
+    // orders.user_id has no cascade (financial records must not silently
+    // vanish on user delete) — POST /subscriptions now creates a linked
+    // first-cycle order, so it must be cleared before the user row.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
   await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -258,11 +269,58 @@ test("pre-debit guard blocks mandate charge if notification dispatch missing", a
   });
 
   // Attempting to charge mandate without pre-debit notification should fail
+  // (ops-credentialed request — the business-logic guard is what's under test).
   const charge = await api("POST", "/payments/charge-mandate", {
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: new Date(),
-  }, user);
+  }, user, { "x-admin-token": ADMIN_TOKEN });
   assert.equal(charge.status, 400, JSON.stringify(charge.json));
   assert.match(String(charge.json.error), /pre-debit notification/i);
+});
+
+test("charge-mandate: unauthenticated/wrongly-credentialed request is rejected (403)", async () => {
+  const user = await makeUser();
+  const created = await api("POST", "/subscriptions", baseBody({ planType: "standard" }), user);
+  const subId = created.json.subscription.id;
+
+  await db.insert(subscriptionMandatesTable).values({
+    subscriptionId: subId,
+    razorpayCustomerId: "cust_test",
+    razorpayTokenId: "tok_test",
+    status: "active",
+  });
+
+  const body = {
+    subscriptionId: subId,
+    amountPaise: 380000,
+    scheduledChargeDate: new Date(),
+  };
+
+  // No credential at all — a plain customer session must not be able to
+  // trigger a mandate charge.
+  const noToken = await api("POST", "/payments/charge-mandate", body, user);
+  assert.equal(noToken.status, 403, JSON.stringify(noToken.json));
+
+  // Wrong token — must not be treated as ops-authorized.
+  const wrongToken = await api("POST", "/payments/charge-mandate", body, user, {
+    "x-admin-token": "not-the-real-token",
+  });
+  assert.equal(wrongToken.status, 403, JSON.stringify(wrongToken.json));
+});
+
+test("jobs/pre-debit-notifications: unauthenticated request is rejected (403), credentialed request succeeds", async () => {
+  const noToken = await api("POST", "/jobs/pre-debit-notifications", {});
+  assert.equal(noToken.status, 403, JSON.stringify(noToken.json));
+
+  const wrongToken = await api("POST", "/jobs/pre-debit-notifications", {}, undefined, {
+    "x-admin-token": "not-the-real-token",
+  });
+  assert.equal(wrongToken.status, 403, JSON.stringify(wrongToken.json));
+
+  const authed = await api("POST", "/jobs/pre-debit-notifications", {}, undefined, {
+    "x-admin-token": ADMIN_TOKEN,
+  });
+  assert.equal(authed.status, 200, JSON.stringify(authed.json));
+  assert.equal(authed.json.success, true);
 });
