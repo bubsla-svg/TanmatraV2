@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { subscriptionsApi } from "@/lib/subscriptionsApi";
 import { formatCurrency } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 
 export const meta = () => [
   { title: "Trial Recap & Upgrade | Tanmatra" },
@@ -22,16 +23,10 @@ interface RecapData {
   holdExpiration: string;
 }
 
-// Plan pricing (paise). The saving badge below is DERIVED from these so it can
-// never drift from the prices actually shown to the user. Weekly is the
-// flexible tier and has no discount baseline of its own, so it shows no saving
-// figure; fortnightly is genuinely cheaper per week than weekly, and that — and
-// only that — is what the badge states.
-const PLAN_WEEKLY_PAISE = 380000;
-const PLAN_FORTNIGHTLY_PAISE = 741000;
-const FORTNIGHTLY_SAVING_PCT = (
-  (1 - PLAN_FORTNIGHTLY_PAISE / 2 / PLAN_WEEKLY_PAISE) * 100
-).toFixed(1);
+// 5 meals/week matches the "5 meals/week plan" copy below; fortnightly is
+// the same cadence billed every 2 weeks (10 meals/cycle).
+const WEEKLY_MEALS_PER_DELIVERY = 5;
+const FORTNIGHTLY_MEALS_PER_DELIVERY = 10;
 
 export default function SubscriptionBridge() {
   const navigate = useNavigate();
@@ -42,6 +37,8 @@ export default function SubscriptionBridge() {
   const [recap, setRecap] = useState<RecapData | null>(null);
   const [timeLeft, setTimeLeft] = useState<{ expired: boolean; hours: number; minutes: number } | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+  const [weeklyPricePaise, setWeeklyPricePaise] = useState<number | null>(null);
+  const [fortnightlyPricePaise, setFortnightlyPricePaise] = useState<number | null>(null);
 
   useEffect(() => {
     if (!subscriptionId) {
@@ -49,12 +46,13 @@ export default function SubscriptionBridge() {
       setLoading(false);
       return;
     }
-    
+
     subscriptionsApi
       .trialRecap(Number(subscriptionId))
       .then((data) => {
         setRecap(data);
         setLoading(false);
+        track("trial_bridge_viewed", { subscription_id: subscriptionId });
       })
       .catch((err) => {
         toast.error("Failed to load trial results", {
@@ -62,6 +60,19 @@ export default function SubscriptionBridge() {
         });
         setLoading(false);
       });
+
+    // Real server-quoted prices for the two cadences offered below — never
+    // a client-side estimate (money-integrity law, CLAUDE.md §2 law 7).
+    subscriptionsApi
+      .quote({ cadence: "weekly", mealsPerDelivery: WEEKLY_MEALS_PER_DELIVERY })
+      .then((q) => setWeeklyPricePaise(q.pricePerDeliveryPaise))
+      .catch(() => {
+        /* price stays null; the UI shows "Verifying price…" rather than a guess */
+      });
+    subscriptionsApi
+      .quote({ cadence: "fortnightly", mealsPerDelivery: FORTNIGHTLY_MEALS_PER_DELIVERY })
+      .then((q) => setFortnightlyPricePaise(q.pricePerDeliveryPaise))
+      .catch(() => {});
   }, [subscriptionId]);
 
   useEffect(() => {
@@ -224,25 +235,44 @@ export default function SubscriptionBridge() {
                 <span className="fine text-stone-500">Weekly weekdays lunch drop</span>
               </div>
               <span className="price safc" style={{ fontSize: 14 }}>
-                {formatCurrency(PLAN_WEEKLY_PAISE)}<span className="fntc" style={{ fontSize: 10 }}>/wk</span>
+                {weeklyPricePaise != null ? formatCurrency(weeklyPricePaise) : "Verifying price…"}
+                <span className="fntc" style={{ fontSize: 10 }}>/wk</span>
               </span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="fx flex-col gap8">
-            <Link to={start6WeekPlanUrl} className="btn btn-p w100 text-center py12">
+            <Link
+              to={start6WeekPlanUrl}
+              className="btn btn-p w100 text-center py12"
+              onClick={() => {
+                track("trial_bridge_cta", { cta: "start_6week_plan", subscription_id: subscriptionId });
+                track("trial_bridge_outcome", { outcome: "converted", subscription_id: subscriptionId });
+              }}
+            >
               Start my 6-week plan
             </Link>
-            
-            <button 
-              onClick={() => setShowComparison(true)}
+
+            <button
+              onClick={() => {
+                track("trial_bridge_cta", { cta: "compare_payment_schedules", subscription_id: subscriptionId });
+                setShowComparison(true);
+              }}
               className="btn btn-g w100 text-center py12"
             >
               Compare payment schedules
             </button>
-            
-            <Link to="/" className="btn w100 text-center py12 text-stone-600 hover:text-stone-900" style={{ border: "1px solid var(--ln)" }}>
+
+            <Link
+              to="/"
+              className="btn w100 text-center py12 text-stone-600 hover:text-stone-900"
+              style={{ border: "1px solid var(--ln)" }}
+              onClick={() => {
+                track("trial_bridge_cta", { cta: "decide_later", subscription_id: subscriptionId });
+                track("trial_bridge_outcome", { outcome: "deferred", subscription_id: subscriptionId });
+              }}
+            >
               Decide later
             </Link>
           </div>
@@ -274,16 +304,26 @@ export default function SubscriptionBridge() {
                   <span className="font-bold" style={{ color: "var(--tx)" }}>Weekly Billing</span>
                   <span className="pill sg">Flexible</span>
                 </div>
-                <p className="fine mt4">{formatCurrency(PLAN_WEEKLY_PAISE)} billed every week.</p>
+                <p className="fine mt4">
+                  {weeklyPricePaise != null ? `${formatCurrency(weeklyPricePaise)} billed every week.` : "Verifying price…"}
+                </p>
                 <p className="fine mt2" style={{ color: "var(--mut)" }}>Best for flexibility. Pause or edit anytime before Thursday cutoff.</p>
               </div>
 
               <div className="p-4 border rounded-xl" style={{ borderColor: "var(--ln)", background: "var(--s1)" }}>
                 <div className="fx ac jb">
                   <span className="font-bold" style={{ color: "var(--tx)" }}>Fortnightly Billing</span>
-                  <span className="pill sg" style={{ background: "var(--safd)", color: "var(--safb)" }}>Save {FORTNIGHTLY_SAVING_PCT}% vs weekly</span>
+                  {weeklyPricePaise != null && fortnightlyPricePaise != null && (
+                    <span className="pill sg" style={{ background: "var(--safd)", color: "var(--safb)" }}>
+                      Save {((1 - fortnightlyPricePaise / 2 / weeklyPricePaise) * 100).toFixed(1)}% vs weekly
+                    </span>
+                  )}
                 </div>
-                <p className="fine mt4">{formatCurrency(PLAN_FORTNIGHTLY_PAISE)} billed every 2 weeks.</p>
+                <p className="fine mt4">
+                  {fortnightlyPricePaise != null
+                    ? `${formatCurrency(fortnightlyPricePaise)} billed every 2 weeks.`
+                    : "Verifying price…"}
+                </p>
                 <p className="fine mt2" style={{ color: "var(--mut)" }}>Save more while retaining control. Skip individual weeks to earn credits.</p>
               </div>
             </div>

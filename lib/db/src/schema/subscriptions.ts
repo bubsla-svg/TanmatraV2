@@ -141,6 +141,17 @@ export const subscriptionMembersTable = pgTable(
     dislikedIngredients: text("disliked_ingredients").array().notNull().default([]),
     lifestyle: varchar("lifestyle", { length: 32 }),
     spiceLevel: varchar("spice_level", { length: 16 }).default("medium"),
+    // Nullable by design: only meaningful when set. A single-member
+    // subscription's sole member is backfilled from the account holder's
+    // own userPreferencesTable at creation time (unambiguous mapping); a
+    // multi-member subscription's guests have no independent goal profile
+    // to backfill from and stay null unless explicitly set. Swap
+    // validation (subscriptions.ts POST /subscription-deliveries/:id/swap)
+    // skips the macro-cap check entirely for a member with no target set —
+    // same "skip rather than fabricate" pattern used elsewhere in this
+    // codebase (see adherence.ts's slug-absent handling).
+    dailyCalorieTarget: integer("daily_calorie_target"),
+    dailyProteinTargetGrams: integer("daily_protein_target_grams"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -892,9 +892,6 @@ export default function V2Subscribe() {
       );
     }
     if (!effectivePlan) return null;
-    const estPrice = quoteDetails?.total
-      ? F_Paise(quoteDetails.total)
-      : `${F_Paise(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial))}/week`;
     return (
       <div className="flex flex-col gap-6">
         <div className="card border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
@@ -918,7 +915,9 @@ export default function V2Subscribe() {
         <div className="card bg-white/[0.01] border border-white/5 p-4 rounded-xl flex flex-col gap-3">
           <div className="flex justify-between items-baseline">
             <span className="text-xs text-white/50 font-medium">Estimated Starting Price</span>
-            <span className="tnm-data text-lg font-bold text-[var(--tnm-action)] font-mono">{estPrice}</span>
+            <span className="tnm-data text-lg font-bold text-[var(--tnm-action)] font-mono">
+              {quoteDetails?.total ? F_Paise(quoteDetails.total) : "Verifying price…"}
+            </span>
           </div>
           <p className="fine text-white/45 leading-relaxed">
             Prices are dynamically calculated from our kitchen based on cadence and number of eaters. All deliveries are free.
