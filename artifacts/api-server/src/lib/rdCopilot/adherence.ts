@@ -253,6 +253,11 @@ export async function detectAdherenceForPlan(
       .where(
         and(
           eq(ordersTable.userId, plan.userId),
+          // Marketplace purchases (snacks, supplements, shelf-stable goods)
+          // are not meal deliveries and will never match a plan day's dish
+          // slugs — without this filter every marketplace order gets
+          // wrongly flagged as `outside_plan` drift.
+          eq(ordersTable.orderKind, "meal"),
           gte(ordersTable.createdAt, startTs),
           lte(ordersTable.createdAt, endTs),
         ),
