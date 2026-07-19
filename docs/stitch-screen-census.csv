@@ -1,0 +1,197 @@
+idx,screen_id,title,device,w,h,has_html,text_chars,cluster
+0,911400cdb6d7,Meal Review & Rating,MOBILE,780,1770,True,263,meal review & rating
+1,5428b6c136ef,Corporate Lunch Planner,DESKTOP,2560,2048,True,1180,corporate lunch planner
+2,f31f8ecf8096,Admin Compliance Console,DESKTOP,2560,2048,True,2115,admin compliance console
+3,e8bbaf2ed28c,Metabolic Calendar & Delivery Schedule,MOBILE,780,2794,True,753,metabolic calendar & delivery schedule
+4,3b3a53684a8d,Checkout: Payment Processing Sheet,MOBILE,780,1768,True,619,checkout
+5,f2708996b2fc,Price Review Redesign,MOBILE,768,1376,False,0,price review redesign
+6,2f1b9fa55dd9,Referral Hub: Clinical Gift Credit,MOBILE,780,1902,True,561,referral hub
+7,8de111453937,My Plans (Empty State),MOBILE,780,1768,True,321,my plans
+8,b66eb85463ef,Premium PDP Hero & Stats,MOBILE,768,1376,False,0,premium pdp hero & stats
+9,c0d2f500d805,Order History (Empty State),MOBILE,780,1768,True,279,order history
+10,ffd17571553d,Menu (Populated),MOBILE,780,1834,True,460,menu
+11,bd2069eafcfa,Menu (Populated),MOBILE,780,5824,True,958,menu
+12,3c9af42f09be,Admin Support Ticket Console,DESKTOP,2560,2048,True,1930,admin support ticket console
+13,9ca0fce00803,Admin Menu Engineering Console,DESKTOP,2560,2048,True,1806,admin menu engineering console
+14,3ea4a9581ff8,PDP Trust & Recommendations,MOBILE,768,1376,False,0,pdp trust & recommendations
+15,9803e70e4494,Menu (Loading Skeleton),MOBILE,780,1958,True,23,menu
+16,a1eee790e552,PDP Interaction & Macro Analysis,MOBILE,768,1376,False,0,pdp interaction & macro analysis
+17,de86049ebf1c,Choose Timeslot,MOBILE,780,1936,True,644,choose timeslot
+18,3df3c3961ae3,Dietitian RD Console: Plan Review Queue,DESKTOP,2560,2048,True,1773,dietitian rd console
+19,873327360881,image.png,?,1920,1080,False,0,image.png
+20,873327360881,image.png,?,1920,1080,False,0,image.png
+21,e024b9ea28d6,Team Group Order Lobby,MOBILE,780,1768,True,765,team group order lobby
+22,f418ed36a906,Dietary Style Assessment,MOBILE,768,1376,False,0,dietary style assessment
+23,5e554e0fc75a,Meal Swap Selection Drawer,MOBILE,780,1768,True,435,meal swap selection drawer
+24,3fddd311bbb3,Weekly Planner (Active),MOBILE,780,2754,True,865,weekly planner
+25,321a4f91627d,Privacy Policy & Terms,MOBILE,780,4694,True,2347,privacy policy & terms
+26,a52b05642ce6,404: Recipe Missing,MOBILE,780,1768,True,278,404
+27,06df130460f9,Clinical Allergen Gate,MOBILE,780,1810,True,545,clinical allergen gate
+28,74af4d3b7d0f,Landing Introduction,MOBILE,780,1768,True,265,landing introduction
+29,104699584170,image.png,?,1920,1080,False,0,image.png
+30,b401dcaac9f5,Admin Moderation Console,DESKTOP,2560,2048,True,2196,admin moderation console
+31,a9c20769d468,Dietitian RD Console: Client Dashboard,DESKTOP,2560,2048,True,2225,dietitian rd console
+32,be47798e87eb,Shader,?,512,512,True,0,shader
+33,60816afabc95,Order Tracker: Delivered,MOBILE,780,2198,True,440,order tracker
+34,d9c3194a0ba0,Allergens & Exclusions,MOBILE,780,2652,True,1180,allergens & exclusions
+35,873327360881,image.png,?,1920,1080,False,0,image.png
+36,33768bb8a539,Consultation Hub,MOBILE,780,2238,True,651,consultation hub
+37,b37e1fcde38a,Order Tracker: Preparing (Verified),MOBILE,780,2016,True,628,order tracker
+38,c44f95172d3d,Dish Detail (Variant Swapping),MOBILE,780,6052,True,2217,dish detail
+39,de6b61a7bc9b,(untitled),MOBILE,0,0,False,0,?
+40,10c06b4d0ecb,Modify Commitment,MOBILE,780,1768,True,742,modify commitment
+41,336118f33387,Kitchen ERP: Final Clinical Sign-off,MOBILE,780,1934,True,816,kitchen erp
+42,00f339dec75b,Spatial Metabolic Mesh Prototype,MOBILE,780,1768,True,524,spatial metabolic mesh prototype
+43,c8620ed534a8,RD Partner Application Review,DESKTOP,2560,2048,True,1656,rd partner application review
+44,84b4160486fe,RD Partner: Practice Setup,MOBILE,780,2078,True,554,rd partner
+45,7a8c8a9579da,Cart Drawer (Populated),MOBILE,780,1768,True,335,cart drawer
+46,85cbc510fdb5,RD Partner: Practice Details,MOBILE,780,1784,True,602,rd partner
+47,f230bb10d0de,Dietitian Marketplace & Plans,MOBILE,780,2514,True,758,dietitian marketplace & plans
+48,05913ee6e6e6,Morning Fitness Clubs Landing,MOBILE,780,7044,True,1514,morning fitness clubs landing
+49,d2c3ec01a1f4,Global Micro-Motion Library,MOBILE,780,5824,True,1062,global micro-motion library
+50,ec34fe9dcef0,Duration Selection Redesign,MOBILE,768,1376,False,0,duration selection redesign
+51,487d6efc4389,Sales & Subscription Console,DESKTOP,2560,2320,True,1160,sales & subscription console
+52,db1654bdff32,Tanmatra Clinical Nutrition Ecosystem,MOBILE,390,884,True,168,tanmatra clinical nutrition ecosystem
+53,1701dd4788ad,Login: OTP Verification,MOBILE,780,1768,True,289,login
+54,689a765e230a,Subscription Plans Landing,MOBILE,780,3478,True,892,subscription plans landing
+55,34256961921f,Loyalty Tiers & Benefits,MOBILE,780,2288,True,831,loyalty tiers & benefits
+56,75f247e89e97,AI Agent Execution Console,DESKTOP,2560,2048,True,978,ai agent execution console
+57,d95c94d85d12,Logistics: Cold-Chain Console,MOBILE,780,1768,True,1214,logistics
+58,0e3ad01bb4ca,Order History,MOBILE,780,2490,True,524,order history
+59,873327360881,image.png,?,1920,1080,False,0,image.png
+60,37de1187ccea,Program Overview Redesign,MOBILE,768,1376,False,0,program overview redesign
+61,8495e2bb2b09,Dish Detail (Verified Provenance),MOBILE,780,5710,True,1921,dish detail
+62,60b9dbda7083,Meal Swap Selection,MOBILE,780,1768,True,614,meal swap selection
+63,0b8baf895687,Post-Booking Preparation,MOBILE,780,2752,True,951,post-booking preparation
+64,29a35355373d,Office Lunch Selection,MOBILE,780,1930,True,538,office lunch selection
+65,fe383ead6a8d,Health Goal Management,MOBILE,780,3360,True,1333,health goal management
+66,1ab5af58542f,Trial Recap & Upgrade Bridge,MOBILE,780,2954,True,995,trial recap & upgrade bridge
+67,7a4ea5f40af4,Animated SVG,?,512,512,True,0,animated svg
+68,00e1e135f875,Kinetic ZenTracker Prototype,MOBILE,780,1768,True,232,kinetic zentracker prototype
+69,873327360881,image.png,?,1920,1080,False,0,image.png
+70,ac2a696db455,Dietitian Clinical Profile,MOBILE,780,1828,True,645,dietitian clinical profile
+71,4016e5c5b975,Extracted text from https://tanmatra.food,?,0,0,True,6048,extracted text from https://tanmatra.food
+72,33d87773d08b,Lab Result Detail,MOBILE,780,3338,True,1118,lab result detail
+73,2a0d9f8748a6,RD Partner Application Review,DESKTOP,2560,2048,True,1304,rd partner application review
+74,d7e43b378ac1,Checkout: Payment Selection,MOBILE,780,1768,True,461,checkout
+75,f2ff5a9902ad,Corporate Performance Hub,MOBILE,780,1992,True,858,corporate performance hub
+76,0421abf5cb36,Login: Phone Entry,MOBILE,780,1768,True,168,login
+77,4ecec67a24bc,Voucher Wallet,MOBILE,780,2602,True,773,voucher wallet
+78,e3377dea7fb6,Secure Payment Redesign,MOBILE,768,1376,False,0,secure payment redesign
+79,b002534d1e3b,Clinical Adherence Summary,MOBILE,780,2438,True,924,clinical adherence summary
+80,31bf55668375,Cart Drawer (Empty),MOBILE,780,1768,True,183,cart drawer
+81,c3286840a51d,Order Tracker: Out for Delivery,MOBILE,780,1768,True,366,order tracker
+82,873327360881,image.png,?,1920,1080,False,0,image.png
+83,346c8d9e79a1,Three.js,?,512,512,True,0,three.js
+84,357647370c8a,Admin Moderation Console,DESKTOP,2560,2048,True,2038,admin moderation console
+85,16f4f8fd3c26,Corporate Verification Gate,MOBILE,780,1768,True,288,corporate verification gate
+86,d692d5395f33,Wellness Challenge Detail,MOBILE,780,4094,True,1176,wellness challenge detail
+87,1a0c82650170,Upload Lab Results,MOBILE,780,2790,True,833,upload lab results
+88,8769f3266566,Home (Populated),MOBILE,780,4188,True,667,home
+89,fdc12e9ca370,Partner Welcome & Success,MOBILE,780,1768,True,342,partner welcome & success
+90,369dab3e8293,Smart Watch Sync,MOBILE,780,2298,True,832,smart watch sync
+91,87dac5181959,Saved Addresses,MOBILE,780,1768,True,254,saved addresses
+92,15e530319599,Frequency Selection Redesign,MOBILE,768,1376,False,0,frequency selection redesign
+93,f049acb23ea1,Checkout (Tier P0 Refined),MOBILE,780,2232,True,510,checkout
+94,8b808acc90f9,404: Page Not Found,MOBILE,780,1768,True,221,404
+95,369e41aee2a3,Validation & Interaction States,MOBILE,780,3040,True,822,validation & interaction states
+96,82019d84ec75,Meal Preview Redesign,MOBILE,768,1376,False,0,meal preview redesign
+97,7e67272116af,Recipe: Wild Salmon & Quinoa Grain Bowl,MOBILE,780,4014,True,1298,recipe
+98,139a3c02fc23,Order Tracker: Placed,MOBILE,780,2036,True,408,order tracker
+99,9cde04bc1288,Dish Detail (Customise),MOBILE,780,1768,True,829,dish detail
+100,3cc7f5e47d38,Home (Loading),MOBILE,780,2188,True,153,home
+101,5f58c3ae5a1e,Partner Club Activation,MOBILE,780,1768,True,410,partner club activation
+102,270e3ef83a37,Modification Confirmed,MOBILE,780,1768,True,345,modification confirmed
+103,feb7ea5023ed,Digestive & Energy Journal,MOBILE,780,2174,True,449,digestive & energy journal
+104,a03172fed6ba,RD Partner: Credentials,MOBILE,780,1878,True,536,rd partner
+105,893dc781ae26,Meal Comparison Tool,MOBILE,780,2564,True,788,meal comparison tool
+106,a7819fddaff3,Daily Performance Report,MOBILE,780,3074,True,797,daily performance report
+107,b84e56417615,Health Information & Privacy,MOBILE,780,2178,True,976,health information & privacy
+108,7d01d135e6ed,Metabolic Cookbook: Editorial Index,MOBILE,780,4982,True,870,metabolic cookbook
+109,8ce156ae8407,Clinical Profile & Baseline,MOBILE,780,2346,True,508,clinical profile & baseline
+110,64a3a022add1,Trust & FAQ Ecosystem,MOBILE,768,1376,False,0,trust & faq ecosystem
+111,f05cc27117c9,Select Dietitian,MOBILE,780,2248,True,743,select dietitian
+112,3d6245ca5d57,Allergens & Exclusions Assessment,MOBILE,768,1376,False,0,allergens & exclusions assessment
+113,57128312acc1,Subscription Analytics Dashboard,MOBILE,780,3450,True,798,subscription analytics dashboard
+114,8cf8ecb861f5,Image from https://tanmatra.food/images/dishes/beetroot-curd.jpg,?,1024,1024,False,0,image from https://tanmatra.food/images/dishes/beetroot-curd.jpg
+115,59ae510c3d3d,Allergen Acknowledgment Sheet,MOBILE,780,1768,True,380,allergen acknowledgment sheet
+116,589659cd5377,Tanmatra: Facility Partnership Landing,MOBILE,780,6852,True,1820,tanmatra
+117,eea58c80cdac,Modify Commitment,MOBILE,780,1768,True,695,modify commitment
+118,82e905751b45,Cart Drawer (Minimum Nudge),MOBILE,780,1768,True,346,cart drawer
+119,873327360881,image.png,?,1920,1080,False,0,image.png
+120,ed818844a940,Glucose Stability Detail,MOBILE,780,2412,True,825,glucose stability detail
+121,873327360881,image.png,?,1920,1080,False,0,image.png
+122,cac1be12ce8f,Billing & Invoices,MOBILE,780,2166,True,720,billing & invoices
+123,3c1dd9de8613,RD Partner: Culinary Models,MOBILE,780,2724,True,942,rd partner
+124,49e9d0b4d3ed,Weekly Nutrition Scorecard,MOBILE,780,2396,True,687,weekly nutrition scorecard
+125,389175400781,Checkout: Address Map Picker,MOBILE,780,1768,True,345,checkout
+126,d0db5c4dc8ec,Clinical Plan Detail (Standardized),MOBILE,780,3186,True,1131,clinical plan detail
+127,79006e9cec86,Refactored Checkout Summary,MOBILE,780,2500,True,700,refactored checkout summary
+128,7d841ee04ff0,Refined Team Group Order Lobby,MOBILE,780,1768,True,762,refined team group order lobby
+129,9b6cc902db6d,Metabolic Rewards & Challenges,MOBILE,780,2870,True,549,metabolic rewards & challenges
+130,46264ac3c400,Kitchen ERP: Live KDS Queue,MOBILE,780,1928,True,1007,kitchen erp
+131,104699584170,image.png,?,1920,1080,False,0,image.png
+132,1914b29a5e66,Order Success (Verified Pipeline),MOBILE,780,2162,True,468,order success
+133,a7d6cf0bea0a,Metabolic Performance Overview,MOBILE,780,2462,True,455,metabolic performance overview
+134,5e7b72e4b57d,Dietitian Messaging,MOBILE,780,1768,True,728,dietitian messaging
+135,1634ff6c4932,Admin Compliance Console,DESKTOP,2560,2048,True,1739,admin compliance console
+136,11d4c9bc87ed,Clinical CMS & Content Sandbox,DESKTOP,2560,2048,True,1004,clinical cms & content sandbox
+137,818fdf3a20bc,Order Tracker: Preparing,MOBILE,780,2000,True,644,order tracker
+138,8b4f1eff271e,ZenTracker (Loading Skeleton),MOBILE,780,1814,True,137,zentracker
+139,1ab437270fee,Global Alerts & Toasts Library,MOBILE,780,2376,True,877,global alerts & toasts library
+140,1897169debea,(untitled),MOBILE,0,0,False,0,?
+141,30ffd1436337,Image from https://tanmatra.food/hero-food.jpg,?,788,760,False,0,image from https://tanmatra.food/hero-food.jpg
+142,96f613012679,Cuisine Preferences Assessment,MOBILE,768,1376,False,0,cuisine preferences assessment
+143,f272f5b3e318,Post-Feedback Calibration Summary,MOBILE,780,2844,True,533,post-feedback calibration summary
+144,8dd00a9497cc,Biometric & Body Composition Trends,MOBILE,780,2168,True,774,biometric & body composition trends
+145,f8903871b209,Image from https://tanmatra.food/images/dishes/charcoal-smoothie.jpg,?,1024,1024,False,0,image from https://tanmatra.food/images/dishes/charcoal-smoothie.jpg
+146,0f1729ecc3e8,Loyalty Tiers & Benefits,MOBILE,780,2238,True,970,loyalty tiers & benefits
+147,2d4d2226d7e4,Dietitian-Signed Guide: PCOS Management,MOBILE,780,4514,True,1628,dietitian-signed guide
+148,21be69bd5866,Cart Drawer Summary,MOBILE,800,1812,True,673,cart drawer summary
+149,104699584170,image.png,?,1920,1080,False,0,image.png
+150,9f0d60ecee8c,Metabolic Rewards Center,MOBILE,780,2342,True,766,metabolic rewards center
+151,6540fad8326f,Order Success Confirmation,MOBILE,780,2170,True,476,order success confirmation
+152,d352fa75bd02,Admin Support Ticket Console,DESKTOP,2560,2048,True,1975,admin support ticket console
+153,9e7a49b0fe12,Skip Day Confirmation,MOBILE,780,1768,True,629,skip day confirmation
+154,873327360881,image.png,?,1920,1080,False,0,image.png
+155,77f8f3c3a562,Dish Detail (Loading),MOBILE,780,3664,True,30,dish detail
+156,8b22fc3d33f8,RD Partner: Documents,MOBILE,780,2152,True,820,rd partner
+157,eac88bd32b38,Change Health Goal,MOBILE,780,1768,True,726,change health goal
+158,ba3a22c0710b,iOS Premium Home,MOBILE,704,1520,False,0,ios premium home
+159,0898ca39401a,Metabolic Labs Overview,MOBILE,780,2448,True,708,metabolic labs overview
+160,d3f66050752b,Dietitian Consultation Profile,MOBILE,768,1376,False,0,dietitian consultation profile
+161,15ba350e382f,Checkout: Address Manual Fallback,MOBILE,780,1768,True,444,checkout
+162,d643c56bf2a9,Account & Clinical Profile,MOBILE,780,3302,True,833,account & clinical profile
+163,4b5c0e05806d,Menu: Spatial Interaction Prototype,MOBILE,780,5900,True,958,menu
+164,b39c7d313929,Premium Subscription Plans,MOBILE,768,1376,False,0,premium subscription plans
+165,dd39525e5245,Account & Profile,MOBILE,780,2462,True,641,account & profile
+166,32ffa63a13d8,Dish Detail (Populated),MOBILE,780,5994,True,2211,dish detail
+167,f013ee65bf5b,Menu (Asymmetric & iOS Refined),MOBILE,780,5900,True,958,menu
+168,e9134e27ec71,Refactored Secure Payment,MOBILE,780,2022,True,669,refactored secure payment
+169,ccd1dba7cf04,Nutrition Deep Dive Sheet,MOBILE,800,1812,True,848,nutrition deep dive sheet
+170,5480593cae9d,Metabolic Marketplace: Supplements & Snacks,MOBILE,780,1768,True,450,metabolic marketplace
+171,104699584170,image.png,?,1920,1080,False,0,image.png
+172,c7f061a6a306,Admin Menu Engineering Console,DESKTOP,2560,2048,True,1399,admin menu engineering console
+173,9ab8caa3e4c7,Gyms & Fitness Landing,MOBILE,780,6852,True,1818,gyms & fitness landing
+174,ac19849bdef3,Wearable Sync Dashboard,MOBILE,780,1768,True,394,wearable sync dashboard
+175,bc7c4aab0b9b,Weekly Planner (Active),MOBILE,780,3102,True,1009,weekly planner
+176,9e83fdedf7c1,Corporate Performance Hub,MOBILE,780,2038,True,766,corporate performance hub
+177,9cf37a815230,RD Partner Recruitment Landing,MOBILE,780,6740,True,1664,rd partner recruitment landing
+178,d169c704f07a,Confirm Booking,MOBILE,780,2232,True,842,confirm booking
+179,dcb791ec44ba,Home (Error),MOBILE,780,1776,True,225,home
+180,fc4f2778e4b9,Animated SVG,?,512,512,True,0,animated svg
+181,b4bf59ae2b99,Subscription Plans Landing v2,MOBILE,780,9488,True,2909,subscription plans landing
+182,8e8aab0153ed,RD Partner: Specializations,MOBILE,780,2136,True,698,rd partner
+183,07adc8c4b078,Assessment Results Recommendation,MOBILE,768,1376,False,0,assessment results recommendation
+184,143893f23cdf,Clinical Landing Page,MOBILE,780,1768,True,410,clinical landing page
+185,485827d750e8,(untitled),MOBILE,0,0,False,0,?
+186,9ff6728374bd,FAQ & Support Hub,MOBILE,780,1768,True,1103,faq & support hub
+187,a4aa435cc709,Refund & Cancellation Policy,MOBILE,780,4566,True,1615,refund & cancellation policy
+188,5509e21310e7,Login: Phone Entry,MOBILE,780,1768,True,331,login
+189,0286e211da36,Checkout: Address Entry,MOBILE,780,1982,True,429,checkout
+190,9d28b2215015,Plan Settings,MOBILE,780,2380,True,709,plan settings
+191,43dd09849f16,Sync & Connection Status Dashboard,MOBILE,780,1768,True,463,sync & connection status dashboard
+192,e8f98397cdc7,Nutrient Trend Overview,MOBILE,780,2736,True,660,nutrient trend overview
+193,25aee90a4fb3,RD Partner: Review & Success,MOBILE,780,2184,True,1000,rd partner
+194,32293ba5b7ef,Completion & Account Drawer,MOBILE,768,1376,False,0,completion & account drawer
+195,8e3bafd37ffa,Corporate Verification Hub,MOBILE,780,1822,True,730,corporate verification hub
