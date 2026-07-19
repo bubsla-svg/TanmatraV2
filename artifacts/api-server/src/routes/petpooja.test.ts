@@ -268,7 +268,7 @@ test("POST /integrations/petpooja/callback updates order status and rider info",
         where: (condition: any) => ({
           limit: (n: number) => {
             if (table === ordersTable) {
-              return Promise.resolve([{ id: 99, externalOrderId: "A-1", status: "placed" }]);
+              return Promise.resolve([{ id: 99, externalOrderId: "A-1", status: "placed", orderKind: "meal" }]);
             }
             if (table === ridersTable) {
               return Promise.resolve([]); // no rider exists yet
@@ -348,7 +348,7 @@ test("POST /integrations/petpooja/orderstatus cancels order and saves cancelReas
         where: (condition: any) => ({
           limit: (n: number) => {
             if (table === ordersTable) {
-              return Promise.resolve([{ id: 26, externalOrderId: "A-1", status: "placed", deliveryInstructions: "Ring bell" }]);
+              return Promise.resolve([{ id: 26, externalOrderId: "A-1", status: "placed", deliveryInstructions: "Ring bell", orderKind: "meal" }]);
             }
             return Promise.resolve([]);
           },
@@ -407,7 +407,7 @@ test("POST /integrations/petpooja/rider-info resolves order and registers/assign
         where: (condition: any) => ({
           limit: (n: number) => {
             if (table === ordersTable) {
-              return Promise.resolve([{ id: 105, externalOrderId: "101010527", status: "confirmed" }]);
+              return Promise.resolve([{ id: 105, externalOrderId: "101010527", status: "confirmed", orderKind: "meal" }]);
             }
             if (table === ridersTable) {
               return Promise.resolve([]);

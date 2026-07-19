@@ -2,7 +2,6 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import {
   db,
   marketplaceItemsTable,
-  marketplaceOrdersTable,
   ordersTable,
   userPreferencesTable,
   type MarketplaceItem,
@@ -12,6 +11,7 @@ import { idempotencyMiddleware } from "../middlewares/idempotency";
 import { incMarketplaceCheckoutRollback } from "../lib/saga-metrics";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod/v4";
+import { randomUUID } from "node:crypto";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 
 const router: IRouter = Router();
@@ -390,20 +390,34 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
         }
       }
 
+      // Fold marketplace orders into ordersTable (orderKind = 'marketplace')
+      // so payments.ts's hardened Razorpay create/webhook/capture logic —
+      // which reads/writes ordersTable exclusively, keyed on
+      // externalOrderId/razorpayOrderId — works on them unchanged. `items`
+      // carries the full MarketplaceOrderLine shape (vendor payout /
+      // commission split included) that used to live only in the
+      // now-retired marketplace_orders table.
+      const externalOrderId = `mkt-${randomUUID()}`;
       const [created] = await tx
-        .insert(marketplaceOrdersTable)
+        .insert(ordersTable)
         .values({
           userId,
+          orderKind: "marketplace",
+          externalOrderId,
           status: "placed",
-          deliveryMode: data.deliveryMode,
-          items: lines,
           totalPaise,
+          // No GST/delivery-fee layer for marketplace goods today — the
+          // meal-order chargePaise (post-discount + GST + delivery fee)
+          // concept doesn't apply, so leave chargePaise null and let
+          // payments.ts fall back to totalPaise (its documented behavior).
+          items: lines,
+          marketplaceDeliveryMode: data.deliveryMode,
+          bundleWithOrderId,
           addressLabel: data.address?.label,
           addressLine: data.address?.line,
           city: data.address?.city,
           pincode: data.address?.pincode,
           phone: data.address?.phone,
-          bundleWithOrderId,
         })
         .returning();
 
@@ -446,9 +460,9 @@ router.get("/marketplace/orders", async (req: Request, res: Response) => {
   }
   const rows = await db
     .select()
-    .from(marketplaceOrdersTable)
-    .where(eq(marketplaceOrdersTable.userId, req.user.id))
-    .orderBy(desc(marketplaceOrdersTable.createdAt));
+    .from(ordersTable)
+    .where(and(eq(ordersTable.userId, req.user.id), eq(ordersTable.orderKind, "marketplace")))
+    .orderBy(desc(ordersTable.createdAt));
   res.json({ orders: rows });
 });
 

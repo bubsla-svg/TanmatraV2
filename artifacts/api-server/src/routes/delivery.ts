@@ -103,6 +103,24 @@ router.post("/delivery/schedule-advance", async (req: Request, res: Response) =>
     return;
   }
   const { orderId, step, delayMs } = parsed.data;
+  const [order] = await db
+    .select({ orderKind: ordersTable.orderKind })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId))
+    .limit(1);
+  if (!order) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  // Marketplace orders never go through the kitchen/rider pipeline —
+  // schedule-advance would otherwise stamp them with meal-order statuses
+  // (preparing/ready/rider_assigned/out_for_delivery/delivered), which then
+  // pollutes kitchen-queue-depth, KDS, and RD "active orders" views that
+  // assume every such row is a real meal being prepared.
+  if (order.orderKind !== "meal") {
+    res.status(409).json({ error: "not a meal order" });
+    return;
+  }
   const queued = await scheduleOrderAdvance(orderId, step, delayMs);
   // Without Redis the queue is disabled; for the delivered step we still need
   // to auto-log nutrition so the wellness dashboard stays in sync.
@@ -131,10 +149,22 @@ router.post("/delivery/auto-assign", async (req: Request, res: Response) => {
   }
   const { orderId } = parsed.data;
   const existing = await db
-    .select({ riderId: ordersTable.riderId })
+    .select({ riderId: ordersTable.riderId, orderKind: ordersTable.orderKind })
     .from(ordersTable)
     .where(eq(ordersTable.id, orderId))
     .limit(1);
+  if (!existing[0]) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  // Riders only ever deliver meal orders — a marketplace row has no
+  // deliverySlotId/kitchen-prep semantics and dispatch.ts already excludes
+  // it from assignment scans; mirror that here so this manual endpoint
+  // can't assign it a rider either.
+  if (existing[0].orderKind !== "meal") {
+    res.status(409).json({ error: "not a meal order" });
+    return;
+  }
   if (existing[0]?.riderId) {
     startSimulation(orderId, existing[0].riderId);
     res.json({ ok: true, alreadyAssigned: true, riderId: existing[0].riderId });
