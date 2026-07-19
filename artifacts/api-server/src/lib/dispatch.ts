@@ -705,6 +705,7 @@ export async function dispatchReadyOrders(opts: {
       .from(ordersTable)
       .where(
         and(
+          eq(ordersTable.orderKind, "meal"),
           inArray(ordersTable.status, liveStatuses),
           isNull(ordersTable.riderId),
           eq(ordersTable.priority, "stat"),
@@ -741,6 +742,7 @@ export async function dispatchReadyOrders(opts: {
     .from(ordersTable)
     .where(
       and(
+        eq(ordersTable.orderKind, "meal"),
         inArray(ordersTable.status, liveStatuses),
         isNull(ordersTable.riderId),
         eq(ordersTable.priority, "stat"),
@@ -762,6 +764,7 @@ export async function dispatchReadyOrders(opts: {
       .from(ordersTable)
       .where(
         and(
+          eq(ordersTable.orderKind, "meal"),
           inArray(ordersTable.status, liveStatuses),
           isNull(ordersTable.riderId),
           sql`${ordersTable.priority} <> 'stat'`,

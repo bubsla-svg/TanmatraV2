@@ -23,6 +23,11 @@ export async function autoLogDeliveredOrder(orderId: number): Promise<number> {
     .from(ordersTable)
     .where(eq(ordersTable.id, orderId));
   if (!order || !order.userId) return 0;
+  // Marketplace items aren't dishes — getDishById(it.id) would either miss
+  // (no-op) or, worse, collide with an unrelated dish sharing the same id
+  // space and log fabricated nutrition/macros for something the user never
+  // ate. Only meal orders feed the wellness auto-log.
+  if (order.orderKind !== "meal") return 0;
   const day = dayStr(order.scheduledFor ?? order.createdAt ?? new Date());
   const rows: Array<typeof nutritionLogsTable.$inferInsert> = [];
   for (let i = 0; i < (order.items ?? []).length; i++) {

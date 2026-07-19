@@ -10,7 +10,7 @@ import {
   kitchenStockTable,
   supplierBatchesTable,
 } from "@workspace/db";
-import { asc, eq, ilike, or, inArray } from "drizzle-orm";
+import { and, asc, eq, ilike, or, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   ackAlert,
@@ -213,7 +213,12 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
       createdAt: ordersTable.createdAt,
     })
     .from(ordersTable)
-    .where(inArray(ordersTable.status, ["placed", "preparing"]))
+    .where(
+      and(
+        inArray(ordersTable.status, ["placed", "preparing"]),
+        eq(ordersTable.orderKind, "meal"),
+      ),
+    )
     .orderBy(asc(ordersTable.createdAt));
   res.json({ orders: rows });
 });
@@ -224,7 +229,7 @@ router.post("/kds/orders/:id/ready", async (req: Request, res: Response) => {
   await db
     .update(ordersTable)
     .set({ status: "ready" })
-    .where(eq(ordersTable.id, orderId));
+    .where(and(eq(ordersTable.id, orderId), eq(ordersTable.orderKind, "meal")));
   res.json({ ok: true });
 });
 

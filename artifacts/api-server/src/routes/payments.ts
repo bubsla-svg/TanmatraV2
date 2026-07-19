@@ -16,6 +16,8 @@ import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 import { isCaptureAmountReconciled, resolvePayableAmountPaise } from "../lib/paymentIntegrity";
 import { chargeMandateCore } from "../lib/chargeMandate";
+import { requireOps } from "../lib/adminGate";
+import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
 
 const router: IRouter = Router();
 
@@ -762,12 +764,16 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
-            pushOrderToPetpooja(order, {
-              name: fullName || "Guest Customer",
-              email: result.user?.email || null,
-            }).catch((err) => {
-              req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
-            });
+            // Marketplace (shelf-stable goods) orders never go through the
+            // kitchen — only meal orders get pushed to Petpooja.
+            if (order.orderKind !== "marketplace") {
+              pushOrderToPetpooja(order, {
+                name: fullName || "Guest Customer",
+                email: result.user?.email || null,
+              }).catch((err) => {
+                req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
+              });
+            }
           } else if (order.status === "cancelled" || order.status === "failed") {
             req.log.error(
               { razorpayOrderId, orderId: order.id, status: order.status },
@@ -828,12 +834,14 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
-            pushOrderToPetpooja(order, {
-              name: fullName || "Guest Customer",
-              email: result.user?.email || null,
-            }).catch((err) => {
-              req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
-            });
+            if (order.orderKind !== "marketplace") {
+              pushOrderToPetpooja(order, {
+                name: fullName || "Guest Customer",
+                email: result.user?.email || null,
+              }).catch((err) => {
+                req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
+              });
+            }
           } else if (order.status === "cancelled" || order.status === "failed") {
             req.log.error(
               { referenceId, orderId: order.id, status: order.status },
@@ -889,15 +897,25 @@ const chargeMandateSchema = z.object({
   scheduledChargeDate: z.string().or(z.date()),
 });
 
-// AUTH: this endpoint currently has no credential requirement of its own —
-// see the module-level note in ../lib/chargeMandate.ts. A separate,
-// independent hardening task is expected to add a service-credential check
-// here (e.g. a shared-secret header). When it lands, add the guard as the
-// very first thing in this handler, before chargeMandateCore() is called —
-// nothing else in this route or in chargeMandateCore needs to change.
-// chargeMandateScheduler never goes through this route at all, so it is
-// unaffected either way.
+/**
+ * Internal/ops only — this debits a customer's stored Razorpay mandate token,
+ * so it must never be reachable by an anonymous caller. `authMiddleware` is
+ * attach-only (it never rejects an unauthenticated request), so the gate
+ * below is the sole enforcement point.
+ *
+ * Meant to be called by the subscription-billing scheduler
+ * (`chargeMandateScheduler.ts`, in-process — never over HTTP, so it is
+ * unaffected by this gate either way) or manually by ops. Gated via
+ * `requireOps` — the same ops-scope gate used by every other internal/ops-only
+ * route in this codebase (see `src/lib/adminGate.ts`). Any ONE of the
+ * following satisfies it:
+ *   - HTTP header `x-admin-token` equal to env `RD_ADMIN_TOKEN`, or
+ *   - a signed admin-session cookie (POST /admin/login), or
+ *   - an authenticated user whose id is in env `OPS_USER_IDS` (comma-separated).
+ * Missing/invalid credentials → 403 "ops scope required".
+ */
 router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
   const parsed = chargeMandateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -920,7 +938,26 @@ router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
   res.status(result.httpStatus).json(result.body);
 });
 
-router.post("/jobs/pre-debit-notifications", async (req: Request, res: Response) => {
+/**
+ * Internal/ops only — manually triggers the pre-debit customer-notification
+ * sweep (RBI-mandated notice before an autopay debit). Meant to be called by
+ * the (separately wired-up) scheduler process, not end users; `authMiddleware`
+ * is attach-only and never rejects, so `requireOps` below is the sole gate —
+ * same convention as `/payments/charge-mandate` above and every other
+ * internal/ops-only route (`src/lib/adminGate.ts`):
+ *   - HTTP header `x-admin-token` equal to env `RD_ADMIN_TOKEN` (the
+ *     credential the future cron/scheduler process should send), or
+ *   - a signed admin-session cookie (POST /admin/login), or
+ *   - an authenticated user whose id is in env `OPS_USER_IDS`.
+ * Missing/invalid credentials → 403 "ops scope required".
+ *
+ * Also mounted with `paymentRateLimit` directly: this route's path
+ * (`/jobs/...`) falls outside the `/api/payments` prefix that
+ * `app.ts` rate-limits, so without this it would otherwise be exempt from
+ * the per-IP payments rate limit entirely.
+ */
+router.post("/jobs/pre-debit-notifications", paymentRateLimit, async (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
   try {
     const result = await runPreDebitNotificationsSweep();
     res.json({ success: true, ...result });

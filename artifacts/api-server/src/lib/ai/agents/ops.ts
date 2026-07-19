@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { eq, desc, sql, inArray } from "drizzle-orm";
+import { and, eq, desc, sql, inArray } from "drizzle-orm";
 import {
   db,
   ordersTable,
@@ -380,7 +380,12 @@ export async function fetchLiveQueue(opts: {
       createdAt: ordersTable.createdAt,
     })
     .from(ordersTable)
-    .where(inArray(ordersTable.status, [...filter]))
+    .where(
+      and(
+        inArray(ordersTable.status, [...filter]),
+        eq(ordersTable.orderKind, "meal"),
+      ),
+    )
     .orderBy(desc(ordersTable.createdAt))
     .limit(opts.limit ?? 25);
   const counts: Record<string, number> = {};

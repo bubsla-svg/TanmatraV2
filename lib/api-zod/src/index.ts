@@ -86,17 +86,12 @@ export const LogoutResponse = z.object({
 });
 export type LogoutResponse = z.infer<typeof LogoutResponse>;
 
+// Noida-only launch zone. We deliver across Noida (incl. Greater Noida
+// sectors); Ghaziabad / Delhi / Gurgaon are intentionally out of scope until
+// ops expands. Keep in sync with the frontend map in serviceablePincodes.ts.
 export const SERVICEABLE_PINCODES = new Set([
   // Noida Core
   "201301", "201303", "201304", "201305", "201306", "201307", "201309", "201318",
-  // Ghaziabad (bordering Noida)
-  "201010", "201012", "201014",
-  // Delhi East (bordering Noida)
-  "110091", "110092", "110096",
-  // Delhi (Central & South)
-  "110001", "110016", "110017", "110019", "110020", "110024", "110025", "110048", "110049", "110065",
-  // Gurgaon
-  "122001", "122002", "122003", "122004", "122009", "122011", "122015", "122016", "122017", "122018",
 ]);
 
 export function isServiceablePincode(pincode: string | null | undefined): boolean {

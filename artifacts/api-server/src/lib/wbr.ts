@@ -163,6 +163,7 @@ export async function calculateWeeklyMargins(
       and(
         gte(ordersTable.createdAt, start),
         sql`${ordersTable.createdAt} < ${end}`,
+        eq(ordersTable.orderKind, "meal"),
       ),
     );
 

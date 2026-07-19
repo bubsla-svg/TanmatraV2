@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import {
   db,
+  ordersTable,
   subscriptionsTable,
   subscriptionMembersTable,
   subscriptionDeliveriesTable,
@@ -24,6 +25,7 @@ import { cancelAutopayMandate } from "../lib/autopay";
 import { SKIP_SWAP_CUTOFF_MS, isPastSkipCutoff } from "../lib/subscriptionRules";
 import {
   PER_MEAL_PAISE,
+  GST_RATE,
   computeTrialPricePaise,
   computeDeliveryPricePaise,
 } from "../lib/subscriptionPricing";
@@ -267,6 +269,10 @@ async function recomputeNextDeliveryAt(
   return value;
 }
 
+// Read+write executor shape shared by `db` and a `db.transaction(tx => ...)`
+// callback param — lets callers run this inside an existing transaction.
+type DbExecutor = Pick<typeof db, "select" | "insert" | "update">;
+
 // Exported: lib/chargeMandate.ts reuses this exact function (rather than a
 // second copy) to replenish the upcoming-deliveries pool when a recurring
 // charge succeeds and finds no un-fulfilled delivery left to bill against —
@@ -279,6 +285,7 @@ export async function generateDeliveriesForSubscription(
   deliveryWindow: string,
   defaultItems: SubscriptionItem[],
   dayPlan?: Array<{ dayOffset: number; items: SubscriptionItem[] }> | null,
+  executor: DbExecutor = db,
 ): Promise<SubscriptionDelivery[]> {
   const stepDays = CADENCE_DAYS[cadence];
   const rows: Array<typeof subscriptionDeliveriesTable.$inferInsert> = [];
@@ -306,7 +313,82 @@ export async function generateDeliveriesForSubscription(
     }
   }
   if (rows.length === 0) return [];
-  return db.insert(subscriptionDeliveriesTable).values(rows).returning();
+  return executor.insert(subscriptionDeliveriesTable).values(rows).returning();
+}
+
+/**
+ * Creates the `ordersTable` row for a subscription's first billing cycle and
+ * links it to the earliest "upcoming" delivery via
+ * `subscriptionDeliveriesTable.orderId` — the same linkage
+ * `finalizeOrder()` establishes for à-la-carte checkout (loyaltyEngine.ts).
+ * `POST /payments/razorpay/order` resolves the charge by looking up
+ * `externalOrderId`, and `registerAutopayMandate` (payments.ts) finds the
+ * subscription by joining on that delivery link — so both depend on this
+ * row existing with the right externalOrderId and the right link.
+ *
+ * The charge is ALWAYS `sub.pricePerDeliveryPaise - bridgeCreditPaise`,
+ * server-computed — never a client-supplied amount, and never recomputed
+ * from the delivery's real dish items (subscription pricing is a flat
+ * per-meal rate independent of which dishes were picked; see
+ * subscriptionPricing.ts). Item rows are recorded for display purposes only
+ * with a flat per-meal price so they cannot silently diverge from the flat
+ * price actually billed.
+ *
+ * NOTE: this creates the order and links it for the autopay-mandate join,
+ * but registerAutopayMandate additionally requires the gateway order to have
+ * been created with subscriptionId (see POST /payments/razorpay/order's
+ * isRecurring branch) for a token to exist — that wiring is tracked
+ * separately.
+ */
+async function createOrderForNewSubscription(
+  tx: DbExecutor,
+  sub: typeof subscriptionsTable.$inferSelect,
+  deliveries: SubscriptionDelivery[],
+  bridgeCreditPaise: number,
+): Promise<void> {
+  if (deliveries.length === 0) return;
+  const firstDelivery = deliveries.reduce((earliest, d) =>
+    d.scheduledFor < earliest.scheduledFor ? d : earliest,
+  );
+
+  const chargePaise = Math.max(0, sub.pricePerDeliveryPaise - bridgeCreditPaise);
+  const orderItems = firstDelivery.items.map((item) => ({
+    id: 0,
+    name: item.name,
+    qty: item.quantity,
+    // Flat per-meal rate breakdown, NOT the (unused) dish catalog price —
+    // subscription pricing never depends on which dishes were picked.
+    price: PER_MEAL_PAISE * item.quantity,
+  }));
+
+  const [order] = await tx
+    .insert(ordersTable)
+    .values({
+      userId: sub.userId,
+      externalOrderId: `sub-${sub.id}`,
+      status: "placed",
+      totalPaise: chargePaise,
+      chargePaise,
+      items: orderItems,
+      addressLabel: sub.addressLabel ?? null,
+      addressLine: sub.addressLine ?? null,
+      city: sub.city ?? null,
+      pincode: sub.pincode ?? null,
+      phone: sub.phone ?? null,
+      fulfillmentType: "delivery",
+    })
+    .onConflictDoNothing({
+      target: [ordersTable.userId, ordersTable.externalOrderId],
+      where: sql`${ordersTable.externalOrderId} is not null`,
+    })
+    .returning();
+
+  if (!order) return; // idempotency race — a row already exists for this sub
+
+  await tx
+    .update(subscriptionDeliveriesTable)
+    .set({ orderId: order.id })
+    .where(eq(subscriptionDeliveriesTable.id, firstDelivery.id));
 }
 
 async function validateDishForSubscription(
@@ -410,9 +492,14 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
   // Delivery is free for subscriptions (delivery included)
   const deliveryFeePaise = 0;
   
-  // Taxes are 5% on food
-  const gstPaise = Math.round(finalSubtotal * 0.05);
-  const totalPaise = finalSubtotal + gstPaise + deliveryFeePaise;
+  // finalSubtotal is already GST-inclusive (computeDeliveryPricePaise /
+  // computeTrialPricePaise both bake in 5% GST). Derive the GST component for
+  // display by splitting finalSubtotal into its pre-tax/post-tax parts —
+  // do NOT apply a second 5% on top, or the quote double-counts tax versus
+  // what /subscriptions actually bills via /payments/charge-mandate.
+  const preTaxSubtotalPaise = Math.round(finalSubtotal / (1 + GST_RATE));
+  const gstPaise = finalSubtotal - preTaxSubtotalPaise;
+  const totalPaise = finalSubtotal + deliveryFeePaise;
 
   res.json({
     mealsPerDelivery: meals,
@@ -519,75 +606,80 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     }
   }
 
-  const [sub] = await db
-    .insert(subscriptionsTable)
-    .values({
-      userId,
-      cadence: data.cadence,
-      mealsPerDelivery,
-      deliveryWindow: data.deliveryWindow,
-      status: "active",
-      startDate,
-      nextDeliveryAt: startDate,
-      pricePerDeliveryPaise,
-      dayPlan: data.dayPlan ?? null,
-      addressLabel: data.addressLabel,
-      addressLine: data.addressLine,
-      city: data.city,
-      pincode: data.pincode,
-      phone: data.phone,
-      notes,
-      trialState: isTrial ? "trial_purchased" : null,
-    })
-    .returning();
-
-  // Phase C2 — redeem the à la carte → trial bridge credit as an explicit line
-  // item: it reduces the CHARGE the client bills, never the persisted base
-  // trial price. The WHERE guard (unconsumed + unexpired) makes double-redeem
-  // impossible even under concurrent trial creates; a consumed credit is linked
-  // back to this subscription for audit.
-  let bridgeCreditPaise = 0;
-  if (isTrial) {
-    const consumedRows = await db
-      .update(mealCreditsTable)
-      .set({ consumedAt: new Date(), subscriptionId: sub.id })
-      .where(
-        and(
-          eq(mealCreditsTable.userId, userId),
-          eq(mealCreditsTable.reason, "alacarte_bridge"),
-          isNull(mealCreditsTable.consumedAt),
-          or(
-            isNull(mealCreditsTable.expiresAt),
-            gt(mealCreditsTable.expiresAt, new Date()),
-          ),
-        ),
-      )
-      .returning({ amount: mealCreditsTable.amount });
-    if (consumedRows.length > 0 && consumedRows[0]) {
-      bridgeCreditPaise = bridgeCreditDiscountPaise(
-        consumedRows[0].amount,
+  // Subscription creation, delivery generation, and the linked first-cycle
+  // order all commit atomically — a partial write here would either leave a
+  // subscription with no billable order (the original bug) or an order
+  // dangling with no subscription to attach a mandate to.
+  const { sub, deliveries, bridgeCreditPaise } = await db.transaction(async (tx) => {
+    const [sub] = await tx
+      .insert(subscriptionsTable)
+      .values({
+        userId,
+        cadence: data.cadence,
         mealsPerDelivery,
+        deliveryWindow: data.deliveryWindow,
+        status: "active",
+        startDate,
+        nextDeliveryAt: startDate,
         pricePerDeliveryPaise,
+        dayPlan: data.dayPlan ?? null,
+        addressLabel: data.addressLabel,
+        addressLine: data.addressLine,
+        city: data.city,
+        pincode: data.pincode,
+        phone: data.phone,
+        notes,
+        trialState: isTrial ? "trial_purchased" : null,
+      })
+      .returning();
+
+    // Phase C2 — redeem the à la carte → trial bridge credit as an explicit line
+    // item: it reduces the CHARGE the client bills, never the persisted base
+    // trial price. The WHERE guard (unconsumed + unexpired) makes double-redeem
+    // impossible even under concurrent trial creates; a consumed credit is linked
+    // back to this subscription for audit.
+    let bridgeCreditPaise = 0;
+    if (isTrial) {
+      const consumedRows = await tx
+        .update(mealCreditsTable)
+        .set({ consumedAt: new Date(), subscriptionId: sub.id })
+        .where(
+          and(
+            eq(mealCreditsTable.userId, userId),
+            eq(mealCreditsTable.reason, "alacarte_bridge"),
+            isNull(mealCreditsTable.consumedAt),
+            or(
+              isNull(mealCreditsTable.expiresAt),
+              gt(mealCreditsTable.expiresAt, new Date()),
+            ),
+          ),
+        )
+        .returning({ amount: mealCreditsTable.amount });
+      if (consumedRows.length > 0 && consumedRows[0]) {
+        bridgeCreditPaise = bridgeCreditDiscountPaise(
+          consumedRows[0].amount,
+          mealsPerDelivery,
+          pricePerDeliveryPaise,
+        );
+      }
+    }
+
+    if (data.members.length > 0) {
+      await tx.insert(subscriptionMembersTable).values(
+        data.members.map((m) => ({
+          subscriptionId: sub.id,
+          name: m.name,
+          diet: m.diet,
+          allergens: m.allergens,
+          medicalConditions: m.medicalConditions,
+          dislikedIngredients: m.dislikedIngredients,
+          lifestyle: m.lifestyle,
+          spiceLevel: m.spiceLevel,
+        })),
       );
     }
-  }
 
-  if (data.members.length > 0) {
-    await db.insert(subscriptionMembersTable).values(
-      data.members.map((m) => ({
-        subscriptionId: sub.id,
-        name: m.name,
-        diet: m.diet,
-        allergens: m.allergens,
-        medicalConditions: m.medicalConditions,
-        dislikedIngredients: m.dislikedIngredients,
-        lifestyle: m.lifestyle,
-        spiceLevel: m.spiceLevel,
-      })),
-    );
-  }
-
-  const deliveries = await generateDeliveriesForSubscription(
+    const deliveries = await generateDeliveriesForSubscription(
       sub.id,
       data.cadence,
       startDate,
@@ -595,7 +687,17 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       data.deliveryWindow,
       data.defaultItems,
       data.dayPlan ?? null,
+      tx,
     );
+
+    // Create the first-cycle order and link it to the earliest delivery so
+    // `POST /payments/razorpay/order` (looked up by externalOrderId
+    // `sub-<id>`) and `registerAutopayMandate` (joined via
+    // subscriptionDeliveriesTable.orderId) both work.
+    await createOrderForNewSubscription(tx, sub, deliveries, bridgeCreditPaise);
+
+    return { sub, deliveries, bridgeCreditPaise };
+  });
 
   // A day plan's first delivery may sit after the cycle start (e.g. a
   // weekdays plan starting Saturday) — align nextDeliveryAt with reality.
@@ -721,6 +823,38 @@ router.post(
   },
 );
 
+// Core cancel logic, factored out so callers other than the HTTP route (e.g.
+// the subscription-abandonment sweep in ../lib/subscriptionAbandonmentScheduler)
+// can cancel a subscription — flip status, cancel its upcoming deliveries, and
+// revoke its autopay mandate — without duplicating any of these three steps.
+// Returns null if the subscription id does not exist (nothing to cancel).
+export async function cancelSubscriptionById(
+  subId: number,
+  log: Parameters<typeof cancelAutopayMandate>[1],
+): Promise<typeof subscriptionsTable.$inferSelect | null> {
+  const [updated] = await db
+    .update(subscriptionsTable)
+    .set({ status: "cancelled" })
+    .where(eq(subscriptionsTable.id, subId))
+    .returning();
+  if (!updated) return null;
+  await db
+    .update(subscriptionDeliveriesTable)
+    .set({ status: "cancelled" })
+    .where(
+      and(
+        eq(subscriptionDeliveriesTable.subscriptionId, subId),
+        eq(subscriptionDeliveriesTable.status, "upcoming"),
+      ),
+    );
+  // Stop billing: revoke the Razorpay autopay mandate and purge scheduled
+  // charge notices. Without this, "cancel in one tap, no hidden fees" is false
+  // — the mandate stays active and the next cycle still debits the customer.
+  // Gateway errors are swallowed inside the helper; never fail cancel on them.
+  await cancelAutopayMandate(subId, log);
+  return updated;
+}
+
 router.post(
   "/subscriptions/:id/cancel",
   async (req: Request, res: Response) => {
@@ -737,26 +871,8 @@ router.post(
       res.status(409).json({ error: "subscription already cancelled" });
       return;
     }
-    const [updated] = await db
-      .update(subscriptionsTable)
-      .set({ status: "cancelled" })
-      .where(eq(subscriptionsTable.id, subId))
-      .returning();
+    const updated = await cancelSubscriptionById(subId, req.log);
     invalidateUserBrief(userId);
-    await db
-      .update(subscriptionDeliveriesTable)
-      .set({ status: "cancelled" })
-      .where(
-        and(
-          eq(subscriptionDeliveriesTable.subscriptionId, subId),
-          eq(subscriptionDeliveriesTable.status, "upcoming"),
-        ),
-      );
-    // Stop billing: revoke the Razorpay autopay mandate and purge scheduled
-    // charge notices. Without this, "cancel in one tap, no hidden fees" is false
-    // — the mandate stays active and the next cycle still debits the customer.
-    // Gateway errors are swallowed inside the helper; never fail cancel on them.
-    await cancelAutopayMandate(subId, req.log);
     res.json({ subscription: updated });
   },
 );
