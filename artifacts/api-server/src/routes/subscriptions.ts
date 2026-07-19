@@ -325,6 +325,12 @@ async function generateDeliveriesForSubscription(
  * subscriptionPricing.ts). Item rows are recorded for display purposes only
  * with a flat per-meal price so they cannot silently diverge from the flat
  * price actually billed.
+ *
+ * NOTE: this creates the order and links it for the autopay-mandate join,
+ * but registerAutopayMandate additionally requires the gateway order to have
+ * been created with subscriptionId (see POST /payments/razorpay/order's
+ * isRecurring branch) for a token to exist — that wiring is tracked
+ * separately.
  */
 async function createOrderForNewSubscription(
   tx: DbExecutor,

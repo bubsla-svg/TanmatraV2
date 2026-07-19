@@ -23,8 +23,17 @@
  *      and bills the authoritative server amount even when the client sends
  *      a tampered amountPaise.
  *   4. POST /payments/razorpay/verify finds the subscription via the
- *      delivery→order link, calls registerAutopayMandate, and flips the
- *      subscription to status "active" with an active mandate row.
+ *      delivery→order link and captures the payment (order flips to
+ *      "preparing") regardless of mandate outcome. As of this commit,
+ *      registerAutopayMandate does NOT actually register a mandate in
+ *      production: it needs a Razorpay `token_id`/`customer_id` on the
+ *      payment, and Razorpay only attaches those when the gateway order was
+ *      created with `subscriptionId` (payments.ts's `isRecurring` branch) —
+ *      which nothing on the subscribe path sends yet (payWithRazorpay /
+ *      razorpayClient.ts has no subscriptionId parameter). Test 4 pins this
+ *      current (broken) behaviour as a regression guard; see the NOTE above
+ *      that test for what must change once the subscriptionId-wiring
+ *      follow-up lands.
  *
  * The Razorpay HTTP calls (order create, payment fetch) are stubbed via
  * globalThis.fetch — no real network / credentials involved. This mirrors
@@ -194,7 +203,20 @@ function installRazorpayFetchStub() {
     }
 
     if (url.startsWith("https://api.razorpay.com/v1/payments/") && (!init?.method || init.method === "GET")) {
-      return new Response(JSON.stringify(stubbedPaymentDetails ?? {}), { status: 200 });
+      // Mirror real Razorpay: a payment only carries customer_id/token_id
+      // when the underlying gateway order was created with a token request
+      // (i.e. POST /payments/razorpay/order was called with
+      // `subscriptionId`, which flips payments.ts's `isRecurring` branch and
+      // adds `customer_id` + `token` to the order-create payload). Without
+      // that, Razorpay never issues a token, so the payment-fetch response
+      // has no customer_id/token_id — regardless of what `stubbedPaymentDetails`
+      // the test would like it to return. This keeps the stub honest about
+      // what production Razorpay would actually hand back.
+      const orderRequestedToken = Boolean(
+        capturedOrderPayload?.customer_id && capturedOrderPayload?.token,
+      );
+      const details = orderRequestedToken ? stubbedPaymentDetails : null;
+      return new Response(JSON.stringify(details ?? {}), { status: 200 });
     }
 
     // Anything else (including the test's own calls into the local test
@@ -327,11 +349,23 @@ test("POST /payments/razorpay/order succeeds for a new subscription and ignores 
 });
 
 // ---------------------------------------------------------------------------
-// 4. POST /payments/razorpay/verify registers the autopay mandate and
-//    activates the subscription via the delivery → order link.
+// 4. POST /payments/razorpay/verify — payment capture succeeds via the
+//    delivery → order link, but autopay mandate registration does NOT fire.
+//
+//    NOTE — this documents the current gap: see follow-up fix wiring
+//    subscriptionId through the subscribe flow. Nothing on the subscribe
+//    path (Subscribe.tsx → payWithRazorpay in razorpayClient.ts →
+//    POST /payments/razorpay/order) sends `subscriptionId` today, so
+//    payments.ts's `isRecurring` branch (~line 275-320) never fires, the
+//    gateway order is created WITHOUT a token request, and a real Razorpay
+//    payment for it carries no customer_id/token_id. registerAutopayMandate
+//    then has nothing to register. Once the subscriptionId-wiring follow-up
+//    lands, this test must be updated to assert the mandate DOES register
+//    (restore the assertions from the version of this test in the parent
+//    commit, gated on the order-create call now passing subscriptionId).
 // ---------------------------------------------------------------------------
 
-test("POST /payments/razorpay/verify activates the subscription and registers an autopay mandate", async () => {
+test("POST /payments/razorpay/verify captures payment but does NOT register an autopay mandate when the order was created without subscriptionId (current gap)", async () => {
   const user = await makeUser();
   const created = await api(
     "POST",
@@ -341,10 +375,12 @@ test("POST /payments/razorpay/verify activates the subscription and registers an
   );
   const sub = created.json.subscription;
   const externalOrderId = `sub-${sub.id}`;
+  const statusBeforeVerify = sub.status;
 
   installRazorpayFetchStub();
   try {
-    // Step 1: create the Razorpay order (binds razorpayOrderId onto the row).
+    // Step 1: create the Razorpay order exactly as payWithRazorpay() does
+    // today — no `subscriptionId` in the request body.
     const orderRes = await api(
       "POST",
       "/payments/razorpay/order",
@@ -353,9 +389,16 @@ test("POST /payments/razorpay/verify activates the subscription and registers an
     );
     assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
     const razorpayOrderId = orderRes.json.razorpayOrderId as string;
+    // Sanity: without subscriptionId, payments.ts never enters isRecurring,
+    // so no customer_id/token was requested from Razorpay for this order.
+    assert.equal(capturedOrderPayload.customer_id, undefined);
+    assert.equal(capturedOrderPayload.token, undefined);
 
-    // Step 2: verify — registerAutopayMandate fetches payment details from
-    // (stubbed) Razorpay and needs customer_id + token_id to register.
+    // Step 2: verify. `stubbedPaymentDetails` is what the test would like
+    // the payment to carry, but installRazorpayFetchStub only hands it back
+    // when the order was actually created with a token request — mirroring
+    // real Razorpay. Since step 1 didn't request one, the (stubbed) payment
+    // fetch returns {} here, same as production would.
     stubbedPaymentDetails = { customer_id: "cust_stub_1", token_id: "token_stub_1" };
     const paymentId = "pay_stub_1";
     const verifyRes = await api("POST", "/payments/razorpay/verify", {
@@ -367,7 +410,14 @@ test("POST /payments/razorpay/verify activates the subscription and registers an
     assert.equal(verifyRes.status, 200, JSON.stringify(verifyRes.json));
     assert.equal(verifyRes.json.ok, true);
     assert.equal(verifyRes.json.status, "preparing");
+    assert.equal(
+      verifyRes.json.autopayDisclaimer,
+      undefined,
+      "no mandate registered, so there is nothing to disclaim",
+    );
 
+    // The payment itself still succeeds — order flips to preparing and
+    // records the payment id — independent of mandate registration.
     const [order] = await db
       .select()
       .from(ordersTable)
@@ -375,20 +425,33 @@ test("POST /payments/razorpay/verify activates the subscription and registers an
     assert.equal(order!.status, "preparing");
     assert.equal(order!.razorpayPaymentId, paymentId);
 
+    // Core assertion of the current gap: no mandate row is created, because
+    // the (stubbed, but production-accurate) payment fetch returned no
+    // token for registerAutopayMandate to persist.
     const [mandate] = await db
       .select()
       .from(subscriptionMandatesTable)
       .where(eq(subscriptionMandatesTable.subscriptionId, sub.id));
-    assert.ok(mandate, "expected registerAutopayMandate to insert a mandate row");
-    assert.equal(mandate!.status, "active");
-    assert.equal(mandate!.razorpayCustomerId, "cust_stub_1");
-    assert.equal(mandate!.razorpayTokenId, "token_stub_1");
+    assert.equal(
+      mandate,
+      undefined,
+      "no autopay mandate should register — the order was never created with subscriptionId, so Razorpay never issued a token",
+    );
 
+    // Subscription status is unaffected by verify. (POST /subscriptions
+    // already sets status "active" unconditionally at creation time,
+    // independent of payment — see subscriptions.ts — and
+    // registerAutopayMandate's own status write never runs here since
+    // mandateResult is null.)
     const [updatedSub] = await db
       .select()
       .from(subscriptionsTable)
       .where(eq(subscriptionsTable.id, sub.id));
-    assert.equal(updatedSub!.status, "active");
+    assert.equal(
+      updatedSub!.status,
+      statusBeforeVerify,
+      "subscription status must be unaffected by verify when no mandate registers",
+    );
   } finally {
     restoreFetch();
   }
