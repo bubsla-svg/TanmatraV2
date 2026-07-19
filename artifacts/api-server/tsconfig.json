@@ -15,6 +15,9 @@
     },
     {
       "path": "../../lib/preferences-match"
+    },
+    {
+      "path": "../../lib/subscription-rules"
     }
   ]
 }

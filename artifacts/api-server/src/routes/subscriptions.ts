@@ -1,3 +1,4 @@
+import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import {
@@ -29,6 +30,13 @@ import {
   computeTrialPricePaise,
   computeDeliveryPricePaise,
 } from "../lib/subscriptionPricing";
+import {
+  razorpayCredentials,
+  razorpayBasicAuth,
+  getOrCreateRazorpayCustomer,
+  fetchRazorpayPayment,
+  upsertActiveMandate,
+} from "../lib/razorpayRecurring";
 
 const router: IRouter = Router();
 
@@ -272,6 +280,43 @@ async function recomputeNextDeliveryAt(
 // Read+write executor shape shared by `db` and a `db.transaction(tx => ...)`
 // callback param — lets callers run this inside an existing transaction.
 type DbExecutor = Pick<typeof db, "select" | "insert" | "update">;
+
+// A requested cadence/mealsPerDelivery change (POST .../change-plan) is never
+// applied mid-cycle — the customer already committed to the deliveries
+// already generated for the CURRENT cycle, and pricePerDeliveryPaise is what
+// any live autopay mandate was authorised against. It is stored in the
+// pending* columns and only takes effect here, the one place a subscription's
+// cycle actually rolls over (POST /subscriptions/:id/generate-next). A change
+// still awaiting re-authorisation (price increase, mandate not yet
+// re-confirmed) is left untouched — it stays pending until the customer
+// completes POST .../change-plan/confirm.
+async function applyPendingPlanChangeIfReady(
+  sub: typeof subscriptionsTable.$inferSelect,
+): Promise<{ cadence: SubscriptionCadence; mealsPerDelivery: number }> {
+  if (sub.pendingCadence == null || sub.pendingChangeReauthRequired) {
+    return { cadence: sub.cadence, mealsPerDelivery: sub.mealsPerDelivery };
+  }
+  const cadence = sub.pendingCadence;
+  const mealsPerDelivery = sub.pendingMealsPerDelivery ?? sub.mealsPerDelivery;
+  const pricePerDeliveryPaise =
+    sub.pendingPricePerDeliveryPaise ?? computeDeliveryPricePaise(cadence, mealsPerDelivery);
+  await db
+    .update(subscriptionsTable)
+    .set({
+      cadence,
+      mealsPerDelivery,
+      pricePerDeliveryPaise,
+      pendingCadence: null,
+      pendingMealsPerDelivery: null,
+      pendingPricePerDeliveryPaise: null,
+      pendingChangeRequestedAt: null,
+      pendingChangeReauthRequired: false,
+      pendingChangeRazorpayOrderId: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptionsTable.id, sub.id));
+  return { cadence, mealsPerDelivery };
+}
 
 // Exported: lib/chargeMandate.ts reuses this exact function (rather than a
 // second copy) to replenish the upcoming-deliveries pool when a recurring
@@ -1456,6 +1501,353 @@ router.post(
   },
 );
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Change plan (cadence and/or mealsPerDelivery) — applied at the NEXT cycle,
+// never mid-cycle. See applyPendingPlanChangeIfReady for where it takes
+// effect. Mirrors /convert's "don't touch the current cycle's deliveries,
+// generate the next cycle fresh" pattern rather than delivery-window's
+// "mutate + propagate to upcoming rows now" pattern, because a cadence/meals
+// change always changes price and the customer already committed to (and, if
+// autopay, was authorised for) the deliveries already on the books.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const changePlanSchema = z
+  .object({
+    cadence: cadenceSchema.optional(),
+    mealsPerDelivery: z.number().int().positive().max(50).optional(),
+    // Accepted for tamper-detection/logging only, exactly like the
+    // `amountPaise` field on POST /payments/razorpay/order — the server
+    // always recomputes the price itself; this value never changes what a
+    // customer is billed.
+    clientQuotedPricePerDeliveryPaise: z.number().int().positive().optional(),
+  })
+  .refine((d) => d.cadence !== undefined || d.mealsPerDelivery !== undefined, {
+    message: "at least one of cadence or mealsPerDelivery must be provided",
+  });
+
+router.post(
+  "/subscriptions/:id/change-plan",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+    const parsed = changePlanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid payload", details: parsed.error.issues });
+      return;
+    }
+    const sub = await loadSubscriptionForUser(subId, userId);
+    if (!sub) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (isTrialSubscription(sub)) {
+      res.status(400).json({ error: "a trial pack is one-off and cannot change plan" });
+      return;
+    }
+    if (sub.status !== "active") {
+      res.status(409).json({ error: `cannot change plan while ${sub.status}` });
+      return;
+    }
+
+    const newCadence = parsed.data.cadence ?? sub.cadence;
+    const newMeals = parsed.data.mealsPerDelivery ?? sub.mealsPerDelivery;
+
+    if (newCadence === sub.cadence && newMeals === sub.mealsPerDelivery) {
+      res.status(400).json({ error: "requested plan matches the current plan" });
+      return;
+    }
+
+    // Day-first (dayPlan) subscriptions: the meal composition comes from the
+    // per-day item plan, not a flat count, so mealsPerDelivery can't be
+    // changed independently here. A cadence-only change is still fine as
+    // long as every existing day offset still fits inside the new cycle —
+    // same guard the create route applies to a brand-new dayPlan.
+    if (sub.dayPlan && sub.dayPlan.length > 0) {
+      if (newMeals !== sub.mealsPerDelivery) {
+        res.status(400).json({
+          error:
+            "This plan's meals are set by its day-by-day schedule — edit individual deliveries instead of changing meals per delivery.",
+        });
+        return;
+      }
+      const newCycleLen = CADENCE_DAYS[newCadence];
+      if (sub.dayPlan.some((d: { dayOffset: number }) => d.dayOffset >= newCycleLen)) {
+        res.status(400).json({
+          error: `This plan's day-by-day schedule doesn't fit inside a ${newCadence} cycle.`,
+        });
+        return;
+      }
+    }
+
+    // Money-path authority: the new price is ALWAYS computed server-side —
+    // never trust a client-supplied number, tampered or not.
+    const newPricePerDeliveryPaise = computeDeliveryPricePaise(newCadence, newMeals);
+    if (
+      parsed.data.clientQuotedPricePerDeliveryPaise != null &&
+      parsed.data.clientQuotedPricePerDeliveryPaise !== newPricePerDeliveryPaise
+    ) {
+      req.log.warn(
+        {
+          subId,
+          clientQuoted: parsed.data.clientQuotedPricePerDeliveryPaise,
+          serverComputed: newPricePerDeliveryPaise,
+        },
+        "change-plan price mismatch — billing server-computed price",
+      );
+    }
+
+    const isIncrease = newPricePerDeliveryPaise > sub.pricePerDeliveryPaise;
+
+    // Re-authorisation is about protecting an EXISTING capped autopay
+    // mandate's fixed ceiling, not the nominal cadence label — key it off
+    // whether an active mandate actually exists for this subscription. A
+    // price decrease or same price is always safe to apply against an
+    // unchanged mandate; only an increase against a live mandate needs a
+    // fresh OTP authorisation (there is no "amend max_amount" API call).
+    let requiresReauth = false;
+    if (isIncrease) {
+      const [activeMandate] = await db
+        .select({ id: subscriptionMandatesTable.id })
+        .from(subscriptionMandatesTable)
+        .where(
+          and(
+            eq(subscriptionMandatesTable.subscriptionId, subId),
+            eq(subscriptionMandatesTable.status, "active"),
+          ),
+        )
+        .limit(1);
+      requiresReauth = activeMandate != null;
+    }
+
+    const [updated] = await db
+      .update(subscriptionsTable)
+      .set({
+        pendingCadence: newCadence,
+        pendingMealsPerDelivery: newMeals,
+        pendingPricePerDeliveryPaise: newPricePerDeliveryPaise,
+        pendingChangeRequestedAt: new Date(),
+        pendingChangeReauthRequired: requiresReauth,
+        pendingChangeRazorpayOrderId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptionsTable.id, subId))
+      .returning();
+
+    invalidateUserBrief(userId);
+    res.json({
+      subscription: updated,
+      requiresReauth,
+      currentPricePerDeliveryPaise: sub.pricePerDeliveryPaise,
+      newPricePerDeliveryPaise,
+    });
+  },
+);
+
+/**
+ * Creates the Razorpay order + recurring token needed to re-authorise a
+ * pending, price-increasing plan change — the SAME token-creation shape used
+ * at subscription creation (POST /payments/razorpay/order's isRecurring
+ * branch), reused via ../lib/razorpayRecurring rather than reinvented. Not
+ * routed through the generic checkout order/verify endpoints: those are
+ * bound to a real placed order (petpooja push, order-confirmation email,
+ * refunds) which a plan-change re-authorisation is not.
+ */
+router.post(
+  "/subscriptions/:id/change-plan/reauth-order",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+    const creds = razorpayCredentials();
+    if (!creds) {
+      res.status(503).json({ error: "payment gateway not configured" });
+      return;
+    }
+    const [keyId, keySecret] = creds;
+
+    const sub = await loadSubscriptionForUser(subId, userId);
+    if (!sub) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (
+      !sub.pendingChangeReauthRequired ||
+      sub.pendingCadence == null ||
+      sub.pendingPricePerDeliveryPaise == null
+    ) {
+      res.status(409).json({ error: "no pending plan change is awaiting re-authorisation" });
+      return;
+    }
+
+    let razorpayCustomerId: string;
+    try {
+      razorpayCustomerId = await getOrCreateRazorpayCustomer(userId, keyId, keySecret, req.log);
+    } catch (err) {
+      req.log.error({ err, subId }, "failed to set up customer for plan-change re-authorisation");
+      res.status(500).json({ error: "failed to set up customer for recurring payment" });
+      return;
+    }
+
+    const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: sub.pendingPricePerDeliveryPaise,
+        currency: "INR",
+        receipt: `plan-change-${subId}`.slice(0, 40),
+        payment_capture: 1,
+        customer_id: razorpayCustomerId,
+        token: {
+          auth_type: "otp",
+          max_amount: 1500000,
+          expire_by: Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 60 * 60, // 10 years
+          frequency: "as_presented",
+        },
+      }),
+    });
+
+    if (!rpRes.ok) {
+      let body: unknown;
+      try {
+        body = await rpRes.json();
+      } catch {
+        body = await rpRes.text();
+      }
+      req.log.error({ status: rpRes.status, body }, "Razorpay plan-change reauth order creation failed");
+      res.status(502).json({ error: "payment gateway error" });
+      return;
+    }
+
+    const rp = (await rpRes.json()) as { id: string; amount: number; currency: string };
+
+    // Bind the confirm step to exactly this order — a signature valid for a
+    // different Razorpay order must never be able to confirm this change.
+    await db
+      .update(subscriptionsTable)
+      .set({ pendingChangeRazorpayOrderId: rp.id, updatedAt: new Date() })
+      .where(eq(subscriptionsTable.id, subId));
+
+    res.json({ razorpayOrderId: rp.id, amount: rp.amount, currency: rp.currency, keyId });
+  },
+);
+
+const changePlanConfirmSchema = z.object({
+  razorpayPaymentId: z.string().min(1).max(64),
+  razorpayOrderId: z.string().min(1).max(64),
+  razorpaySignature: z.string().min(1).max(128),
+});
+
+/**
+ * Confirms a price-increasing plan change after the customer completes the
+ * Razorpay OTP modal. Verifies the payment signature (same HMAC pattern as
+ * POST /payments/razorpay/verify), binds it to the order created by
+ * change-plan/reauth-order, then registers the new mandate — replacing the
+ * old one — via the SAME upsert helper subscription creation uses. The plan
+ * change itself is NOT applied here: only `pendingChangeReauthRequired` is
+ * cleared, so applyPendingPlanChangeIfReady can pick it up at the next cycle
+ * boundary (see generate-next).
+ */
+router.post(
+  "/subscriptions/:id/change-plan/confirm",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = parseIdParam(req.params.id, res);
+    if (subId === null) return;
+    const creds = razorpayCredentials();
+    if (!creds) {
+      res.status(503).json({ error: "payment gateway not configured" });
+      return;
+    }
+    const [, keySecret] = creds;
+
+    const parsed = changePlanConfirmSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid payload" });
+      return;
+    }
+
+    const sub = await loadSubscriptionForUser(subId, userId);
+    if (!sub) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (!sub.pendingChangeReauthRequired || sub.pendingCadence == null) {
+      res.status(409).json({ error: "no pending plan change is awaiting re-authorisation" });
+      return;
+    }
+    if (
+      !sub.pendingChangeRazorpayOrderId ||
+      sub.pendingChangeRazorpayOrderId !== parsed.data.razorpayOrderId
+    ) {
+      req.log.warn(
+        { subId, presented: parsed.data.razorpayOrderId, stored: sub.pendingChangeRazorpayOrderId },
+        "plan-change confirm: razorpay order id does not match — refusing",
+      );
+      res.status(400).json({ error: "this payment does not belong to this plan change" });
+      return;
+    }
+
+    const hmac = crypto.createHmac("sha256", keySecret);
+    hmac.update(`${parsed.data.razorpayOrderId}|${parsed.data.razorpayPaymentId}`);
+    const expected = hmac.digest("hex");
+    let signatureValid = false;
+    try {
+      signatureValid = crypto.timingSafeEqual(
+        Buffer.from(expected, "hex"),
+        Buffer.from(parsed.data.razorpaySignature, "hex"),
+      );
+    } catch {
+      signatureValid = false;
+    }
+    if (!signatureValid) {
+      req.log.warn({ subId }, "invalid Razorpay signature on plan-change reauth confirm");
+      res.status(400).json({ error: "invalid payment signature" });
+      return;
+    }
+
+    const [keyId] = creds;
+    let payment: any;
+    try {
+      payment = await fetchRazorpayPayment(parsed.data.razorpayPaymentId, keyId, keySecret);
+    } catch (err) {
+      req.log.error({ err, subId }, "failed to fetch payment for plan-change confirm");
+      res.status(502).json({ error: "payment gateway error" });
+      return;
+    }
+    const customerId = payment.customer_id;
+    const tokenId = payment.token_id || payment.razorpay_token_id;
+    if (!customerId || !tokenId) {
+      req.log.warn({ subId }, "plan-change reauth payment carried no autopay token");
+      res.status(502).json({ error: "payment did not return an autopay token" });
+      return;
+    }
+
+    await upsertActiveMandate(subId, sub.pendingCadence, customerId, tokenId);
+
+    // Re-authorised — eligible for the next cycle boundary now, but still
+    // does not apply until then (see applyPendingPlanChangeIfReady).
+    const [updated] = await db
+      .update(subscriptionsTable)
+      .set({
+        pendingChangeReauthRequired: false,
+        pendingChangeRazorpayOrderId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptionsTable.id, subId))
+      .returning();
+
+    invalidateUserBrief(userId);
+    res.json({ subscription: updated, requiresReauth: false });
+  },
+);
+
 router.post(
   "/subscriptions/:id/generate-next",
   async (req: Request, res: Response) => {
@@ -1487,6 +1879,11 @@ router.post(
       .orderBy(desc(subscriptionDeliveriesTable.scheduledFor))
       .limit(1);
     const lastDate = last[0]?.scheduledFor ?? sub.startDate;
+    // Cycle-boundary math below is deliberately computed against the OLD
+    // (currently-live) cadence — it has to match the cadence the
+    // already-generated rows were actually laid down under. Only AFTER
+    // locating that boundary do we flip to any pending cadence/meals change,
+    // so the newly generated cycles step forward using the new cadence.
     const stepDays = CADENCE_DAYS[sub.cadence];
     const dayPlan = sub.dayPlan ?? null;
     let startFrom: Date;
@@ -1500,18 +1897,27 @@ router.post(
     } else {
       startFrom = addDays(new Date(lastDate), stepDays);
     }
+
+    // This IS the cycle rollover — apply any ready (non-reauth-pending) plan
+    // change now, so the deliveries generated below use the new cadence,
+    // meal count and (already recomputed) price.
+    const { cadence, mealsPerDelivery } = await applyPendingPlanChangeIfReady(sub);
+
     const newOnes = await generateDeliveriesForSubscription(
       subId,
-      sub.cadence,
+      cadence,
       startFrom,
-      dayPlan && dayPlan.length > 0 ? CADENCE_CYCLES_AHEAD[sub.cadence] : 4,
+      dayPlan && dayPlan.length > 0 ? CADENCE_CYCLES_AHEAD[cadence] : 4,
       sub.deliveryWindow,
       [],
       dayPlan,
     );
     await recomputeNextDeliveryAt(subId, sub.nextDeliveryAt);
     invalidateUserBrief(userId);
-    res.json({ deliveries: newOnes });
+    res.json({
+      deliveries: newOnes,
+      planChangeApplied: cadence !== sub.cadence || mealsPerDelivery !== sub.mealsPerDelivery,
+    });
   },
 );
 router.get(

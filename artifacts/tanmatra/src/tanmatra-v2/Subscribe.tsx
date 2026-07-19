@@ -18,6 +18,7 @@ import {
   CADENCE_LABEL,
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
+import { blankMember, type MemberDraft } from "@/lib/memberDraft";
 import { checkPincode } from "@/lib/serviceablePincodes";
 import GoalPlanChooser from "@/components/subscribe/GoalPlanChooser";
 import { F } from "./data";
@@ -45,33 +46,6 @@ const TIME_WINDOWS = [
   "19:00 - 20:00",
   "20:00 - 21:00",
 ];
-
-const LIFESTYLES = [
-  { value: "", label: "No preference" },
-  { value: "heart-healthy", label: "Heart-Healthy" },
-  { value: "fitness-gains", label: "Fitness Gains" },
-  { value: "diabetes-management", label: "Diabetes Mgmt" },
-  { value: "junior-explorers", label: "Junior Explorer" },
-  { value: "silver-vitality", label: "Silver Vitality" },
-];
-
-const COMMON_ALLERGENS = ["dairy", "gluten", "nuts", "soy", "eggs", "shellfish"];
-
-interface MemberDraft {
-  name: string;
-  diet: "any" | "veg" | "nonveg";
-  allergens: string[];
-  lifestyle: string;
-  spiceLevel: "mild" | "medium" | "hot";
-}
-
-const blankMember = (): MemberDraft => ({
-  name: "",
-  diet: "any",
-  allergens: [],
-  lifestyle: "",
-  spiceLevel: "medium",
-});
 
 const PER_MEAL_PAISE = 75000; // Updated base meal price: ₹750
 const CADENCE_DISCOUNT_PCT: Record<SubscriptionCadence, number> = {

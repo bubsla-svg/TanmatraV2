@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   text,
+  boolean,
   index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -89,6 +90,32 @@ export const subscriptionsTable = pgTable(
     dayPlan: jsonb("day_plan").$type<SubscriptionDayPlanEntry[] | null>(),
     notes: varchar("notes", { length: 512 }),
     trialState: varchar("trial_state", { length: 32 }).$type<TrialState>(),
+    // ── Plan-change (cadence / mealsPerDelivery) — applied at next cycle ──
+    // A requested cadence/meals change is never applied mid-cycle (the
+    // customer already committed to the deliveries already generated for
+    // this cycle, and pricePerDeliveryPaise is what the live autopay mandate
+    // was authorised against). It is stored here and applied the next time
+    // this subscription's deliveries are generated for a new cycle (see
+    // POST /subscriptions/:id/generate-next). When the recomputed price is
+    // higher than the current pricePerDeliveryPaise, `pendingChangeReauthRequired`
+    // stays true until the customer completes a fresh Razorpay OTP
+    // authorisation (POST .../change-plan/confirm) — the cycle-rollover
+    // application step skips any pending change still awaiting reauth.
+    pendingCadence: varchar("pending_cadence", { length: 16 }).$type<SubscriptionCadence>(),
+    pendingMealsPerDelivery: integer("pending_meals_per_delivery"),
+    pendingPricePerDeliveryPaise: integer("pending_price_per_delivery_paise"),
+    pendingChangeRequestedAt: timestamp("pending_change_requested_at", {
+      withTimezone: true,
+    }),
+    pendingChangeReauthRequired: boolean("pending_change_reauth_required")
+      .notNull()
+      .default(false),
+    // The Razorpay order id created for the re-authorisation charge, so the
+    // confirm step can bind the verified payment to exactly this request
+    // (never trust a payment id the client could point at a different order).
+    pendingChangeRazorpayOrderId: varchar("pending_change_razorpay_order_id", {
+      length: 64,
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

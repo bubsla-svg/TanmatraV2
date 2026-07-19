@@ -1,7 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { subscriptionsApi } from "@/lib/subscriptionsApi";
+import {
+  subscriptionsApi,
+  subscriptionKeys,
+  isUnauthorizedError,
+} from "@/lib/subscriptionsApi";
 import type { Subscription, SubscriptionDelivery } from "@/lib/subscriptionsApi";
 
 export const meta = () => [
@@ -29,47 +34,51 @@ const getThursdayCutoff = () => {
 
 export default function Billing() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [activeSub, setActiveSub] = useState<Subscription | null>(null);
-  const [details, setDetails] = useState<SubDetails | null>(null);
-  
-  const [timeLeft, setTimeLeft] = useState<{ expired: boolean; days: number; hours: number; minutes: number } | null>(null);
-  
-  const [confirmModal, setConfirmModal] = useState<"skip" | "pause" | "cancel" | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const fetchSubscriptionDetails = useCallback(async (id: number) => {
-    try {
-      const data = await subscriptionsApi.get(id);
-      setDetails(data);
-    } catch (err) {
-      toast.error("Failed to load subscription billing details");
-    }
-  }, []);
+  // Same subscriptionKeys.* cache Subscriptions.tsx and Account.tsx read
+  // from, so a pause/resume/cancel/skip here is reflected there too without
+  // a hard reload, and vice versa.
+  const listQuery = useQuery({
+    queryKey: subscriptionKeys.list,
+    queryFn: () => subscriptionsApi.list(),
+    retry: false,
+  });
+  const subs = listQuery.data?.subscriptions ?? [];
+  const activeSub = subs.find((s) => s.status === "active") ?? subs[0] ?? null;
 
-  const fetchActiveSubscription = useCallback(async () => {
-    try {
-      const res = await subscriptionsApi.list();
-      const sub = res.subscriptions.find(s => s.status === "active") || res.subscriptions[0] || null;
-      setActiveSub(sub);
-      if (sub) {
-        await fetchSubscriptionDetails(sub.id);
-      }
-    } catch (err) {
-      if (err instanceof Error && err.message === "unauthorized") {
-        toast.error("Please sign in to view billing");
-        navigate("/login?next=/account/billing");
-      } else {
-        toast.error("Failed to load plans");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchSubscriptionDetails, navigate]);
+  const detailQuery = useQuery({
+    queryKey: subscriptionKeys.detail(activeSub?.id ?? -1),
+    queryFn: () => subscriptionsApi.get(activeSub!.id),
+    enabled: activeSub !== null,
+    retry: false,
+  });
+  const details: SubDetails | null = detailQuery.data ?? null;
+
+  const loading = listQuery.isLoading || (activeSub !== null && detailQuery.isLoading);
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: subscriptionKeys.all });
 
   useEffect(() => {
-    fetchActiveSubscription();
-  }, [fetchActiveSubscription]);
+    if (isUnauthorizedError(listQuery.error)) {
+      toast.error("Please sign in to view billing");
+      navigate("/login?next=/account/billing");
+    } else if (listQuery.isError) {
+      toast.error("Failed to load plans");
+    }
+  }, [listQuery.error, listQuery.isError, navigate]);
+
+  useEffect(() => {
+    if (detailQuery.isError) {
+      toast.error("Failed to load subscription billing details");
+    }
+  }, [detailQuery.isError]);
+
+  const [timeLeft, setTimeLeft] = useState<{ expired: boolean; days: number; hours: number; minutes: number } | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<"skip" | "pause" | "cancel" | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -100,7 +109,7 @@ export default function Billing() {
         description: "Your skipped meals have been credited to your account.",
       });
       setConfirmModal(null);
-      if (activeSub) await fetchSubscriptionDetails(activeSub.id);
+      await invalidate();
     } catch (err) {
       toast.error("Failed to skip delivery", {
         description: err instanceof Error ? err.message : "Please try again later.",
@@ -117,7 +126,7 @@ export default function Billing() {
       await subscriptionsApi.pause(activeSub.id);
       toast.success("Subscription paused");
       setConfirmModal(null);
-      await fetchActiveSubscription();
+      await invalidate();
     } catch (err) {
       toast.error("Failed to pause subscription", {
         description: err instanceof Error ? err.message : "",
@@ -135,7 +144,7 @@ export default function Billing() {
       toast.success("Billing reactivated", {
         description: "You'll be charged on the normal schedule.",
       });
-      await fetchActiveSubscription();
+      await invalidate();
     } catch (err) {
       toast.error("Failed to reactivate billing", {
         description: err instanceof Error ? err.message : "",
@@ -152,7 +161,7 @@ export default function Billing() {
       await subscriptionsApi.cancel(activeSub.id);
       toast.success("Subscription cancelled");
       setConfirmModal(null);
-      await fetchActiveSubscription();
+      await invalidate();
     } catch (err) {
       toast.error("Failed to cancel subscription", {
         description: err instanceof Error ? err.message : "",
@@ -319,7 +328,7 @@ export default function Billing() {
                         try {
                           await subscriptionsApi.resume(activeSub.id);
                           toast.success("Subscription resumed");
-                          await fetchActiveSubscription();
+                          await invalidate();
                         } catch (err) {
                           toast.error("Failed to resume subscription");
                         }

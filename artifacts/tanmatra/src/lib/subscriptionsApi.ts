@@ -54,7 +54,21 @@ export interface Subscription {
   pincode: string | null;
   phone: string | null;
   pricePerDeliveryPaise: number;
+  // Present only on day-first plans (one dated delivery per planned day per
+  // cycle) — when set, mealsPerDelivery is server-derived from these items
+  // and can't be changed independently via change-plan.
+  dayPlan?: SubscriptionDayPlanEntry[] | null;
   notes: string | null;
+  // A requested cadence/mealsPerDelivery change (POST /change-plan), applied
+  // at the NEXT billing cycle — never mid-cycle. See subscriptionsApi.changePlan.
+  pendingCadence: SubscriptionCadence | null;
+  pendingMealsPerDelivery: number | null;
+  pendingPricePerDeliveryPaise: number | null;
+  pendingChangeRequestedAt: string | null;
+  // true while a price-increasing change is waiting on a fresh Razorpay OTP
+  // re-authorisation (changePlanReauthOrder + changePlanConfirm) before it is
+  // even eligible to apply at the next cycle.
+  pendingChangeReauthRequired: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -112,9 +126,36 @@ async function request<T>(
   }
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    // The server's error responses are `{ error: "human-readable message",
+    // code?, ... }`. Surface that message — callers show err.message straight
+    // in a toast, so without this a 409 rendered the raw JSON response body
+    // (or worse, an HTML error page) instead of e.g. "This delivery is too
+    // close to its delivery time to skip."
+    let message = text;
+    if (text) {
+      try {
+        const body: unknown = JSON.parse(text);
+        if (
+          body &&
+          typeof body === "object" &&
+          "error" in body &&
+          typeof (body as { error: unknown }).error === "string" &&
+          (body as { error: string }).error.trim()
+        ) {
+          message = (body as { error: string }).error;
+        }
+      } catch {
+        // Not JSON — fall back to the raw text below.
+      }
+    }
+    throw new Error(message || `Request failed (${res.status})`);
   }
   return res.json() as Promise<T>;
+}
+
+/** True when `err` is the "not signed in" sentinel `request()` throws on a 401. */
+export function isUnauthorizedError(err: unknown): boolean {
+  return err instanceof Error && err.message === "unauthorized";
 }
 
 export interface CreateSubscriptionInput {
@@ -147,6 +188,30 @@ function mintIdempotencyKey(): string {
     ? crypto.randomUUID()
     : `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
+
+/** Matches the server's memberInputSchema (subscriptions.ts) — minus subscriptionId. */
+export interface AddMemberInput {
+  name: string;
+  diet: "any" | "veg" | "nonveg";
+  allergens: string[];
+  medicalConditions?: string[];
+  dislikedIngredients?: string[];
+  lifestyle?: string;
+  spiceLevel: "mild" | "medium" | "hot";
+}
+
+/**
+ * React Query cache keys for subscription data. Every surface that reads or
+ * mutates a subscription (Subscriptions.tsx, Billing.tsx, Account.tsx) must
+ * key off these so a mutation on one screen invalidates the cache the others
+ * read from — otherwise pausing from /account/billing leaves /subscriptions
+ * and the Account "active plans" badge stale until a hard reload.
+ */
+export const subscriptionKeys = {
+  all: ["subscriptions"] as const,
+  list: ["subscriptions", "list"] as const,
+  detail: (id: number) => ["subscriptions", "detail", id] as const,
+};
 
 export const subscriptionsApi = {
   list: () =>
@@ -219,9 +284,51 @@ export const subscriptionsApi = {
       { method: "POST", body: JSON.stringify({ deliveryWindow }) },
     ),
   generateNext: (id: number) =>
-    request<{ deliveries: SubscriptionDelivery[] }>(
+    request<{ deliveries: SubscriptionDelivery[]; planChangeApplied?: boolean }>(
       `/subscriptions/${id}/generate-next`,
       { method: "POST" },
+    ),
+  /**
+   * Requests a cadence and/or mealsPerDelivery change, effective at the NEXT
+   * billing cycle (never mid-cycle). The server always recomputes the price
+   * itself — `clientQuotedPricePerDeliveryPaise` is accepted for
+   * tamper-detection logging only and never trusted.
+   *
+   * `requiresReauth: true` means the change is a price increase against a
+   * live autopay mandate: it is stored as pending but will NOT take effect
+   * until `changePlanReauthOrder` + `changePlanConfirm` complete.
+   */
+  changePlan: (
+    id: number,
+    input: {
+      cadence?: SubscriptionCadence;
+      mealsPerDelivery?: number;
+      clientQuotedPricePerDeliveryPaise?: number;
+    },
+  ) =>
+    request<{
+      subscription: Subscription;
+      requiresReauth: boolean;
+      currentPricePerDeliveryPaise: number;
+      newPricePerDeliveryPaise: number;
+    }>(`/subscriptions/${id}/change-plan`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  /** Creates the Razorpay order + recurring token for a pending plan-change re-authorisation. */
+  changePlanReauthOrder: (id: number) =>
+    request<{ razorpayOrderId: string; amount: number; currency: string; keyId: string }>(
+      `/subscriptions/${id}/change-plan/reauth-order`,
+      { method: "POST" },
+    ),
+  /** Confirms a plan-change re-authorisation after the Razorpay modal completes. */
+  changePlanConfirm: (
+    id: number,
+    payment: { razorpayPaymentId: string; razorpayOrderId: string; razorpaySignature: string },
+  ) =>
+    request<{ subscription: Subscription; requiresReauth: boolean }>(
+      `/subscriptions/${id}/change-plan/confirm`,
+      { method: "POST", body: JSON.stringify(payment) },
     ),
   skip: (deliveryId: number) =>
     request<{ delivery: SubscriptionDelivery }>(
@@ -257,6 +364,24 @@ export const subscriptionsApi = {
     }>(`/subscriptions/${id}/trial-recap`),
   credits: () =>
     request<{ credits: MealCredit[]; balance: number }>("/meal-credits"),
+  // Trial → paid conversion. Preserves the SAME subscription row (re-checks
+  // the capacity hold + reserved delivery slot server-side and reprices),
+  // unlike creating a brand-new subscription which bypasses those checks.
+  convert: (id: number) =>
+    request<{ subscription: Subscription; deliveries: SubscriptionDelivery[] }>(
+      `/subscriptions/${id}/convert`,
+      { method: "POST" },
+    ),
+  addMember: (subscriptionId: number, input: AddMemberInput) =>
+    request<{ member: SubscriptionMember }>(
+      `/subscriptions/${subscriptionId}/members`,
+      { method: "POST", body: JSON.stringify(input) },
+    ),
+  removeMember: (subscriptionId: number, memberId: number) =>
+    request<{ ok: true }>(
+      `/subscriptions/${subscriptionId}/members/${memberId}`,
+      { method: "DELETE" },
+    ),
 };
 
 export const CADENCE_LABEL: Record<SubscriptionCadence, string> = {
