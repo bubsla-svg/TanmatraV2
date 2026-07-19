@@ -294,6 +294,14 @@ export default function V2Subscribe() {
   const [addressPrefilled, setAddressPrefilled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
+  // Honest error state for the Payment step: set whenever Razorpay resolves
+  // anything other than "paid" (dismissed modal OR gateway/network
+  // unavailable) so the buyer never sees the success screen for a
+  // subscription that was never actually charged.
+  const [paymentIssue, setPaymentIssue] = useState<{
+    reason: "cancelled" | "unavailable";
+    message: string;
+  } | null>(null);
 
   // ---- State-Amnesia remediation ------------------------------------------
   // Rehydrate the saved build once on mount (the buyer's earlier selections),
@@ -656,12 +664,40 @@ export default function V2Subscribe() {
     });
   };
 
+  // Best-effort rollback for a subscription created but never paid for
+  // (dismissed Razorpay modal, or the gateway/order-create call failing).
+  // Retries once — a client-side cancel can never be fully reliable (closed
+  // tab, lost network, crash), so this is intentionally not more elaborate:
+  // the server-side subscription-abandonment sweep is the load-bearing
+  // backstop that catches whatever this misses.
+  const cancelAbandonedSubscription = async (subscriptionId: number): Promise<void> => {
+    try {
+      await subscriptionsApi.cancel(subscriptionId);
+      return;
+    } catch (err) {
+      console.error(
+        `Failed to cancel abandoned subscription ${subscriptionId} (attempt 1/2)`,
+        err,
+      );
+    }
+    try {
+      await subscriptionsApi.cancel(subscriptionId);
+    } catch (err) {
+      console.error(
+        `Failed to cancel abandoned subscription ${subscriptionId} (attempt 2/2) — ` +
+          "relying on the server-side abandonment sweep to clean this up",
+        err,
+      );
+    }
+  };
+
   const submit = async () => {
     if (!addressComplete) {
       toast.error("Please complete delivery details and verification");
       return;
     }
     setSubmitting(true);
+    setPaymentIssue(null);
     try {
       let dayPlan: SubscriptionDayPlanEntry[] | undefined;
       let defaultItems: SubscriptionItem[];
@@ -762,17 +798,41 @@ export default function V2Subscribe() {
             : `Tanmatra ${CADENCE_LABEL[activeCadence]} plan — first cycle`,
           contact: address.phone,
         });
-        if (outcome === "cancelled") {
-          await subscriptionsApi.cancel(result.subscription.id).catch(() => undefined);
-          track("mandate_authorization_failed", { error_code: "user_cancelled" });
-          toast.info("Payment cancelled — plan not active", {
-            description: "You can try completing checkout again.",
+        if (outcome !== "paid") {
+          // Neither a dismissed modal ("cancelled") nor a gateway/network
+          // failure ("unavailable" — misconfigured keys, the order-create
+          // call failing/404ing, the checkout script failing to load) ever
+          // captured a payment. Either way the subscription just created
+          // above must not be left "active" and must not be shown as a
+          // success — that would be lying to the user about being charged.
+          await cancelAbandonedSubscription(result.subscription.id);
+          track("mandate_authorization_failed", {
+            error_code: outcome === "cancelled" ? "user_cancelled" : "gateway_unavailable",
           });
+          setPaymentIssue(
+            outcome === "cancelled"
+              ? {
+                  reason: "cancelled",
+                  message:
+                    "Payment was cancelled before it completed. Your plan was not activated and you were not charged.",
+                }
+              : {
+                  reason: "unavailable",
+                  message:
+                    "We couldn't reach the payment gateway. Your plan was not activated and you were not charged.",
+                },
+          );
+          toast.error(
+            outcome === "cancelled"
+              ? "Payment cancelled — plan not active"
+              : "Payment didn't go through — plan not active",
+            { description: "You can try completing checkout again." },
+          );
           setSubmitting(false);
           return;
         }
 
-        if (outcome === "paid" && !isTrial && activeCadence !== "monthly") {
+        if (!isTrial && activeCadence !== "monthly") {
           track("mandate_created", { cadence: activeCadence, max_amount: amountDue });
         }
       }
@@ -1521,6 +1581,19 @@ export default function V2Subscribe() {
           <span className="text-xs text-white/80 font-semibold">Payable Today</span>
           <span className="tnm-data text-lg font-bold text-[var(--tnm-action)] font-mono">{payableAmount}</span>
         </div>
+
+        {/* Honest error state (never a silent fallthrough to the success screen):
+            shown when Razorpay resolved "cancelled" or "unavailable" — no
+            payment was captured, so the plan was rolled back. */}
+        {paymentIssue && (
+          <div className="card flex flex-col gap-2" style={{ background: "var(--s2)", borderColor: "var(--tnm-alert)" }}>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[var(--tnm-alert)]">
+              <Warning className="w-4 h-4 shrink-0" />
+              Payment didn't go through
+            </div>
+            <p className="fine text-white/60">{paymentIssue.message}</p>
+          </div>
+        )}
 
         {/* UPI Autopay mandate details - weekly/bi-weekly plans ONLY, trials and prepaid monthly plans bypass it */}
         {!isTrial && activeCadence !== "monthly" && (
