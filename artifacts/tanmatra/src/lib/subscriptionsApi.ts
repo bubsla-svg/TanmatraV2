@@ -121,9 +121,36 @@ async function request<T>(
   }
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    // The server's error responses are `{ error: "human-readable message",
+    // code?, ... }`. Surface that message — callers show err.message straight
+    // in a toast, so without this a 409 rendered the raw JSON response body
+    // (or worse, an HTML error page) instead of e.g. "This delivery is too
+    // close to its delivery time to skip."
+    let message = text;
+    if (text) {
+      try {
+        const body: unknown = JSON.parse(text);
+        if (
+          body &&
+          typeof body === "object" &&
+          "error" in body &&
+          typeof (body as { error: unknown }).error === "string" &&
+          (body as { error: string }).error.trim()
+        ) {
+          message = (body as { error: string }).error;
+        }
+      } catch {
+        // Not JSON — fall back to the raw text below.
+      }
+    }
+    throw new Error(message || `Request failed (${res.status})`);
   }
   return res.json() as Promise<T>;
+}
+
+/** True when `err` is the "not signed in" sentinel `request()` throws on a 401. */
+export function isUnauthorizedError(err: unknown): boolean {
+  return err instanceof Error && err.message === "unauthorized";
 }
 
 export interface CreateSubscriptionInput {
@@ -156,6 +183,30 @@ function mintIdempotencyKey(): string {
     ? crypto.randomUUID()
     : `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
+
+/** Matches the server's memberInputSchema (subscriptions.ts) — minus subscriptionId. */
+export interface AddMemberInput {
+  name: string;
+  diet: "any" | "veg" | "nonveg";
+  allergens: string[];
+  medicalConditions?: string[];
+  dislikedIngredients?: string[];
+  lifestyle?: string;
+  spiceLevel: "mild" | "medium" | "hot";
+}
+
+/**
+ * React Query cache keys for subscription data. Every surface that reads or
+ * mutates a subscription (Subscriptions.tsx, Billing.tsx, Account.tsx) must
+ * key off these so a mutation on one screen invalidates the cache the others
+ * read from — otherwise pausing from /account/billing leaves /subscriptions
+ * and the Account "active plans" badge stale until a hard reload.
+ */
+export const subscriptionKeys = {
+  all: ["subscriptions"] as const,
+  list: ["subscriptions", "list"] as const,
+  detail: (id: number) => ["subscriptions", "detail", id] as const,
+};
 
 export const subscriptionsApi = {
   list: () =>
@@ -298,6 +349,24 @@ export const subscriptionsApi = {
     }>(`/subscriptions/${id}/trial-recap`),
   credits: () =>
     request<{ credits: MealCredit[]; balance: number }>("/meal-credits"),
+  // Trial → paid conversion. Preserves the SAME subscription row (re-checks
+  // the capacity hold + reserved delivery slot server-side and reprices),
+  // unlike creating a brand-new subscription which bypasses those checks.
+  convert: (id: number) =>
+    request<{ subscription: Subscription; deliveries: SubscriptionDelivery[] }>(
+      `/subscriptions/${id}/convert`,
+      { method: "POST" },
+    ),
+  addMember: (subscriptionId: number, input: AddMemberInput) =>
+    request<{ member: SubscriptionMember }>(
+      `/subscriptions/${subscriptionId}/members`,
+      { method: "POST", body: JSON.stringify(input) },
+    ),
+  removeMember: (subscriptionId: number, memberId: number) =>
+    request<{ ok: true }>(
+      `/subscriptions/${subscriptionId}/members/${memberId}`,
+      { method: "DELETE" },
+    ),
 };
 
 export const CADENCE_LABEL: Record<SubscriptionCadence, string> = {

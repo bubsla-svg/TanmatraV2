@@ -88,6 +88,7 @@
     "@react-router/serve": "^7.1.1",
     "@tanstack/react-table": "^8.21.3",
     "@workspace/preferences-match": "workspace:*",
+    "@workspace/subscription-rules": "workspace:*",
     "firebase": "^12.15.0",
     "isbot": "^5.1.0",
     "leaflet": "^1.9.4",

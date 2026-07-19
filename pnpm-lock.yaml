@@ -392,6 +392,9 @@ importers:
       '@workspace/preferences-match':
         specifier: workspace:*
         version: link:../../lib/preferences-match
+      '@workspace/subscription-rules':
+        specifier: workspace:*
+        version: link:../../lib/subscription-rules
       ai:
         specifier: ^6.0.175
         version: 6.0.175(zod@3.25.76)
@@ -693,6 +696,9 @@ importers:
       '@workspace/preferences-match':
         specifier: workspace:*
         version: link:../../lib/preferences-match
+      '@workspace/subscription-rules':
+        specifier: workspace:*
+        version: link:../../lib/subscription-rules
       firebase:
         specifier: ^12.15.0
         version: 12.15.0
@@ -1077,6 +1083,8 @@ importers:
       '@workspace/menu-catalog':
         specifier: workspace:*
         version: link:../menu-catalog
+
+  lib/subscription-rules: {}
 
   scripts:
     dependencies:

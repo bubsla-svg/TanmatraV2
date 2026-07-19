@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { loyaltyApi } from "@/lib/loyaltyApi";
-import { subscriptionsApi } from "@/lib/subscriptionsApi";
+import { subscriptionsApi, subscriptionKeys } from "@/lib/subscriptionsApi";
 import { corporateApi } from "@/lib/corporateApi";
 import { usePremiumStatus } from "@/lib/usePremium";
 import {
@@ -134,7 +134,10 @@ export default function V2Account() {
   });
 
   const subs = useQuery({
-    queryKey: ["subscriptions", "list"],
+    // Shared cache key (subscriptionKeys.list) — pausing/resuming/cancelling
+    // from Subscriptions.tsx or Billing.tsx invalidates this same query, so
+    // the "active plans" count below can't go stale until a hard reload.
+    queryKey: subscriptionKeys.list,
     queryFn: () => subscriptionsApi.list(),
     enabled: isAuthenticated,
     retry: false,
