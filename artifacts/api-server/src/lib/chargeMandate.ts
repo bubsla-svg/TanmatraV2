@@ -47,6 +47,7 @@ import {
   CADENCE_CYCLES_AHEAD,
   addDays,
   generateDeliveriesForSubscription,
+  pauseUpcomingDeliveries,
 } from "../routes/subscriptions";
 
 export type ChargeLogger = {
@@ -54,6 +55,19 @@ export type ChargeLogger = {
   warn: (...args: any[]) => void;
   error: (...args: any[]) => void;
 };
+
+// A mandate that fails this many charge attempts IN A ROW (never reset
+// except by an intervening success — see the success path's
+// `chargeFailureCount: 0`) is halted rather than retried forever. Mirrors a
+// real Razorpay native subscription's `subscription.halted` lifecycle event:
+// after N consecutive failures it stops auto-retrying until the customer
+// takes action. Exported so tests can assert against it instead of a magic
+// number. 3 was chosen as "clearly not a fluke" (a single bank hiccup or a
+// momentarily-declined card is common and should NOT halt) while still
+// stopping well short of "retried forever" — at the scheduler's ~daily retry
+// cadence (see failCharge's near-future retry point below) that is 3 days of
+// genuinely failed attempts before we give up and require customer action.
+export const MAX_CONSECUTIVE_CHARGE_FAILURES = 3;
 
 export interface ChargeMandateOutcome {
   ok: boolean;
@@ -216,19 +230,52 @@ export async function chargeMandateCore(
     .limit(1);
 
   if (!mandate) {
+    // The mandate row itself flips to "halted" alongside the subscription
+    // when MAX_CONSECUTIVE_CHARGE_FAILURES is reached (see failCharge), so a
+    // halted subscription's mandate never matches the "active" filter above
+    // and always lands here — never in the subForGuard race-guard below.
+    // Give callers/ops a distinct, actionable signal for that case instead
+    // of the generic "no active mandate" 404, mirroring a real Razorpay
+    // native subscription's `subscription.halted` event.
+    const [subStatusRow] = await db
+      .select({ status: subscriptionsTable.status })
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.id, subscriptionId))
+      .limit(1);
+    if (subStatusRow?.status === "halted") {
+      return {
+        ok: false,
+        httpStatus: 409,
+        body: {
+          error: "subscription billing has been halted after repeated charge failures",
+          code: "subscription_halted",
+        },
+      };
+    }
     return { ok: false, httpStatus: 404, body: { error: "active subscription mandate not found" } };
   }
 
   // Defense-in-depth: never charge a subscription that is not active. The
-  // mandate flip performed on cancel already makes the lookup above 404,
-  // but this closes the race where a gateway revoke lags a local cancel, or
-  // a stale active mandate row outlives its subscription.
+  // mandate flip performed on cancel (or on halt, see failCharge) already
+  // makes the lookup above 404 in the steady state, but this closes the
+  // race where a gateway revoke lags a local cancel, or a stale active
+  // mandate row outlives its subscription.
   const [subForGuard] = await db
     .select({ status: subscriptionsTable.status })
     .from(subscriptionsTable)
     .where(eq(subscriptionsTable.id, subscriptionId))
     .limit(1);
   if (!subForGuard || subForGuard.status !== "active") {
+    if (subForGuard?.status === "halted") {
+      return {
+        ok: false,
+        httpStatus: 409,
+        body: {
+          error: "subscription billing has been halted after repeated charge failures",
+          code: "subscription_halted",
+        },
+      };
+    }
     return {
       ok: false,
       httpStatus: 409,
@@ -591,6 +638,15 @@ export async function chargeMandateCore(
  * (now-hourly) pre-debit sweep's lookback window for a fresh notice + retry.
  * A failed charge must never leave nextChargeAt stranded in the past
  * forever — that is the "one failed debit = free food forever" bug.
+ *
+ * ON TOP OF THAT: once the NEW chargeFailureCount reaches
+ * MAX_CONSECUTIVE_CHARGE_FAILURES, this is no longer "retry tomorrow" — it
+ * is "stop trying and tell someone", the "one failed debit = free food
+ * forever" bug's mirror image (an un-collectible card retried forever,
+ * quietly, with nobody ever told). Both the mandate and its owning
+ * subscription flip to "halted", and upcoming deliveries are paused —
+ * a halted subscription shouldn't keep dispatching food nobody's paying
+ * for. Recovery is POST /subscriptions/:id/reactivate-billing.
  */
 async function failCharge(
   mandateId: number,
@@ -600,26 +656,64 @@ async function failCharge(
 ): Promise<ChargeMandateOutcome> {
   const message = err instanceof Error ? err.message : String(err);
   log.error({ err, subscriptionId, mandateId }, "charge-mandate: gateway charge attempt failed");
+  let halted = false;
   try {
     const [row] = await db
       .select({ chargeFailureCount: subscriptionMandatesTable.chargeFailureCount })
       .from(subscriptionMandatesTable)
       .where(eq(subscriptionMandatesTable.id, mandateId))
       .limit(1);
+    const newFailureCount = (row?.chargeFailureCount ?? 0) + 1;
+    halted = newFailureCount >= MAX_CONSECUTIVE_CHARGE_FAILURES;
+
     await db
       .update(subscriptionMandatesTable)
       .set({
         lastChargeStatus: "failed",
         lastChargeError: message.slice(0, 256),
-        chargeFailureCount: (row?.chargeFailureCount ?? 0) + 1,
+        chargeFailureCount: newFailureCount,
+        // Leave nextChargeAt untouched here — the claim step earlier in
+        // chargeMandateCore already advanced it to the near-future retry
+        // point regardless of outcome. Once halted, runDueMandateChargesSweep
+        // never selects this row again anyway (its `status: "active"` filter
+        // naturally excludes "halted"), so nextChargeAt going stale is moot.
+        ...(halted ? { status: "halted" as const } : {}),
       })
       .where(eq(subscriptionMandatesTable.id, mandateId));
+
+    if (halted) {
+      await db
+        .update(subscriptionsTable)
+        .set({ status: "halted" })
+        .where(eq(subscriptionsTable.id, subscriptionId));
+      // Reuse the exact same "upcoming → paused" transition the
+      // customer-initiated pause route uses (see pauseUpcomingDeliveries in
+      // routes/subscriptions.ts) — best-effort in the same sense the rest of
+      // this function is: a failure here must not throw and turn a recorded,
+      // correctly-halted mandate into an unhandled exception.
+      try {
+        await pauseUpcomingDeliveries(subscriptionId);
+      } catch (pauseErr) {
+        log.error(
+          { err: pauseErr, subscriptionId, mandateId },
+          "charge-mandate: halted subscription but failed to pause its upcoming deliveries — needs manual follow-up",
+        );
+      }
+      log.error(
+        { subscriptionId, mandateId, chargeFailureCount: newFailureCount },
+        `charge-mandate: ${MAX_CONSECUTIVE_CHARGE_FAILURES} consecutive failures reached — halting subscription billing`,
+      );
+    }
   } catch (persistErr) {
     log.error({ err: persistErr, subscriptionId, mandateId }, "charge-mandate: failed to persist failure record");
   }
   return {
     ok: false,
     httpStatus: 502,
-    body: { error: "payment gateway charge failed", details: message },
+    body: {
+      error: "payment gateway charge failed",
+      details: message,
+      ...(halted ? { code: "subscription_halted" } : {}),
+    },
   };
 }

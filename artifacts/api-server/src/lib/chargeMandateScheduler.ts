@@ -30,6 +30,13 @@ export interface ChargeMandateSweepResult {
  * chargeMandateCore. Exported (rather than only reachable via the timer)
  * so it is directly unit-testable, matching runPreDebitNotificationsSweep's
  * convention in preDebitScheduler.ts.
+ *
+ * A mandate that chargeMandate.ts's failCharge has halted (after
+ * MAX_CONSECUTIVE_CHARGE_FAILURES consecutive failures) is excluded from
+ * this sweep for free — halting flips BOTH `subscriptionMandatesTable.status`
+ * and `subscriptionsTable.status` away from "active", and this query's
+ * `and(...)` requires both to still be "active". No separate "don't retry
+ * halted mandates" branch is needed; the existing filter already does it.
  */
 export async function runDueMandateChargesSweep(opts?: {
   now?: Date;

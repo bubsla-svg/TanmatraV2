@@ -71,7 +71,7 @@ export interface BriefProfile {
 
 export interface BriefSubscription {
   id: number;
-  status: "active" | "paused" | "cancelled";
+  status: "active" | "paused" | "cancelled" | "halted";
   cadence: "weekly" | "fortnightly" | "monthly";
   mealsPerDelivery: number;
   deliveryWindow: string;
