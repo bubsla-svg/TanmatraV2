@@ -573,7 +573,7 @@ export default function SubscriptionPlansLanding() {
               },
               {
                 q: "Where do you deliver?",
-                a: "Across Across Noida, Delhi, and Gurgaon. Enter your pincode at checkout to confirm.",
+                a: "Across Noida. Enter your pincode at checkout to confirm.",
               },
             ].map((faq, i) => (
               <div

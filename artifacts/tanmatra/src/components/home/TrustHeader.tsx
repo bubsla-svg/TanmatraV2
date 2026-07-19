@@ -5,7 +5,7 @@ import { usePreferences } from "@/lib/preferencesContext";
 
 /* Viewport 1 — Trust header.
  * Location selector (real default address area if saved, else neutral
- * "Noida NCR" that routes to address entry), a search bar with a rotating
+ * "Noida" that routes to address entry), a search bar with a rotating
  * placeholder that routes to /menu?q=<term>, and a Veg-Only toggle that
  * routes to /menu?diet=veg. All fixed-height → CLS-safe. */
 
@@ -75,7 +75,7 @@ export default function TrustHeader() {
         >
           <i className="ph-fill ph-map-pin" />
           <span className="clamp1" style={{ maxWidth: 210 }}>
-            {hasArea ? area : "Noida NCR"}
+            {hasArea ? area : "Noida"}
           </span>
           <i className="ph-bold ph-caret-down cd" style={{ fontSize: 12 }} />
         </button>

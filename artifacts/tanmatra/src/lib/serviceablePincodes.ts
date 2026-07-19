@@ -24,16 +24,6 @@ const SERVICEABLE: Record<string, PincodeInfo> = {
   "201307": { area: "Noida Sector 12-15 / Naya Bans", city: "Noida", state: "Uttar Pradesh" },
   "201309": { area: "Noida Sector 137 / Expressway", city: "Noida", state: "Uttar Pradesh" },
   "201318": { area: "Noida Sector 150 / Sports City", city: "Noida", state: "Uttar Pradesh" },
-
-  // Ghaziabad (bordering Noida)
-  "201010": { area: "Indirapuram", city: "Ghaziabad", state: "Uttar Pradesh" },
-  "201012": { area: "Vasundhara", city: "Ghaziabad", state: "Uttar Pradesh" },
-  "201014": { area: "Vaishali / Kaushambi", city: "Ghaziabad", state: "Uttar Pradesh" },
-
-  // Delhi East (bordering Noida)
-  "110091": { area: "Mayur Vihar Phase I", city: "Delhi", state: "Delhi" },
-  "110092": { area: "Laxmi Nagar / Anand Vihar", city: "Delhi", state: "Delhi" },
-  "110096": { area: "Mayur Vihar Phase III / Vasundhara Enclave", city: "Delhi", state: "Delhi" },
 };
 
 const PINCODE_RE = /^\d{6}$/;

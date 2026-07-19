@@ -33,7 +33,7 @@ const HOW_STEPS = [
     icon: "ph-calendar",
     step: "03",
     title: "Delivered fresh daily",
-    desc: "Meals are cooked fresh in an ISO 22000 kitchen and delivered in scheduled windows across Noida, Delhi & Gurgaon.",
+    desc: "Meals are cooked fresh in an ISO 22000 kitchen and delivered in scheduled windows across Noida.",
   },
 ];
 
@@ -50,7 +50,7 @@ export default function V2Home() {
   return (
     <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white select-none">
       <h1 className="sr-only">
-        Tanmatra — Dietitian-designed meal delivery in Noida, Delhi & Gurgaon
+        Tanmatra — Dietitian-designed meal delivery in Noida
       </h1>
 
       {/* 2.1 Sticky scroll transition Header (no CTA — see §S1) */}

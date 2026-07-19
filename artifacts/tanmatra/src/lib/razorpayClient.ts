@@ -49,6 +49,14 @@ export async function payWithRazorpay(args: {
   description: string;
   /** Prefilled contact number, if known. */
   contact?: string;
+  /**
+   * Present only for subscription-checkout payments. Tells the server which
+   * subscription this payment is for so /payments/razorpay/order can attach
+   * a Razorpay customer + recurring (UPI Autopay) token to the gateway
+   * order — without this, no autopay mandate can ever be registered for the
+   * subscription, even on a weekly/fortnightly cadence.
+   */
+  subscriptionId?: number;
 }): Promise<RazorpayOutcome> {
   if (!RAZORPAY_KEY_ID) return "unavailable";
 
@@ -63,6 +71,9 @@ export async function payWithRazorpay(args: {
         amountPaise: args.amountPaise,
         receipt: args.receipt.slice(0, 40),
         orderId: args.receipt,
+        ...(args.subscriptionId != null
+          ? { subscriptionId: args.subscriptionId }
+          : {}),
       }),
     });
     if (!res.ok) return "unavailable";
