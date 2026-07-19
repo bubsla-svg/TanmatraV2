@@ -49,10 +49,16 @@ import paymentsRouter from "./payments";
 const KEY_ID = "rzp_test_x";
 const KEY_SECRET = "secret_test";
 const WEBHOOK_SECRET = "whsec_test";
+// POST /payments/charge-mandate is gated by requireOps() (see lib/adminGate.ts)
+// — hasAdminToken() short-circuits isOpsRequest() before it ever touches
+// req.isAuthenticated(), so the test app's minimal mock req doesn't need an
+// isAuthenticated() stub as long as this header/env pair matches.
+const ADMIN_TOKEN = "test-ops-token";
 
 process.env["RAZORPAY_KEY_ID"] = KEY_ID;
 process.env["RAZORPAY_KEY_SECRET"] = KEY_SECRET;
 process.env["RAZORPAY_WEBHOOK_SECRET"] = WEBHOOK_SECRET;
+process.env["RD_ADMIN_TOKEN"] = ADMIN_TOKEN;
 
 let server: http.Server;
 let baseUrl = "";
@@ -614,7 +620,7 @@ test("charge-mandate bills the subscription's pricePerDeliveryPaise, ignoring a 
     async () => {
       const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-admin-token": ADMIN_TOKEN },
         body: JSON.stringify({
           subscriptionId,
           amountPaise: tamperedClientAmount,
