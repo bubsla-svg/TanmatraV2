@@ -1526,7 +1526,7 @@ export default function V2Checkout() {
                   <span className="small fw6">Partner pickup</span>
                 </div>
                 <p className="fine sagec">
-                  Save up to ₹{Math.max(0, ...pickupLocations.map((p) => p.discountPaise)) / 100 || 30}
+                  Save up to <span className="tnm-data">₹{Math.max(0, ...pickupLocations.map((p) => p.discountPaise)) / 100 || 30}</span>
                 </p>
               </button>
             </div>
@@ -1670,7 +1670,7 @@ export default function V2Checkout() {
                         <div className="fx ac gap8" style={{ width: "100%" }}>
                           <Store className="w-3 h-3" style={{ color: "var(--safb)" }} />
                           <span className="small fw6">{loc.name}</span>
-                          <span className="pill sg" style={{ marginLeft: "auto", fontSize: 10 }}>
+                          <span className="pill sg tnm-data" style={{ marginLeft: "auto", fontSize: 10 }}>
                             -₹{(loc.discountPaise / 100).toFixed(0)}
                           </span>
                         </div>
@@ -1769,9 +1769,13 @@ export default function V2Checkout() {
                   Free Delivery Tracker
                 </span>
                 <span className="small fw7" style={{ color: hasFreeDelivery ? "var(--sage)" : "var(--tx)" }}>
-                  {hasFreeDelivery
-                    ? "Free Delivery Unlocked!"
-                    : `Add ₹${Math.ceil(amountToFreeDelivery / 100)} more for free delivery`}
+                  {hasFreeDelivery ? (
+                    "Free Delivery Unlocked!"
+                  ) : (
+                    <>
+                      Add <span className="tnm-data">₹{Math.ceil(amountToFreeDelivery / 100)}</span> more for free delivery
+                    </>
+                  )}
                 </span>
               </div>
               <div className="pbar">
