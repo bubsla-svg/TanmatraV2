@@ -1,0 +1,20 @@
+{
+  "reviewAndPayCta": {
+    "x": 588.578125,
+    "y": 870.875,
+    "width": 166.421875,
+    "height": 48
+  },
+  "deliveryAddressLabel": {
+    "x": 207,
+    "y": 168,
+    "width": 132.109375,
+    "height": 16.5
+  },
+  "fulfillmentSection": {
+    "x": 166,
+    "y": 478.78125,
+    "width": 448,
+    "height": 428.0625
+  }
+}

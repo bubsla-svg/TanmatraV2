@@ -1,0 +1,1017 @@
+[
+  {
+    "selector": "div.min-h-screen.bg-[var(--color-nn-bg)].text-white",
+    "property": "backgroundColor",
+    "hex": "#131313"
+  },
+  {
+    "selector": "div.tnm2.nn.min-h-screen.bg-[var(--tnm-surface-ink)].text-white.antialiased",
+    "property": "backgroundColor",
+    "hex": "#131313"
+  },
+  {
+    "selector": "div.tnm2.nn.min-h-screen.bg-[var(--tnm-surface-ink)].text-white.antialiased",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.appbar",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button.iconbtn",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "i.ph-bold.ph-arrow-left",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.abt",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.content.padx",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.mb14.mt14",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.card",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.flex.items-center.justify-between.gap-3",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.flex.items-center.gap-3.flex-1.min-w-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.flex.items-center.gap-1.5.sm:gap-2.5.shrink-0.min-w-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.relative.flex-1.h-px.overflow-hidden.bg-white/10",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.absolute.inset-y-0.left-0",
+    "property": "backgroundColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.absolute.inset-y-0.left-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.flex.items-center.gap-3.flex-1.min-w-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.flex.items-center.gap-1.5.sm:gap-2.5.shrink-0.min-w-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
+    "property": "backgroundColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
+    "property": "borderColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.relative.flex-1.h-px.overflow-hidden.bg-white/10",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.absolute.inset-y-0.left-0",
+    "property": "backgroundColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.absolute.inset-y-0.left-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.flex.items-center.gap-3.flex-1.min-w-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.flex.items-center.gap-1.5.sm:gap-2.5.shrink-0.min-w-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.rounded-2xl.bg-[var(--tnm-surface-ink-2)].border.border-white/[0.08].shadow-[0_8px_32px_color-mix(in_srgb,black_40%,",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "circle",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.col.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button.opt",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button.opt",
+    "property": "borderColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "p.small.fw6.fx.ac.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "p.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "hr",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.col.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "span.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "textarea.inp",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div#checkout-fulfillment.rounded-2xl.bg-[var(--tnm-surface-ink-2)].border.border-white/[0.08].shadow-[0_8px_32px_color-m",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.jb.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "circle",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "circle",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.grid.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button.opt.on",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button.opt.on",
+    "property": "borderColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.fx.ac.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "circle",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "circle",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "span.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "button.opt",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "span.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine.sagec",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.tnm-data",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "div.col.gap12",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.grid.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button",
+    "property": "borderColor",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "button",
+    "property": "borderColor",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "p.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "div.rounded-2xl.bg-[var(--tnm-surface-ink-2)].border.border-white/[0.08].shadow-[0_8px_32px_color-mix(in_srgb,black_40%,",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "rect",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "line",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.fx.ac.gap12",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap12",
+    "property": "borderColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "rect",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "line",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.f1",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap6.wrap.mt2",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "span.upi",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "a.note",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "a.note",
+    "property": "borderColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "circle",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.f1",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine.mt2",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.mb14",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.card",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "div.banner.mb14",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.banner.mb14",
+    "property": "borderColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.fx.ac.jb.mb8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "span.small.fw7",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "span.tnm-data",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.pbar",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "b",
+    "property": "backgroundColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "b",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine.mt6",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "div.rounded-2xl.bg-[var(--tnm-surface-ink-2)].border.border-white/[0.08].shadow-[0_8px_32px_color-mix(in_srgb,black_40%,",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "rect",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.col.gap12",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.gap12",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "img",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.f1",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.small.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.price",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "hr",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "hr",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.col.gap8",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.billrow",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.mono",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.billrow",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.mono",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.billrow",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.mono",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.rounded-xl.border.border-white/[0.06].bg-white/[0.02]",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.ac.gap6.small",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "span.fw6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.gap6.mt6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "input.inp",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "hr",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.fx.jb",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div.tl",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "span.price",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "p.fine",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "div.hidden.lg:block",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine.tc",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "a.fine.fx.ac.jc.gap6.mt8",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "p.fine.tc.fx.ac.jc.gap6",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "p.fine.tc",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "a",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "div.lg:hidden",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "div",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine.tc",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "div.rounded-2xl.bg-[var(--tnm-surface-ink-2)].border.border-white/[0.08].shadow-[0_8px_32px_color-mix(in_srgb,black_40%,",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button.f1",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "button.f1",
+    "property": "borderColor",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine.fx.ac.gap6",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "span.clamp1",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "path",
+    "property": "color",
+    "hex": "#c6c6c7"
+  },
+  {
+    "selector": "p.price.mt2",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.col.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "a.fine.fx.ac.jc.gap6",
+    "property": "color",
+    "hex": "#c6c6c7"
+  }
+]

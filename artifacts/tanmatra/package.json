@@ -12,7 +12,8 @@
     "lint:prices": "node --experimental-strip-types ../../scripts/lint-prices.ts",
     "lint:geography": "node --experimental-strip-types ../../scripts/lint-geography.ts",
     "lint:gates": "pnpm run lint:colors && pnpm run lint:prices",
-    "test:ssr": "node ./scripts/check-ssr.cjs"
+    "test:ssr": "node ./scripts/check-ssr.cjs",
+    "stitch:reference": "python3 ../../tools/stitch_retoken.py"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "^5.2.8",
