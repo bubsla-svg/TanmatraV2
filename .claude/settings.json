@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @workspace/api-server run typecheck *)",
+      "Bash(pnpm run typecheck:libs *)",
+      "Bash(pnpm --filter @workspace/tanmatra run typecheck *)",
+      "Bash(pnpm --filter @workspace/tanmatra run lint:gates *)",
+      "mcp__github__pull_request_read"
+    ]
+  }
+}
