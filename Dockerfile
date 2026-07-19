@@ -46,6 +46,9 @@ WORKDIR /app
 RUN mkdir -p /app/artifacts/api-server
 COPY --from=builder /app/artifacts/api-server/dist /app/artifacts/api-server/dist
 RUN ln -s /app/artifacts/api-server/dist /app/dist
+# Boot-time migration runner (lib/db/src/migrate.ts, bundled into dist/index.mjs)
+# resolves migrations at ./drizzle next to the bundle — see that file for why.
+COPY --from=builder /app/lib/db/drizzle /app/artifacts/api-server/dist/drizzle
 COPY --from=builder /app/isolated/package.json ./package.json
 COPY --from=builder /app/isolated/node_modules ./node_modules
 
