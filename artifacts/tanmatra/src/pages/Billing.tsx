@@ -144,7 +144,7 @@ export default function Billing() {
       toast.success("Billing reactivated", {
         description: "You'll be charged on the normal schedule.",
       });
-      await fetchActiveSubscription();
+      await invalidate();
     } catch (err) {
       toast.error("Failed to reactivate billing", {
         description: err instanceof Error ? err.message : "",
