@@ -233,6 +233,14 @@ after(async () => {
   if (CREATED_ORDER_IDS.length > 0) {
     await db.delete(ordersTable).where(inArray(ordersTable.id, CREATED_ORDER_IDS));
   }
+  if (CREATED_USER_IDS.length > 0) {
+    // POST /subscriptions now auto-creates a first-cycle order for each
+    // subscription (createOrderForNewSubscription) — these aren't tracked in
+    // CREATED_ORDER_IDS since tests never call seedOrder for them. orders.user_id
+    // has no ON DELETE CASCADE, so these must be cleared before deleting users
+    // below or that delete FK-violates.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
+  }
   if (CREATED_SUB_IDS.length > 0) {
     await db
       .delete(preDebitNotificationsTable)
@@ -402,8 +410,11 @@ test("weekly subscription + subscriptionId passed through mints a recurring Razo
   const user = await makeUser("weekly");
   const { subId } = await createSubscription(user, "weekly");
   const externalOrderId = `sub-${subId}`;
-  const orderId = await seedOrder({ externalOrderId, userId: user.id, chargePaise: 62500 });
-  await linkFirstDeliveryToOrder(subId, orderId);
+  // POST /subscriptions now creates the linked first-cycle order itself
+  // (see subscriptions.ts's createOrderForNewSubscription) — no manual
+  // seedOrder/linkFirstDeliveryToOrder needed here; doing so would collide
+  // on the (userId, externalOrderId) unique index with the auto-created row.
+  // Teardown deletes orders by userId, so the auto-created row is covered.
 
   // Simulate a plan momentarily not-yet-active pending payment so the
   // "reactivate" side effect of registerAutopayMandate is observable.
@@ -475,8 +486,8 @@ test("monthly cadence never mints a recurring token even with a correctly-owned 
   const user = await makeUser("monthly");
   const { subId } = await createSubscription(user, "monthly");
   const externalOrderId = `sub-${subId}`;
-  const orderId = await seedOrder({ externalOrderId, userId: user.id, chargePaise: 40000 });
-  await linkFirstDeliveryToOrder(subId, orderId);
+  // POST /subscriptions already created and linked the first-cycle order —
+  // see the weekly test above for why manual seeding is skipped here.
 
   const customerCallsBefore = rzpCustomerCalls.length;
 
