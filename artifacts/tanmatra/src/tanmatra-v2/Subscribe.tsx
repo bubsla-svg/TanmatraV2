@@ -761,6 +761,11 @@ export default function V2Subscribe() {
             ? "Tanmatra 3-Day Trial Pack"
             : `Tanmatra ${CADENCE_LABEL[activeCadence]} plan — first cycle`,
           contact: address.phone,
+          // Required so the server can attach a recurring UPI Autopay token
+          // to this gateway order for weekly/fortnightly plans — without it
+          // POST /payments/razorpay/order never enters its recurring branch
+          // and no autopay mandate is ever registered.
+          subscriptionId: result.subscription.id,
         });
         if (outcome === "cancelled") {
           await subscriptionsApi.cancel(result.subscription.id).catch(() => undefined);

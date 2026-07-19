@@ -25,6 +25,7 @@ import {
   subscriptionsTable,
   subscriptionMandatesTable,
   preDebitNotificationsTable,
+  ordersTable,
 } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
@@ -224,6 +225,10 @@ after(async () => {
     await db.delete(subscriptionMandatesTable).where(inArray(subscriptionMandatesTable.subscriptionId, CREATED_SUB_IDS));
   }
   if (CREATED_USER_IDS.length > 0) {
+    // orders.user_id has no cascade (financial records must not silently
+    // vanish on user delete) — POST /subscriptions now creates a linked
+    // first-cycle order, so it must be cleared before the user row.
+    await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(subscriptionsTable).where(inArray(subscriptionsTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
