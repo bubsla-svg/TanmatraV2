@@ -76,7 +76,7 @@ export default function V2Track() {
 
   const { orders, latest, getOrder, updateStatus } = useOrders();
   const order: any = orderIdParam ? getOrder(orderIdParam) : latest();
-  const { connected: socketConnected } = useSocketStatus();
+  const { connected: socketConnected, giveUp: socketGaveUp } = useSocketStatus();
 
   const [hasAutologged, setHasAutologged] = useState(false);
   useEffect(() => {
@@ -223,7 +223,7 @@ export default function V2Track() {
         </div>
 
         {/* Lifecycle stepper (reused) */}
-        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10"><ClinicalLifecycleStepper order={order} socketConnected={socketConnected} /></div>
+        <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt10"><ClinicalLifecycleStepper order={order} socketConnected={socketConnected} socketGaveUp={socketGaveUp} /></div>
 
         {/* Live rider map */}
         {showRiderCard && numericOrderId > 0 && (
