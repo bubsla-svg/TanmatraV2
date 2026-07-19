@@ -1364,7 +1364,7 @@ export default function V2Subscribe() {
               <span className="font-mono text-white/80">{subtotal}</span>
             </div>
             <div className="flex justify-between text-xs text-white/60">
-              <span>GST Taxes (18% clinical catering)</span>
+              <span>GST Taxes (5%)</span>
               <span className="font-mono text-white/80">{taxes}</span>
             </div>
             <div className="flex justify-between text-xs text-white/60">

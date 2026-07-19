@@ -54,7 +54,12 @@ export function computeDeliveryPricePaise(
 
 export function computeTrialPricePaise(meals: number): number {
   if (meals === 3) {
-    return TRIAL_3DAY_SUBTOTAL_PAISE; // ₹1,499 all-in incl 5% GST (₹499.67/meal)
+    // ₹1,427.62 pre-tax subtotal + 5% GST = ₹1,499.00 all-in (₹499.67/meal).
+    // Must return the all-in figure — same contract as computeDeliveryPricePaise
+    // below — since callers (the /subscriptions/quote route and the
+    // pricePerDeliveryPaise stored at subscription-creation time) both treat
+    // this return value as already GST-inclusive.
+    return Math.round(TRIAL_3DAY_SUBTOTAL_PAISE * (1 + GST_RATE));
   }
   // Fallback to proportional trial pricing (25% off base rate ₹750/meal) + 5% GST.
   const basePrice = meals * PER_MEAL_PAISE;
