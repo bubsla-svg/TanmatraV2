@@ -30,17 +30,17 @@ function resolveOps(req: Request): boolean {
 
 // ─── Seeding (idempotent, runs lazily on first read) ────────────────────────
 
-let slotsSeeded = false;
+// Rolling slot seeder. The old version seeded the next 7 days exactly ONCE
+// (guarded by a module flag + a count>0 early-exit), so once that initial
+// window elapsed every slot was in the past and `/delivery/slots` (which
+// filters endsAt >= now) returned empty — "No slots available today". Now we
+// (re)ensure the next 7 days on demand, idempotent via the
+// uniq_delivery_slot_zone_window index, throttled to once per process per day.
+let lastSeedDate = "";
 async function ensureSlots(zone = "default"): Promise<void> {
-  if (slotsSeeded) return;
-  const [{ n }] = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(deliverySlotsTable);
-  if (Number(n) > 0) {
-    slotsSeeded = true;
-    return;
-  }
-  // Seed the next 7 days × 4 windows at 12:00 / 13:30 / 19:00 / 20:30 IST.
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (lastSeedDate === todayStr) return;
+  // Seed the next 7 days × 4 windows at 12:00 / 13:30 / 19:00 / 20:30.
   const windows: Array<[number, number]> = [
     [12, 0],
     [13, 30],
@@ -69,8 +69,10 @@ async function ensureSlots(zone = "default"): Promise<void> {
       });
     }
   }
+  // Idempotent: already-seeded windows conflict on the unique index and are
+  // skipped; only genuinely new days get inserted.
   await db.insert(deliverySlotsTable).values(rows).onConflictDoNothing();
-  slotsSeeded = true;
+  lastSeedDate = todayStr;
 }
 
 let pickupSeeded = false;
