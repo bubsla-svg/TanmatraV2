@@ -1129,7 +1129,7 @@ export default function V2Subscribe() {
             {address.pincode.length === 6 && pincodeCheck.state === "unserviceable" && (
               <p className="fine text-[var(--tnm-alert)] font-semibold mt-1.5 leading-snug flex items-start gap-1.5">
                 <Warning className="w-3.5 h-3.5 shrink-0 mt-0.5" weight="fill" />
-                Pincode unserviceable. Currently delivering to selected sectors in Noida, Delhi, and Gurgaon.
+                Pincode unserviceable. Currently delivering to selected sectors in Noida.
               </p>
             )}
             {pincodeCheck.state === "serviceable" && (

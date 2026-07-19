@@ -21,7 +21,7 @@ const INCLUDED = [
 const BENEFITS = [
   { t: "Dietitian Consult Included", d: "Get direct feedback and adjustments from your registered dietitian every week." },
   { t: "Zero Binding Contracts", d: "Pause, resume, or cancel your deliveries at any time from your subscription dashboard." },
-  { t: "Serviceable Noida, Delhi & Gurgaon Delivery", d: "Locked-in morning and evening slots delivered via temperature-controlled logistics." },
+  { t: "Serviceable Noida Delivery", d: "Locked-in morning and evening slots delivered via temperature-controlled logistics." },
   { t: "100% Clean Ingredients", d: "No artificial preservatives, no refined sugar, and zero hidden seed oils." },
   { t: "Allergen Safety Automated", d: "Our backend filters out unreviewed dishes and swaps allergens to protect your health." },
   { t: "Fresh Cooking Protocols", d: "Never frozen. Cooked from scratch using organic ingredients daily." },

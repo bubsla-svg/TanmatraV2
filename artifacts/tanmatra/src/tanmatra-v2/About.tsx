@@ -62,7 +62,7 @@ export default function AboutV2() {
               </div>
               <h3 className="text-[15px] font-semibold mb-2">You Receive</h3>
               <p className="text-[14px] text-[var(--tnm-text-secondary)] leading-relaxed">
-                Fresh, hot meals arrive at your doorstep in Noida, Delhi & Gurgaon, ready to support your health journey.
+                Fresh, hot meals arrive at your doorstep in Noida, ready to support your health journey.
               </p>
             </div>
           </div>

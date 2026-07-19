@@ -435,7 +435,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       return;
     }
     if (check.state === "unserviceable") {
-      toast.error(`We do not deliver to pincode ${pincode} yet. We are expanding rapidly across Noida, Delhi & Gurgaon!`);
+      toast.error(`We do not deliver to pincode ${pincode} yet. We are expanding rapidly across Noida!`);
       return;
     }
 
@@ -502,7 +502,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <p className="fine">
-                We deliver across Noida, Delhi &amp; Gurgaon — search your area, use your
+                We deliver across Noida — search your area, use your
                 location, or type the address yourself.
               </p>
 
@@ -825,7 +825,7 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
               {pinCheck.state === "unserviceable" && (
                 <p className="flex items-center gap-1.5 text-[11px] -mt-2" style={{ color: "var(--dgr)" }}>
                   <Warning className="w-3.5 h-3.5" weight="fill" />
-                  We don't deliver to {pincode} yet — we deliver across Noida, Delhi &amp; Gurgaon.
+                  We don't deliver to {pincode} yet — we deliver across Noida.
                 </p>
               )}
 
