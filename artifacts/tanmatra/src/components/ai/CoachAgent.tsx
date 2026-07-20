@@ -391,14 +391,22 @@ export default function CoachAgentWidget({
         };
         return copy;
       });
-    } catch {
+    } catch (err) {
+      // Distinct, honest copy per failure mode: a rate-limited user was NOT
+      // hit by a connectivity problem, and telling them so (with what to do)
+      // beats the generic bubble. Everything else stays the generic message.
+      const status = (err as Error & { status?: number })?.status;
+      const text =
+        status === 429
+          ? "You're sending messages faster than I can keep up — please wait a minute and try again."
+          : "Sorry — I'm having trouble reaching the menu right now. Please try again in a moment.";
       setMessages((prev) => {
         const idx = streamingIndexRef.current;
         if (idx == null) return prev;
         const copy = prev.slice();
         copy[idx] = {
           role: "agent",
-          text: "Sorry — I'm having trouble reaching the menu right now. Please try again in a moment.",
+          text,
           timestamp: new Date().toLocaleTimeString(),
         };
         return copy;

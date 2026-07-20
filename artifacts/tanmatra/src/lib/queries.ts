@@ -359,7 +359,11 @@ export async function streamCoachAgentChat(
     signal: handlers.signal,
   });
   if (!res.ok || !res.body) {
-    throw new Error(`coach-agent stream failed: ${res.status}`);
+    // Carry the HTTP status so the UI can show an honest, distinct message
+    // for rate limiting (429) instead of the generic connectivity bubble.
+    const err = new Error(`coach-agent stream failed: ${res.status}`) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
   }
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
