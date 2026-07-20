@@ -28,6 +28,24 @@ export const CADENCE_DISCOUNT: Record<SubscriptionCadence, number> = {
   monthly: 0.85,
 };
 
+/**
+ * Headline discount percentage (integer) for a cadence — derived from
+ * CADENCE_DISCOUNT so marketing copy can never drift from the billed rate.
+ * weekly → 5, fortnightly → 10, monthly → 15.
+ */
+export function cadenceDiscountPct(cadence: SubscriptionCadence): number {
+  return Math.round((1 - CADENCE_DISCOUNT[cadence]) * 100);
+}
+
+/**
+ * The largest discount any recurring cadence offers, for truthful
+ * "save up to N%" copy. Derived — not a literal — so a copy string can
+ * never claim a discount the billing math doesn't actually give.
+ */
+export const MAX_CADENCE_DISCOUNT_PCT: number = Math.max(
+  ...(Object.keys(CADENCE_DISCOUNT) as SubscriptionCadence[]).map(cadenceDiscountPct),
+);
+
 /** First-order 3-day sampler: 25% off list (no cadence discount stacked). */
 export const TRIAL_DISCOUNT = 0.75;
 
