@@ -4,6 +4,7 @@ import { macrosAreProvisional, type DishData } from "@/lib/menuData";
 import { FREE_DELIVERY_THRESHOLD } from "@/lib/cartContext";
 import { localDishSrcset, unsplashSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError } from "@/lib/imgFallback";
+import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
 
 /* Viewport 5 — Zomato-style meta card.
  * Cropped image (fixed height → CLS-safe) with a corner veg/non-veg dot. Real
@@ -46,7 +47,7 @@ export default function MetaDishCard({
             </Link>
 
             <div className="mt-2 flex items-center gap-2 text-xs text-white/60">
-              <span className="flex items-center gap-1"><i className="ph-bold ph-clock text-[var(--tnm-action)]" /> 25–40 min</span>
+              <span className="flex items-center gap-1"><i className="ph-bold ph-clock text-[var(--tnm-action)]" /> {DELIVERY_ETA_TEXT}</span>
               <span className="text-white/30">·</span>
               <span className="flex items-center gap-1"><i className="ph-bold ph-package text-[var(--tnm-action)]" /> Free &gt; {F(FREE_DELIVERY_THRESHOLD)}</span>
             </div>

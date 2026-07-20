@@ -1,9 +1,9 @@
 import { type MetaFunction } from "react-router";
 import V2Home from "@/tanmatra-v2/Home";
+import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
 
 const TITLE = "Tanmatra — Dietitian-Designed Meal Delivery in Noida";
-const DESCRIPTION =
-  "Dietitian-designed meals delivered fresh in 25–40 minutes across Noida. Calories, protein and allergens listed on every dish.";
+const DESCRIPTION = `Dietitian-designed meals delivered fresh in ${DELIVERY_ETA_TEXT} across Noida. Calories, protein and allergens listed on every dish.`;
 const IMAGE = "https://tanmatra.food/opengraph.jpg";
 const URL = "https://tanmatra.food/";
 

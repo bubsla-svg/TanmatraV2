@@ -11,10 +11,10 @@ import {
   SealCheck,
   Timer,
 } from "@phosphor-icons/react";
-import { RD_PLANS, getRdAuthor, type RdPlan } from "@/lib/rdPlans";
+import { RD_PLANS, getRdAuthor, planWeeklyPricePaise, type RdPlan } from "@/lib/rdPlans";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { formatPrice } from "@/lib/api/adapter";
-import { computeTrialPricePaise } from "@workspace/subscription-rules";
+import { computeTrialPricePaise, TRIAL_MEALS } from "@workspace/subscription-rules";
 import { onDishImageError } from "@/lib/imgFallback";
 import type { WellnessGoal } from "@/lib/preferencesApi";
 import FreshVsColdModule from "@/components/shared/FreshVsColdModule";
@@ -37,8 +37,6 @@ const IntakeQuiz = lazy(() => import("@/components/preferences/IntakeQuiz"));
  */
 
 type MetabolicGoal = "fat_loss" | "muscle_gain";
-
-const TRIAL_MEALS = 9; // 3 days × breakfast, lunch & dinner — same pack the wizard sells.
 
 interface GoalConfig {
   label: string;
@@ -395,7 +393,7 @@ export default function MetabolicLandingView() {
               Start small
             </span>
             <h2 className="text-2xl md:text-3xl font-bold text-white">
-              Three days. Nine meals. Zero commitment.
+              Three days. Three meals. Zero commitment.
             </h2>
             <p className="text-sm text-nn-on-surface-variant max-w-md leading-relaxed">
               The 3-Day Trial runs your chosen program end to end — delivered hot, 40–45 minutes
@@ -403,7 +401,7 @@ export default function MetabolicLandingView() {
             </p>
             <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-nn-on-surface-variant pt-1">
               <li className="flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-nn-primary" aria-hidden /> Breakfast, lunch &amp; dinner
+                <Check className="w-3.5 h-3.5 text-nn-primary" aria-hidden /> One meal a day — pick your slot
               </li>
               <li className="flex items-center gap-1.5">
                 <Timer className="w-3.5 h-3.5 text-nn-primary" aria-hidden /> Delivered hot, never cold-chained

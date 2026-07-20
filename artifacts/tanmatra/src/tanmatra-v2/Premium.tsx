@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { premiumApi } from "@/lib/marketplaceApi";
 import { formatPrice } from "@/lib/api/adapter";
+import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
 
 const BENEFITS = [
   {
@@ -132,7 +133,7 @@ export default function V2Premium() {
                   </div>
                 ) : (
                   <div className="fine mt6">
-                    Delivered fresh in 25–40 min priority wave · Cancel anytime · Refund within 7 days
+                    Delivered fresh in {DELIVERY_ETA_TEXT} priority wave · Cancel anytime · Refund within 7 days
                   </div>
                 )}
 

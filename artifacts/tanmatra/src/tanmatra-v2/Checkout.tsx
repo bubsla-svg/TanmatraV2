@@ -89,6 +89,7 @@ import {
   type ServerSafetyConflict,
 } from "@/lib/clinicalDiet";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
+import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
 import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Shapes of the phone-OTP auth responses used by the guest-checkout flow.
@@ -1795,7 +1796,7 @@ export default function V2Checkout() {
                     <Plus className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
                     Add your delivery address
                   </p>
-                  <p className="fine">Noida · Delhi · Gurgaon · fresh in 25–40 min</p>
+                  <p className="fine">Noida · fresh in {DELIVERY_ETA_TEXT}</p>
                 </button>
               ) : (
                 <button

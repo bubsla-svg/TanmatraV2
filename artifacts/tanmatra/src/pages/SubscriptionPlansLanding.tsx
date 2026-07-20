@@ -27,8 +27,7 @@ export const meta: MetaFunction = () => [
   { title: "Meal Plans | Tanmatra" },
   {
     name: "description",
-    content:
-      "Chef-made, dietitian-approved meal plans on autopilot. Start with a 3-day trial at 25% off, then subscribe weekly, fortnightly, or monthly. Pause or skip anytime.",
+    content: `Chef-made, dietitian-approved meal plans on autopilot. Start with a 3-day trial at under ₹${TRIAL_PER_MEAL_RUPEES} a meal, then subscribe weekly, fortnightly, or monthly. Pause or skip anytime.`,
   },
   { property: "og:type", content: "website" },
   { property: "og:title", content: "Meal Plans | Tanmatra" },
@@ -42,14 +41,22 @@ export const meta: MetaFunction = () => [
   { tagName: "link", rel: "canonical", href: "https://tanmatra.food/subscription-plans" },
 ];
 
-import { RD_PLANS } from "@/lib/rdPlans";
+import { RD_PLANS, planCardPricePaise } from "@/lib/rdPlans";
 import {
   computeDeliveryPricePaise,
   computeTrialPricePaise,
   PER_MEAL_PAISE,
   GST_RATE,
+  TRIAL_MEALS,
   type SubscriptionCadence,
 } from "@workspace/subscription-rules";
+
+// Canonical trial per-meal price (rupees, GST-inclusive, rounded up) —
+// derived from the same billing math the wizard charges, so "under ₹N a
+// meal" copy can never drift from the billed ₹1,499 / 3-lunch trial.
+const TRIAL_PER_MEAL_RUPEES = Math.ceil(
+  computeTrialPricePaise(TRIAL_MEALS) / TRIAL_MEALS / 100,
+);
 
 // Full curated catalog minus the trial (it has its own hero section above).
 const GOAL_PLANS = RD_PLANS.filter((p) => p.slug !== "three-day-trial-pack");
@@ -87,7 +94,7 @@ const PLANS = [
     icon: Activity,
     badge: "TRAINING & RECOVERY",
     desc: "Protein-forward meals built around training days and muscle recovery.",
-    mealsPerWeek: 6,
+    mealsPerWeek: 10,
     features: [
       ">30g protein per meal",
       "Pre- & post-workout macro splits",
@@ -133,7 +140,7 @@ export default function SubscriptionPlansLanding() {
             <MapPin className="w-4 h-4 text-nn-primary shrink-0" />
             <div className="min-w-0 text-left">
               <p className="text-[10px] uppercase font-bold tracking-wider text-nn-on-surface-variant leading-none">Service area</p>
-              <p className="text-xs font-medium text-white truncate mt-0.5">Delivering across Noida · Delhi · Gurgaon</p>
+              <p className="text-xs font-medium text-white truncate mt-0.5">Delivering across Noida</p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-nn-on-surface-variant shrink-0 ml-1" />
           </div>
@@ -235,14 +242,14 @@ export default function SubscriptionPlansLanding() {
               </Badge>
               <h2 className="text-2xl md:text-3xl font-bold text-white">
                 3-Day Trial —{" "}
-                <span className="text-nn-primary">25% off</span>
+                <span className="text-nn-primary">under ₹{TRIAL_PER_MEAL_RUPEES} a meal</span>
               </h2>
               <p className="text-sm text-nn-on-surface-variant max-w-md leading-relaxed">
-                Nine meals over three days, matched to your goals. One-off, no commitment — see if Tanmatra fits your week before you subscribe.
+                Three lunches over three days, matched to your goals. One-off, no commitment — see if Tanmatra fits your week before you subscribe.
               </p>
               <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-nn-on-surface-variant pt-1">
                 <li className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-nn-primary" /> Breakfast, lunch & dinner
+                  <Check className="w-3.5 h-3.5 text-nn-primary" /> One lunch each day
                 </li>
                 <li className="flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5 text-nn-primary" /> Does not auto-renew
@@ -252,10 +259,10 @@ export default function SubscriptionPlansLanding() {
             <div className="shrink-0 md:text-right space-y-3">
               <div>
                 <span className="text-3xl font-bold text-nn-primary tabular-nums">
-                  ₹{Math.round(computeTrialPricePaise(9) / 100).toLocaleString("en-IN")}
+                  ₹{Math.round(computeTrialPricePaise(TRIAL_MEALS) / 100).toLocaleString("en-IN")}
                 </span>
                 <span className="text-sm text-nn-on-surface-variant line-through tabular-nums ml-2">
-                  ₹{Math.round((9 * PER_MEAL_PAISE * (1 + GST_RATE)) / 100).toLocaleString("en-IN")}
+                  ₹{Math.round((TRIAL_MEALS * PER_MEAL_PAISE * (1 + GST_RATE)) / 100).toLocaleString("en-IN")}
                 </span>
               </div>
               <Link to="/subscribe?trial=1" className="block">
@@ -423,7 +430,10 @@ export default function SubscriptionPlansLanding() {
           {filteredGoalPlans.map((p) => {
             const sampleSlugs = p.week.slice(0, 3).map((d) => d.lunchSlug || d.dinnerSlug);
             const sampleDishes = sampleSlugs.map((s) => getDishBySlug(s)).filter(Boolean);
-            const perDayPrice = Math.round(p.pricePerWeekPaise / 700);
+            // Card price derives from the plan's advertised basis via the
+            // shared billing math — never the legacy pricePerWeekPaise copy.
+            const cardPricePaise = planCardPricePaise(p);
+            const perDayPrice = Math.round(cardPricePaise / 700);
 
             return (
               <Card
@@ -490,7 +500,7 @@ export default function SubscriptionPlansLanding() {
                       <div className="flex items-baseline gap-2">
                         <span className="text-xl font-extrabold text-white tabular-nums">₹{perDayPrice.toLocaleString("en-IN")}</span>
                         <span className="text-xs text-nn-on-surface-variant line-through tabular-nums">₹{Math.round(perDayPrice * 1.2).toLocaleString("en-IN")}</span>
-                        <span className="text-xs text-nn-primary font-medium">/ day · ₹{Math.round(p.pricePerWeekPaise / 100).toLocaleString("en-IN")} for 7 days</span>
+                        <span className="text-xs text-nn-primary font-medium">/ day · ₹{Math.round(cardPricePaise / 100).toLocaleString("en-IN")} for 7 days</span>
                       </div>
                     </div>
 
@@ -578,7 +588,7 @@ export default function SubscriptionPlansLanding() {
               },
               {
                 q: "Does the 3-day trial auto-renew?",
-                a: "No. The trial is a one-off 3-day pack at 25% off. You choose a recurring plan only when you're ready.",
+                a: `No. The trial is a one-off 3-day pack at under ₹${TRIAL_PER_MEAL_RUPEES} a meal. You choose a recurring plan only when you're ready.`,
               },
               {
                 q: "Where do you deliver?",
