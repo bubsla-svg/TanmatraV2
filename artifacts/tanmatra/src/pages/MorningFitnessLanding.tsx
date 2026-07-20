@@ -15,6 +15,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { onDishImageError } from "@/lib/imgFallback";
+import { apiPath } from "@/lib/apiBase";
+import { track } from "@/lib/analytics";
+
+const TEAM_SIZE_BANDS = [
+  { value: "1-20", label: "1-20 athletes" },
+  { value: "21-100", label: "21-100 athletes" },
+  { value: "101-500", label: "101-500 athletes" },
+  { value: "500+", label: "500+ athletes" },
+] as const;
 
 export const meta: MetaFunction = () => [
   { title: "Morning Fitness & Running Clubs | Tanmatra" },
@@ -33,41 +42,60 @@ export const meta: MetaFunction = () => [
 
 export default function MorningFitnessLanding() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [clubName, setClubName] = useState("");
   const [contactName, setContactName] = useState("");
-  const [city, setCity] = useState("Delhi NCR");
-  const [membersCount, setMembersCount] = useState("20-50");
+  const [email, setEmail] = useState("");
+  const [membersCount, setMembersCount] = useState("21-100");
   const [location, setLocation] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clubName || !contactName || !whatsapp) {
-      toast.error("Please fill in all details");
+    if (!clubName.trim() || !contactName.trim() || !email.trim()) {
+      toast.error("Please fill in your club name, coordinator name, and work email");
       return;
     }
-    // No partner-lead API exists yet — hand the inquiry to our real
-    // partnerships channel (the WhatsApp business line published on the
-    // Refunds & Grievance page) with the details pre-filled, so the lead is
-    // never silently dropped.
-    const message = [
-      "Morning fitness club partnership — Tanmatra",
-      `Club / team: ${clubName}`,
-      `Contact: ${contactName}`,
-      `City: ${city}`,
-      `Members: ${membersCount}`,
-      location ? `Meetup / finish point: ${location}` : null,
-      `WhatsApp: ${whatsapp}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-    window.open(
-      `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-    setSubmitted(true);
-    toast.success("Almost done — send the pre-filled WhatsApp message to reach our partnerships team.");
+    if (!/.+@.+\..+/.test(email)) {
+      toast.error("Please enter a valid work email");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(apiPath("/corporate-leads"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "fitness_club",
+          name: contactName.trim(),
+          workEmail: email.trim().toLowerCase(),
+          company: clubName.trim(),
+          teamSizeBand: membersCount,
+          parkOrSector: location.trim() || undefined,
+          phone: whatsapp.trim() || undefined,
+          source: `${window.location.pathname}${window.location.search}`.slice(0, 160),
+        }),
+      });
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("Too many submissions from this network — please try again in an hour, or WhatsApp us below.");
+        }
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
+      track("corporate_lead_submitted", { kind: "fitness_club", team_size_band: membersCount });
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Something went wrong — please check your connection and try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -226,13 +254,22 @@ export default function MorningFitnessLanding() {
               {submitted ? (
                 <div className="text-center py-10 space-y-4">
                   <CheckCircle className="w-16 h-16 mx-auto text-clinical-sage" />
-                  <h3 className="text-2xl font-bold text-white">Sent to WhatsApp</h3>
+                  <h3 className="text-2xl font-bold text-white">Request received</h3>
                   <p className="text-sm text-nn-on-surface-variant max-w-sm mx-auto">
-                    We've opened WhatsApp with your details pre-filled. Send the message and our partnerships team will coordinate your trial breakfast morning.
+                    We'll call you within one working day to coordinate your trial breakfast morning. Prefer chat? You can also{" "}
+                    <a
+                      href="https://wa.me/919289213115"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 text-white hover:text-nn-primary transition-colors"
+                    >
+                      WhatsApp us
+                    </a>
+                    .
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => setSubmitted(false)}
-                    variant="outline" 
+                    variant="outline"
                     className="border-white/[0.08] text-white hover:text-white"
                   >
                     Submit another location
@@ -265,33 +302,44 @@ export default function MorningFitnessLanding() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5 sm:col-span-2">
-                      <Label htmlFor="whatsapp" className="text-xs text-nn-on-surface-variant">WhatsApp Number for Coordination</Label>
-                      <Input 
-                        id="whatsapp" 
-                        placeholder="e.g. +91 98111 22222"
+                      <Label htmlFor="email" className="text-xs text-nn-on-surface-variant">Work Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="e.g. coordinator@noidarunners.in"
                         className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="size" className="text-xs text-nn-on-surface-variant">Active Group Size</Label>
-                      <select 
+                      <select
                         id="size"
                         className="w-full bg-nn-bg border border-white/[0.08] rounded-md px-3 text-white text-xs h-9 focus:outline-none"
                         value={membersCount}
                         onChange={(e) => setMembersCount(e.target.value)}
                       >
-                        <option value="10-20">10-20 athletes</option>
-                        <option value="20-50">20-50 athletes</option>
-                        <option value="50-100">50-100 athletes</option>
-                        <option value="100+">100+ athletes</option>
+                        {TEAM_SIZE_BANDS.map((band) => (
+                          <option key={band.value} value={band.value}>{band.label}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="location" className="text-xs text-nn-on-surface-variant">Meetup / Finish Point Coordinates or Landmarks</Label>
+                    <Label htmlFor="whatsapp" className="text-xs text-nn-on-surface-variant">WhatsApp Number for Coordination (optional)</Label>
+                    <Input
+                      id="whatsapp"
+                      placeholder="e.g. +91 98111 22222"
+                      className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
+                      value={whatsapp}
+                      onChange={(e) => setWhatsapp(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="location" className="text-xs text-nn-on-surface-variant">Meetup / Finish Point Coordinates or Landmarks (optional)</Label>
                     <Input
                       id="location"
                       placeholder="e.g. Leisure Valley Park Gate 2, Gurgaon"
@@ -301,12 +349,31 @@ export default function MorningFitnessLanding() {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-nn-primary text-action-text hover:bg-nn-primary/90 font-medium text-xs h-10 mt-2"
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-nn-primary text-action-text hover:bg-nn-primary/90 font-medium text-xs h-10 mt-2 disabled:opacity-60"
                   >
-                    Request Trial Breakfast Drop-off
+                    {submitting ? "Submitting…" : "Request Trial Breakfast Drop-off"}
                   </Button>
+
+                  {submitError ? (
+                    <p role="alert" className="text-xs text-red-400 text-center leading-relaxed">
+                      {submitError} <span className="text-nn-on-surface-variant">Your details are still filled in — press the button to retry.</span>
+                    </p>
+                  ) : null}
+
+                  <p className="text-center text-xs text-nn-on-surface-variant">
+                    or{" "}
+                    <a
+                      href="https://wa.me/919289213115"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 text-white hover:text-nn-primary transition-colors"
+                    >
+                      WhatsApp us
+                    </a>
+                  </p>
                 </form>
               )}
             </CardContent>
