@@ -134,34 +134,43 @@ export function useChallenge(slug: string | undefined) {
   });
 }
 
-export function useJoinChallenge(slug: string) {
+// Join/leave flip a client-known boolean, so both mutate the ["challenge",
+// slug] cache optimistically: the CTA switches to its joined/left state the
+// instant it's tapped, and the snapshot is restored if the server rejects
+// (e.g. 401). onSettled reconciles with the authoritative server state.
+function useOptimisticMembership(slug: string, joined: boolean) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () =>
       api<{ ok: boolean; joined: boolean }>(
-        `/challenges/${encodeURIComponent(slug)}/join`,
+        `/challenges/${encodeURIComponent(slug)}/${joined ? "join" : "leave"}`,
         { method: "POST", body: "{}" },
       ),
-    onSuccess: () => {
+    onMutate: async () => {
+      const key = ["challenge", slug];
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<ChallengeDetailDTO | null>(key);
+      if (prev) qc.setQueryData<ChallengeDetailDTO>(key, { ...prev, joined });
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev !== undefined) {
+        qc.setQueryData(["challenge", slug], ctx.prev);
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ["challenge", slug] });
       qc.invalidateQueries({ queryKey: ["challenges"] });
     },
   });
 }
 
+export function useJoinChallenge(slug: string) {
+  return useOptimisticMembership(slug, true);
+}
+
 export function useLeaveChallenge(slug: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () =>
-      api<{ ok: boolean; joined: boolean }>(
-        `/challenges/${encodeURIComponent(slug)}/leave`,
-        { method: "POST", body: "{}" },
-      ),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["challenge", slug] });
-      qc.invalidateQueries({ queryKey: ["challenges"] });
-    },
-  });
+  return useOptimisticMembership(slug, false);
 }
 
 export interface CommunityChallengeCard {

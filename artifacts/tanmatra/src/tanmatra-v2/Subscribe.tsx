@@ -947,8 +947,14 @@ export default function V2Subscribe() {
         <div className="card bg-white/[0.01] border border-white/5 p-4 rounded-xl flex flex-col gap-3">
           <div className="flex justify-between items-baseline">
             <span className="text-xs text-white/50 font-medium">Estimated Starting Price</span>
+            {/* Optimistic: show the client estimate — which is the exact
+                billing math (getCalculatedPricePaise), asserted equal to the
+                payable amount — the instant slots/cadence change, instead of
+                flashing "Verifying price…" or a stale server value on every
+                toggle. The authoritative server quote still gates the Review
+                and Payment steps below (the transparent-ledger guard). */}
             <span className="tnm-data text-lg font-bold text-[var(--tnm-action)] font-mono">
-              {quoteDetails?.total ? F_Paise(quoteDetails.total) : "Verifying price…"}
+              {F_Paise(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial))}
             </span>
           </div>
           {/* The basis line is the anti-sticker-shock contract: a price is
@@ -958,8 +964,8 @@ export default function V2Subscribe() {
             {isTrial
               ? `For ${cycleMeals} meal${cycleMeals === 1 ? "" : "s"} over 3 days · one-time`
               : `For ${cycleMeals} meals per ${activeCadence === "weekly" ? "week" : activeCadence === "fortnightly" ? "2 weeks" : "6 weeks"} (${[slots.breakfast && "breakfast", slots.lunch && "lunch", slots.dinner && "dinner"].filter(Boolean).join(" + ")} · ${daysMode === "everyday" ? "every day" : "weekdays"})`}
-            {quoteDetails?.total && cycleMeals > 0
-              ? ` · ≈${F_Paise(Math.round(quoteDetails.total / cycleMeals))} per meal`
+            {cycleMeals > 0
+              ? ` · ≈${F_Paise(Math.round(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial) / cycleMeals))} per meal`
               : ""}
             {" · incl. GST · free delivery. Adjust everything in the next steps."}
           </p>

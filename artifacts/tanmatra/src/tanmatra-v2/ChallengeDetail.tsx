@@ -7,6 +7,7 @@ import {
   usePostToChallenge,
 } from "@/lib/contentApi";
 import { toast } from "sonner";
+import { hapticSuccess, hapticLight, hapticError } from "@/lib/haptics";
 
 function formatRelative(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -126,6 +127,7 @@ export default function V2ChallengeDetail() {
   const SOON_MS = 24 * 60 * 60 * 1000;
 
   const handleJoin = () => {
+    hapticSuccess();
     join.mutate(undefined, {
       onSuccess: () => {
         // Reveal a "what happens next" panel so the user understands what
@@ -136,6 +138,7 @@ export default function V2ChallengeDetail() {
         });
       },
       onError: (err: unknown) => {
+        hapticError();
         const msg = err instanceof Error ? err.message : "Could not join";
         if (msg.startsWith("401")) {
           toast.error("Log in to join challenges");
@@ -147,6 +150,7 @@ export default function V2ChallengeDetail() {
   };
 
   const handleLeave = () => {
+    hapticLight();
     leave.mutate(undefined, {
       onSuccess: () => {
         toast.success(`Left ${challenge.title}`);

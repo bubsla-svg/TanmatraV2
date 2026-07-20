@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { F } from "./data";
 import { API_BASE } from "@/lib/apiBase";
 import { wellnessApi, type DayTotals, type WellnessTodayResponse } from "@/lib/wellnessApi";
+import { hapticLight, hapticWarning, hapticError } from "@/lib/haptics";
 import { useMenuCatalog } from "@/lib/menuData";
 import { dishesForProtocol, plansForProtocol, rdsForProtocol } from "@/lib/protocols";
 import { RD_PLANS } from "@/lib/rdPlans";
@@ -60,6 +61,7 @@ function WeekBars({ data, field, target, color, label, unit }: { data: DayTotals
   );
 }
 
+const TODAY_KEY = ["wellness", "today"] as const;
 const WATER_PRESETS = [200, 250, 500];
 const NUMERIC_FIELDS: Array<{ key: string; label: string }> = [
   { key: "calories", label: "kcal" }, { key: "proteinGrams", label: "Protein g" }, { key: "fiberGrams", label: "Fiber g" },
@@ -253,14 +255,71 @@ function ProtocolActions() {
 export default function V2Wellness() {
   const qc = useQueryClient();
   const [logOpen, setLogOpen] = useState(false);
-  const todayQ = useQuery({ queryKey: ["wellness", "today"], queryFn: () => wellnessApi.today(), retry: false });
+  const todayQ = useQuery({ queryKey: TODAY_KEY, queryFn: () => wellnessApi.today(), retry: false });
   const weekQ = useQuery({ queryKey: ["wellness", "week"], queryFn: () => wellnessApi.week(), retry: false });
 
   const unauth = (todayQ.error && String(todayQ.error).includes("401")) || (weekQ.error && String(weekQ.error).includes("401"));
   const loadError = !unauth && ((todayQ.error && !String(todayQ.error).includes("401")) || (weekQ.error && !String(weekQ.error).includes("401")));
   const refreshAll = () => qc.invalidateQueries({ queryKey: ["wellness"] });
-  const logWater = async (ml: number) => { try { await wellnessApi.water(ml); toast.success(`+${ml} ml water`); refreshAll(); } catch (e) { toast.error(`Failed: ${(e as Error).message}`); } };
-  const deleteLog = async (id: number) => { try { await wellnessApi.deleteLog(id); toast.success("Removed"); refreshAll(); } catch (e) { toast.error(`Failed: ${(e as Error).message}`); } };
+
+  // Optimistic water: the ring must move the instant a chip is tapped, not
+  // after the POST + the ["wellness"] refetch. Bump totals.waterMl in the
+  // cache immediately; the server appends the real log (with its id) which
+  // the success invalidate reconciles. Roll back to the snapshot on failure
+  // so the UI never quietly drifts from the server (mirrors ordersContext).
+  const logWater = async (ml: number) => {
+    const snapshot = qc.getQueryData<WellnessTodayResponse>(TODAY_KEY);
+    if (snapshot) {
+      qc.setQueryData<WellnessTodayResponse>(TODAY_KEY, {
+        ...snapshot,
+        totals: { ...snapshot.totals, waterMl: snapshot.totals.waterMl + ml },
+      });
+    }
+    hapticLight();
+    try {
+      await wellnessApi.water(ml);
+      toast.success(`+${ml} ml water`);
+      refreshAll();
+    } catch (e) {
+      if (snapshot) qc.setQueryData(TODAY_KEY, snapshot);
+      hapticError();
+      toast.error(`Failed: ${(e as Error).message}`);
+    }
+  };
+
+  // Optimistic delete: drop the row AND subtract its macro contribution from
+  // the rings immediately (NutritionLog and DayTotals share field names), so
+  // the entry vanishes on tap instead of lingering until the refetch.
+  const deleteLog = async (id: number) => {
+    const snapshot = qc.getQueryData<WellnessTodayResponse>(TODAY_KEY);
+    const removed = snapshot?.logs.find((l) => l.id === id);
+    if (snapshot && removed) {
+      qc.setQueryData<WellnessTodayResponse>(TODAY_KEY, {
+        ...snapshot,
+        logs: snapshot.logs.filter((l) => l.id !== id),
+        totals: {
+          ...snapshot.totals,
+          calories: snapshot.totals.calories - removed.calories,
+          proteinGrams: snapshot.totals.proteinGrams - removed.proteinGrams,
+          carbsGrams: snapshot.totals.carbsGrams - removed.carbsGrams,
+          fatGrams: snapshot.totals.fatGrams - removed.fatGrams,
+          fiberGrams: snapshot.totals.fiberGrams - removed.fiberGrams,
+          waterMl: snapshot.totals.waterMl - removed.waterMl,
+          vegServings: snapshot.totals.vegServings - removed.vegServings,
+        },
+      });
+    }
+    hapticWarning();
+    try {
+      await wellnessApi.deleteLog(id);
+      toast.success("Removed");
+      refreshAll();
+    } catch (e) {
+      if (snapshot) qc.setQueryData(TODAY_KEY, snapshot);
+      hapticError();
+      toast.error(`Failed: ${(e as Error).message}`);
+    }
+  };
 
   const data: any = todayQ.data;
   const week: any = weekQ.data;
