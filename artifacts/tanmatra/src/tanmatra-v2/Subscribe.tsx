@@ -833,7 +833,25 @@ export default function V2Subscribe() {
       goToStep(7); // success screen step
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast.error("Could not create subscription", { description: message });
+      if (message === "unauthorized") {
+        // Nothing in this multi-step builder ever checked auth state before
+        // now — an anonymous or session-expired visitor could configure an
+        // entire plan and reach the final Pay step before discovering they
+        // need to sign in, with only a raw "unauthorized" string to explain
+        // why. Same fix as Checkout.tsx's equivalent 401 handling: a plain-
+        // language toast with a Sign In action that preserves the fully
+        // configured plan (it lives in the URL query string) via `next`.
+        toast.error("Sign in to finish setting up your plan", {
+          description: "Your plan configuration is saved — you'll be right back here.",
+          action: {
+            label: "Sign in",
+            onClick: () =>
+              navigate(`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`),
+          },
+        });
+      } else {
+        toast.error("Could not create subscription", { description: message });
+      }
     } finally {
       setSubmitting(false);
     }
