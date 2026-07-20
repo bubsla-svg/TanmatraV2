@@ -7,32 +7,29 @@ export interface EncryptedEnvelope {
   keyVersion: string;
 }
 
-const DEFAULT_DEV_MASTER_KEY_HEX =
-  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-
 function resolveMasterKey(masterKeyHex?: string): Buffer {
   const normalize = (key?: string): string | undefined =>
     typeof key === "string" && key.trim() === "" ? undefined : key;
 
-  let resolvedHex =
+  const hexKey =
     normalize(masterKeyHex) ??
     normalize(process.env.CLINICAL_KMS_MASTER_KEY) ??
     normalize(process.env.MASTER_KEY) ??
     normalize(process.env.DPDPA_MASTER_KEY_HEX) ??
     normalize(process.env.CLINICAL_MASTER_KEY_HEX);
 
-  if (typeof resolvedHex === "string" && resolvedHex.trim() === "") {
-    resolvedHex = undefined;
-  }
-
-  if (!resolvedHex && process.env.NODE_ENV === "production") {
-    throw new Error("FATAL: KMS master key not configured in production environment.");
-  }
-
-  const hexKey = resolvedHex ?? DEFAULT_DEV_MASTER_KEY_HEX;
-
-  if (typeof hexKey !== "string") {
-    throw new TypeError("Master key must be provided as a string");
+  // Fail closed in every environment when no key is configured. There is no
+  // hardcoded development fallback: a repo-committed key would silently encrypt
+  // clinical data under a publicly-known secret in any non-production deploy
+  // (staging, preview, CI, or any host where NODE_ENV !== "production").
+  if (!hexKey) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("FATAL: KMS master key not configured in production environment.");
+    }
+    throw new Error(
+      "FATAL: KMS master key not configured. Pass an explicit key or set one of " +
+        "CLINICAL_KMS_MASTER_KEY / MASTER_KEY / DPDPA_MASTER_KEY_HEX / CLINICAL_MASTER_KEY_HEX.",
+    );
   }
 
   if (/^[0-9a-fA-F]{64}$/.test(hexKey)) {
