@@ -117,9 +117,17 @@ function providerLabel(p: string): string {
       : 'Unknown Health Source';
 }
 
-function relativeTime(isoString?: string): string {
-  if (!isoString) return 'just now';
-  return '2 mins ago';
+function relativeTime(isoString: string): string {
+  const then = new Date(isoString).getTime();
+  if (Number.isNaN(then)) return 'unknown';
+  const diffMs = Date.now() - then;
+  if (diffMs < 60_000) return 'just now';
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hr${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
 }
 
 
@@ -131,13 +139,13 @@ export default function HomeScreen() {
   const [stepsInput, setStepsInput] = useState<string>('');
   const [kcalInput, setKcalInput] = useState<string>('');
   const [showPairHelp, setShowPairHelp] = useState<boolean>(false);
-  const [isConnected, setIsConnected] = useState<boolean>(true);
+  // Honest defaults: nothing is "connected" and nothing has "synced" until
+  // the user actually does it in this session — the previous fabricated
+  // `true` / `new Date()` pair rendered "Connected · Last sync 2 mins ago"
+  // on a fresh install that had never synced anything.
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-
-  const wearableLink = useMemo(
-    () => ({lastSyncedAt: new Date().toISOString()}),
-    [],
-  );
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | undefined>(undefined);
 
   const provider = useMemo(() => {
     return Platform.OS === 'ios'
@@ -203,11 +211,23 @@ export default function HomeScreen() {
     }
   }, []);
 
+  // Pull-to-refresh re-reads today's totals from the native health source
+  // (no-op prefill when the store isn't available, e.g. Expo Go) — the
+  // previous implementation refreshed nothing and just closed the spinner.
   const refreshAll = useCallback(async () => {
-    setRefreshing(false);
+    setRefreshing(true);
+    try {
+      const reading = await readTodayActivity();
+      if (reading) {
+        setStepsInput(String(reading.steps));
+        setKcalInput(String(reading.activityKcal));
+      }
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
 
-  const queryClient = useMemo(() => ({clear: () => {}}), []);
+  const queryClient = useQueryClient();
 
   const connect = useMemo(
     () => ({
@@ -292,6 +312,35 @@ export default function HomeScreen() {
       Alert.alert(
         'Invalid token',
         'Paste the device pairing token from the web app.',
+      );
+      return;
+    }
+    // Verify against the server BEFORE celebrating: previously any ≥8-char
+    // string was saved and announced as "paired", and the user only found
+    // out at their first sync (401). /wellness/today is the cheapest
+    // authenticated read.
+    try {
+      const res = await fetch(`${API_BASE}/wellness/today`, {
+        headers: {Authorization: `Bearer ${trimmed}`},
+      });
+      if (!res.ok) {
+        trackEvent('pairing_invalid_token', {
+          ...createBaseEvent({
+            screen: 'pairing',
+            provider: providerForAnalytics,
+          }),
+          length: trimmed.length,
+        });
+        Alert.alert(
+          'Token not recognized',
+          'The server rejected this pairing token. Generate a fresh one from the web app and paste it here.',
+        );
+        return;
+      }
+    } catch {
+      Alert.alert(
+        'Could not verify token',
+        "We couldn't reach Tanmatra to verify this token. Check your connection and try again.",
       );
       return;
     }
@@ -435,6 +484,7 @@ export default function HomeScreen() {
         activityKcal,
       });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setLastSyncedAt(new Date().toISOString());
       setStepsInput('');
       setKcalInput('');
       await refreshAll();
@@ -634,7 +684,7 @@ export default function HomeScreen() {
                 On the Tanmatra web app, sign in and open{' '}
                 <Text
                   style={{color: c.foreground, fontFamily: 'Inter_500Medium'}}>
-                  tanmatra.health/wellness#pair-device
+                  tanmatra.food/wellness#pair-device
                 </Text>
                 . Tap{' '}
                 <Text
@@ -687,7 +737,7 @@ export default function HomeScreen() {
             marginTop: 2,
           }}>
           {isConnected
-            ? `Connected · Last sync ${relativeTime(wearableLink?.lastSyncedAt)}`
+            ? `Connected · ${lastSyncedAt ? `Last sync ${relativeTime(lastSyncedAt)}` : 'Not synced yet'}`
             : 'Not connected · Connect to enable sync'}
         </Text>
         <View style={{height: 12}} />

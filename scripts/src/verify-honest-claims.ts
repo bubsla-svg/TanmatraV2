@@ -18,8 +18,15 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, relative } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SRC = join(here, "..", "..", "artifacts", "tanmatra", "src");
 const REPO = join(here, "..", "..");
+// Both customer-facing apps: an unbacked clinical claim is just as banned on
+// a mobile screen as on a web one.
+const SCAN_ROOTS = [
+  join(REPO, "artifacts", "tanmatra", "src"),
+  join(REPO, "artifacts", "tanmatra-mobile"),
+];
+
+const SKIP_DIRS = new Set(["node_modules", ".expo", "dist", "build"]);
 
 const RENDER_GATE = /rdVerified\s*&&\s*[(<]/;
 const CLAIM_STRING = /RD Advisory Board Verified/;
@@ -27,6 +34,7 @@ const CLAIM_STRING = /RD Advisory Board Verified/;
 function walk(dir: string): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir)) {
+    if (SKIP_DIRS.has(entry)) continue;
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) {
       out.push(...walk(full));
@@ -43,7 +51,7 @@ const isComment = (line: string) => {
 };
 
 const violations: string[] = [];
-for (const file of walk(SRC)) {
+for (const file of SCAN_ROOTS.flatMap(walk)) {
   const lines = readFileSync(file, "utf8").split("\n");
   lines.forEach((line, i) => {
     if (isComment(line)) return;
