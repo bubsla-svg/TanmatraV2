@@ -19,6 +19,10 @@ import {
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
 import { blankMember, type MemberDraft } from "@/lib/memberDraft";
+import {
+  computeDeliveryPricePaise,
+  computeTrialPricePaise,
+} from "@workspace/subscription-rules";
 import { checkPincode } from "@/lib/serviceablePincodes";
 import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";
 import GoalPlanChooser from "@/components/subscribe/GoalPlanChooser";
@@ -49,12 +53,6 @@ const TIME_WINDOWS = [
   "20:00 - 21:00",
 ];
 
-const PER_MEAL_PAISE = 75000; // Updated base meal price: ₹750
-const CADENCE_DISCOUNT_PCT: Record<SubscriptionCadence, number> = {
-  weekly: 5,
-  fortnightly: 10,
-  monthly: 15,
-};
 const CYCLE_WEEKS: Record<SubscriptionCadence, number> = {
   weekly: 1,
   fortnightly: 2,
@@ -440,19 +438,13 @@ export default function V2Subscribe() {
   );
   const droppedCount = schedule.reduce((s, d) => s + d.droppedSlots.length, 0);
 
-  const getCalculatedPricePaise = (cad: SubscriptionCadence, meals: number, trial: boolean): number => {
-    if (trial) {
-      return meals === 3 ? 225000 : Math.round(meals * 75000 * 0.75 * 1.05);
-    }
-    if (cad === "weekly" && meals === 5) return 380000;
-    if (cad === "fortnightly" && meals === 10) return 741000;
-    if (cad === "monthly" && meals === 30) return 2166000;
-
-    const basePrice = meals * 75000;
-    const discountRate = cad === "monthly" ? 0.85 : cad === "fortnightly" ? 0.90 : 1.0;
-    const discounted = basePrice * discountRate;
-    return Math.round(discounted * 1.05);
-  };
+  // Estimate shown while the server quote is loading (or unreachable). Uses
+  // the exact pricing module the server bills with (@workspace/subscription-
+  // rules), so the estimate can never disagree with the payable amount —
+  // the previous local copy drifted on both the trial price and the weekly
+  // discount.
+  const getCalculatedPricePaise = (cad: SubscriptionCadence, meals: number, trial: boolean): number =>
+    trial ? computeTrialPricePaise(meals) : computeDeliveryPricePaise(cad, meals);
 
   const goToStep = (next: number) => {
     setStep(next);

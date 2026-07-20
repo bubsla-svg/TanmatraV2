@@ -43,15 +43,23 @@ export const meta: MetaFunction = () => [
 ];
 
 import { RD_PLANS } from "@/lib/rdPlans";
+import {
+  computeDeliveryPricePaise,
+  computeTrialPricePaise,
+  PER_MEAL_PAISE,
+  GST_RATE,
+  type SubscriptionCadence,
+} from "@workspace/subscription-rules";
 
 // Full curated catalog minus the trial (it has its own hero section above).
 const GOAL_PLANS = RD_PLANS.filter((p) => p.slug !== "three-day-trial-pack");
 
-// Per-meal list price mirrors the server (PER_MEAL_PAISE ₹260). Cadence
-// discounts match subscriptions.ts CADENCE_DISCOUNT.
-const PER_MEAL = 260;
-const CADENCE_DISCOUNT = { weekly: 0.95, fortnightly: 0.9, monthly: 0.85 } as const;
-type Cadence = keyof typeof CADENCE_DISCOUNT;
+// Prices come from @workspace/subscription-rules — the exact module the
+// server's /subscriptions/quote and billing paths use — so the numbers on
+// this page are the numbers the wizard charges. (A previous local ₹260/meal
+// copy here had drifted to roughly a third of the billed price.) All figures
+// from computeDeliveryPricePaise/computeTrialPricePaise are GST-inclusive.
+type Cadence = SubscriptionCadence;
 
 // D2C goal-framed plans. Each maps to a per-delivery meal count; the price
 // is computed from the same primitives the configurator uses so the
@@ -97,7 +105,8 @@ export default function SubscriptionPlansLanding() {
   const [vegOnly, setVegOnly] = useState(false);
 
   const priceFor = (mealsPerWeek: number) => {
-    const perDelivery = Math.round(mealsPerWeek * PER_MEAL * CADENCE_DISCOUNT[cadence]);
+    // GST-inclusive, straight from the shared billing math.
+    const perDelivery = Math.round(computeDeliveryPricePaise(cadence, mealsPerWeek) / 100);
     const deliveriesPerMonth =
       cadence === "weekly" ? 4 : cadence === "fortnightly" ? 2 : 1;
     return { perDelivery, perMonth: perDelivery * deliveriesPerMonth };
@@ -243,10 +252,10 @@ export default function SubscriptionPlansLanding() {
             <div className="shrink-0 md:text-right space-y-3">
               <div>
                 <span className="text-3xl font-bold text-nn-primary tabular-nums">
-                  ₹{Math.round(9 * PER_MEAL * 0.75).toLocaleString("en-IN")}
+                  ₹{Math.round(computeTrialPricePaise(9) / 100).toLocaleString("en-IN")}
                 </span>
                 <span className="text-sm text-nn-on-surface-variant line-through tabular-nums ml-2">
-                  ₹{(9 * PER_MEAL).toLocaleString("en-IN")}
+                  ₹{Math.round((9 * PER_MEAL_PAISE * (1 + GST_RATE)) / 100).toLocaleString("en-IN")}
                 </span>
               </div>
               <Link to="/subscribe?trial=1" className="block">
