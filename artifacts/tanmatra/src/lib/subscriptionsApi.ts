@@ -35,6 +35,8 @@ export interface SubscriptionMember {
   allergens: string[];
   lifestyle: string | null;
   spiceLevel: "mild" | "medium" | "hot" | null;
+  dailyCalorieTarget: number | null;
+  dailyProteinTargetGrams: number | null;
   createdAt: string;
 }
 
@@ -104,6 +106,16 @@ export interface MealCredit {
 
 import { API_BASE as API_BASE } from "./apiBase";
 
+/** One entry of a structured server rejection (e.g. swap's 422 `reasons`). */
+export interface ApiErrorReason {
+  message?: string;
+  slug?: string;
+  [key: string]: unknown;
+}
+
+/** Error thrown by request(), carrying the server's structured fields. */
+export type ApiError = Error & { code?: string; reasons?: ApiErrorReason[] };
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
@@ -132,23 +144,29 @@ async function request<T>(
     // (or worse, an HTML error page) instead of e.g. "This delivery is too
     // close to its delivery time to skip."
     let message = text;
+    // Preserve the server's structured rejection fields (`code`, `reasons`)
+    // on the thrown Error — same pattern as streamCoachAgentChat attaching
+    // `status` in queries.ts — so callers (Subscriptions' wrap()) can render
+    // e.g. a macro-cap 422's specific reason instead of a generic toast.
+    let code: string | undefined;
+    let reasons: ApiErrorReason[] | undefined;
     if (text) {
       try {
         const body: unknown = JSON.parse(text);
-        if (
-          body &&
-          typeof body === "object" &&
-          "error" in body &&
-          typeof (body as { error: unknown }).error === "string" &&
-          (body as { error: string }).error.trim()
-        ) {
-          message = (body as { error: string }).error;
+        if (body && typeof body === "object") {
+          const b = body as { error?: unknown; code?: unknown; reasons?: unknown };
+          if (typeof b.error === "string" && b.error.trim()) message = b.error;
+          if (typeof b.code === "string") code = b.code;
+          if (Array.isArray(b.reasons)) reasons = b.reasons as ApiErrorReason[];
         }
       } catch {
         // Not JSON — fall back to the raw text below.
       }
     }
-    throw new Error(message || `Request failed (${res.status})`);
+    const err = new Error(message || `Request failed (${res.status})`) as ApiError;
+    err.code = code;
+    err.reasons = reasons;
+    throw err;
   }
   return res.json() as Promise<T>;
 }
@@ -333,6 +351,11 @@ export const subscriptionsApi = {
   skip: (deliveryId: number) =>
     request<{ delivery: SubscriptionDelivery }>(
       `/subscription-deliveries/${deliveryId}/skip`,
+      { method: "POST" },
+    ),
+  unskipDelivery: (deliveryId: number) =>
+    request<{ delivery: SubscriptionDelivery }>(
+      `/subscription-deliveries/${deliveryId}/unskip`,
       { method: "POST" },
     ),
   skipSubscription: (id: number) =>

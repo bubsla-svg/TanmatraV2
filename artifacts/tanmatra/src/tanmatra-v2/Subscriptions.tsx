@@ -15,7 +15,9 @@ import {
   type SubscriptionItem,
   type MealCredit,
   type AddMemberInput,
+  type ApiError,
 } from "@/lib/subscriptionsApi";
+import { PlanNutritionGauges } from "./PlanNutritionGauges";
 import {
   blankMember,
   COMMON_ALLERGENS,
@@ -287,6 +289,16 @@ export default function V2Subscriptions() {
       await refreshWallet();
     } catch (err) {
       const m = err instanceof Error ? err.message : "Error";
+      // Structured swap rejections (allergen safety / macro caps) carry a
+      // `code` + `reasons` on the error (attached by subscriptionsApi's
+      // request()) — surface the server's specific reason instead of the
+      // generic "Action failed".
+      const apiErr = err as ApiError;
+      if (apiErr.code === "macro_cap_exceeded" || apiErr.code === "safety_block") {
+        const reason = apiErr.reasons?.find((r) => typeof r.message === "string");
+        toast.error("Swap blocked", { description: reason?.message ?? m });
+        return;
+      }
       toast.error("Action failed", { description: m });
     }
   };
@@ -549,6 +561,12 @@ export default function V2Subscriptions() {
               setChangePlanOpen(true);
             }}
             onSkip={(d) => setSkipConfirm({ deliveryId: d.id, date: d.scheduledFor })}
+            onUnskip={(d) =>
+              wrap(
+                subscriptionsApi.unskipDelivery(d.id),
+                "Delivery restored — skip credit returned",
+              )
+            }
             onSwap={(d) => setSwapDelivery(d)}
             onReschedule={(d) => {
               setReschedDelivery(d);
@@ -576,6 +594,7 @@ export default function V2Subscriptions() {
         <SwapDialog
           delivery={swapDelivery}
           mealsPerDelivery={detail.subscription.mealsPerDelivery}
+          members={detail.members}
           onClose={() => setSwapDelivery(null)}
           onConfirm={async (items) => {
             if (!swapDelivery) return;
@@ -773,6 +792,7 @@ export default function V2Subscriptions() {
                   )} delivery and credit the value back to your wallet. The next delivery in your schedule is unaffected.`
                 : ""}
             </div>
+            <div className="fine mt6">Skips are logged for kitchen planning.</div>
             <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
               <button className="btn btn-g" style={ACT} onClick={() => setSkipConfirm(null)}>
                 Keep delivery
@@ -879,6 +899,7 @@ function DetailView({
   onChangePlan,
   onReauthorize,
   onSkip,
+  onUnskip,
   onSwap,
   onReschedule,
   onContinueTrial,
@@ -897,6 +918,7 @@ function DetailView({
   onChangePlan: () => void;
   onReauthorize: () => void;
   onSkip: (d: SubscriptionDelivery) => void;
+  onUnskip: (d: SubscriptionDelivery) => void;
   onSwap: (d: SubscriptionDelivery) => void;
   onReschedule: (d: SubscriptionDelivery) => void;
   onContinueTrial: () => void;
@@ -1004,6 +1026,14 @@ function DetailView({
               <i className="ph-bold ph-x-circle" /> Cancel
             </button>
           )}
+        </div>
+
+        <div className="fine mt8" style={{ color: "var(--mut)" }}>
+          Changes to medical restrictions require an{" "}
+          <Link to="/account/health-information" style={{ color: "var(--safb)" }}>
+            RD consult
+          </Link>
+          .
         </div>
 
         {/* Billing gave up after repeated consecutive charge failures — an
@@ -1173,6 +1203,9 @@ function DetailView({
         </div>
       )}
 
+      {/* Weekly nutrition vs the member's targets */}
+      <PlanNutritionGauges members={members} deliveries={deliveries} />
+
       {/* Loyalty (recurring only) */}
       {progress && <LoyaltyStrip pr={progress} />}
 
@@ -1304,6 +1337,35 @@ function DetailView({
                     )}
                   </>
                 )}
+                {d.status === "skipped" && (() => {
+                  // Same 24h kitchen cutoff as skip — past it the server will
+                  // refuse to resurrect the delivery, so don't offer it.
+                  const undoLocked = isPastSkipCutoff(d.scheduledFor);
+                  return (
+                    <div
+                      className="fx wrap gap8 mt12 ac"
+                      style={{ paddingTop: 12, borderTop: "1px solid var(--ln)" }}
+                    >
+                      <button
+                        className={`btn btn-g${undoLocked ? " dis" : ""}`}
+                        style={{ ...ACT, color: "var(--safb)" }}
+                        onClick={() => onUnskip(d)}
+                        disabled={undoLocked}
+                      >
+                        <i className="ph-bold ph-arrow-counter-clockwise" /> Undo skip
+                      </button>
+                      {undoLocked ? (
+                        <span className="fine fx ac g6" style={{ color: "var(--safb)" }}>
+                          <i className="ph-bold ph-lock-simple" /> {lockedLabel(d.scheduledFor)} — inside the 24h change window
+                        </span>
+                      ) : (
+                        <span className="fine" style={{ color: "var(--mut)" }}>
+                          Restores this delivery and returns the skip credit.
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -1320,11 +1382,13 @@ function DetailView({
 function SwapDialog({
   delivery,
   mealsPerDelivery,
+  members,
   onClose,
   onConfirm,
 }: {
   delivery: SubscriptionDelivery | null;
   mealsPerDelivery: number;
+  members: SubscriptionMember[];
   onClose: () => void;
   onConfirm: (items: SubscriptionItem[]) => void | Promise<void>;
 }) {
@@ -1351,6 +1415,27 @@ function SwapDialog({
   );
 
   const totalSelected = Object.values(selected).reduce((a, b) => a + b, 0);
+
+  // Per-meal calorie allowance for the target member (the sole member, or the
+  // member this delivery's items are assigned to). APPROXIMATION: the server's
+  // validateMacroCapForSwap counts meals across ALL of the member's same-day
+  // deliveries and stays authoritative — a dish enabled here can still be
+  // 422'd server-side (which wrap()'s "Swap blocked" toast now explains).
+  // Never enable a dish this check flags.
+  const perMealCalorieAllowance = useMemo(() => {
+    if (!delivery) return null;
+    const target =
+      members.length === 1
+        ? members[0]
+        : members.find((m) =>
+            delivery.items.some((i) => i.memberId === m.id),
+          ) ?? members.find((m) => m.dailyCalorieTarget != null);
+    if (!target?.dailyCalorieTarget) return null;
+    const memberItemCount = delivery.items
+      .filter((i) => i.memberId == null || i.memberId === target.id)
+      .reduce((sum, i) => sum + i.quantity, 0);
+    return (target.dailyCalorieTarget / Math.max(1, memberItemCount)) * 1.15;
+  }, [delivery, members]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1430,7 +1515,12 @@ function SwapDialog({
             {filtered.map((d: DishData) => {
               const qty = selected[d.slug] ?? 0;
               const match = evaluateDishForPreferences(d, preferences);
-              const blocked = match.blocked;
+              const allergenBlocked = match.blocked;
+              const macroBlocked =
+                !allergenBlocked &&
+                perMealCalorieAllowance != null &&
+                d.macros.calories > perMealCalorieAllowance;
+              const blocked = allergenBlocked || macroBlocked;
               return (
                 <div
                   key={d.slug}
@@ -1474,7 +1564,7 @@ function SwapDialog({
                   <div className="f1" style={{ minWidth: 0 }}>
                     <div className="small clamp1 fx ac g6" style={{ fontWeight: 500 }}>
                       {d.name}
-                      {blocked && (
+                      {allergenBlocked && (
                         <span
                           className="lab"
                           style={{
@@ -1493,8 +1583,10 @@ function SwapDialog({
                     </div>
                   </div>
                   {blocked ? (
-                    <span className="fine dgrc nowrap" style={{ fontWeight: 600 }}>
-                      Unavailable
+                    <span className="fine dgrc" style={{ fontWeight: 600, textAlign: "right" }}>
+                      {macroBlocked
+                        ? "Exceeds your plan's macro caps · Unavailable"
+                        : "Unavailable"}
                     </span>
                   ) : qty === 0 ? (
                     <button
