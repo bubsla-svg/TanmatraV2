@@ -15,6 +15,11 @@
     "hex": "#e2e2e2"
   },
   {
+    "selector": "p.sr-only",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
     "selector": "div",
     "property": "color",
     "hex": "#e2e2e2"
@@ -930,6 +935,21 @@
     "hex": "#c6c6c7"
   },
   {
+    "selector": "p.fine.tc.fx.ac.jc.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "i.ph-bold.ph-info",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "span",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
     "selector": "a.fine.fx.ac.jc.gap6.mt8",
     "property": "color",
     "hex": "#c6c6c7"
@@ -1006,6 +1026,21 @@
   },
   {
     "selector": "div.col.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "p.fine.tc.fx.ac.jc.gap6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "i.ph-bold.ph-info",
+    "property": "color",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "span",
     "property": "color",
     "hex": "#e2e2e2"
   },
