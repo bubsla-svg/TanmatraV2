@@ -22,6 +22,7 @@ import { blankMember, type MemberDraft } from "@/lib/memberDraft";
 import {
   computeDeliveryPricePaise,
   computeTrialPricePaise,
+  cadenceDiscountPct,
 } from "@workspace/subscription-rules";
 import { checkPincode } from "@/lib/serviceablePincodes";
 import { useWizardState } from "@/lib/useWizardState";
@@ -1101,8 +1102,8 @@ export default function V2Subscribe() {
       badge: string | null;
     }[] = [
       { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", unit: "/week", best: false, badge: null },
-      { cad: "fortnightly", title: "2-Week Plan", desc: "Billed bi-weekly · save 10% · stops after Week 2.", unit: "/2 weeks", best: false, badge: null },
-      { cad: "monthly", title: "6-Week Plan", desc: "Prepaid · save 15% · stops after Week 6.", unit: "/6 weeks", best: true, badge: "Best Value" },
+      { cad: "fortnightly", title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.`, unit: "/2 weeks", best: false, badge: null },
+      { cad: "monthly", title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.`, unit: "/6 weeks", best: true, badge: "Best Value" },
     ];
     return (
       <div className="flex flex-col gap-6">

@@ -90,6 +90,7 @@ import {
 } from "@/lib/clinicalDiet";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
 import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
+import { cadenceDiscountPct } from "@workspace/subscription-rules";
 import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Shapes of the phone-OTP auth responses used by the guest-checkout flow.
@@ -2097,7 +2098,7 @@ export default function V2Checkout() {
             >
               <Sparkles className="w-4 h-4" style={{ color: "var(--safb)", marginTop: 2, flexShrink: 0 }} aria-hidden="true" />
               <div className="f1" style={{ minWidth: 0 }}>
-                <p className="small fw6">Make this a weekly subscription — save up to 15%</p>
+                <p className="small fw6">Make this a weekly subscription — save {cadenceDiscountPct("weekly")}%</p>
                 <p className="fine mt2">Skip checkout next week. Pause, swap or cancel any time.</p>
               </div>
               <ArrowRight className="w-3.5 h-3.5" style={{ color: "var(--safb)", marginTop: 4, flexShrink: 0 }} aria-hidden="true" />

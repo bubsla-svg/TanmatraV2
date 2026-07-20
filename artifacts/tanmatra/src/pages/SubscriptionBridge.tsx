@@ -121,7 +121,10 @@ export default function SubscriptionBridge() {
     );
   }
 
-  const start6WeekPlanUrl = `/subscribe?plan=healthy-everyday-plan&cadence=weekly&slots=lunch&daysMode=weekdays&duration=6`;
+  // The 6-week offer is the monthly cadence (CYCLE_WEEKS.monthly = 6).
+  // slots/daysMode/duration were dead params the wizard never read — the
+  // plan's advertisedBasis now seeds slots and days on ?plan= entry.
+  const start6WeekPlanUrl = `/subscribe?plan=healthy-everyday-plan&cadence=monthly`;
 
   return (
     <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>

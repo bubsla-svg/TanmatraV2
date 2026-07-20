@@ -23,7 +23,9 @@ import {
 // profile, cart) and a prominent search field that drops the user straight
 // into menu discovery. The chosen city persists per browser; exact pincode
 // serviceability is still confirmed at checkout.
-const SERVED_CITIES = ["Noida", "Delhi", "Gurgaon"] as const;
+// Noida is the only live service area — advertising Delhi/Gurgaon here let
+// users pick a city the kitchen cannot deliver to (register §E3).
+const SERVED_CITIES = ["Noida"] as const;
 const CITY_KEY = "tanmatra:deliver-city";
 
 // Rotating search hints — concrete, food-first, conversion-oriented.
