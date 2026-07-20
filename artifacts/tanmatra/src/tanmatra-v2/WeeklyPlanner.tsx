@@ -167,17 +167,30 @@ export default function V2WeeklyPlanner() {
 
   const handleSwap = async (dishId: number) => {
     if (!activePlan || !swapDialog) return;
+    const { dayIndex, slot } = swapDialog;
+    const chosen = swapDialog.suggestions.find((s) => s.dishId === dishId);
+    // Optimistic swap (Pillar 1): the target dish is already known, so apply it
+    // to the slot and close the sheet immediately — no spinner, no waiting on
+    // the round trip. Snapshot the plan first, then reconcile with the server's
+    // authoritative copy on success or roll straight back to the snapshot on
+    // failure. (Regenerate-day stays pessimistic on purpose: its result is
+    // server-generated and can't be predicted, so it shows a real busy state.)
+    const previousPlan = activePlan;
+    if (chosen) {
+      setActivePlan({
+        ...activePlan,
+        days: activePlan.days.map((day, i) =>
+          i === dayIndex ? { ...day, [slot]: chosen } : day,
+        ),
+      });
+    }
+    setSwapDialog(null);
     try {
-      const { plan } = await mealPlanApi.swapSlot(
-        activePlan.id,
-        swapDialog.dayIndex,
-        swapDialog.slot,
-        dishId,
-      );
+      const { plan } = await mealPlanApi.swapSlot(previousPlan.id, dayIndex, slot, dishId);
       setActivePlan(plan);
-      setSwapDialog(null);
       toast.success("Swapped");
     } catch (err) {
+      setActivePlan(previousPlan);
       toast.error((err as Error).message || "Swap rejected");
     }
   };
