@@ -40,6 +40,18 @@ export type CreditReason =
 
 export type TrialState = "trial_purchased" | "trial_active" | "trial_bridge_eligible" | "trial_ended_undecided" | "converted" | "ended_abandoned";
 
+/**
+ * A subscription is a LIVE trial while its trialState is any pre-decision
+ * stage. Live trials are marketed as one-time purchases ("does not
+ * auto-renew"), so they must NEVER have a recurring UPI Autopay token or
+ * mandate attached — only a conversion ("converted") re-enters the
+ * recurring path. Shared so the payment routes and the trial-bridge logic
+ * can never drift on this definition.
+ */
+export function isLiveTrialState(state: TrialState | null | undefined): boolean {
+  return state != null && state !== "converted" && state !== "ended_abandoned";
+}
+
 export interface SubscriptionItem {
   slug: string;
   name: string;
