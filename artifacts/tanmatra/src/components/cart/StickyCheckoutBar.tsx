@@ -8,6 +8,9 @@ import { DURATION, EASE } from "@/lib/motion";
 import { Zap, ShieldCheck } from "lucide-react";
 
 const HIDE_ON = [
+  // Home mounts its own StickyBottomBar cart bar — rendering this one too
+  // stacked two overlapping cart bars at the same bottom offset.
+  /^\/$/,
   /^\/cart\/?$/,
   /^\/checkout(\/.*)?$/,
   /^\/track(\/.*)?$/,
