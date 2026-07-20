@@ -1255,6 +1255,89 @@ router.post(
 );
 
 router.post(
+  "/subscription-deliveries/:id/unskip",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const deliveryId = parseIdParam(req.params.id, res, "deliveryId");
+    if (deliveryId === null) return;
+    const found = await loadDeliveryForUser(deliveryId, userId);
+    if (!found) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (found.delivery.status !== "skipped") {
+      res.status(400).json({ error: "delivery is not skipped" });
+      return;
+    }
+    // Same cutoff as skip: the kitchen window has passed, so a resurrected
+    // delivery could never actually be prepared.
+    if (isPastSkipCutoff(found.delivery.scheduledFor)) {
+      res.status(409).json({
+        error: "This delivery is too close to its delivery time to restore.",
+        code: "past_cutoff",
+        cutoffHours: SKIP_SWAP_CUTOFF_MS / 3_600_000,
+      });
+      return;
+    }
+
+    // Money-safety rule (mirror of skip's double-credit guard): NEVER flip a
+    // delivery back to upcoming without clawing back its skip credit in the
+    // same transaction. The credit DELETE is keyed on consumedAt IS NULL and
+    // uses .returning() as the guard — if the credit was already spent (or
+    // never existed) we abort WITHOUT touching the delivery, otherwise the
+    // customer would get the meals delivered AND keep the spent credit.
+    const outcome = await db.transaction(async (tx) => {
+      const clawedBack = await tx
+        .delete(mealCreditsTable)
+        .where(
+          and(
+            eq(mealCreditsTable.deliveryId, deliveryId),
+            eq(mealCreditsTable.reason, "skipped_delivery"),
+            isNull(mealCreditsTable.consumedAt),
+          ),
+        )
+        .returning({ id: mealCreditsTable.id });
+      if (clawedBack.length === 0) {
+        // Nothing deleted → nothing to roll back; safe to return inside the tx.
+        return { code: "credit_consumed" as const };
+      }
+      // Atomic transition guard keyed on status='skipped', same shape as the
+      // skip route's — of two concurrent unskips exactly one flips the row.
+      const [row] = await tx
+        .update(subscriptionDeliveriesTable)
+        .set({ status: "upcoming" })
+        .where(
+          and(
+            eq(subscriptionDeliveriesTable.id, deliveryId),
+            eq(subscriptionDeliveriesTable.status, "skipped"),
+          ),
+        )
+        .returning();
+      // Lost the race to a concurrent unskip: throw so the transaction rolls
+      // the credit DELETE back too — the winner's flip keeps exactly one
+      // clawed-back credit.
+      if (!row) throw new Error("unskip_conflict");
+      return { delivery: row };
+    }).catch((err: unknown) => {
+      if (err instanceof Error && err.message === "unskip_conflict") {
+        return { code: "credit_consumed" as const };
+      }
+      throw err;
+    });
+
+    if ("code" in outcome || !outcome.delivery) {
+      res.status(409).json({ error: "skip credit already used", code: "credit_consumed" });
+      return;
+    }
+    const updated = outcome.delivery;
+
+    invalidateUserBrief(userId);
+    res.json({ delivery: updated });
+  },
+);
+
+router.post(
   "/subscriptions/:id/skip",
   async (req: Request, res: Response) => {
     const userId = requireAuth(req, res);
