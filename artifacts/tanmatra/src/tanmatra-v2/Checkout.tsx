@@ -1711,7 +1711,8 @@ export default function V2Checkout() {
   // Single-scroll stepper derivation (PR #247): payment once the confirm
   // dialog opens, otherwise address. The section-gated mobile stepping that
   // drove this off the wizard step is deferred (see the useWizardState note).
-  const stepperStep: CheckoutStep = confirmOpen ? "payment" : "address";
+  // No address chosen yet → still "review"; jumping to "address" would falsely mark Review complete.
+  const stepperStep: CheckoutStep = confirmOpen ? "payment" : activeAddr ? "address" : "review";
   const stepperAddressComplete =
     !!activeAddr &&
     (fulfillmentType === "delivery"
@@ -2324,7 +2325,9 @@ export default function V2Checkout() {
                     }}
                     placeholder="VOUCHER CODE"
                     className="inp"
-                    style={{ flex: 1, minWidth: 0, height: 34, textTransform: "uppercase", letterSpacing: ".08em", fontSize: 11, ...(voucherError ? { borderColor: "var(--dgr)" } : {}) }}
+                    // 16px floor: any smaller and iOS Safari zoom-jumps the
+                    // whole money screen the moment this field is focused.
+                    style={{ flex: 1, minWidth: 0, height: 44, textTransform: "uppercase", letterSpacing: ".08em", fontSize: 16, ...(voucherError ? { borderColor: "var(--dgr)" } : {}) }}
                     disabled={redeemingVoucher}
                     aria-invalid={voucherError ? true : undefined}
                     aria-describedby={voucherError ? "voucher-error" : undefined}
