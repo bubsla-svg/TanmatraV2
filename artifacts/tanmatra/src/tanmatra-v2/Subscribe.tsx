@@ -18,6 +18,11 @@ import {
   CADENCE_LABEL,
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
+import {
+  CADENCE_WEEKS as CYCLE_WEEKS,
+  weeklyEquivalentPaise,
+  cadenceBilledLabel,
+} from "@/lib/subscriptionPricing";
 import { blankMember, type MemberDraft } from "@/lib/memberDraft";
 import {
   computeDeliveryPricePaise,
@@ -55,11 +60,8 @@ const TIME_WINDOWS = [
   "20:00 - 21:00",
 ];
 
-const CYCLE_WEEKS: Record<SubscriptionCadence, number> = {
-  weekly: 1,
-  fortnightly: 2,
-  monthly: 6, // Updated: Monthly cadence maps to 6 weeks
-};
+// CYCLE_WEEKS (cadence → billed weeks) is a single source of truth in
+// @/lib/subscriptionPricing, imported above under the same name.
 
 type MealSlot = "breakfast" | "lunch" | "dinner";
 const SLOT_ORDER: MealSlot[] = ["breakfast", "lunch", "dinner"];
@@ -1153,19 +1155,16 @@ export default function V2Subscribe() {
 
   // Render S3 Duration (Step 2)
   const renderS3Duration = () => {
-    const priceFor = (c: SubscriptionCadence) =>
-      F_Paise(getCalculatedPricePaise(c, cycleMeals, false));
     const OPTIONS: {
       cad: SubscriptionCadence;
       title: string;
       desc: string;
-      unit: string;
       best: boolean;
       badge: string | null;
     }[] = [
-      { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", unit: "/week", best: false, badge: null },
-      { cad: "fortnightly", title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.`, unit: "/2 weeks", best: false, badge: null },
-      { cad: "monthly", title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.`, unit: "/6 weeks", best: true, badge: "Best Value" },
+      { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", best: false, badge: null },
+      { cad: "fortnightly", title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.`, best: false, badge: null },
+      { cad: "monthly", title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.`, best: true, badge: "Best Value" },
     ];
     return (
       <div className="flex flex-col gap-6">
@@ -1214,8 +1213,13 @@ export default function V2Subscribe() {
                   <p className="fine text-white/55 mt-1">{o.desc}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="tnm-data text-sm font-bold text-white/95 font-mono">{priceFor(o.cad)}</div>
-                  <div className="fine text-[10px] text-white/45">{o.unit}</div>
+                  <div className="tnm-data text-sm font-bold text-white/95 font-mono">
+                    {F_Paise(weeklyEquivalentPaise(getCalculatedPricePaise(o.cad, cycleMeals, false), o.cad))}
+                    <span className="text-[10px] font-medium text-white/45"> /week</span>
+                  </div>
+                  <div className="fine text-[10px] text-white/45">
+                    {cadenceBilledLabel(getCalculatedPricePaise(o.cad, cycleMeals, false), o.cad, F_Paise)}
+                  </div>
                 </div>
               </button>
             );
