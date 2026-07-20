@@ -36,7 +36,8 @@ interface EnvCheck {
 const ENV_SPEC: Array<Omit<EnvCheck, "set">> = [
   { name: "DATABASE_URL", required: true, hint: "Postgres connection string (with sslmode=require)." },
   { name: "REDIS", required: true, hint: "Redis (BullMQ + rate-limit storage). Set REDIS_URL as a full redis:// URL, or REDIS_HOST + REDIS_PORT + REDIS_PASSWORD separately. Without it, the order pipeline silently disables in dev and crash-on-boot in prod." },
-  { name: "GOOGLE_API_KEY", required: true, hint: "Gemini key. Without it, every AI agent route returns an error." },
+  { name: "GOOGLE_API_KEY", required: true, hint: "Gemini key. Without it, every AI agent route returns an error. Also the Maps-geocoding fallback when GOOGLE_MAPS_API_KEY is unset — a Gemini-only key here breaks /geo/* and dispatch distances." },
+  { name: "GOOGLE_MAPS_API_KEY", required: false, hint: "Dedicated Maps key (Geocoding API) for /geo/reverse, /geo/search, and dispatch distances. Decouples Maps from Gemini key rotations." },
   { name: "ALLOWED_ORIGINS", required: true, hint: "Comma-separated origins for CORS. e.g. https://tanmatra.food" },
   { name: "ADMIN_USERNAME", required: true, hint: "Username for /admin/login." },
   { name: "ADMIN_PASSWORD_HASH", required: true, hint: "bcrypt hash of the admin password. Mint via POST /admin/_hash with x-admin-secret header." },

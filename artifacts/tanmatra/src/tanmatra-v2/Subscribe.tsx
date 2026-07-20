@@ -20,6 +20,7 @@ import {
 } from "@/lib/subscriptionsApi";
 import { blankMember, type MemberDraft } from "@/lib/memberDraft";
 import { checkPincode } from "@/lib/serviceablePincodes";
+import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";
 import GoalPlanChooser from "@/components/subscribe/GoalPlanChooser";
 import { F } from "./data";
 import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
@@ -37,6 +38,7 @@ import {
   Info,
   CreditCard,
   CaretRight,
+  MapPin,
 } from "@phosphor-icons/react";
 
 const TIME_WINDOWS = [
@@ -266,6 +268,12 @@ export default function V2Subscribe() {
     phone: "",
   });
   const [addressPrefilled, setAddressPrefilled] = useState(false);
+  // Search/GPS address picker (same self-contained overlay Checkout uses).
+  // `pickerSaved` gates the quiet confirmation row under the pincode field —
+  // it only appears after an explicit pick, never for a prefilled saved
+  // address, so the row always reflects a deliberate selection.
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [pickerSaved, setPickerSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
   // Honest error state for the Payment step: set whenever Razorpay resolves
@@ -1172,6 +1180,17 @@ export default function V2Subscribe() {
         {/* Noida/NCR Pincode Serviceability & Slot details */}
         <div className="card flex flex-col gap-4 border border-white/5" style={{ background: "var(--tnm-surface-ink-2)" }}>
           <div>
+            {/* Preferred path: search/GPS picker (same flow as Checkout). The
+                manual pincode input below stays as the untouched fallback. */}
+            <button
+              type="button"
+              onClick={() => setShowLocationPicker(true)}
+              className="btn btn-s btn-blk w-full flex items-center justify-center gap-1.5 text-xs font-semibold focus-ring-clinical mb-3"
+              style={{ height: 44 }}
+            >
+              <MapPin className="w-4 h-4" />
+              Search address or use my location
+            </button>
             <span className="text-[10px] uppercase font-bold text-white/45 mb-2 block">Pincode check</span>
             <input
               type="text"
@@ -1191,6 +1210,15 @@ export default function V2Subscribe() {
             {pincodeCheck.state === "serviceable" && (
               <p className="fine text-[var(--tnm-sage)] font-semibold mt-1.5 flex items-center gap-1">
                 <CheckCircle className="w-3.5 h-3.5" /> Servicing confirmed: {pincodeCheck.info.area} ({pincodeCheck.info.city})
+              </p>
+            )}
+            {/* Quiet confirmation of the picked address so the buyer sees what
+                was selected without scrolling to the later details step. */}
+            {pickerSaved && address.line.trim() && (
+              <p className="fine text-white/50 mt-1.5 leading-snug flex items-start gap-1.5">
+                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                Delivering to: {address.line}
+                {address.city.trim() ? `, ${address.city}` : ""}
               </p>
             )}
           </div>
@@ -1827,10 +1855,52 @@ export default function V2Subscribe() {
             </div>
           </div>
         )}
+
+        {/* Address search/GPS picker — self-contained overlay, same pattern as
+            Checkout. The merge below feeds the existing `address` state, so the
+            pincode gate (checkPincode useMemo) and the later details step's
+            street/phone inputs pick the result up with no extra wiring. */}
+        {/* No initialData, deliberately (Checkout's precedent): Subscribe
+            stores the address as ONE joined line, but the picker's
+            initialData contract is a SPLIT line1 (flat) / line2 (locality) —
+            round-tripping the joined string as line1 leaves locality empty
+            (save hard-blocks) and nests the address deeper on every cycle.
+            A truthy initialData also skips the picker's search/GPS step,
+            which would make this trigger's label a lie. */}
+        <LocationPickerFlow
+          open={showLocationPicker}
+          onOpenChange={setShowLocationPicker}
+          onSave={async (addressData) => {
+            const pickedPincode = String(addressData.pincode ?? "")
+              .replace(/\D/g, "")
+              .slice(0, 6);
+            setAddress((prev) => ({
+              ...prev,
+              label: addressData.label || prev.label,
+              line: [addressData.line1, addressData.line2].filter(Boolean).join(", "),
+              city: addressData.city || prev.city,
+              pincode: pickedPincode,
+              // A phone the buyer already typed wins — the picker's recipient
+              // phone only fills the gap.
+              phone: prev.phone.trim() ? prev.phone : (addressData.phone ?? ""),
+            }));
+            setPickerSaved(true);
+            // Cast: analytics.ts owns a closed EventName union and is outside
+            // this change's blast radius — add the literal there when that
+            // file is next touched.
+            track("subscribe_location_picker_saved" as Parameters<typeof track>[0], {
+              pincode: pickedPincode,
+            });
+          }}
+        />
       </div>
 
-      {/* Global StickyBottomBar integration (Step-locked wizard modes) */}
-      {step < 7 && (
+      {/* Global StickyBottomBar integration (Step-locked wizard modes).
+          Unmounted while the location picker overlay is open: the bar sits at
+          z-[900], the shared picker at zIndex 60 (Checkout's own bar is 30) —
+          left mounted it would cover the picker's Save footer on mobile and
+          keep its Continue CTA clickable above the modal backdrop. */}
+      {step < 7 && !showLocationPicker && (
         <StickyBottomBar
           context="builder"
           step={step}

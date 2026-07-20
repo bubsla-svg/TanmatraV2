@@ -37,6 +37,7 @@ import {
   fetchRazorpayPayment,
   upsertActiveMandate,
 } from "../lib/razorpayRecurring";
+import { encryptClinicalStrings, decryptClinicalStrings } from "../lib/crypto";
 
 const router: IRouter = Router();
 
@@ -477,9 +478,9 @@ async function validateDishForSubscription(
       ...members.map((m) => ({
         id: m.id,
         diet: m.diet,
-        allergens: m.allergens ?? [],
-        medicalConditions: m.medicalConditions ?? [],
-        dislikedIngredients: m.dislikedIngredients ?? [],
+        allergens: decryptClinicalStrings(m.allergens),
+        medicalConditions: decryptClinicalStrings(m.medicalConditions),
+        dislikedIngredients: decryptClinicalStrings(m.dislikedIngredients),
       })),
     );
   }
@@ -827,9 +828,9 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
           subscriptionId: sub.id,
           name: m.name,
           diet: m.diet,
-          allergens: m.allergens,
-          medicalConditions: m.medicalConditions,
-          dislikedIngredients: m.dislikedIngredients,
+          allergens: encryptClinicalStrings(m.allergens),
+          medicalConditions: encryptClinicalStrings(m.medicalConditions),
+          dislikedIngredients: encryptClinicalStrings(m.dislikedIngredients),
           lifestyle: m.lifestyle,
           spiceLevel: m.spiceLevel,
           dailyCalorieTarget: m.dailyCalorieTarget ?? accountHolderTargets?.calorieTarget ?? null,
@@ -913,7 +914,13 @@ router.get("/subscriptions/:id", async (req: Request, res: Response) => {
       .limit(1)
       .then((rows) => rows[0] ?? null),
   ]);
-  res.json({ subscription: sub, members, deliveries, mandate });
+  const decryptedMembers = members.map((m) => ({
+    ...m,
+    allergens: decryptClinicalStrings(m.allergens),
+    medicalConditions: decryptClinicalStrings(m.medicalConditions),
+    dislikedIngredients: decryptClinicalStrings(m.dislikedIngredients),
+  }));
+  res.json({ subscription: sub, members: decryptedMembers, deliveries, mandate });
 });
 
 // Shared "upcoming → paused" delivery transition. Used by the customer-
@@ -1139,10 +1146,24 @@ router.post(
     }
     const [member] = await db
       .insert(subscriptionMembersTable)
-      .values({ subscriptionId: subId, ...parsed.data })
+      .values({
+        subscriptionId: subId,
+        ...parsed.data,
+        allergens: encryptClinicalStrings(parsed.data.allergens),
+        medicalConditions: encryptClinicalStrings(parsed.data.medicalConditions),
+        dislikedIngredients: encryptClinicalStrings(parsed.data.dislikedIngredients),
+      })
       .returning();
     invalidateUserBrief(userId);
-    res.status(201).json({ member });
+    const decryptedMember = member
+      ? {
+          ...member,
+          allergens: decryptClinicalStrings(member.allergens),
+          medicalConditions: decryptClinicalStrings(member.medicalConditions),
+          dislikedIngredients: decryptClinicalStrings(member.dislikedIngredients),
+        }
+      : member;
+    res.status(201).json({ member: decryptedMember });
   },
 );
 

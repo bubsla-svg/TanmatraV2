@@ -1,9 +1,10 @@
 /**
  * Address → (lat,lng) geocoding.
  *
- * We try the Google Maps Geocoding API first (requires GOOGLE_API_KEY) so
- * dispatch distances and batching radii are real. If the API key is
- * missing, the network request fails, the result is empty, or the call
+ * We try the Google Maps Geocoding API first (GOOGLE_MAPS_API_KEY, falling
+ * back to the shared GOOGLE_API_KEY — see routes/geo.ts for why the split
+ * exists) so dispatch distances and batching radii are real. If the API key
+ * is missing, the network request fails, the result is empty, or the call
  * times out, we fall back to the deterministic synthetic helper in
  * `dispatch.addressLatLng` so dispatch never breaks because the geocoder
  * is unhappy.
@@ -51,7 +52,7 @@ function rememberCoord(key: string, coord: { lat: number; lng: number }): void {
 async function googleGeocode(
   addr: GeocodeAddress,
 ): Promise<{ lat: number; lng: number } | null> {
-  const apiKey = process.env["GOOGLE_API_KEY"];
+  const apiKey = process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_API_KEY"];
   if (!apiKey) return null;
   const parts = [addr.line, addr.city, addr.pincode, "India"]
     .map((p) => (p ?? "").trim())

@@ -15,6 +15,25 @@ export function validateEnv(): void {
   // Hard requirement — no DB, no app.
   if (!process.env["DATABASE_URL"]) missingRequired.push("DATABASE_URL");
 
+  // Hard requirement in production — the KMS master key that encrypts
+  // DPDPA-sensitive subscription-member clinical fields (medicalConditions /
+  // allergens / dislikedIngredients) at rest. Without it, member create/read
+  // throws at request time; we fail fast at boot instead so a misconfigured
+  // deploy is caught at the health check rather than as per-request 500s, and
+  // clinical data can never silently fall back to plaintext. Any one of the
+  // aliases accepted by lib/db's resolveMasterKey satisfies this.
+  if (
+    isProd &&
+    !(
+      process.env["CLINICAL_KMS_MASTER_KEY"] ||
+      process.env["MASTER_KEY"] ||
+      process.env["DPDPA_MASTER_KEY_HEX"] ||
+      process.env["CLINICAL_MASTER_KEY_HEX"]
+    )
+  ) {
+    missingRequired.push("CLINICAL_KMS_MASTER_KEY");
+  }
+
   if (isProd) {
     if ((process.env["ADMIN_SESSION_SECRET"] || "").length < 32) {
       warnings.push("ADMIN_SESSION_SECRET is missing or < 32 chars — admin login is insecure/disabled");
@@ -30,6 +49,14 @@ export function validateEnv(): void {
     }
     if (!process.env["GOOGLE_API_KEY"]) {
       warnings.push("GOOGLE_API_KEY unset — Gemini AI agents (coach/support/ops/reorder/CMS) and server-side geocoding return errors");
+    }
+    // Maps geocoding rides on GOOGLE_API_KEY unless GOOGLE_MAPS_API_KEY is
+    // set. A Gemini-only rotation of GOOGLE_API_KEY without the Maps var
+    // breaks /geo/* and dispatch geocoding (observed live 2026-07-20).
+    if (process.env["GOOGLE_API_KEY"] && !process.env["GOOGLE_MAPS_API_KEY"]) {
+      warnings.push(
+        "GOOGLE_MAPS_API_KEY unset — Maps geocoding (/geo/reverse, /geo/search, dispatch distances) shares GOOGLE_API_KEY; ensure that key has the Geocoding API enabled, or set a dedicated Maps key",
+      );
     }
 
     // Twilio powers OPTIONAL server-sent SMS only: delivery-delay alerts,

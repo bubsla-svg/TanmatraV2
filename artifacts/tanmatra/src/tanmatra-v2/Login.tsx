@@ -25,8 +25,6 @@ export default function V2Login() {
   const { refresh: refreshPreferences } = usePreferences();
   const rawNext = params.get("next") ?? "/";
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
-  const UNLOCK_PHRASE = "tanmatra-ops-2026";
-  const adminShortcutVisible = import.meta.env.DEV || params.get("unlock") === UNLOCK_PHRASE;
 
   const [step, setStep] = useState<Step>("phone");
   const [countryCode, setCountryCode] = useState("+91");
@@ -57,14 +55,6 @@ export default function V2Login() {
     const t = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(t);
   }, [resendIn]);
-
-  const enterAdminMode = () => {
-    try {
-      window.localStorage.setItem("tanmatra:admin:v1", "1");
-      toast.success("Admin mode enabled (dev only)");
-      navigate(next.startsWith("/") ? next : "/admin/ops", { replace: true });
-    } catch { toast.error("Could not enable admin mode"); }
-  };
 
   const sendOtp = async () => {
     const digits = phone.replace(/\D/g, "");
@@ -196,14 +186,6 @@ export default function V2Login() {
           <div id="recaptcha-container" style={{ position: "fixed", bottom: 0, right: 0, zIndex: 50, pointerEvents: "none" }} />
 
           <div className="fine tc mt14"><i className="ph-bold ph-shield-check" style={{ color: "var(--sage)" }} /> Secured by Firebase</div>
-
-          {adminShortcutVisible && (
-            <>
-              <div style={{ borderTop: "1px solid var(--ln)", margin: "12px 0" }} />
-              <button className="btn btn-g btn-blk" onClick={enterAdminMode}><i className="ph-bold ph-pulse" /> Continue as Operations</button>
-              <div className="fine tc mt6">Internal shortcut to /admin</div>
-            </>
-          )}
         </div>
       </div>
 

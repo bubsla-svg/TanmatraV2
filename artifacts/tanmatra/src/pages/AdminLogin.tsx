@@ -9,8 +9,6 @@ import { toast } from "sonner";
 
 import { apiPath } from "@/lib/apiBase";
 
-const ADMIN_KEY = "tanmatra:admin:v1";
-
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -51,11 +49,6 @@ export default function AdminLogin() {
         setError(msg);
         toast.error(msg);
         return;
-      }
-      try {
-        window.localStorage.setItem(ADMIN_KEY, "1");
-      } catch {
-        /* ignore */
       }
       toast.success("Welcome back, admin");
       navigate(next, { replace: true });
