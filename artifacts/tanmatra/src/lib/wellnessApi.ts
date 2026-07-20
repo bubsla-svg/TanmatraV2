@@ -107,6 +107,10 @@ export interface ManualLogPayload {
 export const wellnessApi = {
   today: () => request<WellnessTodayResponse>("/wellness/today"),
   week: () => request<WellnessWeekResponse>("/wellness/week"),
+  streaks: () =>
+    request<{ streaks: { protein: Streak | null; veg: Streak | null } }>(
+      "/wellness/streaks",
+    ),
   log: (payload: ManualLogPayload) =>
     request<{ log: NutritionLog }>("/wellness/log", {
       method: "POST",

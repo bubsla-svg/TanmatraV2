@@ -274,7 +274,9 @@ export default function V2ZenTracker() {
         {/* Minimal header / appbar */}
         <div className="appbar" style={{ borderBottom: "1px solid var(--ln)" }}>
           <Link className="iconbtn" to="/menu" aria-label="Menu"><i className="ph-bold ph-arrow-left" /></Link>
-          <div className="abt tc"><span className="lab" style={{ fontSize: 11, color: "var(--safb)" }}>Tanmatra</span></div>
+          {/* §5.2 naming fix: this calm-ring surface is the "Live Kitchen" —
+              the Zen Tracker name moved to the habit/streak strip. */}
+          <div className="abt tc"><span className="lab" style={{ fontSize: 11, color: "var(--safb)" }}>Live Kitchen</span></div>
           <Link className="iconbtn" to={`/track?orderId=${orderId ?? ""}`} aria-label="Details" style={{ fontSize: 13, fontWeight: 600, width: "auto", padding: "0 12px" }}>Details</Link>
         </div>
 

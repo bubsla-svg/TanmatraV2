@@ -13,6 +13,9 @@ import {
   getRdMember,
   listRds,
 } from "@/lib/rdBookingData";
+import { getSocket } from "@/lib/socket";
+import { useSocketStatus } from "@/lib/useSocketStatus";
+import { track } from "@/lib/analytics";
 import { toast } from "sonner";
 
 function fmtDateTime(iso: string) {
@@ -557,6 +560,7 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const member = getRdMember(rdSlug);
+  const { connected: socketConnected } = useSocketStatus();
 
   const refresh = useCallback(async () => {
     try {
@@ -571,6 +575,31 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
     refresh();
   }, [refresh]);
 
+  // §5.5.1 realtime: join this thread's `rd:message` room (server-side auth in
+  // api-server lib/realtime.ts — patients may only join their own thread) and
+  // live-append incoming messages. Refresh-on-send stays as the fallback path,
+  // so a dropped socket only degrades to today's behaviour, never below it.
+  useEffect(() => {
+    const socket = getSocket();
+    const subscribe = () => socket.emit("subscribe:rd-thread", { rdSlug });
+    const onMessage = (payload: { rdSlug?: string; message?: RdMessage }) => {
+      const msg = payload?.message;
+      if (!msg || payload.rdSlug !== rdSlug) return;
+      setMessages((prev) =>
+        prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
+      );
+    };
+    subscribe();
+    socket.on("rd:message", onMessage);
+    // Rooms don't survive a reconnect — re-join whenever the socket comes back.
+    socket.on("connect", subscribe);
+    return () => {
+      socket.off("rd:message", onMessage);
+      socket.off("connect", subscribe);
+      socket.emit("unsubscribe:rd-thread", { rdSlug });
+    };
+  }, [rdSlug]);
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -578,10 +607,22 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
   async function send() {
     const t = body.trim();
     if (!t) return;
+    // Thread age measured from the oldest message (rows arrive oldest-first).
+    const firstMessage = messages[0];
+    const threadAgeDays = firstMessage
+      ? Math.max(
+          0,
+          Math.floor(
+            (Date.now() - new Date(firstMessage.createdAt).getTime()) /
+              86_400_000,
+          ),
+        )
+      : 0;
     setSending(true);
     try {
       await rdAdvisoryApi.sendMessage(rdSlug, t);
       setBody("");
+      track("rd_message_sent", { thread_age_days: threadAgeDays });
       refresh();
     } catch (e) {
       toast.error("Could not send", { description: String(e) });
@@ -612,6 +653,21 @@ function ChatTab({ rdSlug }: { rdSlug: string }) {
           </span>
           {member && <div className="fine clamp1">{member.title}</div>}
         </div>
+        {socketConnected && (
+          <span className="pill sg" style={{ flex: "none" }} aria-label="Live chat connected">
+            <span
+              aria-hidden="true"
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "var(--sage)",
+                display: "inline-block",
+              }}
+            />
+            Live
+          </span>
+        )}
       </div>
       <div
         style={{

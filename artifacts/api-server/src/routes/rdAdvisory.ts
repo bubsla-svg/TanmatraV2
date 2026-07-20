@@ -3,6 +3,7 @@ import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { emitRdMessage } from "../lib/realtime";
 import {
   db,
   rdAppointmentsTable,
@@ -915,6 +916,11 @@ router.post("/rd/messages", async (req: Request, res: Response) => {
       body: parsed.data.body,
     })
     .returning();
+  // Realtime fan-out to the (rdSlug, threadUserId) room — both the patient
+  // and the mapped RD receive it live (see lib/realtime.ts room auth).
+  if (row) {
+    emitRdMessage(parsed.data.rdSlug, targetUserId, { ...row });
+  }
   res.status(201).json({ message: row });
 });
 
