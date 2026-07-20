@@ -14,21 +14,13 @@ function useAdminAuth(): AdminAuthState {
           credentials: "include",
         });
         if (cancelled) return;
-        if (res.ok) {
-          setState("authed");
-        } else if (typeof window !== "undefined" && window.localStorage.getItem("tanmatra:admin:v1") === "1") {
-          setState("authed");
-        } else {
-          setState("anon");
-        }
+        // Trust only the server session cookie via /admin/me. A client-set
+        // localStorage flag is not an auth signal (the API enforces admin
+        // scope independently), so never fall back to it.
+        setState(res.ok ? "authed" : "anon");
       } catch {
-        if (!cancelled) {
-          if (typeof window !== "undefined" && window.localStorage.getItem("tanmatra:admin:v1") === "1") {
-            setState("authed");
-          } else {
-            setState("anon");
-          }
-        }
+        // Network error — redirect to login rather than trust any local state.
+        if (!cancelled) setState("anon");
       }
     })();
     return () => {
