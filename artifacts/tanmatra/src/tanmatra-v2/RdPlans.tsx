@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { PLAN_FROM_PRICE_PER_WEEK_PAISE,
+import { planCardPricePaise,
   RD_PLANS,
   PLAN_GOAL_LABEL,
   recommendPlansForPreferences,
@@ -165,7 +165,7 @@ export default function V2RdPlans() {
                           {PLAN_GOAL_LABEL[plan.goal]}
                         </span>
                         <span className="price safc" style={{ fontSize: 14 }}>
-                          {formatRupees(PLAN_FROM_PRICE_PER_WEEK_PAISE)}
+                          {formatRupees(planCardPricePaise(plan))}
                           <span className="fntc" style={{ fontSize: 11 }}> /wk</span>
                         </span>
                       </div>
@@ -259,7 +259,7 @@ export default function V2RdPlans() {
                       <div style={{ flex: "none", textAlign: "right" }}>
                         <div className="lab">from</div>
                         <div className="price safc" style={{ fontSize: 18 }}>
-                          {formatRupees(PLAN_FROM_PRICE_PER_WEEK_PAISE)}
+                          {formatRupees(planCardPricePaise(plan))}
                         </div>
                         <div className="lab">/ week</div>
                       </div>

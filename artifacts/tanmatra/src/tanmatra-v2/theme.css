@@ -211,20 +211,6 @@
 .tnm2 .clamp1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tnm2 .tl{text-align:right}
 
-/* ---- V2 persistent bottom navigation dock (BottomDock.tsx) --------------
- * Fixed thumb-zone bar. Rendered outside a page's `.tnm2` wrapper, so the
- * element carries `.tnm2` itself to resolve the design tokens. Uses a unique
- * `.bdock` namespace to avoid colliding with the in-device `.dock` class. */
-.tnm2.bdock{position:fixed;bottom:0;left:0;right:0;z-index:60;min-height:0;height:auto;background:rgba(10,12,13,.82);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border-top:1px solid var(--ln);padding-bottom:var(--safe-bottom,0px)}
-.tnm2 .bdock-list{display:grid;grid-template-columns:repeat(4,1fr);margin:0;padding:0;list-style:none}
-.tnm2 .bdock-item{display:flex}
-.tnm2 .bdock-link{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;min-height:60px;padding:8px 4px;color:var(--mut);text-decoration:none;transition:color 150ms var(--e)}
-.tnm2 .bdock-link:active{color:var(--tx)}
-.tnm2 .bdock-link.on{color:var(--safb)}
-.tnm2 .bdock-icon{font-size:22px;line-height:1}
-.tnm2 .bdock-label{font-size:10.5px;font-weight:600;letter-spacing:.01em;line-height:1}
-@media (prefers-reduced-motion:reduce){.tnm2 .bdock-link{transition:none}}
-
 /* ────────────────────────────────────────────────────────────────────────
  * Home conversion funnel (Zomato-style). All interactive tiles use fixed /
  * reserved heights so nothing reflows as data (address, images) loads → CLS 0.

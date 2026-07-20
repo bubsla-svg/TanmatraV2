@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { cadenceDiscountPct } from "@workspace/subscription-rules";
 import { F } from "./data";
 import { useQuery } from "@tanstack/react-query";
 import { loyaltyApi } from "@/lib/loyaltyApi";
@@ -161,7 +162,9 @@ export default function V2Cart() {
                         <span className={item.isVeg ? "vd" : "vd nv"} />
                         <Link to={`/dish/${item.slug}`} className="small clamp1" style={{ fontWeight: 600 }}>{item.name}</Link>
                       </div>
-                      <button className="qbtn" style={{ width: 30, height: 30 }} onClick={() => { removeItem(item.lineId); toast.success("Item removed from your order"); }} aria-label={`Remove ${item.name}`}><i className="ph-bold ph-trash" style={{ fontSize: 14 }} /></button>
+                      {/* Full 44px .qbtn target — the 30×30 override sat one mis-tap from
+    the item link and deleted a line (WCAG 2.5.5 / fat-finger). */}
+<button className="qbtn" onClick={() => { removeItem(item.lineId); toast.success("Item removed from your order"); }} aria-label={`Remove ${item.name}`}><i className="ph-bold ph-trash" style={{ fontSize: 14 }} /></button>
                     </div>
                     <div className="fine mt2" style={{ textTransform: "capitalize" }}>{kitchenLabel} · {item.macros.calories} kcal</div>
 
@@ -241,7 +244,7 @@ export default function V2Cart() {
           </div>
 
           <StartGroupOrderButton />
-          <Link to="/subscribe?fromCart=1" className="fine tc mt10" style={{ color: "var(--safb)", display: "block" }}>Subscribe to weekly delivery — save 10% →</Link>
+          <Link to="/subscribe?fromCart=1" className="fine tc mt10" style={{ color: "var(--safb)", display: "block" }}>Subscribe to weekly delivery — save {cadenceDiscountPct("weekly")}% →</Link>
           <div className="fine tc mt6"><i className="ph-bold ph-lock-simple" /> Secured by Razorpay · SSL encrypted</div>
         </div>
 

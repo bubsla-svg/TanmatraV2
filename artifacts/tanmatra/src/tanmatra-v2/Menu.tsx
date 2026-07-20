@@ -43,6 +43,7 @@ import { groupCatalogDishes, type ConsolidatedDish } from "@/lib/menuVariants";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError } from "@/lib/imgFallback";
 import { evaluateDishForPreferences, rankDishesForPreferences } from "@/lib/preferencesMatch";
+import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
 import { toast } from "sonner";
 
 /* Full-parity re-port of the System-A Menu (git 2507084, 1489 lines) into the
@@ -631,7 +632,7 @@ export default function V2Menu() {
           {/* Delivery promise */}
           <div className="note mb10" style={{ background: "var(--safd)", borderColor: "var(--saf)", color: "var(--safb)" }}>
             <i className="ph-fill ph-lightning" />
-            <span>Delivered fresh to your doorstep in <b>25–40 minutes</b></span>
+            <span>Delivered fresh to your doorstep in <b>{DELIVERY_ETA_TEXT}</b></span>
           </div>
 
           {/* Protocol tagline */}

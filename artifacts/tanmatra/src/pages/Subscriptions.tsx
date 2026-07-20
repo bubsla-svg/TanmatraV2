@@ -9,6 +9,10 @@ export const meta: MetaFunction = () => [
 
 export const handle = { chrome: false };
 
+// Money-CUJ crash containment (Pillar 2): render a styled recovery
+// screen instead of a white screen; cart/drafts survive the reload.
+export { MoneyPathErrorBoundary as ErrorBoundary } from "@/components/checkout/MoneyPathErrorBoundary";
+
 export default function Subscriptions() {
   return <V2Subscriptions />;
 }

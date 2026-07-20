@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Stethoscope,
 } from "@phosphor-icons/react";
-import { getRdPlanBySlug } from "@/lib/rdPlans";
+import { getRdPlanBySlug, planCardPricePaise } from "@/lib/rdPlans";
 import { RD_BOOKING } from "@/lib/rdBookingData";
 import { rdsForProtocol } from "@/lib/protocols";
 import { TEAM } from "@/lib/teamData";
@@ -360,7 +360,7 @@ export default function CareLandingView({ condition }: { condition: CareConditio
             </div>
             <div className="shrink-0 md:text-right space-y-3">
               <p className="text-3xl font-bold text-nn-primary tabular-nums">
-                {formatPrice(plan.pricePerWeekPaise)}
+                {formatPrice(planCardPricePaise(plan))}
                 <span className="block text-[11px] text-nn-on-surface-variant font-medium mt-1">
                   per week · GST included
                 </span>

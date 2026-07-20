@@ -3,6 +3,7 @@ import { useLocation } from "react-router";
 import { Sparkles, X } from "lucide-react";
 import IntakeQuiz from "./IntakeQuiz";
 import { usePreferences } from "@/lib/preferencesContext";
+import { useCart } from "@/lib/cartContext";
 import { isSoftGateResolved } from "@/components/onboarding/SoftGate";
 
 // Store the dismissal as a timestamp in localStorage rather than a flag
@@ -22,6 +23,7 @@ function isDismissed(): boolean {
 
 export default function OnboardingQuizGate() {
   const { needsQuiz } = usePreferences();
+  const { items: cartItems } = useCart();
   const location = useLocation();
   const [bannerVisible, setBannerVisible] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
@@ -79,6 +81,11 @@ export default function OnboardingQuizGate() {
   const handleQuizChange = (open: boolean) => {
     setQuizOpen(open);
   };
+
+  // The z-45 sticky cart bar paints over this z-30 banner at the same bottom
+  // offset — stay out of the way while the cart has items; the quiz nudge
+  // returns once the cart bar is gone.
+  if (cartItems.length > 0) return null;
 
   return (
     <>

@@ -12,6 +12,7 @@ import {
   deliverySlotsTable,
   slotReservationsTable,
   subscriptionMandatesTable,
+  isLiveTrialState,
   type SubscriptionCadence,
   type SubscriptionItem,
   type SubscriptionDelivery,
@@ -2287,7 +2288,7 @@ router.post(
           throw new Error("subscription not found");
         }
 
-        const isTrial = sub.trialState != null && sub.trialState !== "converted" && sub.trialState !== "ended_abandoned";
+        const isTrial = isLiveTrialState(sub.trialState);
         if (!isTrial) {
           throw new Error("subscription is not an active trial");
         }

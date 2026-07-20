@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useParams, Navigate } from "react-router";
-import { PLAN_FROM_PRICE_PER_WEEK_PAISE,
+import { planCardPricePaise,
   getRdPlanBySlug,
   resolvePlanWeek,
   getRdAuthor,
@@ -74,7 +74,7 @@ export default function V2RdPlanDetail() {
           <div className="fx ac jb mt14">
             <div>
               <div className="lab mb4">FROM</div>
-              <span className="price safc" style={{ fontSize: 22 }}>{F(PLAN_FROM_PRICE_PER_WEEK_PAISE)}</span>
+              <span className="price safc" style={{ fontSize: 22 }}>{F(planCardPricePaise(plan))}</span>
               <span className="fine" style={{ fontSize: 12 }}> / week</span>
             </div>
             <Link className="btn btn-p" to={`/subscribe?plan=${plan.slug}`}>Subscribe<i className="ph-bold ph-arrow-right" /></Link>
@@ -197,7 +197,7 @@ export default function V2RdPlanDetail() {
         {/* Persistent CTA */}
         <div className="dock" style={{ position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 0, width: "100%", maxWidth: 480 }}>
           <Link className="btn btn-p btn-lg btn-blk" to={`/subscribe?plan=${plan.slug}`}>
-            Subscribe — from <span className="price">{F(PLAN_FROM_PRICE_PER_WEEK_PAISE)}</span>/week
+            Subscribe — from <span className="price">{F(planCardPricePaise(plan))}</span>/week
             <i className="ph-bold ph-arrow-right" />
           </Link>
         </div>

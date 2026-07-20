@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { addressesApi } from "@/lib/userAddressesApi";
 import { usePreferences } from "@/lib/preferencesContext";
+import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
 
 /* Viewport 1 — Trust header.
  * Location selector (real default address area if saved, else neutral
@@ -101,7 +102,7 @@ export default function TrustHeader() {
       <div className="fx ac jb mt10">
         <span className="fine">
           <i className="ph-fill ph-shield-check" style={{ color: "var(--sage)" }} /> RD-verified kitchen ·
-          Fresh in 25–40 min
+          Fresh in {DELIVERY_ETA_TEXT}
         </span>
         <button
           type="button"

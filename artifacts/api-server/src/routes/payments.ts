@@ -8,6 +8,7 @@ import {
   subscriptionsTable,
   subscriptionMandatesTable,
   subscriptionDeliveriesTable,
+  isLiveTrialState,
 } from "@workspace/db";
 import { and, eq, asc } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -68,6 +69,7 @@ async function registerAutopayMandate(
     .select({
       subscriptionId: subscriptionDeliveriesTable.subscriptionId,
       cadence: subscriptionsTable.cadence,
+      trialState: subscriptionsTable.trialState,
     })
     .from(subscriptionDeliveriesTable)
     .innerJoin(
@@ -78,6 +80,17 @@ async function registerAutopayMandate(
     .limit(1);
 
   if (!subDelivery) return null;
+
+  // Defense in depth with the order-create guard above: a live trial must
+  // never end up with an active mandate row, whichever payment path
+  // (verify or webhook) confirmed it.
+  if (isLiveTrialState(subDelivery.trialState)) {
+    log.info(
+      { orderId, subscriptionId: subDelivery.subscriptionId },
+      "skipping autopay mandate registration for live trial subscription"
+    );
+    return null;
+  }
 
   let payment;
   try {
@@ -188,7 +201,16 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
       )
       .limit(1);
 
-    if (sub && (sub.cadence === "weekly" || sub.cadence === "fortnightly")) {
+    // Live trials are sold as one-time ("does not auto-renew") on every
+    // surface, so they must never get a recurring token — even though they
+    // reuse cadence:"weekly" for scheduling. Only a converted trial
+    // re-enters the recurring path (isLiveTrialState is false once
+    // trialState becomes "converted").
+    if (
+      sub &&
+      !isLiveTrialState(sub.trialState) &&
+      (sub.cadence === "weekly" || sub.cadence === "fortnightly")
+    ) {
       isRecurring = true;
       try {
         razorpayCustomerId = await getOrCreateRazorpayCustomer(

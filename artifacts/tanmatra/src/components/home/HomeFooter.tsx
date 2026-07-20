@@ -44,7 +44,7 @@ export default function HomeFooter() {
 
           <div className="flex flex-col gap-0.5 mt-1">
             <span className="font-semibold text-white/70">Delivery Areas</span>
-            <p className="fine text-white/45">Serving select sectors across Delhi, Noida, and Gurgaon.</p>
+            <p className="fine text-white/45">Serving select sectors across Noida.</p>
           </div>
         </div>
 

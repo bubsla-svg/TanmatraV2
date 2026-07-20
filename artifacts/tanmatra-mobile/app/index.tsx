@@ -1,6 +1,8 @@
 import {createBaseEvent, trackEvent} from '@/lib/analytics/track';
 import {readTodayActivity, API_BASE} from '@/lib/activity';
 import {clearToken, loadToken, saveToken} from '@/lib/auth';
+import {useColors} from '@/hooks/useColors';
+import {useQueryClient} from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
@@ -16,22 +18,11 @@ import {
   View,
 } from 'react-native';
 
-const c = {
-  background: '#09090b',
-  foreground: '#fafafa',
-  mutedForeground: '#a1a1aa',
-  zinc: '#71717a',
-  borderStrong: '#27272a',
-  radius: 12,
-  cardElevated: '#18181b',
-  primary: '#10b981',
-  destructive: '#ef4444',
-};
-
 const topPad = 10;
 const bottomPad = 10;
 
-function Card({children}: {children?: any}) {
+function Card({children}: {children?: React.ReactNode}) {
+  const c = useColors();
   return (
     <View
       style={{
@@ -46,7 +37,8 @@ function Card({children}: {children?: any}) {
   );
 }
 
-function Label({children}: {children?: any}) {
+function Label({children}: {children?: React.ReactNode}) {
+  const c = useColors();
   return (
     <Text
       style={{
@@ -68,6 +60,7 @@ function Button({
   onPress: () => void | Promise<void>;
   testID?: string;
 }) {
+  const c = useColors();
   // Guard against double-taps: while an async handler is in flight the button
   // is disabled and shows a spinner, so a second tap can't fire a duplicate
   // connect/sync/pair request.
@@ -95,11 +88,11 @@ function Button({
         opacity: pending ? 0.6 : 1,
       }}>
       {pending ? (
-        <ActivityIndicator color="#ffffff" />
+        <ActivityIndicator color={c.primaryForeground} />
       ) : (
         <Text
           style={{
-            color: '#ffffff',
+            color: c.primaryForeground,
             fontFamily: 'Inter_600SemiBold',
             fontSize: 14,
           }}>
@@ -124,26 +117,35 @@ function providerLabel(p: string): string {
       : 'Unknown Health Source';
 }
 
-function relativeTime(isoString?: string): string {
-  if (!isoString) return 'just now';
-  return '2 mins ago';
+function relativeTime(isoString: string): string {
+  const then = new Date(isoString).getTime();
+  if (Number.isNaN(then)) return 'unknown';
+  const diffMs = Date.now() - then;
+  if (diffMs < 60_000) return 'just now';
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hr${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
 }
 
 
 export default function HomeScreen() {
+  const c = useColors();
   const [token, setTokenState] = useState<string | null>(null);
   const [tokenReady, setTokenReady] = useState<boolean>(false);
   const [tokenInput, setTokenInput] = useState<string>('');
   const [stepsInput, setStepsInput] = useState<string>('');
   const [kcalInput, setKcalInput] = useState<string>('');
   const [showPairHelp, setShowPairHelp] = useState<boolean>(false);
-  const [isConnected, setIsConnected] = useState<boolean>(true);
+  // Honest defaults: nothing is "connected" and nothing has "synced" until
+  // the user actually does it in this session — the previous fabricated
+  // `true` / `new Date()` pair rendered "Connected · Last sync 2 mins ago"
+  // on a fresh install that had never synced anything.
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-
-  const wearableLink = useMemo(
-    () => ({lastSyncedAt: new Date().toISOString()}),
-    [],
-  );
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | undefined>(undefined);
 
   const provider = useMemo(() => {
     return Platform.OS === 'ios'
@@ -209,11 +211,23 @@ export default function HomeScreen() {
     }
   }, []);
 
+  // Pull-to-refresh re-reads today's totals from the native health source
+  // (no-op prefill when the store isn't available, e.g. Expo Go) — the
+  // previous implementation refreshed nothing and just closed the spinner.
   const refreshAll = useCallback(async () => {
-    setRefreshing(false);
+    setRefreshing(true);
+    try {
+      const reading = await readTodayActivity();
+      if (reading) {
+        setStepsInput(String(reading.steps));
+        setKcalInput(String(reading.activityKcal));
+      }
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
 
-  const queryClient = useMemo(() => ({clear: () => {}}), []);
+  const queryClient = useQueryClient();
 
   const connect = useMemo(
     () => ({
@@ -298,6 +312,35 @@ export default function HomeScreen() {
       Alert.alert(
         'Invalid token',
         'Paste the device pairing token from the web app.',
+      );
+      return;
+    }
+    // Verify against the server BEFORE celebrating: previously any ≥8-char
+    // string was saved and announced as "paired", and the user only found
+    // out at their first sync (401). /wellness/today is the cheapest
+    // authenticated read.
+    try {
+      const res = await fetch(`${API_BASE}/wellness/today`, {
+        headers: {Authorization: `Bearer ${trimmed}`},
+      });
+      if (!res.ok) {
+        trackEvent('pairing_invalid_token', {
+          ...createBaseEvent({
+            screen: 'pairing',
+            provider: providerForAnalytics,
+          }),
+          length: trimmed.length,
+        });
+        Alert.alert(
+          'Token not recognized',
+          'The server rejected this pairing token. Generate a fresh one from the web app and paste it here.',
+        );
+        return;
+      }
+    } catch {
+      Alert.alert(
+        'Could not verify token',
+        "We couldn't reach Tanmatra to verify this token. Check your connection and try again.",
       );
       return;
     }
@@ -441,6 +484,7 @@ export default function HomeScreen() {
         activityKcal,
       });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setLastSyncedAt(new Date().toISOString());
       setStepsInput('');
       setKcalInput('');
       await refreshAll();
@@ -640,7 +684,7 @@ export default function HomeScreen() {
                 On the Tanmatra web app, sign in and open{' '}
                 <Text
                   style={{color: c.foreground, fontFamily: 'Inter_500Medium'}}>
-                  tanmatra.health/wellness#pair-device
+                  tanmatra.food/wellness#pair-device
                 </Text>
                 . Tap{' '}
                 <Text
@@ -693,7 +737,7 @@ export default function HomeScreen() {
             marginTop: 2,
           }}>
           {isConnected
-            ? `Connected · Last sync ${relativeTime(wearableLink?.lastSyncedAt)}`
+            ? `Connected · ${lastSyncedAt ? `Last sync ${relativeTime(lastSyncedAt)}` : 'Not synced yet'}`
             : 'Not connected · Connect to enable sync'}
         </Text>
         <View style={{height: 12}} />

@@ -28,8 +28,40 @@ export const CADENCE_DISCOUNT: Record<SubscriptionCadence, number> = {
   monthly: 0.85,
 };
 
+/**
+ * Headline discount percentage (integer) for a cadence — derived from
+ * CADENCE_DISCOUNT so marketing copy can never drift from the billed rate.
+ * weekly → 5, fortnightly → 10, monthly → 15.
+ */
+export function cadenceDiscountPct(cadence: SubscriptionCadence): number {
+  return Math.round((1 - CADENCE_DISCOUNT[cadence]) * 100);
+}
+
+/**
+ * The largest discount any recurring cadence offers, for truthful
+ * "save up to N%" copy. Derived — not a literal — so a copy string can
+ * never claim a discount the billing math doesn't actually give.
+ */
+export const MAX_CADENCE_DISCOUNT_PCT: number = Math.max(
+  ...(Object.keys(CADENCE_DISCOUNT) as SubscriptionCadence[]).map(cadenceDiscountPct),
+);
+
 /** First-order 3-day sampler: 25% off list (no cadence discount stacked). */
 export const TRIAL_DISCOUNT = 0.75;
+
+/**
+ * THE marketed 3-Day Trial: 3 days × 1 lunch = 3 meals, priced by the
+ * flat Phase-A1 figure below (₹1,499 all-in). Every surface that renders
+ * a trial price MUST price computeTrialPricePaise(TRIAL_MEALS) — passing
+ * any other meal count (the old 9-meal "3 slots × 3 days" reading)
+ * silently bypasses the special case and produced three different trial
+ * prices across the app (₹1,499 vs ₹5,316 vs a stale ₹3,458). A customer
+ * may still ADD slots in the wizard; the quote then reprices
+ * transparently — but the advertised trial is this one.
+ */
+export const TRIAL_DAYS = 3;
+export const TRIAL_MEALS_PER_DAY = 1;
+export const TRIAL_MEALS = TRIAL_DAYS * TRIAL_MEALS_PER_DAY;
 
 // Phase A1 — flat price of the marketed 3-Day Trial (the `meals === 3` case).
 // A trial must not cost more per meal than the à la carte dish it introduces.

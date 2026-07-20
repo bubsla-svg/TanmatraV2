@@ -85,6 +85,7 @@ type EventName =
   | "order_confirmed"
   | "mandate_created"
   | "mandate_authorization_failed"
+  | "money_path_error"
   | "predebit_notified"
   | "mandate_revoked"
   // Trial → subscription bridge (SubscriptionBridge.tsx recap screen).

@@ -32,7 +32,7 @@ const PRICING_PRESETS: PricingPreset[] = [
   {
     id: "weekly",
     title: "Weekly Plan",
-    desc: "Daily lunches. Pause, skip, or swap anytime. Delivery included, renews weekly.",
+    desc: "Weekday lunches (Mon–Fri). Pause, skip, or swap up to 24h before delivery. Delivery included, renews weekly.",
     badge: "Recommended",
     meals: 5,
     cadence: "weekly",
@@ -48,7 +48,7 @@ const PRICING_PRESETS: PricingPreset[] = [
     meals: 30,
     cadence: "monthly",
     planType: "standard",
-    ctaText: "View Program",
+    ctaText: "Start Program",
     to: "/subscribe?plan=healthy-everyday-plan&cadence=monthly",
     priceLabel: "total commitment",
   },

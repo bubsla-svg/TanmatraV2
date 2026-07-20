@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { ArrowRight, Check, UsersThree, ForkKnife } from "@phosphor-icons/react";
-import { computeTrialPricePaise } from "@workspace/subscription-rules";
+import { computeTrialPricePaise, TRIAL_DAYS, TRIAL_MEALS } from "@workspace/subscription-rules";
 import { track } from "@/lib/analytics";
 import { useSectionViewed } from "./useSectionViewed";
 
@@ -15,10 +15,6 @@ import { useSectionViewed } from "./useSectionViewed";
  * server's /subscriptions/quote and billing paths use (money-path lockstep,
  * playbook R4). computeTrialPricePaise is GST-inclusive.
  */
-
-// 3 days × 3 meals — mirrors the trial the /subscribe?trial=1 wizard sells
-// (see SubscriptionPlansLanding's "Nine meals over three days" hero).
-const TRIAL_MEALS = 9;
 
 export default function HomeDualFunnel() {
   const sectionRef = useSectionViewed<HTMLElement>("dual_funnel");
@@ -53,7 +49,7 @@ export default function HomeDualFunnel() {
               ₹{trialPriceRupees}
             </p>
             <p className="text-[10px] text-white/45 mt-1">
-              {TRIAL_MEALS} meals · one-time · incl. GST
+              {TRIAL_MEALS} lunches · {TRIAL_DAYS} days · one-time · incl. GST
             </p>
             <p className="mt-2 flex items-start gap-1.5 text-[11px] text-white/70 leading-snug">
               <Check

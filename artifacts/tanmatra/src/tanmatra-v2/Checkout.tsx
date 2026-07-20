@@ -89,6 +89,8 @@ import {
   type ServerSafetyConflict,
 } from "@/lib/clinicalDiet";
 import ConflictsPanel from "@/components/clinical/ConflictsPanel";
+import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
+import { cadenceDiscountPct } from "@workspace/subscription-rules";
 import { savePendingTransaction, removePendingTransaction, subscribeUpiRecovery } from "@/lib/paymentRecovery";
 
 // Shapes of the phone-OTP auth responses used by the guest-checkout flow.
@@ -1711,7 +1713,8 @@ export default function V2Checkout() {
   // Single-scroll stepper derivation (PR #247): payment once the confirm
   // dialog opens, otherwise address. The section-gated mobile stepping that
   // drove this off the wizard step is deferred (see the useWizardState note).
-  const stepperStep: CheckoutStep = confirmOpen ? "payment" : "address";
+  // No address chosen yet → still "review"; jumping to "address" would falsely mark Review complete.
+  const stepperStep: CheckoutStep = confirmOpen ? "payment" : activeAddr ? "address" : "review";
   const stepperAddressComplete =
     !!activeAddr &&
     (fulfillmentType === "delivery"
@@ -1794,7 +1797,7 @@ export default function V2Checkout() {
                     <Plus className="w-3.5 h-3.5" style={{ color: "var(--safb)" }} />
                     Add your delivery address
                   </p>
-                  <p className="fine">Noida · Delhi · Gurgaon · fresh in 25–40 min</p>
+                  <p className="fine">Noida · fresh in {DELIVERY_ETA_TEXT}</p>
                 </button>
               ) : (
                 <button
@@ -2095,7 +2098,7 @@ export default function V2Checkout() {
             >
               <Sparkles className="w-4 h-4" style={{ color: "var(--safb)", marginTop: 2, flexShrink: 0 }} aria-hidden="true" />
               <div className="f1" style={{ minWidth: 0 }}>
-                <p className="small fw6">Make this a weekly subscription — save up to 15%</p>
+                <p className="small fw6">Make this a weekly subscription — save {cadenceDiscountPct("weekly")}%</p>
                 <p className="fine mt2">Skip checkout next week. Pause, swap or cancel any time.</p>
               </div>
               <ArrowRight className="w-3.5 h-3.5" style={{ color: "var(--safb)", marginTop: 4, flexShrink: 0 }} aria-hidden="true" />
@@ -2324,7 +2327,9 @@ export default function V2Checkout() {
                     }}
                     placeholder="VOUCHER CODE"
                     className="inp"
-                    style={{ flex: 1, minWidth: 0, height: 34, textTransform: "uppercase", letterSpacing: ".08em", fontSize: 11, ...(voucherError ? { borderColor: "var(--dgr)" } : {}) }}
+                    // 16px floor: any smaller and iOS Safari zoom-jumps the
+                    // whole money screen the moment this field is focused.
+                    style={{ flex: 1, minWidth: 0, height: 44, textTransform: "uppercase", letterSpacing: ".08em", fontSize: 16, ...(voucherError ? { borderColor: "var(--dgr)" } : {}) }}
                     disabled={redeemingVoucher}
                     aria-invalid={voucherError ? true : undefined}
                     aria-describedby={voucherError ? "voucher-error" : undefined}

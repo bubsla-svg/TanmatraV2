@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { isPastSkipCutoff, SKIP_SWAP_CUTOFF_MS } from "@workspace/subscription-rules";
+import { isPastSkipCutoff, SKIP_SWAP_CUTOFF_MS, cadenceDiscountPct } from "@workspace/subscription-rules";
 import StreakRings, { useStreaks, type StreaksState } from "@/components/retention/StreakRings";
 import {
   subscriptionsApi,
@@ -1464,9 +1464,9 @@ function DetailView({
               ? ` for ${members.map((m) => m.name).join(", ")}`
               : ""}
             , delivered {s.deliveryWindow}. Continue the exact same setup as a
-            recurring <strong>weekly</strong> plan — lock your window, save up to
-            15%, and earn a free meal every few deliveries. Pause, swap or cancel
-            anytime.
+            recurring <strong>weekly</strong> plan — lock your window, save{" "}
+            {cadenceDiscountPct("weekly")}%, and earn a free meal every few
+            deliveries. Pause, swap or cancel anytime.
           </div>
           <button
             className="btn btn-p btn-blk mt12"

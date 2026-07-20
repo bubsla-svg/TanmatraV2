@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { subscriptionsApi } from "@/lib/subscriptionsApi";
 import { formatPriceRounded } from "@/lib/api/adapter";
+import { getRdPlanBySlug, resolvePlanWeek } from "@/lib/rdPlans";
 import { Sparkle, Barbell, Heart } from "@phosphor-icons/react";
 
 interface PlanPreset {
@@ -11,8 +12,6 @@ interface PlanPreset {
   desc: string;
   badge: string;
   icon: typeof Sparkle;
-  meals: number;
-  macrosText: string;
 }
 
 const PLAN_PRESETS: PlanPreset[] = [
@@ -22,8 +21,6 @@ const PLAN_PRESETS: PlanPreset[] = [
     desc: "Lighter, high-fibre meals to support weight loss without feeling hungry.",
     badge: "Weight Loss",
     icon: Sparkle,
-    meals: 5,
-    macrosText: "Avg 32g Protein · 25g+ Fiber",
   },
   {
     slug: "lean-muscle-builder",
@@ -31,8 +28,6 @@ const PLAN_PRESETS: PlanPreset[] = [
     desc: "Calorie surplus & high protein to fuel muscle growth and accelerate recovery.",
     badge: "Lean Muscle",
     icon: Barbell,
-    meals: 10,
-    macrosText: "Avg 45g Protein · 30g+ Fiber",
   },
   {
     slug: "pcos-balance",
@@ -40,10 +35,34 @@ const PLAN_PRESETS: PlanPreset[] = [
     desc: "Balanced, high-fibre meals designed to support steady blood sugar.",
     badge: "Hormone Health",
     icon: Heart,
-    meals: 5,
-    macrosText: "Avg 34g Protein · Low GI",
   },
 ];
+
+const WEEKDAY_LABELS = new Set(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+
+/**
+ * Honest per-meal protein average across the plan's ADVERTISED slots —
+ * computed from the real catalog dishes in the plan week (rounded down),
+ * replacing hand-written "Avg 32g Protein · 25g+ Fiber" claims that were
+ * 2–4× the actual dish macros. Returns null (render nothing) when the
+ * plan or its dishes can't be resolved.
+ */
+function avgAdvertisedProteinPerMeal(slug: string): number | null {
+  const plan = getRdPlanBySlug(slug);
+  const basis = plan?.advertisedBasis;
+  if (!plan || !basis) return null;
+  const days = resolvePlanWeek(plan).filter(
+    (day) => basis.daysMode === "everyday" || WEEKDAY_LABELS.has(day.label),
+  );
+  const proteins: number[] = [];
+  for (const day of days) {
+    if (basis.slots.breakfast && day.breakfast) proteins.push(day.breakfast.macros.protein);
+    if (basis.slots.lunch && day.lunch) proteins.push(day.lunch.macros.protein);
+    if (basis.slots.dinner && day.dinner) proteins.push(day.dinner.macros.protein);
+  }
+  if (proteins.length === 0) return null;
+  return Math.floor(proteins.reduce((sum, g) => sum + g, 0) / proteins.length);
+}
 
 export default function HomeRecommendedPlans() {
   return (
@@ -60,14 +79,19 @@ export default function HomeRecommendedPlans() {
 
 function PlanCard({ preset }: { preset: PlanPreset }) {
   const Icon = preset.icon;
+  // Meal count comes from the plan's single advertised basis — the same
+  // basis the Subscribe wizard inherits on ?plan=, so this card can never
+  // quote a different composition than the wizard charges.
+  const mealsPerWeek = getRdPlanBySlug(preset.slug)!.advertisedBasis!.mealsPerWeek;
+  const avgProtein = avgAdvertisedProteinPerMeal(preset.slug);
 
   // Fetch live price quote from server quote API
   const { data: quote, isLoading } = useQuery({
-    queryKey: ["subscription-quote", preset.slug, preset.meals],
+    queryKey: ["subscription-quote", preset.slug, mealsPerWeek],
     queryFn: () =>
       subscriptionsApi.quote({
         cadence: "weekly",
-        mealsPerDelivery: preset.meals,
+        mealsPerDelivery: mealsPerWeek,
         planType: "standard",
       }),
     staleTime: 5 * 60 * 1000, // 5 minutes cache
@@ -97,9 +121,11 @@ function PlanCard({ preset }: { preset: PlanPreset }) {
 
       <div className="border-t border-white/5 pt-3 mt-4">
         <div className="flex items-baseline justify-between mb-3">
-          <span className="tnm-data text-[10px] uppercase tracking-wider text-white/45">
-            {preset.macrosText}
-          </span>
+          {avgProtein !== null && (
+            <span className="tnm-data text-[10px] uppercase tracking-wider text-white/45">
+              Avg {avgProtein}g protein per meal
+            </span>
+          )}
           {isLoading ? (
             <span className="w-16 h-5 rounded bg-white/5 animate-pulse" />
           ) : quote ? (
@@ -108,7 +134,7 @@ function PlanCard({ preset }: { preset: PlanPreset }) {
                 {displayPrice} <span className="text-[10px] text-white/50 font-normal">/wk</span>
               </span>
               <span className="text-[10px] text-white/45 font-normal">
-                ≈ {formatPriceRounded(quote.totalPaise / preset.meals)}/meal
+                ≈ {formatPriceRounded(quote.totalPaise / mealsPerWeek)}/meal
               </span>
             </span>
           ) : (

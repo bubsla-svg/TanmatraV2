@@ -22,6 +22,7 @@ import { blankMember, type MemberDraft } from "@/lib/memberDraft";
 import {
   computeDeliveryPricePaise,
   computeTrialPricePaise,
+  cadenceDiscountPct,
 } from "@workspace/subscription-rules";
 import { checkPincode } from "@/lib/serviceablePincodes";
 import { useWizardState } from "@/lib/useWizardState";
@@ -214,17 +215,29 @@ export default function V2Subscribe() {
   const cartItems = useCartStore((s) => s.items);
   const { dishes: catalogDishes } = useMenuCatalog();
 
-  const showChooser = !effectivePlan && !fromCart;
+  // Chooser gates EVERY plan-less entry, fromCart included: Cart's
+  // "Subscribe to weekly delivery" link carries no ?plan=, and the old
+  // `!fromCart` guard made renderS1Recommendation fall through both of its
+  // branches — a completely blank step 0 behind Cart's own upsell link.
+  const showChooser = !effectivePlan;
 
   // ---- Builder configs state ----
+  // Seed the builder from the SAME basis the entry surface advertised.
+  // Priority: explicit protocol preset → the plan's advertisedBasis (fixes
+  // the ₹3,800-card → ₹10,474-wizard jump: ?plan= used to discard the
+  // plan's meal basis and fall to a generic lunch+dinner × everyday = 14
+  // meals default) → the canonical 3-meal trial → the legacy default.
+  // Everything stays user-editable at step 1; only the STARTING point now
+  // matches what the card quoted.
   const [slots, setSlots] = useState<Record<MealSlot, boolean>>(
     protocolPreset?.slots ??
+      effectivePlan?.advertisedBasis?.slots ??
       (isTrial
-        ? { breakfast: true, lunch: true, dinner: true }
+        ? { breakfast: false, lunch: true, dinner: false }
         : { breakfast: false, lunch: true, dinner: true }),
   );
   const [daysMode, setDaysMode] = useState<DaysMode>(
-    protocolPreset?.daysMode ?? "everyday",
+    protocolPreset?.daysMode ?? effectivePlan?.advertisedBasis?.daysMode ?? "everyday",
   );
   
   // Swaps state
@@ -663,6 +676,10 @@ export default function V2Subscribe() {
   };
 
   const submit = async () => {
+    // Re-entry guard: step 6 mounts two controls that can charge (the
+    // in-content pay button and the sticky bar). A fast double-tap must
+    // never create two subscriptions / two Razorpay orders.
+    if (submitting) return;
     if (!addressComplete) {
       toast.error("Please complete delivery details and verification");
       return;
@@ -930,12 +947,27 @@ export default function V2Subscribe() {
         <div className="card bg-white/[0.01] border border-white/5 p-4 rounded-xl flex flex-col gap-3">
           <div className="flex justify-between items-baseline">
             <span className="text-xs text-white/50 font-medium">Estimated Starting Price</span>
+            {/* Optimistic: show the client estimate — which is the exact
+                billing math (getCalculatedPricePaise), asserted equal to the
+                payable amount — the instant slots/cadence change, instead of
+                flashing "Verifying price…" or a stale server value on every
+                toggle. The authoritative server quote still gates the Review
+                and Payment steps below (the transparent-ledger guard). */}
             <span className="tnm-data text-lg font-bold text-[var(--tnm-action)] font-mono">
-              {quoteDetails?.total ? F_Paise(quoteDetails.total) : "Verifying price…"}
+              {F_Paise(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial))}
             </span>
           </div>
+          {/* The basis line is the anti-sticker-shock contract: a price is
+              never shown without the meal count it prices, so this screen
+              can never silently disagree with the card that linked here. */}
           <p className="fine text-white/45 leading-relaxed">
-            Prices are dynamically calculated from our kitchen based on cadence and number of eaters. All deliveries are free.
+            {isTrial
+              ? `For ${cycleMeals} meal${cycleMeals === 1 ? "" : "s"} over 3 days · one-time`
+              : `For ${cycleMeals} meals per ${activeCadence === "weekly" ? "week" : activeCadence === "fortnightly" ? "2 weeks" : "6 weeks"} (${[slots.breakfast && "breakfast", slots.lunch && "lunch", slots.dinner && "dinner"].filter(Boolean).join(" + ")} · ${daysMode === "everyday" ? "every day" : "weekdays"})`}
+            {cycleMeals > 0
+              ? ` · ≈${F_Paise(Math.round(getCalculatedPricePaise(activeCadence, cycleMeals, isTrial) / cycleMeals))} per meal`
+              : ""}
+            {" · incl. GST · free delivery. Adjust everything in the next steps."}
           </p>
         </div>
 
@@ -1076,8 +1108,8 @@ export default function V2Subscribe() {
       badge: string | null;
     }[] = [
       { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", unit: "/week", best: false, badge: null },
-      { cad: "fortnightly", title: "2-Week Plan", desc: "Billed bi-weekly · save 10% · stops after Week 2.", unit: "/2 weeks", best: false, badge: null },
-      { cad: "monthly", title: "6-Week Plan", desc: "Prepaid · save 15% · stops after Week 6.", unit: "/6 weeks", best: true, badge: "Best Value" },
+      { cad: "fortnightly", title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.`, unit: "/2 weeks", best: false, badge: null },
+      { cad: "monthly", title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.`, unit: "/6 weeks", best: true, badge: "Best Value" },
     ];
     return (
       <div className="flex flex-col gap-6">
@@ -1618,7 +1650,13 @@ export default function V2Subscribe() {
             <div className="flex flex-col gap-2 text-xs text-white/60">
               <div className="flex justify-between">
                 <span>Maximum Authorization:</span>
-                <span className="tnm-data font-semibold text-white/95">Up to {payableAmount}/week</span>
+                {/* payableAmount is the full-cycle charge — for fortnightly
+                    that is a 2-week amount, so a hardcoded "/week" unit
+                    misstated the authorization. */}
+                <span className="tnm-data font-semibold text-white/95">
+                  Up to {payableAmount}
+                  {activeCadence === "fortnightly" ? " / 2 weeks" : " / week"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>First Debit Date:</span>
@@ -1908,10 +1946,17 @@ export default function V2Subscribe() {
           }
           pricePaise={quoteDetails?.total || getCalculatedPricePaise(activeCadence, cycleMeals, isTrial)}
           ctaText={
+            // The word "Pay" appears ONLY on the step whose action charges
+            // (step 6 → submit()). Step 5 is Review — its action just
+            // advances, so it must say so. The old mapping had these
+            // reversed: "Pay & start" on the non-charging Review step and a
+            // generic "Continue" on the actual charge.
             step === 0
               ? "Build plan"
               : step === 5
-              ? `Pay & start`
+              ? "Continue to payment"
+              : step === 6
+              ? `Pay ${quoteDetails?.total ? F_Paise(quoteDetails.total) : ""} & start`.replace("  ", " ")
               : "Continue"
           }
           onContinue={() => {

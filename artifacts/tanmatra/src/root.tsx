@@ -17,7 +17,6 @@ import Header from "@/components/layout/Header";
 import WelcomeOfferBanner from "@/components/marketing/WelcomeOfferBanner";
 import Footer from "@/components/layout/Footer";
 import BottomNav from "@/components/layout/BottomNav";
-import BottomDock from "@/components/layout/BottomDock";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import StickyCheckoutBar from "@/components/cart/StickyCheckoutBar";
 import CartDrawer from "@/components/cart/CartDrawer";
@@ -261,20 +260,9 @@ function AppShellInner() {
   const { items } = useCart();
   const onDiscoverySurface = DISCOVERY_SURFACES.some((re) => re.test(currentPath));
 
-  const dockHidden = ["/checkout", "/cart", "/track", "/login", "/admin"].some(
-    (deny) => currentPath === deny || currentPath.startsWith(deny + "/"),
-  );
-  const dockShown = ["/menu", "/wellness", "/subscriptions", "/orders", "/account", "/recipes", "/challenges"].some(
-    (root) => currentPath === root || currentPath.startsWith(root + "/"),
-  );
-  const showDock = !dockHidden && (currentPath === "/" || dockShown);
   const showCheckoutBar = items.length > 0 && !STICKY_CHECKOUT_HIDE.some((re) => re.test(currentPath));
 
-  const paddingBottomStyle = showDock && showCheckoutBar
-    ? "calc(138px + var(--safe-bottom, 0px))"
-    : showDock
-    ? "calc(60px + var(--safe-bottom, 0px))"
-    : showCheckoutBar
+  const paddingBottomStyle = showCheckoutBar
     ? "calc(78px + var(--safe-bottom, 0px))"
     : undefined;
 
@@ -298,7 +286,6 @@ function AppShellInner() {
       {!hideChrome && <Footer />}
       {!hideChrome && <BottomNav />}
       {!hideChrome && <StickyCheckoutBar />}
-      {showDock && <BottomDock />}
       <CartDrawer />
     </div>
   );
