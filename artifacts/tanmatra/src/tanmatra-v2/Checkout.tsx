@@ -1250,9 +1250,13 @@ export default function V2Checkout() {
         submitAttemptRef.current = null;
         // Persistent inline banner near the Pay area (toasts vanish before
         // a rattled buyer re-engages). Cleared on dismiss / next attempt.
+        // A deliberate cancel gets calmer copy — no money moved, so the
+        // auto-reversal reassurance would only alarm.
         setPayFailure({
           message:
-            "Payment didn't complete. Any amount debited is auto-reversed by your bank, typically within 5-7 business days.",
+            rpMsg === "payment_cancelled"
+              ? "Payment cancelled — nothing was charged and your cart is saved."
+              : "Payment didn't complete. Any amount debited is auto-reversed by your bank, typically within 5-7 business days.",
         });
         toast.info(
           rpMsg === "payment_cancelled"
