@@ -87,10 +87,19 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   // Search state (Places REST — no Maps JS involved)
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  // Inline status under the search box (no-matches / unavailable) so the box
-  // is never a silent dead-end. Null = no message.
+  // Inline status under the search box (searching / no-matches / unavailable)
+  // so the box is never a silent dead-end. Null = no message.
   const [searchHint, setSearchHint] = useState<string | null>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stale-response guard: every dispatched search captures the sequence it
+  // was issued at; results apply only if it is still the latest. Paired with
+  // an AbortController so a superseded fetch is cancelled, not just ignored.
+  const searchSeqRef = useRef(0);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  // Session micro-cache of mapped suggestions keyed by normalized query —
+  // retyping an already-searched area applies instantly, no network.
+  const SEARCH_CACHE_MAX = 50;
+  const searchCacheRef = useRef<Map<string, Suggestion[]>>(new Map());
 
   // Form details
   const [orderingFor, setOrderingFor] = useState<"myself" | "someone">("myself");
@@ -134,6 +143,11 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     if (!open) {
       setLocating(false);
       setResolving(false);
+      // Cancel any pending/in-flight search so a late response can't
+      // resolve into a reopened picker.
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      searchSeqRef.current += 1;
+      searchAbortRef.current?.abort();
     }
   }, [open, initialData]);
 
@@ -144,10 +158,34 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
   // inline hint instead of silently swallowing the query.
   const SEARCH_UNAVAILABLE_HINT =
     "Search is unavailable right now — use your location or enter the address manually.";
+  // Shown while a search is in flight and nothing is listed yet — the box
+  // must never claim "no matches" or "unavailable" before the answer is in.
+  const SEARCH_LOADING_HINT = "Searching…";
 
-  const queryServerSearch = async (input: string) => {
+  // Cache key: lowercase + collapsed whitespace, so "Sector  18" and
+  // "sector 18" share an entry.
+  const normalizeQuery = (input: string) => input.trim().toLowerCase().replace(/\s+/g, " ");
+
+  const rememberSearchResults = (key: string, value: Suggestion[]) => {
+    const cache = searchCacheRef.current;
+    if (cache.size >= SEARCH_CACHE_MAX) {
+      const oldest = cache.keys().next().value;
+      if (typeof oldest === "string") cache.delete(oldest);
+    }
+    cache.set(key, value);
+  };
+
+  // True when this response was aborted or superseded by a newer keystroke —
+  // in either case it must not touch suggestions or the hint.
+  const isStaleSearch = (err: unknown, seq: number) =>
+    (err as { name?: string } | null)?.name === "AbortError" || seq !== searchSeqRef.current;
+
+  const queryServerSearch = async (input: string, seq: number, signal: AbortSignal) => {
     try {
-      const res = await fetch(`${API_BASE}/geo/search?q=${encodeURIComponent(input.trim())}`);
+      const res = await fetch(`${API_BASE}/geo/search?q=${encodeURIComponent(input.trim())}`, {
+        signal,
+      });
+      if (seq !== searchSeqRef.current) return;
       if (res.status === 503) {
         setSuggestions([]);
         setSearchHint(SEARCH_UNAVAILABLE_HINT);
@@ -156,36 +194,39 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
       const data = (await res.json().catch(() => null)) as
         | { ok?: boolean; results?: GeoPlace[] }
         | null;
+      if (seq !== searchSeqRef.current) return;
       if (res.ok && data?.ok && Array.isArray(data.results)) {
         if (data.results.length === 0) {
           setSuggestions([]);
           setSearchHint("No matches — try a nearby landmark or sector.");
           return;
         }
+        const mapped: Suggestion[] = data.results.slice(0, 6).map((r, i) => ({
+          id: `srv-${i}`,
+          main: r.formattedAddress.split(",")[0]?.trim() || r.formattedAddress,
+          secondary: r.formattedAddress,
+          place: r,
+        }));
+        rememberSearchResults(normalizeQuery(input), mapped);
         setSearchHint(null);
-        setSuggestions(
-          data.results.slice(0, 6).map((r, i) => ({
-            id: `srv-${i}`,
-            main: r.formattedAddress.split(",")[0]?.trim() || r.formattedAddress,
-            secondary: r.formattedAddress,
-            place: r,
-          })),
-        );
+        setSuggestions(mapped);
         return;
       }
       setSuggestions([]);
       setSearchHint(SEARCH_UNAVAILABLE_HINT);
-    } catch {
+    } catch (err) {
+      // Aborted/superseded = a newer query owns the box — stay silent.
+      if (isStaleSearch(err, seq)) return;
       setSuggestions([]);
       setSearchHint(SEARCH_UNAVAILABLE_HINT);
     }
   };
 
-  const queryPlacesRest = async (input: string) => {
+  const queryPlacesRest = async (input: string, seq: number, signal: AbortSignal) => {
     if (input.trim().length < 3) return;
     // No frontend Places key → straight to the server geocoder.
     if (!MAPS_API_KEY) {
-      await queryServerSearch(input);
+      await queryServerSearch(input, seq, signal);
       return;
     }
     try {
@@ -197,12 +238,15 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
           includedRegionCodes: ["in"],
           locationBias: { circle: { center: { latitude: 28.55, longitude: 77.25 }, radius: 50000 } },
         }),
+        signal,
       });
+      if (seq !== searchSeqRef.current) return;
       if (!res.ok) {
-        await queryServerSearch(input);
+        await queryServerSearch(input, seq, signal);
         return;
       }
       const data = (await res.json()) as any;
+      if (seq !== searchSeqRef.current) return;
       const mapped: Suggestion[] = (data.suggestions ?? [])
         .map((sg: any) => sg.placePrediction)
         .filter(Boolean)
@@ -214,17 +258,25 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
         }));
       if (mapped.length === 0) {
         // Places found nothing — try the server geocoder before giving up.
-        await queryServerSearch(input);
+        await queryServerSearch(input, seq, signal);
         return;
       }
+      rememberSearchResults(normalizeQuery(input), mapped);
       setSearchHint(null);
       setSuggestions(mapped);
-    } catch {
-      await queryServerSearch(input);
+    } catch (err) {
+      // Aborted/superseded = a newer query owns the box — stay silent.
+      if (isStaleSearch(err, seq)) return;
+      await queryServerSearch(input, seq, signal);
     }
   };
 
   const choosePlace = async (sg: Suggestion) => {
+    // Picking a result supersedes any pending/in-flight search — a late
+    // response must not reopen the dropdown over the chosen place.
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchSeqRef.current += 1;
+    searchAbortRef.current?.abort();
     setSuggestions([]);
     setSearchHint(null);
     setSearchQuery(sg.main);
@@ -280,11 +332,39 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
     setSearchQuery(v);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     if (v.trim().length < 3) {
+      // Supersede + cancel anything in flight so a late response can't
+      // repopulate the cleared box.
+      searchSeqRef.current += 1;
+      searchAbortRef.current?.abort();
       setSuggestions([]);
       setSearchHint(null);
       return;
     }
-    searchDebounceRef.current = setTimeout(() => queryPlacesRest(v), 300);
+    // Micro-cache hit → apply instantly, no debounce, no network.
+    const cached = searchCacheRef.current.get(normalizeQuery(v));
+    if (cached) {
+      searchSeqRef.current += 1;
+      searchAbortRef.current?.abort();
+      setSearchHint(null);
+      setSuggestions(cached);
+      return;
+    }
+    // Loading hint from the first keystroke (the dropdown only shows the
+    // hint while there are no suggestions), cleared on resolve/supersede.
+    setSearchHint(SEARCH_LOADING_HINT);
+    // Supersede + abort AT THE KEYSTROKE, not inside the debounce callback:
+    // deferring the seq bump 300ms leaves a window where an in-flight fetch
+    // for the PREVIOUS query still holds the current seq and would pass the
+    // staleness checks, stamping the old query's results (or its "No
+    // matches" hint) over this one. A keystroke that later cancels the
+    // timer wastes one seq value, which is harmless.
+    const seq = ++searchSeqRef.current;
+    searchAbortRef.current?.abort();
+    searchDebounceRef.current = setTimeout(() => {
+      const ctrl = new AbortController();
+      searchAbortRef.current = ctrl;
+      void queryPlacesRest(v, seq, ctrl.signal);
+    }, 300);
   };
 
   // Reverse-geocode a lat/lng into the address fields — shared by GPS and by
