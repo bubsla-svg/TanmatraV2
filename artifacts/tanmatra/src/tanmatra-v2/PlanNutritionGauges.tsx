@@ -77,14 +77,18 @@ function GaugeCard({
   avg,
   target,
   unit,
+  direction,
 }: {
   title: string;
   avg: number;
   target: number;
   unit: string;
+  // Calories are a CEILING (over = caution); protein is a FLOOR
+  // (under = caution) — a lower-protein day is the shortfall direction.
+  direction: "ceiling" | "floor";
 }) {
-  const over = avg > target;
-  const color = over ? "var(--tnm-caution)" : "var(--sage)";
+  const caution = direction === "ceiling" ? avg > target : avg < target;
+  const color = caution ? "var(--tnm-caution)" : "var(--sage)";
   return (
     <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 f1">
       <div className="lab">{title}</div>
@@ -96,8 +100,12 @@ function GaugeCard({
           </div>
           {/* Icon + text, never color alone */}
           <div className="fine mt4 fx ac g6" style={{ color }}>
-            <i className={`ph-bold ${over ? "ph-warning-circle" : "ph-check-circle"}`} />
-            {over ? "Over target" : "Within target"}
+            <i className={`ph-bold ${caution ? "ph-warning-circle" : "ph-check-circle"}`} />
+            {caution
+              ? direction === "ceiling"
+                ? "Over target"
+                : "Below target"
+              : "Within target"}
           </div>
         </div>
       </div>
@@ -168,6 +176,7 @@ export function PlanNutritionGauges({
           avg={averages.kcalPerDay}
           target={target.dailyCalorieTarget}
           unit="kcal"
+          direction="ceiling"
         />
       ) : (
         <EmptyGauge title="Avg calories / day" />
@@ -178,6 +187,7 @@ export function PlanNutritionGauges({
           avg={averages.proteinPerDay}
           target={target.dailyProteinTargetGrams}
           unit="g"
+          direction="floor"
         />
       ) : (
         <EmptyGauge title="Avg protein / day" />
