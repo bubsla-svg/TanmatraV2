@@ -334,6 +334,30 @@
     .press-spring:active { transform: scale(0.97); }
   }
 
+  /* ─── Selected-state idiom (Playbook Part 2 R3) ───
+     One way to say "selected" across every selectable card/chip/tile:
+     add `.selectable` and drive `data-state="selected|unselected"` (plus the
+     matching aria attribute). Opt-in class so Radix primitives with their own
+     data-state vocabularies are never restyled by accident. Replaces the three
+     legacy idioms (.opt on / inline style toggles / per-page Tailwind
+     conditionals) as components migrate. */
+  .selectable {
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
+  }
+  .selectable[data-state="selected"],
+  .selectable[aria-pressed="true"],
+  .selectable[aria-selected="true"] {
+    border-color: var(--action);
+    background-color: color-mix(in srgb, var(--action) 12%, transparent);
+  }
+  .selectable:focus-visible {
+    outline: 2px solid var(--action);
+    outline-offset: 2px;
+  }
+
   /* ─── Inline-validation shake (reduced-motion safe; re-armed via onAnimationEnd) ─── */
   @media (prefers-reduced-motion: no-preference) {
     @keyframes shake-x {
