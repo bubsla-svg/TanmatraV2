@@ -1,5 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
-import { seedCart, cartItem, gstOn, rupees } from "../fixtures";
+import { seedCart, cartItem, gstOn, quietFirstTouch, rupees } from "../fixtures";
+
+// Resolve first-touch onboarding before every audit vector — the SoftGate
+// overlay (discovery routes, fresh profiles) is covered by softgate.spec.ts.
+test.beforeEach(async ({ page }) => {
+  await quietFirstTouch(page);
+});
 
 /**
  * Storefront & checkout 5-vector audit — rewritten against the REAL app.

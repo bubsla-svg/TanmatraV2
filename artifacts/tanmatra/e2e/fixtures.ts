@@ -78,6 +78,27 @@ export async function seedCart(
 export const cartSubtotal = (items: CartItem[]): number =>
   items.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
 
+/**
+ * Pre-resolve first-touch onboarding BEFORE the app boots so specs exercise
+ * their own surface instead of the SoftGate overlay (mounted on discovery
+ * routes for fresh visitors) or the quiz-nudge banner. Call in a
+ * `test.beforeEach` (before page.goto) from any spec that navigates to
+ * `/`, `/menu`, `/dish/*`, or the landing pages. Specs that test the gate
+ * itself (softgate.spec.ts) must NOT call this.
+ */
+export async function quietFirstTouch(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tanmatra:softgate:v1",
+      JSON.stringify({ v: 1, at: Date.now(), outcome: "completed" }),
+    );
+    window.localStorage.setItem(
+      "tanmatra:quiz-banner-dismissed-at:v2",
+      String(Date.now()),
+    );
+  });
+}
+
 // ── API helpers (assert correctness at the source) ───────────────────────────
 export const API_BASE =
   process.env["E2E_API_BASE"] ??
