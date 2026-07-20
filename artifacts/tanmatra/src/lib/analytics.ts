@@ -89,7 +89,10 @@ type EventName =
   // Trial → subscription bridge (SubscriptionBridge.tsx recap screen).
   | "trial_bridge_viewed"
   | "trial_bridge_cta"
-  | "trial_bridge_outcome";
+  | "trial_bridge_outcome"
+  // PR05 plan-first PDP — macro gate unlock + allergen acknowledge-and-proceed.
+  | "gate_unlock"
+  | "allergen_ack";
 
 // Health-adjacent or personal keys never leave the device — the server
 // scrubs them again, but the first line of defence is here.

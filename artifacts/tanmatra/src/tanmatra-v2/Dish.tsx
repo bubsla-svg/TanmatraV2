@@ -9,7 +9,7 @@ import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
 import { useClinicalMode, clinicalCategoryLabel } from "@/lib/clinicalDiet";
-import { evaluateDishForPreferences, findSmartSwap } from "@/lib/preferencesMatch";
+import { evaluateDishForPreferences, findSmartSwap, modifierClashAllergens } from "@/lib/preferencesMatch";
 import {
   getCustomizationsForDish,
   getKitchenNoteForDish,
@@ -158,12 +158,15 @@ export default function V2Dish() {
   // Determine suitability matches for Personalized "Why this fits" section
   const hasAssessment = preferences && (preferences.goal || preferences.dietaryStyle);
   const isHighFit = match && !match.blocked && match.warnings.length === 0;
+  // Macros are gated purely behind whether the user has set a goal/dietaryStyle.
+  const macrosUnlocked = !!hasAssessment;
 
   const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<number, string | string[]>>({});
   const [showFacts, setShowFacts] = useState(false);
   const [showCalcDisclosure, setShowCalcDisclosure] = useState(false);
   const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [consentOpen, setConsentOpen] = useState(false);
   
   // Hero Carousel Slide index
   const [heroActiveIdx, setHeroActiveIdx] = useState(0);
@@ -180,7 +183,29 @@ export default function V2Dish() {
     setQuantity(1);
     setShowFacts(false);
     setHeroActiveIdx(0);
+    // A consent sheet computed for one dish must never survive into another —
+    // its clashAllergens/smartSwap would silently recompute for the new dish
+    // while the user believes they're acknowledging the old one.
+    setConsentOpen(false);
   }, [meal?.slug]);
+
+  // Safety-sheet modality: Escape closes (declining, never acknowledging),
+  // and the page behind can't scroll while an allergen acknowledgment is
+  // pending — this is the one sheet where interacting with the background
+  // by accident matters most.
+  useEffect(() => {
+    if (!consentOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setConsentOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [consentOpen]);
 
   useEffect(() => {
     if (meal) {
@@ -235,6 +260,41 @@ export default function V2Dish() {
     });
     return base;
   }, [selections, meal, customizations]);
+
+  // ALL selected customization option names — INCLUDING default:true options.
+  // This deliberately differs from collectCustomizations() (which skips
+  // defaults, since cart labels only list what the customer changed): the
+  // allergen check must see everything actually going into the dish, and the
+  // default choice is often exactly the allergen-bearing one (e.g. a pasta
+  // group defaulting to "Whole wheat" for a wheat-allergic user). Skipping
+  // defaults here would let that clash bypass the consent sheet entirely.
+  // Inlined (not a call to collectCustomizations) because that fn is declared
+  // after the `if (!meal)` early return and this hook must run before it
+  // (rules-of-hooks + TDZ) — and because the two lists intentionally differ.
+  const selectedOptionNames = useMemo(() => {
+    const labels: string[] = [];
+    customizations.forEach((group: any, idx: number) => {
+      const sel = selections[idx];
+      if (group.type === "single" && typeof sel === "string") {
+        if (group.options.some((o: any) => o.name === sel)) labels.push(sel);
+      } else if (group.type === "multiple" && Array.isArray(sel)) {
+        // Guard against the one-frame window on a variant switch where
+        // `selections` still holds the previous variant's option names but
+        // `customizations` has already updated — mirror the defensive
+        // options.find() pattern the price/macro memos use.
+        sel.forEach((name) => {
+          if (group.options.some((o: any) => o.name === name)) labels.push(name);
+        });
+      }
+    });
+    return labels;
+  }, [selections, customizations]);
+  const modifierClashes = useMemo(() => modifierClashAllergens(selectedOptionNames, preferences), [selectedOptionNames, preferences]);
+  const clashAllergens = useMemo(() => {
+    const base = match?.matchedAllergens ?? [];
+    return Array.from(new Set([...base, ...modifierClashes]));
+  }, [match, modifierClashes]);
+  const hasClash = (match?.blocked ?? false) || modifierClashes.length > 0;
 
 
   const calculatedTotal = calculatedUnitPrice * quantity;
@@ -307,18 +367,9 @@ export default function V2Dish() {
     return labels;
   };
 
-  const handleAddToOrder = () => {
-    if (isPremiumOnly && !isPremium) {
-      toast.error(`${meal.name} is a Premium-only dish`, {
-        description: "Join Tanmatra Premium to add this dish.",
-        action: { label: "See Premium", onClick: () => navigate("/premium") },
-      });
-      return;
-    }
-    if (match?.blocked === true) {
-      toast.error("Cannot add dish: Allergen safety block");
-      return;
-    }
+  // The actual add-to-cart body. Reached either directly (no clash) or after the
+  // user acknowledges the allergen consent sheet.
+  const doAddToOrder = () => {
     const custom = collectCustomizations();
     addItem({
       dishId: meal.id,
@@ -337,6 +388,23 @@ export default function V2Dish() {
     track("add_committed", { source: "pdp", dishId: meal.id, name: meal.name, price: calculatedUnitPrice });
     openCart();
     toast.success(`Added ${meal.name} to order`);
+  };
+
+  // Gate: premium check first, then (per product decision) an allergen clash no
+  // longer hard-blocks — it routes to an acknowledge-and-proceed consent sheet.
+  const handleAddToOrder = () => {
+    if (isPremiumOnly && !isPremium) {
+      toast.error(`${meal.name} is a Premium-only dish`, {
+        description: "Join Tanmatra Premium to add this dish.",
+        action: { label: "See Premium", onClick: () => navigate("/premium") },
+      });
+      return;
+    }
+    if (hasClash) {
+      setConsentOpen(true);
+      return;
+    }
+    doAddToOrder();
   };
 
   // One-click add from the "Related meals" rail — adds the base dish (no
@@ -492,9 +560,10 @@ export default function V2Dish() {
           <AllergenSummaryValue meal={meal} className="text-[15px] leading-5 text-[var(--pdp-on-surface)]" />
         </div>
 
-        {/* ③ Macro Summary Bento */}
+        {/* ③ Macro Summary Bento — gated behind a completed assessment */}
         {calculatedMacros && (
-          <div>
+          <div className={macrosUnlocked ? undefined : "relative"}>
+            <div className={macrosUnlocked ? undefined : "blur-sm select-none pointer-events-none"}>
             <div className="grid grid-cols-4 rounded-xl overflow-hidden border border-white/10"
               style={{ gap: "1px", background: "color-mix(in srgb, white 5%, transparent)" }}>
               {/* Calories */}
@@ -531,6 +600,20 @@ export default function V2Dish() {
                 {macrosEstimated ? "Estimated nutrition profile" : "Verified nutrition profile"}
               </span>
             </div>
+            </div>
+            {!macrosUnlocked && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                <p className="text-[13px] leading-5 text-white font-semibold">Macros are personalised to your goal</p>
+                <button
+                  type="button"
+                  onClick={() => { track("gate_unlock", { dishId: meal.id }); navigate("/preferences"); }}
+                  className="px-4 py-2 rounded-xl text-black text-[13px] font-bold shadow-lg active:scale-95 transition-all"
+                  style={{ background: "var(--tnm-action)" }}
+                >
+                  See how this fits your goal
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -640,9 +723,10 @@ export default function V2Dish() {
           </div>
         </div>
 
-        {/* ⑥ Macro Splits Detail + Full Nutrition Facts */}
+        {/* ⑥ Macro Splits Detail + Full Nutrition Facts — gated behind a completed assessment */}
         {calculatedMacros && (
-          <div className="space-y-4">
+          <div className={macrosUnlocked ? undefined : "relative"}>
+            <div className={macrosUnlocked ? "space-y-4" : "space-y-4 blur-sm select-none pointer-events-none"}>
             <h3 className="text-[11px] leading-4 tracking-[0.05em] font-semibold text-[var(--pdp-secondary)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
               Macro Splits
             </h3>
@@ -701,6 +785,20 @@ export default function V2Dish() {
                     <span className="text-white font-semibold">{v}</span>
                   </div>
                 ))}
+              </div>
+            )}
+            </div>
+            {!macrosUnlocked && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                <p className="text-[13px] leading-5 text-white font-semibold">Macros are personalised to your goal</p>
+                <button
+                  type="button"
+                  onClick={() => { track("gate_unlock", { dishId: meal.id }); navigate("/preferences"); }}
+                  className="px-4 py-2 rounded-xl text-black text-[13px] font-bold shadow-lg active:scale-95 transition-all"
+                  style={{ background: "var(--tnm-action)" }}
+                >
+                  See how this fits your goal
+                </button>
               </div>
             )}
           </div>
@@ -893,8 +991,7 @@ export default function V2Dish() {
             <button
               type="button"
               onClick={handleAddToOrder}
-              disabled={match?.blocked === true}
-              className="h-[52px] flex-1 min-w-0 rounded-xl text-black font-bold text-[17px] leading-6 relative overflow-hidden transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              className="h-[52px] flex-1 min-w-0 rounded-xl text-black font-bold text-[17px] leading-6 relative overflow-hidden transition-colors"
               style={{
                 background: "var(--tnm-action)",
                 boxShadow: "0px 6px 20px color-mix(in srgb, var(--tnm-action) 25%, transparent)",
@@ -990,6 +1087,105 @@ export default function V2Dish() {
                 style={{ background: "var(--tnm-action)" }}
               >
                 Apply & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Allergen Consent Sheet — acknowledge & proceed ──────────────── */}
+      {consentOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[950] flex items-end justify-center">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Allergen conflict confirmation"
+            className="w-full max-w-[480px] border-t border-white/10 rounded-t-2xl max-h-[85dvh] overflow-hidden flex flex-col p-4 shadow-2xl"
+            style={{ background: "var(--tnm-surface-ink-2)" }}>
+            <div className="mx-auto h-1.5 w-10 rounded-full bg-white/15 mb-3 shrink-0" />
+            <div className="flex justify-between items-start border-b border-white/5 pb-3">
+              <div className="flex items-start gap-2.5">
+                <WarningCircle className="w-5 h-5 text-[var(--pdp-on-error)] shrink-0 mt-0.5" weight="fill" />
+                <h3 className="text-[17px] leading-6 font-semibold text-white">
+                  {clashAllergens.length > 0 ? "Allergen conflict — please confirm" : "Safety conflict — please confirm"}
+                </h3>
+              </div>
+              <button type="button" onClick={() => setConsentOpen(false)} aria-label="Close"
+                className="w-12 h-12 -mt-2 -mr-2 rounded-full flex items-center justify-center text-white/70 hover:bg-white/10 shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* flagged allergens + honesty disclaimer */}
+            <div className="flex-1 overflow-y-auto flex flex-col gap-3 mt-4 py-1 pr-1">
+              <div className="rounded-xl p-3 flex items-start gap-2.5 border"
+                style={{ background: "color-mix(in srgb, var(--pdp-error-container) 10%, transparent)", borderColor: "color-mix(in srgb, var(--pdp-error-container) 25%, transparent)" }}>
+                <Warning className="w-4 h-4 text-[var(--pdp-on-error)] shrink-0 mt-0.5" weight="fill" />
+                <div className="text-[13px] leading-5 text-white/80 flex flex-col gap-1">
+                  {/* A clash can also come from a non-allergen block (diet-order
+                      conflict, or unreviewed allergen data), where
+                      matchedAllergens is empty — mirror the safety banner's
+                      per-reason rendering so this sheet never shows a bare
+                      "Flagged allergens:" line with nothing after it. */}
+                  {clashAllergens.length > 0 && (
+                    <span>
+                      <span className="font-bold text-[var(--pdp-on-error)]">Flagged allergens: </span>
+                      {clashAllergens.map((a) => a.toUpperCase()).join(", ")}
+                    </span>
+                  )}
+                  {(match?.blockReasons ?? [])
+                    .filter((r) => r.code !== "allergen_block")
+                    .map((r, i) => {
+                      if (r.code === "diet_block")
+                        return <span key={i}>Diet order conflict: {r.detail}</span>;
+                      if (r.code === "unchecked_allergens")
+                        return <span key={i}>This dish's allergen data hasn't been reviewed — treat it as unverified.</span>;
+                      return <span key={i}>Patient safety conflict detected.</span>;
+                    })}
+                </div>
+              </div>
+              {modifierClashes.length > 0 && (
+                <p className="text-[13px] leading-5 text-white/70 flex items-start gap-2">
+                  <Warning className="w-4 h-4 text-[var(--pdp-on-error)] shrink-0 mt-0.5" weight="fill" />
+                  <span>A selected customization may introduce an allergen.</span>
+                </p>
+              )}
+              <p className="text-[13px] leading-5 text-white/50">
+                Customization options aren't allergen-verified — we flag matches by name only and can't guarantee a customization is free of an allergen.
+              </p>
+            </div>
+
+            {/* actions — SAFE choice is primary/dominant, override is secondary (safety requirement) */}
+            <div className="mt-4 border-t border-white/5 pt-4 flex flex-col gap-2.5">
+              {smartSwap ? (
+                <Link
+                  to={`/dish/${smartSwap.slug}`}
+                  onClick={() => setConsentOpen(false)}
+                  className="w-full h-12 rounded-xl text-black text-[15px] font-bold flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                  style={{ background: "var(--tnm-action)" }}
+                >
+                  Choose a safe alternative
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConsentOpen(false)}
+                  className="w-full h-12 rounded-xl text-black text-[15px] font-bold flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                  style={{ background: "var(--tnm-action)" }}
+                >
+                  Choose another dish
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  track("allergen_ack", { dishId: meal.id, allergens: clashAllergens, viaModifier: modifierClashes.length > 0 });
+                  setConsentOpen(false);
+                  doAddToOrder();
+                }}
+                className="w-full h-12 rounded-xl border border-white/15 text-white/70 text-[15px] font-semibold flex items-center justify-center hover:bg-white/5 transition-colors"
+              >
+                I understand — add anyway
               </button>
             </div>
           </div>
