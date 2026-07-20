@@ -57,8 +57,15 @@ test.describe("CUJ-2 address picker (canvas-free)", () => {
     await seedCart(page, [cartItem({ quantity: 2 })]);
     await page.goto("/checkout");
 
-    // Trip the address gate.
-    await page.getByRole("button", { name: /review & pay/i }).first().click();
+    // Trip the address gate. With no address, Review & Pay is disabled with
+    // a visible reason (PR-09) rather than an enabled click-then-toast, so
+    // the picker opens from the address card's own CTA instead.
+    await expect(
+      page.getByRole("button", { name: /review & pay/i }).first(),
+    ).toBeDisabled();
+    await page
+      .getByRole("button", { name: /add your delivery address/i })
+      .click();
 
     // The rebuilt picker: prompt copy present, and the old dead-map states
     // must never render (no Maps JS in the component at all).

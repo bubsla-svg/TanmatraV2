@@ -2849,7 +2849,7 @@ function V2MobilePayBar({
             {formatPrice(razorpayTotal)}
           </p>
         </button>
-        <div className="col gap6" style={{ flexShrink: 0, alignItems: "stretch" }}>
+        <div className="col gap6" style={{ flexShrink: 0, alignItems: "stretch", maxWidth: 168 }}>
           {checkoutBlocked && checkoutBlockedReason && (
             <p className="fine dgrc tc">{checkoutBlockedReason}</p>
           )}
@@ -2859,7 +2859,10 @@ function V2MobilePayBar({
             onClick={onPay}
             disabled={checkoutBlocked || payBlockedReason !== null}
             className={checkoutBlocked || payBlockedReason !== null ? "btn btn-p dis" : "btn btn-p"}
-            style={{ height: 48, padding: "0 16px" }}
+            // A long reason line above (patient-safety or address/slot/pickup)
+            // must not stretch this button wider than its own content — it
+            // shares the "col" with alignItems:stretch, so opt it back out.
+            style={{ height: 48, padding: "0 16px", alignSelf: "flex-end", width: "max-content" }}
             title={checkoutBlocked ? checkoutBlockedReason ?? undefined : payBlockedReason ?? undefined}
           >
             <CreditCard className="w-4 h-4" />
