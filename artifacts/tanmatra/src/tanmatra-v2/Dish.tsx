@@ -940,13 +940,16 @@ export default function V2Dish() {
                       <p className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] mt-1" style={{ fontFamily: "Geist, sans-serif" }}>
                         {u.macros?.calories || "—"} kcal &bull; {u.macros?.protein || "—"}g protein
                       </p>
+                      {typeof u.price === "number" && (
+                        <p className="text-[13px] leading-4 text-white font-bold mt-1 tabular-nums">{F(u.price)}</p>
+                      )}
                     </div>
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleAddUpsell(u)}
                     aria-label={`Add ${u.name} to order`}
-                    className="w-10 h-10 flex items-center justify-center text-[var(--pdp-secondary)] hover:text-white transition-colors"
+                    className="w-11 h-11 shrink-0 flex items-center justify-center rounded-full border border-[var(--tnm-action)]/40 bg-[var(--tnm-action)]/10 text-[var(--tnm-action)] hover:bg-[var(--tnm-action)]/20 active:scale-95 transition-all"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
