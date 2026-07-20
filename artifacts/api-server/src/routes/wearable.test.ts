@@ -8,7 +8,7 @@ import express, { type Express, type Request } from "express";
 // Real DB (the route writes metric + rollup rows). Fall back to the local
 // staging DB when run standalone; the CI/verify command sets DATABASE_URL.
 process.env["DATABASE_URL"] ||=
-  "postgres://brand_tanmatra_user:a4bEozBP3nusjNRX@localhost:5432/brand-tanmatra-db-staging";
+  "postgres://postgres:postgres@localhost:5432/brand-tanmatra-db-staging";
 
 // Enable the integration in MOCK mode (shared-secret header auth) so we don't
 // have to hand-compute HMACs. Config is read at request time.
