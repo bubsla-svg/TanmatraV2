@@ -10,6 +10,7 @@ import {
 } from "../lib/adminAuth";
 import { rateLimit } from "../lib/rateLimit";
 import { revokeSession } from "../lib/auth";
+import { safeEqual } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
@@ -97,7 +98,7 @@ router.get("/admin/me", (req: Request, res: Response) => {
 router.post("/admin/_hash", (req: Request, res: Response) => {
   const secret = process.env["ADMIN_SESSION_SECRET"];
   const provided = req.header("x-admin-secret");
-  if (!secret || !provided || provided !== secret) {
+  if (!secret || !provided || !safeEqual(provided, secret)) {
     res.status(404).end();
     return;
   }
