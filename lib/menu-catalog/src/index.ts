@@ -52,6 +52,14 @@ export interface DishCustomOption {
     description: string;
     longDescription: string;
     image: string;
+    /**
+     * Companion shots used by imagery-led surfaces (menu hero rails, PDP
+     * galleries). Optional: dishes without them fall back to `image`.
+     */
+    imageIngredient?: string;
+    imageDelivered?: string;
+    imageLifestyle?: string;
+    imagePackaging?: string;
     price: number;
     kitchen: DishKitchen;
     category: DishCategory;
