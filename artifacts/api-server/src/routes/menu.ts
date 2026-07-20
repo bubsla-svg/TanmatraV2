@@ -23,9 +23,8 @@ import {
 } from "../lib/menuCopy";
 import { recordOpsAction } from "../lib/opsAudit";
 import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
-import { db, userPreferencesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
+import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
 
@@ -69,11 +68,9 @@ router.get("/menu/ranked", async (req: Request, res: Response) => {
   let prefsRow: any = null;
 
   if (profileId) {
-    const rows = await db
-      .select()
-      .from(userPreferencesTable)
-      .where(eq(userPreferencesTable.userId, profileId));
-    prefsRow = rows[0] ?? null;
+    // Decrypt-on-read: clinical arrays are envelope-encrypted at rest, and
+    // evaluateDishForPreferences must see plaintext to match allergens.
+    prefsRow = await getDecryptedPreferences(profileId);
   }
 
   const dishes = await getMergedCatalog();

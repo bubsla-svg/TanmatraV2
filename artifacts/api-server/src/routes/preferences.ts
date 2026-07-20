@@ -4,6 +4,12 @@ import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { db, userPreferencesTable } from "@workspace/db";
 import { invalidateUserBrief } from "../lib/userBrief";
+import {
+  decryptClinicalStrings,
+  decryptPreferencesRow,
+  encryptPreferencesPatch,
+} from "../lib/crypto";
+import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
 
@@ -62,22 +68,31 @@ router.get("/preferences", async (req: Request, res: Response) => {
     res.json({ preferences: null });
     return;
   }
-  const [row] = await db
-    .select()
-    .from(userPreferencesTable)
-    .where(eq(userPreferencesTable.userId, userId));
-  res.json({ preferences: row ?? null });
+  // Decrypt-on-read: clinical arrays are stored as AES-256-GCM envelopes.
+  const preferences = await getDecryptedPreferences(userId);
+  res.json({ preferences });
 });
 
 async function upsertPreferences(
   userId: string,
   patch: z.infer<typeof preferencesSchema>,
 ) {
+  // Encrypt-on-write (DPDPA at-rest protection): the three clinical
+  // free-text arrays are stored as AES-256-GCM envelope strings, mirroring
+  // subscription-member clinical fields. The scalar clinical fields
+  // (hba1cPct: double precision, pcosHistory: boolean) are NOT encrypted —
+  // their column types cannot hold an envelope string; moving them under
+  // the KMS envelope requires a schema migration reviewed separately.
+  const clinical = encryptPreferencesPatch({
+    allergens: patch.allergens,
+    dislikedIngredients: patch.dislikedIngredients,
+    medicalConditions: patch.medicalConditions,
+  });
   const insertValues = {
     userId,
-    allergens: patch.allergens ?? [],
-    dislikedIngredients: patch.dislikedIngredients ?? [],
-    medicalConditions: patch.medicalConditions ?? [],
+    allergens: clinical.allergens ?? [],
+    dislikedIngredients: clinical.dislikedIngredients ?? [],
+    medicalConditions: clinical.medicalConditions ?? [],
     cuisines: patch.cuisines ?? [],
     spiceLevel: patch.spiceLevel ?? "medium",
     dietaryStyle: patch.dietaryStyle ?? "omnivore",
@@ -94,11 +109,11 @@ async function upsertPreferences(
     quizCompletedAt: patch.markQuizComplete ? new Date() : null,
   };
   const updateSet: Record<string, unknown> = {};
-  if (patch.allergens !== undefined) updateSet["allergens"] = patch.allergens;
+  if (patch.allergens !== undefined) updateSet["allergens"] = clinical.allergens;
   if (patch.dislikedIngredients !== undefined)
-    updateSet["dislikedIngredients"] = patch.dislikedIngredients;
+    updateSet["dislikedIngredients"] = clinical.dislikedIngredients;
   if (patch.medicalConditions !== undefined)
-    updateSet["medicalConditions"] = patch.medicalConditions;
+    updateSet["medicalConditions"] = clinical.medicalConditions;
   if (patch.cuisines !== undefined) updateSet["cuisines"] = patch.cuisines;
   if (patch.spiceLevel !== undefined)
     updateSet["spiceLevel"] = patch.spiceLevel;
@@ -125,18 +140,20 @@ async function upsertPreferences(
     updateSet["weightKg"] = patch.weightKg;
   if (patch.markQuizComplete) updateSet["quizCompletedAt"] = new Date();
 
+  // Rows coming back from the DB carry envelope strings; decrypt before
+  // returning so API responses always expose plaintext to the client.
   if (Object.keys(updateSet).length === 0) {
     const [existing] = await db
       .insert(userPreferencesTable)
       .values(insertValues)
       .onConflictDoNothing({ target: userPreferencesTable.userId })
       .returning();
-    if (existing) return existing;
+    if (existing) return decryptPreferencesRow(existing);
     const [row] = await db
       .select()
       .from(userPreferencesTable)
       .where(eq(userPreferencesTable.userId, userId));
-    return row;
+    return row ? decryptPreferencesRow(row) : row;
   }
 
   const [row] = await db
@@ -147,7 +164,7 @@ async function upsertPreferences(
       set: updateSet,
     })
     .returning();
-  return row;
+  return row ? decryptPreferencesRow(row) : row;
 }
 
 async function preferencesWriteHandler(req: Request, res: Response) {
@@ -225,8 +242,15 @@ router.delete("/user/health-data/:field", async (req: Request, res: Response) =>
         .from(userPreferencesTable)
         .where(eq(userPreferencesTable.userId, userId));
 
+      // Stored elements may be AES-256-GCM envelopes (or legacy plaintext
+      // mid-rollout). Compare on the DECRYPTED value, but keep each kept
+      // element in its original stored representation — a targeted delete
+      // must not rewrite unrelated elements.
       const current = prefs?.medicalConditions ?? [];
-      const updated = current.filter((c) => c.toLowerCase() !== lower);
+      const currentPlain = decryptClinicalStrings(current);
+      const updated = current.filter(
+        (_, i) => (currentPlain[i] ?? "").toLowerCase() !== lower,
+      );
 
       await db
         .update(userPreferencesTable)
