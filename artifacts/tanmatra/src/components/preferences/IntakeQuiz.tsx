@@ -28,6 +28,7 @@ import {
   type UserPreferences,
 } from "@/lib/preferencesApi";
 import { usePreferences } from "@/lib/preferencesContext";
+import { track } from "@/lib/analytics";
 
 interface QuizState {
   dietaryStyle: DietaryStyle;
@@ -114,6 +115,10 @@ interface IntakeQuizProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialGoal?: WellnessGoal;
+  /** Playbook §8.2 `quiz_opened.entry` — which surface launched the quiz.
+   *  Optional and defaulted so existing call sites (Home,
+   *  OnboardingQuizGate) keep compiling unchanged; they can adopt it later. */
+  entry?: "hero" | "banner" | "lp" | "account" | "unknown";
 }
 
 // `STEPS.length` is the form steps; once the user saves, we show a results
@@ -121,7 +126,7 @@ interface IntakeQuizProps {
 // conversion moment in the product.
 const RESULTS_STEP = STEPS.length;
 
-export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQuizProps) {
+export default function IntakeQuiz({ open, onOpenChange, initialGoal, entry = "unknown" }: IntakeQuizProps) {
   const { preferences, update, unauthorized } = usePreferences();
   const [step, setStep] = useState(0);
   const [state, setState] = useState<QuizState>(() => {
@@ -146,6 +151,53 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
   const spiceId = useId();
   const allergenId = useId();
   const targetsHintId = useId();
+
+  // ── Playbook §8.2 instrumentation — beacons only, zero flow changes. ──
+  // Wire format: 1-based step numbers (1–5 form steps, 6 = results) with the
+  // paired viewed/completed pattern. §8.4 governance: only enums, booleans
+  // and counts leave the device — never condition names or allergen lists.
+  const stepRef = useRef(step);
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+  // "suggested" until the user types in a manual target field; the Calculate
+  // button flips it back — last writer wins. Reset per open session.
+  const targetSourceRef = useRef<"suggested" | "edited">("suggested");
+  const openedTrackedRef = useRef(false);
+
+  const trackStepViewed = (s: number) =>
+    track("quiz_step_viewed", {
+      step: s + 1,
+      step_name: s === RESULTS_STEP ? "Results" : STEPS[s],
+    });
+
+  // Declared BEFORE the hydration effect so `quiz_opened` beacons before the
+  // first `quiz_step_viewed` on the same open commit (effects run in order).
+  useEffect(() => {
+    if (!open) {
+      openedTrackedRef.current = false;
+      return;
+    }
+    targetSourceRef.current = "suggested";
+    if (!openedTrackedRef.current) {
+      openedTrackedRef.current = true;
+      track("quiz_opened", { entry });
+    }
+    return () => {
+      // Session end: either the dialog closed while mounted
+      // (OnboardingQuizGate flips `open`) or the component unmounted while
+      // open (Home renders the quiz conditionally). Un-saved past the first
+      // step = abandoned; the post-save results step never counts.
+      const s = stepRef.current;
+      if (s >= 1 && s < RESULTS_STEP) {
+        track("quiz_abandoned", { last_step: s + 1 });
+      }
+    };
+    // Keyed on `open` alone (matching this file's effect style): `entry` is
+    // fixed per surface, and re-running on a prop identity change would fake
+    // a close/reopen beacon pair.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -186,6 +238,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
             ),
           );
           hydratedSessionRef.current = true;
+          trackStepViewed(restoredStep);
           return;
         }
       }
@@ -214,7 +267,8 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
     if (preferences?.allergens?.length) resumeAt = 4;
     // Cap at last form step — the results step is only entered after a
     // successful save in onNext.
-    setStep(Math.min(resumeAt, STEPS.length - 1));
+    const resumeStep = Math.min(resumeAt, STEPS.length - 1);
+    setStep(resumeStep);
     setShowManualTargets(
       Boolean(
         preferences?.calorieTarget ||
@@ -224,6 +278,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
       ),
     );
     hydratedSessionRef.current = true;
+    trackStepViewed(resumeStep);
   }, [open, preferences]);
 
   useEffect(() => {
@@ -302,11 +357,23 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
       // Ignore storage exceptions
     }
     if (markComplete) {
+      // The forward advance out of the last form step IS this successful
+      // save — fire its `completed` half, then the §8.2 completion beacon.
+      // Governance: `goal` is the non-medical WellnessGoal enum,
+      // `has_condition` a boolean derived from whether ANY condition is on
+      // the profile (never the names), `target_source` an enum.
+      track("quiz_step_completed", { step: STEPS.length });
+      track("quiz_completed", {
+        goal: state.goal,
+        has_condition: (preferences?.medicalConditions?.length ?? 0) > 0,
+        target_source: targetSourceRef.current,
+      });
       // Stay in the dialog and reveal the results step rather than
       // hard-redirecting — the user gets to see what they unlocked
       // (RD-matched plans, free RD consult, personalized menu) and
       // pick their next action instead of being dumped on /menu.
       setStep(RESULTS_STEP);
+      trackStepViewed(RESULTS_STEP);
     }
   };
 
@@ -316,7 +383,9 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
       // doesn't lose answers. Failures are silent — the user will see
       // the real toast on final save.
       void update(buildPartialPatch(state));
+      track("quiz_step_completed", { step: step + 1 });
       setStep(step + 1);
+      trackStepViewed(step + 1);
     } else void handleSave(true);
   };
 
@@ -607,6 +676,7 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                 <button
                   type="button"
                   onClick={() => {
+                    targetSourceRef.current = "suggested";
                     const t = suggestedTargets(state.goal, state.activityLevel);
                     setState((s) => ({
                       ...s,
@@ -667,12 +737,13 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         placeholder="220"
                         aria-describedby={targetsHintId}
                         value={state.carbsTargetGrams}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          targetSourceRef.current = "edited";
                           setState((s) => ({
                             ...s,
                             carbsTargetGrams: e.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
@@ -689,12 +760,13 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         placeholder="60"
                         aria-describedby={targetsHintId}
                         value={state.fatTargetGrams}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          targetSourceRef.current = "edited";
                           setState((s) => ({
                             ...s,
                             fatTargetGrams: e.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
@@ -713,9 +785,10 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         placeholder="2000"
                         aria-describedby={targetsHintId}
                         value={state.calorieTarget}
-                        onChange={(e) =>
-                          setState((s) => ({ ...s, calorieTarget: e.target.value }))
-                        }
+                        onChange={(e) => {
+                          targetSourceRef.current = "edited";
+                          setState((s) => ({ ...s, calorieTarget: e.target.value }));
+                        }}
                         className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
@@ -732,12 +805,13 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                         placeholder="120"
                         aria-describedby={targetsHintId}
                         value={state.proteinTargetGrams}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          targetSourceRef.current = "edited";
                           setState((s) => ({
                             ...s,
                             proteinTargetGrams: e.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         className="bg-nn-surface-high border-white/[0.08] text-sm"
                       />
                     </div>
@@ -777,6 +851,9 @@ export default function IntakeQuiz({ open, onOpenChange, initialGoal }: IntakeQu
                   return;
                 }
                 setStep(step - 1);
+                // Backward navigation is still a step entry for the paired
+                // viewed/completed funnel — no `completed` fires on Back.
+                trackStepViewed(step - 1);
               }}
               className="min-h-11 text-xs text-nn-on-surface-variant"
             >

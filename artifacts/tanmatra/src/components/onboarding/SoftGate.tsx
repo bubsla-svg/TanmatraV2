@@ -228,11 +228,15 @@ export default function SoftGate() {
       markQuizComplete: false,
     });
 
+    // Playbook §8.2 contract: softgate_complete carries exactly
+    // {goal, allergen_count}. `goal` is the non-medical WellnessGoal enum;
+    // `allergen_count` a count, never the list (allergen_count === 0 also
+    // covers the explicit "none" pick, so no extra boolean rides along).
+    // The card key must NOT be sent — `blood_sugar`/`heart` are one-to-one
+    // proxies for the seeded medicalConditions, which §8.4 forbids in events.
     track("softgate_complete", {
       goal: chosenGoal.goal,
-      goal_card: chosenGoal.key,
       allergen_count: allergens.length,
-      none: noneSelected,
     });
 
     // Satisfying confirmation, then slide into the app.
