@@ -373,6 +373,13 @@ export default function V2Checkout() {
       setShowNewAddressFlow(true);
       return;
     }
+    // Defense in depth for the OTHER Pay entry points that aren't disabled
+    // by payBlockedReason directly — currently the payFailure banner's
+    // "Try again" button, which re-invokes this same handler.
+    if (payBlockedReason) {
+      toast.error(payBlockedReason);
+      return;
+    }
     if (addressAuthRequired) {
       if (currentAddr.phone.trim()) {
         setGuestPhone(currentAddr.phone.trim().replace(/^\+91/, ""));
@@ -468,18 +475,37 @@ export default function V2Checkout() {
       applyOtpCode(guestOtpCode.slice(0, index) + guestOtpCode.slice(index + 1));
       return;
     }
-    if (digits.length >= 4) {
-      // A multi-digit burst reaching a single box is WebOTP / keyboard
-      // OTP autofill (autoComplete="one-time-code" — boxes deliberately
-      // have no maxLength so autofill isn't truncated) or a paste the
-      // onPaste handler didn't intercept. Distribute across the boxes.
+    if (digits.length >= 6) {
+      // True full-code burst — WebOTP / keyboard OTP autofill (boxes
+      // deliberately have no maxLength so autofill isn't truncated).
+      // Distribute across all six boxes from the start.
       applyOtpCode(digits);
       focusOtpBox(Math.min(digits.length, 5));
       return;
     }
-    // Single keystroke (2-3 digits can only mean a stray append next to an
-    // existing digit — the newly-typed character is the last one).
-    const ch = digits[digits.length - 1];
+    if (digits.length >= 4) {
+      // A shorter autofill burst landing on this box — insert starting at
+      // the receiving box rather than replacing from zero, so digits
+      // already entered in earlier boxes survive.
+      const at = Math.min(index, guestOtpCode.length);
+      applyOtpCode(
+        guestOtpCode.slice(0, at) + digits + guestOtpCode.slice(at + digits.length),
+      );
+      focusOtpBox(Math.min(at + digits.length, 5));
+      return;
+    }
+    // Single keystroke next to an existing digit (2 chars): the caret may
+    // sit BEFORE the existing digit (click, ArrowLeft, or Home collapses
+    // the select-all to the start), so the browser can deliver
+    // "<new><old>" instead of "<old><new>". Diff against the box's
+    // previous value to find the actually-new character instead of always
+    // assuming it's last — otherwise a correction silently rewrites the
+    // same old digit while focus still advances.
+    const old = guestOtpCode[index];
+    let ch = digits[digits.length - 1];
+    if (old != null && digits.length > 1 && ch === old && digits[0] !== old) {
+      ch = digits[0];
+    }
     const at = Math.min(index, guestOtpCode.length);
     applyOtpCode(guestOtpCode.slice(0, at) + ch + guestOtpCode.slice(at + 1));
     focusOtpBox(Math.min(at + 1, 5));
@@ -507,14 +533,29 @@ export default function V2Checkout() {
     }
   };
 
-  const handleOtpPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+  const handleOtpPaste = (
+    index: number,
+    e: ClipboardEvent<HTMLInputElement>,
+  ) => {
     const digits = e.clipboardData.getData("text").replace(/\D/g, "");
     if (digits.length === 0) return;
-    // Full-code paste into ANY box distributes across the boxes from the
-    // first one — same net behaviour the old single input had.
     e.preventDefault();
-    applyOtpCode(digits);
-    focusOtpBox(Math.min(digits.length, 5));
+    if (digits.length >= 6) {
+      // A full-code paste distributes across all six boxes from the start
+      // regardless of which box received it — same net behaviour the old
+      // single input had.
+      applyOtpCode(digits);
+      focusOtpBox(Math.min(digits.length, 5));
+      return;
+    }
+    // A partial paste (completing a code the user started typing) inserts
+    // at the receiving box instead of replacing from zero, so digits
+    // already entered in earlier boxes survive.
+    const at = Math.min(index, guestOtpCode.length);
+    applyOtpCode(
+      guestOtpCode.slice(0, at) + digits + guestOtpCode.slice(at + digits.length),
+    );
+    focusOtpBox(Math.min(at + digits.length, 5));
   };
 
   const handleVerifyGuestOtp = async () => {
@@ -1508,6 +1549,7 @@ export default function V2Checkout() {
 
   return (
     <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <ProcessingLiveRegion isProcessing={isProcessing} orderRef={processingOrderRef} />
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <button type="button" className="iconbtn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cart"))} aria-label="Back">
@@ -2222,11 +2264,20 @@ export default function V2Checkout() {
                       setPayFailure(null);
                       void handlePlaceOrderClick();
                     }}
-                    className="btn btn-g mt8"
+                    disabled={checkoutBlocked || payBlockedReason !== null}
+                    className={
+                      checkoutBlocked || payBlockedReason !== null
+                        ? "btn btn-g mt8 dis"
+                        : "btn btn-g mt8"
+                    }
+                    title={checkoutBlocked ? checkoutBlockedReason ?? undefined : payBlockedReason ?? undefined}
                     style={{ height: 32, padding: "0 12px", fontSize: 12 }}
                   >
                     Try again
                   </button>
+                  {payBlockedReason && (
+                    <PayBlockedNotice reason={payBlockedReason} style={{ marginTop: 6, justifyContent: "flex-start" }} />
+                  )}
                 </div>
                 <button
                   type="button"
@@ -2393,7 +2444,7 @@ export default function V2Checkout() {
                           value={guestOtpCode[i] ?? ""}
                           onChange={(e) => handleOtpBoxChange(i, e.target.value)}
                           onKeyDown={(e) => handleOtpBoxKeyDown(i, e)}
-                          onPaste={handleOtpPaste}
+                          onPaste={(e) => handleOtpPaste(i, e)}
                           onFocus={(e) => {
                             setOtpFocusIdx(i);
                             e.target.select();
@@ -2852,9 +2903,13 @@ function PayBlockedNotice({
   );
 }
 
-// In-flight payment notice shown near the Pay area / confirm modal. The
-// order reference is only rendered when a real attempt ref exists — never
-// a fabricated one.
+// In-flight payment notice shown near the Pay area / confirm modal. This is
+// purely visual — screen readers get the same message from the single
+// persistent live region in V2Checkout's <ProcessingLiveRegion>, since a
+// role="status" region that's inserted into the DOM already containing its
+// text is announced unreliably (and this component mounts in up to three
+// places at once, which would risk triple-announcing). aria-hidden here
+// keeps a virtual cursor from reading it as a fourth, redundant copy.
 function PayProcessingNotice({
   orderRef,
   style,
@@ -2865,7 +2920,7 @@ function PayProcessingNotice({
   return (
     <p
       className="fine tc fx ac jc gap6"
-      role="status"
+      aria-hidden="true"
       style={{ color: "var(--tx)", ...style }}
     >
       <i
@@ -2882,6 +2937,33 @@ function PayProcessingNotice({
           </>
         ) : null}
       </span>
+    </p>
+  );
+}
+
+// Single always-mounted live region for the processing state. Screen
+// readers only reliably announce role="status" content when it changes
+// AFTER the region already exists in the DOM — mounting a brand-new
+// role="status" element that already contains its text (the pattern the
+// three visible PayProcessingNotice instances use) is announced
+// inconsistently. This region is empty on first render and its text is
+// set only once isProcessing flips, so the mutation is a genuine live
+// update, and being a single instance it also dedupes the desktop
+// summary + confirm-sheet overlap.
+function ProcessingLiveRegion({
+  isProcessing,
+  orderRef,
+}: {
+  isProcessing: boolean;
+  orderRef: string | null;
+}) {
+  return (
+    <p role="status" className="sr-only">
+      {isProcessing
+        ? `Payment in progress — don't close this screen.${
+            orderRef ? ` Ref: ${orderRef}` : ""
+          }`
+        : ""}
     </p>
   );
 }
