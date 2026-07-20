@@ -44,6 +44,8 @@ import {
 import AddOnRail from "@/components/checkout/AddOnRail";
 import CheckoutStepper, { type CheckoutStep } from "@/components/checkout/CheckoutStepper";
 import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";
+import { useWizardState } from "@/lib/useWizardState";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
   MapPin,
@@ -95,12 +97,91 @@ interface VerifyOtpResponse {
   error?: string;
 }
 
+// Wizard draft (playbook R1) — refresh/back-navigation no longer wipes the
+// checkout form. ONLY benign, re-enterable form fields are persisted here;
+// NEVER payment identifiers, OTP codes, or card/UPI data (none of those ever
+// enter this object — Razorpay owns them end to end).
+type CheckoutDraft = {
+  /** Stable per-draft id attached to checkout_step_* events (Part 8). */
+  checkoutId?: string;
+  fulfillmentType?: "delivery" | "pickup";
+  deliveryMode?: "now" | "schedule";
+  selectedSlotId?: number | null;
+  selectedPickupId?: number | null;
+  deliveryInstructions?: string;
+  guestPhone?: string;
+  ecoPackagingOptIn?: boolean;
+  // No tip field: checkout deliberately offers no tip selector (there is no
+  // server-side capture path — see the inline note near the Payment card).
+};
+
+/** Field-by-field validation of a stored draft — a corrupt or stale payload
+ * degrades to "field absent", never to a crash or a bad value in state. */
+function parseCheckoutDraft(stored: Record<string, unknown>): CheckoutDraft {
+  const d: CheckoutDraft = {};
+  if (typeof stored.checkoutId === "string") d.checkoutId = stored.checkoutId;
+  if (stored.fulfillmentType === "delivery" || stored.fulfillmentType === "pickup") {
+    d.fulfillmentType = stored.fulfillmentType;
+  }
+  if (stored.deliveryMode === "now" || stored.deliveryMode === "schedule") {
+    d.deliveryMode = stored.deliveryMode;
+  }
+  if (typeof stored.selectedSlotId === "number" || stored.selectedSlotId === null) {
+    d.selectedSlotId = stored.selectedSlotId;
+  }
+  if (typeof stored.selectedPickupId === "number" || stored.selectedPickupId === null) {
+    d.selectedPickupId = stored.selectedPickupId;
+  }
+  if (typeof stored.deliveryInstructions === "string") {
+    d.deliveryInstructions = stored.deliveryInstructions;
+  }
+  if (typeof stored.guestPhone === "string") d.guestPhone = stored.guestPhone;
+  if (typeof stored.ecoPackagingOptIn === "boolean") {
+    d.ecoPackagingOptIn = stored.ecoPackagingOptIn;
+  }
+  return d;
+}
+
+function mintCheckoutId(): string {
+  try {
+    return (
+      crypto.randomUUID?.() ??
+      `c-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    );
+  } catch {
+    return `c-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
 export default function V2Checkout() {
   const navigate = useNavigate();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // R1 wizard contract. On mobile (<md) checkout becomes a REAL 3-step flow —
+  // 0 Review, 1 Delivery, 2 Payment — mirrored to `?step=` (browser Back
+  // walks steps) and persisted with the form draft under
+  // `tanmatra:checkout-draft:v1`. On ≥md the page stays single-scroll: the
+  // step state still exists (and the draft still persists) but gates nothing.
+  const isMobile = useIsMobile();
+  const [freshCheckoutId] = useState(() => mintCheckoutId());
+  const wizard = useWizardState<CheckoutDraft>({
+    flow: "checkout",
+    totalSteps: 3,
+    initialDraft: { checkoutId: freshCheckoutId },
+    parse: (stored) => {
+      const d = parseCheckoutDraft(stored);
+      // A draft always carries its id; heal one written before ids existed.
+      if (!d.checkoutId) d.checkoutId = freshCheckoutId;
+      return d;
+    },
+  });
+  const wizardStep = wizard.step;
+  const checkoutId = wizard.draft.checkoutId ?? freshCheckoutId;
+  const clearCheckoutDraft = wizard.clearDraft;
+
   const { items, bundleSlugs, subtotal, clear } = useCart();
   // Guard: bounce to the menu only when the cart is GENUINELY empty (deep link
   // with nothing to buy, back-button after clear). On a refresh/deep-link the
@@ -249,6 +330,9 @@ export default function V2Checkout() {
         setIsProcessing(false);
         setConfirmOpen(false);
         clear();
+        // Terminal success via UPI-app recovery — clear the R1 wizard draft
+        // exactly like the direct success path does.
+        clearCheckoutDraft();
         submitAttemptRef.current = null;
         toast.success(`Payment confirmed upon return from UPI app! Order ${event.tx.orderId} placed.`);
         navigate(`/track?orderId=${encodeURIComponent(event.tx.orderId)}`);
@@ -257,7 +341,7 @@ export default function V2Checkout() {
         setIsProcessing(false);
       },
     });
-  }, [clear, navigate]);
+  }, [clear, navigate, clearCheckoutDraft]);
 
   // High-fidelity guest-checkout & slotting states
   const [deliveryMode, setDeliveryMode] = useState<"now" | "schedule">("now");
@@ -302,6 +386,54 @@ export default function V2Checkout() {
   const [ecoPackagingOptIn, setEcoPackagingOptIn] = useState(false);
   const [deliveryInstructions, setDeliveryInstructions] = useState("");
   const [savedInstructions, setSavedInstructions] = useState<Record<string, string>>({});
+
+  // ---- R1 rehydrate-once-on-mount -----------------------------------------
+  // Restore the benign form fields a refresh or back-navigation used to wipe
+  // (they were in-memory only). `wizard.draft` on first render IS the stored
+  // snapshot. The skip-once ref protects a restored in-progress rider note
+  // from being clobbered by the saved-per-address hydration effect below the
+  // moment addresses finish loading.
+  const skipNextInstructionsHydration = useRef(false);
+  useEffect(() => {
+    const d = wizard.draft;
+    if (d.fulfillmentType) setFulfillmentType(d.fulfillmentType);
+    if (d.deliveryMode) setDeliveryMode(d.deliveryMode);
+    if (d.selectedSlotId !== undefined) setSelectedSlotId(d.selectedSlotId);
+    if (d.selectedPickupId !== undefined) setSelectedPickupId(d.selectedPickupId);
+    if (typeof d.deliveryInstructions === "string" && d.deliveryInstructions.length > 0) {
+      setDeliveryInstructions(d.deliveryInstructions);
+      skipNextInstructionsHydration.current = true;
+    }
+    if (typeof d.guestPhone === "string" && d.guestPhone.length > 0) {
+      setGuestPhone(d.guestPhone);
+    }
+    if (typeof d.ecoPackagingOptIn === "boolean") setEcoPackagingOptIn(d.ecoPackagingOptIn);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mirror the live form fields into the persisted draft; the hook
+  // serializes to sessionStorage on every change. Only the benign fields
+  // listed in CheckoutDraft ever pass through here.
+  useEffect(() => {
+    wizard.patchDraft({
+      fulfillmentType,
+      deliveryMode,
+      selectedSlotId,
+      selectedPickupId,
+      deliveryInstructions,
+      guestPhone,
+      ecoPackagingOptIn,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    fulfillmentType,
+    deliveryMode,
+    selectedSlotId,
+    selectedPickupId,
+    deliveryInstructions,
+    guestPhone,
+    ecoPackagingOptIn,
+  ]);
 
   // Default scheduled time: tomorrow 12:30 in the user's locale.
   const tomorrowSlot = (() => {
@@ -602,6 +734,12 @@ export default function V2Checkout() {
   const activeAddrLabel = savedAddresses.find((a) => a.id === selectedAddress)?.label;
   useEffect(() => {
     if (!activeAddrLabel) return;
+    if (skipNextInstructionsHydration.current) {
+      // An R1-draft-restored in-progress note wins the FIRST hydration after
+      // addresses load; switching addresses afterwards behaves as before.
+      skipNextInstructionsHydration.current = false;
+      return;
+    }
     setDeliveryInstructions(savedInstructions[activeAddrLabel] ?? "");
   }, [activeAddrLabel, savedInstructions]);
 
@@ -727,6 +865,57 @@ export default function V2Checkout() {
   };
 
   const activeAddr = savedAddresses.find((a) => a.id === selectedAddress);
+
+  // ---- R1 mobile 3-step flow ----------------------------------------------
+  // Paired step events (Part 8) fire only while the stepped flow is REAL
+  // (<md) so desktop single-scroll traffic can't inflate step-1 views against
+  // step completions. Steps are reported 1-based (1 review / 2 delivery /
+  // 3 payment) with the draft-stable checkout_id.
+  const stepViewedRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!isMobile || !isMounted) return;
+    if (stepViewedRef.current === wizardStep) return;
+    stepViewedRef.current = wizardStep;
+    track("checkout_step_viewed", { step: wizardStep + 1, checkout_id: checkoutId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wizardStep, isMobile, isMounted]);
+
+  const goToCheckoutStep = (next: number) => {
+    if (isMobile && next > wizardStep) {
+      track("checkout_step_completed", { step: wizardStep + 1, checkout_id: checkoutId });
+    }
+    wizard.goToStep(next);
+  };
+
+  // Forward gate for the mobile stepper — reuses the exact error affordances
+  // the submit path already uses, so nothing can be "completed" past a state
+  // the server would reject anyway.
+  const handleMobileContinue = () => {
+    if (wizardStep === 0) {
+      goToCheckoutStep(1);
+      return;
+    }
+    if (!activeAddr) {
+      toast.error("Please enter or select a valid delivery address");
+      setShowNewAddressFlow(true);
+      return;
+    }
+    if (fulfillmentType === "pickup" && selectedPickupId === null) {
+      toast.error("Please choose a pickup partner to continue");
+      return;
+    }
+    if (fulfillmentType === "delivery" && deliveryMode === "schedule" && selectedSlotId === null) {
+      setSlotErrorMsg("Pick a delivery window to continue.");
+      return;
+    }
+    goToCheckoutStep(2);
+  };
+
+  // Section gating for the mobile stepped flow: everything stays MOUNTED
+  // (field/query state survives step walks); the inactive steps' cards are
+  // display-hidden below md only. ≥md renders everything — single scroll.
+  const mobileStepClass = (uiStep: number) =>
+    wizardStep === uiStep ? "" : "max-md:hidden";
 
   useEffect(() => {
     if (!activeAddr || items.length === 0 || fulfillmentType !== "delivery") {
@@ -1161,9 +1350,15 @@ export default function V2Checkout() {
       const statusMatch = /^(\d{3}):/.exec(msg);
       const status = statusMatch ? Number(statusMatch[1]) : 0;
       const scrollToFulfillment = () => {
-        document
-          .getElementById("checkout-fulfillment")
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        // On the mobile stepped flow the fulfillment card lives on the
+        // Delivery step — walk back first (no-op visually on ≥md), and let
+        // the commit land before scrolling to the now-visible element.
+        goToCheckoutStep(1);
+        setTimeout(() => {
+          document
+            .getElementById("checkout-fulfillment")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 0);
       };
       if (msg.includes("delivery slot full")) {
         try {
@@ -1349,9 +1544,11 @@ export default function V2Checkout() {
       toast.success("Referral reward unlocked for your friend");
     }
 
-    // Terminal success — next checkout is a new intent.
+    // Terminal success — next checkout is a new intent. The R1 wizard draft
+    // (form fields + step + checkout_id) is cleared with the cart.
     submitAttemptRef.current = null;
     clear();
+    clearCheckoutDraft();
     setIsProcessing(false);
     setConfirmOpen(false);
 
@@ -1361,7 +1558,15 @@ export default function V2Checkout() {
     navigate(`/track?orderId=${encodeURIComponent(orderId)}`);
   };
 
-  const stepperStep: CheckoutStep = confirmOpen ? "payment" : "address";
+  // Honest stepper (R1): on mobile the highlighted step IS the wizard step —
+  // the stepper finally steps. On ≥md keep the previous single-scroll
+  // derivation (payment only once the confirm dialog opens).
+  const WIZARD_STEP_IDS: CheckoutStep[] = ["review", "address", "payment"];
+  const stepperStep: CheckoutStep = isMobile
+    ? WIZARD_STEP_IDS[wizardStep] ?? "review"
+    : confirmOpen
+      ? "payment"
+      : "address";
   const stepperAddressComplete =
     !!activeAddr &&
     (fulfillmentType === "delivery"
@@ -1394,11 +1599,21 @@ export default function V2Checkout() {
               current={stepperStep}
               reviewComplete={items.length > 0}
               addressComplete={stepperAddressComplete}
+              onStepClick={
+                isMobile
+                  ? (target) => {
+                      // Walking BACK through completed steps is free; forward
+                      // movement stays behind the Continue gate.
+                      const idx = WIZARD_STEP_IDS.indexOf(target);
+                      if (idx >= 0 && idx < wizardStep) goToCheckoutStep(idx);
+                    }
+                  : undefined
+              }
             />
           </div>
 
-          {/* Delivery Address */}
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4">
+          {/* Delivery Address — mobile step 2 (Delivery) */}
+          <div className={cn("rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4", mobileStepClass(1))}>
             <div className="fx ac gap8">
               <MapPin className="w-4 h-4" style={{ color: "var(--safb)" }} />
               <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Delivery Address</div>
@@ -1483,8 +1698,8 @@ export default function V2Checkout() {
             </div>
           </div>
 
-          {/* Fulfillment */}
-          <div id="checkout-fulfillment" className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 scroll-mt-24 p-4">
+          {/* Fulfillment — mobile step 2 (Delivery) */}
+          <div id="checkout-fulfillment" className={cn("rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 scroll-mt-24 p-4", mobileStepClass(1))}>
             <div className="fx ac jb gap8">
               <div className="fx ac gap8">
                 <Truck className="w-4 h-4" style={{ color: "var(--safb)" }} />
@@ -1713,8 +1928,8 @@ export default function V2Checkout() {
               amount that's never actually charged. Re-add once a real
               capture mechanism exists. */}
 
-          {/* Payment */}
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap12 mb14 p-4">
+          {/* Payment — mobile step 3 (Payment) */}
+          <div className={cn("rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap12 mb14 p-4", mobileStepClass(2))}>
             <div className="fx ac gap8">
               <CreditCard className="w-4 h-4" style={{ color: "var(--safb)" }} />
               <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Payment</div>
@@ -1751,8 +1966,8 @@ export default function V2Checkout() {
             </Link>
           </div>
 
-          {/* Add-ons rail (legacy widget) */}
-          <div className="mb14">
+          {/* Add-ons rail (legacy widget) — mobile step 1 (Review) */}
+          <div className={cn("mb14", mobileStepClass(0))}>
             <AddOnRail
               cartTags={cartTags}
               selected={selectedAddons}
@@ -1760,9 +1975,9 @@ export default function V2Checkout() {
             />
           </div>
 
-          {/* Free-delivery tracker */}
+          {/* Free-delivery tracker — mobile step 1 (Review) */}
           {fulfillmentType !== "pickup" && (
-            <div className="banner mb14" style={hasFreeDelivery ? { background: "var(--saged)", borderColor: "var(--sage)" } : undefined}>
+            <div className={cn("banner mb14", mobileStepClass(0))} style={hasFreeDelivery ? { background: "var(--saged)", borderColor: "var(--sage)" } : undefined}>
               <div className="fx ac jb mb8">
                 <span className="lab fx ac gap6">
                   {hasFreeDelivery ? <ShieldCheck className="w-4 h-4" style={{ color: "var(--sage)" }} /> : <Zap className="w-4 h-4" style={{ color: "var(--safb)" }} />}
@@ -1789,8 +2004,8 @@ export default function V2Checkout() {
             </div>
           )}
 
-          {/* Order Summary (desktop bill column) */}
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4">
+          {/* Order Summary (desktop bill column) — mobile step 1 (Review) */}
+          <div className={cn("rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] col gap16 mb14 p-4", mobileStepClass(0))}>
             <div className="fx ac gap8">
               <ClipboardList className="w-4 h-4" style={{ color: "var(--safb)" }} />
               <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-white/50">Order Summary</div>
@@ -2127,6 +2342,8 @@ export default function V2Checkout() {
             checkoutBlocked={checkoutBlocked}
             checkoutBlockedReason={checkoutBlockedReason}
             onPay={handlePlaceOrderClick}
+            mobileStep={isMobile ? wizardStep : null}
+            onContinue={handleMobileContinue}
           />
         </div>
 
@@ -2470,6 +2687,11 @@ interface V2MobilePayBarProps {
   checkoutBlocked: boolean;
   checkoutBlockedReason: string | null;
   onPay: () => void;
+  /** R1 stepped flow: current wizard step (0 review / 1 delivery / 2 payment)
+   * while the mobile 3-step checkout is active, null when single-scroll
+   * (md–lg viewports also render this bar). */
+  mobileStep: number | null;
+  onContinue: () => void;
 }
 
 function V2MobilePayBar({
@@ -2488,8 +2710,12 @@ function V2MobilePayBar({
   checkoutBlocked,
   checkoutBlockedReason,
   onPay,
+  mobileStep,
+  onContinue,
 }: V2MobilePayBarProps) {
   const [open, setOpen] = useState(false);
+  // Stepped mode (<md): steps 1–2 continue forward; the final step pays.
+  const isSteppedContinue = mobileStep !== null && mobileStep < 2;
   return (
     <div style={{ position: "fixed", left: 0, right: 0, zIndex: 30, padding: "0 12px 8px", bottom: "calc(4rem + env(safe-area-inset-bottom))" }}>
       {open && (
@@ -2566,16 +2792,28 @@ function V2MobilePayBar({
           {checkoutBlocked && checkoutBlockedReason && (
             <p className="fine dgrc tc">{checkoutBlockedReason}</p>
           )}
-          <button
-            onClick={onPay}
-            disabled={checkoutBlocked}
-            className={checkoutBlocked ? "btn btn-p dis" : "btn btn-p"}
-            style={{ height: 48, padding: "0 16px" }}
-            title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
-          >
-            <CreditCard className="w-4 h-4" />
-            {checkoutBlocked ? "Blocked" : "Review & Pay"}
-          </button>
+          {isSteppedContinue ? (
+            <button
+              type="button"
+              onClick={onContinue}
+              className="btn btn-p"
+              style={{ height: 48, padding: "0 16px" }}
+            >
+              {mobileStep === 0 ? "Continue to delivery" : "Continue to payment"}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={onPay}
+              disabled={checkoutBlocked}
+              className={checkoutBlocked ? "btn btn-p dis" : "btn btn-p"}
+              style={{ height: 48, padding: "0 16px" }}
+              title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
+            >
+              <CreditCard className="w-4 h-4" />
+              {checkoutBlocked ? "Blocked" : "Review & Pay"}
+            </button>
+          )}
           <a
             href="https://wa.me/919289213115"
             target="_blank"
