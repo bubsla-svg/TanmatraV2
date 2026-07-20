@@ -1,6 +1,8 @@
 import {createBaseEvent, trackEvent} from '@/lib/analytics/track';
 import {readTodayActivity, API_BASE} from '@/lib/activity';
 import {clearToken, loadToken, saveToken} from '@/lib/auth';
+import {useColors} from '@/hooks/useColors';
+import {useQueryClient} from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
@@ -16,22 +18,11 @@ import {
   View,
 } from 'react-native';
 
-const c = {
-  background: '#09090b',
-  foreground: '#fafafa',
-  mutedForeground: '#a1a1aa',
-  zinc: '#71717a',
-  borderStrong: '#27272a',
-  radius: 12,
-  cardElevated: '#18181b',
-  primary: '#10b981',
-  destructive: '#ef4444',
-};
-
 const topPad = 10;
 const bottomPad = 10;
 
 function Card({children}: {children?: any}) {
+  const c = useColors();
   return (
     <View
       style={{
@@ -47,6 +38,7 @@ function Card({children}: {children?: any}) {
 }
 
 function Label({children}: {children?: any}) {
+  const c = useColors();
   return (
     <Text
       style={{
@@ -68,6 +60,7 @@ function Button({
   onPress: () => void | Promise<void>;
   testID?: string;
 }) {
+  const c = useColors();
   // Guard against double-taps: while an async handler is in flight the button
   // is disabled and shows a spinner, so a second tap can't fire a duplicate
   // connect/sync/pair request.
@@ -95,11 +88,11 @@ function Button({
         opacity: pending ? 0.6 : 1,
       }}>
       {pending ? (
-        <ActivityIndicator color="#ffffff" />
+        <ActivityIndicator color={c.primaryForeground} />
       ) : (
         <Text
           style={{
-            color: '#ffffff',
+            color: c.primaryForeground,
             fontFamily: 'Inter_600SemiBold',
             fontSize: 14,
           }}>
@@ -131,6 +124,7 @@ function relativeTime(isoString?: string): string {
 
 
 export default function HomeScreen() {
+  const c = useColors();
   const [token, setTokenState] = useState<string | null>(null);
   const [tokenReady, setTokenReady] = useState<boolean>(false);
   const [tokenInput, setTokenInput] = useState<string>('');
