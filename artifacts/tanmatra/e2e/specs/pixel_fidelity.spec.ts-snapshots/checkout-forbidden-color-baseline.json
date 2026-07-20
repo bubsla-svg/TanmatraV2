@@ -76,17 +76,17 @@
   },
   {
     "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
+    "property": "backgroundColor",
+    "hex": "#fbbf24"
+  },
+  {
+    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
     "property": "color",
     "hex": "#e2e2e2"
   },
   {
-    "selector": "svg",
-    "property": "color",
-    "hex": "#fbbf24"
-  },
-  {
-    "selector": "path",
-    "property": "color",
+    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
+    "property": "borderColor",
     "hex": "#fbbf24"
   },
   {
@@ -116,18 +116,8 @@
   },
   {
     "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
-    "property": "backgroundColor",
-    "hex": "#fbbf24"
-  },
-  {
-    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
     "property": "color",
     "hex": "#e2e2e2"
-  },
-  {
-    "selector": "div.w-7.h-7.rounded-full.border.flex.items-center.justify-center.shrink-0",
-    "property": "borderColor",
-    "hex": "#fbbf24"
   },
   {
     "selector": "div.relative.flex-1.h-px.overflow-hidden.bg-white/10",
