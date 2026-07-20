@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus } from "./petpooja";
-import { usersTable, menuItemsTable } from "@workspace/db/schema";
+import { usersTable, menuItemsTable, isMealOrderItem } from "@workspace/db/schema";
 
 test("slugify helper", () => {
   assert.equal(slugify("Veg Loaded Pizza"), "veg-loaded-pizza");
@@ -363,10 +363,14 @@ test("mapPetpoojaOrderToDb maps order payload to database order structure", asyn
   assert.equal(order.priority, "urgent");
   assert.equal(order.deliveryInstructions, "No onions");
   assert.equal(order.items.length, 1);
-  assert.equal(order.items[0].id, 401);
-  assert.equal(order.items[0].name, "Veg Loaded Pizza");
-  assert.equal(order.items[0].qty, 2);
-  assert.equal(order.items[0].price, 11000);
+  const [firstItem] = order.items;
+  if (!isMealOrderItem(firstItem)) {
+    assert.fail("expected mapPetpoojaOrderToDb to produce a meal order item");
+  }
+  assert.equal(firstItem.id, 401);
+  assert.equal(firstItem.name, "Veg Loaded Pizza");
+  assert.equal(firstItem.qty, 2);
+  assert.equal(firstItem.price, 11000);
 });
 
 test("mapPetpoojaStatus maps status codes to database statuses", () => {

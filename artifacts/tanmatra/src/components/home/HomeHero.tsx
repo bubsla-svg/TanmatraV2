@@ -65,17 +65,23 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
         {/* Dark gradient — top for legibility, bottom fade into bg */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/20 to-[var(--tnm-surface-ink)]" />
 
-        {/* Hero copy — city-aware headline */}
+        {/* Hero copy — city-aware headline (playbook §1.2). Eyebrow stays
+            city-only: the only persisted serviceability state is
+            `tanmatra:deliver-city` (city string) — no pincode is stored
+            client-side anywhere (LocationPickerFlow keeps it in component
+            state and saves via the addresses API), so a `· {pincode}` suffix
+            has no honest source yet. Extend here once serviceability
+            persists a pincode. */}
         <div className="absolute inset-0 flex flex-col justify-center px-5 pt-8">
           <p className="text-[var(--tnm-action)] font-bold text-[13px] leading-4 mb-2 uppercase tracking-wide">
             Now serving {city}
           </p>
-          <h1 className="text-[30px] font-extrabold text-white tracking-tight leading-[1.1]">
-            Clinical nutrition,
-            <br />delivered fresh daily.
+          <h1 className="text-[27px] font-extrabold text-white tracking-tight leading-[1.12] max-w-[340px]">
+            Clinical nutrition. Cooked fresh, at your desk in 40–45 minutes.
           </h1>
-          <p className="mt-2 text-[14px] text-white/70 font-normal leading-5 max-w-[280px]">
-            Dietitian-designed meals for your health goal — cooked in an ISO kitchen, delivered to your door.
+          <p className="mt-2 text-[14px] text-white/70 font-normal leading-5 max-w-[310px]">
+            Dietitian-designed for your health goal — fired when you order in
+            our ISO-22000 Noida kitchen. Never blast-chilled, never reheated.
           </p>
         </div>
       </div>

@@ -30,6 +30,11 @@ const MARKETING_PATHS = [
   "/premium",
   "/corporate",
   "/subscription-plans",
+  // Playbook Part 3 acquisition landing pages.
+  "/metabolic",
+  "/care/pcos",
+  "/care/diabetes",
+  "/corporate-wellness",
   "/rd-partners",
   "/partners/gyms",
   "/partners/fitness-clubs",

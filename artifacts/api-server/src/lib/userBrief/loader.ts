@@ -21,11 +21,11 @@ import {
   streaksTable,
   subscriptionMembersTable,
   subscriptionsTable,
-  userPreferencesTable,
   userProfileTable,
   usersTable,
 } from "@workspace/db";
 import { logger } from "../logger";
+import { getDecryptedPreferences } from "../userPreferences";
 import {
   getProcessCached,
   getRequestCache,
@@ -110,11 +110,13 @@ async function loadIdentity(userId: string) {
 }
 
 async function loadPreferences(userId: string): Promise<BriefPreferences | null> {
-  const [row] = await db
-    .select()
-    .from(userPreferencesTable)
-    .where(eq(userPreferencesTable.userId, userId))
-    .limit(1);
+  // Decrypt-on-read: clinical arrays are envelope-encrypted at rest. Every
+  // brief consumer (AI coach, meal planner, dish rationale) receives
+  // plaintext through this single seam. If decryption fails (missing/wrong
+  // KMS key on an encrypted row) the throw is caught by safeLoad and the
+  // preferences section lands as null — agents then treat the user as
+  // having no declared profile rather than matching against ciphertext.
+  const row = await getDecryptedPreferences(userId);
   if (!row) return null;
   return {
     dietaryStyle: row.dietaryStyle,

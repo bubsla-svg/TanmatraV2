@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, userPreferencesTable, usersTable } from "@workspace/db";
+import { db, ordersTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
@@ -13,6 +13,7 @@ import {
 } from "../lib/checkoutSafety";
 import { isServiceablePincode, SERVICEABLE_PINCODES } from "@workspace/api-zod";
 import { sendOrderConfirmation } from "../lib/orderNotification";
+import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
 
@@ -123,7 +124,9 @@ router.post("/orders", async (req: Request, res: Response) => {
   const isGuest = authUserId === null;
   let authPrefs: PreferencesForMatch | null = null;
   if (authUserId) {
-    const [pRow] = await db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, authUserId)).limit(1);
+    // Decrypt-on-read: clinical arrays are envelope-encrypted at rest; the
+    // safety gate below must compare plaintext allergens/conditions.
+    const pRow = await getDecryptedPreferences(authUserId);
     if (pRow) {
       authPrefs = {
         allergens: pRow.allergens ?? [],

@@ -19,7 +19,12 @@ import {
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
 import { blankMember, type MemberDraft } from "@/lib/memberDraft";
+import {
+  computeDeliveryPricePaise,
+  computeTrialPricePaise,
+} from "@workspace/subscription-rules";
 import { checkPincode } from "@/lib/serviceablePincodes";
+import { useWizardState } from "@/lib/useWizardState";
 import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";
 import GoalPlanChooser from "@/components/subscribe/GoalPlanChooser";
 import { F } from "./data";
@@ -49,12 +54,6 @@ const TIME_WINDOWS = [
   "20:00 - 21:00",
 ];
 
-const PER_MEAL_PAISE = 75000; // Updated base meal price: ₹750
-const CADENCE_DISCOUNT_PCT: Record<SubscriptionCadence, number> = {
-  weekly: 5,
-  fortnightly: 10,
-  monthly: 15,
-};
 const CYCLE_WEEKS: Record<SubscriptionCadence, number> = {
   weekly: 1,
   fortnightly: 2,
@@ -148,9 +147,13 @@ const STEP_TITLES = [
 // Persist the in-progress subscription build so the browser Back button, a
 // reload, or navigating away and returning does not wipe the buyer's config
 // (State-Amnesia remediation). Scoped to the tab session; cleared on success.
-const SUBSCRIBE_DRAFT_KEY = "tanmatra:subscribe-draft:v1";
+// The plumbing now lives in the shared wizard contract (playbook R1):
+// useWizardState owns the versioned sessionStorage key
+// (`tanmatra:subscribe-draft:v1` — unchanged, in-flight drafts survive),
+// the `?step=` URL mirroring, popstate back-walking and rehydration. This
+// type lists the fields snapshotted into that draft (step is stored by the
+// hook itself, alongside these).
 type SubscribeDraft = {
-  step?: number;
   slots?: Record<MealSlot, boolean>;
   daysMode?: DaysMode;
   cadence?: SubscriptionCadence;
@@ -158,15 +161,6 @@ type SubscribeDraft = {
   startDate?: string;
   address?: { label: string; line: string; city: string; pincode: string; phone: string };
 };
-function readSubscribeDraft(): SubscribeDraft | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.sessionStorage.getItem(SUBSCRIBE_DRAFT_KEY);
-    return raw ? (JSON.parse(raw) as SubscribeDraft) : null;
-  } catch {
-    return null;
-  }
-}
 
 export default function V2Subscribe() {
   const navigate = useNavigate();
@@ -177,20 +171,23 @@ export default function V2Subscribe() {
     setIsMounted(true);
   }, []);
 
-  // Stepper step state
+  // Stepper step state — owned by the shared wizard contract (R1):
+  // sessionStorage draft, `?step=` URL mirroring, popstate back-walking and
+  // rehydrate-on-mount all live in useWizardState.
   // 0: S1 Recommendation
   // 1: S2 Frequency
-  // 2: S3 Duration
-  // 3: S4 Billing
-  // 4: S5 Schedule
-  // 5: S6 Week-1 Preview
-  // 6: S7 Price Review
-  // 7: S8 Payment
-  // 8: Success Screen
-  const [step, setStep] = useState<number>(() => {
-    const s = readSubscribeDraft()?.step;
-    return typeof s === "number" && s >= 0 && s <= 8 ? s : 0;
+  // 2: S3 Duration (plan + billing, merged)
+  // 3: S5 Schedule
+  // 4: S6 Week-1 Preview
+  // 5: S7 Price Review
+  // 6: S8 Payment
+  // 7: Success Screen
+  const wizard = useWizardState<SubscribeDraft>({
+    flow: "subscribe",
+    totalSteps: 8,
+    initialDraft: {},
   });
+  const step = wizard.step;
 
   const planSlug = searchParams.get("plan");
   const directPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
@@ -286,11 +283,12 @@ export default function V2Subscribe() {
   } | null>(null);
 
   // ---- State-Amnesia remediation ------------------------------------------
-  // Rehydrate the saved build once on mount (the buyer's earlier selections),
-  // then keep the draft in sessionStorage in sync as they proceed.
+  // Rehydrate the saved build once on mount (the buyer's earlier selections);
+  // useWizardState read the stored draft during init, so wizard.draft here is
+  // the persisted snapshot. The URL mirroring and popstate back-walking the
+  // old inline effects did are owned by the hook now.
   useEffect(() => {
-    const d = readSubscribeDraft();
-    if (!d) return;
+    const d = wizard.draft;
     if (d.slots) setSlots(d.slots);
     if (d.daysMode) setDaysMode(d.daysMode);
     if (d.cadence) setCadence(d.cadence);
@@ -300,56 +298,19 @@ export default function V2Subscribe() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Mirror the builder's field state into the wizard draft; the hook
+  // serializes it (with the current step) to sessionStorage on every change.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      if (step === 7) {
-        // Order placed — the draft has served its purpose.
-        window.sessionStorage.removeItem(SUBSCRIBE_DRAFT_KEY);
-        return;
-      }
-      window.sessionStorage.setItem(
-        SUBSCRIBE_DRAFT_KEY,
-        JSON.stringify({ step, slots, daysMode, cadence, selectedBillingCadence, startDate, address }),
-      );
-    } catch {
-      /* private mode / quota — non-fatal, the flow still works in-memory */
-    }
-  }, [step, slots, daysMode, cadence, selectedBillingCadence, startDate, address]);
+    wizard.patchDraft({ slots, daysMode, cadence, selectedBillingCadence, startDate, address });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots, daysMode, cadence, selectedBillingCadence, startDate, address]);
 
-  // Mirror `step` into the URL so the browser Back button walks back through the
-  // stepper instead of dropping the buyer out of the money flow. The draft above
-  // keeps every selection intact regardless of how they navigate. `setStep` is
-  // the single source of truth; this effect only reflects it into history, and a
-  // popstate listener reflects history back into `step` — no bidirectional loop
-  // because each guards on equality.
-  const stepUrlSynced = useRef(false);
+  // Clear-on-success: order placed (success screen) — the draft has served
+  // its purpose. Walking back from success re-creates it, same as before.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!stepUrlSynced.current) {
-      stepUrlSynced.current = true; // skip the initial mount push
-      return;
-    }
-    setSearchParams(
-      (prev) => {
-        const p = new URLSearchParams(prev);
-        if (p.get("step") !== String(step)) p.set("step", String(step));
-        return p;
-      },
-      { replace: false },
-    );
+    if (step === 7) wizard.clearDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
-
-  useEffect(() => {
-    const onPop = () => {
-      const raw = new URLSearchParams(window.location.search).get("step");
-      const n = raw !== null ? Number(raw) : 0;
-      setStep(Number.isInteger(n) && n >= 0 && n <= 8 ? n : 0);
-    };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
 
   const toggleSlot = (slot: MealSlot) => {
     setSlots((prev) => {
@@ -440,22 +401,21 @@ export default function V2Subscribe() {
   );
   const droppedCount = schedule.reduce((s, d) => s + d.droppedSlots.length, 0);
 
-  const getCalculatedPricePaise = (cad: SubscriptionCadence, meals: number, trial: boolean): number => {
-    if (trial) {
-      return meals === 3 ? 225000 : Math.round(meals * 75000 * 0.75 * 1.05);
-    }
-    if (cad === "weekly" && meals === 5) return 380000;
-    if (cad === "fortnightly" && meals === 10) return 741000;
-    if (cad === "monthly" && meals === 30) return 2166000;
-
-    const basePrice = meals * 75000;
-    const discountRate = cad === "monthly" ? 0.85 : cad === "fortnightly" ? 0.90 : 1.0;
-    const discounted = basePrice * discountRate;
-    return Math.round(discounted * 1.05);
-  };
+  // Estimate shown while the server quote is loading (or unreachable). Uses
+  // the exact pricing module the server bills with (@workspace/subscription-
+  // rules), so the estimate can never disagree with the payable amount —
+  // the previous local copy drifted on both the trial price and the weekly
+  // discount.
+  const getCalculatedPricePaise = (cad: SubscriptionCadence, meals: number, trial: boolean): number =>
+    trial ? computeTrialPricePaise(meals) : computeDeliveryPricePaise(cad, meals);
 
   const goToStep = (next: number) => {
-    setStep(next);
+    if (next > step) {
+      // Paired step event (playbook Part 8): the step being left, completed
+      // by moving forward. 0-based (0–6), matching subscribe_step_viewed.
+      track("subscribe_step_completed", { step });
+    }
+    wizard.goToStep(next);
     if (next === 1) {
       track("subscription_config_started", { plan: effectivePlan?.slug });
     } else if (next === 2) {
@@ -486,6 +446,29 @@ export default function V2Subscribe() {
   const activeCadence = isTrial ? "weekly" : selectedBillingCadence || cadence;
   const cycleWeeks = isTrial ? 1 : CYCLE_WEEKS[activeCadence];
   const cycleMeals = effectivePlan ? weekMeals * cycleWeeks : weekMeals;
+
+  // Paired step event (playbook Part 8): fire once per step ENTRY — mount,
+  // forward/back navigation and popstate walks all land here; the ref
+  // dedupes re-renders within the same step. Step is 0-based (0–6) per the
+  // Part 8 dictionary; the success screen (7) is covered by order_confirmed /
+  // subscription_activated instead.
+  const stepViewedRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!isMounted) return;
+    if (step > 6) return;
+    if (stepViewedRef.current === step) return;
+    stepViewedRef.current = step;
+    track("subscribe_step_viewed", {
+      step,
+      plan: effectivePlan?.slug,
+      cadence: activeCadence,
+      trial: isTrial,
+      entry: fromCart ? "fromCart" : planSlug || protocolParam ? "lp" : "bare",
+    });
+    // Only a step change (or the mount gate) may fire this — the descriptive
+    // props are read fresh from the closure at that moment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, isMounted]);
 
   // ---- Dynamic quote details from backend quote API ----
   const [quoteDetails, setQuoteDetails] = useState<{
@@ -520,6 +503,12 @@ export default function V2Subscribe() {
           savings: q.discountPaise,
           total: q.totalPaise,
           nextBillingAmount: q.totalPaise,
+        });
+        // Part 8: every server-quote resolution the buyer can see — feeds
+        // the quote-latency vs step-drop analysis in the F3 funnel.
+        track("subscribe_quote_shown", {
+          payable_today_paise: q.totalPaise,
+          cadence: activeCadence,
         });
       })
       .catch((err) => {
@@ -1760,7 +1749,7 @@ export default function V2Subscribe() {
         {/* Stepper App Header */}
         <div className="appbar shrink-0">
           {step > 0 && step < 7 ? (
-            <button className="iconbtn" onClick={() => setStep(step - 1)} aria-label="Previous step">
+            <button className="iconbtn" onClick={() => wizard.goToStep(step - 1)} aria-label="Previous step">
               <ArrowLeft className="w-4 h-4" />
             </button>
           ) : (
@@ -1926,12 +1915,15 @@ export default function V2Subscribe() {
               : "Continue"
           }
           onContinue={() => {
-            if (step === 0) setStep(1);
-            else if (step === 1) setStep(2);
-            else if (step === 2) setStep(3);
-            else if (step === 3) setStep(4);
-            else if (step === 4) setStep(5);
-            else if (step === 5) setStep(6);
+            // Routed through goToStep (not the hook's raw setter) so the
+            // sticky bar fires the same per-step analytics as the in-content
+            // Continue buttons — they were silently unpaired before.
+            if (step === 0) goToStep(1);
+            else if (step === 1) goToStep(2);
+            else if (step === 2) goToStep(3);
+            else if (step === 3) goToStep(4);
+            else if (step === 4) goToStep(5);
+            else if (step === 5) goToStep(6);
             else if (step === 6) submit();
           }}
           disabled={

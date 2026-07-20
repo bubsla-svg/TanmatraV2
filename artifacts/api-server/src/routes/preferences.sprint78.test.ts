@@ -6,11 +6,18 @@ import http from "node:http";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { eq, inArray } from "drizzle-orm";
 import { db, usersTable, userPreferencesTable, sessionsTable, userConsentsTable } from "@workspace/db";
+import { isEncryptedEnvelope } from "../lib/crypto";
 
 import preferencesRouter from "./preferences";
 import authRouter from "./auth";
 import userConsentsRouter from "./userConsents";
 import { purgeDeletedAccountsJob } from "../lib/auth";
+
+// The preferences routes encrypt clinical arrays with the env-resolved KMS
+// key (resolved per request, not at import time). Provide a deterministic
+// test key so the suite is hermetic when CI doesn't export one.
+process.env["CLINICAL_KMS_MASTER_KEY"] ||=
+  "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90";
 
 interface TestUser {
   id: string;
@@ -191,4 +198,68 @@ test("purgeDeletedAccountsJob hard-deletes soft-deleted users after 30 days", as
   // Cascade constraints should automatically delete preference record
   const [prefRow] = await db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, user.id));
   assert.equal(prefRow, undefined, "User preference record should be cascade-deleted/purged");
+});
+
+test("clinical arrays are encrypted at rest and round-trip as plaintext through the API", async () => {
+  const user = await makeUser();
+
+  // Legacy plaintext row (seeded by makeUser via direct insert) still reads
+  // back verbatim — decrypt-on-read passes pre-backfill plaintext through.
+  let r = await api("GET", "/preferences", null, user);
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.json.preferences.medicalConditions, ["diabetes", "gerd", "pcos"]);
+
+  // Write through the API: clinical arrays must be encrypted on the way in.
+  r = await api(
+    "PUT",
+    "/preferences",
+    {
+      allergens: ["Peanuts", "Shellfish"],
+      dislikedIngredients: ["Okra"],
+      medicalConditions: ["Diabetes", "GERD"],
+      cuisines: ["indian"],
+    },
+    user,
+  );
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  // The API response is decrypted plaintext (schema lowercases input).
+  assert.deepEqual(r.json.preferences.allergens, ["peanuts", "shellfish"]);
+  assert.deepEqual(r.json.preferences.dislikedIngredients, ["okra"]);
+  assert.deepEqual(r.json.preferences.medicalConditions, ["diabetes", "gerd"]);
+
+  // At rest: every clinical element is an AES-256-GCM envelope, never plaintext.
+  let [row] = await db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, user.id));
+  for (const el of [
+    ...row!.allergens,
+    ...row!.dislikedIngredients,
+    ...row!.medicalConditions,
+  ]) {
+    assert.ok(isEncryptedEnvelope(el), `stored clinical element must be encrypted: ${el}`);
+  }
+  // Non-clinical array stays plaintext.
+  assert.deepEqual(row!.cuisines, ["indian"]);
+
+  // Read back through the API: decrypted plaintext.
+  r = await api("GET", "/preferences", null, user);
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.json.preferences.allergens, ["peanuts", "shellfish"]);
+  assert.deepEqual(r.json.preferences.medicalConditions, ["diabetes", "gerd"]);
+
+  // PATCH one field: untouched clinical columns keep their ciphertext.
+  r = await api("PATCH", "/preferences", { allergens: ["soy"] }, user);
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.json.preferences.allergens, ["soy"]);
+  assert.deepEqual(r.json.preferences.medicalConditions, ["diabetes", "gerd"]);
+
+  // Targeted deletion filters by DECRYPTED value on an encrypted row.
+  r = await api("DELETE", "/user/health-data/medicalConditions?condition=gerd", null, user);
+  assert.equal(r.status, 200);
+  r = await api("GET", "/preferences", null, user);
+  assert.deepEqual(r.json.preferences.medicalConditions, ["diabetes"]);
+  [row] = await db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, user.id));
+  assert.equal(row!.medicalConditions.length, 1);
+  assert.ok(
+    isEncryptedEnvelope(row!.medicalConditions[0]!),
+    "kept element must remain in its stored encrypted form",
+  );
 });

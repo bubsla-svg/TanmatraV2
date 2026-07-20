@@ -5,12 +5,12 @@ import { z } from "zod/v4";
 import {
   db,
   groupOrdersTable,
-  userPreferencesTable,
   type GroupOrderLine,
 } from "@workspace/db";
 import { resolveDishById } from "../lib/menuResolver";
 import { rateLimit } from "../lib/rateLimit";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
+import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const MAX_LINES_PER_GROUP = 50;
 
@@ -152,11 +152,10 @@ router.post("/group-orders/:code/items", async (req: Request, res: Response) => 
       if ((existing.items?.length ?? 0) >= MAX_LINES_PER_GROUP) {
         return { error: "full" as const };
       }
-      const [prefsRow] = await tx
-        .select()
-        .from(userPreferencesTable)
-        .where(eq(userPreferencesTable.userId, auth.id));
-      const match = evaluateDishForPreferences(dish, prefsRow ?? null, { strict: true });
+      // Decrypt-on-read inside the tx: clinical arrays are envelope-encrypted
+      // at rest and the strict safety gate must compare plaintext.
+      const prefsRow = await getDecryptedPreferences(auth.id, tx);
+      const match = evaluateDishForPreferences(dish, prefsRow, { strict: true });
       if (match.blocked) {
         return { error: "safety_block" as const, reasons: match.blockReasons };
       }

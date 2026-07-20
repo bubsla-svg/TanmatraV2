@@ -86,3 +86,91 @@ export function decryptClinicalStrings(
     isEncryptedEnvelope(v) ? decryptClinicalAttribute(v, masterKeyHex) : v,
   );
 }
+
+/**
+ * Structural shape of the clinical free-text arrays on a consumer
+ * `user_preferences` row. Kept structural (all fields optional) so full
+ * drizzle rows, partial selects, and validated request patches all fit
+ * without casts. The scalar clinical fields (`hba1cPct` double precision,
+ * `pcosHistory` boolean) are NOT covered: their columns are not text and
+ * cannot hold an envelope string without a schema migration, which gets
+ * its own review per the working agreement.
+ */
+export interface ClinicalPreferenceArrays {
+  allergens?: string[] | null;
+  dislikedIngredients?: string[] | null;
+  medicalConditions?: string[] | null;
+}
+
+/**
+ * Decrypt-on-read for a consumer `user_preferences` row (or any partial
+ * select / DTO carrying the clinical arrays). Returns a NEW object — the
+ * input row is never mutated. Only fields that are present and non-null
+ * are transformed; everything else (cuisines, macros, scalars) passes
+ * through untouched. Legacy plaintext elements pass through unchanged via
+ * `decryptClinicalStrings`, so this is safe on not-yet-backfilled rows.
+ * `null`/`undefined` rows → `null`.
+ */
+export function decryptPreferencesRow<T extends ClinicalPreferenceArrays>(
+  row: T,
+  masterKeyHex?: string,
+): T;
+export function decryptPreferencesRow<T extends ClinicalPreferenceArrays>(
+  row: T | null | undefined,
+  masterKeyHex?: string,
+): T | null;
+export function decryptPreferencesRow<T extends ClinicalPreferenceArrays>(
+  row: T | null | undefined,
+  masterKeyHex?: string,
+): T | null {
+  if (!row) return null;
+  const patch: ClinicalPreferenceArrays = {};
+  if (row.allergens != null) {
+    patch.allergens = decryptClinicalStrings(row.allergens, masterKeyHex);
+  }
+  if (row.dislikedIngredients != null) {
+    patch.dislikedIngredients = decryptClinicalStrings(
+      row.dislikedIngredients,
+      masterKeyHex,
+    );
+  }
+  if (row.medicalConditions != null) {
+    patch.medicalConditions = decryptClinicalStrings(
+      row.medicalConditions,
+      masterKeyHex,
+    );
+  }
+  return { ...row, ...patch };
+}
+
+/**
+ * Encrypt-on-write counterpart for a preferences insert/update patch.
+ * Returns a NEW object with the clinical arrays replaced by envelope
+ * strings; fields that are absent (`undefined`) stay absent so PATCH
+ * semantics ("only update what the caller sent") are preserved. Idempotent
+ * via `encryptClinicalStrings` — already-encrypted elements are not
+ * double-wrapped. Fails closed (throws) when no KMS master key is
+ * configured and there is at least one plaintext element to encrypt.
+ */
+export function encryptPreferencesPatch<T extends ClinicalPreferenceArrays>(
+  patch: T,
+  masterKeyHex?: string,
+): T {
+  const enc: ClinicalPreferenceArrays = {};
+  if (patch.allergens != null) {
+    enc.allergens = encryptClinicalStrings(patch.allergens, masterKeyHex);
+  }
+  if (patch.dislikedIngredients != null) {
+    enc.dislikedIngredients = encryptClinicalStrings(
+      patch.dislikedIngredients,
+      masterKeyHex,
+    );
+  }
+  if (patch.medicalConditions != null) {
+    enc.medicalConditions = encryptClinicalStrings(
+      patch.medicalConditions,
+      masterKeyHex,
+    );
+  }
+  return { ...patch, ...enc };
+}

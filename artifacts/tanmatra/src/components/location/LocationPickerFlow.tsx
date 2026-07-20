@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { checkPincode } from "@/lib/serviceablePincodes";
+import { track } from "@/lib/analytics";
 import { API_BASE } from "@/lib/apiBase";
 
 // Default map centre — Noida Sector 18 (our core serviceable NCR area).
@@ -495,6 +496,31 @@ export function LocationPickerFlow({ open, onOpenChange, onSave, initialData }: 
 
   // Early serviceability signal — surfaced as soon as a PIN is known.
   const pinCheck = checkPincode(pincode);
+
+  // Playbook §8.2 `serviceability_checked`: beacon once per distinct
+  // definitive PIN check (serviceable/unserviceable) — never per keystroke or
+  // render (the `pinCheck` derivation above stays pure). Dedupe resets when
+  // the PIN goes indefinite or the picker closes, so re-completing a PIN is a
+  // fresh check. Props are §8.4-safe: pincode is a geographic band plus a
+  // boolean. Additive alongside the existing `pincode_unserviceable` event.
+  const trackedPinRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open) {
+      trackedPinRef.current = null;
+      return;
+    }
+    const result = checkPincode(pincode);
+    if (result.state !== "serviceable" && result.state !== "unserviceable") {
+      trackedPinRef.current = null;
+      return;
+    }
+    if (trackedPinRef.current === result.pincode) return;
+    trackedPinRef.current = result.pincode;
+    track("serviceability_checked", {
+      pincode: result.pincode,
+      serviceable: result.state === "serviceable",
+    });
+  }, [open, pincode]);
 
   const handleSaveAddress = async () => {
     if (!flatNo.trim()) {

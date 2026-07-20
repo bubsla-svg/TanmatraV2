@@ -8,6 +8,8 @@
 // To extend beyond Noida NCR, replace with a lazy fetch against the
 // India Post Pincode API (`api.postalpincode.in/pincode/{pin}`) and
 // cache responses.
+import { track } from "./analytics";
+
 export interface PincodeInfo {
   area: string;
   city: string;
@@ -41,4 +43,30 @@ export function checkPincode(raw: string): PincodeCheckResult {
   const info = SERVICEABLE[v];
   if (!info) return { state: "unserviceable", pincode: v };
   return { state: "serviceable", pincode: v, info };
+}
+
+/**
+ * `checkPincode` + the playbook §8.2 `serviceability_checked` beacon.
+ *
+ * Beacons only on a definitive result (serviceable / unserviceable) — empty
+ * or partial input is not a check. Props stay inside §8.4 governance: the
+ * pincode is a geographic band and `serviceable` a boolean; no address text
+ * or personal data leaves the device. Purely additive alongside the existing
+ * `pincode_unserviceable` event — those firing sites are untouched.
+ *
+ * Adoption: event-driven call sites (e.g. the Subscribe schedule step or the
+ * Checkout address form) can swap `checkPincode` for this wrapper to get the
+ * beacon for free. Render-reactive sites (useMemo / per-keystroke derivations)
+ * must NOT use it — keep `checkPincode` pure there and beacon from a deduped
+ * effect instead (see LocationPickerFlow).
+ */
+export function checkPincodeTracked(raw: string): PincodeCheckResult {
+  const result = checkPincode(raw);
+  if (result.state === "serviceable" || result.state === "unserviceable") {
+    track("serviceability_checked", {
+      pincode: result.pincode,
+      serviceable: result.state === "serviceable",
+    });
+  }
+  return result;
 }

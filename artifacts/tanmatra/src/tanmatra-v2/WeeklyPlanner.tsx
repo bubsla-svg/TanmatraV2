@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import StreakRings from "@/components/retention/StreakRings";
 import {
   mealPlanApi,
   formatPaise,
@@ -298,6 +299,10 @@ export default function V2WeeklyPlanner() {
                 ? "Regenerate week"
                 : "Generate plan"}
           </button>
+
+          {/* Zen Tracker — Zone 3 of the My Week dashboard (playbook §5.2):
+              metabolic streak rings over the existing `streaks` backend. */}
+          <StreakRings />
 
           {loading ? (
             <div className="mt16">

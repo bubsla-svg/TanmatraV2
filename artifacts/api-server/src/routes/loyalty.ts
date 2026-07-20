@@ -36,6 +36,7 @@ import {
   dispatchNotificationEmail,
 } from "../lib/notificationMail";
 import { invalidateUserBrief } from "../lib/userBrief";
+import { emitServerEvent } from "../lib/serverEvents";
 
 const router: IRouter = Router();
 
@@ -358,6 +359,15 @@ router.post("/orders/finalize", idempotencyMiddleware, async (req: Request, res:
       ...rest,
       scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
     });
+    // Part 8 A4 — server-truth order_created. Fire-and-forget (emitServerEvent
+    // never throws); duplicate finalize replays must not double-count.
+    if (!out.duplicate) {
+      void emitServerEvent(
+        "order_created",
+        { order_kind: "meal", charge_paise: out.chargePaise },
+        userId,
+      );
+    }
     // Phase C2 — a customer's first à la carte order earns a one-time trial
     // credit (one free meal, one per customer). Additive and best-effort: it
     // never blocks or fails the order, and idempotent retries don't re-issue.

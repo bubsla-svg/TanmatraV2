@@ -4,12 +4,13 @@
 // window.gtag when a vendor script is present — call sites never change.
 import { API_BASE } from "./apiBase";
 
-// Experimentation is deferred (CRO spec Amendment A6): v1 ships no
-// assignment service, so every event carries an EMPTY experiment map
-// (never null, never absent) plus the release cohort. When a platform
-// lands later it slots in here without an event-version bump — copy and
-// design iterations are read as `app_release` cohorts, not A/B splits.
-const EXPERIMENT_ASSIGNMENTS: Record<string, string> = {};
+// A6 activation (Playbook Part 8): assignments come from the config-driven
+// bucketing util. The map stays EMPTY (never null, never absent) until an
+// experiment is explicitly enabled in lib/experiments.ts, so this wiring
+// changes nothing for un-experimented traffic; enabled experiments stamp a
+// sticky per-device variant onto every event without an event-version bump.
+import { getExperimentAssignments } from "./experiments";
+
 const APP_RELEASE = "1.0.0";
 
 type EventName =
@@ -92,7 +93,59 @@ type EventName =
   | "trial_bridge_outcome"
   // PR05 plan-first PDP — macro gate unlock + allergen acknowledge-and-proceed.
   | "gate_unlock"
-  | "allergen_ack";
+  | "allergen_ack"
+  // ── Playbook Part 8 dictionary (docs/e2e-master-playbook-noida-ncr.md) ──
+  // Acquisition & landing pages.
+  | "landing_viewed"
+  | "landing_cta_clicked"
+  | "serviceability_checked"
+  | "waitlist_joined"
+  // Clinical intake quiz (paired step events; Segment step pattern).
+  | "quiz_opened"
+  | "quiz_step_viewed"
+  | "quiz_step_completed"
+  | "quiz_completed"
+  | "quiz_abandoned"
+  // Checkout & subscribe wizards (paired step events).
+  | "checkout_step_viewed"
+  | "checkout_step_completed"
+  | "address_added"
+  | "slot_selected"
+  | "payment_attempted"
+  | "subscribe_step_viewed"
+  | "subscribe_step_completed"
+  | "subscribe_quote_shown"
+  // Retention & clinical surfaces.
+  | "delivery_skipped"
+  | "delivery_unskipped"
+  | "subscription_paused"
+  | "subscription_resumed"
+  | "subscription_cancelled"
+  | "swap_requested"
+  | "swap_rejected"
+  | "planner_week_generated"
+  | "planner_week_accepted"
+  | "planner_day_regenerated"
+  | "streak_viewed"
+  | "streak_milestone_reached"
+  | "trial_recap_viewed"
+  | "trial_converted"
+  | "rd_appointment_booked"
+  | "rd_message_sent"
+  | "rd_lab_shared"
+  | "progress_logged"
+  | "challenge_joined"
+  | "challenge_checkin_attended"
+  | "referral_shared"
+  | "referral_redeemed"
+  | "credit_redeemed"
+  // B2B & owned-channel marketing.
+  | "corporate_lead_submitted"
+  | "corporate_calculator_used"
+  | "office_order_pick_made"
+  | "office_order_closed"
+  | "whatsapp_optin"
+  | "whatsapp_link_clicked";
 
 // Health-adjacent or personal keys never leave the device — the server
 // scrubs them again, but the first line of defence is here.
@@ -143,8 +196,8 @@ export function track(event: EventName, props?: Record<string, unknown>): void {
         sessionId: sessionId(),
         path: typeof location !== "undefined" ? location.pathname : undefined,
         ts: Date.now(),
-        // A6: experimentation deferral — empty map + release cohort.
-        experiment_assignments: EXPERIMENT_ASSIGNMENTS,
+        // A6: sticky per-device assignments; {} until an experiment is enabled.
+        experiment_assignments: getExperimentAssignments(),
         app_release: APP_RELEASE,
       }),
     }).catch(() => undefined);

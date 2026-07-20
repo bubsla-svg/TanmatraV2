@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { isPastSkipCutoff } from "@workspace/subscription-rules";
+import { isPastSkipCutoff, SKIP_SWAP_CUTOFF_MS } from "@workspace/subscription-rules";
+import StreakRings, { useStreaks, type StreaksState } from "@/components/retention/StreakRings";
 import {
   subscriptionsApi,
   subscriptionKeys,
@@ -160,6 +161,24 @@ function lockedLabel(iso: string): string {
   return `Locked — starts in ${hours}h`;
 }
 
+// Hours of self-serve headroom left before the 24h kitchen cutoff closes this
+// delivery to skip/unskip — the funnel dimension for playbook §5.3's
+// cutoff-transparency analysis (delivery_skipped / delivery_unskipped events).
+function hoursBeforeCutoff(iso: string): number {
+  const cutoffAt = new Date(iso).getTime() - SKIP_SWAP_CUTOFF_MS;
+  return Math.max(0, Math.round((cutoffAt - Date.now()) / 3_600_000));
+}
+
+// Two-step cancel (playbook §5.3): reason first, targeted save-offer second.
+const CANCEL_REASONS = [
+  { value: "price", label: "It's costing more than I'd like" },
+  { value: "variety", label: "I want more variety in my meals" },
+  { value: "moving", label: "I'm moving or travelling" },
+  { value: "health", label: "My health needs have changed" },
+  { value: "other", label: "Something else" },
+] as const;
+type CancelReason = (typeof CANCEL_REASONS)[number]["value"];
+
 // compact inline styling for the row of manage-actions
 const ACT: React.CSSProperties = {
   height: 38,
@@ -281,12 +300,19 @@ export default function V2Subscriptions() {
   const [changePlanOpen, setChangePlanOpen] = useState(false);
   const [changePlanInitialStep, setChangePlanInitialStep] = useState<"picker" | "reauth">("picker");
 
-  const wrap = async <T,>(p: Promise<T>, msg: string) => {
+  // Returns the outcome so action sites can fire their funnel events
+  // (delivery_skipped, swap_rejected, …) only on the real result — existing
+  // fire-and-forget callers can keep ignoring the return value.
+  const wrap = async <T,>(
+    p: Promise<T>,
+    msg: string,
+  ): Promise<{ ok: boolean; code?: string }> => {
     try {
       await p;
       toast.success(msg);
       await invalidateSubscriptions();
       await refreshWallet();
+      return { ok: true };
     } catch (err) {
       const m = err instanceof Error ? err.message : "Error";
       // Structured swap rejections (allergen safety / macro caps) carry a
@@ -297,9 +323,10 @@ export default function V2Subscriptions() {
       if (apiErr.code === "macro_cap_exceeded" || apiErr.code === "safety_block") {
         const reason = apiErr.reasons?.find((r) => typeof r.message === "string");
         toast.error("Swap blocked", { description: reason?.message ?? m });
-        return;
+        return { ok: false, code: apiErr.code };
       }
       toast.error("Action failed", { description: m });
+      return { ok: false, code: apiErr.code };
     }
   };
 
@@ -381,8 +408,39 @@ export default function V2Subscriptions() {
   );
 
   // ---------- Destructive-action safeguards ----------
+  // Cancel is two-step (§5.3): 1) reason picker → 2) targeted save-offer with
+  // a factual what-changes recap, then — and only then — the same cancel
+  // mutation as before.
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelStep, setCancelStep] = useState<1 | 2>(1);
+  const [cancelReason, setCancelReason] = useState<CancelReason | null>(null);
   const [skipConfirm, setSkipConfirm] = useState<{ deliveryId: number; date: string } | null>(null);
+
+  // Streak rows power both the Zen Tracker strip near the LoyaltyStrip and
+  // the cancel dialog's transparent what-changes recap — fetched once here.
+  const streakState = useStreaks();
+
+  // Save-offer for the "variety" cancel reason hands off to the existing
+  // dish-swap dialog for the next editable delivery.
+  const nextUpcomingDelivery =
+    detail?.deliveries.find(
+      (d) => d.status === "upcoming" && !isPastSkipCutoff(d.scheduledFor),
+    ) ?? null;
+
+  const acceptPauseSaveOffer = async () => {
+    if (!detail) return;
+    setCancelConfirmOpen(false);
+    const r = await wrap(
+      subscriptionsApi.pause(detail.subscription.id),
+      "Plan paused — resume whenever you're ready",
+    );
+    if (r.ok) {
+      track("subscription_paused", {
+        save_offer_accepted: true,
+        reason: cancelReason ?? undefined,
+      });
+    }
+  };
 
   if (unauthorized) {
     return (
@@ -529,19 +587,32 @@ export default function V2Subscriptions() {
           <DetailView
             detail={detail}
             progress={!isTrialSub(detail.subscription) ? activeProgress : undefined}
-            onPause={() =>
-              wrap(subscriptionsApi.pause(detail.subscription.id), "Subscription paused")
-            }
-            onResume={() =>
-              wrap(subscriptionsApi.resume(detail.subscription.id), "Subscription resumed")
-            }
+            streaks={streakState}
+            onPause={async () => {
+              const r = await wrap(
+                subscriptionsApi.pause(detail.subscription.id),
+                "Subscription paused",
+              );
+              if (r.ok) track("subscription_paused", {});
+            }}
+            onResume={async () => {
+              const r = await wrap(
+                subscriptionsApi.resume(detail.subscription.id),
+                "Subscription resumed",
+              );
+              if (r.ok) track("subscription_resumed", {});
+            }}
             onReactivateBilling={() =>
               wrap(
                 subscriptionsApi.reactivateBilling(detail.subscription.id),
                 "Billing reactivated — you'll be charged on the normal schedule",
               )
             }
-            onCancel={() => setCancelConfirmOpen(true)}
+            onCancel={() => {
+              setCancelStep(1);
+              setCancelReason(null);
+              setCancelConfirmOpen(true);
+            }}
             onEditWindow={() => {
               setPendingWindow(detail.subscription.deliveryWindow);
               setWindowEditOpen(true);
@@ -561,12 +632,14 @@ export default function V2Subscriptions() {
               setChangePlanOpen(true);
             }}
             onSkip={(d) => setSkipConfirm({ deliveryId: d.id, date: d.scheduledFor })}
-            onUnskip={(d) =>
-              wrap(
+            onUnskip={async (d) => {
+              const hrs = hoursBeforeCutoff(d.scheduledFor);
+              const r = await wrap(
                 subscriptionsApi.unskipDelivery(d.id),
                 "Delivery restored — skip credit returned",
-              )
-            }
+              );
+              if (r.ok) track("delivery_unskipped", { hours_before_cutoff: hrs });
+            }}
             onSwap={(d) => setSwapDelivery(d)}
             onReschedule={(d) => {
               setReschedDelivery(d);
@@ -598,10 +671,17 @@ export default function V2Subscriptions() {
           onClose={() => setSwapDelivery(null)}
           onConfirm={async (items) => {
             if (!swapDelivery) return;
-            await wrap(
+            track("swap_requested", {
+              items: items.length,
+              hours_before_cutoff: hoursBeforeCutoff(swapDelivery.scheduledFor),
+            });
+            const r = await wrap(
               subscriptionsApi.swap(swapDelivery.id, items),
               "Delivery updated",
             );
+            if (!r.ok && r.code) {
+              track("swap_rejected", { rejection_kind: r.code });
+            }
             setSwapDelivery(null);
           }}
         />
@@ -732,43 +812,249 @@ export default function V2Subscriptions() {
         </div>
       )}
 
-      {/* ------ Cancel confirmation (destructive) ------ */}
+      {/* ------ Cancel flow (two-step, §5.3: reason → targeted save-offer) ------ */}
       {cancelConfirmOpen && (
         <div
           className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setCancelConfirmOpen(false)}
         >
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="tt" style={{ color: "var(--text-primary)" }}>
-              Cancel this subscription?
-            </div>
-            <div className="fine mt6">
-              All upcoming deliveries will be cancelled. Any prepaid credits
-              remain on your account and can be used for one-off orders. You can
-              re-subscribe at any time, but you'll lose your current delivery
-              window. This action cannot be undone.
-            </div>
-            <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
-              <button className="btn btn-g" style={ACT} onClick={() => setCancelConfirmOpen(false)}>
-                Keep subscription
-              </button>
-              <button
-                className="btn"
-                style={{ ...ACT, background: "var(--color-error)", color: "var(--color-stone-0)" }}
-                onClick={() => {
-                  setCancelConfirmOpen(false);
-                  if (detail) {
-                    void wrap(
-                      subscriptionsApi.cancel(detail.subscription.id),
-                      "Subscription cancelled",
+          <div
+            className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+            style={{ maxWidth: 440, width: "100%", maxHeight: "88vh", overflowY: "auto" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {cancelStep === 1 ? (
+              <>
+                <div className="tt" style={{ color: "var(--text-primary)" }}>
+                  Before you go — what's not working?
+                </div>
+                <div className="fine mt6">
+                  One tap helps us fix the right thing. You decide on the next
+                  screen.
+                </div>
+                <div
+                  className="col mt12"
+                  role="radiogroup"
+                  aria-label="Reason for cancelling"
+                  style={{ gap: 8 }}
+                >
+                  {CANCEL_REASONS.map((r) => {
+                    const on = cancelReason === r.value;
+                    return (
+                      <button
+                        key={r.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => setCancelReason(r.value)}
+                        className="fx ac gap10"
+                        style={{
+                          minHeight: 44,
+                          padding: "0 12px",
+                          borderRadius: 10,
+                          textAlign: "left",
+                          border: `1px solid ${on ? "var(--saf)" : "var(--ln2)"}`,
+                          background: on ? "var(--safd)" : "var(--s2)",
+                          color: on ? "var(--safb)" : "var(--tx)",
+                          fontSize: 13.5,
+                          fontWeight: 500,
+                        }}
+                      >
+                        <i
+                          className={`ph-bold ${on ? "ph-radio-button-fill" : "ph-circle"}`}
+                          style={{ fontSize: 16, flex: "none" }}
+                          aria-hidden="true"
+                        />
+                        {r.label}
+                      </button>
                     );
-                  }
-                }}
-              >
-                Yes, cancel subscription
-              </button>
-            </div>
+                  })}
+                </div>
+                <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+                  <button
+                    className={`btn btn-g${cancelReason === null ? " dis" : ""}`}
+                    style={{ ...ACT, minHeight: 44 }}
+                    disabled={cancelReason === null}
+                    onClick={() => setCancelStep(2)}
+                  >
+                    Continue <i className="ph-bold ph-caret-right" />
+                  </button>
+                  <button
+                    className="btn btn-p"
+                    style={{ ...ACT, minHeight: 44 }}
+                    onClick={() => setCancelConfirmOpen(false)}
+                  >
+                    Keep my plan
+                  </button>
+                </div>
+              </>
+            ) : (
+              (() => {
+                const showSwapOffer =
+                  cancelReason === "variety" && nextUpcomingDelivery !== null;
+                const showRdOffer = cancelReason === "health";
+                const proteinDays = streakState.streaks?.protein?.currentDays ?? 0;
+                const vegDays = streakState.streaks?.veg?.currentDays ?? 0;
+                return (
+                  <>
+                    <div className="fx ac gap8">
+                      <button
+                        type="button"
+                        className="iconbtn"
+                        onClick={() => setCancelStep(1)}
+                        aria-label="Back to reasons"
+                        style={{ width: 44, height: 44, flex: "none" }}
+                      >
+                        <i className="ph-bold ph-arrow-left" />
+                      </button>
+                      <div className="tt" style={{ color: "var(--text-primary)" }}>
+                        {showSwapOffer
+                          ? "Swap the dishes, keep the plan"
+                          : showRdOffer
+                            ? "Talk to a dietitian first — free"
+                            : "Pause instead — keep everything"}
+                      </div>
+                    </div>
+
+                    {/* Targeted save-offer */}
+                    <div
+                      className="mt10"
+                      style={{
+                        background: "var(--saged)",
+                        border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 35%, transparent)",
+                        borderRadius: 10,
+                        padding: "12px 14px",
+                      }}
+                    >
+                      {showSwapOffer ? (
+                        <>
+                          <div className="fine" style={{ color: "var(--tx)" }}>
+                            Your next delivery can be a completely different
+                            menu — pick any dishes that fit your plan, at no
+                            extra cost.
+                          </div>
+                          <button
+                            className="btn btn-g mt10"
+                            style={{ ...ACT, minHeight: 44, color: "var(--sage)" }}
+                            onClick={() => {
+                              setCancelConfirmOpen(false);
+                              setSwapDelivery(nextUpcomingDelivery);
+                            }}
+                          >
+                            <i className="ph-bold ph-swap" /> Choose new dishes
+                          </button>
+                        </>
+                      ) : showRdOffer ? (
+                        <>
+                          <div className="fine" style={{ color: "var(--tx)" }}>
+                            If your health needs have changed, a registered
+                            dietitian can retune your plan's macros and
+                            restrictions in a free 15-minute consult.
+                          </div>
+                          <Link
+                            to="/rd"
+                            className="btn btn-g mt10"
+                            style={{ ...ACT, minHeight: 44, color: "var(--sage)", display: "inline-flex" }}
+                            onClick={() => setCancelConfirmOpen(false)}
+                          >
+                            <i className="ph-bold ph-calendar-plus" /> Book a free RD consult
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <div className="fine" style={{ color: "var(--tx)" }}>
+                            Take a break instead of starting over: no deliveries
+                            and no charges while paused, and your delivery
+                            window, wallet credits and loyalty progress stay
+                            exactly where they are. Resume in one tap.
+                          </div>
+                          <button
+                            className="btn btn-g mt10"
+                            style={{ ...ACT, minHeight: 44, color: "var(--sage)" }}
+                            onClick={acceptPauseSaveOffer}
+                          >
+                            <i className="ph-bold ph-pause" /> Pause my plan
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Transparent, factual recap — §5.3: show what changes,
+                        never guilt. Credits genuinely stay; say so. */}
+                    <div
+                      className="mt12"
+                      style={{
+                        background: "var(--s2)",
+                        border: "1px solid var(--ln2)",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                      }}
+                    >
+                      <div className="lab mb6">If you cancel today</div>
+                      <div className="fine col" style={{ gap: 4 }}>
+                        <span>
+                          Upcoming deliveries stop and your reserved delivery
+                          window is released. Cancelling can't be undone.
+                        </span>
+                        <span>
+                          {credits.balance > 0 ? (
+                            <>
+                              Your <span className="tnm-data">{credits.balance}</span>{" "}
+                              meal credit{credits.balance === 1 ? "" : "s"} stay
+                              in your wallet for one-off orders.
+                            </>
+                          ) : (
+                            "You can re-subscribe any time."
+                          )}
+                        </span>
+                        {(proteinDays > 0 || vegDays > 0) && (
+                          <span>
+                            Streaks only grow while you hit daily targets —
+                            protein is at{" "}
+                            <span className="tnm-data">{proteinDays}</span>{" "}
+                            day{proteinDays === 1 ? "" : "s"}, veg at{" "}
+                            <span className="tnm-data">{vegDays}</span>.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="fx gap8 mt16" style={{ justifyContent: "flex-end" }}>
+                      <button
+                        className="btn btn-g"
+                        style={{ ...ACT, minHeight: 44, color: "var(--dgr)", borderColor: "transparent" }}
+                        onClick={async () => {
+                          const reason = cancelReason ?? "other";
+                          setCancelConfirmOpen(false);
+                          if (!detail) return;
+                          const r = await wrap(
+                            subscriptionsApi.cancel(detail.subscription.id),
+                            "Subscription cancelled",
+                          );
+                          if (r.ok) {
+                            track("subscription_cancelled", {
+                              reason,
+                              save_offer_shown: true,
+                              save_offer_accepted: false,
+                            });
+                          }
+                        }}
+                      >
+                        Cancel anyway
+                      </button>
+                      <button
+                        className="btn btn-p"
+                        style={{ ...ACT, minHeight: 44 }}
+                        onClick={() => setCancelConfirmOpen(false)}
+                      >
+                        Keep my plan
+                      </button>
+                    </div>
+                  </>
+                );
+              })()
+            )}
           </div>
         </div>
       )}
@@ -800,14 +1086,15 @@ export default function V2Subscriptions() {
               <button
                 className="btn btn-p"
                 style={ACT}
-                onClick={() => {
-                  if (skipConfirm) {
-                    void wrap(
-                      subscriptionsApi.skip(skipConfirm.deliveryId),
-                      "Delivery skipped — credits added",
-                    );
-                    setSkipConfirm(null);
-                  }
+                onClick={async () => {
+                  if (!skipConfirm) return;
+                  const hrs = hoursBeforeCutoff(skipConfirm.date);
+                  setSkipConfirm(null);
+                  const r = await wrap(
+                    subscriptionsApi.skip(skipConfirm.deliveryId),
+                    "Delivery skipped — credits added",
+                  );
+                  if (r.ok) track("delivery_skipped", { hours_before_cutoff: hrs });
                 }}
               >
                 Yes, skip
@@ -890,6 +1177,7 @@ function DateBox({ iso, big }: { iso: string; big?: boolean }) {
 function DetailView({
   detail,
   progress,
+  streaks,
   onPause,
   onResume,
   onReactivateBilling,
@@ -909,6 +1197,7 @@ function DetailView({
 }: {
   detail: Detail;
   progress?: LoyaltyProgress;
+  streaks?: StreaksState;
   onPause: () => void;
   onResume: () => void;
   onReactivateBilling: () => void;
@@ -1208,6 +1497,11 @@ function DetailView({
 
       {/* Loyalty (recurring only) */}
       {progress && <LoyaltyStrip pr={progress} />}
+
+      {/* Zen Tracker — metabolic streak rings (playbook §5.2 Zone 3), kept
+          beside the loyalty economics so habit + reward progress read as one
+          retention block. */}
+      <StreakRings data={streaks} />
 
       {/* Next delivery — hero */}
       {nextDelivery && (

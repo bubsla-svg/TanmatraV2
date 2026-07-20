@@ -32,7 +32,7 @@ export async function sendOrderConfirmation(orderId: number): Promise<void> {
     const totalINR = (order.totalPaise / 100).toFixed(2);
     
     const itemsSummary = Array.isArray(order.items)
-      ? order.items.map((it: { name: string; qty: number; price: number }) => `${it.qty}x ${it.name}`).join(", ")
+      ? order.items.map((it: { name: string; qty: number }) => `${it.qty}x ${it.name}`).join(", ")
       : "Your items";
 
     // 1. Dispatch WhatsApp confirmation

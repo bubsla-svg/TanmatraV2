@@ -19,6 +19,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatRupees } from "@/lib/rdPlans";
+import { apiPath } from "@/lib/apiBase";
+import { track } from "@/lib/analytics";
+
+const TEAM_SIZE_BANDS = [
+  { value: "1-20", label: "1-20 members" },
+  { value: "21-100", label: "21-100 members" },
+  { value: "101-500", label: "101-500 members" },
+  { value: "500+", label: "500+ members" },
+] as const;
 
 export const meta: MetaFunction = () => [
   { title: "Partner with Tanmatra | Gyms & Fitness Centers" },
@@ -44,34 +53,60 @@ export default function GymsLanding() {
   const monthlyAncillaryRevenue = Math.round(members * 0.15 * GYM_STANDARD_PLAN_PRICE_RUPEES * (commissionTier / 100));
 
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [gymName, setGymName] = useState("");
   const [email, setEmail] = useState("");
+  const [teamSizeBand, setTeamSizeBand] = useState("101-500");
+  const [parkOrSector, setParkOrSector] = useState("");
   const [phone, setPhone] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !gymName || !email || !phone) {
-      toast.error("Please fill in all details");
+    if (!name.trim() || !gymName.trim() || !email.trim()) {
+      toast.error("Please fill in your name, gym name, and work email");
       return;
     }
-    // No partner-lead API exists yet — hand the inquiry to our real
-    // partnerships channel (the same WhatsApp business line published on
-    // the Refunds & Grievance page) with the details pre-filled.
-    const message = [
-      "Gym partnership inquiry — Tanmatra",
-      `Name: ${name}`,
-      `Gym / fitness center: ${gymName}`,
-      `Email: ${email}`,
-      `Phone: ${phone}`,
-    ].join("\n");
-    window.open(
-      `https://wa.me/919289213115?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-    setSubmitted(true);
-    toast.success("Almost done — send the pre-filled WhatsApp message to reach our partnerships team.");
+    if (!/.+@.+\..+/.test(email)) {
+      toast.error("Please enter a valid work email");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(apiPath("/corporate-leads"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "gym",
+          name: name.trim(),
+          workEmail: email.trim().toLowerCase(),
+          company: gymName.trim(),
+          teamSizeBand,
+          parkOrSector: parkOrSector.trim() || undefined,
+          phone: phone.trim() || undefined,
+          source: `${window.location.pathname}${window.location.search}`.slice(0, 160),
+        }),
+      });
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("Too many submissions from this network — please try again in an hour, or WhatsApp us below.");
+        }
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
+      track("corporate_lead_submitted", { kind: "gym", team_size_band: teamSizeBand });
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Something went wrong — please check your connection and try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -276,7 +311,7 @@ export default function GymsLanding() {
           <div className="text-center space-y-3">
             <h2 className="font-serif text-3xl sm:text-4xl">Start Your Application</h2>
             <p className="text-xs text-nn-on-surface-variant">
-              Enter your details below and send them to our partnerships team on WhatsApp. A partnership specialist will verify your center and follow up.
+              Tell us about your center below. A partnership specialist will verify your details and call you within one working day.
             </p>
           </div>
 
@@ -285,13 +320,22 @@ export default function GymsLanding() {
               {submitted ? (
                 <div className="text-center py-10 space-y-4">
                   <CheckCircle className="w-16 h-16 mx-auto text-clinical-sage" />
-                  <h3 className="text-2xl font-bold text-white">One step left</h3>
+                  <h3 className="text-2xl font-bold text-white">Application received</h3>
                   <p className="text-sm text-nn-on-surface-variant max-w-sm mx-auto">
-                    We've opened WhatsApp with your details pre-filled. Send the message and our partnerships team will get back to you on WhatsApp or email.
+                    We'll call you within one working day. Prefer chat? You can also{" "}
+                    <a
+                      href="https://wa.me/919289213115"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 text-white hover:text-nn-primary transition-colors"
+                    >
+                      WhatsApp us
+                    </a>
+                    .
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => setSubmitted(false)}
-                    variant="outline" 
+                    variant="outline"
                     className="border-white/[0.08] text-white hover:text-white"
                   >
                     Submit another form
@@ -325,8 +369,8 @@ export default function GymsLanding() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="email" className="text-xs text-nn-on-surface-variant">Work Email Address</Label>
-                      <Input 
-                        id="email" 
+                      <Input
+                        id="email"
                         type="email"
                         placeholder="e.g. partner@irongym.in"
                         className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
@@ -335,9 +379,35 @@ export default function GymsLanding() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="phone" className="text-xs text-nn-on-surface-variant">Mobile Number (WhatsApp Enabled)</Label>
-                      <Input 
-                        id="phone" 
+                      <Label htmlFor="team-size" className="text-xs text-nn-on-surface-variant">Active Members</Label>
+                      <select
+                        id="team-size"
+                        className="w-full bg-nn-bg border border-white/[0.08] rounded-md px-3 text-white text-xs h-9 focus:outline-none"
+                        value={teamSizeBand}
+                        onChange={(e) => setTeamSizeBand(e.target.value)}
+                      >
+                        {TEAM_SIZE_BANDS.map((band) => (
+                          <option key={band.value} value={band.value}>{band.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="park-or-sector" className="text-xs text-nn-on-surface-variant">Sector / Locality (optional)</Label>
+                      <Input
+                        id="park-or-sector"
+                        placeholder="e.g. Sector 62, Noida"
+                        className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
+                        value={parkOrSector}
+                        onChange={(e) => setParkOrSector(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone" className="text-xs text-nn-on-surface-variant">Mobile Number (optional)</Label>
+                      <Input
+                        id="phone"
                         placeholder="e.g. +91 99999 88888"
                         className="bg-nn-bg border-white/[0.08] text-white text-xs h-9"
                         value={phone}
@@ -346,12 +416,31 @@ export default function GymsLanding() {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-nn-primary text-action-text hover:bg-nn-primary/90 font-medium text-xs h-10 mt-2"
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-nn-primary text-action-text hover:bg-nn-primary/90 font-medium text-xs h-10 mt-2 disabled:opacity-60"
                   >
-                    Send Inquiry via WhatsApp
+                    {submitting ? "Submitting…" : "Submit Partnership Application"}
                   </Button>
+
+                  {submitError ? (
+                    <p role="alert" className="text-xs text-red-400 text-center leading-relaxed">
+                      {submitError} <span className="text-nn-on-surface-variant">Your details are still filled in — press the button to retry.</span>
+                    </p>
+                  ) : null}
+
+                  <p className="text-center text-xs text-nn-on-surface-variant">
+                    or{" "}
+                    <a
+                      href="https://wa.me/919289213115"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 text-white hover:text-nn-primary transition-colors"
+                    >
+                      WhatsApp us
+                    </a>
+                  </p>
                 </form>
               )}
             </CardContent>

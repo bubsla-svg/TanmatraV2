@@ -1,9 +1,22 @@
 import type { Server as HttpServer, IncomingMessage } from "node:http";
 import { Server as IOServer } from "socket.io";
 import { db, ordersTable, rdUsersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getSession, SESSION_COOKIE } from "./auth";
 import { logger } from "./logger";
+
+// Mirrors routes/rdAdvisory.ts's RD_SLUG_RE — room names are built from this
+// value, so it must stay a closed character set (no ":" separator collisions).
+const RD_SLUG_RE = /^rd-[a-z0-9-]{2,48}$/;
+
+/**
+ * RD chat thread room. A thread is keyed by (rdSlug, threadUserId) — the same
+ * pair `rd_messages` rows are keyed by — so one room carries exactly one
+ * patient↔RD conversation.
+ */
+function rdThreadRoom(rdSlug: string, threadUserId: string): string {
+  return `rd:${rdSlug}:${threadUserId}`;
+}
 
 function parseCookieHeader(header: string | undefined): Record<string, string> {
   if (!header) return {};
@@ -139,6 +152,82 @@ export function initRealtime(httpServer: HttpServer): IOServer {
       if (socket.data.isOps) socket.join("riders");
       else socket.emit("subscribe:riders:error", { error: "forbidden" });
     });
+
+    // RD chat thread rooms — mirrors the order-room convention above.
+    // Authorization model (same shape as REST in routes/rdAdvisory.ts):
+    //   - A signed-in patient may join only their OWN thread with an RD
+    //     (threadUserId omitted or equal to their own id). The room carries
+    //     only messages they can already read via GET /rd/messages.
+    //   - The clinician mapped to `rdSlug` in `rd_users` may join any user's
+    //     thread FOR THAT SLUG (checked against the DB per subscribe, exactly
+    //     like the order-ownership lookup above). RDs are the counterparty of
+    //     every message in the room, so no appointment-link probe is needed —
+    //     both message-insert paths already require the link server-side.
+    //   - Ops users deliberately get NO access: RD threads are clinical
+    //     conversations, not delivery telemetry.
+    socket.on(
+      "subscribe:rd-thread",
+      async (payload: { rdSlug?: unknown; threadUserId?: unknown }) => {
+        const rdSlug =
+          typeof payload?.rdSlug === "string" ? payload.rdSlug : "";
+        if (!RD_SLUG_RE.test(rdSlug)) {
+          socket.emit("subscribe:rd-thread:error", {
+            rdSlug,
+            error: "invalid rdSlug",
+          });
+          return;
+        }
+        const userId = socket.data.userId as string | null;
+        if (!userId) {
+          socket.emit("subscribe:rd-thread:error", {
+            rdSlug,
+            error: "unauthenticated",
+          });
+          return;
+        }
+        const threadUserId =
+          typeof payload?.threadUserId === "string" &&
+          payload.threadUserId.length > 0
+            ? payload.threadUserId
+            : userId;
+        if (threadUserId !== userId) {
+          const rows = await db
+            .select({ id: rdUsersTable.id })
+            .from(rdUsersTable)
+            .where(
+              and(
+                eq(rdUsersTable.userId, userId),
+                eq(rdUsersTable.rdSlug, rdSlug),
+              ),
+            )
+            .limit(1);
+          if (rows.length === 0) {
+            socket.emit("subscribe:rd-thread:error", {
+              rdSlug,
+              error: "forbidden",
+            });
+            return;
+          }
+        }
+        socket.join(rdThreadRoom(rdSlug, threadUserId));
+      },
+    );
+    socket.on(
+      "unsubscribe:rd-thread",
+      (payload: { rdSlug?: unknown; threadUserId?: unknown }) => {
+        const rdSlug =
+          typeof payload?.rdSlug === "string" ? payload.rdSlug : "";
+        if (!RD_SLUG_RE.test(rdSlug)) return;
+        const userId = socket.data.userId as string | null;
+        const threadUserId =
+          typeof payload?.threadUserId === "string" &&
+          payload.threadUserId.length > 0
+            ? payload.threadUserId
+            : userId;
+        if (!threadUserId) return;
+        socket.leave(rdThreadRoom(rdSlug, threadUserId));
+      },
+    );
   });
 
   logger.info("Socket.IO mounted at /api/socket.io with auth + room scoping");
@@ -156,6 +245,25 @@ export function emitDeliveryEta(
 ): void {
   if (!io) return;
   io.to(`order:${orderId}`).emit("delivery:eta", { orderId, ...payload });
+}
+
+/**
+ * Broadcast a newly-persisted rd_messages row to its thread room. Fired for
+ * BOTH directions (user→RD and RD→user) after the DB insert in
+ * routes/rdAdvisory.ts, so whichever party has the chat open sees the message
+ * live instead of waiting for the next refresh-on-send.
+ */
+export function emitRdMessage(
+  rdSlug: string,
+  threadUserId: string,
+  message: Record<string, unknown>,
+): void {
+  if (!io) return;
+  io.to(rdThreadRoom(rdSlug, threadUserId)).emit("rd:message", {
+    rdSlug,
+    threadUserId,
+    message,
+  });
 }
 
 export function emitRiderPosition(

@@ -6,9 +6,31 @@ import { usersTable } from "./auth";
 import { ridersTable } from "./riders";
 import { deliverySlotsTable } from "./deliverySlots";
 import { pickupLocationsTable } from "./pickupLocations";
+import type { MarketplaceOrderLine } from "./marketplace";
 
 export const orderKindValues = ["meal", "marketplace"] as const;
 export type OrderKind = (typeof orderKindValues)[number];
+
+// Meal-order line item: {id,name,qty,price}. Marketplace-order lines use
+// MarketplaceOrderLine (see ./marketplace) instead. orders.items is a
+// union of the two shapes — see isMealOrderItem below.
+export interface MealOrderItem {
+  id: number;
+  name: string;
+  qty: number;
+  price: number;
+}
+
+export type OrderItem = MealOrderItem | MarketplaceOrderLine;
+
+// Narrows an order line to the meal shape (id/price) vs. the marketplace
+// shape (itemId/unitPricePaise/...). Drizzle's $type<> can't correlate the
+// orderKind column with the items shape for TypeScript, so call sites that
+// read id/price must narrow per-item with this guard even when the query
+// already filters to orderKind = 'meal'.
+export function isMealOrderItem(item: OrderItem): item is MealOrderItem {
+  return "id" in item;
+}
 
 export const ordersTable = pgTable(
   "orders",

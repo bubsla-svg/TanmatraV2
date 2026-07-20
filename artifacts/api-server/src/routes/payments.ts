@@ -12,6 +12,7 @@ import {
 import { and, eq, asc } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
+import { emitServerEvent } from "../lib/serverEvents";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 import { isCaptureAmountReconciled, resolvePayableAmountPaise } from "../lib/paymentIntegrity";
@@ -323,6 +324,9 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
       id: ordersTable.id,
       status: ordersTable.status,
       razorpayOrderId: ordersTable.razorpayOrderId,
+      userId: ordersTable.userId,
+      chargePaise: ordersTable.chargePaise,
+      totalPaise: ordersTable.totalPaise,
     })
     .from(ordersTable)
     .where(eq(ordersTable.externalOrderId, orderId))
@@ -366,6 +370,14 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
       .returning({ id: ordersTable.id });
     if (updated[0]) {
       void sendOrderConfirmation(updated[0].id);
+      // Part 8 A4 — server-truth payment_succeeded, emitted only on the
+      // fresh placed→preparing transition (the webhook path emits its own
+      // copy when it wins the race instead). Fire-and-forget, never throws.
+      void emitServerEvent(
+        "payment_succeeded",
+        { charge_paise: order.chargePaise ?? order.totalPaise },
+        order.userId,
+      );
     }
 
     const mandateResult = await registerAutopayMandate(order.id, razorpayPaymentId, keyId, keySecret, req.log);
@@ -660,6 +672,13 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             .returning({ id: ordersTable.id });
           if (updated[0]) {
             void sendOrderConfirmation(updated[0].id);
+            // Part 8 A4 — server-truth payment_succeeded (webhook won the
+            // verify/webhook race for the placed→preparing transition).
+            void emitServerEvent(
+              "payment_succeeded",
+              { charge_paise: order.chargePaise ?? order.totalPaise },
+              order.userId,
+            );
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
@@ -730,6 +749,13 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             .returning({ id: ordersTable.id });
           if (updated[0]) {
             void sendOrderConfirmation(updated[0].id);
+            // Part 8 A4 — server-truth payment_succeeded (UPI payment-link
+            // capture path; same fresh-transition guard as above).
+            void emitServerEvent(
+              "payment_succeeded",
+              { charge_paise: order.chargePaise ?? order.totalPaise },
+              order.userId,
+            );
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");

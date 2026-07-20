@@ -84,6 +84,10 @@ const NAV_ROUTES: RouteEntry[] = [
   { label: "Performance protocol", to: "/performance", icon: Sparkle, group: "Community" },
   { label: "Clinical protocol", to: "/clinical", icon: Stethoscope, group: "Community" },
   { label: "Corporate", to: "/corporate", icon: Buildings, group: "Community", keywords: "office team" },
+  { label: "Corporate wellness", to: "/corporate-wellness", icon: Buildings, group: "Community", keywords: "hr team lunch office pilot b2b subsidy" },
+  { label: "Metabolic programs", to: "/metabolic", icon: Sparkle, group: "Community", keywords: "fat loss muscle gain macros protein landing" },
+  { label: "Hormone-aware care (PCOS)", to: "/care/pcos", icon: Stethoscope, group: "Community", keywords: "pcos low gi hormone rd consult care" },
+  { label: "Low-GI care (diabetes)", to: "/care/diabetes", icon: Stethoscope, group: "Community", keywords: "diabetes sugar conscious low gi rd consult care" },
   { label: "Team", to: "/team", icon: Users, group: "Community" },
 
   { label: "Account hub", to: "/account", icon: UserCircle, group: "Account", keywords: "profile sign out logout" },

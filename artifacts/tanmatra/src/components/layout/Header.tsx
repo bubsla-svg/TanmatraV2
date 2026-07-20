@@ -35,11 +35,11 @@ export default function Header() {
     ...(isLoggedIn
       ? [
           { path: "/orders", label: "Orders", icon: Package, match: ["/orders", "/track"] },
-          { path: "/challenges", label: "Community", icon: UsersThree, match: ["/challenges", "/wellness", "/performance", "/clinical", "/corporate", "/team"] },
+          { path: "/challenges", label: "Community", icon: UsersThree, match: ["/challenges", "/wellness", "/performance", "/clinical", "/metabolic", "/care", "/corporate", "/corporate-wellness", "/team"] },
           { path: "/account", label: "Account", icon: UserCircle, match: ["/account", "/preferences", "/rewards", "/vouchers", "/premium", "/login"] },
         ]
       : [
-          { path: "/challenges", label: "Community", icon: UsersThree, match: ["/challenges", "/wellness", "/performance", "/clinical", "/corporate", "/team"] },
+          { path: "/challenges", label: "Community", icon: UsersThree, match: ["/challenges", "/wellness", "/performance", "/clinical", "/metabolic", "/care", "/corporate", "/corporate-wellness", "/team"] },
           { path: "/login", label: "Sign In", icon: UserCircle, match: ["/login"] },
         ]),
   ];

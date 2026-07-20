@@ -7,13 +7,18 @@ const IntakeQuiz = lazy(() => import("@/components/preferences/IntakeQuiz"));
 import HomeHeader from "@/components/home/HomeHeader";
 import HomeHero from "@/components/home/HomeHero";
 import HomeRecommendedPlans from "@/components/home/HomeRecommendedPlans";
+import HomeProofStrip from "@/components/home/HomeProofStrip";
 import HomeMealsRail from "@/components/home/HomeMealsRail";
+import HomeSocialProof from "@/components/home/HomeSocialProof";
+import HomeDualFunnel from "@/components/home/HomeDualFunnel";
 import HomeTrustWall from "@/components/home/HomeTrustWall";
 import HomePricing from "@/components/home/HomePricing";
 import HomeDietitian from "@/components/home/HomeDietitian";
 import HomeFAQ from "@/components/home/HomeFAQ";
 import HomeFooter from "@/components/home/HomeFooter";
 import HomeFeaturedMeal from "@/components/home/HomeFeaturedMeal";
+import FreshVsColdModule from "@/components/shared/FreshVsColdModule";
+import { useSectionViewed } from "@/components/home/useSectionViewed";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
 
 const HOW_STEPS = [
@@ -43,6 +48,10 @@ export default function V2Home() {
   // meals" entry point. No unsolicited modal opens on load.
   const [quizOpen, setQuizOpen] = useState(false);
 
+  // S5 fresh-vs-cold is a shared module (also mounted on landing pages), so
+  // the host page owns its section_viewed instrumentation.
+  const freshVsColdRef = useSectionViewed<HTMLDivElement>("fresh_vs_cold");
+
   useEffect(() => {
     track("view_home");
   }, []);
@@ -67,11 +76,21 @@ export default function V2Home() {
         {/* 2.5 Recommended plans rail */}
         <HomeRecommendedPlans />
 
+        {/* S3 Proof-of-precision strip — after the programs band, before the
+            meals rail (playbook §1.1). */}
+        <HomeProofStrip />
+
         {/* 2.6 Dietitian-selected meals rail */}
         <HomeMealsRail />
 
         {/* 2.6b Featured meal teaser card */}
         <HomeFeaturedMeal />
+
+        {/* S5 Fresh-vs-cold contrast module — between the meals rail and
+            how-it-works (playbook §1.1). Shared with the landing pages. */}
+        <div ref={freshVsColdRef} className="mt-10">
+          <FreshVsColdModule context="homepage" />
+        </div>
 
         {/* 2.7 How It Works */}
         <section className="padx mt-10">
@@ -101,8 +120,16 @@ export default function V2Home() {
           </div>
         </section>
 
+        {/* S7 Social proof — aggregate rating + verbatims from the live
+            dish-reviews API; renders nothing when no real reviews exist. */}
+        <HomeSocialProof />
+
         {/* 2.9 Verifiable Trust wall */}
         <HomeTrustWall />
+
+        {/* S9 Dual-funnel split — B2C trial vs B2B pilot, before pricing
+            (playbook §1.1/§1.3). */}
+        <HomeDualFunnel />
 
         {/* 2.11 Pricing cards with flexibility checklist */}
         <HomePricing />

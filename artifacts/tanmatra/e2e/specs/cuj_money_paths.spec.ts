@@ -24,7 +24,13 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { cartItem, seedCart, API_BASE, PINCODES, rupees } from "../fixtures";
+import { cartItem, seedCart, quietFirstTouch, API_BASE, PINCODES, rupees } from "../fixtures";
+
+// Money-path specs test money paths — first-touch onboarding is resolved
+// up-front (softgate.spec.ts covers the gate itself).
+test.beforeEach(async ({ page }) => {
+  await quietFirstTouch(page);
+});
 
 const TEST_PHONE = process.env["E2E_TEST_PHONE"]; // e.g. 9999999901 (Firebase fictional)
 const TEST_OTP = process.env["E2E_TEST_OTP"]; // the fixed code configured for it

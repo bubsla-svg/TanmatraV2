@@ -13,6 +13,7 @@ import { startAnomalyDigestSender } from "./lib/anomalyDigestSender";
 import { startReviewSummarizerScheduler } from "./lib/menuEngineeringScheduler";
 import { startMealPlanScheduler } from "./lib/mealPlanScheduler";
 import { startAnalyticsScheduler } from "./lib/analyticsScheduler";
+import { startFunnelRollupScheduler } from "./lib/funnelRollupScheduler";
 import { startPreDebitScheduler, stopPreDebitScheduler } from "./lib/preDebitScheduler";
 import { startTrialLifecycleScheduler, stopTrialLifecycleScheduler } from "./lib/trialLifecycleScheduler";
 import { startChargeMandateScheduler, stopChargeMandateScheduler } from "./lib/chargeMandateScheduler";
@@ -75,6 +76,11 @@ if (!schedulersDisabled) {
   startTrialLifecycleScheduler();
   startChargeMandateScheduler();
   startSubscriptionAbandonmentScheduler();
+  // Nightly funnel_events → funnel_daily aggregation (Part 8 A1). The table
+  // is ensured by ensureRectificationSchema() before the port binds, and the
+  // scheduler's first tick is delayed past that. FUNNEL_ROLLUP_DISABLED=1
+  // gates it off individually.
+  startFunnelRollupScheduler();
   void resumeActiveSimulations();
 }
 

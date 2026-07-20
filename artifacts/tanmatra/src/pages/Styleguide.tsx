@@ -343,6 +343,32 @@ export default function Styleguide() {
           </motion.div>
         </Section>
 
+        {/* Selected-state idiom — Playbook Part 2 R3 */}
+        <Section title="Selection states" kicker=".selectable + data-state · one idiom for every selectable">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {(["unselected", "selected"] as const).map((state) => (
+              <button
+                key={state}
+                type="button"
+                data-state={state}
+                aria-pressed={state === "selected"}
+                className="selectable press-spring rounded-lg border border-white/[0.08] bg-nn-surface p-4 text-left min-h-11"
+              >
+                <p className="text-clinical-label">{state}</p>
+                <p className="text-body-sm text-white mt-1">
+                  {state === "selected" ? "Action border + 12% tint" : "Component's own border"}
+                </p>
+              </button>
+            ))}
+          </div>
+          <p className="text-body-sm text-nn-on-surface-variant mt-3">
+            Drive with <code>data-state</code> plus the matching aria attribute
+            (<code>aria-pressed</code> / <code>aria-selected</code>). Pair with{" "}
+            <code>.press-spring</code> for the kinetic press. Replaces the legacy{" "}
+            <code>.opt on</code> classes, inline style toggles, and per-page Tailwind conditionals.
+          </p>
+        </Section>
+
         {/* Iconography */}
         <Section title="Iconography" kicker="Phosphor (primary) · Lucide (legacy)">
           <Card className="bg-nn-surface border-white/[0.08] p-5">
