@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { F } from "./data";
+import { hapticLight, hapticWarning, hapticError } from "@/lib/haptics";
 import { useBundles, groupOrdersApi } from "@/lib/queries";
 import { macrosAreProvisional } from "@workspace/menu-catalog";
 import {
@@ -291,11 +292,12 @@ export default function V2Menu() {
     if (!item.isAvailable) return;
     if (groupCode) {
       groupOrdersApi.addItem(groupCode, { dishId: item.id, quantity: 1, customizations: [] })
-        .then(() => toast.success(`Added ${item.name} to group ${groupCode}`))
-        .catch(() => toast.error("Could not add to group order"));
+        .then(() => { hapticLight(); toast.success(`Added ${item.name} to group ${groupCode}`); })
+        .catch(() => { hapticError(); toast.error("Could not add to group order"); });
       return;
     }
     if (premiumSlugs.has(item.slug) && !isPremium) {
+      hapticWarning();
       toast.error(`${item.name} is a Premium-only dish`, {
         description: "Join Tanmatra Premium to unlock chef-table dishes.",
         action: { label: "See Premium", onClick: () => navigate("/premium") },
@@ -308,6 +310,7 @@ export default function V2Menu() {
       kitchen: item.kitchen, isVeg: item.isVeg, rdVerified: item.rdVerified,
       macros: item.macros, customizations: [],
     });
+    hapticLight();
     openCart();
     toast.success(`Added ${item.name} to your order`, { description: "Tap the cart to review and check out." });
   };
@@ -332,6 +335,7 @@ export default function V2Menu() {
       kitchen: item.kitchen, isVeg: item.isVeg, rdVerified: item.rdVerified,
       macros: item.macros, customizations: [],
     });
+    hapticLight();
     navigate("/checkout");
   };
 
@@ -350,7 +354,7 @@ export default function V2Menu() {
   }, [customizingDish, selectedOptions]);
 
   const handleAddBundle = (bundle: any) => {
-    if (groupCode) { toast.error("Bundles can only be added to your personal cart"); return; }
+    if (groupCode) { hapticWarning(); toast.error("Bundles can only be added to your personal cart"); return; }
     const before = new Set(useCartStore.getState().items.map((i: any) => i.lineId));
     let added = 0;
     for (const did of bundle.dishIds) {
@@ -365,9 +369,10 @@ export default function V2Menu() {
       });
       added++;
     }
-    if (added === 0) { toast.error("This bundle is currently unavailable"); return; }
+    if (added === 0) { hapticWarning(); toast.error("This bundle is currently unavailable"); return; }
     const newIds = useCartStore.getState().items.filter((i: any) => !before.has(i.lineId)).map((i: any) => i.lineId);
     addBundleSlug(bundle.slug);
+    hapticLight();
     openCart();
     toast.success(`${bundle.name} added to your order`, {
       description: `${added} item${added === 1 ? "" : "s"} for ${F(bundle.pricePaise)}`,
@@ -1113,6 +1118,7 @@ export default function V2Menu() {
                   const original = catalogDishes.find((d: any) => d.id === activeVariant.id);
                   if (!original) return;
                   if (premiumSlugs.has(original.slug) && !isPremium) {
+                    hapticWarning();
                     toast.error(`${original.name} is a Premium-only dish`, { description: "Join Tanmatra Premium to unlock chef-table dishes.", action: { label: "See Premium", onClick: () => navigate("/premium") } });
                     return;
                   }
@@ -1122,6 +1128,7 @@ export default function V2Menu() {
                     kitchen: original.kitchen, isVeg: original.isVeg, rdVerified: original.rdVerified,
                     macros: original.macros, customizations: [],
                   });
+                  hapticLight();
                   setCustomizingDish(null);
                   openCart();
                   toast.success(`Added ${original.name} to your order`);
