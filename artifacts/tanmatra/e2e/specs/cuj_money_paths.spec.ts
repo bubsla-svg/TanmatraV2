@@ -57,8 +57,15 @@ test.describe("CUJ-2 address picker (canvas-free)", () => {
     await seedCart(page, [cartItem({ quantity: 2 })]);
     await page.goto("/checkout");
 
-    // Trip the address gate.
-    await page.getByRole("button", { name: /review & pay/i }).first().click();
+    // Trip the address gate. With no address, Review & Pay is disabled with
+    // a visible reason (PR-09) rather than an enabled click-then-toast, so
+    // the picker opens from the address card's own CTA instead.
+    await expect(
+      page.getByRole("button", { name: /review & pay/i }).first(),
+    ).toBeDisabled();
+    await page
+      .getByRole("button", { name: /add your delivery address/i })
+      .click();
 
     // The rebuilt picker: prompt copy present, and the old dead-map states
     // must never render (no Maps JS in the component at all).
@@ -116,7 +123,17 @@ test.describe("CUJ-4 guest OTP auth", () => {
   test("guest checkout phone → fixed OTP → verified session", async ({ page }) => {
     await seedCart(page, [cartItem({ quantity: 1 })]);
     await page.goto("/checkout");
-    await page.getByRole("button", { name: /review & pay/i }).first().click();
+    // With no address, Pay is disabled with a visible reason (PR-09) — the
+    // address flow is entered from the address card's CTA instead.
+    await expect(
+      page.getByText("Select a delivery address to continue").first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /review & pay/i }).first(),
+    ).toBeDisabled();
+    await page
+      .getByRole("button", { name: /add your delivery address/i })
+      .click();
 
     // Complete the address gate via manual entry (guest has none saved).
     await page.getByRole("button", { name: /enter address manually/i }).click();
@@ -131,12 +148,14 @@ test.describe("CUJ-4 guest OTP auth", () => {
     await page.getByPlaceholder("Enter 10-digit mobile number").fill(TEST_PHONE!);
     await page.getByRole("button", { name: /send|continue|otp/i }).first().click();
 
-    await page.getByPlaceholder("Enter 6-digit OTP").fill(TEST_OTP!);
+    // Segmented 6-box OTP (PR-09): a full-code fill into box 1 distributes
+    // across the boxes via the multi-digit autofill branch.
+    await page.getByLabel("OTP digit 1 of 6").fill(TEST_OTP!);
     await page.getByRole("button", { name: /verify & continue/i }).click();
 
     // Verified session: the dialog resolves and the order confirm path opens
     // (either the confirm sheet or Razorpay). Either way the OTP step is gone.
-    await expect(page.getByPlaceholder("Enter 6-digit OTP")).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.getByLabel("OTP digit 1 of 6")).toHaveCount(0, { timeout: 15_000 });
   });
 });
 

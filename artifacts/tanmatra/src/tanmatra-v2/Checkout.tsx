@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/api/adapter";
 import { useCart, useCartStore, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
+import { GST_RATE_FOOD, GST_RATE_DELIVERY } from "@/lib/cartMath";
 import { addonsApi } from "@/lib/marketplaceApi";
 import { useOrders, generateOrderId, submitOrderIdempotencyKey } from "@/lib/ordersContext";
 import { loyaltyApi } from "@/lib/loyaltyApi";
@@ -219,6 +228,13 @@ export default function V2Checkout() {
   const [showNewAddressFlow, setShowNewAddressFlow] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  // Payment-failed banner near the Pay area. Set only on the payment
+  // failure path that cancels the unpaid server order and keeps the user
+  // on checkout (NOT the verify_unconfirmed recovery path, which navigates
+  // to /track). Cleared on dismiss and on the next payment attempt.
+  const [payFailure, setPayFailure] = useState<{ message: string } | null>(
+    null,
+  );
   // Holds the Idempotency-Key AND the orderId for the in-flight
   // finalize attempt. Both must be reused across retries so the
   // request body hashes identically and the server replays its
@@ -273,6 +289,11 @@ export default function V2Checkout() {
   const [guestIsVerifying, setGuestIsVerifying] = useState(false);
   const [guestOtpError, setGuestOtpError] = useState<string | null>(null);
   const [otpShakeOn, setOtpShakeOn] = useState(false);
+  // Segmented 6-box OTP input: refs for focus management plus the index of
+  // the currently-focused box (drives a deterministic visible focus ring —
+  // the theme resets the native outline on .tnm2 inputs).
+  const otpBoxRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const [otpFocusIdx, setOtpFocusIdx] = useState<number | null>(null);
   const [guestResendIn, setGuestResendIn] = useState(0);
   const [guestFirstName, setGuestFirstName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -352,6 +373,13 @@ export default function V2Checkout() {
       setShowNewAddressFlow(true);
       return;
     }
+    // Defense in depth for the OTHER Pay entry points that aren't disabled
+    // by payBlockedReason directly — currently the payFailure banner's
+    // "Try again" button, which re-invokes this same handler.
+    if (payBlockedReason) {
+      toast.error(payBlockedReason);
+      return;
+    }
     if (addressAuthRequired) {
       if (currentAddr.phone.trim()) {
         setGuestPhone(currentAddr.phone.trim().replace(/^\+91/, ""));
@@ -419,6 +447,115 @@ export default function V2Checkout() {
   const failOtpInline = (message: string) => {
     setGuestOtpError(message);
     setOtpShakeOn(true);
+  };
+
+  // ── Segmented 6-box OTP input helpers ────────────────────────────────
+  // guestOtpCode stays the single joined string (the verify logic, the
+  // "Verify & Continue" disabled state, shake-on-error and the resend flow
+  // are untouched); the six boxes are just a view over it. Entry is kept
+  // contiguous: digit i always lives in box i.
+  const focusOtpBox = (index: number) => {
+    const el = otpBoxRefs.current[index];
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  };
+
+  const applyOtpCode = (next: string) => {
+    setGuestOtpCode(next.replace(/\D/g, "").slice(0, 6));
+    setGuestOtpError(null);
+  };
+
+  const handleOtpBoxChange = (index: number, raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length === 0) {
+      // Box cleared (backspace/cut on a selected digit) — drop this
+      // position; any later digits shift left to stay contiguous.
+      applyOtpCode(guestOtpCode.slice(0, index) + guestOtpCode.slice(index + 1));
+      return;
+    }
+    if (digits.length >= 6) {
+      // True full-code burst — WebOTP / keyboard OTP autofill (boxes
+      // deliberately have no maxLength so autofill isn't truncated).
+      // Distribute across all six boxes from the start.
+      applyOtpCode(digits);
+      focusOtpBox(Math.min(digits.length, 5));
+      return;
+    }
+    if (digits.length >= 4) {
+      // A shorter autofill burst landing on this box — insert starting at
+      // the receiving box rather than replacing from zero, so digits
+      // already entered in earlier boxes survive.
+      const at = Math.min(index, guestOtpCode.length);
+      applyOtpCode(
+        guestOtpCode.slice(0, at) + digits + guestOtpCode.slice(at + digits.length),
+      );
+      focusOtpBox(Math.min(at + digits.length, 5));
+      return;
+    }
+    // Single keystroke next to an existing digit (2 chars): the caret may
+    // sit BEFORE the existing digit (click, ArrowLeft, or Home collapses
+    // the select-all to the start), so the browser can deliver
+    // "<new><old>" instead of "<old><new>". Diff against the box's
+    // previous value to find the actually-new character instead of always
+    // assuming it's last — otherwise a correction silently rewrites the
+    // same old digit while focus still advances.
+    const old = guestOtpCode[index];
+    let ch = digits[digits.length - 1];
+    if (old != null && digits.length > 1 && ch === old && digits[0] !== old) {
+      ch = digits[0];
+    }
+    const at = Math.min(index, guestOtpCode.length);
+    applyOtpCode(guestOtpCode.slice(0, at) + ch + guestOtpCode.slice(at + 1));
+    focusOtpBox(Math.min(at + 1, 5));
+  };
+
+  const handleOtpBoxKeyDown = (
+    index: number,
+    e: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Backspace" && e.currentTarget.value === "") {
+      // Empty box: move back and delete the previous digit.
+      e.preventDefault();
+      if (index > 0) {
+        applyOtpCode(
+          guestOtpCode.slice(0, index - 1) + guestOtpCode.slice(index),
+        );
+        focusOtpBox(index - 1);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      focusOtpBox(index - 1);
+    } else if (e.key === "ArrowRight" && index < 5) {
+      e.preventDefault();
+      focusOtpBox(index + 1);
+    }
+  };
+
+  const handleOtpPaste = (
+    index: number,
+    e: ClipboardEvent<HTMLInputElement>,
+  ) => {
+    const digits = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (digits.length === 0) return;
+    e.preventDefault();
+    if (digits.length >= 6) {
+      // A full-code paste distributes across all six boxes from the start
+      // regardless of which box received it — same net behaviour the old
+      // single input had.
+      applyOtpCode(digits);
+      focusOtpBox(Math.min(digits.length, 5));
+      return;
+    }
+    // A partial paste (completing a code the user started typing) inserts
+    // at the receiving box instead of replacing from zero, so digits
+    // already entered in earlier boxes survive.
+    const at = Math.min(index, guestOtpCode.length);
+    applyOtpCode(
+      guestOtpCode.slice(0, at) + digits + guestOtpCode.slice(at + digits.length),
+    );
+    focusOtpBox(Math.min(at + digits.length, 5));
   };
 
   const handleVerifyGuestOtp = async () => {
@@ -663,7 +800,11 @@ export default function V2Checkout() {
   const freeDeliveryProgress = subtotal === 0 ? 0 : Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
   const hasFreeDelivery = fulfillmentType === "pickup" || deliveryFee === 0;
   // Statutory GST split: prepared food 5% (no ITC) + delivery service 18%.
-  const gst = Math.round(discountedSubtotal * 0.05) + Math.round(deliveryFee * 0.18);
+  // Rates are shared with the cart display via cartMath.ts (single
+  // client-side source of truth, mirroring the server's computeChargePaise).
+  const gst =
+    Math.round(discountedSubtotal * GST_RATE_FOOD) +
+    Math.round(deliveryFee * GST_RATE_DELIVERY);
   // grossTotal (and razorpayTotal below) intentionally EXCLUDE addonTotal:
   // add-ons are not part of the Razorpay-captured amount (chargePaise) — they
   // are recorded separately via POST /addons/attach after payment succeeds.
@@ -727,6 +868,32 @@ export default function V2Checkout() {
   };
 
   const activeAddr = savedAddresses.find((a) => a.id === selectedAddress);
+
+  // Disabled-with-reason for the Pay CTAs. Surfaces the first actionable
+  // blocker BEFORE the click instead of relying on a post-click toast; the
+  // guards inside handlePlaceOrderClick / handleConfirmedPayment stay as
+  // defense in depth. Patient-safety blocks intentionally keep their own
+  // dedicated flow via checkoutBlocked / checkoutBlockedReason.
+  const payBlockedReason: string | null =
+    fulfillmentType === "delivery" && !activeAddr
+      ? "Select a delivery address to continue"
+      : fulfillmentType === "pickup" && selectedPickupId === null
+        ? "Choose a pickup location to continue"
+        : fulfillmentType === "delivery" &&
+            deliveryMode === "schedule" &&
+            selectedSlotId === null
+          ? "Pick a delivery slot to continue"
+          : null;
+
+  // Order reference surfaced while a payment is in flight. The attempt ref
+  // is minted synchronously before the first await in
+  // handleConfirmedPayment, so by the time the isProcessing re-render
+  // happens it is already populated. UPI-recovery polling can flip
+  // isProcessing on without an attempt of its own — in that case we simply
+  // omit the reference (never show a fabricated one).
+  const processingOrderRef = isProcessing
+    ? submitAttemptRef.current?.orderId ?? null
+    : null;
 
   useEffect(() => {
     if (!activeAddr || items.length === 0 || fulfillmentType !== "delivery") {
@@ -802,6 +969,8 @@ export default function V2Checkout() {
     // wearing the previous failure's red panel.
     setServerAllergenError(null);
     setServerConflicts(null);
+    // New attempt — retire any previous payment-failed banner.
+    setPayFailure(null);
     setIsProcessing(true);
     // (Removed an artificial 1.5s setTimeout that delayed every order
     // for no functional reason. Server timing already drives the spinner.)
@@ -1120,6 +1289,16 @@ export default function V2Checkout() {
         cancelServerOrder();
         removePendingTransaction(orderId);
         submitAttemptRef.current = null;
+        // Persistent inline banner near the Pay area (toasts vanish before
+        // a rattled buyer re-engages). Cleared on dismiss / next attempt.
+        // A deliberate cancel gets calmer copy — no money moved, so the
+        // auto-reversal reassurance would only alarm.
+        setPayFailure({
+          message:
+            rpMsg === "payment_cancelled"
+              ? "Payment cancelled — nothing was charged and your cart is saved."
+              : "Payment didn't complete. Any amount debited is auto-reversed by your bank, typically within 5-7 business days.",
+        });
         toast.info(
           rpMsg === "payment_cancelled"
             ? "Payment cancelled — your cart is safe"
@@ -1370,6 +1549,7 @@ export default function V2Checkout() {
 
   return (
     <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <ProcessingLiveRegion isProcessing={isProcessing} orderRef={processingOrderRef} />
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <button type="button" className="iconbtn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cart"))} aria-label="Back">
@@ -2069,15 +2249,69 @@ export default function V2Checkout() {
               </p>
             )}
 
+            {payFailure && (
+              <div
+                className="note"
+                role="alert"
+                style={{ alignItems: "flex-start", background: "var(--dgrd)", borderColor: "color-mix(in oklab, var(--dgr) 35%, transparent)" }}
+              >
+                <AlertTriangle className="w-4 h-4" aria-hidden="true" style={{ color: "var(--dgr)", flexShrink: 0, marginTop: 2 }} />
+                <div className="f1" style={{ minWidth: 0 }}>
+                  <p className="small fw6" style={{ color: "var(--tx)" }}>{payFailure.message}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPayFailure(null);
+                      void handlePlaceOrderClick();
+                    }}
+                    disabled={checkoutBlocked || payBlockedReason !== null}
+                    className={
+                      checkoutBlocked || payBlockedReason !== null
+                        ? "btn btn-g mt8 dis"
+                        : "btn btn-g mt8"
+                    }
+                    title={checkoutBlocked ? checkoutBlockedReason ?? undefined : payBlockedReason ?? undefined}
+                    style={{ height: 32, padding: "0 12px", fontSize: 12 }}
+                  >
+                    Try again
+                  </button>
+                  {payBlockedReason && (
+                    <PayBlockedNotice reason={payBlockedReason} style={{ marginTop: 6, justifyContent: "flex-start" }} />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPayFailure(null)}
+                  aria-label="Dismiss payment notice"
+                  className="iconbtn"
+                  style={{ width: 24, height: 24, flexShrink: 0 }}
+                >
+                  <i className="ph-bold ph-x" style={{ fontSize: 12 }} />
+                </button>
+              </div>
+            )}
+
             <div className="hidden lg:block">
               <p className="fine tc" style={{ fontSize: 10.5, color: "var(--mut)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: 8 }}>
-                FSSAI-licensed kitchen · RD-designed menu · Allergens disclosed per dish
+                FSSAI-licensed · ISO 22000 kitchen · RD-designed menu
               </p>
+              {payBlockedReason && (
+                <PayBlockedNotice
+                  reason={payBlockedReason}
+                  style={{ marginBottom: 8 }}
+                />
+              )}
+              {isProcessing && (
+                <PayProcessingNotice
+                  orderRef={processingOrderRef}
+                  style={{ marginBottom: 8 }}
+                />
+              )}
               <button
                 onClick={handlePlaceOrderClick}
-                disabled={checkoutBlocked}
-                className={checkoutBlocked ? "btn btn-p btn-blk dis" : "btn btn-p btn-blk"}
-                title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
+                disabled={checkoutBlocked || payBlockedReason !== null}
+                className={checkoutBlocked || payBlockedReason !== null ? "btn btn-p btn-blk dis" : "btn btn-p btn-blk"}
+                title={checkoutBlocked ? checkoutBlockedReason ?? undefined : payBlockedReason ?? undefined}
               >
                 <CreditCard className="w-4 h-4" />
                 {checkoutBlocked
@@ -2126,6 +2360,9 @@ export default function V2Checkout() {
             razorpayTotal={razorpayTotal}
             checkoutBlocked={checkoutBlocked}
             checkoutBlockedReason={checkoutBlockedReason}
+            payBlockedReason={payBlockedReason}
+            isProcessing={isProcessing}
+            processingOrderRef={processingOrderRef}
             onPay={handlePlaceOrderClick}
           />
         </div>
@@ -2193,24 +2430,59 @@ export default function V2Checkout() {
                 <div className="col gap16 mt14">
                   <div className="col gap8">
                     <label htmlFor="guest-otp-input" className="lab">Verification Code</label>
-                    <input
-                      id="guest-otp-input"
-                      placeholder="Enter 6-digit OTP"
-                      value={guestOtpCode}
-                      onChange={(e) => {
-                        setGuestOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6));
-                        setGuestOtpError(null);
-                      }}
+                    <div
+                      className={otpShakeOn ? "fx gap8 animate-shake" : "fx gap8"}
                       onAnimationEnd={() => setOtpShakeOn(false)}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      aria-invalid={guestOtpError ? true : undefined}
-                      aria-describedby={guestOtpError ? "guest-otp-error" : undefined}
-                      className={otpShakeOn ? "inp mono animate-shake" : "inp mono"}
-                      style={{ textAlign: "center", letterSpacing: ".4em", ...(guestOtpError ? { borderColor: "var(--dgr)" } : {}) }}
-                    />
+                    >
+                      {Array.from({ length: 6 }, (_, i) => (
+                        <input
+                          key={i}
+                          ref={(el) => {
+                            otpBoxRefs.current[i] = el;
+                          }}
+                          id={i === 0 ? "guest-otp-input" : undefined}
+                          value={guestOtpCode[i] ?? ""}
+                          onChange={(e) => handleOtpBoxChange(i, e.target.value)}
+                          onKeyDown={(e) => handleOtpBoxKeyDown(i, e)}
+                          onPaste={(e) => handleOtpPaste(i, e)}
+                          onFocus={(e) => {
+                            setOtpFocusIdx(i);
+                            e.target.select();
+                          }}
+                          onBlur={() => setOtpFocusIdx((cur) => (cur === i ? null : cur))}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          // one-time-code on the FIRST box only → WebOTP /
+                          // keyboard OTP suggestion lands there and the
+                          // multi-digit branch distributes it. No maxLength:
+                          // it would truncate that autofill to one digit.
+                          autoComplete={i === 0 ? "one-time-code" : "off"}
+                          autoFocus={i === 0}
+                          aria-label={`OTP digit ${i + 1} of 6`}
+                          aria-invalid={guestOtpError ? true : undefined}
+                          aria-describedby={guestOtpError ? "guest-otp-error" : undefined}
+                          className="inp mono tnm-data"
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            width: "auto",
+                            padding: 0,
+                            textAlign: "center",
+                            fontSize: 18,
+                            ...(guestOtpError ? { borderColor: "var(--dgr)" } : {}),
+                            // Deterministic visible focus ring — the theme
+                            // resets the native outline on .tnm2 inputs.
+                            ...(otpFocusIdx === i
+                              ? {
+                                  borderColor: guestOtpError ? "var(--dgr)" : "var(--safb)",
+                                  boxShadow: "0 0 0 2px var(--safd)",
+                                }
+                              : {}),
+                          }}
+                        />
+                      ))}
+                    </div>
                     {guestOtpError && (
                       <p id="guest-otp-error" role="alert" className="fine" style={{ color: "var(--dgr)" }}>
                         {guestOtpError}
@@ -2395,6 +2667,12 @@ export default function V2Checkout() {
                   Refund &amp; cancellation policy
                 </Link>
               </p>
+              {isProcessing && (
+                <PayProcessingNotice
+                  orderRef={processingOrderRef}
+                  style={{ marginTop: 10 }}
+                />
+              )}
               <div className="fx gap8 mt10" style={{ justifyContent: "flex-end" }}>
                 <button
                   onClick={() => setConfirmOpen(false)}
@@ -2469,6 +2747,12 @@ interface V2MobilePayBarProps {
   razorpayTotal: number;
   checkoutBlocked: boolean;
   checkoutBlockedReason: string | null;
+  // First actionable pre-payment blocker (missing address / pickup / slot).
+  // Non-null ⇒ Pay is disabled and the reason renders above the button.
+  payBlockedReason: string | null;
+  isProcessing: boolean;
+  // Order reference of the in-flight attempt, if one exists yet.
+  processingOrderRef: string | null;
   onPay: () => void;
 }
 
@@ -2487,6 +2771,9 @@ function V2MobilePayBar({
   razorpayTotal,
   checkoutBlocked,
   checkoutBlockedReason,
+  payBlockedReason,
+  isProcessing,
+  processingOrderRef,
   onPay,
 }: V2MobilePayBarProps) {
   const [open, setOpen] = useState(false);
@@ -2541,7 +2828,7 @@ function V2MobilePayBar({
         </div>
       )}
       <p className="fine tc" style={{ fontSize: 10, color: "var(--mut)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", background: "var(--s1)", border: "1px solid var(--ln)", borderRadius: 8, padding: "4px 10px", marginBottom: 6 }}>
-        FSSAI-licensed kitchen · RD-designed menu · Allergens disclosed per dish
+        FSSAI-licensed · ISO 22000 kitchen · RD-designed menu
       </p>
       <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] fx ac gap12" style={{ padding: 12 }}>
         <button
@@ -2562,16 +2849,21 @@ function V2MobilePayBar({
             {formatPrice(razorpayTotal)}
           </p>
         </button>
-        <div className="col gap6" style={{ flexShrink: 0, alignItems: "stretch" }}>
+        <div className="col gap6" style={{ flexShrink: 0, alignItems: "stretch", maxWidth: 168 }}>
           {checkoutBlocked && checkoutBlockedReason && (
             <p className="fine dgrc tc">{checkoutBlockedReason}</p>
           )}
+          {payBlockedReason && <PayBlockedNotice reason={payBlockedReason} />}
+          {isProcessing && <PayProcessingNotice orderRef={processingOrderRef} />}
           <button
             onClick={onPay}
-            disabled={checkoutBlocked}
-            className={checkoutBlocked ? "btn btn-p dis" : "btn btn-p"}
-            style={{ height: 48, padding: "0 16px" }}
-            title={checkoutBlocked ? checkoutBlockedReason ?? undefined : undefined}
+            disabled={checkoutBlocked || payBlockedReason !== null}
+            className={checkoutBlocked || payBlockedReason !== null ? "btn btn-p dis" : "btn btn-p"}
+            // A long reason line above (patient-safety or address/slot/pickup)
+            // must not stretch this button wider than its own content — it
+            // shares the "col" with alignItems:stretch, so opt it back out.
+            style={{ height: 48, padding: "0 16px", alignSelf: "flex-end", width: "max-content" }}
+            title={checkoutBlocked ? checkoutBlockedReason ?? undefined : payBlockedReason ?? undefined}
           >
             <CreditCard className="w-4 h-4" />
             {checkoutBlocked ? "Blocked" : "Review & Pay"}
@@ -2590,5 +2882,91 @@ function V2MobilePayBar({
         </div>
       </div>
     </div>
+  );
+}
+
+// Why the Pay button is disabled, rendered directly above it. Icon + text —
+// never color alone — so the blocker is unmissable pre-click.
+function PayBlockedNotice({
+  reason,
+  style,
+}: {
+  reason: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <p className="fine tc fx ac jc gap6" style={{ color: "var(--tx)", ...style }}>
+      <i
+        className="ph-bold ph-info"
+        aria-hidden="true"
+        style={{ color: "var(--safb)", fontSize: 13, flexShrink: 0 }}
+      />
+      <span>{reason}</span>
+    </p>
+  );
+}
+
+// In-flight payment notice shown near the Pay area / confirm modal. This is
+// purely visual — screen readers get the same message from the single
+// persistent live region in V2Checkout's <ProcessingLiveRegion>, since a
+// role="status" region that's inserted into the DOM already containing its
+// text is announced unreliably (and this component mounts in up to three
+// places at once, which would risk triple-announcing). aria-hidden here
+// keeps a virtual cursor from reading it as a fourth, redundant copy.
+function PayProcessingNotice({
+  orderRef,
+  style,
+}: {
+  orderRef: string | null;
+  style?: CSSProperties;
+}) {
+  return (
+    <p
+      className="fine tc fx ac jc gap6"
+      aria-hidden="true"
+      style={{ color: "var(--tx)", ...style }}
+    >
+      <i
+        className="ph-bold ph-clock"
+        aria-hidden="true"
+        style={{ color: "var(--safb)", fontSize: 13, flexShrink: 0 }}
+      />
+      <span>
+        Payment in progress — don't close this screen.
+        {orderRef ? (
+          <>
+            {" "}
+            Ref: <span className="tnm-data">{orderRef}</span>
+          </>
+        ) : null}
+      </span>
+    </p>
+  );
+}
+
+// Single always-mounted live region for the processing state. Screen
+// readers only reliably announce role="status" content when it changes
+// AFTER the region already exists in the DOM — mounting a brand-new
+// role="status" element that already contains its text (the pattern the
+// three visible PayProcessingNotice instances use) is announced
+// inconsistently. This region is empty on first render and its text is
+// set only once isProcessing flips, so the mutation is a genuine live
+// update, and being a single instance it also dedupes the desktop
+// summary + confirm-sheet overlap.
+function ProcessingLiveRegion({
+  isProcessing,
+  orderRef,
+}: {
+  isProcessing: boolean;
+  orderRef: string | null;
+}) {
+  return (
+    <p role="status" className="sr-only">
+      {isProcessing
+        ? `Payment in progress — don't close this screen.${
+            orderRef ? ` Ref: ${orderRef}` : ""
+          }`
+        : ""}
+    </p>
   );
 }
