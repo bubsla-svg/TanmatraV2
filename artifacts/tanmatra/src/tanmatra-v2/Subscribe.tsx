@@ -154,6 +154,8 @@ const STEP_TITLES = [
 // the `?step=` URL mirroring, popstate back-walking and rehydration. This
 // type lists the fields snapshotted into that draft (step is stored by the
 // hook itself, alongside these).
+const TRIAL_SLUG = "three-day-trial-pack";
+
 type SubscribeDraft = {
   slots?: Record<MealSlot, boolean>;
   daysMode?: DaysMode;
@@ -161,6 +163,11 @@ type SubscribeDraft = {
   selectedBillingCadence?: SubscriptionCadence | null;
   startDate?: string;
   address?: { label: string; line: string; city: string; pincode: string; phone: string };
+  // The plan the draft's slots/daysMode were built on. Lets the basis-
+  // adoption effect tell "user returning to the same plan with their own
+  // customizations" (draft wins) apart from "stale draft from a different
+  // plan/bare entry" (the plan's advertised basis wins).
+  planSlug?: string;
 };
 
 export default function V2Subscribe() {
@@ -192,10 +199,10 @@ export default function V2Subscribe() {
 
   const planSlug = searchParams.get("plan");
   const directPlan = planSlug ? getRdPlanBySlug(planSlug) : undefined;
-  
+
   // Trial mode
   const [isTrial, setIsTrial] = useState(() => {
-    return searchParams.get("trial") === "1" || directPlan?.slug === "three-day-trial-pack";
+    return searchParams.get("trial") === "1" || directPlan?.slug === TRIAL_SLUG;
   });
 
   const fromCart = searchParams.get("fromCart") === "1";
@@ -208,7 +215,7 @@ export default function V2Subscribe() {
   const effectivePlan: RdPlan | undefined =
     directPlan ??
     (protocolPreset ? getRdPlanBySlug(protocolPreset.planSlug) : undefined) ??
-    (isTrial ? getRdPlanBySlug("three-day-trial-pack") : undefined);
+    (isTrial ? getRdPlanBySlug(TRIAL_SLUG) : undefined);
 
   const rdAuthor = effectivePlan ? getRdAuthor(effectivePlan) : undefined;
   const { preferences, update } = usePreferences();
@@ -311,12 +318,58 @@ export default function V2Subscribe() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The wizard's meal basis must FOLLOW the chosen plan — mount-time
+  // seeding alone cannot guarantee that. Picking a plan in the chooser (or
+  // any /subscribe→/subscribe link) changes ?plan= without remounting, so
+  // the useState initializers above never re-run; and the draft rehydrate
+  // above can stomp a correct seed with slots saved from a different
+  // context. Both resurrect the ₹3,800-card → ₹10,474-wizard bug for
+  // chooser users. Adopt the advertised basis exactly when the plan
+  // IDENTITY changes; manual slot edits (slug unchanged) are never touched,
+  // and a draft built on this same plan (draft.planSlug matches) keeps the
+  // user's own customizations.
+  const adoptedPlanRef = useRef<string | null>(null);
+  useEffect(() => {
+    const slug = isTrial ? TRIAL_SLUG : (effectivePlan?.slug ?? null);
+    if (!slug || adoptedPlanRef.current === slug) return;
+    const isFirstAdoption = adoptedPlanRef.current === null;
+    adoptedPlanRef.current = slug;
+    // Returning to the plan this draft was built on → the rehydrated
+    // customizations are the user's own; don't overwrite them.
+    if (isFirstAdoption && wizard.draft.planSlug === slug) return;
+    if (slug === TRIAL_SLUG) {
+      // The marketed trial: one lunch a day for 3 days — the flat ₹1,499
+      // pack every surface advertises. Extra slots remain a user-chosen
+      // upgrade at step 1, never a silent default.
+      if (!isTrial) setIsTrial(true);
+      setSlots({ breakfast: false, lunch: true, dinner: false });
+      setDaysMode("everyday");
+      return;
+    }
+    const basis = effectivePlan?.advertisedBasis;
+    if (basis) {
+      setSlots({ ...basis.slots });
+      setDaysMode(basis.daysMode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectivePlan, isTrial]);
+
   // Mirror the builder's field state into the wizard draft; the hook
   // serializes it (with the current step) to sessionStorage on every change.
+  // planSlug records which plan the slots/daysMode belong to, so the
+  // adoption effect above can tell a same-plan return from a stale draft.
   useEffect(() => {
-    wizard.patchDraft({ slots, daysMode, cadence, selectedBillingCadence, startDate, address });
+    wizard.patchDraft({
+      slots,
+      daysMode,
+      cadence,
+      selectedBillingCadence,
+      startDate,
+      address,
+      planSlug: isTrial ? TRIAL_SLUG : effectivePlan?.slug,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots, daysMode, cadence, selectedBillingCadence, startDate, address]);
+  }, [slots, daysMode, cadence, selectedBillingCadence, startDate, address, isTrial, effectivePlan]);
 
   // Clear-on-success: order placed (success screen) — the draft has served
   // its purpose. Walking back from success re-creates it, same as before.
@@ -983,8 +1036,11 @@ export default function V2Subscribe() {
 
           <button
             onClick={() => {
+              // Just flip to trial — the basis-adoption effect configures the
+              // marketed 3-lunch pack. The old inline setSlots forced all
+              // three slots (9 meals ≈ ₹3,544) under this very button's
+              // ₹1,499 label — register §A3's "three trial prices" bug.
               setIsTrial(true);
-              setSlots({ breakfast: true, lunch: true, dinner: true });
               goToStep(3); // Land straight on scheduling/checkout for Trial
             }}
             className="btn btn-s btn-blk w-full text-xs font-semibold"
