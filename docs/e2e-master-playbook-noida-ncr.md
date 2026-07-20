@@ -205,7 +205,7 @@ One template, two launches: `/care/pcos`, `/care/diabetes`. This is the page whe
 
 | # | Section | Content & components | Conversion gateway |
 |---|---|---|---|
-| 1 | Hero | Diabetes: "Eat like your HbA1c depends on it. It does." / PCOS: "Hormone-aware meals, designed by RDs — not influencers." Sub carries the required framing: *supports dietary management of*, never *treats* | **[Book a free 15-min RD consult]** → `/rd?protocol=` (existing slot API) |
+| 1 | Hero | Diabetes: "Low-GI, measured — not marketed." / PCOS: "Hormone-aware meals, designed by RDs — not influencers." All condition copy is diet-descriptive + service-led per §7.6 — the food never claims a disease effect; the RD consult carries the clinical promise | **[Book a free 15-min RD consult]** → `/rd?protocol=` (existing slot API) |
 | 2 | Credibility block | Dr. Anjali Nair + RD team cards (`/team` data), "every plate signed off for sodium & blood-sugar impact", ISO 22000 + FSSAI license | — |
 | 3 | How the protocol works | 3 steps: RD intake → personalized low-GI plan → weekly adjustments via your RD chat (Part 5 surface) | — |
 | 4 | The science, honestly | Low-GI methodology, macro caps, allergen governance; India context stat: 11.4% adult diabetes prevalence, ~101M people (ICMR-INDIAB, Lancet 2023) [V] — as market context, not fear copy | — |
@@ -362,16 +362,17 @@ The retention *backend* is largely built (pause/resume/skip/unskip/swap-with-mac
 
 | Mechanic | Rule | Backend | Competitive benchmark |
 |---|---|---|---|
-| Skip | One tap from Today strip + week grid; show **cutoff countdown** ("skippable for 3h 20m"); skipped delivery → instant credit note; unskip restores | `subscription-deliveries/:id/skip`/`unskip` + `SKIP_SWAP_CUTOFF_MS` (live) | 6meal requires 24h notice, 15-day max pause [V] — Tanmatra's self-serve instant skip is a visible superiority; say so in marketing |
-| Pause | Duration picker (1–4 wks) in a medium-detent sheet; on pause, offer "keep RD chat active" (retention tether); pre-return WhatsApp nudge 48h before resume | `pause`/`resume` (live) | — |
-| Swap | Bottom sheet (R2) with macro-equivalent suggestions; allergen/macro-cap rejections already structured — render them as guidance ("this swap drops protein below your floor"), not errors | `swap` + `validateMacroCapForSwap` (live) | — |
-| Cancel | Two-step: reasons sheet → targeted save-offer (pause instead / RD call / discount from `loyalty_config`) → confirm. Every reason → `funnel_events` | `cancel` (live) | — |
+| Skip | One tap from Today strip + week grid; show **cutoff countdown** ("skippable for 3h 20m"); skipped delivery → instant credit note; unskip restores | `subscription-deliveries/:id/skip`/`unskip` + `SKIP_SWAP_CUTOFF_MS` (live) | Global leaders lock far earlier: HelloFresh 11:59 pm PT **5 days** before delivery, Factor Wed 11:59 pm CT for next week, Marley Spoon 6–7 days [V]; NCR: 6meal needs 24h notice [V]; eat.fit has no pause at all (per-meal cancel only) [S]. Tanmatra's near-delivery self-serve skip is a visible superiority — market it |
+| Pause | Duration picker (1–4 wks) in a medium-detent sheet; on pause, offer "keep RD chat active" (retention tether); pre-return WhatsApp nudge 48h before resume (Marley Spoon's restart reminder pattern [V]) | `pause`/`resume` (live) | 6meal caps pauses at 15 days [V]; Marley Spoon offers date-picked pause with reminder [V] |
+| Swap | Bottom sheet (R2) with macro-equivalent suggestions; allergen/macro-cap rejections already structured — render them as guidance ("this swap drops protein below your floor"), not errors | `swap` + `validateMacroCapForSwap` (live) | HelloFresh's cross-plan weekly recipe choice is the flexibility benchmark [V] |
+| Cancel | Two-step: reasons sheet → targeted save-offer (pause instead / RD call / discount from `loyalty_config`) → confirm. Every reason → `funnel_events`. At confirm, show what's lost: credit balance, streaks, RD history — HelloFresh's verified credit-forfeiture steer ("skip instead of cancelling") [V], done transparently rather than punitively | `cancel` (live); credit expiry exists in `credit_ledger` | Meal-kit reality check: only 57% of HelloFresh's Jan-2022 cohort repurchased in month 2; M6 ≈ 16%, M11 ≈ 9% [V: Second Measure] — every mechanic on this row exists to beat those curves |
 
 **Cutoff transparency rule:** every skippable/swappable object displays its own deadline inline. Deadline-at-the-object beats deadline-in-the-FAQ — this is the single most-cited pain in meal-kit subscription reviews.
 
 ### 5.4 Gamification — Zen Tracker mechanics (wired to existing backend)
 
-- **Streaks:** protein & veg streaks already computed server-side from orders (`streaks` table via `wellnessAutoLog`, `protein_streak_threshold` in `loyalty_config`). UI = Zone 3 rings + milestone celebrations at 7/30/66 days (66 = median habit-formation duration — framing, Part 6 organic content hook).
+- **Streaks:** protein & veg streaks already computed server-side from orders (`streaks` table via `wellnessAutoLog`, `protein_streak_threshold` in `loyalty_config`). UI = Zone 3 rings + milestone celebrations at 7/30/66 days (66 = average days to habit automaticity, Lally et al. 2010, UCL [V] — also a Part 6 content hook). The 7-day milestone matters most: Duolingo's official data shows 7-day-streak users are **3.6× likelier to complete their course and 2.4× likelier to return next day** [V].
+- **Streak Shield:** one auto-equipped protection per week — a skipped delivery or travel day never breaks a streak (Lally: missing one day doesn't impair habit formation [V]; Duolingo: two equipped Streak Freezes *increased* DAU +0.38% — forgiveness beats rigidity [V]). A shield-used state says "protected — back tomorrow," never "broken."
 - **Loss-aversion, gently:** streak-at-risk state ("your 12-day protein streak needs 18g more today — tonight's Almond Chicken covers it") → deep-link to the dish. Never guilt; always a one-tap repair.
 - **Milestones → loyalty engine:** streak milestones mint `credit_ledger` rewards (engine + notification kind `protein_streak` already exist).
 - **Cohort layer:** RD-led `challenges` (exists) = the social streak surface; time-boxed resets with private cohort feed. Cross-link Zone 3 → active challenge.
@@ -401,7 +402,67 @@ Flow (all routes live): `/rd` directory → `/rd/:slug` slot picker (`intro_15m`
 
 ---
 
-<!-- PART6-INSERT -->
+## Part 6 — Hyper-Local Online Marketing & Paid Ads Plan (Noida/NCR)
+
+> **Budget-number honesty:** platform mechanics, WhatsApp pricing model and targeting minimums below are verified **[V]**; India CPC/CPM/CPL figures are agency-consensus **[D] directional** — Google/Meta publish no country rate cards. Treat every ₹ band as a planning envelope to be replaced by week-1 actuals.
+
+### 6.1 Geo-targeting map (verified anchors)
+
+**Platform facts first:** Google Ads India supports **no pincode targeting** (India exposes only state/UT/city levels) — hyper-local = **1 km+ radius pins** dropped on campuses and societies (1 km is Google's documented minimum radius) [V]. Meta's API allows **1–80 km radii** (0.63 mi floor — the "1 mile minimum" is UI folklore) [V]. Use the PINs below for delivery-zone logic, CRM segmentation, and serviceability copy — not ad platforms.
+
+| Zone | Sectors | PIN | Radius-pin anchors (verified) |
+|---|---|---|---|
+| **Tech corridor North** | 62 / 63 / 64 / 65 | 201309 (62) · 201301 (63/64/65) | Candor TechSpace N1, Logix Cyber Park (C-28/29), Stellar IT Park, Okaya Centre (TCS anchor), Barclays GSC, Samsung R&D (legacy) — plus Tanmatra's own Sector 63 kitchen |
+| **DND / 16A / 16B** | 16A, 16B, 18 | 201301 | Microsoft IDC (KP Towers, 16B), Max Towers, Film City media cluster (Zee, Network18, India Today, ABP, T-Series), Sector 18 retail |
+| **Expressway SEZ belt** | 98, 125–144 | 201304 (93–144 west) · 201305 (142 NEPZ) · 201303 (126) · 201313 (125 Amity) | HCLTech Noida Technology Hub (Sec 126), Adobe (Sec 132 + new Sec 129, 700+ staff), Info Edge/Naukri (Sec 132), Paytm One Skymark (Sec 98), Optum + Publicis Sapient (Oxygen Park, Sec 144), Advant Navis (Sec 142), Candor N2 + Genpact + TCS (Sec 135), Samsung R&D's new Expressway campus |
+| **Premium residential** | 93A–104, 128–134, 144, 150 | 201304 · 201310 (150) | Jaypee Greens Wish Town (~1,063 acres, Sec 128–134), Supertech Supernova (Sec 94, ~5,708 units), Gulshan Dynasty (Sec 144, ultra-luxury), ATS One Hamlet (104), ATS Greens Village + Eldeco Utopia (93A), Lotus Boulevard (100), Amrapali Sapphire (45), Tata Eureka Park + ACE Parkway (150) |
+| **Central/golf belt** | 37, 38, 43, 44 | 201303 · 201301 (44) | Noida Golf Course (Sec 38), Godrej Woods (Sec 43, possession Oct 2026 — new-mover moment), established premium blocks |
+
+**Why this geography pays:** Gautam Buddha Nagar has UP's highest per-capita income (~₹10.17 lakh, ~10.9× the state average) [S]; Noida's IT workforce is estimated at 4.5 lakh+ professionals [D].
+
+### 6.2 The 30-day blitz calendar
+
+| Week | Theme | Actions |
+|---|---|---|
+| **W0 (prep)** | Instrument before you spend | Part 8 events live end-to-end (a rupee spent before funnels are measurable is a rupee wasted); 3 LPs shipped; WhatsApp opt-in + template approvals; corporate lead endpoint replacing the `wa.me` leak; Google/Meta pixels + first-party `/events` dual capture |
+| **W1** | Intent capture + seed | Google Search on high-intent + brand terms (§6.3 rows 1–2); CTWA ads to tech-corridor radii exploiting the **72-hour free WhatsApp window** [V]; society sampling pilot in 2 Expressway societies (Jaypee Wish Town, ATS 93A); micro-influencer batch 1 briefed (CCPA health-influencer disclosure rules apply — §6.4) |
+| **W2** | Visual prospecting + B2B | Meta Reels prospecting on campus radii (Reels CPMs run 25–40% below Feed [D]); lead-form campaigns for corporate pilots aimed at named parks (Candor, Oxygen, Advant, Stellar 135); direct ABM outreach to HR at Adobe/HCL/Paytm/Optum/Genpact; RWA activation #1 (weekend stall + RD table) |
+| **W3** | Optimize + activate | Kill bottom-half ad sets on CPL; retargeting ladders (menu viewers → quiz; quiz finishers → trial; cart abandoners → WhatsApp utility nudge); first corporate pilot lunch delivered + photographed; society WhatsApp groups seeded via RWA partnerships |
+| **W4** | Scale + referral | 2× budget on winning ad sets only; referral push to first cohort (engine exists); testimonial/outcome content from weeks 1–3 buyers; corporate case card #1 onto `/corporate-wellness`; review round-up (Google Business Profile for the Sector 63 kitchen) |
+
+### 6.3 Tactical execution table
+
+Envelope: **₹5.0 L core 30-day paid media** (₹4.0–6.5 L range) + ₹1.0 L influencer/offline. All CPL/CAC figures [D].
+
+| # | Channel | Target audience | Ad format | 30-day budget | Primary hook |
+|---|---|---|---|---|---|
+| 1 | Google Search — clinical intent | NCR searches: "diabetic meal delivery noida", "pcos diet food delivery", "low gi tiffin service", "dietitian meal plan noida" (CPC ₹10–45 [D]) | RSAs → `/care/*` LPs | ₹1.2 L (24%) | "RD-designed diabetic-friendly meals, delivered hot in Noida. Free dietitian intro call." |
+| 2 | Google Search — lifestyle intent + brand | "healthy tiffin sector 62", "protein meals noida", "office lunch subscription noida", brand terms | RSAs → `/metabolic`, home | ₹0.8 L (16%) | "Your macros, engineered. At your desk in 45 min." |
+| 3 | Meta prospecting — Reels-first | 24–45, radius pins on §6.1 tech-corridor + Expressway zones; interest layers: gym, nutrition, diabetes care | 15–20s Reels: kitchen-cam "fired at 12:04, sealed at 12:19, desk by 12:47" | ₹1.2 L (24%) | The fresh-vs-cold-drop contrast (enemy: the 7 AM tiffin fridge) |
+| 4 | Meta — CTWA + lead forms | Same radii; lookalikes of quiz completers from W2 | Click-to-WhatsApp ads (opens 72h free messaging window [V]); instant forms for corporate | ₹0.8 L (16%) | "Take the 60-second assessment on WhatsApp — get tomorrow's menu matched to you" |
+| 5 | Meta retargeting | Menu/PDP viewers, quiz abandoners, cart abandoners (Part 8 audiences) | Carousel dishes + trial offer; DPA once catalog synced | ₹0.5 L (10%) | "Your assessment is 80% done — your matched menu is waiting" |
+| 6 | WhatsApp broadcast (owned) | Opted-in leads + lapsed trials | Marketing templates ≈ ₹0.86–1.09/msg + 18% GST [S]; utility msgs in service window free [V] | ₹0.25 L (5%) | Sunday planner recap · trial-end recap · streak nudges |
+| 7 | Corporate ABM | HR/admin at named §6.1 campuses | Direct outreach + LinkedIn organic exec posts; pilot-lunch offers | ₹0.25 L (5%) | "One free pilot lunch for your team of 20. RD on site." |
+| 8 | Micro-influencers (Noida food/fitness, 10k–100k) | Corridor professionals via local creators | 6–8 Reels @ ₹5–15k/deliverable [D] + meal barter for nano tier | ₹0.6 L | "I tracked my macros for a week eating only Tanmatra" |
+| 9 | Society RWA activations | Jaypee Wish Town, ATS 93A/104, Supernova, Lotus Boulevard | Weekend stalls, RD tasting tables, society-WhatsApp seeding, kitty/club sponsorships | ₹0.4 L | "The Sunday your society tasted its blood-sugar numbers" |
+
+**Guardrails:** CAC ceiling ₹1,800 blended (India D2C food benchmarks ₹1,000–2,500 [D]; global food-subscription CAC ≈ ₹1,250–2,100 [D]); LTV:CAC ≥ 3 target; weekly kill rule = any ad set >2× category CPL after ₹8k spend dies; festive warning — auction costs can ~3× around Diwali/sale events [D], so an October blitz needs a bigger envelope or a January start.
+
+### 6.4 Organic hook strategy
+
+| Pillar | Hook | Format/channel |
+|---|---|---|
+| Corporate burnout | "The 3 PM crash isn't your workload. It's your lunch." — desk-lunch autopsies, RD explains glucose curves | Reels + LinkedIn |
+| Commute economics | "Your tiffin left home at 7 AM. You eat at 1 PM. Do the math." — the cold-chain enemy, localized to Noida commute reality | Reels, society WhatsApp |
+| Clinical myth-busting | RD shorts: "sugar-free ≠ diabetic-safe", "why low-GI beats low-carb for desk workers" — RDs must disclose certification per CCPA health-influencer guidelines (Aug 2023) [V] | Reels/YouTube Shorts |
+| Sector storytelling | "Feeding Sector 132 this week" — kitchen-to-campus mini-docs; delivery-rider POV to Adobe/HCL gates | Reels + GBP posts |
+| Challenge cohorts | RD-led 14-day metabolic reset challenges (product exists — `/challenges`) opened to non-customers with a free tier | Community + WhatsApp |
+| Founder/RD authority | Weekly "clinical honesty" note — one ingredient, one number, one decision | LinkedIn + email |
+
+**Channel-mix note:** with no push infrastructure, WhatsApp is both the retention rail and a paid channel — CTWA ads (row 4) are the bridge: paid click → 72h free conversation → opt-in → owned channel forever. This is the cheapest compounding asset in the plan.
+
+---
+
 
 ## Part 7 — Brand Positioning Guide
 
@@ -428,13 +489,13 @@ Flow (all routes live): `/rd` directory → `/rd/:slug` slot picker (`intro_15m`
 
 **Vocabulary guardrails**
 
-| Say | Never say |
-|---|---|
-| "supports dietary management of diabetes" | "treats / reverses / cures diabetes" |
-| "RD-designed · RD-signed" | "doctor-approved" (unless a named clinician genuinely approved that item) |
-| "blood-sugar-aware", "low-GI, measured" | "sugar-free!" (unless it meets the regulatory threshold), "superfood", "detox" |
-| "clinical honesty", "clinical-grade process" | "medical food" / "prescription meals" (regulated category claims) |
-| "cooked fresh this hour" | "farm-to-table" clichés |
+| Say | Never say | Why (see §7.6) |
+|---|---|---|
+| "low-GI, measured" (GI < 55 per FSSAI methodology), "high-protein", "low-sodium" — with numbers | "treats / reverses / manages / cures diabetes or PCOS" | Disease-suitability claims barred (Reg 10(1)); measurable nutrient claims are permitted (Schedule I) |
+| "designed by registered dietitians" (advertising, factual) | "doctor-recommended", "approved by health professionals" — and keep ALL professional-endorsement wording off packaging | Reg 10(2) label prohibition; CCPA endorsement rules |
+| "blood-sugar-aware menu", "hormone-aware menu" | "diabetic-friendly = safe for diabetics", "PCOS Care" as an efficacy promise | Diet-descriptive ≠ disease-suitability; DMR Act lists diabetes |
+| "clinical honesty", "clinical-grade kitchen & governance" (process claims) | "therapeutic meals", "medical food", "prescription meals" | s.23(1) therapeutic-claim bar; FSMP is a licensed category we are not |
+| "cooked fresh this hour" | "home-style/home-cooked" (expressly barred, Reg 9(2)), "farm-to-table" clichés | Reg 9(2) + credibility |
 
 ### 7.3 The Enemy (what we define ourselves against)
 
@@ -459,3 +520,149 @@ Proof stack (every claim must trace to one): ISO 22000:2018 kitchen · FSSAI Lic
 | Clinical-need patient (PCOS, T2D, hypertension) | Exhausted by conflicting advice; wants an authority who listens | "An RD designed this plate for people like you. Talk to her free." |
 | HR / People leader (Noida IT parks) | Wellness budget underused; wants visible, low-effort benefit | "The lunch benefit your team actually uses." |
 | Household health manager (Expressway societies) | Buys for family incl. a diabetic parent | "One kitchen, everyone's plate handled — including Papa's." |
+
+### 7.6 Regulatory reality check (FSSAI) — binding on all copy
+
+All primary-verified against the FSS (Advertising & Claims) Regulations 2018 (consolidated 14.12.2022), the FSS Act 2006, and the 2016 Nutra Regulations [V]:
+
+1. **No disease-suitability claims.** Reg 10(1): no claim that a food is suitable for the *prevention, alleviation, treatment or cure* of a disease/disorder/physiological condition. **"PCOS Care" as a plan name and "Diabetic Friendly" framing on the live site need legal review** — rename toward diet-descriptive forms: "Low-GI Protocol", "Hormone-Aware Menu", "Sugar-Conscious Plan". Diabetes is additionally item 9 of the DMR Act 1954 schedule (criminal penalties for remedy ads) [S].
+2. **No "doctor-recommended" on labels.** Reg 10(2) bars label words implying the food is recommended/prescribed/approved by medical or health professionals. "Dietitian-designed" in *advertising* is defensible as a factual statement of who designed the menu; on *packaging labels*, keep professional-endorsement language off entirely.
+3. **Permitted claims we CAN own loudly** (Schedule I thresholds): **"Low GI"** (GI < 55, defined methodology — item 16), **"high protein"** (≥20% RDA/100g), **"low sodium"** (≤0.12g/100g), **"low sugar"** (≤5g/100g). These measurable claims ARE the brand voice — precision as poetry is also the compliant lane.
+4. **No FSDU shelter.** Ordinary cooked meals cannot be classified FSDU/FSMP (Explanation 2, Reg 3, Nutra Regs 2016), FSMP cannot be advertised to the public at all, and FSDU/FSMP still can't carry free-form disease claims (A&C Reg 10(4)). There is no category trick.
+5. **"Clinical" is not banned by name** — but s.23(1) (no therapeutic/medicinal label claims), s.24 (no unsubstantiated efficacy guarantees; burden of proof on advertiser) and Reg 4(7) (misleading brand names need front-of-pack disclaimers) mean **"clinical-grade" must always modify the *process* (kitchen, governance, sign-off), never the *food's effect on disease*.** "Therapeutic meal delivery" as a public positioning phrase should be retired in favor of "RD-governed nutrition".
+6. **Consequences are live:** up to ₹10 lakh per misleading ad (s.53) + license suspension; FSSAI's ad-monitoring committee logged 170 cases in six months (2023) [V].
+7. **Operational display duties:** menu calorie display + "An average active adult requires 2,000 kcal…" statement and allergen info for e-commerce (Labelling & Display Regs 2020, Reg 9 — note the special-order/modified-meal exemption may cover personalized plans); FSSAI license number on all invoices/receipts; license displayed at the kitchen. Wire these into the app footer, dish pages (calorie display already exists) and invoice templates.
+8. **Outcome testimonials** must be framed as *service* outcomes (RD consultation + adherence), never food efficacy; health-influencer content follows the CCPA 2022 + Aug 2023 guidelines (certification disclosure, "not a substitute for medical advice") [V].
+
+**The compliant brand thesis in one line:** *we make measurable-nutrient claims about food, capability claims about our process, and outcome claims only about our RD service — never disease claims about a plate.*
+
+---
+
+## Part 8 — Telemetry & Analytics Event Matrix
+
+### 8.1 Current state → activation plan
+
+**What exists:** typed first-party tracker (`src/lib/analytics.ts`, ~90 events, snake_case) → `POST /events` (Zod-validated, PII-scrubbed both sides, always-204) → `funnel_events` table (indexed on `(name, created_at)`, `session_id`). **What's missing:** any read path — `funnel_events` is excluded from the admin "Ask the data" safe schema, no aggregation job, mobile tracker is a console stub, no experiment assignment service (every event ships `experiment_assignments: {}`).
+
+**Activation plan (ordered, all prerequisites for Part 6 W0):**
+
+| # | Action | Detail |
+|---|---|---|
+| A1 | Add `funnel_events` to the safe-SQL schema + a nightly rollup job | `funnel_daily(name, day, count, distinct_sessions, distinct_users)` + per-flow step tables; expose a Funnels tab in AdminAnalytics |
+| A2 | Define the 5 named funnels (§8.3) as materialized queries | Powers weekly WBR "funnel health" section (WBR generator already runs) |
+| A3 | Wire the mobile stub | `trackEvent` → `POST /events` with `platform:"mobile"` prop (endpoint + scrubbing already handle it) |
+| A4 | Server-side money truth | Emit `order_created`/`payment_succeeded`/`subscription_started` from the API (finalize/webhook paths) with `source:"server"`; client events become corroboration, not truth (Segment-style server confirmation) |
+| A5 | Optional vendor dual-write | The tracker already forwards to `window.gtag` when present; if GA4 is added, map names per §8.4 — first-party capture remains the source of truth |
+| A6 | Experiment service (deferred flag exists) | Fill `experiment_assignments` from a config-driven bucketing util; unblocks hero A/B (Part 1) and Stitch cut-over A/B (Part 2 P4) |
+
+### 8.2 Event data dictionary (by CUJ)
+
+Convention: **snake_case verb/object names (GA4-compatible), past-state semantics, ≤20 properties/event (Amplitude guidance [V]), names are case-sensitive contracts (Mixpanel warning [V]).** `session_id`, `path`, `app_release`, `experiment_assignments` attach automatically. Status: ✅ = exists in `analytics.ts` today · ➕ = add.
+
+**Acquisition & landing**
+
+| Event | Trigger condition | Properties | Status |
+|---|---|---|---|
+| `view_home` | Home mount | `city` | ✅ |
+| `landing_viewed` | Any `/metabolic`, `/care/*`, `/corporate-wellness` mount | `landing_slug, utm_source, utm_campaign, sector` | ➕ |
+| `landing_cta_clicked` | Any LP primary/secondary CTA | `landing_slug, cta_id, target` | ➕ |
+| `serviceability_checked` | Pincode chip / delivery check | `pincode, serviceable` | ➕ |
+| `waitlist_joined` | Out-of-zone capture submit | `pincode` | ➕ |
+
+**Onboarding & profiling (Part 4)**
+
+| Event | Trigger condition | Properties | Status |
+|---|---|---|---|
+| `softgate_shown` / `softgate_completed` / `softgate_skipped` | Stage A lifecycle | `goal, allergen_count` (completed only) | ➕ |
+| `quiz_opened` | IntakeQuiz mount | `entry` (hero/banner/lp/account) | ➕ |
+| `quiz_step_viewed` / `quiz_step_completed` | Per Stage B step (paired, Segment step pattern [V]) | `step` (1–6), `step_name` | ➕ |
+| `quiz_completed` | Results step reached | `goal, has_condition:boolean, target_source` (suggested/edited) — **never the condition values themselves** (blocked-keys scrub stays) | ➕ |
+| `quiz_abandoned` | Draft TTL expiry or exit ≥24h | `last_step` | ➕ |
+
+**Menu → cart → checkout**
+
+| Event | Trigger condition | Properties | Status |
+|---|---|---|---|
+| `view_menu` / `pdp_viewed` / `pdp_variant_switched` / `full_nutrition_opened` | existing triggers | existing props | ✅ |
+| `add_to_cart` | Add action (any surface) | `dish_slug, price_paise, source` | ✅ |
+| `checkout_start` | Checkout mount with items | `cart_value_paise, item_count, is_guest` | ✅ |
+| `checkout_step_viewed` / `checkout_step_completed` | Per real checkout step once R1 makes steps real (paired) | `step` (1 review / 2 delivery / 3 payment), `checkout_id` | ➕ |
+| `address_added` / `slot_selected` | Address save / slot pick | `is_first_address` · `slot_window, fulfillment` | ➕ |
+| `payment_attempted` | Razorpay modal opened | `method_hint, charge_paise` | ➕ |
+| `payment_succeeded` / `order_created` | Server verify / finalize (A4 server-emitted) | `order_id, charge_paise, order_kind, priority` | ✅→server |
+| `checkout_abandoned` | Session end after `checkout_start` without order | `last_step, cart_value_paise` (derived in rollup, not client-fired) | ➕(derived) |
+
+**Subscribe wizard (7 steps — the highest-value funnel)**
+
+| Event | Trigger condition | Properties | Status |
+|---|---|---|---|
+| `subscribe_step_viewed` / `subscribe_step_completed` | Per `?step=` transition (paired) | `step` (0–6), `plan, cadence, trial:boolean, entry` (`fromCart`/lp/bare) | ➕ |
+| `protocol_duration_selected` / `billing_period_selected` / `plan_dish_swapped` | existing triggers | existing props | ✅ |
+| `subscribe_quote_shown` | Quote API resolves on any step | `payable_today_paise, cadence` | ➕ |
+| `trial_started` / `subscription_started` | existing (move to server per A4) | `plan, cadence, charge_paise` | ✅→server |
+| `mandate_created` / `mandate_authorization_failed` / `predebit_notified` / `mandate_revoked` | existing UPI Autopay lifecycle | existing props | ✅ |
+
+**Retention & clinical (Part 5)**
+
+| Event | Trigger condition | Properties | Status |
+|---|---|---|---|
+| `delivery_skipped` / `delivery_unskipped` | Skip/unskip confirmed | `hours_before_cutoff, week_index` | ➕ |
+| `subscription_paused` / `subscription_resumed` | Pause/resume confirmed | `pause_weeks` | ➕ |
+| `subscription_cancelled` | Cancel confirmed | `reason` (enum: price/variety/moving/health/other — RevenueCat-style cause capture [V]), `save_offer_shown, save_offer_accepted` | ➕ |
+| `swap_requested` / `swap_rejected` | Swap sheet submit / structured rejection | `rejection_kind` (allergen/macro_cap) | ➕ |
+| `planner_week_generated` / `planner_week_accepted` / `planner_day_regenerated` | WeeklyPlanner actions | `week_start` | ➕ |
+| `streak_viewed` / `streak_milestone_reached` | Zone 3 render / milestone hit | `kind` (protein/veg), `days` | ➕ |
+| `trial_recap_viewed` / `trial_converted` / `trial_expired` | Bridge lifecycle (`trial_bridge_*` partially ✅) | `meals_eaten, streak_days` | ✅/➕ |
+| `rd_appointment_booked` / `rd_message_sent` / `rd_lab_shared` / `progress_logged` | Care-hub actions | `kind` (intro/follow-up) · `thread_age_days` · — · `fields_count` | ➕ |
+| `challenge_joined` / `challenge_checkin_attended` | Community actions | `challenge_slug` | ➕ |
+| `referral_shared` / `referral_redeemed` / `credit_redeemed` | Loyalty actions | `channel` · `award_paise` · `reason` | ➕ |
+
+**B2B & marketing**
+
+| Event | Trigger condition | Properties | Status |
+|---|---|---|---|
+| `corporate_lead_submitted` | New lead form (Part 3.3) | `company_size_band, park_or_sector, source` | ➕ |
+| `corporate_calculator_used` | Subsidy calculator interaction | `team_size_band, subsidy_model` | ➕ |
+| `office_order_pick_made` / `office_order_closed` | Group-order flow | `company_slug (hashed), picks_count` | ➕ |
+| `whatsapp_optin` / `whatsapp_link_clicked` | Opt-in confirmed / CTWA-origin session | `source` (ctwa/checkout/rwa) | ➕ |
+| `gate_unlock` / `allergen_ack` | existing safety gates | existing props | ✅ |
+
+### 8.3 Named funnels & abandonment math
+
+Abandonment for step *N* = `step N viewed − step N completed` (paired-event model [V: Segment]); session-scoped, 30-min timeout; computed in the A1 rollup.
+
+| Funnel | Steps | Primary KPI | Diagnostic it unlocks |
+|---|---|---|---|
+| F1 Discovery | `view_home/landing_viewed → view_menu → pdp_viewed → add_to_cart` | Visit→cart % | LP quality per UTM/sector |
+| F2 Checkout | `checkout_start → step 1→2→3 → payment_attempted → order_created` | Cart→paid % (vs 70.22% avg abandonment baseline [V: Baymard]) | "Step 1 vs Step 3 abandonment" precisely; guest-vs-account delta |
+| F3 Subscribe | `subscribe_step_viewed(0…6) → subscription_started` | Step 0→paid %; per-step drop | Which of the 7 steps bleeds; quote-latency impact via `subscribe_quote_shown` |
+| F4 Profiling | `softgate_shown → quiz_opened → quiz_step(1…6) → quiz_completed → add_to_cart` | Quiz→cart lift vs non-quiz sessions | ROI of the onboarding engine; SoftGate fix validation |
+| F5 Trial→Sub | `trial_started → trial_recap_viewed → trial_converted` | Trial conversion % (meal-kit M2 benchmark: 57% repeat at HelloFresh [V]) | Recap-screen efficacy; mandate failure impact |
+
+Retention KPIs alongside funnels: M1/M2/M6 subscriber retention (benchmark: meal-kit M2 ≈ 57–69%, M6 ≈ 16%, M11 ≈ 5–15% [V: Second Measure] — beat them via clinical lock-in), skip rate, swap rate, streak participation (Duolingo-verified: 7-day streak → 3.6× course completion, 2.4× next-day return [V] — directional analog for Zen Tracker).
+
+### 8.4 Governance rules
+
+1. **Health data never enters events.** The blocked-keys scrub (`allergens, conditions, medicalConditions, phone, email, address, name`) stays on both client and server; new events carry booleans/bands only (`has_condition`, `company_size_band`).
+2. **Names are contracts** — case-sensitive, snake_case, no dynamic values in names (values go to properties) [V: Mixpanel]; additions go through the typed `EventName` union (compile-time governance already in place).
+3. **Money events are server-truth** (A4); client fires are corroboration. `charge_paise` from `finalizeOrder` is the only revenue number.
+4. **GA4 mapping layer** (if/when vendor added): `add_to_cart→add_to_cart`, `checkout_start→begin_checkout`, `slot_selected→add_shipping_info`, `payment_attempted→add_payment_info`, `order_created→purchase` (+`transaction_id` required [V]) — mapping lives at the destination adapter, first-party names never change.
+5. **≤20 properties per event; one owner per funnel dashboard; WBR carries funnel deltas weekly** (scheduler exists).
+
+---
+
+## Appendix — Evidence Register & Open Items
+
+**Verification method:** 107-agent deep-research pass (25 sources fetched, 117 claims extracted, 3-vote adversarial verification per claim, 1 claim refuted and excluded) + 5-agent primary-source gap-fill (FSSAI PDFs, GA4/Segment/Stripe/RevenueCat docs, Meta/Google platform docs, India Post PIN API, official help centers). Repo evidence from direct audit of `artifacts/tanmatra`, `artifacts/api-server`, `lib/db`, `artifacts/tanmatra-mobile`.
+
+**Key verified sources:** Baymard (cart abandonment 70.22%; extra-costs 39%; can't-calculate-total 14%; forced account 19%; 5.1 steps/11.3 fields vs 8 needed) · Apple HIG (sheets vs full-screen modality, detents) · ICMR-INDIAB/Lancet 2023 (11.4% diabetes, ~101M) · FSSAI A&C Regs 2018 + FSS Act 2006 + Nutra Regs 2016 (Part 7.6 items) · 6meal/ParaFit/OJO live pricing & delivery pages · HelloFresh/Factor/Marley Spoon/Dinnerly official help pages · Duolingo official blog (streak stats) · Bloomberg Second Measure (meal-kit retention) · HelloFresh FY2024 press release · GA4 & Segment V2 & RevenueCat & Stripe event specs · Meta WhatsApp pricing pages (per-message model, 72h CTWA window) · Google/Meta radius-targeting docs · India Post PIN API + company-owned address pages (Adobe, HCLTech, Paytm, Info Edge, Optum, Godrej).
+
+**Explicitly directional [D] (replace with actuals in week 1–2 of the blitz):** all India CPC/CPM/CPL bands, CAC benchmarks, influencer rates, launch-budget envelopes, Noida IT-workforce count, festive-season multipliers.
+
+**Open items for the team:**
+1. Legal review of "PCOS Care" / "Diabetic Friendly" program names and "therapeutic" positioning against Part 7.6 (also re-check the draft FSS Nutra Regulations 2022 supersession status).
+2. Extend KMS envelope encryption to consumer `user_preferences` clinical fields before scaling clinical acquisition.
+3. Decide GA4 dual-write vs first-party-only (A5) and the experiment-bucketing util (A6).
+4. Confirm actual kitchen capacity + rider coverage for the §6.1 zones before making the 40–45-min promise sector-specific.
+5. First corporate pilot target list sign-off (named campuses, §6.2 W2).
+
