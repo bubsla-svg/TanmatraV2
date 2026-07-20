@@ -169,16 +169,20 @@ export default function V2Checkout() {
     setIsMounted(true);
   }, []);
 
-  // R1 wizard contract. On mobile (<md) checkout becomes a REAL 3-step flow —
-  // 0 Review, 1 Delivery, 2 Payment — mirrored to `?step=` (browser Back
-  // walks steps) and persisted with the form draft under
-  // `tanmatra:checkout-draft:v1`. On ≥md the page stays single-scroll: the
-  // step state still exists (and the draft still persists) but gates nothing.
+  // R1 wizard contract — used here for DRAFT PERSISTENCE only (the State
+  // Amnesia fix: slot/instructions/guest-phone/eco-opt-in survive refresh
+  // under `tanmatra:checkout-draft:v1`). The section-gated mobile 3-step flow
+  // is intentionally deferred: PR #247 landed a single-scroll mobile checkout
+  // with a ±2px pixel-geometry baseline, and re-litigating that money-path UX
+  // inside this large PR is the wrong risk. `mirrorStepInUrl: false` keeps the
+  // draft without putting a no-op `?step=` on the checkout URL. A stepped
+  // mobile checkout can be a focused follow-up built on #247's stepper.
   const isMobile = useIsMobile();
   const [freshCheckoutId] = useState(() => mintCheckoutId());
   const wizard = useWizardState<CheckoutDraft>({
     flow: "checkout",
     totalSteps: 3,
+    mirrorStepInUrl: false,
     initialDraft: { checkoutId: freshCheckoutId },
     parse: (stored) => {
       const d = parseCheckoutDraft(stored);
@@ -1007,56 +1011,23 @@ export default function V2Checkout() {
 
   const activeAddr = savedAddresses.find((a) => a.id === selectedAddress);
 
-  // ---- R1 mobile 3-step flow ----------------------------------------------
-  // Paired step events (Part 8) fire only while the stepped flow is REAL
-  // (<md) so desktop single-scroll traffic can't inflate step-1 views against
-  // step completions. Steps are reported 1-based (1 review / 2 delivery /
-  // 3 payment) with the draft-stable checkout_id.
-  const stepViewedRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (!isMobile || !isMounted) return;
-    if (stepViewedRef.current === wizardStep) return;
-    stepViewedRef.current = wizardStep;
-    track("checkout_step_viewed", { step: wizardStep + 1, checkout_id: checkoutId });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wizardStep, isMobile, isMounted]);
-
+  // Mobile 3-step flow is deferred (see the useWizardState note above).
+  // goToCheckoutStep stays a thin wrapper — still used to reveal the
+  // fulfillment card on an error scroll — but the paired step telemetry is
+  // intentionally NOT emitted: without the stepped flow live it would inject
+  // phantom checkout_step_viewed/_completed events and skew the F2 funnel.
+  // The follow-up that ships the stepped mobile flow re-adds the events and
+  // the forward-gate guards.
   const goToCheckoutStep = (next: number) => {
-    if (isMobile && next > wizardStep) {
-      track("checkout_step_completed", { step: wizardStep + 1, checkout_id: checkoutId });
-    }
     wizard.goToStep(next);
   };
+  const handleMobileContinue = () => goToCheckoutStep(Math.min(wizardStep + 1, 2));
 
-  // Forward gate for the mobile stepper — reuses the exact error affordances
-  // the submit path already uses, so nothing can be "completed" past a state
-  // the server would reject anyway.
-  const handleMobileContinue = () => {
-    if (wizardStep === 0) {
-      goToCheckoutStep(1);
-      return;
-    }
-    if (!activeAddr) {
-      toast.error("Please enter or select a valid delivery address");
-      setShowNewAddressFlow(true);
-      return;
-    }
-    if (fulfillmentType === "pickup" && selectedPickupId === null) {
-      toast.error("Please choose a pickup partner to continue");
-      return;
-    }
-    if (fulfillmentType === "delivery" && deliveryMode === "schedule" && selectedSlotId === null) {
-      setSlotErrorMsg("Pick a delivery window to continue.");
-      return;
-    }
-    goToCheckoutStep(2);
-  };
-
-  // Section gating for the mobile stepped flow: everything stays MOUNTED
-  // (field/query state survives step walks); the inactive steps' cards are
-  // display-hidden below md only. ≥md renders everything — single scroll.
-  const mobileStepClass = (uiStep: number) =>
-    wizardStep === uiStep ? "" : "max-md:hidden";
+  // Mobile checkout follows PR #247's single-scroll design (all sections
+  // visible at 390px — its pixel-geometry baseline depends on it). Section
+  // gating is deferred with the stepped flow; this stays a no-op so the
+  // wiring is ready for the follow-up without changing today's layout.
+  const mobileStepClass = (_uiStep: number) => "";
 
   // Disabled-with-reason for the Pay CTAs (PR-09). Surfaces the first
   // actionable blocker BEFORE the click instead of relying on a post-click
@@ -1737,15 +1708,10 @@ export default function V2Checkout() {
     navigate(`/track?orderId=${encodeURIComponent(orderId)}`);
   };
 
-  // Honest stepper (R1): on mobile the highlighted step IS the wizard step —
-  // the stepper finally steps. On ≥md keep the previous single-scroll
-  // derivation (payment only once the confirm dialog opens).
-  const WIZARD_STEP_IDS: CheckoutStep[] = ["review", "address", "payment"];
-  const stepperStep: CheckoutStep = isMobile
-    ? WIZARD_STEP_IDS[wizardStep] ?? "review"
-    : confirmOpen
-      ? "payment"
-      : "address";
+  // Single-scroll stepper derivation (PR #247): payment once the confirm
+  // dialog opens, otherwise address. The section-gated mobile stepping that
+  // drove this off the wizard step is deferred (see the useWizardState note).
+  const stepperStep: CheckoutStep = confirmOpen ? "payment" : "address";
   const stepperAddressComplete =
     !!activeAddr &&
     (fulfillmentType === "delivery"
@@ -1779,16 +1745,6 @@ export default function V2Checkout() {
               current={stepperStep}
               reviewComplete={items.length > 0}
               addressComplete={stepperAddressComplete}
-              onStepClick={
-                isMobile
-                  ? (target) => {
-                      // Walking BACK through completed steps is free; forward
-                      // movement stays behind the Continue gate.
-                      const idx = WIZARD_STEP_IDS.indexOf(target);
-                      if (idx >= 0 && idx < wizardStep) goToCheckoutStep(idx);
-                    }
-                  : undefined
-              }
             />
           </div>
 
@@ -2579,7 +2535,7 @@ export default function V2Checkout() {
             isProcessing={isProcessing}
             processingOrderRef={processingOrderRef}
             onPay={handlePlaceOrderClick}
-            mobileStep={isMobile ? wizardStep : null}
+            mobileStep={null}
             onContinue={handleMobileContinue}
           />
         </div>
