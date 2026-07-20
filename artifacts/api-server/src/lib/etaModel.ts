@@ -4,6 +4,7 @@ import {
   ridersTable,
   etaPredictionsTable,
   deliveryEventsTable,
+  isMealOrderItem,
 } from "@workspace/db";
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { logger } from "./logger";
@@ -326,7 +327,7 @@ export async function getDeliveryEta(orderId: number): Promise<EtaResult | null>
     () => ({
       ...deterministicFallback(
         { city: order.city, pincode: order.pincode, line: order.addressLine },
-        (order.items ?? []).map((it) => ({ id: it.id, qty: it.qty })),
+        (order.items ?? []).map((it) => ({ id: isMealOrderItem(it) ? it.id : it.itemId, qty: it.qty })),
       ),
       ...dropCoords,
     }),
@@ -352,7 +353,7 @@ async function predictAndPersist(
   };
   const f = await gatherFeatures({
     address: { city: order.city, pincode: order.pincode, line: order.addressLine },
-    items: (order.items ?? []).map((it) => ({ id: it.id, qty: it.qty })),
+    items: (order.items ?? []).map((it) => ({ id: isMealOrderItem(it) ? it.id : it.itemId, qty: it.qty })),
   });
   const minutes = predictMinutes(f);
   const etaAt = new Date(Date.now() + minutes * 60_000);

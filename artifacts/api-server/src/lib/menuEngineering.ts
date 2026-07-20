@@ -6,6 +6,7 @@ import {
   menuEngineeringRunsTable,
   menuEngineeringDishStatsTable,
   ordersTable,
+  isMealOrderItem,
   pricingSuggestionsTable,
   recipesTable,
   recipeIngredientsTable,
@@ -165,6 +166,9 @@ export async function aggregateDishStats(
     if (!Array.isArray(order.items)) continue;
     for (const it of order.items) {
       if (!it || typeof it !== "object") continue;
+      // Query already filters orderKind = 'meal', but the column type is a
+      // meal/marketplace union — narrow per-item so it.price is safe below.
+      if (!isMealOrderItem(it)) continue;
       const name = String(it.name ?? "");
       if (!name) continue;
       const lookup =

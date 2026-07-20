@@ -1,4 +1,4 @@
-import { db, ordersTable, nutritionLogsTable } from "@workspace/db";
+import { db, ordersTable, nutritionLogsTable, isMealOrderItem } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { getDishById, type DishData } from "@workspace/menu-catalog";
 import { logger } from "./logger";
@@ -32,6 +32,7 @@ export async function autoLogDeliveredOrder(orderId: number): Promise<number> {
   const rows: Array<typeof nutritionLogsTable.$inferInsert> = [];
   for (let i = 0; i < (order.items ?? []).length; i++) {
     const it = order.items[i];
+    if (!isMealOrderItem(it)) continue;
     const dish = getDishById(Number(it.id));
     if (!dish) continue;
     const qty = Math.max(1, Number(it.qty ?? 1));
