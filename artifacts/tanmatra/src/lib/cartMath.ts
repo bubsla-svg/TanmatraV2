@@ -3,6 +3,14 @@ export interface CartItemCalculationInput {
   quantity: number;
 }
 
+// Statutory GST split: prepared food 5% (no ITC), delivery service 18%.
+// Single client-side source of truth for these rates — mirrors the
+// authoritative computeChargePaise in the api-server. Any change here
+// must follow the money-path lockstep rule in
+// docs/AGENT_WORKING_AGREEMENT.md §2.
+export const GST_RATE_FOOD = 0.05;
+export const GST_RATE_DELIVERY = 0.18;
+
 export interface CartTotals {
   subtotal: number;
   tax: number;
@@ -30,8 +38,8 @@ export function calculateCartTotals(items: CartItemCalculationInput[]): CartTota
 
     // Statutory GST split: prepared food 5% (no ITC), delivery service 18%.
     // Mirrors the authoritative computeChargePaise in the api-server.
-    const foodTax = Math.round(subtotal * 0.05);
-    const deliveryTax = Math.round(deliveryFee * 0.18);
+    const foodTax = Math.round(subtotal * GST_RATE_FOOD);
+    const deliveryTax = Math.round(deliveryFee * GST_RATE_DELIVERY);
     const tax = foodTax + deliveryTax;
 
     const total = subtotal + deliveryFee + tax;
