@@ -1,5 +1,5 @@
 import { type MetaFunction } from "react-router";
-import { PLAN_FROM_PRICE_PER_WEEK_PAISE, RD_PLANS } from "@/lib/rdPlans";
+import { planCardPricePaise, RD_PLANS } from "@/lib/rdPlans";
 import V2RdPlans from "@/tanmatra-v2/RdPlans";
 
 const TITLE = "RD-Designed Meal Plans | Tanmatra";
@@ -38,7 +38,7 @@ export const meta: MetaFunction = () => [
           "brand": { "@type": "Brand", "name": "Tanmatra" },
           "offers": {
             "@type": "Offer",
-            "price": (PLAN_FROM_PRICE_PER_WEEK_PAISE / 100).toFixed(0),
+            "price": (planCardPricePaise(plan) / 100).toFixed(0),
             "priceCurrency": "INR",
             "availability": "https://schema.org/InStock",
           },

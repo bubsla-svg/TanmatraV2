@@ -1,8 +1,39 @@
 import type { DishData } from "@workspace/menu-catalog";
 import { DISHES } from "@workspace/menu-catalog";
+import {
+  computeDeliveryPricePaise,
+  computeTrialPricePaise,
+  TRIAL_MEALS,
+} from "@workspace/subscription-rules";
 import type { UserPreferences, WellnessGoal, DietaryStyle } from "./preferencesApi";
 import { evaluateDishForPreferences, type DishMatchResult } from "./preferencesMatch";
 import { TEAM, type TeamMember } from "./teamData";
+
+/**
+ * The meal-composition a plan is ADVERTISED at — the single basis every
+ * surface (cards, landing pages, JSON-LD, and the Subscribe wizard's
+ * initial state) must derive both its meal count and its price from.
+ * `mealsPerWeek` is computed from slots × days at definition time so the
+ * three fields can never disagree internally, and the wizard landing on a
+ * plan can never disagree with the card that linked to it (the ₹3,800 →
+ * ₹10,474 class of bug).
+ */
+export interface PlanAdvertisedBasis {
+  slots: { breakfast: boolean; lunch: boolean; dinner: boolean };
+  daysMode: "everyday" | "weekdays";
+  mealsPerWeek: number;
+}
+
+function basis(
+  slots: PlanAdvertisedBasis["slots"],
+  daysMode: PlanAdvertisedBasis["daysMode"],
+): PlanAdvertisedBasis {
+  const slotCount = Number(slots.breakfast) + Number(slots.lunch) + Number(slots.dinner);
+  return { slots, daysMode, mealsPerWeek: slotCount * (daysMode === "everyday" ? 7 : 5) };
+}
+
+const LUNCH_WEEKDAYS = basis({ breakfast: false, lunch: true, dinner: false }, "weekdays");
+const LUNCH_DINNER_WEEKDAYS = basis({ breakfast: false, lunch: true, dinner: true }, "weekdays");
 
 export type PlanGoal =
   | "weight_loss"
@@ -40,7 +71,17 @@ export interface RdPlan {
   carbsTargetGrams: number;
   fatTargetGrams: number;
   dietaryStyles: DietaryStyle[];
+  /**
+   * LEGACY copy data — never price UI from this field. Live prices come
+   * from planWeeklyPricePaise(plan) / the server quote, both of which
+   * derive from @workspace/subscription-rules.
+   */
   pricePerWeekPaise: number;
+  /**
+   * Absent only on the trial pack (the trial's basis is TRIAL_MEALS in
+   * @workspace/subscription-rules).
+   */
+  advertisedBasis?: PlanAdvertisedBasis;
   badges: string[];
   week: PlanDay[];
   weeklyNotes: RdPlanWeeklyNote[];
@@ -73,6 +114,7 @@ export const RD_PLANS: RdPlan[] = [
     fatTargetGrams: 50,
     dietaryStyles: ["omnivore", "vegetarian", "pescatarian"],
     pricePerWeekPaise: 549000,
+    advertisedBasis: LUNCH_WEEKDAYS,
     badges: ["Low GI", "High fibre", "RD signed-off"],
     matchesGoals: ["lose_weight", "general_wellness"],
     week: [
@@ -104,6 +146,7 @@ export const RD_PLANS: RdPlan[] = [
     fatTargetGrams: 75,
     dietaryStyles: ["omnivore", "pescatarian"],
     pricePerWeekPaise: 749000,
+    advertisedBasis: LUNCH_DINNER_WEEKDAYS,
     badges: ["High protein", "Trainer-tested", "Post-workout meals"],
     matchesGoals: ["gain_muscle"],
     week: [
@@ -134,6 +177,7 @@ export const RD_PLANS: RdPlan[] = [
     fatTargetGrams: 60,
     dietaryStyles: ["vegetarian", "omnivore", "pescatarian"],
     pricePerWeekPaise: 599000,
+    advertisedBasis: LUNCH_WEEKDAYS,
     badges: ["Low GI", "Anti-inflammatory", "Hormone-aware"],
     matchesGoals: ["lose_weight", "general_wellness", "maintain"],
     week: [
@@ -164,6 +208,7 @@ export const RD_PLANS: RdPlan[] = [
     fatTargetGrams: 60,
     dietaryStyles: ["vegetarian", "omnivore", "pescatarian"],
     pricePerWeekPaise: 629000,
+    advertisedBasis: LUNCH_WEEKDAYS,
     badges: ["ADA aligned", "≤45g carbs/meal", "Low GI"],
     matchesGoals: ["maintain", "general_wellness", "lose_weight"],
     week: [
@@ -194,6 +239,7 @@ export const RD_PLANS: RdPlan[] = [
     fatTargetGrams: 55,
     dietaryStyles: ["vegetarian", "omnivore", "pescatarian"],
     pricePerWeekPaise: 549000,
+    advertisedBasis: LUNCH_WEEKDAYS,
     badges: ["Low sodium", "Soft texture", "B12 + calcium"],
     matchesGoals: ["maintain", "general_wellness"],
     week: [
@@ -224,6 +270,7 @@ export const RD_PLANS: RdPlan[] = [
     fatTargetGrams: 60,
     dietaryStyles: ["vegetarian", "omnivore", "pescatarian"],
     pricePerWeekPaise: 649000,
+    advertisedBasis: LUNCH_WEEKDAYS,
     badges: ["Low FODMAP", "Garlic + onion free", "IBS protocol"],
     matchesGoals: ["general_wellness", "maintain"],
     week: [
@@ -255,6 +302,7 @@ export const RD_PLANS: RdPlan[] = [
     fatTargetGrams: 60,
     dietaryStyles: ["omnivore", "vegetarian"],
     pricePerWeekPaise: 549000,
+    advertisedBasis: LUNCH_WEEKDAYS,
     badges: ["Balanced Nutrition", "Low Sodium", "High Fiber"],
     matchesGoals: ["general_wellness", "maintain"],
     week: [
@@ -462,14 +510,31 @@ export function findPlanSafeSwap(
 }
 
 /**
- * Advertised "from" price per week — MUST match the server's flat
- * per-meal pricing (PER_MEAL_PAISE 26000 x weekly 5% discount) for the
- * default lunch+dinner x 7 days configuration. Plan cards, detail CTAs,
- * and JSON-LD all derive from this so no surface can contradict the
- * configurator's real price again. (RdPlan.pricePerWeekPaise is legacy
- * copy data - do not price UI from it.)
+ * The advertised weekly price for a plan — derived from the SAME billing
+ * math the server quotes with (@workspace/subscription-rules), at the
+ * plan's advertised meal basis. This replaces the retired flat
+ * PLAN_FROM_PRICE_PER_WEEK_PAISE constant, which had resurrected the
+ * deprecated ₹260/meal figure (14 × 26000 × 0.95 = ₹3,458) that
+ * pricing.ts's own header documents as already-eliminated — and which
+ * showed one identical "from" price for six structurally different plans.
+ * Plans without a basis (the trial pack) price via
+ * computeTrialPricePaise(TRIAL_MEALS) instead — never through here.
  */
-export const PLAN_FROM_PRICE_PER_WEEK_PAISE = Math.round(14 * 26000 * 0.95);
+export function planWeeklyPricePaise(plan: RdPlan): number | null {
+  if (!plan.advertisedBasis) return null;
+  return computeDeliveryPricePaise("weekly", plan.advertisedBasis.mealsPerWeek);
+}
+
+/**
+ * Card-display price for any plan, trial pack included: recurring plans
+ * price at their advertised weekly basis, the trial prices as the
+ * canonical TRIAL_MEALS one-off. One call site per card — no surface
+ * picks its own meal count.
+ */
+export function planCardPricePaise(plan: RdPlan): number {
+  const weekly = planWeeklyPricePaise(plan);
+  return weekly ?? computeTrialPricePaise(TRIAL_MEALS);
+}
 
 export function formatRupees(paise: number): string {
   return `₹${(paise / 100).toFixed(0)}`;

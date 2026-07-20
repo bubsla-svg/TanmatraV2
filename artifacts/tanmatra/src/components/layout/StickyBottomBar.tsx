@@ -91,7 +91,9 @@ export default function StickyBottomBar({
   // Subscribe's wizard collapsed Duration+Billing into one step (7 steps
   // total now); Review moved from index 6 to index 5 — keep this in sync with
   // Subscribe.tsx's STEP_TITLES/goToStep numbering.
-  const isCheckoutStep = context === "builder" && step === 5;
+  // Steps 5 (Review) and 6 (Payment) both show the verified quote total —
+  // the amount on the PAYING step must never be labeled "estimated".
+  const isCheckoutStep = context === "builder" && (step === 5 || step === 6);
   const barHeightClass = isCheckoutStep ? "h-[88px]" : "h-[72px]";
 
   // Style helper for scroll translation & motion settings
