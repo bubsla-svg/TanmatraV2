@@ -92,7 +92,59 @@ type EventName =
   | "trial_bridge_outcome"
   // PR05 plan-first PDP — macro gate unlock + allergen acknowledge-and-proceed.
   | "gate_unlock"
-  | "allergen_ack";
+  | "allergen_ack"
+  // ── Playbook Part 8 dictionary (docs/e2e-master-playbook-noida-ncr.md) ──
+  // Acquisition & landing pages.
+  | "landing_viewed"
+  | "landing_cta_clicked"
+  | "serviceability_checked"
+  | "waitlist_joined"
+  // Clinical intake quiz (paired step events; Segment step pattern).
+  | "quiz_opened"
+  | "quiz_step_viewed"
+  | "quiz_step_completed"
+  | "quiz_completed"
+  | "quiz_abandoned"
+  // Checkout & subscribe wizards (paired step events).
+  | "checkout_step_viewed"
+  | "checkout_step_completed"
+  | "address_added"
+  | "slot_selected"
+  | "payment_attempted"
+  | "subscribe_step_viewed"
+  | "subscribe_step_completed"
+  | "subscribe_quote_shown"
+  // Retention & clinical surfaces.
+  | "delivery_skipped"
+  | "delivery_unskipped"
+  | "subscription_paused"
+  | "subscription_resumed"
+  | "subscription_cancelled"
+  | "swap_requested"
+  | "swap_rejected"
+  | "planner_week_generated"
+  | "planner_week_accepted"
+  | "planner_day_regenerated"
+  | "streak_viewed"
+  | "streak_milestone_reached"
+  | "trial_recap_viewed"
+  | "trial_converted"
+  | "rd_appointment_booked"
+  | "rd_message_sent"
+  | "rd_lab_shared"
+  | "progress_logged"
+  | "challenge_joined"
+  | "challenge_checkin_attended"
+  | "referral_shared"
+  | "referral_redeemed"
+  | "credit_redeemed"
+  // B2B & owned-channel marketing.
+  | "corporate_lead_submitted"
+  | "corporate_calculator_used"
+  | "office_order_pick_made"
+  | "office_order_closed"
+  | "whatsapp_optin"
+  | "whatsapp_link_clicked";
 
 // Health-adjacent or personal keys never leave the device — the server
 // scrubs them again, but the first line of defence is here.
