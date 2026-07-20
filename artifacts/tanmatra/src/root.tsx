@@ -4,7 +4,8 @@ import type { LinksFunction, MetaFunction } from "react-router";
 import { API_BASE } from "@/lib/apiBase";
 import { Toaster } from "sonner";
 import NetworkStatusToast from "./components/NetworkStatusToast";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider, useCart } from "@/lib/cartContext";
 import { ThemeManager } from "@/lib/clinicalTheme";
@@ -60,8 +61,6 @@ export const meta: MetaFunction = () => [
   { name: "twitter:description", content: "Clinical-grade therapeutic meals designed by registered dietitians." },
   { name: "twitter:image", content: "https://tanmatra.food/opengraph.jpg" },
 ];
-
-const queryClient = new QueryClient();
 
 // Report a single Core Web Vital to the API for server-side aggregation.
 // keepalive: true ensures the beacon fires even on page unload/navigation.
