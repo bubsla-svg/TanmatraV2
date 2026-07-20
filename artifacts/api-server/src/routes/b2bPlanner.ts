@@ -35,15 +35,14 @@ import {
   updateQbrSections,
   upsertDietProfile,
 } from "../lib/b2b";
+import { hasAdminToken } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
 function isAdminRequest(req: Request): boolean {
-  const expected = process.env["RD_ADMIN_TOKEN"];
-  if (expected) {
-    const header = req.header("x-admin-token");
-    if (header && header === expected) return true;
-  }
+  // Constant-time x-admin-token / RD_ADMIN_TOKEN check via the shared admin
+  // gate; a signed admin session is the other accepted path.
+  if (hasAdminToken(req)) return true;
   const session = (req as Request & { session?: { isAdmin?: boolean } })
     .session;
   return session?.isAdmin === true;

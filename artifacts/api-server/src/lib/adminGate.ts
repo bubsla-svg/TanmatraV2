@@ -6,7 +6,7 @@ import { hasAdminSession } from "./adminAuth";
  * Constant-time comparison for shared-secret tokens. Both inputs must be
  * the same length to be considered equal; never log either side.
  */
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
   if (bufA.length !== bufB.length) return false;
@@ -21,7 +21,7 @@ function envList(name: string): string[] {
 }
 
 /** True iff the request carries a valid `x-admin-token` header. */
-function hasAdminToken(req: Request): boolean {
+export function hasAdminToken(req: Request): boolean {
   const expected = process.env["RD_ADMIN_TOKEN"];
   if (!expected) return false;
   const got = req.header("x-admin-token");

@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, aiRunsTable } from "@workspace/db";
 import { desc, eq, and, lt, type SQL } from "drizzle-orm";
 import { listAgents } from "../lib/ai";
+import { hasAdminToken } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
@@ -16,15 +17,12 @@ const router: IRouter = Router();
  * If `RD_ADMIN_TOKEN` is unset, admin elevation via header is disabled.
  */
 function isAdminRequest(req: Request): boolean {
-  const expected = process.env["RD_ADMIN_TOKEN"];
-  if (expected) {
-    const header = req.header("x-admin-token");
-    if (header && header === expected) return true;
-  }
+  // Constant-time x-admin-token / RD_ADMIN_TOKEN check via the shared admin
+  // gate; a signed admin session is the other accepted path.
+  if (hasAdminToken(req)) return true;
   const session = (req as Request & { session?: { isAdmin?: boolean } })
     .session;
-  if (session?.isAdmin === true) return true;
-  return false;
+  return session?.isAdmin === true;
 }
 
 router.get("/ai/agents", (req: Request, res: Response) => {
