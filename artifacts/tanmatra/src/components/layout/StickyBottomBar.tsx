@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/api/adapter";
+import { TapScale } from "@/components/ui/TapScale";
+import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { ArrowRight, Warning, ShoppingCart } from "@phosphor-icons/react";
 
 export type BottomBarContext = "homepage" | "pdp" | "builder" | "attention";
@@ -161,16 +163,19 @@ export default function StickyBottomBar({
             )}
           </span>
         </div>
-        <button
+        <TapScale
           type="button"
-          onClick={onAddDish}
+          onClick={() => {
+            hapticSuccess();
+            onAddDish?.();
+          }}
           disabled={disabled}
-          className="inline-flex items-center gap-2 bg-[var(--tnm-action)] text-black text-sm font-bold px-6 rounded-xl shrink-0 shadow-[0_6px_20px_rgba(251,191,36,0.28)] active:scale-[0.97] transition-transform disabled:opacity-40 disabled:pointer-events-none"
+          className="inline-flex items-center gap-2 bg-[var(--tnm-action)] text-black text-sm font-bold px-6 rounded-xl shrink-0 shadow-[0_6px_20px_rgba(251,191,36,0.28)] disabled:opacity-40 disabled:pointer-events-none"
           style={{ height: 48, minWidth: 44 }}
         >
           <ShoppingCart size={18} weight="bold" />
           {isIncluded ? "Add another" : "Add to cart"}
-        </button>
+        </TapScale>
       </div>
     );
   }
@@ -201,16 +206,19 @@ export default function StickyBottomBar({
             </span>
           </span>
         </div>
-        <button
+        <TapScale
           type="button"
-          onClick={continueAction}
+          onClick={() => {
+            hapticLight();
+            continueAction();
+          }}
           disabled={disabled || loading}
-          className="inline-flex items-center gap-2 bg-[var(--tnm-action)] text-black text-sm font-bold px-6 rounded-xl shrink-0 shadow-[0_6px_20px_rgba(251,191,36,0.28)] active:scale-[0.97] transition-transform disabled:opacity-40 disabled:pointer-events-none"
+          className="inline-flex items-center gap-2 bg-[var(--tnm-action)] text-black text-sm font-bold px-6 rounded-xl shrink-0 shadow-[0_6px_20px_rgba(251,191,36,0.28)] disabled:opacity-40 disabled:pointer-events-none"
           style={{ height: 48, minWidth: 44 }}
         >
           {loading ? "Processing…" : cta}
           {!loading && <ArrowRight className="w-4 h-4" weight="bold" />}
-        </button>
+        </TapScale>
       </div>
     );
   }
