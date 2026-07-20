@@ -4,8 +4,10 @@ import http from "node:http";
 import { type AddressInfo } from "node:net";
 import express, { type Express, type Request } from "express";
 
+// Local-run fallback only — CI/verify sets a real DATABASE_URL. Never commit a
+// real credential here; this points at a throwaway local Postgres.
 process.env["DATABASE_URL"] ||=
-  "postgres://brand_tanmatra_user:a4bEozBP3nusjNRX@localhost:5432/brand-tanmatra-db-staging";
+  "postgres://postgres:postgres@localhost:5432/brand-tanmatra-db-staging";
 
 const { db, usersTable, userPreferencesTable } = await import("@workspace/db");
 const { eq } = await import("drizzle-orm");
