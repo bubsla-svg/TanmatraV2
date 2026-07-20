@@ -4,12 +4,13 @@
 // window.gtag when a vendor script is present — call sites never change.
 import { API_BASE } from "./apiBase";
 
-// Experimentation is deferred (CRO spec Amendment A6): v1 ships no
-// assignment service, so every event carries an EMPTY experiment map
-// (never null, never absent) plus the release cohort. When a platform
-// lands later it slots in here without an event-version bump — copy and
-// design iterations are read as `app_release` cohorts, not A/B splits.
-const EXPERIMENT_ASSIGNMENTS: Record<string, string> = {};
+// A6 activation (Playbook Part 8): assignments come from the config-driven
+// bucketing util. The map stays EMPTY (never null, never absent) until an
+// experiment is explicitly enabled in lib/experiments.ts, so this wiring
+// changes nothing for un-experimented traffic; enabled experiments stamp a
+// sticky per-device variant onto every event without an event-version bump.
+import { getExperimentAssignments } from "./experiments";
+
 const APP_RELEASE = "1.0.0";
 
 type EventName =
@@ -195,8 +196,8 @@ export function track(event: EventName, props?: Record<string, unknown>): void {
         sessionId: sessionId(),
         path: typeof location !== "undefined" ? location.pathname : undefined,
         ts: Date.now(),
-        // A6: experimentation deferral — empty map + release cohort.
-        experiment_assignments: EXPERIMENT_ASSIGNMENTS,
+        // A6: sticky per-device assignments; {} until an experiment is enabled.
+        experiment_assignments: getExperimentAssignments(),
         app_release: APP_RELEASE,
       }),
     }).catch(() => undefined);
