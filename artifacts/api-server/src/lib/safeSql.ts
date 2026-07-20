@@ -123,6 +123,33 @@ export const SAFE_SCHEMA: SafeTable[] = [
       { name: "created_at", type: "timestamptz" },
     ],
   },
+  {
+    name: "safe_funnel_events",
+    source: "funnel_events",
+    description:
+      "First-party funnel event log (one row per tracked event). Event names are snake_case contracts (view_menu, add_to_cart, checkout_start, order_created…). props (jsonb) is deliberately NOT exposed: the view mechanism selects whole columns and cannot filter jsonb keys, and although props are PII-scrubbed at ingest, free-form keys could still carry incidental identifiers. Use safe_funnel_daily for aggregates.",
+    columns: [
+      { name: "id", type: "int" },
+      { name: "name", type: "varchar", description: "snake_case event name" },
+      { name: "session_id", type: "varchar", description: "client session (null for server-emitted events)" },
+      { name: "user_id", type: "varchar", description: "nullable — only set for signed-in users" },
+      { name: "path", type: "varchar", description: "SPA route that fired the event ('server' for server-truth money events)" },
+      { name: "created_at", type: "timestamptz" },
+    ],
+  },
+  {
+    name: "safe_funnel_daily",
+    source: "funnel_daily",
+    description:
+      "Nightly per-day per-event rollup of funnel_events (unique on day+name). distinct_sessions/distinct_users are per-day distincts — summing across days over-counts.",
+    columns: [
+      { name: "day", type: "date" },
+      { name: "name", type: "varchar", description: "snake_case event name" },
+      { name: "event_count", type: "int" },
+      { name: "distinct_sessions", type: "int" },
+      { name: "distinct_users", type: "int" },
+    ],
+  },
 ];
 
 const ALLOWED_TABLE_NAMES = new Set(SAFE_SCHEMA.map((t) => t.name));

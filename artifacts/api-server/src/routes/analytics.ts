@@ -18,6 +18,13 @@ import { extractWeeklyVoc, listVocThemes } from "../lib/voc";
 import { publishWbr } from "../lib/wbrPublisher";
 import { SAFE_SCHEMA, UnsafeSqlError } from "../lib/safeSql";
 import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { and, gte, inArray, sql } from "drizzle-orm";
+import { db, funnelDailyTable } from "@workspace/db";
+import {
+  allFunnelEventNames,
+  computeAllFunnels,
+  type EventTotals,
+} from "../lib/funnelDefs";
 
 const router: IRouter = Router();
 
@@ -229,6 +236,61 @@ router.post("/analytics/wbr/simulate", async (req: Request, res: Response) => {
       netMarginPct: sim.marginPct,
       thresholdAlert: sim.marginPct < 35.0,
     });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// ---- Funnels (playbook Part 8 §8.3, A2) -------------------------------------
+
+const MAX_FUNNEL_WINDOW_DAYS = 90;
+
+/**
+ * GET /analytics/funnels?days=N — the 5 named funnels (F1 discovery,
+ * F2 checkout, F3 subscribe, F4 profiling, F5 trial→sub) computed from the
+ * funnel_daily rollup over a trailing N-day window (default 7). Read-only:
+ * freshness is bounded by the nightly funnelRollupScheduler tick.
+ */
+router.get("/analytics/funnels", async (req: Request, res: Response) => {
+  if (!requireCatalog(req, res)) return;
+  const rawDays = Number(req.query["days"] ?? 7);
+  if (!Number.isFinite(rawDays)) {
+    res.status(400).json({ error: "invalid days" });
+    return;
+  }
+  const days = Math.min(MAX_FUNNEL_WINDOW_DAYS, Math.max(1, Math.floor(rawDays)));
+  // funnel_daily.day is a UTC date — window start is (days - 1) days before
+  // today's UTC date so days=1 means "today only".
+  const sinceDate = new Date();
+  sinceDate.setUTCDate(sinceDate.getUTCDate() - (days - 1));
+  const since = sinceDate.toISOString().slice(0, 10);
+  try {
+    const rows = await db
+      .select({
+        name: funnelDailyTable.name,
+        events: sql<number>`sum(${funnelDailyTable.eventCount})::int`,
+        sessions: sql<number>`sum(${funnelDailyTable.distinctSessions})::int`,
+        users: sql<number>`sum(${funnelDailyTable.distinctUsers})::int`,
+      })
+      .from(funnelDailyTable)
+      .where(
+        and(
+          gte(funnelDailyTable.day, since),
+          inArray(funnelDailyTable.name, allFunnelEventNames()),
+        ),
+      )
+      .groupBy(funnelDailyTable.name);
+    const totalsByEvent = new Map<string, EventTotals>(
+      rows.map((r) => [
+        r.name,
+        {
+          events: Number(r.events ?? 0),
+          sessions: Number(r.sessions ?? 0),
+          users: Number(r.users ?? 0),
+        },
+      ]),
+    );
+    res.json({ days, since, funnels: computeAllFunnels(totalsByEvent) });
   } catch (err) {
     sendError(res, err);
   }

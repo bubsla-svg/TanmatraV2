@@ -14,7 +14,6 @@ import {
   slotReservationsTable,
   subscriptionDeliveriesTable,
   subscriptionsTable,
-  userPreferencesTable,
   userProfileTable,
   type CreditLedgerReason,
   type LoyaltyConfig,
@@ -38,6 +37,7 @@ import {
 import { invalidateUserBrief } from "./userBrief";
 import { geocodeAddress } from "./geocode";
 import { isDeliverySlotBookable } from "./deliverySlotBooking";
+import { getDecryptedPreferences } from "./userPreferences";
 
 type DbOrTx = typeof db | PgTransaction<any, any, any>;
 
@@ -583,11 +583,9 @@ export async function finalizeOrder(args: {
   // There is intentionally no override path; the meal-planner / coach
   // flows already filter, so a block reaching finalize means the client
   // bypassed those filters and we refuse + audit.
-  const [prefRow] = await db
-    .select()
-    .from(userPreferencesTable)
-    .where(eq(userPreferencesTable.userId, args.userId))
-    .limit(1);
+  // Decrypt-on-read: clinical arrays are envelope-encrypted at rest; the
+  // fail-closed safety evaluation below must compare plaintext values.
+  const prefRow = await getDecryptedPreferences(args.userId);
   const prefs: PreferencesForMatch | null = prefRow
     ? {
         allergens: prefRow.allergens ?? [],
@@ -823,11 +821,7 @@ export async function finalizeOrder(args: {
     // Re-read user preferences inside the tx — closes the second TOCTOU
     // window where the patient updated their allergens or dietary style
     // between the pre-tx gate and the order insert.
-    const [txPrefRow] = await tx
-      .select()
-      .from(userPreferencesTable)
-      .where(eq(userPreferencesTable.userId, args.userId))
-      .limit(1);
+    const txPrefRow = await getDecryptedPreferences(args.userId, tx);
     const txPrefs: PreferencesForMatch | null = txPrefRow
       ? {
           allergens: txPrefRow.allergens ?? [],

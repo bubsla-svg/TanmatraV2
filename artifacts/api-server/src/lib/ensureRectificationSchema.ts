@@ -109,6 +109,20 @@ CREATE TABLE IF NOT EXISTS public.funnel_events (
 );
 CREATE INDEX IF NOT EXISTS idx_funnel_events_name_time ON public.funnel_events (name, created_at);
 CREATE INDEX IF NOT EXISTS idx_funnel_events_session ON public.funnel_events (session_id);
+
+-- Nightly per-day per-event rollup of funnel_events (Part 8 A1). Upserted by
+-- funnelRollupScheduler on (day, name); mirrors lib/db drizzle migration
+-- 0007_funnel_daily_rollup.sql for deploys that rely on this boot ensure.
+CREATE TABLE IF NOT EXISTS public.funnel_daily (
+  id serial PRIMARY KEY,
+  day date NOT NULL,
+  name varchar(64) NOT NULL,
+  event_count integer NOT NULL DEFAULT 0,
+  distinct_sessions integer NOT NULL DEFAULT 0,
+  distinct_users integer NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_funnel_daily_day_name ON public.funnel_daily (day, name);
 `;
 
 export async function ensureRectificationSchema(): Promise<void> {

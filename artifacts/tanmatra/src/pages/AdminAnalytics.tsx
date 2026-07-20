@@ -102,6 +102,24 @@ interface SafeTable {
   columns: Array<{ name: string; type: string; description?: string }>;
 }
 
+interface FunnelStep {
+  label: string;
+  events: string[];
+  count: number;
+  sessions: number;
+  users: number;
+  dropOffPct: number | null;
+  conversionPct: number | null;
+}
+
+interface Funnel {
+  id: string;
+  name: string;
+  kpi: string;
+  steps: FunnelStep[];
+  overallConversionPct: number | null;
+}
+
 function getToken(): string {
   if (typeof window === "undefined") return "";
   return window.localStorage.getItem(ADMIN_TOKEN_KEY) ?? "";
@@ -587,6 +605,121 @@ function VocTab() {
   );
 }
 
+const FUNNEL_WINDOWS = [7, 14, 30] as const;
+
+function pctLabel(v: number | null): string {
+  return v === null ? "—" : `${v}%`;
+}
+
+function FunnelsTab() {
+  const [days, setDays] = useState<number>(7);
+  const [funnels, setFunnels] = useState<Funnel[]>([]);
+  const [since, setSince] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setBusy(true);
+    setErr(null);
+    api<{ days: number; since: string; funnels: Funnel[] }>(`/analytics/funnels?days=${days}`)
+      .then((r) => {
+        if (cancelled) return;
+        setFunnels(r.funnels);
+        setSince(r.since);
+      })
+      .catch((e) => {
+        if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [days]);
+
+  const hasData = funnels.some((f) => f.steps.some((s) => s.count > 0));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 className="font-semibold text-lg">Funnels</h2>
+          <p className="text-xs text-muted-foreground">
+            The 5 named funnels (§8.3), aggregated nightly from first-party events
+            {since ? ` · since ${new Date(`${since}T00:00:00Z`).toLocaleDateString()}` : ""}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          {FUNNEL_WINDOWS.map((w) => (
+            <Button key={w} size="sm" variant={days === w ? "default" : "outline"} onClick={() => setDays(w)} disabled={busy}>
+              {w}d
+            </Button>
+          ))}
+        </div>
+      </div>
+      {err && <p className="text-xs text-red-600">{err}</p>}
+      {!err && !busy && !hasData && (
+        <p className="text-sm text-muted-foreground">
+          No funnel data in this window yet. Events land in funnel_events immediately and are rolled up into
+          funnel_daily by the nightly job — check back after the next rollup tick.
+        </p>
+      )}
+      <div className="grid md:grid-cols-2 gap-4">
+        {funnels.map((f) => (
+          <Card key={f.id}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardTitle>{f.name}</CardTitle>
+                <Badge variant="outline" className="text-[10px]">{f.kpi}</Badge>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  overall <span className="font-medium text-clinical-data">{pctLabel(f.overallConversionPct)}</span>
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {f.steps.map((s, i) => (
+                <div key={s.label}>
+                  {i > 0 && (
+                    <div className="flex justify-end pr-1">
+                      <span className={`text-[10px] ${s.dropOffPct !== null && s.dropOffPct > 0 ? "text-red-600" : "text-muted-foreground"}`}>
+                        ↓ {s.dropOffPct === null ? "—" : `${s.dropOffPct}% drop`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-baseline justify-between gap-2 text-xs">
+                    <span className="truncate" title={s.events.join(", ")}>
+                      <span className="text-muted-foreground mr-1">{i + 1}.</span>
+                      {s.label}
+                    </span>
+                    <span className="text-clinical-data whitespace-nowrap">
+                      {s.count.toLocaleString()}
+                      <span className="text-muted-foreground"> · {pctLabel(s.conversionPct)}</span>
+                    </span>
+                  </div>
+                  <div className="h-2 mt-1 rounded-full bg-muted/40 overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.max(s.count > 0 ? 2 : 0, Math.min(100, s.conversionPct ?? 0))}%`,
+                        background: "var(--color-nn-tertiary)",
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <p className="text-[10px] text-muted-foreground pt-1">
+                counts = events in window · sessions/users are per-day distincts (server-truth money events carry no session)
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminAnalytics() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
@@ -602,10 +735,12 @@ export default function AdminAnalytics() {
           <TabsTrigger value="ask">Ask the data</TabsTrigger>
           <TabsTrigger value="wbr">Weekly review</TabsTrigger>
           <TabsTrigger value="voc">Voice of customer</TabsTrigger>
+          <TabsTrigger value="funnels">Funnels</TabsTrigger>
         </TabsList>
         <TabsContent value="ask"><AskTab /></TabsContent>
         <TabsContent value="wbr"><WbrTab /></TabsContent>
         <TabsContent value="voc"><VocTab /></TabsContent>
+        <TabsContent value="funnels"><FunnelsTab /></TabsContent>
       </Tabs>
     </div>
   );

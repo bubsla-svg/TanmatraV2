@@ -3,16 +3,17 @@ import {
   db,
   marketplaceItemsTable,
   ordersTable,
-  userPreferencesTable,
   type MarketplaceItem,
   type MarketplaceOrderLine,
 } from "@workspace/db";
 import { idempotencyMiddleware } from "../middlewares/idempotency";
 import { incMarketplaceCheckoutRollback } from "../lib/saga-metrics";
+import { getDecryptedPreferences } from "../lib/userPreferences";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { randomUUID } from "node:crypto";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
+import { emitServerEvent } from "../lib/serverEvents";
 
 const router: IRouter = Router();
 
@@ -198,11 +199,9 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
   const data = parsed.data;
   const userId = req.user.id;
 
-  const [prefRow] = await db
-    .select()
-    .from(userPreferencesTable)
-    .where(eq(userPreferencesTable.userId, userId))
-    .limit(1);
+  // Decrypt-on-read: clinical arrays are envelope-encrypted at rest; the
+  // contraindication/allergen matching below must run on plaintext.
+  const prefRow = await getDecryptedPreferences(userId);
 
   // Reserve-and-create saga (Task #6). All stock decrements and the
   // order row insert happen inside a single Postgres transaction so a
@@ -423,6 +422,17 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
 
       return created;
     });
+    // Part 8 A4 — server-truth order_created (marketplace kind). chargePaise
+    // is null for marketplace orders; payments.ts bills totalPaise instead
+    // (documented fallback), so report the same number here. Fire-and-forget.
+    void emitServerEvent(
+      "order_created",
+      {
+        order_kind: "marketplace",
+        charge_paise: result.chargePaise ?? result.totalPaise,
+      },
+      userId,
+    );
     res.status(201).json({ order: result });
   } catch (err) {
     if (err instanceof MarketplaceCheckoutError) {

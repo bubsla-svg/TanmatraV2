@@ -20,6 +20,7 @@ import { and, asc, desc, eq, gt, lt, isNull, or, sql } from "drizzle-orm";
 import { bridgeCreditDiscountPaise } from "../lib/bridgeCredit";
 import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
+import { emitServerEvent } from "../lib/serverEvents";
 import { resolveDishBySlug, makeBatchDishResolver } from "../lib/menuResolver";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { cancelAutopayMandate } from "../lib/autopay";
@@ -38,6 +39,7 @@ import {
   upsertActiveMandate,
 } from "../lib/razorpayRecurring";
 import { encryptClinicalStrings, decryptClinicalStrings } from "../lib/crypto";
+import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
 
@@ -453,11 +455,12 @@ async function validateDishForSubscription(
   }>,
   targetMemberId?: number | null,
 ): Promise<{ blocked: boolean; reasons: any[] }> {
-  const [prefsRow] = await db
-    .select()
-    .from(userPreferencesTable)
-    .where(eq(userPreferencesTable.userId, userId));
-  const primaryMatch = evaluateDishForPreferences(dish, prefsRow ?? null, { strict: true });
+  // Decrypt-on-read: once consumer clinical fields are KMS-encrypted at rest,
+  // reading the raw row here would feed ciphertext into the strict allergen
+  // gate and it would fail OPEN (ciphertext matches no allergen). This is the
+  // account-holder's own safety gate — the member path below already decrypts.
+  const prefsRow = await getDecryptedPreferences(userId);
+  const primaryMatch = evaluateDishForPreferences(dish, prefsRow, { strict: true });
   if (primaryMatch.blocked) return { blocked: true, reasons: primaryMatch.blockReasons };
 
   const subProfiles: Array<{
@@ -866,6 +869,15 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     sub.nextDeliveryAt = await recomputeNextDeliveryAt(sub.id, startDate);
   }
 
+  // Part 8 A4 — server-truth subscription lifecycle event. A trial pack
+  // emits trial_started (F5 funnel entry); a standard subscription emits
+  // subscription_started (F3 terminal step). Fire-and-forget: emitServerEvent
+  // never throws, so the money path cannot be broken by analytics.
+  void emitServerEvent(
+    isTrial ? "trial_started" : "subscription_started",
+    { cadence: data.cadence, plan_type: isTrial ? "trial" : "standard" },
+    userId,
+  );
   invalidateUserBrief(userId);
   res.status(201).json({ subscription: sub, deliveries, bridgeCreditPaise });
 });
