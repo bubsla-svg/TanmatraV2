@@ -21,7 +21,7 @@ import {
 const topPad = 10;
 const bottomPad = 10;
 
-function Card({children}: {children?: any}) {
+function Card({children}: {children?: React.ReactNode}) {
   const c = useColors();
   return (
     <View
@@ -37,7 +37,7 @@ function Card({children}: {children?: any}) {
   );
 }
 
-function Label({children}: {children?: any}) {
+function Label({children}: {children?: React.ReactNode}) {
   const c = useColors();
   return (
     <Text
