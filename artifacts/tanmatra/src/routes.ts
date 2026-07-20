@@ -76,6 +76,10 @@ export default [
     route("partners/gyms", "pages/GymsLanding.tsx"),
     route("partners/fitness-clubs", "pages/MorningFitnessLanding.tsx"),
     route("subscription-plans", "pages/SubscriptionPlansLanding.tsx"),
+    // Playbook Part 3 acquisition landing pages (§3.1–3.3).
+    route("metabolic", "pages/MetabolicLanding.tsx"),
+    route("care/:condition", "pages/CareLanding.tsx"),
+    route("corporate-wellness", "pages/CorporateWellnessLanding.tsx"),
     route("group/:code", "pages/GroupOrder.tsx"),
     route("recipes", "pages/Recipes.tsx"),
     route("recipes/:slug", "pages/RecipeDetail.tsx"),

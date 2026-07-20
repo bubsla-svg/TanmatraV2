@@ -89,6 +89,8 @@ const PRIMARY: NavItem[] = [
       p.startsWith("/wellness") ||
       p.startsWith("/performance") ||
       p.startsWith("/clinical") ||
+      p.startsWith("/metabolic") ||
+      p.startsWith("/care/") ||
       p.startsWith("/corporate") ||
       p.startsWith("/team"),
   },
@@ -148,7 +150,11 @@ const MORE_GROUPS: { title: string; items: MoreLink[] }[] = [
       { to: "/wellness", label: "Wellness Protocol", icon: HandHeart },
       { to: "/performance", label: "Performance Protocol", icon: Sparkle },
       { to: "/clinical", label: "Clinical Protocol", icon: Stethoscope },
+      { to: "/metabolic", label: "Metabolic Programs", icon: Sparkle, desc: "Fat-loss & muscle-gain plans" },
+      { to: "/care/pcos", label: "Hormone-Aware Care (PCOS)", icon: Stethoscope },
+      { to: "/care/diabetes", label: "Low-GI Care (Diabetes)", icon: Stethoscope },
       { to: "/corporate", label: "Corporate", icon: Buildings },
+      { to: "/corporate-wellness", label: "Corporate Wellness", icon: Buildings, desc: "Team lunches for HR" },
       { to: "/team", label: "Team", icon: Users },
       { to: "/rd-partners", label: "For Dietitians", icon: Stethoscope, desc: "Become an RD partner" },
     ],
