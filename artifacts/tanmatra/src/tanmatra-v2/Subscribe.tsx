@@ -831,6 +831,22 @@ export default function V2Subscribe() {
         0,
         result.subscription.pricePerDeliveryPaise - bridgeCreditPaise,
       );
+      // Gateway integers only: Razorpay rejects a non-integer / NaN / negative
+      // amount with an opaque "internal error". Validate the pricing here so a
+      // bad payload surfaces as a precise, logged message instead of a
+      // dead-end red toast at the final gatekeeper.
+      const perDeliveryPaise = result.subscription.pricePerDeliveryPaise;
+      if (
+        !Number.isInteger(perDeliveryPaise) ||
+        perDeliveryPaise < 0 ||
+        !Number.isInteger(amountDue) ||
+        amountDue < 0
+      ) {
+        throw new Error(
+          `Invalid subscription pricing — paise must be a non-negative integer ` +
+            `(pricePerDeliveryPaise=${perDeliveryPaise}, bridgeCreditPaise=${bridgeCreditPaise}, amountDue=${amountDue}).`,
+        );
+      }
       if (razorpayConfigured() && amountDue > 0) {
         track("payment_initiated", { total_amount: amountDue });
         const outcome = await payWithRazorpay({
@@ -919,6 +935,22 @@ export default function V2Subscribe() {
           },
         });
       } else {
+        // Aggressive diagnostics for the "Could not create subscription"
+        // gatekeeper failure — enough context to pinpoint a bad payload or
+        // pricing bug, with NO PII (never name / phone / address).
+        console.error("[SUBSCRIPTION_CREATE_FAILED]", {
+          message,
+          stack: err instanceof Error ? err.stack : null,
+          cadence: activeCadence,
+          planType: isTrial ? "trial" : "standard",
+          planName: effectivePlan?.name ?? null,
+          razorpayConfigured: razorpayConfigured(),
+        });
+        track("subscription_create_failed", {
+          cadence: activeCadence,
+          planType: isTrial ? "trial" : "standard",
+          reason: message,
+        });
         toast.error("Could not create subscription", { description: message });
       }
     } finally {
