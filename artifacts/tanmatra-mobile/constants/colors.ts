@@ -1,3 +1,7 @@
+// Mirrors artifacts/tanmatra/src/index.css's live @theme tokens (the design
+// system's single source of truth). --action / --color-info-theme moved to
+// saffron-400 (#E9A847) / info-theme (#7FA3B3) on web; this palette had
+// drifted, still shipping the retired #D4AF37 / #6BA3C8 pair (register §C6).
 const palette = {
   bg: "#050505",
   surface: "#0A0A0C",
@@ -10,10 +14,10 @@ const palette = {
   slate: "#334155",
   sage: "#7D9E7E",
   sageSoft: "rgba(125, 158, 126, 0.14)",
-  gold: "#D4AF37",
-  goldSoft: "rgba(212, 175, 55, 0.14)",
-  blue: "#6BA3C8",
-  blueSoft: "rgba(107, 163, 200, 0.14)",
+  saffron: "#E9A847",
+  saffronSoft: "rgba(233, 168, 71, 0.14)",
+  infoBlue: "#7FA3B3",
+  infoBlueSoft: "rgba(127, 163, 179, 0.14)",
   destructive: "#EF4444",
   destructiveSoft: "rgba(239, 68, 68, 0.12)",
 };
@@ -41,12 +45,12 @@ const colors = {
     mutedForeground: palette.muted,
     zinc: palette.zinc,
 
-    accent: palette.gold,
-    accentSoft: palette.goldSoft,
-    accentForeground: palette.gold,
+    accent: palette.saffron,
+    accentSoft: palette.saffronSoft,
+    accentForeground: palette.saffron,
 
-    info: palette.blue,
-    infoSoft: palette.blueSoft,
+    info: palette.infoBlue,
+    infoSoft: palette.infoBlueSoft,
 
     destructive: palette.destructive,
     destructiveSoft: palette.destructiveSoft,
@@ -79,12 +83,12 @@ const colors = {
     mutedForeground: palette.muted,
     zinc: palette.zinc,
 
-    accent: palette.gold,
-    accentSoft: palette.goldSoft,
-    accentForeground: palette.gold,
+    accent: palette.saffron,
+    accentSoft: palette.saffronSoft,
+    accentForeground: palette.saffron,
 
-    info: palette.blue,
-    infoSoft: palette.blueSoft,
+    info: palette.infoBlue,
+    infoSoft: palette.infoBlueSoft,
 
     destructive: palette.destructive,
     destructiveSoft: palette.destructiveSoft,
