@@ -477,9 +477,12 @@ export default function V2Dish() {
               style={{ transform: `translateX(-${heroActiveIdx * 100}%)` }}
             >
               <img
-                src={src}
+                src={getLocalDishFallback(src, 800)}
+                srcSet={localDishSrcset(src)}
+                sizes="(max-width: 768px) 100vw, 768px"
                 alt={idx === 0 ? meal.name : `${meal.name} view ${idx + 1}`}
                 loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : undefined}
                 decoding={idx === 0 ? "sync" : "async"}
                 onError={onDishImageError}
                 className="w-full h-full object-cover rounded-b-3xl"
