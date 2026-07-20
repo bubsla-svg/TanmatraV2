@@ -108,6 +108,7 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
 |----------|---------|
 | `DATABASE_URL` | `lib/db`, `artifacts/api-server` |
 | `REDIS_URL` | `artifacts/api-server` (BullMQ queue — optional) |
+| `CLINICAL_KMS_MASTER_KEY` | `artifacts/api-server`, `lib/db` — AES-256-GCM key for encrypting subscription-member clinical fields at rest. **Required in production** (server fails to boot without it). 64 hex chars; aliases: `MASTER_KEY`, `DPDPA_MASTER_KEY_HEX`, `CLINICAL_MASTER_KEY_HEX`. |
 
 ## Key conventions
 

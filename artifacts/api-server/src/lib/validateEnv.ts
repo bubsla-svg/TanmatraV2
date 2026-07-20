@@ -15,6 +15,25 @@ export function validateEnv(): void {
   // Hard requirement — no DB, no app.
   if (!process.env["DATABASE_URL"]) missingRequired.push("DATABASE_URL");
 
+  // Hard requirement in production — the KMS master key that encrypts
+  // DPDPA-sensitive subscription-member clinical fields (medicalConditions /
+  // allergens / dislikedIngredients) at rest. Without it, member create/read
+  // throws at request time; we fail fast at boot instead so a misconfigured
+  // deploy is caught at the health check rather than as per-request 500s, and
+  // clinical data can never silently fall back to plaintext. Any one of the
+  // aliases accepted by lib/db's resolveMasterKey satisfies this.
+  if (
+    isProd &&
+    !(
+      process.env["CLINICAL_KMS_MASTER_KEY"] ||
+      process.env["MASTER_KEY"] ||
+      process.env["DPDPA_MASTER_KEY_HEX"] ||
+      process.env["CLINICAL_MASTER_KEY_HEX"]
+    )
+  ) {
+    missingRequired.push("CLINICAL_KMS_MASTER_KEY");
+  }
+
   if (isProd) {
     if ((process.env["ADMIN_SESSION_SECRET"] || "").length < 32) {
       warnings.push("ADMIN_SESSION_SECRET is missing or < 32 chars — admin login is insecure/disabled");
