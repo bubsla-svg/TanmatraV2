@@ -131,7 +131,8 @@
 .tnm2 .wteaser .wtxt .wlab{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--fnt)}
 .tnm2 .wteaser .wtxt .wcta{display:block;margin-top:2px;font-size:11px;line-height:1.25;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tnm2 .wteaser .wcar{z-index:1;flex:none;color:var(--fnt);font-size:13px}
-.tnm2 .hrail{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 8px;scrollbar-width:none}
+.tnm2 .hrail{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 8px;scrollbar-width:none;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.tnm2 .hrail>.hcard{scroll-snap-align:start}
 .tnm2 .hcard{width:152px;flex:none;background:var(--s1);border:1px solid var(--ln);border-radius:12px;overflow:hidden}
 .tnm2 .himg{height:88px}
 .tnm2 .hbody{padding:10px 10px 12px}
