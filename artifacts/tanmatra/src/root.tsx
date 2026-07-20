@@ -12,6 +12,7 @@ import { ThemeProvider } from "next-themes";
 import { OrdersProvider } from "@/lib/ordersContext";
 import { PreferencesProvider } from "@/lib/preferencesContext";
 import OnboardingQuizGate from "@/components/preferences/OnboardingQuizGate";
+import SoftGate from "@/components/onboarding/SoftGate";
 import Header from "@/components/layout/Header";
 import WelcomeOfferBanner from "@/components/marketing/WelcomeOfferBanner";
 import Footer from "@/components/layout/Footer";
@@ -237,11 +238,28 @@ const STICKY_CHECKOUT_HIDE = [
   /^\/marketplace\/.+/,
 ];
 
+// Discovery surfaces where first-touch onboarding (SoftGate) and the
+// quiz-nudge banner may appear. Deliberately excludes money-path and
+// utility routes (checkout, cart, track, login, admin) so onboarding
+// never interrupts a purchase in progress.
+const DISCOVERY_SURFACES = [
+  /^\/$/,
+  /^\/menu$/,
+  /^\/dish\/.+/,
+  /^\/subscription-plans$/,
+  /^\/wellness$/,
+  /^\/performance$/,
+  /^\/clinical$/,
+  /^\/plans(\/.*)?$/,
+  /^\/recipes(\/.*)?$/,
+];
+
 function AppShellInner() {
   const matches = useMatches();
   const hideChrome = matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false);
   const currentPath = useLocation().pathname;
   const { items } = useCart();
+  const onDiscoverySurface = DISCOVERY_SURFACES.some((re) => re.test(currentPath));
 
   const dockHidden = ["/checkout", "/cart", "/track", "/login", "/admin"].some(
     (deny) => currentPath === deny || currentPath.startsWith(deny + "/"),
@@ -269,7 +287,8 @@ function AppShellInner() {
     >
       {!hideChrome && <Header />}
       {!hideChrome && <WelcomeOfferBanner />}
-      {!hideChrome && <OnboardingQuizGate />}
+      {(!hideChrome || onDiscoverySurface) && <OnboardingQuizGate />}
+      {onDiscoverySurface && <SoftGate />}
       <main
         className={hideChrome ? "flex-1" : "flex-1 pb-20 md:pb-0"}
         style={paddingBottomStyle ? { paddingBottom: paddingBottomStyle } : undefined}
