@@ -33,6 +33,27 @@ interface GeoPlace {
   pincode: string;
 }
 
+// GOOGLE_API_KEY is shared with the Gemini AI stack (lib/integrations-gemini-ai,
+// ai/model.ts), so a Gemini-motivated key rotation can silently strip the
+// Geocoding API from these routes (observed live 2026-07-20: the rotated key
+// was Gemini-only and every /geo/* call started returning REQUEST_DENIED).
+// GOOGLE_MAPS_API_KEY, when set, decouples Maps from that blast radius.
+function mapsApiKey(): string | undefined {
+  return process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_API_KEY"];
+}
+
+// Geocoding statuses that mean the KEY/QUOTA is broken, not "no matches".
+// These must surface as 502 (the picker shows its honest "search
+// unavailable" hint) — never as ok-with-empty-results, which reads as a
+// blank address and hides the outage from monitoring.
+const KEY_FAILURE_STATUSES = new Set([
+  "REQUEST_DENIED",
+  "OVER_QUERY_LIMIT",
+  "OVER_DAILY_LIMIT",
+  "INVALID_REQUEST",
+  "UNKNOWN_ERROR",
+]);
+
 function cacheKey(lat: number, lng: number): string {
   return `${lat.toFixed(4)},${lng.toFixed(4)}`;
 }
@@ -95,7 +116,7 @@ router.get("/geo/reverse", async (req: Request, res: Response) => {
     return;
   }
 
-  const apiKey = process.env["GOOGLE_API_KEY"];
+  const apiKey = mapsApiKey();
   if (!apiKey) {
     res.status(503).json({ ok: false, error: "geocoding not configured" });
     return;
@@ -117,11 +138,21 @@ router.get("/geo/reverse", async (req: Request, res: Response) => {
     }
     const json = (await gres.json()) as {
       status?: string;
+      error_message?: string;
       results?: Array<{
         formatted_address?: string;
         address_components?: Array<{ long_name: string; types: string[] }>;
       }>;
     };
+    if (json.status && KEY_FAILURE_STATUSES.has(json.status)) {
+      // Key/quota failure — a real outage, not "no address here".
+      logger.error(
+        { status: json.status, errorMessage: json.error_message },
+        "geo/reverse: geocoder key/quota failure",
+      );
+      res.status(502).json({ ok: false, error: "geocoder unavailable" });
+      return;
+    }
     if (json.status !== "OK" || !json.results?.[0]) {
       // ZERO_RESULTS is a normal outcome (e.g. open water) — not an error.
       res.json({ ok: true, formattedAddress: "", city: "", pincode: "" });
@@ -143,8 +174,9 @@ router.get("/geo/reverse", async (req: Request, res: Response) => {
  * addresses) for the picker's search box. Same doctrine as /geo/reverse:
  * this is the fallback the picker uses when the browser Places (New) REST
  * key is absent or its call fails, so the search box is never a silent
- * dead-end. Constrained to India (region=in + components=country:IN) and
- * per-IP rate limited so it can't be used as a free geocoding proxy.
+ * dead-end. Constrained to India (region=in + components=country:IN),
+ * viewport-biased to the NCR service area, and per-IP rate limited so it
+ * can't be used as a free geocoding proxy.
  */
 router.get("/geo/search", async (req: Request, res: Response) => {
   const q = String(req.query["q"] ?? "").trim();
@@ -167,7 +199,7 @@ router.get("/geo/search", async (req: Request, res: Response) => {
     return;
   }
 
-  const apiKey = process.env["GOOGLE_API_KEY"];
+  const apiKey = mapsApiKey();
   if (!apiKey) {
     res.status(503).json({ ok: false, error: "geocoding not configured" });
     return;
@@ -178,6 +210,9 @@ router.get("/geo/search", async (req: Request, res: Response) => {
   url.searchParams.set("key", apiKey);
   url.searchParams.set("region", "in");
   url.searchParams.set("components", "country:IN");
+  // Viewport-bias toward the NCR service area (south,west|north,east) so a
+  // partial query like "sector 18" resolves locally, not across India.
+  url.searchParams.set("bounds", "28.20,76.80|28.95,77.75");
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), SEARCH_TIMEOUT_MS);
@@ -190,17 +225,28 @@ router.get("/geo/search", async (req: Request, res: Response) => {
     }
     const json = (await gres.json()) as {
       status?: string;
+      error_message?: string;
       results?: Array<{
         formatted_address?: string;
         address_components?: Array<{ long_name: string; types: string[] }>;
       }>;
     };
+    if (json.status && KEY_FAILURE_STATUSES.has(json.status)) {
+      // Key/quota failure — surface as an outage so the picker shows its
+      // "search unavailable" hint instead of a silent empty dropdown.
+      logger.error(
+        { status: json.status, errorMessage: json.error_message },
+        "geo/search: geocoder key/quota failure",
+      );
+      res.status(502).json({ ok: false, error: "geocoder unavailable" });
+      return;
+    }
     if (json.status !== "OK" || !json.results?.length) {
       // ZERO_RESULTS is a normal "no matches" outcome — not an error.
       res.json({ ok: true, results: [] });
       return;
     }
-    const results = json.results.slice(0, 6).map(placeFrom);
+    const results = json.results.slice(0, 5).map(placeFrom);
     rememberSearch(norm, results);
     res.json({ ok: true, results });
   } catch (err) {

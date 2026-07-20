@@ -31,6 +31,14 @@ export function validateEnv(): void {
     if (!process.env["GOOGLE_API_KEY"]) {
       warnings.push("GOOGLE_API_KEY unset — Gemini AI agents (coach/support/ops/reorder/CMS) and server-side geocoding return errors");
     }
+    // Maps geocoding rides on GOOGLE_API_KEY unless GOOGLE_MAPS_API_KEY is
+    // set. A Gemini-only rotation of GOOGLE_API_KEY without the Maps var
+    // breaks /geo/* and dispatch geocoding (observed live 2026-07-20).
+    if (process.env["GOOGLE_API_KEY"] && !process.env["GOOGLE_MAPS_API_KEY"]) {
+      warnings.push(
+        "GOOGLE_MAPS_API_KEY unset — Maps geocoding (/geo/reverse, /geo/search, dispatch distances) shares GOOGLE_API_KEY; ensure that key has the Geocoding API enabled, or set a dedicated Maps key",
+      );
+    }
 
     // Twilio powers OPTIONAL server-sent SMS only: delivery-delay alerts,
     // WhatsApp updates, and a fallback SMS-OTP path. The primary customer OTP
