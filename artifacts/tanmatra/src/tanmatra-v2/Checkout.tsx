@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { formatPrice } from "@/lib/api/adapter";
 import { useCart, useCartStore, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
 import { GST_RATE_FOOD, GST_RATE_DELIVERY } from "@/lib/cartMath";
+import { computeCheckoutLedger } from "@/lib/checkoutLedger";
 import { addonsApi } from "@/lib/marketplaceApi";
 import { useOrders, generateOrderId, submitOrderIdempotencyKey } from "@/lib/ordersContext";
 import { loyaltyApi } from "@/lib/loyaltyApi";
@@ -932,7 +933,6 @@ export default function V2Checkout() {
         firstOrderOffer.capPaise,
       )
     : 0;
-  const discountedSubtotal = Math.max(0, preFirstOrderSubtotal - firstOrderDiscount);
   // Pickup orders skip delivery fee entirely; otherwise the existing free-over-threshold rule.
   // Free-delivery threshold is judged on the RAW meal subtotal — the same
   // basis the cart page and sticky bar use — so an applied offer (e.g. the
@@ -943,28 +943,24 @@ export default function V2Checkout() {
   const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
   const freeDeliveryProgress = subtotal === 0 ? 0 : Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
   const hasFreeDelivery = fulfillmentType === "pickup" || deliveryFee === 0;
-  // Statutory GST split: prepared food 5% (no ITC) + delivery service 18%.
-  // Rates are shared with the cart display via cartMath.ts (single
-  // client-side source of truth, mirroring the server's computeChargePaise).
-  const gst =
-    Math.round(discountedSubtotal * GST_RATE_FOOD) +
-    Math.round(deliveryFee * GST_RATE_DELIVERY);
-  // grossTotal (and razorpayTotal below) intentionally EXCLUDE addonTotal:
-  // add-ons are not part of the Razorpay-captured amount (chargePaise) — they
-  // are recorded separately via POST /addons/attach after payment succeeds.
-  // Folding them into the number shown on the "Pay" button / Razorpay modal
-  // would show the customer a total higher than what's actually charged.
-  const grossTotal = discountedSubtotal + gst + deliveryFee + effectiveTip;
-  // Server only redeems against the (discounted) meal subtotal; cap here too
-  // so the UI total matches the server final total exactly.
-  const creditApplied =
-    applyCredits && creditBalance > 0
-      ? Math.min(creditBalance, discountedSubtotal)
-      : 0;
-  const remainingAfterCredit = Math.max(0, grossTotal - creditApplied);
-  const subsidyAvailable =
-    applySubsidy && subsidy?.active ? Math.min(subsidy.subsidyPaise ?? 0, remainingAfterCredit) : 0;
-  const razorpayTotal = Math.max(0, remainingAfterCredit - subsidyAvailable);
+  // Pure, penny-reconciling ledger — the discount → exclusive-GST → credit →
+  // subsidy → payable arithmetic lives in (and is unit-tested by)
+  // lib/checkoutLedger.ts. GST stays EXCLUSIVE (5% food + 18% delivery),
+  // charged on the discounted base and rounded per component. addonTotal is
+  // intentionally excluded from the Razorpay amount — it is captured separately
+  // via POST /addons/attach after payment, so folding it in would show a total
+  // higher than what's actually charged.
+  const ledger = computeCheckoutLedger({
+    preFirstOrderSubtotal,
+    firstOrderDiscount,
+    deliveryFee,
+    tip: effectiveTip,
+    creditBalance: applyCredits ? creditBalance : 0,
+    subsidyPaise: applySubsidy && subsidy?.active ? (subsidy.subsidyPaise ?? 0) : 0,
+  });
+  const { discountedSubtotal, gst, grossTotal, creditApplied, remainingAfterCredit } = ledger;
+  const subsidyAvailable = ledger.subsidyApplied;
+  const razorpayTotal = ledger.payable;
 
   useEffect(() => {
     let alive = true;
