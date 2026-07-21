@@ -471,3 +471,13 @@
   background: var(--tnm-surface-ink);
 }
 
+/* Category quick-nav (scroll-spy) — the last pinned row of the sticky cluster.
+   Clicking a pill jumps to that section; the pill for the section in view stays
+   active. Reuses .chip / .chip.on; a hairline rule sets it apart from the filter
+   rails above. Active detection is IntersectionObserver-driven (no scroll
+   listener), and section landing is offset by --menu-anchor-offset. */
+.tnm2 .catspy{
+  border-top: 1px solid var(--ln);
+  padding-top: 8px;
+}
+

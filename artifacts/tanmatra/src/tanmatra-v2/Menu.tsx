@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { F } from "./data";
 import { hapticLight, hapticWarning, hapticError } from "@/lib/haptics";
@@ -184,12 +184,104 @@ export function computeMatchScore(
 const SPARK_PATH =
   "M0 30 L14 26 L28 31 L42 20 L56 24 L70 14 L84 22 L98 12 L112 19 L126 10 L140 17 L154 9 L168 15 L182 8 L200 13";
 
+/** How long to ignore scroll-spy updates after a click-jump, so the tapped pill
+ *  stays active while the smooth-scroll settles (no mid-scroll flicker through
+ *  intermediate categories). */
+const SPY_LOCK_MS = 700;
+
+/* Category quick-nav with scroll-spy (Uber-Eats habit-loop pattern). Tapping a
+ * pill jumps to that section; an IntersectionObserver marks whichever section is
+ * in view as active. No scroll listener — the observer does the work, and each
+ * section's scroll-margin-top (var --menu-anchor-offset) lands it just below the
+ * pinned header. Rendered only in sectioned mode with 2+ anchors. */
+function CategoryScrollSpy({ anchors }: { anchors: Array<{ id: string; label: string }> }) {
+  const [active, setActive] = useState(anchors[0]?.id ?? "");
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const suppressRef = useRef(false);
+  const railRef = useRef<HTMLDivElement>(null);
+  const anchorKey = anchors.map((a) => a.id).join("|");
+
+  useEffect(() => {
+    const ids = anchorKey ? anchorKey.split("|") : [];
+    if (!ids.includes(activeRef.current)) setActive(ids[0] ?? "");
+    const els = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (els.length === 0) return;
+    const seen = new Map<string, boolean>();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) seen.set(e.target.id, e.isIntersecting);
+        if (suppressRef.current) return; // hold the tapped pill during a click-jump
+        const next = ids.find((id) => seen.get(id));
+        if (next && next !== activeRef.current) setActive(next);
+      },
+      { rootMargin: "-15% 0px -55% 0px", threshold: 0 },
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [anchorKey]);
+
+  // Keep the active pill scrolled into view within the horizontal rail.
+  useEffect(() => {
+    railRef.current
+      ?.querySelector<HTMLElement>(`[data-anchor="${active}"]`)
+      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [active]);
+
+  const jump = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    suppressRef.current = true;
+    setActive(id);
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    window.setTimeout(() => { suppressRef.current = false; }, reduce ? 0 : SPY_LOCK_MS);
+  };
+
+  return (
+    <div className="chiprow catspy" ref={railRef} role="group" aria-label="Jump to category">
+      {anchors.map((a) => (
+        <button
+          key={a.id}
+          type="button"
+          data-anchor={a.id}
+          aria-current={active === a.id ? "location" : undefined}
+          className={active === a.id ? "chip on" : "chip"}
+          onClick={() => jump(a.id)}
+        >
+          {a.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function V2Menu() {
   const { isPremium } = usePremiumStatus();
   const premiumSlugs = usePremiumSlugs();
   const navigate = useNavigate();
 
   useEffect(() => { track("view_menu"); }, []);
+
+  // Keep --menu-anchor-offset synced to the live sticky-header height so
+  // jump-to-category (CategoryScrollSpy) lands each section just below the
+  // pinned cluster via its scroll-margin-top. ResizeObserver catches the header
+  // growing/shrinking (search toggle, chip wrap, rail show/hide).
+  useEffect(() => {
+    const header = document.querySelector<HTMLElement>(".menu-stickytop");
+    if (!header) return;
+    const root = document.documentElement;
+    const sync = () => root.style.setProperty("--menu-anchor-offset", `${header.offsetHeight + 8}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(header);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--menu-anchor-offset");
+    };
+  }, []);
 
   // ── One-time initial-state hydration from URL params ──────────────────────
   // Home's trust-header search, category badges, veg toggle and "Healthy Mode"
@@ -531,6 +623,40 @@ export default function V2Menu() {
 
   const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length + excludedAllergens.length;
 
+  // Precompute the sectioned layout once (category === "all" only) so the
+  // scroll-spy rail and the rendered sections stay in lockstep — same goal-match
+  // + per-category split the grid renders, capped by visibleCount.
+  type MenuEntry = (typeof consolidatedDishes)[number];
+  const menuSections = useMemo(() => {
+    if (category !== "all") return null;
+    const goalMatched = isAssessed
+      ? consolidatedDishes.filter((e) => e.fit_band === "high").slice(0, 8)
+      : [];
+    const goalIds = new Set(goalMatched.map((e) => e.dish.id));
+    const rest = consolidatedDishes.filter((e) => !goalIds.has(e.dish.id));
+    let remaining = visibleCount;
+    const cats: Array<{ cat: DishCategory; id: string; label: string; items: MenuEntry[] }> = [];
+    for (const cat of CATEGORY_TABS) {
+      if (cat === "all") continue;
+      const catItems = rest.filter((e) => e.dish.category === cat);
+      if (catItems.length === 0 || remaining <= 0) continue;
+      const items = catItems.slice(0, remaining);
+      remaining -= items.length;
+      cats.push({ cat, id: `cat-${cat}`, label: CATEGORY_LABELS[cat], items });
+    }
+    return { goalMatched, cats };
+  }, [category, isAssessed, consolidatedDishes, visibleCount]);
+
+  // Jump-nav anchors for the scroll-spy rail (goal section first, then each
+  // populated category). Rail is hidden unless there are 2+ anchors.
+  const navAnchors = useMemo<Array<{ id: string; label: string }>>(() => {
+    if (!menuSections) return [];
+    const list: Array<{ id: string; label: string }> = [];
+    if (menuSections.goalMatched.length > 0) list.push({ id: "cat-foryou", label: "For you" });
+    for (const c of menuSections.cats) list.push({ id: c.id, label: c.label });
+    return list;
+  }, [menuSections]);
+
   return (
     <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh" }}>
@@ -616,6 +742,10 @@ export default function V2Menu() {
             );
           })}
         </div>
+
+        {/* Category quick-nav (scroll-spy) — Uber-Eats jump-to-section rail,
+            shown only when the list spans multiple category anchors. */}
+        {navAnchors.length > 1 && <CategoryScrollSpy anchors={navAnchors} />}
 
         </div>{/* /menu-stickytop */}
 
@@ -918,104 +1048,82 @@ export default function V2Menu() {
                     );
                   })}
                 </div>
-              ) : (
-                // Sectioned rendering when category is "all"
-                (() => {
-                  const goalMatched = isAssessed
-                    ? consolidatedDishes.filter((e) => e.fit_band === "high").slice(0, 8)
-                    : [];
-                  const goalMatchedIds = new Set(goalMatched.map((e) => e.dish.id));
-                  const rest = consolidatedDishes.filter((e) => !goalMatchedIds.has(e.dish.id));
-
-                  let remainingLimit = visibleCount;
-
-                  return (
-                    <div className="flex flex-col gap-6">
-                      {/* Section 1: Goal Match */}
-                      {goalMatched.length > 0 && (
-                        <div>
-                          <h2 className="sh mb10 fx ac gap6 text-[var(--tnm-action)] uppercase tracking-[0.06em] text-[11px] font-semibold">
-                            <i className="ph-fill ph-sparkle text-[var(--tnm-action)] text-xs" />
-                            Matched to your goal
-                          </h2>
-                          <div className="prodgrid onecol">
-                            {goalMatched.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, idx) => {
-                              const price = parent.variants[0].price;
-                              const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
-                              return (
-                                <DishCard
-                                  key={parent.id}
-                                  dish={rep}
-                                  name={parent.name}
-                                  price={price}
-                                  match={match}
-                                  scoreInfo={scoreInfo}
-                                  hasVariants={hasVariants}
-                                  isPremiumOnly={premiumSlugs.has(parent.slug)}
-                                  isPremium={isPremium}
-                                  lifestyleTag={lifestyleTag}
-                                  showWearableTeaser={idx === 0}
-                                  canExpress={hasSavedAddress && !hasVariants}
-                                  fit_band={fit_band}
-                                  social_proof={social_proof}
-                                  onAdd={() => handleQuickAddClick(parent)}
-                                  onExpress={() => handleExpressBuy(rep)}
-                                  onPremiumGate={() => navigate("/premium")}
-                                />
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Section 2: Categories in RD-curated order */}
-                      {CATEGORY_TABS.map((cat) => {
-                        if (cat === "all") return null;
-                        const catDishes = rest.filter((e) => e.dish.category === cat);
-                        if (catDishes.length === 0 || remainingLimit <= 0) return null;
-
-                        const renderList = catDishes.slice(0, remainingLimit);
-                        remainingLimit -= renderList.length;
-
-                        return (
-                          <div key={cat}>
-                            <h2 className="sh mb10 uppercase tracking-[0.06em] text-[11px] font-semibold text-white/50" style={{ textTransform: "uppercase" }}>
-                              {CATEGORY_LABELS[cat]}
-                            </h2>
-                            <div className="prodgrid onecol">
-                              {renderList.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }) => {
-                                const price = parent.variants[0].price;
-                                const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
-                                return (
-                                  <DishCard
-                                    key={parent.id}
-                                    dish={rep}
-                                    name={parent.name}
-                                    price={price}
-                                    match={match}
-                                    scoreInfo={scoreInfo}
-                                    hasVariants={hasVariants}
-                                    isPremiumOnly={premiumSlugs.has(parent.slug)}
-                                    isPremium={isPremium}
-                                    lifestyleTag={lifestyleTag}
-                                    showWearableTeaser={false}
-                                    canExpress={hasSavedAddress && !hasVariants}
-                                    fit_band={fit_band}
-                                    social_proof={social_proof}
-                                    onAdd={() => handleQuickAddClick(parent)}
-                                    onExpress={() => handleExpressBuy(rep)}
-                                    onPremiumGate={() => navigate("/premium")}
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
+              ) : menuSections ? (
+                <div className="flex flex-col gap-6">
+                  {/* Section 1: Goal Match */}
+                  {menuSections.goalMatched.length > 0 && (
+                    <div id="cat-foryou" style={{ scrollMarginTop: "var(--menu-anchor-offset, 8px)" }}>
+                      <h2 className="sh mb10 fx ac gap6 text-[var(--tnm-action)] uppercase tracking-[0.06em] text-[11px] font-semibold">
+                        <i className="ph-fill ph-sparkle text-[var(--tnm-action)] text-xs" />
+                        Matched to your goal
+                      </h2>
+                      <div className="prodgrid onecol">
+                        {menuSections.goalMatched.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }, idx) => {
+                          const price = parent.variants[0].price;
+                          const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
+                          return (
+                            <DishCard
+                              key={parent.id}
+                              dish={rep}
+                              name={parent.name}
+                              price={price}
+                              match={match}
+                              scoreInfo={scoreInfo}
+                              hasVariants={hasVariants}
+                              isPremiumOnly={premiumSlugs.has(parent.slug)}
+                              isPremium={isPremium}
+                              lifestyleTag={lifestyleTag}
+                              showWearableTeaser={idx === 0}
+                              canExpress={hasSavedAddress && !hasVariants}
+                              fit_band={fit_band}
+                              social_proof={social_proof}
+                              onAdd={() => handleQuickAddClick(parent)}
+                              onExpress={() => handleExpressBuy(rep)}
+                              onPremiumGate={() => navigate("/premium")}
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })()
-              )}
+                  )}
+
+                  {/* Section 2: Categories in RD-curated order */}
+                  {menuSections.cats.map(({ cat, id, label, items }) => (
+                    <div key={cat} id={id} style={{ scrollMarginTop: "var(--menu-anchor-offset, 8px)" }}>
+                      <h2 className="sh mb10 uppercase tracking-[0.06em] text-[11px] font-semibold text-white/50" style={{ textTransform: "uppercase" }}>
+                        {label}
+                      </h2>
+                      <div className="prodgrid onecol">
+                        {items.map(({ parent, dish: rep, match, fit_band, social_proof, hasVariants }) => {
+                          const price = parent.variants[0].price;
+                          const scoreInfo = computeMatchScore(match, preferences, macrosAreProvisional(rep));
+                          return (
+                            <DishCard
+                              key={parent.id}
+                              dish={rep}
+                              name={parent.name}
+                              price={price}
+                              match={match}
+                              scoreInfo={scoreInfo}
+                              hasVariants={hasVariants}
+                              isPremiumOnly={premiumSlugs.has(parent.slug)}
+                              isPremium={isPremium}
+                              lifestyleTag={lifestyleTag}
+                              showWearableTeaser={false}
+                              canExpress={hasSavedAddress && !hasVariants}
+                              fit_band={fit_band}
+                              social_proof={social_proof}
+                              onAdd={() => handleQuickAddClick(parent)}
+                              onExpress={() => handleExpressBuy(rep)}
+                              onPremiumGate={() => navigate("/premium")}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               {visibleCount < consolidatedDishes.length && (
                 <button className="btn btn-g btn-blk mt10" onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}>
@@ -1031,7 +1139,7 @@ export default function V2Menu() {
       {/* Customization sheet */}
       {customizingDish && activeVariant && (
         <div className="bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setCustomizingDish(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--tnm-surface-ink-2)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", borderTop: "1px solid white/[0.08]", padding: 16, paddingBottom: "calc(16px + var(--safe-bottom))", maxHeight: "min(85vh, 85dvh)", overflowY: "auto" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", background: "var(--tnm-surface-ink-2)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", borderTop: "1px solid var(--ln2)", padding: 16, paddingBottom: "calc(16px + var(--safe-bottom))", maxHeight: "min(85vh, 85dvh)", overflowY: "auto" }}>
             <div style={{ margin: "0 auto 10px", height: 6, width: 40, borderRadius: 999, background: "var(--ln2)" }} aria-hidden="true" />
             <div className="fx ac jb mb10">
               <div className="h2" style={{ fontSize: 18 }}>Customise {customizingDish.name}</div>
