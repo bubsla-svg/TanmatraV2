@@ -33,6 +33,7 @@ import type { DishData } from "@/lib/menuData";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { openRazorpayCheckout, razorpayConfigured } from "@/lib/razorpayClient";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 interface LoyaltyProgress {
   subscriptionId: number;
@@ -415,6 +416,12 @@ export default function V2Subscriptions() {
   const [cancelStep, setCancelStep] = useState<1 | 2>(1);
   const [cancelReason, setCancelReason] = useState<CancelReason | null>(null);
   const [skipConfirm, setSkipConfirm] = useState<{ deliveryId: number; date: string } | null>(null);
+  // Accessibility for the hand-rolled manage-plan modals: focus trap, Escape,
+  // and focus restore (each Escape mirrors its own backdrop-close).
+  const windowEditA11y = useDialogA11y(windowEditOpen, () => setWindowEditOpen(false));
+  const reschedA11y = useDialogA11y(reschedDelivery !== null, () => setReschedDelivery(null));
+  const cancelA11y = useDialogA11y(cancelConfirmOpen, () => setCancelConfirmOpen(false));
+  const skipA11y = useDialogA11y(skipConfirm !== null, () => setSkipConfirm(null));
 
   // Streak rows power both the Zen Tracker strip near the LoyaltyStrip and
   // the cancel dialog's transparent what-changes recap — fetched once here.
@@ -703,7 +710,16 @@ export default function V2Subscriptions() {
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setWindowEditOpen(false)}
         >
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div
+            ref={windowEditA11y.panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit delivery window"
+            onKeyDown={windowEditA11y.onKeyDown}
+            className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+            style={{ maxWidth: 460, width: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Update delivery window
             </div>
@@ -754,7 +770,16 @@ export default function V2Subscriptions() {
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setReschedDelivery(null)}
         >
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div
+            ref={reschedA11y.panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Reschedule delivery"
+            onKeyDown={reschedA11y.onKeyDown}
+            className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+            style={{ maxWidth: 460, width: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="tt fx ac gap8" style={{ color: "var(--text-primary)" }}>
               <i className="ph-bold ph-clock safc" /> Reschedule delivery
             </div>
@@ -820,6 +845,11 @@ export default function V2Subscriptions() {
           onClick={() => setCancelConfirmOpen(false)}
         >
           <div
+            ref={cancelA11y.panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cancel subscription"
+            onKeyDown={cancelA11y.onKeyDown}
             className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
             style={{ maxWidth: 440, width: "100%", maxHeight: "88vh", overflowY: "auto" }}
             onClick={(e) => e.stopPropagation()}
@@ -1066,7 +1096,16 @@ export default function V2Subscriptions() {
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSkipConfirm(null)}
         >
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 440, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+          <div
+            ref={skipA11y.panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Skip delivery"
+            onKeyDown={skipA11y.onKeyDown}
+            className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+            style={{ maxWidth: 440, width: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="tt" style={{ color: "var(--text-primary)" }}>
               Skip this delivery?
             </div>
@@ -1770,6 +1809,7 @@ function SwapDialog({
 
   if (delivery === null) return null;
 
+  const swapA11y = useDialogA11y(true, onClose);
   return (
     <div
       className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
@@ -1777,6 +1817,11 @@ function SwapDialog({
       onClick={() => onClose()}
     >
       <div
+        ref={swapA11y.panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Swap meal"
+        onKeyDown={swapA11y.onKeyDown}
         className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
         style={{ maxWidth: 512, width: "100%" }}
         onClick={(e) => e.stopPropagation()}
@@ -2107,6 +2152,7 @@ function ChangePlanDialog({
     }
   }
 
+  const changePlanA11y = useDialogA11y(open, () => { if (!busy) onClose(); });
   return (
     <div
       className="tnm2 nn bg-[color-mix(in_srgb,var(--tnm-surface-ink)_95%,transparent)] backdrop-blur-md"
@@ -2114,6 +2160,11 @@ function ChangePlanDialog({
       onClick={() => !busy && onClose()}
     >
       <div
+        ref={changePlanA11y.panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Change plan"
+        onKeyDown={changePlanA11y.onKeyDown}
         className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
         style={{ maxWidth: 480, width: "100%", maxHeight: "88vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
@@ -2305,6 +2356,7 @@ function AddMemberDialog({
     if (open) setDraft(blankMember());
   }, [open]);
 
+  const addMemberA11y = useDialogA11y(open, onClose);
   if (!open) return null;
 
   const toggleAllergen = (allergen: string) => {
@@ -2325,6 +2377,11 @@ function AddMemberDialog({
       onClick={onClose}
     >
       <div
+        ref={addMemberA11y.panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add member"
+        onKeyDown={addMemberA11y.onKeyDown}
         className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
         style={{ maxWidth: 440, width: "100%", maxHeight: "86vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
