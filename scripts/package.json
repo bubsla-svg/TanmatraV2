@@ -28,9 +28,11 @@
     "@workspace/menu-catalog": "workspace:*",
     "@workspace/preferences-match": "workspace:*",
     "drizzle-orm": "catalog:",
+    "express": "^5",
     "sharp": "^0.33.5"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "lighthouse": "^13.2.0",
     "tsx": "catalog:"

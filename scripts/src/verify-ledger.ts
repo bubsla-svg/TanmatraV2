@@ -129,7 +129,8 @@ function runTests() {
     { accountId: "acc_2", entryType: "CREDIT" as const, amount: -100 },
   ];
   assert.strictEqual(verifyDoubleEntryMath(negativeLines), false, "Negative amounts must be rejected");
-  assert.strictEqual(verifyDoubleEntryMath([{ accountId: "acc_1", entryType: "DEBIT" as const, amount: 100 }]), false, "Single line must be rejected");
+  const singleLine = [{ accountId: "acc_1", entryType: "DEBIT" as const, amount: 100 }];
+  assert.strictEqual(verifyDoubleEntryMath(singleLine), false, "Single line must be rejected");
 
   const zeroLines = [
     { accountId: "acc_1", entryType: "DEBIT" as const, amount: 100 },
@@ -226,7 +227,7 @@ function runTests() {
   const jeConfig = getTableConfig(ledgerJournalEntriesTable);
   const prevHashIdx = jeConfig.indexes.find((idx) => idx.config.name === "idx_ledger_je_prev_hash");
   assert.ok(prevHashIdx, "idx_ledger_je_prev_hash index must exist on ledger_journal_entries");
-  assert.strictEqual(prevHashIdx.config.isUnique, true, "idx_ledger_je_prev_hash must be a unique index to prevent chain forking");
+  assert.strictEqual(prevHashIdx.config.unique, true, "idx_ledger_je_prev_hash must be a unique index to prevent chain forking");
 
   const linesConfig = getTableConfig(ledgerLinesTable);
   const jeFk = linesConfig.foreignKeys.find((fk) => {
@@ -234,7 +235,7 @@ function runTests() {
     return ref.columns.some((col) => col.name === "journal_entry_id") || ref.foreignColumns.some((col) => col.name === "id");
   });
   assert.ok(jeFk, "Foreign key from ledger_lines to ledger_journal_entries must exist");
-  const onDeleteRule = jeFk.onDelete ?? jeFk.reference().onDelete;
+  const onDeleteRule = jeFk.onDelete;
   assert.notStrictEqual(onDeleteRule, "cascade", "onDelete on journalEntryId foreign key must not be cascade");
   assert.strictEqual(onDeleteRule, "restrict", "onDelete on journalEntryId foreign key must be restrict to preserve historical lines");
 
