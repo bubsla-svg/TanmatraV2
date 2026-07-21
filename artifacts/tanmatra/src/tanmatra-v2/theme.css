@@ -442,3 +442,14 @@
   .tnm2 .addb:active{transform:translateX(-50%)}
 }
 
+/* Accessibility — visible keyboard focus on the .tnm2 money-path controls.
+   The .tnm2 reset zeroes input outlines (line ~19) and none of the button /
+   chip / opt / stepper primitives declared a :focus-visible ring, so keyboard
+   users had NO focus indicator anywhere across Menu / Cart / Checkout / OTP /
+   address. This restores one, scoped to .tnm2 so it can't touch shadcn/Radix. */
+.tnm2 :is(button, a, input, select, .btn, .chip, .opt, .iconbtn, .qbtn, .glass, .sw, .addb, .door, .rowi, .ritem):focus-visible{
+  outline: 2px solid var(--saf);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+

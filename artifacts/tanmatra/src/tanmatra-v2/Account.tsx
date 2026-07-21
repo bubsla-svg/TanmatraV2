@@ -411,7 +411,7 @@ function ThemeToggleCard() {
                 minHeight: 48,
                 borderRadius: 10,
                 textAlign: "left",
-                border: `1px solid ${active ? "var(--tnm-action)" : "white/[0.08]"}`,
+                border: `1px solid ${active ? "var(--tnm-action)" : "rgba(255,255,255,0.08)"}`,
                 background: active ? "color-mix(in srgb, var(--tnm-action) 14%, transparent)" : "var(--tnm-surface-ink)",
               }}
             >

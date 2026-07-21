@@ -1687,7 +1687,7 @@ export default function V2Subscribe() {
             shown when Razorpay resolved "cancelled" or "unavailable" — no
             payment was captured, so the plan was rolled back. */}
         {paymentIssue && (
-          <div className="card flex flex-col gap-2" style={{ background: "var(--s2)", borderColor: "var(--tnm-alert)" }}>
+          <div role="alert" className="card flex flex-col gap-2" style={{ background: "var(--s2)", borderColor: "var(--tnm-alert)" }}>
             <div className="flex items-center gap-2 text-xs font-semibold text-[var(--tnm-alert)]">
               <Warning className="w-4 h-4 shrink-0" />
               Payment didn't go through

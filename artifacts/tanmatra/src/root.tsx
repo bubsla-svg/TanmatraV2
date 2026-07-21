@@ -25,6 +25,12 @@ import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { installErrorTelemetry } from "@/lib/errorTelemetry";
 import "./index.css";
 import "./tanmatra-v2/theme.css";
+// The design tokens reference Instrument Serif (--font-serif) and JetBrains Mono
+// (--font-mono / clinical data), but only Inter was ever loaded — so display
+// headings silently fell back to Georgia and every price/macro to system mono.
+// These register the @font-face rules the tokens already point at.
+import "@fontsource/instrument-serif";
+import "@fontsource-variable/jetbrains-mono";
 import interFontUrl from "@fontsource-variable/inter/files/inter-latin-standard-normal.woff2?url";
 
 export const links: LinksFunction = () => [
@@ -301,7 +307,7 @@ export default function Root() {
   }, []);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>

@@ -410,7 +410,6 @@ export default function SubscriptionPlansLanding() {
                       <p className="text-[11px] text-nn-on-surface-variant">Plans starting at</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-xl font-extrabold text-white tabular-nums">₹{perDelivery.toLocaleString("en-IN")}</span>
-                        <span className="text-xs text-nn-on-surface-variant line-through tabular-nums">₹{(perDelivery + 50).toLocaleString("en-IN")}</span>
                         <span className="text-xs text-nn-primary font-medium">for {p.mealsPerWeek} meals/wk</span>
                       </div>
                     </div>
@@ -466,10 +465,7 @@ export default function SubscriptionPlansLanding() {
                   <div className="space-y-2 pt-1">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-nn-on-surface-variant">Available dishes in rotation</p>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-                      {(sampleDishes.length > 0 ? sampleDishes : [
-                        { name: p.name + " Signature Bowl", macros: { calories: p.calorieTargetPerDay / 3, protein: Math.round(p.proteinTargetGrams / 3) }, isVeg: true },
-                        { name: "Clinical RD Super salad", macros: { calories: Math.round(p.calorieTargetPerDay / 3.2), protein: Math.round(p.proteinTargetGrams / 3) }, isVeg: true },
-                      ]).map((sample: any, idx: number) => (
+                      {sampleDishes.map((sample: any, idx: number) => (
                         <div key={idx} className="shrink-0 w-44 sm:w-52 rounded-xl bg-nn-bg border border-white/[0.064] overflow-hidden flex flex-col justify-between group">
                           <div className="h-28 bg-nn-surface-high relative overflow-hidden flex items-center justify-center">
                             {sample.image ? (
@@ -499,7 +495,6 @@ export default function SubscriptionPlansLanding() {
                       <p className="text-[11px] text-nn-on-surface-variant">Plans starting at</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-xl font-extrabold text-white tabular-nums">₹{perDayPrice.toLocaleString("en-IN")}</span>
-                        <span className="text-xs text-nn-on-surface-variant line-through tabular-nums">₹{Math.round(perDayPrice * 1.2).toLocaleString("en-IN")}</span>
                         <span className="text-xs text-nn-primary font-medium">/ day · ₹{Math.round(cardPricePaise / 100).toLocaleString("en-IN")} for 7 days</span>
                       </div>
                     </div>
