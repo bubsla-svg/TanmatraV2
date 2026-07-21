@@ -30,7 +30,6 @@ import {
   Gift,
   Notepad,
   SignIn,
-  PaintBrush,
   UserCircle,
   type Icon,
 } from "@phosphor-icons/react";
@@ -97,7 +96,6 @@ const NAV_ROUTES: RouteEntry[] = [
   { label: "Rewards", to: "/rewards", icon: Sparkle, group: "Account" },
   { label: "Vouchers", to: "/vouchers", icon: Gift, group: "Account" },
   { label: "Premium", to: "/premium", icon: Crown, group: "Account" },
-  { label: "Design styleguide", to: "/__styleguide", icon: PaintBrush, group: "Account", keywords: "tokens components dev internal", devOnly: true },
 ];
 
 export function useCommandPaletteHotkey(): CommandPaletteContextValue {
