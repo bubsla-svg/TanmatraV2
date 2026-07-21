@@ -37,6 +37,7 @@ import { PROTOCOLS, PROTOCOL_LABELS, PROTOCOL_TAGLINES, isProtocol, matchesProto
 import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
 import MenuFilterSheet from "./MenuFilterSheet";
+import { FssaiMark } from "@/components/FssaiMark";
 import { usePreferences } from "@/lib/preferencesContext";
 import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
@@ -828,7 +829,7 @@ export default function V2Menu() {
                     </Link>
                     <div className="hbody">
                       <div className="fx ac g6 mb4">
-                        <span className="vtag"><span className={dish.isVeg ? "vd" : "vd nv"} />{dish.isVeg ? "VEG" : "NON-VEG"}</span>
+                        <span className="vtag"><FssaiMark isVeg={!!dish.isVeg} size={14} />{dish.isVeg ? "VEG" : "NON-VEG"}</span>
                       </div>
                       <Link to={`/dish/${dish.slug}`} className="small clamp1" style={{ fontWeight: 600, display: "block" }}>{dish.name}</Link>
                       <div className="mono" style={{ fontSize: 10, color: "var(--fnt)" }}>
@@ -1354,7 +1355,7 @@ function DishCard({
       <div className="fx gap12">
         <div className="f1" style={{ minWidth: 0 }}>
           <div className="fx ac g6 wrap mb6">
-            <span className="vtag"><span className={isVeg ? "vd" : "vd nv"} />{isVeg ? "VEG" : "NON-VEG"}</span>
+            <span className="vtag"><FssaiMark isVeg={isVeg} size={14} />{isVeg ? "VEG" : "NON-VEG"}</span>
             <span className={giCls}>{giLabel}</span>
             {lifestyleTag && <span className="pill" style={{ fontSize: 9 }}>{lifestyleTag}</span>}
             {isAssessed && fit_band === "high" && (

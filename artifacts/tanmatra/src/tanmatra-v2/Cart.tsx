@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { FssaiMark } from "@/components/FssaiMark";
 import { cadenceDiscountPct } from "@workspace/subscription-rules";
 import { F } from "./data";
 import { useQuery } from "@tanstack/react-query";
@@ -159,7 +160,7 @@ export default function V2Cart() {
                   <div className="f1" style={{ minWidth: 0 }}>
                     <div className="fx ac jb gap8">
                       <div className="fx ac g6" style={{ minWidth: 0 }}>
-                        <span className={item.isVeg ? "vd" : "vd nv"} />
+                        <FssaiMark isVeg={!!item.isVeg} size={14} />
                         <Link to={`/dish/${item.slug}`} className="small clamp1" style={{ fontWeight: 600 }}>{item.name}</Link>
                       </div>
                       {/* Full 44px .qbtn target — the 30×30 override sat one mis-tap from
