@@ -38,8 +38,8 @@ export default function V2Team() {
   const rds = TEAM.filter((m: any) => m.role === "rd");
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh" }}>
         {/* App bar */}
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>

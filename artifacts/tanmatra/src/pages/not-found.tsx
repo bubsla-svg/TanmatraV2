@@ -15,7 +15,7 @@ export default function NotFound() {
     <div
       className="tnm2 nn"
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: "var(--bg)",
         display: "flex",
         alignItems: "center",

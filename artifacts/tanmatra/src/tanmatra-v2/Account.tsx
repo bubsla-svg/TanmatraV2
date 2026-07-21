@@ -178,7 +178,7 @@ export default function V2Account() {
   };
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">
@@ -411,7 +411,7 @@ function ThemeToggleCard() {
                 minHeight: 48,
                 borderRadius: 10,
                 textAlign: "left",
-                border: `1px solid ${active ? "var(--tnm-action)" : "white/[0.08]"}`,
+                border: `1px solid ${active ? "var(--tnm-action)" : "var(--ln)"}`,
                 background: active ? "color-mix(in srgb, var(--tnm-action) 14%, transparent)" : "var(--tnm-surface-ink)",
               }}
             >

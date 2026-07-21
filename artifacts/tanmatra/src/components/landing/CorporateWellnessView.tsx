@@ -239,7 +239,7 @@ export default function CorporateWellnessView() {
     "placeholder:text-nn-on-surface-variant/50 focus:outline-none focus:ring-1 focus:ring-nn-primary focus:border-nn-primary/50";
 
   return (
-    <div className="nn-clinical bg-nn-bg text-white min-h-screen pb-16">
+    <div className="nn-clinical bg-nn-bg text-white min-h-dvh pb-16">
       <LandingTopBar
         ctaLabel="Get pilot pricing"
         ctaTo="#pilot-form"

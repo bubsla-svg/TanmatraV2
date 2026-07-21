@@ -90,7 +90,7 @@ export default function V2RdProfile() {
 
   if (!profile || !member) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/rd" aria-label="All RDs">
@@ -182,12 +182,12 @@ export default function V2RdProfile() {
   const hasVerify = member.councilNumber || member.verifyUrl;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
       <div
         style={{
           maxWidth: 480,
           margin: "0 auto",
-          minHeight: "100vh",
+          minHeight: "100dvh",
           display: "flex",
           flexDirection: "column",
         }}

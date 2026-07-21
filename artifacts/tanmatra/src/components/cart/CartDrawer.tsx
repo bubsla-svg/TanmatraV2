@@ -214,7 +214,10 @@ export default function CartDrawer() {
             exit="exit"
             onClick={close}
             className="bg-black/60"
-            style={{ position: "fixed", inset: 0, zIndex: 70 }}
+            // Above the StickyBottomBar (z-900): an open modal must sit over the
+            // persistent cart bar, otherwise the bar overlays the drawer's lower
+            // controls and eats their taps (audit #16 z-index collision).
+            style={{ position: "fixed", inset: 0, zIndex: 910 }}
             aria-hidden="true"
           />
 
@@ -235,7 +238,7 @@ export default function CartDrawer() {
               position: "fixed",
               right: 0,
               top: 0,
-              zIndex: 71,
+              zIndex: 911,
               height: "100dvh",
               width: "100%",
               maxWidth: "min(420px,100vw)",

@@ -36,7 +36,7 @@ export default function V2MarketplaceItem() {
 
   if (q.isLoading)
     return (
-      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/marketplace" aria-label="Back to marketplace">
@@ -61,7 +61,7 @@ export default function V2MarketplaceItem() {
   const item = q.data?.item;
   if (!item) {
     return (
-      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/marketplace" aria-label="Back to marketplace">
@@ -153,7 +153,7 @@ export default function V2MarketplaceItem() {
 
   return (
     <div
-      className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased"
+      className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased"
       style={{ display: "flex", flexDirection: "column" }}
     >
       <div
@@ -288,7 +288,7 @@ export default function V2MarketplaceItem() {
           {deliveryMode === "bundle_with_meal" && recentOrders.length > 0 && (
             <select
               className="inp mb10"
-              style={{ cursor: "pointer", background: "var(--tnm-surface-ink-2)", border: "1px solid white/[0.08]" }}
+              style={{ cursor: "pointer", background: "var(--tnm-surface-ink-2)", border: "1px solid var(--ln)" }}
               value={bundleOrderId ?? ""}
               onChange={(e) =>
                 setBundleOrderId(

@@ -173,7 +173,7 @@ export default function Billing() {
 
   if (loading) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
         <div style={{ textAlign: "center" }}>
           <div className="mono fine">Loading billing options...</div>
         </div>
@@ -182,7 +182,7 @@ export default function Billing() {
   }
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         {/* AppBar */}
         <div className="appbar">

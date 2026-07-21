@@ -77,7 +77,7 @@ export default function V2Protocol({ which }: { which: Key }) {
   const heroImg = cfg.heroImg ?? featured[0]?.image;
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       {which === "clinical" && <EnableClinical />}
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="content" style={{ paddingBottom: 24 }}>

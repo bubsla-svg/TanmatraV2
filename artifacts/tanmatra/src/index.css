@@ -16,7 +16,7 @@
   --text-primary: #E9ECEE;  /* bone: readable soft-white */
   --text-secondary: #8B9398;/* mute: secondary zinc-gray */
   --text-tertiary: #5C6367; /* faint: tertiary divider gray */
-  --action: #F4C430;        /* saffron-400: dark CTA fill */
+  --action: var(--color-nn-primary);  /* one amber: matches nav pill + BottomNav */
   --action-text: #141210;   /* saffron-on: dark action text */
 
   /* Canonical .tnm2 design-token bindings (CRO spec Amendment A3) — full set. */
@@ -81,7 +81,7 @@
   --text-primary: #F2F0E9;  /* bone: readable soft-white */
   --text-secondary: #8B9099;/* mute: secondary zinc-gray */
   --text-tertiary: #5B616B; /* faint: tertiary divider gray */
-  --action: #E9A847;        /* saffron-400: dark CTA fill */
+  --action: var(--color-nn-primary);  /* one amber: matches nav pill + BottomNav */
   --action-text: #2A1B08;   /* saffron-on: dark action text */
   
   --color-macro-protein-theme: #8FB996;
@@ -287,8 +287,8 @@
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.15); }
-    50% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.25); }
+    0%, 100% { box-shadow: 0 0 20px color-mix(in srgb, var(--color-nn-primary) 15%, transparent); }
+    50% { box-shadow: 0 0 30px color-mix(in srgb, var(--color-nn-primary) 25%, transparent); }
   }
   @keyframes breathe {
     0%, 100% { transform: scale(1); }
@@ -443,7 +443,7 @@
     outline: none;
     box-shadow:
       0 0 0 2px var(--color-nn-bg),
-      0 0 0 4px rgba(212, 175, 55, 0.55);
+      0 0 0 4px color-mix(in srgb, var(--color-nn-primary) 55%, transparent);
   }
 
   /* All numeric fields tabular by default for clinical data */

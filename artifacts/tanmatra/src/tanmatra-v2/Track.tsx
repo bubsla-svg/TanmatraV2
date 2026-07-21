@@ -159,7 +159,7 @@ export default function V2Track() {
   }, [order, updateStatus, numericOrderId]);
 
   const shell = (body: any) => (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>{body}</div>
     </div>
   );

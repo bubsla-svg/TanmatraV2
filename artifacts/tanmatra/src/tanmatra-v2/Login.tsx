@@ -134,7 +134,7 @@ export default function V2Login() {
   );
 
   return (
-    <div className="tnm2 nn text-white antialiased" style={{ minHeight: "100vh", background: "var(--tnm-surface-ink)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+    <div className="tnm2 nn text-white antialiased" style={{ minHeight: "100dvh", background: "var(--tnm-surface-ink)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
       <div style={{ maxWidth: 420, width: "100%", margin: "0 auto", padding: 20 }}>
         <div className="tc mb20">
           <div className="dic" style={{ width: 48, height: 48, margin: "0 auto 12px", color: "var(--safb)", fontSize: 24 }}><i className="ph-bold ph-flask" /></div>

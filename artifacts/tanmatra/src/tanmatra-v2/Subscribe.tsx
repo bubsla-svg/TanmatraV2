@@ -959,8 +959,8 @@ export default function V2Subscribe() {
     // (isMounted starts false), so server and client markup match — no
     // hydration mismatch.
     return (
-      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white">
-        <div className="max-w-[480px] mx-auto min-h-screen flex flex-col px-4 pt-16">
+      <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white">
+        <div className="max-w-[480px] mx-auto min-h-dvh flex flex-col px-4 pt-16">
           <h1 className="text-xl font-bold text-white/95 leading-tight">
             Build your subscription
           </h1>
@@ -1716,7 +1716,7 @@ export default function V2Subscribe() {
             shown when Razorpay resolved "cancelled" or "unavailable" — no
             payment was captured, so the plan was rolled back. */}
         {paymentIssue && (
-          <div className="card flex flex-col gap-2" style={{ background: "var(--s2)", borderColor: "var(--tnm-alert)" }}>
+          <div role="alert" className="card flex flex-col gap-2" style={{ background: "var(--s2)", borderColor: "var(--tnm-alert)" }}>
             <div className="flex items-center gap-2 text-xs font-semibold text-[var(--tnm-alert)]">
               <Warning className="w-4 h-4 shrink-0" />
               Payment didn't go through
@@ -1867,8 +1867,8 @@ export default function V2Subscribe() {
   };
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white select-none">
-      <div className="max-w-[480px] mx-auto min-h-screen flex flex-col pb-24">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white select-none">
+      <div className="max-w-[480px] mx-auto min-h-dvh flex flex-col pb-24">
         {/* Stepper App Header */}
         <div className="appbar shrink-0">
           {step > 0 && step < 7 ? (

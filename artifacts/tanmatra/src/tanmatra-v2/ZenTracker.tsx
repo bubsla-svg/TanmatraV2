@@ -268,9 +268,9 @@ export default function V2ZenTracker() {
   const isDelivered = status === "delivered";
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
       <style>{"@keyframes spin{to{transform:rotate(360deg)}}"}</style>
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
         {/* Minimal header / appbar */}
         <div className="appbar" style={{ borderBottom: "1px solid var(--ln)" }}>
           <Link className="iconbtn" to="/menu" aria-label="Menu"><i className="ph-bold ph-arrow-left" /></Link>

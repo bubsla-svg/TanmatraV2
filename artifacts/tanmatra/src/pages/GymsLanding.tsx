@@ -104,7 +104,7 @@ export default function GymsLanding() {
   };
 
   return (
-    <div className="nn-clinical bg-nn-bg text-white min-h-screen">
+    <div className="nn-clinical bg-nn-bg text-white min-h-dvh">
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-white/[0.08] py-20 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 items-center">
@@ -113,10 +113,10 @@ export default function GymsLanding() {
               GYM & FITNESS CENTER PARTNERSHIPS
             </Badge>
             <h1 className="font-serif text-4xl sm:text-6xl leading-tight">
-              70% of results come from nutrition. <span className="text-nn-primary">Own that 70%.</span>
+              Training is half the result. <span className="text-nn-primary">Own the other half.</span>
             </h1>
             <p className="text-base sm:text-lg text-nn-on-surface-variant max-w-xl leading-relaxed">
-              Integrate Tanmatra's dietitian-designed, macro-calibrated meals directly into your memberships. Increase client retention, accelerate their fat-loss or muscle-gain results, and unlock a passive revenue stream.
+              Integrate Tanmatra's dietitian-designed, macro-calibrated meals directly into your memberships. Increase client retention, accelerate their fat-loss or muscle-gain results, and add a new revenue line.
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <a href="#partner-form">
@@ -143,11 +143,14 @@ export default function GymsLanding() {
 
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-nn-primary/10 to-transparent blur-3xl -z-10 rounded-full" />
-            <img 
-              src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80" 
-              alt="Gym workouts and health"
-              className="rounded-2xl border border-white/[0.08] w-full object-cover max-h-[400px] shadow-2xl"
-            />
+            <div className="rounded-2xl border border-white/[0.08] w-full aspect-[4/3] max-h-[400px] shadow-2xl bg-gradient-to-br from-nn-surface-high to-nn-surface flex flex-col items-center justify-center gap-4 text-center p-8">
+              <div className="w-14 h-14 rounded-2xl bg-nn-primary/15 border border-nn-primary/25 flex items-center justify-center">
+                <TrendingUp className="w-7 h-7 text-nn-primary" />
+              </div>
+              <p className="text-sm text-nn-on-surface-variant max-w-xs">
+                Dietitian-designed, macro-calibrated meals — delivered into your members' routine.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -158,7 +161,7 @@ export default function GymsLanding() {
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <h2 className="font-serif text-3xl sm:text-4xl">Why gyms partner with Tanmatra</h2>
             <p className="text-sm text-nn-on-surface-variant">
-              Workout sessions are only half the battle. Bridge the gap between training and nutrition seamlessly.
+              Workout sessions are only half the battle. Bridge the gap between training and nutrition.
             </p>
           </div>
 

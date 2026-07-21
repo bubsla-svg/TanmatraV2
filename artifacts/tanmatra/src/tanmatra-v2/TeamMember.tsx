@@ -29,7 +29,7 @@ export default function V2TeamMember() {
 
   if (!member) {
     return (
-      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/team"><i className="ph-bold ph-arrow-left" /></Link>
@@ -51,8 +51,8 @@ export default function V2TeamMember() {
   const isRd = member.role === "rd";
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
         {/* App bar */}
         <div className="appbar">
           <Link className="iconbtn" to="/team" aria-label="Back to team"><i className="ph-bold ph-arrow-left" /></Link>

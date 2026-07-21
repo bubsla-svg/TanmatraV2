@@ -43,7 +43,7 @@ const AVATAR_ACCENT: Record<string, any> = {
 };
 
 const TAB_CSS = `
-.tnm2 .apx-tabs{display:flex;gap:4px;background:var(--tnm-surface-ink-2);border:1px solid white/[0.08];border-radius:12px;padding:4px}
+.tnm2 .apx-tabs{display:flex;gap:4px;background:var(--tnm-surface-ink-2);border:1px solid var(--ln);border-radius:12px;padding:4px}
 .tnm2 .apx-tab{flex:1;min-width:0;height:38px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--tnm-text-secondary);white-space:nowrap;transition:background 150ms,color 150ms}
 .tnm2 .apx-tab i{font-size:15px;flex:none}
 .tnm2 .apx-tab.on{background:color-mix(in srgb, var(--tnm-action) 14%, transparent);color:var(--tnm-action);box-shadow:inset 0 0 0 1px var(--tnm-action)}
@@ -131,7 +131,7 @@ export default function V2Appointments() {
 
   if (unauth) {
     return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <Link className="iconbtn" to="/" aria-label="Home">
@@ -170,7 +170,7 @@ export default function V2Appointments() {
   }
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home">

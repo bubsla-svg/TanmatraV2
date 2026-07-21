@@ -43,7 +43,7 @@ export default function V2CheckoutAppointment() {
 
   if (!booking || !booking.rdSlug) {
     return (
-      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="appbar">
             <button className="iconbtn" onClick={() => navigate("/rd")}><i className="ph-bold ph-arrow-left" /></button>
@@ -123,8 +123,8 @@ export default function V2CheckoutAppointment() {
   }
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <button className="iconbtn" onClick={() => navigate(-1)}><i className="ph-bold ph-arrow-left" /></button>
           <div className="abt">Review your booking</div>

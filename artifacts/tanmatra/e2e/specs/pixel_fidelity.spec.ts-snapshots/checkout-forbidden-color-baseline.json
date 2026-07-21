@@ -1,16 +1,16 @@
 [
   {
-    "selector": "div.min-h-screen.bg-[var(--color-nn-bg)].text-white",
+    "selector": "div.min-h-dvh.bg-[var(--color-nn-bg)].text-white",
     "property": "backgroundColor",
     "hex": "#131313"
   },
   {
-    "selector": "div.tnm2.nn.min-h-screen.bg-[var(--tnm-surface-ink)].text-white.antialiased",
+    "selector": "div.tnm2.nn.min-h-dvh.bg-[var(--tnm-surface-ink)].text-white.antialiased",
     "property": "backgroundColor",
     "hex": "#131313"
   },
   {
-    "selector": "div.tnm2.nn.min-h-screen.bg-[var(--tnm-surface-ink)].text-white.antialiased",
+    "selector": "div.tnm2.nn.min-h-dvh.bg-[var(--tnm-surface-ink)].text-white.antialiased",
     "property": "color",
     "hex": "#e2e2e2"
   },

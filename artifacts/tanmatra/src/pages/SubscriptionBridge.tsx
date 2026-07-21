@@ -98,7 +98,7 @@ export default function SubscriptionBridge() {
 
   if (loading) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
         <div style={{ textAlign: "center" }}>
           <div className="mono fine">Loading your 3-day results...</div>
         </div>
@@ -108,7 +108,7 @@ export default function SubscriptionBridge() {
 
   if (!subscriptionId || !recap) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: 24 }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 400 }}>
           <i className="ph-bold ph-warning-circle dgrc" style={{ fontSize: 48 }} />
           <h1 className="h1 mt12">Trial details not found</h1>
@@ -127,7 +127,7 @@ export default function SubscriptionBridge() {
   const start6WeekPlanUrl = `/subscribe?plan=healthy-everyday-plan&cadence=monthly`;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         {/* AppBar */}
         <div className="appbar">

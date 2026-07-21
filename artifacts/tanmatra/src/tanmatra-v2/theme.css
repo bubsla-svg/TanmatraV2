@@ -108,6 +108,13 @@
 .tnm2 .dimg{width:92px;height:92px;border-radius:10px;flex:none;position:relative}
 .tnm2 .addb{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);height:30px;min-width:64px;padding:0 10px;border-radius:8px;background:var(--s3);border:1px solid var(--ln2);color:var(--safb);font-size:12px;font-weight:700;letter-spacing:.04em;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform 150ms var(--e)}
 .tnm2 .addb.in{background:var(--saged);border-color:var(--sage);color:var(--sage)}
+/* In-place quantity stepper on menu cards — same footprint as .addb (floating
+   at the bottom of the 92px thumbnail), green in-cart treatment. Lets a dish
+   already in the cart go −/qty/+ without opening the drawer (Uber-Eats). */
+.tnm2 .stepb{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);height:30px;border-radius:8px;background:var(--saged);border:1px solid var(--sage);color:var(--sage);display:inline-flex;align-items:center;overflow:hidden}
+.tnm2 .stepb button{width:32px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--sage);transition:background 150ms var(--e)}
+.tnm2 .stepb button:active{background:color-mix(in srgb,var(--sage) 20%,transparent)}
+.tnm2 .stepb span{min-width:24px;text-align:center;font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:700;color:var(--sage)}
 .tnm2 .dtitle{font-size:15px;font-weight:600;line-height:1.3;margin:6px 0 4px}
 /* Phase 2 — Ambient Personalization Grid: biometric match badge + locked wearable teaser.
    Badge is absolutely positioned (never affects layout); reason line + teaser use
@@ -440,5 +447,27 @@
   .tnm2 .qbtn:active,
   .tnm2 .chip:active{transform:none}
   .tnm2 .addb:active{transform:translateX(-50%)}
+}
+
+/* Accessibility — visible keyboard focus on the .tnm2 money-path controls.
+   The .tnm2 reset zeroes input outlines (line ~19) and none of the button /
+   chip / opt / stepper primitives declared a :focus-visible ring, so keyboard
+   users had NO focus indicator anywhere across Menu / Cart / Checkout / OTP /
+   address. This restores one, scoped to .tnm2 so it can't touch shadcn/Radix. */
+.tnm2 :is(button, a, input, select, .btn, .chip, .opt, .iconbtn, .qbtn, .glass, .sw, .addb, .door, .rowi, .ritem):focus-visible{
+  outline: 2px solid var(--saf);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Sticky menu header cluster — app bar + search + filter rails stay pinned as
+   the dish list scrolls under, so re-filtering never requires scrolling back
+   to the top (Uber-Eats scannability). Degrades to a normal header if the
+   scroll container isn't the window. */
+.tnm2 .menu-stickytop{
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--tnm-surface-ink);
 }
 

@@ -54,7 +54,7 @@ export default function V2OfficeLunch() {
 
   if (loading || !data) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="padx fine mut" style={{ paddingTop: 24 }}>Loading…</div>
         </div>
@@ -118,8 +118,8 @@ export default function V2OfficeLunch() {
   const saveDisabled = !windowOpen || submitting || overBudget;
 
   return (
-    <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
         <div className="content" style={{ paddingBottom: 24 }}>
           {/* Hero */}
           <div className="plc" style={{ minHeight: 200 }}>

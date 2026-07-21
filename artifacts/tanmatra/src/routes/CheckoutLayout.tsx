@@ -5,7 +5,7 @@ export const handle = { chrome: false } as const;
 
 export default function CheckoutLayout() {
   return (
-    <div className="min-h-screen bg-[var(--color-nn-bg)] text-white">
+    <div className="min-h-dvh bg-[var(--color-nn-bg)] text-white">
       <Outlet />
     </div>
   );

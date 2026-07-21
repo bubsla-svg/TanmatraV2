@@ -35,6 +35,7 @@ import {
 } from "@/lib/clinicalDiet";
 import { PROTOCOLS, PROTOCOL_LABELS, PROTOCOL_TAGLINES, isProtocol, matchesProtocol, type Protocol } from "@/lib/protocols";
 import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
+import StickyBottomBar from "@/components/layout/StickyBottomBar";
 import { usePreferences } from "@/lib/preferencesContext";
 import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
@@ -311,7 +312,8 @@ export default function V2Menu() {
       macros: item.macros, customizations: [],
     });
     hapticLight();
-    openCart();
+    // No auto-open drawer — keep the browse loop uninterrupted (Uber-Eats
+    // pattern). The persistent StickyBottomBar + toast are the feedback.
     toast.success(`Added ${item.name} to your order`, { description: "Tap the cart to review and check out." });
   };
 
@@ -530,8 +532,11 @@ export default function V2Menu() {
   const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length + excludedAllergens.length;
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh" }}>
+        {/* Sticky header cluster — app bar + search + filter rails stay pinned
+            so re-filtering never means scrolling back to the top (Uber-Eats). */}
+        <div className="menu-stickytop">
         {/* App bar */}
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -611,6 +616,8 @@ export default function V2Menu() {
             );
           })}
         </div>
+
+        </div>{/* /menu-stickytop */}
 
         <div className="content padx" style={{ paddingTop: 4, paddingBottom: 96 }}>
           {/* Clinical-mode diet-order banner */}
@@ -1145,6 +1152,9 @@ export default function V2Menu() {
           </div>
         </div>
       )}
+
+      {/* Persistent cart bar — Uber-Eats "View cart" parity; empty cart renders nothing. */}
+      <StickyBottomBar context="homepage" />
     </div>
   );
 }
@@ -1178,6 +1188,23 @@ function DishCard({
 }: any) {
   const { preferences } = usePreferences();
   const isAssessed = preferences !== null && preferences.quizCompletedAt !== null;
+  // In-place quantity stepper: the cart line for this dish added without
+  // customizations (a plain menu quick-add), if any. Selecting primitives keeps
+  // each card from re-rendering unless its own line changes.
+  const cartLineId = useCartStore((s: any) => {
+    const line = s.items.find(
+      (i: any) => i.dishId === dish.id && (!i.customizations || i.customizations.length === 0),
+    );
+    return line ? line.lineId : null;
+  });
+  const cartQty = useCartStore((s: any) => {
+    const line = s.items.find(
+      (i: any) => i.dishId === dish.id && (!i.customizations || i.customizations.length === 0),
+    );
+    return line ? line.quantity : 0;
+  });
+  const stepQty = useCartStore((s: any) => s.updateQty);
+  const stepRemove = useCartStore((s: any) => s.removeItem);
   const isVeg = !!dish.isVeg;
   const gi = dish.glycaemicIndex || "medium";
   const giCls = gi === "low" ? "gi gi-low" : "gi gi-med";
@@ -1186,6 +1213,8 @@ function DishCard({
   const warned = match?.warnings?.length > 0;
   const provisional = macrosAreProvisional(dish);
   const info: MatchScore = scoreInfo ?? { kind: "none" };
+  // Show the in-place stepper once a plain (non-variant) line is in the cart.
+  const showStepper = cartQty > 0 && !hasVariants && !blocked && !(isPremiumOnly && !isPremium);
 
   const handleLinkClick = (e: React.MouseEvent) => {
     if (blocked) {
@@ -1280,21 +1309,56 @@ function DishCard({
           {info.kind === "blocked" && (
             <span className="mscore off" aria-label="Off your plan"><i className="ph-bold ph-prohibit" />Off-plan</span>
           )}
-          <button
-            className="addb"
-            disabled={blocked}
-            style={blocked ? { opacity: 0.5, cursor: "not-allowed", pointerEvents: "auto" } : undefined}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (blocked) return;
-              if (isPremiumOnly && !isPremium) { onPremiumGate(); return; }
-              onAdd();
-            }}
-            aria-label={blocked ? "Blocked" : `Add ${name}`}
-          >
-            {blocked ? "BLOCKED" : hasVariants ? "CUSTOMISE" : "ADD"}
-          </button>
+          {showStepper ? (
+            <div
+              className="stepb"
+              role="group"
+              aria-label={`${name}, ${cartQty} in cart`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            >
+              <button
+                type="button"
+                aria-label={cartQty <= 1 ? `Remove ${name}` : `Decrease ${name}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!cartLineId) return;
+                  if (cartQty <= 1) stepRemove(cartLineId);
+                  else stepQty(cartLineId, -1);
+                }}
+              >
+                <i className="ph-bold ph-minus" aria-hidden />
+              </button>
+              <span className="mono" aria-hidden>{cartQty}</span>
+              <button
+                type="button"
+                aria-label={`Add another ${name}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (cartLineId) stepQty(cartLineId, 1);
+                }}
+              >
+                <i className="ph-bold ph-plus" aria-hidden />
+              </button>
+            </div>
+          ) : (
+            <button
+              className="addb"
+              disabled={blocked}
+              style={blocked ? { opacity: 0.5, cursor: "not-allowed", pointerEvents: "auto" } : undefined}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (blocked) return;
+                if (isPremiumOnly && !isPremium) { onPremiumGate(); return; }
+                onAdd();
+              }}
+              aria-label={blocked ? "Blocked" : `Add ${name}`}
+            >
+              {blocked ? "BLOCKED" : hasVariants ? "CUSTOMISE" : "ADD"}
+            </button>
+          )}
         </Link>
       </div>
       {/* Macro ribbon — same honesty rule as the PDP: provisional (placeholder)

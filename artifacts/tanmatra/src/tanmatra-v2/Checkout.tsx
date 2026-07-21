@@ -17,6 +17,7 @@ import { GST_RATE_FOOD, GST_RATE_DELIVERY } from "@/lib/cartMath";
 import { computeCheckoutLedger } from "@/lib/checkoutLedger";
 import { addonsApi } from "@/lib/marketplaceApi";
 import { useOrders, generateOrderId, submitOrderIdempotencyKey } from "@/lib/ordersContext";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import { loyaltyApi } from "@/lib/loyaltyApi";
 import { corporateApi, type CompanySubsidy } from "@/lib/corporateApi";
 import { onDishImageError } from "@/lib/imgFallback";
@@ -354,6 +355,15 @@ export default function V2Checkout() {
   const [guestDevCode, setGuestDevCode] = useState<string | null>(null);
   const [guestIsSending, setGuestIsSending] = useState(false);
   const [guestIsVerifying, setGuestIsVerifying] = useState(false);
+  // Accessibility for the two hand-rolled charge-gate modals (focus trap +
+  // Escape + focus restore); each Escape carries the same guard as its
+  // backdrop-click so a charge can't be dismissed mid-flight.
+  const guestAuthA11y = useDialogA11y(showGuestAuthDialog, () => {
+    if (!guestIsVerifying) setShowGuestAuthDialog(false);
+  });
+  const confirmPayA11y = useDialogA11y(confirmOpen, () => {
+    if (!isProcessing) setConfirmOpen(false);
+  });
   const [guestOtpError, setGuestOtpError] = useState<string | null>(null);
   const [otpShakeOn, setOtpShakeOn] = useState(false);
   // Segmented 6-box OTP input: refs for focus management plus the index of
@@ -501,7 +511,13 @@ export default function V2Checkout() {
       }
       setShowGuestAuthDialog(true);
     } else {
-      setConfirmOpen(true);
+      // Returning (authenticated) user with a selected address + slot: pay
+      // directly. The itemized total is already on the page and Razorpay
+      // re-shows it, so the extra in-app "Confirm Payment" dialog was a
+      // redundant tap (Uber-Eats one-tap-to-pay). handleConfirmedPayment
+      // self-guards (re-entry guard + idempotency + its own address check).
+      // Guests still pass through auth above, then the confirm step.
+      void handleConfirmedPayment();
     }
   };
 
@@ -1062,7 +1078,7 @@ export default function V2Checkout() {
 
   if (!isMounted) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="content padx tc" style={{ padding: "72px 20px" }}>
             <h1>Checkout</h1>
@@ -1077,7 +1093,7 @@ export default function V2Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="content padx tc" style={{ padding: "72px 20px" }}>
             <i className="ph-bold ph-warning-circle" style={{ fontSize: 34, color: "var(--safb)" }} />
@@ -1346,6 +1362,18 @@ export default function V2Checkout() {
               theme: { color: "var(--tnm-action)" },
               prefill: {
                 contact: activeAddr?.phone ?? "",
+              },
+              // UPI-intent-first: surface UPI as the first payment block (the
+              // India habit path) while keeping every other Razorpay method
+              // available below via show_default_blocks.
+              config: {
+                display: {
+                  blocks: {
+                    upi: { name: "Pay by UPI", instruments: [{ method: "upi" }] },
+                  },
+                  sequence: ["block.upi"],
+                  preferences: { show_default_blocks: true },
+                },
               },
               handler: async (response: {
                 razorpay_payment_id: string;
@@ -1694,9 +1722,9 @@ export default function V2Checkout() {
       : selectedPickupId !== null);
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       <ProcessingLiveRegion isProcessing={isProcessing} orderRef={processingOrderRef} />
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <button type="button" className="iconbtn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cart"))} aria-label="Back">
             <i className="ph-bold ph-arrow-left" />
@@ -2524,10 +2552,19 @@ export default function V2Checkout() {
             style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!guestIsVerifying) setShowGuestAuthDialog(false); }}
           >
-            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 360, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div
+              ref={guestAuthA11y.panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="guest-auth-title"
+              onKeyDown={guestAuthA11y.onKeyDown}
+              className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+              style={{ maxWidth: 360, width: "100%" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="fx ac gap8">
                 <Phone className="w-5 h-5" style={{ color: "var(--safb)" }} />
-                <div className="h2" style={{ fontSize: 18 }}>
+                <div id="guest-auth-title" className="h2" style={{ fontSize: 18 }}>
                   {guestAuthStep === "welcome" ? "Welcome to Tanmatra!" : "Verify Mobile"}
                 </div>
               </div>
@@ -2725,10 +2762,19 @@ export default function V2Checkout() {
             style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!isProcessing) setConfirmOpen(false); }}
           >
-            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 400, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div
+              ref={confirmPayA11y.panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="confirm-pay-title"
+              onKeyDown={confirmPayA11y.onKeyDown}
+              className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+              style={{ maxWidth: 400, width: "100%" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="fx ac gap8">
                 <ShieldCheck className="w-5 h-5" style={{ color: "var(--sage)" }} />
-                <div className="h2" style={{ fontSize: 18 }}>Confirm Payment</div>
+                <div id="confirm-pay-title" className="h2" style={{ fontSize: 18 }}>Confirm Payment</div>
               </div>
               <p className="fine mt6">
                 You will be charged <span className="safc fw7 mono">{formatPrice(razorpayTotal)}</span> via Razorpay.

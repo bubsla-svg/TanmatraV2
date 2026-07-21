@@ -25,6 +25,12 @@ import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { installErrorTelemetry } from "@/lib/errorTelemetry";
 import "./index.css";
 import "./tanmatra-v2/theme.css";
+// The design tokens reference Instrument Serif (--font-serif) and JetBrains Mono
+// (--font-mono / clinical data), but only Inter was ever loaded — so display
+// headings silently fell back to Georgia and every price/macro to system mono.
+// These register the @font-face rules the tokens already point at.
+import "@fontsource/instrument-serif";
+import "@fontsource-variable/jetbrains-mono";
 import interFontUrl from "@fontsource-variable/inter/files/inter-latin-standard-normal.woff2?url";
 
 export const links: LinksFunction = () => [
@@ -183,7 +189,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
         <noscript>
-          <div style={{ minHeight:"100vh", background:"var(--bg)", color:"var(--color-stone-0)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
+          <div style={{ minHeight:"100dvh", background:"var(--bg)", color:"var(--color-stone-0)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
             <strong style={{ color:"var(--color-nn-primary)", fontSize:"1.25rem" }}>Tanmatra</strong>
             <p style={{ color:"var(--text-secondary)", fontSize:"0.875rem", maxWidth:"320px" }}>
               Dietitian-designed meals, delivered fresh
@@ -267,7 +273,7 @@ function AppShellInner() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col transition-colors duration-200 ${
+      className={`min-h-dvh flex flex-col transition-colors duration-200 ${
         hideChrome ? "text-foreground" : "bg-background text-foreground"
       }`}
       style={hideChrome ? { background: "var(--bg)" } : undefined}
@@ -301,7 +307,7 @@ export default function Root() {
   }, []);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>

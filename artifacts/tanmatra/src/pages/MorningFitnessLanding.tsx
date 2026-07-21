@@ -99,7 +99,7 @@ export default function MorningFitnessLanding() {
   };
 
   return (
-    <div className="nn-clinical bg-nn-bg text-white min-h-screen">
+    <div className="nn-clinical bg-nn-bg text-white min-h-dvh">
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-white/[0.08] py-20 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 items-center">
@@ -138,11 +138,14 @@ export default function MorningFitnessLanding() {
 
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-nn-primary/10 to-transparent blur-3xl -z-10 rounded-full" />
-            <img 
-              src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800&q=80" 
-              alt="Running club outdoors"
-              className="rounded-2xl border border-white/[0.08] w-full object-cover max-h-[400px] shadow-2xl"
-            />
+            <div className="rounded-2xl border border-white/[0.08] w-full aspect-[4/3] max-h-[400px] shadow-2xl bg-gradient-to-br from-nn-surface-high to-nn-surface flex flex-col items-center justify-center gap-4 text-center p-8">
+              <div className="w-14 h-14 rounded-2xl bg-nn-primary/15 border border-nn-primary/25 flex items-center justify-center">
+                <Coffee className="w-7 h-7 text-nn-primary" />
+              </div>
+              <p className="text-sm text-nn-on-surface-variant max-w-xs">
+                Warm, dietitian-approved recovery breakfasts — at your finish line by 7:00 AM.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -177,7 +180,7 @@ export default function MorningFitnessLanding() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">Clean Recovery Macros</h3>
                 <p className="text-xs text-nn-on-surface-variant leading-relaxed">
-                  Menu items like *Boiled Egg Plates*, *Buckwheat Mung Khichdi*, and *High-Protein Berry Smoothies* replenish glycogen and repair muscle fibers instantly without sugars.
+                  Menu items like Boiled Egg Plates, Buckwheat Mung Khichdi, and High-Protein Berry Smoothies replenish glycogen and repair muscle fibers instantly without sugars.
                 </p>
               </CardContent>
             </Card>
