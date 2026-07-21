@@ -6,7 +6,7 @@ export default function AboutV2() {
   const dietitians = TEAM.filter((m) => m.role === "rd").slice(0, 3);
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       {/* Hero Section */}
       <section className="relative px-6 pt-28 pb-16 text-center max-w-3xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">

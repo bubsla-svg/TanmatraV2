@@ -1096,7 +1096,7 @@ export default function V2Checkout() {
 
   if (!isMounted) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="content padx tc" style={{ padding: "72px 20px" }}>
             <h1>Checkout</h1>
@@ -1111,7 +1111,7 @@ export default function V2Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="tnm2 nn" style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="tnm2 nn" style={{ minHeight: "100dvh", background: "var(--bg)" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div className="content padx tc" style={{ padding: "72px 20px" }}>
             <i className="ph-bold ph-warning-circle" style={{ fontSize: 34, color: "var(--safb)" }} />
@@ -1740,9 +1740,9 @@ export default function V2Checkout() {
       : selectedPickupId !== null);
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       <ProcessingLiveRegion isProcessing={isProcessing} orderRef={processingOrderRef} />
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
         <div className="appbar">
           <button type="button" className="iconbtn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cart"))} aria-label="Back">
             <i className="ph-bold ph-arrow-left" />

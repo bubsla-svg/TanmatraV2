@@ -99,7 +99,7 @@ export default function MorningFitnessLanding() {
   };
 
   return (
-    <div className="nn-clinical bg-nn-bg text-white min-h-screen">
+    <div className="nn-clinical bg-nn-bg text-white min-h-dvh">
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-white/[0.08] py-20 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 items-center">

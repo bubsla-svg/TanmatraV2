@@ -57,7 +57,7 @@ export default function V2Home() {
   }, []);
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white select-none">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white select-none">
       <h1 className="sr-only">
         Tanmatra — Dietitian-designed meal delivery in Noida
       </h1>

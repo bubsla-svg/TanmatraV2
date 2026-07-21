@@ -221,7 +221,7 @@ function AlertPaletteGrid() {
 
 export default function Styleguide() {
   return (
-    <div className="min-h-screen bg-nn-bg">
+    <div className="min-h-dvh bg-nn-bg">
       {/* Hero */}
       <div className="border-b border-white/[0.08] bg-gradient-to-b from-nn-primary/5 to-transparent">
         <div className="max-w-5xl mx-auto px-6 py-16">

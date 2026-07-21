@@ -189,7 +189,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
         <noscript>
-          <div style={{ minHeight:"100vh", background:"var(--bg)", color:"var(--color-stone-0)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
+          <div style={{ minHeight:"100dvh", background:"var(--bg)", color:"var(--color-stone-0)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", fontFamily:"sans-serif", textAlign:"center", padding:"24px" }}>
             <strong style={{ color:"var(--color-nn-primary)", fontSize:"1.25rem" }}>Tanmatra</strong>
             <p style={{ color:"var(--text-secondary)", fontSize:"0.875rem", maxWidth:"320px" }}>
               Dietitian-designed meals, delivered fresh
@@ -273,7 +273,7 @@ function AppShellInner() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col transition-colors duration-200 ${
+      className={`min-h-dvh flex flex-col transition-colors duration-200 ${
         hideChrome ? "text-foreground" : "bg-background text-foreground"
       }`}
       style={hideChrome ? { background: "var(--bg)" } : undefined}

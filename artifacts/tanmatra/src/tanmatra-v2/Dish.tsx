@@ -301,8 +301,8 @@ export default function V2Dish() {
 
   if (!meal) {
     return (
-      <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)]">
-        <div className="max-w-[480px] mx-auto min-h-screen">
+      <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)]">
+        <div className="max-w-[480px] mx-auto min-h-dvh">
           <div className="appbar">
             <Link className="iconbtn" to="/menu"><i className="ph-bold ph-arrow-left" /></Link>
             <div className="abt">Dish</div>
@@ -445,7 +445,7 @@ export default function V2Dish() {
   const hasAllergens = allergenDisclosure.state !== "unchecked" && allergenDisclosure.allergens.length > 0;
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-[var(--pdp-on-surface)] antialiased pb-[120px]">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-[var(--pdp-on-surface)] antialiased pb-[120px]">
 
       {/* ── Fixed Top Nav ──────────────────────────────────────────────── */}
       <div className="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16 pointer-events-none">

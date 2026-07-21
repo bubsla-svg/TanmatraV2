@@ -135,7 +135,7 @@ export default function MetabolicLandingView() {
   const trialPriceText = formatPrice(computeTrialPricePaise(TRIAL_MEALS));
 
   return (
-    <div className="nn-clinical bg-nn-bg text-white min-h-screen pb-28">
+    <div className="nn-clinical bg-nn-bg text-white min-h-dvh pb-28">
       <LandingTopBar
         ctaLabel="Start 3-Day Trial"
         ctaTo="/subscribe?trial=1"

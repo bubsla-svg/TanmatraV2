@@ -127,7 +127,7 @@ export default function CareLandingView({ condition }: { condition: CareConditio
   );
 
   return (
-    <div className="nn-clinical bg-nn-bg text-white min-h-screen pb-16">
+    <div className="nn-clinical bg-nn-bg text-white min-h-dvh pb-16">
       <LandingTopBar
         ctaLabel="Free 15-min RD consult"
         ctaTo={CONSULT_TARGET}

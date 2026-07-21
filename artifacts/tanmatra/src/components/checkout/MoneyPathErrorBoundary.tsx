@@ -35,7 +35,7 @@ export function MoneyPathErrorBoundary() {
   }, [pathname, status, message]);
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased flex items-center justify-center px-5">
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased flex items-center justify-center px-5">
       <div
         role="alert"
         className="w-full max-w-[420px] rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] p-6 flex flex-col gap-4 text-center"

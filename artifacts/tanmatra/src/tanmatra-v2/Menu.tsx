@@ -532,8 +532,8 @@ export default function V2Menu() {
   const secondaryActive = [lifestyle, diet, category, kitchen].filter((v) => v !== "all").length + excludedAllergens.length;
 
   return (
-    <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
+    <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
+      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100dvh" }}>
         {/* Sticky header cluster — app bar + search + filter rails stay pinned
             so re-filtering never means scrolling back to the top (Uber-Eats). */}
         <div className="menu-stickytop">
