@@ -217,6 +217,12 @@
   --color-clinical-sage: #7D9E7E;
   --color-clinical-sage-light: rgba(125, 158, 126, 0.12);
 
+  /* ─── FSSAI regulatory dietary marks (§11.1) — the legal veg/non-veg symbol
+     colours, rendered on a white field as they appear on packaging. These are
+     regulatory marks, never restyled to brand tokens. ─── */
+  --color-fssai-veg: #1A7A3D;
+  --color-fssai-nonveg: #8A3324;
+
   /* ─── Refined Radii Scale ─── */
   --radius-btn: 12px;
   --radius-card: 16px;
