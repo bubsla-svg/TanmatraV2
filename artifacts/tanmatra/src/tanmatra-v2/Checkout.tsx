@@ -9,23 +9,7 @@ import {
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { API_BASE } from "@/lib/apiBase";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/api/adapter";
 import { useCart, useCartStore, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
@@ -40,16 +24,8 @@ import {
   type DeliverySlotOption,
   type PickupLocationOption,
 } from "@/lib/fulfillmentApi";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Check, Flame, Lock, MessageSquare } from "lucide-react";
-import { checkPincode, type PincodeCheckResult } from "@/lib/serviceablePincodes";
+import { Sparkles, Leaf, Store, Truck, NotebookPen, ArrowRight, ChevronDown, Flame, Lock, MessageSquare } from "lucide-react";
 import { track } from "@/lib/analytics";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import AddOnRail from "@/components/checkout/AddOnRail";
 import CheckoutStepper, { type CheckoutStep } from "@/components/checkout/CheckoutStepper";
 import { LocationPickerFlow } from "@/components/location/LocationPickerFlow";

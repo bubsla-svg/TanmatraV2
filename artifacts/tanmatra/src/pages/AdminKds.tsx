@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { API_BASE } from "@/lib/apiBase";
-import { useMenuCatalog, getDishById, type DishData } from "@/lib/menuData";
+import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { AlertTriangle, CheckCircle2, Scale, Clock, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
