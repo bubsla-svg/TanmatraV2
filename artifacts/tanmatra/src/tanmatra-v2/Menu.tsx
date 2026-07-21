@@ -36,6 +36,7 @@ import {
 import { PROTOCOLS, PROTOCOL_LABELS, PROTOCOL_TAGLINES, isProtocol, matchesProtocol, type Protocol } from "@/lib/protocols";
 import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
+import MenuFilterSheet from "./MenuFilterSheet";
 import { usePreferences } from "@/lib/preferencesContext";
 import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
@@ -890,56 +891,71 @@ export default function V2Menu() {
             </div>
           )}
 
-          {/* Secondary filters (collapsible) */}
-          <button className="opt mb10" onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} style={{ marginBottom: 10 }}>
+          {/* Secondary filters — opens a dedicated filter sheet (contract §2.2) */}
+          <button
+            className="opt mb10"
+            onClick={() => setShowFilters(true)}
+            aria-haspopup="dialog"
+            style={{ marginBottom: 10 }}
+          >
             <i className="ph-bold ph-sliders-horizontal" />
             <span className="f1">More filters {secondaryActive > 0 && <span className="pill" style={{ marginLeft: 6 }}>{secondaryActive}</span>}</span>
-            <i className={showFilters ? "ph-bold ph-caret-up" : "ph-bold ph-caret-down"} />
+            <i className="ph-bold ph-caret-right" />
           </button>
 
-          {showFilters && (
-            <div className="mb10">
-              <FilterRail label={clinicalMode ? "Therapeutic diet" : "Lifestyle"}>
-                {LIFESTYLE_TABS.map(({ value, label }) => {
-                  const l = clinicalMode && value !== "all" ? LIFESTYLE_EHR_LABEL[value] ?? label : label;
-                  return <button key={value} className={lifestyle === value ? "chip on" : "chip"} onClick={() => setLifestyle(value)}>{l}</button>;
-                })}
-              </FilterRail>
-              <FilterRail label="Diet">
-                {(["all", "veg", "nonveg"] as DietFilter[]).map((opt) => (
-                  <button key={opt} className={diet === opt ? "chip on" : "chip"} onClick={() => setDiet(opt)}>
-                    {opt !== "all" && <span className={opt === "veg" ? "vd" : "vd nv"} />}{opt === "all" ? "All" : opt === "veg" ? "Veg" : "Non-Veg"}
+          <MenuFilterSheet
+            open={showFilters}
+            onClose={() => setShowFilters(false)}
+            resultCount={consolidatedDishes.length}
+            activeCount={secondaryActive}
+            onReset={() => {
+              setLifestyle("all");
+              setDiet("all");
+              setCategory("all");
+              setKitchen("all");
+              setExcludedAllergens([]);
+            }}
+          >
+            <FilterRail label={clinicalMode ? "Therapeutic diet" : "Lifestyle"}>
+              {LIFESTYLE_TABS.map(({ value, label }) => {
+                const l = clinicalMode && value !== "all" ? LIFESTYLE_EHR_LABEL[value] ?? label : label;
+                return <button key={value} className={lifestyle === value ? "chip on" : "chip"} onClick={() => setLifestyle(value)}>{l}</button>;
+              })}
+            </FilterRail>
+            <FilterRail label="Diet">
+              {(["all", "veg", "nonveg"] as DietFilter[]).map((opt) => (
+                <button key={opt} className={diet === opt ? "chip on" : "chip"} onClick={() => setDiet(opt)}>
+                  {opt !== "all" && <span className={opt === "veg" ? "vd" : "vd nv"} />}{opt === "all" ? "All" : opt === "veg" ? "Veg" : "Non-Veg"}
+                </button>
+              ))}
+            </FilterRail>
+            <FilterRail label="Category">
+              {CATEGORY_TABS.map((c) => (
+                <button key={c} className={category === c ? "chip on" : "chip"} onClick={() => setCategory(c)}>{c === "all" ? "All" : CATEGORY_LABELS[c]}</button>
+              ))}
+            </FilterRail>
+            <FilterRail label="Kitchen">
+              {KITCHEN_TABS.map((k) => (
+                <button key={k} className={kitchen === k ? "chip on" : "chip"} onClick={() => setKitchen(k)}>{k === "all" ? "All" : k[0].toUpperCase() + k.slice(1)}</button>
+              ))}
+            </FilterRail>
+            <FilterRail label="Avoid allergens">
+              {EXCLUDABLE_ALLERGENS.map((a) => {
+                const on = excludedAllergens.includes(a.value);
+                return (
+                  <button
+                    key={a.value}
+                    className={on ? "chip on" : "chip"}
+                    aria-pressed={on}
+                    onClick={() => setExcludedAllergens((p) => (on ? p.filter((v) => v !== a.value) : [...p, a.value]))}
+                  >
+                    {on && <i className="ph-bold ph-prohibit" />}No {a.label.toLowerCase()}
                   </button>
-                ))}
-              </FilterRail>
-              <FilterRail label="Category">
-                {CATEGORY_TABS.map((c) => (
-                  <button key={c} className={category === c ? "chip on" : "chip"} onClick={() => setCategory(c)}>{c === "all" ? "All" : CATEGORY_LABELS[c]}</button>
-                ))}
-              </FilterRail>
-              <FilterRail label="Kitchen">
-                {KITCHEN_TABS.map((k) => (
-                  <button key={k} className={kitchen === k ? "chip on" : "chip"} onClick={() => setKitchen(k)}>{k === "all" ? "All" : k[0].toUpperCase() + k.slice(1)}</button>
-                ))}
-              </FilterRail>
-              <FilterRail label="Avoid allergens">
-                {EXCLUDABLE_ALLERGENS.map((a) => {
-                  const on = excludedAllergens.includes(a.value);
-                  return (
-                    <button
-                      key={a.value}
-                      className={on ? "chip on" : "chip"}
-                      aria-pressed={on}
-                      onClick={() => setExcludedAllergens((p) => (on ? p.filter((v) => v !== a.value) : [...p, a.value]))}
-                    >
-                      {on && <i className="ph-bold ph-prohibit" />}No {a.label.toLowerCase()}
-                    </button>
-                  );
-                })}
-              </FilterRail>
-              <div className="fine mb6" style={{ color: "var(--fnt)" }}>Excludes dishes with unverified allergen data</div>
-            </div>
-          )}
+                );
+              })}
+            </FilterRail>
+            <div className="fine mb6" style={{ color: "var(--fnt)" }}>Excludes dishes with unverified allergen data</div>
+          </MenuFilterSheet>
 
           {/* Dosha / Jain guarantee notes */}
           {quickFilters.some((f) => ["vata", "pitta", "kapha"].includes(f)) && (
