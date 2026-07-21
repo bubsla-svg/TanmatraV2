@@ -22,7 +22,7 @@ import {
   SESSION_COOKIE,
   SESSION_TTL,
 } from "../lib/auth";
-import { normalisePhone, sendSmsOtp, verifySmsOtp } from "../lib/sms";
+import { normalisePhone, sendSmsOtp } from "../lib/sms";
 import { verifyFirebaseIdToken } from "../lib/firebase";
 import { logger } from "../lib/logger";
 
@@ -87,7 +87,6 @@ function clientIp(req: Request): string {
 // --- Routes -----------------------------------------------------------------
 
 import {
-  issueRefreshToken,
   rotateRefreshToken,
 } from "../lib/refreshTokenRotation";
 

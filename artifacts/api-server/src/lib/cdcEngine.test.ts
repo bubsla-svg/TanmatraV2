@@ -8,8 +8,6 @@ import {
   mockAnalyticsDashboardStore,
   mockNotificationAlertLogs,
   SEARCH_INDEX_SINK_NAME,
-  ANALYTICS_SINK_NAME,
-  NOTIFICATION_ALERT_SINK_NAME,
 } from "./cdcEngine";
 
 describe("Change Data Capture (CDC), Event Routing & Dead Letter Queue Architecture", () => {

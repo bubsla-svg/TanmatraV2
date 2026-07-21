@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import crypto from "node:crypto";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import {
   userConsentsTable,

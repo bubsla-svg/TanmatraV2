@@ -21,10 +21,10 @@
  */
 
 import assert from "node:assert/strict";
-import { test, after, before } from "node:test";
+import { test, after } from "node:test";
 import { randomUUID } from "node:crypto";
 
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import {
   db,
   deliveryEventsTable,
