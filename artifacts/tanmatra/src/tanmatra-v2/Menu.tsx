@@ -976,15 +976,17 @@ export default function V2Menu() {
             <div className="lab">{consolidatedDishes.length} {consolidatedDishes.length === 1 ? "dish" : "dishes"}</div>
             <label className="fx ac g6">
               <span className="lab" style={{ padding: 0 }}>Sort</span>
-              <select
-                className="chip"
-                aria-label="Sort dishes"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                style={{ height: 30, paddingRight: 10, appearance: "auto" as any }}
-              >
-                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <span className="selchip">
+                <select
+                  className="chip"
+                  aria-label="Sort dishes"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                >
+                  {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <i className="ph-bold ph-caret-down selcaret" aria-hidden="true" />
+              </span>
             </label>
           </div>
 

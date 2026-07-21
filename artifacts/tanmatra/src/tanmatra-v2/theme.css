@@ -481,3 +481,26 @@
   padding-top: 8px;
 }
 
+/* Native <select> themed as a .tnm2 chip — strip the OS chrome and supply our
+   own caret, so the sort control matches the chip language while keeping the
+   platform-native option list (mobile wheel picker) plus keyboard a11y. .tnm2
+   sets color-scheme:dark, so the native option popup renders dark too. */
+.tnm2 .selchip{position:relative;display:inline-flex;align-items:center}
+.tnm2 .selchip > select{
+  appearance:none;
+  -webkit-appearance:none;
+  height:30px;
+  padding-right:28px;
+  cursor:pointer;
+}
+.tnm2 .selchip > .selcaret{
+  position:absolute;
+  right:11px;
+  top:50%;
+  transform:translateY(-50%);
+  pointer-events:none;
+  color:var(--mut);
+  font-size:12px;
+  line-height:1;
+}
+
