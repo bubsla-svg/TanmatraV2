@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Plus } from "@phosphor-icons/react";
 import { useMenuCatalog } from "@/lib/menuData";
 import { onDishImageError } from "@/lib/imgFallback";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 
 /**
  * Full-width teaser card showing one dietitian-verified dish.
@@ -36,13 +37,20 @@ export default function HomeFeaturedMeal() {
         aria-label={`View ${featured.name}`}
       >
         {/* Food photo */}
-        <img
-          src={featured.image}
-          alt={featured.name}
-          loading="lazy"
-          onError={onDishImageError}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
-        />
+        <picture>
+          <source srcSet={localDishSrcset(featured.image, "avif")} type="image/avif" />
+          <source srcSet={localDishSrcset(featured.image, "webp")} type="image/webp" />
+          <img
+            src={getLocalDishFallback(featured.image, 800)}
+            srcSet={localDishSrcset(featured.image, "jpg")}
+            sizes="(max-width: 480px) 100vw, 480px"
+            alt={featured.name}
+            loading="lazy"
+            decoding="async"
+            onError={onDishImageError}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          />
+        </picture>
 
         {/* Gradient scrim — bottom heavy */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />

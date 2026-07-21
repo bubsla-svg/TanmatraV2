@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
-import { unsplashSrcset } from "@/lib/imgSrcset";
+import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError } from "@/lib/imgFallback";
 
 export default function HomeMealsRail() {
@@ -101,15 +101,20 @@ function DishSwipeCard({ dish }: { dish: DishData }) {
     >
       <div>
         <Link to={`/dish/${dish.slug}`} className="relative aspect-[4/3] rounded-xl overflow-hidden block border border-white/[0.06]">
-          <img
-            src={dish.image}
-            srcSet={unsplashSrcset(dish.image)}
-            sizes="240px"
-            alt={dish.name}
-            loading="lazy"
-            onError={onDishImageError}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-          />
+          <picture>
+            <source srcSet={localDishSrcset(dish.image, "avif")} type="image/avif" />
+            <source srcSet={localDishSrcset(dish.image, "webp")} type="image/webp" />
+            <img
+              src={getLocalDishFallback(dish.image, 400)}
+              srcSet={localDishSrcset(dish.image, "jpg")}
+              sizes="240px"
+              alt={dish.name}
+              loading="lazy"
+              decoding="async"
+              onError={onDishImageError}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            />
+          </picture>
           {/* Badge overlays */}
           <div className="absolute top-2 left-2 flex gap-1 items-center flex-wrap z-10">
             {badges}

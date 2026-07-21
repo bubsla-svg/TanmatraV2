@@ -61,6 +61,7 @@ export default function HomeHero({ onSeeMenu, onHelpChoose }: HomeHeroProps) {
           alt="Fresh clinical meals"
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
+          fetchPriority="high"
         />
         {/* Dark gradient — top for legibility, bottom fade into bg */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/20 to-[var(--tnm-surface-ink)]" />
