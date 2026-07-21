@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router";
 import { API_BASE } from "@/lib/apiBase";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/api/adapter";
+import { FssaiMark } from "@/components/FssaiMark";
 import { useCart, useCartStore, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/lib/cartContext";
 import { GST_RATE_FOOD, GST_RATE_DELIVERY } from "@/lib/cartMath";
 import { computeCheckoutLedger } from "@/lib/checkoutLedger";
@@ -2155,14 +2156,19 @@ export default function V2Checkout() {
                 <div key={item.lineId} className="fx gap12" style={{ alignItems: "flex-start" }}>
                   <img src={item.image} alt={item.name} loading="lazy" onError={onDishImageError} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid var(--ln)", flex: "none" }} />
                   <div className="f1" style={{ minWidth: 0 }}>
-                    <p className="small fw6">
-                      {item.name}
-                      {item.recipient && (
-                        <span className="safc" style={{ fontSize: 10, fontWeight: 600, marginLeft: 4 }}>
-                          (For {item.recipient})
-                        </span>
-                      )}
-                    </p>
+                    <div className="fx g6" style={{ minWidth: 0, alignItems: "flex-start" }}>
+                      <span style={{ flex: "none", marginTop: 1 }}>
+                        <FssaiMark isVeg={!!item.isVeg} size={14} />
+                      </span>
+                      <p className="small fw6" style={{ minWidth: 0 }}>
+                        {item.name}
+                        {item.recipient && (
+                          <span className="safc" style={{ fontSize: 10, fontWeight: 600, marginLeft: 4 }}>
+                            (For {item.recipient})
+                          </span>
+                        )}
+                      </p>
+                    </div>
                     <p className="fine">Qty: {item.quantity}</p>
                     {item.customizations.length > 0 && (
                       <div className="fx wrap gap6 mt4">

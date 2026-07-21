@@ -765,6 +765,36 @@
     "hex": "#e2e2e2"
   },
   {
+    "selector": "div.fx.g6",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "span",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "span",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "svg",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "rect",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
+    "selector": "circle",
+    "property": "color",
+    "hex": "#e2e2e2"
+  },
+  {
     "selector": "p.small.fw6",
     "property": "color",
     "hex": "#e2e2e2"
