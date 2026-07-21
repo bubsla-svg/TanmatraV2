@@ -1,5 +1,4 @@
 import { type Request, type Response, type NextFunction } from "express";
-import type { AuthUser } from "@workspace/api-zod";
 import { overrideDb } from "@workspace/db";
 import { clearSession, getSession, getSessionId } from "../lib/auth";
 
@@ -23,22 +22,6 @@ function isOverrideCriticalPath(req: Request): boolean {
   return candidates.some(
     (p) => p === OVERRIDE_PATH_SUFFIX || p.endsWith(OVERRIDE_PATH_SUFFIX),
   );
-}
-
-declare global {
-  namespace Express {
-    interface User extends AuthUser {}
-
-    interface Request {
-      isAuthenticated(): this is AuthedRequest;
-
-      user?: User | undefined;
-    }
-
-    export interface AuthedRequest {
-      user: User;
-    }
-  }
 }
 
 /**
