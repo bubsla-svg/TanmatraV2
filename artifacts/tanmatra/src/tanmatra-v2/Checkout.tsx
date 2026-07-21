@@ -524,7 +524,13 @@ export default function V2Checkout() {
       }
       setShowGuestAuthDialog(true);
     } else {
-      setConfirmOpen(true);
+      // Returning (authenticated) user with a selected address + slot: pay
+      // directly. The itemized total is already on the page and Razorpay
+      // re-shows it, so the extra in-app "Confirm Payment" dialog was a
+      // redundant tap (Uber-Eats one-tap-to-pay). handleConfirmedPayment
+      // self-guards (re-entry guard + idempotency + its own address check).
+      // Guests still pass through auth above, then the confirm step.
+      void handleConfirmedPayment();
     }
   };
 
@@ -1374,6 +1380,18 @@ export default function V2Checkout() {
               theme: { color: "var(--tnm-action)" },
               prefill: {
                 contact: activeAddr?.phone ?? "",
+              },
+              // UPI-intent-first: surface UPI as the first payment block (the
+              // India habit path) while keeping every other Razorpay method
+              // available below via show_default_blocks.
+              config: {
+                display: {
+                  blocks: {
+                    upi: { name: "Pay by UPI", instruments: [{ method: "upi" }] },
+                  },
+                  sequence: ["block.upi"],
+                  preferences: { show_default_blocks: true },
+                },
               },
               handler: async (response: {
                 razorpay_payment_id: string;

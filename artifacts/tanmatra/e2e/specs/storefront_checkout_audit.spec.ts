@@ -104,7 +104,10 @@ test.describe("Tanmatra storefront & checkout audit (v2 app)", () => {
     await addBtn.scrollIntoViewIfNeeded();
     await addBtn.click();
 
-    // The drawer opens as a fixed overlay carrying the Close cart control.
+    // Quick-add no longer auto-opens the drawer (the browse loop is preserved,
+    // Uber-Eats style) — open it explicitly via the cart affordance, then
+    // assert the Close control.
+    await page.getByRole("button", { name: /cart/i }).first().click();
     await expect(page.getByLabel("Close cart").first()).toBeVisible({ timeout: 5000 });
 
     // Close it — the cart state must survive the drawer closing (the
@@ -202,11 +205,13 @@ test.describe("Tanmatra storefront & checkout audit (v2 app)", () => {
     await page.goto("/menu");
     await expect(page.locator("#__tanmatra-loader")).toBeHidden({ timeout: 10000 });
 
-    // Open the cart drawer via the first add on a menu card (opens the drawer)
-    // or the cart entry point; then locate the upsell "Add" buttons.
+    // Add a dish from a menu card (quick-add no longer auto-opens the drawer),
+    // then open the drawer via the cart affordance; the upsell rail renders
+    // inside it.
     const addBtn = page.locator(".addb").first();
     await addBtn.scrollIntoViewIfNeeded();
     await addBtn.click();
+    await page.getByRole("button", { name: /cart/i }).first().click();
     await expect(page.getByLabel("Close cart").first()).toBeVisible({ timeout: 5000 });
 
     // The upsell rail lives under the "Add to your order" heading. Grab its
