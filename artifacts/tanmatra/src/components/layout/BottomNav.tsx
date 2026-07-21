@@ -184,7 +184,7 @@ export function MoreSheetTrigger({ className }: { className?: string }) {
         aria-label="Open all sections menu"
         className={
           className ??
-          "inline-flex items-center justify-center h-12 w-12 rounded-md text-white/45 hover:text-[var(--tnm-action)] hover:bg-[var(--tnm-action)]/10 transition-colors touch-target-48"
+          "inline-flex items-center justify-center h-12 w-12 rounded-md text-white/45 hover:text-[var(--tnm-action)] hover:bg-[var(--tnm-action)]/10 transition-colors touch-target-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tnm-action)]/50"
         }
       >
         <DotsThree className="w-6 h-6" weight="bold" aria-hidden />
@@ -340,7 +340,7 @@ export default function BottomNav() {
               <Link
                 to={item.to}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-1.5 text-[10px] font-medium tracking-wide transition-colors ${
+                className={`relative flex flex-col items-center justify-center gap-0.5 min-h-[56px] py-1.5 text-[10px] font-medium tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tnm-action)]/50 ${
                   active
                     ? "text-[var(--tnm-action)]"
                     : "text-white/45 hover:text-white/70"
