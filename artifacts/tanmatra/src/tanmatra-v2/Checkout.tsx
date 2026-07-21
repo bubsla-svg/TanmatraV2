@@ -32,6 +32,7 @@ import { useCart, useCartStore, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/
 import { GST_RATE_FOOD, GST_RATE_DELIVERY } from "@/lib/cartMath";
 import { addonsApi } from "@/lib/marketplaceApi";
 import { useOrders, generateOrderId, submitOrderIdempotencyKey } from "@/lib/ordersContext";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import { loyaltyApi } from "@/lib/loyaltyApi";
 import { corporateApi, type CompanySubsidy } from "@/lib/corporateApi";
 import { onDishImageError } from "@/lib/imgFallback";
@@ -377,6 +378,15 @@ export default function V2Checkout() {
   const [guestDevCode, setGuestDevCode] = useState<string | null>(null);
   const [guestIsSending, setGuestIsSending] = useState(false);
   const [guestIsVerifying, setGuestIsVerifying] = useState(false);
+  // Accessibility for the two hand-rolled charge-gate modals (focus trap +
+  // Escape + focus restore); each Escape carries the same guard as its
+  // backdrop-click so a charge can't be dismissed mid-flight.
+  const guestAuthA11y = useDialogA11y(showGuestAuthDialog, () => {
+    if (!guestIsVerifying) setShowGuestAuthDialog(false);
+  });
+  const confirmPayA11y = useDialogA11y(confirmOpen, () => {
+    if (!isProcessing) setConfirmOpen(false);
+  });
   const [guestOtpError, setGuestOtpError] = useState<string | null>(null);
   const [otpShakeOn, setOtpShakeOn] = useState(false);
   // Segmented 6-box OTP input: refs for focus management plus the index of
@@ -2570,10 +2580,19 @@ export default function V2Checkout() {
             style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!guestIsVerifying) setShowGuestAuthDialog(false); }}
           >
-            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 360, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div
+              ref={guestAuthA11y.panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="guest-auth-title"
+              onKeyDown={guestAuthA11y.onKeyDown}
+              className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+              style={{ maxWidth: 360, width: "100%" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="fx ac gap8">
                 <Phone className="w-5 h-5" style={{ color: "var(--safb)" }} />
-                <div className="h2" style={{ fontSize: 18 }}>
+                <div id="guest-auth-title" className="h2" style={{ fontSize: 18 }}>
                   {guestAuthStep === "welcome" ? "Welcome to Tanmatra!" : "Verify Mobile"}
                 </div>
               </div>
@@ -2771,10 +2790,19 @@ export default function V2Checkout() {
             style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
             onClick={() => { if (!isProcessing) setConfirmOpen(false); }}
           >
-            <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ maxWidth: 400, width: "100%" }} onClick={(e) => e.stopPropagation()}>
+            <div
+              ref={confirmPayA11y.panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="confirm-pay-title"
+              onKeyDown={confirmPayA11y.onKeyDown}
+              className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+              style={{ maxWidth: 400, width: "100%" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="fx ac gap8">
                 <ShieldCheck className="w-5 h-5" style={{ color: "var(--sage)" }} />
-                <div className="h2" style={{ fontSize: 18 }}>Confirm Payment</div>
+                <div id="confirm-pay-title" className="h2" style={{ fontSize: 18 }}>Confirm Payment</div>
               </div>
               <p className="fine mt6">
                 You will be charged <span className="safc fw7 mono">{formatPrice(razorpayTotal)}</span> via Razorpay.
