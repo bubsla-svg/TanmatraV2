@@ -16,8 +16,8 @@ import crypto from "node:crypto";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
-import { db, idempotencyKeysTable, webhookInboxTable, ordersTable } from "@workspace/db";
-import { and, eq, sql } from "drizzle-orm";
+import { db, idempotencyKeysTable, webhookInboxTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
 import { idempotencyMiddleware } from "../../artifacts/api-server/src/middlewares/idempotency";
 import paymentsRouter from "../../artifacts/api-server/src/routes/payments";
 

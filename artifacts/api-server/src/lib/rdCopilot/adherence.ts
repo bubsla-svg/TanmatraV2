@@ -25,7 +25,6 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import {
   db,
   adherenceEventsTable,
-  mealPlansTable,
   nutritionLogsTable,
   ordersTable,
   subscriptionDeliveriesTable,
@@ -33,7 +32,6 @@ import {
   type AdherenceEventKind,
   type MealPlan,
   type MealPlanDay,
-  type SubscriptionItem,
 } from "@workspace/db";
 
 export const OVER_CALORIES_RATIO = 1.25;

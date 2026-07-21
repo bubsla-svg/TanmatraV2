@@ -12,7 +12,7 @@ import {
   type CompanyMember,
   type OfficeOrderPick,
 } from "@workspace/db";
-import { resolveDishById, makeBatchDishResolver } from "../lib/menuResolver";
+import { makeBatchDishResolver } from "../lib/menuResolver";
 import { corporateInquiryRateLimit } from "../middlewares/rateLimitMiddleware";
 import { sendMail } from "../lib/mail";
 import { logger } from "../lib/logger";

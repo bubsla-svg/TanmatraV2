@@ -1,9 +1,6 @@
-import assert from "node:assert";
 import {
   computeJournalEntryHash,
-  verifyJournalEntryHash,
   verifyDoubleEntryMath,
-  assertDoubleEntryBalanced,
   calculateDoubleEntryTotals,
   LEDGER_SEED_ACCOUNTS,
   GENESIS_PREVIOUS_HASH,

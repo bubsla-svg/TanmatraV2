@@ -1,5 +1,5 @@
 import { sql, eq } from "drizzle-orm";
-import { type InsertMenuItem, type MenuItem, type InsertOrder, usersTable, menuItemsTable, ridersTable, ordersTable } from "@workspace/db/schema";
+import { type InsertMenuItem, type MenuItem, type InsertOrder, usersTable, menuItemsTable } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
