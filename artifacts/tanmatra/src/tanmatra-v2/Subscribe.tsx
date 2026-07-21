@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
-import { DISHES, macrosAreProvisional, type DishData } from "@workspace/menu-catalog";
+import { DISHES, type DishData } from "@workspace/menu-catalog";
 import { useMenuCatalog } from "@/lib/menuData";
 import { getRdPlanBySlug, getRdAuthor, resolvePlanWeek, findPlanSafeSwap, type RdPlan } from "@/lib/rdPlans";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { usePreferences } from "@/lib/preferencesContext";
-import { ACCENT_CLASSES } from "@/lib/teamData";
 import { useCartStore } from "@/lib/cartContext";
 import type { SubscriptionItem, SubscriptionDayPlanEntry } from "@/lib/subscriptionsApi";
 import { payWithRazorpay, razorpayConfigured } from "@/lib/razorpayClient";
 import { track } from "@/lib/analytics";
 import { toast } from "sonner";
-import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
 import {
   subscriptionsApi,
@@ -40,15 +38,10 @@ import {
   ArrowLeft,
   ArrowRight,
   ShieldCheck,
-  Calendar,
-  Clock,
   Warning,
   CheckCircle,
-  Plus,
-  Trash,
   Info,
   CreditCard,
-  CaretRight,
   MapPin,
 } from "@phosphor-icons/react";
 

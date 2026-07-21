@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { API_BASE } from "@/lib/apiBase";
-import { AlertTriangle, CheckCircle2, Barcode, ClipboardList, PackagePlus } from "lucide-react";
+import { Barcode, ClipboardList, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 
 const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
