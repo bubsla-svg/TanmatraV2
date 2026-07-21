@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-21T12:00:00Z",
+  "title": "Design System: Tanmatra",
+  "extensions": {
+    "colorMeta": {
+      "saffron": {
+        "role": "primary",
+        "displayName": "Saffron",
+        "canonical": "#fbbf24",
+        "tonalRamp": ["#5A3712", "#7E4C18", "#A2611A", "#C67A1E", "#E0922B", "#E9A847", "#EEBB6B", "#FAE9CE"]
+      },
+      "cyan": {
+        "role": "tertiary",
+        "displayName": "Electric Cyan",
+        "canonical": "#34daff",
+        "tonalRamp": ["#08323C", "#0B4E5E", "#0E6E84", "#1191AE", "#16B6D9", "#34DAFF", "#7DE8FF", "#C4F5FF"]
+      },
+      "sage": {
+        "role": "secondary",
+        "displayName": "Clinical Sage",
+        "canonical": "#7d9e7e",
+        "tonalRamp": ["#1E2E23", "#283E2E", "#324F3A", "#3E6448", "#4F7D5A", "#6E9A78", "#93B59B", "#DBE7DD"]
+      },
+      "macro-protein": { "role": "data", "displayName": "Protein Green", "canonical": "#8fb996" },
+      "macro-carbs": { "role": "data", "displayName": "Carb Wheat", "canonical": "#cbb07a" },
+      "macro-fat": { "role": "data", "displayName": "Fat Clay", "canonical": "#d9a488" },
+      "success": { "role": "status", "displayName": "Success Sage", "canonical": "#93b59b" },
+      "error": { "role": "status", "displayName": "Error Clay", "canonical": "#dc8773" },
+      "warning": { "role": "status", "displayName": "Warning Amber", "canonical": "#d8b45e" },
+      "info": { "role": "status", "displayName": "Info Slate", "canonical": "#7fa3b3" },
+      "nn-bg": {
+        "role": "neutral",
+        "displayName": "Nocturnal Canvas",
+        "canonical": "#131313",
+        "tonalRamp": ["#131313", "#1b1b1b", "#1f1f1f", "#2a2a2a", "#3a3a3a", "#6b6b6b", "#9c8f79", "#e2e2e2"]
+      },
+      "nn-on-surface": { "role": "neutral", "displayName": "Warm Off-White", "canonical": "#e2e2e2" },
+      "nn-secondary": { "role": "neutral", "displayName": "Muted Zinc", "canonical": "#c6c6c7" },
+      "nn-error": { "role": "status", "displayName": "NN Error (live money-path)", "canonical": "#ffb4ab" },
+      "ink-900": {
+        "role": "neutral",
+        "displayName": "Ink 900 (Clinical-Dark base)",
+        "canonical": "#0b0c0e",
+        "tonalRamp": ["#0b0c0e", "#141619", "#1b1e22", "#262a30", "#33373e", "#5b616b", "#8b9099", "#f2f0e9"]
+      },
+      "bone": { "role": "neutral", "displayName": "Bone (base text)", "canonical": "#f2f0e9" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page and hero headings. Inter 700, modest clamp ceiling — clinical, not a poster." },
+      "title": { "displayName": "Title", "purpose": "Card titles, dish names, section headers. Inter 600." },
+      "body": { "displayName": "Body", "purpose": "All prose. Inter 400, 16px min on mobile, 60-75ch measure." },
+      "label": { "displayName": "Label", "purpose": "Chip text, eyebrows, meta. Inter 600, 0.06em, often uppercase." },
+      "data": { "displayName": "Clinical Data", "purpose": "Macros, calories, prices, order IDs. JetBrains Mono 500, tabular-nums. Its scarcity is the clinical signal." },
+      "serif": { "displayName": "Accent Serif", "purpose": "Rare editorial accent headings only. Instrument Serif. Never body or UI." }
+    },
+    "shadows": [
+      { "name": "raised", "value": "0 1px 2px rgba(0,0,0,0.35), 0 4px 8px rgba(0,0,0,0.22)", "purpose": "Cards that lift on hover." },
+      { "name": "overlay", "value": "0 2px 4px rgba(0,0,0,0.4), 0 8px 14px rgba(0,0,0,0.32)", "purpose": "Popovers and dropdowns above the canvas." },
+      { "name": "sheet", "value": "0 -6px 14px rgba(0,0,0,0.4)", "purpose": "Bottom sheets rising from the screen edge." },
+      { "name": "saffron-glow", "value": "0 4px 16px color-mix(in srgb, #fbbf24 32%, transparent)", "purpose": "The floating add-button only — the one earned colored glow." }
+    ],
+    "motion": [
+      { "name": "duration-instant", "value": "80ms", "purpose": "Press compression and micro-feedback." },
+      { "name": "duration-fast", "value": "120ms", "purpose": "Chip and control state changes." },
+      { "name": "duration-base", "value": "200ms", "purpose": "Default state transitions." },
+      { "name": "duration-slow", "value": "320ms", "purpose": "Surface and sheet entrances." },
+      { "name": "ease-standard", "value": "cubic-bezier(0.2, 0, 0, 1)", "purpose": "Default easing; ease-out, no bounce." },
+      { "name": "ease-emphasized", "value": "cubic-bezier(0.3, 0, 0, 1)", "purpose": "Emphasized entrances." },
+      { "name": "ease-spring", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "iOS-style sheet curve." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ],
+    "zIndex": [
+      { "name": "sticky", "value": 30 },
+      { "name": "overlay", "value": 40 },
+      { "name": "modal", "value": 50 },
+      { "name": "toast", "value": 60 },
+      { "name": "tooltip", "value": 70 },
+      { "name": "sticky-cta", "value": 900 },
+      { "name": "cart-drawer", "value": 911 }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one saffron action. Exactly one per screen. Dark-ink label, never white.",
+      "html": "<button class=\"ds-btn-primary\">Add to Plan</button>",
+      "css": ".ds-btn-primary { height: 44px; padding: 0 20px; border: none; border-radius: 12px; background: linear-gradient(180deg, #FFD75A 0%, #fbbf24 60%); color: #402d00; font-family: 'Inter Variable', Inter, system-ui, sans-serif; font-weight: 700; font-size: 14px; letter-spacing: -0.01em; cursor: pointer; transition: transform 120ms cubic-bezier(0.2,0,0,1), filter 120ms; } .ds-btn-primary:hover { filter: brightness(1.04); } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #402d00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action. Surface fill, hairline border, primary-text label.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { height: 44px; padding: 0 20px; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; background: #1f1f1f; color: #e2e2e2; font-family: 'Inter Variable', Inter, system-ui, sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 120ms, transform 120ms; } .ds-btn-ghost:hover { background: #2a2a2a; } .ds-btn-ghost:active { transform: scale(0.97); } .ds-btn-ghost:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Fully-rounded glass pill for filters and category nav. Saffron-tinted when selected.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-chip\">All programs</button><button class=\"ds-chip ds-chip--on\" aria-current=\"location\">High-Protein</button></div>",
+      "css": ".ds-chip { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); color: #c6c6c7; font-family: 'Inter Variable', Inter, system-ui, sans-serif; font-weight: 500; font-size: 13px; white-space: nowrap; cursor: pointer; transition: transform 120ms; } .ds-chip:active { transform: scale(0.96); } .ds-chip:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-chip--on { background: color-mix(in srgb, #fbbf24 14%, transparent); border-color: color-mix(in srgb, #fbbf24 42%, transparent); color: #fbbf24; }"
+    },
+    {
+      "name": "Themed Select",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Native select themed as a chip — strips OS chrome, adds a Phosphor caret, keeps the mobile wheel picker.",
+      "html": "<span class=\"ds-selchip\"><select class=\"ds-select\" aria-label=\"Sort dishes\"><option>Recommended</option><option>Price: low to high</option></select><svg class=\"ds-selcaret\" width=\"12\" height=\"12\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M208.5 96.5l-80 80-80-80\" stroke=\"currentColor\" stroke-width=\"24\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span>",
+      "css": ".ds-selchip { position: relative; display: inline-flex; align-items: center; } .ds-select { appearance: none; height: 34px; padding: 0 28px 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.05); color: #c6c6c7; font-family: 'Inter Variable', Inter, system-ui, sans-serif; font-size: 13px; cursor: pointer; } .ds-select:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-selcaret { position: absolute; right: 11px; pointer-events: none; color: #c6c6c7; }"
+    },
+    {
+      "name": "Macro Ribbon",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The signature clinical readout — macros in JetBrains Mono, tabular figures, stated units. Whole numbers only.",
+      "html": "<div class=\"ds-ribbon\"><span class=\"ds-rc\"><span class=\"ds-rl\">KCAL</span><span class=\"ds-rv ds-rv--sf\">420</span></span><span class=\"ds-rc\"><span class=\"ds-rl\">PROTEIN</span><span class=\"ds-rv\">32<i>g</i></span></span><span class=\"ds-rc\"><span class=\"ds-rl\">CARBS</span><span class=\"ds-rv\">38<i>g</i></span></span><span class=\"ds-rc\"><span class=\"ds-rl\">FAT</span><span class=\"ds-rv\">14<i>g</i></span></span></div>",
+      "css": ".ds-ribbon { display: flex; gap: 20px; padding: 10px 12px; border-radius: 12px; background: #1f1f1f; border: 1px solid rgba(255,255,255,0.06); } .ds-rc { display: flex; flex-direction: column; gap: 2px; } .ds-rl { font-family: 'Inter Variable', Inter, system-ui, sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; color: #9c8f79; } .ds-rv { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 500; color: #e2e2e2; } .ds-rv--sf { color: #fbbf24; } .ds-rv i { font-style: normal; font-size: 11px; color: #9c8f79; }"
+    },
+    {
+      "name": "Dish Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The signature commerce card — image, FSSAI mark, name, one macro/price line, floating saffron add-button. Detail lives on the dish page.",
+      "html": "<div class=\"ds-dcard\"><div class=\"ds-dimg\"><span class=\"ds-fssai\" title=\"Vegetarian\"><span></span></span><button class=\"ds-addb\">ADD</button></div><div class=\"ds-dbody\"><div class=\"ds-dname\">Grilled Paneer Bowl</div><div class=\"ds-dmeta\"><span class=\"ds-price\">₹340</span> · 32g protein</div></div></div>",
+      "css": ".ds-dcard { display: flex; flex-direction: column; width: 180px; border-radius: 16px; background: #1f1f1f; border: 1px solid rgba(255,255,255,0.06); overflow: visible; } .ds-dimg { position: relative; height: 120px; border-radius: 16px 16px 0 0; background: linear-gradient(135deg, #2a2a2a, #1b1b1b); } .ds-fssai { position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border: 2px solid #4F7D5A; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: #131313; } .ds-fssai span { width: 7px; height: 7px; border-radius: 999px; background: #4F7D5A; } .ds-addb { position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%); height: 30px; padding: 0 16px; border: none; border-radius: 8px; background: #fbbf24; color: #402d00; font-family: 'Inter Variable', Inter, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; box-shadow: 0 4px 16px color-mix(in srgb, #fbbf24 32%, transparent); cursor: pointer; transition: transform 120ms; } .ds-addb:active { transform: translateX(-50%) scale(0.96); } .ds-addb:focus-visible { outline: 2px solid #e2e2e2; outline-offset: 2px; } .ds-dbody { padding: 18px 12px 12px; } .ds-dname { font-family: 'Inter Variable', Inter, sans-serif; font-weight: 600; font-size: 14px; color: #e2e2e2; } .ds-dmeta { margin-top: 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 12px; color: rgba(226,226,226,0.5); } .ds-price { color: #fbbf24; font-weight: 600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Calm Clinic at Night",
+    "overview": "Tanmatra is a clinical wellness storefront that reads like a well-lit kitchen after dark: a deep near-black canvas, one warm saffron light that marks every action, and a disciplined monospace layer that makes nutrition numbers feel measured rather than marketed. The signature theme is dark. The mood is credible, precise, calm, and human. It rejects the sterile hospital-EMR look, the alarmist red-everywhere wellness-app look, and the trend-driven supplement-brand gradient look. The palette is layered: a Clinical-Dark base provides the token foundation, and the Nocturnal Nourishment (NN) layer — the .tnm2 skin — governs every live customer money-path surface. Saffron #fbbf24 is the single unified action color across both.",
+    "keyCharacteristics": [
+      "Dark by default; deep near-black canvas, warm off-white text.",
+      "Exactly one accent — saffron — and exactly one primary action per screen.",
+      "A monospace clinical layer (JetBrains Mono) reserved for numbers, so data reads as measured.",
+      "Token-only color; raw hex is a lint-blocking defect.",
+      "Safety information (FSSAI marks, allergens) is exempt from minimalism and always shown."
+    ],
+    "rules": [
+      { "name": "The One Saffron Rule", "body": "Saffron is the only accent that marks action. If two things on a screen are saffron, one is not really the primary action — demote it. Cyan and sage never stand in as a second CTA color.", "section": "colors" },
+      { "name": "The Two-Layer Rule", "body": "A .tnm2 (customer) surface draws canvas, text, and alerts from --color-nn-*; a base Tailwind surface draws from --color-ink-* / --color-*-theme. Never hardcode one layer's canvas hex (#0b0c0e) onto the other layer's surface (#131313). Consume the token; the skin resolves it.", "section": "colors" },
+      { "name": "The No-Legacy Rule", "body": "Gold #D4AF37 and blue #6BA3C8 are retired, absent from the codebase, and must never return. Saffron and cyan only.", "section": "colors" },
+      { "name": "The Mono-Is-Data Rule", "body": "JetBrains Mono is forbidden for headings, body, navigation, and marketing copy. It appears only on numbers and codes. Diluting it dilutes the clinical signal.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Every price and every numeric column uses font-variant-numeric: tabular-nums. Figures must not jitter as they change.", "section": "typography" },
+      { "name": "The No-Third-Family Rule", "body": "Inter, JetBrains Mono, Instrument Serif. A serif display for body or UI was evaluated and rejected; do not reintroduce one.", "section": "typography" },
+      { "name": "The Tonal-First Rule", "body": "On dark, hierarchy is the surface step and the hairline, not the shadow. Never rely on a drop shadow alone to separate a card from the canvas.", "section": "elevation" },
+      { "name": "The In-Place Rule", "body": "Variant, protein, and quantity changes swap in place under 100ms with zero navigation. A full page reload on a variant change is a defect.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do source every color from a token and run lint:colors; a raw hex, rgb(), or arbitrary Tailwind color in src is a blocking defect (only index.css and theme.css are exempt).",
+      "Do use saffron #fbbf24 (--color-nn-primary / --action) as the single primary action, exactly one per screen.",
+      "Do render every macro, calorie, price, and code in JetBrains Mono with tabular-nums and stated units (g, kcal).",
+      "Do give every interactive .tnm2 control the 2px saffron :focus-visible ring — a missing ring is a known past defect, equal to a lint failure.",
+      "Do carry the FSSAI veg/non-veg marks (>=14px) on every dish card, dish page, cart line, and order line, and keep allergens always-visible on the dish page.",
+      "Do trace every money figure to a server quote and format with Intl.NumberFormat('en-IN'); the client displays, it never computes.",
+      "Do reserve final dimensions on every image, card, and skeleton (CLS <= 0.05); the shell renders first — no route paints blank."
+    ],
+    "donts": [
+      "Don't use legacy gold #D4AF37 or legacy blue #6BA3C8. They are retired and absent; saffron and cyan are the only brand accents.",
+      "Don't hardcode the Clinical-Dark canvas (#0b0c0e) or bone text (#f2f0e9) on a live .tnm2 surface — those use --color-nn-bg (#131313) and --color-nn-on-surface (#e2e2e2).",
+      "Don't use cyan #34daff as a CTA or a decorative glow; it is a tertiary data highlight only.",
+      "Don't use sage as an unrestricted decorative green; it means verified / healthy / approved.",
+      "Don't set JetBrains Mono on headings, body, navigation, or marketing text; its scarcity is the clinical signal.",
+      "Don't render false macro precision (23.47g protein) — whole numbers only, honest to kitchen variance.",
+      "Don't hide allergen or FSSAI information behind hover, accordion, or tap; safety is exempt from progressive disclosure.",
+      "Don't render silent hardcoded fallback data on a failed fetch; show honest error microcopy.",
+      "Don't reach for a modal as the first thought, a display font in a UI label, or a serif for body/headings.",
+      "Don't ship the AI tells: no colored side-stripe borders, no gradient text, no ghost card (1px border + heavy shadow), no over-rounded cards (>16px), no decorative eyebrow above every section."
+    ]
+  }
+}
