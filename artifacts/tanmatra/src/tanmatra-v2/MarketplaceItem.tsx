@@ -288,7 +288,7 @@ export default function V2MarketplaceItem() {
           {deliveryMode === "bundle_with_meal" && recentOrders.length > 0 && (
             <select
               className="inp mb10"
-              style={{ cursor: "pointer", background: "var(--tnm-surface-ink-2)", border: "1px solid rgba(255,255,255,0.08)" }}
+              style={{ cursor: "pointer", background: "var(--tnm-surface-ink-2)", border: "1px solid var(--ln)" }}
               value={bundleOrderId ?? ""}
               onChange={(e) =>
                 setBundleOrderId(
