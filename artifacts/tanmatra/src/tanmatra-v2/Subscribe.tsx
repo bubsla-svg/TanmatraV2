@@ -1,23 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
-import { DISHES, macrosAreProvisional, type DishData } from "@workspace/menu-catalog";
+import { DISHES, type DishData } from "@workspace/menu-catalog";
 import { useMenuCatalog } from "@/lib/menuData";
 import { getRdPlanBySlug, getRdAuthor, resolvePlanWeek, findPlanSafeSwap, type RdPlan } from "@/lib/rdPlans";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { usePreferences } from "@/lib/preferencesContext";
-import { ACCENT_CLASSES } from "@/lib/teamData";
 import { useCartStore } from "@/lib/cartContext";
 import type { SubscriptionItem, SubscriptionDayPlanEntry } from "@/lib/subscriptionsApi";
 import { payWithRazorpay, razorpayConfigured } from "@/lib/razorpayClient";
 import { track } from "@/lib/analytics";
 import { toast } from "sonner";
-import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
 import {
   subscriptionsApi,
   CADENCE_LABEL,
   type SubscriptionCadence,
 } from "@/lib/subscriptionsApi";
+import {
+  CADENCE_WEEKS as CYCLE_WEEKS,
+  weeklyEquivalentPaise,
+  cadenceBilledLabel,
+} from "@/lib/subscriptionPricing";
 import { blankMember, type MemberDraft } from "@/lib/memberDraft";
 import {
   computeDeliveryPricePaise,
@@ -35,15 +38,10 @@ import {
   ArrowLeft,
   ArrowRight,
   ShieldCheck,
-  Calendar,
-  Clock,
   Warning,
   CheckCircle,
-  Plus,
-  Trash,
   Info,
   CreditCard,
-  CaretRight,
   MapPin,
 } from "@phosphor-icons/react";
 
@@ -55,11 +53,8 @@ const TIME_WINDOWS = [
   "20:00 - 21:00",
 ];
 
-const CYCLE_WEEKS: Record<SubscriptionCadence, number> = {
-  weekly: 1,
-  fortnightly: 2,
-  monthly: 6, // Updated: Monthly cadence maps to 6 weeks
-};
+// CYCLE_WEEKS (cadence → billed weeks) is a single source of truth in
+// @/lib/subscriptionPricing, imported above under the same name.
 
 type MealSlot = "breakfast" | "lunch" | "dinner";
 const SLOT_ORDER: MealSlot[] = ["breakfast", "lunch", "dinner"];
@@ -829,6 +824,22 @@ export default function V2Subscribe() {
         0,
         result.subscription.pricePerDeliveryPaise - bridgeCreditPaise,
       );
+      // Gateway integers only: Razorpay rejects a non-integer / NaN / negative
+      // amount with an opaque "internal error". Validate the pricing here so a
+      // bad payload surfaces as a precise, logged message instead of a
+      // dead-end red toast at the final gatekeeper.
+      const perDeliveryPaise = result.subscription.pricePerDeliveryPaise;
+      if (
+        !Number.isInteger(perDeliveryPaise) ||
+        perDeliveryPaise < 0 ||
+        !Number.isInteger(amountDue) ||
+        amountDue < 0
+      ) {
+        throw new Error(
+          `Invalid subscription pricing — paise must be a non-negative integer ` +
+            `(pricePerDeliveryPaise=${perDeliveryPaise}, bridgeCreditPaise=${bridgeCreditPaise}, amountDue=${amountDue}).`,
+        );
+      }
       if (razorpayConfigured() && amountDue > 0) {
         track("payment_initiated", { total_amount: amountDue });
         const outcome = await payWithRazorpay({
@@ -917,6 +928,22 @@ export default function V2Subscribe() {
           },
         });
       } else {
+        // Aggressive diagnostics for the "Could not create subscription"
+        // gatekeeper failure — enough context to pinpoint a bad payload or
+        // pricing bug, with NO PII (never name / phone / address).
+        console.error("[SUBSCRIPTION_CREATE_FAILED]", {
+          message,
+          stack: err instanceof Error ? err.stack : null,
+          cadence: activeCadence,
+          planType: isTrial ? "trial" : "standard",
+          planName: effectivePlan?.name ?? null,
+          razorpayConfigured: razorpayConfigured(),
+        });
+        track("subscription_create_failed", {
+          cadence: activeCadence,
+          planType: isTrial ? "trial" : "standard",
+          reason: message,
+        });
         toast.error("Could not create subscription", { description: message });
       }
     } finally {
@@ -1153,19 +1180,16 @@ export default function V2Subscribe() {
 
   // Render S3 Duration (Step 2)
   const renderS3Duration = () => {
-    const priceFor = (c: SubscriptionCadence) =>
-      F_Paise(getCalculatedPricePaise(c, cycleMeals, false));
     const OPTIONS: {
       cad: SubscriptionCadence;
       title: string;
       desc: string;
-      unit: string;
       best: boolean;
       badge: string | null;
     }[] = [
-      { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", unit: "/week", best: false, badge: null },
-      { cad: "fortnightly", title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.`, unit: "/2 weeks", best: false, badge: null },
-      { cad: "monthly", title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.`, unit: "/6 weeks", best: true, badge: "Best Value" },
+      { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", best: false, badge: null },
+      { cad: "fortnightly", title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.`, best: false, badge: null },
+      { cad: "monthly", title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.`, best: true, badge: "Best Value" },
     ];
     return (
       <div className="flex flex-col gap-6">
@@ -1214,8 +1238,13 @@ export default function V2Subscribe() {
                   <p className="fine text-white/55 mt-1">{o.desc}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="tnm-data text-sm font-bold text-white/95 font-mono">{priceFor(o.cad)}</div>
-                  <div className="fine text-[10px] text-white/45">{o.unit}</div>
+                  <div className="tnm-data text-sm font-bold text-white/95 font-mono">
+                    {F_Paise(weeklyEquivalentPaise(getCalculatedPricePaise(o.cad, cycleMeals, false), o.cad))}
+                    <span className="text-[10px] font-medium text-white/45"> /week</span>
+                  </div>
+                  <div className="fine text-[10px] text-white/45">
+                    {cadenceBilledLabel(getCalculatedPricePaise(o.cad, cycleMeals, false), o.cad, F_Paise)}
+                  </div>
                 </div>
               </button>
             );

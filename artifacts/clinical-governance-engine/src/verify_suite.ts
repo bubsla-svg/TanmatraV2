@@ -8,9 +8,7 @@ import {
 } from './AdverseEventWebhookController';
 import {
   AllergenTraceabilityService,
-  OrderTraceabilityRecord,
   RecallCommunicationGateway,
-  SupplierLotMetadata,
 } from './AllergenTraceabilityService';
 import {
   ClinicalContraindicationEngine,
@@ -19,7 +17,6 @@ import {
 } from './ContraindicationEngine';
 import {
   CxOperationsSupportService,
-  TicketTriageRequest,
 } from './CxOperationsSupportService';
 import {
   DisasterRecoveryResilienceService,
@@ -27,8 +24,6 @@ import {
   PendingKitchenOrder,
 } from './DisasterRecoveryResilienceService';
 import {
-  DpdpaConsentReceipt,
-  DpdpaErasureJob,
   DpdpaPrivacyConsentService,
 } from './DpdpaPrivacyConsentService';
 import {
@@ -48,13 +43,11 @@ import {
   SupervisorAuthGateway,
 } from './PackingStationInterlockService';
 import {
-  GameDayTurbulenceParams,
   PerformanceGameDaySimulationService,
 } from './PerformanceGameDaySimulationService';
 import {SecurityThreatMitigationService} from './SecurityThreatMitigationService';
 import {
   UnifiedGoLiveReadinessService,
-  UnifiedRiskItem,
 } from './UnifiedGoLiveReadinessService';
 import {
   MenuItem,

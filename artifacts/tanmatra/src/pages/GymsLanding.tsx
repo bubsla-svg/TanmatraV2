@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, type MetaFunction } from "react-router";
+import { type MetaFunction } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,16 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   ArrowRight, 
-  Dumbbell, 
   Percent, 
   TrendingUp, 
-  Clock, 
-  Sparkles, 
   CheckCircle,
-  Briefcase,
-  Smartphone,
-  Award
-} from "lucide-react";
+  Smartphone} from "lucide-react";
 import { toast } from "sonner";
 import { formatRupees } from "@/lib/rdPlans";
 import { apiPath } from "@/lib/apiBase";

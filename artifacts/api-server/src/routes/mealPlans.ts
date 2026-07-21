@@ -10,9 +10,7 @@ import {
   subscriptionDeliveriesTable,
   type MealPlan,
   type MealPlanConstraints,
-  type MealPlanDay,
   MEAL_SLOTS,
-  type MealPlanSlot,
 } from "@workspace/db";
 import {
   generateWeeklyPlan,

@@ -4,8 +4,8 @@ import { randomUUID } from "node:crypto";
 import { type AddressInfo } from "node:net";
 import http from "node:http";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
-import { and, eq, inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, preDebitNotificationsTable, subscriptionMandatesTable, ordersTable } from "@workspace/db";
+import { eq, inArray } from "drizzle-orm";
+import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, subscriptionMandatesTable, ordersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 import paymentsRouter from "./payments";

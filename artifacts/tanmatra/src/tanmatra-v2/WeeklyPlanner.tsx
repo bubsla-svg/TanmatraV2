@@ -12,6 +12,7 @@ import {
   type MealPlanSlotEntry,
   type WeekDayCalendarKind,
 } from "@/lib/mealPlanApi";
+import { swapMacroWarning } from "@/lib/planMacroGuard";
 
 const CALENDAR_KINDS: WeekDayCalendarKind[] = ["normal", "gym", "travel", "wfh"];
 const CALENDAR_LABEL: Record<WeekDayCalendarKind, string> = {
@@ -188,7 +189,16 @@ export default function V2WeeklyPlanner() {
     try {
       const { plan } = await mealPlanApi.swapSlot(previousPlan.id, dayIndex, slot, dishId);
       setActivePlan(plan);
-      toast.success("Swapped");
+      // Clinical guard: a swap can pull the day off its prescribed macro
+      // targets. Escalate to an amber warning (not a green success) when the
+      // day drifts more than 10% on a targeted macro, naming the deficit.
+      const swappedDay = plan.days[dayIndex];
+      const macroWarning = swappedDay ? swapMacroWarning(swappedDay, plan.constraints) : null;
+      if (macroWarning) {
+        toast.warning(macroWarning);
+      } else {
+        toast.success("Swapped");
+      }
     } catch (err) {
       setActivePlan(previousPlan);
       toast.error((err as Error).message || "Swap rejected");

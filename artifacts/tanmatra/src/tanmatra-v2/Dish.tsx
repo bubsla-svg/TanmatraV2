@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { getDishBySlug, F } from "./data";
-import { useMenuCatalog, macrosAreProvisional, getAllergenDisclosure, type DishData } from "@/lib/menuData";
+import { useMenuCatalog, macrosAreProvisional, getAllergenDisclosure } from "@/lib/menuData";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
@@ -26,15 +25,12 @@ import { buildNutritionLabel } from "@/lib/nutritionLabel";
 import { getChefForDish } from "@/lib/teamData";
 import { RD_PLANS } from "@/lib/rdPlans";
 import CoachAgentWidget from "@/components/ai/CoachAgent";
-import MedicalDisclaimer from "@/components/v2/MedicalDisclaimer";
 import DishReviews from "@/components/dish/DishReviews";
-import { API_BASE } from "@/lib/apiBase";
-import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
+import { getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError, FALLBACK_DISH_IMAGE } from "@/lib/imgFallback";
-import StickyBottomBar from "@/components/layout/StickyBottomBar";
 import {
   Check, ShieldCheck, WarningCircle, CaretRight, Question, X, Warning,
-  Plus, Calculator, Timer, SealCheck, CheckCircle, Sparkle, ChartBar,
+  Plus, CheckCircle, ChartBar,
   Info, Package, FirstAid, ArrowLeft,
 } from "@phosphor-icons/react";
 
@@ -477,12 +473,9 @@ export default function V2Dish() {
               style={{ transform: `translateX(-${heroActiveIdx * 100}%)` }}
             >
               <img
-                src={getLocalDishFallback(src, 800)}
-                srcSet={localDishSrcset(src)}
-                sizes="(max-width: 768px) 100vw, 768px"
+                src={src}
                 alt={idx === 0 ? meal.name : `${meal.name} view ${idx + 1}`}
                 loading={idx === 0 ? "eager" : "lazy"}
-                fetchPriority={idx === 0 ? "high" : undefined}
                 decoding={idx === 0 ? "sync" : "async"}
                 onError={onDishImageError}
                 className="w-full h-full object-cover rounded-b-3xl"
@@ -940,16 +933,13 @@ export default function V2Dish() {
                       <p className="text-[10px] leading-3 font-medium text-[var(--pdp-secondary)] mt-1" style={{ fontFamily: "Geist, sans-serif" }}>
                         {u.macros?.calories || "—"} kcal &bull; {u.macros?.protein || "—"}g protein
                       </p>
-                      {typeof u.price === "number" && (
-                        <p className="text-[13px] leading-4 text-white font-bold mt-1 tabular-nums">{F(u.price)}</p>
-                      )}
                     </div>
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleAddUpsell(u)}
                     aria-label={`Add ${u.name} to order`}
-                    className="w-11 h-11 shrink-0 flex items-center justify-center rounded-full border border-[var(--tnm-action)]/40 bg-[var(--tnm-action)]/10 text-[var(--tnm-action)] hover:bg-[var(--tnm-action)]/20 active:scale-95 transition-all"
+                    className="w-10 h-10 flex items-center justify-center text-[var(--pdp-secondary)] hover:text-white transition-colors"
                   >
                     <Plus className="w-5 h-5" />
                   </button>

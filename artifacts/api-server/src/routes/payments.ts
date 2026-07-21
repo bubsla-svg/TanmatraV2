@@ -6,11 +6,10 @@ import {
   webhookInboxTable,
   usersTable,
   subscriptionsTable,
-  subscriptionMandatesTable,
   subscriptionDeliveriesTable,
   isLiveTrialState,
 } from "@workspace/db";
-import { and, eq, asc } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
