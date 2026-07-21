@@ -453,3 +453,14 @@
   border-radius: 8px;
 }
 
+/* Sticky menu header cluster — app bar + search + filter rails stay pinned as
+   the dish list scrolls under, so re-filtering never requires scrolling back
+   to the top (Uber-Eats scannability). Degrades to a normal header if the
+   scroll container isn't the window. */
+.tnm2 .menu-stickytop{
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--tnm-surface-ink);
+}
+

@@ -35,6 +35,7 @@ import {
 } from "@/lib/clinicalDiet";
 import { PROTOCOLS, PROTOCOL_LABELS, PROTOCOL_TAGLINES, isProtocol, matchesProtocol, type Protocol } from "@/lib/protocols";
 import { useCart, useCartDrawer, useCartStore } from "@/lib/cartContext";
+import StickyBottomBar from "@/components/layout/StickyBottomBar";
 import { usePreferences } from "@/lib/preferencesContext";
 import { useOrders } from "@/lib/ordersContext";
 import { addressesApi } from "@/lib/userAddressesApi";
@@ -311,7 +312,8 @@ export default function V2Menu() {
       macros: item.macros, customizations: [],
     });
     hapticLight();
-    openCart();
+    // No auto-open drawer — keep the browse loop uninterrupted (Uber-Eats
+    // pattern). The persistent StickyBottomBar + toast are the feedback.
     toast.success(`Added ${item.name} to your order`, { description: "Tap the cart to review and check out." });
   };
 
@@ -532,6 +534,9 @@ export default function V2Menu() {
   return (
     <div className="tnm2 nn min-h-screen bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
+        {/* Sticky header cluster — app bar + search + filter rails stay pinned
+            so re-filtering never means scrolling back to the top (Uber-Eats). */}
+        <div className="menu-stickytop">
         {/* App bar */}
         <div className="appbar">
           <Link className="iconbtn" to="/" aria-label="Home"><i className="ph-bold ph-arrow-left" /></Link>
@@ -611,6 +616,8 @@ export default function V2Menu() {
             );
           })}
         </div>
+
+        </div>{/* /menu-stickytop */}
 
         <div className="content padx" style={{ paddingTop: 4, paddingBottom: 96 }}>
           {/* Clinical-mode diet-order banner */}
@@ -1145,6 +1152,9 @@ export default function V2Menu() {
           </div>
         </div>
       )}
+
+      {/* Persistent cart bar — Uber-Eats "View cart" parity; empty cart renders nothing. */}
+      <StickyBottomBar context="homepage" />
     </div>
   );
 }
