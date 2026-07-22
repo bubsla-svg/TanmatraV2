@@ -12,7 +12,7 @@
 - **Field translation for pools:** `gi → glycaemicIndex`, `kcal → macros.calories`, corpus-`signed → reviewed`; two macro truths (raw seed vs the DISHES estimated overlay) — pools run against DISHES.
 - **Data gaps that gate launches:** veg lean-high-protein pool = 0; high-protein snacks ≈ 0; veg/egg low-GI too small → Steady & GLP-1 veg/egg tracks cannot launch from current SKUs (config narrows them off honestly).
 - **Missing inputs still needed from Chandan:** IMPECCABLE.md, Amendment 02/02a (copy system + 12-glyph chip set), the final `catalog-repricing.csv`, the rescue plan, the benchmark framework, HFEP.
-- **Hard stop:** Ragi Brownie veg/allergen provenance (blocks Stage-A).
+- **Hard stop (RESOLVED 2026-07-22):** the Ragi Dates Brownie veg/allergen provenance was the Stage-A blocker. Per product call, the SKU is now **removed from the catalog entirely** (record dropped from `lib/menu-catalog`, no longer served) rather than left contained — so it no longer gates Stage-A. Re-add only on a kitchen answer that covers premix (see the removal commit for the provenance trail + verbatim question).
 
 ## Sequencing principle
 One concern per commit; money-path slices land behind a feature flag first, are verified, then the legacy path is removed. Never delete a working money-path surface before its replacement is green. Each slice ships with tests; CI must run typecheck + the money-path suite before any legacy removal (see S0).
@@ -44,7 +44,7 @@ One concern per commit; money-path slices land behind a feature flag first, are 
 
 | # | Slice | Scope | Depends |
 |---|---|---|---|
-| **S11** | Stage-A repricing | Confirm Ragi Brownie status (contain if unresolved, per brief A4); write `PRICE-FLOW.md`; apply `stageA_paise` byte-exact to the catalog **and** DB atomically; tamper test + rollback + 30-min watch. | Ragi confirmation |
+| **S11** | Stage-A repricing | ~~Confirm Ragi Brownie status~~ (done — Ragi removed from the catalog, so Stage-A is no longer gated on it); write `PRICE-FLOW.md`; apply `stageA_paise` byte-exact to the catalog **and** DB atomically; tamper test + rollback + 30-min watch. | — |
 | **S12** | Final prices + dual-channel | Apply the final `catalog-repricing.csv` and the "₹X here · ₹Y on delivery apps" line. | S3 (final CSV), S11 |
 | **S13** | Benchmark + budgets | Stand up CLS/perf infra; wire the `cuj_*` funnel to the benchmark scoreboard; enforce 02c/02d tap/field budgets in Playwright. | S8, S9, benchmark doc |
 
@@ -58,6 +58,6 @@ One concern per commit; money-path slices land behind a feature flag first, are 
 - **This roadmap.**
 
 ## Immediate next (in order)
-1. **Chandan:** Ragi Brownie status (unblocks S11) + the missing spec inputs — IMPECCABLE.md, Amendment 02/02a, final `catalog-repricing.csv` (unblocks S3, and un-infers S2's glyph set / S5 / S12).
+1. **Chandan:** ~~Ragi Brownie status~~ (resolved — removed from the catalog) + the missing spec inputs — IMPECCABLE.md, Amendment 02/02a, final `catalog-repricing.csv` (unblocks S3, and un-infers S2's glyph set / S5 / S12).
 2. **S5b + S6b + a DB** — the DB-write halves deferred for want of a Postgres-capable environment: trial credit grant/eligibility record at trial-paid + redemption on plan start (S5b); subscription add-on attach/detach + recurring-charge inclusion (S6b). Add DB-backed integration tests to the `money-integration` CI job.
 3. **S7** — assemble `PlanCard`/`OrderBump` and the plan surfaces from the S2 primitives (consumes the S4 quote + S6 add-ons).

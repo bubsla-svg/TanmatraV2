@@ -3894,46 +3894,6 @@ export interface DishCustomOption {
     "isAvailable": true
   },
   {
-    "id": 100,
-    "slug": "ragi-dates-eggless-brownie",
-    "name": "Ragi Dates Eggless Brownie",
-    "description": "Ragi flour, Whole wheat flour, Dates puree, and more.",
-    "longDescription": "Ragi flour – 80 g · Whole wheat flour – 20 g · Dates puree – 50 g · Cocoa powder – 15 g · Baking powder – ½ tsp · Olive oil – 20 ml",
-    "image": "/images/dishes/ragi-dates-eggless-brownie.jpg",
-    "price": 11000,
-    "kitchen": "indian",
-    "category": "snacks",
-    "isVeg": true,
-    "rdVerified": true,
-    "prepTime": "15-20 min",
-    "serveMode": "ready_ambient",
-    "tasteDescription": "Fudgy ragi-and-cocoa bake, naturally sweetened with dates — cakey crumb, gently earthy, no refined sugar.",
-    "macros": {
-      "protein": 6,
-      "carbs": 30,
-      "fat": 10,
-      "fiber": 3,
-      "calories": 240
-    },
-    "ingredients": [
-      "Ragi flour – 80 g",
-      "Whole wheat flour – 20 g",
-      "Dates puree – 50 g",
-      "Cocoa powder – 15 g",
-      "Baking powder – ½ tsp",
-      "Olive oil – 20 ml",
-      "Milk – 60 ml"
-    ],
-    "allergens": [
-      "Dairy",
-      "Gluten"
-    ],
-    "glycaemicIndex": "high",
-    "sugarPerServing": "4g",
-    "customizations": [],
-    "isAvailable": true
-  },
-  {
     "id": 101,
     "slug": "roast-chicken-russian",
     "name": "Roast Chicken Russian",
