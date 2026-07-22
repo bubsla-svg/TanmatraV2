@@ -46,3 +46,36 @@ export {
   computeDeliveryPricePaise,
   computeTrialPricePaise,
 } from "./pricing.js";
+
+// ── Corpus 02e plan catalog (the "replace the live model" spine) ─────────────
+// Introduced additively; quote/create routes and web surfaces are re-pointed at
+// it in later slices (see IMPLEMENTATION-PLAN.md). See planCatalog.ts header for
+// the inferred-value flags carried until IMPECCABLE.md / Amendment 02 land.
+export {
+  type PlanId,
+  type DietTrack,
+  type PlanCycle,
+  type PlanSlot,
+  type AddOnId,
+  type PlanStatus,
+  type PoolQueryId,
+  type PlanConfig,
+  type AddOnConfig,
+  type PoolPredicate,
+  type TrackLaunchState,
+  PLAN_CATALOG,
+  ADD_ONS,
+  BUILDER_DEFAULTS,
+  TRIAL_CREDIT_PAISE,
+  TRIAL_CREDIT_VALIDITY_DAYS,
+  WEEKLY_PRICE_PAISE,
+  MONTHLY_PRICE_PAISE,
+  applyTrialCreditPaise,
+  TRIAL_TRIOS,
+  POOL_PREDICATES,
+  isServable,
+  dishTrack,
+  poolForPlan,
+  trackLaunchState,
+  ROUTER_ANSWER_TO_PLAN,
+} from "./planCatalog.js";

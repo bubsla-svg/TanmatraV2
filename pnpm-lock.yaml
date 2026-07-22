@@ -1084,7 +1084,11 @@ importers:
         specifier: workspace:*
         version: link:../menu-catalog
 
-  lib/subscription-rules: {}
+  lib/subscription-rules:
+    dependencies:
+      '@workspace/menu-catalog':
+        specifier: workspace:*
+        version: link:../menu-catalog
 
   scripts:
     dependencies:
