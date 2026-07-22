@@ -19,6 +19,9 @@ interface StickyBottomBarProps {
   step?: number;
   planSummaryText?: string;
   pricePaise?: number;
+  /** When false, the price line is suppressed (e.g. before a plan/duration is
+   *  chosen, so the bar never shows a committed estimate the user hasn't set). */
+  showPrice?: boolean;
   ctaText?: string;
   onContinue?: () => void;
   disabled?: boolean;
@@ -36,6 +39,7 @@ export default function StickyBottomBar({
   step = 0,
   planSummaryText,
   pricePaise,
+  showPrice = true,
   ctaText,
   onContinue,
   disabled = false,
@@ -199,12 +203,18 @@ export default function StickyBottomBar({
           <span className="text-[10px] uppercase font-bold tracking-wider text-white/40 truncate">
             {summary}
           </span>
-          <span className="tnm-data text-sm font-bold text-[var(--tnm-action)] mt-0.5">
-            {formatPrice(price)}
-            <span className="text-[10px] text-white/50 font-normal ml-1">
-              {isCheckoutStep ? "total payable" : "estimated"}
+          {showPrice ? (
+            <span className="tnm-data text-sm font-bold text-[var(--tnm-action)] mt-0.5">
+              {formatPrice(price)}
+              <span className="text-[10px] text-white/50 font-normal ml-1">
+                {isCheckoutStep ? "total payable" : "estimated"}
+              </span>
             </span>
-          </span>
+          ) : (
+            <span className="text-[10px] text-white/40 font-normal mt-0.5">
+              Pick a plan length to see your price
+            </span>
+          )}
         </div>
         <TapScale
           type="button"

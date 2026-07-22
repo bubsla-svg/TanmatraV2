@@ -1180,17 +1180,32 @@ export default function V2Subscribe() {
 
   // Render S3 Duration (Step 2)
   const renderS3Duration = () => {
-    const OPTIONS: {
-      cad: SubscriptionCadence;
-      title: string;
-      desc: string;
-      best: boolean;
-      badge: string | null;
-    }[] = [
-      { cad: "weekly", title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue.", best: false, badge: null },
-      { cad: "fortnightly", title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.`, best: false, badge: null },
-      { cad: "monthly", title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.`, best: true, badge: "Best Value" },
-    ];
+    // A7 fix — price each option for ITS OWN commitment length. A plan's meal
+    // count scales with the number of weeks billed (weekMeals × weeks), so the
+    // full-cycle total strictly ascends with duration. The previous code priced
+    // every card at `cycleMeals` (the ACTIVE cadence's meal count), which made
+    // all three cards charge the same basket and only differ by discount —
+    // inverting the totals (1-Week ₹7,481 vs 6-Week ₹6,694 on the 2026-07-22
+    // recording). à-la-carte (non-plan) carts keep their fixed per-delivery
+    // basket, so they don't scale by weeks.
+    const optionMealsFor = (cad: SubscriptionCadence): number =>
+      effectivePlan ? weekMeals * CYCLE_WEEKS[cad] : weekMeals;
+
+    const OPTIONS = (
+      [
+        { cad: "weekly" as const, title: "1-Week Plan", desc: "Billed weekly · stops after Week 1 unless you continue." },
+        { cad: "fortnightly" as const, title: "2-Week Plan", desc: `Billed bi-weekly · save ${cadenceDiscountPct("fortnightly")}% · stops after Week 2.` },
+        { cad: "monthly" as const, title: "6-Week Plan", desc: `Prepaid · save ${cadenceDiscountPct("monthly")}% · stops after Week 6.` },
+      ]
+    ).map((o) => {
+      const totalPaise = getCalculatedPricePaise(o.cad, optionMealsFor(o.cad), false);
+      return { ...o, totalPaise, perWeekPaise: weeklyEquivalentPaise(totalPaise, o.cad) };
+    });
+
+    // BEST VALUE is DERIVED, never hardcoded: it renders only on the lowest
+    // per-week rate (the biggest commitment discount), so the badge can never
+    // land on a pricier option than a plan without it.
+    const bestPerWeekPaise = Math.min(...OPTIONS.map((o) => o.perWeekPaise));
     return (
       <div className="flex flex-col gap-6">
         <div>
@@ -1211,6 +1226,7 @@ export default function V2Subscribe() {
         <div className="flex flex-col gap-3">
           {OPTIONS.map((o) => {
             const on = selectedBillingCadence === o.cad;
+            const isBest = o.perWeekPaise === bestPerWeekPaise;
             return (
               <button
                 key={o.cad}
@@ -1222,16 +1238,16 @@ export default function V2Subscribe() {
                 }}
                 className="text-left flex justify-between items-center gap-3 p-4 rounded-xl transition-all w-full border active:scale-[0.99]"
                 style={{
-                  borderColor: on ? "var(--saf)" : o.best ? "color-mix(in srgb, var(--saf) 30%, transparent)" : "var(--ln2)",
-                  background: on || o.best ? "var(--safd)" : "var(--s2)",
+                  borderColor: on ? "var(--saf)" : isBest ? "color-mix(in srgb, var(--saf) 30%, transparent)" : "var(--ln2)",
+                  background: on || isBest ? "var(--safd)" : "var(--s2)",
                 }}
               >
                 <div style={{ minWidth: 0 }}>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="text-sm font-bold text-white/95">{o.title}</h4>
-                    {o.badge && (
+                    {isBest && (
                       <span className="text-[9px] uppercase font-bold text-black bg-[var(--tnm-action)] px-1.5 py-0.5 rounded tracking-wide">
-                        {o.badge}
+                        Best Value
                       </span>
                     )}
                   </div>
@@ -1239,11 +1255,11 @@ export default function V2Subscribe() {
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="tnm-data text-sm font-bold text-white/95 font-mono">
-                    {F_Paise(weeklyEquivalentPaise(getCalculatedPricePaise(o.cad, cycleMeals, false), o.cad))}
+                    {F_Paise(o.perWeekPaise)}
                     <span className="text-[10px] font-medium text-white/45"> /week</span>
                   </div>
                   <div className="fine text-[10px] text-white/45">
-                    {cadenceBilledLabel(getCalculatedPricePaise(o.cad, cycleMeals, false), o.cad, F_Paise)}
+                    {cadenceBilledLabel(o.totalPaise, o.cad, F_Paise)}
                   </div>
                 </div>
               </button>
@@ -2030,6 +2046,11 @@ export default function V2Subscribe() {
               : `Payable details checklist`
           }
           pricePaise={quoteDetails?.total || getCalculatedPricePaise(activeCadence, cycleMeals, isTrial)}
+          // A7 — the committed estimate renders only after a duration exists:
+          // a trial (fixed price) or an explicitly chosen billing cadence.
+          // Before that the bar prompts instead of showing a default-cadence
+          // number the user never selected.
+          showPrice={isTrial || selectedBillingCadence != null}
           ctaText={
             // The word "Pay" appears ONLY on the step whose action charges
             // (step 6 → submit()). Step 5 is Review — its action just
