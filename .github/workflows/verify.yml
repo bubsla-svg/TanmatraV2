@@ -126,7 +126,10 @@ jobs:
         run: pnpm --filter @workspace/db run push-force
       # Payment-authority crown jewels: the tamper test (client amount ignored,
       # server amount billed) + webhook capture reconciliation + refund
-      # idempotency + subscription-order pricing.
+      # idempotency + subscription-order pricing. Plus the 3-Day Taste Test
+      # creditback (S5b): the one-per-phone ledger + grant service, the paid-time
+      # seam, and the create-time gate — all enforced by real Postgres UNIQUE
+      # constraints, so they cannot run DB-free.
       - name: Money-path integration tests
         working-directory: artifacts/api-server
         run: >
@@ -135,3 +138,6 @@ jobs:
           ./src/routes/payments.webhook.test.ts
           ./src/routes/payments.subscriptionOrder.test.ts
           ./src/routes/refunds.test.ts
+          ./src/lib/trialRedemption.test.ts
+          ./src/routes/payments.trialCreditback.test.ts
+          ./src/routes/subscriptions.planV2Trial.test.ts
