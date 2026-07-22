@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import StreakRings from "@/components/retention/StreakRings";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import {
   mealPlanApi,
   formatPaise,
@@ -32,7 +33,7 @@ const SLOT_LABEL: Record<MealPlanSlot, string> = {
 
 // Shared v2 surface for the shadcn Dialog portals (rendered outside the main
 // .tnm2 scope, so each DialogContent becomes its own .tnm2 root).
-const DIALOG_SURFACE: any = {
+const DIALOG_SURFACE: CSSProperties = {
   background: "var(--s1)",
   border: "1px solid var(--ln2)",
   color: "var(--tx)",
@@ -74,6 +75,11 @@ export default function V2WeeklyPlanner() {
     weeklyBudgetRupees: "",
     maxRepetitionsPerDish: 2,
   });
+
+  // Focus trap + Escape-to-close + focus restore for the two hand-rolled modal
+  // overlays, matching the useDialogA11y treatment on Checkout/Subscriptions.
+  const swapA11y = useDialogA11y(swapDialog !== null, () => setSwapDialog(null));
+  const settingsA11y = useDialogA11y(settingsOpen, () => setSettingsOpen(false));
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -394,6 +400,7 @@ export default function V2WeeklyPlanner() {
                       key={i}
                       type="button"
                       onClick={() => cycleCalendar(i)}
+                      aria-label={`${DAY_LABELS[i]}: ${CALENDAR_LABEL[kind]} — tap to change day type`}
                       data-testid={`button-calendar-${i}`}
                       style={{
                         display: "flex",
@@ -500,8 +507,17 @@ export default function V2WeeklyPlanner() {
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSwapDialog(null)}
         >
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ ...DIALOG_SURFACE, maxWidth: 520, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="h2" style={{ color: "var(--tx)" }}>
+          <div
+            ref={swapA11y.panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="swap-dialog-title"
+            onKeyDown={swapA11y.onKeyDown}
+            className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+            style={{ ...DIALOG_SURFACE, maxWidth: 520, width: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h2" id="swap-dialog-title" style={{ color: "var(--tx)" }}>
               Swap {swapDialog ? SLOT_LABEL[swapDialog.slot] : ""}
             </div>
           {swapDialog?.loading ? (
@@ -586,8 +602,17 @@ export default function V2WeeklyPlanner() {
           style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setSettingsOpen(false)}
         >
-          <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4" style={{ ...DIALOG_SURFACE, maxWidth: 460, width: "100%" }} onClick={(e) => e.stopPropagation()}>
-            <div className="h2" style={{ color: "var(--tx)" }}>
+          <div
+            ref={settingsA11y.panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="planner-settings-title"
+            onKeyDown={settingsA11y.onKeyDown}
+            className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4"
+            style={{ ...DIALOG_SURFACE, maxWidth: 460, width: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h2" id="planner-settings-title" style={{ color: "var(--tx)" }}>
               Meal planner settings
             </div>
           <div className="mt10">
