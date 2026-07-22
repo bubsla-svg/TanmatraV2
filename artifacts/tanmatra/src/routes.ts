@@ -17,6 +17,10 @@ export default [
     ]),
     route("track", "pages/Track.tsx"),
     route("subscribe", "pages/Subscribe.tsx"),
+    // S10 cut-over DRAFT — the 02-series plan-v2 journey behind VITE_FLAG_PLAN_V2.
+    // Client-only (not prerendered), inert by default (redirects to /subscribe),
+    // and unlinked from nav until cut-over. See pages/PlanV2.tsx.
+    route("plan-v2", "pages/PlanV2.tsx"),
     route("subscription/bridge", "pages/SubscriptionBridge.tsx"),
     route("trial/:id", "pages/TrialStub.tsx"),
     route("order/confirmed/:orderId", "pages/OrderConfirmedStub.tsx"),
