@@ -23,9 +23,9 @@ One concern per commit; money-path slices land behind a feature flag first, are 
 
 | # | Slice | Scope | Acceptance | Status |
 |---|---|---|---|---|
-| **S0** | CI safety net | Add a CI job running `pnpm run typecheck` + the api-server test suite (Postgres service or a DB-less split) before any money-path change. | A PR that breaks payment-amount authority fails CI. | **TODO — do first** |
+| **S0** | CI safety net | `.github/workflows/verify.yml`: `typecheck` + `money-unit` (DB-free) + `money-integration` (Postgres, mirrors bulkhead) jobs. | ✅ typecheck + money-unit verified green locally; a PR breaking payment authority now fails CI. | **DONE (this session)** |
 | **S1** | Plan-config spine (02e) | Typed `PLAN_CATALOG`, pool predicates (translated fields), launch gates, add-ons, trial-credit math, fixed trios. Pure lib, additive. | ✅ `lib/subscription-rules/planCatalog.ts` + 13 passing tests; `typecheck:libs` green. | **DONE (this session)** |
-| **S2** | 02f component primitives | Net-new presentational components against existing tokens: `Chip` (glyph set inferred + flagged), `MacroReadout` (reuse `macrosEstimated`/provisional gating), `RdBadge`, `SegmentedControl`, `StepDots`, and formalize `Price`/`DishImage` as components. Reuse existing `FssaiMark` (=DietMark) and `Sheet`. | Storybook/styleguide entries render; a11y (focus/roles) per repo patterns; no raw hex (lint:colors green). | TODO |
+| **S2** | 02f component primitives | Net-new presentational components against existing tokens: `Chip` (glyph set inferred + flagged), `MacroReadout` (A5 gate), `RdBadge`, `SegmentedControl`, `StepDots`, `Price`, `DishImage`. Reuse `FssaiMark` (=DietMark) and `Sheet`. | ✅ `artifacts/tanmatra/src/components/primitives/` + 6 passing logic tests; tanmatra typecheck + lint:colors/prices green. | **DONE (this session)** |
 | **S3** | Missing-input intake | Land IMPECCABLE.md, Amendment 02/02a, final `catalog-repricing.csv` when provided; reconcile every value flagged `INFERRED` in S1/S2. | Flagged inferences resolved or ticketed. | BLOCKED on Chandan |
 
 ## Phase B — commercial model (behind `FLAG_PLAN_V2`)
@@ -52,10 +52,12 @@ One concern per commit; money-path slices land behind a feature flag first, are 
 
 ## What this session delivered
 - **Phase 0 (docs):** `docs/spec/` corpus home + `PLAN-CROSSCHECK.md`.
-- **S1:** the plan-config spine (`lib/subscription-rules/planCatalog.ts`) with 13 passing tests and clean `typecheck:libs`.
+- **S0:** the CI money-path safety net (`.github/workflows/verify.yml`).
+- **S1:** the plan-config spine (`lib/subscription-rules/planCatalog.ts`) — 13 tests.
+- **S2:** the 02f component primitives (`artifacts/tanmatra/src/components/primitives/`) — 6 logic tests.
 - **This roadmap.**
 
 ## Immediate next (in order)
-1. **S0** — the CI safety net (cheap, unblocks safe money-path work).
-2. **Chandan:** Ragi Brownie status (unblocks S11) + the missing spec inputs (unblocks S3, and un-infers S2/S5/S12).
-3. **S2** — the component primitives (no money risk, needed by every screen).
+1. **Chandan:** Ragi Brownie status (unblocks S11) + the missing spec inputs — IMPECCABLE.md, Amendment 02/02a, final `catalog-repricing.csv` (unblocks S3, and un-infers S2's glyph set / S5 / S12).
+2. **S4** — plan quote/create on the new spine behind `FLAG_PLAN_V2` (first flagged commercial slice).
+3. **S7** — assemble `PlanCard`/`OrderBump` and the plan surfaces from the S2 primitives once S4/S5/S6 land.
