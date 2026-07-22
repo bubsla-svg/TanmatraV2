@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import { useOrders, formatRelativeTime, type PastOrder } from "@/lib/ordersContext";
 import { useCart } from "@/lib/cartContext";
@@ -13,7 +13,7 @@ import { useClinicalMode } from "@/lib/clinicalDiet";
 import { onDishImageError } from "@/lib/imgFallback";
 
 // v2 status pill: consumer-facing labels by default, mapped to dark-theme tokens.
-const STATUS_BADGE: Record<PastOrder["status"], { label: string; cls: string; style?: any }> = {
+const STATUS_BADGE: Record<PastOrder["status"], { label: string; cls: string; style?: CSSProperties }> = {
   placed: { label: "Submitted", cls: "pill", style: { background: "var(--safd)", color: "var(--safb)" } },
   preparing: { label: "In Preparation", cls: "pill", style: { background: "var(--s3)", color: "var(--tx)" } },
   ready: { label: "In Preparation", cls: "pill", style: { background: "var(--s3)", color: "var(--tx)" } },
@@ -146,6 +146,9 @@ export default function V2Orders() {
                               src={item.image}
                               alt={item.name}
                               onError={onDishImageError}
+                              loading="lazy"
+                              width={56}
+                              height={56}
                               style={{ width: 56, height: 56, borderRadius: 9, objectFit: "cover", border: "1px solid var(--ln)" }}
                             />
                             <div className="fine mt4" style={{ fontSize: 10 }}>×{item.quantity}</div>
