@@ -3931,7 +3931,18 @@ export interface DishCustomOption {
     "glycaemicIndex": "high",
     "sugarPerServing": "4g",
     "customizations": [],
-    "isAvailable": true
+    // CONTAINED (safety) — do not set back to true without a kitchen answer.
+    // The isVeg/allergen fields were flipped to isVeg:true / no-Eggs in a bare
+    // data edit (git blame → 8e9ac7a, a "Batch 7 dish images" merge) that carries
+    // NO kitchen evidence — a silent resolution of the original isVeg:false+Eggs
+    // contradiction, not a confirmation of it. Per the blocker-resolution protocol
+    // (§3), unverified values are re-contained regardless of what they now claim,
+    // so ordering is blocked server-side (422 dish_unavailable) until the kitchen
+    // answers, verbatim: "Does the ragi dates brownie contain egg in any form —
+    // including any bakery premix or ready flour mix?" (premix is the classic
+    // hidden-egg vector in Indian bakery). Restore only on an answer that covers
+    // premix. See the Ragi provenance issue.
+    "isAvailable": false
   },
   {
     "id": 101,
