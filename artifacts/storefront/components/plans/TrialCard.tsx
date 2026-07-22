@@ -18,7 +18,7 @@ export function TrialCard() {
         <span className="tabular text-sm font-semibold text-ink">{formatPaise(TRIAL_PRICE_PAISE)}</span>
       </div>
       <p className="text-sm leading-relaxed text-ink-muted">{TRIAL_COPY.creditLine}</p>
-      <span className="mt-1 text-sm font-semibold text-gold">Start the taste test &rarr;</span>
+      <span className="mt-1 text-sm font-semibold text-gold-text">Start the taste test &rarr;</span>
     </Link>
   );
 }

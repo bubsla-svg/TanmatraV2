@@ -16,9 +16,11 @@
   /* ── Locked brand accents (identical in both themes) ───────────────────── */
   --gold: #d4af37;
   --gold-ink: #1a1c1e; /* text on a gold fill */
+  --gold-text: #8a6d1f; /* gold AS foreground text/links — AA (4.9:1 on white); raw --gold is 2.1:1 and fails */
   --blue: #6ba3c8;
   --sage: #7d9e7e;
   --sage-ink: #14170f; /* text on a sage fill — AA on #7d9e7e in both themes */
+  --sage-text: #4f6b50; /* sage AS foreground text — AA (5.9:1 on white); raw --sage is 3.0:1 and fails */
 
   /* Semantic status (shared) */
   --success: #7d9e7e;
@@ -31,7 +33,7 @@
   --surface-raised: #ffffff;
   --ink: #1a1c1e; /* primary text */
   --ink-muted: #5c6367; /* secondary text */
-  --ink-faint: #8b9398; /* tertiary text */
+  --ink-faint: #6b7378; /* tertiary text — darkened to AA (4.8:1 on white; was #8b9398 = 3.1:1, fail) */
   --line: #e7e3da; /* hairline border */
   --line-strong: #d8d3c7;
 
@@ -76,9 +78,13 @@
   --surface-raised: #1e2125;
   --ink: #e9ecee; /* bone */
   --ink-muted: #8b9398;
-  --ink-faint: #5c6367;
+  --ink-faint: #7f878c; /* lightened to AA on dark surfaces (was #5c6367 = 3.1:1) */
   --line: #262a2e;
   --line-strong: #333940;
+  /* On dark surfaces the raw brand accents already pass as text (gold 8.4:1,
+     sage 5.9:1), so the text variants point back at them. */
+  --gold-text: #d4af37;
+  --sage-text: #7d9e7e;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.5);

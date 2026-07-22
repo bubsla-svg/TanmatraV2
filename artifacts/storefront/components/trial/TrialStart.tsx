@@ -47,8 +47,8 @@ export function TrialStart({
   return (
     <section className="flex flex-col gap-5" aria-label="Start the 3-day taste test">
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Preference</p>
-        <div className="inline-flex rounded-xl border border-line p-1">
+        <p id="trial-pref-label" className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Preference</p>
+        <div role="group" aria-labelledby="trial-pref-label" className="inline-flex rounded-xl border border-line p-1">
           {TRACKS.map((t) => (
             <button
               key={t.id}

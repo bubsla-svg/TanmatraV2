@@ -35,11 +35,12 @@ export function CheckoutPay({
         <StepDots current={step} total={stepCount} />
         <span className="tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
       </div>
+      <h1 className="text-lg font-semibold text-ink">Review &amp; pay</h1>
 
       <div className="rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]">
         <p className="text-sm text-ink-muted">{planSummary}</p>
         {creditPaise > 0 && (
-          <p className="mt-1 text-sm font-medium text-sage">
+          <p className="mt-1 text-sm font-medium text-sage-text">
             {formatPaise(creditPaise)} credit applied
           </p>
         )}
@@ -57,7 +58,7 @@ export function CheckoutPay({
       <button
         type="button"
         onClick={() => setMore((m) => !m)}
-        className="self-center text-xs font-medium text-ink-muted underline-offset-4 hover:underline"
+        className="-m-2 self-center p-2 text-xs font-medium text-ink-muted underline-offset-4 hover:underline"
         aria-expanded={more}
       >
         More ways to pay

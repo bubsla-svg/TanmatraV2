@@ -27,7 +27,7 @@ export function PlanCard({ id }: { id: PlanId }) {
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-base font-semibold text-ink">{d.name}</h3>
         {d.clinical && (
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sage ring-1 ring-sage/40">
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sage-text ring-1 ring-sage/40">
             RD-reviewed
           </span>
         )}
@@ -37,7 +37,7 @@ export function PlanCard({ id }: { id: PlanId }) {
       <div className="mt-auto flex items-end justify-between pt-2">
         <span className="tabular text-sm font-semibold text-ink">{price}</span>
         {q.launchable ? (
-          <span className="text-sm font-semibold text-gold">Choose &rarr;</span>
+          <span className="text-sm font-semibold text-gold-text">Choose &rarr;</span>
         ) : (
           <span className="text-xs font-medium text-ink-faint">Join waitlist &rarr;</span>
         )}

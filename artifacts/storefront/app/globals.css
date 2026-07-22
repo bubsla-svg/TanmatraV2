@@ -16,8 +16,10 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-gold: var(--gold);
+  --color-gold-text: var(--gold-text);
   --color-blue: var(--blue);
   --color-sage: var(--sage);
+  --color-sage-text: var(--sage-text);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -43,4 +45,34 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
+}
+
+/* Keyboard focus (WCAG 2.4.7 / 1.4.11): a high-contrast ring on every
+ * interactive element. --ink is always maximally contrasting with the
+ * background in either theme (it's the primary text colour), so this clears
+ * the 3:1 non-text minimum everywhere — the brand accents don't (gold 2.1:1,
+ * blue 2.7:1 on the bone bg). Element+pseudo specificity beats the utility
+ * `outline-none` some inputs carry. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Respect a reduced-motion preference (WCAG 2.3.3): the transforms/scales on
+ * cards and CTAs are decorative, so collapse them. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

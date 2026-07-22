@@ -48,7 +48,7 @@ export function OrderBump({
         <button
           type="button"
           onClick={onRemove}
-          className="text-sm text-ink-muted underline-offset-2 hover:underline"
+          className="-m-2 p-2 text-sm text-ink-muted underline-offset-2 hover:underline"
         >
           Remove
         </button>

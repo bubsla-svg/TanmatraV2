@@ -39,7 +39,7 @@ export function GoalRouter() {
         ))}
         <a
           href="/menu"
-          className="mt-1 self-start text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
+          className="-m-2 mt-1 self-start p-2 text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
         >
           Just browsing &rarr;
         </a>
