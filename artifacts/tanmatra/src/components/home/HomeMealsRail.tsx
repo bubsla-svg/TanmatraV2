@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useMenuCatalog, type DishData } from "@/lib/menuData";
 import { localDishSrcset, getLocalDishFallback } from "@/lib/imgSrcset";
 import { onDishImageError } from "@/lib/imgFallback";
+import { FssaiMark } from "@/components/FssaiMark";
 
 export default function HomeMealsRail() {
   const { dishes: catalogDishes } = useMenuCatalog();
@@ -53,7 +54,7 @@ function DishSwipeCard({ dish }: { dish: DishData }) {
           key="veg"
           className="text-[9px] px-1.5 py-0.5 rounded-full font-extrabold uppercase tracking-wide bg-[var(--color-alert-safe-bg)] text-[var(--color-alert-safe-text)] border border-[var(--color-alert-safe-border)] flex items-center gap-1"
         >
-          <span className="w-1 h-1 rounded-full bg-[var(--color-alert-safe)] shadow-[0_0_4px_rgba(74,222,128,0.8)]" />
+          <FssaiMark isVeg size={14} />
           Veg
         </span>
       );
@@ -61,8 +62,9 @@ function DishSwipeCard({ dish }: { dish: DishData }) {
       list.push(
         <span
           key="non-veg"
-          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide bg-white/10 text-white/80"
+          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide bg-white/10 text-white/80 flex items-center gap-1"
         >
+          <FssaiMark isVeg={false} size={14} />
           Non-Veg
         </span>
       );
