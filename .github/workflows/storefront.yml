@@ -1,0 +1,40 @@
+# Storefront (rebuild skeleton) — anti-rot gates as CI from commit one.
+# Phase 1: these are hard checks, not aspirations. A PR that grows a file past
+# the cap, adds an unjustified "use client", or breaks the server build fails.
+name: Storefront
+
+on:
+  pull_request:
+    paths:
+      - "artifacts/storefront/**"
+      - "lib/tokens/**"
+      - "lib/menu-catalog/**"
+      - "scripts/lint-filecap.ts"
+      - ".github/workflows/storefront.yml"
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/storefront/**"
+      - "lib/tokens/**"
+      - ".github/workflows/storefront.yml"
+  workflow_dispatch: {}
+
+jobs:
+  storefront:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Anti-rot — file-cap + "use client" justification
+        run: pnpm --filter @workspace/storefront run lint:filecap
+      - name: Typecheck
+        run: pnpm --filter @workspace/storefront run typecheck
+      - name: Build (server-first, no money path)
+        run: pnpm --filter @workspace/storefront run build

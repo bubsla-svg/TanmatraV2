@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/*
+ * Map the raw design tokens (from @workspace/tokens/tokens.css, imported in the
+ * root layout before this file) onto Tailwind v4 utilities. `inline` means the
+ * generated utilities reference the CSS custom properties directly, so a
+ * `data-theme` switch reflows colours with no rebuild and no flash.
+ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-gold: var(--gold);
+  --color-blue: var(--blue);
+  --color-sage: var(--sage);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* Clinical data (prices, macros) always reads in tabular figures. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}

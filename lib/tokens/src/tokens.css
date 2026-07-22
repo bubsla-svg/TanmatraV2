@@ -1,0 +1,86 @@
+/*
+ * @workspace/tokens — the single source of truth for the rebuild storefront's
+ * design tokens. Raw CSS custom properties only; a consuming app maps these to
+ * Tailwind utilities via `@theme inline` (see the storefront's globals.css).
+ *
+ * Theme model: LIGHT is the default (`:root`), so a server-rendered document
+ * paints correct colours with zero client JS — no theme flash by construction.
+ * Dark is an opt-in override on `:root[data-theme="dark"]`.
+ *
+ * Accents are the LOCKED Clinical palette (CLAUDE.md — no new base colours):
+ * clinical-gold #D4AF37 · blue #6BA3C8 · sage #7D9E7E. Only the neutral
+ * surface/ink ramp differs between light and dark.
+ */
+
+:root {
+  /* ── Locked brand accents (identical in both themes) ───────────────────── */
+  --gold: #d4af37;
+  --gold-ink: #1a1c1e; /* text on a gold fill */
+  --blue: #6ba3c8;
+  --sage: #7d9e7e;
+
+  /* Semantic status (shared) */
+  --success: #7d9e7e;
+  --warning: #d8b45e;
+  --danger: #c2603f;
+
+  /* ── Light neutrals (default) ──────────────────────────────────────────── */
+  --bg: #fbfaf7; /* bone */
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --ink: #1a1c1e; /* primary text */
+  --ink-muted: #5c6367; /* secondary text */
+  --ink-faint: #8b9398; /* tertiary text */
+  --line: #e7e3da; /* hairline border */
+  --line-strong: #d8d3c7;
+
+  /* ── Type scale (fluid, clamp-based) ───────────────────────────────────── */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --text-3xl: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+
+  /* ── Radii ─────────────────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 999px;
+
+  /* ── Shadows (light) ───────────────────────────────────────────────────── */
+  --shadow-card: 0 1px 2px rgba(26, 28, 30, 0.06), 0 4px 12px rgba(26, 28, 30, 0.05);
+  --shadow-raised: 0 6px 24px rgba(26, 28, 30, 0.1);
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --duration-fast: 150ms;
+  --duration-normal: 240ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Spacing rhythm ────────────────────────────────────────────────────── */
+  --space-section: clamp(2.5rem, 1.5rem + 4vw, 5rem);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0f11;
+  --surface: #17191c;
+  --surface-raised: #1e2125;
+  --ink: #e9ecee; /* bone */
+  --ink-muted: #8b9398;
+  --ink-faint: #5c6367;
+  --line: #262a2e;
+  --line-strong: #333940;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
