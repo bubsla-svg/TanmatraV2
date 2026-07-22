@@ -48,6 +48,7 @@ export function CheckoutIdentity({
   return (
     <div className="flex flex-col gap-5">
       <StepDots current={step} total={total} />
+      <h1 className="text-lg font-semibold text-ink">Your details</h1>
       <p className="text-sm text-ink-muted">{planSummary}</p>
       <div>
         <label htmlFor="co-phone" className="mb-1.5 block text-sm font-medium text-ink">
@@ -66,8 +67,12 @@ export function CheckoutIdentity({
         />
         <p className="mt-1.5 text-xs text-ink-faint">We&rsquo;ll text a code — no passwords, ever.</p>
       </div>
-      {error && <p className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-      <p className="text-xs font-medium text-sage">{CERTAINTY.identity}</p>
+      {error && (
+        <p role="alert" className="text-xs font-medium text-[var(--danger)]">
+          {error}
+        </p>
+      )}
+      <p className="text-xs font-medium text-sage-text">{CERTAINTY.identity}</p>
       <button
         type="button"
         disabled={!valid || sending}

@@ -39,7 +39,7 @@ export default async function TrialPage() {
   return (
     <section className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
           Not ready for a month?
         </span>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">

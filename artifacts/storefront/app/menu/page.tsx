@@ -23,6 +23,7 @@ export default async function MenuPage() {
           {dishes.length} dishes · verified macros · RD-reviewed kitchen
         </p>
       </div>
+      <h2 className="sr-only">Dishes</h2>
       <MenuGrid dishes={dishes} />
     </section>
   );
