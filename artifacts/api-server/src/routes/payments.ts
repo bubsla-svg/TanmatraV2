@@ -9,7 +9,7 @@ import {
   subscriptionDeliveriesTable,
   isLiveTrialState,
 } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
@@ -26,6 +26,9 @@ import {
   fetchRazorpayPayment,
   upsertActiveMandate,
 } from "../lib/razorpayRecurring";
+import { isPlanV2Enabled } from "../lib/flags";
+import { hashTrialPhone } from "../lib/trialEligibility";
+import { recordAndGrantTrialCredit } from "../lib/trialRedemption";
 
 const router: IRouter = Router();
 
@@ -57,6 +60,81 @@ const upiIntentSchema = z.object({
   phone: z.string().max(20),
 });
 
+// The `notes` tag a plan-v2 3-Day Taste Test carries (subscriptions.ts writes
+// `plan_v2:trial_3day`). Gating the grant on this keeps legacy RD-plan trials
+// (which use a different note) out of the creditback path.
+const PLAN_V2_TRIAL_TAG = "plan_v2:trial_3day";
+
+/**
+ * Grant the 3-Day Taste Test creditback for a PAID plan-v2 trial and write the
+ * durable one-per-phone ledger row, atomically and idempotently. No-ops unless
+ * FLAG_PLAN_V2 is on AND the subscription is a plan-v2 trial. The trial's end
+ * is its last scheduled delivery, which sets the credit's 7-day expiry.
+ *
+ * Best-effort by contract: any failure is logged and swallowed so a payment
+ * confirmation (verify or webhook) is never broken by the creditback side
+ * effect. The phone-hash UNIQUE makes a later retry safe.
+ */
+export async function maybeGrantTrialCreditback(
+  sub: {
+    subscriptionId: number;
+    userId: string;
+    notes: string | null;
+    phone: string | null;
+  },
+  log: any
+): Promise<void> {
+  if (!isPlanV2Enabled()) return;
+  if (!sub.notes || !sub.notes.includes(PLAN_V2_TRIAL_TAG)) return;
+
+  const phoneHash = hashTrialPhone(sub.phone);
+  if (!phoneHash) {
+    log.warn(
+      { subscriptionId: sub.subscriptionId },
+      "plan-v2 trial paid but phone is unidentifiable; skipping creditback"
+    );
+    return;
+  }
+
+  try {
+    // Trial end = the last scheduled delivery of this trial subscription.
+    const [last] = await db
+      .select({ scheduledFor: subscriptionDeliveriesTable.scheduledFor })
+      .from(subscriptionDeliveriesTable)
+      .where(eq(subscriptionDeliveriesTable.subscriptionId, sub.subscriptionId))
+      .orderBy(desc(subscriptionDeliveriesTable.scheduledFor))
+      .limit(1);
+    const trialEndsAt = last?.scheduledFor ?? new Date();
+
+    const result = await db.transaction((tx) =>
+      recordAndGrantTrialCredit(tx, {
+        userId: sub.userId,
+        phoneHash,
+        subscriptionId: sub.subscriptionId,
+        trialEndsAt,
+      })
+    );
+
+    if (result.granted) {
+      log.info(
+        { subscriptionId: sub.subscriptionId, userId: sub.userId },
+        "granted 3-Day Taste Test creditback"
+      );
+    } else {
+      log.info(
+        { subscriptionId: sub.subscriptionId, reason: result.reason },
+        "3-Day Taste Test creditback not granted"
+      );
+    }
+  } catch (err) {
+    // Never let the creditback break the payment confirmation.
+    log.error(
+      { err, subscriptionId: sub.subscriptionId },
+      "failed to grant 3-Day Taste Test creditback"
+    );
+  }
+}
+
 async function registerAutopayMandate(
   orderId: number,
   paymentId: string,
@@ -69,6 +147,9 @@ async function registerAutopayMandate(
       subscriptionId: subscriptionDeliveriesTable.subscriptionId,
       cadence: subscriptionsTable.cadence,
       trialState: subscriptionsTable.trialState,
+      userId: subscriptionsTable.userId,
+      notes: subscriptionsTable.notes,
+      phone: subscriptionsTable.phone,
     })
     .from(subscriptionDeliveriesTable)
     .innerJoin(
@@ -88,6 +169,13 @@ async function registerAutopayMandate(
       { orderId, subscriptionId: subDelivery.subscriptionId },
       "skipping autopay mandate registration for live trial subscription"
     );
+    // The trial-PAID confirmation point (02b/02e §6): a PAID 3-Day Taste Test
+    // earns the ₹399 creditback + writes the durable one-per-phone ledger row.
+    // Doing it HERE (not at create) means a trial whose payment never lands
+    // never burns the allowance. Idempotent across the verify + webhook paths
+    // via the phone-hash UNIQUE, so a double confirmation grants exactly once.
+    // Best-effort: a grant failure must never fail the payment confirmation.
+    await maybeGrantTrialCreditback(subDelivery, log);
     return null;
   }
 

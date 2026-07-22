@@ -66,6 +66,8 @@ import {
 } from "../lib/razorpayRecurring";
 import { encryptClinicalStrings, decryptClinicalStrings } from "../lib/crypto";
 import { getDecryptedPreferences } from "../lib/userPreferences";
+import { hashTrialPhone } from "../lib/trialEligibility";
+import { hasRedeemedTrialPhone } from "../lib/trialRedemption";
 
 const router: IRouter = Router();
 
@@ -205,8 +207,14 @@ const TRIAL_NOTE = "Trial: 3-Day Pack (25% off)";
 // links and existing rows keep behaving as trials.
 const LEGACY_TRIAL_NOTE = "RD Plan: 3-Day Trial Pack";
 
+// The note tag a plan-v2 3-Day Taste Test carries (see the create route). A
+// plan-v2 trial is one-off too, so the change-plan / generate-next guards must
+// treat it as a trial even though its note isn't the legacy exact-match string.
+const PLAN_V2_TRIAL_TAG = `${PLAN_V2_NOTE_PREFIX}trial_3day`;
+
 function isTrialSubscription(sub: { notes: string | null }): boolean {
-  return sub.notes === TRIAL_NOTE || sub.notes === LEGACY_TRIAL_NOTE;
+  if (sub.notes === TRIAL_NOTE || sub.notes === LEGACY_TRIAL_NOTE) return true;
+  return sub.notes?.includes(PLAN_V2_TRIAL_TAG) ?? false;
 }
 
 export function getSunday8PM(date: Date): Date {
@@ -854,7 +862,10 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   }
   // A trial is any request that asks for planType:"trial" OR carries a
   // recognised trial marker in notes (keeps old RD-plan trial links working).
-  const isTrial =
+  // The plan-v2 `trial_3day` plan also flips this on below (once the flag +
+  // plan gates pass), so it persists trialState — without which the paid-time
+  // creditback seam (isLiveTrialState) would never fire.
+  let isTrial =
     data.planType === "trial" || isTrialSubscription({ notes: data.notes ?? null });
 
   // With a day plan the meal count is server-authoritative: sum of item
@@ -902,6 +913,20 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     pricePerDeliveryPaise = q.cycleTotalPaise;
     if (data.planId === "trial_3day") {
       generateCount = 1; // one-off sampler — does not recur
+      isTrial = true; // persist trialState so the paid-time creditback fires
+      // One 3-Day Taste Test per phone, EVER (02b/02e §6). This is a friendly
+      // early rejection — the durable enforcement is the trial_redemptions
+      // UNIQUE that the paid-time grant writes (a create whose payment never
+      // lands must not burn the allowance, so we only READ here). An
+      // unidentifiable phone hashes to "" and is not gated.
+      const phoneHash = hashTrialPhone(data.phone);
+      if (phoneHash && (await hasRedeemedTrialPhone(phoneHash))) {
+        res.status(409).json({
+          error: "This phone number has already used its 3-Day Taste Test.",
+          code: "trial_already_redeemed",
+        });
+        return;
+      }
     }
     const planTag = `${PLAN_V2_NOTE_PREFIX}${data.planId}`;
     notes = notes ? `${planTag} — ${notes}`.slice(0, 512) : planTag;
