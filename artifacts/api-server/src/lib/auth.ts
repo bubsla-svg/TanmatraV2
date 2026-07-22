@@ -12,7 +12,7 @@ export interface SessionData {
   /** ISO timestamp the session was created. */
   createdAt?: number;
   /** Optional label for debugging (e.g. "phone-otp"). */
-  kind?: "web" | "mobile" | "phone-otp";
+  kind?: "web" | "mobile" | "phone-otp" | "truecaller";
 }
 
 export async function createSession(data: SessionData): Promise<string> {
