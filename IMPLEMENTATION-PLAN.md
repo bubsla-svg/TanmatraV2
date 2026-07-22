@@ -32,7 +32,7 @@ One concern per commit; money-path slices land behind a feature flag first, are 
 
 | # | Slice | Scope | Depends |
 |---|---|---|---|
-| **S4** | Plan quote/create on the new spine | Re-point `POST /subscriptions/quote` + create to `PLAN_CATALOG` (per-plan/per-meal pricing, mealsPerCycle), gated by flag. Keep cadence model live until S9. | S0, S1 |
+| **S4** | Plan quote/create on the new spine | ✅ **DONE (pricing/gates/routes).** `FLAG_PLAN_V2` (`api-server/src/lib/flags.ts`); `computePlanQuote` + launch gates in the spine; `POST /subscriptions/quote` + create take an optional `planId`/`track` and, when the flag is on, price by `PLAN_CATALOG` and refuse blocked/sales-led plans + unserved tracks with a typed `waitlist` 422. Flag-off = byte-identical to today. 21 spine + flag tests; full `typecheck` green. **Follow-up:** DB-backed route integration tests + client sending `planId` (needs a DB / later slice). | S0, S1 |
 | **S5** | ₹399 trial + creditback | Trial priced at `flatPricePaise` 39900; grant a 39900-paise, 7-day `credit_ledger` lot on paid trial (new reason); redeem in `/convert` and first-charge (`applyTrialCreditPaise`); server-enforced **one-per-phone-ever** (durable hashed-phone record surviving account deletion); no auto-convert. | S4 |
 | **S6** | RD bump + evening add | `rd_bump` (+₹499/mo) at plan review — reconcile with the existing ₹999/mo premium membership's RD-consult overlap; `evening_add` (+₹599/wk) post-purchase, one-tap, never blocks confirmation. | S4 |
 | **S7** | PlanCard / OrderBump / plan surfaces (02f §2) | Build `PlanCard` (matched 2× weight), `OrderBump`, plan page, builder (segmented controls, defaults per 02e §5), trial card. | S2, S4, S5, S6 |

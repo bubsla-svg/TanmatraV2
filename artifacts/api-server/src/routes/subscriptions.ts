@@ -33,6 +33,30 @@ import {
   computeDeliveryPricePaise,
 } from "../lib/subscriptionPricing";
 import {
+  type PlanId,
+  type DietTrack,
+  PLAN_CATALOG,
+  computePlanQuote,
+  planIsSelfServiceLaunchable,
+  planServesTrack,
+} from "@workspace/subscription-rules";
+import { isPlanV2Enabled } from "../lib/flags";
+
+// Marker written into a subscription's `notes` so a plan-v2 subscription is
+// attributable to its PlanId without a schema migration (the subscriptions
+// table has no planId column yet — added in a later slice). Kept short and
+// stable so downstream reconciliation can parse it.
+const PLAN_V2_NOTE_PREFIX = "plan_v2:";
+
+const PLAN_ID_VALUES = [
+  "desk_fuel",
+  "steady",
+  "glp1_companion",
+  "protein_build",
+  "teams",
+  "trial_3day",
+] as const satisfies readonly PlanId[];
+import {
   razorpayCredentials,
   razorpayBasicAuth,
   getOrCreateRazorpayCustomer,
@@ -97,7 +121,48 @@ const createSubscriptionSchema = z.object({
   // (scheduled per day), meals are counted server-side from the entries,
   // and the pattern repeats every billing cycle.
   dayPlan: z.array(dayPlanEntrySchema).max(28).optional(),
+  // Plan-v2 (FLAG_PLAN_V2): see quote schema. Ignored while the flag is off.
+  planId: z.enum(PLAN_ID_VALUES).optional(),
+  track: z.enum(["veg", "egg", "nonveg"]).optional(),
 });
+
+/**
+ * Shared plan-v2 launch gate for the quote/create paths. Returns a typed 4xx
+ * body when the plan/track is not self-serve bookable (route to waitlist), or
+ * null when it is bookable. Only consulted when FLAG_PLAN_V2 is on and a planId
+ * was supplied.
+ */
+function planV2Rejection(
+  planId: PlanId,
+  track: DietTrack,
+): { status: number; body: Record<string, unknown> } | null {
+  if (!planIsSelfServiceLaunchable(planId)) {
+    return {
+      status: 422,
+      body: {
+        error: "plan is not available for self-serve booking",
+        code: "plan_not_launchable",
+        planId,
+        waitlist: true,
+        reasons: PLAN_CATALOG[planId].blockers,
+      },
+    };
+  }
+  if (!planServesTrack(planId, track)) {
+    return {
+      status: 422,
+      body: {
+        error: `track "${track}" is not served by ${planId}`,
+        code: "plan_track_unavailable",
+        planId,
+        track,
+        servedTracks: PLAN_CATALOG[planId].dietTracks,
+        waitlist: true,
+      },
+    };
+  }
+  return null;
+}
 
 const swapItemsSchema = z.object({
   items: z.array(itemSchema).min(1),
@@ -611,6 +676,11 @@ const quoteSubscriptionSchema = z.object({
   mealsPerDelivery: z.number().int().positive().max(50).optional(),
   planType: z.enum(["standard", "trial"]).default("standard"),
   dayPlan: z.array(dayPlanEntrySchema).max(28).optional(),
+  // Plan-v2 (FLAG_PLAN_V2): when a planId is supplied and the flag is on, the
+  // quote is priced by the corpus plan spine instead of the cadence model.
+  // Ignored while the flag is off, so existing callers are unaffected.
+  planId: z.enum(PLAN_ID_VALUES).optional(),
+  track: z.enum(["veg", "egg", "nonveg"]).optional(),
 });
 
 router.post("/subscriptions/quote", async (req: Request, res: Response) => {
@@ -620,6 +690,33 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
     return;
   }
   const data = parsed.data;
+
+  // Plan-v2 quote (FLAG_PLAN_V2): price by the corpus plan spine. Same response
+  // shape as the legacy quote plus planId/track, so the client renders it
+  // identically. Blocked/sales-led plans and unserved tracks return a typed
+  // 422 with `waitlist: true` rather than a bookable quote (02e §7).
+  if (isPlanV2Enabled() && data.planId) {
+    const track: DietTrack = data.track ?? "veg";
+    const rejection = planV2Rejection(data.planId, track);
+    if (rejection) {
+      res.status(rejection.status).json(rejection.body);
+      return;
+    }
+    const q = computePlanQuote(data.planId);
+    res.json({
+      planId: data.planId,
+      track,
+      mealsPerDelivery: q.mealsPerCycle,
+      pricePerMealPaise: q.pricePerMealPaise,
+      pricePerDeliveryPaise: q.cycleTotalPaise,
+      discountPaise: 0,
+      deliveryFeePaise: 0,
+      gstPaise: q.gstPaise,
+      totalPaise: q.cycleTotalPaise,
+    });
+    return;
+  }
+
   const isTrial = data.planType === "trial";
   const meals = data.dayPlan
     ? data.dayPlan.reduce(
@@ -748,6 +845,27 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       // trial is still recognisable later.
       notes = `${TRIAL_NOTE} — ${notes}`.slice(0, 512);
     }
+  }
+
+  // Plan-v2 (FLAG_PLAN_V2): price and gate by the corpus plan spine. This wins
+  // over the cadence/trial pricing above — the plan's cycle total is the
+  // server-authoritative billed amount — and tags the subscription with its
+  // PlanId in notes (no schema migration). Blocked/sales-led plans and unserved
+  // tracks are refused here, so a bad combo can never reach mandate creation.
+  if (isPlanV2Enabled() && data.planId) {
+    const track: DietTrack = data.track ?? "veg";
+    const rejection = planV2Rejection(data.planId, track);
+    if (rejection) {
+      res.status(rejection.status).json(rejection.body);
+      return;
+    }
+    const q = computePlanQuote(data.planId);
+    pricePerDeliveryPaise = q.cycleTotalPaise;
+    if (data.planId === "trial_3day") {
+      generateCount = 1; // one-off sampler — does not recur
+    }
+    const planTag = `${PLAN_V2_NOTE_PREFIX}${data.planId}`;
+    notes = notes ? `${planTag} — ${notes}`.slice(0, 512) : planTag;
   }
 
   // A single-member subscription's sole member unambiguously IS the account

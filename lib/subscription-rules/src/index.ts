@@ -63,6 +63,7 @@ export {
   type AddOnConfig,
   type PoolPredicate,
   type TrackLaunchState,
+  type PlanQuote,
   PLAN_CATALOG,
   ADD_ONS,
   BUILDER_DEFAULTS,
@@ -77,5 +78,8 @@ export {
   dishTrack,
   poolForPlan,
   trackLaunchState,
+  computePlanQuote,
+  planIsSelfServiceLaunchable,
+  planServesTrack,
   ROUTER_ANSWER_TO_PLAN,
 } from "./planCatalog.js";

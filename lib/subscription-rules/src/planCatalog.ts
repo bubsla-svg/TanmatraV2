@@ -28,6 +28,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { DishData } from "@workspace/menu-catalog";
+import { GST_RATE } from "./pricing.js";
 
 /** 02e §1. */
 export type PlanId =
@@ -247,6 +248,57 @@ export function applyTrialCreditPaise(
   creditPaise: number = TRIAL_CREDIT_PAISE,
 ): number {
   return Math.max(0, planPricePaise - creditPaise);
+}
+
+// ── Plan pricing (server-authoritative quote for one cycle) ──────────────────
+// Corpus plan prices are the GST-inclusive charged figures (02c: "server-quoted,
+// GST-inclusive — the number that gets charged"). A per-meal plan's cycle total
+// is pricePerMealPaise × mealsPerCycle; a flat plan uses flatPricePaise. The GST
+// component is split out for display (never a second 5% on top), matching how
+// the legacy quote treats computeDeliveryPricePaise output.
+
+export interface PlanQuote {
+  planId: PlanId;
+  cycle: PlanCycle;
+  mealsPerCycle: number;
+  pricePerMealPaise: number | null;
+  /** GST-inclusive total charged for one cycle. */
+  cycleTotalPaise: number;
+  preTaxPaise: number;
+  gstPaise: number;
+}
+
+export function computePlanQuote(planId: PlanId): PlanQuote {
+  const p = PLAN_CATALOG[planId];
+  const cycleTotalPaise =
+    p.pricePerMealPaise != null
+      ? p.pricePerMealPaise * p.mealsPerCycle
+      : (p.flatPricePaise ?? 0);
+  const preTaxPaise = Math.round(cycleTotalPaise / (1 + GST_RATE));
+  const gstPaise = cycleTotalPaise - preTaxPaise;
+  return {
+    planId,
+    cycle: p.cycle,
+    mealsPerCycle: p.mealsPerCycle,
+    pricePerMealPaise: p.pricePerMealPaise,
+    cycleTotalPaise,
+    preTaxPaise,
+    gstPaise,
+  };
+}
+
+/**
+ * Self-service bookable = the plan is `live`. `blocked_pending_skus` (steady,
+ * glp1) and `sales_led` (teams) plans route to a waitlist / sales motion, never
+ * to a self-serve builder (02e §7, 02d §8 zero-dead-end).
+ */
+export function planIsSelfServiceLaunchable(planId: PlanId): boolean {
+  return PLAN_CATALOG[planId].status === "live";
+}
+
+/** Whether a plan serves a given diet track (never widen this in callers). */
+export function planServesTrack(planId: PlanId, track: DietTrack): boolean {
+  return PLAN_CATALOG[planId].dietTracks.includes(track);
 }
 
 // ── §3.5 Fixed trial trios (no query, no swaps) ──────────────────────────────

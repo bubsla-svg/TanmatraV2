@@ -12,6 +12,9 @@ import {
   applyTrialCreditPaise,
   poolForPlan,
   trackLaunchState,
+  computePlanQuote,
+  planIsSelfServiceLaunchable,
+  planServesTrack,
   ROUTER_ANSWER_TO_PLAN,
   isServable,
 } from "./planCatalog.js";
@@ -60,6 +63,40 @@ test("trial credit math is exact (02e §6): weekly→80000, monthly→397900", (
 
 test("trial credit never bills negative when credit exceeds plan", () => {
   assert.equal(applyTrialCreditPaise(20000), 0);
+});
+
+// ── S4 plan quote (server-authoritative, GST-inclusive) ──────────────────────
+test("computePlanQuote — per-meal plan: cycle total = price × meals, GST split", () => {
+  const q = computePlanQuote("desk_fuel");
+  assert.equal(q.cycleTotalPaise, 437800); // 19900 × 22 = ₹4,378
+  assert.equal(q.pricePerMealPaise, 19900);
+  assert.equal(q.mealsPerCycle, 22);
+  // GST split (5% inclusive): preTax = round(437800/1.05), gst = remainder
+  assert.equal(q.preTaxPaise, 416952);
+  assert.equal(q.gstPaise, 437800 - 416952);
+  assert.equal(q.preTaxPaise + q.gstPaise, q.cycleTotalPaise); // no double-count
+});
+
+test("computePlanQuote — flat plans use flatPricePaise", () => {
+  assert.equal(computePlanQuote("glp1_companion").cycleTotalPaise, 599900);
+  assert.equal(computePlanQuote("trial_3day").cycleTotalPaise, 39900);
+  assert.equal(computePlanQuote("protein_build").cycleTotalPaise, 24900 * 22);
+});
+
+test("self-service launch gate: only `live` plans are bookable", () => {
+  assert.equal(planIsSelfServiceLaunchable("desk_fuel"), true);
+  assert.equal(planIsSelfServiceLaunchable("protein_build"), true);
+  assert.equal(planIsSelfServiceLaunchable("trial_3day"), true);
+  assert.equal(planIsSelfServiceLaunchable("steady"), false); // blocked_pending_skus
+  assert.equal(planIsSelfServiceLaunchable("glp1_companion"), false);
+  assert.equal(planIsSelfServiceLaunchable("teams"), false); // sales_led
+});
+
+test("planServesTrack never widens a plan's tracks", () => {
+  assert.equal(planServesTrack("steady", "veg"), false);
+  assert.equal(planServesTrack("steady", "nonveg"), true);
+  assert.equal(planServesTrack("glp1_companion", "veg"), false);
+  assert.equal(planServesTrack("desk_fuel", "egg"), true);
 });
 
 // ── §2 router map (02d §2) ───────────────────────────────────────────────────
