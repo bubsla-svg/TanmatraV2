@@ -5,6 +5,8 @@ import { DISHES } from "@workspace/menu-catalog";
 import {
   PLAN_CATALOG,
   ADD_ONS,
+  attachableAddOns,
+  resolveAddOns,
   TRIAL_TRIOS,
   TRIAL_CREDIT_PAISE,
   WEEKLY_PRICE_PAISE,
@@ -51,8 +53,41 @@ test("RD sign-off + blocked status flags match 02e §2", () => {
 test("add-on prices match 02e §4", () => {
   assert.equal(ADD_ONS.rd_bump.pricePaise, 49900);
   assert.equal(ADD_ONS.rd_bump.cadence, "monthly");
+  assert.equal(ADD_ONS.rd_bump.attachPoint, "plan_review");
   assert.equal(ADD_ONS.evening_add.pricePaise, 59900);
   assert.equal(ADD_ONS.evening_add.cadence, "weekly");
+  assert.equal(ADD_ONS.evening_add.attachPoint, "post_purchase");
+});
+
+test("resolveAddOns validates against the plan allow-list (02e §2)", () => {
+  // desk_fuel allows both
+  const ok = resolveAddOns("desk_fuel", ["rd_bump", "evening_add"]);
+  assert.deepEqual(ok.rejected, []);
+  assert.deepEqual(
+    ok.items.map((i) => i.id),
+    ["rd_bump", "evening_add"],
+  );
+  assert.equal(ok.items[0].pricePaise, 49900);
+  // protein_build allows evening_add only → rd_bump is rejected
+  const pb = resolveAddOns("protein_build", ["rd_bump", "evening_add"]);
+  assert.deepEqual(pb.rejected, ["rd_bump"]);
+  assert.deepEqual(
+    pb.items.map((i) => i.id),
+    ["evening_add"],
+  );
+  // teams allows none
+  assert.deepEqual(resolveAddOns("teams", ["rd_bump"]).rejected, ["rd_bump"]);
+});
+
+test("resolveAddOns dedupes and preserves request order", () => {
+  const r = resolveAddOns("desk_fuel", ["rd_bump", "rd_bump", "evening_add"]);
+  assert.equal(r.items.length, 2);
+  assert.deepEqual(r.items.map((i) => i.id), ["rd_bump", "evening_add"]);
+});
+
+test("attachableAddOns reflects each plan's allow-list", () => {
+  assert.deepEqual(attachableAddOns("glp1_companion"), ["rd_bump"]);
+  assert.deepEqual(attachableAddOns("teams"), []);
 });
 
 // ── §6 trial credit math (implement exactly) ─────────────────────────────────

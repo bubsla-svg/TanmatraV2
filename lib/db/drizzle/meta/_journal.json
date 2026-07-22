@@ -71,6 +71,13 @@
       "when": 1784714603824,
       "tag": "0009_trial_redemptions",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784719900798,
+      "tag": "0010_subscription_addons",
+      "breakpoints": true
     }
   ]
 }

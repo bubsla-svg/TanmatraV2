@@ -39,6 +39,7 @@ import {
   computePlanQuote,
   planIsSelfServiceLaunchable,
   planServesTrack,
+  resolveAddOns,
 } from "@workspace/subscription-rules";
 import { isPlanV2Enabled } from "../lib/flags";
 
@@ -124,6 +125,7 @@ const createSubscriptionSchema = z.object({
   // Plan-v2 (FLAG_PLAN_V2): see quote schema. Ignored while the flag is off.
   planId: z.enum(PLAN_ID_VALUES).optional(),
   track: z.enum(["veg", "egg", "nonveg"]).optional(),
+  addOns: z.array(z.enum(["rd_bump", "evening_add"])).max(2).optional(),
 });
 
 /**
@@ -681,6 +683,10 @@ const quoteSubscriptionSchema = z.object({
   // Ignored while the flag is off, so existing callers are unaffected.
   planId: z.enum(PLAN_ID_VALUES).optional(),
   track: z.enum(["veg", "egg", "nonveg"]).optional(),
+  // Plan-review add-ons (02 §5). Only plan_review add-ons (rd_bump) affect the
+  // quote total; post_purchase add-ons (evening_add) are returned as available
+  // but not billed here.
+  addOns: z.array(z.enum(["rd_bump", "evening_add"])).max(2).optional(),
 });
 
 router.post("/subscriptions/quote", async (req: Request, res: Response) => {
@@ -703,16 +709,49 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
       return;
     }
     const q = computePlanQuote(data.planId);
+
+    // Resolve any requested add-ons against the plan's allow-list. A not-allowed
+    // add-on is a client error (422); this never happens for the default flow.
+    const { items: addOnItems, rejected } = resolveAddOns(
+      data.planId,
+      data.addOns ?? [],
+    );
+    if (rejected.length > 0) {
+      res.status(422).json({
+        error: "add-on not available for this plan",
+        code: "addon_not_allowed",
+        planId: data.planId,
+        rejected,
+        allowed: PLAN_CATALOG[data.planId].addOnsAllowed,
+      });
+      return;
+    }
+    // Only plan-review add-ons (rd_bump) are billed into the plan-review quote;
+    // post_purchase add-ons (evening_add) are surfaced as available but never
+    // block or inflate this total (02c: the pay screen shows the real number).
+    const planReviewAddOns = addOnItems.filter(
+      (a) => a.attachPoint === "plan_review",
+    );
+    const addOnTotalPaise = planReviewAddOns.reduce(
+      (sum, a) => sum + a.pricePaise,
+      0,
+    );
+    const totalPaise = q.cycleTotalPaise + addOnTotalPaise;
+    // Re-derive the GST split on the combined (GST-inclusive) total.
+    const preTaxPaise = Math.round(totalPaise / (1 + GST_RATE));
+
     res.json({
       planId: data.planId,
       track,
       mealsPerDelivery: q.mealsPerCycle,
       pricePerMealPaise: q.pricePerMealPaise,
       pricePerDeliveryPaise: q.cycleTotalPaise,
+      addOns: addOnItems,
+      addOnTotalPaise,
       discountPaise: 0,
       deliveryFeePaise: 0,
-      gstPaise: q.gstPaise,
-      totalPaise: q.cycleTotalPaise,
+      gstPaise: totalPaise - preTaxPaise,
+      totalPaise,
     });
     return;
   }

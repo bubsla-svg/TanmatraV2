@@ -217,6 +217,56 @@ export const ADD_ONS: Record<AddOnId, AddOnConfig> = {
   },
 };
 
+// RECONCILIATION FLAG (Chandan-owned, PLAN-CROSSCHECK §3.2 H3): rd_bump
+// (+₹499/mo, plan-attached RD touch) overlaps the existing ₹999/mo premium
+// membership, which already bundles ~1 RD consult/period. Default here: keep
+// them DISTINCT — rd_bump is the lighter, subscription-attached option offered
+// at plan review; premium remains the broader standalone membership. Revisit
+// (merge / retire premium) when Amendment 02 §5 lands.
+
+export interface AddOnLineItem {
+  id: AddOnId;
+  pricePaise: number;
+  cadence: "monthly" | "weekly";
+  attachPoint: "plan_review" | "post_purchase";
+}
+
+/** The add-on ids a plan permits (02e §2 addOnsAllowed). */
+export function attachableAddOns(planId: PlanId): AddOnId[] {
+  return PLAN_CATALOG[planId].addOnsAllowed;
+}
+
+/**
+ * Validate requested add-ons against a plan's allow-list and return their line
+ * items. Deduplicates, preserves request order, and reports any add-on the plan
+ * does not permit in `rejected` (the caller decides whether to 422). Pure.
+ */
+export function resolveAddOns(
+  planId: PlanId,
+  requested: readonly AddOnId[],
+): { items: AddOnLineItem[]; rejected: AddOnId[] } {
+  const allowed = new Set(PLAN_CATALOG[planId].addOnsAllowed);
+  const items: AddOnLineItem[] = [];
+  const rejected: AddOnId[] = [];
+  const seen = new Set<AddOnId>();
+  for (const id of requested) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    if (!allowed.has(id)) {
+      rejected.push(id);
+      continue;
+    }
+    const cfg = ADD_ONS[id];
+    items.push({
+      id,
+      pricePaise: cfg.pricePaise,
+      cadence: cfg.cadence,
+      attachPoint: cfg.attachPoint,
+    });
+  }
+  return { items, rejected };
+}
+
 // ── §5 Builder defaults ──────────────────────────────────────────────────────
 export const BUILDER_DEFAULTS = {
   duration: "monthly" as PlanCycle,
