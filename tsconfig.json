@@ -16,6 +16,9 @@
       "path": "./lib/menu-catalog"
     },
     {
+      "path": "./lib/tokens"
+    },
+    {
       "path": "./lib/preferences-match"
     },
     {
