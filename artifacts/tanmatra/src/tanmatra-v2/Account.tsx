@@ -1,3 +1,4 @@
+import { useRef, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { loyaltyApi } from "@/lib/loyaltyApi";
@@ -339,23 +340,32 @@ export default function V2Account() {
                     Sign out
                   </button>
                 </div>
-                <div
-                  className="fine fx ac g6 mt14"
-                  style={{ paddingTop: 12, borderTop: "1px solid var(--ln)" }}
-                >
-                  <i className="ph-fill ph-shield-check sagec" style={{ flex: "none" }} />
-                  <span>Secured by Firebase · ISO 22000 · FSSAI Lic. 22725926001018</span>
-                </div>
+                <TrustBadge divider />
               </>
             ) : (
-              <div className="fine fx ac g6">
-                <i className="ph-fill ph-shield-check sagec" style={{ flex: "none" }} />
-                <span>Secured by Firebase · ISO 22000 · FSSAI Lic. 22725926001018</span>
-              </div>
+              <TrustBadge />
             )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Single source of truth for the compliance/trust footer so the FSSAI licence
+// and certifications can't drift between the signed-in and guest states.
+function TrustBadge({ divider = false }: { divider?: boolean }) {
+  return (
+    <div
+      className={`fine fx ac g6${divider ? " mt14" : ""}`}
+      style={
+        divider
+          ? { paddingTop: 12, borderTop: "1px solid var(--ln)" }
+          : undefined
+      }
+    >
+      <i className="ph-fill ph-shield-check sagec" style={{ flex: "none" }} />
+      <span>Secured by Firebase · ISO 22000 · FSSAI Lic. 22725926001018</span>
     </div>
   );
 }
@@ -374,6 +384,45 @@ function ThemeToggleCard() {
     { value: "clinical", label: "Clinical", sub: "High-contrast WCAG AAA" },
     { value: "default", label: "Default", sub: "Marketing-friendly visuals" },
   ];
+
+  // WAI-ARIA radiogroup keyboard support: a single tab stop (roving tabindex)
+  // with arrow / Home / End moving between options, selection following focus.
+  const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const activeIndex = Math.max(
+    0,
+    options.findIndex((o) => o.value === override),
+  );
+
+  const focusOption = (index: number) => {
+    themeOverrideStore.set(options[index].value);
+    btnRefs.current[index]?.focus();
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const last = options.length - 1;
+    let next: number;
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        next = activeIndex === last ? 0 : activeIndex + 1;
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        next = activeIndex === 0 ? last : activeIndex - 1;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = last;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    focusOption(next);
+  };
+
   return (
     <div className="rounded-2xl bg-[var(--tnm-surface-ink-2)] border border-white/[0.08] shadow-[0_8px_32px_color-mix(in_srgb,black_40%,transparent)] p-4 mt14">
       <div className="fx gap12" style={{ alignItems: "flex-start" }}>
@@ -395,15 +444,20 @@ function ThemeToggleCard() {
         aria-label="Display theme"
         className="grid mt12"
         style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}
+        onKeyDown={onKeyDown}
       >
-        {options.map((o) => {
+        {options.map((o, i) => {
           const active = override === o.value;
           return (
             <button
               key={o.value}
+              ref={(el) => {
+                btnRefs.current[i] = el;
+              }}
               type="button"
               role="radio"
               aria-checked={active}
+              tabIndex={active ? 0 : -1}
               onClick={() => themeOverrideStore.set(o.value)}
               className="pointer"
               style={{
