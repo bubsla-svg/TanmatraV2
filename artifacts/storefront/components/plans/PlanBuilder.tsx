@@ -3,6 +3,7 @@
 // events — the configure-by-exception decision the CUJ needs.
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatPaise } from "@/lib/format";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { emitFunnel } from "@/lib/funnel";
@@ -21,13 +22,13 @@ const TRACK_LABEL: Record<DietTrack, string> = { veg: "Veg", egg: "Egg", nonveg:
 export function PlanBuilder({ planId, defaultTrack }: { planId: PlanId; defaultTrack: DietTrack }) {
   const d = planDisplay(planId);
   const q = planQuoteView(planId);
+  const router = useRouter();
   const [track, setTrack] = useState<DietTrack>(defaultTrack);
-  const [confirmed, setConfirmed] = useState(false);
 
   function confirm() {
     emitFunnel("cuj_builder_confirm", { planId, track });
     emitFunnel("cuj_checkout_start", { planId, track });
-    setConfirmed(true);
+    router.push(`/checkout?plan=${planId}`);
   }
 
   return (
@@ -69,21 +70,13 @@ export function PlanBuilder({ planId, defaultTrack }: { planId: PlanId; defaultT
         <span className="tabular text-xl font-semibold text-ink">{formatPaise(q.cycleTotalPaise)}</span>
       </div>
 
-      {confirmed ? (
-        <div className="rounded-xl border border-line bg-surface p-4 text-sm text-ink-muted">
-          <span className="font-semibold text-ink">{d.name} · {TRACK_LABEL[track]}</span> selected at{" "}
-          {formatPaise(q.cycleTotalPaise)}/mo. Next: the 3-screen Breeze checkout (identity → address →
-          pay), server-quoted, wired to OTP + UPI Autopay — the upcoming Phase 2 slice.
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={confirm}
-          className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-        >
-          Continue to checkout
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={confirm}
+        className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+      >
+        Continue to checkout
+      </button>
     </section>
   );
 }
