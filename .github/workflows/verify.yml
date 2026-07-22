@@ -88,6 +88,7 @@ jobs:
           ../tanmatra/src/components/primitives/logic.test.ts
           ../tanmatra/src/components/plans/planDisplay.test.ts
           ../tanmatra/src/components/cuj/cuj.test.ts
+          ../tanmatra/src/components/checkout02c/checkout02c.test.ts
 
   money-integration:
     runs-on: ubuntu-latest
