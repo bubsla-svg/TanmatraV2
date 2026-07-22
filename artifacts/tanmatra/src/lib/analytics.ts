@@ -147,7 +147,22 @@ type EventName =
   | "office_order_pick_made"
   | "office_order_closed"
   | "whatsapp_optin"
-  | "whatsapp_link_clicked";
+  | "whatsapp_link_clicked"
+  // Subscription CUJ v2 funnel (02d §9). Named to share a vocabulary with
+  // analytics + Playwright; the 28.1% menu→cart baseline maps to
+  // cuj_plan_view → cuj_builder_confirm as its successor metric.
+  | "cuj_pin_ok"
+  | "cuj_router_answer"
+  | "cuj_plan_view"
+  | "cuj_builder_open"
+  | "cuj_builder_confirm"
+  | "cuj_review"
+  | "cuj_checkout_start"
+  | "cuj_paid"
+  | "cuj_first_delivery"
+  | "cuj_week2_retained"
+  // Zero-dead-end: a blocked plan/track routed to waitlist capture (02e §7).
+  | "cuj_waitlist_capture";
 
 // Health-adjacent or personal keys never leave the device — the server
 // scrubs them again, but the first line of defence is here.

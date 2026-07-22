@@ -20,6 +20,9 @@ export type CreditLedgerReason =
   | "winback_offer"
   | "manual_grant"
   | "checkout_redemption"
+  // 3-Day Taste Test creditback (02b/02e §6): a ₹399 lot granted when a trial
+  // is PAID, valid 7 days from trial end, redeemable against any plan start.
+  | "trial_creditback"
   | "expired";
 
 export type NotificationKind =
