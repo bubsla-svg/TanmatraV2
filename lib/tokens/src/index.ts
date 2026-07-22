@@ -15,6 +15,7 @@ export const ACCENTS = {
   goldInk: "#1a1c1e",
   blue: "#6ba3c8",
   sage: "#7d9e7e",
+  sageInk: "#14170f",
 } as const;
 
 export const STATUS = {

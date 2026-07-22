@@ -9,6 +9,7 @@ import { formatPaise } from "@/lib/format";
 import { CheckoutIdentity } from "./CheckoutIdentity";
 import { CheckoutAddress } from "./CheckoutAddress";
 import { CheckoutPay } from "./CheckoutPay";
+import { EveningAddOffer } from "./EveningAddOffer";
 
 interface Props {
   planId: string;
@@ -19,6 +20,9 @@ interface Props {
   /** Trial creditback applied to this bill (paise). 0 = none. The server is the
    *  authority on eligibility (#287); this is the applied amount to display. */
   creditPaise?: number;
+  /** Evening Add price (paise) when the plan permits it — offered post-purchase
+   *  on the confirmation screen (02d stage 8). null = not offered. */
+  eveningAddPaise?: number | null;
 }
 
 /**
@@ -27,7 +31,15 @@ interface Props {
  * advance — those are the live-env seams (real WebOTP, serviceability, and the
  * OS UPI intent land with the api-server + gateway wiring).
  */
-export function CheckoutFlow({ planId, planSummary, totalPaise, futureLine, user, creditPaise = 0 }: Props) {
+export function CheckoutFlow({
+  planId,
+  planSummary,
+  totalPaise,
+  futureLine,
+  user,
+  creditPaise = 0,
+  eveningAddPaise = null,
+}: Props) {
   const screens = screensForUser(user);
   const [i, setI] = useState(0);
   const [paid, setPaid] = useState(false);
@@ -43,10 +55,13 @@ export function CheckoutFlow({ planId, planSummary, totalPaise, futureLine, user
 
   if (paid) {
     return (
-      <div className="flex flex-col gap-3">
-        <h1 className="tabular text-2xl font-semibold text-ink">{formatPaise(totalPaise)} paid.</h1>
-        <p className="text-sm text-ink-muted">First lunch next weekday, 12:30&ndash;1:30. {futureLine}</p>
-        <a href="/plans" className="mt-2 text-sm font-medium text-gold">Manage your plan &rarr;</a>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <h1 className="tabular text-2xl font-semibold text-ink">{formatPaise(totalPaise)} paid.</h1>
+          <p className="text-sm text-ink-muted">First lunch next weekday, 12:30&ndash;1:30. {futureLine}</p>
+        </div>
+        {eveningAddPaise != null && <EveningAddOffer pricePaise={eveningAddPaise} />}
+        <a href="/plans" className="text-sm font-medium text-gold">Manage your plan &rarr;</a>
       </div>
     );
   }

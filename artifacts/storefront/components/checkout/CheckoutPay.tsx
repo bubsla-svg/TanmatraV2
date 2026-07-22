@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { StepDots } from "./StepDots";
 import { formatPaise } from "@/lib/format";
+import { MEALCARD_RAIL_ENABLED } from "@/lib/flags";
 
 /**
  * Screen 3 — Pay (02c §3). One decision: pay. One dominant UPI button (the OS
@@ -63,8 +64,9 @@ export function CheckoutPay({
       </button>
       {more && (
         <p className="text-center text-xs text-ink-faint">
-          Cards · meal card (Pluxee / Sodexo) · netbanking — added when merchant
-          credentials are live.
+          {MEALCARD_RAIL_ENABLED
+            ? "Cards · meal card (Pluxee / Sodexo) · netbanking."
+            : "Cards · meal card (Pluxee / Sodexo) · netbanking — added when merchant credentials are live."}
         </p>
       )}
 
