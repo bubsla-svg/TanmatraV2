@@ -36,5 +36,8 @@ jobs:
         run: pnpm --filter @workspace/storefront run lint:filecap
       - name: Typecheck
         run: pnpm --filter @workspace/storefront run typecheck
+      - name: Money-path invariants (checkout · trial · attach)
+        working-directory: artifacts/api-server
+        run: node --test --import tsx ../storefront/lib/*.test.ts
       - name: Build (server-first, no money path)
         run: pnpm --filter @workspace/storefront run build

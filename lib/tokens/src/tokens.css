@@ -18,6 +18,7 @@
   --gold-ink: #1a1c1e; /* text on a gold fill */
   --blue: #6ba3c8;
   --sage: #7d9e7e;
+  --sage-ink: #14170f; /* text on a sage fill — AA on #7d9e7e in both themes */
 
   /* Semantic status (shared) */
   --success: #7d9e7e;
