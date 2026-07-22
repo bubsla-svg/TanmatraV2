@@ -1,0 +1,118 @@
+id,name,category,current_rs,stageA_rs,stageA_paise,final_target_rs,final_target_paise,stageA_delta_pct,remaining_at_cutover_pct
+1,Activated Charcoal Smoothie,beverages,50,69,6900,139,13900,38,101,101
+2,Aglio Olio - Veg,pasta,130,189,18900,229,22900,45,21
+3,Aglio Olio - Chicken,pasta,180,259,25900,269,26900,44,4
+4,Aglio Olio - Prawns,pasta,200,269,26900,269,26900,34,0
+5,Alfredo Pasta - Veg,pasta,175,229,22900,229,22900,31,0
+6,Alfredo Pasta - Chicken,pasta,225,269,26900,269,26900,20,0
+7,Alfredo Pasta - Prawns,pasta,245,269,26900,269,26900,10,0
+8,Aliya Viral Beetroot Curd,mains,145,179,17900,179,17900,23,0
+9,Almond Chicken Salad,salads,155,219,21900,249,24900,41,14
+10,Amaranth Porridge with Blueberry Sauce,breakfast,80,109,10900,109,10900,36,0
+11,Antioxidant Detox,beverages,170,170,17000,170,17000,0,0
+12,Apple Cinnamon Smoothie,beverages,150,150,15000,150,15000,0,0
+13,Arrabbiata - Veg,pasta,125,179,17900,229,22900,43,28
+14,Arrabbiata - Chicken,pasta,175,249,24900,269,26900,42,8
+15,Arrabbiata - Prawns,pasta,160,229,22900,269,26900,43,17
+16,Avocado Toast,breakfast,240,240,24000,240,24000,0,0
+17,Avocado Toast with Poached Boiled Egg,breakfast,280,280,28000,280,28000,0,0
+18,Avocado Toast with Sunny Side Up,breakfast,280,280,28000,280,28000,0,0
+19,Barbeque Chicken Burrito Wrap,wraps,160,229,22900,249,24900,43,9
+20,Barbeque Grilled Chicken Rice Bowl,bowls,170,249,24900,259,25900,46,4
+21,Barbeque Paneer Fiesta Rice Bowl,bowls,165,229,22900,229,22900,39,0
+22,Blueberry Smoothie,beverages,230,230,23000,230,23000,0,0
+23,Broccoli Almond Soup,soups,95,139,13900,139,13900,46,0
+24,Broccoli Babycorn Tomato Salad,salads,100,139,13900,199,19900,39,43
+25,Broccoli Lemon Chicken Salad,salads,155,219,21900,249,24900,41,14
+26,Cheese Omelette,breakfast,85,119,11900,169,16900,40,42
+27,Cheese Tomato Omelette,breakfast,85,119,11900,169,16900,40,42
+28,Cheesy Delight Nachos,snacks,130,130,13000,130,13000,0,0
+29,Chia Lemonade Smoothie,beverages,80,119,11900,139,13900,49,17
+30,Chicken Amigos Sandwich,wraps,145,209,20900,249,24900,44,19
+31,Chicken Caesar Story Salad,salads,200,269,26900,269,26900,34,0
+32,Chicken Hummus Pita,wraps,130,189,18900,249,24900,45,32
+33,Chicken Pita Pockets with Hummus,wraps,115,169,16900,249,24900,47,47
+34,Chicken Tikka Sandwich with Ranch Yoghurt,wraps,155,219,21900,249,24900,41,14
+35,Chickpea & Peanut Tabbouleh Salad,salads,75,109,10900,199,19900,45,83
+36,Chilli Chipotle Paneer Burrito Wrap,wraps,150,199,19900,199,19900,33,0
+37,Chilli Chipotle Paneer Rice Bowl,bowls,140,199,19900,229,22900,42,15
+38,Chipotle Chicken Burrito Wrap,wraps,170,249,24900,249,24900,46,0
+39,Chipotle Grilled Chicken Rice Bowl,bowls,145,209,20900,259,25900,44,24
+40,Classic Bread Omelette (2 Egg),breakfast,65,89,8900,169,16900,37,90
+41,Classic Nachos,snacks,110,119,11900,119,11900,8,0
+42,Classic Vegetable Poha,breakfast,80,109,10900,109,10900,36,0
+43,Coke Can,beverages,80,109,10900,109,10900,36,0
+44,Cream of Broccoli,soups,125,149,14900,149,14900,19,0
+45,Cream of Chicken,soups,160,160,16000,160,16000,0,0
+46,Cream of Mushroom,soups,145,145,14500,145,14500,0,0
+47,Creamy Egg White Sandwich,wraps,125,179,17900,249,24900,43,39
+48,Crispy Mushroom Burrito Wrap,wraps,190,199,19900,199,19900,5,0
+49,Crispy Mushroom Rice Bowl,bowls,190,229,22900,229,22900,21,0
+50,Crispy Peri Peri Chicken Burrito Wrap,wraps,230,249,24900,249,24900,8,0
+51,Crispy Peri Peri Chicken Rice Bowl,bowls,220,259,25900,259,25900,18,0
+52,Crispy Peri Peri Mushroom Burrito Wrap,wraps,185,199,19900,199,19900,8,0
+53,Crispy Peri Peri Mushroom Rice Bowl,bowls,175,229,22900,229,22900,31,0
+54,Crispy Peri Peri Potato Rice Bowl,bowls,225,229,22900,229,22900,2,0
+55,Dates Banana Smoothie,beverages,105,139,13900,139,13900,32,0
+56,Diet Coke Can,beverages,80,109,10900,109,10900,36,0
+57,Exotic Amaranth Blueberry Yogurt,breakfast,80,109,10900,109,10900,36,0
+58,Exotic Egg Bhurji,breakfast,75,109,10900,169,16900,45,55
+59,Exotic Fruit Bowl,breakfast,80,119,11900,149,14900,49,25
+60,Falafal Hummus Wrap,wraps,145,199,19900,199,19900,37,0
+61,Falafal Pita Pockets with Hummus,wraps,145,199,19900,199,19900,37,0
+62,Falafel Garden Salad,salads,110,159,15900,199,19900,45,25
+63,French Omelette (Sweet/Savoury),breakfast,100,139,13900,169,16900,39,22
+64,Fruity Sprout Salad,salads,110,159,15900,199,19900,45,25
+65,Fruity Yogurt,breakfast,80,119,11900,129,12900,49,8
+66,Greek Roman Chicken Salad,salads,195,249,24900,249,24900,28,0
+67,Greek Roman Veg Salad,salads,115,169,16900,229,22900,47,36
+68,Healthy Liver Juice,beverages,50,69,6900,109,10900,38,58
+69,Healthy Whole Wheat Tofu Wrap,wraps,145,199,19900,199,19900,37,0
+70,Healthy Whole Wheat Chicken Tikka Wrap,wraps,155,219,21900,249,24900,41,14
+71,Healthy Whole Wheat Paneer Wrap,wraps,155,199,19900,199,19900,28,0
+72,High Protein Chicken Omelette,breakfast,125,169,16900,169,16900,35,0
+73,Hot n Sour Soup (Veg),soups,95,139,13900,139,13900,46,0
+74,Hot n Sour Soup (Chicken),soups,95,139,13900,159,15900,46,14
+75,Hummus Pita Classic,wraps,50,69,6900,199,19900,38,188
+76,Hummus Pita with Falafel,wraps,145,199,19900,199,19900,37,0
+77,Hydrating Watermelon Juice,beverages,50,69,6900,109,10900,38,58
+78,Lebanese Hummus Salad,salads,60,89,8900,199,19900,48,124
+79,Lemon Mint Ice Tea Smoothie,beverages,80,119,11900,139,13900,49,17
+80,Manchow Soup (Veg),soups,95,139,13900,139,13900,46,0
+81,Manchow Soup (Chicken),soups,95,139,13900,159,15900,46,14
+82,Masala Bread Omelette (2 Egg),breakfast,80,119,11900,169,16900,49,42
+83,Millets Bread Loaf,snacks,110,119,11900,119,11900,8,0
+84,Millets Poha Barnyard,breakfast,80,109,10900,109,10900,36,0
+85,Moong Dal Chilla with Curd,breakfast,85,109,10900,109,10900,28,0
+86,Mushroom Omelette,breakfast,95,139,13900,169,16900,46,22
+87,Nutella Toast - White Bread,breakfast,80,109,10900,109,10900,36,0
+88,Nutella Toast - Brown Bread,breakfast,80,109,10900,109,10900,36,0
+89,Paneer Tikka Burrito Wrap,wraps,170,199,19900,199,19900,17,0
+90,Peanut Butter Banana Smoothie,beverages,80,119,11900,139,13900,49,17
+91,Peri Peri Paneer Burrito Wrap,wraps,170,199,19900,199,19900,17,0
+92,Peri Peri Paneer Fiesta Rice Bowl,bowls,165,229,22900,229,22900,39,0
+93,Pesto Pasta (Veg),pasta,160,229,22900,229,22900,43,0
+94,Pesto Pasta (Chicken),pasta,205,269,26900,269,26900,31,0
+95,Pesto Pasta (Prawns),pasta,230,269,26900,269,26900,17,0
+96,Plain Omelette,breakfast,85,119,11900,169,16900,40,42
+97,Power House Smoothie,beverages,80,119,11900,179,17900,49,50
+98,Quinoa Khichdi,breakfast,70,99,9900,109,10900,41,10
+99,Quinoa Upma,breakfast,75,109,10900,109,10900,45,0
+100,Ragi Dates Eggless Brownie,snacks,110,119,11900,119,11900,8,0
+101,Roast Chicken Russian,mains,140,199,19900,329,32900,42,65
+102,Signature Quinoa Salad,salads,90,129,12900,199,19900,43,54
+103,Smoked Chicken Cheese Omelette,breakfast,175,175,17500,175,17500,0,0
+104,Smokey Chicken Salad,salads,135,199,19900,269,26900,47,35
+105,Spinach Mushroom Omelette,breakfast,100,139,13900,169,16900,39,22
+106,Thums Up Can,beverages,80,109,10900,109,10900,36,0
+107,Tomato Basil Soup,soups,95,139,13900,139,13900,46,0
+108,Tomato Basil Omelette,breakfast,80,119,11900,169,16900,49,42
+109,Two Boiled Eggs,breakfast,55,79,7900,89,8900,44,13
+110,Veg Amigos Sandwich,wraps,145,199,19900,199,19900,37,0
+111,Veg Caesar Story Salad,salads,130,189,18900,199,19900,45,5
+112,Veg Loaded Bread Omelette (2 Egg),breakfast,80,119,11900,169,16900,49,42
+113,Zero Calorie Mint Mojito,beverages,75,109,10900,109,10900,45,0
+120,Grilled Chicken With Sautéed Vegetable And Mash Potato High Protein,mains,333,333,33300,333,33300,0,0
+121,Grilled Veggie Sandwich With Ranch Yoghurt,wraps,260,260,26000,260,26000,0,0
+122,Grilled Chicken Breast [Single Serve],mains,360,360,36000,360,36000,0,0
+123,Boiled Chicken Breast [Single Serve],mains,278,289,28900,289,28900,4,0
