@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import { useChallenges } from "@/lib/contentApi";
 import CommunityCohortPanel from "@/components/CommunityCohortPanel";
@@ -6,7 +7,7 @@ function formatRange(startsAt: string, endsAt: string): string {
   const s = new Date(startsAt);
   const e = new Date(endsAt);
   const fmt = (d: Date) =>
-    d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
   return `${fmt(s)} – ${fmt(e)}`;
 }
 
@@ -22,14 +23,17 @@ function statusFor(
   return { label: "Live now", tone: "live" };
 }
 
-function statusPill(tone: "live" | "soon" | "ended") {
-  if (tone === "live") return { cls: "pill sg", style: undefined as any };
+function statusPill(tone: "live" | "soon" | "ended"): {
+  cls: string;
+  style?: CSSProperties;
+} {
+  if (tone === "live") return { cls: "pill sg" };
   if (tone === "soon")
     return {
       cls: "pill",
-      style: { background: "var(--safd)", color: "var(--safb)" } as any,
+      style: { background: "var(--safd)", color: "var(--safb)" },
     };
-  return { cls: "pill", style: undefined as any };
+  return { cls: "pill" };
 }
 
 export default function V2Challenges() {
@@ -141,9 +145,9 @@ export default function V2Challenges() {
                   </div>
 
                   <div style={{ padding: 14 }}>
-                    <div className="dtitle" style={{ margin: 0 }}>
+                    <h3 className="dtitle" style={{ margin: 0 }}>
                       {c.title}
-                    </div>
+                    </h3>
                     <div className="fine mt4">{c.tagline}</div>
 
                     {c.goalTags.length > 0 && (
