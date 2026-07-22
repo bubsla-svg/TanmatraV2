@@ -33,7 +33,7 @@ One concern per commit; money-path slices land behind a feature flag first, are 
 | # | Slice | Scope | Depends |
 |---|---|---|---|
 | **S4** | Plan quote/create on the new spine | ✅ **DONE (pricing/gates/routes).** `FLAG_PLAN_V2` (`api-server/src/lib/flags.ts`); `computePlanQuote` + launch gates in the spine; `POST /subscriptions/quote` + create take an optional `planId`/`track` and, when the flag is on, price by `PLAN_CATALOG` and refuse blocked/sales-led plans + unserved tracks with a typed `waitlist` 422. Flag-off = byte-identical to today. 21 spine + flag tests; full `typecheck` green. **Follow-up:** DB-backed route integration tests + client sending `planId` (needs a DB / later slice). | S0, S1 |
-| **S5** | ₹399 trial + creditback | Trial priced at `flatPricePaise` 39900; grant a 39900-paise, 7-day `credit_ledger` lot on paid trial (new reason); redeem in `/convert` and first-charge (`applyTrialCreditPaise`); server-enforced **one-per-phone-ever** (durable hashed-phone record surviving account deletion); no auto-convert. | S4 |
+| **S5** | ₹399 trial + creditback | ✅ **Foundation done.** ₹399 trial pricing lands via S4. Added: the durable `trial_redemptions` table (salted-phone-hash, unique, survives account deletion) + migration `0009`; `trial_creditback` credit reason; pure `trialCreditExpiry`/`trialCreditGrant` (spine) and `normalizeE164`/`hashTrialPhone` (api-server), all tested. No-auto-convert already holds (S4 `generateCount=1` + trial scheduler). **S5b (needs a DB to test safely):** call `issueCredit(trial_creditback)` + write the eligibility row at the trial-**paid** confirmation point (not create — a failed payment must not burn the allowance), and auto-apply the lot via the existing `applyCreditsPaise` path on plan start. | S4 |
 | **S6** | RD bump + evening add | `rd_bump` (+₹499/mo) at plan review — reconcile with the existing ₹999/mo premium membership's RD-consult overlap; `evening_add` (+₹599/wk) post-purchase, one-tap, never blocks confirmation. | S4 |
 | **S7** | PlanCard / OrderBump / plan surfaces (02f §2) | Build `PlanCard` (matched 2× weight), `OrderBump`, plan page, builder (segmented controls, defaults per 02e §5), trial card. | S2, S4, S5, S6 |
 | **S8** | Goal router + CUJ v2 (02d) | "What's lunch for?" router (5 answers → plans/menu), configure-by-exception builder, `cuj_*` funnel events reconciled to the existing analytics dictionary; zero-dead-end waitlist for blocked tracks (Steady/GLP-1 veg/egg). | S7 |
@@ -59,5 +59,6 @@ One concern per commit; money-path slices land behind a feature flag first, are 
 
 ## Immediate next (in order)
 1. **Chandan:** Ragi Brownie status (unblocks S11) + the missing spec inputs — IMPECCABLE.md, Amendment 02/02a, final `catalog-repricing.csv` (unblocks S3, and un-infers S2's glyph set / S5 / S12).
-2. **S4** — plan quote/create on the new spine behind `FLAG_PLAN_V2` (first flagged commercial slice).
-3. **S7** — assemble `PlanCard`/`OrderBump` and the plan surfaces from the S2 primitives once S4/S5/S6 land.
+2. **S5b + a DB** — wire the trial credit grant + eligibility record at the trial-paid point and redemption on plan start; add DB-backed integration tests to the `money-integration` CI job. Needs a Postgres-capable environment to verify.
+3. **S6** — RD bump + evening add (reconcile rd_bump vs the existing ₹999/mo premium membership).
+4. **S7** — assemble `PlanCard`/`OrderBump` and the plan surfaces from the S2 primitives.

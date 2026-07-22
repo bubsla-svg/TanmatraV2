@@ -64,6 +64,13 @@
       "when": 1784552900000,
       "tag": "0008_corporate_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784714603824,
+      "tag": "0009_trial_redemptions",
+      "breakpoints": true
     }
   ]
 }

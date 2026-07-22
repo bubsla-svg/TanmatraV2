@@ -15,6 +15,7 @@ export * from "./recipes";
 export * from "./teamProfiles";
 export * from "./subscriptions";
 export * from "./loyalty";
+export * from "./trialRedemptions";
 export * from "./preferences";
 export * from "./rdAdvisory";
 export * from "./bundles";

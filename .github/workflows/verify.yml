@@ -73,6 +73,7 @@ jobs:
           ./src/lib/paymentIntegrity.test.ts
           ./src/lib/subscriptionPricing.test.ts
           ./src/lib/flags.test.ts
+          ./src/lib/trialEligibility.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
       # The web half of the money-path lockstep rule: these have no wired test
       # script in @workspace/tanmatra, so CI ran them nowhere. Drive them

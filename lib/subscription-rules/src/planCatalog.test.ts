@@ -10,6 +10,8 @@ import {
   WEEKLY_PRICE_PAISE,
   MONTHLY_PRICE_PAISE,
   applyTrialCreditPaise,
+  trialCreditExpiry,
+  trialCreditGrant,
   poolForPlan,
   trackLaunchState,
   computePlanQuote,
@@ -63,6 +65,15 @@ test("trial credit math is exact (02e §6): weekly→80000, monthly→397900", (
 
 test("trial credit never bills negative when credit exceeds plan", () => {
   assert.equal(applyTrialCreditPaise(20000), 0);
+});
+
+test("trial credit expiry is 7 days after trial end; grant is a ₹399 lot", () => {
+  const end = new Date("2026-08-01T00:00:00.000Z");
+  assert.equal(trialCreditExpiry(end).toISOString(), "2026-08-08T00:00:00.000Z");
+  const grant = trialCreditGrant(end);
+  assert.equal(grant.deltaPaise, TRIAL_CREDIT_PAISE);
+  assert.equal(grant.reason, "trial_creditback");
+  assert.equal(grant.expiresAt.toISOString(), "2026-08-08T00:00:00.000Z");
 });
 
 // ── S4 plan quote (server-authoritative, GST-inclusive) ──────────────────────

@@ -250,6 +250,35 @@ export function applyTrialCreditPaise(
   return Math.max(0, planPricePaise - creditPaise);
 }
 
+/**
+ * Expiry instant for a trial credit lot: TRIAL_CREDIT_VALIDITY_DAYS (7) after
+ * the trial ends (02b conversion window). `trialEndsAt` is injectable so the
+ * calculation stays pure and testable. Returns a new Date (no mutation).
+ */
+export function trialCreditExpiry(trialEndsAt: Date): Date {
+  const ms = trialEndsAt.getTime();
+  return new Date(ms + TRIAL_CREDIT_VALIDITY_DAYS * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * The credit lot to grant when a 3-Day Taste Test is PAID (02b/02e §6).
+ * Pure descriptor — the caller passes this to the DB grant (`issueCredit`) at
+ * the trial-paid confirmation point (see IMPLEMENTATION-PLAN slice S5b).
+ */
+export interface TrialCreditGrant {
+  deltaPaise: number;
+  reason: "trial_creditback";
+  expiresAt: Date;
+}
+
+export function trialCreditGrant(trialEndsAt: Date): TrialCreditGrant {
+  return {
+    deltaPaise: TRIAL_CREDIT_PAISE,
+    reason: "trial_creditback",
+    expiresAt: trialCreditExpiry(trialEndsAt),
+  };
+}
+
 // ── Plan pricing (server-authoritative quote for one cycle) ──────────────────
 // Corpus plan prices are the GST-inclusive charged figures (02c: "server-quoted,
 // GST-inclusive — the number that gets charged"). A per-meal plan's cycle total
