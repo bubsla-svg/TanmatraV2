@@ -8,7 +8,8 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { Minus, Plus, ShoppingBag, Trash2, X, Leaf, ShieldCheck, Check, Zap, Crown } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X, ShieldCheck, Check, Zap, Crown } from "lucide-react";
+import { FssaiMark } from "@/components/FssaiMark";
 import { toast } from "sonner";
 import {
   useCart,
@@ -683,9 +684,7 @@ function CartLine({
                 {item.name}
               </p>
               <div className="fx ac" style={{ gap: 6, marginTop: 2, fontSize: 10, color: "var(--mut)" }}>
-                {item.isVeg && (
-                  <Leaf className="w-3 h-3" style={{ color: "var(--sage)" }} aria-label="Vegetarian" />
-                )}
+                <FssaiMark isVeg={!!item.isVeg} size={14} />
                 <span className="mono" style={{ fontSize: 10 }}>
                   {item.macros.calories} kcal · P{item.macros.protein}g
                 </span>
@@ -900,11 +899,9 @@ function UpsellCard({
           onError={onDishImageError}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
-        {dish.isVeg && (
-          <span style={{ position: "absolute", top: 6, left: 6, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: 4, border: "1px solid color-mix(in oklab, var(--color-clinical-sage) 70%, transparent)", background: "color-mix(in oklab, var(--bg) 70%, transparent)" }}>
-            <Leaf className="w-2.5 h-2.5" style={{ color: "var(--sage)" }} aria-label="Vegetarian" />
-          </span>
-        )}
+        <span style={{ position: "absolute", top: 6, left: 6 }}>
+          <FssaiMark isVeg={!!dish.isVeg} size={16} />
+        </span>
       </div>
       <div className="hbody" style={{ padding: 8 }}>
         <p className="small" style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.3, minHeight: 28, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>

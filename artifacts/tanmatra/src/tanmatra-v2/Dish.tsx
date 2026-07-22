@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { getDishBySlug, F } from "./data";
 import { useMenuCatalog, macrosAreProvisional, getAllergenDisclosure } from "@/lib/menuData";
+import { FssaiMark } from "@/components/FssaiMark";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import { usePreferences } from "@/lib/preferencesContext";
 import { usePremiumStatus, usePremiumSlugs } from "@/lib/usePremium";
@@ -534,7 +535,7 @@ export default function V2Dish() {
           {/* Veg + GI chips */}
           <div className="flex gap-2 pt-2">
             <div className="flex items-center gap-1 px-2 py-1 rounded-md border border-white/5" style={{ background: "var(--pdp-chip-surface)" }}>
-              <span className={`w-2 h-2 rounded-full ${isVeg ? "bg-green-500" : "bg-orange-400"}`} />
+              <FssaiMark isVeg={isVeg} size={16} />
               <span className="text-[10px] leading-3 font-medium text-[var(--pdp-on-surface)] uppercase" style={{ fontFamily: "Geist, sans-serif" }}>
                 {isVeg ? "Veg" : "Non-Veg"}
               </span>

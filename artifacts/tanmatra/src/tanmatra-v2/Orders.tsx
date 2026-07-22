@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router";
 import { useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import { useOrders, formatRelativeTime, type PastOrder } from "@/lib/ordersContext";
+import { FssaiMark } from "@/components/FssaiMark";
 import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/api/adapter";
 import { ClinicalLifecycleStepper } from "@/components/track/ClinicalLifecycleStepper";
@@ -169,7 +170,10 @@ export default function V2Orders() {
                           {order.items.map((item) => (
                             <div key={item.lineId} className="mt8">
                               <div className="fx jb gap8" style={{ alignItems: "baseline" }}>
-                                <span className="small">{item.name} · ×{item.quantity}</span>
+                                <span className="fx ac g6" style={{ minWidth: 0 }}>
+                                  <FssaiMark isVeg={!!item.isVeg} size={14} />
+                                  <span className="small clamp1">{item.name} · ×{item.quantity}</span>
+                                </span>
                                 <span className="price mut" style={{ fontSize: 13 }}>
                                   {formatPrice(item.unitPrice * item.quantity)}
                                 </span>
