@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -32,6 +32,15 @@ const EVENT_LABELS: Record<string, string> = {
   delivery_failed: "Delivery failed",
 };
 const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+// Live ETA payload from GET /delivery/eta/:id — all optional; the endpoint may
+// return a partial while a delivery is still being modelled.
+interface DeliveryEta {
+  etaAt?: string;
+  source?: string;
+  dropLat?: number;
+  dropLng?: number;
+}
 
 function PackagingReturnCard({ orderServerId, delivered }: { orderServerId: number | undefined; delivered: boolean }) {
   const [row, setRow] = useState<PackagingReturnRow | null>(null);
@@ -117,13 +126,13 @@ export default function V2Track() {
   const qc = useQueryClient();
   const [supportOpen, setSupportOpen] = useState(false);
 
-  const [dynamicEta, setDynamicEta] = useState<any>(null);
+  const [dynamicEta, setDynamicEta] = useState<DeliveryEta | null>(null);
   useEffect(() => {
     if (!numericOrderId || !order) return;
     if (order.status === "delivered" || order.status === "cancelled") return;
     let cancelled = false;
     const fetchEta = async () => {
-      try { const r = await fetch(`${API_BASE}/delivery/eta/${numericOrderId}`, { credentials: "include" }); if (!r.ok) return; const data = await r.json(); if (!cancelled && data?.etaAt) setDynamicEta(data); } catch {}
+      try { const r = await fetch(`${API_BASE}/delivery/eta/${numericOrderId}`, { credentials: "include" }); if (!r.ok) return; const data = (await r.json()) as DeliveryEta; if (!cancelled && data?.etaAt) setDynamicEta(data); } catch {}
     };
     void fetchEta();
     const id = window.setInterval(fetchEta, 60_000);
@@ -158,7 +167,7 @@ export default function V2Track() {
     return () => { cancelled = true; };
   }, [order, updateStatus, numericOrderId]);
 
-  const shell = (body: any) => (
+  const shell = (body: ReactNode) => (
     <div className="tnm2 nn min-h-dvh bg-[var(--tnm-surface-ink)] text-white antialiased">
       <div style={{ maxWidth: 480, margin: "0 auto" }}>{body}</div>
     </div>
