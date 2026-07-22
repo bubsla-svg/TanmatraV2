@@ -10,14 +10,18 @@ import { formatPaise } from "@/lib/format";
  */
 export function CheckoutPay({
   step,
-  total,
+  stepCount,
+  totalPaise,
   planSummary,
   futureLine,
   creditPaise = 0,
   onPay,
 }: {
   step: number;
-  total: number;
+  /** How many screens this user's flow has (for the step dots). */
+  stepCount: number;
+  /** The amount charged, in paise — server-quoted, GST-inclusive. */
+  totalPaise: number;
   planSummary: string;
   futureLine: string;
   creditPaise?: number;
@@ -27,8 +31,8 @@ export function CheckoutPay({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <StepDots current={step} total={total} />
-        <span className="tabular text-sm font-semibold text-ink">{formatPaise(total)}</span>
+        <StepDots current={step} total={stepCount} />
+        <span className="tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
       </div>
 
       <div className="rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]">
@@ -38,7 +42,7 @@ export function CheckoutPay({
             {formatPaise(creditPaise)} credit applied
           </p>
         )}
-        <p className="tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(total)}</p>
+        <p className="tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(totalPaise)}</p>
       </div>
 
       <button
@@ -46,7 +50,7 @@ export function CheckoutPay({
         onClick={onPay}
         className="rounded-xl bg-gold px-5 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
       >
-        Pay {formatPaise(total)} with UPI
+        Pay {formatPaise(totalPaise)} with UPI
       </button>
 
       <button

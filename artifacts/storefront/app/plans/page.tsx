@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GoalRouter } from "@/components/plans/GoalRouter";
 import { PlanCard } from "@/components/plans/PlanCard";
+import { TrialCard } from "@/components/plans/TrialCard";
 import { routerPlans } from "@/lib/plans";
 
 export const metadata: Metadata = {
@@ -17,8 +18,9 @@ export default function PlansPage() {
   const plans = routerPlans();
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10">
-      <div className="max-w-md">
+      <div className="flex max-w-md flex-col gap-4">
         <GoalRouter />
+        <TrialCard />
       </div>
 
       <div>

@@ -16,6 +16,9 @@ interface Props {
   totalPaise: number;
   futureLine: string;
   user: CheckoutUser;
+  /** Trial creditback applied to this bill (paise). 0 = none. The server is the
+   *  authority on eligibility (#287); this is the applied amount to display. */
+  creditPaise?: number;
 }
 
 /**
@@ -24,7 +27,7 @@ interface Props {
  * advance — those are the live-env seams (real WebOTP, serviceability, and the
  * OS UPI intent land with the api-server + gateway wiring).
  */
-export function CheckoutFlow({ planId, planSummary, totalPaise, futureLine, user }: Props) {
+export function CheckoutFlow({ planId, planSummary, totalPaise, futureLine, user, creditPaise = 0 }: Props) {
   const screens = screensForUser(user);
   const [i, setI] = useState(0);
   const [paid, setPaid] = useState(false);
@@ -61,9 +64,11 @@ export function CheckoutFlow({ planId, planSummary, totalPaise, futureLine, user
   return (
     <CheckoutPay
       step={step}
-      total={total}
+      stepCount={total}
+      totalPaise={totalPaise}
       planSummary={planSummary}
       futureLine={futureLine}
+      creditPaise={creditPaise}
       onPay={pay}
     />
   );
