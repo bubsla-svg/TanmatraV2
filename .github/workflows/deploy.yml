@@ -1,8 +1,8 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  #push:
+    #branches: [main]
   workflow_dispatch: {}
 
 # Don't let two pushes to main race each other into the Cloud Run services.
