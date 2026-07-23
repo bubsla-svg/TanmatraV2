@@ -17,6 +17,32 @@ export interface MenuResult {
   source: "api" | "fallback";
 }
 
+/**
+ * The live catalog references dish photography two ways: absolute URLs
+ * (Unsplash stock) and legacy root-relative paths. The photo library is
+ * served by the legacy app at BOTH `/dishes/<f>` and `/images/dishes/<f>`,
+ * but the storefront only proxies `/images/*` (next.config rewrites) — so an
+ * api-supplied `/dishes/<f>` 404s here and the card renders a blank box.
+ * Map it onto the proxied `/images/dishes/` path — the catalog's own
+ * documented convention and the lighter resized variant. Absolute URLs and
+ * already-`/images/` paths pass through untouched.
+ */
+export function toProxiedImage(url: string): string {
+  return url.startsWith("/dishes/") ? `/images${url}` : url;
+}
+
+/** Normalize every image reference on a dish to the storefront's proxy path. */
+export function normalizeDishImages(dish: DishData): DishData {
+  return {
+    ...dish,
+    image: toProxiedImage(dish.image),
+    ...(dish.imageIngredient && { imageIngredient: toProxiedImage(dish.imageIngredient) }),
+    ...(dish.imageDelivered && { imageDelivered: toProxiedImage(dish.imageDelivered) }),
+    ...(dish.imageLifestyle && { imageLifestyle: toProxiedImage(dish.imageLifestyle) }),
+    ...(dish.imagePackaging && { imagePackaging: toProxiedImage(dish.imagePackaging) }),
+  };
+}
+
 function availableFallback(): DishData[] {
   return DISHES.filter((d) => d.isAvailable !== false);
 }
@@ -30,7 +56,7 @@ export async function fetchMenu(): Promise<MenuResult> {
     if (!res.ok) throw new Error(`menu ${res.status}`);
     const data = (await res.json()) as { dishes?: DishData[] };
     if (!data.dishes?.length) throw new Error("empty menu");
-    return { dishes: data.dishes, source: "api" };
+    return { dishes: data.dishes.map(normalizeDishImages), source: "api" };
   } catch {
     return { dishes: availableFallback(), source: "fallback" };
   }
