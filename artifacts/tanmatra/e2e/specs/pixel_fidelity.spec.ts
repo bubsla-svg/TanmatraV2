@@ -44,10 +44,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function dismissSoftGate(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    window.localStorage.setItem(
-      "tanmatra:softgate:v1",
-      JSON.stringify({ v: 1, at: 1, outcome: "skip" }),
-    );
+    try {
+      window.localStorage.setItem(
+        "tanmatra:softgate:v1",
+        JSON.stringify({ v: 1, at: 1, outcome: "skip" }),
+      );
+    } catch {
+      /* sandboxed third-party frame — see fixtures.seedCart note */
+    }
   });
 }
 
