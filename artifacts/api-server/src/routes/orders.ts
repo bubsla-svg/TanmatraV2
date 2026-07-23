@@ -111,6 +111,44 @@ router.get("/orders/active", async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/orders/mine
+ *
+ * The signed-in user's own orders across ALL statuses (meal kind), most recent
+ * first — the storefront's order-history surface (SF-09). Personal only: unlike
+ * /orders/active this never widens to the clinician cross-patient feed. Read
+ * only; no money movement.
+ */
+router.get("/orders/mine", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  const rows = await db
+    .select({
+      id: ordersTable.id,
+      externalOrderId: ordersTable.externalOrderId,
+      status: ordersTable.status,
+      totalPaise: ordersTable.totalPaise,
+      addressLabel: ordersTable.addressLabel,
+      createdAt: ordersTable.createdAt,
+    })
+    .from(ordersTable)
+    .where(and(eq(ordersTable.userId, req.user.id), eq(ordersTable.orderKind, "meal")))
+    .orderBy(desc(ordersTable.createdAt))
+    .limit(100);
+  res.json({
+    orders: rows.map((r) => ({
+      serverOrderId: r.id,
+      externalOrderId: r.externalOrderId,
+      status: r.status,
+      totalPaise: r.totalPaise,
+      addressLabel: r.addressLabel,
+      createdAt: r.createdAt,
+    })),
+  });
+});
+
+/**
  * POST /api/orders/:externalOrderId/cancel
  *
  * Cancels an order. Authorisation:
