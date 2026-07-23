@@ -118,7 +118,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - name: Install workspace
         run: pnpm install --frozen-lockfile
@@ -132,8 +132,14 @@ jobs:
       # constraints, so they cannot run DB-free.
       - name: Money-path integration tests
         working-directory: artifacts/api-server
+        # --test-force-exit: these suites hold real Postgres connections; on
+        # completion the pool's open handles keep the event loop alive, so the
+        # runner never exits on its own and the job is killed at the 20-min
+        # timeout (a hang, not a failure). Force exit once all tests finish —
+        # the process still exits non-zero if any test failed. Node 22 (matching
+        # money-unit/typecheck) also drains cleaner than the prior Node 20 pin.
         run: >
-          node --test --import tsx
+          node --test --test-force-exit --import tsx
           ./src/routes/payments.integrity.test.ts
           ./src/routes/payments.webhook.test.ts
           ./src/routes/payments.subscriptionOrder.test.ts
