@@ -36,7 +36,9 @@ export function SubscriptionManager() {
   const [subs, setSubs] = useState<Subscription[] | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<number | null>(null);
+  // Per-id, not a single scalar: acting on row B must not re-enable row A while
+  // A's transition is still in flight (which would allow a double-submit).
+  const [busyIds, setBusyIds] = useState<ReadonlySet<number>>(new Set());
 
   const load = useCallback(async () => {
     setError(null);
@@ -58,7 +60,7 @@ export function SubscriptionManager() {
     if (action === "cancel" && !window.confirm("Cancel this plan? Upcoming deliveries stop and billing ends.")) {
       return;
     }
-    setBusyId(sub.id);
+    setBusyIds((prev) => new Set(prev).add(sub.id));
     setError(null);
     try {
       await ACTION_FN[action](sub.id);
@@ -70,7 +72,11 @@ export function SubscriptionManager() {
       }
       setError(e instanceof ApiError ? e.message : "Couldn't update the plan.");
     } finally {
-      setBusyId(null);
+      setBusyIds((prev) => {
+        const next = new Set(prev);
+        next.delete(sub.id);
+        return next;
+      });
     }
   }
 
@@ -98,7 +104,7 @@ export function SubscriptionManager() {
       ) : (
         <ul className="flex flex-col gap-3">
           {subs.map((s) => (
-            <SubscriptionCard key={s.id} sub={s} busy={busyId === s.id} onAction={(a) => void act(s, a)} />
+            <SubscriptionCard key={s.id} sub={s} busy={busyIds.has(s.id)} onAction={(a) => void act(s, a)} />
           ))}
         </ul>
       )}
