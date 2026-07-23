@@ -2,7 +2,8 @@
 # a DEPLOYED service URL (never live traffic pre-cutover — point it at the
 # dark preview service or a tagged candidate revision, not the domain).
 # Dispatch with the target URL; the same specs gate PRs against a local build
-# in storefront.yml.
+# in storefront.yml. E2E_LIVE_CHECKOUT flips cuj-01 to assert the live SF-05
+# money-path surface (the flag-on deployed build) instead of the flag-dark CTA.
 name: E2E (remote target)
 
 on:
@@ -12,6 +13,10 @@ on:
         description: "Deployed base URL to run the CUJ suite against"
         required: true
         default: "https://storefront-475157072474.asia-south2.run.app"
+      live_checkout:
+        description: "Assert the live checkout surface (SF-05): 1 = on"
+        required: false
+        default: "1"
 
 jobs:
   e2e-remote:
@@ -31,8 +36,9 @@ jobs:
       - name: CUJ suite (mobile) against the deployed target
         env:
           E2E_BASE_URL: ${{ inputs.base_url }}
+          E2E_LIVE_CHECKOUT: ${{ inputs.live_checkout }}
         run: |
-          echo "Target: $E2E_BASE_URL"
+          echo "Target: $E2E_BASE_URL (live_checkout=$E2E_LIVE_CHECKOUT)"
           curl -s "$E2E_BASE_URL/api/build" || true
           pnpm exec playwright test \
             --config artifacts/storefront/e2e/playwright.config.ts --project=mobile

@@ -8,7 +8,17 @@ on:
   # the deploy jobs explicitly bypass the filter on dispatch — without this,
   # a dispatch silently deployed nothing, and deploying required committing
   # push-trigger toggles to main (which happened twice; see e09c21e1).
-  workflow_dispatch: {}
+  #
+  # only_storefront rolls JUST the dark-preview `storefront` service and leaves
+  # the production api-server + domain `tanmatra` untouched — for verifying a
+  # storefront change on its deployed URL without a full three-service release.
+  workflow_dispatch:
+    inputs:
+      only_storefront:
+        description: "Deploy only the dark-preview storefront (skip api-server + tanmatra)"
+        required: false
+        type: boolean
+        default: false
 
 # Don't let two pushes to main race each other into the Cloud Run services.
 concurrency:
@@ -58,7 +68,7 @@ jobs:
   # files changed.
   cloud-run:
     needs: changes
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.api == 'true'
+    if: (github.event_name == 'workflow_dispatch' && !inputs.only_storefront) || needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -152,7 +162,7 @@ jobs:
     needs: [changes, cloud-run]
     if: |
       always() &&
-      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true') &&
+      ((github.event_name == 'workflow_dispatch' && !inputs.only_storefront) || needs.changes.outputs.web == 'true') &&
       needs.cloud-run.result != 'cancelled'
     runs-on: ubuntu-latest
     permissions:
