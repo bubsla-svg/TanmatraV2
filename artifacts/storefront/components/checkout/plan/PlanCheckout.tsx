@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { runCheckout, finishPlanPayment, type PlanOrderRef } from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
+import { stashCheckoutPerks } from "@/lib/postCheckout";
 import { quotePlan, getAddresses, ApiError, type Address, type AuthUser, type DietTrack } from "@/lib/api";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
@@ -95,6 +96,9 @@ export function PlanCheckout({
           },
         });
       }
+      // Hand the verify response's facts to the confirmation screen — the
+      // autopay disclaimer is the server's verbatim mandate disclosure.
+      stashCheckoutPerks(result.orderId, { autopayDisclaimer: result.autopayDisclaimer });
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
     } catch (e) {
       if (e instanceof RazorpayDismissed) {
