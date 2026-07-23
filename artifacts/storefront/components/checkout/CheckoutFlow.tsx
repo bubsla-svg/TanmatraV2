@@ -3,9 +3,11 @@
 // identical across screens (CLS = 0) — inherently interactive.
 
 import { useState } from "react";
+import Link from "next/link";
 import { screensForUser, type CheckoutUser } from "@/lib/checkout";
 import { emitFunnel } from "@/lib/funnel";
 import { formatPaise } from "@/lib/format";
+import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { CheckoutIdentity } from "./CheckoutIdentity";
 import { CheckoutAddress } from "./CheckoutAddress";
 import { CheckoutPay } from "./CheckoutPay";
@@ -43,14 +45,36 @@ export function CheckoutFlow({
   const screens = screensForUser(user);
   const [i, setI] = useState(0);
   const [paid, setPaid] = useState(false);
+  const [notLive, setNotLive] = useState(false);
   const advance = () => setI((n) => Math.min(n + 1, screens.length - 1));
 
   function pay() {
-    // TODO(live): create the plan-v2 subscription server-side, open the Razorpay
-    // UPI intent, verify the signature, then confirm. Stubbed to the money-status
-    // confirmation for the skeleton.
+    if (LIVE_CHECKOUT_ENABLED) {
+      // The plan-purchase money path (createSubscription + members intake +
+      // FLAG_PLAN_V2 + Razorpay) lands in the plan-v2 wave. Behind the live
+      // flag we must never fabricate a receipt — fail LOUD and point at the
+      // à-la-carte path that IS live. (The skeleton receipt below only renders
+      // in a flag-dark preview build.)
+      setNotLive(true);
+      return;
+    }
     emitFunnel("cuj_paid", { planId, total: totalPaise });
     setPaid(true);
+  }
+
+  if (notLive) {
+    return (
+      <div className="flex flex-col items-start gap-4">
+        <h1 className="text-xl font-semibold text-ink">Plan checkout is finishing its wiring</h1>
+        <p className="text-sm text-ink-muted">
+          Subscription purchase goes live in the next wave. Ordering individual
+          dishes from the menu is live now.
+        </p>
+        <Link href="/menu" className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]">
+          Order from the menu
+        </Link>
+      </div>
+    );
   }
 
   if (paid) {

@@ -4,6 +4,7 @@ import {
   createRazorpayOrder,
   verifyPayment,
   type AlacarteOrderInput,
+  type AlacarteOrderResponse,
   type CreateSubscriptionInput,
 } from "./api";
 
@@ -110,17 +111,41 @@ export interface AlacarteCheckoutResult extends CheckoutResult {
  * rejects before verify is ever called.
  */
 export async function runAlacarteCheckout(
-  params: { order: AlacarteOrderInput; razorpay: RazorpayAdapter },
+  params: {
+    order: AlacarteOrderInput;
+    razorpay: RazorpayAdapter;
+    /** Fired with the server order the instant it is created — BEFORE any
+     *  payment step. Lets the caller persist the id so a retry after a
+     *  dismissed modal RESUMES payment on the same order instead of creating a
+     *  second one (the server 409s a reused externalOrderId, so a re-create is
+     *  never the right retry). */
+    onCreated?: (order: AlacarteOrderResponse) => void;
+  },
   deps: AlacartePathDeps = ALC_DEFAULT_DEPS,
 ): Promise<AlacarteCheckoutResult> {
   const created = await deps.createAlacarteOrder(params.order);
+  params.onCreated?.(created);
+  return finishAlacartePayment(created, params.razorpay, deps);
+}
 
-  const rzpOrder = await deps.createRazorpayOrder({ orderId: created.orderId });
+/**
+ * The payment leg on its own: create the Razorpay order for an ALREADY-created
+ * guest order → open the modal → verify. Shared by runAlacarteCheckout and used
+ * directly to RESUME payment for an order a prior attempt already created (so a
+ * dismissed modal never spawns a duplicate row). Still price-free — only the
+ * server order id threads through.
+ */
+export async function finishAlacartePayment(
+  order: Pick<AlacarteOrderResponse, "orderId" | "totalPaise" | "etaMinutes">,
+  razorpay: RazorpayAdapter,
+  deps: Pick<AlacartePathDeps, "createRazorpayOrder" | "verifyPayment"> = ALC_DEFAULT_DEPS,
+): Promise<AlacarteCheckoutResult> {
+  const rzpOrder = await deps.createRazorpayOrder({ orderId: order.orderId });
 
-  const paid = await params.razorpay.open(rzpOrder);
+  const paid = await razorpay.open(rzpOrder);
 
   const verified = await deps.verifyPayment({
-    orderId: created.orderId,
+    orderId: order.orderId,
     razorpayPaymentId: paid.razorpayPaymentId,
     razorpayOrderId: paid.razorpayOrderId,
     razorpaySignature: paid.razorpaySignature,
@@ -129,7 +154,7 @@ export async function runAlacarteCheckout(
   return {
     orderId: verified.orderId,
     status: verified.status,
-    totalPaise: created.totalPaise,
-    etaMinutes: created.etaMinutes,
+    totalPaise: order.totalPaise,
+    etaMinutes: order.etaMinutes,
   };
 }
