@@ -3,6 +3,11 @@ name: Deploy
 on:
   #push:
     #branches: [main]
+  # Manual dispatch deploys ALL THREE services from the chosen ref.
+  # paths-filter cannot diff a dispatch event (no before/after commits), so
+  # the deploy jobs explicitly bypass the filter on dispatch — without this,
+  # a dispatch silently deployed nothing, and deploying required committing
+  # push-trigger toggles to main (which happened twice; see e09c21e1).
   workflow_dispatch: {}
 
 # Don't let two pushes to main race each other into the Cloud Run services.
@@ -21,7 +26,10 @@ jobs:
       storefront: ${{ steps.filter.outputs.storefront }}
     steps:
       - uses: actions/checkout@v4
+      # Skipped on workflow_dispatch (nothing to diff); outputs come back
+      # empty and the deploy jobs' event-name conditions take over.
       - uses: dorny/paths-filter@v3
+        if: github.event_name == 'push'
         id: filter
         with:
           filters: |
@@ -50,7 +58,7 @@ jobs:
   # files changed.
   cloud-run:
     needs: changes
-    if: needs.changes.outputs.api == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -144,7 +152,7 @@ jobs:
     needs: [changes, cloud-run]
     if: |
       always() &&
-      needs.changes.outputs.web == 'true' &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true') &&
       needs.cloud-run.result != 'cancelled'
     runs-on: ubuntu-latest
     permissions:
@@ -275,7 +283,7 @@ jobs:
     needs: [changes, cloud-run]
     if: |
       always() &&
-      needs.changes.outputs.storefront == 'true' &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.storefront == 'true') &&
       needs.cloud-run.result != 'cancelled'
     runs-on: ubuntu-latest
     permissions:
