@@ -36,11 +36,18 @@ ARG NEXT_PUBLIC_API_BASE=""
 ARG NEXT_PUBLIC_LIVE_CHECKOUT=""
 ARG NEXT_PUBLIC_MEALCARD_RAIL=""
 ARG NEXT_PUBLIC_ANALYTICS_BEACON=""
+# Proxy upstreams for the same-origin /api and /images hops. next.config's
+# rewrites() are evaluated at BUILD time and baked into routes-manifest.json —
+# a runtime env var cannot enable them — so these must arrive as build args.
+ARG API_UPSTREAM=""
+ARG IMAGE_UPSTREAM=""
 
 RUN NEXT_PUBLIC_API_BASE="${NEXT_PUBLIC_API_BASE}" \
     NEXT_PUBLIC_LIVE_CHECKOUT="${NEXT_PUBLIC_LIVE_CHECKOUT}" \
     NEXT_PUBLIC_MEALCARD_RAIL="${NEXT_PUBLIC_MEALCARD_RAIL}" \
     NEXT_PUBLIC_ANALYTICS_BEACON="${NEXT_PUBLIC_ANALYTICS_BEACON}" \
+    API_UPSTREAM="${API_UPSTREAM}" \
+    IMAGE_UPSTREAM="${IMAGE_UPSTREAM}" \
     pnpm --filter @workspace/storefront run build
 
 # ── runner ────────────────────────────────────────────────────────────────────

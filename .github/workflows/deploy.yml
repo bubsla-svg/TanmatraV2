@@ -293,6 +293,10 @@ jobs:
       GCP_REGION: asia-south2
       SERVICE: storefront
       API_URL: https://wellness-foods-475157072474.asia-south2.run.app/api
+      # Dish-photo origin for the /images proxy (next.config rewrites). The
+      # library lives in the legacy tanmatra service's public/ dir; repoint to
+      # a bucket/CDN at cutover — runtime env, no rebuild.
+      IMAGE_URL: https://tanmatra-475157072474.asia-south2.run.app
     steps:
       - uses: actions/checkout@v4
 
@@ -318,6 +322,13 @@ jobs:
                 - build
                 - --build-arg
                 - NEXT_PUBLIC_API_BASE=
+                # Rewrites are baked at build time (routes-manifest), so the
+                # /api and /images proxy upstreams must be build args — the
+                # runtime env alone cannot enable them.
+                - --build-arg
+                - API_UPSTREAM=${API_URL%/api}
+                - --build-arg
+                - IMAGE_UPSTREAM=${IMAGE_URL}
                 - -t
                 - ${IMAGE}
                 - -f
@@ -361,7 +372,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 8080 \
-            --update-env-vars "API_BASE_URL=${API_URL%/api},API_UPSTREAM=${API_URL%/api},BUILD_SHA=${{ github.sha }}" \
+            --update-env-vars "API_BASE_URL=${API_URL%/api},API_UPSTREAM=${API_URL%/api},IMAGE_UPSTREAM=${IMAGE_URL},BUILD_SHA=${{ github.sha }}" \
             --memory=512Mi \
             --cpu=1 \
             --cpu-boost \

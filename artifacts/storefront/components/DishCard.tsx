@@ -12,7 +12,11 @@ export function DishCard({ dish }: { dish: DishData }) {
   const est = dish.macrosEstimated ? "~" : "";
   return (
     <Link
-      href={`/dish/${dish.slug}`}
+      // Opens the §4.2 PDP bottom sheet over the grid (?dish= deep-link);
+      // /dish/[slug] stays the canonical share/SEO route, linked from the
+      // drawer. scroll={false} keeps the grid position under the sheet.
+      href={`/menu?dish=${dish.slug}`}
+      scroll={false}
       className="group flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-raised">
