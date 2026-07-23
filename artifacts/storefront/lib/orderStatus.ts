@@ -29,10 +29,13 @@ const STATUS_LABELS: Record<string, string> = {
   placed: "Order placed",
   preparing: "Being fired in the kitchen",
   ready: "Packed and ready",
+  rider_assigned: "Rider assigned",
   dispatched: "Out for delivery",
   out_for_delivery: "Out for delivery",
   delivered: "Delivered",
   cancelled: "Cancelled",
+  refunded: "Refunded",
+  failed: "Payment failed",
 };
 
 export function statusLabel(status: string): string {
