@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { logger } from "../lib/logger";
+import { requireOps } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
@@ -65,8 +66,12 @@ router.post(
 /**
  * GET /api/v1/error-reports/audit
  * Audit inspection endpoint for debugging linked session replays and rage clicks.
+ * Ops-gated: reports carry full page URLs, JS stack traces, and session-replay
+ * interaction traces from ALL users — never public. (Ingestion above stays
+ * open: error beacons cannot authenticate.)
  */
-router.get("/v1/error-reports/audit", (_req: Request, res: Response) => {
+router.get("/v1/error-reports/audit", (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
   res.json({
     totalReports: storedErrorReports.length,
     reports: storedErrorReports,
