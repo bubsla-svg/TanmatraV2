@@ -2,8 +2,8 @@ import Link from "next/link";
 
 /**
  * Global chrome shell. Server component — it holds no state and needs no
- * interactivity, so it ships zero client JS. Phase 1 exposes browsing only
- * (brand + Menu); plan/checkout/account nav lands with the money path.
+ * interactivity, so it ships zero client JS. Browse (Menu / Plans) plus the
+ * Account area (saved addresses; SF-04) — the session gate lives on the page.
  */
 export function Header() {
   return (
@@ -28,6 +28,12 @@ export function Header() {
             className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
           >
             Plans
+          </Link>
+          <Link
+            href="/account/addresses"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+          >
+            Account
           </Link>
         </nav>
       </div>
