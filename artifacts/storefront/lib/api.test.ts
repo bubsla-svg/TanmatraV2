@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { API_BASE, ApiError, apiPost, quotePlan, createRazorpayOrder } from "./api";
-import { runCheckout, type RazorpayAdapter, type MoneyPathDeps } from "./moneyPath";
+import { runCheckout, finishPlanPayment, type RazorpayAdapter, type MoneyPathDeps } from "./moneyPath";
 
 function fakeFetch(status: number, payload: unknown) {
   const calls: { url: string; init: RequestInit }[] = [];
@@ -89,10 +89,66 @@ test("runCheckout sequences create → order → modal → verify and returns th
   };
 
   const result = await runCheckout(
-    { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{}] }, razorpay },
+    { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] }, razorpay },
     deps,
   );
   assert.deepEqual(seen, ["create", "order", "modal", "verify"]);
+  assert.equal(result.orderId, "sub-7");
+  assert.equal(result.status, "preparing");
+});
+
+test("runCheckout fires onCreated with the subscription order before any payment step", async () => {
+  const seen: string[] = [];
+  let createdOrderId: string | null = null;
+  const deps: MoneyPathDeps = {
+    createSubscription: async () => {
+      seen.push("create");
+      return { subscription: { id: 7, externalOrderId: "sub-7" }, deliveries: [], bridgeCreditPaise: 0 };
+    },
+    createRazorpayOrder: async () => {
+      seen.push("order");
+      return { razorpayOrderId: "order_9", amount: 437800, currency: "INR", keyId: "rzp_test" };
+    },
+    verifyPayment: async (input) => {
+      seen.push("verify");
+      return { ok: true, orderId: input.orderId, status: "preparing" };
+    },
+  };
+  const razorpay: RazorpayAdapter = {
+    open: async (order) => {
+      seen.push("modal");
+      return { razorpayPaymentId: "pay_1", razorpayOrderId: order.razorpayOrderId, razorpaySignature: "sig" };
+    },
+  };
+  await runCheckout(
+    {
+      subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] },
+      razorpay,
+      onCreated: (ref) => { createdOrderId = ref.orderId; seen.push("onCreated"); },
+    },
+    deps,
+  );
+  assert.equal(createdOrderId, "sub-7");
+  assert.deepEqual(seen, ["create", "onCreated", "order", "modal", "verify"]);
+});
+
+test("finishPlanPayment resumes an already-created subscription — pays it WITHOUT re-creating", async () => {
+  const seen: string[] = [];
+  const deps: MoneyPathDeps = {
+    createSubscription: async () => { seen.push("create"); throw new Error("must not create on resume"); },
+    createRazorpayOrder: async (input) => {
+      seen.push("order");
+      assert.equal(input.orderId, "sub-7");
+      assert.equal(input.subscriptionId, 7);
+      return { razorpayOrderId: "order_9", amount: 437800, currency: "INR", keyId: "rzp_test" };
+    },
+    verifyPayment: async (input) => { seen.push("verify"); return { ok: true, orderId: input.orderId, status: "preparing" }; },
+  };
+  const razorpay: RazorpayAdapter = {
+    open: async (order) => { seen.push("modal"); return { razorpayPaymentId: "pay_2", razorpayOrderId: order.razorpayOrderId, razorpaySignature: "sig2" }; },
+  };
+  const result = await finishPlanPayment({ orderId: "sub-7", subscriptionId: 7 }, razorpay, deps);
+  assert.deepEqual(seen, ["order", "modal", "verify"]); // no "create"
   assert.equal(result.orderId, "sub-7");
   assert.equal(result.status, "preparing");
 });
@@ -122,7 +178,7 @@ test("runCheckout stops at the modal if the user dismisses it — no verify call
   await assert.rejects(
     () =>
       runCheckout(
-        { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{}] }, razorpay },
+        { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] }, razorpay },
         deps,
       ),
     /dismissed/,
