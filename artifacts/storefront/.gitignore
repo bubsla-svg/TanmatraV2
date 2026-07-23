@@ -3,3 +3,5 @@
 /out/
 *.tsbuildinfo
 .turbo
+test-results/
+playwright-report/
