@@ -1,6 +1,6 @@
 "use client";
 // Client: Firebase phone-auth is browser-only (reCAPTCHA + SMS confirmation).
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { firebaseConfigured, friendlyFirebaseError } from "@/lib/firebase";
 import { sendPhoneOtp, toE164, type PhoneVerification } from "@/lib/phoneAuth";
 import { verifyOtp, ApiError, type AuthUser } from "@/lib/api";
@@ -25,6 +25,9 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
   const verification = useRef<PhoneVerification | null>(null);
   const recaptcha = useRef<HTMLDivElement | null>(null);
 
+  // Tear down the reCAPTCHA widget on unmount so it doesn't leak across mounts.
+  useEffect(() => () => verification.current?.clear(), []);
+
   if (!firebaseConfigured()) return null;
 
   const phoneValid = phone.replace(/\D/g, "").length >= 10;
@@ -33,6 +36,10 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
   async function send() {
     const el = recaptcha.current;
     if (!el) return;
+    // Clear any prior widget first — a re-send into the same element otherwise
+    // throws "reCAPTCHA has already been rendered in this element".
+    verification.current?.clear();
+    verification.current = null;
     setError(null);
     setBusy(true);
     try {

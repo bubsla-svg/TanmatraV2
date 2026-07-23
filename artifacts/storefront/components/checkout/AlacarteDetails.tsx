@@ -46,7 +46,8 @@ export function AlacarteDetails({
 
   const phoneValid = phone.replace(/\D/g, "").length >= 10;
   const pinValid = pincode.replace(/\D/g, "").length === 6;
-  const valid = phoneValid && line1.trim().length > 2 && city.trim().length > 1 && pinValid && consent;
+  const hasItems = cart.lines.length > 0;
+  const valid = hasItems && phoneValid && line1.trim().length > 2 && city.trim().length > 1 && pinValid && consent;
 
   return (
     <div className="flex flex-col gap-4">

@@ -1,13 +1,13 @@
 "use client";
 // Client: reads the interactive cart and drives the guest money path end to end.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 import { itemCount } from "@/lib/cartStore";
-import { runAlacarteCheckout } from "@/lib/moneyPath";
+import { runAlacarteCheckout, finishAlacartePayment } from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
-import { ApiError, type AlacarteOrderInput, type AuthUser } from "@/lib/api";
+import { ApiError, type AlacarteOrderInput, type AlacarteOrderResponse, type AuthUser } from "@/lib/api";
 import { DPDP_POLICY_VERSION } from "@/lib/consent";
 import { PhoneAuth } from "./PhoneAuth";
 import { AlacarteDetails, type AlacarteAddress } from "./AlacarteDetails";
@@ -26,6 +26,11 @@ export function AlacarteCheckout() {
   const [phoneLocked, setPhoneLocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One idempotency key per checkout session, and the order once created, so a
+  // retry after a dismissed modal resumes payment instead of creating a
+  // duplicate (the server 409s a reused externalOrderId).
+  const idempotencyKey = useRef<string | null>(null);
+  const createdOrder = useRef<AlacarteOrderResponse | null>(null);
 
   function onVerified(user: AuthUser) {
     if (user.phoneE164) {
@@ -35,20 +40,32 @@ export function AlacarteCheckout() {
   }
 
   async function handlePay(address: AlacarteAddress) {
+    if (cart.lines.length === 0) return; // defense-in-depth; the button is also gated
     setError(null);
     setBusy(true);
-    const order: AlacarteOrderInput = {
-      externalOrderId: `alc-${crypto.randomUUID()}`,
-      items: cart.lines.map((l) => ({ dishId: l.dishId, qty: l.qty })),
-      phone: `+91${phone.replace(/\D/g, "")}`,
-      address,
-      consent: { accepted: true, policyVersion: DPDP_POLICY_VERSION },
-    };
+    const contact = `+91${phone.replace(/\D/g, "")}`;
     try {
-      const result = await runAlacarteCheckout({
-        order,
-        razorpay: createRazorpayAdapter({ contact: order.phone }),
-      });
+      let result;
+      if (createdOrder.current) {
+        // A prior attempt already created this order — pay it, don't re-create.
+        result = await finishAlacartePayment(createdOrder.current, createRazorpayAdapter({ contact }));
+      } else {
+        if (!idempotencyKey.current) idempotencyKey.current = `alc-${crypto.randomUUID()}`;
+        const order: AlacarteOrderInput = {
+          externalOrderId: idempotencyKey.current,
+          items: cart.lines.map((l) => ({ dishId: l.dishId, qty: l.qty })),
+          phone: contact,
+          address,
+          consent: { accepted: true, policyVersion: DPDP_POLICY_VERSION },
+        };
+        result = await runAlacarteCheckout({
+          order,
+          razorpay: createRazorpayAdapter({ contact }),
+          onCreated: (o) => {
+            createdOrder.current = o;
+          },
+        });
+      }
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
     } catch (e) {
       if (e instanceof RazorpayDismissed) {

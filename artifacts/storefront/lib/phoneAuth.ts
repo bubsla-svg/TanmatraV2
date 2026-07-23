@@ -13,9 +13,12 @@ import { getFirebaseAuth } from "./firebase";
  */
 
 /** A pending SMS verification. confirm(code) resolves the Firebase idToken the
- *  api-server exchanges for a session. */
+ *  api-server exchanges for a session; clear() tears down the reCAPTCHA widget
+ *  so a re-send can render a fresh challenge (grecaptcha throws if two verifiers
+ *  render into the same element). */
 export interface PhoneVerification {
   confirm(code: string): Promise<string>;
+  clear(): void;
 }
 
 /** Compose an E.164 number (`+<cc><digits>`) from a country code + local input. */
@@ -49,6 +52,7 @@ export async function sendPhoneOtp(
         const credential = await confirmation.confirm(code);
         return credential.user.getIdToken();
       },
+      clear: () => verifier.clear(),
     };
   } catch (err) {
     verifier.clear();
