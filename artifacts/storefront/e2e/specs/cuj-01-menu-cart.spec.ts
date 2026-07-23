@@ -85,6 +85,32 @@ test("cart drawer shows lines + subtotal; dark checkout fails LOUD, never dead",
   }
 });
 
+// The à-la-carte checkout leg (SF-05) only exists where the live flag is built
+// in — i.e. the deployed service, run with E2E_LIVE_CHECKOUT=1. In the flag-dark
+// PR-gate build the CTA is absent, so this leg is skipped rather than asserting
+// a surface that isn't there.
+const liveCheckout = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
+
+liveCheckout("cart → live à-la-carte checkout renders the guest details form", async ({ page }) => {
+  await page.goto("/menu");
+  const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
+  await card.getByRole("button", { name: "Add" }).click();
+  await page.getByRole("button", { name: "View cart" }).click();
+
+  const drawer = page.getByRole("dialog");
+  await drawer.getByRole("link", { name: "Checkout" }).click();
+
+  await expect(page).toHaveURL(/\/checkout\?mode=alacarte/);
+  await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible();
+  // The DPDP consent the server hard-requires (400 consent_required) is present.
+  await expect(page.getByText(/process my dietary and health details/i)).toBeVisible();
+  // The pay CTA exists and is amount-free — the server owns the total — and it
+  // stays disabled until the form is valid: never a dead button into a void.
+  const pay = page.getByRole("button", { name: "Continue to payment" });
+  await expect(pay).toBeVisible();
+  await expect(pay).toBeDisabled();
+});
+
 test("plan-only dishes carry no Add CTA (no dead buttons)", async ({ page }) => {
   await page.goto("/menu");
   const addButtons = page.getByRole("button", { name: "Add", exact: true });

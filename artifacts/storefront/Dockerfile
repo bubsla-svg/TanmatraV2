@@ -36,6 +36,16 @@ ARG NEXT_PUBLIC_API_BASE=""
 ARG NEXT_PUBLIC_LIVE_CHECKOUT=""
 ARG NEXT_PUBLIC_MEALCARD_RAIL=""
 ARG NEXT_PUBLIC_ANALYTICS_BEACON=""
+# Firebase web config (SF-03 phone-auth). These are PUBLIC by design — the
+# security boundary is the api-server, which verifies the resulting idToken —
+# so they ship in the client bundle exactly like the legacy VITE_FIREBASE_* set.
+# Absent → firebaseConfigured() is false and sign-in silently self-hides.
+ARG NEXT_PUBLIC_FIREBASE_API_KEY=""
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=""
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID=""
+ARG NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=""
+ARG NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=""
+ARG NEXT_PUBLIC_FIREBASE_APP_ID=""
 # Proxy upstreams for the same-origin /api and /images hops. next.config's
 # rewrites() are evaluated at BUILD time and baked into routes-manifest.json —
 # a runtime env var cannot enable them — so these must arrive as build args.
@@ -46,6 +56,12 @@ RUN NEXT_PUBLIC_API_BASE="${NEXT_PUBLIC_API_BASE}" \
     NEXT_PUBLIC_LIVE_CHECKOUT="${NEXT_PUBLIC_LIVE_CHECKOUT}" \
     NEXT_PUBLIC_MEALCARD_RAIL="${NEXT_PUBLIC_MEALCARD_RAIL}" \
     NEXT_PUBLIC_ANALYTICS_BEACON="${NEXT_PUBLIC_ANALYTICS_BEACON}" \
+    NEXT_PUBLIC_FIREBASE_API_KEY="${NEXT_PUBLIC_FIREBASE_API_KEY}" \
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}" \
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID="${NEXT_PUBLIC_FIREBASE_PROJECT_ID}" \
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}" \
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}" \
+    NEXT_PUBLIC_FIREBASE_APP_ID="${NEXT_PUBLIC_FIREBASE_APP_ID}" \
     API_UPSTREAM="${API_UPSTREAM}" \
     IMAGE_UPSTREAM="${IMAGE_UPSTREAM}" \
     pnpm --filter @workspace/storefront run build

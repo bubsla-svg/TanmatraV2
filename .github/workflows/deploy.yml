@@ -312,8 +312,12 @@ jobs:
         run: |
           IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
           # Custom Dockerfile. NEXT_PUBLIC_API_BASE is left empty so the browser
-          # uses the same-origin /api proxy. Live checkout stays off until the
-          # Firebase/Razorpay browser build-args are added. Async +
+          # uses the same-origin /api proxy. Live checkout (SF-05) is ON: the
+          # à-la-carte guest money path needs only Razorpay creds on the
+          # api-server; the browser gets the Razorpay keyId from the server's
+          # order response, so no Razorpay secret ships in the bundle. The
+          # NEXT_PUBLIC_FIREBASE_* values (SF-03 sign-in) are PUBLIC web config —
+          # the same secrets the tanmatra SPA build consumes. Async +
           # CLOUD_LOGGING_ONLY avoids VPC-SC log-streaming errors.
           cat > /tmp/storefront-cloudbuild.yaml <<EOF
           steps:
@@ -322,6 +326,20 @@ jobs:
                 - build
                 - --build-arg
                 - NEXT_PUBLIC_API_BASE=
+                - --build-arg
+                - NEXT_PUBLIC_LIVE_CHECKOUT=1
+                - --build-arg
+                - NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+                - --build-arg
+                - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+                - --build-arg
+                - NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+                - --build-arg
+                - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+                - --build-arg
+                - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+                - --build-arg
+                - NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
                 # Rewrites are baked at build time (routes-manifest), so the
                 # /api and /images proxy upstreams must be build args — the
                 # runtime env alone cannot enable them.

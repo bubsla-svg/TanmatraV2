@@ -103,3 +103,61 @@ lockstep-governed; see the working agreement):
 
 Until (2) is fixed, the bump is display-and-quote-only; until (1) exists, the
 Evening Add confirmation offer cannot attach server-side.
+
+---
+
+## 6. À-la-carte money path — LIVE (SF-03 + SF-05)
+
+The **guest** money path (browse → cart → checkout → pay → confirmed → track) is
+now wired end-to-end and armed on the deployed storefront. It does **not** reuse
+the plan-v2 machinery (§2/§4): it is `POST /api/orders` guest checkout, which the
+api-server designs for `userId: null` orders — no session required.
+
+**Call order (verified against `checkout.ts` + `payments.ts`):**
+
+1. `POST /api/orders` — `{externalOrderId, items:[{dishId,qty}], phone, address,
+   consent:{accepted:true, policyVersion}}`. The server prices it (DPDP consent →
+   400 `consent_required`, serviceable pincode → 422, allergen gate). Returns
+   `{orderId, status:"placed", etaMinutes, totalPaise}`. **No client price.**
+2. `POST /api/payments/razorpay/order {orderId}` → `{razorpayOrderId, amount,
+   currency, keyId}`. Guest orders stay open for payment without auth; the amount
+   is the server-stored total. `keyId` comes back here — **no Razorpay key ships
+   in the bundle.**
+3. Razorpay checkout.js modal (`lib/razorpayAdapter.ts`) → `{razorpayPaymentId,
+   razorpayOrderId, razorpaySignature}`. A **dismissed** modal throws
+   `RazorpayDismissed` so verify is never called.
+4. `POST /api/payments/razorpay/verify {...}` → `status:"preparing"` →
+   `/order/confirmed/[orderId]` → `/track/[orderId]`.
+
+**Wired client pieces:** `lib/firebase.ts`, `lib/phoneAuth.ts`,
+`components/checkout/PhoneAuth.tsx` (SF-03 optional sign-in), `lib/razorpayAdapter.ts`,
+`components/checkout/{AlacarteCheckout,AlacarteDetails}.tsx`, and the
+`/checkout?mode=alacarte` branch. `runAlacarteCheckout()` (`lib/moneyPath.ts`)
+sequences the calls.
+
+**SF-03 optional sign-in.** Firebase phone-auth (`signInWithPhoneNumber` →
+`confirm` → `getIdToken` → `POST /api/auth/phone/verify-otp {idToken}` → `sid`
+session) is offered at the top of the à-la-carte details step. It **self-hides**
+when `firebaseConfigured()` is false, so the guest money path never hard-depends
+on it. When a user signs in, the order is attributed to them and the phone is
+prefilled.
+
+**Deploy config (already applied):**
+
+- storefront job (`deploy.yml`): `NEXT_PUBLIC_LIVE_CHECKOUT=1` +
+  `NEXT_PUBLIC_FIREBASE_*` (6, from the same `secrets.FIREBASE_*` the tanmatra
+  build uses) as Docker build args; mirrored `ARG`s in the Dockerfile.
+- api-server: `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` already set;
+  `ALC_CHECKOUT_ENABLED` defaults true; Firebase Admin verifies via ADC. **No
+  api-server change is required for this path.**
+
+**One console-side step (outside CI):** Firebase Console → Authentication →
+Settings → Authorized domains must list the storefront origin for phone sign-in
+to succeed. If it is missing, `signInWithPhoneNumber` fails with
+`auth/unauthorized-domain`; PhoneAuth surfaces the friendly error and the guest
+path is unaffected.
+
+**Plan path unchanged.** The subscription money path (§2/§4) remains for a later
+wave. `CheckoutFlow.pay()` now **fails loud** under the live flag ("finishing its
+wiring", points at the menu) instead of fabricating a receipt — no mocked success
+ships behind the flag.
