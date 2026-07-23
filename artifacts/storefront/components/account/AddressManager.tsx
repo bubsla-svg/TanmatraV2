@@ -16,6 +16,11 @@ import { AddressForm } from "./AddressForm";
 
 type Editing = null | "new" | Address;
 
+/** A 401 mid-session means the sid session lapsed — route back to sign-in. */
+function isAuthExpired(e: unknown): boolean {
+  return e instanceof ApiError && e.status === 401;
+}
+
 /**
  * SF-04 CRUD surface. Session-gated: an unauthenticated load 401s, and we show
  * the Firebase sign-in (SF-03) inline; verifying reloads the list. Every
@@ -56,6 +61,11 @@ export function AddressManager() {
       setEditing(null);
       await load();
     } catch (e) {
+      if (isAuthExpired(e)) {
+        setEditing(null);
+        setNeedsAuth(true);
+        return;
+      }
       setFormError(e instanceof ApiError ? e.message : "Couldn't save the address.");
     } finally {
       setFormBusy(false);
@@ -69,6 +79,10 @@ export function AddressManager() {
       await run();
       await load();
     } catch (e) {
+      if (isAuthExpired(e)) {
+        setNeedsAuth(true);
+        return;
+      }
       // Surface it — the list is unchanged, but never fail silently.
       setLoadError(e instanceof ApiError ? e.message : "Couldn't update the address.");
     } finally {
@@ -101,6 +115,7 @@ export function AddressManager() {
       />
       {editing ? (
         <AddressForm
+          key={editing === "new" ? "new" : editing.id}
           initial={editing === "new" ? undefined : editing}
           busy={formBusy}
           error={formError}

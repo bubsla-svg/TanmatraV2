@@ -111,7 +111,6 @@ export function AlacarteCheckout() {
       <h1 className="text-lg font-semibold text-ink">Checkout</h1>
       <PhoneAuth onVerified={onVerified} />
       <AlacarteDetails
-        key={savedAddress?.id ?? "manual"}
         cart={cart}
         phone={phone}
         onPhoneChange={setPhone}

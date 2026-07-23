@@ -1,6 +1,6 @@
 "use client";
 // Client: controlled address/consent inputs for the guest money path.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatPaise } from "@/lib/format";
 import { subtotalPaise, type CartState } from "@/lib/cartStore";
 import { DPDP_CONSENT_COPY } from "@/lib/consent";
@@ -47,6 +47,20 @@ export function AlacarteDetails({
   const [city, setCity] = useState(initialAddress?.city ?? "");
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
   const [consent, setConsent] = useState(false);
+  const prefilled = useRef(false);
+
+  // A saved address may arrive AFTER mount (async sign-in fetch). Seed the
+  // fields once — but only while they're still untouched, so a customer who
+  // started typing before it resolved never has their input clobbered.
+  useEffect(() => {
+    if (!initialAddress || prefilled.current) return;
+    if (line1 === "" && city === "" && pincode === "") {
+      prefilled.current = true;
+      setLine1(initialAddress.line1);
+      setCity(initialAddress.city);
+      setPincode(initialAddress.pincode);
+    }
+  }, [initialAddress, line1, city, pincode]);
 
   const phoneValid = phone.replace(/\D/g, "").length >= 10;
   const pinValid = pincode.replace(/\D/g, "").length === 6;
