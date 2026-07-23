@@ -54,22 +54,53 @@ const DEFAULT_DEPS: MoneyPathDeps = { createSubscription, createRazorpayOrder, v
  * flow, plus the full `subscription` payload (address + members). See
  * docs/LIVE-CUTOVER.md for the remaining client integration.
  */
+/** The created subscription's payable order — captured before payment so a
+ *  retry after a dismissed modal RESUMES on the same subscription instead of
+ *  creating a second one. */
+export interface PlanOrderRef {
+  orderId: string;
+  subscriptionId: number;
+}
+
 export async function runCheckout(
-  params: { subscription: CreateSubscriptionInput; razorpay: RazorpayAdapter },
+  params: {
+    subscription: CreateSubscriptionInput;
+    razorpay: RazorpayAdapter;
+    /** Fired with the created subscription's order the instant it exists —
+     *  BEFORE any payment step — so the caller can resume payment on a retry. */
+    onCreated?: (ref: PlanOrderRef) => void;
+  },
   deps: MoneyPathDeps = DEFAULT_DEPS,
 ): Promise<CheckoutResult> {
   const created = await deps.createSubscription(params.subscription);
-  const orderId = created.subscription.externalOrderId ?? `sub-${created.subscription.id}`;
-
-  const order = await deps.createRazorpayOrder({
-    orderId,
+  const ref: PlanOrderRef = {
+    orderId: created.subscription.externalOrderId ?? `sub-${created.subscription.id}`,
     subscriptionId: created.subscription.id,
+  };
+  params.onCreated?.(ref);
+  return finishPlanPayment(ref, params.razorpay, deps);
+}
+
+/**
+ * The payment leg for an ALREADY-created subscription: create the Razorpay order
+ * for its first cycle → open the modal → verify. Shared by runCheckout and used
+ * directly to resume payment after a dismissed modal (so no duplicate
+ * subscription is created). The server owns the amount; this sends only ids.
+ */
+export async function finishPlanPayment(
+  ref: PlanOrderRef,
+  razorpay: RazorpayAdapter,
+  deps: Pick<MoneyPathDeps, "createRazorpayOrder" | "verifyPayment"> = DEFAULT_DEPS,
+): Promise<CheckoutResult> {
+  const order = await deps.createRazorpayOrder({
+    orderId: ref.orderId,
+    subscriptionId: ref.subscriptionId,
   });
 
-  const paid = await params.razorpay.open(order);
+  const paid = await razorpay.open(order);
 
   const verified = await deps.verifyPayment({
-    orderId,
+    orderId: ref.orderId,
     razorpayPaymentId: paid.razorpayPaymentId,
     razorpayOrderId: paid.razorpayOrderId,
     razorpaySignature: paid.razorpaySignature,

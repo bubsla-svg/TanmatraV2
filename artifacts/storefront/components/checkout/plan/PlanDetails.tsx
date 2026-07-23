@@ -43,21 +43,24 @@ export function PlanDetails({
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
   const [consent, setConsent] = useState(false);
   const prefilled = useRef(false);
+  const touched = useRef(false);
 
   // Seed the address once from a saved default (arrives async after sign-in),
-  // but only while untouched — never clobber what the user typed.
+  // but never once the user has touched a field — no clobber of typed input,
+  // even the type-then-clear case a value-based guard would miss.
   useEffect(() => {
-    if (!initialAddress || prefilled.current) return;
-    if (line1 === "" && city === "" && pincode === "") {
-      prefilled.current = true;
-      setLine1(initialAddress.line1);
-      setCity(initialAddress.city);
-      setPincode(initialAddress.pincode);
-    }
-  }, [initialAddress, line1, city, pincode]);
+    if (!initialAddress || prefilled.current || touched.current) return;
+    prefilled.current = true;
+    setLine1(initialAddress.line1);
+    setCity(initialAddress.city);
+    setPincode(initialAddress.pincode);
+  }, [initialAddress]);
 
   const pinValid = pincode.replace(/\D/g, "").length === 6;
+  // Gate on a landed quote too: the CTA must never submit while a track change
+  // is re-quoting (else the new track pairs with the old meals-per-delivery).
   const valid =
+    quoteTotalPaise !== null &&
     member.name.trim().length > 0 && line1.trim().length > 2 && city.trim().length > 1 && pinValid && consent;
 
   return (
@@ -79,10 +82,10 @@ export function PlanDetails({
       <MemberIntake value={member} onChange={setMember} />
 
       <div className="flex flex-col gap-3">
-        <input aria-label="Flat / house · street" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62" className={inputCls} />
+        <input aria-label="Flat / house · street" value={line1} onChange={(e) => { touched.current = true; setLine1(e.target.value); }} placeholder="Flat 3B, Sector 62" className={inputCls} />
         <div className="grid grid-cols-2 gap-3">
-          <input aria-label="City" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Noida" className={inputCls} />
-          <input aria-label="PIN code" inputMode="numeric" value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="201301" aria-invalid={pincode.length > 0 && !pinValid} className={inputCls} />
+          <input aria-label="City" value={city} onChange={(e) => { touched.current = true; setCity(e.target.value); }} placeholder="Noida" className={inputCls} />
+          <input aria-label="PIN code" inputMode="numeric" value={pincode} onChange={(e) => { touched.current = true; setPincode(e.target.value); }} placeholder="201301" aria-invalid={pincode.length > 0 && !pinValid} className={inputCls} />
         </div>
       </div>
 

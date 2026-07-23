@@ -1,12 +1,12 @@
 "use client";
 // Client: drives the live plan-subscription money path end to end.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { runCheckout } from "@/lib/moneyPath";
+import { runCheckout, finishPlanPayment, type PlanOrderRef } from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { quotePlan, getAddresses, ApiError, type Address, type AuthUser, type DietTrack } from "@/lib/api";
-import { PhoneAuth } from "../PhoneAuth";
+import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 
 /**
@@ -34,12 +34,18 @@ export function PlanCheckout({
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The created subscription, so a retry after a dismissed modal resumes payment
+  // on it instead of creating a second subscription.
+  const createdRef = useRef<PlanOrderRef | null>(null);
 
   // Server quote per track — the authoritative meals-per-delivery + billed total
   // (the same corpus quote the create route bills from, so the displayed number
-  // matches the charge). No auth needed; runs before and after sign-in.
+  // matches the charge). No auth needed; runs before and after sign-in. Clearing
+  // `quote` on track change gates the CTA until the fresh quote lands, so a
+  // submit can never pair the new track with the old track's meals-per-delivery.
   useEffect(() => {
     let live = true;
+    setQuote(null);
     setQuoteLoading(true);
     quotePlan({ planId, track, cadence: "monthly" })
       .then((q) => { if (live) setQuote({ mealsPerDelivery: q.mealsPerDelivery, totalPaise: q.totalPaise }); })
@@ -63,21 +69,32 @@ export function PlanCheckout({
     setError(null);
     setBusy(true);
     const phone = user.phoneE164 ?? "";
-    const subscription = buildSubscriptionInput({
-      planId,
-      track,
-      cadence: "monthly",
-      mealsPerDelivery: quote.mealsPerDelivery,
-      startDate: nextWeekdayISO(new Date()),
-      members: [v.member],
-      address: v.address,
-      phone,
-    });
+    const adapter = createRazorpayAdapter({ name: "Tanmatra", description: `${planName} plan`, contact: phone });
     try {
-      const result = await runCheckout({
-        subscription,
-        razorpay: createRazorpayAdapter({ name: "Tanmatra", description: `${planName} plan`, contact: phone }),
-      });
+      let result;
+      if (createdRef.current) {
+        // A prior attempt already created this subscription — pay it, don't
+        // create a second one.
+        result = await finishPlanPayment(createdRef.current, adapter);
+      } else {
+        const subscription = buildSubscriptionInput({
+          planId,
+          track,
+          cadence: "monthly",
+          mealsPerDelivery: quote.mealsPerDelivery,
+          startDate: nextWeekdayISO(new Date()),
+          members: [v.member],
+          address: v.address,
+          phone,
+        });
+        result = await runCheckout({
+          subscription,
+          razorpay: adapter,
+          onCreated: (ref) => {
+            createdRef.current = ref;
+          },
+        });
+      }
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
     } catch (e) {
       if (e instanceof RazorpayDismissed) {
@@ -90,13 +107,7 @@ export function PlanCheckout({
   }
 
   if (!user) {
-    return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-lg font-semibold text-ink">Start your {planName} plan</h1>
-        <p className="text-sm text-ink-muted">Sign in to set up delivery — a code by SMS, no passwords.</p>
-        <PhoneAuth onVerified={onVerified} />
-      </div>
-    );
+    return <PlanIdentityGate planName={planName} onVerified={onVerified} />;
   }
 
   return (
