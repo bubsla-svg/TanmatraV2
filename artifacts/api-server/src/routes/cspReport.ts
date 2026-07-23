@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { logger } from "../lib/logger";
+import { requireOps } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
@@ -65,8 +66,12 @@ router.post(
 /**
  * GET /api/v1/csp-report/audit
  * Audit endpoint to inspect recorded CSP violations during report-only phase.
+ * Ops-gated: violation logs leak internal document/source URLs and inline
+ * script samples — reconnaissance material, never public. (Ingestion above
+ * stays open: browsers' report-uri POSTs cannot authenticate.)
  */
-router.get("/v1/csp-report/audit", (_req: Request, res: Response) => {
+router.get("/v1/csp-report/audit", (req: Request, res: Response) => {
+  if (!requireOps(req, res)) return;
   res.json({
     totalViolations: cspViolationLogs.length,
     violations: cspViolationLogs,
