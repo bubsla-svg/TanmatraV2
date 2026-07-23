@@ -30,7 +30,7 @@ export function Header() {
             Plans
           </Link>
           <Link
-            href="/account/addresses"
+            href="/account/subscriptions"
             className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
           >
             Account
