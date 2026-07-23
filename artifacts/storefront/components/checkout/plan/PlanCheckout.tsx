@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { runCheckout, finishPlanPayment, type PlanOrderRef } from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
-import { stashCheckoutPerks } from "@/lib/postCheckout";
+import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { quotePlan, getAddresses, ApiError, type Address, type AuthUser, type DietTrack } from "@/lib/api";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
@@ -22,14 +22,23 @@ export function PlanCheckout({
   planId,
   planName,
   servedTracks,
+  initialTrack,
+  finePrint,
+  successPerks,
 }: {
   planId: string;
   planName: string;
   servedTracks: DietTrack[];
+  /** Entry-surface track preselect (?track=…), host-validated against servedTracks. */
+  initialTrack?: DietTrack;
+  /** Offer terms under the total (spine copy — trial creditback etc.), never a price. */
+  finePrint?: string[];
+  /** Plan-scoped perks stashed for the confirmation beside the verify facts. */
+  successPerks?: CheckoutPerks;
 }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [track, setTrack] = useState<DietTrack>(servedTracks[0] ?? "veg");
+  const [track, setTrack] = useState<DietTrack>(initialTrack ?? servedTracks[0] ?? "veg");
   const [quote, setQuote] = useState<{ mealsPerDelivery: number; totalPaise: number } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
@@ -96,9 +105,13 @@ export function PlanCheckout({
           },
         });
       }
-      // Hand the verify response's facts to the confirmation screen — the
-      // autopay disclaimer is the server's verbatim mandate disclosure.
-      stashCheckoutPerks(result.orderId, { autopayDisclaimer: result.autopayDisclaimer });
+      // Hand the money event's facts to the confirmation screen — the autopay
+      // disclaimer verbatim from verify, plus any plan-scoped perks the host
+      // declared (trial creditback).
+      stashCheckoutPerks(result.orderId, {
+        autopayDisclaimer: result.autopayDisclaimer,
+        ...successPerks,
+      });
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
     } catch (e) {
       if (e instanceof RazorpayDismissed) {
@@ -124,6 +137,7 @@ export function PlanCheckout({
         quoteTotalPaise={quote?.totalPaise ?? null}
         quoteLoading={quoteLoading}
         initialAddress={savedAddress}
+        finePrint={finePrint}
         busy={busy}
         error={error}
         onSubmit={handlePay}

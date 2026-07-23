@@ -23,6 +23,7 @@ export function PlanDetails({
   quoteTotalPaise,
   quoteLoading,
   initialAddress,
+  finePrint,
   busy,
   error,
   onSubmit,
@@ -33,6 +34,9 @@ export function PlanDetails({
   quoteTotalPaise: number | null;
   quoteLoading: boolean;
   initialAddress?: { line1: string; city: string; pincode: string } | null;
+  /** Offer terms stated under the total (spine copy — e.g. trial creditback +
+   *  no-auto-renew). Never a price of its own. */
+  finePrint?: string[];
   busy: boolean;
   error: string | null;
   onSubmit: (value: PlanDetailsValue) => void;
@@ -100,6 +104,14 @@ export function PlanDetails({
           {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
         </span>
       </div>
+
+      {finePrint && finePrint.length > 0 && (
+        <div className="flex flex-col gap-1">
+          {finePrint.map((line) => (
+            <p key={line} className="text-xs leading-relaxed text-ink-muted">{line}</p>
+          ))}
+        </div>
+      )}
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 

@@ -20,6 +20,11 @@ export interface CheckoutPerks {
    *  registered a UPI Autopay mandate (never for trials; the server skips
    *  mandate registration on a live trial). */
   autopayDisclaimer?: string;
+  /** The paid trial's creditback, in paise — spine-priced (TRIAL_CREDITBACK_
+   *  PAISE), the same ₹399 the server's paid-time grant writes. The verify
+   *  response carries no creditback field, so the spine is the single source
+   *  the confirmation may state (lib/trial.ts owns the display facts). */
+  trialCreditbackPaise?: number;
 }
 
 export type StorageLike = Pick<Storage, "getItem" | "setItem">;
