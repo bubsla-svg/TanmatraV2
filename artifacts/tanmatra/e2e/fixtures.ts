@@ -71,7 +71,17 @@ export async function seedCart(
 ): Promise<void> {
   const persisted = { state: { items, bundleSlugs }, version: 0 };
   await page.addInitScript((p) => {
-    window.localStorage.setItem("tanmatra:cart:v1", JSON.stringify(p));
+    // Init scripts run in EVERY document, including sandboxed / storage-
+    // partitioned third-party iframes (Razorpay, maps, analytics) where
+    // touching localStorage throws a SecurityError. That throw surfaces as a
+    // pageerror and fails the specs' `errors == []` assertions even though
+    // the app is healthy. Only the top document needs the seed — swallow the
+    // rest.
+    try {
+      window.localStorage.setItem("tanmatra:cart:v1", JSON.stringify(p));
+    } catch {
+      /* sandboxed frame — not our document */
+    }
   }, persisted);
 }
 
@@ -88,14 +98,18 @@ export const cartSubtotal = (items: CartItem[]): number =>
  */
 export async function quietFirstTouch(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    window.localStorage.setItem(
-      "tanmatra:softgate:v1",
-      JSON.stringify({ v: 1, at: Date.now(), outcome: "completed" }),
-    );
-    window.localStorage.setItem(
-      "tanmatra:quiz-banner-dismissed-at:v2",
-      String(Date.now()),
-    );
+    try {
+      window.localStorage.setItem(
+        "tanmatra:softgate:v1",
+        JSON.stringify({ v: 1, at: Date.now(), outcome: "completed" }),
+      );
+      window.localStorage.setItem(
+        "tanmatra:quiz-banner-dismissed-at:v2",
+        String(Date.now()),
+      );
+    } catch {
+      /* sandboxed frame — see seedCart note */
+    }
   });
 }
 
