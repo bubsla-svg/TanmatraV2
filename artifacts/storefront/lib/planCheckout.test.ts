@@ -41,6 +41,22 @@ test("buildSubscriptionInput: members threaded, address flattened, NO price auth
   assert.ok(!("pricePaise" in body), "no pricePaise");
 });
 
+test("addOns thread through to the create body; empty/absent is OMITTED", () => {
+  const base = {
+    planId: "desk_fuel", track: "veg" as const, cadence: "monthly" as const,
+    mealsPerDelivery: 5, startDate: "2026-07-27", members: MEMBERS,
+    address: { line1: "Flat 3B", city: "Noida", pincode: "201301" }, phone: "+911",
+  };
+  const withBump = buildSubscriptionInput({ ...base, addOns: ["rd_bump"] });
+  assert.deepEqual(withBump.addOns, ["rd_bump"]);
+  // Still no client-authored amount — the server prices the bump too.
+  assert.ok(!("totalPaise" in withBump), "no totalPaise with addOns");
+  const without = buildSubscriptionInput(base);
+  assert.ok(!("addOns" in without), "absent addOns omitted");
+  const empty = buildSubscriptionInput({ ...base, addOns: [] });
+  assert.ok(!("addOns" in empty), "empty addOns omitted");
+});
+
 test("addressLine omits an empty line2", () => {
   const body = buildSubscriptionInput({
     planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 5,

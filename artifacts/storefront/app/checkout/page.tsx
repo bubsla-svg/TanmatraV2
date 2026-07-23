@@ -57,16 +57,19 @@ export default async function CheckoutPage({ searchParams }: Props) {
   const isReturning = returning === "1";
   const isTrial = id === "trial_3day";
 
-  // Live plan money path (SF-07/09 · CUJ-02/04): identity → eater profile →
-  // address → real pay via createSubscription. The server prices from planId
-  // AND flips the trial branch (one-off sampler, creditback granted at paid
-  // time, one per phone — 409 trial_already_redeemed) from planId ===
-  // "trial_3day" itself, so trial and plan share one create path. Post-trial
-  // credit (`credit=1`) needs an authed, ledger-aware displayed total and
-  // stays on the skeleton until that lands; the RD bump joins in SF-11.
-  if (LIVE_CHECKOUT_ENABLED && credit !== "1" && bump !== "1") {
+  // Live plan money path (SF-07/09/11 · CUJ-02/03/04): identity → eater
+  // profile → address → real pay via createSubscription. The server prices
+  // from planId AND flips the trial branch (one-off sampler, creditback at
+  // paid time, one per phone — 409 trial_already_redeemed) from planId ===
+  // "trial_3day" itself, so trial and plan share one create path. An accepted
+  // RD bump (`bump=1`, allow-list-gated) is threaded through quote AND create —
+  // the server bills it, so display equals charge. Post-trial credit
+  // (`credit=1`) needs an authed, ledger-aware displayed total and stays on
+  // the skeleton until that lands.
+  if (LIVE_CHECKOUT_ENABLED && credit !== "1") {
     const requestedTrack =
       track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
+    const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
     return (
       <section className="mx-auto max-w-md px-4 py-10">
         <PlanCheckout
@@ -74,6 +77,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
           planName={d.name}
           servedTracks={q.servedTracks}
           initialTrack={requestedTrack}
+          addOns={withRdBump ? ["rd_bump"] : undefined}
           finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
           successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
         />

@@ -22,6 +22,7 @@ export function PlanDetails({
   onTrackChange,
   quoteTotalPaise,
   quoteLoading,
+  addOnLine,
   initialAddress,
   finePrint,
   busy,
@@ -33,6 +34,9 @@ export function PlanDetails({
   onTrackChange: (t: DietTrack) => void;
   quoteTotalPaise: number | null;
   quoteLoading: boolean;
+  /** The quote's billed add-on line ("Your dietitian · +₹499/mo") — the
+   *  SERVER's priced items, shown so the total is never a surprise. */
+  addOnLine?: string | null;
   initialAddress?: { line1: string; city: string; pincode: string } | null;
   /** Offer terms stated under the total (spine copy — e.g. trial creditback +
    *  no-auto-renew). Never a price of its own. */
@@ -98,11 +102,14 @@ export function PlanDetails({
         <span>{DPDP_CONSENT_COPY}</span>
       </label>
 
-      <div className="flex items-center justify-between rounded-xl bg-surface px-4 py-3">
-        <span className="text-sm text-ink-muted">Billed each cycle (server-priced, incl. GST)</span>
-        <span className="tabular text-lg font-semibold text-ink">
-          {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
-        </span>
+      <div className="flex flex-col gap-1 rounded-xl bg-surface px-4 py-3">
+        {addOnLine && <p className="text-xs font-medium text-ink-muted">{addOnLine}</p>}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-ink-muted">Billed each cycle (server-priced, incl. GST)</span>
+          <span className="tabular text-lg font-semibold text-ink">
+            {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
+          </span>
+        </div>
       </div>
 
       {finePrint && finePrint.length > 0 && (

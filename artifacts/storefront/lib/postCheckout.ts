@@ -25,6 +25,12 @@ export interface CheckoutPerks {
    *  response carries no creditback field, so the spine is the single source
    *  the confirmation may state (lib/trial.ts owns the display facts). */
   trialCreditbackPaise?: number;
+  /** The plan just purchased — lets the confirmation gate plan-scoped offers
+   *  (the evening_add allow-list) without re-deriving server state. */
+  planId?: string;
+  /** The created subscription — the id post-purchase attach calls need
+   *  (POST /subscriptions/:id/add-ons). */
+  subscriptionId?: number;
 }
 
 export type StorageLike = Pick<Storage, "getItem" | "setItem">;

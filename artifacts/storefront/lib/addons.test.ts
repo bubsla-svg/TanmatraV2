@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { computePlanQuote } from "@workspace/subscription-rules";
-import { addOnView, planAllowsAddOn, checkoutTotalWithAddOns } from "./addons";
+import { addOnView, planAllowsAddOn, checkoutTotalWithAddOns, addOnLineFromQuote } from "./addons";
 
 test("the add-ons are spine-priced: RD bump ₹499/mo, Evening Add ₹599/week", () => {
   const rd = addOnView("rd_bump");
@@ -50,4 +50,19 @@ test("desk_fuel permits both attach points; trial permits none", () => {
   assert.equal(planAllowsAddOn("desk_fuel", "evening_add"), true);
   assert.equal(planAllowsAddOn("trial_3day", "rd_bump"), false);
   assert.equal(planAllowsAddOn("trial_3day", "evening_add"), false);
+});
+
+test("addOnLineFromQuote states only BILLED items, priced from the quote", () => {
+  // The quote's price wins over the spine's (it's what the server will charge).
+  assert.equal(
+    addOnLineFromQuote([{ id: "rd_bump", pricePaise: 49900, attachPoint: "plan_review" }]),
+    "Your dietitian · +₹499/mo",
+  );
+  // A post_purchase item never appears in the billed line.
+  assert.equal(
+    addOnLineFromQuote([{ id: "evening_add", pricePaise: 59900, attachPoint: "post_purchase" }]),
+    null,
+  );
+  assert.equal(addOnLineFromQuote([]), null);
+  assert.equal(addOnLineFromQuote(undefined), null);
 });

@@ -1,21 +1,23 @@
 "use client";
 // Client: drives the live plan-subscription money path end to end.
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { runCheckout, finishPlanPayment, type PlanOrderRef } from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
-import { quotePlan, getAddresses, ApiError, type Address, type AuthUser, type DietTrack } from "@/lib/api";
+import { usePlanQuote } from "@/lib/usePlanQuote";
+import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack } from "@/lib/api";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 
 /**
- * Live plan checkout (SF-07 / CUJ-02). Identity (Firebase → session) → track +
- * eater profile + address → real pay via runCheckout (createSubscription →
- * Razorpay order for its first cycle → modal → verify). The SERVER prices the
- * plan from planId (subscriptions.ts overrides pricePerDeliveryPaise with the
- * corpus quote); this sends the collected profile + the server's own
+ * Live plan checkout (SF-07/09/11 · CUJ-02/04). Identity (Firebase → session) →
+ * track + eater profile + address → real pay via runCheckout
+ * (createSubscription → Razorpay order for its first cycle → modal → verify).
+ * The SERVER prices the plan — and any billed add-ons — from planId
+ * (subscriptions.ts overrides pricePerDeliveryPaise with the corpus quote +
+ * plan-review add-ons); this sends the collected profile + the server's own
  * meals-per-delivery, never a client-authored amount.
  */
 export function PlanCheckout({
@@ -23,6 +25,7 @@ export function PlanCheckout({
   planName,
   servedTracks,
   initialTrack,
+  addOns,
   finePrint,
   successPerks,
 }: {
@@ -31,6 +34,9 @@ export function PlanCheckout({
   servedTracks: DietTrack[];
   /** Entry-surface track preselect (?track=…), host-validated against servedTracks. */
   initialTrack?: DietTrack;
+  /** Plan-review add-ons to bill (host-validated against the allow-list) —
+   *  threaded through quote AND create so display always equals charge. */
+  addOns?: AddOnId[];
   /** Offer terms under the total (spine copy — trial creditback etc.), never a price. */
   finePrint?: string[];
   /** Plan-scoped perks stashed for the confirmation beside the verify facts. */
@@ -39,30 +45,14 @@ export function PlanCheckout({
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [track, setTrack] = useState<DietTrack>(initialTrack ?? servedTracks[0] ?? "veg");
-  const [quote, setQuote] = useState<{ mealsPerDelivery: number; totalPaise: number } | null>(null);
-  const [quoteLoading, setQuoteLoading] = useState(false);
+  // Server quote per (plan, track, add-ons) — the billed total; gates the CTA.
+  const { quote, quoteLoading } = usePlanQuote(planId, track, addOns);
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // The created subscription, so a retry after a dismissed modal resumes payment
   // on it instead of creating a second subscription.
   const createdRef = useRef<PlanOrderRef | null>(null);
-
-  // Server quote per track — the authoritative meals-per-delivery + billed total
-  // (the same corpus quote the create route bills from, so the displayed number
-  // matches the charge). No auth needed; runs before and after sign-in. Clearing
-  // `quote` on track change gates the CTA until the fresh quote lands, so a
-  // submit can never pair the new track with the old track's meals-per-delivery.
-  useEffect(() => {
-    let live = true;
-    setQuote(null);
-    setQuoteLoading(true);
-    quotePlan({ planId, track, cadence: "monthly" })
-      .then((q) => { if (live) setQuote({ mealsPerDelivery: q.mealsPerDelivery, totalPaise: q.totalPaise }); })
-      .catch(() => { if (live) setQuote(null); })
-      .finally(() => { if (live) setQuoteLoading(false); });
-    return () => { live = false; };
-  }, [planId, track]);
 
   function onVerified(u: AuthUser) {
     setUser(u);
@@ -92,6 +82,7 @@ export function PlanCheckout({
           track,
           cadence: "monthly",
           mealsPerDelivery: quote.mealsPerDelivery,
+          addOns,
           startDate: nextWeekdayISO(new Date()),
           members: [v.member],
           address: v.address,
@@ -106,10 +97,12 @@ export function PlanCheckout({
         });
       }
       // Hand the money event's facts to the confirmation screen — the autopay
-      // disclaimer verbatim from verify, plus any plan-scoped perks the host
-      // declared (trial creditback).
+      // disclaimer verbatim from verify, the plan/subscription for post-purchase
+      // attach, plus any host-declared perks (trial creditback).
       stashCheckoutPerks(result.orderId, {
         autopayDisclaimer: result.autopayDisclaimer,
+        planId,
+        subscriptionId: createdRef.current?.subscriptionId,
         ...successPerks,
       });
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
@@ -136,6 +129,7 @@ export function PlanCheckout({
         onTrackChange={setTrack}
         quoteTotalPaise={quote?.totalPaise ?? null}
         quoteLoading={quoteLoading}
+        addOnLine={quote?.addOnLine ?? null}
         initialAddress={savedAddress}
         finePrint={finePrint}
         busy={busy}
