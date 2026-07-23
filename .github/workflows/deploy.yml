@@ -179,6 +179,10 @@ jobs:
                 - --build-arg
                 - VITE_API_BASE=/api
                 - --build-arg
+                - BUILD_SHA=${{ github.sha }}
+                - --build-arg
+                - BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                - --build-arg
                 - VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
                 - --build-arg
                 - VITE_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
@@ -232,7 +236,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 8080 \
-            --update-env-vars "API_UPSTREAM=${API_URL%/api}" \
+            --update-env-vars "API_UPSTREAM=${API_URL%/api},BUILD_SHA=${{ github.sha }},BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --quiet
 
       - name: Smoke-test /checkout serves the SPA shell
@@ -253,6 +257,12 @@ jobs:
             sleep 5
           done
           echo "checkout still not serving the SPA shell"; exit 1
+
+      - name: Self-verifying deploy check on live production domain
+        run: |
+          DEPLOYED=$(curl -sf https://tanmatra.food/api/build | jq -r .sha || echo "failed")
+          echo "Live domain build SHA: $DEPLOYED (expected: ${{ github.sha }})"
+          [ "$DEPLOYED" = "${{ github.sha }}" ] || { echo "DEPLOY NOT LIVE ON DOMAIN"; exit 1; }
 
   # Build the rebuild storefront (Next.js) image and roll the `storefront`
   # Cloud Run service. Separate service from `tanmatra` (the current SPA) — the

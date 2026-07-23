@@ -61,6 +61,10 @@ FROM node:24-slim AS runner
 
 ENV NODE_ENV=production
 ENV PORT=8080
+ARG BUILD_SHA=unknown
+ARG BUILT_AT=unknown
+ENV BUILD_SHA=${BUILD_SHA}
+ENV BUILT_AT=${BUILT_AT}
 WORKDIR /app
 
 COPY --from=builder /app/artifacts/tanmatra/build/client ./public
