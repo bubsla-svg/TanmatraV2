@@ -30,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   preparing: "Being fired in the kitchen",
   ready: "Packed and ready",
   dispatched: "Out for delivery",
+  out_for_delivery: "Out for delivery",
   delivered: "Delivered",
   cancelled: "Cancelled",
 };

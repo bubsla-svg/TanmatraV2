@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Tab = "subscriptions" | "addresses";
+type Tab = "subscriptions" | "orders" | "addresses";
 
 /**
  * Account section tabs. Server component (no client JS) — each page passes its
@@ -21,6 +21,7 @@ export function AccountNav({ active }: { active: Tab }) {
   return (
     <nav aria-label="Account" className="mb-6 flex gap-5 border-b border-line">
       {link("/account/subscriptions", "subscriptions", "Plans")}
+      {link("/account/orders", "orders", "Orders")}
       {link("/account/addresses", "addresses", "Addresses")}
     </nav>
   );
