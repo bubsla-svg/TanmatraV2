@@ -10,6 +10,7 @@ on:
       - "lib/tokens/**"
       - "lib/menu-catalog/**"
       - "scripts/lint-filecap.ts"
+      - "scripts/lint-tokens.ts"
       - ".github/workflows/storefront.yml"
   push:
     branches: [main]
@@ -34,6 +35,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Anti-rot — file-cap + "use client" justification
         run: pnpm --filter @workspace/storefront run lint:filecap
+      - name: Token gate — no raw colours / palette classes (TNM-UIF-01 §3.4)
+        run: pnpm --filter @workspace/storefront run lint:tokens
       - name: Typecheck
         run: pnpm --filter @workspace/storefront run typecheck
       - name: Money-path invariants (checkout · trial · attach)

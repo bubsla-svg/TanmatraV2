@@ -6,6 +6,63 @@
  * generated utilities reference the CSS custom properties directly, so a
  * `data-theme` switch reflows colours with no rebuild and no flash.
  */
+/*
+ * TNM-UIF-01 §3 — Token Bridge. shadcn/Radix components consume shadcn's
+ * semantic variable NAMES; here each maps onto the EXISTING committed
+ * .tnm2/Clinical tokens (from @workspace/tokens). No value is invented — every
+ * alias resolves to a token that already carries its own light/dark value, so
+ * the bridge is theme-aware for free. Concrete hexes live in tokens.css.
+ *
+ * Locked semantics (§3.1/§3.2): --primary is the SOLE action colour (saffron =
+ * --gold); --secondary/--accent/--muted are NEUTRAL surfaces, never a rival
+ * hue; --sage is a signal, never mapped onto anything interactive; --destructive
+ * is the one sanctioned non-saffron interactive colour (errors only).
+ */
+:root {
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
+
+  /* Saffron — the sole action colour; foreground = contrast-verified ink-on-gold. */
+  --primary: var(--gold);
+  --primary-foreground: var(--gold-ink);
+
+  /* Neutral secondary/accent/muted — never a second accent. */
+  --secondary: var(--surface-raised);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-raised);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--surface-raised);
+  --accent-foreground: var(--ink);
+
+  /* Errors only. White reads AA on the danger red for short UI labels. */
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+
+  --border: var(--line);
+  --input: var(--line);
+
+  /* Focus ring = the action colour (§3.1), via --gold-text (the AA saffron,
+     4.9:1) NOT raw --gold (2.1:1) — clears WCAG 1.4.11's 3:1 in both themes. */
+  --ring: var(--gold-text);
+  --radius: var(--radius-md);
+
+  /* Brand-semantic extension (§3.2): sage is a SIGNAL, never action. */
+  --sage-foreground: var(--sage-ink);
+
+  /* Typeface (TNM-UIF-01 §10.2 decision): IBM Plex Sans for UI, JetBrains Mono
+     for macro/numeric data. The families are loaded via next/font in the root
+     layout (exposed as the two vars below); this override wins over the system
+     stack in tokens.css because globals.css is imported after it. */
+  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "JetBrains Mono",
+    "SFMono-Regular", Menlo, monospace;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -20,6 +77,28 @@
   --color-blue: var(--blue);
   --color-sage: var(--sage);
   --color-sage-text: var(--sage-text);
+  --color-sage-foreground: var(--sage-foreground);
+
+  /* shadcn semantic utilities: bg-primary, text-muted-foreground, ring-ring… */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -47,19 +126,19 @@ body {
   font-family: var(--font-mono);
 }
 
-/* Keyboard focus (WCAG 2.4.7 / 1.4.11): a high-contrast ring on every
- * interactive element. --ink is always maximally contrasting with the
- * background in either theme (it's the primary text colour), so this clears
- * the 3:1 non-text minimum everywhere — the brand accents don't (gold 2.1:1,
- * blue 2.7:1 on the bone bg). Element+pseudo specificity beats the utility
- * `outline-none` some inputs carry. */
+/* Keyboard focus (WCAG 2.4.7 / 1.4.11): a saffron ring on every interactive
+ * element — focus visibility is part of the action language (TNM-UIF-01 §3.1).
+ * The ring resolves to --ring = --gold-text (the AA saffron, 4.9:1), NOT raw
+ * --gold (2.1:1), so it clears the 3:1 non-text minimum in both themes. shadcn
+ * components use the same token via `ring-ring`, so all focus reads identically.
+ * Element+pseudo specificity beats the utility `outline-none` some inputs carry. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }

@@ -1,9 +1,27 @@
 import type { Metadata, Viewport } from "next";
+import { IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 // Order matters: tokens define the CSS custom properties, globals maps them to
 // Tailwind utilities and sets the document defaults.
 import "@workspace/tokens/tokens.css";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { ThemeProvider } from "@/components/theme-provider";
+
+// TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
+// next/font self-hosts the files and exposes each as a CSS variable that
+// globals.css folds into --font-sans / --font-mono.
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ibm-plex-sans",
+  display: "swap",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -31,16 +49,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="light">
+    <html
+      lang="en"
+      data-theme="light"
+      suppressHydrationWarning
+      className={`${ibmPlexSans.variable} ${jetbrainsMono.variable}`}
+    >
       <body>
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-gold focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--gold-ink)]"
-        >
-          Skip to main content
-        </a>
-        <Header />
-        <main id="main">{children}</main>
+        <ThemeProvider>
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-gold focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--gold-ink)]"
+          >
+            Skip to main content
+          </a>
+          <Header />
+          <main id="main">{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );

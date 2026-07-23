@@ -8,15 +8,23 @@
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint:filecap": "node --experimental-strip-types ../../scripts/lint-filecap.ts artifacts/storefront"
+    "lint:filecap": "node --experimental-strip-types ../../scripts/lint-filecap.ts artifacts/storefront",
+    "lint:tokens": "node --experimental-strip-types ../../scripts/lint-tokens.ts artifacts/storefront"
   },
   "dependencies": {
     "@workspace/menu-catalog": "workspace:*",
     "@workspace/subscription-rules": "workspace:*",
     "@workspace/tokens": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.25.0",
+    "motion": "^12.42.2",
     "next": "^16.2.0",
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.6.5",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",
