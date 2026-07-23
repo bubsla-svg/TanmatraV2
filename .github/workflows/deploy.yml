@@ -378,6 +378,21 @@ jobs:
             --cpu-boost \
             --quiet
 
+      # The storefront is the DARK preview service (no domain mapped). A
+      # stray traffic pin left run 30002863468's deploy stranded at 0% — the
+      # home smoke passed against the OLD revision and the deploy-truth
+      # assert below (correctly) failed. A preview service must serve what it
+      # deploys, so route to latest explicitly. The tanmatra job carries NO
+      # such step: its pin protects the production domain and traffic there
+      # is promoted by name, deliberately, outside CI.
+      - name: Route traffic to the new revision (dark preview service only)
+        run: |
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --to-latest \
+            --quiet
+
       - name: Smoke-test the home page renders
         run: |
           URL=$(gcloud run services describe ${SERVICE} \
