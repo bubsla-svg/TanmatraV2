@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { fetchMenu } from "@/lib/catalog";
+import { fetchMenu, findDish } from "@/lib/catalog";
 import { MenuGrid } from "@/components/MenuGrid";
+import { DishDrawer } from "@/components/menu/DishDrawer";
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -11,9 +12,21 @@ export const metadata: Metadata = {
  * Menu route. Server component — it awaits the catalog on the server, so the
  * grid is in the first HTML paint (no client fetch, no loading spinner, no
  * layout shift). Deep-linkable and back/forward-safe by App Router default.
+ *
+ * ?dish=<slug> opens the PDP bottom sheet (§4.2) over the grid — the drawer
+ * is the only client island; the grid stays fully server-rendered. An unknown
+ * slug simply renders the grid (no dead end, no crash).
  */
-export default async function MenuPage() {
-  const { dishes } = await fetchMenu();
+export default async function MenuPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dish?: string }>;
+}) {
+  const [{ dishes }, { dish: dishSlug }] = await Promise.all([
+    fetchMenu(),
+    searchParams,
+  ]);
+  const openDish = dishSlug ? findDish(dishSlug, dishes) : undefined;
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-8">
@@ -25,6 +38,7 @@ export default async function MenuPage() {
       </div>
       <h2 className="sr-only">Dishes</h2>
       <MenuGrid dishes={dishes} />
+      {openDish && <DishDrawer dish={openDish} />}
     </section>
   );
 }
