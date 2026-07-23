@@ -343,6 +343,9 @@ jobs:
         run: |
           # API_BASE_URL — server components fetch the api directly.
           # API_UPSTREAM — the same-origin /api proxy target (next.config rewrites).
+          # BUILD_SHA feeds /api/build — the deploy-truth endpoint. It is set at
+          # deploy time (not baked into the image) so the running revision
+          # always reports the commit that produced it.
           gcloud run deploy ${SERVICE} \
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
@@ -350,7 +353,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 8080 \
-            --update-env-vars "API_BASE_URL=${API_URL%/api};API_UPSTREAM=${API_URL%/api}" \
+            --update-env-vars "API_BASE_URL=${API_URL%/api},API_UPSTREAM=${API_URL%/api},BUILD_SHA=${{ github.sha }}" \
             --memory=512Mi \
             --cpu=1 \
             --cpu-boost \
@@ -369,3 +372,22 @@ jobs:
             echo "home attempt $i failed, retrying..."; sleep 5
           done
           echo "storefront home never returned 200"; exit 1
+
+      - name: Assert deployed sha (/api/build == pushed commit)
+        run: |
+          # Deploy-truth assertion (TNM-OPS-01 pattern): the running revision
+          # must report exactly the commit this workflow deployed. Catches
+          # stale revisions, failed rollouts, and env-var drift in one check.
+          URL=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.url)')
+          for i in 1 2 3 4 5 6; do
+            BODY=$(curl -sf "$URL/api/build" || true)
+            echo "attempt $i: $BODY"
+            DEPLOYED=$(echo "$BODY" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+            if [ "$DEPLOYED" = "${{ github.sha }}" ]; then
+              echo "deploy-truth OK: $DEPLOYED"; exit 0
+            fi
+            sleep 5
+          done
+          echo "deploy-truth FAILED: /api/build sha never matched ${{ github.sha }}"; exit 1

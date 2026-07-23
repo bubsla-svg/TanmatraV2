@@ -29,6 +29,33 @@ const PALETTE_CLASS = new RegExp(
 const RAW_HEX = /#[0-9a-fA-F]{3,8}\b/;
 const RAW_FN = /\b(rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\(/;
 
+// §3.4 sage-is-never-interactive: sage is a wellness/veg *signal*, never an
+// action colour. Element-scoped: Prettier splits JSX attributes across lines,
+// so a line-scoped grep can only ever catch single-line probes (review
+// finding). Instead, scan each JSX opening-tag region — from the tag start to
+// its first child tag; attributes always precede children, and `>` can't
+// delimit the region because arrow-function handlers contain `=>`. A region
+// that both paints sage and is interactive (intrinsically, or via handler/
+// href/role) is a violation. (Saffron-exclusivity's other half — no raw gold
+// — is covered by the RAW_HEX gate; "is this element a genuine CTA" is a
+// review judgement a grep cannot make.)
+const SAGE_PAINT = /\b(?:bg|text|border|ring|fill|stroke|outline|decoration)-sage(?:-foreground|-text)?\b|var\(--sage\b/;
+const TAG_START = /<([A-Za-z][\w.]*)\b/g;
+const INTERACTIVE_TAG = new Set(["button", "a", "Link", "Button"]);
+const INTERACTIVE_ATTR =
+  /\bon(?:Click|Press|PointerDown|MouseDown|KeyDown|KeyUp)=|\bhref=|\brole=["']button["']|\bcursor-pointer\b/;
+const TAG_REGION_CAP = 600;
+// Known pre-TNM-UIF-01 "sage = attach CTA" surfaces (RD OrderBump accept,
+// Evening Add). §3.2 outlaws sage on anything clickable; restyling these
+// money-path CTAs is a conversion-surface change that needs its own reviewed
+// PR, tracked as follow-up. The gate stays green-but-loud on them while
+// catching NEW violations. Remove each entry when its CTA is restyled.
+const SAGE_LEGACY_ALLOW = new Set([
+  "artifacts/storefront/components/plans/OrderBump.tsx",
+  "artifacts/storefront/components/checkout/EveningAddOffer.tsx",
+]);
+const legacySageHits: string[] = [];
+
 /** Strip block + line comments so PR refs / prose don't false-positive. */
 function stripComments(src: string): string {
   const noBlock = src.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -59,6 +86,31 @@ function scanFile(abs: string, violations: Violation[]): void {
       violations.push({ file: rel, line, rule: "raw-color-fn", text: raw.trim() });
     }
   });
+
+  // Element-scoped sage-interactive scan — whole-file, because the per-line
+  // loop above cannot see attributes Prettier wrapped onto separate lines.
+  const relPosix = rel.replace(/\\/g, "/");
+  TAG_START.lastIndex = 0;
+  let tag: RegExpExecArray | null;
+  while ((tag = TAG_START.exec(stripped)) !== null) {
+    const nextTag = stripped.indexOf("<", tag.index + 1);
+    const end = nextTag === -1 ? tag.index + TAG_REGION_CAP : Math.min(nextTag, tag.index + TAG_REGION_CAP);
+    const region = stripped.slice(tag.index, end);
+    const isInteractive = INTERACTIVE_TAG.has(tag[1] as string) || INTERACTIVE_ATTR.test(region);
+    if (isInteractive && SAGE_PAINT.test(region)) {
+      const line = stripped.slice(0, tag.index).split("\n").length;
+      if (SAGE_LEGACY_ALLOW.has(relPosix)) {
+        legacySageHits.push(`${rel}:${line}`);
+      } else {
+        violations.push({
+          file: rel,
+          line,
+          rule: "sage-interactive",
+          text: region.replace(/\s+/g, " ").trim(),
+        });
+      }
+    }
+  }
 }
 
 function walk(dir: string, violations: Violation[]): void {
@@ -82,5 +134,10 @@ if (violations.length > 0) {
   }
   console.error("");
   process.exit(1);
+}
+if (legacySageHits.length > 0) {
+  console.log(
+    `⚠ sage-interactive: ${legacySageHits.length} allow-listed legacy site(s) pending §3.2 restyle — ${legacySageHits.join(", ")}`,
+  );
 }
 console.log("✓ token gate: no raw colours or palette classes in components/app.");

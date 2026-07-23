@@ -53,8 +53,11 @@ WORKDIR /app
 
 # Next `standalone` output: a self-contained traced server. The build traces
 # from the monorepo root, so the server entry sits at artifacts/storefront/.
+# `public/` is not part of the traced output and must be copied explicitly —
+# it carries the §9.5 service-worker kill switch (sw.js).
 COPY --from=builder /app/artifacts/storefront/.next/standalone ./
 COPY --from=builder /app/artifacts/storefront/.next/static ./artifacts/storefront/.next/static
+COPY --from=builder /app/artifacts/storefront/public ./artifacts/storefront/public
 
 RUN groupadd --system --gid 1001 app \
  && useradd  --system --uid 1001 --gid app --home /app app \
