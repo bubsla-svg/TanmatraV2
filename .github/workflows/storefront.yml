@@ -44,3 +44,24 @@ jobs:
         run: node --test --import tsx ../storefront/lib/*.test.ts
       - name: Build (server-first, no money path)
         run: pnpm --filter @workspace/storefront run build
+      # CUJ specs against the built app (TNM-SF-01 §6). Same specs re-run
+      # against the deployed service URL at each wave gate via E2E_BASE_URL;
+      # here they gate the merge on a real served build (e2e-pr.yml pattern).
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: CUJ e2e (mobile) against the built app
+        run: |
+          PORT=3000 pnpm --filter @workspace/storefront run start &
+          for i in $(seq 1 20); do
+            curl -sf http://127.0.0.1:3000/ >/dev/null && break
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:3000 pnpm exec playwright test \
+            --config artifacts/storefront/e2e/playwright.config.ts --project=mobile
+      - name: Upload e2e report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-e2e-report
+          path: playwright-report/
+          retention-days: 7
