@@ -353,7 +353,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 8080 \
-            --update-env-vars "API_BASE_URL=${API_URL%/api};API_UPSTREAM=${API_URL%/api};BUILD_SHA=${{ github.sha }}" \
+            --update-env-vars "API_BASE_URL=${API_URL%/api},API_UPSTREAM=${API_URL%/api},BUILD_SHA=${{ github.sha }}" \
             --memory=512Mi \
             --cpu=1 \
             --cpu-boost \
