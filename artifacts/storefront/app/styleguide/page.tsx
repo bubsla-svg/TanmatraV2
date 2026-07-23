@@ -133,9 +133,9 @@ export default function StyleguidePage() {
           <button type="button" className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]">
             Gold primary
           </button>
-          <button type="button" className="rounded-xl bg-sage px-5 py-3 text-sm font-semibold text-[var(--sage-ink)]">
-            Sage attach
-          </button>
+          <span className="rounded-full bg-sage px-4 py-1.5 text-xs font-semibold text-[var(--sage-ink)]">
+            Sage signal
+          </span>
           <button type="button" className="rounded-xl border border-line-strong bg-transparent px-5 py-3 text-sm font-semibold text-ink">
             Outline
           </button>

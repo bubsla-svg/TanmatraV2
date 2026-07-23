@@ -29,6 +29,16 @@ const PALETTE_CLASS = new RegExp(
 const RAW_HEX = /#[0-9a-fA-F]{3,8}\b/;
 const RAW_FN = /\b(rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\(/;
 
+// §3.4 sage-is-never-interactive: sage is a wellness/veg *signal*, never an
+// action colour. Heuristic: a line that both paints something sage and wires
+// interactivity is flagged. Line-scoped on purpose — a sage badge next to a
+// button elsewhere in the file is fine; `onClick` on the sage-painted element
+// itself is the violation. (Saffron-exclusivity's other half — no raw gold —
+// is covered by the RAW_HEX gate; "is this element a genuine CTA" is a review
+// judgement a grep cannot make.)
+const SAGE_PAINT = /\b(?:bg|text|border|ring|fill|stroke|outline|decoration)-sage(?:-foreground|-text)?\b|var\(--sage\b/;
+const INTERACTIVE = /\bonClick=|\bhref=|\brole="button"|\bcursor-pointer\b|<button\b|<a\s|<Link\b/;
+
 /** Strip block + line comments so PR refs / prose don't false-positive. */
 function stripComments(src: string): string {
   const noBlock = src.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -57,6 +67,9 @@ function scanFile(abs: string, violations: Violation[]): void {
     }
     if (RAW_FN.test(raw)) {
       violations.push({ file: rel, line, rule: "raw-color-fn", text: raw.trim() });
+    }
+    if (SAGE_PAINT.test(raw) && INTERACTIVE.test(raw)) {
+      violations.push({ file: rel, line, rule: "sage-interactive", text: raw.trim() });
     }
   });
 }
