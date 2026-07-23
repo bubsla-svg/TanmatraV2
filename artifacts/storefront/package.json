@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint:filecap": "node --experimental-strip-types ../../scripts/lint-filecap.ts artifacts/storefront"
   },
   "dependencies": {
     "@workspace/menu-catalog": "workspace:*",
+    "@workspace/subscription-rules": "workspace:*",
     "@workspace/tokens": "workspace:*",
     "next": "^16.2.0",
     "react": "catalog:",

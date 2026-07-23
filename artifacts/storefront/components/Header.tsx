@@ -16,12 +16,18 @@ export function Header() {
         >
           Tanmatra
         </Link>
-        <nav aria-label="Primary">
+        <nav aria-label="Primary" className="flex items-center gap-1">
           <Link
             href="/menu"
             className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
           >
             Menu
+          </Link>
+          <Link
+            href="/plans"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+          >
+            Plans
           </Link>
         </nav>
       </div>

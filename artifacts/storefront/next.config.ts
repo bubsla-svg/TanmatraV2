@@ -7,12 +7,44 @@ import type { NextConfig } from "next";
  * fallback).
  */
 const nextConfig: NextConfig = {
-  transpilePackages: ["@workspace/tokens", "@workspace/menu-catalog"],
+  // Cloud Run ships the app as a self-contained Node server: `next build`
+  // emits `.next/standalone` with only the traced deps, so the runtime image
+  // needs no pnpm/workspace install. Next auto-detects the monorepo root from
+  // the lockfile for dependency tracing.
+  output: "standalone",
+  transpilePackages: [
+    "@workspace/tokens",
+    "@workspace/menu-catalog",
+    "@workspace/subscription-rules",
+  ],
   reactStrictMode: true,
+  // Same-origin /api proxy to the api-server (set API_UPSTREAM at runtime). The
+  // browser calls same-origin `/api/*` (NEXT_PUBLIC_API_BASE=""), so the session
+  // cookie stays first-party — the cross-site topology (storefront → api on a
+  // different host) drops it under Safari/ITP, exactly the bug the tanmatra
+  // static server was built to avoid. Server components fetch the api directly
+  // via API_BASE_URL and don't use this hop.
+  async rewrites() {
+    const upstream = process.env.API_UPSTREAM;
+    return upstream
+      ? [{ source: "/api/:path*", destination: `${upstream}/api/:path*` }]
+      : [];
+  },
   // Dish imagery is served by the api-server / CDN; explicit dimensions on the
   // <img> keep CLS at zero without pulling in the next/image loader for the
   // skeleton. Revisit with next/image + remotePatterns in a later phase.
   images: { unoptimized: true },
+  // The workspace's shared TS libs use NodeNext ".js" import specifiers that
+  // resolve to ".ts" sources (e.g. subscription-rules' `from "./pricing.js"`).
+  // Vite/tsx map those automatically; webpack needs an explicit extension alias.
+  // (Turbopack has no equivalent, so the storefront builds with --webpack.)
+  webpack(config) {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js"],
+      ".mjs": [".mts", ".mjs"],
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

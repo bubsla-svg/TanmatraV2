@@ -27,9 +27,12 @@ export function DishCard({ dish }: { dish: DishData }) {
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
         <span
-          className="absolute left-2 top-2 inline-block h-3 w-3 rounded-full ring-2 ring-white"
-          style={{ backgroundColor: dish.isVeg ? "var(--sage)" : "var(--danger)" }}
+          role="img"
           aria-label={dish.isVeg ? "Vegetarian" : "Non-vegetarian"}
+          className={`absolute left-2 top-2 inline-block h-3 w-3 ring-2 ring-white ${
+            dish.isVeg ? "rounded-full" : "rounded-[2px]"
+          }`}
+          style={{ backgroundColor: dish.isVeg ? "var(--sage)" : "var(--danger)" }}
         />
       </div>
 

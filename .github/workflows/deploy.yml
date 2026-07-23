@@ -18,6 +18,7 @@ jobs:
     outputs:
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
+      storefront: ${{ steps.filter.outputs.storefront }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -33,6 +34,12 @@ jobs:
               - '.github/workflows/deploy.yml'
             web:
               - 'artifacts/tanmatra/**'
+              - 'lib/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.github/workflows/deploy.yml'
+            storefront:
+              - 'artifacts/storefront/**'
               - 'lib/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
@@ -100,7 +107,7 @@ jobs:
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }};PETPOOJA_RESTAURANT_ID=cq5hnj3629;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }};BULLMQ_PREFIX=prod;GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }};RAZORPAY_WEBHOOK_SECRET=${{ secrets.RAZORPAY_WEBHOOK_SECRET }};TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }};TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }};TWILIO_VERIFY_SERVICE_SID=${{ secrets.TWILIO_VERIFY_SERVICE_SID }};PRIVATE_OBJECT_DIR=${{ secrets.PRIVATE_OBJECT_DIR }}" \
+            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }};PETPOOJA_RESTAURANT_ID=cq5hnj3629;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }};BULLMQ_PREFIX=prod;GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }};RAZORPAY_WEBHOOK_SECRET=${{ secrets.RAZORPAY_WEBHOOK_SECRET }};TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }};TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }};TWILIO_VERIFY_SERVICE_SID=${{ secrets.TWILIO_VERIFY_SERVICE_SID }};PRIVATE_OBJECT_DIR=${{ secrets.PRIVATE_OBJECT_DIR }}" \
             --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest,CLINICAL_KMS_MASTER_KEY=brand-tanmatra-clinical-kms-key:latest,PETPOOJA_APP_KEY=brand-tanmatra-petpooja-app-key:latest,PETPOOJA_APP_SECRET=brand-tanmatra-petpooja-app-secret:latest,PETPOOJA_ACCESS_TOKEN=brand-tanmatra-petpooja-access-token:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --memory=1Gi \
@@ -246,3 +253,109 @@ jobs:
             sleep 5
           done
           echo "checkout still not serving the SPA shell"; exit 1
+
+  # Build the rebuild storefront (Next.js) image and roll the `storefront`
+  # Cloud Run service. Separate service from `tanmatra` (the current SPA) — the
+  # rebuild ships alongside it; traffic is cut over by domain mapping when
+  # ready. The browser talks to this service's own origin and the Next server
+  # proxies /api to the api-server (same-origin cookie), so no ALLOWED_ORIGINS
+  # change is needed. NOTE: the plan-v2 surfaces need FLAG_PLAN_V2=true on the
+  # api-server (a separate go-live switch, not flipped here).
+  storefront-cloud-run:
+    needs: [changes, cloud-run]
+    if: |
+      always() &&
+      needs.changes.outputs.storefront == 'true' &&
+      needs.cloud-run.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      GCP_REGION: asia-south2
+      SERVICE: storefront
+      API_URL: https://wellness-foods-475157072474.asia-south2.run.app/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build image with Cloud Build
+        run: |
+          IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          # Custom Dockerfile. NEXT_PUBLIC_API_BASE is left empty so the browser
+          # uses the same-origin /api proxy. Live checkout stays off until the
+          # Firebase/Razorpay browser build-args are added. Async +
+          # CLOUD_LOGGING_ONLY avoids VPC-SC log-streaming errors.
+          cat > /tmp/storefront-cloudbuild.yaml <<EOF
+          steps:
+            - name: gcr.io/cloud-builders/docker
+              args:
+                - build
+                - --build-arg
+                - NEXT_PUBLIC_API_BASE=
+                - -t
+                - ${IMAGE}
+                - -f
+                - artifacts/storefront/Dockerfile
+                - .
+          images:
+            - ${IMAGE}
+          options:
+            logging: CLOUD_LOGGING_ONLY
+            machineType: E2_HIGHCPU_8
+          EOF
+          BUILD_ID=$(gcloud builds submit \
+            --config /tmp/storefront-cloudbuild.yaml \
+            --project ${GCP_PROJECT} \
+            --async \
+            --format='value(id)' .)
+          echo "Cloud Build ID: $BUILD_ID"
+          for i in $(seq 1 50); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" \
+              --project ${GCP_PROJECT} --format='value(status)')
+            echo "[$i/50] Build status: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then exit 0; fi
+            if [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "TIMEOUT" ]; then
+              echo "Build failed with status: $STATUS"; exit 1
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for Cloud Build"; exit 1
+
+      - name: Deploy to Cloud Run
+        run: |
+          # API_BASE_URL — server components fetch the api directly.
+          # API_UPSTREAM — the same-origin /api proxy target (next.config rewrites).
+          gcloud run deploy ${SERVICE} \
+            --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --update-env-vars "API_BASE_URL=${API_URL%/api};API_UPSTREAM=${API_URL%/api}" \
+            --memory=512Mi \
+            --cpu=1 \
+            --cpu-boost \
+            --quiet
+
+      - name: Smoke-test the home page renders
+        run: |
+          URL=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.url)')
+          echo "Service URL: $URL"
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -sf "$URL/" >/dev/null; then
+              echo "storefront home OK"; exit 0
+            fi
+            echo "home attempt $i failed, retrying..."; sleep 5
+          done
+          echo "storefront home never returned 200"; exit 1
