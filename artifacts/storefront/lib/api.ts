@@ -246,3 +246,14 @@ export function updateAddress(
 export function deleteAddress(id: string, fetchImpl?: FetchImpl): Promise<{ ok: true }> {
   return apiDelete(`/addresses/${encodeURIComponent(id)}`, fetchImpl);
 }
+
+// ── Session (account surfaces) ───────────────────────────────────────────────
+/** The session's user, or null — GET /auth/user answers 200 either way. */
+export function getAuthUser(fetchImpl?: FetchImpl): Promise<{ user: AuthUser | null }> {
+  return apiGet("/auth/user", fetchImpl);
+}
+
+/** End the `sid` session (POST /logout — auth.ts clears it server-side). */
+export function logoutSession(fetchImpl?: FetchImpl): Promise<{ success: boolean }> {
+  return apiPost("/logout", {}, fetchImpl);
+}
