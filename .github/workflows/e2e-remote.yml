@@ -1,0 +1,45 @@
+# TNM-SF-01 §6 — the wave-gate runner: drive the storefront CUJ suite against
+# a DEPLOYED service URL (never live traffic pre-cutover — point it at the
+# dark preview service or a tagged candidate revision, not the domain).
+# Dispatch with the target URL; the same specs gate PRs against a local build
+# in storefront.yml.
+name: E2E (remote target)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Deployed base URL to run the CUJ suite against"
+        required: true
+        default: "https://storefront-475157072474.asia-south2.run.app"
+
+jobs:
+  e2e-remote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: CUJ suite (mobile) against the deployed target
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url }}
+        run: |
+          echo "Target: $E2E_BASE_URL"
+          curl -s "$E2E_BASE_URL/api/build" || true
+          pnpm exec playwright test \
+            --config artifacts/storefront/e2e/playwright.config.ts --project=mobile
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-remote-report
+          path: playwright-report/
+          retention-days: 7
