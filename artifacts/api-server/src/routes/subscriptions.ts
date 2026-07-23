@@ -7,6 +7,7 @@ import {
   subscriptionsTable,
   subscriptionMembersTable,
   subscriptionDeliveriesTable,
+  subscriptionAddonsTable,
   mealCreditsTable,
   userPreferencesTable,
   deliverySlotsTable,
@@ -35,6 +36,7 @@ import {
 import {
   type PlanId,
   type DietTrack,
+  type AddOnLineItem,
   PLAN_CATALOG,
   computePlanQuote,
   planIsSelfServiceLaunchable,
@@ -166,6 +168,24 @@ function planV2Rejection(
     };
   }
   return null;
+}
+
+/**
+ * Recover a subscription's PlanId from its `notes` tag (`plan_v2:<id>`, written
+ * at create — there's no planId column yet). Returns null for a non-plan-v2
+ * subscription. Used by the post-purchase add-on endpoints to enforce each
+ * plan's add-on allow-list.
+ */
+function planIdFromNotes(notes: string | null | undefined): PlanId | null {
+  if (!notes) return null;
+  const idx = notes.indexOf(PLAN_V2_NOTE_PREFIX);
+  if (idx === -1) return null;
+  // The id runs from just after the prefix to the first space or em-dash
+  // separator (create writes `plan_v2:<id>` or `plan_v2:<id> — <rest>`).
+  const token = notes.slice(idx + PLAN_V2_NOTE_PREFIX.length).split(/[\s—]/)[0]?.trim();
+  return token && (PLAN_ID_VALUES as readonly string[]).includes(token)
+    ? (token as PlanId)
+    : null;
 }
 
 const swapItemsSchema = z.object({
@@ -885,6 +905,10 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   // Normalise the persisted note so downstream trial detection is stable
   // regardless of which entry point created it.
   let notes = data.notes;
+  // Plan-v2 add-ons resolved from the request, persisted with the subscription
+  // inside the create transaction below (empty unless the plan-v2 branch fills
+  // it).
+  let planV2AddOns: AddOnLineItem[] = [];
 
   if (isTrial) {
     pricePerDeliveryPaise = computeTrialPricePaise(mealsPerDelivery);
@@ -909,8 +933,29 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       res.status(rejection.status).json(rejection.body);
       return;
     }
+    // Resolve requested add-ons against the plan's allow-list — the same gate
+    // the quote uses. A not-allowed add-on is a 422, never silently priced.
+    const resolvedAddOns = resolveAddOns(data.planId, data.addOns ?? []);
+    if (resolvedAddOns.rejected.length > 0) {
+      res.status(422).json({
+        error: "add-on not available for this plan",
+        code: "addon_not_allowed",
+        planId: data.planId,
+        rejected: resolvedAddOns.rejected,
+        allowed: PLAN_CATALOG[data.planId].addOnsAllowed,
+      });
+      return;
+    }
+    planV2AddOns = resolvedAddOns.items;
     const q = computePlanQuote(data.planId);
-    pricePerDeliveryPaise = q.cycleTotalPaise;
+    // Only plan-review add-ons (rd_bump, monthly) are billed into this first
+    // cycle — the same rule as /quote. A post_purchase add-on (evening_add) is
+    // still persisted active below, but billed by the recurring charge, never
+    // inflating this order.
+    const planReviewAddOnPaise = planV2AddOns
+      .filter((a) => a.attachPoint === "plan_review")
+      .reduce((sum, a) => sum + a.pricePaise, 0);
+    pricePerDeliveryPaise = q.cycleTotalPaise + planReviewAddOnPaise;
     if (data.planId === "trial_3day") {
       generateCount = 1; // one-off sampler — does not recur
       isTrial = true; // persist trialState so the paid-time creditback fires
@@ -1026,6 +1071,21 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       );
     }
 
+    // Persist the plan-v2 add-ons accepted at plan review. price/cadence are
+    // snapshotted from the canonical ADD_ONS config (via resolveAddOns) so a
+    // later price change never silently reprices an already-attached add-on.
+    if (planV2AddOns.length > 0) {
+      await tx.insert(subscriptionAddonsTable).values(
+        planV2AddOns.map((a) => ({
+          subscriptionId: sub.id,
+          addonId: a.id,
+          pricePaise: a.pricePaise,
+          cadence: a.cadence,
+          active: true,
+        })),
+      );
+    }
+
     const deliveries = await generateDeliveriesForSubscription(
       sub.id,
       data.cadence,
@@ -1064,6 +1124,165 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   invalidateUserBrief(userId);
   res.status(201).json({ subscription: sub, deliveries, bridgeCreditPaise });
 });
+
+// ── Plan-v2 subscription add-ons (02 §5 / 02a §4) ────────────────────────────
+// rd_bump is billed at create (plan review, above); evening_add is attached
+// here, post-purchase, one tap. Each attach snapshots price/cadence from the
+// canonical ADD_ONS config (via resolveAddOns) and is enforced against the
+// plan's allow-list. Summing active add-ons into the recurring charge is
+// roadmap slice S6b.
+const attachAddOnSchema = z.object({
+  addOnId: z.enum(["rd_bump", "evening_add"]),
+});
+
+router.get(
+  "/subscriptions/:id/add-ons",
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = Number(req.params.id);
+    if (!Number.isInteger(subId) || subId <= 0) {
+      res.status(400).json({ error: "invalid subscription id" });
+      return;
+    }
+    const [sub] = await db
+      .select({ id: subscriptionsTable.id })
+      .from(subscriptionsTable)
+      .where(and(eq(subscriptionsTable.id, subId), eq(subscriptionsTable.userId, userId)))
+      .limit(1);
+    if (!sub) {
+      res.status(404).json({ error: "subscription not found" });
+      return;
+    }
+    const rows = await db
+      .select()
+      .from(subscriptionAddonsTable)
+      .where(eq(subscriptionAddonsTable.subscriptionId, subId));
+    res.json({ addOns: rows });
+  },
+);
+
+router.post(
+  "/subscriptions/:id/add-ons",
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = Number(req.params.id);
+    if (!Number.isInteger(subId) || subId <= 0) {
+      res.status(400).json({ error: "invalid subscription id" });
+      return;
+    }
+    const parsed = attachAddOnSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid payload", details: parsed.error.issues });
+      return;
+    }
+    const { addOnId } = parsed.data;
+
+    const [sub] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(and(eq(subscriptionsTable.id, subId), eq(subscriptionsTable.userId, userId)))
+      .limit(1);
+    if (!sub) {
+      res.status(404).json({ error: "subscription not found" });
+      return;
+    }
+
+    // The plan's add-on allow-list is keyed off the plan_v2 notes tag.
+    const planId = planIdFromNotes(sub.notes);
+    if (!planId) {
+      res.status(409).json({ error: "not a plan-v2 subscription", code: "not_plan_v2" });
+      return;
+    }
+    const { items, rejected } = resolveAddOns(planId, [addOnId]);
+    if (rejected.length > 0 || items.length === 0) {
+      res.status(422).json({
+        error: "add-on not available for this plan",
+        code: "addon_not_allowed",
+        planId,
+        rejected,
+        allowed: PLAN_CATALOG[planId].addOnsAllowed,
+      });
+      return;
+    }
+    const addon = items[0]!;
+
+    // Idempotent: a re-tap on an already-active add-on returns the existing row
+    // (200) rather than stacking a duplicate charge line.
+    const [existing] = await db
+      .select()
+      .from(subscriptionAddonsTable)
+      .where(
+        and(
+          eq(subscriptionAddonsTable.subscriptionId, subId),
+          eq(subscriptionAddonsTable.addonId, addOnId),
+          eq(subscriptionAddonsTable.active, true),
+        ),
+      )
+      .limit(1);
+    if (existing) {
+      res.status(200).json({ addOn: existing, alreadyActive: true });
+      return;
+    }
+
+    const [row] = await db
+      .insert(subscriptionAddonsTable)
+      .values({
+        subscriptionId: subId,
+        addonId: addon.id,
+        pricePaise: addon.pricePaise,
+        cadence: addon.cadence,
+        active: true,
+      })
+      .returning();
+    res.status(201).json({ addOn: row });
+  },
+);
+
+router.delete(
+  "/subscriptions/:id/add-ons/:addOnId",
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const subId = Number(req.params.id);
+    const addOnId = req.params.addOnId;
+    if (!Number.isInteger(subId) || subId <= 0) {
+      res.status(400).json({ error: "invalid subscription id" });
+      return;
+    }
+    if (addOnId !== "rd_bump" && addOnId !== "evening_add") {
+      res.status(400).json({ error: "invalid add-on id" });
+      return;
+    }
+    const [sub] = await db
+      .select({ id: subscriptionsTable.id })
+      .from(subscriptionsTable)
+      .where(and(eq(subscriptionsTable.id, subId), eq(subscriptionsTable.userId, userId)))
+      .limit(1);
+    if (!sub) {
+      res.status(404).json({ error: "subscription not found" });
+      return;
+    }
+    // Soft-detach (active=false) preserves the audit trail (schema doc).
+    const detached = await db
+      .update(subscriptionAddonsTable)
+      .set({ active: false, updatedAt: new Date() })
+      .where(
+        and(
+          eq(subscriptionAddonsTable.subscriptionId, subId),
+          eq(subscriptionAddonsTable.addonId, addOnId),
+          eq(subscriptionAddonsTable.active, true),
+        ),
+      )
+      .returning({ id: subscriptionAddonsTable.id });
+    if (detached.length === 0) {
+      res.status(404).json({ error: "add-on not attached" });
+      return;
+    }
+    res.json({ ok: true, detached: addOnId });
+  },
+);
 
 router.get("/subscriptions", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);

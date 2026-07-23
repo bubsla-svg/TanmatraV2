@@ -81,6 +81,30 @@ export const PhoneVerifyOtpResponse = z.object({
 });
 export type PhoneVerifyOtpResponse = z.infer<typeof PhoneVerifyOtpResponse>;
 
+// --- Truecaller 1-Tap sign-in (OAuth 2.0 + PKCE) ---------------------------
+// The mobile client runs Truecaller's bottom-sheet OAuth flow and receives an
+// authorization code (with the PKCE code_verifier it generated). It sends BOTH
+// to the server, which exchanges them with Truecaller and reads the *verified*
+// phone number from Truecaller's userinfo endpoint. The client never sends the
+// phone number — the server derives it — so a caller cannot mint a session for
+// a number it does not control.
+export const TruecallerVerifyBody = z.object({
+  authorizationCode: z.string().min(1),
+  codeVerifier: z.string().min(1),
+  attribution: VerifyOtpAttribution.optional(),
+  // Dev/CI ONLY. Ignored unless the server is in Truecaller mock mode (no
+  // TRUECALLER_CLIENT_ID and NODE_ENV !== "production"). Lets local/CI exercise
+  // the flow without real Truecaller credentials. Never honoured in production.
+  devPhoneE164: z.string().optional(),
+});
+export type TruecallerVerifyBody = z.infer<typeof TruecallerVerifyBody>;
+
+export const TruecallerVerifyResponse = z.object({
+  ok: z.boolean(),
+  user: AuthUser.nullable(),
+});
+export type TruecallerVerifyResponse = z.infer<typeof TruecallerVerifyResponse>;
+
 export const LogoutResponse = z.object({
   success: z.boolean(),
 });

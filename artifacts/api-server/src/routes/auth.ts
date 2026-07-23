@@ -9,6 +9,9 @@ import {
   LogoutResponse,
   UpdateProfileInfoBody,
   UpdateProfileInfoResponse,
+  TruecallerVerifyBody,
+  TruecallerVerifyResponse,
+  type VerifyOtpAttribution,
 } from "@workspace/api-zod";
 import { db, usersTable, sessionsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
@@ -22,8 +25,13 @@ import {
   SESSION_COOKIE,
   SESSION_TTL,
 } from "../lib/auth";
-import { normalisePhone, sendSmsOtp } from "../lib/sms";
+import { normalisePhone, sendSmsOtp, maskE164 } from "../lib/sms";
 import { verifyFirebaseIdToken } from "../lib/firebase";
+import {
+  verifyTruecallerToken,
+  TruecallerVerifyError,
+  type TruecallerProfile,
+} from "../lib/truecaller";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -317,6 +325,138 @@ router.post(
     res.json(
       PhoneVerifyOtpResponse.parse({ ok: true, user: authUser }),
     );
+  },
+);
+
+/**
+ * Upsert a user by a phone number that has ALREADY been verified by a trusted
+ * provider (Truecaller here). Attribution + optional names are applied only on
+ * first creation; a returning user's edited name/email is never clobbered — we
+ * only refresh the verification timestamp and any freshly-granted consents.
+ */
+async function upsertUserByVerifiedPhone(
+  phoneE164: string,
+  attr: VerifyOtpAttribution | undefined,
+  names: { firstName?: string; lastName?: string },
+) {
+  const now = new Date();
+  const consentUpdates: Record<string, Date | string> = {
+    phoneVerifiedAt: now,
+    updatedAt: now,
+  };
+  if (attr?.marketingSmsConsent === true) {
+    consentUpdates["marketingSmsConsentAt"] = now;
+  }
+  if (attr?.dpdpConsent === true) {
+    consentUpdates["dpdpConsentAt"] = now;
+  }
+  if (attr?.tosVersion) {
+    consentUpdates["tosAcceptedVersion"] = attr.tosVersion;
+  }
+
+  const [user] = await db
+    .insert(usersTable)
+    .values({
+      phoneE164,
+      phoneVerifiedAt: now,
+      firstName: names.firstName,
+      lastName: names.lastName,
+      signupSource: attr?.signupSource ?? "truecaller",
+      utmSource: attr?.utmSource,
+      utmMedium: attr?.utmMedium,
+      utmCampaign: attr?.utmCampaign,
+      referralCode: attr?.referralCode,
+      marketingSmsConsentAt:
+        attr?.marketingSmsConsent === true ? now : undefined,
+      dpdpConsentAt: attr?.dpdpConsent === true ? now : undefined,
+      tosAcceptedVersion: attr?.tosVersion,
+    })
+    .onConflictDoUpdate({
+      target: usersTable.phoneE164,
+      set: consentUpdates,
+    })
+    .returning();
+  return user;
+}
+
+// POST /auth/truecaller/verify — Truecaller 1-Tap sign-in. The client sends a
+// Truecaller OAuth authorization code + PKCE verifier; we verify with Truecaller
+// and derive the phone from *their* userinfo response (never the client's), then
+// mint a session exactly like the OTP path. See lib/truecaller.ts for the
+// security invariant this endpoint depends on.
+router.post(
+  "/auth/truecaller/verify",
+  async (req: Request, res: Response): Promise<void> => {
+    const parsed = TruecallerVerifyBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid input" });
+      return;
+    }
+
+    // Per-IP only: a per-phone limit is impossible before verification because
+    // we (deliberately) do not trust any client-supplied number here.
+    if (!(await rateLimit(`auth:tc:ip:${clientIp(req)}`, 60 * 60_000, 30))) {
+      res.status(429).json({ error: "too many requests" });
+      return;
+    }
+
+    let profile: TruecallerProfile;
+    try {
+      profile = await verifyTruecallerToken({
+        authorizationCode: parsed.data.authorizationCode,
+        codeVerifier: parsed.data.codeVerifier,
+        devPhoneE164: parsed.data.devPhoneE164,
+      });
+    } catch (err) {
+      if (err instanceof TruecallerVerifyError && err.reason === "config") {
+        logger.error({ err: err.message }, "auth.truecaller.not_configured");
+        res.status(503).json({ error: "Truecaller sign-in is unavailable" });
+        return;
+      }
+      logger.warn(
+        { err: (err as Error).message },
+        "auth.truecaller.verify_failed",
+      );
+      res.status(401).json({ error: "invalid token" });
+      return;
+    }
+
+    const user = await upsertUserByVerifiedPhone(
+      profile.phoneE164,
+      parsed.data.attribution,
+      { firstName: profile.firstName, lastName: profile.lastName },
+    );
+    if (!user) {
+      logger.error(
+        { e164: profile.phoneE164 },
+        "auth.truecaller.upsert_failed",
+      );
+      res.status(500).json({ error: "could not create session" });
+      return;
+    }
+
+    const authUser = AuthUser.parse({
+      id: user.id,
+      phoneE164: user.phoneE164,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profileImageUrl: user.profileImageUrl,
+    });
+
+    const sid = await createSession({
+      user: authUser,
+      kind: "truecaller",
+      createdAt: Date.now(),
+    });
+    setSessionCookie(res, sid);
+
+    logger.info(
+      { userId: user.id, e164: maskE164(profile.phoneE164) },
+      "auth.truecaller.session_created",
+    );
+
+    res.json(TruecallerVerifyResponse.parse({ ok: true, user: authUser }));
   },
 );
 

@@ -189,6 +189,21 @@ function proxyHttp(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  if (req.url === "/api/build") {
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      ...SECURITY_HEADERS,
+    });
+    res.end(
+      JSON.stringify({
+        sha: process.env.BUILD_SHA || "unknown",
+        builtAt: process.env.BUILT_AT || new Date().toISOString(),
+        service: "tanmatra",
+      })
+    );
+    return;
+  }
   if (upstream && req.url.startsWith("/api")) {
     proxyHttp(req, res);
     return;
