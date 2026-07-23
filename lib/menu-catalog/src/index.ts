@@ -4621,12 +4621,19 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
   // enabled. 26 of the 34 KEEP-PUSH rows resolve to a catalog dish by exact
   // name; the other 8 are renamed variants or live on the separate Petpooja
   // menu — reconciled separately, never fuzzy-matched (per the E1.1 lesson).
-  export const AL_A_CARTE_HERO_SLUGS: ReadonlySet<string> = new Set([
+  /**
+   * À-la-carte tier 1 — heroes that exist in this package's static DISHES
+   * snapshot (typo-guarded by alaCarte.test.ts against DISHES).
+   */
+  export const STATIC_ALA_CARTE_HERO_SLUGS: readonly string[] = [
     "avocado-toast",
+    "avocado-toast-with-sunny-side-up",
     "barbeque-chicken-burrito-wrap",
     "barbeque-grilled-chicken-rice-bowl",
     "boiled-chicken-breast-single-serve",
     "broccoli-lemon-chicken-salad",
+    "cheese-omelette",
+    "chicken-caesar-story-salad",
     "chicken-pita-pockets-with-hummus",
     "chicken-tikka-sandwich-with-ranch-yoghurt",
     "chilli-chipotle-paneer-burrito-wrap",
@@ -4634,7 +4641,16 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
     "chipotle-chicken-burrito-wrap",
     "chipotle-grilled-chicken-rice-bowl",
     "classic-bread-omelette-2-egg",
+    "classic-vegetable-poha",
+    "coke-can",
+    "cream-of-mushroom",
     "crispy-mushroom-burrito-wrap",
+    "crispy-mushroom-rice-bowl",
+    "crispy-peri-peri-mushroom-rice-bowl",
+    "dates-banana-smoothie",
+    "falafal-hummus-wrap",
+    "falafel-garden-salad",
+    "fruity-sprout-salad",
     "grilled-chicken-breast-single-serve",
     "grilled-chicken-sauteed-veg-mash-potato",
     "grilled-veggie-sandwich-ranch-yoghurt",
@@ -4642,12 +4658,59 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
     "healthy-whole-wheat-paneer-wrap",
     "high-protein-chicken-omelette",
     "hummus-pita-classic",
+    "hummus-pita-with-falafel",
     "moong-dal-chilla-with-curd",
+    "mushroom-omelette",
     "paneer-tikka-burrito-wrap",
+    "power-house-smoothie",
     "quinoa-khichdi",
     "smoked-chicken-cheese-omelette",
     "spinach-mushroom-omelette",
+    "tomato-basil-soup",
     "veg-loaded-bread-omelette-2-egg",
+  ];
+
+  /**
+   * À-la-carte tier 2 — heroes that exist only in the DB-merged live
+   * catalog (no static snapshot entry to validate against; the deployed
+   * menu verification covers them). Every one is photo-backed and was
+   * confirmed present, priced, and available in /api/menu/public.
+   */
+  export const LIVE_ALA_CARTE_HERO_SLUGS: readonly string[] = [
+    "aam-panna",
+    "abc-juice",
+    "aglio-olio-pasta-v",
+    "barbeque-paneer-rice-bowl",
+    "boiled-3-egg-with-saut-ed-veggies",
+    "classic-french-toast-with-butter",
+    "crispy-edamame-roasted-cauliflower-bowl",
+    "english-breakfast",
+    "fiery-tandoori-tofu-skewers",
+    "four-boiled-egg",
+    "fruity-greek-yogurt",
+    "garlic-bread",
+    "grilled-chicken-club-sandwich",
+    "grilled-chicken-salad",
+    "grilled-paneer-salad",
+    "grilled-paneer-sandwich-with-ranch-yoghurt",
+    "grilled-paneer-with-sauteed-veggies",
+    "grilled-veg-club-sandwich",
+    "healthy-tiramisu-box",
+    "mix-berry-smoothie-high-protein",
+    "mushroom-caramelised-onion-sandwich",
+    "mutton-paya-soup",
+    "ragi-dates-eggless-brownie",
+    "roasted-vegetable-quinoa-salad",
+    "spiced-buckwheat-mung-sprout-khichdi",
+    "spiced-lentil-spinach-kebab",
+    "spicy-szechuan-tempeh-broccoli-bowl",
+    "stuffed-chicken-with-mashed-potato-saut-ed-green-beans",
+    "watermelon-mint-cooler",
+  ];
+
+  export const AL_A_CARTE_HERO_SLUGS: ReadonlySet<string> = new Set([
+    ...STATIC_ALA_CARTE_HERO_SLUGS,
+    ...LIVE_ALA_CARTE_HERO_SLUGS,
   ]);
 
   /** True when a dish is offered for scheduled à la carte ordering (a hero). */

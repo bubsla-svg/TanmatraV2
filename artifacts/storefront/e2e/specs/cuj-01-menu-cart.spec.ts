@@ -7,14 +7,16 @@ import { collectErrors, ORDERABLE_DISH } from "../fixtures";
  * then the spec asserts the flag-dark state is LOUD, not silently dead.
  */
 
-test("menu renders the catalog grid with live-or-fallback data", async ({ page }) => {
+test("menu renders the à-la-carte grid with live-or-fallback data", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/menu");
   await expect(page.getByRole("heading", { name: "The menu" })).toBeVisible();
-  // The catalog is ~117 dishes; assert a healthy grid, not an exact count,
+  // The menu is à-la-carte ONLY (owner decision): the grid shows just the
+  // orderable hero set — 42 in the api-less fallback build (static tier),
+  // 71 against the live catalog. Assert a healthy floor, not an exact count,
   // so a curated add/remove doesn't break the spec.
   const cards = page.locator('a[href^="/menu?dish="]');
-  expect(await cards.count()).toBeGreaterThan(80);
+  expect(await cards.count()).toBeGreaterThan(35);
   expect(errors).toEqual([]);
 });
 
@@ -111,13 +113,14 @@ liveCheckout("cart → live à-la-carte checkout renders the guest details form"
   await expect(pay).toBeDisabled();
 });
 
-test("plan-only dishes carry no Add CTA (no dead buttons)", async ({ page }) => {
+test("every menu card is orderable — Add CTA on all cards, zero dead ends", async ({ page }) => {
   await page.goto("/menu");
   const addButtons = page.getByRole("button", { name: "Add", exact: true });
   const cards = page.locator('a[href^="/menu?dish="]');
-  // The curated à-la-carte hero set is a strict subset of the catalog.
+  // À-la-carte-only grid: a card without an Add CTA is a browse-only dead
+  // end, which the menu no longer ships. Count parity is the invariant.
   const adds = await addButtons.count();
   const total = await cards.count();
-  expect(adds).toBeGreaterThan(10);
-  expect(adds).toBeLessThan(total / 2);
+  expect(total).toBeGreaterThan(35);
+  expect(adds).toBe(total);
 });
