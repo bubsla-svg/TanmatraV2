@@ -89,7 +89,7 @@ test("runCheckout sequences create → order → modal → verify and returns th
   };
 
   const result = await runCheckout(
-    { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{}] }, razorpay },
+    { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] }, razorpay },
     deps,
   );
   assert.deepEqual(seen, ["create", "order", "modal", "verify"]);
@@ -122,7 +122,7 @@ test("runCheckout stops at the modal if the user dismisses it — no verify call
   await assert.rejects(
     () =>
       runCheckout(
-        { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{}] }, razorpay },
+        { subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] }, razorpay },
         deps,
       ),
     /dismissed/,

@@ -6,6 +6,8 @@ import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { planTotalAfterCredit, TRIAL_COPY } from "@/lib/trial";
 import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { AlacarteCheckout } from "@/components/checkout/AlacarteCheckout";
+import { PlanCheckout } from "@/components/checkout/plan/PlanCheckout";
+import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
@@ -48,6 +50,18 @@ export default async function CheckoutPage({ searchParams }: Props) {
   const d = planDisplay(id);
   const isReturning = returning === "1";
   const isTrial = id === "trial_3day";
+
+  // Live plan money path (SF-07 / CUJ-02): the real subscription checkout —
+  // identity → eater profile → address → pay via createSubscription. The server
+  // prices the plan from planId. The trial keeps its own sampler flow; credit /
+  // RD-bump land as follow-ups, so those variants stay on the skeleton below.
+  if (LIVE_CHECKOUT_ENABLED && !isTrial && credit !== "1" && bump !== "1") {
+    return (
+      <section className="mx-auto max-w-md px-4 py-10">
+        <PlanCheckout planId={id} planName={d.name} servedTracks={q.servedTracks} />
+      </section>
+    );
+  }
 
   // Credit applies to the base plan only (the trial earns it; #287 owns
   // eligibility). The RD bump is added on top — a bump is never discounted.
