@@ -6,7 +6,7 @@ export default function HomePage() {
   return (
     <section className="mx-auto max-w-5xl px-4 py-[var(--space-section)]">
       <div className="max-w-2xl">
-        <p className="text-sm font-medium uppercase tracking-wider text-sage">
+        <p className="text-sm font-medium uppercase tracking-wider text-sage-text">
           Now serving Noida
         </p>
         <h1 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight text-ink">

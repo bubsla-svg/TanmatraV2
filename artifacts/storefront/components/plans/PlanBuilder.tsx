@@ -57,8 +57,8 @@ export function PlanBuilder({ planId, defaultTrack }: { planId: PlanId; defaultT
       </div>
 
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Preference</p>
-        <div className="inline-flex rounded-xl border border-line p-1">
+        <p id="pref-label" className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Preference</p>
+        <div role="group" aria-labelledby="pref-label" className="inline-flex rounded-xl border border-line p-1">
           {q.servedTracks.map((t) => (
             <button
               key={t}

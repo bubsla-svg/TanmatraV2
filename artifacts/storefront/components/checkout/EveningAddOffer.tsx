@@ -35,7 +35,7 @@ export function EveningAddOffer({ pricePaise }: { pricePaise: number }) {
           // TODO(live): POST the post-purchase add-on attach to the api-server.
           setAdded(true);
         }}
-        className="mt-1 self-start rounded-xl border border-sage/50 px-4 py-2 text-sm font-semibold text-sage transition-colors hover:bg-[color-mix(in_srgb,var(--sage)_10%,transparent)]"
+        className="mt-1 self-start rounded-xl border border-sage/50 px-4 py-2 text-sm font-semibold text-sage-text transition-colors hover:bg-[color-mix(in_srgb,var(--sage)_10%,transparent)]"
       >
         Add evening meals
       </button>

@@ -18,6 +18,7 @@ export default function PlansPage() {
   const plans = routerPlans();
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10">
+      <h1 className="sr-only">Choose your plan</h1>
       <div className="flex max-w-md flex-col gap-4">
         <GoalRouter />
         <TrialCard />
