@@ -34,18 +34,21 @@ export class ApiError extends Error {
 
 type FetchImpl = typeof fetch;
 
-/** POST JSON to `/api<path>`, cookie-authed, bare-JSON in and out. `fetchImpl`
- *  is injectable so the money path is testable without a network. */
-export async function apiPost<T>(
+/** Cookie-authed JSON request to `/api<path>`, bare-JSON in and out. `fetchImpl`
+ *  is injectable so callers are testable without a network. A body (and the
+ *  content-type header) is sent only when provided — GET/DELETE omit it. */
+async function apiRequest<T>(
+  method: string,
   path: string,
-  body: unknown,
+  body?: unknown,
   fetchImpl: FetchImpl = fetch,
 ): Promise<T> {
   const res = await fetchImpl(`${API_BASE}/api${path}`, {
-    method: "POST",
+    method,
     credentials: "include",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    ...(body !== undefined
+      ? { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }
+      : {}),
   });
   const text = await res.text();
   const json: unknown = text ? JSON.parse(text) : {};
@@ -54,6 +57,26 @@ export async function apiPost<T>(
     throw new ApiError(res.status, e.code ?? "error", e.error ?? res.statusText);
   }
   return json as T;
+}
+
+/** POST JSON to `/api<path>`. */
+export function apiPost<T>(path: string, body: unknown, fetchImpl?: FetchImpl): Promise<T> {
+  return apiRequest<T>("POST", path, body, fetchImpl);
+}
+
+/** GET `/api<path>` (no body). */
+export function apiGet<T>(path: string, fetchImpl?: FetchImpl): Promise<T> {
+  return apiRequest<T>("GET", path, undefined, fetchImpl);
+}
+
+/** PATCH JSON to `/api<path>`. */
+export function apiPatch<T>(path: string, body: unknown, fetchImpl?: FetchImpl): Promise<T> {
+  return apiRequest<T>("PATCH", path, body, fetchImpl);
+}
+
+/** DELETE `/api<path>` (no body). */
+export function apiDelete<T>(path: string, fetchImpl?: FetchImpl): Promise<T> {
+  return apiRequest<T>("DELETE", path, undefined, fetchImpl);
 }
 
 // ── Quote (no auth, no secret — the one seam that runs without a gateway) ─────
@@ -209,4 +232,58 @@ export function verifyPayment(
   fetchImpl?: FetchImpl,
 ): Promise<VerifyPaymentResponse> {
   return apiPost("/payments/razorpay/verify", input, fetchImpl);
+}
+
+// ── Addresses (SF-04 — session required; 401 without the sid cookie) ──────────
+// Grounded contract (userAddresses.ts): GET/POST/PATCH/DELETE /addresses, all
+// behind requireAuthUser. The first saved address auto-defaults; an unserviceable
+// pincode is refused with 422 `unserviceable_pincode`.
+export type AddressType = "home" | "work" | "other";
+
+export interface Address {
+  id: string;
+  label: string;
+  type: AddressType;
+  line1: string;
+  line2: string;
+  city: string;
+  pincode: string;
+  phone: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AddressInput {
+  label: string;
+  type?: AddressType;
+  line1: string;
+  line2?: string | null;
+  city: string;
+  pincode: string;
+  phone: string;
+  isDefault?: boolean;
+}
+
+export function getAddresses(fetchImpl?: FetchImpl): Promise<{ addresses: Address[] }> {
+  return apiGet("/addresses", fetchImpl);
+}
+
+export function createAddress(
+  body: AddressInput,
+  fetchImpl?: FetchImpl,
+): Promise<{ address: Address }> {
+  return apiPost("/addresses", body, fetchImpl);
+}
+
+export function updateAddress(
+  id: string,
+  patch: Partial<AddressInput>,
+  fetchImpl?: FetchImpl,
+): Promise<{ address: Address }> {
+  return apiPatch(`/addresses/${encodeURIComponent(id)}`, patch, fetchImpl);
+}
+
+export function deleteAddress(id: string, fetchImpl?: FetchImpl): Promise<{ ok: true }> {
+  return apiDelete(`/addresses/${encodeURIComponent(id)}`, fetchImpl);
 }

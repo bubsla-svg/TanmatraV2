@@ -27,6 +27,7 @@ export function AlacarteDetails({
   phone,
   onPhoneChange,
   phoneLocked,
+  initialAddress,
   busy,
   error,
   onSubmit,
@@ -35,13 +36,16 @@ export function AlacarteDetails({
   phone: string;
   onPhoneChange: (v: string) => void;
   phoneLocked: boolean;
+  /** SF-04: a saved default address to seed the fields (parent remounts this
+   *  component via `key` when it arrives, so plain useState seeds are correct). */
+  initialAddress?: { line1: string; city: string; pincode: string } | null;
   busy: boolean;
   error: string | null;
   onSubmit: (address: AlacarteAddress) => void;
 }) {
-  const [line1, setLine1] = useState("");
-  const [city, setCity] = useState("");
-  const [pincode, setPincode] = useState("");
+  const [line1, setLine1] = useState(initialAddress?.line1 ?? "");
+  const [city, setCity] = useState(initialAddress?.city ?? "");
+  const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
   const [consent, setConsent] = useState(false);
 
   const phoneValid = phone.replace(/\D/g, "").length >= 10;

@@ -7,7 +7,14 @@ import { useCart } from "@/components/cart/CartProvider";
 import { itemCount } from "@/lib/cartStore";
 import { runAlacarteCheckout, finishAlacartePayment } from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
-import { ApiError, type AlacarteOrderInput, type AlacarteOrderResponse, type AuthUser } from "@/lib/api";
+import {
+  ApiError,
+  getAddresses,
+  type Address,
+  type AlacarteOrderInput,
+  type AlacarteOrderResponse,
+  type AuthUser,
+} from "@/lib/api";
 import { DPDP_POLICY_VERSION } from "@/lib/consent";
 import { PhoneAuth } from "./PhoneAuth";
 import { AlacarteDetails, type AlacarteAddress } from "./AlacarteDetails";
@@ -26,6 +33,8 @@ export function AlacarteCheckout() {
   const [phoneLocked, setPhoneLocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // SF-04 in-flow: once signed in, a saved default address prefills the form.
+  const [savedAddress, setSavedAddress] = useState<Address | null>(null);
   // One idempotency key per checkout session, and the order once created, so a
   // retry after a dismissed modal resumes payment instead of creating a
   // duplicate (the server 409s a reused externalOrderId).
@@ -37,6 +46,14 @@ export function AlacarteCheckout() {
       setPhone(user.phoneE164.replace(/^\+?91/, ""));
       setPhoneLocked(true);
     }
+    // Prefill from the saved default address, if any (SF-04). Best-effort: a
+    // failure just leaves the manual form — the guest path never depends on it.
+    void getAddresses()
+      .then(({ addresses }) => {
+        const pick = addresses.find((a) => a.isDefault) ?? addresses[0];
+        if (pick) setSavedAddress(pick);
+      })
+      .catch(() => {});
   }
 
   async function handlePay(address: AlacarteAddress) {
@@ -94,10 +111,12 @@ export function AlacarteCheckout() {
       <h1 className="text-lg font-semibold text-ink">Checkout</h1>
       <PhoneAuth onVerified={onVerified} />
       <AlacarteDetails
+        key={savedAddress?.id ?? "manual"}
         cart={cart}
         phone={phone}
         onPhoneChange={setPhone}
         phoneLocked={phoneLocked}
+        initialAddress={savedAddress}
         busy={busy}
         error={error}
         onSubmit={handlePay}
