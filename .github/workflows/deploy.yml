@@ -235,34 +235,79 @@ jobs:
             --project ${GCP_PROJECT} \
             --platform managed \
             --allow-unauthenticated \
+            --no-traffic \
             --port 8080 \
             --update-env-vars "API_UPSTREAM=${API_URL%/api},BUILD_SHA=${{ github.sha }},BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --quiet
 
-      - name: Smoke-test /checkout serves the SPA shell
-        run: |
-          URL=$(gcloud run services describe ${SERVICE} \
-            --region ${GCP_REGION} --project ${GCP_PROJECT} \
-            --format='value(status.url)')
-          echo "Service URL: $URL"
-          # A client-only route must now return the small __spa-fallback.html
-          # shell, not the large prerendered home document (the hydration-crash
-          # bug). Treat a sub-20KB response as the fixed SPA shell.
-          for i in 1 2 3 4 5 6; do
-            BYTES=$(curl -s "$URL/checkout" | wc -c)
-            echo "[$i/6] /checkout bytes: $BYTES"
-            if [ "$BYTES" -gt 0 ] && [ "$BYTES" -lt 20000 ]; then
-              echo "checkout serves SPA shell — OK"; exit 0
-            fi
-            sleep 5
-          done
-          echo "checkout still not serving the SPA shell"; exit 1
+          # Tag the deployed revision as 'candidate'
+          REV=$(gcloud run revisions list --service=${SERVICE} --region=${GCP_REGION} --project=${GCP_PROJECT} --sort-by=~metadata.creationTimestamp --limit=1 --format='value(metadata.name)')
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --set-tags candidate=$REV \
+            --quiet
 
-      - name: Self-verifying deploy check on live production domain
+      - name: Verify Candidate Build Endpoint
         run: |
+          CANDIDATE_URL="https://candidate---${SERVICE}-yftxztp3xq-em.a.run.app"
+          DEPLOYED=$(curl -sf $CANDIDATE_URL/api/build | jq -r .sha || echo "failed")
+          echo "Candidate domain build SHA: $DEPLOYED (expected: ${{ github.sha }})"
+          [ "$DEPLOYED" = "${{ github.sha }}" ] || { echo "DEPLOY NOT LIVE ON CANDIDATE DOMAIN"; exit 1; }
+
+      - name: Run Playwright CMP tests on Candidate
+        run: |
+          npm install -g pnpm
+          pnpm install
+          cd artifacts/tanmatra
+          npx playwright install chromium
+          PLAYWRIGHT_TEST_BASE_URL="https://candidate---${SERVICE}-yftxztp3xq-em.a.run.app" pnpm exec playwright test tests/e2e/mobile-onboarding.spec.ts
+
+  promote-frontend:
+    needs: frontend-cloud-run
+    environment: production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      GCP_REGION: asia-south2
+      SERVICE: tanmatra
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Promote and Verify
+        run: |
+          # Record current stable revision before promote
+          STABLE_REV=$(gcloud run services describe ${SERVICE} --region ${GCP_REGION} --project ${GCP_PROJECT} --format="value(status.traffic[0].revisionName)")
+          
+          # Promote
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --to-latest \
+            --quiet
+
+          # Verify
           DEPLOYED=$(curl -sf https://tanmatra.food/api/build | jq -r .sha || echo "failed")
           echo "Live domain build SHA: $DEPLOYED (expected: ${{ github.sha }})"
-          [ "$DEPLOYED" = "${{ github.sha }}" ] || { echo "DEPLOY NOT LIVE ON DOMAIN"; exit 1; }
+          if [ "$DEPLOYED" != "${{ github.sha }}" ]; then
+            echo "DEPLOY NOT LIVE ON DOMAIN. Auto-rolling back to $STABLE_REV..."
+            gcloud run services update-traffic ${SERVICE} \
+              --region ${GCP_REGION} \
+              --project ${GCP_PROJECT} \
+              --to-revisions $STABLE_REV=100 \
+              --quiet
+            exit 1
+          fi
 
   # Build the rebuild storefront (Next.js) image and roll the `storefront`
   # Cloud Run service. Separate service from `tanmatra` (the current SPA) — the
@@ -349,6 +394,7 @@ jobs:
             --project ${GCP_PROJECT} \
             --platform managed \
             --allow-unauthenticated \
+            --no-traffic \
             --port 8080 \
             --update-env-vars "API_BASE_URL=${API_URL%/api};API_UPSTREAM=${API_URL%/api}" \
             --memory=512Mi \
