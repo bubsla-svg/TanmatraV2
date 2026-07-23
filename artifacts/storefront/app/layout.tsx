@@ -6,6 +6,8 @@ import "@workspace/tokens/tokens.css";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/theme-provider";
+import { CartProvider } from "@/components/cart/CartProvider";
+import { MiniCartBar } from "@/components/cart/MiniCartBar";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
 // next/font self-hosts the files and exposes each as a CSS variable that
@@ -63,8 +65,12 @@ export default function RootLayout({
           >
             Skip to main content
           </a>
-          <Header />
-          <main id="main">{children}</main>
+          <CartProvider>
+            <Header />
+            <main id="main">{children}</main>
+            {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
+            <MiniCartBar />
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

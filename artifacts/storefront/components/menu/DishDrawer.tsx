@@ -4,8 +4,9 @@
 // behave; closing rewrites the URL. Everything around it stays RSC.
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { DishData } from "@workspace/menu-catalog";
+import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
+import { AddToCart } from "@/components/cart/AddToCart";
 import {
   Drawer,
   DrawerContent,
@@ -83,8 +84,9 @@ export function DishDrawer({ dish }: { dish: DishData }) {
             >
               Open full page
             </Link>
-            {/* The sticky Add CTA lands with the cart slice (SF-02) — no dead
-                buttons shipped in the meantime. */}
+            {/* §4.2 footer Add — server price beside the sole action colour;
+                only for à-la-carte-orderable dishes (no dead buttons). */}
+            {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
           </div>
         </div>
       </DrawerContent>
