@@ -1,7 +1,9 @@
 import {
+  createAlacarteOrder,
   createSubscription,
   createRazorpayOrder,
   verifyPayment,
+  type AlacarteOrderInput,
   type CreateSubscriptionInput,
 } from "./api";
 
@@ -76,5 +78,58 @@ export async function runCheckout(
     orderId: verified.orderId,
     status: verified.status,
     autopayDisclaimer: verified.autopayDisclaimer,
+  };
+}
+
+// ── À-la-carte (SF-05 / CUJ-01) ──────────────────────────────────────────────
+
+export interface AlacartePathDeps {
+  createAlacarteOrder: typeof createAlacarteOrder;
+  createRazorpayOrder: typeof createRazorpayOrder;
+  verifyPayment: typeof verifyPayment;
+}
+
+const ALC_DEFAULT_DEPS: AlacartePathDeps = {
+  createAlacarteOrder,
+  createRazorpayOrder,
+  verifyPayment,
+};
+
+export interface AlacarteCheckoutResult extends CheckoutResult {
+  /** The SERVER's billed total — the only number the UI may show. */
+  totalPaise: number;
+  etaMinutes: number;
+}
+
+/**
+ * The à-la-carte money path, same verified order as the plan path: create the
+ * guest order (server prices it; DPDP consent + serviceable pincode enforced
+ * server-side) → create the Razorpay order for it (server bills the DB row's
+ * amount — the body carries only the order id) → open the modal → verify the
+ * signature. The client never sends a price at any step; a dismissed modal
+ * rejects before verify is ever called.
+ */
+export async function runAlacarteCheckout(
+  params: { order: AlacarteOrderInput; razorpay: RazorpayAdapter },
+  deps: AlacartePathDeps = ALC_DEFAULT_DEPS,
+): Promise<AlacarteCheckoutResult> {
+  const created = await deps.createAlacarteOrder(params.order);
+
+  const rzpOrder = await deps.createRazorpayOrder({ orderId: created.orderId });
+
+  const paid = await params.razorpay.open(rzpOrder);
+
+  const verified = await deps.verifyPayment({
+    orderId: created.orderId,
+    razorpayPaymentId: paid.razorpayPaymentId,
+    razorpayOrderId: paid.razorpayOrderId,
+    razorpaySignature: paid.razorpaySignature,
+  });
+
+  return {
+    orderId: verified.orderId,
+    status: verified.status,
+    totalPaise: created.totalPaise,
+    etaMinutes: created.etaMinutes,
   };
 }

@@ -142,6 +142,39 @@ export function createSubscription(
   return apiPost("/subscriptions", body, fetchImpl);
 }
 
+// ── À-la-carte order (guest checkout — no session required) ──────────────────
+// Grounded contract (checkout.ts POST /orders): DPDP consent object REQUIRED
+// (400 consent_required), serviceable pincode enforced (422), allergen safety
+// gate, idempotency via externalOrderId, and the whole route is dark until
+// the api-server env sets ALC_CHECKOUT_ENABLED (403 alc_checkout_disabled).
+export interface AlacarteOrderInput {
+  /** Client-generated idempotency key; also the id used to poll status. */
+  externalOrderId: string;
+  items: { dishId: number; qty: number }[];
+  phone: string;
+  address: { label?: string; line1: string; line2?: string; city: string; pincode: string };
+  consent: { accepted: true; policyVersion: string };
+  guestPrefs?: Record<string, unknown>;
+  allergenAck?: boolean;
+  [extra: string]: unknown;
+}
+
+export interface AlacarteOrderResponse {
+  orderId: string;
+  serverOrderId: number | string;
+  status: string;
+  etaMinutes: number;
+  /** The SERVER's total — the only number any later step may display. */
+  totalPaise: number;
+}
+
+export function createAlacarteOrder(
+  body: AlacarteOrderInput,
+  fetchImpl?: FetchImpl,
+): Promise<AlacarteOrderResponse> {
+  return apiPost("/orders", body, fetchImpl);
+}
+
 // ── Pay (Razorpay order → browser modal → verify) ────────────────────────────
 export interface RazorpayOrderResponse {
   razorpayOrderId: string;
