@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-type Tab = "subscriptions" | "orders" | "addresses";
+type Tab = "subscriptions" | "orders" | "addresses" | "preferences";
 
 /**
  * Account section tabs. Server component (no client JS) — each page passes its
- * own `active` tab. Extend here as account surfaces land (orders, etc.).
+ * own `active` tab. Extend here as account surfaces land.
  */
 export function AccountNav({ active }: { active: Tab }) {
   const link = (href: string, key: Tab, label: string) => (
@@ -19,10 +19,11 @@ export function AccountNav({ active }: { active: Tab }) {
     </Link>
   );
   return (
-    <nav aria-label="Account" className="mb-6 flex gap-5 border-b border-line">
+    <nav aria-label="Account" className="mb-6 flex gap-5 overflow-x-auto border-b border-line">
       {link("/account/subscriptions", "subscriptions", "Plans")}
       {link("/account/orders", "orders", "Orders")}
       {link("/account/addresses", "addresses", "Addresses")}
+      {link("/account/preferences", "preferences", "Preferences")}
     </nav>
   );
 }
