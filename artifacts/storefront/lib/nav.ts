@@ -91,9 +91,11 @@ export const PRIMARY_NAV: NavLink[] = [
   { label: "Account", href: "/account" },
 ];
 
-/** "Company" / help links (footer). Waves append (Wave A → About, FAQ). */
+/** "Company" / help links (footer). */
 export const COMPANY_LINKS: NavLink[] = [
+  { label: "About", href: "/about" },
   { label: "Corporate", href: "/corporate" },
+  { label: "FAQ", href: "/faq" },
 ];
 
 /**
