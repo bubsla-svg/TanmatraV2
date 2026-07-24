@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Tab = "subscriptions" | "orders" | "addresses" | "loyalty";
+type Tab = "subscriptions" | "orders" | "addresses" | "preferences" | "loyalty";
 
 /**
  * Account section tabs. Server component (no client JS) — each page passes its
@@ -19,10 +19,11 @@ export function AccountNav({ active }: { active: Tab }) {
     </Link>
   );
   return (
-    <nav aria-label="Account" className="mb-6 flex gap-5 border-b border-line">
+    <nav aria-label="Account" className="mb-6 flex gap-5 overflow-x-auto border-b border-line">
       {link("/account/subscriptions", "subscriptions", "Plans")}
       {link("/account/orders", "orders", "Orders")}
       {link("/account/addresses", "addresses", "Addresses")}
+      {link("/account/preferences", "preferences", "Preferences")}
       {link("/account/loyalty", "loyalty", "Rewards")}
     </nav>
   );
