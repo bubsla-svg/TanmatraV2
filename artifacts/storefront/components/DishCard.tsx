@@ -2,6 +2,7 @@ import Link from "next/link";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
+import type { DishFit } from "@/lib/menuFit";
 
 /**
  * Presentational dish card. Server component — pure render; the only client
@@ -15,7 +16,7 @@ import { AddToCart } from "@/components/cart/AddToCart";
  * of the Link, not a child — a button inside an anchor is invalid HTML and an
  * a11y fail.
  */
-export function DishCard({ dish }: { dish: DishData }) {
+export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
   const est = dish.macrosEstimated ? "~" : "";
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5">
@@ -42,6 +43,12 @@ export function DishCard({ dish }: { dish: DishData }) {
         </div>
         <div className="flex flex-col gap-1.5 p-3 pb-0">
           <h3 className="text-sm font-semibold leading-snug text-ink">{dish.name}</h3>
+          {fit?.band === "conflict" && fit.conflictLabel && (
+            <p role="note" className="text-[11px] font-semibold text-[var(--danger)]">{fit.conflictLabel}</p>
+          )}
+          {fit?.band === "high" && (
+            <p className="text-[11px] font-semibold text-sage-text">Good match for you</p>
+          )}
           <p className="line-clamp-2 text-xs leading-relaxed text-ink-muted">
             {dish.tasteDescription || dish.description}
           </p>
