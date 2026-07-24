@@ -24,9 +24,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/plans", priority: 0.9, changeFrequency: "monthly" },
     { path: "/trial", priority: 0.8, changeFrequency: "monthly" },
     { path: "/corporate", priority: 0.6, changeFrequency: "monthly" },
+    { path: "/corporate-wellness", priority: 0.6, changeFrequency: "monthly" },
     { path: "/about", priority: 0.5, changeFrequency: "monthly" },
     { path: "/faq", priority: 0.5, changeFrequency: "monthly" },
     { path: "/recipes", priority: 0.7, changeFrequency: "weekly" },
+    { path: "/partners/gyms", priority: 0.5, changeFrequency: "monthly" },
+    { path: "/partners/fitness-clubs", priority: 0.5, changeFrequency: "monthly" },
   ];
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE_URL}${r.path === "/" ? "" : r.path}`,

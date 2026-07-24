@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { CorporateLeadForm } from "@/components/corporate/CorporateLeadForm";
+import { PARTNER_LINKS } from "@/lib/nav";
 
 export const metadata: Metadata = {
   title: "Meal programs for teams",
@@ -20,8 +22,26 @@ export default function CorporatePage() {
         RD-designed lunches for offices, gyms, and fitness clubs across Delhi NCR. Tell us about your
         team and we&rsquo;ll put together a plan that fits.
       </p>
+      <p className="mt-3 text-sm">
+        <Link href="/corporate-wellness" className="font-medium text-gold-text hover:underline">
+          See the full corporate-wellness pitch — subsidy calculator &amp; FAQ &rarr;
+        </Link>
+      </p>
       <div className="mt-6">
         <CorporateLeadForm />
+      </div>
+      <div className="mt-8 border-t border-line pt-6">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Run a gym or club?</p>
+        <ul className="mt-3 flex flex-col gap-2">
+          {PARTNER_LINKS.map((l) => (
+            <li key={l.href}>
+              <Link href={l.href} className="text-sm font-medium text-gold-text hover:underline">
+                {l.label} &rarr;
+              </Link>
+              {l.desc && <span className="ml-2 text-xs text-ink-muted">{l.desc}</span>}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

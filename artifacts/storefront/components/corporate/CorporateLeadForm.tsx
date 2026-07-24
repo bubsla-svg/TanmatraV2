@@ -20,8 +20,27 @@ const inputCls =
   "w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
 const emailOk = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim());
 
-export function CorporateLeadForm() {
-  const [kind, setKind] = useState<CorporateLeadKind>("corporate");
+export interface CorporateLeadFormProps {
+  /** Pre-select the segment (a landing page implies its own kind). */
+  defaultKind?: CorporateLeadKind;
+  /** Hide the segment selector when the page already implies the kind. */
+  lockKind?: boolean;
+  /** Attribution written onto the lead (defaults to the /corporate source). */
+  source?: string;
+  /** Override the submit button label to match the page's CTA. */
+  submitLabel?: string;
+  /** Digits-only WhatsApp number for a wa.me fallback link under the form. */
+  whatsApp?: string;
+}
+
+export function CorporateLeadForm({
+  defaultKind = "corporate",
+  lockKind = false,
+  source = "web:/corporate",
+  submitLabel = "Request a plan",
+  whatsApp,
+}: CorporateLeadFormProps = {}) {
+  const [kind, setKind] = useState<CorporateLeadKind>(defaultKind);
   const [name, setName] = useState("");
   const [workEmail, setWorkEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -50,7 +69,7 @@ export function CorporateLeadForm() {
         parkOrSector: parkOrSector.trim() || undefined,
         phone: phone.trim() || undefined,
         message: message.trim() || undefined,
-        source: "web:/corporate",
+        source,
       });
       setDone(true);
     } catch (e) {
@@ -77,12 +96,14 @@ export function CorporateLeadForm() {
 
   return (
     <div className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-        You&rsquo;re a
-        <select value={kind} onChange={(e) => setKind(e.target.value as CorporateLeadKind)} className={inputCls}>
-          {KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
-        </select>
-      </label>
+      {!lockKind && (
+        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          You&rsquo;re a
+          <select value={kind} onChange={(e) => setKind(e.target.value as CorporateLeadKind)} className={inputCls}>
+            {KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
+          </select>
+        </label>
+      )}
       <input aria-label="Your name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className={inputCls} />
       <input aria-label="Work email" type="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} placeholder="Work email" className={inputCls} />
       <input aria-label="Company or organisation" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company / organisation" className={inputCls} />
@@ -101,8 +122,21 @@ export function CorporateLeadForm() {
         type="button" disabled={!valid || busy} onClick={() => void submit()}
         className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
       >
-        {busy ? "Sending…" : "Request a plan"}
+        {busy ? "Sending…" : submitLabel}
       </button>
+      {whatsApp && (
+        <p className="text-xs text-ink-muted">
+          or{" "}
+          <a
+            href={`https://wa.me/${whatsApp}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gold-text underline underline-offset-2"
+          >
+            WhatsApp us
+          </a>
+        </p>
+      )}
     </div>
   );
 }

@@ -63,6 +63,7 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/recipes",
     links: [
       { label: "Recipes", href: "/recipes", desc: "RD-designed, macro-labelled" },
+      { label: "Corporate wellness", href: "/corporate-wellness", desc: "RD-designed team lunches for offices" },
       { label: "Corporate & partnerships", href: "/corporate", desc: "Team lunches for your office" },
     ],
   },
@@ -114,6 +115,17 @@ export const LEGAL_LINKS: NavLink[] = [
   { label: "Shipping & Delivery", href: "/legal/shipping" },
   { label: "Health & Nutrition Disclaimer", href: "/legal/disclaimer" },
   { label: "Grievance Redressal", href: "/legal/grievance" },
+];
+
+/**
+ * Partnership / segment landers (route-parity Wave B). B2B conversion pages,
+ * not primary IA — they're surfaced by internal links from /corporate and the
+ * sitemap, deliberately kept out of the header/BottomNav. Each POSTs to the
+ * shared /corporate-leads endpoint under its own `kind`.
+ */
+export const PARTNER_LINKS: NavLink[] = [
+  { label: "For gyms", href: "/partners/gyms", desc: "Bundle nutrition into memberships" },
+  { label: "For running & cycling clubs", href: "/partners/fitness-clubs", desc: "Post-workout breakfast drop-offs" },
 ];
 
 /** Site-level facts surfaced in the footer. */
