@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import { fetchMenu, findDish } from "@/lib/catalog";
-import { MenuGrid } from "@/components/MenuGrid";
+import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
 
 export const metadata: Metadata = {
@@ -41,7 +41,7 @@ export default async function MenuPage({
         </p>
       </div>
       <h2 className="sr-only">Dishes</h2>
-      <MenuGrid dishes={orderable} />
+      <PersonalizedMenu dishes={orderable} />
       {openDish && <DishDrawer dish={openDish} />}
     </section>
   );

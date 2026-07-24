@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@workspace/menu-catalog": "workspace:*",
+    "@workspace/preferences-match": "workspace:*",
     "@workspace/subscription-rules": "workspace:*",
     "@workspace/tokens": "workspace:*",
     "class-variance-authority": "^0.7.1",
