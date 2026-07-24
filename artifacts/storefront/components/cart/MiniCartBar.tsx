@@ -25,7 +25,7 @@ export function MiniCartBar() {
 
   return (
     <>
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+      <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <p className="text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}
