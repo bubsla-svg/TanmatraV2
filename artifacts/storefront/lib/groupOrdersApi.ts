@@ -1,4 +1,4 @@
-import { apiGet, apiPost, type FetchImpl } from "@/lib/apiClient";
+import { apiGet, apiPost, type FetchImpl } from "./apiClient";
 
 /**
  * Group-order client (route-parity Wave E). A share code opens a group anyone

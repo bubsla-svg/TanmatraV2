@@ -1,6 +1,6 @@
-import { apiGet, API_BASE, ApiError, type FetchImpl } from "@/lib/apiClient";
-import { createRazorpayOrder, verifyPayment } from "@/lib/api";
-import type { RazorpayAdapter } from "@/lib/moneyPath";
+import { apiGet, API_BASE, ApiError, type FetchImpl } from "./apiClient";
+import { createRazorpayOrder, verifyPayment } from "./api";
+import type { RazorpayAdapter } from "./moneyPath";
 
 /**
  * Marketplace (Wave F) client. Browse is public; buying is a real money-path.

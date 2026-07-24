@@ -1,5 +1,5 @@
-import { apiGet, apiPost, type FetchImpl } from "@/lib/apiClient";
-import type { RazorpayAdapter } from "@/lib/moneyPath";
+import { apiGet, apiPost, type FetchImpl } from "./apiClient";
+import type { RazorpayAdapter } from "./moneyPath";
 
 /**
  * Premium-membership client (route-parity — gated). The purchase is a real

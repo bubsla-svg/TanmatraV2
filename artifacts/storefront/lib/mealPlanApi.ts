@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, apiPut, type FetchImpl } from "@/lib/apiClient";
+import { apiGet, apiPost, apiPatch, apiPut, type FetchImpl } from "./apiClient";
 
 /**
  * Weekly meal-planner client (route-parity Wave H). Wraps the api-server's
