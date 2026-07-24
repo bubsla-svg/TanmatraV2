@@ -3,6 +3,7 @@ import { PLAN_CATALOG } from "@workspace/subscription-rules";
 import { LEGAL_DOCS } from "@/content/legal";
 import { fetchMenu } from "@/lib/catalog";
 import { getRecipes } from "@/lib/recipesApi";
+import { getChallenges } from "@/lib/challengesApi";
 import { SITE_URL } from "@/lib/siteUrl";
 
 // Only public, indexable routes belong here. /login, /checkout, /track,
@@ -30,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/recipes", priority: 0.7, changeFrequency: "weekly" },
     { path: "/partners/gyms", priority: 0.5, changeFrequency: "monthly" },
     { path: "/partners/fitness-clubs", priority: 0.5, changeFrequency: "monthly" },
+    { path: "/challenges", priority: 0.6, changeFrequency: "weekly" },
   ];
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE_URL}${r.path === "/" ? "" : r.path}`,
@@ -101,5 +103,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // getRecipes already swallows failures; last-resort guard.
   }
 
-  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries];
+  // Challenge detail (Event) pages. getChallenges() returns [] on a cold API.
+  let challengeEntries: MetadataRoute.Sitemap = [];
+  try {
+    const challenges = await getChallenges();
+    challengeEntries = challenges.map((c) => ({
+      url: `${SITE_URL}/challenges/${c.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
+  } catch {
+    // getChallenges already swallows failures; last-resort guard.
+  }
+
+  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries, ...challengeEntries];
 }
