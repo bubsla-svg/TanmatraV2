@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getRds, getRd, type RdProfile } from "@/lib/rdApi";
 import { formatPaise } from "@/lib/format";
+import { RdBooking } from "@/components/rd/RdBooking";
 
 type Params = { params: Promise<{ slug: string }> };
 export const revalidate = 3600;
@@ -89,16 +90,10 @@ export default async function RdProfilePage({ params }: Params) {
             );
           })}
         </ul>
-        <p className="mt-4 text-xs leading-relaxed text-ink-faint">
-          1:1 RD booking is rolling out shortly. In the meantime, get personalised guidance from our
-          nutrition coach — it can route you to the right dietitian.
-        </p>
-        <Link
-          href="/coach"
-          className="mt-3 inline-block rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)]"
-        >
-          Chat with our nutrition coach &rarr;
-        </Link>
+      </div>
+
+      <div className="mt-4">
+        <RdBooking rd={{ slug: rd.slug, name: rd.name, pricing: rd.pricing }} />
       </div>
     </article>
   );
