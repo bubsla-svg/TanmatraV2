@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { PRIMARY_NAV } from "@/lib/nav";
+import { CommandMenu } from "@/components/CommandMenu";
 
 /**
- * Global chrome shell. Server component — it holds no state and needs no
- * interactivity, so it ships zero client JS. The primary links come from the
- * central nav config (lib/nav.ts) so route-parity waves extend the IA by
- * editing data, not this file.
+ * Global chrome shell. Server component itself; it hosts one small client island
+ * (CommandMenu, the ⌘K search). The primary links come from the central nav
+ * config (lib/nav.ts) so route-parity waves extend the IA by editing data, not
+ * this file. Primary links are desktop-only — on mobile the BottomNav carries them.
  */
 export function Header() {
   return (
@@ -19,15 +20,18 @@ export function Header() {
           Tanmatra
         </Link>
         <nav aria-label="Primary" className="flex items-center gap-1">
-          {PRIMARY_NAV.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
-            >
-              {l.label}
-            </Link>
-          ))}
+          <CommandMenu />
+          <div className="hidden items-center gap-1 md:flex">
+            {PRIMARY_NAV.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       </div>
     </header>

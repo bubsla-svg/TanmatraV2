@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { MiniCartBar } from "@/components/cart/MiniCartBar";
 import { Footer } from "@/components/Footer";
+import { BottomNav } from "@/components/BottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -80,7 +81,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${ibmPlexSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body>
+      <body className="pb-16 md:pb-0">
         <SiteStructuredData />
         <ThemeProvider>
           <a
@@ -95,6 +96,7 @@ export default function RootLayout({
             {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
             <MiniCartBar />
             <Footer />
+            <BottomNav />
           </CartProvider>
         </ThemeProvider>
       </body>
