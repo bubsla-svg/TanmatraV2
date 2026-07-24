@@ -18,7 +18,7 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
   const [{ dishes }, rds] = await Promise.all([fetchMenu(), getRds()]);
   const slim: ProtocolDish[] = dishes.map((d) => ({
     slug: d.slug, name: d.name, image: toProxiedImage(d.image),
-    protein: d.macros.protein, calories: d.macros.calories, gi: d.glycaemicIndex,
+    protein: d.macros.protein, calories: d.macros.calories, fiber: d.macros.fiber, gi: d.glycaemicIndex,
     sugar: parseFloat(d.sugarPerServing) || 0, sugarPerServing: d.sugarPerServing, rdVerified: d.rdVerified,
   }));
   const qualifying = slim.filter((d) => matchesProtocolDish(d, cfg.filter)).length;
@@ -68,7 +68,7 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
         <section className="py-12">
           <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Talk to a specialist</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">
-            {cfg.clinical ? "Your clinical dietitians" : "Your performance dietitian"}
+            Your {cfg.eyebrow.replace(" Protocol", "").toLowerCase()} {protocolRds.length > 1 ? "dietitians" : "dietitian"}
           </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {protocolRds.map((rd) => <RdCard key={rd.slug} rd={rd} />)}

@@ -19,8 +19,8 @@
 import type { PlanId } from "@workspace/subscription-rules";
 import type { LandingBenefit } from "./partners";
 
-export type ProtocolKey = "performance" | "clinical";
-export const PROTOCOL_KEYS: ProtocolKey[] = ["performance", "clinical"];
+export type ProtocolKey = "performance" | "clinical" | "wellness";
+export const PROTOCOL_KEYS: ProtocolKey[] = ["performance", "clinical", "wellness"];
 
 export interface ProtocolConfig {
   metaTitle: string;
@@ -106,5 +106,37 @@ export const PROTOCOL_CONFIG: Record<ProtocolKey, ProtocolConfig> = {
     filter: "clinical",
     rdKeywords: ["diabet", "pcos", "cardio", "cholesterol", "clinical", "ibs", "gut"],
     clinical: true,
+  },
+  wellness: {
+    metaTitle: "Wellness Protocol — Preventive, Everyday Nutrition | Tanmatra",
+    metaDescription:
+      "Preventive, longevity-leaning meals — high-fibre, low-GI, and gentle on sodium and sugar. RD-portioned for daily energy and gut health, with published nutrition on every dish.",
+    eyebrow: "Wellness Protocol",
+    headline: "Preventive nutrition for",
+    accent: "everyday vitality.",
+    desc: "Balanced, RD-portioned meals for daily energy and gut health — high-fibre, low-glycaemic, and gentle on sodium and sugar, with the numbers published on every dish.",
+    pillars: [
+      {
+        icon: "shield-check",
+        title: "Anti-inflammatory leaning",
+        body: "Micronutrient-dense plates that prioritise anti-inflammatory whole-food ingredients.",
+      },
+      {
+        icon: "check",
+        title: "Gut-health forward",
+        body: "12g+ fibre per meal to support a healthy microbiome — printed on every label.",
+      },
+      {
+        icon: "timer",
+        title: "Sustainable",
+        body: "Portioned for the long run — habits you can actually keep, not a crash reset.",
+      },
+    ],
+    featuredLabel: "Wellness-aligned picks",
+    featuredSub: "High-fibre, low-glycaemic plates that pass the Wellness criteria.",
+    planId: "desk_fuel",
+    filter: "wellness",
+    rdKeywords: ["wellness", "family", "senior", "longevity", "general", "gut"],
+    clinical: false,
   },
 };

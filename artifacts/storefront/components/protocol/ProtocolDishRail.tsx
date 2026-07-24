@@ -8,6 +8,7 @@ export interface ProtocolDish {
   image: string;
   protein: number;
   calories: number;
+  fiber: number;
   gi: "low" | "medium" | "high";
   sugar: number;
   sugarPerServing: string;
@@ -16,18 +17,22 @@ export interface ProtocolDish {
 
 /** The protocol qualification predicate (shared with the stat strip). */
 export function matchesProtocolDish(d: ProtocolDish, filter: ProtocolKey): boolean {
-  return filter === "performance" ? d.protein >= 18 : d.rdVerified && d.gi === "low" && d.sugar <= 10;
+  if (filter === "performance") return d.protein >= 18;
+  if (filter === "wellness") return d.gi !== "high" && d.fiber >= 4 && d.sugar <= 12;
+  return d.rdVerified && d.gi === "low" && d.sugar <= 10; // clinical
 }
 
 function selected(dishes: ProtocolDish[], filter: ProtocolKey): ProtocolDish[] {
   const q = dishes.filter((d) => matchesProtocolDish(d, filter));
-  return filter === "performance"
-    ? q.sort((a, b) => b.protein - a.protein).slice(0, 6)
-    : q.sort((a, b) => a.sugar - b.sugar).slice(0, 6);
+  if (filter === "performance") return q.sort((a, b) => b.protein - a.protein).slice(0, 6);
+  if (filter === "wellness") return q.sort((a, b) => b.fiber - a.fiber).slice(0, 6);
+  return q.sort((a, b) => a.sugar - b.sugar).slice(0, 6); // clinical
 }
 
 function badge(d: ProtocolDish, filter: ProtocolKey): string {
-  return filter === "performance" ? `${Math.round(d.protein)}g protein` : `GI ${d.gi}`;
+  if (filter === "performance") return `${Math.round(d.protein)}g protein`;
+  if (filter === "wellness") return `${Math.round(d.fiber)}g fibre`;
+  return `GI ${d.gi}`; // clinical
 }
 
 /** "Featured dishes" rail for a protocol page — the live catalog filtered to the
