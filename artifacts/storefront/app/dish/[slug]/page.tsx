@@ -9,6 +9,7 @@ import { DishSpec } from "@/components/menu/DishSpec";
 import { DishGallery } from "@/components/menu/DishGallery";
 import { DishAllergens } from "@/components/menu/DishAllergens";
 import { DishPairing } from "@/components/menu/DishPairing";
+import { DishReviews } from "@/components/menu/DishReviews";
 import { galleryImages } from "@/lib/gallery";
 import { dishCrossSell } from "@/lib/related";
 import { DishStructuredData } from "@/components/StructuredData";
@@ -90,6 +91,11 @@ export default async function DishPage({ params }: Params) {
       <DishAllergens dish={dish} />
 
       <DishPairing pairing={pairing} related={related} />
+
+      {/* key={slug}: like DishGallery above, force a fresh island on client-side
+          PDP→PDP navigation (via the cross-sell links) so dish B never briefly
+          renders dish A's held reviews/rating/eligibility before the refetch. */}
+      <DishReviews key={dish.slug} slug={dish.slug} />
     </article>
   );
 }
