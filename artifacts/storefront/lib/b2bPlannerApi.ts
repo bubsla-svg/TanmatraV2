@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, type FetchImpl } from "@/lib/apiClient";
+import { apiGet, apiPost, apiPut, type FetchImpl } from "./apiClient";
 
 /**
  * B2B lunch-planner client (route-parity Wave E, admin). Capture a team diet

@@ -1,4 +1,4 @@
-import { apiGet, apiPost, type FetchImpl } from "@/lib/apiClient";
+import { apiGet, apiPost, type FetchImpl } from "./apiClient";
 
 /**
  * Company / corporate-membership client (route-parity Wave E). Member-facing
