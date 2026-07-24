@@ -20,6 +20,7 @@ import {
 } from "@workspace/db";
 import { and, asc, desc, eq, gt, lt, isNull, or, sql } from "drizzle-orm";
 import { bridgeCreditDiscountPaise } from "../lib/bridgeCredit";
+import { getCreditBalancePaise, issueCredit } from "../lib/loyaltyEngine";
 import { z } from "zod/v4";
 import { invalidateUserBrief } from "../lib/userBrief";
 import { emitServerEvent } from "../lib/serverEvents";
@@ -999,7 +1000,7 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   // order all commit atomically — a partial write here would either leave a
   // subscription with no billable order (the original bug) or an order
   // dangling with no subscription to attach a mandate to.
-  const { sub, deliveries, bridgeCreditPaise } = await db.transaction(async (tx) => {
+  const { sub, deliveries, bridgeCreditPaise, ledgerCreditPaise } = await db.transaction(async (tx) => {
     const [sub] = await tx
       .insert(subscriptionsTable)
       .values({
@@ -1053,6 +1054,39 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
       }
     }
 
+    // General credit-ledger balance (referral awards, the 3-Day Taste Test's
+    // ₹399 paid-time creditback, loyalty/winback grants — anything issued
+    // through `issueCredit`) is "redeemable against any plan start" (02e §6):
+    // apply whatever remains of THIS bill after the trial bridge credit above,
+    // never the full pre-bridge price, so a trial that bridgeCreditPaise
+    // already zeroed out can't also burn an unrelated ledger balance for
+    // nothing. Same advisory-lock + FIFO-balance pattern as the à-la-carte
+    // path's inline redemption (loyaltyEngine.finalizeOrder) — inlined rather
+    // than calling redeemCreditAtomic because that helper opens its own
+    // transaction and can't nest inside this one.
+    let ledgerCreditPaise = 0;
+    const billableAfterBridge = Math.max(0, pricePerDeliveryPaise - bridgeCreditPaise);
+    if (billableAfterBridge > 0) {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${"credit:" + userId}, 0))`,
+      );
+      const balancePaise = await getCreditBalancePaise(userId, tx);
+      ledgerCreditPaise = Math.min(balancePaise, billableAfterBridge);
+      if (ledgerCreditPaise > 0) {
+        await issueCredit(
+          {
+            userId,
+            deltaPaise: -ledgerCreditPaise,
+            reason: "checkout_redemption",
+            refType: "subscription",
+            refId: String(sub.id),
+            note: `Applied at plan checkout for subscription ${sub.id}`,
+          },
+          tx,
+        );
+      }
+    }
+
     if (data.members.length > 0) {
       await tx.insert(subscriptionMembersTable).values(
         data.members.map((m) => ({
@@ -1101,9 +1135,14 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     // `POST /payments/razorpay/order` (looked up by externalOrderId
     // `sub-<id>`) and `registerAutopayMandate` (joined via
     // subscriptionDeliveriesTable.orderId) both work.
-    await createOrderForNewSubscription(tx, sub, deliveries, bridgeCreditPaise);
+    await createOrderForNewSubscription(
+      tx,
+      sub,
+      deliveries,
+      bridgeCreditPaise + ledgerCreditPaise,
+    );
 
-    return { sub, deliveries, bridgeCreditPaise };
+    return { sub, deliveries, bridgeCreditPaise, ledgerCreditPaise };
   });
 
   // A day plan's first delivery may sit after the cycle start (e.g. a
@@ -1122,7 +1161,12 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     userId,
   );
   invalidateUserBrief(userId);
-  res.status(201).json({ subscription: sub, deliveries, bridgeCreditPaise });
+  res.status(201).json({
+    subscription: sub,
+    deliveries,
+    bridgeCreditPaise,
+    creditAppliedPaise: ledgerCreditPaise,
+  });
 });
 
 // ── Plan-v2 subscription add-ons (02 §5 / 02a §4) ────────────────────────────

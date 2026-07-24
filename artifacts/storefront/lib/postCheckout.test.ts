@@ -27,6 +27,15 @@ test("stash → read round-trips the server's verbatim disclaimer, keyed by orde
   assert.equal(readCheckoutPerks("sub-43", storage), null);
 });
 
+test("creditAppliedPaise round-trips alongside the other perks", () => {
+  const storage = memoryStorage();
+  stashCheckoutPerks("sub-77", { creditAppliedPaise: 39900, planId: "desk_fuel" }, storage);
+  assert.deepEqual(readCheckoutPerks("sub-77", storage), {
+    creditAppliedPaise: 39900,
+    planId: "desk_fuel",
+  });
+});
+
 test("read is non-destructive — an in-tab refresh still shows the disclaimer", () => {
   const storage = memoryStorage();
   stashCheckoutPerks("sub-7", { autopayDisclaimer: "d" }, storage);
