@@ -60,8 +60,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "community",
     label: "Community",
-    href: "/corporate",
+    href: "/recipes",
     links: [
+      { label: "Recipes", href: "/recipes", desc: "RD-designed, macro-labelled" },
       { label: "Corporate & partnerships", href: "/corporate", desc: "Team lunches for your office" },
     ],
   },
