@@ -76,13 +76,21 @@ export function checkout(
  * order for its externalOrderId → modal → verify. The client authors no amount;
  * the server bills the order's own total.
  */
+export type DeliveryMode = "ship" | "bundle_with_meal";
+
 export async function payForMarketplace(
   line: { itemId: number; qty: number },
   razorpay: RazorpayAdapter,
+  opts: { deliveryMode?: DeliveryMode; bundleWithOrderId?: number | null } = {},
   fetchImpl?: FetchImpl,
 ): Promise<MarketplaceOrder> {
   const { order } = await checkout(
-    { idempotencyKey: newIdempotencyKey(), items: [line], deliveryMode: "ship" },
+    {
+      idempotencyKey: newIdempotencyKey(),
+      items: [line],
+      deliveryMode: opts.deliveryMode ?? "ship",
+      bundleWithOrderId: opts.bundleWithOrderId ?? null,
+    },
     fetchImpl,
   );
   const rzp = await createRazorpayOrder({ orderId: order.externalOrderId }, fetchImpl);

@@ -1,7 +1,8 @@
 "use client";
 // Marketplace item detail + BUY (real money-path). Browse is public; the
 // purchase is session-gated (401 → PhoneAuth) and settles via the shared
-// Razorpay path (payForMarketplace). Ship-only for v1; bundle-with-meal deferred.
+// Razorpay path (payForMarketplace). Ships separately, or bundles DELIVERY with
+// a recent order (still its own paid order — bundleWithOrderId only links delivery).
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ApiError } from "@/lib/apiClient";
@@ -9,6 +10,7 @@ import { formatPaise } from "@/lib/format";
 import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
 import { getItem, payForMarketplace, type MarketplaceItem } from "@/lib/marketplaceApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { BundlePicker } from "./BundlePicker";
 
 export function MarketplaceItemView({ slug }: { slug: string }) {
   const [item, setItem] = useState<MarketplaceItem | null>(null);
@@ -18,6 +20,8 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
   const [placed, setPlaced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
+  const [mode, setMode] = useState<"ship" | "bundle">("ship");
+  const [bundleId, setBundleId] = useState<number | null>(null);
 
   const load = useCallback(() => {
     getItem(slug).then((r) => setItem(r.item)).catch((e) => {
@@ -29,9 +33,14 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
 
   async function buy() {
     if (!item) return;
+    if (mode === "bundle" && bundleId === null) { setError("Pick an order to bundle delivery with."); return; }
     setBusy(true); setError(null);
     try {
-      await payForMarketplace({ itemId: item.id, qty }, createRazorpayAdapter());
+      await payForMarketplace(
+        { itemId: item.id, qty },
+        createRazorpayAdapter(),
+        mode === "bundle" ? { deliveryMode: "bundle_with_meal", bundleWithOrderId: bundleId } : {},
+      );
       setPlaced(true);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
@@ -82,6 +91,20 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
       </div>
 
       {item.longDescription && <p className="whitespace-pre-line text-xs leading-relaxed text-ink-muted">{item.longDescription}</p>}
+
+      <div>
+        <p className="text-sm text-ink-muted">Delivery</p>
+        <div className="mt-2 flex gap-2">
+          {(["ship", "bundle"] as const).map((m) => (
+            <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${mode === m ? "border-[var(--gold)] text-ink" : "border-line text-ink-muted hover:text-ink"}`}>
+              {m === "ship" ? "Ship separately" : "Add to a recent order"}
+            </button>
+          ))}
+        </div>
+        {mode === "bundle" && <div className="mt-3"><BundlePicker selected={bundleId} onSelect={setBundleId} /></div>}
+      </div>
+
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
       {needsAuth ? (

@@ -40,7 +40,21 @@ test("payForMarketplace: checkout → razorpay order → open → verify, in ord
   const razorpay: RazorpayAdapter = {
     open: async (o) => { seq.push("open"); assert.equal(o.razorpayOrderId, "order_9"); return { razorpayPaymentId: "pay", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "sig" }; },
   };
-  const order = await payForMarketplace({ itemId: 5, qty: 1 }, razorpay, impl);
+  const order = await payForMarketplace({ itemId: 5, qty: 1 }, razorpay, {}, impl);
   assert.deepEqual(seq, ["checkout", "order", "open", "verify"]);
   assert.equal(order.externalOrderId, "mkt-9");
+});
+
+test("payForMarketplace bundle mode passes deliveryMode + bundleWithOrderId to checkout", async () => {
+  let body: any = null;
+  const impl = (async (u: string, init?: RequestInit) => {
+    const url = String(u);
+    if (url.endsWith("/marketplace/checkout")) { body = JSON.parse(String(init?.body)); return jsonRes({ order: { id: 1, externalOrderId: "mkt-b", status: "placed", totalPaise: 34000 } }); }
+    if (url.endsWith("/payments/razorpay/order")) return jsonRes({ razorpayOrderId: "o", amount: 34000, currency: "INR", keyId: "k" });
+    return jsonRes({ ok: true, orderId: "mkt-b", status: "preparing" });
+  }) as unknown as typeof fetch;
+  const razorpay: RazorpayAdapter = { open: async (o) => ({ razorpayPaymentId: "p", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "s" }) };
+  await payForMarketplace({ itemId: 5, qty: 1 }, razorpay, { deliveryMode: "bundle_with_meal", bundleWithOrderId: 77 }, impl);
+  assert.equal(body.deliveryMode, "bundle_with_meal");
+  assert.equal(body.bundleWithOrderId, 77);
 });
