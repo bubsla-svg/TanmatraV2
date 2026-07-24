@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiDelete, type FetchImpl } from "@/lib/apiClient";
+import { apiGet, apiPost, apiDelete, type FetchImpl } from "./apiClient";
 
 /**
  * Wellness nutrition tracker client (route-parity PHI v2). Manual food + water
