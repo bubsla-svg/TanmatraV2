@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
+import { AddToCart } from "@/components/cart/AddToCart";
+import { DishSpec } from "@/components/menu/DishSpec";
 import { DishStructuredData } from "@/components/StructuredData";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -52,9 +55,16 @@ export default async function DishPage({ params }: Params) {
             {dish.tasteDescription || dish.description}
           </p>
         </div>
-        <span className="tabular shrink-0 text-xl font-semibold text-ink">
-          {formatPaise(dish.price)}
-        </span>
+        {/* Price + the sole action: the canonical page is deep-linkable and
+            SEO-indexed, so a shared /dish link must be orderable, not a dead
+            end — same server-priced AddToCart as the card/drawer, only for
+            à-la-carte dishes (no dead CTA on plan-only dishes). */}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span className="tabular text-xl font-semibold text-ink">
+            {formatPaise(dish.price)}
+          </span>
+          {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
+        </div>
       </div>
 
       <dl className="mt-6 grid grid-cols-4 gap-2">
@@ -65,6 +75,8 @@ export default async function DishPage({ params }: Params) {
           </div>
         ))}
       </dl>
+
+      <DishSpec dish={dish} />
 
       {dish.allergens.length > 0 && (
         <p className="mt-5 text-xs text-ink-muted">
