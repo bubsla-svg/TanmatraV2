@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { PLAN_CATALOG } from "@workspace/subscription-rules";
+import { LEGAL_DOCS } from "@/content/legal";
 import { fetchMenu } from "@/lib/catalog";
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -32,6 +33,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: r.priority,
   }));
 
+  // Legal / policy pages (legal-pages wave): the /legal index + one page per
+  // registered document. Iterates LEGAL_DOCS so a new policy is listed the
+  // moment it's added to the registry.
+  const legalEntries: MetadataRoute.Sitemap = [
+    {
+      url: `${SITE_URL}/legal`,
+      lastModified: now,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
+    },
+    ...LEGAL_DOCS.map((d) => ({
+      url: `${SITE_URL}/legal/${d.slug}`,
+      lastModified: now,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
+    })),
+  ];
+
   // Every catalog plan has a /plan/<id> page (a blocked plan renders a waitlist
   // — still real, indexable content). trial_3day is excluded: its canonical
   // surface is /trial, already listed above.
@@ -61,5 +80,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // sitemap is always emitted even if enumeration itself throws.
   }
 
-  return [...staticEntries, ...planEntries, ...dishEntries];
+  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries];
 }
