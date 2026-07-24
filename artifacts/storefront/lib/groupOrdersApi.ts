@@ -42,6 +42,15 @@ export function getGroup(code: string, fetchImpl?: FetchImpl): Promise<{ group: 
   return apiGet(`/group-orders/${encodeURIComponent(code)}`, fetchImpl);
 }
 
+/** Add the caller's own pick to the group (from /menu?group=CODE). The server
+ *  resolves the dish's canonical name/image/price and runs the strict safety
+ *  gate — the client sends only dishId/quantity. */
+export function addItem(
+  code: string, dishId: number, quantity = 1, customizations: string[] = [], fetchImpl?: FetchImpl,
+): Promise<{ group: GroupOrder }> {
+  return apiPost(`/group-orders/${encodeURIComponent(code)}/items`, { dishId, quantity, customizations }, fetchImpl);
+}
+
 export function removeLine(code: string, lineId: string, fetchImpl?: FetchImpl): Promise<{ group: GroupOrder }> {
   return apiPost(`/group-orders/${encodeURIComponent(code)}/remove-line`, { lineId }, fetchImpl);
 }

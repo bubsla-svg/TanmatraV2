@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getGroup, removeLine, closeGroup, groupSubtotalPaise, type GroupOrder } from "./groupOrdersApi";
+import { getGroup, addItem, removeLine, closeGroup, groupSubtotalPaise, type GroupOrder } from "./groupOrdersApi";
 
 const jsonRes = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -17,6 +17,14 @@ test("getGroup GETs the public /group-orders/:code", async () => {
   const impl = (async (u: string) => { url = u; return jsonRes({ group: group({}) }); }) as unknown as typeof fetch;
   await getGroup("ABC123", impl);
   assert.match(url, /\/api\/group-orders\/ABC123$/);
+});
+
+test("addItem POSTs dishId/quantity to /group-orders/:code/items", async () => {
+  let call: { url: string; body: any } | null = null;
+  const impl = (async (u: string, init?: RequestInit) => { call = { url: u, body: JSON.parse(String(init?.body)) }; return jsonRes({ group: group({}) }); }) as unknown as typeof fetch;
+  await addItem("ABC123", 42, 2, [], impl);
+  assert.match(call!.url, /\/group-orders\/ABC123\/items$/);
+  assert.deepEqual(call!.body, { dishId: 42, quantity: 2, customizations: [] });
 });
 
 test("removeLine and closeGroup POST to their sub-routes", async () => {
