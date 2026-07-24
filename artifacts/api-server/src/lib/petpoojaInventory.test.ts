@@ -13,8 +13,11 @@ import { afterEach, describe, it } from "node:test";
 
 import {
   buildPurchaseRequestBody,
+  buildStockRequestBody,
   fetchPurchases,
+  fetchStock,
   normalizePurchaseResponse,
+  normalizeStockResponse,
   petpoojaInventoryConfig,
   toIsoDate,
   toNumber,
@@ -29,6 +32,7 @@ const ENV_KEYS = [
   "PETPOOJA_INVENTORY_RID",
   "PETPOOJA_INVENTORY_BASE_URL",
   "PETPOOJA_PURCHASE_PATH",
+  "PETPOOJA_STOCK_PATH",
 ] as const;
 
 const saved = new Map<string, string | undefined>();
@@ -284,6 +288,147 @@ describe("fetchPurchases", () => {
     configure();
     const warnings: unknown[] = [];
     const res = await fetchPurchases(range, {
+      fetchImpl: (async () => ({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ totally: "different" }),
+      })) as FetchLike,
+      log: { warn: (o) => warnings.push(o) },
+    });
+    assert.equal(res.ok, true);
+    assert.deepEqual(res.lines, []);
+    assert.equal(warnings.length, 1);
+  });
+});
+
+describe("normalizeStockResponse", () => {
+  it("reads a flat array of balances", () => {
+    const rows = normalizeStockResponse([
+      { item_name: "Paneer", closing_stock: "12.5", unit: "KG" },
+      { item_name: "Egg", available_qty: 60, unit: "pcs" },
+    ]);
+    assert.equal(rows.length, 2);
+    assert.deepEqual(rows[0], { product: "Paneer", qty: 12.5, unit: "kg", asOfDate: null });
+    assert.deepEqual(rows[1], { product: "Egg", qty: 60, unit: "pcs", asOfDate: null });
+  });
+
+  it("inherits the as-of date from the enclosing envelope", () => {
+    const rows = normalizeStockResponse({
+      success: "1",
+      stock_date: "21-07-2026",
+      data: { items: [{ itemName: "Spinach", in_hand: 3, uom: "kg" }] },
+    });
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].asOfDate, "2026-07-21");
+  });
+
+  it("keeps a zero balance — that is the whole point of a stock feed", () => {
+    const rows = normalizeStockResponse([{ item_name: "Ghee", closing_stock: 0, unit: "kg" }]);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].qty, 0);
+  });
+
+  it("refuses a negative balance rather than understating on-hand", () => {
+    assert.deepEqual(normalizeStockResponse([{ item_name: "Rice", closing_stock: -4 }]), []);
+  });
+
+  it("skips objects that carry no product name or no quantity", () => {
+    assert.deepEqual(
+      normalizeStockResponse({ success: "0", message: "no data", data: [{ closing_stock: 5 }, { item_name: "Salt" }] }),
+      [],
+    );
+  });
+
+  it("tolerates a missing unit rather than dropping the row", () => {
+    const rows = normalizeStockResponse([{ item_name: "Curd", closing_stock: 2 }]);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].unit, "");
+  });
+
+  it("returns [] for a non-JSON body rather than throwing", () => {
+    assert.deepEqual(normalizeStockResponse("<html>login</html>"), []);
+    assert.deepEqual(normalizeStockResponse(null), []);
+  });
+});
+
+describe("buildStockRequestBody", () => {
+  it("sends the one date under every plausible key, plus a degenerate range", () => {
+    configure();
+    const cfg = petpoojaInventoryConfig();
+    assert.ok(cfg);
+    const body = buildStockRequestBody(cfg, { date: "2026-07-24" });
+    assert.equal(body["app_key"], "key");
+    assert.equal(body["restID"], "355738");
+    assert.equal(body["date"], "2026-07-24");
+    assert.equal(body["stock_date"], "2026-07-24");
+    assert.equal(body["start_date"], "2026-07-24");
+    assert.equal(body["end_date"], "2026-07-24");
+  });
+});
+
+describe("fetchStock", () => {
+  it("skips (does not fail) when the integration is unconfigured", async () => {
+    setEnv({});
+    let called = false;
+    const res = await fetchStock("2026-07-24", {
+      fetchImpl: (async () => {
+        called = true;
+        throw new Error("must not be called");
+      }) as unknown as FetchLike,
+    });
+    assert.equal(res.skipped, true);
+    assert.equal(res.ok, false);
+    assert.deepEqual(res.lines, []);
+    assert.equal(called, false);
+  });
+
+  it("posts to the stock path on the inventory host and parses the response", async () => {
+    configure();
+    let seenUrl = "";
+    const res = await fetchStock("2026-07-24", {
+      fetchImpl: (async (url) => {
+        seenUrl = url;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify([{ item_name: "Dal", closing_stock: 7, unit: "kg" }]),
+        };
+      }) as FetchLike,
+    });
+    assert.equal(res.ok, true);
+    assert.equal(seenUrl, "https://inventory.petpooja.com/api/get_stock");
+    assert.equal(res.lines.length, 1);
+    assert.equal(res.lines[0].qty, 7);
+  });
+
+  it("honours the stock-path override", async () => {
+    configure({ PETPOOJA_STOCK_PATH: "/v2/stock" });
+    let seenUrl = "";
+    await fetchStock("2026-07-24", {
+      fetchImpl: (async (url) => {
+        seenUrl = url;
+        return { ok: true, status: 200, text: async () => "[]" };
+      }) as FetchLike,
+    });
+    assert.equal(seenUrl, "https://inventory.petpooja.com/v2/stock");
+  });
+
+  it("never throws when the vendor is unreachable", async () => {
+    configure();
+    const res = await fetchStock("2026-07-24", {
+      fetchImpl: (async () => {
+        throw new Error("ETIMEDOUT");
+      }) as FetchLike,
+    });
+    assert.equal(res.ok, false);
+    assert.equal(res.error, "ETIMEDOUT");
+    assert.deepEqual(res.lines, []);
+  });
+
+  it("succeeds-with-zero-rows and warns when the shape is unrecognised", async () => {
+    configure();
+    const warnings: unknown[] = [];
+    const res = await fetchStock("2026-07-24", {
       fetchImpl: (async () => ({
         ok: true,
         status: 200,
