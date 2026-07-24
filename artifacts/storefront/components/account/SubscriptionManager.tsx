@@ -117,7 +117,13 @@ export function SubscriptionManager() {
       ) : (
         <ul className="flex flex-col gap-3">
           {subs.map((s) => (
-            <SubscriptionCard key={s.id} sub={s} busy={busyIds.has(s.id)} onAction={(a) => void act(s, a)} />
+            <SubscriptionCard
+              key={s.id}
+              sub={s}
+              busy={busyIds.has(s.id)}
+              onAction={(a) => void act(s, a)}
+              onChanged={() => void load()}
+            />
           ))}
         </ul>
       )}
