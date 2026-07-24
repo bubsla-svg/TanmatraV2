@@ -59,6 +59,7 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/account/orders",
     links: [
       { label: "My orders", href: "/account/orders" },
+      { label: "Nutrition tracker", href: "/account/wellness", desc: "Log food & water, track streaks" },
       { label: "Wellness", href: "/wellness", desc: "Preventive, everyday nutrition" },
       { label: "Nutrition coach", href: "/coach", desc: "Chat with an AI nutrition coach" },
       { label: "Our dietitians", href: "/rd", desc: "Meet the registered dietitians" },
