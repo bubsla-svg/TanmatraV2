@@ -62,6 +62,13 @@ const nextConfig: NextConfig = {
       // Bare /track was the legacy order LIST; the storefront keeps only
       // /track/:orderId (live tracking), which this exact-match rule leaves alone.
       { source: "/track", destination: "/account/orders", permanent: true },
+      // Legacy /account/plan was a stub that forwarded to plan management; the
+      // storefront's plan surface is /account/subscriptions — target it directly
+      // (no double-hop through the /subscriptions alias above).
+      { source: "/account/plan", destination: "/account/subscriptions", permanent: true },
+      // /profile is a common typed / QR-code / deep-link URL; the canonical
+      // account home is /account (legacy ProfileRedirect did the same).
+      { source: "/profile", destination: "/account", permanent: true },
       // Plan surfaces reconcile onto /plans + /plan/:id + /trial (Wave H).
       { source: "/subscribe", destination: "/plans", permanent: true },
       { source: "/subscription-plans", destination: "/plans", permanent: true },
