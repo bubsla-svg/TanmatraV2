@@ -8,6 +8,7 @@ import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { MiniCartBar } from "@/components/cart/MiniCartBar";
+import { Footer } from "@/components/Footer";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -93,6 +94,7 @@ export default function RootLayout({
             <main id="main">{children}</main>
             {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
             <MiniCartBar />
+            <Footer />
           </CartProvider>
         </ThemeProvider>
       </body>
