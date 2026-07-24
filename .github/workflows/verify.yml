@@ -152,3 +152,4 @@ jobs:
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
           ./src/routes/loyalty.referral.test.ts
           ./src/routes/dishRationales.test.ts
+          ./src/routes/coachAgent.test.ts
