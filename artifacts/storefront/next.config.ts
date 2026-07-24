@@ -47,6 +47,32 @@ const nextConfig: NextConfig = {
         : []),
     ];
   },
+  // Central path-rename map (route-parity Track 0 — docs/STOREFRONT-ROUTE-PARITY.md
+  // §3). Legacy top-level paths → their canonical storefront home, as permanent
+  // (308) redirects so link-equity + SEO consolidate onto one URL each. Baked at
+  // build time (routes-manifest) — adding one is a redeploy. This is the single
+  // shared redirect surface; waves add here instead of scattering redirects.
+  async redirects() {
+    return [
+      // Account/plan consolidation: legacy bare paths → the /account/* home.
+      { source: "/orders", destination: "/account/orders", permanent: true },
+      { source: "/rewards", destination: "/account/loyalty", permanent: true },
+      { source: "/preferences", destination: "/account/preferences", permanent: true },
+      { source: "/subscriptions", destination: "/account/subscriptions", permanent: true },
+      // Bare /track was the legacy order LIST; the storefront keeps only
+      // /track/:orderId (live tracking), which this exact-match rule leaves alone.
+      { source: "/track", destination: "/account/orders", permanent: true },
+      // Plan surfaces reconcile onto /plans + /plan/:id + /trial (Wave H).
+      { source: "/subscribe", destination: "/plans", permanent: true },
+      { source: "/subscription-plans", destination: "/plans", permanent: true },
+      // Legacy legal paths → the consolidated /legal/* pages (legal-pages PR).
+      // These resolve once that PR merges; until then they 308 to a not-yet-live
+      // path — no regression, since the bare paths 404 today anyway.
+      { source: "/terms", destination: "/legal/terms", permanent: true },
+      { source: "/privacy", destination: "/legal/privacy", permanent: true },
+      { source: "/refunds", destination: "/legal/refunds", permanent: true },
+    ];
+  },
   // Explicit dimensions on the <img> keep CLS at zero without pulling in the
   // next/image loader for the skeleton. Revisit with next/image +
   // remotePatterns in a later phase.
