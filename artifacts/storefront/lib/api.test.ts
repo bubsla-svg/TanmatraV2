@@ -3,7 +3,7 @@
 //   cd artifacts/api-server && node --test --import tsx ../storefront/lib/api.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { API_BASE, ApiError, apiPost, quotePlan, createRazorpayOrder } from "./api";
+import { API_BASE, ApiError, apiPost, quotePlan, createRazorpayOrder, getCreditBalance } from "./api";
 import { runCheckout, finishPlanPayment, type RazorpayAdapter, type MoneyPathDeps } from "./moneyPath";
 
 function fakeFetch(status: number, payload: unknown) {
@@ -61,6 +61,41 @@ test("createRazorpayOrder posts only the order ref — never a client amount", a
   const body = JSON.parse(String(calls[0]?.init.body));
   assert.deepEqual(body, { orderId: "sub-42", subscriptionId: 42 });
   assert.equal("amountPaise" in body, false);
+});
+
+test("getCreditBalance reads GET /credit-ledger with cookies, no body", async () => {
+  const { impl, calls } = fakeFetch(200, { balancePaise: 39900 });
+  const out = await getCreditBalance(impl);
+  assert.equal(out.balancePaise, 39900);
+  assert.equal(calls[0]?.url, `${API_BASE}/api/credit-ledger`);
+  assert.equal(calls[0]?.init.method, "GET");
+  assert.equal(calls[0]?.init.credentials, "include");
+});
+
+test("runCheckout's onCreated ref carries the server's creditAppliedPaise", async () => {
+  const deps: MoneyPathDeps = {
+    createSubscription: async () => ({
+      subscription: { id: 7, externalOrderId: "sub-7" },
+      deliveries: [],
+      bridgeCreditPaise: 0,
+      creditAppliedPaise: 39900,
+    }),
+    createRazorpayOrder: async () => ({ razorpayOrderId: "order_9", amount: 340100, currency: "INR", keyId: "rzp_test" }),
+    verifyPayment: async (input) => ({ ok: true, orderId: input.orderId, status: "preparing" }),
+  };
+  const razorpay: RazorpayAdapter = {
+    open: async (order) => ({ razorpayPaymentId: "pay_1", razorpayOrderId: order.razorpayOrderId, razorpaySignature: "sig" }),
+  };
+  let seenCredit: number | undefined;
+  await runCheckout(
+    {
+      subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] },
+      razorpay,
+      onCreated: (ref) => { seenCredit = ref.creditAppliedPaise; },
+    },
+    deps,
+  );
+  assert.equal(seenCredit, 39900);
 });
 
 test("runCheckout sequences create → order → modal → verify and returns the verified result", async () => {

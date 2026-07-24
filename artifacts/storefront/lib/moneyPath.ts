@@ -60,6 +60,11 @@ const DEFAULT_DEPS: MoneyPathDeps = { createSubscription, createRazorpayOrder, v
 export interface PlanOrderRef {
   orderId: string;
   subscriptionId: number;
+  /** What the server actually redeemed from the credit ledger against this
+   *  subscription's first bill (0 when the account had no balance). Optional
+   *  so a caller resuming payment with a bare {orderId, subscriptionId} still
+   *  type-checks. */
+  creditAppliedPaise?: number;
 }
 
 export async function runCheckout(
@@ -76,6 +81,7 @@ export async function runCheckout(
   const ref: PlanOrderRef = {
     orderId: created.subscription.externalOrderId ?? `sub-${created.subscription.id}`,
     subscriptionId: created.subscription.id,
+    creditAppliedPaise: created.creditAppliedPaise ?? 0,
   };
   params.onCreated?.(ref);
   return finishPlanPayment(ref, params.razorpay, deps);

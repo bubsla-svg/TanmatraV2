@@ -23,6 +23,7 @@ export function PlanDetails({
   quoteTotalPaise,
   quoteLoading,
   addOnLine,
+  creditAppliedPaise,
   initialAddress,
   finePrint,
   busy,
@@ -37,6 +38,9 @@ export function PlanDetails({
   /** The quote's billed add-on line ("Your dietitian · +₹499/mo") — the
    *  SERVER's priced items, shown so the total is never a surprise. */
   addOnLine?: string | null;
+  /** Credit-ledger balance already netted OUT of quoteTotalPaise (see
+   *  usePlanQuote) — shown as its own line so the discount is never silent. */
+  creditAppliedPaise?: number;
   initialAddress?: { line1: string; city: string; pincode: string } | null;
   /** Offer terms stated under the total (spine copy — e.g. trial creditback +
    *  no-auto-renew). Never a price of its own. */
@@ -104,6 +108,11 @@ export function PlanDetails({
 
       <div className="flex flex-col gap-1 rounded-xl bg-surface px-4 py-3">
         {addOnLine && <p className="text-xs font-medium text-ink-muted">{addOnLine}</p>}
+        {!!creditAppliedPaise && (
+          <p className="text-xs font-medium text-sage-text">
+            Credit applied: −{formatPaise(creditAppliedPaise)}
+          </p>
+        )}
         <div className="flex items-center justify-between">
           <span className="text-sm text-ink-muted">Billed each cycle (server-priced, incl. GST)</span>
           <span className="tabular text-lg font-semibold text-ink">
