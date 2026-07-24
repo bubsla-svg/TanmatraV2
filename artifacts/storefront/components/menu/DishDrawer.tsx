@@ -14,6 +14,7 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import { DishRationale } from "./DishRationale";
+import { DishSpec } from "./DishSpec";
 
 /**
  * Dish detail as a bottom sheet over the menu (§4.2): users triage dishes in
@@ -71,6 +72,8 @@ export function DishDrawer({ dish }: { dish: DishData }) {
               </div>
             ))}
           </dl>
+
+          <DishSpec dish={dish} />
 
           {/* Allergens are never clamped (§6). */}
           {dish.allergens.length > 0 && (
