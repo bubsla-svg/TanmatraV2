@@ -132,6 +132,27 @@ const INVOICE_DATE_KEYS = [
   "purchase_date", "purchasedate", "date", "created_on", "createdon",
 ];
 
+/**
+ * Stock-quantity aliases, most specific first. A separate list from `QTY_KEYS`
+ * because a stock row's defining field is a closing/available balance; the bare
+ * `quantity`/`qty` fallbacks sit last, for a feed that labels the balance
+ * generically. This does NOT distinguish a stock row from an invoice line — the
+ * two are genuinely indistinguishable by shape — so it is only ever applied to
+ * a get_stock response. What it does do is refuse the envelope: `{success, data}`
+ * carries no product name, so the walker recurses past it rather than emitting.
+ */
+const STOCK_QTY_KEYS = [
+  "closing_stock", "closingstock", "closing_qty", "closingqty",
+  "current_stock", "currentstock", "available_qty", "availableqty",
+  "balance_qty", "balanceqty", "physical_stock", "physicalstock",
+  "in_hand", "inhand", "on_hand", "onhand", "stock_qty", "stockqty",
+  "stock", "quantity", "qty",
+];
+const STOCK_DATE_KEYS = [
+  "stock_date", "stockdate", "as_on", "ason", "as_on_date", "asondate",
+  "report_date", "reportdate", "date",
+];
+
 type Rec = Record<string, unknown>;
 
 function isRec(v: unknown): v is Rec {
@@ -244,34 +265,42 @@ function asLine(
   };
 }
 
-function walk(
+/**
+ * Generic shape-agnostic traversal, shared by the purchase and stock parsers.
+ *
+ * Line-shaped objects win: a real line carries the fields `asLine` insists on,
+ * which envelopes and headers do not. Anything else is treated as a wrapper and
+ * we descend, carrying this node's header fields down with us — that is how a
+ * nested `{ invoice_no, supplier, items: [...] }` shape gets its header fields
+ * onto each line.
+ */
+function walk<T, H>(
   node: unknown,
-  header: HeaderCtx,
-  out: PetpoojaPurchaseLine[],
+  header: H,
+  out: T[],
   depth: number,
+  spec: {
+    mergeHeader: (flat: Map<string, unknown>, parent: H) => H;
+    asLine: (flat: Map<string, unknown>, header: H) => T | null;
+  },
 ): void {
   if (depth > 8 || out.length >= 20_000) return;
   if (Array.isArray(node)) {
-    for (const el of node) walk(el, header, out, depth + 1);
+    for (const el of node) walk(el, header, out, depth + 1, spec);
     return;
   }
   if (!isRec(node)) return;
 
   const flat = flatten(node);
-  const here = mergeHeader(flat, header);
+  const here = spec.mergeHeader(flat, header);
 
-  // Line-shaped objects win: a real line carries product + qty + a price, which
-  // invoice headers and envelopes do not. Anything else is treated as a wrapper
-  // and we descend, carrying this node's supplier/invoice fields down with us —
-  // that is how a nested { invoice_no, supplier, items: [...] } shape gets its
-  // header fields onto each line.
-  const line = asLine(flat, here);
+  const line = spec.asLine(flat, here);
   if (line) {
     out.push(line);
     return;
   }
   for (const v of Object.values(node)) {
-    if (Array.isArray(v) || isRec(v)) walk(v, here, out, depth + 1);
+    if (Array.isArray(v) || isRec(v)) walk(v, here, out, depth + 1, spec);
   }
 }
 
@@ -282,7 +311,77 @@ function walk(
  */
 export function normalizePurchaseResponse(body: unknown): PetpoojaPurchaseLine[] {
   const out: PetpoojaPurchaseLine[] = [];
-  walk(body, { supplierName: null, invoiceNo: null, invoiceDate: null }, out, 0);
+  walk<PetpoojaPurchaseLine, HeaderCtx>(
+    body,
+    { supplierName: null, invoiceNo: null, invoiceDate: null },
+    out,
+    0,
+    { mergeHeader, asLine },
+  );
+  return out;
+}
+
+// ── Stock ───────────────────────────────────────────────────────────────────
+
+/** One on-hand balance, normalized out of whatever the vendor returned. */
+export interface PetpoojaStockLine {
+  /** Free-text product name as the vendor spells it. */
+  product: string;
+  /** On-hand quantity in `unit`. Zero is a legitimate value here. */
+  qty: number;
+  /** Raw vendor unit, lowercased and trimmed. May be "". */
+  unit: string;
+  /** ISO `YYYY-MM-DD` the balance is as-of, when the vendor said. */
+  asOfDate: string | null;
+}
+
+interface StockHeaderCtx {
+  asOfDate: string | null;
+}
+
+function mergeStockHeader(flat: Map<string, unknown>, parent: StockHeaderCtx): StockHeaderCtx {
+  return {
+    asOfDate: toIsoDate(pickString(flat, STOCK_DATE_KEYS)) ?? parent.asOfDate,
+  };
+}
+
+/**
+ * Try to read one object as a stock balance. Returns null if it isn't one.
+ *
+ * Unlike a purchase line, qty **0 is valid and meaningful** — it is the whole
+ * point of a stock feed — so the guard is "a stock-specific quantity key is
+ * present and parses to a non-negative finite number", not "qty > 0".
+ * A negative balance is refused: PetPooja can emit one after a bad adjustment,
+ * and feeding it to the reorder engine understates what we hold.
+ */
+function asStockLine(
+  flat: Map<string, unknown>,
+  header: StockHeaderCtx,
+): PetpoojaStockLine | null {
+  const product = pickString(flat, PRODUCT_KEYS);
+  if (!product) return null;
+
+  const raw = pick(flat, STOCK_QTY_KEYS);
+  if (raw === undefined) return null;
+  const qty = toNumber(raw);
+  if (qty === null || qty < 0) return null;
+
+  const unitRaw = pickString(flat, UNIT_KEYS);
+  return {
+    product,
+    qty,
+    unit: (unitRaw ?? "").toLowerCase().trim(),
+    asOfDate: header.asOfDate,
+  };
+}
+
+/** Shape-agnostic stock parser. Returns `[]` (never throws) when nothing matches. */
+export function normalizeStockResponse(body: unknown): PetpoojaStockLine[] {
+  const out: PetpoojaStockLine[] = [];
+  walk<PetpoojaStockLine, StockHeaderCtx>(body, { asOfDate: null }, out, 0, {
+    mergeHeader: mergeStockHeader,
+    asLine: asStockLine,
+  });
   return out;
 }
 
@@ -317,6 +416,28 @@ export function buildPurchaseRequestBody(
   };
 }
 
+/**
+ * ⚠ UNVERIFIED. Request body for Get Stock. PetPooja support described this as
+ * "stock levels for a given date", so one date is sent under every plausible
+ * key, including a degenerate start==end range in case it is range-shaped.
+ */
+export function buildStockRequestBody(
+  cfg: PetpoojaInventoryConfig,
+  opts: { date: string },
+): Record<string, string> {
+  return {
+    app_key: cfg.appKey,
+    app_secret: cfg.appSecret,
+    access_token: cfg.accessToken,
+    restID: cfg.rid,
+    restaurantid: cfg.rid,
+    date: opts.date,
+    stock_date: opts.date,
+    start_date: opts.date,
+    end_date: opts.date,
+  };
+}
+
 export interface PurchaseFetchResult {
   ok: boolean;
   /** True when the integration is unconfigured — not an error. */
@@ -326,28 +447,42 @@ export interface PurchaseFetchResult {
   error?: string;
 }
 
+export interface StockFetchResult {
+  ok: boolean;
+  /** True when the integration is unconfigured — not an error. */
+  skipped?: boolean;
+  status?: number;
+  lines: PetpoojaStockLine[];
+  error?: string;
+}
+
 export type FetchLike = (
   input: string,
   init?: { method?: string; headers?: Record<string, string>; body?: string; signal?: AbortSignal },
 ) => Promise<{ ok: boolean; status: number; text: () => Promise<string> }>;
 
+interface RawPost {
+  ok: boolean;
+  status?: number;
+  parsed?: unknown;
+  error?: string;
+}
+
 /**
- * Fetch supplier-invoice lines for a date range. Never throws: a vendor outage
- * must not take down the scheduler. Returns `{ ok: false }` on any failure.
- *
- * `fetchImpl` is injectable so tests exercise the parse path without network.
+ * One POST to the inventory host. Never throws: a vendor outage must not take
+ * down the scheduler. Credentials go in the body (mirroring the POS API's Save
+ * Order convention) AND in headers, because which one this service wants could
+ * not be read from the spec.
  */
-export async function fetchPurchases(
-  range: PurchaseDateRange,
-  opts: { fetchImpl?: FetchLike; log?: InventoryLogger } = {},
-): Promise<PurchaseFetchResult> {
-  const cfg = petpoojaInventoryConfig();
-  if (!cfg) {
-    opts.log?.info?.({ range }, "petpooja inventory: get_purchase skipped — not configured");
-    return { ok: false, skipped: true, lines: [] };
-  }
-  const doFetch = opts.fetchImpl ?? (fetch as unknown as FetchLike);
-  const url = `${cfg.baseUrl}${cfg.purchasePath}`;
+async function postToInventory(
+  cfg: PetpoojaInventoryConfig,
+  url: string,
+  body: Record<string, string>,
+  label: string,
+  log: InventoryLogger | undefined,
+  fetchImpl: FetchLike | undefined,
+): Promise<RawPost> {
+  const doFetch = fetchImpl ?? (fetch as unknown as FetchLike);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
@@ -360,7 +495,7 @@ export async function fetchPurchases(
         "app-secret": cfg.appSecret,
         "access-token": cfg.accessToken,
       },
-      body: JSON.stringify(buildPurchaseRequestBody(cfg, range)),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
     const text = await res.text().catch(() => "");
@@ -368,27 +503,92 @@ export async function fetchPurchases(
     try {
       parsed = JSON.parse(text);
     } catch {
-      /* keep raw text — normalize will simply find nothing */
+      /* keep raw text — the normalizers will simply find nothing */
     }
     if (!res.ok) {
-      opts.log?.error?.(
+      log?.error?.(
         { url, status: res.status, body: typeof parsed === "string" ? parsed.slice(0, 500) : parsed },
-        "petpooja inventory: get_purchase rejected",
+        `petpooja inventory: ${label} rejected`,
       );
-      return { ok: false, status: res.status, lines: [] };
+      return { ok: false, status: res.status };
     }
-    const lines = normalizePurchaseResponse(parsed);
-    if (lines.length === 0) {
-      opts.log?.warn?.(
-        { url, range, status: res.status },
-        "petpooja inventory: get_purchase returned no parseable lines — the response shape may differ from the assumed contract",
-      );
-    }
-    return { ok: true, status: res.status, lines };
+    return { ok: true, status: res.status, parsed };
   } catch (err) {
-    opts.log?.error?.({ url, range, err }, "petpooja inventory: get_purchase failed");
-    return { ok: false, lines: [], error: (err as Error).message };
+    log?.error?.({ url, err }, `petpooja inventory: ${label} failed`);
+    return { ok: false, error: (err as Error).message };
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/**
+ * Fetch supplier-invoice lines for a date range. Returns `{ ok: false }` on any
+ * failure rather than throwing.
+ *
+ * `fetchImpl` is injectable so tests exercise the parse path without network.
+ */
+export async function fetchPurchases(
+  range: PurchaseDateRange,
+  opts: { fetchImpl?: FetchLike; log?: InventoryLogger } = {},
+): Promise<PurchaseFetchResult> {
+  const cfg = petpoojaInventoryConfig();
+  if (!cfg) {
+    opts.log?.info?.({ range }, "petpooja inventory: get_purchase skipped — not configured");
+    return { ok: false, skipped: true, lines: [] };
+  }
+  const url = `${cfg.baseUrl}${cfg.purchasePath}`;
+  const res = await postToInventory(
+    cfg,
+    url,
+    buildPurchaseRequestBody(cfg, range),
+    "get_purchase",
+    opts.log,
+    opts.fetchImpl,
+  );
+  if (!res.ok) {
+    return { ok: false, status: res.status, lines: [], error: res.error };
+  }
+  const lines = normalizePurchaseResponse(res.parsed);
+  if (lines.length === 0) {
+    opts.log?.warn?.(
+      { url, range, status: res.status },
+      "petpooja inventory: get_purchase returned no parseable lines — the response shape may differ from the assumed contract",
+    );
+  }
+  return { ok: true, status: res.status, lines };
+}
+
+/**
+ * Fetch on-hand balances as of one date. Same never-throws contract as
+ * `fetchPurchases`; `fetchImpl` is injectable for tests.
+ */
+export async function fetchStock(
+  date: string,
+  opts: { fetchImpl?: FetchLike; log?: InventoryLogger } = {},
+): Promise<StockFetchResult> {
+  const cfg = petpoojaInventoryConfig();
+  if (!cfg) {
+    opts.log?.info?.({ date }, "petpooja inventory: get_stock skipped — not configured");
+    return { ok: false, skipped: true, lines: [] };
+  }
+  const url = `${cfg.baseUrl}${cfg.stockPath}`;
+  const res = await postToInventory(
+    cfg,
+    url,
+    buildStockRequestBody(cfg, { date }),
+    "get_stock",
+    opts.log,
+    opts.fetchImpl,
+  );
+  if (!res.ok) {
+    return { ok: false, status: res.status, lines: [], error: res.error };
+  }
+  const lines = normalizeStockResponse(res.parsed);
+  if (lines.length === 0) {
+    opts.log?.warn?.(
+      { url, date, status: res.status },
+      "petpooja inventory: get_stock returned no parseable rows — the response shape may differ from the assumed contract",
+    );
+  }
+  return { ok: true, status: res.status, lines };
 }
