@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { navGroup, COMPANY_LINKS, LEGAL_LINKS, SITE, type NavLink } from "@/lib/nav";
 
@@ -26,15 +27,26 @@ export function Footer() {
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
                 {col.label}
               </p>
-              {col.links.map((l) => (
-                <Link
-                  key={l.href + l.label}
-                  href={l.href}
-                  className="text-sm text-ink-muted transition-colors hover:text-ink"
-                >
-                  {l.label}
-                </Link>
-              ))}
+              {col.links.map((l, i) => {
+                // A sectioned run opens with a small sub-heading; links are kept
+                // contiguous per section (lib/nav.test.ts), so this fires once.
+                const openSection = Boolean(l.section && l.section !== col.links[i - 1]?.section);
+                return (
+                  <Fragment key={l.href + l.label}>
+                    {openSection && (
+                      <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-ink-faint">
+                        {l.section}
+                      </p>
+                    )}
+                    <Link
+                      href={l.href}
+                      className="text-sm text-ink-muted transition-colors hover:text-ink"
+                    >
+                      {l.label}
+                    </Link>
+                  </Fragment>
+                );
+              })}
             </nav>
           ))}
         </div>

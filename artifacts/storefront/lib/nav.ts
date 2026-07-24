@@ -16,6 +16,14 @@ export interface NavLink {
   href: string;
   /** Optional one-line description for expanded surfaces (footer, ⌘K, sheet). */
   desc?: string;
+  /**
+   * Optional sub-section label. Links sharing a `section` render under a small
+   * sub-heading in EXPANDED surfaces (the footer today), giving a large group
+   * light two-tier hierarchy without changing the flat `links` contract that
+   * BottomNav (group tops only) and ⌘K (flattened search) consume unchanged.
+   * A group's sectioned links MUST be contiguous — see lib/nav.test.ts.
+   */
+  section?: string;
 }
 
 export type NavGroupKey = "eat" | "plan" | "track" | "community" | "account";
@@ -40,17 +48,21 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    // Two-tier IA: the core plan actions (choose a plan / start a trial) sit up
+    // top; the five goal- & condition-specific landers — all entry points into
+    // the same catalog (they each map to a real PlanId) — are grouped under one
+    // sub-section so a large group reads as a short list, not a flat pile.
     key: "plan",
     label: "Plan",
     href: "/plans",
     links: [
       { label: "Plans", href: "/plans", desc: "Therapeutic subscription plans" },
-      { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs" },
-      { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu" },
-      { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu" },
-      { label: "Performance protocol", href: "/performance", desc: "High-protein, recovery-tuned" },
-      { label: "Clinical protocol", href: "/clinical", desc: "RD-supervised, low-GI therapeutic" },
       { label: "Free trial", href: "/trial", desc: "Try it for 3 days" },
+      { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal & condition" },
+      { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu", section: "By goal & condition" },
+      { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu", section: "By goal & condition" },
+      { label: "Performance protocol", href: "/performance", desc: "High-protein, recovery-tuned", section: "By goal & condition" },
+      { label: "Clinical protocol", href: "/clinical", desc: "RD-supervised, low-GI therapeutic", section: "By goal & condition" },
     ],
   },
   {
