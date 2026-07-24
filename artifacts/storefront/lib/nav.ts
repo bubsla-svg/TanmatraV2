@@ -82,6 +82,7 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/account",
     links: [
       { label: "Account hub", href: "/account" },
+      { label: "Tanmatra Premium", href: "/premium", desc: "Priority delivery + a monthly RD consult" },
       { label: "Subscriptions", href: "/account/subscriptions" },
       { label: "Orders", href: "/account/orders" },
       { label: "Billing & credits", href: "/account/billing", desc: "Wallet balance & credit activity" },
