@@ -45,8 +45,9 @@ export function PlanCheckout({
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [track, setTrack] = useState<DietTrack>(initialTrack ?? servedTracks[0] ?? "veg");
-  // Server quote per (plan, track, add-ons) — the billed total; gates the CTA.
-  const { quote, quoteLoading } = usePlanQuote(planId, track, addOns);
+  // Server quote per (plan, track, add-ons) — the billed total, net of any
+  // redeemable credit once signed in; gates the CTA.
+  const { quote, quoteLoading } = usePlanQuote(planId, track, addOns, user !== null);
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +104,7 @@ export function PlanCheckout({
         autopayDisclaimer: result.autopayDisclaimer,
         planId,
         subscriptionId: createdRef.current?.subscriptionId,
+        creditAppliedPaise: createdRef.current?.creditAppliedPaise,
         ...successPerks,
       });
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
@@ -127,9 +129,10 @@ export function PlanCheckout({
         servedTracks={servedTracks}
         track={track}
         onTrackChange={setTrack}
-        quoteTotalPaise={quote?.totalPaise ?? null}
+        quoteTotalPaise={quote?.payableTotalPaise ?? null}
         quoteLoading={quoteLoading}
         addOnLine={quote?.addOnLine ?? null}
+        creditAppliedPaise={quote?.creditAppliedPaise ?? 0}
         initialAddress={savedAddress}
         finePrint={finePrint}
         busy={busy}

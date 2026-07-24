@@ -6,6 +6,7 @@
  * under the file cap.
  */
 import { apiGet, apiPost, type FetchImpl } from "./apiClient";
+import type { SubscriptionCadence } from "@workspace/subscription-rules";
 
 export type SubscriptionStatus = "active" | "paused" | "halted" | "cancelled";
 
@@ -26,6 +27,19 @@ export interface Subscription {
   pricePerDeliveryPaise: number;
   notes: string | null;
   createdAt: string;
+  /** A day-first plan's meal count comes from its per-day schedule, not a
+   *  flat number — change-plan can't touch mealsPerDelivery on these (the
+   *  server 400s). Only presence (a non-empty array) matters client-side. */
+  dayPlan?: unknown[] | null;
+  // ── Pending plan change (cadence / mealsPerDelivery) — see changePlan().
+  // Never applied mid-cycle: these describe a request awaiting the next
+  // billing cycle (and, if the bill is increasing against a live autopay
+  // mandate, awaiting a fresh Razorpay OTP authorisation first).
+  pendingCadence?: SubscriptionCadence | null;
+  pendingMealsPerDelivery?: number | null;
+  pendingPricePerDeliveryPaise?: number | null;
+  pendingChangeRequestedAt?: string | null;
+  pendingChangeReauthRequired?: boolean;
 }
 
 export function getSubscriptions(fetchImpl?: FetchImpl): Promise<{ subscriptions: Subscription[] }> {
@@ -100,4 +114,73 @@ export interface MealCreditsResponse {
 
 export function getMealCredits(fetchImpl?: FetchImpl): Promise<MealCreditsResponse> {
   return apiGet("/meal-credits", fetchImpl);
+}
+
+// ── Change plan (cadence / mealsPerDelivery) — Wave-2 straggler ─────────────
+// Never applied mid-cycle (see Subscription.pendingCadence above) — a request
+// only sets pending* fields; the server applies it at the next generate-next
+// cycle rollover. A price INCREASE against a live autopay mandate comes back
+// requiresReauth: true, which the caller resolves via
+// createChangePlanReauthOrder + confirmChangePlanReauth (the same Razorpay
+// order→modal→verify shape as lib/moneyPath.ts) before it's even eligible to
+// apply. A decrease, or an increase with no live mandate to protect, applies
+// nothing immediately either — it's still deferred to next cycle, just with
+// no reauth gate in front of it.
+
+export interface ChangePlanInput {
+  cadence?: SubscriptionCadence;
+  mealsPerDelivery?: number;
+  /** Sent for tamper-detection/logging only, exactly like
+   *  createSubscription's price fields — the server always recomputes and
+   *  bills its own price via the shared computeDeliveryPricePaise. */
+  clientQuotedPricePerDeliveryPaise?: number;
+}
+
+export interface ChangePlanResponse {
+  subscription: Subscription;
+  requiresReauth: boolean;
+  currentPricePerDeliveryPaise: number;
+  newPricePerDeliveryPaise: number;
+}
+
+export function changePlan(
+  id: number,
+  input: ChangePlanInput,
+  fetchImpl?: FetchImpl,
+): Promise<ChangePlanResponse> {
+  return apiPost(`/subscriptions/${id}/change-plan`, input, fetchImpl);
+}
+
+export interface ChangePlanReauthOrder {
+  razorpayOrderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+}
+
+/** Creates the Razorpay OTP order to re-authorise a pending price-increasing
+ *  change. 409s (as a typed ApiError) if no change is actually awaiting
+ *  reauth on this subscription. */
+export function createChangePlanReauthOrder(
+  id: number,
+  fetchImpl?: FetchImpl,
+): Promise<ChangePlanReauthOrder> {
+  return apiPost(`/subscriptions/${id}/change-plan/reauth-order`, {}, fetchImpl);
+}
+
+export interface ConfirmChangePlanReauthInput {
+  razorpayPaymentId: string;
+  razorpayOrderId: string;
+  razorpaySignature: string;
+}
+
+/** Confirms the OTP payment, registering it as the subscription's new
+ *  autopay mandate. Still doesn't apply the change itself — only clears the
+ *  reauth gate so it's eligible at the next cycle rollover. */
+export function confirmChangePlanReauth(
+  id: number,
+  input: ConfirmChangePlanReauthInput,
+  fetchImpl?: FetchImpl,
+): Promise<{ subscription: Subscription; requiresReauth: false }> {
+  return apiPost(`/subscriptions/${id}/change-plan/confirm`, input, fetchImpl);
 }

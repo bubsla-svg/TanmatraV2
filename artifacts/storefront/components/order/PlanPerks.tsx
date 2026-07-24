@@ -29,6 +29,14 @@ export function PlanPerks({ orderId }: { orderId: string }) {
     typeof perks?.trialCreditbackPaise === "number" && perks.trialCreditbackPaise > 0
       ? perks.trialCreditbackPaise
       : null;
+  // Credit already SPENT on this bill — the opposite direction from
+  // creditback above (a future grant a paid trial earns). Both can appear
+  // together without contradiction (e.g. a referral credit applied while the
+  // trial itself is still earning its own future creditback).
+  const creditApplied =
+    typeof perks?.creditAppliedPaise === "number" && perks.creditAppliedPaise > 0
+      ? perks.creditAppliedPaise
+      : null;
 
   const planId =
     perks?.planId && perks.planId in PLAN_CATALOG ? (perks.planId as PlanId) : null;
@@ -39,12 +47,20 @@ export function PlanPerks({ orderId }: { orderId: string }) {
       ? perks.subscriptionId
       : null;
 
-  if (!perks || (!perks.autopayDisclaimer && creditback === null && eveningAddSubId === null)) {
+  if (
+    !perks ||
+    (!perks.autopayDisclaimer && creditback === null && creditApplied === null && eveningAddSubId === null)
+  ) {
     return null;
   }
 
   return (
     <div className="mt-6 flex flex-col gap-3">
+      {creditApplied !== null && (
+        <p className="rounded-xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
+          {formatPaise(creditApplied)} in credits were applied to this order.
+        </p>
+      )}
       {creditback !== null && (
         <p className="rounded-xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
           Your {formatPaise(creditback)} comes back as credit — start any plan within 7 days

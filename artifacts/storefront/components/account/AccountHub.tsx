@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: "/account/orders", label: "Orders", sub: "History and reorder" },
   { href: "/account/addresses", label: "Addresses", sub: "Where we deliver" },
   { href: "/account/preferences", label: "Preferences", sub: "Diet, allergens, goals" },
+  { href: "/account/loyalty", label: "Rewards", sub: "Referral code and plan perks" },
 ] as const;
 
 /**

@@ -32,6 +32,13 @@ export interface PlanQuoteResponse {
   addOnTotalPaise?: number;
   gstPaise: number;
   totalPaise: number;
+  /** Credit preview — present only on a signed-in (cookie-authed) quote. The
+   *  bridge (trial) + ledger credit the create route will redeem against this
+   *  first bill, and the resulting net charge, both server-computed in the
+   *  create route's exact order. Absent for anonymous quotes. */
+  bridgeCreditPaise?: number;
+  creditAppliedPaise?: number;
+  payableTotalPaise?: number;
 }
 
 export function quotePlan(
@@ -115,6 +122,10 @@ export interface CreateSubscriptionResponse {
   subscription: { id: number; externalOrderId?: string; [k: string]: unknown };
   deliveries: unknown[];
   bridgeCreditPaise: number;
+  /** General credit-ledger balance (referral/trial-creditback/loyalty — see
+   *  getCreditBalance) the server redeemed against THIS bill, net of any
+   *  bridgeCreditPaise already applied. */
+  creditAppliedPaise?: number;
 }
 
 export function createSubscription(
@@ -256,4 +267,16 @@ export function getAuthUser(fetchImpl?: FetchImpl): Promise<{ user: AuthUser | n
 /** End the `sid` session (POST /logout — auth.ts clears it server-side). */
 export function logoutSession(fetchImpl?: FetchImpl): Promise<{ success: boolean }> {
   return apiPost("/logout", {}, fetchImpl);
+}
+
+// ── Credit ledger (session required) ─────────────────────────────────────────
+// The FIFO balance behind "redeemable against any plan start" (02e §6):
+// referral awards, the 3-Day Taste Test's ₹399 paid-time creditback, loyalty/
+// winback grants. subscriptions.ts applies it automatically at plan create —
+// this is the pre-purchase read so the checkout total can show the net amount
+// before the user ever pays.
+export function getCreditBalance(
+  fetchImpl?: FetchImpl,
+): Promise<{ balancePaise: number }> {
+  return apiGet("/credit-ledger", fetchImpl);
 }

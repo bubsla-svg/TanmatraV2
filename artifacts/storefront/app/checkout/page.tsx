@@ -63,10 +63,13 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // paid time, one per phone — 409 trial_already_redeemed) from planId ===
   // "trial_3day" itself, so trial and plan share one create path. An accepted
   // RD bump (`bump=1`, allow-list-gated) is threaded through quote AND create —
-  // the server bills it, so display equals charge. Post-trial credit
-  // (`credit=1`) needs an authed, ledger-aware displayed total and stays on
-  // the skeleton until that lands.
-  if (LIVE_CHECKOUT_ENABLED && credit !== "1") {
+  // the server bills it, so display equals charge. Post-trial credit needs no
+  // special-casing here any more: once signed in, PlanCheckout reads the
+  // account's real credit-ledger balance (GET /credit-ledger) and shows the
+  // net total; subscriptions.ts redeems the same balance automatically at
+  // create time. `credit=1` is accepted for back-compat with existing links
+  // but no longer gates which surface renders.
+  if (LIVE_CHECKOUT_ENABLED) {
     const requestedTrack =
       track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
     const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");

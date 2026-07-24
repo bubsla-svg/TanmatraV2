@@ -17,6 +17,9 @@ import {
   resumeSubscription,
   cancelSubscription,
   reactivateSubscriptionBilling,
+  changePlan,
+  createChangePlanReauthOrder,
+  confirmChangePlanReauth,
 } from "./subscriptionsApi";
 
 interface Call { method: string; url: string; credentials?: string }
@@ -126,4 +129,82 @@ test("getMealCredits: GET /api/meal-credits → the server's balance", async () 
   assert.equal(c.method, "GET");
   assert.match(c.url, /\/api\/meal-credits$/);
   assert.equal(res.balance, 3);
+});
+
+// ── Change plan (cadence / mealsPerDelivery) ────────────────────────────────
+
+test("changePlan: POST /api/subscriptions/:id/change-plan sends the body verbatim", async () => {
+  const calls: (Call & { body?: unknown })[] = [];
+  const impl = (async (url: unknown, init: Record<string, unknown>) => {
+    calls.push({ method: String(init.method), url: String(url), credentials: init.credentials as string, body: init.body });
+    return {
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          subscription: { ...SUB, pendingCadence: "monthly" },
+          requiresReauth: false,
+          currentPricePerDeliveryPaise: 380000,
+          newPricePerDeliveryPaise: 360000,
+        }),
+    };
+  }) as unknown as typeof fetch;
+
+  const res = await changePlan(7, { cadence: "monthly", mealsPerDelivery: 22, clientQuotedPricePerDeliveryPaise: 360000 }, impl);
+  const [c] = calls;
+  assert.ok(c);
+  assert.equal(c.method, "POST");
+  assert.match(c.url, /\/api\/subscriptions\/7\/change-plan$/);
+  assert.equal(c.credentials, "include");
+  assert.deepEqual(JSON.parse(String(c.body)), { cadence: "monthly", mealsPerDelivery: 22, clientQuotedPricePerDeliveryPaise: 360000 });
+  assert.equal(res.requiresReauth, false);
+  assert.equal(res.newPricePerDeliveryPaise, 360000);
+});
+
+test("changePlan surfaces a blocked transition (409, e.g. paused) as a typed ApiError", async () => {
+  await assert.rejects(
+    changePlan(7, { mealsPerDelivery: 19 }, fakeFetch([], () => ({ status: 409, body: { error: "cannot change plan while paused" } }))),
+    (e) => e instanceof ApiError && e.status === 409 && /paused/.test((e as Error).message),
+  );
+});
+
+test("createChangePlanReauthOrder: POST /api/subscriptions/:id/change-plan/reauth-order, no body needed", async () => {
+  const calls: Call[] = [];
+  const res = await createChangePlanReauthOrder(
+    7,
+    fakeFetch(calls, () => ({ status: 200, body: { razorpayOrderId: "order_9", amount: 360000, currency: "INR", keyId: "rzp_test" } })),
+  );
+  const [c] = calls;
+  assert.ok(c);
+  assert.equal(c.method, "POST");
+  assert.match(c.url, /\/api\/subscriptions\/7\/change-plan\/reauth-order$/);
+  assert.equal(c.credentials, "include");
+  assert.equal(res.razorpayOrderId, "order_9");
+  assert.equal(res.amount, 360000);
+});
+
+test("createChangePlanReauthOrder: 409 when nothing is awaiting reauth", async () => {
+  await assert.rejects(
+    createChangePlanReauthOrder(7, fakeFetch([], () => ({ status: 409, body: { error: "no pending plan change is awaiting re-authorisation" } }))),
+    (e) => e instanceof ApiError && e.status === 409,
+  );
+});
+
+test("confirmChangePlanReauth: POST /api/subscriptions/:id/change-plan/confirm with the payment triple", async () => {
+  const calls: (Call & { body?: unknown })[] = [];
+  const impl = (async (url: unknown, init: Record<string, unknown>) => {
+    calls.push({ method: String(init.method), url: String(url), credentials: init.credentials as string, body: init.body });
+    return { ok: true, status: 200, text: async () => JSON.stringify({ subscription: SUB, requiresReauth: false }) };
+  }) as unknown as typeof fetch;
+
+  const res = await confirmChangePlanReauth(
+    7,
+    { razorpayPaymentId: "pay_1", razorpayOrderId: "order_9", razorpaySignature: "sig" },
+    impl,
+  );
+  const [c] = calls;
+  assert.ok(c);
+  assert.match(c.url, /\/api\/subscriptions\/7\/change-plan\/confirm$/);
+  assert.deepEqual(JSON.parse(String(c.body)), { razorpayPaymentId: "pay_1", razorpayOrderId: "order_9", razorpaySignature: "sig" });
+  assert.equal(res.requiresReauth, false);
 });

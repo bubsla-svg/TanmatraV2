@@ -31,6 +31,11 @@ export interface CheckoutPerks {
   /** The created subscription — the id post-purchase attach calls need
    *  (POST /subscriptions/:id/add-ons). */
   subscriptionId?: number;
+  /** Credit-ledger balance the server actually redeemed against THIS order's
+   *  bill (referral/trial-creditback/loyalty — lib/api.ts getCreditBalance).
+   *  Distinct from trialCreditbackPaise: that's a FUTURE grant a paid trial
+   *  earns; this is credit already consumed just now, on this bill. */
+  creditAppliedPaise?: number;
 }
 
 export type StorageLike = Pick<Storage, "getItem" | "setItem">;
