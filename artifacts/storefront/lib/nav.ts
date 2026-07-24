@@ -70,6 +70,8 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/recipes",
     links: [
       { label: "Recipes", href: "/recipes", desc: "RD-designed, macro-labelled" },
+      { label: "Our team", href: "/team", desc: "Chefs & dietitians" },
+      { label: "Challenges", href: "/challenges", desc: "RD-led cohort programmes" },
       { label: "Corporate wellness", href: "/corporate-wellness", desc: "RD-designed team lunches for offices" },
       { label: "Corporate & partnerships", href: "/corporate", desc: "Team lunches for your office" },
     ],

@@ -6,6 +6,12 @@ import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { DishSpec } from "@/components/menu/DishSpec";
+import { DishGallery } from "@/components/menu/DishGallery";
+import { DishAllergens } from "@/components/menu/DishAllergens";
+import { DishPairing } from "@/components/menu/DishPairing";
+import { DishReviews } from "@/components/menu/DishReviews";
+import { galleryImages } from "@/lib/gallery";
+import { dishCrossSell } from "@/lib/related";
 import { DishStructuredData } from "@/components/StructuredData";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -18,14 +24,17 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: dish.name, description: dish.tasteDescription || dish.description };
 }
 
-/** Dish detail. Dynamic, server-rendered, deep-linkable. No money surface —
- *  browsing only; ordering arrives with the money path. */
+/** Dish detail — the full canonical PDP: image gallery, macros + spec,
+ *  allergen disclosure, and pairing/related cross-sell. Dynamic,
+ *  server-rendered, deep-linkable; the price header carries the à-la-carte
+ *  AddToCart (server-priced, gated to orderable dishes). */
 export default async function DishPage({ params }: Params) {
   const { slug } = await params;
   const { dishes } = await fetchMenu();
   const dish = findDish(slug, dishes);
   if (!dish) notFound();
 
+  const { pairing, related } = dishCrossSell(dish, dishes);
   const est = dish.macrosEstimated ? "~" : "";
   const macros: Array<[string, string]> = [
     ["Calories", `${est}${dish.macros.calories} kcal`],
@@ -41,11 +50,12 @@ export default async function DishPage({ params }: Params) {
         &larr; Menu
       </Link>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-line bg-surface-raised">
-        <div className="aspect-[16/9] w-full">
-          {/* eslint-disable-next-line @next/next/no-img-element -- see DishCard */}
-          <img src={dish.image} alt="" className="h-full w-full object-cover" />
-        </div>
+      <div className="mt-4">
+        {/* key={slug} forces a fresh gallery (active-thumbnail state reset to 0)
+            on client-side PDP→PDP navigation via the cross-sell links below —
+            otherwise React keeps the same-position island and dish B would load
+            showing dish A's selected companion shot as its hero. */}
+        <DishGallery key={dish.slug} images={galleryImages(dish)} alt={dish.name} />
       </div>
 
       <div className="mt-5 flex items-start justify-between gap-4">
@@ -78,12 +88,14 @@ export default async function DishPage({ params }: Params) {
 
       <DishSpec dish={dish} />
 
-      {dish.allergens.length > 0 && (
-        <p className="mt-5 text-xs text-ink-muted">
-          <span className="font-semibold text-ink">Allergens:</span>{" "}
-          {dish.allergens.join(", ")}
-        </p>
-      )}
+      <DishAllergens dish={dish} />
+
+      <DishPairing pairing={pairing} related={related} />
+
+      {/* key={slug}: like DishGallery above, force a fresh island on client-side
+          PDP→PDP navigation (via the cross-sell links) so dish B never briefly
+          renders dish A's held reviews/rating/eligibility before the refetch. */}
+      <DishReviews key={dish.slug} slug={dish.slug} />
     </article>
   );
 }

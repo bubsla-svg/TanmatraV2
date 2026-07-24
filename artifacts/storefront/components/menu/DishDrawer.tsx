@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/drawer";
 import { DishRationale } from "./DishRationale";
 import { DishSpec } from "./DishSpec";
+import { DishAllergens } from "./DishAllergens";
 
 /**
  * Dish detail as a bottom sheet over the menu (§4.2): users triage dishes in
@@ -75,13 +76,10 @@ export function DishDrawer({ dish }: { dish: DishData }) {
 
           <DishSpec dish={dish} />
 
-          {/* Allergens are never clamped (§6). */}
-          {dish.allergens.length > 0 && (
-            <p className="mt-4 text-xs text-ink-muted">
-              <span className="font-semibold text-ink">Allergens:</span>{" "}
-              {dish.allergens.join(", ")}
-            </p>
-          )}
+          {/* Allergens are never clamped (§6); the disclosure preserves the
+              reviewed / auto-detected / under-review states — an unknown list
+              is never rendered as "no allergens". */}
+          <DishAllergens dish={dish} />
 
           <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
             <Link

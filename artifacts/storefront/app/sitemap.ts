@@ -3,6 +3,8 @@ import { PLAN_CATALOG } from "@workspace/subscription-rules";
 import { LEGAL_DOCS } from "@/content/legal";
 import { fetchMenu } from "@/lib/catalog";
 import { getRecipes } from "@/lib/recipesApi";
+import { getChallenges } from "@/lib/challengesApi";
+import { getTeamProfiles } from "@/lib/teamApi";
 import { getRds } from "@/lib/rdApi";
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -38,6 +40,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/rd", priority: 0.7, changeFrequency: "monthly" },
     { path: "/partners/gyms", priority: 0.5, changeFrequency: "monthly" },
     { path: "/partners/fitness-clubs", priority: 0.5, changeFrequency: "monthly" },
+    { path: "/challenges", priority: 0.6, changeFrequency: "weekly" },
+    { path: "/team", priority: 0.5, changeFrequency: "monthly" },
   ];
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE_URL}${r.path === "/" ? "" : r.path}`,
@@ -109,6 +113,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // getRecipes already swallows failures; last-resort guard.
   }
 
+  // Challenge detail (Event) pages. getChallenges() returns [] on a cold API.
+  let challengeEntries: MetadataRoute.Sitemap = [];
+  try {
+    const challenges = await getChallenges();
+    challengeEntries = challenges.map((c) => ({
+      url: `${SITE_URL}/challenges/${c.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
+  } catch {
+    // getChallenges already swallows failures; last-resort guard.
+  }
+
+  // Team profile pages. getTeamProfiles() returns [] on a cold/unreachable API,
+  // so this never breaks the build — the URLs appear once the API is reachable.
+  let teamEntries: MetadataRoute.Sitemap = [];
+  try {
+    const profiles = await getTeamProfiles();
+    teamEntries = profiles.map((p) => ({
+      url: `${SITE_URL}/team/${p.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
+    }));
+  } catch {
+    // getTeamProfiles already swallows failures; last-resort guard.
+  }
+
   // RD profile pages. getRds() returns [] on a cold/unreachable API, so this
   // never breaks the build — profile URLs appear once the API is reachable.
   let rdEntries: MetadataRoute.Sitemap = [];
@@ -124,5 +157,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // getRds already swallows failures; last-resort guard.
   }
 
-  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries, ...rdEntries];
+  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries, ...challengeEntries, ...teamEntries, ...rdEntries];
 }
