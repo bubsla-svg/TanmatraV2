@@ -153,3 +153,6 @@ jobs:
           ./src/routes/loyalty.referral.test.ts
           ./src/routes/dishRationales.test.ts
           ./src/routes/coachAgent.test.ts
+          ./src/routes/rdAdvisory.appointmentOrder.test.ts
+          ./src/routes/vouchers.test.ts
+          ./src/routes/premium.paymentOrder.test.ts

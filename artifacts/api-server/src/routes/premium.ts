@@ -1,10 +1,13 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { z } from "zod/v4";
 import {
   db,
   premiumMembershipsTable,
   premiumMealsTable,
 } from "@workspace/db";
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { razorpayCredentials, razorpayBasicAuth } from "../lib/razorpayRecurring";
 
 const router: IRouter = Router();
 
@@ -101,34 +104,186 @@ router.post("/premium/subscribe", async (req: Request, res: Response) => {
     return;
   }
   const existing = await loadActive(req.user.id);
+  // Resume auto-renewal for a cancelled-but-still-in-period membership. This is
+  // free — they already paid for the current period; we only re-enable renewal.
+  if (existing?.status === "cancelled") {
+    const [resumed] = await db
+      .update(premiumMembershipsTable)
+      .set({ status: "active", cancelledAt: null })
+      .where(eq(premiumMembershipsTable.id, existing.id))
+      .returning();
+    res.json({ membership: resumed, isPremium: true, resumed: true });
+    return;
+  }
   if (existing) {
-    if (existing.status === "cancelled") {
-      // Resume auto-renewal on the same period.
-      const [resumed] = await db
-        .update(premiumMembershipsTable)
-        .set({ status: "active", cancelledAt: null })
-        .where(eq(premiumMembershipsTable.id, existing.id))
-        .returning();
-      res.json({ membership: resumed, isPremium: true, resumed: true });
-      return;
-    }
     res.status(409).json({ error: "already a premium member", membership: existing });
     return;
   }
+  // A BRAND-NEW membership is a paid action: money integrity requires the
+  // checkout → Razorpay → verify path (below), never a free activation here.
+  res.status(409).json({ error: "payment required — start checkout", code: "payment_required" });
+});
+
+const premiumVerifySchema = z.object({
+  razorpayPaymentId: z.string().min(1).max(64),
+  razorpayOrderId: z.string().min(1).max(64),
+  razorpaySignature: z.string().min(1).max(256),
+});
+
+/**
+ * Open a Razorpay order for a NEW premium membership at the SERVER price. Mirrors
+ * the appointment-payment path: create (or reuse) a `pending_payment` row, bind
+ * the gateway order id to it, and return only ids + the server amount to the
+ * client. `loadActive` ignores `pending_payment`, so a stale attempt never
+ * blocks a fresh checkout.
+ */
+router.post("/premium/checkout", async (req: Request, res: Response) => {
+  await ensurePremiumSeeded();
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  const active = await loadActive(req.user.id);
+  if (active) {
+    res.status(409).json({ error: "already a premium member", membership: active });
+    return;
+  }
+  const creds = razorpayCredentials();
+  if (!creds) {
+    res.status(503).json({ error: "payment gateway not configured" });
+    return;
+  }
+  const [keyId, keySecret] = creds;
+
   const now = new Date();
-  const [created] = await db
-    .insert(premiumMembershipsTable)
-    .values({
-      userId: req.user.id,
+  const [pending] = await db
+    .select()
+    .from(premiumMembershipsTable)
+    .where(
+      and(
+        eq(premiumMembershipsTable.userId, req.user.id),
+        eq(premiumMembershipsTable.status, "pending_payment"),
+      ),
+    )
+    .orderBy(desc(premiumMembershipsTable.createdAt))
+    .limit(1);
+  let membershipId: number;
+  if (pending) {
+    membershipId = pending.id;
+  } else {
+    const [created] = await db
+      .insert(premiumMembershipsTable)
+      .values({
+        userId: req.user.id,
+        status: "pending_payment",
+        monthlyPricePaise: PREMIUM_PRICE_PAISE,
+        startedAt: now,
+        currentPeriodEnd: addDaysUtc(now, PERIOD_DAYS),
+        rdConsultsUsedThisPeriod: 0,
+        rdConsultsPerPeriod: FREE_RD_CONSULTS_PER_PERIOD,
+      })
+      .returning();
+    if (!created) {
+      res.status(500).json({ error: "could not start checkout" });
+      return;
+    }
+    membershipId = created.id;
+  }
+
+  const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: PREMIUM_PRICE_PAISE,
+      currency: "INR",
+      receipt: `premium-${membershipId}`,
+      payment_capture: 1,
+    }),
+  });
+  if (!rpRes.ok) {
+    let body: unknown;
+    try {
+      body = await rpRes.json();
+    } catch {
+      body = await rpRes.text();
+    }
+    req.log.error({ status: rpRes.status, body }, "Razorpay premium order creation failed");
+    res.status(502).json({ error: "payment gateway error" });
+    return;
+  }
+  const rp = (await rpRes.json()) as { id: string; amount: number; currency: string };
+  await db
+    .update(premiumMembershipsTable)
+    .set({ razorpayOrderId: rp.id })
+    .where(eq(premiumMembershipsTable.id, membershipId));
+  res.json({ razorpayOrderId: rp.id, amount: rp.amount, currency: rp.currency, keyId });
+});
+
+/**
+ * Verify the Razorpay signature and activate the membership. The atomic guarded
+ * update binds THIS payment to the `pending_payment` row whose stored
+ * `razorpayOrderId` matches — replaying another order's valid signature updates
+ * zero rows (→ 409), exactly as the appointment path defends.
+ */
+router.post("/premium/verify", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  const creds = razorpayCredentials();
+  if (!creds) {
+    res.status(503).json({ error: "payment gateway not configured" });
+    return;
+  }
+  const [, keySecret] = creds;
+  const parsed = premiumVerifySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+  const { razorpayPaymentId, razorpayOrderId, razorpaySignature } = parsed.data;
+  const expected = createHmac("sha256", keySecret)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+    .digest("hex");
+  let valid = false;
+  try {
+    valid = timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(razorpaySignature, "hex"));
+  } catch {
+    valid = false;
+  }
+  if (!valid) {
+    req.log.warn({ userId: req.user.id, razorpayOrderId }, "invalid premium payment signature");
+    res.status(400).json({ error: "invalid payment signature" });
+    return;
+  }
+  const now = new Date();
+  const [row] = await db
+    .update(premiumMembershipsTable)
+    .set({
       status: "active",
-      monthlyPricePaise: PREMIUM_PRICE_PAISE,
+      razorpayPaymentId,
       startedAt: now,
       currentPeriodEnd: addDaysUtc(now, PERIOD_DAYS),
       rdConsultsUsedThisPeriod: 0,
       rdConsultsPerPeriod: FREE_RD_CONSULTS_PER_PERIOD,
     })
+    .where(
+      and(
+        eq(premiumMembershipsTable.userId, req.user.id),
+        eq(premiumMembershipsTable.razorpayOrderId, razorpayOrderId),
+        eq(premiumMembershipsTable.status, "pending_payment"),
+      ),
+    )
     .returning();
-  res.status(201).json({ membership: created, isPremium: true });
+  if (!row) {
+    res.status(409).json({ error: "payment could not be applied" });
+    return;
+  }
+  req.log.info({ userId: req.user.id }, "premium membership paid");
+  res.json({ ok: true, membership: row, isPremium: true });
 });
 
 router.post("/premium/cancel", async (req: Request, res: Response) => {

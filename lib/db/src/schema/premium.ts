@@ -10,7 +10,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./auth";
 
-export type PremiumStatus = "active" | "cancelled" | "expired";
+export type PremiumStatus = "active" | "cancelled" | "expired" | "pending_payment";
 
 export const premiumMembershipsTable = pgTable(
   "premium_memberships",
@@ -31,6 +31,11 @@ export const premiumMembershipsTable = pgTable(
       withTimezone: true,
     }).notNull(),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    // Razorpay money-path (mirrors rd_appointments): a checkout creates a
+    // `pending_payment` row + gateway order id; verify binds the payment id and
+    // flips the row to `active`. Nullable — free/legacy rows never set them.
+    razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
+    razorpayPaymentId: varchar("razorpay_payment_id", { length: 64 }),
     rdConsultsUsedThisPeriod: integer("rd_consults_used_this_period")
       .notNull()
       .default(0),
