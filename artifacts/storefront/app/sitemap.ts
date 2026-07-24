@@ -4,6 +4,7 @@ import { LEGAL_DOCS } from "@/content/legal";
 import { fetchMenu } from "@/lib/catalog";
 import { getRecipes } from "@/lib/recipesApi";
 import { getChallenges } from "@/lib/challengesApi";
+import { getTeamProfiles } from "@/lib/teamApi";
 import { SITE_URL } from "@/lib/siteUrl";
 
 // Only public, indexable routes belong here. /login, /checkout, /track,
@@ -32,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/partners/gyms", priority: 0.5, changeFrequency: "monthly" },
     { path: "/partners/fitness-clubs", priority: 0.5, changeFrequency: "monthly" },
     { path: "/challenges", priority: 0.6, changeFrequency: "weekly" },
+    { path: "/team", priority: 0.5, changeFrequency: "monthly" },
   ];
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE_URL}${r.path === "/" ? "" : r.path}`,
@@ -117,5 +119,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // getChallenges already swallows failures; last-resort guard.
   }
 
-  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries, ...challengeEntries];
+  // Team profile pages. getTeamProfiles() returns [] on a cold/unreachable API,
+  // so this never breaks the build — the URLs appear once the API is reachable.
+  let teamEntries: MetadataRoute.Sitemap = [];
+  try {
+    const profiles = await getTeamProfiles();
+    teamEntries = profiles.map((p) => ({
+      url: `${SITE_URL}/team/${p.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
+    }));
+  } catch {
+    // getTeamProfiles already swallows failures; last-resort guard.
+  }
+
+  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries, ...challengeEntries, ...teamEntries];
 }
