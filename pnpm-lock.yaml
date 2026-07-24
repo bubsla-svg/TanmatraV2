@@ -687,6 +687,9 @@ importers:
       '@workspace/menu-catalog':
         specifier: workspace:*
         version: link:../../lib/menu-catalog
+      '@workspace/preferences-match':
+        specifier: workspace:*
+        version: link:../../lib/preferences-match
       '@workspace/subscription-rules':
         specifier: workspace:*
         version: link:../../lib/subscription-rules
