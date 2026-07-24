@@ -12,12 +12,23 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  const staticEntries: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${SITE_URL}/menu`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${SITE_URL}/plans`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${SITE_URL}/trial`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+  // Public, indexable static routes. Route-parity waves APPEND their new
+  // content routes here as they land (Wave A → /about, /faq; legal-pages →
+  // /legal/*) — one line each, so the sitemap grows with the site. Only list a
+  // path once its page actually exists on this branch, or the URL 404s.
+  const STATIC_ROUTES: { path: string; priority: number; changeFrequency: "weekly" | "monthly" }[] = [
+    { path: "/", priority: 1, changeFrequency: "weekly" },
+    { path: "/menu", priority: 0.9, changeFrequency: "weekly" },
+    { path: "/plans", priority: 0.9, changeFrequency: "monthly" },
+    { path: "/trial", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/corporate", priority: 0.6, changeFrequency: "monthly" },
   ];
+  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
+    url: `${SITE_URL}${r.path === "/" ? "" : r.path}`,
+    lastModified: now,
+    changeFrequency: r.changeFrequency,
+    priority: r.priority,
+  }));
 
   // Every catalog plan has a /plan/<id> page (a blocked plan renders a waitlist
   // — still real, indexable content). trial_3day is excluded: its canonical
