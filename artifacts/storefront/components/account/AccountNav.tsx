@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Tab = "subscriptions" | "orders" | "billing" | "addresses" | "preferences" | "loyalty";
+type Tab = "subscriptions" | "orders" | "billing" | "addresses" | "preferences" | "health" | "loyalty";
 
 /**
  * Account section tabs. Server component (no client JS) — each page passes its
@@ -25,6 +25,7 @@ export function AccountNav({ active }: { active: Tab }) {
       {link("/account/billing", "billing", "Billing")}
       {link("/account/addresses", "addresses", "Addresses")}
       {link("/account/preferences", "preferences", "Preferences")}
+      {link("/account/health-information", "health", "Health")}
       {link("/account/loyalty", "loyalty", "Rewards")}
     </nav>
   );
