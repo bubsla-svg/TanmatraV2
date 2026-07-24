@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatPaise } from "@/lib/format";
 import type { Subscription, SubscriptionStatus } from "@/lib/subscriptionsApi";
 import { DeliveryList } from "./DeliveryList";
+import { ChangePlanPanel } from "./ChangePlanPanel";
 
 export type SubAction = "pause" | "resume" | "cancel" | "reactivate-billing";
 
@@ -37,13 +38,18 @@ export function SubscriptionCard({
   sub,
   busy,
   onAction,
+  onChanged,
 }: {
   sub: Subscription;
   busy: boolean;
   onAction: (action: SubAction) => void;
+  /** A change-plan request settled (applied, or reauthorised) — reload the list. */
+  onChanged: () => void;
 }) {
-  // Deliveries load lazily on first open — a closed card costs no request.
+  // Deliveries and the change-plan form each load/render lazily — a closed
+  // card costs no request either way.
   const [showDeliveries, setShowDeliveries] = useState(false);
+  const [showChangePlan, setShowChangePlan] = useState(false);
   return (
     <li className="rounded-xl border border-line bg-surface p-4">
       <div className="flex items-center justify-between gap-2">
@@ -65,6 +71,17 @@ export function SubscriptionCard({
       {sub.addressLine && (
         <p className="mt-0.5 text-xs text-ink-faint">{[sub.addressLine, sub.city, sub.pincode].filter(Boolean).join(", ")}</p>
       )}
+      {sub.pendingCadence && (
+        <p className="mt-1.5 text-xs font-medium text-sage-text">
+          Plan change to {sub.pendingCadence} · {sub.pendingMealsPerDelivery} meals
+          {sub.pendingChangeReauthRequired ? " awaiting authorisation — " : " takes effect next cycle."}
+          {sub.pendingChangeReauthRequired && (
+            <button type="button" onClick={() => setShowChangePlan(true)} className="underline">
+              Complete authorisation
+            </button>
+          )}
+        </p>
+      )}
       {(actionsFor(sub.status).length > 0 || sub.status !== "cancelled") && (
         <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-medium">
           {actionsFor(sub.status).map((a) => (
@@ -78,6 +95,11 @@ export function SubscriptionCard({
               {ACTION_LABEL[a]}
             </button>
           ))}
+          {sub.status === "active" && !showChangePlan && (
+            <button type="button" onClick={() => setShowChangePlan(true)} className="-m-1 p-1 text-gold-text hover:underline">
+              Change plan
+            </button>
+          )}
           {sub.status !== "cancelled" && (
             <button
               type="button"
@@ -89,6 +111,9 @@ export function SubscriptionCard({
             </button>
           )}
         </div>
+      )}
+      {showChangePlan && (
+        <ChangePlanPanel sub={sub} onDone={() => { onChanged(); setShowChangePlan(false); }} />
       )}
       {showDeliveries && sub.status !== "cancelled" && <DeliveryList subscriptionId={sub.id} />}
     </li>
