@@ -5,6 +5,7 @@ import { fetchMenu } from "@/lib/catalog";
 import { getRecipes } from "@/lib/recipesApi";
 import { getChallenges } from "@/lib/challengesApi";
 import { getTeamProfiles } from "@/lib/teamApi";
+import { getRds } from "@/lib/rdApi";
 import { SITE_URL } from "@/lib/siteUrl";
 
 // Only public, indexable routes belong here. /login, /checkout, /track,
@@ -30,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/about", priority: 0.5, changeFrequency: "monthly" },
     { path: "/faq", priority: 0.5, changeFrequency: "monthly" },
     { path: "/recipes", priority: 0.7, changeFrequency: "weekly" },
+    { path: "/rd", priority: 0.7, changeFrequency: "monthly" },
     { path: "/partners/gyms", priority: 0.5, changeFrequency: "monthly" },
     { path: "/partners/fitness-clubs", priority: 0.5, changeFrequency: "monthly" },
     { path: "/challenges", priority: 0.6, changeFrequency: "weekly" },
@@ -134,5 +136,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // getTeamProfiles already swallows failures; last-resort guard.
   }
 
-  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries, ...challengeEntries, ...teamEntries];
+  // RD profile pages. getRds() returns [] on a cold/unreachable API, so this
+  // never breaks the build — profile URLs appear once the API is reachable.
+  let rdEntries: MetadataRoute.Sitemap = [];
+  try {
+    const rds = await getRds();
+    rdEntries = rds.map((r) => ({
+      url: `${SITE_URL}/rd/${r.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }));
+  } catch {
+    // getRds already swallows failures; last-resort guard.
+  }
+
+  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries, ...challengeEntries, ...teamEntries, ...rdEntries];
 }
