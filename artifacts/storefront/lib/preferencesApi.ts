@@ -8,7 +8,7 @@
  * re-seed from the response rather than assume their input casing survives.
  * Kept out of lib/api.ts to stay under the file cap.
  */
-import { apiGet, apiPatch, type FetchImpl } from "./apiClient";
+import { apiGet, apiPatch, apiDelete, type FetchImpl } from "./apiClient";
 
 export type DietaryStyle = "omnivore" | "vegetarian" | "vegan" | "pescatarian" | "keto";
 export type SpiceLevel = "none" | "mild" | "medium" | "hot";
@@ -66,4 +66,56 @@ export function savePreferences(
   fetchImpl?: FetchImpl,
 ): Promise<{ preferences: UserPreferences }> {
   return apiPatch("/preferences", patch, fetchImpl);
+}
+
+// ── Clinical / health-information subset (account/health-information) ─────────
+
+export type ClinicalContraindication =
+  | "hypertension" | "diabetes" | "gerd" | "kidney_disease" | "celiac" | "pregnancy";
+
+export const MEDICAL_CONDITION_OPTIONS: ClinicalContraindication[] = [
+  "hypertension", "diabetes", "gerd", "kidney_disease", "celiac", "pregnancy",
+];
+
+export const MEDICAL_CONDITION_LABEL: Record<ClinicalContraindication, string> = {
+  hypertension: "Hypertension (High BP)",
+  diabetes: "Diabetes / Blood Sugar",
+  gerd: "GERD / Acid Reflux",
+  kidney_disease: "Kidney Disease / Renal",
+  celiac: "Celiac Disease",
+  pregnancy: "Pregnancy",
+};
+
+export type HealthField = "hba1cPct" | "pcosHistory" | "heightCm" | "weightKg" | "medicalConditions";
+
+export interface ClinicalPatch {
+  medicalConditions?: string[];
+  hba1cPct?: number | null;
+  pcosHistory?: boolean | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
+}
+
+/** Save the clinical subset (same PATCH /preferences endpoint; server encrypts
+ *  the conditions array at rest and re-seeds the decrypted row on the response). */
+export function saveClinical(
+  patch: ClinicalPatch,
+  fetchImpl?: FetchImpl,
+): Promise<{ preferences: UserPreferences }> {
+  return apiPatch("/preferences", patch, fetchImpl);
+}
+
+/** DPDP right-to-erasure of one clinical field (or one condition). */
+export function deleteHealthField(
+  field: HealthField,
+  condition?: string,
+  fetchImpl?: FetchImpl,
+): Promise<{ success: boolean; message: string }> {
+  const q = condition ? `?condition=${encodeURIComponent(condition)}` : "";
+  return apiDelete(`/user/health-data/${field}${q}`, fetchImpl);
+}
+
+/** DPDP §12 full account + health-data erasure (soft-delete + 30-day purge). */
+export function deleteAccount(fetchImpl?: FetchImpl): Promise<{ success: boolean }> {
+  return apiDelete("/user/account", fetchImpl);
 }
