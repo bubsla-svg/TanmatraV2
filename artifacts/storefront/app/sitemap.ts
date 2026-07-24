@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { PLAN_CATALOG } from "@workspace/subscription-rules";
 import { LEGAL_DOCS } from "@/content/legal";
 import { fetchMenu } from "@/lib/catalog";
+import { getRecipes } from "@/lib/recipesApi";
 import { SITE_URL } from "@/lib/siteUrl";
 
 // Only public, indexable routes belong here. /login, /checkout, /track,
@@ -25,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/corporate", priority: 0.6, changeFrequency: "monthly" },
     { path: "/about", priority: 0.5, changeFrequency: "monthly" },
     { path: "/faq", priority: 0.5, changeFrequency: "monthly" },
+    { path: "/recipes", priority: 0.7, changeFrequency: "weekly" },
   ];
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE_URL}${r.path === "/" ? "" : r.path}`,
@@ -80,5 +82,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // sitemap is always emitted even if enumeration itself throws.
   }
 
-  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries];
+  // Recipe detail pages. getRecipes() returns [] on a cold/unreachable API, so
+  // this never breaks the build — the recipe URLs simply appear once the API is
+  // reachable at revalidate time.
+  let recipeEntries: MetadataRoute.Sitemap = [];
+  try {
+    const recipes = await getRecipes();
+    recipeEntries = recipes.map((r) => ({
+      url: `${SITE_URL}/recipes/${r.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }));
+  } catch {
+    // getRecipes already swallows failures; last-resort guard.
+  }
+
+  return [...staticEntries, ...legalEntries, ...planEntries, ...dishEntries, ...recipeEntries];
 }

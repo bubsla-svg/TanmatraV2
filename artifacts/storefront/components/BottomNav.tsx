@@ -11,7 +11,7 @@ const MATCH: Record<NavGroupKey, string[]> = {
   eat: ["/menu", "/dish"],
   plan: ["/plans", "/plan", "/trial"],
   track: ["/account/orders", "/track"],
-  community: ["/corporate"],
+  community: ["/recipes", "/corporate"],
   account: ["/account"],
 };
 
