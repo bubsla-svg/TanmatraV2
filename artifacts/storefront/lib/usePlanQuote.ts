@@ -1,24 +1,27 @@
 // Client-side hook (imported only by client components): the server quote that
-// gates the pay CTA, net of any redeemable credit-ledger balance once signed
-// in. Extracted from PlanCheckout to keep the component under the file cap as
-// add-ons (and now credit) joined the quote.
+// gates the pay CTA, net of any redeemable credit once signed in. Extracted
+// from PlanCheckout to keep the component under the file cap as add-ons (and
+// now credit) joined the quote.
 import { useEffect, useState } from "react";
-import { quotePlan, getCreditBalance, type AddOnId, type DietTrack } from "./api";
+import { quotePlan, type AddOnId, type DietTrack } from "./api";
 import { addOnLineFromQuote } from "./addons";
 
-interface RawQuote {
+export interface PlanQuoteState {
   mealsPerDelivery: number;
   totalPaise: number;
+  /** Display line for the quote's billed add-ons ("Your dietitian · +₹499/mo"),
+   *  or null when none — always the SERVER's priced items, never the spine's. */
   addOnLine: string | null;
-}
-
-export interface PlanQuoteState extends RawQuote {
-  /** Redeemable credit-ledger balance applied against totalPaise (0 until
-   *  signed in, or when the account holds no balance). Computed the same way
-   *  subscriptions.ts's create route itself redeems — min(balance, total) —
-   *  so this is never a promise the server might not honor. */
+  /** Total credit the SERVER will redeem against this first bill — the
+   *  à-la-carte→trial bridge credit PLUS the general ledger balance, derived
+   *  as totalPaise − payableTotalPaise so the displayed "credit applied" line
+   *  always reconciles with the billed amount (never just the ledger slice).
+   *  0 until signed in / when the account holds none. */
   creditAppliedPaise: number;
-  /** What will actually be charged: totalPaise - creditAppliedPaise. */
+  /** What will actually be charged. Comes straight from the server
+   *  (payableTotalPaise), computed in the create route's exact redemption
+   *  order, so it can never drift from the amount create bills — no
+   *  client-side redemption math. */
   payableTotalPaise: number;
 }
 
@@ -30,11 +33,12 @@ export interface PlanQuoteState extends RawQuote {
  * CTA until the fresh quote lands — a submit can never pair a new track with a
  * stale quote's meals-per-delivery.
  *
- * Once `signedIn`, the account's real credit-ledger balance (GET
- * /credit-ledger — auth required) is fetched once and folded into
- * `creditAppliedPaise`/`payableTotalPaise`, so a returning post-trial buyer
- * (or anyone else holding a balance) sees the discounted total BEFORE paying,
- * never a surprise on the confirmation screen.
+ * The credit preview is SERVER-computed: once `signedIn`, the quote (a
+ * cookie-authed POST) comes back with the exact bridge + ledger credit the
+ * create route will redeem and the net `payableTotalPaise`. The client never
+ * replicates redemption order/precedence, so a trial buyer holding BOTH an
+ * à-la-carte bridge credit and a ledger balance sees the true amount before
+ * paying — not a client guess that missed the bridge step.
  */
 export function usePlanQuote(
   planId: string,
@@ -42,29 +46,35 @@ export function usePlanQuote(
   addOns?: AddOnId[],
   signedIn?: boolean,
 ): { quote: PlanQuoteState | null; quoteLoading: boolean } {
-  const [raw, setRaw] = useState<RawQuote | null>(null);
+  const [quote, setQuote] = useState<PlanQuoteState | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
-  const [creditBalance, setCreditBalance] = useState<number | null>(null);
   // Keyed by value, not array identity — a parent re-render with an equal
   // array must not re-quote.
   const addOnsKey = (addOns ?? []).join(",");
 
   useEffect(() => {
     let live = true;
-    setRaw(null);
+    setQuote(null);
     setQuoteLoading(true);
     const requested = addOnsKey ? (addOnsKey.split(",") as AddOnId[]) : [];
+    // `signedIn` is a dep, not sent in the body: a re-quote after login carries
+    // the session cookie (credentials:"include"), so the server folds in this
+    // account's real credit; the pre-login quote shows the gross total.
     quotePlan({ planId, track, cadence: "monthly", addOns: requested })
       .then((q) => {
         if (!live) return;
-        setRaw({
+        const payableTotalPaise = q.payableTotalPaise ?? q.totalPaise;
+        setQuote({
           mealsPerDelivery: q.mealsPerDelivery,
           totalPaise: q.totalPaise,
           addOnLine: addOnLineFromQuote(q.addOns),
+          // Full discount (bridge + ledger), always == what's taken off.
+          creditAppliedPaise: q.totalPaise - payableTotalPaise,
+          payableTotalPaise,
         });
       })
       .catch(() => {
-        if (live) setRaw(null);
+        if (live) setQuote(null);
       })
       .finally(() => {
         if (live) setQuoteLoading(false);
@@ -72,29 +82,7 @@ export function usePlanQuote(
     return () => {
       live = false;
     };
-  }, [planId, track, addOnsKey]);
+  }, [planId, track, addOnsKey, signedIn]);
 
-  // Runs once per sign-in (not per track/add-on change) — the balance is an
-  // account fact, not a quote input.
-  useEffect(() => {
-    if (!signedIn) return;
-    let live = true;
-    getCreditBalance()
-      .then(({ balancePaise }) => {
-        if (live) setCreditBalance(balancePaise);
-      })
-      .catch(() => {
-        if (live) setCreditBalance(0);
-      });
-    return () => {
-      live = false;
-    };
-  }, [signedIn]);
-
-  if (!raw) return { quote: null, quoteLoading };
-  const creditAppliedPaise = Math.max(0, Math.min(creditBalance ?? 0, raw.totalPaise));
-  return {
-    quote: { ...raw, creditAppliedPaise, payableTotalPaise: raw.totalPaise - creditAppliedPaise },
-    quoteLoading,
-  };
+  return { quote, quoteLoading };
 }

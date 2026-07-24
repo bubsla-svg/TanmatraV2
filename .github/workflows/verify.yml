@@ -148,3 +148,5 @@ jobs:
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
+          ./src/routes/subscriptions.creditLedger.test.ts
+          ./src/routes/subscriptions.quoteCreditPreview.test.ts

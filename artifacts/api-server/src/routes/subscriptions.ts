@@ -769,6 +769,56 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
     // Re-derive the GST split on the combined (GST-inclusive) total.
     const preTaxPaise = Math.round(totalPaise / (1 + GST_RATE));
 
+    // Signed-in preview of the credits the create route WILL redeem against
+    // this first bill, in its exact order: the à-la-carte→trial bridge credit
+    // first (trial only), then the general ledger balance against what's left
+    // (02e §6). The create route feeds bridgeCreditDiscountPaise the SAME
+    // inputs this uses — the storefront sends mealsPerDelivery = this quote's
+    // q.mealsPerCycle, and pricePerDeliveryPaise there === totalPaise here — so
+    // payableTotalPaise below equals the amount create charges, never a
+    // client-side guess that misses the bridge step. READ-ONLY: nothing is
+    // consumed; create re-derives and redeems atomically at pay time. Absent
+    // for anonymous callers (no req.user) — the pre-OTP quote just shows the
+    // gross total, and PlanCheckout re-quotes once signed in.
+    let bridgeCreditPaise = 0;
+    let creditAppliedPaise = 0;
+    const previewUserId = req.user?.id;
+    if (previewUserId) {
+      if (data.planId === "trial_3day") {
+        const [credit] = await db
+          .select({ amount: mealCreditsTable.amount })
+          .from(mealCreditsTable)
+          .where(
+            and(
+              eq(mealCreditsTable.userId, previewUserId),
+              eq(mealCreditsTable.reason, "alacarte_bridge"),
+              isNull(mealCreditsTable.consumedAt),
+              or(
+                isNull(mealCreditsTable.expiresAt),
+                gt(mealCreditsTable.expiresAt, new Date()),
+              ),
+            ),
+          )
+          .limit(1);
+        if (credit) {
+          bridgeCreditPaise = bridgeCreditDiscountPaise(
+            credit.amount,
+            q.mealsPerCycle,
+            totalPaise,
+          );
+        }
+      }
+      const balancePaise = await getCreditBalancePaise(previewUserId);
+      creditAppliedPaise = Math.min(
+        balancePaise,
+        Math.max(0, totalPaise - bridgeCreditPaise),
+      );
+    }
+    const payableTotalPaise = Math.max(
+      0,
+      totalPaise - bridgeCreditPaise - creditAppliedPaise,
+    );
+
     res.json({
       planId: data.planId,
       track,
@@ -781,6 +831,10 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
       deliveryFeePaise: 0,
       gstPaise: totalPaise - preTaxPaise,
       totalPaise,
+      // Credit preview (signed-in only) — see the block above.
+      bridgeCreditPaise,
+      creditAppliedPaise,
+      payableTotalPaise,
     });
     return;
   }
