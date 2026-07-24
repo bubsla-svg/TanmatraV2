@@ -33,10 +33,17 @@ data or business logic.
 
 ---
 
-## 1 · Excluded from scope (override if wrong)
+## 1 · Excluded from scope (decided)
 
-- **`admin/*`** — 18 internal console routes, behind admin auth. Separate app.
-- **`/cart`** — the storefront uses a cart **drawer** by design, not a page.
+- **`admin/*`** — 18 internal console routes, behind admin auth (decision 1: **out**).
+  They mix a different trust boundary (`AdminAuthLayout`/`RdAuthLayout`, operator
+  sessions) and heavy operator tooling (KDS, forecasting, AI-run inspectors) that
+  has no place in the customer IA. If admin ever moves to Next it is its own
+  program with its own auth layer, not part of this port.
+- **`/cart`** — the storefront uses a cart **drawer** + mini-bar by design, not a
+  page (decision 2: **stay a drawer**). `/checkout` already serves the review step,
+  and `/group/:code` (Wave E) covers the one shareable-cart need. Revisit only if a
+  concrete share-a-cart requirement appears.
 - **`stitch/*`**, **`rd-console`** — prototype / internal.
 
 ---
@@ -89,16 +96,41 @@ Status legend: ⬜ not started · 🟡 in progress · ✅ merged & deployed.
 
 ### Path-rename map (already-built storefront equivalents)
 These legacy paths already have a storefront home under `/account/*` or the
-consolidated plan surfaces — they need **redirects**, not new pages:
+consolidated plan surfaces — they get **permanent (308) redirects** (decision 3),
+not new pages or bare aliases. One canonical URL each → SEO/link-equity
+consolidates, no duplicate-content risk. Centralised in `next.config.ts`
+`redirects()` (baked at build → adding one is a redeploy).
 
-| Legacy path | Storefront path |
+| Legacy path | Redirect target (308) |
 |---|---|
 | `/orders` | `/account/orders` |
 | `/rewards` | `/account/loyalty` |
 | `/preferences` | `/account/preferences` |
 | `/subscriptions` | `/account/subscriptions` |
-| `/track` (bare) | `/track/:orderId` only (no index) |
+| `/track` (bare — legacy order list) | `/account/orders` (the storefront keeps only `/track/:orderId`) |
 | `/subscribe`, `/subscription-plans` | `/plans` + `/plan/:id` + `/trial` (Wave H reconciles) |
+
+### Backend readiness (grounds decision 4)
+
+Audit of `artifacts/api-server/src/routes/`: **most waves already have backend
+routes to port against** — reuse existing endpoints by default; the client never
+fabricates pricing.
+
+| Wave | Backend already present | Gap → new endpoint (money-path lockstep + DB test) |
+|---|---|---|
+| C community | `recipes.ts` · `challenges.ts` · `community.ts` · `teamProfiles.ts` | — |
+| E corporate/group | `groupOrders.ts` (+ `groupOrders.test.ts`) · `corporate.ts` · `b2bPlanner.ts` | verify `office-lunch`/`lunch-planner` coverage under `b2bPlanner`/`groupOrders` |
+| F marketplace | `marketplace.ts` | — |
+| H planning | `mealPlans.ts` · `subscriptions.ts` | — |
+| B / D premium+RD | `premium.ts` · `wellness.ts` · `rdPartners.ts` · `rdAdvisory.ts` | — |
+| **D appointments** | — | **no `appointment` route** → new booking + appointment-order endpoint (the one clear new-endpoint build; prerequisite slice before its UI) |
+| **G vouchers** | — | no `voucher` route → build one or map onto `loyalty.ts` |
+| **G billing** | `payments.ts` + `orders.ts` + `subscriptions.ts` | read-only aggregation; likely no new endpoint |
+| **G health-information (PHI)** | `health.ts` is *liveness*, not PHI | identify the real CLINICAL_KMS-encrypted read/write endpoint (on subscription members) with PHI care |
+
+**Rule:** reuse existing endpoints; when a wave hits a genuine gap, carve out a
+separate api-server slice under the money-path lockstep (server owns every amount,
+DB-backed test in `verify.yml`) — never let a UI port invent client-side money math.
 
 ---
 
@@ -125,20 +157,32 @@ service · spot-checked on the live URL (the deploy-truth discipline: assert
 
 ---
 
-## 6 · Open decisions
+## 6 · Resolved decisions
 
-1. **Admin `/admin/*` (18 routes)** — confirmed **out of scope**? (recommend: yes)
-2. **`/cart`** — keep as drawer (recommend) or add a page?
-3. **Renamed paths** — redirect legacy → `/account/*` (recommend), or also expose
-   bare aliases?
-4. **Money-path waves (D/E/F/H)** — port UI against **existing** api-server
-   endpoints only, or are new/changed endpoints in scope? (recommend: reuse
-   existing, flag gaps)
-5. **Order** — strict A→H, or pull a business-priority domain forward?
+1. **Admin `/admin/*` (18 routes) — OUT of scope.** Separate trust boundary and
+   operator tooling; stays on the legacy SPA. See §1.
+2. **`/cart` — stays a drawer**, not a page. `/checkout` covers review;
+   `/group/:code` covers shareable carts. See §1.
+3. **Renamed paths — permanent (308) redirects**, one canonical URL each, no bare
+   aliases. See the path-rename map in §3.
+4. **Money-path waves — reuse existing api-server endpoints by default**; carve
+   out a new endpoint slice (money-path lockstep + DB test) only where the audit
+   shows a genuine gap. See the backend-readiness table in §3. Known new-endpoint
+   work: **appointments (Wave D)**; open questions: vouchers + health-information
+   PHI (Wave G).
+5. **Sequencing — Wave A is locked first** (cheapest, near-zero risk, and it builds
+   the shared nav / redirect-map / SEO / test scaffolding every later wave reuses).
+   **B–H are then reordered by business priority** — pending a business-priority
+   signal (RD? Corporate? Community/content for SEO?), the default is strict A→H
+   (derisks best).
 
 ---
 
 ## 7 · Changelog
 
+- _(unreleased)_ — resolved the five open decisions (§6): admin **out**, cart
+  stays a **drawer**, **308 redirects** for renamed paths, **reuse existing
+  endpoints** (backend-readiness audit added to §3, appointment/voucher/PHI gaps
+  flagged), and **Wave A first → then reorder B–H by business priority**.
 - _(unreleased)_ — initial program plan authored; wave backlog created
   (tasks #54–#61). Branch `claude/storefront-parity-content` cut for Wave A.
