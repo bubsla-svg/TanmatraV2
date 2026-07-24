@@ -139,11 +139,19 @@ for S in brand-tanmatra-petpooja-app-key brand-tanmatra-petpooja-app-secret bran
 done
 ```
 
-## 6. Restaurant ID — already inlined (no action)
+## 6. Identifiers — already inlined (no action)
 
-`PETPOOJA_RESTAURANT_ID` is a non-secret identifier and is already set as a
-literal in `deploy.yml`'s `--update-env-vars`. Nothing to do. To change it
-later, edit that one value in `deploy.yml`.
+Three non-secret identifiers are set as literals in `deploy.yml`'s
+`--update-env-vars`. Nothing to do; to change one, edit that value in `deploy.yml`.
+
+- `PETPOOJA_RESTAURANT_ID` = `cq5hnj3629` — `restID` on the Save Order payload
+- `PETPOOJA_MENU_SHARING_CODE` = `cq5hnj3629` — pinned explicitly, **not** left to
+  the `|| restId` fallback, so the two stay independently editable
+- `PETPOOJA_INVENTORY_RID` = `355738` — Inventory API only (different host, §7)
+
+⚠ These are **different identifiers from Petpooja** and are not interchangeable.
+Open question: confirm whether Save Order wants `restID` = `355738` rather than the
+sharing code we send today — a wrong value there fails silently at the POS.
 
 ## 7. 🛑 Optional non-default endpoints — ask before adding
 
@@ -151,7 +159,10 @@ The code defaults are correct for a standard Petpooja tenant. Only if the
 Petpooja team specified something different:
 
 - `PETPOOJA_SAVE_ORDER_URL` (default `https://pos.petpooja.com/api/v1/save_order`)
-- `PETPOOJA_MENU_SHARING_CODE` (default = restaurant ID)
+- `PETPOOJA_INVENTORY_BASE_URL` (default `https://inventory.petpooja.com` — the
+  Inventory API is on a different host from the ordering API)
+- `PETPOOJA_MENU_SHARING_CODE` (pinned in `deploy.yml`; falls back to the
+  restaurant ID only when unset)
 - `PETPOOJA_RESTAURANT_NAME` (default `Wellness Foods`)
 
 If any differ, **stop and ask the operator**, then add each as a literal line in

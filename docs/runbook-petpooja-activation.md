@@ -65,18 +65,35 @@ for S in brand-tanmatra-petpooja-app-key brand-tanmatra-petpooja-app-secret bran
 done
 ```
 
-## 3. Restaurant ID — already inlined
+## 3. Identifiers — already inlined (and they are NOT interchangeable)
 
-`PETPOOJA_RESTAURANT_ID` is a non-secret identifier and is already set as a
-literal in `deploy.yml`'s `--update-env-vars`. No action needed. To change it
-later, edit that one value in `deploy.yml` (a normal PR → deploy).
+Petpooja issued **two** distinct non-secret identifiers for this outlet. Both are
+set as literals in `deploy.yml`'s `--update-env-vars`; no action needed.
+
+| Env var | Value | Used by |
+|---|---|---|
+| `PETPOOJA_RESTAURANT_ID` | `cq5hnj3629` | ordering integration — `restID` in the Save Order payload |
+| `PETPOOJA_MENU_SHARING_CODE` | `cq5hnj3629` | menu fetch/serialization |
+| `PETPOOJA_INVENTORY_RID` | `355738` | Inventory API (different host — see §4) |
+
+`PETPOOJA_MENU_SHARING_CODE` is now **pinned explicitly**. `petpoojaConfig()` still
+falls back to `restId` when it is unset (`petpoojaClient.ts:46`), and that fallback
+silently coupled the two identifiers — correcting one would have moved the other.
+Pinning it decouples them, so `PETPOOJA_RESTAURANT_ID` can be changed on its own.
+
+> ⚠ **Open question with Petpooja.** Now that a distinct RID (`355738`) is known to
+> exist, confirm which value **Save Order** expects in `restID`. We currently send
+> the sharing code. If the POS wants the RID, outbound order pushes are being
+> misrouted — and it fails *silently*: nothing in the repo asserts on the POS
+> response body. Fixing it is a one-value edit here once Petpooja answers.
 
 ## 4. (Optional) Non-default endpoints
 
 Only if Petpooja gave you values different from the code defaults:
 
 - `PETPOOJA_SAVE_ORDER_URL` — defaults to `https://pos.petpooja.com/api/v1/save_order`
-- `PETPOOJA_MENU_SHARING_CODE` — defaults to the restaurant ID
+- `PETPOOJA_INVENTORY_BASE_URL` — defaults to `https://inventory.petpooja.com`
+  (the Inventory API is on a **different host** from the ordering API)
 - `PETPOOJA_RESTAURANT_NAME` — defaults to `Wellness Foods`
 
 Add these as literal lines in `deploy.yml`'s `--update-env-vars` (they're
