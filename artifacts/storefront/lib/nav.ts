@@ -52,7 +52,10 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "track",
     label: "Track",
     href: "/account/orders",
-    links: [{ label: "My orders", href: "/account/orders" }],
+    links: [
+      { label: "My orders", href: "/account/orders" },
+      { label: "Nutrition coach", href: "/coach", desc: "Chat with an AI nutrition coach" },
+    ],
   },
   {
     key: "community",
