@@ -82,6 +82,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Account hub", href: "/account" },
       { label: "Subscriptions", href: "/account/subscriptions" },
       { label: "Orders", href: "/account/orders" },
+      { label: "Billing & credits", href: "/account/billing", desc: "Wallet balance & credit activity" },
       { label: "Wallet & vouchers", href: "/vouchers", desc: "Redeem a voucher · wallet balance" },
       { label: "Addresses", href: "/account/addresses" },
       { label: "Preferences", href: "/account/preferences" },
