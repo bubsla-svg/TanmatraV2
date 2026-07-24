@@ -45,6 +45,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { label: "Home", href: "/" },
       { label: "Menu", href: "/menu", desc: "Browse today's dishes" },
+      { label: "Marketplace", href: "/marketplace", desc: "RD-curated pantry & supplements" },
     ],
   },
   {
