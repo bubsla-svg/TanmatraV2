@@ -426,6 +426,24 @@ export async function applyPurchaseIngest(plan: IngestPlan): Promise<ApplyResult
 
 // ── Orchestration ───────────────────────────────────────────────────────────
 
+/**
+ * The review-shaped projection of a `PlannedUpdate`. The full record carries the
+ * derived display labels too, which are noise when the question is "did this
+ * price come out right?" — so the log gets the before, the after, the move
+ * between them, and who we bought it from.
+ */
+export interface PlannedPriceLogEntry {
+  product: string;
+  vendorProduct: string;
+  previousPaise: number | null;
+  newPaise: number;
+  changePct: number | null;
+  supplierName: string | null;
+}
+
+/** See `PLANNED_LOG_LIMIT` in stockSync.ts — same reasoning, kept in step. */
+export const PLANNED_LOG_LIMIT = 100;
+
 export interface PurchaseIngestSummary {
   ok: boolean;
   /** True when PetPooja Inventory is unconfigured — a no-op, not a failure. */
@@ -436,6 +454,15 @@ export interface PurchaseIngestSummary {
   productsAggregated: number;
   itemsUpdated: number;
   suppliersFilled: number;
+  /**
+   * The price changes themselves, capped at `PLANNED_LOG_LIMIT`. A dry run that
+   * reports only `itemsUpdated: 0` cannot be reviewed, and these prices feed
+   * margin — so they are worth reading before they land, and worth having on
+   * record after.
+   */
+  planned: PlannedPriceLogEntry[];
+  /** Length of the full plan, whether or not `planned` was truncated. */
+  plannedTotal: number;
   unmatched: string[];
   ambiguous: string[];
   suspicious: IngestPlan["suspicious"];
@@ -470,6 +497,8 @@ export async function runPurchaseIngest(
     productsAggregated: 0,
     itemsUpdated: 0,
     suppliersFilled: 0,
+    planned: [],
+    plannedTotal: 0,
     unmatched: [],
     ambiguous: [],
     suspicious: [],
@@ -505,10 +534,25 @@ export async function runPurchaseIngest(
     productsAggregated: aggregates.length,
     itemsUpdated: applied.itemsUpdated,
     suppliersFilled: applied.suppliersFilled,
+    planned: plan.updates.slice(0, PLANNED_LOG_LIMIT).map((u) => ({
+      product: u.product,
+      vendorProduct: u.vendorProduct,
+      previousPaise: u.previousBuyingPricePaise,
+      newPaise: u.buyingPricePaise,
+      changePct: u.changePct,
+      supplierName: u.supplierName,
+    })),
+    plannedTotal: plan.updates.length,
     unmatched: plan.unmatched.map((u) => u.vendorProduct),
     ambiguous: plan.ambiguous.map((a) => a.vendorProduct),
     suspicious: plan.suspicious,
   };
-  opts.log?.info?.(summary, "petpooja purchase ingest complete");
+  if (dryRun) {
+    // See the matching branch in stockSync.ts — a dry run needs reading, and
+    // info-level in a production log stream does not get read.
+    opts.log?.warn?.(summary, "petpooja purchase ingest DRY RUN — nothing written, review `planned`");
+  } else {
+    opts.log?.info?.(summary, "petpooja purchase ingest complete");
+  }
   return summary;
 }

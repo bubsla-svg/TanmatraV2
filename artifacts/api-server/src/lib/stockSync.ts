@@ -134,6 +134,15 @@ export interface StockPlan {
   unchanged: number;
   /** Present when the whole batch was refused by the zero-flood breaker. */
   aborted?: { reason: "zero_flood"; zeroWrites: number; plannedWrites: number };
+  /**
+   * The writes the breaker took away, kept for the ops log. Only `updates` is
+   * ever applied, so these cannot leak into the database — but a bare count of
+   * what was refused leaves nothing to diagnose with, and the one recovery that
+   * is always wrong (raise the ratio until it passes) is then the only one
+   * available. Seeing the actual SKUs is what distinguishes "the feed is broken"
+   * from "the kitchen really did run down".
+   */
+  refused?: PlannedStockUpdate[];
 }
 
 /** Float noise floor for "did this actually change?" on a doublePrecision column. */
@@ -292,6 +301,7 @@ export function planStockSync(
     zeroWrites / plan.updates.length > maxZeroRatio
   ) {
     plan.aborted = { reason: "zero_flood", zeroWrites, plannedWrites: plan.updates.length };
+    plan.refused = plan.updates;
     plan.updates = [];
   }
 
@@ -335,6 +345,15 @@ export function istDay(d: Date): string {
   return new Date(d.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+/**
+ * How many planned writes ride along in the log line. The dry run exists to be
+ * read, so this is generous; it is bounded at all because a large outlet's whole
+ * catalogue would blow the log entry, and a dropped log line reviews as badly as
+ * no log line. `plannedTotal` always carries the real count, so a truncated
+ * sample can never be mistaken for the complete plan.
+ */
+export const PLANNED_LOG_LIMIT = 100;
+
 export interface StockSyncSummary {
   ok: boolean;
   /** True when PetPooja Inventory is unconfigured — a no-op, not a failure. */
@@ -344,11 +363,23 @@ export interface StockSyncSummary {
   rowsFetched: number;
   rowsUpdated: number;
   unchanged: number;
+  /**
+   * The writes themselves, capped at `PLANNED_LOG_LIMIT`. Without this a dry run
+   * reports `rowsUpdated: 0` and nothing else, which cannot answer the only
+   * question it was run to answer — is the vendor telling us what we think it
+   * is? Present on live runs too, where it doubles as the audit trail for a
+   * column no human edits.
+   */
+  planned: PlannedStockUpdate[];
+  /** Length of the full plan, whether or not `planned` was truncated. */
+  plannedTotal: number;
   unmatched: string[];
   ambiguous: StockPlan["ambiguous"];
   unitMismatch: StockPlan["unitMismatch"];
   noStockRow: string[];
   aborted?: StockPlan["aborted"];
+  /** Sample of what the breaker refused, same cap. See `StockPlan.refused`. */
+  refused?: PlannedStockUpdate[];
   error?: string;
 }
 
@@ -371,6 +402,8 @@ export async function runStockSync(
     rowsFetched: 0,
     rowsUpdated: 0,
     unchanged: 0,
+    planned: [],
+    plannedTotal: 0,
     unmatched: [],
     ambiguous: [],
     unitMismatch: [],
@@ -407,14 +440,21 @@ export async function runStockSync(
     rowsFetched: fetched.lines.length,
     rowsUpdated: applied.rowsUpdated,
     unchanged: plan.unchanged,
+    planned: plan.updates.slice(0, PLANNED_LOG_LIMIT),
+    plannedTotal: plan.updates.length,
     unmatched: plan.unmatched.map((u) => u.vendorProduct),
     ambiguous: plan.ambiguous,
     unitMismatch: plan.unitMismatch,
     noStockRow: plan.noStockRow.map((n) => n.vendorProduct),
     ...(plan.aborted ? { aborted: plan.aborted } : {}),
+    ...(plan.refused ? { refused: plan.refused.slice(0, PLANNED_LOG_LIMIT) } : {}),
   };
   if (plan.aborted) {
     opts.log?.error?.(summary, "petpooja stock sync REFUSED — zero-flood guard tripped");
+  } else if (dryRun) {
+    // A dry run is a run waiting on a person. info is where that waits unread,
+    // so it goes out at warn, next to the other things needing a decision.
+    opts.log?.warn?.(summary, "petpooja stock sync DRY RUN — nothing written, review `planned`");
   } else {
     opts.log?.info?.(summary, "petpooja stock sync complete");
   }
