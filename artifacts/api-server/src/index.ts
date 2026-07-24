@@ -14,6 +14,7 @@ import { startReviewSummarizerScheduler } from "./lib/menuEngineeringScheduler";
 import { startMealPlanScheduler } from "./lib/mealPlanScheduler";
 import { startAnalyticsScheduler } from "./lib/analyticsScheduler";
 import { startFunnelRollupScheduler } from "./lib/funnelRollupScheduler";
+import { startPetpoojaInventoryScheduler } from "./lib/petpoojaInventoryScheduler";
 import { startPreDebitScheduler, stopPreDebitScheduler } from "./lib/preDebitScheduler";
 import { startTrialLifecycleScheduler, stopTrialLifecycleScheduler } from "./lib/trialLifecycleScheduler";
 import { startChargeMandateScheduler, stopChargeMandateScheduler } from "./lib/chargeMandateScheduler";
@@ -83,6 +84,12 @@ if (!schedulersDisabled) {
   startFunnelRollupScheduler();
   void resumeActiveSimulations();
 }
+
+// Outside the blanket DISABLE_SCHEDULERS gate (which production sets), for the
+// same reason startAnalyticsScheduler is: it self-gates. It registers no timer
+// at all unless PETPOOJA_INVENTORY_RID + the three PETPOOJA_* secrets are
+// present, so it is inert everywhere the integration has not been wired up.
+startPetpoojaInventoryScheduler();
 
 // Bootstrap the curated safe_* views and reader role BEFORE we start
 // listening, so the very first /analytics/* request can never race view
