@@ -9,11 +9,14 @@ import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { PlanSummary } from "./PlanSummary";
 import { DayCard } from "./DayCard";
 import { SwapDialog } from "./SwapDialog";
+import { WeekCalendarStrip } from "./WeekCalendarStrip";
+import { SettingsDialog } from "./SettingsDialog";
 import type { MealPlanSlot } from "@/lib/mealPlanApi";
 
 export function MealPlanner() {
   const mp = useMealPlan();
   const [swap, setSwap] = useState<{ dayIndex: number; slot: MealPlanSlot } | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   if (mp.phase === "needsAuth") {
     return (
@@ -32,14 +35,19 @@ export function MealPlanner() {
     <div className="flex flex-col gap-6">
       {mp.error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{mp.error}</p>}
 
-      <button
-        type="button"
-        onClick={() => void mp.generate()}
-        disabled={mp.busy}
-        className="self-start rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60"
-      >
-        {mp.busy ? "Working…" : plan ? "Regenerate week" : "Generate my week"}
-      </button>
+      <WeekCalendarStrip calendar={mp.weekCalendar} onCycle={mp.cycleDay} />
+
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => void mp.generate()}
+          disabled={mp.busy}
+          className="rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60"
+        >
+          {mp.busy ? "Working…" : plan ? "Regenerate week" : "Generate my week"}
+        </button>
+        <button type="button" onClick={() => setShowSettings(true)} className="text-sm font-medium text-ink-muted hover:text-ink">Settings</button>
+      </div>
 
       {!plan ? (
         <div className="rounded-2xl border border-line bg-surface p-8 text-center">
@@ -56,7 +64,7 @@ export function MealPlanner() {
           <PlanSummary plan={plan} accepted={mp.accepted} />
           <div className="flex flex-col gap-3">
             {plan.days.map((day, i) => (
-              <DayCard key={day.date + i} day={day} editable={editable} onSwap={(slot) => setSwap({ dayIndex: i, slot })} />
+              <DayCard key={day.date + i} day={day} editable={editable} onSwap={(slot) => setSwap({ dayIndex: i, slot })} onRegen={() => void mp.regenDay(i)} />
             ))}
           </div>
           {plan.status === "draft" ? (
@@ -95,6 +103,9 @@ export function MealPlanner() {
           onPick={(dishId) => { const t = swap; setSwap(null); void mp.swap(t.dayIndex, t.slot, dishId); }}
         />
       )}
+
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
     </div>
   );
 }
+

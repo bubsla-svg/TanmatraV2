@@ -63,6 +63,11 @@ export function apiPatch<T>(path: string, body: unknown, fetchImpl?: FetchImpl):
   return apiRequest<T>("PATCH", path, body, fetchImpl);
 }
 
+/** PUT JSON to `/api<path>`. */
+export function apiPut<T>(path: string, body: unknown, fetchImpl?: FetchImpl): Promise<T> {
+  return apiRequest<T>("PUT", path, body, fetchImpl);
+}
+
 /** DELETE `/api<path>` (no body). */
 export function apiDelete<T>(path: string, fetchImpl?: FetchImpl): Promise<T> {
   return apiRequest<T>("DELETE", path, undefined, fetchImpl);

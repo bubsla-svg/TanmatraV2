@@ -5,14 +5,20 @@ const SLOT_LABEL: Record<MealPlanSlot, string> = { breakfast: "Breakfast", lunch
 
 /** One day of the week — three slots, each with its dish + macros/price and,
  *  while the plan is a draft, a Swap control. */
-export function DayCard({ day, editable, onSwap }: {
+export function DayCard({ day, editable, onSwap, onRegen }: {
   day: MealPlanDay;
   editable: boolean;
   onSwap: (slot: MealPlanSlot) => void;
+  onRegen?: () => void;
 }) {
   return (
     <div className="rounded-2xl border border-line bg-surface p-4">
-      <p className="text-sm font-semibold text-ink">{formatPlanDay(day.date)}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-ink">{formatPlanDay(day.date)}</p>
+        {editable && onRegen && (
+          <button type="button" onClick={onRegen} className="rounded-lg border border-line px-2 py-0.5 text-[11px] font-medium text-ink-muted hover:border-[var(--gold)] hover:text-ink">Regen</button>
+        )}
+      </div>
       <ul className="mt-3 flex flex-col gap-2.5">
         {MEAL_SLOTS.map((slot) => {
           const entry = day[slot];

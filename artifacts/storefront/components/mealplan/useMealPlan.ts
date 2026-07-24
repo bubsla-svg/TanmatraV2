@@ -5,8 +5,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/lib/apiClient";
 import {
-  getPlans, generatePlan, swapSlot as apiSwapSlot, acceptPlan, discardPlan, pickActivePlan,
-  type MealPlan, type MealPlanSlot, type AcceptResult,
+  getPlans, generatePlan, swapSlot as apiSwapSlot, acceptPlan, discardPlan, regenerateDay, pickActivePlan,
+  WEEK_CALENDAR_CYCLE, type MealPlan, type MealPlanSlot, type AcceptResult, type WeekDayCalendarKind,
 } from "@/lib/mealPlanApi";
 
 type Phase = "loading" | "ready" | "needsAuth";
@@ -19,11 +19,14 @@ export interface UseMealPlan {
   busy: boolean;
   error: string | null;
   accepted: AcceptResult | null;
+  weekCalendar: WeekDayCalendarKind[];
+  cycleDay: (dayIndex: number) => void;
   reload: () => Promise<void>;
   generate: () => Promise<void>;
   accept: () => Promise<void>;
   discard: () => Promise<void>;
   swap: (dayIndex: number, slot: MealPlanSlot, dishId: number) => Promise<void>;
+  regenDay: (dayIndex: number) => Promise<void>;
 }
 
 export function useMealPlan(): UseMealPlan {
@@ -32,6 +35,15 @@ export function useMealPlan(): UseMealPlan {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState<AcceptResult | null>(null);
+  // gym/travel/wfh per weekday — applied on the NEXT generate (as overrides).
+  const [weekCalendar, setWeekCalendar] = useState<WeekDayCalendarKind[]>(() => Array(7).fill("normal"));
+
+  const cycleDay = useCallback((dayIndex: number) => {
+    setWeekCalendar((cal) => cal.map((k, i) => {
+      if (i !== dayIndex) return k;
+      return WEEK_CALENDAR_CYCLE[(WEEK_CALENDAR_CYCLE.indexOf(k) + 1) % WEEK_CALENDAR_CYCLE.length]!;
+    }));
+  }, []);
 
   const reload = useCallback(async () => {
     setError(null);
@@ -61,9 +73,9 @@ export function useMealPlan(): UseMealPlan {
   }, []);
 
   const generate = useCallback(
-    () => run(async () => { const { plan: p } = await generatePlan(); setPlan(p); setAccepted(null); },
+    () => run(async () => { const { plan: p } = await generatePlan({ overrides: { weekCalendar } }); setPlan(p); setAccepted(null); },
       "Couldn't generate a plan."),
-    [run],
+    [run, weekCalendar],
   );
 
   const accept = useCallback(
@@ -85,5 +97,12 @@ export function useMealPlan(): UseMealPlan {
     [run, plan],
   );
 
-  return { plan, phase, busy, error, accepted, reload, generate, accept, discard, swap };
+  const regenDay = useCallback(
+    (dayIndex: number) =>
+      run(async () => { if (!plan) return; const { plan: p } = await regenerateDay(plan.id, dayIndex); setPlan(p); },
+        "Couldn't refresh that day."),
+    [run, plan],
+  );
+
+  return { plan, phase, busy, error, accepted, weekCalendar, cycleDay, reload, generate, accept, discard, swap, regenDay };
 }
