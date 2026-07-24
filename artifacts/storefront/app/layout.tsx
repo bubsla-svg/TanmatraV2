@@ -8,6 +8,8 @@ import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { MiniCartBar } from "@/components/cart/MiniCartBar";
+import { SiteStructuredData } from "@/components/StructuredData";
+import { SITE_URL } from "@/lib/siteUrl";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
 // next/font self-hosts the files and exposes each as a CSS variable that
@@ -25,13 +27,33 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const TITLE = "Tanmatra — clinical nutrition, cooked fresh";
+const DESCRIPTION =
+  "RD-designed lunches delivered to your desk. Real food, verified macros, no jargon.";
+
 export const metadata: Metadata = {
+  // Absolute base for canonical + OpenGraph URLs. Env-overridable once a real
+  // marketing domain is in front of the service (see lib/siteUrl.ts).
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Tanmatra — clinical nutrition, cooked fresh",
+    default: TITLE,
     template: "%s · Tanmatra",
   },
-  description:
-    "RD-designed lunches delivered to your desk. Real food, verified macros, no jargon.",
+  description: DESCRIPTION,
+  applicationName: "Tanmatra",
+  openGraph: {
+    type: "website",
+    siteName: "Tanmatra",
+    locale: "en_IN",
+    url: SITE_URL,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
@@ -58,6 +80,7 @@ export default function RootLayout({
       className={`${ibmPlexSans.variable} ${jetbrainsMono.variable}`}
     >
       <body>
+        <SiteStructuredData />
         <ThemeProvider>
           <a
             href="#main"

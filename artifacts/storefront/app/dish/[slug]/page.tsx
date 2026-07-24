@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
+import { DishStructuredData } from "@/components/StructuredData";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -32,6 +33,7 @@ export default async function DishPage({ params }: Params) {
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-8">
+      <DishStructuredData dish={dish} />
       <Link href="/menu" className="text-sm text-ink-muted hover:text-ink">
         &larr; Menu
       </Link>
