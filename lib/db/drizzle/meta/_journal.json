@@ -78,6 +78,13 @@
       "when": 1784719900798,
       "tag": "0010_subscription_addons",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784903094988,
+      "tag": "0011_rd_appointment_razorpay",
+      "breakpoints": true
     }
   ]
 }

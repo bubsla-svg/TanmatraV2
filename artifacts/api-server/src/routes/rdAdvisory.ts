@@ -4,6 +4,7 @@ import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { emitRdMessage } from "../lib/realtime";
+import { razorpayCredentials, razorpayBasicAuth } from "../lib/razorpayRecurring";
 import {
   db,
   rdAppointmentsTable,
@@ -166,52 +167,12 @@ function isInsideWindow(
   );
 }
 
-// --- Mock payment processor (replace with Stripe/Razorpay webhook) ---
-const PAYMENTS_SECRET =
-  process.env["PAYMENTS_WEBHOOK_SECRET"] ?? process.env["SESSION_SECRET"] ?? "";
-function signPayment(apptId: number, userId: string, amountPaise: number): string {
-  return createHmac("sha256", PAYMENTS_SECRET)
-    .update(`${apptId}|${userId}|${amountPaise}`)
-    .digest("hex");
-}
-/**
- * In production this would be triggered by a verified Stripe/Razorpay
- * webhook. For this codebase we synthesise the same call server-internally
- * after an appointment is created — the client never has authority to flip
- * payment status.
- */
-async function settlePayment(
-  apptId: number,
-  userId: string,
-  amountPaise: number,
-): Promise<void> {
-  const sig = signPayment(apptId, userId, amountPaise);
-  await markPaidWithSignature(apptId, userId, amountPaise, sig);
-}
-async function markPaidWithSignature(
-  apptId: number,
-  userId: string,
-  amountPaise: number,
-  signature: string,
-): Promise<boolean> {
-  if (!PAYMENTS_SECRET) return false;
-  const expected = signPayment(apptId, userId, amountPaise);
-  const a = Buffer.from(expected);
-  const b = Buffer.from(signature);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
-  await db
-    .update(rdAppointmentsTable)
-    .set({ paymentStatus: "paid" })
-    .where(
-      and(
-        eq(rdAppointmentsTable.id, apptId),
-        eq(rdAppointmentsTable.userId, userId),
-        eq(rdAppointmentsTable.pricePaise, amountPaise),
-        eq(rdAppointmentsTable.paymentStatus, "pending"),
-      ),
-    );
-  return true;
-}
+// Real payment path (replaces the former mock auto-settle): a paid consult is
+// booked paymentStatus:"pending", then charged via
+// POST /rd/appointments/:id/checkout (opens a Razorpay order for the
+// server-priced amount) → Razorpay → POST /rd/appointments/:id/verify
+// (HMAC-verifies the signature and flips pending → paid). The client never has
+// authority to flip payment status, and the amount is always the server price.
 
 /**
  * Verify the signed-in user is mapped to `rdSlug` in `rd_users`. Returns true
@@ -556,21 +517,10 @@ router.post("/rd/appointments", async (req: Request, res: Response) => {
       return inserted;
     });
     req.log.info({ apptId: row?.id, rdSlug, userId }, "rd appointment booked");
-    // For paid kinds: settle via the internal HMAC-signed webhook path.
-    // The client cannot trigger this — only server code holding
-    // PAYMENTS_WEBHOOK_SECRET can produce a valid signature. Replace
-    // settlePayment() with your real Stripe/Razorpay handoff in prod.
-    let finalRow = row;
-    if (row && pricePaise > 0) {
-      await settlePayment(row.id, userId, pricePaise);
-      const [refreshed] = await db
-        .select()
-        .from(rdAppointmentsTable)
-        .where(eq(rdAppointmentsTable.id, row.id))
-        .limit(1);
-      finalRow = refreshed ?? row;
-    }
-    res.status(201).json({ appointment: finalRow });
+    // Free intros insert as paymentStatus:"free". Paid consults insert as
+    // "pending" and are charged out-of-band via /checkout → Razorpay → /verify
+    // (below) — booking never marks a paid consult as paid.
+    res.status(201).json({ appointment: row });
   } catch (err) {
     if (err instanceof Error && err.message === "SLOT_TAKEN") {
       res.status(409).json({ error: "slot already booked" });
@@ -580,38 +530,171 @@ router.post("/rd/appointments", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Verified payment webhook. The body must include {apptId, userId,
- * amountPaise} and the X-Webhook-Signature header must be a valid HMAC
- * over `${apptId}|${userId}|${amountPaise}` keyed by
- * PAYMENTS_WEBHOOK_SECRET. There is NO client-authoritative path to flip
- * payment status — this is the only entry point.
- */
-const webhookSchema = z.object({
-  apptId: z.number().int().positive(),
-  userId: z.string().min(1),
-  amountPaise: z.number().int().min(0),
+// --- Paid-consult payment (Razorpay) ---
+// The amount is ALWAYS the server-priced pricePaise stored at booking; the
+// client cannot influence it. Mirrors the create-order + HMAC-verify pattern in
+// routes/payments.ts, but keyed on rd_appointments (consults never ride the
+// meal `orders` table).
+
+router.post(
+  "/rd/appointments/:id/checkout",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const id = Number(req.params["id"]);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "invalid id" });
+      return;
+    }
+    const creds = razorpayCredentials();
+    if (!creds) {
+      res.status(503).json({ error: "payment gateway not configured" });
+      return;
+    }
+    const [keyId, keySecret] = creds;
+    const [appt] = await db
+      .select()
+      .from(rdAppointmentsTable)
+      .where(
+        and(
+          eq(rdAppointmentsTable.id, id),
+          eq(rdAppointmentsTable.userId, userId),
+        ),
+      )
+      .limit(1);
+    if (!appt) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+    if (appt.status === "cancelled") {
+      res.status(409).json({ error: "appointment cancelled" });
+      return;
+    }
+    if (appt.paymentStatus === "paid") {
+      res.status(409).json({ error: "already paid" });
+      return;
+    }
+    // Server-authoritative amount — the price stored at booking, never the client's.
+    const amountPaise = appt.pricePaise;
+    if (!Number.isInteger(amountPaise) || amountPaise <= 0) {
+      res.status(409).json({ error: "appointment is free — nothing to pay" });
+      return;
+    }
+    const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: amountPaise,
+        currency: "INR",
+        receipt: `appt-${id}`,
+        payment_capture: 1,
+      }),
+    });
+    if (!rpRes.ok) {
+      let body: unknown;
+      try {
+        body = await rpRes.json();
+      } catch {
+        body = await rpRes.text();
+      }
+      req.log.error(
+        { status: rpRes.status, body },
+        "Razorpay appointment order creation failed",
+      );
+      res.status(502).json({ error: "payment gateway error" });
+      return;
+    }
+    const rp = (await rpRes.json()) as {
+      id: string;
+      amount: number;
+      currency: string;
+    };
+    // Bind the gateway order to THIS appointment so verify can require the linkage.
+    await db
+      .update(rdAppointmentsTable)
+      .set({ razorpayOrderId: rp.id })
+      .where(eq(rdAppointmentsTable.id, id));
+    res.json({
+      razorpayOrderId: rp.id,
+      amount: rp.amount,
+      currency: rp.currency,
+      keyId,
+    });
+  },
+);
+
+const apptVerifySchema = z.object({
+  razorpayPaymentId: z.string().min(1).max(64),
+  razorpayOrderId: z.string().min(1).max(64),
+  razorpaySignature: z.string().min(1).max(256),
 });
-router.post("/rd/payments/webhook", async (req: Request, res: Response) => {
-  const sig = String(req.header("x-webhook-signature") ?? "");
-  if (!sig) {
-    res.status(401).json({ error: "missing signature" });
-    return;
-  }
-  const parsed = webhookSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "invalid payload" });
-    return;
-  }
-  const { apptId, userId, amountPaise } = parsed.data;
-  const ok = await markPaidWithSignature(apptId, userId, amountPaise, sig);
-  if (!ok) {
-    res.status(403).json({ error: "invalid signature" });
-    return;
-  }
-  req.log.info({ apptId, userId }, "rd payment webhook settled");
-  res.json({ ok: true });
-});
+router.post(
+  "/rd/appointments/:id/verify",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const id = Number(req.params["id"]);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "invalid id" });
+      return;
+    }
+    const creds = razorpayCredentials();
+    if (!creds) {
+      res.status(503).json({ error: "payment gateway not configured" });
+      return;
+    }
+    const [, keySecret] = creds;
+    const parsed = apptVerifySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid payload" });
+      return;
+    }
+    const { razorpayPaymentId, razorpayOrderId, razorpaySignature } = parsed.data;
+    // Razorpay's client signature: HMAC-SHA256("<orderId>|<paymentId>", keySecret).
+    const expected = createHmac("sha256", keySecret)
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest("hex");
+    let valid = false;
+    try {
+      valid = timingSafeEqual(
+        Buffer.from(expected, "hex"),
+        Buffer.from(razorpaySignature, "hex"),
+      );
+    } catch {
+      valid = false;
+    }
+    if (!valid) {
+      req.log.warn({ id, razorpayOrderId }, "invalid appointment payment signature");
+      res.status(400).json({ error: "invalid payment signature" });
+      return;
+    }
+    // A valid signature only proves SOME payment on SOME order. Bind it to THIS
+    // appointment: the presented razorpayOrderId must equal the one we stored at
+    // /checkout, owned by this user, and still pending. Atomic guarded update
+    // prevents replaying one appointment's signature against another.
+    const [row] = await db
+      .update(rdAppointmentsTable)
+      .set({ paymentStatus: "paid", razorpayPaymentId })
+      .where(
+        and(
+          eq(rdAppointmentsTable.id, id),
+          eq(rdAppointmentsTable.userId, userId),
+          eq(rdAppointmentsTable.razorpayOrderId, razorpayOrderId),
+          eq(rdAppointmentsTable.paymentStatus, "pending"),
+        ),
+      )
+      .returning();
+    if (!row) {
+      res.status(409).json({ error: "payment could not be applied" });
+      return;
+    }
+    req.log.info({ id, userId }, "rd appointment paid");
+    res.json({ ok: true, paymentStatus: row.paymentStatus, appointment: row });
+  },
+);
 
 router.post(
   "/rd/appointments/:id/cancel",

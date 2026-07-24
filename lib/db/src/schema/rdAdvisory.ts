@@ -82,6 +82,11 @@ export const rdAppointmentsTable = pgTable(
       .$type<PaymentStatus>()
       .notNull()
       .default("free"),
+    // Real-money linkage for a paid consult: the gateway order opened at
+    // /rd/appointments/:id/checkout and the payment id proven at /verify.
+    // Null for free intros and paid consults not yet checked out.
+    razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
+    razorpayPaymentId: varchar("razorpay_payment_id", { length: 64 }),
     joinUrl: text("join_url"),
     userQuestion: text("user_question"),
     rdNotes: text("rd_notes"),
