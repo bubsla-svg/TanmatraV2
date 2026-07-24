@@ -108,6 +108,25 @@ const PATHS: Record<LandingIconName, ReactNode> = {
       <line x1="8" y1="16" x2="13" y2="16" />
     </>
   ),
+  scale: (
+    <>
+      <path d="M12 3v18" />
+      <path d="M7 7h10l3 7a4 4 0 0 1-8 0l3-7" transform="translate(-5 0)" />
+      <path d="M12 7l3 7a4 4 0 0 1-8 0l3-7" transform="translate(5 0)" />
+      <path d="M5 21h14" />
+    </>
+  ),
+  dumbbell: (
+    <>
+      <path d="M6.5 6.5l11 11" />
+      <path d="M21 21l-1-1" />
+      <path d="M3 3l1 1" />
+      <path d="M18 22l4-4" />
+      <path d="M2 6l4-4" />
+      <path d="M3 10l7-7" />
+      <path d="M14 21l7-7" />
+    </>
+  ),
 };
 
 export function LandingIcon({ name, className }: { name: LandingIconName; className?: string }) {

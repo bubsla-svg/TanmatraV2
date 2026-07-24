@@ -45,6 +45,11 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/plans",
     links: [
       { label: "Plans", href: "/plans", desc: "Therapeutic subscription plans" },
+      { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs" },
+      { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu" },
+      { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu" },
+      { label: "Performance protocol", href: "/performance", desc: "High-protein, recovery-tuned" },
+      { label: "Clinical protocol", href: "/clinical", desc: "RD-supervised, low-GI therapeutic" },
       { label: "Free trial", href: "/trial", desc: "Try it for 3 days" },
     ],
   },

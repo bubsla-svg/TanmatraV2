@@ -31,7 +31,9 @@ export type LandingIconName =
   | "buildings"
   | "timer"
   | "shield-check"
-  | "clipboard";
+  | "clipboard"
+  | "scale"
+  | "dumbbell";
 
 export interface LandingBenefit {
   icon: LandingIconName;
