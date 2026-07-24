@@ -58,6 +58,23 @@ export interface WellnessToday {
   streaks: { protein: Streak | null; veg: Streak | null };
 }
 
+export type WeekDay = DayTotals & { date: string };
+
+export interface WeekTargets {
+  calorieTarget: number;
+  proteinTargetGrams: number;
+  fiberTargetGrams: number;
+  waterTargetMl: number;
+  vegTargetServings: number;
+}
+
+export interface WellnessWeek {
+  from: string;
+  to: string;
+  days: WeekDay[];
+  targets: WeekTargets | null;
+}
+
 export interface ManualLogInput {
   label: string;
   calories?: number;
@@ -72,6 +89,11 @@ export const WATER_PRESETS = [200, 250, 500];
 
 export function getToday(fetchImpl?: FetchImpl): Promise<WellnessToday> {
   return apiGet("/wellness/today", fetchImpl);
+}
+
+/** Last-7-days totals (padded server-side, so the bars never have holes). */
+export function getWeek(fetchImpl?: FetchImpl): Promise<WellnessWeek> {
+  return apiGet("/wellness/week", fetchImpl);
 }
 
 export function logMeal(input: ManualLogInput, fetchImpl?: FetchImpl): Promise<{ log: NutritionLog }> {

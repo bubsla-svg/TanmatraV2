@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getToday, logMeal, logWater, deleteLog, pctOf } from "./wellnessApi";
+import { getToday, getWeek, logMeal, logWater, deleteLog, pctOf } from "./wellnessApi";
 
 const jsonRes = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -10,6 +10,13 @@ test("getToday GETs /wellness/today", async () => {
   const impl = (async (u: string) => { url = u; return jsonRes({}); }) as unknown as typeof fetch;
   await getToday(impl);
   assert.match(url, /\/api\/wellness\/today$/);
+});
+
+test("getWeek GETs /wellness/week", async () => {
+  let url = "";
+  const impl = (async (u: string) => { url = u; return jsonRes({ from: "", to: "", days: [], targets: null }); }) as unknown as typeof fetch;
+  await getWeek(impl);
+  assert.match(url, /\/api\/wellness\/week$/);
 });
 
 test("logMeal POSTs the manual log; logWater POSTs { ml }", async () => {

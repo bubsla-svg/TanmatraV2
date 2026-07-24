@@ -4,15 +4,17 @@
 // sync is deferred, so there's no consent modal here (food/water only).
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/lib/apiClient";
-import { getToday, logWater, deleteLog, pctOf, WATER_PRESETS, type WellnessToday, type NutritionLog } from "@/lib/wellnessApi";
+import { getToday, getWeek, logWater, deleteLog, pctOf, WATER_PRESETS, type WellnessToday, type WellnessWeek, type NutritionLog } from "@/lib/wellnessApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { NutritionRing } from "./NutritionRing";
 import { LogMealDialog } from "./LogMealDialog";
+import { WeekBars } from "./WeekBars";
 
 const SOURCE_LABEL: Record<string, string> = { auto_order: "From an order", manual: "Manual", water: "Water", wearable_adjust: "Activity" };
 
 export function WellnessTracker() {
   const [today, setToday] = useState<WellnessToday | null>(null);
+  const [week, setWeek] = useState<WellnessWeek | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,12 @@ export function WellnessTracker() {
 
   const load = useCallback(async () => {
     setError(null);
-    try { setToday(await getToday()); setNeedsAuth(false); }
+    try {
+      setToday(await getToday());
+      setNeedsAuth(false);
+      // Best-effort — the 7-day view must never block or break the tracker.
+      void getWeek().then(setWeek).catch(() => setWeek(null));
+    }
     catch (e) { if (e instanceof ApiError && e.status === 401) setNeedsAuth(true); else setError("Couldn't load your tracker."); }
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -77,6 +84,8 @@ export function WellnessTracker() {
           </ul>
         )}
       </div>
+
+      {week && <WeekBars week={week} />}
 
       <p className="text-[11px] text-ink-faint">Tanmatra is not a medical service — this tracker is for your own awareness, not diagnosis or treatment.</p>
 
