@@ -276,11 +276,19 @@ jobs:
           done
           echo "checkout still not serving the SPA shell"; exit 1
 
-      - name: Self-verifying deploy check on live production domain
+      # Domain promotion is deliberately manual / out-of-CI (the tanmatra service
+      # revision is deployed above, but traffic to tanmatra.food is promoted by
+      # name, not auto-latest). And once the domain is cut over to the storefront
+      # service (docs/DOMAIN-CUTOVER.md), tanmatra.food stops reflecting this job
+      # at all. So this is a NON-FATAL notice, not a gate — the storefront job
+      # owns the domain deploy-truth post-cutover.
+      - name: Domain notice (non-fatal — promotion/cutover is manual)
         run: |
-          DEPLOYED=$(curl -sf https://tanmatra.food/api/build | jq -r .sha || echo "failed")
-          echo "Live domain build SHA: $DEPLOYED (expected: ${{ github.sha }})"
-          [ "$DEPLOYED" = "${{ github.sha }}" ] || { echo "DEPLOY NOT LIVE ON DOMAIN"; exit 1; }
+          DEPLOYED=$(curl -sf https://tanmatra.food/api/build | jq -r '.sha // "unknown"' 2>/dev/null || echo "unreachable")
+          echo "tanmatra.food currently serves sha: $DEPLOYED (this job deployed: ${{ github.sha }})"
+          if [ "$DEPLOYED" != "${{ github.sha }}" ]; then
+            echo "NOTE: domain not on this revision — expected when promotion is pending or the domain is mapped to the storefront service."
+          fi
 
   # Build the rebuild storefront (Next.js) image and roll the `storefront`
   # Cloud Run service. Separate service from `tanmatra` (the current SPA) — the
@@ -338,6 +346,10 @@ jobs:
                 - NEXT_PUBLIC_API_BASE=
                 - --build-arg
                 - NEXT_PUBLIC_LIVE_CHECKOUT=1
+                # Canonical origin for robots/sitemap/canonical/OG — the production
+                # domain that fronts this service post-cutover (docs/DOMAIN-CUTOVER.md).
+                - --build-arg
+                - NEXT_PUBLIC_SITE_URL=https://tanmatra.food
                 - --build-arg
                 - NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
                 - --build-arg
@@ -453,3 +465,22 @@ jobs:
             sleep 5
           done
           echo "deploy-truth FAILED: /api/build sha never matched ${{ github.sha }}"; exit 1
+
+      # Non-fatal check of the production domain. The fatal deploy-truth above
+      # runs against this service's own run.app URL. Once tanmatra.food is mapped
+      # to the storefront (docs/DOMAIN-CUTOVER.md) it should serve this same sha
+      # with app=tanmatra-web. Kept NON-FATAL: the domain mapping is manual infra
+      # this build doesn't control, so a pre-cutover / cert-propagation mismatch
+      # must not red the deploy. Flip to fatal once the domain is permanently on
+      # the storefront.
+      - name: Domain notice — tanmatra.food (non-fatal until cutover completes)
+        run: |
+          BODY=$(curl -sf https://tanmatra.food/api/build || true)
+          DEPLOYED=$(echo "$BODY" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+          APP=$(echo "$BODY" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("app",""))' 2>/dev/null || true)
+          echo "tanmatra.food /api/build → sha=$DEPLOYED app=$APP (storefront sha: ${{ github.sha }})"
+          if [ "$DEPLOYED" = "${{ github.sha }}" ] && [ "$APP" = "tanmatra-web" ]; then
+            echo "domain deploy-truth OK — tanmatra.food is on this storefront build"
+          else
+            echo "NOTE: tanmatra.food not yet on this storefront build (pre-cutover, or mapping/cert still propagating). Non-fatal."
+          fi

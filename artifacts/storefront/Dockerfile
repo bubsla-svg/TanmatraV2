@@ -36,6 +36,11 @@ ARG NEXT_PUBLIC_API_BASE=""
 ARG NEXT_PUBLIC_LIVE_CHECKOUT=""
 ARG NEXT_PUBLIC_MEALCARD_RAIL=""
 ARG NEXT_PUBLIC_ANALYTICS_BEACON=""
+# Canonical public origin baked into robots.txt / sitemap.xml / canonical + OG
+# tags and JSON-LD (lib/siteUrl.ts). Empty → falls back to the Cloud Run run.app
+# origin; set to the production domain once it fronts this service (see
+# docs/DOMAIN-CUTOVER.md).
+ARG NEXT_PUBLIC_SITE_URL=""
 # Firebase web config (SF-03 phone-auth). These are PUBLIC by design — the
 # security boundary is the api-server, which verifies the resulting idToken —
 # so they ship in the client bundle exactly like the legacy VITE_FIREBASE_* set.
@@ -56,6 +61,7 @@ RUN NEXT_PUBLIC_API_BASE="${NEXT_PUBLIC_API_BASE}" \
     NEXT_PUBLIC_LIVE_CHECKOUT="${NEXT_PUBLIC_LIVE_CHECKOUT}" \
     NEXT_PUBLIC_MEALCARD_RAIL="${NEXT_PUBLIC_MEALCARD_RAIL}" \
     NEXT_PUBLIC_ANALYTICS_BEACON="${NEXT_PUBLIC_ANALYTICS_BEACON}" \
+    NEXT_PUBLIC_SITE_URL="${NEXT_PUBLIC_SITE_URL}" \
     NEXT_PUBLIC_FIREBASE_API_KEY="${NEXT_PUBLIC_FIREBASE_API_KEY}" \
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}" \
     NEXT_PUBLIC_FIREBASE_PROJECT_ID="${NEXT_PUBLIC_FIREBASE_PROJECT_ID}" \
