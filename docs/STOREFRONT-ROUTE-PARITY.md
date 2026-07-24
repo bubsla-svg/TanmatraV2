@@ -5,11 +5,12 @@ app (React Router v7 SSR) but are missing on the new `storefront` (Next.js 16 Ap
 Router) — **natively**, as real RSC pages in the Clinical Dark design system, not
 proxied.
 
-This is a **program**, not a single change. It ships in risk-ordered waves, **one
-PR per wave**, per the one-concern-per-PR rule in
-[`AGENT_WORKING_AGREEMENT.md`](./AGENT_WORKING_AGREEMENT.md). Waves A–C are pure
-presentation and move fast; D–H touch the money path or PHI and get the full
-lockstep + DB-test treatment.
+This is a **program**, not a single change. It is optimised for **shortest
+wall-clock**: waves run as **parallel tracks**, not a strict A→H chain — see
+**§7 Execution acceleration**. Independent routes touch disjoint files, so multiple
+agents work concurrently; the only shared surfaces (nav, redirect map, sitemap) are
+front-loaded once (Track 0) so waves never collide. Only two human checkpoints
+remain — money-path sign-off and PHI review — everything else runs autonomously.
 
 > Source of truth for the legacy inventory: `artifacts/tanmatra/src/routes.ts`
 > (86 route lines). Source of truth for what already exists on the storefront:
@@ -170,16 +171,68 @@ service · spot-checked on the live URL (the deploy-truth discipline: assert
    shows a genuine gap. See the backend-readiness table in §3. Known new-endpoint
    work: **appointments (Wave D)**; open questions: vouchers + health-information
    PHI (Wave G).
-5. **Sequencing — Wave A is locked first** (cheapest, near-zero risk, and it builds
-   the shared nav / redirect-map / SEO / test scaffolding every later wave reuses).
-   **B–H are then reordered by business priority** — pending a business-priority
-   signal (RD? Corporate? Community/content for SEO?), the default is strict A→H
-   (derisks best).
+5. **Sequencing — parallel tracks, not a serial chain** (see §7). The shared infra
+   (nav / redirect map / sitemap) is front-loaded once as Track 0 to unblock and
+   de-conflict everything; presentation waves then run concurrently and
+   autonomously. Business priority only re-orders which parallel work starts
+   first (RD? Corporate? Community/content for SEO?) — it does not serialise them.
 
 ---
 
-## 7 · Changelog
+## 7 · Execution acceleration (parallel tracks)
 
+Optimised for **shortest wall-clock**. Waves are **not** a serial A→H chain — they
+run as concurrent tracks. Independent routes touch disjoint files, so multiple
+agents work in parallel; the only shared surfaces are front-loaded once so waves
+never collide on them.
+
+- **Track 0 — shared infra (first, once; unblocks & de-conflicts everything):**
+  IA/nav refactor (`Header` · `BottomNav` · footer · `CommandPalette` to hold a
+  *Community* group + new account tabs), central `redirects()` map, `sitemap.ts`
+  plumbing. One PR. **Doing this first is the single biggest accelerator** — it
+  stops every later wave from re-editing (and conflicting on) the nav files.
+- **Track 1 — presentation waves A · B · C (parallel, autonomous):** pure leaf
+  pages, no money, no PHI. Split across agents; branch/PR per wave (or per route);
+  CI runs concurrently. **Pre-authorised — no per-wave approval.**
+- **Track 2 — backend gap slices (start now, in parallel):** the long-pole
+  dependencies — appointment booking+order endpoint (Wave D), voucher endpoint
+  (Wave G). api-server, server owns amounts, DB test. Starting now keeps them off
+  the UI critical path.
+- **Track 3 — money-path UI waves D · E · F · H (once their backend is ready):**
+  E/F/H reuse existing endpoints; D consumes the Track-2 appointment slice.
+  **One checkpoint: money-path integration sign-off before merge.**
+- **Track 4 — PHI route (`account/health-information`, Wave G):** decoupled so it
+  never blocks the other ~42 routes. **One checkpoint: clinical / DPDPA review.**
+
+**Checkpoints reduced to exactly two** (money-path sign-off · PHI review).
+Everything else executes autonomously — no per-wave gating.
+
+### Skip vs honour (so the agent wastes zero time)
+
+**Removed friction — skip:** strict A→H ordering · per-wave "await go" pauses ·
+one-wave-at-a-time serialisation · waiting for a green wave before starting the
+next. Run concurrently on separate branches; let CI parallelise.
+
+**Non-negotiable — honour (these are pro-speed, not ceremony; skipping them makes
+delivery slower via rework / incidents / rollback):**
+- **Server owns every amount; the client never sends a price.**
+- **Money-path DB tests wired into `verify.yml`** (catch billing regressions
+  pre-merge).
+- **PHI encryption via `CLINICAL_KMS`** on `health-information` (a leak is a DPDPA
+  breach, not a bug fix).
+- **CI gates** (file-cap · typecheck · color/price/token lint · build) — enforced
+  by CI regardless of this doc; honouring them up front avoids red-CI rework.
+
+## 8 · Changelog
+
+- _(unreleased)_ — execution acceleration (§7): reframed from a serial A→H chain
+  to **parallel tracks** — Track 0 shared infra first (de-conflicts nav), Track 1
+  presentation waves autonomous, Track 2 backend gap slices started in parallel,
+  money-path and PHI decoupled behind exactly **two** checkpoints. Added an
+  explicit skip-vs-honour list: process friction removed (serial ordering,
+  per-wave approval pauses); safety guardrails kept (server-owns-price, money-path
+  DB tests, PHI encryption, CI gates) because skipping them costs more time via
+  rework/incidents than it saves.
 - _(unreleased)_ — resolved the five open decisions (§6): admin **out**, cart
   stays a **drawer**, **308 redirects** for renamed paths, **reuse existing
   endpoints** (backend-readiness audit added to §3, appointment/voucher/PHI gaps
