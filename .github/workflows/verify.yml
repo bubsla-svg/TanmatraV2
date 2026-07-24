@@ -144,6 +144,7 @@ jobs:
           ./src/routes/payments.webhook.test.ts
           ./src/routes/payments.subscriptionOrder.test.ts
           ./src/routes/refunds.test.ts
+          ./src/routes/orders.mine.test.ts
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
