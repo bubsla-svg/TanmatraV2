@@ -32,6 +32,13 @@ export interface PlanQuoteResponse {
   addOnTotalPaise?: number;
   gstPaise: number;
   totalPaise: number;
+  /** Credit preview — present only on a signed-in (cookie-authed) quote. The
+   *  bridge (trial) + ledger credit the create route will redeem against this
+   *  first bill, and the resulting net charge, both server-computed in the
+   *  create route's exact order. Absent for anonymous quotes. */
+  bridgeCreditPaise?: number;
+  creditAppliedPaise?: number;
+  payableTotalPaise?: number;
 }
 
 export function quotePlan(
