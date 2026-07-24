@@ -16,7 +16,8 @@ import type { PetpoojaStockLine } from "./petpoojaInventory";
 // Set before importing: @workspace/db throws at import time without it.
 process.env["DATABASE_URL"] ||= "postgresql://dummy:dummy@localhost:5432/dummy";
 
-const { convertQty, istDay, planStockSync, DEFAULT_MAX_ZERO_RATIO } = await import("./stockSync");
+const { convertQty, istDay, planStockSync, runStockSync, DEFAULT_MAX_ZERO_RATIO, PLANNED_LOG_LIMIT } =
+  await import("./stockSync");
 
 type StockRow = {
   id: number;
@@ -268,5 +269,41 @@ describe("planStockSync zero-flood breaker", () => {
     assert.equal(DEFAULT_MAX_ZERO_RATIO, 0.5);
     const plan = planStockSync(feed(3, 3), inventory, rows, { maxZeroRatio: 0.4 });
     assert.equal(plan.aborted?.reason, "zero_flood");
+  });
+
+  it("keeps the refused writes so the trip can be diagnosed, not just counted", () => {
+    const plan = planStockSync(feed(5, 2), inventory, rows);
+    // Whoever reads the alert has to decide "broken feed" vs "the kitchen really
+    // did run down", and a bare count of 5 supports neither. Without the list the
+    // only lever left is raising the ratio, which is always the wrong answer.
+    assert.equal(plan.refused?.length, 7);
+    assert.deepEqual(
+      plan.refused?.filter((u) => u.newQty === 0).map((u) => u.vendorProduct),
+      ["Item1", "Item2", "Item3", "Item4", "Item5"],
+    );
+    // Still nothing appliable: applyStockSync only ever reads `updates`.
+    assert.deepEqual(plan.updates, []);
+  });
+
+  it("leaves `refused` absent when the breaker did not trip", () => {
+    const plan = planStockSync(feed(3, 3), inventory, rows);
+    assert.equal(plan.refused, undefined);
+  });
+});
+
+describe("runStockSync summary", () => {
+  it("reports an empty plan rather than omitting the field when unconfigured", async () => {
+    // No PETPOOJA_INVENTORY_RID in the test env, so this returns before it can
+    // reach the database — which is what makes it safe to assert on here.
+    const summary = await runStockSync({});
+    assert.equal(summary.skipped, true);
+    assert.deepEqual(summary.planned, []);
+    assert.equal(summary.plannedTotal, 0);
+  });
+
+  it("caps the logged sample high enough that a real dry run is readable", () => {
+    // The number itself is a judgement call; that it is well above a kitchen's
+    // daily movement and below "whole catalogue" is the property that matters.
+    assert.equal(PLANNED_LOG_LIMIT, 100);
   });
 });
