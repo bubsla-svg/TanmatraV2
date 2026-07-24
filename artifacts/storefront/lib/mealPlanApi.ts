@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, type FetchImpl } from "@/lib/apiClient";
+import { apiGet, apiPost, apiPatch, apiPut, type FetchImpl } from "@/lib/apiClient";
 
 /**
  * Weekly meal-planner client (route-parity Wave H). Wraps the api-server's
@@ -121,4 +121,28 @@ export function formatPlanDay(iso: string): string {
   return new Date(`${iso}T00:00:00.000Z`).toLocaleDateString("en-IN", {
     weekday: "short", day: "numeric", month: "short", timeZone: "UTC",
   });
+}
+
+// ── v2: week calendar · per-day regenerate · settings ────────────────────────
+
+export type WeekDayCalendarKind = "normal" | "gym" | "travel" | "wfh";
+export const WEEK_CALENDAR_CYCLE: WeekDayCalendarKind[] = ["normal", "gym", "travel", "wfh"];
+
+export interface MealPlanSettings {
+  autoReplanEnabled: boolean;
+  weeklyBudgetPaise: number | null;
+  maxRepetitionsPerDish: number;
+}
+
+/** Regenerate a single day of a DRAFT plan (409 if not draft). */
+export function regenerateDay(id: number, dayIndex: number, fetchImpl?: FetchImpl): Promise<{ plan: MealPlan }> {
+  return apiPost(`/meal-plans/${id}/regenerate-day`, { dayIndex }, fetchImpl);
+}
+
+export function getSettings(fetchImpl?: FetchImpl): Promise<{ settings: MealPlanSettings }> {
+  return apiGet("/meal-plan-settings", fetchImpl);
+}
+
+export function updateSettings(patch: Partial<MealPlanSettings>, fetchImpl?: FetchImpl): Promise<{ settings: MealPlanSettings }> {
+  return apiPut("/meal-plan-settings", patch, fetchImpl);
 }
