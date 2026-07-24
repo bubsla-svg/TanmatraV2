@@ -68,6 +68,46 @@ const PATHS: Record<LandingIconName, ReactNode> = {
       <polyline points="12 5 19 12 12 19" />
     </>
   ),
+  lightning: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
+  "fork-knife": (
+    <>
+      <path d="M3 2v7a3 3 0 0 0 3 3v10" />
+      <path d="M9 2v7a3 3 0 0 1-3 3" />
+      <path d="M6 2v6" />
+      <path d="M17 2a3 5 0 0 0 0 10v10" />
+    </>
+  ),
+  buildings: (
+    <>
+      <path d="M3 21h18" />
+      <path d="M5 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16" />
+      <path d="M13 9h5a1 1 0 0 1 1 1v11" />
+      <line x1="8" y1="8" x2="10" y2="8" />
+      <line x1="8" y1="12" x2="10" y2="12" />
+      <line x1="8" y1="16" x2="10" y2="16" />
+    </>
+  ),
+  timer: (
+    <>
+      <line x1="10" y1="2" x2="14" y2="2" />
+      <circle cx="12" cy="14" r="8" />
+      <line x1="12" y1="14" x2="15" y2="11" />
+    </>
+  ),
+  "shield-check": (
+    <>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <polyline points="9 12 11 14 15 10" />
+    </>
+  ),
+  clipboard: (
+    <>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      <line x1="8" y1="16" x2="13" y2="16" />
+    </>
+  ),
 };
 
 export function LandingIcon({ name, className }: { name: LandingIconName; className?: string }) {

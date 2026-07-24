@@ -25,7 +25,13 @@ export type LandingIconName =
   | "users"
   | "check"
   | "map-pin"
-  | "arrow-right";
+  | "arrow-right"
+  | "lightning"
+  | "fork-knife"
+  | "buildings"
+  | "timer"
+  | "shield-check"
+  | "clipboard";
 
 export interface LandingBenefit {
   icon: LandingIconName;

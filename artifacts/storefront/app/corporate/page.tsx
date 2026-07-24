@@ -22,6 +22,11 @@ export default function CorporatePage() {
         RD-designed lunches for offices, gyms, and fitness clubs across Delhi NCR. Tell us about your
         team and we&rsquo;ll put together a plan that fits.
       </p>
+      <p className="mt-3 text-sm">
+        <Link href="/corporate-wellness" className="font-medium text-gold-text hover:underline">
+          See the full corporate-wellness pitch — subsidy calculator &amp; FAQ &rarr;
+        </Link>
+      </p>
       <div className="mt-6">
         <CorporateLeadForm />
       </div>

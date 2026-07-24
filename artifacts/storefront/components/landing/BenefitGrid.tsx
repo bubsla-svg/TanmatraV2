@@ -11,14 +11,21 @@ export function BenefitGrid({
   heading,
   sub,
   benefits,
+  eyebrow,
+  id,
 }: {
   heading: string;
   sub?: string;
   benefits: LandingBenefit[];
+  /** Optional gold uppercase kicker above the heading. */
+  eyebrow?: string;
+  /** Optional anchor id (so a hero CTA can jump to the section). */
+  id?: string;
 }) {
   return (
-    <section className="py-12">
-      <h2 className="text-2xl font-semibold tracking-tight text-ink">{heading}</h2>
+    <section id={id} className="scroll-mt-20 py-12">
+      {eyebrow && <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{eyebrow}</p>}
+      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">{heading}</h2>
       {sub && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">{sub}</p>}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {benefits.map((b) => (

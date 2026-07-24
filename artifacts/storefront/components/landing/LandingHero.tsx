@@ -12,10 +12,12 @@ export function LandingHero({
   hero,
   ctaLabel,
   ctaHref,
+  secondaryCta,
 }: {
   hero: HeroData;
   ctaLabel: string;
   ctaHref: string;
+  secondaryCta?: { label: string; href: string };
 }) {
   return (
     <header className="border-b border-line py-12">
@@ -32,15 +34,25 @@ export function LandingHero({
           {ctaLabel}
           <LandingIcon name="arrow-right" className="h-4 w-4" />
         </a>
+        {secondaryCta && (
+          <a
+            href={secondaryCta.href}
+            className="inline-flex items-center rounded-xl border border-line px-6 py-3 text-sm font-semibold text-ink hover:border-line-strong"
+          >
+            {secondaryCta.label}
+          </a>
+        )}
       </div>
-      <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
-        {hero.trust.map((t) => (
-          <li key={t.label} className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-            <LandingIcon name={t.icon} className="h-4 w-4 text-sage" />
-            {t.label}
-          </li>
-        ))}
-      </ul>
+      {hero.trust.length > 0 && (
+        <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
+          {hero.trust.map((t) => (
+            <li key={t.label} className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
+              <LandingIcon name={t.icon} className="h-4 w-4 text-sage" />
+              {t.label}
+            </li>
+          ))}
+        </ul>
+      )}
     </header>
   );
 }
