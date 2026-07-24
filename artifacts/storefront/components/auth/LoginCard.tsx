@@ -1,0 +1,62 @@
+"use client";
+// Client: session probe + Firebase OTP are browser-only.
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { firebaseConfigured } from "@/lib/firebase";
+import { getAuthUser } from "@/lib/api";
+import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+
+/**
+ * The /login card (SF account surfaces / CUJ-02). An already-signed-in visitor
+ * is forwarded to `next` immediately (replace, so Back never bounces through
+ * /login — the no-redirect-loop rule); otherwise Firebase OTP signs them in and
+ * the verified session forwards the same way. No Firebase config = the same
+ * fail-LOUD fallback the plan gate uses — never a silent dead end.
+ */
+export function LoginCard({ next }: { next: string }) {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let live = true;
+    getAuthUser()
+      .then(({ user }) => {
+        if (!live) return;
+        if (user) router.replace(next);
+        else setChecking(false);
+      })
+      .catch(() => {
+        if (live) setChecking(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [next, router]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h1 className="text-lg font-semibold text-ink">Sign in</h1>
+      {checking ? (
+        <p className="text-sm text-ink-muted">Checking your session…</p>
+      ) : firebaseConfigured() ? (
+        <>
+          <p className="text-sm text-ink-muted">A code by SMS, no passwords.</p>
+          <PhoneAuth onVerified={() => router.replace(next)} />
+        </>
+      ) : (
+        <>
+          <p role="alert" className="text-sm font-medium text-[var(--danger)]">
+            Sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
+          </p>
+          <Link
+            href="/menu"
+            className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
+          >
+            Browse the menu
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}

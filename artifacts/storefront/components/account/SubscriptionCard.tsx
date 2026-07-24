@@ -1,7 +1,9 @@
 "use client";
 // Client: presentational subscription row + status-driven actions.
+import { useState } from "react";
 import { formatPaise } from "@/lib/format";
 import type { Subscription, SubscriptionStatus } from "@/lib/subscriptionsApi";
+import { DeliveryList } from "./DeliveryList";
 
 export type SubAction = "pause" | "resume" | "cancel" | "reactivate-billing";
 
@@ -40,6 +42,8 @@ export function SubscriptionCard({
   busy: boolean;
   onAction: (action: SubAction) => void;
 }) {
+  // Deliveries load lazily on first open — a closed card costs no request.
+  const [showDeliveries, setShowDeliveries] = useState(false);
   return (
     <li className="rounded-xl border border-line bg-surface p-4">
       <div className="flex items-center justify-between gap-2">
@@ -61,7 +65,7 @@ export function SubscriptionCard({
       {sub.addressLine && (
         <p className="mt-0.5 text-xs text-ink-faint">{[sub.addressLine, sub.city, sub.pincode].filter(Boolean).join(", ")}</p>
       )}
-      {actionsFor(sub.status).length > 0 && (
+      {(actionsFor(sub.status).length > 0 || sub.status !== "cancelled") && (
         <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-medium">
           {actionsFor(sub.status).map((a) => (
             <button
@@ -74,8 +78,19 @@ export function SubscriptionCard({
               {ACTION_LABEL[a]}
             </button>
           ))}
+          {sub.status !== "cancelled" && (
+            <button
+              type="button"
+              onClick={() => setShowDeliveries((s) => !s)}
+              aria-expanded={showDeliveries}
+              className="-m-1 p-1 text-gold-text hover:underline"
+            >
+              {showDeliveries ? "Hide deliveries" : "Deliveries"}
+            </button>
+          )}
         </div>
       )}
+      {showDeliveries && sub.status !== "cancelled" && <DeliveryList subscriptionId={sub.id} />}
     </li>
   );
 }

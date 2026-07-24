@@ -6,6 +6,7 @@ import {
   type AddOnId,
   type PlanId,
 } from "@workspace/subscription-rules";
+import { formatPaise } from "./format";
 
 /**
  * Storefront adapter over the pure attach spine (planCatalog §4). The spine owns
@@ -68,4 +69,23 @@ export function checkoutTotalWithAddOns(
   const views = reviewItems.map((it) => addOnView(it.id));
   const addOnPaise = views.reduce((sum, v) => sum + v.pricePaise, 0);
   return { basePaise, addOnPaise, totalPaise: basePaise + addOnPaise, items: views };
+}
+
+/**
+ * One display line for the BILLED (plan_review) add-ons in a server quote —
+ * "Your dietitian · +₹499/mo" — or null when the quote bills none. Prices come
+ * from the quote items, not the spine: the line must state exactly what the
+ * server will charge (names/cadence labels are display-only).
+ */
+export function addOnLineFromQuote(
+  addOns: { id: AddOnId; pricePaise: number; attachPoint: string }[] | undefined,
+): string | null {
+  const billed = (addOns ?? []).filter((a) => a.attachPoint === "plan_review");
+  if (billed.length === 0) return null;
+  return billed
+    .map((a) => {
+      const v = addOnView(a.id);
+      return `${v.name} · +${formatPaise(a.pricePaise)}/${v.cadence === "weekly" ? "wk" : "mo"}`;
+    })
+    .join(" · ");
 }

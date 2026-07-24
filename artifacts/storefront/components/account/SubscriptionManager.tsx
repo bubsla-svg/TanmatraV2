@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ApiError } from "@/lib/apiClient";
 import {
   getSubscriptions,
+  getMealCredits,
   pauseSubscription,
   resumeSubscription,
   cancelSubscription,
@@ -36,6 +37,8 @@ export function SubscriptionManager() {
   const [subs, setSubs] = useState<Subscription[] | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The server's unconsumed/unexpired balance; null = unknown (chip hidden).
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
   // Per-id, not a single scalar: acting on row B must not re-enable row A while
   // A's transition is still in flight (which would allow a double-submit).
   const [busyIds, setBusyIds] = useState<ReadonlySet<number>>(new Set());
@@ -46,6 +49,11 @@ export function SubscriptionManager() {
       const { subscriptions } = await getSubscriptions();
       setSubs(subscriptions);
       setNeedsAuth(false);
+      // Best-effort: the credits chip is informational — its failure must
+      // never block the list (skips re-fetch it via load()).
+      void getMealCredits()
+        .then(({ balance }) => setCreditBalance(balance))
+        .catch(() => setCreditBalance(null));
     } catch (e) {
       if (isAuthExpired(e)) setNeedsAuth(true);
       else setError(e instanceof ApiError ? e.message : "Couldn't load your plans.");
@@ -95,6 +103,11 @@ export function SubscriptionManager() {
 
   return (
     <div className="flex flex-col gap-4">
+      {creditBalance !== null && creditBalance > 0 && (
+        <p className="tabular self-start rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage-text">
+          {creditBalance} meal credit{creditBalance === 1 ? "" : "s"} — skipped deliveries come back as credits
+        </p>
+      )}
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       {subs.length === 0 ? (
         <p className="text-sm text-ink-muted">

@@ -42,6 +42,21 @@ export function statusLabel(status: string): string {
   return STATUS_LABELS[status] ?? status;
 }
 
+/**
+ * In-flight statuses that can be tracked. An ALLOWLIST, not a terminal
+ * denylist: new terminal states ("refunded", "failed", …) keep appearing, and
+ * an allowlist fails safe by hiding Track for anything it doesn't recognise
+ * rather than showing a dead CTA on a settled order. Shared by the order rows
+ * and the account hub's live-order card.
+ */
+export const TRACKABLE_STATUSES: ReadonlySet<string> = new Set([
+  "placed",
+  "preparing",
+  "ready",
+  "rider_assigned",
+  "out_for_delivery",
+]);
+
 export async function fetchOrderStatus(
   externalOrderId: string,
   base: string,

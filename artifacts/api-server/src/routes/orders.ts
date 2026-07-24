@@ -131,6 +131,7 @@ router.get("/orders/mine", async (req: Request, res: Response) => {
       totalPaise: ordersTable.totalPaise,
       addressLabel: ordersTable.addressLabel,
       createdAt: ordersTable.createdAt,
+      items: ordersTable.items,
     })
     .from(ordersTable)
     .where(and(eq(ordersTable.userId, req.user.id), eq(ordersTable.orderKind, "meal")))
@@ -144,6 +145,10 @@ router.get("/orders/mine", async (req: Request, res: Response) => {
       totalPaise: r.totalPaise,
       addressLabel: r.addressLabel,
       createdAt: r.createdAt,
+      // orderKind is filtered to "meal" above, so these are always the
+      // {id,name,qty,price} meal lines — the storefront's reorder seed
+      // (SF-09 tail / CUJ-09). Read-only exposure of the caller's own rows.
+      items: r.items,
     })),
   });
 });

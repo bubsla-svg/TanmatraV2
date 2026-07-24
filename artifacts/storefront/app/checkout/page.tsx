@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId } from "@workspace/subscription-rules";
+import {
+  PLAN_CATALOG,
+  planIsSelfServiceLaunchable,
+  type DietTrack,
+  type PlanId,
+} from "@workspace/subscription-rules";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
-import { planTotalAfterCredit, TRIAL_COPY } from "@/lib/trial";
+import { planTotalAfterCredit, TRIAL_COPY, TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
 import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { AlacarteCheckout } from "@/components/checkout/AlacarteCheckout";
 import { PlanCheckout } from "@/components/checkout/plan/PlanCheckout";
@@ -14,6 +19,7 @@ export const metadata: Metadata = { title: "Checkout", robots: { index: false } 
 type Props = {
   searchParams: Promise<{
     plan?: string;
+    track?: string;
     returning?: string;
     credit?: string;
     bump?: string;
@@ -29,7 +35,7 @@ type Props = {
  * comes off the first bill; `bump=1` = the RD add-on accepted at plan review.
  */
 export default async function CheckoutPage({ searchParams }: Props) {
-  const { plan, returning, credit, bump, mode } = await searchParams;
+  const { plan, track, returning, credit, bump, mode } = await searchParams;
 
   // À-la-carte (SF-05 / CUJ-01): the guest money path — no plan, no session.
   // The cart lives client-side, so this leg is a client island; the server owns
@@ -51,14 +57,30 @@ export default async function CheckoutPage({ searchParams }: Props) {
   const isReturning = returning === "1";
   const isTrial = id === "trial_3day";
 
-  // Live plan money path (SF-07 / CUJ-02): the real subscription checkout —
-  // identity → eater profile → address → pay via createSubscription. The server
-  // prices the plan from planId. The trial keeps its own sampler flow; credit /
-  // RD-bump land as follow-ups, so those variants stay on the skeleton below.
-  if (LIVE_CHECKOUT_ENABLED && !isTrial && credit !== "1" && bump !== "1") {
+  // Live plan money path (SF-07/09/11 · CUJ-02/03/04): identity → eater
+  // profile → address → real pay via createSubscription. The server prices
+  // from planId AND flips the trial branch (one-off sampler, creditback at
+  // paid time, one per phone — 409 trial_already_redeemed) from planId ===
+  // "trial_3day" itself, so trial and plan share one create path. An accepted
+  // RD bump (`bump=1`, allow-list-gated) is threaded through quote AND create —
+  // the server bills it, so display equals charge. Post-trial credit
+  // (`credit=1`) needs an authed, ledger-aware displayed total and stays on
+  // the skeleton until that lands.
+  if (LIVE_CHECKOUT_ENABLED && credit !== "1") {
+    const requestedTrack =
+      track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
+    const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
     return (
       <section className="mx-auto max-w-md px-4 py-10">
-        <PlanCheckout planId={id} planName={d.name} servedTracks={q.servedTracks} />
+        <PlanCheckout
+          planId={id}
+          planName={d.name}
+          servedTracks={q.servedTracks}
+          initialTrack={requestedTrack}
+          addOns={withRdBump ? ["rd_bump"] : undefined}
+          finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
+          successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
+        />
       </section>
     );
   }
