@@ -13,6 +13,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import { DishRationale } from "./DishRationale";
 
 /**
  * Dish detail as a bottom sheet over the menu (§4.2): users triage dishes in
@@ -59,6 +60,8 @@ export function DishDrawer({ dish }: { dish: DishData }) {
           <DrawerDescription className="mt-2 text-sm leading-relaxed text-ink-muted">
             {dish.tasteDescription || dish.description}
           </DrawerDescription>
+
+          <DishRationale dishId={dish.id} />
 
           <dl className="mt-4 grid grid-cols-4 gap-2">
             {macros.map(([label, value]) => (
