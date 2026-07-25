@@ -156,3 +156,16 @@ jobs:
           ./src/routes/rdAdvisory.appointmentOrder.test.ts
           ./src/routes/vouchers.test.ts
           ./src/routes/premium.paymentOrder.test.ts
+      # Kept as its own step so a failure reads as "the kitchen board broke"
+      # rather than being buried in a sixteen-file money run. Not a money path,
+      # but it needs the same Postgres service and pushed schema, so it lives
+      # in this job. Two things are pinned: the board shows own_app + meal only
+      # (an aggregator ticket here gets cooked twice — Petpooja's own screen is
+      # already driving it), and POST ready advances only tickets the board can
+      # actually show (without the status predicate it would drag a delivered
+      # order back to ready, or resurrect a cancelled one onto the board).
+      - name: Kitchen-board route contract (KDS)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/ops.kds.test.ts

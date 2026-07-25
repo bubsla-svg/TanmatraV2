@@ -203,6 +203,16 @@ router.get("/recipes/:slug", async (req: Request, res: Response) => {
 });
 
 /**
+ * The statuses a ticket can be in while it is still food the kitchen owes
+ * someone. Shared deliberately by the board query and the ready mutation
+ * below: those two predicates ARE the contract — a ticket the board cannot
+ * show must not be a ticket the board can advance — and when they were
+ * written out separately they silently drifted apart. Change them together
+ * or not at all. Pinned by routes/ops.kds.test.ts.
+ */
+const KDS_BOARD_STATUSES = ["placed", "preparing"];
+
+/**
  * The kitchen display board — and the place the "two boards" decision lives.
  *
  * One kitchen, two screens: this board shows the orders that arrived through
@@ -231,7 +241,7 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
     .from(ordersTable)
     .where(
       and(
-        inArray(ordersTable.status, ["placed", "preparing"]),
+        inArray(ordersTable.status, KDS_BOARD_STATUSES),
         eq(ordersTable.orderKind, "meal"),
         eq(ordersTable.orderChannel, "own_app"),
       ),
@@ -243,15 +253,35 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
 router.post("/kds/orders/:id/ready", async (req: Request, res: Response) => {
   if (!requireOps(req, res)) return;
   const orderId = parseInt(String(req.params.id ?? ""), 10);
-  // Mirrors the queue's predicate. A board that cannot show a ticket must not
-  // be able to advance it either — otherwise the guard above is decoration
+  // parseInt("abc") is NaN, and an unguarded NaN reaches Postgres as an
+  // invalid integer literal — the driver throws and Express answers with a
+  // 500 HTML error page. An id that is not an id is not on the board; say so
+  // in the same shape as every other off-board answer.
+  if (!Number.isInteger(orderId)) {
+    res
+      .status(404)
+      .json({ ok: false, error: "no such order on this board", code: "order_not_on_board" });
+    return;
+  }
+  // Mirrors the board query's predicate exactly — same statuses, same kind,
+  // same channel. A ticket the board cannot show must not be a ticket the
+  // board can advance, otherwise the guard on the read side is decoration
   // that any client holding an order id can step around.
+  //
+  // The status clause is the one that is easy to leave out, and leaving it
+  // out is not a cosmetic bug: without it this UPDATE matches a row in ANY
+  // status, so a stale kitchen tab could drag a `delivered` order back to
+  // `ready`, or resurrect a `cancelled` one onto the board to be cooked. It
+  // also made the 404 below unreachable for the case it exists to report —
+  // a second click on an already-advanced ticket re-set `ready` to `ready`,
+  // matched a row, and answered `{ok:true}`.
   const advanced = await db
     .update(ordersTable)
     .set({ status: "ready" })
     .where(
       and(
         eq(ordersTable.id, orderId),
+        inArray(ordersTable.status, KDS_BOARD_STATUSES),
         eq(ordersTable.orderKind, "meal"),
         eq(ordersTable.orderChannel, "own_app"),
       ),
