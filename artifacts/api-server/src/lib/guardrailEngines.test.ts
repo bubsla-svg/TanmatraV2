@@ -100,29 +100,52 @@ test("evaluateWholesalePriceSpike triggers menu pricing proposals when cost incr
   assert.equal(suggestions[0]?.status, "pending");
 });
 
-test("processBiometricAnomaly calibrates fiber target upward and activates ingredient lockouts at >=140 mg/dL glucose", async () => {
-  // Normal reading (115 mg/dL)
+test("processBiometricAnomaly alerts the RD with a PROPOSAL and never writes targets itself", async () => {
+  // Normal reading (115 mg/dL): nothing happens.
   const normRes = await processBiometricAnomaly(testUserId, 115);
   assert.equal(normRes.targetAdjusted, false);
   assert.equal(normRes.restrictedIngredients.length, 0);
 
-  // Hyperglycemic postprandial spike (165 mg/dL)
+  // Snapshot targets BEFORE the spike — the engine must not touch them.
+  const targetsBefore = await db
+    .select()
+    .from(dailyTargetsTable)
+    .where(eq(dailyTargetsTable.userId, testUserId));
+
+  // Hyperglycemic postprandial spike (165 mg/dL): alert + proposal, no writes.
   const spikeRes = await processBiometricAnomaly(testUserId, 165);
-  assert.equal(spikeRes.targetAdjusted, true);
-  assert.equal(spikeRes.newFiberTargetGrams, 36); // 28 + 8 = 36g fiber required
+  assert.equal(
+    spikeRes.targetAdjusted,
+    false,
+    "a self-reported reading must NEVER auto-modify clinical targets — the first draft did, and this pins the review that removed it",
+  );
+  assert.equal(spikeRes.proposedFiberTargetGrams, 36); // 28 + 8, proposed to the RD
   assert.equal(spikeRes.rdAlertGenerated, true);
   assert.ok(spikeRes.restrictedIngredients.includes("refined-sugar"));
 
-  // Check persisted lockouts endpoint helper
+  // daily_targets is byte-identical to before the spike.
+  const targetsAfter = await db
+    .select()
+    .from(dailyTargetsTable)
+    .where(eq(dailyTargetsTable.userId, testUserId));
+  assert.deepEqual(
+    targetsAfter,
+    targetsBefore,
+    "the engine wrote daily_targets — the autonomous clinical intervention is back",
+  );
+
+  // Advisory cautions surface for the UI…
   const lockouts = await getPatientIngredientLockouts(testUserId);
-  assert.ok(lockouts.reason?.includes("biometric glucose"));
+  assert.ok(lockouts.reason?.includes("advisory"));
   assert.ok(lockouts.restrictedIngredients.includes("refined-sugar"));
 
-  // Check RD client summary note
+  // …and the RD note carries the reading, the proposal, and the disclaimer.
   const rdNotes = await db
     .select()
     .from(rdClientSummariesTable)
     .where(eq(rdClientSummariesTable.userId, testUserId));
   assert.equal(rdNotes.length, 1);
   assert.ok(rdNotes[0]?.summary.includes("165 mg/dL"));
+  assert.ok(rdNotes[0]?.summary.includes("PROPOSED"));
+  assert.ok(rdNotes[0]?.summary.includes("No targets have been changed automatically"));
 });

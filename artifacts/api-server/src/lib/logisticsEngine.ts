@@ -1,16 +1,16 @@
 /**
  * Autonomous Logistics & Rider Geolocation Fallback Engine (PRD Phase 2).
  * Scans active delivery queues for dropped signals and delivery lags,
- * auto-triggers priority 3PL rescue rider re-assignments at 15+ minute delays,
- * and autonomously distributes ₹150 goodwill compensation vouchers at 20+ minute lags.
+ * flags priority 3PL rescue re-assignment at 15+ minutes PAST THE PROMISED
+ * time, and issues a single ₹150 goodwill voucher at 20+ minutes past it.
+ * Operator-triggered from the ops console (behind the ops gate) — this is a
+ * button, not a scheduler.
  */
 import { inArray, eq, gte, sql } from "drizzle-orm";
 import {
   db,
   ordersTable,
   vouchersTable,
-  creditLedgerTable,
-  usersTable,
 } from "@workspace/db";
 import { logger } from "./logger";
 import { sendDeliveryDelaySms } from "./sms";
@@ -38,9 +38,17 @@ export async function scanAndExecuteRiderFallbacks(
 
   const interventions: LogisticsIntervention[] = [];
 
+  // Expected-by: the promised slot when the order has one, else creation time
+  // plus the standard fulfilment window. "Minutes since the customer ordered"
+  // is NOT a delay — a normal 30–45 minute delivery would hit a 20-minute
+  // age threshold on every order, and this function hands out money.
+  const STANDARD_FULFILMENT_MIN = 45;
   for (const order of activeOrders) {
     if (!order.createdAt) continue;
-    const delayMinutes = Math.floor((Date.now() - order.createdAt.getTime()) / 60000);
+    const expectedByMs = order.scheduledFor
+      ? order.scheduledFor.getTime()
+      : order.createdAt.getTime() + STANDARD_FULFILMENT_MIN * 60_000;
+    const delayMinutes = Math.floor((Date.now() - expectedByMs) / 60000);
     const userId = order.userId || "guest";
 
     if (delayMinutes >= 20) {
@@ -62,26 +70,10 @@ export async function scanAndExecuteRiderFallbacks(
           status: "active",
         });
 
-        if (order.userId) {
-          try {
-            const userCheck = await db
-              .select({ id: usersTable.id })
-              .from(usersTable)
-              .where(eq(usersTable.id, order.userId))
-              .limit(1);
-
-            if (userCheck.length > 0) {
-              await db.insert(creditLedgerTable).values({
-                userId: order.userId,
-                deltaPaise: 15000,
-                reason: "manual_grant",
-                note: `Autonomous compensation voucher (${voucherCode}) for delivery lag`,
-              });
-            }
-          } catch (err) {
-            logger.warn({ err, userId: order.userId }, "logistics.voucher.ledger_credit_skipped");
-          }
-        }
+        // ONE grant, not two. The voucher IS the ₹150 — redeeming it lands in
+        // the wallet through the existing voucher flow. The first draft also
+        // wrote a direct ₹150 credit_ledger row alongside it, paying every
+        // incident twice (₹300) and once more at redemption.
 
         const msg = `Delay Alert for Order #${order.id}: Your meal is running behind due to weather or traffic. We have dispatched a priority rescue rider and credited ₹150 (Voucher: ${voucherCode}) to your Protocol Vault!`;
         await sendDeliveryDelaySms(
