@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { corporateApi, type Voucher } from "@/lib/corporateApi";
+import { openRazorpayCheckout } from "@/lib/razorpayClient";
 import { formatPrice } from "@/lib/api/adapter";
 
 const PRESET_AMOUNTS = [50000, 100000, 250000, 500000];
@@ -32,6 +33,10 @@ export default function V2Vouchers() {
     refresh();
   }, []);
 
+  // Buying a voucher is a real payment: the server opens a Razorpay order for
+  // the chosen denomination and only reveals the code once the capture is
+  // verified. A cancelled or failed payment therefore yields no code at all —
+  // the voucher row stays `pending_payment` server-side and is never listed.
   const handlePurchase = async () => {
     if (amountPaise < 10_000) {
       toast.error("Minimum ₹ 100");
@@ -39,24 +44,41 @@ export default function V2Vouchers() {
     }
     setBusy(true);
     try {
-      const r = await corporateApi.purchaseVoucher({
+      const checkout = await corporateApi.startVoucherCheckout({
         amountPaise,
         recipientEmail: recipientEmail || undefined,
         recipientName: recipientName || undefined,
         message: message || undefined,
       });
-      toast.success(`Voucher ${r.voucher.code} purchased`, {
+
+      const opened = await openRazorpayCheckout({
+        razorpayOrderId: checkout.razorpayOrderId,
+        amountPaise: checkout.amount,
+        description: `Tanmatra voucher ${formatPrice(checkout.amount)}`,
+      });
+      if (opened.outcome === "cancelled") {
+        toast.message("Payment cancelled — no voucher was issued");
+        return;
+      }
+      if (opened.outcome !== "paid") {
+        toast.error("Payments are unavailable right now — please try later");
+        return;
+      }
+
+      const verified = await corporateApi.verifyVoucher(opened.payment);
+      const code = verified.voucher.code;
+      toast.success(`Voucher ${code} purchased`, {
         description: "Code copied to clipboard — share it with the recipient.",
         action: {
           label: "Copy code",
           onClick: () => {
-            navigator.clipboard?.writeText(r.voucher.code);
+            navigator.clipboard?.writeText(code);
             toast.success("Code copied");
           },
         },
       });
       try {
-        await navigator.clipboard?.writeText(r.voucher.code);
+        await navigator.clipboard?.writeText(code);
       } catch {
         // best-effort; toast action above remains
       }
@@ -73,6 +95,8 @@ export default function V2Vouchers() {
             onClick: () => navigate("/login?next=/vouchers"),
           },
         });
+      } else if (msg.includes("503")) {
+        toast.error("Voucher payments are temporarily unavailable");
       } else {
         toast.error("Could not purchase voucher — please try again");
       }
