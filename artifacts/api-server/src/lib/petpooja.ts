@@ -582,6 +582,38 @@ export async function mapPetpoojaOrderToDb(
     });
   }
 
+  // The aggregator's GRAND total — GST, delivery and packing included — and
+  // that is correct here, not the bug it looks like.
+  //
+  // `total_paise` is documented as "meal subtotal after discounts/credit (NO
+  // GST, NO delivery fee)", so writing a gross number into it reads like the
+  // inbound twin of the outbound charge-fidelity bug (branch 5). It is not.
+  // The invariant the money path actually depends on is stated in
+  // paymentIntegrity.ts: `chargePaise ?? totalPaise` IS the payable gross.
+  // `charge_paise` is the post-GST number only for orders WE priced; when it is
+  // null, `total_paise` carries the gross instead. The guest-checkout path is
+  // the sanctioned precedent — checkout.ts writes `totals.total` (GST and fee
+  // included) into `totalPaise` and never sets `chargePaise`.
+  //
+  // This mapper leaves `chargePaise` unset, deliberately: we never charge an
+  // aggregator order, the customer paid Zomato. So the gross belongs in
+  // `total_paise`, and every reader of `chargePaise ?? totalPaise` gets a true
+  // answer — including routes/orders.ts's cancel path, which seeds a refund
+  // request at exactly that expression with no channel predicate. "Fixing"
+  // this line to a recomputed subtotal would quote an operator less than the
+  // customer actually paid.
+  //
+  // And it would be a number we invented. The payload's components are not
+  // guaranteed to reconcile to `total`: in Petpooja's OWN documentation sample
+  // (the fixture in petpooja.test.ts) the items come to ₹220, and
+  // 220 + 50 delivery + 20 packing + 65.52 tax − 45 discount = ₹310.52 against
+  // a stated total of ₹560. Σ(components) is a guess; `total` is the one figure
+  // the aggregator asserts.
+  //
+  // What IS wrong is downstream, and it is not this column's fault: the
+  // analytics layer sums `total_paise` across every channel with no way to tell
+  // them apart. See claude/order-channel-split.md §6 rows 7-8.
+  // petpooja.moneyInvariant.test.ts pins all of the above.
   const totalPaise = Math.round(parseFloat(Order.details.total || "0") * 100);
 
   let fulfillmentType = "delivery";
