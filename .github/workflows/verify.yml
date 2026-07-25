@@ -49,6 +49,22 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck (libs + all artifact packages)
         run: pnpm run typecheck
+      # Every step below enumerates its test files BY NAME, which makes the list
+      # authoritative and leaves one hole: a test named nowhere runs nowhere. It
+      # stays green in the tree and reports nothing. #384 and #388 both exist
+      # only because whole suites had been written, passed locally, and were in
+      # no workflow — and nothing said so. This gate fails on a test file that
+      # no workflow command would execute, so the next one is caught here
+      # instead of being discovered months later.
+      #
+      # It also backstops the merge hazard: these lists are a contention point
+      # (every money PR appends to the same one), and the dangerous resolution
+      # is the one that silently DROPS an entry. A dropped entry now fails.
+      #
+      # Lives in this job because it needs no database and no build — it reads
+      # the workflow files and the tree.
+      - name: Test-reach gate — no test file runs in no workflow
+        run: pnpm run lint:test-reach
 
   money-unit:
     runs-on: ubuntu-latest
@@ -89,6 +105,73 @@ jobs:
           ../tanmatra/src/components/plans/planDisplay.test.ts
           ../tanmatra/src/components/cuj/cuj.test.ts
           ../tanmatra/src/components/checkout02c/checkout02c.test.ts
+      # Inbound Petpooja authentication. These three files existed and passed
+      # locally while running in no workflow at all — they were on the
+      # test-reach baseline — which is precisely why two fail-open branches in
+      # petpoojaAuthOk() survived unnoticed: `/push-menu` bulk-upserts
+      # menu_items including price_paise, and nothing was checking that the
+      # guard in front of it still held. Wiring them removes three entries from
+      # scripts/test-reach-baseline.txt.
+      #
+      # DB-free: every case is credential/signature arithmetic over a request,
+      # so no Postgres is needed. Its own step, so a failure reads as "inbound
+      # Petpooja auth broke" rather than being buried in a money run.
+      - name: Petpooja inbound auth contract
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/petpoojaClient.test.ts
+          ./src/routes/petpooja.auth.test.ts
+          ./src/routes/petpooja.test.ts
+      # Access-control contract for the /ops router. Its own step, and named for
+      # what it is, so a failure reads as "the ops gate broke" rather than being
+      # buried in a money run — same reasoning as the KDS step below.
+      #
+      # It lives in money-unit because it is DB-free: the gate rejects before
+      # any handler runs, so no query is ever issued. The suite enumerates every
+      # route registered on the router and asserts each 403s without
+      # credentials, so a route added later is covered without editing a list —
+      # which is the point, given four routes shipped unguarded precisely
+      # because a per-handler check is a thing an author can forget.
+      - name: Ops router access-control contract
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/routes/ops.gate.test.ts
+      # Food-cost resolution for the weekly business review. Not a billed
+      # amount, but it decides a number people act on: the WBR's margin per
+      # dish and the 35%-margin threshold alert. The lookup it replaces asked a
+      # slug-keyed cost map for a lowercased display name, so every dish's food
+      # cost resolved to `?? 0` — margins read ~80% where they were ~30%, and
+      # the alert could not fire at all. A pure resolver with an explicit
+      # `basis` ("recipe" | "estimate" | "none") makes an unknown dish
+      # countable instead of free.
+      #
+      # DB-free: the index is built from plain menu/recipe rows the caller
+      # supplies, so every case here is key normalisation and arithmetic. Its
+      # own step so a failure reads as "dish cost resolution broke".
+      - name: Dish food-cost resolution (WBR margin inputs)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/dishCostIndex.test.ts
+      # Menu-engineering cost authority. This one DOES reach the money path, by
+      # a long route: an unknown food cost recorded as 0 became a 100% margin,
+      # margin is an axis of the star/plowhorse/puzzle/dog matrix, a star draws
+      # a +5% pricing suggestion, and approving that suggestion writes
+      # menu_items.price_paise — the price checkout charges. Missing data raised
+      # a real price. The guard makes null/0/negative all mean "unknown" and
+      # fall back identically.
+      #
+      # DB-free: only pure functions (costPerUnitPaise, classifyDishes) are
+      # exercised; the suite sets a dummy DATABASE_URL itself so the module's
+      # db import can be constructed without a server. Its own step so a
+      # failure reads as "dish cost authority broke".
+      - name: Menu-engineering cost authority (zero is not a measurement)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/menuEngineering.cost.test.ts
 
   money-integration:
     runs-on: ubuntu-latest
