@@ -19,8 +19,13 @@ function makeApp(): Express {
   app.use(express.json());
   // Mock logger on request
   app.use((req: any, _res: any, next: any) => {
+    // `warn` is not optional decoration: the route calls `req.log?.warn(...)`
+    // on the missing-orderID and duplicate-order paths, and `?.` guards only
+    // `req.log` — a logger without `warn` turns a warning into a TypeError and
+    // a 500, which is the same disguised failure as the mock above.
     req.log = {
       info: () => {},
+      warn: () => {},
       error: () => {},
     };
     next();
@@ -166,18 +171,33 @@ test("POST /integrations/petpooja/saveorder parses payload, inserts order, and r
     return mockSelectResult;
   });
 
+  // The chain modelled here has to be the chain the route actually calls. It
+  // is `.values().onConflictDoNothing().returning()` — the `onConflictDoNothing`
+  // link arrived with the saveorder idempotency fix and this mock did not
+  // follow it, so `.values()` returned an object with no such method, the
+  // TypeError landed in the route's catch, and the route answered 500. The
+  // symptom read exactly like a broken handler; the handler was fine.
+  //
+  // That is the hazard with a hand-rolled builder mock: it fails loudly but
+  // blames the wrong file. Returning `this` from each link keeps it honest —
+  // a future link added to the real chain resolves against the same object
+  // instead of being undefined.
   t.mock.method(db, "insert", (table: any) => {
     assert.equal(table, ordersTable);
-    const mockInsertBuilder = {
+    const mockInsertBuilder: any = {
       values: (values: any) => {
         assert.equal(values.externalOrderId, "A-1");
         assert.equal(values.totalPaise, 56000);
         assert.equal(values.userId, "usr_abc123");
-        const mockValuesBuilder = {
-          returning: () => Promise.resolve([{ id: 26 }]),
-        };
-        return mockValuesBuilder;
+        return mockInsertBuilder;
       },
+      onConflictDoNothing: () => mockInsertBuilder,
+      // A row came back, so this is the first-write path: the route uses the
+      // id directly and never reaches the conflict lookup. The lookup path is
+      // covered against a real database in petpooja.saveorder.test.ts, which
+      // is where it belongs — a mock that returns [] here would only be
+      // asserting that the mock returns [].
+      returning: () => Promise.resolve([{ id: 26 }]),
     };
     return mockInsertBuilder;
   });
