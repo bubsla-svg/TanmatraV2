@@ -7,6 +7,8 @@ import {
   formatRupees,
   type AppointmentKind,
 } from "@/lib/rdBookingData";
+import { openRazorpayCheckout } from "@/lib/razorpayClient";
+import { useRef } from "react";
 
 /* Full-parity re-port of the System-A CheckoutAppointment (git 2507084) into v2.
  * The payment handler, API call (rdAdvisoryApi.book), paymentStatus branching,
@@ -40,6 +42,8 @@ export default function V2CheckoutAppointment() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [appointmentId, setAppointmentId] = useState<number | null>(null);
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   if (!booking || !booking.rdSlug) {
     return (
@@ -66,35 +70,72 @@ export default function V2CheckoutAppointment() {
     if (!booking) return;
     setLastError(null);
     setProcessing(true);
-    // Mock payment processing UI delay — same pattern as the meal
-    // checkout flow. The actual payment is settled server-side via the
-    // HMAC-signed internal webhook when /rd/appointments resolves.
-    await new Promise((r) => setTimeout(r, 1200));
+
     try {
-      const { appointment } = await rdAdvisoryApi.book({
-        rdSlug: booking.rdSlug,
-        kind: booking.kind,
-        startAt: booking.startAt,
-        endAt: booking.endAt,
-        userQuestion: booking.userQuestion,
+      let apptId = appointmentId;
+      
+      // 1. Book appointment if not already done
+      if (!apptId) {
+        const { appointment } = await rdAdvisoryApi.book({
+          rdSlug: booking.rdSlug,
+          kind: booking.kind,
+          startAt: booking.startAt,
+          endAt: booking.endAt,
+          userQuestion: booking.userQuestion,
+        }, idempotencyKeyRef.current);
+        apptId = appointment.id;
+        setAppointmentId(apptId);
+      }
+
+      // 2. Get Razorpay order from server
+      const checkout = await rdAdvisoryApi.checkout(apptId);
+
+      // 3. Open Razorpay modal
+      const opened = await openRazorpayCheckout({
+        razorpayOrderId: checkout.razorpayOrderId,
+        amountPaise: checkout.amount,
+        description: `${meta.label} with ${booking.rdName ?? "RD"}`,
       });
-      setConfirmOpen(false);
-      if (appointment.paymentStatus === "paid") {
+
+      if (opened.outcome !== "paid") {
+        throw new Error(opened.outcome);
+      }
+
+      // 4. Verify payment
+      try {
+        await rdAdvisoryApi.verify(apptId, {
+          razorpayPaymentId: opened.payment.razorpayPaymentId,
+          razorpayOrderId: opened.payment.razorpayOrderId,
+          razorpaySignature: opened.payment.razorpaySignature,
+        });
+        
+        setConfirmOpen(false);
         toast.success("Payment received", {
           description: `${meta.label} confirmed with ${booking.rdName ?? "your RD"}.`,
         });
-      } else if (appointment.paymentStatus === "pending") {
-        toast.error("Booking held — payment not configured", {
-          description:
-            "Server's payment processor is not set up. Booking saved as pending.",
-        });
-      } else {
-        toast.success("Booking confirmed");
+        navigate("/appointments");
+      } catch (e) {
+        // Distinguish transport/server error from verification failure
+        const msg = String(e);
+        if (msg.includes("Error")) { // Assuming custom error format from request<T>
+          throw e; // Bubble up as error
+        } else {
+          // Transport error, treat as unconfirmed
+          setConfirmOpen(false);
+          toast.message("Confirming payment", {
+            description: "We're confirming your payment. Please check your appointments list shortly.",
+          });
+          navigate("/appointments");
+        }
       }
-      navigate("/appointments");
+
     } catch (e) {
       const msg = String(e);
-      if (msg.includes("409")) {
+      if (msg === "cancelled") {
+        toast.message("Payment cancelled");
+      } else if (msg === "unavailable") {
+        toast.error("Payment gateway unavailable");
+      } else if (msg.includes("409")) {
         toast.error("Slot just taken", {
           description: "Please pick another time.",
         });
