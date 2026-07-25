@@ -60,3 +60,4 @@ export * from "./funnelEvents";
 export * from "./funnelRollup";
 export * from "./refundRequests";
 export * from "./messageDispatches";
+export * from "./savedMeals";

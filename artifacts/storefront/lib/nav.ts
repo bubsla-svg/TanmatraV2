@@ -59,6 +59,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { label: "Plans", href: "/plans", desc: "Therapeutic subscription plans" },
       { label: "Free trial", href: "/trial", desc: "Try it for 3 days" },
+      { label: "Custom build hub", href: "/custom-build", desc: "Customize macros & boosts" },
       { label: "Quick setup wizard", href: "/quick-setup", desc: "3-step clinical personalization" },
       { label: "Smart recommendations", href: "/meal-recommendations", desc: "AI therapeutic reasoning" },
       { label: "Value deals & combos", href: "/meal-deals", desc: "Macro density per rupee" },
@@ -75,6 +76,7 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/account/orders",
     links: [
       { label: "My orders", href: "/account/orders" },
+      { label: "Protocol vault", href: "/account/favorites", desc: "Saved favorites & presets" },
       { label: "Nutrition tracker", href: "/account/wellness", desc: "Log food & water, track streaks" },
       { label: "Meal planner", href: "/meal-planner", desc: "Plan & swap your week" },
       { label: "Wellness", href: "/wellness", desc: "Preventive, everyday nutrition" },
