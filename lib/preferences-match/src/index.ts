@@ -26,6 +26,7 @@ export interface PreferencesForMatch {
   goal?: WellnessGoal | null;
   calorieTarget?: number | null;
   medicalConditions?: string[];
+  pcosHistory?: boolean | null;
 }
 
 export interface DishMatchResult {
@@ -221,8 +222,12 @@ export function evaluateDishForPreferences(
   const ingText = dishIngredientText(dish);
   const dishNameNorm = dish.name.toLowerCase();
 
-  if (prefs.medicalConditions && prefs.medicalConditions.length > 0) {
-    const userConditions = prefs.medicalConditions.map(norm).filter(Boolean);
+  const userConditions = (prefs.medicalConditions ?? []).map(norm).filter(Boolean);
+  if (prefs.pcosHistory === true && !userConditions.includes("pcos")) {
+    userConditions.push("pcos");
+  }
+
+  if (userConditions.length > 0) {
     const dishContra = (dish.contraindications ?? []).map(norm);
     const matchedConds = new Set<string>();
     const details: string[] = [];
@@ -242,6 +247,18 @@ export function evaluateDishForPreferences(
         )) {
           matchedConds.add(cond);
           details.push(`High sugar per serving (${dish.sugarPerServing}) is contraindicated for diabetes`);
+        }
+      }
+      if (cond === "pcos" || cond === "polycystic_ovary_syndrome" || cond === "polycystic ovary syndrome") {
+        if (dish.glycaemicIndex === "high") {
+          matchedConds.add("pcos");
+          details.push("High glycaemic index dish is contraindicated for PCOS hormonal therapy");
+        } else if (dish.sugarPerServing && (
+          norm(dish.sugarPerServing).includes("high") ||
+          parseInt(dish.sugarPerServing, 10) >= 12
+        )) {
+          matchedConds.add("pcos");
+          details.push(`High sugar content (${dish.sugarPerServing}) is contraindicated for PCOS insulin sensitivity`);
         }
       }
       if (
