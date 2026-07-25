@@ -29,6 +29,10 @@ import {
 import { sendDailyDigest } from "../lib/anomalyDigestSender";
 import { requireOps as gateRequireOps } from "../lib/adminGate";
 import { sendDeliveryDelaySms } from "../lib/sms";
+import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
+import { scanAndExecuteRiderFallbacks } from "../lib/logisticsEngine";
+import { evaluateWholesalePriceSpike } from "../lib/marginGuardrailEngine";
+import { dispatchRoutedFulfillment } from "../lib/wmsRoutingEngine";
 
 const router: IRouter = Router();
 
@@ -491,6 +495,114 @@ router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response
   }
 
   res.json({ ok: true, smsSent: true, newCreatedAt: delayedTime });
+});
+
+// Phase 1A: 4:00 AM Morning Brief prep aggregation for expediter KDS terminals
+router.get("/kds/prep-brief", async (req: Request, res: Response) => {
+  const dateStr = (req.query["forDate"] as string) || new Date().toISOString().slice(0, 10);
+  try {
+    const summary = await generateMorningPrepBrief(dateStr);
+    res.json({ forDate: dateStr, stationPrep: summary });
+  } catch (err) {
+    logger.error({ err }, "ops.kds.prep_brief_failed");
+    res.status(500).json({ error: "Failed to assemble morning prep brief" });
+  }
+});
+
+const bomExplodeSchema = z.object({
+  items: z.array(
+    z.object({
+      dishSlug: z.string().min(1),
+      quantity: z.number().int().positive().default(1),
+    })
+  ),
+});
+
+// Phase 1A: Autonomous runtime BOM explosion and predictive PO replenishment trigger
+router.post("/kds/orders/:id/explode-bom", async (req: Request, res: Response) => {
+  const parsed = bomExplodeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "malformed order items for BOM explosion" });
+    return;
+  }
+
+  try {
+    const results = await executeBom(parsed.data.items);
+    res.json({ ok: true, deductions: results });
+  } catch (err) {
+    logger.error({ err, orderId: req.params.id }, "ops.kds.bom_explosion_failed");
+    res.status(500).json({ error: "Failed to execute BOM explosion and inventory deduction" });
+  }
+});
+
+// Phase 2: Autonomous Logistics Fallback & Rider Geotracking DLQ trigger
+router.all("/logistics/scan-fallbacks", async (_req: Request, res: Response) => {
+  try {
+    const interventions = await scanAndExecuteRiderFallbacks(24);
+    res.json({ ok: true, interventions });
+  } catch (err) {
+    logger.error({ err }, "ops.logistics.fallback_scan_failed");
+    res.status(500).json({ error: "Failed to scan logistics delivery queues" });
+  }
+});
+
+const wholesaleSpikeSchema = z.object({
+  inventoryItemId: z.number().int().positive(),
+  newUnitPricePaise: z.number().int().positive(),
+});
+
+// Phase 3: Dynamic Wholesale Margin Protection Guardrail
+router.post("/logistics/evaluate-wholesale-spike", async (req: Request, res: Response) => {
+  const parsed = wholesaleSpikeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "malformed parameters for wholesale cost evaluation" });
+    return;
+  }
+  try {
+    const result = await evaluateWholesalePriceSpike(parsed.data.inventoryItemId, parsed.data.newUnitPricePaise);
+    if (!result) {
+      res.status(404).json({ error: "Inventory item not located" });
+      return;
+    }
+    res.json({ ok: true, evaluation: result });
+  } catch (err) {
+    logger.error({ err }, "ops.guardrail.wholesale_spike_error");
+    res.status(500).json({ error: "Failed to evaluate wholesale price margin guardrail" });
+  }
+});
+
+const wmsRouteSchema = z.object({
+  orderId: z.number().int().positive(),
+  externalOrderId: z.string().min(1),
+  items: z.array(
+    z.object({
+      itemId: z.number().int().positive().optional(),
+      id: z.number().int().positive().optional(),
+      name: z.string(),
+      qty: z.number().int().positive(),
+      fulfillmentType: z.enum(["MTO", "FMCG"]).optional(),
+    }),
+  ),
+});
+
+// WMS Vector 3: Hybrid Checkout Routing & KDS Bypass
+router.post("/wms/route-fulfillment", async (req: Request, res: Response) => {
+  const parsed = wmsRouteSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "malformed WMS routing payload" });
+    return;
+  }
+  try {
+    const ticket = await dispatchRoutedFulfillment(
+      parsed.data.orderId,
+      parsed.data.externalOrderId,
+      parsed.data.items,
+    );
+    res.json({ ok: true, ticket });
+  } catch (err) {
+    logger.error({ err }, "ops.wms.routing_failed");
+    res.status(500).json({ error: (err as Error).message || "WMS fulfillment routing failed" });
+  }
 });
 
 export default router;

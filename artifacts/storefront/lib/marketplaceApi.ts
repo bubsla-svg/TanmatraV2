@@ -106,3 +106,36 @@ export async function payForMarketplace(
   );
   return order;
 }
+
+export interface StockAvailabilityResponse {
+  itemId: number;
+  slug: string;
+  totalAvailableQty: number;
+  inStock: boolean;
+  nextExpiryDate: string | null;
+}
+
+export async function checkItemAvailability(
+  slug: string,
+  fetchImpl?: FetchImpl,
+): Promise<StockAvailabilityResponse> {
+  return apiGet(`/marketplace/items/${encodeURIComponent(slug)}/availability`, fetchImpl);
+}
+
+export interface LiquidationDealPayload {
+  slug: string;
+  skuName: string;
+  originalPricePaise: number;
+  discountedPricePaise: number;
+  discountPercentage: number;
+  batchNumber: string;
+  expiryDate: string;
+  promotionalBadge: string;
+  unitsAvailable: number;
+}
+
+export async function getLiquidationDeals(
+  fetchImpl?: FetchImpl,
+): Promise<{ deals: LiquidationDealPayload[] }> {
+  return apiGet(`/marketplace/liquidation-deals`, fetchImpl);
+}
