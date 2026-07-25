@@ -86,6 +86,26 @@ export interface MarketplaceOrderLine {
 
 export interface MarketplaceOrder {
   id: number;
+  /**
+   * The payment handle. `POST /payments/razorpay/order` and
+   * `POST /payments/razorpay/verify` key on THIS, not on `id` — the
+   * numeric id is a row pointer, the external id is the money handle
+   * (`mkt-<uuid>`, 40 chars, fits razorpay's 40-char receipt field).
+   *
+   * The server has always returned it (marketplace.ts checkout uses a
+   * bare `.returning()`), but this type omitted it, so the customer UI
+   * had no way to reach the payment routes and shipped a revenue leak:
+   * checkout returned 201, the cart said "order placed", and the row
+   * sat at `status: "placed"` — which by house convention means UNPAID.
+   * The storefront client declares the same field for the same reason.
+   */
+  externalOrderId: string;
+  /**
+   * NOTE: `placed` means created-but-UNPAID (house convention across
+   * `orders.status`); `preparing` and later mean paid. `packed` and
+   * `shipped` are vestigial — they are in this union but no writer
+   * emits them, left over from the retired `marketplace_orders` table.
+   */
   status: "placed" | "packed" | "shipped" | "delivered" | "cancelled";
   deliveryMode: "ship" | "bundle_with_meal";
   items: MarketplaceOrderLine[];

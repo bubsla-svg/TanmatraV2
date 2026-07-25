@@ -129,10 +129,23 @@ jobs:
       # idempotency + subscription-order pricing. Plus the 3-Day Taste Test
       # creditback (S5b): the one-per-phone ledger + grant service, the paid-time
       # seam, and the create-time gate — all enforced by real Postgres UNIQUE
-      # constraints, so they cannot run DB-free. addons.test.ts belongs here for
-      # the same reason as the rest: it pins that POST /addons/attach never
-      # moves orders.total_paise or orders.charge_paise, which are finalizeOrder's
-      # to write and the payment path's to reconcile against.
+      # constraints, so they cannot run DB-free.
+      #
+      # addons.test.ts belongs here for the same reason as the rest: it pins
+      # that POST /addons/attach never moves orders.total_paise or
+      # orders.charge_paise, which are finalizeOrder's to write and the payment
+      # path's to reconcile against.
+      #
+      # The marketplace pair closes a hole of the same shape this workflow was
+      # built for. Both files existed, both were green, and neither was named
+      # in any workflow — so nothing would have told us when they stopped
+      # being. What they pin: checkout decrements stock atomically and writes
+      # an `orders` row that `/payments/razorpay/order` can actually bill for
+      # the real amount (goods carry no GST/delivery layer, so `charge_paise`
+      # is null and the payment path falls back to `total_paise` — if that
+      # fallback ever breaks, marketplace orders bill zero), commission
+      # splitting for third-party items, and the ownership check that stops
+      # one user billing another user's order.
       - name: Money-path integration tests
         working-directory: artifacts/api-server
         # --test-force-exit: these suites hold real Postgres connections; on
@@ -160,8 +173,10 @@ jobs:
           ./src/routes/vouchers.test.ts
           ./src/routes/premium.paymentOrder.test.ts
           ./src/routes/addons.test.ts
+          ./src/routes/marketplace.checkout.test.ts
+          ./src/routes/marketplace.paymentsIntegration.test.ts
       # Kept as its own step so a failure reads as "the kitchen board broke"
-      # rather than being buried in a sixteen-file money run. Not a money path,
+      # rather than being buried in an eighteen-file money run. Not a money path,
       # but it needs the same Postgres service and pushed schema, so it lives
       # in this job. Two things are pinned: the board shows own_app + meal only
       # (an aggregator ticket here gets cooked twice — Petpooja's own screen is
