@@ -138,6 +138,83 @@ export const companyBudgetUsageTable = pgTable(
   ],
 );
 
+/**
+ * One row per order that a corporate subsidy was applied to — the ledger that
+ * makes "the company pays part of this order" a fact about a specific order
+ * rather than a running total nobody can attribute.
+ *
+ * Lifecycle, and why it has one:
+ *
+ *   reserved  — written in the SAME transaction that prices the order, so the
+ *               customer's charge_paise is already net of it. Counts against
+ *               the monthly budget immediately, which is what stops a second
+ *               concurrent checkout from being promised the same money.
+ *   committed — the payment for that order was captured. Only now does the
+ *               amount land in company_budget_usage.spent_paise, which is what
+ *               the QBR reports on, so an abandoned checkout never inflates
+ *               reported spend.
+ *   released   — the order was cancelled or never paid. The reservation stops
+ *               counting and the budget is the employee's again.
+ *
+ * `uniq_company_subsidy_charges_order` is the idempotency key. Commit and
+ * release are both driven off it, so a webhook that fires twice, or a verify
+ * and a webhook that both land, cannot bill the company twice for one order.
+ */
+export type CompanySubsidyChargeStatus = "reserved" | "committed" | "released";
+
+export const companySubsidyChargesTable = pgTable(
+  "company_subsidy_charges",
+  {
+    id: serial("id").primaryKey(),
+    companyId: integer("company_id")
+      .notNull()
+      .references(() => companiesTable.id, { onDelete: "cascade" }),
+    userId: varchar("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    /**
+     * The orders row this subsidy belongs to. Unique — one subsidy per order.
+     *
+     * No FK: the payment path resolves orders by their serial id and the
+     * reservation must survive an order row being hard-deleted by a test or a
+     * backfill without taking the company's ledger with it. Orphans are
+     * harmless because every read is scoped by company + user + period.
+     */
+    orderId: integer("order_id").notNull(),
+    periodMonth: varchar("period_month", { length: 7 }).notNull(), // yyyy-mm
+    paise: integer("paise").notNull(),
+    status: varchar("status", { length: 16 })
+      .notNull()
+      .default("reserved")
+      .$type<CompanySubsidyChargeStatus>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("uniq_company_subsidy_charges_order").on(table.orderId),
+    // The hot read: "how much of this employee's budget is already promised or
+    // spent this month" filters on exactly these four.
+    index("idx_company_subsidy_charges_period").on(
+      table.companyId,
+      table.userId,
+      table.periodMonth,
+      table.status,
+    ),
+    check(
+      "company_subsidy_charges_status_chk",
+      sql`${table.status} in ('reserved','committed','released')`,
+    ),
+    // A zero or negative subsidy is not a subsidy. Enforced here so no code
+    // path can record one and quietly make the arithmetic unfalsifiable.
+    check("company_subsidy_charges_paise_chk", sql`${table.paise} > 0`),
+  ],
+);
+
 export const officeOrdersTable = pgTable(
   "office_orders",
   {

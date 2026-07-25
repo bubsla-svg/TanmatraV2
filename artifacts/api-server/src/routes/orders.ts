@@ -12,6 +12,7 @@ import {
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { emitDeliveryEvent } from "../lib/realtime";
+import { releaseSubsidyForOrder } from "../lib/corporateSubsidy";
 
 const router: IRouter = Router();
 
@@ -294,6 +295,15 @@ router.post(
             eq(ordersTable.externalOrderId, externalOrderId),
           ),
         );
+
+      // Give the employee their corporate budget back. A subsidy is reserved
+      // when the order is priced, so an order that never gets paid — the
+      // common case here, since the checkout cancels its own unpaid order when
+      // payment doesn't complete — would otherwise hold that allowance until
+      // month end. Only a `reserved` row is released; one already committed
+      // means the money really was collected, and unwinding that belongs to the
+      // refund path.
+      await releaseSubsidyForOrder(row.id, tx);
 
       // Release the held delivery-slot capacity so an abandoned/cancelled
       // order stops consuming a seat (previously a permanent capacity leak).
