@@ -154,7 +154,15 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
   // order` allows exactly one refund_requests row per order, and the claim CAS
   // above serializes approvals of that row. There is no second request to race.
   const [order] = await db
-    .select({ chargePaise: ordersTable.chargePaise, totalPaise: ordersTable.totalPaise })
+    .select({
+      chargePaise: ordersTable.chargePaise,
+      totalPaise: ordersTable.totalPaise,
+      // Read for the reversal path, not the cap: a `speed: normal` refund is
+      // only *accepted* by the gateway here, and can still fail days later. The
+      // `refund.failed` webhook has to put the order back where it was, and the
+      // only moment that value is knowable is right now, before we overwrite it.
+      status: ordersTable.status,
+    })
     .from(ordersTable)
     .where(eq(ordersTable.id, claimed.orderId))
     .limit(1);
@@ -170,7 +178,10 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
         )
     : [];
   const remainingPaise = order ? remainingRefundablePaise(order, priorRefundEvents) : null;
-  if (remainingPaise == null || claimed.amountPaise > remainingPaise) {
+  // `!order` is already implied by `remainingPaise == null` — it is spelled out
+  // so the compiler narrows `order` for the settlement block below, which needs
+  // its pre-refund status.
+  if (!order || remainingPaise == null || claimed.amountPaise > remainingPaise) {
     // Park it back as `failed` (re-approvable, and visible in the console with
     // the reason) rather than leaving it stuck in `processing` with no money
     // moved. A deterministic refusal will refuse again on retry — which is
@@ -205,7 +216,19 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
 
   // Issue the refund against the payment. Idempotency-Key makes a retry safe:
   // Razorpay returns the same refund instead of creating a second one.
+  //
+  // `speed: "normal"` is ASYNCHRONOUS. A 200 here means Razorpay accepted the
+  // instruction, not that the customer has their money — the entity comes back
+  // with status `pending` and settles over the following days, and it can still
+  // fail. We nevertheless record settlement optimistically below, for one
+  // reason: the reconciling webhook is not registered in every environment yet,
+  // and a refund that silently sat in `processing` forever would be worse than
+  // one recorded early and corrected late. `refund.processed` /`refund.failed`
+  // in `routes/payments.ts` are what make that optimism safe — `failed` deletes
+  // the premature `order_refunded` event (so the cap stops counting money that
+  // never left) and restores `previousOrderStatus` from its meta.
   let refundId: string;
+  let gatewayRefundStatus: string | null = null;
   try {
     const rpRes = await fetch(
       `https://api.razorpay.com/v1/payments/${encodeURIComponent(claimed.razorpayPaymentId)}/refund`,
@@ -234,8 +257,9 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
       res.status(502).json({ error: "payment gateway error" });
       return;
     }
-    const refund = (await rpRes.json()) as { id: string };
+    const refund = (await rpRes.json()) as { id: string; status?: string };
     refundId = refund.id;
+    gatewayRefundStatus = typeof refund.status === "string" ? refund.status : null;
   } catch (err) {
     req.log.error({ err, refundId: claimed.id }, "razorpay refund threw");
     await db
@@ -264,6 +288,14 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
       amountPaise: claimed.amountPaise,
       razorpayRefundId: refundId,
       approvedBy: operatorId,
+      // What the gateway actually said when it accepted the instruction —
+      // usually "pending" for speed: normal. Recorded so this row does not
+      // read as a settlement it has not yet earned.
+      gatewayStatus: gatewayRefundStatus,
+      // The order's status immediately before this line overwrote it. The
+      // `refund.failed` webhook restores it; without it a failed refund leaves
+      // the order permanently displaying "refunded" with no money returned.
+      previousOrderStatus: order.status,
     },
   });
 
