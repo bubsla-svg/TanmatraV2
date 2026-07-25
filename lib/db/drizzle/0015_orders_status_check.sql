@@ -1,0 +1,58 @@
+-- Close the order-status vocabulary at the database.
+--
+-- `orders.status` has always been a bare varchar(32). `orderStatusValues` in
+-- lib/db/src/schema/orders.ts describes the ten legal values, but nothing
+-- enforced them, and the Petpooja webhook mappers duly wrote two that were not
+-- on the list — "confirmed" and "dispatched". No reader recognised either, so
+-- an order the POS moved to one of them dropped out of the customer's
+-- active-order list, the dispatch sweep and the storefront tracker at once.
+--
+-- ADDED `NOT VALID`, AND THAT IS THE WHOLE DESIGN.
+--
+-- A plain ADD CONSTRAINT scans every existing row and aborts the migration if
+-- any one of them fails. We cannot see production from here, so we do not know
+-- whether a stranded 'confirmed' row survives; a migration that might abort is
+-- one nobody applies. NOT VALID skips the scan. The constraint is fully
+-- enforced against every INSERT and UPDATE from the moment this runs — which is
+-- the entire point of it — and merely declines to make a claim about rows
+-- written before it existed.
+--
+-- It also takes only a brief ACCESS EXCLUSIVE lock to write the catalog entry,
+-- rather than holding one for a full table scan.
+--
+-- OWNER FOLLOW-UP, in this order:
+--
+--   1. Report what is actually there:
+--
+--        pnpm --filter @workspace/scripts run audit-order-status
+--
+--      or by hand:
+--
+--        select status, count(*), min(created_at), max(created_at)
+--        from orders
+--        where status not in (
+--          'placed','preparing','ready','rider_assigned','out_for_delivery',
+--          'delivered','cancelled','failed','refunded','billed'
+--        )
+--        group by 1 order by 2 desc;
+--
+--   2. If it returns nothing, go straight to step 4.
+--
+--   3. If it returns rows, each one needs a decision, and the decision is NOT
+--      mechanical. 'confirmed' maps to 'preparing' and 'dispatched' maps to
+--      'out_for_delivery' in the current mappers — but blindly applying that to
+--      a months-old row would resurrect a long-since-eaten meal into the live
+--      KDS queue and the dispatch sweep. Old rows almost certainly want
+--      'delivered' or 'cancelled'. The audit script prints the age range for
+--      exactly this reason. That judgement is why this migration does not
+--      backfill anything.
+--
+--   4. Then promote the constraint to fully checked:
+--
+--        ALTER TABLE orders VALIDATE CONSTRAINT orders_status_chk;
+--
+--      VALIDATE takes only SHARE UPDATE EXCLUSIVE — it does not block reads or
+--      writes — so it is safe to run against a live table. After it succeeds,
+--      the schema declaration in orders.ts and the database agree exactly, and
+--      the NOT VALID note in that file can be deleted.
+ALTER TABLE "orders" ADD CONSTRAINT "orders_status_chk" CHECK ("orders"."status" in ('placed','preparing','ready','rider_assigned','out_for_delivery','delivered','cancelled','failed','refunded','billed')) NOT VALID;

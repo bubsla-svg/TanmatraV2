@@ -111,6 +111,21 @@ export const orderStatusLadderRank: Record<OrderStatus, number | null> = {
   billed: null,
 };
 
+// The runtime gate for a status that came out of the database rather than out
+// of this file. It stays necessary even now that `orders_status_chk` exists,
+// and that is worth being explicit about, because the constraint looks like it
+// makes the check redundant: migration 0015 adds it as NOT VALID, which binds
+// every INSERT and UPDATE from the moment it runs but deliberately makes no
+// claim about rows written before it. Until an owner runs `VALIDATE
+// CONSTRAINT` (see that migration's header), a row read back really can hold a
+// value outside the vocabulary — which is why the column is not typed
+// `$type<OrderStatus>()`. A read is `string`, and anything reasoning about
+// where an order sits must be able to say "I do not recognise this" rather
+// than casting and hoping.
+export function isOrderStatus(value: string): value is OrderStatus {
+  return (orderStatusValues as readonly string[]).includes(value);
+}
+
 // Whether an external status webhook is allowed to move an order out of this
 // state at all. False means settled: the order's delivery story is over, and a
 // webhook claiming otherwise is stale, replayed, or wrong.
@@ -120,18 +135,8 @@ export const orderStatusLadderRank: Record<OrderStatus, number | null> = {
 // refund path against a payment we control — never by the POS, whose mappers
 // cannot even produce the value.
 //
-// Same Record-not-function reasoning as above: adding a status value must be a
-// decision made in both tables, and the compiler is what makes it one.
-// `orders.status` is a plain varchar with no check constraint, so a row read
-// back from the database is `string`, not `OrderStatus` — and until that
-// constraint exists (see the pending orders-status-check-constraint work) a row
-// really can hold a value outside the vocabulary. Anything that reasons about
-// where an order sits must therefore be able to say "I do not recognise this",
-// rather than casting and hoping.
-export function isOrderStatus(value: string): value is OrderStatus {
-  return (orderStatusValues as readonly string[]).includes(value);
-}
-
+// Same Record-not-function reasoning as the ladder above: adding a status value
+// must be a decision made in both tables, and the compiler is what makes it one.
 export const orderStatusAcceptsExternalUpdate: Record<OrderStatus, boolean> = {
   placed: true,
   preparing: true,
@@ -352,6 +357,30 @@ export const ordersTable = pgTable(
       "orders_order_channel_chk",
       sql`${table.orderChannel} in ('own_app','zomato','swiggy','pos','other')`,
     ),
+    // The status vocabulary, finally enforced by the database rather than only
+    // described by `orderStatusValues`. Keep this literal in step with that
+    // tuple — orderStatus.schema.test.ts compares the two and fails on drift.
+    //
+    // This is the constraint whose absence let the Petpooja mappers write
+    // "confirmed" and "dispatched" into production: two values no reader in the
+    // system recognised, so an order the POS moved to either one vanished from
+    // the customer's active-order list, the dispatch sweep and the tracker. The
+    // mappers were fixed in claude/petpooja-status-vocabulary; this is what
+    // makes the *next* one impossible rather than merely unlikely.
+    //
+    // MIGRATION 0015 ADDS THIS AS `NOT VALID`, deliberately. See that file: the
+    // constraint binds every new INSERT and UPDATE immediately, while existing
+    // rows go unscanned, because we cannot see production from here and do not
+    // know whether any row still holds a stranded value. Drizzle's `check()`
+    // helper has no way to express NOT VALID, so the declaration here and the
+    // migration differ in exactly that one clause until an owner runs
+    // `VALIDATE CONSTRAINT` — at which point they converge and this comment can
+    // go. `pnpm --filter @workspace/scripts run audit-order-status` is what
+    // tells them whether it is safe to.
+    check(
+      "orders_status_chk",
+      sql`${table.status} in ('placed','preparing','ready','rider_assigned','out_for_delivery','delivered','cancelled','failed','refunded','billed')`,
+    ),
     // Speeds up dispatch.ts's live-order scans, which now must filter to
     // orderKind = 'meal' on every query.
     index("idx_orders_kind_status").on(table.orderKind, table.status),
@@ -371,6 +400,18 @@ export const insertOrderSchema = createInsertSchema(ordersTable, {
   // DEFAULT earns it. Without it, every writer that legitimately omits the
   // field — relying on the 'own_app' default — would fail validation.
   orderChannel: z.enum(orderChannelValues).optional(),
+  // Same treatment for status, and note the asymmetry it creates on purpose:
+  // the WRITE side is closed here, while the READ side stays `string`.
+  //
+  // The obvious-looking move is `$type<OrderStatus>()` on the column, which
+  // would type reads as OrderStatus too. That would be a lie while migration
+  // 0015's constraint is still NOT VALID — a row written before it existed can
+  // hold anything, and telling the compiler otherwise is how `isOrderStatus`
+  // stops being called and the fail-closed paths quietly become unreachable.
+  // Writes are a different matter: every one of them happens after the
+  // constraint, so closing them costs nothing and turns a runtime constraint
+  // violation into a parse error with a readable message.
+  status: z.enum(orderStatusValues).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof ordersTable.$inferSelect;

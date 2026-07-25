@@ -39,7 +39,8 @@ import express, {
   type Response,
   type NextFunction,
 } from "express";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
+import { getTableConfig, PgDialect } from "drizzle-orm/pg-core";
 import { db, ordersTable, ridersTable } from "@workspace/db";
 
 import petpoojaRouter from "./petpooja";
@@ -97,7 +98,8 @@ after(async () => {
 /**
  * Seed one POS order sitting at a given status. `status` is typed loosely on
  * purpose: one test needs to plant a legacy value that is not in the
- * vocabulary, which is precisely the case the guard has to survive.
+ * vocabulary, which is precisely the case the guard has to survive — see
+ * `seedPreConstraintOrder`, which is what makes that still possible.
  */
 async function seedOrder(opts: {
   externalOrderId: string;
@@ -122,6 +124,66 @@ async function seedOrder(opts: {
     })
     .returning({ id: ordersTable.id });
   return row!.id;
+}
+
+/**
+ * Seed an order holding a status the database no longer accepts.
+ *
+ * Migration 0015 added `orders_status_chk`, so a plain INSERT of "confirmed"
+ * is now refused — which is the entire point of it, and which would otherwise
+ * delete the one test below that covers the rows the constraint deliberately
+ * says nothing about. It is added `NOT VALID`: rows written before it existed
+ * are not scanned and may still hold anything, and until an owner runs
+ * `VALIDATE CONSTRAINT` such a row can be sitting in production right now.
+ * The guard has to survive meeting one.
+ *
+ * So the seed reconstructs the only way such a row can exist: it is written
+ * while the constraint is not there. Dropping and re-adding it inside a
+ * transaction is what makes that faithful rather than a bypass — the DDL takes
+ * ACCESS EXCLUSIVE for the duration, so no concurrent session ever observes
+ * the table unconstrained, and the constraint is restored whether the insert
+ * succeeds or throws.
+ *
+ * The re-added definition is rendered from the Drizzle table config rather than
+ * pasted, so this cannot drift into restoring a narrower or wider constraint
+ * than the schema declares.
+ *
+ * It comes back NOT VALID, and it has to: the row this helper just wrote is
+ * exactly the kind a full scan would reject, so a plain ADD CONSTRAINT here
+ * would fail. If the test database had been promoted with VALIDATE CONSTRAINT
+ * beforehand, running this file demotes it — visible in `pg_constraint`, and
+ * harmless, since the `after` hook deletes the row and a re-validate is one
+ * statement away.
+ */
+async function seedPreConstraintOrder(opts: {
+  externalOrderId: string;
+  status: string;
+}): Promise<number> {
+  const check = getTableConfig(ordersTable).checks.find((c) => c.name === "orders_status_chk");
+  assert.ok(check, "orders_status_chk is missing from ordersTable — has migration 0015 been reverted?");
+  const body = new PgDialect().sqlToQuery(check.value).sql;
+
+  CREATED_EXTERNAL_IDS.push(opts.externalOrderId);
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`alter table orders drop constraint if exists orders_status_chk`);
+    const [row] = await tx
+      .insert(ordersTable)
+      .values({
+        userId: null,
+        orderChannel: "zomato",
+        orderKind: "meal",
+        externalOrderId: opts.externalOrderId,
+        status: opts.status,
+        totalPaise: 42500,
+        items: [],
+        fulfillmentType: "delivery",
+      })
+      .returning({ id: ordersTable.id });
+    await tx.execute(
+      sql`alter table orders add constraint orders_status_chk check (${sql.raw(body)}) not valid`,
+    );
+    return row!.id;
+  });
 }
 
 async function seedRider(label: string): Promise<{ id: number; phone: string }> {
@@ -378,13 +440,20 @@ test("/orderstatus — a replayed cancellation does not prepend its reason twice
 
 test("/orderstatus — an order holding a legacy status is left alone", async () => {
   // "confirmed" and "dispatched" were really written by the old, untyped
-  // Petpooja mappers, and orders.status has no check constraint to have stopped
-  // them. Such a row cannot be placed on the ladder, so the guard fails
-  // closed. That is deliberately conservative: the repair for those rows is a
-  // backfill someone runs on purpose, not a webhook silently guessing where
-  // they belong.
+  // Petpooja mappers, at a time when orders.status had no check constraint to
+  // stop them. Migration 0015 closed that door for every write from now on, but
+  // added the constraint NOT VALID — so it makes no claim about rows already
+  // there, and one of them can still be sitting in production holding a value
+  // this system does not recognise. That row is what this test is about.
+  //
+  // Such a row cannot be placed on the ladder, so the guard fails closed. That
+  // is deliberately conservative: the repair is a decision someone makes on
+  // purpose, per row and with its age in front of them (see
+  // `pnpm --filter @workspace/scripts run audit-order-status`), not a webhook
+  // silently guessing where a months-old order belongs and putting a meal that
+  // was eaten in March back on the KDS board.
   const id = ext("os-legacy");
-  const orderId = await seedOrder({ externalOrderId: id, status: "confirmed" });
+  const orderId = await seedPreConstraintOrder({ externalOrderId: id, status: "confirmed" });
 
   const res = await post("orderstatus", orderstatus({ clientorderID: id, status: "6" }));
 
