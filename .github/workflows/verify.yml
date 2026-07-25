@@ -129,7 +129,10 @@ jobs:
       # idempotency + subscription-order pricing. Plus the 3-Day Taste Test
       # creditback (S5b): the one-per-phone ledger + grant service, the paid-time
       # seam, and the create-time gate — all enforced by real Postgres UNIQUE
-      # constraints, so they cannot run DB-free.
+      # constraints, so they cannot run DB-free. addons.test.ts belongs here for
+      # the same reason as the rest: it pins that POST /addons/attach never
+      # moves orders.total_paise or orders.charge_paise, which are finalizeOrder's
+      # to write and the payment path's to reconcile against.
       - name: Money-path integration tests
         working-directory: artifacts/api-server
         # --test-force-exit: these suites hold real Postgres connections; on
@@ -156,6 +159,7 @@ jobs:
           ./src/routes/rdAdvisory.appointmentOrder.test.ts
           ./src/routes/vouchers.test.ts
           ./src/routes/premium.paymentOrder.test.ts
+          ./src/routes/addons.test.ts
       # Kept as its own step so a failure reads as "the kitchen board broke"
       # rather than being buried in a sixteen-file money run. Not a money path,
       # but it needs the same Postgres service and pushed schema, so it lives

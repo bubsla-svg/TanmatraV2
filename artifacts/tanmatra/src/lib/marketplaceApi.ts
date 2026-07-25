@@ -99,14 +99,22 @@ export const addonsApi = {
     request<{ addons: Addon[]; isPremium: boolean }>(
       `/addons${tags?.length ? `?tags=${encodeURIComponent(tags.join(","))}` : ""}`,
     ),
+  // Attaches add-ons to an ALREADY-PLACED order. `billed` is the server
+  // telling you whether the customer was charged for them: it is currently
+  // always false, because add-ons arrive after finalizeOrder has written
+  // orders.charge_paise and nothing may move that number afterwards. Treat
+  // `addedPaise` as "what these would cost", never as "what was taken".
   attach: (
     orderId: number,
     items: Array<{ addonId: number; qty: number }>,
   ) =>
-    request<{ addons: unknown[]; addedPaise: number }>(`/addons/attach`, {
-      method: "POST",
-      body: JSON.stringify({ orderId, items }),
-    }),
+    request<{ addons: unknown[]; addedPaise: number; billed: boolean }>(
+      `/addons/attach`,
+      {
+        method: "POST",
+        body: JSON.stringify({ orderId, items }),
+      },
+    ),
   forOrder: (orderId: number) =>
     request<{
       addons: Array<{
