@@ -28,7 +28,6 @@ artifacts/api-server/src/lib/loyaltyEngine.allergenGate.test.ts
 artifacts/api-server/src/lib/loyaltyEngine.bundles.test.ts
 artifacts/api-server/src/lib/loyaltyEngine.checkout.test.ts
 artifacts/api-server/src/lib/mealPlanner.test.ts
-artifacts/api-server/src/lib/petpoojaClient.test.ts
 artifacts/api-server/src/lib/petpoojaInventory.test.ts
 artifacts/api-server/src/lib/preDebitScheduler.test.ts
 artifacts/api-server/src/lib/purchaseIngest.test.ts
@@ -58,8 +57,6 @@ artifacts/api-server/src/routes/groupOrders.test.ts
 artifacts/api-server/src/routes/loyalty.checkout.test.ts
 artifacts/api-server/src/routes/menu.test.ts
 artifacts/api-server/src/routes/openApiContract.test.ts
-artifacts/api-server/src/routes/petpooja.auth.test.ts
-artifacts/api-server/src/routes/petpooja.test.ts
 artifacts/api-server/src/routes/preferences.sprint78.test.ts
 artifacts/api-server/src/routes/subscriptions.cancel.test.ts
 artifacts/api-server/src/routes/subscriptions.changePlan.test.ts
