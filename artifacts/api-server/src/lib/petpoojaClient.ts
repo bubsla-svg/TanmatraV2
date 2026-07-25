@@ -261,6 +261,7 @@ type OrderRow = {
   deliveryInstructions: string | null;
   priority: string | null;
   scheduledFor: Date | null;
+  orderKind?: string | null;
 };
 
 /** Build the Petpooja Save Order payload from one of our order rows. */
