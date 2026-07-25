@@ -49,6 +49,22 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck (libs + all artifact packages)
         run: pnpm run typecheck
+      # Every step below enumerates its test files BY NAME, which makes the list
+      # authoritative and leaves one hole: a test named nowhere runs nowhere. It
+      # stays green in the tree and reports nothing. #384 and #388 both exist
+      # only because whole suites had been written, passed locally, and were in
+      # no workflow — and nothing said so. This gate fails on a test file that
+      # no workflow command would execute, so the next one is caught here
+      # instead of being discovered months later.
+      #
+      # It also backstops the merge hazard: these lists are a contention point
+      # (every money PR appends to the same one), and the dangerous resolution
+      # is the one that silently DROPS an entry. A dropped entry now fails.
+      #
+      # Lives in this job because it needs no database and no build — it reads
+      # the workflow files and the tree.
+      - name: Test-reach gate — no test file runs in no workflow
+        run: pnpm run lint:test-reach
 
   money-unit:
     runs-on: ubuntu-latest
