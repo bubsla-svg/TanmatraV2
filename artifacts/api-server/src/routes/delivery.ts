@@ -270,8 +270,6 @@ router.post("/delivery/eta/record-actual", async (req: Request, res: Response) =
   res.json({ ok: true, ...out });
 });
 
-
-
 // ─── Smart dispatch & batching ─────────────────────────────────────────────
 
 const dispatchBody = z.object({
@@ -313,13 +311,17 @@ const riderAvailabilityBody = z.object({
 router.post(
   "/delivery/rider/availability",
   async (req: Request, res: Response) => {
+    // Authorize before parsing. This route had the two in the other order, so a
+    // caller with no ops scope could distinguish a valid payload shape from an
+    // invalid one — and it made the gate contract non-uniform across the
+    // router, which is what delivery.opsGate.test.ts sweeps for.
+    if (!resolveOps(req)) {
+      res.status(403).json({ error: "ops scope required" });
+      return;
+    }
     const parsed = riderAvailabilityBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "invalid payload" });
-      return;
-    }
-    if (!resolveOps(req)) {
-      res.status(403).json({ error: "ops scope required" });
       return;
     }
     const { riderId, status } = parsed.data;
