@@ -57,7 +57,13 @@ export const ordersTable = pgTable(
     // for historical/ops continuity — do not use this to charge.
     totalPaise: integer("total_paise").notNull(),
     // THE authoritative amount to charge, in paise: post-discount meal total
-    // + 18% GST + delivery fee. Written once by finalizeOrder and is the ONLY
+    // + 5% GST on that meal value + the delivery fee + 18% GST on that fee.
+    // (The previous wording here said "+ 18% GST", which is the rate on the
+    // delivery service, not on food — see computeChargePaise, which is the
+    // implementation this comment describes and has always split the two.)
+    // The composition matters beyond bookkeeping: it is the breakdown the POS
+    // is sent per order, so the outlet files GST against it.
+    // Written once by finalizeOrder and is the ONLY
     // number the payment path may bill or reconcile against (mirrors Medusa's
     // "the order carries its own payable total" rule). Nullable so legacy rows
     // and the guest-checkout path — whose total_paise already includes GST+fee
