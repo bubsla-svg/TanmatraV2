@@ -38,7 +38,11 @@ interface OrderSlice {
   uniqueUsers: number;
 }
 
-async function aggregateWindow(start: Date, end: Date): Promise<OrderSlice> {
+// Exported for wbr.channel.test.ts. The claim under test is that revenueMix
+// partitions THE HEADLINE NUMBER — so the test has to compare against the
+// function that produces the headline, not against a re-implementation of it
+// that could drift in the same direction on the same day.
+export async function aggregateWindow(start: Date, end: Date): Promise<OrderSlice> {
   const r = await db.execute<{ orders: number; revenue_paise: string; unique_users: number }>(
     sql`select count(*)::int as orders,
                coalesce(sum(total_paise), 0)::bigint as revenue_paise,
@@ -68,6 +72,65 @@ async function ordersByDay(start: Date, end: Date) {
     orders: Number(row.orders),
     revenuePaise: Number(row.revenue_paise),
   }));
+}
+
+/**
+ * The composition of the revenue number above, by channel and kind.
+ *
+ * `aggregateWindow` sums `total_paise` over every row in the window, which is
+ * every order the business touched — Zomato, Swiggy, POS walk-ins and
+ * marketplace goods alongside our own storefront. That has always been true and
+ * has never been visible: until `order_channel` and `order_kind` were added to
+ * safe_orders, this file could not have filtered on them if it wanted to, and
+ * neither could the "Ask the data" model working from the same views.
+ *
+ * This does NOT decide the attribution question — whether the headline
+ * `revenuePaise` should exclude aggregator rows is an owner call, and silently
+ * restating a number that has been published to Slack for weeks would be the
+ * wrong way to raise it. It reports the mix so the call can be made from data.
+ */
+interface ChannelSlice {
+  channel: string;
+  orderKind: string;
+  orders: number;
+  revenuePaise: number;
+}
+
+// Exported for wbr.channel.test.ts: this is the unit that carries the claim
+// (the breakdown partitions the headline total exactly), and asserting it
+// through generateWbr would drag an LLM call into the test.
+export async function revenueMix(start: Date, end: Date): Promise<ChannelSlice[]> {
+  const r = await db.execute<{
+    order_channel: string;
+    order_kind: string;
+    orders: number;
+    revenue_paise: string;
+  }>(
+    sql`select order_channel, order_kind,
+               count(*)::int as orders,
+               coalesce(sum(total_paise), 0)::bigint as revenue_paise
+        from safe_orders
+        where created_at >= ${start} and created_at < ${end}
+        group by 1, 2
+        order by revenue_paise desc, order_channel`,
+  );
+  return r.rows.map((row) => ({
+    channel: String(row.order_channel),
+    orderKind: String(row.order_kind),
+    orders: Number(row.orders),
+    revenuePaise: Number(row.revenue_paise),
+  }));
+}
+
+/**
+ * Our own revenue: every kind, but only the channel that is our customers.
+ * Deliberately not restricted to `meal` — an own-app marketplace order is as
+ * much ours as an own-app meal is.
+ */
+export function ownAppRevenuePaise(mix: ChannelSlice[]): number {
+  return mix
+    .filter((s) => s.channel === "own_app")
+    .reduce((sum, s) => sum + s.revenuePaise, 0);
 }
 
 async function topDishes(start: Date, end: Date) {
@@ -104,6 +167,26 @@ function pctDelta(curr: number, prev: number): string {
   return `${sign}${d.toFixed(1)}%`;
 }
 
+/**
+ * One sentence, present only when the headline revenue is not all ours.
+ *
+ * The point is that `revenuePaise` has always included aggregator and
+ * marketplace rows and the commentary has always described it as if it did not.
+ * Naming the gap is the smallest honest fix; changing the number is the owner's
+ * call (claude/order-channel-split.md §6 row 7).
+ */
+export function mixCaveat(kpis: WbrReport["kpis"]): string {
+  const own = kpis.ownAppRevenuePaise;
+  if (own == null || kpis.revenuePaise <= 0 || own >= kpis.revenuePaise) return "";
+  const otherPaise = kpis.revenuePaise - own;
+  const share = (otherPaise / kpis.revenuePaise) * 100;
+  const channels = (kpis.revenueMix ?? [])
+    .filter((s) => s.channel !== "own_app" && s.revenuePaise > 0)
+    .map((s) => s.channel);
+  const named = [...new Set(channels)].join(", ");
+  return `Of that revenue, ₹${(otherPaise / 100).toFixed(0)} (${share.toFixed(1)}%) came from orders we did not originate${named ? ` (${named})` : ""} — own-app revenue was ₹${(own / 100).toFixed(0)}.`;
+}
+
 function templateCommentary(kpis: WbrReport["kpis"]): string {
   return [
     `Last week we shipped ${kpis.orders} orders (${pctDelta(kpis.orders, kpis.ordersPrev)} vs the prior week) for ₹${(kpis.revenuePaise / 100).toFixed(0)} revenue (${pctDelta(kpis.revenuePaise, kpis.revenuePaisePrev)}).`,
@@ -114,6 +197,10 @@ function templateCommentary(kpis: WbrReport["kpis"]): string {
     kpis.anomaliesFired
       ? `${kpis.anomaliesFired} metric anomalies fired — review on the Ops page.`
       : "No anomalies fired this week.",
+    // Only says anything when there is something to say. A week that is wholly
+    // own-app reads exactly as it did before this branch; a week that is not
+    // stops looking like one.
+    mixCaveat(kpis),
   ]
     .filter(Boolean)
     .join(" ");
@@ -208,13 +295,15 @@ export async function generateWbr(input?: Partial<WbrInput>): Promise<WbrReport>
   prevStart.setUTCDate(prevStart.getUTCDate() - 7);
   const prevEnd = new Date(weekStart);
 
-  const [curr, prev, byDay, top, fired, marginDetails] = await Promise.all([
+  const [curr, prev, byDay, top, fired, marginDetails, mix, mixPrev] = await Promise.all([
     aggregateWindow(weekStart, weekEnd),
     aggregateWindow(prevStart, prevEnd),
     ordersByDay(weekStart, weekEnd),
     topDishes(weekStart, weekEnd),
     anomaliesFired(weekStart, weekEnd),
     calculateWeeklyMargins(weekStart, weekEnd),
+    revenueMix(weekStart, weekEnd),
+    revenueMix(prevStart, prevEnd),
   ]);
 
   const kpis: WbrReport["kpis"] = {
@@ -228,6 +317,15 @@ export async function generateWbr(input?: Partial<WbrInput>): Promise<WbrReport>
     topDishes: top,
     anomaliesFired: fired,
     netMarginPct: marginDetails.marginPct,
+    // `revenuePaise` above is every channel and every kind, unchanged. These
+    // two say what is inside it. `netMarginPct` has the same exposure and is
+    // NOT corrected here: it divides an all-channel gross by our own cost model
+    // (calculateWeeklyMargins filters order_kind = 'meal' but no channel), so
+    // an aggregator week reads as a margin on revenue we did not price. That is
+    // the same attribution decision, and it belongs with the same owner.
+    revenueMix: mix,
+    ownAppRevenuePaise: ownAppRevenuePaise(mix),
+    ownAppRevenuePaisePrev: ownAppRevenuePaise(mixPrev),
   };
   const chartSpec = {
     revenueByDay: byDay.map((d) => ({ day: d.day, revenuePaise: d.revenuePaise })),
