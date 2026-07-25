@@ -55,9 +55,16 @@ jobs:
         run: pnpm --filter @workspace/storefront run lint:tokens
       - name: Typecheck
         run: pnpm --filter @workspace/storefront run typecheck
+      # Quoted so **node** expands the glob, not the shell. Actions runs `run:`
+      # under bash with globstar off, where `**` is only `*` — one directory
+      # level, no more and no less. All 43 files sit directly in `lib/` today,
+      # so the previous `lib/*.test.ts` and this `lib/**/*.test.ts` both yield
+      # 211 tests; the quoting is what keeps that true once someone adds a
+      # subdirectory. Unquoted it would silently invert — bash would match the
+      # nested files and drop all 43 of these.
       - name: Money-path invariants (checkout · trial · attach)
         working-directory: artifacts/api-server
-        run: node --test --import tsx ../storefront/lib/*.test.ts
+        run: node --test --import tsx "../storefront/lib/**/*.test.ts"
       - name: Build (server-first, no money path)
         run: pnpm --filter @workspace/storefront run build
       # CUJ specs against the built app (TNM-SF-01 §6). Same specs re-run
