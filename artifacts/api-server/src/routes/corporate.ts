@@ -13,6 +13,7 @@ import {
   type OfficeOrderPick,
 } from "@workspace/db";
 import { makeBatchDishResolver } from "../lib/menuResolver";
+import { quoteSubsidyPaise } from "../lib/corporateSubsidy";
 import { corporateInquiryRateLimit } from "../middlewares/rateLimitMiddleware";
 import {
   razorpayBasicAuth,
@@ -403,132 +404,78 @@ router.post(
 
 // ---------- Subsidy at checkout ----------
 
+/**
+ * The subsidy the caller would get on an order of `subtotal` right now.
+ *
+ * An ESTIMATE for the UI, and labelled as one: the authoritative number is the
+ * one reserved under a lock when the order is priced. The client must never
+ * bill from this — it does not send an amount at all any more.
+ *
+ * `remainingPaise` nets out reservations held by the caller's other in-flight
+ * orders, not just committed spend, so two checkouts open at once cannot both
+ * be quoted the same money.
+ */
 router.get("/me/company-subsidy", async (req: Request, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
   const subtotal = Math.max(0, Number(req.query.subtotal ?? 0));
-  const period = currentMonth();
-  // Pick the first active membership (v1: one company at a time).
-  const [row] = await db
-    .select({
-      company: companiesTable,
-      member: companyMembersTable,
-    })
-    .from(companyMembersTable)
-    .innerJoin(
-      companiesTable,
-      eq(companyMembersTable.companyId, companiesTable.id),
-    )
-    .where(
-      and(
-        eq(companyMembersTable.userId, auth.id),
-        eq(companyMembersTable.status, "active"),
-      ),
-    )
-    .limit(1);
-  if (!row) {
+  const quote = await quoteSubsidyPaise(auth.id, subtotal);
+  if (!quote.active || quote.companyId === null) {
     res.json({ active: false });
     return;
   }
-  const monthlyBudget =
-    row.member.perEmployeeBudgetPaiseOverride ??
-    row.company.perEmployeeMonthlyBudgetPaise;
-  const [usage] = await db
-    .select()
-    .from(companyBudgetUsageTable)
-    .where(
-      and(
-        eq(companyBudgetUsageTable.companyId, row.company.id),
-        eq(companyBudgetUsageTable.userId, auth.id),
-        eq(companyBudgetUsageTable.periodMonth, period),
-      ),
-    );
-  const spent = usage?.spentPaise ?? 0;
-  const remaining = Math.max(0, monthlyBudget - spent);
-  const subsidyPaise = Math.min(remaining, subtotal);
+  const [company] = await db
+    .select({
+      id: companiesTable.id,
+      slug: companiesTable.slug,
+      name: companiesTable.name,
+    })
+    .from(companiesTable)
+    .where(eq(companiesTable.id, quote.companyId));
   res.json({
     active: true,
-    company: { id: row.company.id, slug: row.company.slug, name: row.company.name },
-    monthlyBudgetPaise: monthlyBudget,
-    spentThisMonthPaise: spent,
-    remainingPaise: remaining,
-    subsidyPaise,
+    company,
+    monthlyBudgetPaise: quote.monthlyBudgetPaise,
+    spentThisMonthPaise: quote.committedPaise,
+    // Held by this employee's other priced-but-unpaid orders. Surfaced so a
+    // "why is my budget lower than I expect" question has an answer.
+    reservedThisMonthPaise: quote.reservedPaise,
+    remainingPaise: quote.remainingPaise,
+    subsidyPaise: quote.subsidyPaise,
   });
 });
 
-const chargeSchema = z.object({
-  companyId: z.number().int().positive(),
-  paise: z.number().int().positive(),
-  orderRef: z.string().max(64).optional(),
-});
-
+/**
+ * POST /me/company-subsidy/charge — GONE (410).
+ *
+ * This let a signed-in member tell the server how much to bill their own
+ * company, tied to no order, bounded only by the monthly budget. The checkout
+ * called it after payment, best-effort, which is how the company's share came
+ * to be collected IN ADDITION to a card charge that was never reduced: the UI
+ * showed a net total, the gateway billed gross from orders.charge_paise, and
+ * then this endpoint billed the company on top.
+ *
+ * The subsidy is now part of the order's own price — reserved inside the
+ * pricing transaction and committed when the payment is captured. There is no
+ * client-callable way to spend a company's budget, and there should not be.
+ *
+ * Kept as an explicit 410 rather than deleted: a browser running a cached
+ * pre-fix bundle will still call this after paying, and that call must be an
+ * inert no-op instead of a second charge. The old client treats a failure here
+ * as non-fatal (a toast), so a 410 degrades exactly as intended.
+ */
 router.post(
   "/me/company-subsidy/charge",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
-    if (!auth) return;
-    const parsed = chargeSchema.safeParse(req.body ?? {});
-    if (!parsed.success) {
-      res.status(400).json({ error: "invalid payload" });
-      return;
-    }
-    const m = await loadMembership(parsed.data.companyId, auth.id);
-    if (!m || m.status !== "active") {
-      res.status(403).json({ error: "not a member" });
-      return;
-    }
-    const [company] = await db
-      .select()
-      .from(companiesTable)
-      .where(eq(companiesTable.id, parsed.data.companyId));
-    if (!company) {
-      res.status(404).json({ error: "not found" });
-      return;
-    }
-    const monthlyBudget =
-      m.perEmployeeBudgetPaiseOverride ?? company.perEmployeeMonthlyBudgetPaise;
-    const period = currentMonth();
-    try {
-      const out = await db.transaction(async (tx) => {
-        await tx.execute(
-          sql`select pg_advisory_xact_lock(hashtextextended(${"subsidy:" + company.id + ":" + auth.id + ":" + period}, 0))`,
-        );
-        const [existing] = await tx
-          .select()
-          .from(companyBudgetUsageTable)
-          .where(
-            and(
-              eq(companyBudgetUsageTable.companyId, company.id),
-              eq(companyBudgetUsageTable.userId, auth.id),
-              eq(companyBudgetUsageTable.periodMonth, period),
-            ),
-          );
-        const currentSpent = existing?.spentPaise ?? 0;
-        const remaining = Math.max(0, monthlyBudget - currentSpent);
-        const charged = Math.min(remaining, parsed.data.paise);
-        if (charged <= 0) {
-          return { charged: 0, balanceRemaining: remaining };
-        }
-        if (existing) {
-          await tx
-            .update(companyBudgetUsageTable)
-            .set({ spentPaise: currentSpent + charged })
-            .where(eq(companyBudgetUsageTable.id, existing.id));
-        } else {
-          await tx.insert(companyBudgetUsageTable).values({
-            companyId: company.id,
-            userId: auth.id,
-            periodMonth: period,
-            spentPaise: charged,
-          });
-        }
-        return { charged, balanceRemaining: remaining - charged };
-      });
-      res.json({ chargedPaise: out.charged, remainingPaise: out.balanceRemaining });
-    } catch (err) {
-      req.log.error({ err }, "subsidy charge failed");
-      res.status(500).json({ error: "charge failed" });
-    }
+    req.log.warn(
+      { userId: req.user?.id ?? null },
+      "deprecated /me/company-subsidy/charge called — subsidy is now billed server-side at order pricing; ignoring",
+    );
+    res.status(410).json({
+      error: "gone",
+      detail:
+        "corporate subsidy is applied server-side when the order is priced; this endpoint no longer bills anything",
+    });
   },
 );
 

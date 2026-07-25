@@ -164,14 +164,6 @@ export const corporateApi = {
     request<CompanySubsidy>(
       `/me/company-subsidy?subtotal=${encodeURIComponent(subtotal)}`,
     ),
-  chargeSubsidy: (companyId: number, paise: number, orderRef?: string) =>
-    request<{ chargedPaise: number; remainingPaise: number }>(
-      "/me/company-subsidy/charge",
-      {
-        method: "POST",
-        body: JSON.stringify({ companyId, paise, orderRef }),
-      },
-    ),
   createOfficeOrder: (input: {
     companySlug: string;
     title: string;

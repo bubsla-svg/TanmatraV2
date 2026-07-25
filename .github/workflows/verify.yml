@@ -90,6 +90,7 @@ jobs:
           ./src/lib/subscriptionPricing.test.ts
           ./src/lib/flags.test.ts
           ./src/lib/trialEligibility.test.ts
+          ./src/lib/corporateSubsidy.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
       # The web half of the money-path lockstep rule: these have no wired test
       # script in @workspace/tanmatra, so CI ran them nowhere. Drive them
@@ -281,6 +282,7 @@ jobs:
           ./src/lib/ai/agents/ops.refundCap.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
+          ./src/routes/corporate.subsidyLedger.test.ts
       # Kept as its own step so a failure reads as "the kitchen board broke"
       # rather than being buried in an eighteen-file money run. Not a money path,
       # but it needs the same Postgres service and pushed schema, so it lives
