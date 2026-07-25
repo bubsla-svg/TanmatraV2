@@ -1,7 +1,20 @@
 import { generateText } from "ai";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
-import { db, wbrReportsTable, ordersTable, packagingItemsTable, type WbrReport } from "@workspace/db";
+import {
+  db,
+  wbrReportsTable,
+  isMealOrderItem,
+  menuItemsTable,
+  ordersTable,
+  packagingItemsTable,
+  type WbrReport,
+} from "@workspace/db";
 import { DEFAULT_MODEL_ID, getModel } from "./ai/model";
+import {
+  buildDishCostIndex,
+  lookupUnitFoodCostPaise,
+  type DishCostIndex,
+} from "./dishCostIndex";
 import { logger } from "./logger";
 import { loadDynamicRecipeCosts } from "./menuEngineering";
 
@@ -135,12 +148,51 @@ async function aiCommentary(kpis: WbrReport["kpis"]): Promise<{ text: string; mo
   return { text: templateCommentary(kpis), modelId: "template" };
 }
 
+export interface WeeklyMarginResult {
+  marginPct: number;
+  totalCostPaise: number;
+  foodCostPaise: number;
+  /** Units whose food cost came from a costed recipe — i.e. measured. */
+  measuredUnits: number;
+  /** Units costed from the default-margin assumption instead. */
+  estimatedUnits: number;
+  /** Units that contributed no food cost at all: no recipe, no price. */
+  uncostedUnits: number;
+  /** measuredUnits as a share of all units, 0–100 with one decimal. */
+  foodCostCoveragePct: number;
+  /** Distinct order-line names that matched no menu item, capped for logging. */
+  unmatchedItemNames: string[];
+}
+
+/**
+ * Net margin for a window, and — just as important — how much of it was
+ * measured rather than assumed.
+ *
+ * The margin here is not decoration. `/analytics/wbr/simulate` turns it into
+ * `thresholdAlert: marginPct < 35`, so it is the trigger for the alarm that is
+ * supposed to tell the business its unit economics have gone underwater.
+ * Before this function resolved dish names correctly, the food cost of nearly
+ * every line silently resolved to zero, the reported margin ran roughly thirty
+ * points high, and that alarm could not ring. An alarm wired to a number that
+ * cannot reach the threshold is worse than no alarm, because it reads as an
+ * all-clear. `foodCostCoveragePct` is what lets a reader tell the two apart.
+ */
 export async function calculateWeeklyMargins(
   start: Date,
   end: Date,
   fuelFactor = 1.0,
-): Promise<{ marginPct: number; totalCostPaise: number }> {
+): Promise<WeeklyMarginResult> {
   const foodCostMap = await loadDynamicRecipeCosts();
+  const menuItems = await db
+    .select({
+      slug: menuItemsTable.slug,
+      name: menuItemsTable.name,
+      pricePaise: menuItemsTable.pricePaise,
+    })
+    .from(menuItemsTable);
+  // Order lines carry a display name; recipe costs are keyed by slug. The
+  // index owns that translation so it is done once, one way, and testably.
+  const costIndex: DishCostIndex = buildDishCostIndex(menuItems, foodCostMap);
   const packaging = await db.select().from(packagingItemsTable);
   const avgPackCostPaise =
     packaging.length > 0
@@ -169,6 +221,11 @@ export async function calculateWeeklyMargins(
 
   let grossRevenuePaise = 0;
   let totalCostPaise = 0;
+  let foodCostPaise = 0;
+  let measuredUnits = 0;
+  let estimatedUnits = 0;
+  let uncostedUnits = 0;
+  const unmatched = new Set<string>();
 
   for (const order of orders) {
     grossRevenuePaise += order.totalPaise;
@@ -178,15 +235,32 @@ export async function calculateWeeklyMargins(
     if (Array.isArray(order.items)) {
       for (const it of order.items) {
         if (!it || typeof it !== "object") continue;
-        const name = String(it.name ?? "").toLowerCase();
         const qty = Math.max(1, Math.round(Number(it.qty ?? 1)));
-        const recipeCost = foodCostMap.get(name) ?? 0;
-        orderFoodCostPaise += recipeCost * qty;
+        // Packaging and delivery arithmetic is untouched by this change: one
+        // packed unit is one packed unit whether or not we know its recipe.
         orderPackCostPaise += avgPackCostPaise * qty;
+
+        const rawName = String(it.name ?? "");
+        // The query filters orderKind = 'meal', so every line should be a meal
+        // line; the narrowing is what makes `it.price` type-safe to read.
+        const linePricePaise = isMealOrderItem(it)
+          ? Math.max(0, Math.round(Number(it.price ?? 0)))
+          : 0;
+        const resolved = lookupUnitFoodCostPaise(
+          costIndex,
+          rawName,
+          linePricePaise,
+        );
+        if (resolved.slug === null && rawName) unmatched.add(rawName);
+        if (resolved.basis === "recipe") measuredUnits += qty;
+        else if (resolved.basis === "estimate") estimatedUnits += qty;
+        else uncostedUnits += qty;
+        orderFoodCostPaise += resolved.costPaise * qty;
       }
     }
 
     const orderDeliveryCostPaise = Math.round(4500 * fuelFactor);
+    foodCostPaise += orderFoodCostPaise;
     totalCostPaise +=
       orderFoodCostPaise + orderPackCostPaise + orderDeliveryCostPaise;
   }
@@ -196,7 +270,33 @@ export async function calculateWeeklyMargins(
       ? Math.round(((grossRevenuePaise - totalCostPaise) / grossRevenuePaise) * 1000) / 10
       : 0;
 
-  return { marginPct: netMarginPct, totalCostPaise };
+  const totalUnits = measuredUnits + estimatedUnits + uncostedUnits;
+  const foodCostCoveragePct =
+    totalUnits > 0 ? Math.round((measuredUnits / totalUnits) * 1000) / 10 : 0;
+
+  if (totalUnits > 0 && measuredUnits < totalUnits) {
+    logger.warn(
+      {
+        coveragePct: foodCostCoveragePct,
+        measuredUnits,
+        estimatedUnits,
+        uncostedUnits,
+        unmatchedItemNames: [...unmatched].slice(0, 20),
+      },
+      "weekly margin: some units had no costed recipe — the reported net margin is part assumption, and the 35% threshold alert is only as trustworthy as this coverage",
+    );
+  }
+
+  return {
+    marginPct: netMarginPct,
+    totalCostPaise,
+    foodCostPaise,
+    measuredUnits,
+    estimatedUnits,
+    uncostedUnits,
+    foodCostCoveragePct,
+    unmatchedItemNames: [...unmatched].slice(0, 50),
+  };
 }
 
 export async function generateWbr(input?: Partial<WbrInput>): Promise<WbrReport> {
@@ -228,6 +328,11 @@ export async function generateWbr(input?: Partial<WbrInput>): Promise<WbrReport>
     topDishes: top,
     anomaliesFired: fired,
     netMarginPct: marginDetails.marginPct,
+    // Published alongside the margin on purpose. The commentary prompt below
+    // is handed the whole kpis object, so the model can see — and say — when
+    // the headline margin rests on assumed food costs rather than measured
+    // ones. A margin without its coverage is a number without its error bar.
+    foodCostCoveragePct: marginDetails.foodCostCoveragePct,
   };
   const chartSpec = {
     revenueByDay: byDay.map((d) => ({ day: d.day, revenuePaise: d.revenuePaise })),

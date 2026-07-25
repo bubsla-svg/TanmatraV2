@@ -138,6 +138,23 @@ jobs:
         run: >
           node --test --import tsx
           ./src/routes/ops.gate.test.ts
+      # Food-cost resolution for the weekly business review. Not a billed
+      # amount, but it decides a number people act on: the WBR's margin per
+      # dish and the 35%-margin threshold alert. The lookup it replaces asked a
+      # slug-keyed cost map for a lowercased display name, so every dish's food
+      # cost resolved to `?? 0` — margins read ~80% where they were ~30%, and
+      # the alert could not fire at all. A pure resolver with an explicit
+      # `basis` ("recipe" | "estimate" | "none") makes an unknown dish
+      # countable instead of free.
+      #
+      # DB-free: the index is built from plain menu/recipe rows the caller
+      # supplies, so every case here is key normalisation and arithmetic. Its
+      # own step so a failure reads as "dish cost resolution broke".
+      - name: Dish food-cost resolution (WBR margin inputs)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/dishCostIndex.test.ts
       # Menu-engineering cost authority. This one DOES reach the money path, by
       # a long route: an unknown food cost recorded as 0 became a 100% margin,
       # margin is an axis of the star/plowhorse/puzzle/dog matrix, a star draws
