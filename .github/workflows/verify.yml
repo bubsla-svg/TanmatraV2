@@ -169,3 +169,29 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/ops.kds.test.ts
+      # The order-channel split's own test corpus. Every one of these files was
+      # written to guard the split and every one of them ran nowhere — this
+      # workflow enumerates test files by name, and none of these were named,
+      # in any workflow. They are green today; the point is that nothing would
+      # have told us when they stopped being. What they cover:
+      #
+      #   orderChannel.schema  — the DB check constraints agree with the TS
+      #                          tuples, order_channel is NOT NULL defaulting
+      #                          to own_app, and no channel value collides
+      #                          with an order-kind value.
+      #   dispatch.channel     — an aggregator's order never consumes one of
+      #                          our riders, through all three doors
+      #                          (dispatchOrder, overrideAssignment,
+      #                          findBatchPartner).
+      #   wellnessAutoLog      — marketplace orders do not write nutrition
+      #                          logs; you cannot eat a saucepan.
+      #   petpooja             — the status vocabulary the mappers emit is the
+      #                          vocabulary the readers recognise.
+      - name: Order-channel split integrity
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/orderChannel.schema.test.ts
+          ./src/lib/dispatch.channel.test.ts
+          ./src/lib/wellnessAutoLog.orderKind.test.ts
+          ./src/lib/petpooja.test.ts
