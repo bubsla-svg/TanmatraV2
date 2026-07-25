@@ -59,6 +59,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { label: "Plans", href: "/plans", desc: "Therapeutic subscription plans" },
       { label: "Free trial", href: "/trial", desc: "Try it for 3 days" },
+      { label: "Custom build hub", href: "/custom-build", desc: "Customize macros & boosts" },
       { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal & condition" },
       { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu", section: "By goal & condition" },
       { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu", section: "By goal & condition" },
@@ -72,6 +73,7 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/account/orders",
     links: [
       { label: "My orders", href: "/account/orders" },
+      { label: "Protocol vault", href: "/account/favorites", desc: "Saved favorites & presets" },
       { label: "Nutrition tracker", href: "/account/wellness", desc: "Log food & water, track streaks" },
       { label: "Meal planner", href: "/meal-planner", desc: "Plan & swap your week" },
       { label: "Wellness", href: "/wellness", desc: "Preventive, everyday nutrition" },

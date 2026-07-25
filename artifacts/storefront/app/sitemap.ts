@@ -44,6 +44,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/partners/fitness-clubs", priority: 0.5, changeFrequency: "monthly" },
     { path: "/challenges", priority: 0.6, changeFrequency: "weekly" },
     { path: "/team", priority: 0.5, changeFrequency: "monthly" },
+    { path: "/custom-build", priority: 0.8, changeFrequency: "weekly" },
+    { path: "/account/favorites", priority: 0.6, changeFrequency: "monthly" },
   ];
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE_URL}${r.path === "/" ? "" : r.path}`,
