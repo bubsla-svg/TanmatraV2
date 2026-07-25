@@ -8,6 +8,7 @@ import {
   type AppointmentKind,
 } from "@/lib/rdBookingData";
 import { openRazorpayCheckout } from "@/lib/razorpayClient";
+import { httpStatusOf } from "@/lib/apiError";
 import { useRef } from "react";
 
 /* Full-parity re-port of the System-A CheckoutAppointment (git 2507084) into v2.
@@ -95,6 +96,11 @@ export default function V2CheckoutAppointment() {
         razorpayOrderId: checkout.razorpayOrderId,
         amountPaise: checkout.amount,
         description: `${meta.label} with ${booking.rdName ?? "RD"}`,
+        // The key the server opened THIS order with. Without it the modal falls
+        // back to the build-time VITE_RAZORPAY_KEY_ID, so a build with none
+        // reports "unavailable" even though the server is configured and just
+        // handed one over.
+        keyId: checkout.keyId,
       });
 
       if (opened.outcome !== "paid") {
@@ -115,22 +121,34 @@ export default function V2CheckoutAppointment() {
         });
         navigate("/appointments");
       } catch (e) {
-        // Distinguish transport/server error from verification failure
-        const msg = String(e);
-        if (msg.includes("Error")) { // Assuming custom error format from request<T>
-          throw e; // Bubble up as error
-        } else {
-          // Transport error, treat as unconfirmed
-          setConfirmOpen(false);
-          toast.message("Confirming payment", {
-            description: "We're confirming your payment. Please check your appointments list shortly.",
-          });
-          navigate("/appointments");
-        }
+        // The money is already captured at this point, so the two failures need
+        // opposite handling and must actually be told apart.
+        //
+        //   • The server answered and refused (bad signature, wrong
+        //     appointment, 401) — a real error the customer must see.
+        //   • We never reached the server (offline, DNS, CORS, tab suspended) —
+        //     the payment stands and reconciliation will settle it, so telling
+        //     the customer "booking failed" after taking their money is wrong.
+        //
+        // request<T>() throws `${status}: ${body}` on an HTTP error; fetch
+        // itself rejects with a TypeError carrying no status. So the presence of
+        // a leading status code IS the distinction.
+        if (httpStatusOf(e) != null) throw e;
+        setConfirmOpen(false);
+        toast.message("Confirming payment", {
+          description:
+            "We're confirming your payment. Please check your appointments list shortly.",
+        });
+        navigate("/appointments");
       }
 
     } catch (e) {
-      const msg = String(e);
+      // `message`, not String(e): the modal outcomes are thrown as
+      // `new Error("cancelled" | "unavailable")`, and String(err) on an Error
+      // yields "Error: cancelled" — so comparing the stringified error to
+      // "cancelled" never matched and a customer who simply closed the modal
+      // was told the booking failed.
+      const msg = e instanceof Error ? e.message : String(e);
       if (msg === "cancelled") {
         toast.message("Payment cancelled");
       } else if (msg === "unavailable") {
