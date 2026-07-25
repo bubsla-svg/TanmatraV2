@@ -80,6 +80,71 @@ export const orderStatusValues = [
 ] as const;
 export type OrderStatus = (typeof orderStatusValues)[number];
 
+// Position on the forward delivery ladder — the order in which an order is
+// supposed to move through the world. `null` means "not on the ladder": an end
+// state, or a settlement state that is not part of the delivery story at all.
+//
+// The vocabulary above says which values exist; this says which way time runs
+// between them. That was missing, and its absence is a live bug on the three
+// Petpooja status webhooks — none of them compared the incoming status to the
+// one already stored, so a replayed or out-of-order webhook could walk an order
+// BACKWARDS, including out of `delivered`. See classifyPosStatusTransition in
+// artifacts/api-server/src/lib/petpooja.ts, which is what consumes this.
+//
+// Deliberately a Record and not a lookup function: a new value added to
+// `orderStatusValues` fails to compile here until someone decides where on the
+// ladder it sits. That tripwire is the point — this table is only correct while
+// it is exhaustive, and "someone will remember to update it" is not a mechanism.
+export const orderStatusLadderRank: Record<OrderStatus, number | null> = {
+  placed: 0,
+  preparing: 1,
+  ready: 2,
+  rider_assigned: 3,
+  out_for_delivery: 4,
+  delivered: 5,
+  // Off the ladder. `cancelled` is reachable from any live rung — an outlet can
+  // cancel an order at any point before it lands — but nothing is reachable
+  // from it, so it has no rank of its own.
+  cancelled: null,
+  failed: null,
+  refunded: null,
+  billed: null,
+};
+
+// Whether an external status webhook is allowed to move an order out of this
+// state at all. False means settled: the order's delivery story is over, and a
+// webhook claiming otherwise is stale, replayed, or wrong.
+//
+// `delivered` is false despite being the top of the ladder. The only status
+// that legitimately follows it is `refunded`, which is written by our own
+// refund path against a payment we control — never by the POS, whose mappers
+// cannot even produce the value.
+//
+// Same Record-not-function reasoning as above: adding a status value must be a
+// decision made in both tables, and the compiler is what makes it one.
+// `orders.status` is a plain varchar with no check constraint, so a row read
+// back from the database is `string`, not `OrderStatus` — and until that
+// constraint exists (see the pending orders-status-check-constraint work) a row
+// really can hold a value outside the vocabulary. Anything that reasons about
+// where an order sits must therefore be able to say "I do not recognise this",
+// rather than casting and hoping.
+export function isOrderStatus(value: string): value is OrderStatus {
+  return (orderStatusValues as readonly string[]).includes(value);
+}
+
+export const orderStatusAcceptsExternalUpdate: Record<OrderStatus, boolean> = {
+  placed: true,
+  preparing: true,
+  ready: true,
+  rider_assigned: true,
+  out_for_delivery: true,
+  delivered: false,
+  cancelled: false,
+  failed: false,
+  refunded: false,
+  billed: false,
+};
+
 // Meal-order line item: {id,name,qty,price}. Marketplace-order lines use
 // MarketplaceOrderLine (see ./marketplace) instead. orders.items is a
 // union of the two shapes — see isMealOrderItem below.

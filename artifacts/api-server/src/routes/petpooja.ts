@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
-import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload, type PetpoojaRiderInfoPayload } from "../lib/petpooja";
+import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, classifyPosStatusTransition, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload, type PetpoojaRiderInfoPayload } from "../lib/petpooja";
 import { petpoojaAuthOk, getStoreStatus, setStoreStatus } from "../lib/petpoojaClient";
 
 const router = Router();
@@ -219,6 +219,41 @@ router.post("/integrations/petpooja/saveorder", async (req: Request, res: Respon
   }
 });
 
+/**
+ * Status intake from the POS. The first of three routes that write
+ * `orders.status` from a webhook, and the place to read about what they all now
+ * refuse to do.
+ *
+ * All three used to write the incoming status unconditionally, which made an
+ * order's state a function of webhook ARRIVAL order rather than of what
+ * happened to the food. Webhook delivery is at-least-once and unordered, so
+ * that is a bug with teeth: a retried `rider-assigned` landing after `pickedup`
+ * walked a moving order back to `rider_assigned` — which is in dispatch.ts's
+ * `partnerStatuses`, so an order that had already left the kitchen became
+ * eligible to be batched onto a new one. A replayed accept walked a delivered
+ * order back to `preparing` — which is on the KDS board, so a finished meal
+ * reappeared as a ticket to cook.
+ *
+ * `classifyPosStatusTransition` (lib/petpooja.ts) answers advance / hold /
+ * regress against the ladder in lib/db, and each of the three handlers acts on
+ * that rather than on the raw mapped value.
+ *
+ * Two things about the response, both learned from the saveorder fix in the
+ * commit before this one:
+ *
+ *   - A refused webhook still gets **200 with success:"1"**. The status is a
+ *     4xx-shaped problem but a 4xx-shaped answer is the wrong medicine: the
+ *     vendor reads non-2xx as "did not arrive" and retries, so refusing loudly
+ *     would earn a retry storm for a webhook we are deliberately ignoring. The
+ *     guard changes what we WRITE, not what we ANSWER. The message text says
+ *     what actually happened, and the log line is where an operator looks.
+ *   - A `hold` is not a no-op. It is how a rider REASSIGNMENT arrives — the
+ *     same status twice, the second time with a different courier — so
+ *     identity-like fields are still taken. What must not be re-applied on a
+ *     hold is anything that accumulates; see the cancellation reason in
+ *     /orderstatus, which a replay used to prepend to the delivery
+ *     instructions a second time.
+ */
 router.post("/integrations/petpooja/callback", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const payload = req.body as PetpoojaCallbackPayload;
@@ -255,10 +290,35 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
     }
 
     const mappedStatus = mapPetpoojaStatus(payload.status);
-    const updateFields: any = {
-      status: mappedStatus,
-      updatedAt: new Date(),
-    };
+    const transition = classifyPosStatusTransition(order.status, mappedStatus);
+
+    if (transition === "regress") {
+      // Nothing is written, including the rider block below: the only evidence
+      // of ordering we have is the ladder, and a webhook that contradicts it
+      // cannot be trusted for its other fields either. A row assembled from two
+      // different moments in time is harder to reason about than one that is
+      // simply not updated.
+      req.log?.warn(
+        {
+          orderID: order.id,
+          externalOrderId: payload.orderID,
+          currentStatus: order.status,
+          rejectedStatus: mappedStatus,
+          petpoojaStatus: payload.status,
+        },
+        "petpooja callback rejected — would move the order backwards"
+      );
+      res.status(200).json({
+        success: "1",
+        message: `Callback acknowledged; status not applied (order is already ${order.status}).`,
+      });
+      return;
+    }
+
+    const updateFields: Record<string, unknown> = {};
+    if (transition === "advance") {
+      updateFields.status = mappedStatus;
+    }
 
     if (payload.rider_phone_number && payload.rider_name) {
       let [rider] = await db
@@ -279,18 +339,36 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
           .returning();
       }
 
-      if (rider) {
+      // Only when it actually differs, so a replayed webhook does not issue an
+      // UPDATE that changes nothing and bumps `updated_at` for no reason.
+      if (rider && rider.id !== order.riderId) {
         updateFields.riderId = rider.id;
       }
     }
 
+    if (Object.keys(updateFields).length === 0) {
+      // A `hold` with nothing new attached — the ordinary duplicate delivery.
+      req.log?.info(
+        { orderID: order.id, externalOrderId: payload.orderID, status: order.status },
+        "petpooja callback was a duplicate — nothing to change"
+      );
+      res.status(200).json({ success: "1", message: "Callback processed successfully" });
+      return;
+    }
+
     await db
       .update(ordersTable)
-      .set(updateFields)
+      .set({ ...updateFields, updatedAt: new Date() })
       .where(eq(ordersTable.id, order.id));
 
     req.log?.info(
-      { orderID: order.id, externalOrderId: payload.orderID, status: mappedStatus },
+      {
+        orderID: order.id,
+        externalOrderId: payload.orderID,
+        status: mappedStatus,
+        transition,
+        applied: Object.keys(updateFields),
+      },
       "petpooja status callback processed successfully"
     );
 
@@ -347,24 +425,71 @@ router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Resp
     }
 
     const mappedStatus = mapPetpoojaStatus(payload.status);
-    const updateFields: any = {
-      status: mappedStatus,
-      updatedAt: new Date(),
-    };
+    const transition = classifyPosStatusTransition(order.status, mappedStatus);
 
-    // If cancelReason is provided, prepend it to deliveryInstructions or log it.
-    if (payload.cancelReason && mappedStatus === "cancelled") {
-      const currentInstructions = order.deliveryInstructions || "";
-      updateFields.deliveryInstructions = `[Cancelled: ${payload.cancelReason}] ${currentInstructions}`.substring(0, 512);
+    if (transition === "regress") {
+      req.log?.warn(
+        {
+          orderID: order.id,
+          clientorderID: payload.clientorderID,
+          currentStatus: order.status,
+          rejectedStatus: mappedStatus,
+          petpoojaStatus: payload.status,
+        },
+        "petpooja orderstatus rejected — would move the order backwards"
+      );
+      // 200 and success:"1" on purpose — see the note above /callback. `status`
+      // still echoes what they sent rather than what we hold, because that
+      // field is contract shape and a client may well be matching on it; the
+      // message is where the truth goes.
+      res.status(200).json({
+        success: "1",
+        message: `Status not applied; order is already ${order.status}.`,
+        restID: payload.restID,
+        orderID: order.id.toString(),
+        status: payload.status,
+      });
+      return;
+    }
+
+    const updateFields: Record<string, unknown> = {};
+    if (transition === "advance") {
+      updateFields.status = mappedStatus;
+
+      // Deliberately inside the `advance` branch. The reason belongs to the
+      // cancellation EVENT, not to the cancelled state, and this write is not
+      // idempotent — it prepends to whatever is already there. Applying it on a
+      // `hold` meant a replayed cancellation produced
+      // "[Cancelled: X] [Cancelled: X] …", eating the customer's real delivery
+      // instructions 512 characters at a time.
+      if (payload.cancelReason && mappedStatus === "cancelled") {
+        const currentInstructions = order.deliveryInstructions || "";
+        updateFields.deliveryInstructions = `[Cancelled: ${payload.cancelReason}] ${currentInstructions}`.substring(0, 512);
+      }
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      req.log?.info(
+        { orderID: order.id, clientorderID: payload.clientorderID, status: order.status },
+        "petpooja orderstatus was a duplicate — nothing to change"
+      );
+      res.status(200).json({
+        success: "1",
+        message: "Order status already up to date.",
+        restID: payload.restID,
+        orderID: order.id.toString(),
+        status: payload.status,
+      });
+      return;
     }
 
     await db
       .update(ordersTable)
-      .set(updateFields)
+      .set({ ...updateFields, updatedAt: new Date() })
       .where(eq(ordersTable.id, order.id));
 
     req.log?.info(
-      { orderID: order.id, clientorderID: payload.clientorderID, status: mappedStatus },
+      { orderID: order.id, clientorderID: payload.clientorderID, status: mappedStatus, transition },
       "order status updated successfully"
     );
 
@@ -426,10 +551,30 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
     }
 
     const mappedStatus = mapPetpoojaRiderStatus(payload.status);
-    const updateFields: any = {
-      status: mappedStatus,
-      updatedAt: new Date(),
-    };
+    const transition = classifyPosStatusTransition(order.status, mappedStatus);
+
+    if (transition === "regress") {
+      req.log?.warn(
+        {
+          orderID: order.id,
+          currentStatus: order.status,
+          rejectedStatus: mappedStatus,
+          petpoojaStatus: payload.status,
+        },
+        "petpooja rider webhook rejected — would move the order backwards"
+      );
+      res.status(200).json({
+        code: "200",
+        message: `Rider status acknowledged; not applied (order is already ${order.status}).`,
+        success: "success",
+      });
+      return;
+    }
+
+    const updateFields: Record<string, unknown> = {};
+    if (transition === "advance") {
+      updateFields.status = mappedStatus;
+    }
 
     if (payload.rider_data && payload.rider_data.rider_name && payload.rider_data.rider_phone_number) {
       let [rider] = await db
@@ -450,18 +595,36 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
           .returning();
       }
 
-      if (rider) {
+      // This is the reason `hold` exists as a separate outcome from `regress`.
+      // A reassignment arrives as a second `rider-assigned` for an order
+      // already in `rider_assigned` — no ladder movement, but a genuinely
+      // different courier, and dropping it would leave dispatch pointing at
+      // someone who is no longer carrying the food.
+      if (rider && rider.id !== order.riderId) {
         updateFields.riderId = rider.id;
       }
     }
 
+    if (Object.keys(updateFields).length === 0) {
+      req.log?.info(
+        { orderID: order.id, status: order.status },
+        "petpooja rider webhook was a duplicate — nothing to change"
+      );
+      res.status(200).json({
+        code: "200",
+        message: "Rider status already up to date.",
+        success: "success",
+      });
+      return;
+    }
+
     await db
       .update(ordersTable)
-      .set(updateFields)
+      .set({ ...updateFields, updatedAt: new Date() })
       .where(eq(ordersTable.id, order.id));
 
     req.log?.info(
-      { orderID: order.id, status: mappedStatus, riderId: updateFields.riderId },
+      { orderID: order.id, status: mappedStatus, transition, riderId: updateFields.riderId },
       "rider webhook status processed successfully"
     );
 
