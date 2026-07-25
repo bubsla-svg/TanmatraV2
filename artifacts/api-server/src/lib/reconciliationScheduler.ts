@@ -13,6 +13,9 @@ import { logger } from "./logger";
 import { razorpayCredentials, razorpayBasicAuth } from "./razorpayRecurring";
 import { pushOrderToPetpooja } from "./petpoojaClient";
 import { emitServerEvent } from "./serverEvents";
+import { isCaptureAmountReconciled, resolvePayableAmountPaise } from "./paymentIntegrity";
+import { commitSubsidyForOrder } from "./corporateSubsidy";
+import { sendOrderConfirmation } from "./orderNotification";
 
 export interface ReconciliationSweepResult {
   inspected: number;
@@ -69,8 +72,24 @@ export async function runOrderReconciliationSweep(opts?: {
         continue;
       }
 
-      const body = (await res.json()) as { items?: Array<{ id: string; status: string }> };
-      const validPayment = body.items?.find((p) => p.status === "captured" || p.status === "authorized");
+      const body = (await res.json()) as {
+        items?: Array<{ id: string; status: string; amount?: number }>;
+      };
+      // captured ONLY. `authorized` money is not collected — the auth can
+      // lapse — and the webhook path never promotes on it either. Promoting
+      // here would cook food against money we may never receive.
+      const validPayment = body.items?.find(
+        (p) =>
+          p.status === "captured" &&
+          // Same amount-reconciliation rule as the webhook: a capture may only
+          // confirm the order when it captured the order's own authoritative
+          // amount. A partial or wrong-amount capture is an integrity alarm,
+          // not a promotion.
+          isCaptureAmountReconciled(
+            resolvePayableAmountPaise(order),
+            typeof p.amount === "number" ? p.amount : null,
+          ),
+      );
 
       if (validPayment) {
         // Guarded atomic UPDATE per Rule §5: never read-then-write without state predicate
@@ -87,6 +106,17 @@ export async function runOrderReconciliationSweep(opts?: {
           reconciled++;
           logger.info({ orderId: order.id, paymentId: validPayment.id }, "reconciliation: transitioned order to preparing");
 
+          // The same side effects the webhook performs on a fresh promotion.
+          // The CAS above means exactly one of (webhook | sweep) runs them.
+          void sendOrderConfirmation(order.id);
+          // Corporate subsidy: charge_paise is net of the company's share, so
+          // a capture of it means the company now owes that share. Idempotent.
+          try {
+            await commitSubsidyForOrder(order.id);
+          } catch (err) {
+            logger.error({ err, orderId: order.id }, "reconciliation: corporate subsidy commit failed");
+          }
+
           const [user] = await db
             .select()
             .from(usersTable)
@@ -94,7 +124,10 @@ export async function runOrderReconciliationSweep(opts?: {
             .limit(1);
           const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
 
-          if (order.orderKind !== "marketplace") {
+          // Kitchen push is meal-only by schema contract (orders.ts: "the
+          // Petpooja push MUST filter to orderKind = 'meal'") — a positive
+          // predicate, so a future third kind defaults to NOT cooked.
+          if (order.orderKind === "meal") {
             pushOrderToPetpooja(order, {
               name: fullName || "Reconciled Customer",
               email: user?.email || null,
@@ -103,10 +136,14 @@ export async function runOrderReconciliationSweep(opts?: {
             });
           }
 
-          void emitServerEvent("subscription_order_reconciled", {
-            orderId: order.id,
-            razorpayPaymentId: validPayment.id,
-            reconciledBy: "scheduler",
+          // The webhook was dropped, so no payment_succeeded was ever
+          // emitted for this order — emit it here, flagged, so the funnel
+          // stays complete without inventing a new event name for the same
+          // fact told later.
+          void emitServerEvent("payment_succeeded", {
+            charge_paise: order.chargePaise ?? order.totalPaise,
+            razorpay_payment_id: validPayment.id,
+            reconciled_by: "sweep",
           }, orderUserId);
         }
       } else {

@@ -283,6 +283,7 @@ jobs:
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
+          ./src/lib/reconciliationScheduler.test.ts
       # Kept as its own step so a failure reads as "the kitchen board broke"
       # rather than being buried in an eighteen-file money run. Not a money path,
       # but it needs the same Postgres service and pushed schema, so it lives

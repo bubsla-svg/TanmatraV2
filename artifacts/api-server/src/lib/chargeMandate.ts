@@ -606,7 +606,7 @@ export async function chargeMandateCore(
         .from(usersTable)
         .where(eq(usersTable.id, sub.userId))
         .limit(1);
-      if (createdOrder && createdOrder.orderKind !== "marketplace") {
+      if (createdOrder && createdOrder.orderKind === "meal") {
         const fullName = [orderUser?.firstName, orderUser?.lastName].filter(Boolean).join(" ");
         pushOrderToPetpooja(createdOrder, {
           name: fullName || "Subscription Member",
@@ -614,7 +614,15 @@ export async function chargeMandateCore(
         }, log).catch((err) => {
           log.error({ err, orderId: createdOrder.id }, "charge-mandate: failed to push recurring order to Petpooja KDS");
         });
-        void emitServerEvent("subscription_order_reconciled", { orderId: createdOrder.id, subscriptionId: sub.id }, sub.userId);
+        // A mandate charge is a captured payment, not a reconciliation —
+        // and the webhook never emits for mandate orders (they are born
+        // "billed", so its placed→preparing CAS never matches). Emit the
+        // standard event here so recurring revenue is in the funnel.
+        void emitServerEvent("payment_succeeded", {
+          charge_paise: createdOrder.chargePaise ?? createdOrder.totalPaise,
+          recurring: true,
+          subscription_id: sub.id,
+        }, sub.userId);
       }
     }
   } catch (err) {

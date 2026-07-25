@@ -83,6 +83,13 @@ if (!schedulersDisabled) {
   // scheduler's first tick is delayed past that. FUNNEL_ROLLUP_DISABLED=1
   // gates it off individually.
   startFunnelRollupScheduler();
+  // Razorpay dropped-webhook backstop. INSIDE the gate on purpose: it does
+  // not self-gate (a timer registers whenever Razorpay creds exist), and it
+  // moves order state — production disabled schedulers deliberately, and a
+  // money-touching timer must not be the one exception smuggled past that.
+  // Arming it in prod is an operator decision (dedicated flag or an external
+  // scheduler hitting an admin endpoint), not a default.
+  startReconciliationScheduler();
   void resumeActiveSimulations();
 }
 
@@ -91,7 +98,6 @@ if (!schedulersDisabled) {
 // at all unless PETPOOJA_INVENTORY_RID + the three PETPOOJA_* secrets are
 // present, so it is inert everywhere the integration has not been wired up.
 startPetpoojaInventoryScheduler();
-startReconciliationScheduler();
 
 // Bootstrap the curated safe_* views and reader role BEFORE we start
 // listening, so the very first /analytics/* request can never race view
