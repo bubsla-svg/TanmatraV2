@@ -78,7 +78,7 @@ jobs:
       # The web half of the money-path lockstep rule: these have no wired test
       # script in @workspace/tanmatra, so CI ran them nowhere. Drive them
       # through the api-server tsx loader (the documented manual command).
-      - name: Money-math unit tests (web)
+      - name: Money-math unit tests (web — legacy SPA)
         working-directory: artifacts/api-server
         run: >
           node --test --import tsx
@@ -89,6 +89,23 @@ jobs:
           ../tanmatra/src/components/plans/planDisplay.test.ts
           ../tanmatra/src/components/cuj/cuj.test.ts
           ../tanmatra/src/components/checkout02c/checkout02c.test.ts
+
+      # The step above predates the storefront and covers only the legacy SPA,
+      # so the money path that is actually live — a-la-carte checkout, plan
+      # checkout, trial creditback, post-checkout attach, the Razorpay adapter —
+      # was gated by storefront.yml alone. That workflow's path filter does not
+      # fire on most `lib/**` changes, so a change under `lib/` could reach main
+      # without these ever running. Same tsx-loader trick: the storefront
+      # declares no `tsx` of its own.
+      #
+      # Deliberately a glob, not a hand-listed set. The list above went stale the
+      # moment a second web app appeared, and enumerating files is what let that
+      # happen silently. Every one of these is DB-free and network-free (the
+      # clients take an injectable `fetchImpl`), so the whole suite is safe in
+      # this job and costs ~20s.
+      - name: Wire + money-path unit tests (web — storefront)
+        working-directory: artifacts/api-server
+        run: node --test --import tsx ../storefront/lib/*.test.ts
 
   money-integration:
     runs-on: ubuntu-latest
