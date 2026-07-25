@@ -130,6 +130,13 @@ jobs:
       # creditback (S5b): the one-per-phone ledger + grant service, the paid-time
       # seam, and the create-time gate — all enforced by real Postgres UNIQUE
       # constraints, so they cannot run DB-free.
+      #
+      # ops.refundCap covers the same authority question in the outbound
+      # direction: how much the ops agent's refund_order tool may send back
+      # against one order. It lives in this step rather than its own because
+      # refund authority IS a money path — the arithmetic half is DB-free and
+      # runs in money-unit (paymentIntegrity.test.ts); only "does the tool
+      # actually consult it, across both refund event dialects" needs Postgres.
       - name: Money-path integration tests
         working-directory: artifacts/api-server
         # --test-force-exit: these suites hold real Postgres connections; on
@@ -156,3 +163,4 @@ jobs:
           ./src/routes/rdAdvisory.appointmentOrder.test.ts
           ./src/routes/vouchers.test.ts
           ./src/routes/premium.paymentOrder.test.ts
+          ./src/lib/ai/agents/ops.refundCap.test.ts
