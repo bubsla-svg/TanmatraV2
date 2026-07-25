@@ -1,0 +1,2 @@
+ALTER TABLE "orders" ADD COLUMN "order_channel" varchar(16) DEFAULT 'own_app' NOT NULL;--> statement-breakpoint
+ALTER TABLE "orders" ADD CONSTRAINT "orders_order_channel_chk" CHECK ("orders"."order_channel" in ('own_app','zomato','swiggy','pos','other'));
