@@ -56,6 +56,7 @@ import cspReportRouter from "./cspReport";
 import openApiContractRouter from "./openApiContract";
 import geoRouter from "./geo";
 import ecosystemRouter from "./ecosystem";
+import savedMealsRouter from "./savedMeals";
 
 const router: IRouter = Router();
 
@@ -121,5 +122,6 @@ if (petpoojaWebhooksMounted()) {
 }
 router.use(wearableRouter);
 router.use(ecosystemRouter);
+router.use(savedMealsRouter);
 
 export default router;

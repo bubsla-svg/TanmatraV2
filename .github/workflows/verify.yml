@@ -283,6 +283,8 @@ jobs:
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
+          ./src/lib/reconciliationScheduler.test.ts
+          ./src/routes/savedMeals.test.ts
           ./src/routes/ecosystem.test.ts
       # Kept as its own step so a failure reads as "the kitchen board broke"
       # rather than being buried in an eighteen-file money run. Not a money path,

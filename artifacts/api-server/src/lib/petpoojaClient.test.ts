@@ -317,3 +317,4 @@ test("store status persists across update → get", () => {
   setStoreStatus("1", null, null);
   assert.equal(getStoreStatus().status, "1");
 });
+

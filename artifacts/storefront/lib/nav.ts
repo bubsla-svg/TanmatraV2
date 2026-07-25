@@ -59,6 +59,10 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { label: "Plans", href: "/plans", desc: "Therapeutic subscription plans" },
       { label: "Free trial", href: "/trial", desc: "Try it for 3 days" },
+      { label: "Custom build hub", href: "/custom-build", desc: "Customize macros & boosts" },
+      { label: "Quick setup wizard", href: "/quick-setup", desc: "3-step clinical personalization" },
+      { label: "Smart recommendations", href: "/meal-recommendations", desc: "AI therapeutic reasoning" },
+      { label: "Value deals & combos", href: "/meal-deals", desc: "Macro density per rupee" },
       { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal & condition" },
       { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu", section: "By goal & condition" },
       { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu", section: "By goal & condition" },
@@ -72,6 +76,7 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/account/orders",
     links: [
       { label: "My orders", href: "/account/orders" },
+      { label: "Protocol vault", href: "/account/favorites", desc: "Saved favorites & presets" },
       { label: "Meal history dashboard", href: "/account/history", desc: "Consumed macro adherence" },
       { label: "Symptom logs", href: "/account/symptoms", desc: "Correlate reactions & food" },
       { label: "Challenge streak tracker", href: "/challenges/tracker", desc: "Regimen telemetry" },
