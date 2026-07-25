@@ -47,6 +47,12 @@ export default function V2Premium() {
         razorpayOrderId: checkout.razorpayOrderId,
         amountPaise: checkout.amount,
         description: "Tanmatra Premium Membership",
+        // The key the server opened THIS order with. Without it the modal falls
+        // back to the build-time VITE_RAZORPAY_KEY_ID, so a build with none
+        // reports "unavailable" even though the server is configured and just
+        // handed one over — and a mismatched build key could open a modal
+        // against a different Razorpay account than the order.
+        keyId: checkout.keyId,
       });
 
       if (opened.outcome !== "paid") {
