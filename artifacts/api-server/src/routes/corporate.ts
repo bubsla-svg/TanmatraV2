@@ -1,6 +1,6 @@
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   companiesTable,
@@ -14,6 +14,10 @@ import {
 } from "@workspace/db";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import { corporateInquiryRateLimit } from "../middlewares/rateLimitMiddleware";
+import {
+  razorpayBasicAuth,
+  razorpayCredentials,
+} from "../lib/razorpayRecurring";
 import { sendMail } from "../lib/mail";
 import { logger } from "../lib/logger";
 
@@ -782,6 +786,23 @@ router.post(
 );
 
 // ---------- Vouchers ----------
+//
+// A voucher is bearer money: redeeming one writes `amountPaise` straight into
+// credit_ledger, which checkout spends like cash. So the ONLY way a voucher may
+// reach `active` is a Razorpay capture whose signature verifies server-side.
+//
+// The buyer picks the denomination — that part is legitimate for a gift card;
+// what is not legitimate is honouring the denomination without charging for it.
+// So the amount the client asks for is not trusted as *value*, it is trusted
+// only as the amount to OPEN A GATEWAY ORDER FOR. The row is born
+// `pending_payment` (the column default, so a forgetful future insert lands on
+// the worthless value), carries the gateway order id, and is flipped to
+// `active` by exactly one guarded UPDATE in POST /vouchers/verify.
+//
+// The `code` is allocated at insert time because the unique-index retry loop
+// needs it, but it is deliberately withheld from every response until that
+// capture is verified — handing the buyer a code before payment would hand
+// them a string that LOOKS spendable.
 
 const purchaseVoucherSchema = z.object({
   amountPaise: z.number().int().min(10_000).max(5_000_000),
@@ -790,6 +811,14 @@ const purchaseVoucherSchema = z.object({
   message: z.string().max(512).optional(),
 });
 
+/**
+ * Opens checkout for a NEW voucher. Unlike premium (where a user has at most
+ * one membership, so the pending row is reused), every voucher is a distinct
+ * gift with its own recipient and message — reusing an abandoned pending row
+ * would silently retarget an earlier gift at a new recipient. So each checkout
+ * mints its own row; abandoned ones stay `pending_payment` forever, invisible
+ * and worthless.
+ */
 router.post("/vouchers", async (req: Request, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
@@ -798,6 +827,14 @@ router.post("/vouchers", async (req: Request, res: Response) => {
     res.status(400).json({ error: "invalid payload" });
     return;
   }
+  const creds = razorpayCredentials();
+  if (!creds) {
+    // No silent free voucher when the gateway is unconfigured — refuse.
+    res.status(503).json({ error: "payment gateway not configured" });
+    return;
+  }
+  const [keyId, keySecret] = creds;
+
   let attempt = 0;
   let inserted: typeof vouchersTable.$inferSelect | undefined;
   while (attempt < 5 && !inserted) {
@@ -811,7 +848,7 @@ router.post("/vouchers", async (req: Request, res: Response) => {
         recipientEmail: parsed.data.recipientEmail?.toLowerCase(),
         recipientName: parsed.data.recipientName,
         message: parsed.data.message,
-        status: "active",
+        status: "pending_payment",
       })
       .onConflictDoNothing({ target: vouchersTable.code })
       .returning();
@@ -822,16 +859,140 @@ router.post("/vouchers", async (req: Request, res: Response) => {
     res.status(500).json({ error: "could not allocate code" });
     return;
   }
-  res.json({ voucher: inserted });
+
+  const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: inserted.amountPaise,
+      currency: "INR",
+      receipt: `voucher-${inserted.id}`,
+      payment_capture: 1,
+    }),
+  });
+  if (!rpRes.ok) {
+    let body: unknown;
+    try {
+      body = await rpRes.json();
+    } catch {
+      body = await rpRes.text();
+    }
+    req.log.error(
+      { status: rpRes.status, body, voucherId: inserted.id },
+      "Razorpay voucher order creation failed",
+    );
+    res.status(502).json({ error: "payment gateway error" });
+    return;
+  }
+  const rp = (await rpRes.json()) as {
+    id: string;
+    amount: number;
+    currency: string;
+  };
+  await db
+    .update(vouchersTable)
+    .set({ razorpayOrderId: rp.id })
+    .where(eq(vouchersTable.id, inserted.id));
+
+  // No `code` in this response, and no voucher row either — both would leak
+  // the code. The client gets back only what it needs to open the modal.
+  res.json({
+    voucherId: inserted.id,
+    razorpayOrderId: rp.id,
+    amount: rp.amount,
+    currency: rp.currency,
+    keyId,
+  });
+});
+
+const voucherVerifySchema = z.object({
+  razorpayPaymentId: z.string().min(1).max(64),
+  razorpayOrderId: z.string().min(1).max(64),
+  razorpaySignature: z.string().min(1).max(256),
+});
+
+/**
+ * Verifies a captured payment and funds the voucher. The guarded UPDATE binds
+ * THIS payment to the `pending_payment` row whose stored `razorpayOrderId`
+ * matches AND whose purchaser is the caller — replaying another order's valid
+ * signature, or re-posting a signature for an already-funded voucher, updates
+ * zero rows (→ 409). This is the only code path in the app allowed to write
+ * `status: "active"` onto a voucher.
+ */
+router.post("/vouchers/verify", async (req: Request, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  const parsed = voucherVerifySchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+  const { razorpayPaymentId, razorpayOrderId, razorpaySignature } = parsed.data;
+  const creds = razorpayCredentials();
+  if (!creds) {
+    res.status(503).json({ error: "payment gateway not configured" });
+    return;
+  }
+  const [, keySecret] = creds;
+
+  const expected = createHmac("sha256", keySecret)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+    .digest("hex");
+  let valid = false;
+  try {
+    valid = timingSafeEqual(
+      Buffer.from(expected, "hex"),
+      Buffer.from(razorpaySignature, "hex"),
+    );
+  } catch {
+    valid = false;
+  }
+  if (!valid) {
+    req.log.warn(
+      { userId: auth.id, razorpayOrderId },
+      "invalid voucher payment signature",
+    );
+    res.status(400).json({ error: "invalid payment signature" });
+    return;
+  }
+
+  const [row] = await db
+    .update(vouchersTable)
+    .set({ status: "active", razorpayPaymentId })
+    .where(
+      and(
+        eq(vouchersTable.purchasedByUserId, auth.id),
+        eq(vouchersTable.razorpayOrderId, razorpayOrderId),
+        eq(vouchersTable.status, "pending_payment"),
+      ),
+    )
+    .returning();
+  if (!row) {
+    res.status(409).json({ error: "payment could not be applied" });
+    return;
+  }
+  // Payment is captured and bound — only now is the code real, so only now is
+  // it disclosed.
+  res.json({ voucher: row });
 });
 
 router.get("/vouchers/mine", async (req: Request, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
+  // `pending_payment` rows are excluded: an unpaid voucher has no code worth
+  // showing and listing it would present abandoned checkouts as gift cards.
   const purchased = await db
     .select()
     .from(vouchersTable)
-    .where(eq(vouchersTable.purchasedByUserId, auth.id))
+    .where(
+      and(
+        eq(vouchersTable.purchasedByUserId, auth.id),
+        ne(vouchersTable.status, "pending_payment"),
+      ),
+    )
     .orderBy(desc(vouchersTable.createdAt));
   const redeemed = await db
     .select()
@@ -853,7 +1014,10 @@ router.post("/vouchers/preview", async (req: Request, res: Response) => {
     .select()
     .from(vouchersTable)
     .where(eq(vouchersTable.code, parsed.data.code.toUpperCase()));
-  if (!v) {
+  // An unpaid voucher is indistinguishable from one that does not exist. This
+  // endpoint is unauthenticated, so anything softer would let a guessed code
+  // confirm a pending row — and would show a value that was never funded.
+  if (!v || v.status === "pending_payment") {
     res.status(404).json({ error: "voucher not found" });
     return;
   }
@@ -883,7 +1047,12 @@ router.post("/vouchers/redeem", async (req: Request, res: Response) => {
         .select()
         .from(vouchersTable)
         .where(eq(vouchersTable.code, code));
-      if (!v) return { error: "not_found" as const };
+      // Fail-closed on anything that is not `active`. An unpaid voucher is
+      // reported as not_found rather than already_redeemed: it was never
+      // funded, so "already redeemed" would be a lie that also confirms the
+      // code exists.
+      if (!v || v.status === "pending_payment")
+        return { error: "not_found" as const };
       if (v.status !== "active") return { error: "already_redeemed" as const };
       const [updated] = await tx
         .update(vouchersTable)
