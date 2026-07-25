@@ -137,6 +137,16 @@ jobs:
       # refund authority IS a money path — the arithmetic half is DB-free and
       # runs in money-unit (paymentIntegrity.test.ts); only "does the tool
       # actually consult it, across both refund event dialects" needs Postgres.
+      # The marketplace pair closes a hole of the same shape this workflow was
+      # built for. Both files existed, both were green, and neither was named
+      # in any workflow — so nothing would have told us when they stopped
+      # being. What they pin: checkout decrements stock atomically and writes
+      # an `orders` row that `/payments/razorpay/order` can actually bill for
+      # the real amount (goods carry no GST/delivery layer, so `charge_paise`
+      # is null and the payment path falls back to `total_paise` — if that
+      # fallback ever breaks, marketplace orders bill zero), commission
+      # splitting for third-party items, and the ownership check that stops
+      # one user billing another user's order.
       - name: Money-path integration tests
         working-directory: artifacts/api-server
         # --test-force-exit: these suites hold real Postgres connections; on
@@ -164,8 +174,10 @@ jobs:
           ./src/routes/vouchers.test.ts
           ./src/routes/premium.paymentOrder.test.ts
           ./src/lib/ai/agents/ops.refundCap.test.ts
+          ./src/routes/marketplace.checkout.test.ts
+          ./src/routes/marketplace.paymentsIntegration.test.ts
       # Kept as its own step so a failure reads as "the kitchen board broke"
-      # rather than being buried in a sixteen-file money run. Not a money path,
+      # rather than being buried in an eighteen-file money run. Not a money path,
       # but it needs the same Postgres service and pushed schema, so it lives
       # in this job. Two things are pinned: the board shows own_app + meal only
       # (an aggregator ticket here gets cooked twice — Petpooja's own screen is
