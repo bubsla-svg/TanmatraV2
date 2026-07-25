@@ -89,6 +89,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Challenges", href: "/challenges", desc: "RD-led cohort programmes" },
       { label: "Corporate wellness", href: "/corporate-wellness", desc: "RD-designed team lunches for offices" },
       { label: "Corporate & partnerships", href: "/corporate", desc: "Team lunches for your office" },
+      { label: "Dietitian partner network", href: "/rd-partners", desc: "For clinical RDs & nutritionists" },
     ],
   },
   {
@@ -100,6 +101,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Tanmatra Premium", href: "/premium", desc: "Priority delivery + a monthly RD consult" },
       { label: "Subscriptions", href: "/account/subscriptions" },
       { label: "Orders", href: "/account/orders" },
+      { label: "Consults", href: "/account/appointments", desc: "View booked RD sessions" },
       { label: "Billing & credits", href: "/account/billing", desc: "Wallet balance & credit activity" },
       { label: "Wallet & vouchers", href: "/vouchers", desc: "Redeem a voucher · wallet balance" },
       { label: "Addresses", href: "/account/addresses" },
