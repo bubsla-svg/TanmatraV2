@@ -1,4 +1,5 @@
 import {
+  check,
   pgTable,
   serial,
   varchar,
@@ -8,12 +9,22 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { usersTable } from "./auth";
 
 export type CompanyMemberRole = "admin" | "member";
 export type CompanyMemberStatus = "invited" | "active" | "removed";
 export type OfficeOrderStatus = "open" | "closed" | "delivered" | "cancelled";
-export type VoucherStatus = "active" | "redeemed" | "cancelled";
+/**
+ * `pending_payment` is the state a voucher is BORN in: the row exists so a
+ * Razorpay order can be bound to it, but it carries no spendable value until a
+ * verified capture flips it to `active`. Only `active` may be redeemed.
+ */
+export type VoucherStatus =
+  | "pending_payment"
+  | "active"
+  | "redeemed"
+  | "cancelled";
 
 export interface OfficeOrderAddress {
   label?: string;
@@ -177,10 +188,17 @@ export const vouchersTable = pgTable(
     recipientEmail: varchar("recipient_email", { length: 256 }),
     recipientName: varchar("recipient_name", { length: 128 }),
     message: varchar("message", { length: 512 }),
+    // Fail-safe default: a row inserted by any future code path that forgets
+    // to think about money is WORTHLESS, not funded. Only the verified-capture
+    // update in POST /vouchers/verify may write "active".
     status: varchar("status", { length: 16 })
       .notNull()
-      .default("active")
+      .default("pending_payment")
       .$type<VoucherStatus>(),
+    /** Gateway order opened for exactly `amountPaise`; bound before checkout. */
+    razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
+    /** Captured payment that funded this voucher. Set once, at verify. */
+    razorpayPaymentId: varchar("razorpay_payment_id", { length: 64 }),
     redeemedByUserId: varchar("redeemed_by_user_id").references(
       () => usersTable.id,
       { onDelete: "set null" },
@@ -193,6 +211,15 @@ export const vouchersTable = pgTable(
   (table) => [
     uniqueIndex("uniq_vouchers_code").on(table.code),
     index("idx_vouchers_purchaser").on(table.purchasedByUserId),
+    index("idx_vouchers_razorpay_order").on(table.razorpayOrderId),
+    // DB-level guard mirroring orders_order_channel_chk. A voucher row is
+    // spendable money: no raw SQL, backfill script or future route may write a
+    // status outside this set, and in particular cannot invent a fifth value
+    // that /vouchers/redeem's `status !== "active"` check would wave through.
+    check(
+      "vouchers_status_chk",
+      sql`${table.status} in ('pending_payment','active','redeemed','cancelled')`,
+    ),
   ],
 );
 

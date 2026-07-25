@@ -402,6 +402,8 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
         .values({
           userId,
           orderKind: "marketplace",
+          // Orthogonal to orderKind: a marketplace order is still one of ours.
+          orderChannel: "own_app",
           externalOrderId,
           status: "placed",
           totalPaise,

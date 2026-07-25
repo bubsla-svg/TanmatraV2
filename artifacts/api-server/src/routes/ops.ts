@@ -1,4 +1,10 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import {
+  Router,
+  type IRouter,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import { logger } from "../lib/logger";
 import {
   db,
@@ -26,12 +32,27 @@ import { sendDeliveryDelaySms } from "../lib/sms";
 
 const router: IRouter = Router();
 
-function requireOps(req: Request, res: Response): boolean {
-  return gateRequireOps(req, res) !== null;
-}
+/**
+ * Ops scope is required for EVERY route on this router, enforced here as
+ * router-level middleware rather than as a call at the top of each handler.
+ *
+ * That distinction is not stylistic. The per-handler form shipped four routes
+ * without the guard — `/inventory`, `/packaging`, `/recipes` and
+ * `/recipes/:slug` — which served the full inventory list, the packaging list
+ * and the recipe book (`food_cost_paise`, i.e. our unit economics, included) to
+ * any unauthenticated caller who could reach the API. Nothing flagged it,
+ * because "did the author remember to write one line?" is not a checkable
+ * invariant. "Is there a router.use gate?" is.
+ *
+ * gateRequireOps sends its own 403 and returns null on failure, so a rejected
+ * request must NOT call next().
+ */
+router.use((req: Request, res: Response, next: NextFunction) => {
+  if (gateRequireOps(req, res) === null) return; // 403 already written
+  next();
+});
 
 router.get("/anomalies", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const status = (typeof req.query.status === "string" ? req.query.status : "active") as
     | "open"
     | "ack"
@@ -43,8 +64,7 @@ router.get("/anomalies", async (req: Request, res: Response) => {
   res.json({ rows });
 });
 
-router.post("/anomalies/scan", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.post("/anomalies/scan", async (_req: Request, res: Response) => {
   const results = await runAnomalyScan();
   res.json({ results });
 });
@@ -55,7 +75,6 @@ const snoozeBody = z.object({
 });
 
 router.post("/anomalies/:id/ack", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = idParam.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid id" });
@@ -70,7 +89,6 @@ router.post("/anomalies/:id/ack", async (req: Request, res: Response) => {
 });
 
 router.post("/anomalies/:id/snooze", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const idP = idParam.safeParse(req.params);
   const bodyP = snoozeBody.safeParse(req.body);
   if (!idP.success || !bodyP.success) {
@@ -90,7 +108,6 @@ router.post("/anomalies/:id/snooze", async (req: Request, res: Response) => {
 });
 
 router.post("/anomalies/:id/close", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = idParam.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid id" });
@@ -104,14 +121,12 @@ router.post("/anomalies/:id/close", async (req: Request, res: Response) => {
   res.json({ alert: row });
 });
 
-router.get("/anomalies/digest", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.get("/anomalies/digest", async (_req: Request, res: Response) => {
   const digest = await buildDailyDigest();
   res.json(digest);
 });
 
-router.post("/anomalies/digest/send", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.post("/anomalies/digest/send", async (_req: Request, res: Response) => {
   const out = await sendDailyDigest();
   res.json(out);
 });
@@ -202,8 +217,36 @@ router.get("/recipes/:slug", async (req: Request, res: Response) => {
   res.json({ recipe, ingredients });
 });
 
-router.get("/kds/orders", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+/**
+ * The statuses a ticket can be in while it is still food the kitchen owes
+ * someone. Shared deliberately by the board query and the ready mutation
+ * below: those two predicates ARE the contract — a ticket the board cannot
+ * show must not be a ticket the board can advance — and when they were
+ * written out separately they silently drifted apart. Change them together
+ * or not at all. Pinned by routes/ops.kds.test.ts.
+ */
+const KDS_BOARD_STATUSES = ["placed", "preparing"];
+
+/**
+ * The kitchen display board — and the place the "two boards" decision lives.
+ *
+ * One kitchen, two screens: this board shows the orders that arrived through
+ * our app, Petpooja's own screen shows the orders that arrived through
+ * Petpooja (aggregator, counter, phone). Every ticket is on exactly one board,
+ * none on both, none on neither — which is the property that makes two boards
+ * safe rather than merely tolerable.
+ *
+ * The alternative — one board with a channel badge per ticket — is a better
+ * product and a one-line change here (drop the orderChannel predicate). It is
+ * NOT safe yet: POST /petpooja/saveorder has no idempotency guard, so a
+ * retried push writes the same order two or three times and the kitchen would
+ * cook it two or three times. Do that branch first. See §5 of
+ * claude/order-channel-split.md.
+ */
+// No per-handler gate call here: the router.use above covers every route on
+// this router, and the per-handler form is exactly what let four routes ship
+// unguarded. `_req` because the gate now reads the request, not the handler.
+router.get("/kds/orders", async (_req: Request, res: Response) => {
   const rows = await db
     .select({
       id: ordersTable.id,
@@ -215,8 +258,9 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
     .from(ordersTable)
     .where(
       and(
-        inArray(ordersTable.status, ["placed", "preparing"]),
+        inArray(ordersTable.status, KDS_BOARD_STATUSES),
         eq(ordersTable.orderKind, "meal"),
+        eq(ordersTable.orderChannel, "own_app"),
       ),
     )
     .orderBy(asc(ordersTable.createdAt));
@@ -224,12 +268,50 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
 });
 
 router.post("/kds/orders/:id/ready", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const orderId = parseInt(String(req.params.id ?? ""), 10);
-  await db
+  // parseInt("abc") is NaN, and an unguarded NaN reaches Postgres as an
+  // invalid integer literal — the driver throws and Express answers with a
+  // 500 HTML error page. An id that is not an id is not on the board; say so
+  // in the same shape as every other off-board answer.
+  if (!Number.isInteger(orderId)) {
+    res
+      .status(404)
+      .json({ ok: false, error: "no such order on this board", code: "order_not_on_board" });
+    return;
+  }
+  // Mirrors the board query's predicate exactly — same statuses, same kind,
+  // same channel. A ticket the board cannot show must not be a ticket the
+  // board can advance, otherwise the guard on the read side is decoration
+  // that any client holding an order id can step around.
+  //
+  // The status clause is the one that is easy to leave out, and leaving it
+  // out is not a cosmetic bug: without it this UPDATE matches a row in ANY
+  // status, so a stale kitchen tab could drag a `delivered` order back to
+  // `ready`, or resurrect a `cancelled` one onto the board to be cooked. It
+  // also made the 404 below unreachable for the case it exists to report —
+  // a second click on an already-advanced ticket re-set `ready` to `ready`,
+  // matched a row, and answered `{ok:true}`.
+  const advanced = await db
     .update(ordersTable)
     .set({ status: "ready" })
-    .where(and(eq(ordersTable.id, orderId), eq(ordersTable.orderKind, "meal")));
+    .where(
+      and(
+        eq(ordersTable.id, orderId),
+        inArray(ordersTable.status, KDS_BOARD_STATUSES),
+        eq(ordersTable.orderKind, "meal"),
+        eq(ordersTable.orderChannel, "own_app"),
+      ),
+    )
+    .returning({ id: ordersTable.id });
+  // This used to answer `{ok:true}` unconditionally, so a click on a ticket
+  // that had already left the board reported success and changed nothing.
+  // Adding a predicate makes that silent no-op reachable in a new way — a
+  // stale board, an aggregator ticket — so the endpoint now says which
+  // happened. Ops needs to know the food was not in fact marked ready.
+  if (advanced.length === 0) {
+    res.status(404).json({ ok: false, error: "no such order on this board", code: "order_not_on_board" });
+    return;
+  }
   res.json({ ok: true });
 });
 
@@ -242,7 +324,6 @@ const deliveryBatchSchema = z.object({
 });
 
 router.post("/supplier/deliver", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = deliveryBatchSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload", issues: parsed.error.issues });
@@ -285,7 +366,6 @@ const intakeSchema = z.object({
 });
 
 router.post("/supplier/intake", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = intakeSchema.safeParse(req.body);
   if (!parsed.success) {
     res
@@ -380,7 +460,6 @@ router.post("/supplier/intake", async (req: Request, res: Response) => {
 });
 
 router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const orderId = parseInt(String(req.params.id ?? ""), 10);
   
   // Set createdAt to 25 minutes ago
