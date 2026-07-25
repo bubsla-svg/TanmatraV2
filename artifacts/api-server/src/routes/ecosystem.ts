@@ -1,5 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
+import {
+  encryptClinicalAttribute,
+  decryptClinicalAttribute,
+} from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
@@ -41,7 +45,20 @@ router.get("/symptom-logs", async (req: Request, res: Response) => {
       .from(symptomLogsTable)
       .where(eq(symptomLogsTable.userId, userId))
       .orderBy(desc(symptomLogsTable.loggedDate));
-    res.json(rows);
+    // notes is a clinical free-text field, encrypted at rest with the same
+    // AES-256-GCM envelope the preferences row uses (CLINICAL_KMS_MASTER_KEY).
+    // Decrypt for the owner; tolerate legacy/plaintext rows by passing them
+    // through unchanged.
+    res.json(
+      rows.map((r) => {
+        if (!r.notes) return r;
+        try {
+          return { ...r, notes: decryptClinicalAttribute(r.notes) };
+        } catch {
+          return r;
+        }
+      }),
+    );
   } catch (e) {
     console.error("Failed to fetch symptom logs:", e);
     res.status(500).json({ error: "Failed to fetch symptom logs" });
@@ -68,11 +85,17 @@ router.post("/symptom-logs", async (req: Request, res: Response) => {
         loggedDate,
         symptomType,
         severity,
-        notes,
+        // Free-text symptom notes are patient-authored clinical data — the
+        // highest-sensitivity field on this row. Encrypted at rest like every
+        // other clinical field in this codebase. (symptom_type remains
+        // plaintext: it is a bounded vocabulary in a varchar(64), and moving
+        // it under the envelope needs a column-type migration — recorded as a
+        // known residual, not silently accepted.)
+        notes: notes ? JSON.stringify(encryptClinicalAttribute(notes)) : "",
         relatedDishSlug,
       })
       .returning();
-    res.status(201).json(inserted);
+    res.status(201).json({ ...inserted, notes });
   } catch (e) {
     console.error("Failed to insert symptom log:", e);
     res.status(500).json({ error: "Failed to log symptom" });
@@ -82,8 +105,21 @@ router.post("/symptom-logs", async (req: Request, res: Response) => {
 // Feature #5: Community Q&A Threads
 router.get("/community/qa", async (_req: Request, res: Response) => {
   try {
+    // Public read. Every column EXCEPT user_id — the author's internal user
+    // id is not part of a public forum's contract, and select() would ship it
+    // to anyone with curl.
     const threads = await db
-      .select()
+      .select({
+        id: communityQaThreadsTable.id,
+        authorName: communityQaThreadsTable.authorName,
+        questionTitle: communityQaThreadsTable.questionTitle,
+        questionBody: communityQaThreadsTable.questionBody,
+        category: communityQaThreadsTable.category,
+        rdAnswer: communityQaThreadsTable.rdAnswer,
+        rdAnsweredBy: communityQaThreadsTable.rdAnsweredBy,
+        upvotes: communityQaThreadsTable.upvotes,
+        createdAt: communityQaThreadsTable.createdAt,
+      })
       .from(communityQaThreadsTable)
       .orderBy(desc(communityQaThreadsTable.createdAt))
       .limit(50);
