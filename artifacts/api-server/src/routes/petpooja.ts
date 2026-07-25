@@ -92,6 +92,31 @@ router.post("/integrations/petpooja/fetchmenu", async (req: Request, res: Respon
   }
 });
 
+/**
+ * Order intake from the POS — and the one route where "at least once" has to
+ * be turned into "exactly once".
+ *
+ * A webhook that is not acknowledged is a webhook that gets retried, and this
+ * one used to fail both ways at once. An unmatched customer (the aggregator
+ * case, `user_id = null`) slipped past `uniq_orders_user_external` because
+ * Postgres treats NULLs as distinct, so a retry silently inserted a second
+ * row: two KDS tickets, two dispatches, one meal. A matched customer hit the
+ * constraint with no `onConflictDoNothing` to catch it, threw, and returned
+ * 500 — which Petpooja reads as failure and retries, forever, never
+ * succeeding. Opposite symptoms, one cause, one fix.
+ *
+ * The fix is in two halves and needs both. The index
+ * `uniq_orders_external_pos` (migration 0014) is the guarantee — it holds even
+ * against two retries landing in the same millisecond on different instances,
+ * which no amount of application-level checking can. This handler is the
+ * manners: it converts the resulting conflict into the same 200 the first call
+ * got, so the retry loop terminates instead of hammering a route that keeps
+ * refusing it.
+ *
+ * `onConflictDoNothing()` is deliberately untargeted so it covers both unique
+ * indexes on `orders`, i.e. both of the failure modes above, without this
+ * route having to know which one it tripped.
+ */
 router.post("/integrations/petpooja/saveorder", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
   const payload = req.body as PetpoojaSaveOrderPayload;
@@ -103,8 +128,25 @@ router.post("/integrations/petpooja/saveorder", async (req: Request, res: Respon
 
   try {
     const { Restaurant, Order } = payload.orderinfo.OrderInfo;
+
+    // An order id is not optional metadata here — it is the only handle the
+    // system has on this row. Without it the order cannot be deduped, cannot
+    // be found by /callback, /orderstatus or /rider-info (all three resolve on
+    // external_order_id), and cannot be reconciled against the POS. Accepting
+    // it would mean writing a ticket nobody can ever update or match. Better
+    // to refuse it loudly at the door than to accumulate orphans quietly.
+    const externalOrderId = (Order.details.orderID ?? "").trim();
+    if (externalOrderId === "") {
+      req.log?.warn(
+        { restID: Restaurant.details.restID },
+        "petpooja saveorder rejected — payload carries no orderID"
+      );
+      res.status(400).json({ success: "0", message: "missing orderID" });
+      return;
+    }
+
     req.log?.info(
-      { clientOrderID: Order.details.orderID, restID: Restaurant.details.restID },
+      { clientOrderID: externalOrderId, restID: Restaurant.details.restID },
       "starting petpooja saveorder mapping"
     );
 
@@ -113,23 +155,63 @@ router.post("/integrations/petpooja/saveorder", async (req: Request, res: Respon
     const [inserted] = await db
       .insert(ordersTable)
       .values(orderInsertData)
+      .onConflictDoNothing()
       .returning({ id: ordersTable.id });
 
-    if (!inserted) {
-      throw new Error("failed to insert order row");
+    let orderId: number;
+    if (inserted) {
+      orderId = inserted.id;
+      req.log?.info(
+        { orderID: orderId, clientOrderID: externalOrderId },
+        "petpooja order saved successfully"
+      );
+    } else {
+      // The value the mapper actually wrote, not the one parsed above, so the
+      // two cannot drift into looking up a key we never stored.
+      const dedupeKey = orderInsertData.externalOrderId;
+      if (!dedupeKey) throw new Error("order mapper produced no external_order_id");
+
+      // Resolved on external_order_id alone, matching how /callback,
+      // /orderstatus and /rider-info find the same row. Keeping the four
+      // lookups identical means they can only ever be wrong together, which is
+      // a far easier property to reason about than four subtly different keys.
+      // orderBy(id) only decides ties, which the unique index makes
+      // unreachable for POS rows — it is there so behaviour stays defined if
+      // that ever stops being true.
+      const [existing] = await db
+        .select({ id: ordersTable.id })
+        .from(ordersTable)
+        .where(eq(ordersTable.externalOrderId, dedupeKey))
+        .orderBy(ordersTable.id)
+        .limit(1);
+
+      if (!existing) {
+        // The insert was refused and yet nothing is there to have refused it.
+        // Not a duplicate — something else is wrong, and pretending success
+        // would tell Petpooja we hold an order we do not.
+        throw new Error("insert conflicted but no existing order found");
+      }
+
+      orderId = existing.id;
+      // warn, not info: a single duplicate is the guard working as designed,
+      // but a stream of them means Petpooja is not accepting our 200s and
+      // someone should look at why.
+      req.log?.warn(
+        { orderID: orderId, clientOrderID: externalOrderId },
+        "petpooja saveorder was a duplicate — returning the existing order"
+      );
     }
 
-    req.log?.info(
-      { orderID: inserted.id, clientOrderID: Order.details.orderID },
-      "petpooja order saved successfully"
-    );
-
+    // Byte-identical to the first call's response, on purpose. An idempotent
+    // endpoint answers a repeat the same way it answered the original; a
+    // different shape here would just be a new thing for the vendor's client
+    // to mishandle.
     res.status(200).json({
       success: "1",
       message: "Your order is saved.",
       restID: Restaurant.details.restID,
-      clientOrderID: Order.details.orderID,
-      orderID: inserted.id.toString(),
+      clientOrderID: externalOrderId,
+      orderID: orderId.toString(),
     });
   } catch (err: any) {
     req.log?.error({ err }, "failed to save petpooja order");

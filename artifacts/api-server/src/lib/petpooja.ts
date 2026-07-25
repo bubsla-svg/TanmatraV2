@@ -598,7 +598,18 @@ export async function mapPetpoojaOrderToDb(
     userId,
     // Never 'own_app' — this order came from the POS, whoever originated it.
     orderChannel: mapPetpoojaOrderChannel(Order.details.order_from),
-    externalOrderId: Order.details.orderID,
+    // Trimmed because this is a dedupe key, not a label. `uniq_orders_external_pos`
+    // compares bytes, so " 4471" and "4471" would be two rows for one meal —
+    // exactly the duplicate the index exists to prevent, walking straight past
+    // it. Canonicalise once, here, where the value enters the system.
+    //
+    // Blank collapses to null, not "": a partial index keyed
+    // `external_order_id is not null` would happily treat "" as a real id and
+    // then dedupe every id-less order onto the first one. Null says what is
+    // true — this order has no handle — and keeps it out of the index. The
+    // route refuses such a payload outright, so this is the backstop for any
+    // other caller.
+    externalOrderId: (Order.details.orderID ?? "").trim() || null,
     status: "placed",
     totalPaise,
     addressLabel: "Delivery Address",

@@ -201,9 +201,56 @@ export const ordersTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [
+    // Scoped by user, so it is NULL-blind: Postgres treats NULLs as distinct
+    // in a unique index, and every order the POS pushes us whose customer
+    // email matches no user of ours gets `user_id = null`. Three own-app money
+    // writers infer their ON CONFLICT spec against this exact index
+    // (loyaltyEngine.ts, chargeMandate.ts, subscriptions.ts) — including the
+    // partial predicate, which Postgres requires to match — so it must not be
+    // dropped or altered. The companion index below covers what it cannot.
     uniqueIndex("uniq_orders_user_external")
       .on(table.userId, table.externalOrderId)
       .where(sql`external_order_id is not null`),
+    // The other half of the same guarantee: one row per POS order id.
+    //
+    // POST /integrations/petpooja/saveorder writes `external_order_id` from
+    // Petpooja's own `orderID`, and a webhook that is not acknowledged is a
+    // webhook that gets retried. Without this index a retry inserts a second
+    // row — a second KDS ticket, a second dispatch, one meal — and nothing
+    // anywhere notices. Demonstrated against a real Postgres: three identical
+    // aggregator inserts, three rows, no error.
+    //
+    // Keyed on `external_order_id` ALONE, deliberately, not on
+    // (order_channel, external_order_id):
+    //   - Petpooja assigns the id, so it is already unique within the outlet
+    //     across every channel it serves. A wider key would let a retry whose
+    //     `order_from` differed — a field our push interface does not even
+    //     model — slip past as a "different" order, which is the precise
+    //     failure this index exists to stop.
+    //   - The rest of the system already assumes this. /callback,
+    //     /orderstatus and /rider-info all resolve an order with
+    //     `where external_order_id = ? limit 1` and no channel predicate. If
+    //     two POS rows ever shared an id, those routes would already be
+    //     picking one arbitrarily. This makes an existing assumption
+    //     enforceable rather than introducing a new one.
+    //
+    // `order_channel <> 'own_app'` in the predicate is load-bearing, not a
+    // tidy-up. Own-app orders derive `external_order_id` from a client-supplied
+    // order id, so two users could legitimately present the same string; a
+    // global unique index would 500 the second user's checkout on a violation
+    // their ON CONFLICT (user_id, external_order_id) spec does not cover.
+    // Excluding own_app puts those rows entirely outside this index, so the
+    // three money writers above cannot collide with it at all.
+    //
+    // Migration caveat: creating this index FAILS if prod already holds
+    // duplicate POS rows — which is exactly the bug being fixed. Run
+    //   select external_order_id, count(*) from orders
+    //   where external_order_id is not null and order_channel <> 'own_app'
+    //   group by 1 having count(*) > 1;
+    // and reconcile any hits before applying migration 0014.
+    uniqueIndex("uniq_orders_external_pos")
+      .on(table.externalOrderId)
+      .where(sql`external_order_id is not null and order_channel <> 'own_app'`),
     // Postgres does NOT auto-index FK columns. These three indexes back
     // the most common access patterns:
     //   - "my orders" page (filter by user, sort by createdAt desc)
