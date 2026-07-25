@@ -514,6 +514,7 @@ async function createOrderForNewSubscription(
     .insert(ordersTable)
     .values({
       userId: sub.userId,
+      orderChannel: "own_app",
       externalOrderId: `sub-${sub.id}`,
       status: "placed",
       totalPaise: chargePaise,

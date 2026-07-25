@@ -11,6 +11,75 @@ import type { MarketplaceOrderLine } from "./marketplace";
 export const orderKindValues = ["meal", "marketplace"] as const;
 export type OrderKind = (typeof orderKindValues)[number];
 
+// The channel an order arrived through. Orthogonal to orderKind: a `meal`
+// order can be ours or an aggregator's, and both come out of the same kitchen.
+//
+// This exists because "manage our own app's orders internally and let Petpooja
+// keep carrying Zomato/Swiggy" was a sentence the schema could not express.
+// order_kind separates meal from marketplace — not us from them. So an order
+// Petpooja pushed to /integrations/petpooja/saveorder landed as
+// order_kind = 'meal', indistinguishable from a clinical subscription order,
+// and therefore surfaced on the RD console's active-patient feed, queued on
+// the KDS and swept by the dispatcher for rider assignment.
+//
+//   • own_app       originated in our own checkout / subscription path. The
+//                   column default, and the ONLY value our own writers set.
+//   • zomato/swiggy an aggregator order relayed by the POS. Ours to cook, not
+//                   ours to dispatch, track, or show on a clinical surface.
+//   • pos           pushed to us by Petpooja with no channel stated. Means
+//                   "not ours" — never assume own_app from silence.
+//   • other         reserved, so a channel we haven't met has somewhere to
+//                   land that isn't a lie.
+//
+// Deliberately NOT indexed. Today every row is own_app, so an index on this
+// column has no selectivity to offer; the reads that matter stay covered by
+// idx_orders_kind_status. If aggregator volume ever becomes material the right
+// shape is a partial index on `where order_channel <> 'own_app'`, not a plain
+// one. See claude/order-channel-split.md for the full rationale.
+export const orderChannelValues = ["own_app", "zomato", "swiggy", "pos", "other"] as const;
+export type OrderChannel = (typeof orderChannelValues)[number];
+
+// The order-status vocabulary. `orders.status` is a plain varchar with no
+// check constraint, so this tuple is documentation-plus-types rather than an
+// enforced enum — but it is the ONLY place the full set is written down, and
+// every writer of `orders.status` should be typed against `OrderStatus` so a
+// new value cannot be invented at a keyboard.
+//
+// This exists because it was possible to invent one: the Petpooja webhook
+// mappers used to emit "confirmed" and "dispatched", two values that no
+// reader in the system recognised. An order the POS moved to either one
+// disappeared from the customer's active-order list, the dispatch sweep and
+// the storefront tracker. See mapPetpoojaStatus in
+// artifacts/api-server/src/lib/petpooja.ts.
+//
+// The readers that must accept a value for it to be usable — keep this list
+// current, it is the reason the vocabulary is closed:
+//   • artifacts/api-server/src/routes/orders.ts    ACTIVE_STATUSES, CANCELLABLE
+//   • artifacts/api-server/src/routes/payments.ts  PAID_STATES
+//   • artifacts/api-server/src/routes/ops.ts       the KDS queue filter
+//   • artifacts/api-server/src/lib/dispatch.ts     liveStatuses, partnerStatuses
+//   • artifacts/api-server/src/lib/etaModel.ts     ACTIVE_STATUSES
+//   • artifacts/storefront/lib/orderStatus.ts      STATUS_LABELS, TRACKABLE_STATUSES
+export const orderStatusValues = [
+  // Pre-kitchen.
+  "placed",
+  // In the kitchen. This is what an accepted/confirmed POS order becomes —
+  // there is no separate "confirmed" state; acceptance IS the start of prep.
+  "preparing",
+  "ready",
+  // Out the door.
+  "rider_assigned",
+  "out_for_delivery",
+  "delivered",
+  // Terminal, unhappy.
+  "cancelled",
+  "failed",
+  "refunded",
+  // Marketplace/ops settlement state, not part of the delivery ladder.
+  "billed",
+] as const;
+export type OrderStatus = (typeof orderStatusValues)[number];
+
 // Meal-order line item: {id,name,qty,price}. Marketplace-order lines use
 // MarketplaceOrderLine (see ./marketplace) instead. orders.items is a
 // union of the two shapes — see isMealOrderItem below.
@@ -46,6 +115,14 @@ export const ordersTable = pgTable(
     // so a grocery order never gets a rider assigned or pushed to the
     // kitchen POS.
     orderKind: varchar("order_kind", { length: 16 }).notNull().default("meal"),
+    // Which channel the order came in through — see orderChannelValues above.
+    // Defaults to 'own_app' because that is true of every row that existed
+    // before this column did. Typed so a writer cannot invent a sixth value at
+    // a keyboard the way the Petpooja status mappers once invented "confirmed".
+    orderChannel: varchar("order_channel", { length: 16 })
+      .notNull()
+      .default("own_app")
+      .$type<OrderChannel>(),
     externalOrderId: varchar("external_order_id", { length: 64 }),
     razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
     // The captured Razorpay payment id (set at verify / webhook capture).
@@ -156,12 +233,32 @@ export const ordersTable = pgTable(
       "orders_order_kind_chk",
       sql`${table.orderKind} in ('meal','marketplace')`,
     ),
+    // Same guard for the channel discriminator. Keep this literal in step with
+    // orderChannelValues above — api-server's orderChannel.schema.test.ts
+    // compares the two and fails if they drift apart.
+    check(
+      "orders_order_channel_chk",
+      sql`${table.orderChannel} in ('own_app','zomato','swiggy','pos','other')`,
+    ),
     // Speeds up dispatch.ts's live-order scans, which now must filter to
     // orderKind = 'meal' on every query.
     index("idx_orders_kind_status").on(table.orderKind, table.status),
   ],
 );
 
-export const insertOrderSchema = createInsertSchema(ordersTable).omit({ id: true, createdAt: true, updatedAt: true });
+// drizzle-zod generates from the column's SQL type and does not honour
+// `$type<>`, so without this refinement `InsertOrder["orderChannel"]` widens
+// back to plain `string` — which both defeats the compile-time guard on the
+// column and lets a value the check constraint will reject through any path
+// that validates with this schema. Naming the enum here closes the vocabulary
+// at the Zod layer too, so a bad channel fails at parse time with a readable
+// error instead of at INSERT time with a constraint violation.
+export const insertOrderSchema = createInsertSchema(ordersTable, {
+  // `.optional()` is load-bearing: supplying a custom schema for a column makes
+  // drizzle-zod treat it as required, dropping the optionality the column's
+  // DEFAULT earns it. Without it, every writer that legitimately omits the
+  // field — relying on the 'own_app' default — would fail validation.
+  orderChannel: z.enum(orderChannelValues).optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof ordersTable.$inferSelect;
