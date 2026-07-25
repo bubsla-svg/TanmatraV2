@@ -30,6 +30,7 @@ import { sendDailyDigest } from "../lib/anomalyDigestSender";
 import { requireOps as gateRequireOps } from "../lib/adminGate";
 import { sendDeliveryDelaySms } from "../lib/sms";
 import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
+import { scanAndExecuteRiderFallbacks } from "../lib/logisticsEngine";
 
 const router: IRouter = Router();
 
@@ -529,6 +530,17 @@ router.post("/kds/orders/:id/explode-bom", async (req: Request, res: Response) =
   } catch (err) {
     logger.error({ err, orderId: req.params.id }, "ops.kds.bom_explosion_failed");
     res.status(500).json({ error: "Failed to execute BOM explosion and inventory deduction" });
+  }
+});
+
+// Phase 2: Autonomous Logistics Fallback & Rider Geotracking DLQ trigger
+router.all("/logistics/scan-fallbacks", async (_req: Request, res: Response) => {
+  try {
+    const interventions = await scanAndExecuteRiderFallbacks(24);
+    res.json({ ok: true, interventions });
+  } catch (err) {
+    logger.error({ err }, "ops.logistics.fallback_scan_failed");
+    res.status(500).json({ error: "Failed to scan logistics delivery queues" });
   }
 });
 
