@@ -138,6 +138,23 @@ jobs:
         run: >
           node --test --import tsx
           ./src/routes/ops.gate.test.ts
+      # Menu-engineering cost authority. This one DOES reach the money path, by
+      # a long route: an unknown food cost recorded as 0 became a 100% margin,
+      # margin is an axis of the star/plowhorse/puzzle/dog matrix, a star draws
+      # a +5% pricing suggestion, and approving that suggestion writes
+      # menu_items.price_paise — the price checkout charges. Missing data raised
+      # a real price. The guard makes null/0/negative all mean "unknown" and
+      # fall back identically.
+      #
+      # DB-free: only pure functions (costPerUnitPaise, classifyDishes) are
+      # exercised; the suite sets a dummy DATABASE_URL itself so the module's
+      # db import can be constructed without a server. Its own step so a
+      # failure reads as "dish cost authority broke".
+      - name: Menu-engineering cost authority (zero is not a measurement)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/menuEngineering.cost.test.ts
 
   money-integration:
     runs-on: ubuntu-latest
