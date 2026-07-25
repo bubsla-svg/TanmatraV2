@@ -29,6 +29,7 @@ import {
 import { sendDailyDigest } from "../lib/anomalyDigestSender";
 import { requireOps as gateRequireOps } from "../lib/adminGate";
 import { sendDeliveryDelaySms } from "../lib/sms";
+import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
 
 const router: IRouter = Router();
 
@@ -491,6 +492,44 @@ router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response
   }
 
   res.json({ ok: true, smsSent: true, newCreatedAt: delayedTime });
+});
+
+// Phase 1A: 4:00 AM Morning Brief prep aggregation for expediter KDS terminals
+router.get("/kds/prep-brief", async (req: Request, res: Response) => {
+  const dateStr = (req.query["forDate"] as string) || new Date().toISOString().slice(0, 10);
+  try {
+    const summary = await generateMorningPrepBrief(dateStr);
+    res.json({ forDate: dateStr, stationPrep: summary });
+  } catch (err) {
+    logger.error({ err }, "ops.kds.prep_brief_failed");
+    res.status(500).json({ error: "Failed to assemble morning prep brief" });
+  }
+});
+
+const bomExplodeSchema = z.object({
+  items: z.array(
+    z.object({
+      dishSlug: z.string().min(1),
+      quantity: z.number().int().positive().default(1),
+    })
+  ),
+});
+
+// Phase 1A: Autonomous runtime BOM explosion and predictive PO replenishment trigger
+router.post("/kds/orders/:id/explode-bom", async (req: Request, res: Response) => {
+  const parsed = bomExplodeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "malformed order items for BOM explosion" });
+    return;
+  }
+
+  try {
+    const results = await executeBom(parsed.data.items);
+    res.json({ ok: true, deductions: results });
+  } catch (err) {
+    logger.error({ err, orderId: req.params.id }, "ops.kds.bom_explosion_failed");
+    res.status(500).json({ error: "Failed to execute BOM explosion and inventory deduction" });
+  }
 });
 
 export default router;
