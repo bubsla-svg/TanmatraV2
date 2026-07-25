@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus } from "./petpooja";
-import { usersTable, menuItemsTable, isMealOrderItem, orderStatusValues } from "@workspace/db/schema";
+import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaOrderChannel, mapPetpoojaStatus, mapPetpoojaRiderStatus } from "./petpooja";
+import { usersTable, menuItemsTable, isMealOrderItem, orderStatusValues, orderChannelValues } from "@workspace/db/schema";
 
 test("slugify helper", () => {
   assert.equal(slugify("Veg Loaded Pizza"), "veg-loaded-pizza");
@@ -356,6 +356,10 @@ test("mapPetpoojaOrderToDb maps order payload to database order structure", asyn
 
   assert.equal(order.userId, "usr_abc123");
   assert.equal(order.externalOrderId, "A-1");
+  // Petpooja pushed it, so it is not ours — even though the customer email
+  // matched one of our users and userId got populated. A matching email means
+  // "this person has an account with us", not "this order came from our app".
+  assert.equal(order.orderChannel, "pos");
   assert.equal(order.totalPaise, 56000);
   assert.equal(order.fulfillmentType, "delivery");
   assert.equal(order.dropLat, 23.01);
@@ -371,6 +375,111 @@ test("mapPetpoojaOrderToDb maps order payload to database order structure", asyn
   assert.equal(firstItem.name, "Veg Loaded Pizza");
   assert.equal(firstItem.qty, 2);
   assert.equal(firstItem.price, 11000);
+});
+
+test("mapPetpoojaOrderChannel normalises Petpooja's order_from", () => {
+  // Present and recognised — case and padding are the vendor's business, not
+  // ours, so both are normalised away.
+  assert.equal(mapPetpoojaOrderChannel("Zomato"), "zomato");
+  assert.equal(mapPetpoojaOrderChannel("zomato"), "zomato");
+  assert.equal(mapPetpoojaOrderChannel("  Swiggy  "), "swiggy");
+
+  // Absent, blank, or whitespace — the field may not exist on the push
+  // contract at all, so silence must land somewhere honest: 'pos' says
+  // "reached us through the POS, provenance unstated".
+  assert.equal(mapPetpoojaOrderChannel(undefined), "pos");
+  assert.equal(mapPetpoojaOrderChannel(null), "pos");
+  assert.equal(mapPetpoojaOrderChannel(""), "pos");
+  assert.equal(mapPetpoojaOrderChannel("   "), "pos");
+
+  // Present but unknown — keeps the fact that a channel WAS named, which
+  // 'pos' would throw away. A new aggregator shows up as 'other' rather than
+  // being quietly indistinguishable from an unlabelled POS order.
+  assert.equal(mapPetpoojaOrderChannel("Magicpin"), "other");
+  assert.equal(mapPetpoojaOrderChannel("DotPe"), "other");
+});
+
+test("mapPetpoojaOrderChannel can never return own_app", () => {
+  // The load-bearing invariant. An order we did not originate must not be
+  // able to claim it did — 'own_app' is what the RD console, the KDS and the
+  // dispatcher will filter on, so a channel mapper that can emit it puts an
+  // aggregator's customer back onto a clinical surface.
+  const inputs = [
+    "own_app",
+    "OWN_APP",
+    " own_app ",
+    "Tanmatra",
+    "app",
+    "Own App",
+    "direct",
+    ...orderChannelValues,
+  ];
+  for (const input of inputs) {
+    assert.notEqual(
+      mapPetpoojaOrderChannel(input),
+      "own_app",
+      `mapPetpoojaOrderChannel(${JSON.stringify(input)}) must not claim own_app`,
+    );
+  }
+});
+
+test("mapPetpoojaOrderChannel only ever returns a value the DB accepts", () => {
+  const inputs = [undefined, null, "", "Zomato", "swiggy", "Magicpin", "🍕", "a".repeat(200)];
+  for (const input of inputs) {
+    const channel = mapPetpoojaOrderChannel(input);
+    assert.ok(
+      (orderChannelValues as readonly string[]).includes(channel),
+      `${JSON.stringify(input)} produced ${channel}, which orders_order_channel_chk would reject`,
+    );
+  }
+});
+
+test("mapPetpoojaOrderToDb records the channel Petpooja names", async () => {
+  const mockDbClient = {
+    select: () => ({
+      from: () => ({
+        where: () => ({ limit: () => Promise.resolve([]) }),
+      }),
+    }),
+  };
+  const payloadWith = (orderFrom?: string) => ({
+    app_key: "key",
+    app_secret: "secret",
+    access_token: "token",
+    orderinfo: {
+      OrderInfo: {
+        Restaurant: { details: { res_name: "L", address: "M", contact_information: "1", restID: "r" } },
+        Customer: { details: { email: "nobody@example.com", name: "N", address: "A", phone: "9" } },
+        Order: {
+          details: {
+            orderID: "Z-1",
+            preorder_date: "",
+            preorder_time: "",
+            delivery_charges: "0",
+            packing_charges: "0",
+            order_type: "H",
+            payment_type: "COD",
+            total: "100",
+            tax_total: "0",
+            discount_total: "0",
+            created_on: "",
+            ...(orderFrom === undefined ? {} : { order_from: orderFrom }),
+          },
+        },
+        OrderItem: { details: [] },
+      },
+    },
+  });
+
+  const zomato = await mapPetpoojaOrderToDb(payloadWith("Zomato") as any, mockDbClient);
+  assert.equal(zomato.orderChannel, "zomato");
+  // The unmatched-customer case: userId stays null, which is exactly the row
+  // the (user_id, external_order_id) unique index cannot deduplicate. The
+  // channel is what a channel-scoped index will key on instead.
+  assert.equal(zomato.userId, null);
+
+  const unlabelled = await mapPetpoojaOrderToDb(payloadWith() as any, mockDbClient);
+  assert.equal(unlabelled.orderChannel, "pos");
 });
 
 test("mapPetpoojaStatus maps status codes to database statuses", () => {

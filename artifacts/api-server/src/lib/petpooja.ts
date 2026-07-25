@@ -1,5 +1,5 @@
 import { sql, eq } from "drizzle-orm";
-import { type InsertMenuItem, type MenuItem, type InsertOrder, type OrderStatus, usersTable, menuItemsTable } from "@workspace/db/schema";
+import { type InsertMenuItem, type MenuItem, type InsertOrder, type OrderStatus, type OrderChannel, usersTable, menuItemsTable } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
@@ -135,6 +135,13 @@ export interface PetpoojaSaveOrderPayload {
           urgent_order?: boolean;
           description?: string;
           created_on: string;
+          // The originating channel, e.g. "Zomato" / "Swiggy". Petpooja's READ
+          // API (get_orders_api) reports this; whether their push payload
+          // carries it is unconfirmed with the vendor, so it is optional and
+          // its absence is handled — see mapPetpoojaOrderChannel. Modelling it
+          // is what makes the field survive: req.body is cast straight to this
+          // interface, so anything not declared here is silently dropped.
+          order_from?: string;
         };
       };
       OrderItem: {
@@ -513,6 +520,31 @@ export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPa
   } as any;
 }
 
+/**
+ * Petpooja's channel label → our closed `order_channel` vocabulary.
+ *
+ * Petpooja's read API reports the channel as `order_from` with values like
+ * "Zomato" / "Swiggy"; per the live probe this outlet's orders are
+ * overwhelmingly Zomato. Whether the push payload carries the same field is
+ * unconfirmed with the vendor (claude/order-channel-split.md §7), so this is
+ * best-effort and degrades in the right direction:
+ *
+ *   absent / blank        → 'pos'    "arrived via the POS, provenance unstated"
+ *   "Zomato" / "Swiggy"   → itself   (case- and whitespace-insensitive)
+ *   anything else present → 'other'  keeps the fact that a channel was named
+ *
+ * It can never return 'own_app'. An order we did not originate must not be
+ * able to claim it did — that would put an aggregator's customer straight back
+ * onto the clinical console this column exists to keep them off.
+ */
+export function mapPetpoojaOrderChannel(orderFrom: string | null | undefined): OrderChannel {
+  const normalized = (orderFrom ?? "").trim().toLowerCase();
+  if (!normalized) return "pos";
+  if (normalized === "zomato") return "zomato";
+  if (normalized === "swiggy") return "swiggy";
+  return "other";
+}
+
 export async function mapPetpoojaOrderToDb(
   payload: PetpoojaSaveOrderPayload,
   dbClient: any
@@ -564,6 +596,8 @@ export async function mapPetpoojaOrderToDb(
 
   return {
     userId,
+    // Never 'own_app' — this order came from the POS, whoever originated it.
+    orderChannel: mapPetpoojaOrderChannel(Order.details.order_from),
     externalOrderId: Order.details.orderID,
     status: "placed",
     totalPaise,
