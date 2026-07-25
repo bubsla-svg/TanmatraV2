@@ -32,6 +32,7 @@ import { sendDeliveryDelaySms } from "../lib/sms";
 import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
 import { scanAndExecuteRiderFallbacks } from "../lib/logisticsEngine";
 import { evaluateWholesalePriceSpike } from "../lib/marginGuardrailEngine";
+import { dispatchRoutedFulfillment } from "../lib/wmsRoutingEngine";
 
 const router: IRouter = Router();
 
@@ -567,6 +568,40 @@ router.post("/logistics/evaluate-wholesale-spike", async (req: Request, res: Res
   } catch (err) {
     logger.error({ err }, "ops.guardrail.wholesale_spike_error");
     res.status(500).json({ error: "Failed to evaluate wholesale price margin guardrail" });
+  }
+});
+
+const wmsRouteSchema = z.object({
+  orderId: z.number().int().positive(),
+  externalOrderId: z.string().min(1),
+  items: z.array(
+    z.object({
+      itemId: z.number().int().positive().optional(),
+      id: z.number().int().positive().optional(),
+      name: z.string(),
+      qty: z.number().int().positive(),
+      fulfillmentType: z.enum(["MTO", "FMCG"]).optional(),
+    }),
+  ),
+});
+
+// WMS Vector 3: Hybrid Checkout Routing & KDS Bypass
+router.post("/wms/route-fulfillment", async (req: Request, res: Response) => {
+  const parsed = wmsRouteSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "malformed WMS routing payload" });
+    return;
+  }
+  try {
+    const ticket = await dispatchRoutedFulfillment(
+      parsed.data.orderId,
+      parsed.data.externalOrderId,
+      parsed.data.items,
+    );
+    res.json({ ok: true, ticket });
+  } catch (err) {
+    logger.error({ err }, "ops.wms.routing_failed");
+    res.status(500).json({ error: (err as Error).message || "WMS fulfillment routing failed" });
   }
 });
 
