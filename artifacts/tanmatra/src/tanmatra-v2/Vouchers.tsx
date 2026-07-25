@@ -55,6 +55,11 @@ export default function V2Vouchers() {
         razorpayOrderId: checkout.razorpayOrderId,
         amountPaise: checkout.amount,
         description: `Tanmatra voucher ${formatPrice(checkout.amount)}`,
+        // The key the server opened THIS order with. Without it the modal falls
+        // back to the build-time key, so a build with none would report
+        // "unavailable" even though the server is configured and just handed
+        // one over.
+        keyId: checkout.keyId,
       });
       if (opened.outcome === "cancelled") {
         toast.message("Payment cancelled — no voucher was issued");
