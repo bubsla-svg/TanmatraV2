@@ -25,6 +25,7 @@ import {
   fetchPurchases,
   fetchStock,
   normalizePurchaseResponse,
+  emptyStockParseStats,
   normalizeStockResponse,
   petpoojaInventoryConfig,
   readVendorEnvelope,
@@ -77,7 +78,7 @@ afterEach(() => {
 });
 
 const PURCHASE_URL = "https://api.petpooja.com/V1/thirdparty/get_purchase/";
-const STOCK_URL = "https://api.petpooja.com/V1/thirdparty/get_stock/";
+const STOCK_URL = "https://api.petpooja.com/V1/thirdparty/get_stock_api/";
 
 /** A response shaped exactly like the live one, minus the fields we ignore. */
 function vendorOk(extra: Record<string, unknown>): string {
@@ -116,7 +117,7 @@ describe("petpoojaInventoryConfig", () => {
     assert.ok(cfg);
     assert.equal(cfg.baseUrl, "https://api.petpooja.com");
     assert.equal(cfg.purchasePath, "/V1/thirdparty/get_purchase/");
-    assert.equal(cfg.stockPath, "/V1/thirdparty/get_stock/");
+    assert.equal(cfg.stockPath, "/V1/thirdparty/get_stock_api/");
     // inventory.petpooja.com is the billing web UI; it 404s every API path.
     assert.ok(!cfg.baseUrl.includes("inventory.petpooja.com"));
   });
@@ -462,17 +463,23 @@ describe("buildPurchaseRequestBody", () => {
 });
 
 describe("buildStockRequestBody", () => {
-  it("sends exactly the verified keys — one `date`, no aliases", () => {
+  it("sends the sharing code as camelCase `menuSharingCode`, never as restID", () => {
     configure();
     const cfg = petpoojaInventoryConfig();
     assert.ok(cfg);
-    assert.deepEqual(buildStockRequestBody(cfg, { date: "2026-07-24" }), {
+    const body = buildStockRequestBody(cfg, { date: "2026-07-24" });
+    assert.deepEqual(body, {
       app_key: "key",
       app_secret: "secret",
       access_token: "token",
-      restID: "cq5hnj3629",
+      menuSharingCode: "cq5hnj3629",
       date: "2026-07-24",
     });
+    // get_stock_api is stricter than get_purchase: `restID` earns code 103 and
+    // lowercase `menusharingcode` earns code 100. Both spellings are a silent
+    // "no stock" if nobody is reading the envelope, so pin them out explicitly.
+    assert.equal("restID" in body, false);
+    assert.equal("menusharingcode" in body, false);
   });
 });
 
@@ -671,6 +678,53 @@ describe("normalizeStockResponse", () => {
     assert.deepEqual(normalizeStockResponse([{ item_name: "Rice", closing_stock: -4 }]), []);
   });
 
+  it("counts the negative rows it dropped instead of losing them silently", () => {
+    const stats = emptyStockParseStats();
+    const rows = normalizeStockResponse(
+      [
+        { name: "Egg Tray", qty: "-408", unit: "Piece" },
+        { name: "Cashew", qty: "-0.34", unit: "Kg" },
+        { name: "Atta", qty: "12", unit: "Kg" },
+      ],
+      stats,
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].product, "Atta");
+    assert.equal(stats.negativeRows, 2);
+    assert.deepEqual(stats.negativeSample, ["Egg Tray", "Cashew"]);
+  });
+
+  it("caps the negative sample at ten names so one bad outlet cannot flood a log line", () => {
+    const stats = emptyStockParseStats();
+    normalizeStockResponse(
+      Array.from({ length: 40 }, (_, i) => ({ name: `Item ${i}`, qty: "-1" })),
+      stats,
+    );
+    assert.equal(stats.negativeRows, 40);
+    assert.equal(stats.negativeSample.length, 10);
+  });
+
+  it("reads the live get_stock_api shape — closing_json rows with name/qty/unit", () => {
+    const stats = emptyStockParseStats();
+    const rows = normalizeStockResponse(
+      {
+        code: "200",
+        success: "1",
+        message: "",
+        closing_json: [
+          { name: "Dhoop", price: "0", unit: "Piece", qty: "-1", restaurant_id: "355738", category: "", sapcode: "" },
+          { name: "Basmati Rice", price: "120", unit: "Kg", qty: "8.5", restaurant_id: "355738", category: "", sapcode: "" },
+        ],
+      },
+      stats,
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].product, "Basmati Rice");
+    assert.equal(rows[0].qty, 8.5);
+    assert.equal(rows[0].unit, "kg");
+    assert.equal(stats.negativeRows, 1);
+  });
+
   it("skips objects that carry no product name or no quantity", () => {
     assert.deepEqual(
       normalizeStockResponse({ success: "0", message: "no data", data: [{ closing_stock: 5 }, { item_name: "Salt" }] }),
@@ -730,7 +784,7 @@ describe("fetchStock", () => {
     assert.equal(res.lines[0].unit, "kg");
   });
 
-  it("surfaces the unprovisioned-stock refusal (code 301) as a vendor error", async () => {
+  it("surfaces a vendor refusal (code 301) as an error with the code intact", async () => {
     configure();
     const errors: unknown[] = [];
     const res = await fetchStock("2026-07-24", {
@@ -747,9 +801,11 @@ describe("fetchStock", () => {
       })) as FetchLike,
       log: { error: (o) => errors.push(o) },
     });
-    // This is the live answer for every date tried on this outlet: stock history
-    // is not provisioned. Keeping the code visible is what makes it a PetPooja
-    // ticket rather than a parser hunt.
+    // 301 used to be the live answer for every date, which this suite read as
+    // "stock is not provisioned". It was not: the client was calling
+    // /V1/thirdparty/get_stock/, a different endpoint from the inventory Stock
+    // API at /V1/thirdparty/get_stock_api/. Keeping the code visible is what
+    // makes a refusal a diagnosis rather than a parser hunt.
     assert.equal(res.ok, false);
     assert.equal(res.error, "301: Provide date is not in your date range.");
     assert.equal(errors.length, 1);
