@@ -202,6 +202,22 @@ router.get("/recipes/:slug", async (req: Request, res: Response) => {
   res.json({ recipe, ingredients });
 });
 
+/**
+ * The kitchen display board — and the place the "two boards" decision lives.
+ *
+ * One kitchen, two screens: this board shows the orders that arrived through
+ * our app, Petpooja's own screen shows the orders that arrived through
+ * Petpooja (aggregator, counter, phone). Every ticket is on exactly one board,
+ * none on both, none on neither — which is the property that makes two boards
+ * safe rather than merely tolerable.
+ *
+ * The alternative — one board with a channel badge per ticket — is a better
+ * product and a one-line change here (drop the orderChannel predicate). It is
+ * NOT safe yet: POST /petpooja/saveorder has no idempotency guard, so a
+ * retried push writes the same order two or three times and the kitchen would
+ * cook it two or three times. Do that branch first. See §5 of
+ * claude/order-channel-split.md.
+ */
 router.get("/kds/orders", async (req: Request, res: Response) => {
   if (!requireOps(req, res)) return;
   const rows = await db
@@ -217,6 +233,7 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
       and(
         inArray(ordersTable.status, ["placed", "preparing"]),
         eq(ordersTable.orderKind, "meal"),
+        eq(ordersTable.orderChannel, "own_app"),
       ),
     )
     .orderBy(asc(ordersTable.createdAt));
@@ -226,10 +243,29 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
 router.post("/kds/orders/:id/ready", async (req: Request, res: Response) => {
   if (!requireOps(req, res)) return;
   const orderId = parseInt(String(req.params.id ?? ""), 10);
-  await db
+  // Mirrors the queue's predicate. A board that cannot show a ticket must not
+  // be able to advance it either — otherwise the guard above is decoration
+  // that any client holding an order id can step around.
+  const advanced = await db
     .update(ordersTable)
     .set({ status: "ready" })
-    .where(and(eq(ordersTable.id, orderId), eq(ordersTable.orderKind, "meal")));
+    .where(
+      and(
+        eq(ordersTable.id, orderId),
+        eq(ordersTable.orderKind, "meal"),
+        eq(ordersTable.orderChannel, "own_app"),
+      ),
+    )
+    .returning({ id: ordersTable.id });
+  // This used to answer `{ok:true}` unconditionally, so a click on a ticket
+  // that had already left the board reported success and changed nothing.
+  // Adding a predicate makes that silent no-op reachable in a new way — a
+  // stale board, an aggregator ticket — so the endpoint now says which
+  // happened. Ops needs to know the food was not in fact marked ready.
+  if (advanced.length === 0) {
+    res.status(404).json({ ok: false, error: "no such order on this board", code: "order_not_on_board" });
+    return;
+  }
   res.json({ ok: true });
 });
 

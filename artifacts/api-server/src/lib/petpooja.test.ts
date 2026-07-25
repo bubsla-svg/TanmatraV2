@@ -533,7 +533,14 @@ test("both mappers only ever emit the shared order-status vocabulary", () => {
 // The vocabulary is only worth having if the readers actually accept it. These
 // are the live allowlists, copied here so that narrowing one of them without
 // thinking about the Petpooja seam fails a test instead of silently hiding
-// POS orders again. Keep in sync with:
+// POS orders again.
+//
+// These cover the STATUS axis only. Those same readers now apply a second,
+// independent predicate — `order_channel = 'own_app'` — which is what actually
+// keeps a POS order off our board and away from our riders. The test below
+// this one covers that axis and their interaction; neither is redundant,
+// because a status bug and a channel bug fail in opposite directions (invisible
+// vs. wrongly visible). Keep in sync with:
 //   artifacts/api-server/src/routes/orders.ts:56   ACTIVE_STATUSES
 //   artifacts/api-server/src/routes/ops.ts         /kds/orders filter
 //   artifacts/api-server/src/lib/dispatch.ts:331   partnerStatuses
@@ -567,4 +574,61 @@ test("every mapped in-flight status is visible to the readers that matter", () =
   // Picked up → trackable, no longer batchable.
   assert.ok(storefrontTrackable.includes(mapPetpoojaRiderStatus("pickedup")));
   assert.ok(!dispatchPartner.includes(mapPetpoojaRiderStatus("pickedup")));
+});
+
+// The channel axis of the same seam. Models the predicate the narrowed readers
+// actually apply, so the two dimensions can be reasoned about together:
+// status decides whether a row is in flight, channel decides whether it is ours.
+function passesOwnAppReader(row: {
+  orderKind: string;
+  orderChannel: string;
+  status: string;
+}, statusAllowlist: readonly string[]): boolean {
+  return (
+    row.orderKind === "meal" &&
+    row.orderChannel === "own_app" &&
+    statusAllowlist.includes(row.status)
+  );
+}
+
+test("no Petpooja status can put a POS order on an own-app surface", () => {
+  const ordersActive = ["placed", "preparing", "ready", "out_for_delivery"];
+  const kdsQueue = ["placed", "preparing"];
+  const dispatchLive = ["placed", "preparing", "ready", "rider_assigned"];
+
+  // Every status code Petpooja can send us, including the ones that map to a
+  // very-much-in-flight state. `order_from` is absent here, which is the
+  // realistic case: Petpooja has not confirmed the push carries that field.
+  for (const code of ["1", "-1", "2", "5", "6", "0", "", "99"]) {
+    const row = {
+      orderKind: "meal",
+      orderChannel: mapPetpoojaOrderChannel(undefined),
+      status: mapPetpoojaStatus(code),
+    };
+    for (const allowlist of [ordersActive, kdsQueue, dispatchLive]) {
+      assert.equal(
+        passesOwnAppReader(row, allowlist),
+        false,
+        `Petpooja status ${JSON.stringify(code)} → ${row.status} reached an own-app reader`,
+      );
+    }
+  }
+
+  // ...and the exclusion must come from the channel, not from the status
+  // happening to fall outside every allowlist. Without this the test above
+  // could pass for entirely the wrong reason and keep passing after someone
+  // deletes the channel predicate.
+  const accepted = { orderKind: "meal", orderChannel: "own_app", status: mapPetpoojaStatus("1") };
+  assert.equal(passesOwnAppReader(accepted, ordersActive), true);
+  assert.equal(passesOwnAppReader(accepted, kdsQueue), true);
+
+  // Named aggregators are excluded by the same single predicate — there is no
+  // per-aggregator list to keep up to date, which is the point of the column.
+  for (const channel of orderChannelValues.filter((c) => c !== "own_app")) {
+    assert.equal(
+      passesOwnAppReader({ ...accepted, orderChannel: channel }, ordersActive),
+      false,
+      `channel ${channel} reached an own-app reader`,
+    );
+  }
 });

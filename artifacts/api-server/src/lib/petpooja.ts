@@ -639,11 +639,16 @@ export async function mapPetpoojaOrderToDb(
  *   anything else      — `placed`, the safe pre-kitchen default.
  *
  * Consequence worth stating: `preparing` is in the KDS queue filter
- * (ops.ts /kds/orders, ["placed","preparing"] + orderKind='meal'), so
- * POS-originated orders now surface in the Tanmatra KDS. That is correct.
- * Before this they were not "correctly excluded" — they were accidentally
- * invisible. Excluding aggregator (Zomato/Swiggy) orders is a job for an
- * order-channel column, not for a status value no reader understands.
+ * (ops.ts /kds/orders, ["placed","preparing"]), so on status alone a
+ * POS-originated order is visible to every reader that matters. Before this
+ * mapper was typed they were not "correctly excluded" — they were accidentally
+ * invisible, which is a different and worse thing.
+ *
+ * What keeps them off our surfaces now is `orders.order_channel`, which is the
+ * right tool for it: ops.ts, orders.ts and dispatch.ts filter on the channel,
+ * not on a status value no reader understands. The two mechanisms are
+ * deliberately separate — status says how far along an order is, channel says
+ * whose order it is, and conflating them is what produced the original bug.
  */
 export function mapPetpoojaStatus(petpoojaStatus: string): OrderStatus {
   switch (petpoojaStatus) {
