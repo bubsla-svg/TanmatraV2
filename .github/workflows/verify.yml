@@ -101,6 +101,7 @@ jobs:
           ../tanmatra/src/lib/checkoutLedger.test.ts
           ../tanmatra/src/lib/subscriptionPricing.test.ts
           ../tanmatra/src/lib/rdPlans.pricing.test.ts
+          ../tanmatra/src/lib/apiError.test.ts
           ../tanmatra/src/components/primitives/logic.test.ts
           ../tanmatra/src/components/plans/planDisplay.test.ts
           ../tanmatra/src/components/cuj/cuj.test.ts
