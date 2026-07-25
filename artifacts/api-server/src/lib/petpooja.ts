@@ -1,5 +1,5 @@
 import { sql, eq } from "drizzle-orm";
-import { type InsertMenuItem, type MenuItem, type InsertOrder, usersTable, menuItemsTable } from "@workspace/db/schema";
+import { type InsertMenuItem, type MenuItem, type InsertOrder, type OrderStatus, usersTable, menuItemsTable } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
@@ -580,15 +580,46 @@ export async function mapPetpoojaOrderToDb(
   };
 }
 
-export function mapPetpoojaStatus(petpoojaStatus: string): string {
+/**
+ * Petpooja numeric order status → our order-status vocabulary.
+ *
+ * The return type is `OrderStatus` (lib/db/src/schema/orders.ts) on purpose.
+ * These two mappers used to return `string` and emitted "confirmed" and
+ * "dispatched" — two values NOTHING in the system reads. Neither appears in
+ * orders.ts's ACTIVE_STATUSES or CANCELLABLE, payments.ts's PAID_STATES,
+ * dispatch.ts's liveStatuses or partnerStatuses, etaModel.ts's ACTIVE_STATUSES,
+ * the ops.ts KDS queue filter, or the storefront's TRACKABLE_STATUSES. An order
+ * the POS moved to either one silently dropped out of the customer's active
+ * list, the dispatch sweep and the tracker — losing tracking at exactly the
+ * moment the food was on its way. Typing the return closes that door.
+ *
+ * Petpooja's codes (per the Online Ordering API status callback):
+ *   1  Accepted        — the kitchen has taken the order and started on it.
+ *                        We have no separate "confirmed" state; acceptance IS
+ *                        the start of prep, so this is `preparing` (which is
+ *                        also what our own money path writes on payment
+ *                        capture — payments.ts:477).
+ *   -1 Cancelled by outlet, 2 Rejected — both terminal, both `cancelled`.
+ *   5  Dispatched      — out the door with a rider: `out_for_delivery`.
+ *   6  Delivered       — `delivered`.
+ *   anything else      — `placed`, the safe pre-kitchen default.
+ *
+ * Consequence worth stating: `preparing` is in the KDS queue filter
+ * (ops.ts /kds/orders, ["placed","preparing"] + orderKind='meal'), so
+ * POS-originated orders now surface in the Tanmatra KDS. That is correct.
+ * Before this they were not "correctly excluded" — they were accidentally
+ * invisible. Excluding aggregator (Zomato/Swiggy) orders is a job for an
+ * order-channel column, not for a status value no reader understands.
+ */
+export function mapPetpoojaStatus(petpoojaStatus: string): OrderStatus {
   switch (petpoojaStatus) {
     case "1":
-      return "confirmed";
+      return "preparing";
     case "-1":
     case "2":
       return "cancelled";
     case "5":
-      return "dispatched";
+      return "out_for_delivery";
     case "6":
       return "delivered";
     default:
@@ -596,9 +627,36 @@ export function mapPetpoojaStatus(petpoojaStatus: string): string {
   }
 }
 
-export function mapPetpoojaRiderStatus(status: string): string {
-  if (status.toLowerCase() === "delivered") {
-    return "delivered";
+/**
+ * Petpooja rider-info status string → our order-status vocabulary.
+ *
+ * The two rider states are distinct for us and must not be collapsed:
+ * `rider_assigned` is in dispatch.ts's partnerStatuses (so a rider-assigned
+ * order can still be batched with a nearby one) while `out_for_delivery` is
+ * not — once the food is moving, batching it is wrong.
+ *
+ * An unrecognised string maps to `rider_assigned`, the LEAST advanced of the
+ * rider states. Guessing low is the safe direction: over-stating progress
+ * would strip an order out of the batching pool and tell the customer the
+ * food had left when it had not.
+ *
+ * Still open (pre-existing, not introduced here): neither this mapper's caller
+ * nor the /callback and /orderstatus callers guard monotonicity, so an
+ * out-of-order or replayed webhook can walk an order BACKWARDS — including out
+ * of `delivered`. That was already true when these mappers returned "confirmed"
+ * and "dispatched"; making the values real does not create it. The fix belongs
+ * with the webhook handlers in routes/petpooja.ts, not here.
+ */
+export function mapPetpoojaRiderStatus(status: string): OrderStatus {
+  switch (status.toLowerCase()) {
+    case "delivered":
+      return "delivered";
+    case "pickedup":
+      return "out_for_delivery";
+    case "rider-assigned":
+    case "rider-arrived":
+      return "rider_assigned";
+    default:
+      return "rider_assigned";
   }
-  return "dispatched"; // rider-assigned, rider-arrived, pickedup map to dispatched
 }

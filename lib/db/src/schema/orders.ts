@@ -11,6 +11,47 @@ import type { MarketplaceOrderLine } from "./marketplace";
 export const orderKindValues = ["meal", "marketplace"] as const;
 export type OrderKind = (typeof orderKindValues)[number];
 
+// The order-status vocabulary. `orders.status` is a plain varchar with no
+// check constraint, so this tuple is documentation-plus-types rather than an
+// enforced enum — but it is the ONLY place the full set is written down, and
+// every writer of `orders.status` should be typed against `OrderStatus` so a
+// new value cannot be invented at a keyboard.
+//
+// This exists because it was possible to invent one: the Petpooja webhook
+// mappers used to emit "confirmed" and "dispatched", two values that no
+// reader in the system recognised. An order the POS moved to either one
+// disappeared from the customer's active-order list, the dispatch sweep and
+// the storefront tracker. See mapPetpoojaStatus in
+// artifacts/api-server/src/lib/petpooja.ts.
+//
+// The readers that must accept a value for it to be usable — keep this list
+// current, it is the reason the vocabulary is closed:
+//   • artifacts/api-server/src/routes/orders.ts    ACTIVE_STATUSES, CANCELLABLE
+//   • artifacts/api-server/src/routes/payments.ts  PAID_STATES
+//   • artifacts/api-server/src/routes/ops.ts       the KDS queue filter
+//   • artifacts/api-server/src/lib/dispatch.ts     liveStatuses, partnerStatuses
+//   • artifacts/api-server/src/lib/etaModel.ts     ACTIVE_STATUSES
+//   • artifacts/storefront/lib/orderStatus.ts      STATUS_LABELS, TRACKABLE_STATUSES
+export const orderStatusValues = [
+  // Pre-kitchen.
+  "placed",
+  // In the kitchen. This is what an accepted/confirmed POS order becomes —
+  // there is no separate "confirmed" state; acceptance IS the start of prep.
+  "preparing",
+  "ready",
+  // Out the door.
+  "rider_assigned",
+  "out_for_delivery",
+  "delivered",
+  // Terminal, unhappy.
+  "cancelled",
+  "failed",
+  "refunded",
+  // Marketplace/ops settlement state, not part of the delivery ladder.
+  "billed",
+] as const;
+export type OrderStatus = (typeof orderStatusValues)[number];
+
 // Meal-order line item: {id,name,qty,price}. Marketplace-order lines use
 // MarketplaceOrderLine (see ./marketplace) instead. orders.items is a
 // union of the two shapes — see isMealOrderItem below.

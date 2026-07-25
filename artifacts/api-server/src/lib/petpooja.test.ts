@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { mapPetpoojaItem, slugify, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus } from "./petpooja";
-import { usersTable, menuItemsTable, isMealOrderItem } from "@workspace/db/schema";
+import { usersTable, menuItemsTable, isMealOrderItem, orderStatusValues } from "@workspace/db/schema";
 
 test("slugify helper", () => {
   assert.equal(slugify("Veg Loaded Pizza"), "veg-loaded-pizza");
@@ -374,17 +374,88 @@ test("mapPetpoojaOrderToDb maps order payload to database order structure", asyn
 });
 
 test("mapPetpoojaStatus maps status codes to database statuses", () => {
-  assert.equal(mapPetpoojaStatus("1"), "confirmed");
+  // "1" = Accepted. There is no "confirmed" state — acceptance is the start
+  // of prep, and `preparing` is what our own money path writes on capture.
+  assert.equal(mapPetpoojaStatus("1"), "preparing");
+  assert.equal(mapPetpoojaStatus("-1"), "cancelled");
   assert.equal(mapPetpoojaStatus("2"), "cancelled");
-  assert.equal(mapPetpoojaStatus("5"), "dispatched");
+  assert.equal(mapPetpoojaStatus("5"), "out_for_delivery");
   assert.equal(mapPetpoojaStatus("6"), "delivered");
   assert.equal(mapPetpoojaStatus("9"), "placed");
+  assert.equal(mapPetpoojaStatus(""), "placed");
 });
 
 test("mapPetpoojaRiderStatus maps status string to database status", () => {
-  assert.equal(mapPetpoojaRiderStatus("rider-assigned"), "dispatched");
-  assert.equal(mapPetpoojaRiderStatus("rider-arrived"), "dispatched");
-  assert.equal(mapPetpoojaRiderStatus("pickedup"), "dispatched");
+  assert.equal(mapPetpoojaRiderStatus("rider-assigned"), "rider_assigned");
+  assert.equal(mapPetpoojaRiderStatus("rider-arrived"), "rider_assigned");
+  // Picked up = moving. Distinct from rider_assigned because dispatch.ts's
+  // partnerStatuses batches rider_assigned orders and must not batch this one.
+  assert.equal(mapPetpoojaRiderStatus("pickedup"), "out_for_delivery");
   assert.equal(mapPetpoojaRiderStatus("delivered"), "delivered");
-  assert.equal(mapPetpoojaRiderStatus("other"), "dispatched");
+  assert.equal(mapPetpoojaRiderStatus("DELIVERED"), "delivered");
+  assert.equal(mapPetpoojaRiderStatus("PickedUp"), "out_for_delivery");
+  // Unknown guesses LOW, never high — over-stating progress would strip the
+  // order out of the batching pool and lie to the customer.
+  assert.equal(mapPetpoojaRiderStatus("other"), "rider_assigned");
+});
+
+// The regression this file exists to prevent. Both mappers previously returned
+// "confirmed" / "dispatched", values no reader in the system recognises, so a
+// POS-driven order vanished from the customer's active list, the dispatch
+// sweep and the storefront tracker. These assertions are deliberately stated
+// against the SHARED vocabulary rather than against literals, so adding a new
+// Petpooja code cannot reintroduce a private dialect.
+test("both mappers only ever emit the shared order-status vocabulary", () => {
+  const vocabulary: ReadonlySet<string> = new Set(orderStatusValues);
+  for (const code of ["1", "-1", "2", "5", "6", "9", "", "999"]) {
+    assert.ok(
+      vocabulary.has(mapPetpoojaStatus(code)),
+      `mapPetpoojaStatus(${JSON.stringify(code)}) → ${mapPetpoojaStatus(code)} is not in orderStatusValues`,
+    );
+  }
+  for (const s of ["rider-assigned", "rider-arrived", "pickedup", "delivered", "", "surprise"]) {
+    assert.ok(
+      vocabulary.has(mapPetpoojaRiderStatus(s)),
+      `mapPetpoojaRiderStatus(${JSON.stringify(s)}) → ${mapPetpoojaRiderStatus(s)} is not in orderStatusValues`,
+    );
+  }
+});
+
+// The vocabulary is only worth having if the readers actually accept it. These
+// are the live allowlists, copied here so that narrowing one of them without
+// thinking about the Petpooja seam fails a test instead of silently hiding
+// POS orders again. Keep in sync with:
+//   artifacts/api-server/src/routes/orders.ts:56   ACTIVE_STATUSES
+//   artifacts/api-server/src/routes/ops.ts         /kds/orders filter
+//   artifacts/api-server/src/lib/dispatch.ts:331   partnerStatuses
+//   artifacts/storefront/lib/orderStatus.ts:52     TRACKABLE_STATUSES
+test("every mapped in-flight status is visible to the readers that matter", () => {
+  const ordersActive = ["placed", "preparing", "ready", "out_for_delivery"];
+  const kdsQueue = ["placed", "preparing"];
+  const dispatchPartner = ["rider_assigned", "ready"];
+  const storefrontTrackable = [
+    "placed",
+    "preparing",
+    "ready",
+    "rider_assigned",
+    "out_for_delivery",
+  ];
+
+  // Accepted by the POS → in the customer's active list AND on the KDS board.
+  assert.ok(ordersActive.includes(mapPetpoojaStatus("1")));
+  assert.ok(kdsQueue.includes(mapPetpoojaStatus("1")));
+  assert.ok(storefrontTrackable.includes(mapPetpoojaStatus("1")));
+
+  // Dispatched by the POS → still active, still trackable, NOT batchable.
+  assert.ok(ordersActive.includes(mapPetpoojaStatus("5")));
+  assert.ok(storefrontTrackable.includes(mapPetpoojaStatus("5")));
+  assert.ok(!dispatchPartner.includes(mapPetpoojaStatus("5")));
+
+  // Rider assigned → trackable AND still eligible for batching.
+  assert.ok(dispatchPartner.includes(mapPetpoojaRiderStatus("rider-assigned")));
+  assert.ok(storefrontTrackable.includes(mapPetpoojaRiderStatus("rider-assigned")));
+
+  // Picked up → trackable, no longer batchable.
+  assert.ok(storefrontTrackable.includes(mapPetpoojaRiderStatus("pickedup")));
+  assert.ok(!dispatchPartner.includes(mapPetpoojaRiderStatus("pickedup")));
 });
