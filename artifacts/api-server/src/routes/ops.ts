@@ -31,6 +31,7 @@ import { requireOps as gateRequireOps } from "../lib/adminGate";
 import { sendDeliveryDelaySms } from "../lib/sms";
 import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
 import { scanAndExecuteRiderFallbacks } from "../lib/logisticsEngine";
+import { evaluateWholesalePriceSpike } from "../lib/marginGuardrailEngine";
 
 const router: IRouter = Router();
 
@@ -541,6 +542,31 @@ router.all("/logistics/scan-fallbacks", async (_req: Request, res: Response) => 
   } catch (err) {
     logger.error({ err }, "ops.logistics.fallback_scan_failed");
     res.status(500).json({ error: "Failed to scan logistics delivery queues" });
+  }
+});
+
+const wholesaleSpikeSchema = z.object({
+  inventoryItemId: z.number().int().positive(),
+  newUnitPricePaise: z.number().int().positive(),
+});
+
+// Phase 3: Dynamic Wholesale Margin Protection Guardrail
+router.post("/logistics/evaluate-wholesale-spike", async (req: Request, res: Response) => {
+  const parsed = wholesaleSpikeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "malformed parameters for wholesale cost evaluation" });
+    return;
+  }
+  try {
+    const result = await evaluateWholesalePriceSpike(parsed.data.inventoryItemId, parsed.data.newUnitPricePaise);
+    if (!result) {
+      res.status(404).json({ error: "Inventory item not located" });
+      return;
+    }
+    res.json({ ok: true, evaluation: result });
+  } catch (err) {
+    logger.error({ err }, "ops.guardrail.wholesale_spike_error");
+    res.status(500).json({ error: "Failed to evaluate wholesale price margin guardrail" });
   }
 });
 
