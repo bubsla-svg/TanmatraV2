@@ -9,9 +9,14 @@
 //   "paid"        — payment captured AND signature verified server-side.
 //   "cancelled"   — the customer dismissed the modal. Caller decides how to
 //                   roll back (e.g. cancel the just-created subscription).
-//   "unavailable" — gateway not configured (no VITE_RAZORPAY_KEY_ID at build
-//                   time, or the server has no keys). Caller falls back to
-//                   its deferred/pay-later path.
+//   "unavailable" — gateway not configured: no key from the server for this
+//                   order AND no VITE_RAZORPAY_KEY_ID baked in at build time.
+//                   Caller falls back to its deferred/pay-later path.
+//
+// Prefer passing the server-supplied `keyId` (see openRazorpayCheckout): the
+// endpoint that opened the order knows which key it belongs to, so a build with
+// no key baked in still takes payments, and a modal can never be opened with a
+// key from a different Razorpay account than the order it is paying.
 
 import { API_BASE } from "./apiBase";
 
@@ -67,11 +72,23 @@ export async function openRazorpayCheckout(args: {
   description: string;
   /** Prefilled contact number, if known. */
   contact?: string;
+  /**
+   * Publishable key returned alongside the order by the server that opened it.
+   * Prefer this over the build-time `VITE_RAZORPAY_KEY_ID`: the server already
+   * knows which key its order belongs to, so passing it through means checkout
+   * works on a build with no key baked in, and makes it impossible to open a
+   * modal with a key from a different Razorpay account than the order.
+   *
+   * Optional so existing callers keep working; they fall back to the build-time
+   * key exactly as before.
+   */
+  keyId?: string;
 }): Promise<
   | { outcome: "paid"; payment: RazorpayPaymentResult }
   | { outcome: "cancelled" | "unavailable"; payment?: undefined }
 > {
-  if (!RAZORPAY_KEY_ID) return { outcome: "unavailable" };
+  const keyId = args.keyId ?? RAZORPAY_KEY_ID;
+  if (!keyId) return { outcome: "unavailable" };
 
   try {
     await loadCheckoutScript();
@@ -87,7 +104,7 @@ export async function openRazorpayCheckout(args: {
       return;
     }
     const rzp = new Razorpay({
-      key: RAZORPAY_KEY_ID,
+      key: keyId,
       amount: args.amountPaise,
       currency: "INR",
       order_id: args.razorpayOrderId,
