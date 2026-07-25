@@ -105,6 +105,21 @@ jobs:
           ../tanmatra/src/components/plans/planDisplay.test.ts
           ../tanmatra/src/components/cuj/cuj.test.ts
           ../tanmatra/src/components/checkout02c/checkout02c.test.ts
+      # Access-control contract for the /ops router. Its own step, and named for
+      # what it is, so a failure reads as "the ops gate broke" rather than being
+      # buried in a money run — same reasoning as the KDS step below.
+      #
+      # It lives in money-unit because it is DB-free: the gate rejects before
+      # any handler runs, so no query is ever issued. The suite enumerates every
+      # route registered on the router and asserts each 403s without
+      # credentials, so a route added later is covered without editing a list —
+      # which is the point, given four routes shipped unguarded precisely
+      # because a per-handler check is a thing an author can forget.
+      - name: Ops router access-control contract
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/routes/ops.gate.test.ts
 
   money-integration:
     runs-on: ubuntu-latest
