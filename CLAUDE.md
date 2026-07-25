@@ -35,19 +35,21 @@ node --test --import tsx ./src/lib/mealPlanner.test.ts
 node --test --import tsx ./src/routes/groupOrders.test.ts
 ```
 
-The storefront's tests are the exception: it has **no `test` script**, and it does not
-declare `tsx`, so the root `pnpm run test` silently skips all 43 files / 211 tests. Drive
-them through the api-server's `tsx` loader — that package does declare it, so this works on
-a clean `pnpm install` (a bare `pnpm exec tsx` inside `artifacts/storefront` only appears to
-work when the machine happens to have a global `tsx` on `PATH`):
+The storefront runs its own suite — 43 files, 211 tests, all in `artifacts/storefront/lib/`
+and all DB- and network-free (every API client takes an injectable `fetchImpl`):
 ```bash
-cd artifacts/api-server
-node --test --import tsx ../storefront/lib/catalog.test.ts   # one file
-node --test --import tsx ../storefront/lib/*.test.ts         # all storefront wire tests
+pnpm --filter @workspace/storefront run test     # all 211, ~18s
+cd artifacts/storefront
+node --test --import tsx ./lib/catalog.test.ts   # one file
 ```
-This is the same invocation `.github/workflows/storefront.yml` uses, so they are gated on
-PRs that touch the storefront — but a green root `pnpm run test` is not evidence that they
-pass.
+`.github/workflows/storefront.yml` drives the same files from `artifacts/api-server`
+(`node --test --import tsx ../storefront/lib/*.test.ts`). That form predates the storefront
+declaring its own `tsx` and is still correct — either works.
+
+**`artifacts/tanmatra` (the legacy SPA) has no `test` script**, so the root `pnpm run test`
+skips it. Its money-math tests run only through the hand-written file list in `verify.yml`'s
+`money-unit` job — adding a test file under `artifacts/tanmatra/` without also adding it to
+that list means it runs nowhere.
 
 **API codegen (after changing `lib/api-spec/openapi.yaml`)**
 ```bash
