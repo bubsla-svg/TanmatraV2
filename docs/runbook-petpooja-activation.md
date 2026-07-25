@@ -94,12 +94,19 @@ Only if Petpooja gave you values different from the code defaults:
 - `PETPOOJA_SAVE_ORDER_URL` — defaults to `https://pos.petpooja.com/api/v1/save_order`
 - `PETPOOJA_RESTAURANT_NAME` — defaults to `Wellness Foods`
 - `PETPOOJA_INVENTORY_BASE_URL` — defaults to `https://api.petpooja.com`.
-  **Leave it blank.** Petpooja's own integration mail names
-  `https://inventory.petpooja.com`; that host serves the billing web UI and 404s
-  every API path. The working endpoints are `/V1/thirdparty/get_purchase/` and
-  `/V1/thirdparty/get_stock/` on `api.petpooja.com`, verified against the live
-  outlet on 2026-07-24. Setting this variable from the mail would override a
-  known-good default with a known-bad one.
+  **Leave it blank.** Petpooja's integration mail names
+  `https://inventory.petpooja.com`, and that host is real — but it hosts the
+  *write* side of the Inventory API (`/inventories/purchase_save_api` and
+  friends, which push data INTO Petpooja). Everything this codebase reads lives
+  on `api.petpooja.com`: `/V1/thirdparty/get_purchase/` and
+  `/V1/thirdparty/get_stock_api/`, both verified against the live outlet on
+  2026-07-25. Pointing the read client at the write host would 404.
+
+  > An earlier revision of this runbook said `inventory.petpooja.com` "404s
+  > every API path". That was a wrong inference from testing it with
+  > `api.petpooja.com`'s paths. The advice — leave the variable blank — happens
+  > to be unchanged; the reasoning was not sound, and is corrected here so the
+  > next person does not conclude the vendor's mail was mistaken.
 - `PETPOOJA_INVENTORY_REST_ID` — defaults to the menu sharing code. Leave blank.
   The Inventory API rejects the numeric RID with code 103 ("error in restaurant
   mapping"), so the RID is never the value here despite being the number

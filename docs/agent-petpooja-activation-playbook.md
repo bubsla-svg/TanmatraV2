@@ -164,12 +164,14 @@ Petpooja team specified something different:
 - `PETPOOJA_RESTAURANT_NAME` (default `Wellness Foods`)
 - `PETPOOJA_INVENTORY_BASE_URL` / `PETPOOJA_INVENTORY_REST_ID` — **do not set
   these from Petpooja's integration mail.** The mail names
-  `https://inventory.petpooja.com` and RID `355738`; both are wrong for the API.
-  That host 404s every API path (it is the billing web UI) and the RID is
-  rejected with code 103. The defaults — `https://api.petpooja.com` and the menu
-  sharing code — were verified against the live outlet on 2026-07-24. This is the
-  one place where "the vendor specified something different" is not a reason to
-  override; if Petpooja insists, get it confirmed against a live call first.
+  `https://inventory.petpooja.com` and RID `355738`. The host is genuine, but it
+  serves the Inventory API's *write* endpoints (`/inventories/*_save_api`, which
+  push data into Petpooja); every read this codebase performs is on
+  `api.petpooja.com`. The RID is rejected with code 103 wherever it is sent. The
+  defaults — `https://api.petpooja.com` and the menu sharing code — were verified
+  against the live outlet on 2026-07-25. This is the one place where "the vendor
+  specified something different" is not a reason to override; if Petpooja insists,
+  get it confirmed against a live call first.
 
 If any differ, **stop and ask the operator**, then add each as a literal line in
 `deploy.yml`'s `--update-env-vars` (they're non-secret) — mirroring how

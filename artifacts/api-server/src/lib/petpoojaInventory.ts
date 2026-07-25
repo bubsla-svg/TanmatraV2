@@ -5,49 +5,59 @@
  * contrary to what this file assumed until it was probed — the SAME host and the
  * SAME identifier:
  *
- *   | Concern             | Host             | Path                          | Identifier         |
- *   |---------------------|------------------|-------------------------------|--------------------|
- *   | Order push (POS)    | pos.petpooja.com | /api/v1/save_order            | Menu Sharing Code  |
- *   | Purchases/invoices  | api.petpooja.com | /V1/thirdparty/get_purchase/  | Menu Sharing Code  |
- *   | Stock balances      | api.petpooja.com | /V1/thirdparty/get_stock/     | Menu Sharing Code  |
+ *   | Concern             | Host             | Path                            | Identifier key    |
+ *   |---------------------|------------------|---------------------------------|-------------------|
+ *   | Order push (POS)    | pos.petpooja.com | /api/v1/save_order              | Menu Sharing Code |
+ *   | Purchases/invoices  | api.petpooja.com | /V1/thirdparty/get_purchase/    | restID *or* MSC   |
+ *   | Stock balances      | api.petpooja.com | /V1/thirdparty/get_stock_api/   | menuSharingCode   |
  *
  * ─────────────────────────────────────────────────────────────────────────
- * VERIFIED VENDOR CONTRACT (probed live against outlet cq5hnj3629, 2026-07-24)
+ * VERIFIED VENDOR CONTRACT (probed live against outlet cq5hnj3629, 2026-07-25)
  * ─────────────────────────────────────────────────────────────────────────
  * An earlier revision of this file guessed the contract, because the vendor's
  * reference page is client-rendered and could not be read. Every one of those
  * guesses was wrong; recorded here so the same wrong turns are not retaken:
  *
- *   | Thing        | Guessed                        | Actual                        |
- *   |--------------|--------------------------------|-------------------------------|
- *   | host         | inventory.petpooja.com         | api.petpooja.com              |
- *   | purchase     | /api/get_purchase              | /V1/thirdparty/get_purchase/  |
- *   | stock        | /api/get_stock                 | /V1/thirdparty/get_stock/     |
- *   | identifier   | RID 355738                     | sharing code cq5hnj3629       |
- *   | date keys    | start_date/end_date            | from_date/to_date             |
- *   | failure      | non-2xx HTTP                   | HTTP 200 + success:"0"        |
+ *   | Thing        | Guessed                        | Actual                          |
+ *   |--------------|--------------------------------|---------------------------------|
+ *   | host         | inventory.petpooja.com         | api.petpooja.com (for reads)    |
+ *   | purchase     | /api/get_purchase              | /V1/thirdparty/get_purchase/    |
+ *   | stock        | /api/get_stock                 | /V1/thirdparty/get_stock_api/   |
+ *   | identifier   | RID 355738                     | sharing code cq5hnj3629         |
+ *   | date keys    | start_date/end_date            | from_date/to_date               |
+ *   | failure      | non-2xx HTTP                   | HTTP 200 + success:"0"          |
  *
- * `inventory.petpooja.com` 404s every API path tried — it serves the billing
- * web UI, not the API. The numeric RID is rejected with code 103 ("error in
- * restaurant mapping"); the Menu Sharing Code is what `restID` wants, and the
- * response echoes it back. Confirmed constraints:
+ * The numeric RID is rejected with code 103 ("error in restaurant mapping");
+ * the Menu Sharing Code is the wire value everywhere. Confirmed constraints:
  *
- *   - get_purchase takes `from_date`/`to_date` (YYYY-MM-DD) and refuses a span
- *     wider than about a month with code 101. `MAX_PURCHASE_RANGE_DAYS` clamps.
+ *   - get_purchase takes `from_date`/`to_date` and refuses a span wider than
+ *     about a month with code 101. `MAX_PURCHASE_RANGE_DAYS` clamps. It accepts
+ *     the identifier under EITHER `restID` or `menuSharingCode`, and accepts
+ *     either `DD-MM-YYYY` or `YYYY-MM-DD` — all four combinations return the
+ *     same rows. We send `restID` + ISO because that pair is the longest-lived
+ *     verified form.
  *   - A reversed range (to < from) is NOT an error — it returns "No record
  *     found." So a date bug reads as a quiet empty day. Refused locally.
- *   - get_stock takes `date`, and for this outlet answers code 301 "Provide
- *     date is not in your date range" with an EMPTY available_range for every
- *     date tried across a year and every format tried. Stock history appears
- *     not to be provisioned yet; purchases work fine. Until that is fixed with
- *     PetPooja the stock sync has nothing to read — which is exactly why it
- *     ships dry-run.
+ *   - get_stock_api takes `menuSharingCode` (camelCase — `restID` gets code 103
+ *     and lowercase `menusharingcode` gets code 100) plus `date` in `YYYY-MM-DD`
+ *     (`DD-MM-YYYY` gets "Please provide valid date"). It answers `closing_json`,
+ *     an array of `{name, price, unit, qty, restaurant_id, category, sapcode}`.
+ *     `date` IS honoured: five dates across 14 months returned five different
+ *     payloads.
+ *
+ *   ⚠ CORRECTION. The previous revision of this file recorded that get_stock
+ *   "answers code 301 for every date tried, so stock history is not provisioned".
+ *   That was wrong, and wrong in an expensive way: `/V1/thirdparty/get_stock/`
+ *   is a DIFFERENT endpoint from `/V1/thirdparty/get_stock_api/`, and only the
+ *   latter is the inventory Stock API. The outlet has always had 378 raw
+ *   materials with live balances. The 301 was this client knocking on the wrong
+ *   door. Nothing was broken at PetPooja's end.
  *
  * Everything above is still env-overridable, so a vendor change is a config
  * edit rather than a redeploy:
  *   PETPOOJA_INVENTORY_BASE_URL      default https://api.petpooja.com
  *   PETPOOJA_PURCHASE_PATH           default /V1/thirdparty/get_purchase/
- *   PETPOOJA_STOCK_PATH              default /V1/thirdparty/get_stock/
+ *   PETPOOJA_STOCK_PATH              default /V1/thirdparty/get_stock_api/
  *   PETPOOJA_INVENTORY_REST_ID       default = menu sharing code
  *
  * The whole module is inert unless the three PetPooja secrets AND
@@ -84,7 +94,7 @@ export interface InventoryLogger {
 
 const DEFAULT_BASE_URL = "https://api.petpooja.com";
 const DEFAULT_PURCHASE_PATH = "/V1/thirdparty/get_purchase/";
-const DEFAULT_STOCK_PATH = "/V1/thirdparty/get_stock/";
+const DEFAULT_STOCK_PATH = "/V1/thirdparty/get_stock_api/";
 const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
@@ -532,6 +542,7 @@ function mergeStockHeader(flat: Map<string, unknown>, parent: StockHeaderCtx): S
 function asStockLine(
   flat: Map<string, unknown>,
   header: StockHeaderCtx,
+  stats?: StockParseStats,
 ): PetpoojaStockLine | null {
   const product = pickString(flat, PRODUCT_KEYS);
   if (!product) return null;
@@ -539,7 +550,14 @@ function asStockLine(
   const raw = pick(flat, STOCK_QTY_KEYS);
   if (raw === undefined) return null;
   const qty = toNumber(raw);
-  if (qty === null || qty < 0) return null;
+  if (qty === null) return null;
+  if (qty < 0) {
+    if (stats) {
+      stats.negativeRows += 1;
+      if (stats.negativeSample.length < 10) stats.negativeSample.push(product);
+    }
+    return null;
+  }
 
   return {
     product,
@@ -549,12 +567,37 @@ function asStockLine(
   };
 }
 
+/**
+ * What the stock parser threw away, so a caller can say so out loud.
+ *
+ * Negative balances are dropped rather than passed on — feeding one to the
+ * reorder engine understates what we hold — but dropping them silently is worse
+ * than the negatives themselves. At this outlet 89 of the 122 non-zero rows are
+ * negative, which is not a rounding artefact: it is what a PetPooja inventory
+ * module looks like when recipes deduct on every sale and nobody enters the
+ * purchase invoices. Losing that signal would make an unmanaged store look like
+ * an empty one.
+ */
+export interface StockParseStats {
+  /** Rows refused for carrying a negative balance. */
+  negativeRows: number;
+  /** Up to ten product names from those rows, for the log line. */
+  negativeSample: string[];
+}
+
+export function emptyStockParseStats(): StockParseStats {
+  return { negativeRows: 0, negativeSample: [] };
+}
+
 /** Shape-agnostic stock parser. Returns `[]` (never throws) when nothing matches. */
-export function normalizeStockResponse(body: unknown): PetpoojaStockLine[] {
+export function normalizeStockResponse(
+  body: unknown,
+  stats?: StockParseStats,
+): PetpoojaStockLine[] {
   const out: PetpoojaStockLine[] = [];
   walk<PetpoojaStockLine, StockHeaderCtx>(body, { asOfDate: null }, out, 0, {
     mergeHeader: mergeStockHeader,
-    asLine: asStockLine,
+    asLine: (flat, header) => asStockLine(flat, header, stats),
   });
   return out;
 }
@@ -591,9 +634,22 @@ export function buildPurchaseRequestBody(
 }
 
 /**
- * Request body for Get Stock. VERIFIED key name (`date`); the endpoint reads it
- * and answers about the date's validity, which is how we know it is the right
- * key. `stock_date` alone gets code 100.
+ * Request body for Get Stock (`/V1/thirdparty/get_stock_api/`).
+ *
+ * The identifier key here is `menuSharingCode`, NOT `restID` — this endpoint is
+ * stricter than get_purchase, which takes either. Probed against the live
+ * outlet, all three spellings answer differently and only one works:
+ *
+ *   menuSharingCode  -> success 1, 378 rows
+ *   restID           -> code 103 "There were some error in restaurant mapping."
+ *   menusharingcode  -> code 100 "Please provide all request parameters."
+ *
+ * That last row matters because the vendor's own Authentication section
+ * documents the parameter as lowercase `menusharingcode`, while every sample
+ * curl on the same page uses camelCase. The camelCase samples are right.
+ *
+ * `date` must be `YYYY-MM-DD`; `DD-MM-YYYY` is refused with "Please provide
+ * valid date" even though get_purchase accepts that format happily.
  */
 export function buildStockRequestBody(
   cfg: PetpoojaInventoryConfig,
@@ -603,7 +659,7 @@ export function buildStockRequestBody(
     app_key: cfg.appKey,
     app_secret: cfg.appSecret,
     access_token: cfg.accessToken,
-    restID: cfg.restId,
+    menuSharingCode: cfg.restId,
     date: opts.date,
   };
 }
@@ -853,15 +909,15 @@ export async function fetchStock(
   }
   const envelope = readVendorEnvelope(res.parsed);
   if (!envelope.ok) {
-    // Code 301 ("Provide date is not in your date range", with an empty
-    // available_range) is the answer this outlet gives for EVERY date tried
-    // across a year and every date format — i.e. stock history is not
-    // provisioned yet. That is a PetPooja-side fix, not a code change, so it is
-    // surfaced as a vendor rejection with the code intact rather than being
-    // flattened into "no rows".
+    // The three refusals worth recognising on sight, all HTTP 200:
+    //   103 — identifier sent as `restID` instead of `menuSharingCode`
+    //   100 — identifier spelled `menusharingcode`, or `date` missing
+    //   "Please provide valid date" — `date` sent as DD-MM-YYYY
+    // Each is a client bug wearing a vendor error's clothes, so the code is
+    // surfaced intact rather than flattened into "no rows".
     opts.log?.error?.(
       { url, date, status: res.status, code: envelope.code, message: envelope.message },
-      "petpooja inventory: get_stock rejected by the vendor",
+      "petpooja inventory: get_stock_api rejected by the vendor",
     );
     return {
       ok: false,
@@ -870,7 +926,23 @@ export async function fetchStock(
       error: `${envelope.code ?? "vendor_error"}: ${envelope.message ?? "rejected"}`,
     };
   }
-  const lines = normalizeStockResponse(res.parsed);
+  const stats = emptyStockParseStats();
+  const lines = normalizeStockResponse(res.parsed, stats);
+  if (stats.negativeRows > 0) {
+    // Not a parser fault and not fatal — but a store running dozens of raw
+    // materials below zero is telling us purchases are not being entered, and
+    // that is worth reading in the logs rather than inferring from a short list.
+    opts.log?.warn?.(
+      {
+        url,
+        date,
+        negativeRows: stats.negativeRows,
+        sample: stats.negativeSample,
+        kept: lines.length,
+      },
+      "petpooja inventory: get_stock_api returned negative balances — dropped from the reorder view",
+    );
+  }
   if (lines.length === 0) {
     // An accepted-but-empty stock response is NOT routine the way an empty
     // purchase window is: a working kitchen always holds something, so zero
