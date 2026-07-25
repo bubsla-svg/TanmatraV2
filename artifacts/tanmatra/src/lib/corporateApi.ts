@@ -87,7 +87,14 @@ export interface Voucher {
   recipientEmail: string | null;
   recipientName: string | null;
   message: string | null;
-  status: "active" | "redeemed" | "cancelled";
+  /**
+   * `pending_payment` is a voucher whose Razorpay order exists but whose
+   * payment has not been captured — it holds no value and the server never
+   * discloses its code. It is filtered out of /vouchers/mine, so it should
+   * not appear in this app; the member exists so the union matches the
+   * server's VoucherStatus exactly.
+   */
+  status: "pending_payment" | "active" | "redeemed" | "cancelled";
   redeemedByUserId: string | null;
   redeemedAt: string | null;
   createdAt: string;
@@ -197,13 +204,36 @@ export const corporateApi = {
     request<{ officeOrder: OfficeOrder }>(`/office-orders/${id}/close`, {
       method: "POST",
     }),
-  purchaseVoucher: (input: {
+  /**
+   * Opens checkout for a voucher. Deliberately returns NO voucher code — the
+   * server withholds it until `verifyVoucher` confirms a captured payment, so
+   * an abandoned checkout never leaves the buyer holding a code that looks
+   * spendable. 503 means the gateway is not configured (there is no free
+   * fallback for bearer money); 502 means Razorpay rejected the order.
+   */
+  startVoucherCheckout: (input: {
     amountPaise: number;
     recipientEmail?: string;
     recipientName?: string;
     message?: string;
   }) =>
-    request<{ voucher: Voucher }>("/vouchers", {
+    request<{
+      voucherId: number;
+      razorpayOrderId: string;
+      amount: number;
+      currency: string;
+      keyId: string;
+    }>("/vouchers", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  /** Verifies the capture server-side; the funded voucher (with code) comes back. */
+  verifyVoucher: (input: {
+    razorpayPaymentId: string;
+    razorpayOrderId: string;
+    razorpaySignature: string;
+  }) =>
+    request<{ voucher: Voucher }>("/vouchers/verify", {
       method: "POST",
       body: JSON.stringify(input),
     }),
