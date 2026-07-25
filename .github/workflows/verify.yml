@@ -131,6 +131,11 @@ jobs:
       # seam, and the create-time gate — all enforced by real Postgres UNIQUE
       # constraints, so they cannot run DB-free.
       #
+      # addons.test.ts belongs here for the same reason as the rest: it pins
+      # that POST /addons/attach never moves orders.total_paise or
+      # orders.charge_paise, which are finalizeOrder's to write and the payment
+      # path's to reconcile against.
+      #
       # ops.refundCap covers the same authority question in the outbound
       # direction: how much the ops agent's refund_order tool may send back
       # against one order. It lives in this step rather than its own because
@@ -173,6 +178,7 @@ jobs:
           ./src/routes/rdAdvisory.appointmentOrder.test.ts
           ./src/routes/vouchers.test.ts
           ./src/routes/premium.paymentOrder.test.ts
+          ./src/routes/addons.test.ts
           ./src/lib/ai/agents/ops.refundCap.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts

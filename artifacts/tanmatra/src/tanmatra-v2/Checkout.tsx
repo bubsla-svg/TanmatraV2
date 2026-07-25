@@ -940,9 +940,11 @@ export default function V2Checkout() {
   // subsidy → payable arithmetic lives in (and is unit-tested by)
   // lib/checkoutLedger.ts. GST stays EXCLUSIVE (5% food + 18% delivery),
   // charged on the discounted base and rounded per component. addonTotal is
-  // intentionally excluded from the Razorpay amount — it is captured separately
-  // via POST /addons/attach after payment, so folding it in would show a total
-  // higher than what's actually charged.
+  // intentionally excluded from the Razorpay amount — it is RECORDED (not
+  // charged) via POST /addons/attach after payment, so folding it in would show
+  // a total higher than what is actually taken. That endpoint returns
+  // `billed: false` to say so at the API boundary; the summary row below must
+  // keep matching it.
   const ledger = computeCheckoutLedger({
     preFirstOrderSubtotal,
     firstOrderDiscount,
@@ -2840,7 +2842,7 @@ export default function V2Checkout() {
                 </div>
                 {addonTotal > 0 && (
                   <div className="billrow" style={{ padding: "4px 0 0", color: "var(--mut)", fontSize: 12 }}>
-                    <span>Add-ons (billed separately, not charged now)</span>
+                    <span>Add-ons (added to your order — not charged)</span>
                     <span className="mono" style={{ color: "var(--mut)" }}>{formatPrice(addonTotal)}</span>
                   </div>
                 )}
@@ -3032,7 +3034,7 @@ function V2MobilePayBar({
           </div>
           {addonTotal > 0 && (
             <div className="billrow" style={{ padding: "6px 0 0", color: "var(--mut)", fontSize: 12 }}>
-              <span>Add-ons (billed separately, not charged now)</span>
+              <span>Add-ons (added to your order — not charged)</span>
               <span className="mono" style={{ color: "var(--mut)" }}>{formatPrice(addonTotal)}</span>
             </div>
           )}
