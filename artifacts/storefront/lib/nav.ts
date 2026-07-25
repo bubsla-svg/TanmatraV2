@@ -77,6 +77,9 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { label: "My orders", href: "/account/orders" },
       { label: "Protocol vault", href: "/account/favorites", desc: "Saved favorites & presets" },
+      { label: "Meal history dashboard", href: "/account/history", desc: "Consumed macro adherence" },
+      { label: "Symptom logs", href: "/account/symptoms", desc: "Correlate reactions & food" },
+      { label: "Challenge streak tracker", href: "/challenges/tracker", desc: "Regimen telemetry" },
       { label: "Nutrition tracker", href: "/account/wellness", desc: "Log food & water, track streaks" },
       { label: "Meal planner", href: "/meal-planner", desc: "Plan & swap your week" },
       { label: "Wellness", href: "/wellness", desc: "Preventive, everyday nutrition" },
@@ -90,6 +93,7 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/recipes",
     links: [
       { label: "Recipes", href: "/recipes", desc: "RD-designed, macro-labelled" },
+      { label: "Community Q&A forum", href: "/qa", desc: "Clinical answers from dietitians" },
       { label: "Our team", href: "/team", desc: "Chefs & dietitians" },
       { label: "Challenges", href: "/challenges", desc: "RD-led cohort programmes" },
       { label: "Corporate wellness", href: "/corporate-wellness", desc: "RD-designed team lunches for offices" },
