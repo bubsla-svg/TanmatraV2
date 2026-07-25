@@ -105,6 +105,24 @@ jobs:
           ../tanmatra/src/components/plans/planDisplay.test.ts
           ../tanmatra/src/components/cuj/cuj.test.ts
           ../tanmatra/src/components/checkout02c/checkout02c.test.ts
+      # Inbound Petpooja authentication. These three files existed and passed
+      # locally while running in no workflow at all — they were on the
+      # test-reach baseline — which is precisely why two fail-open branches in
+      # petpoojaAuthOk() survived unnoticed: `/push-menu` bulk-upserts
+      # menu_items including price_paise, and nothing was checking that the
+      # guard in front of it still held. Wiring them removes three entries from
+      # scripts/test-reach-baseline.txt.
+      #
+      # DB-free: every case is credential/signature arithmetic over a request,
+      # so no Postgres is needed. Its own step, so a failure reads as "inbound
+      # Petpooja auth broke" rather than being buried in a money run.
+      - name: Petpooja inbound auth contract
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/petpoojaClient.test.ts
+          ./src/routes/petpooja.auth.test.ts
+          ./src/routes/petpooja.test.ts
 
   money-integration:
     runs-on: ubuntu-latest
