@@ -1,48 +1,76 @@
 /**
  * PetPooja **Inventory** API client (purchase / supplier-invoice reads).
  *
- * This is a DIFFERENT service from the POS integration in `petpoojaClient.ts`:
+ * A DIFFERENT endpoint family from the order push in `petpoojaClient.ts`, but —
+ * contrary to what this file assumed until it was probed — the SAME host and the
+ * SAME identifier:
  *
- *   | Concern            | Host                        | Identifier                   |
- *   |--------------------|-----------------------------|------------------------------|
- *   | Orders + menu (POS)| pos.petpooja.com            | Menu Sharing Code (cq5hnj…)  |
- *   | Inventory reads    | inventory.petpooja.com      | RID (355738)                 |
- *
- * The two identifiers are NOT interchangeable — see
- * `PETPOOJA_RESTAURANT_ID` (sharing code) vs `PETPOOJA_INVENTORY_RID`.
+ *   | Concern             | Host             | Path                          | Identifier         |
+ *   |---------------------|------------------|-------------------------------|--------------------|
+ *   | Order push (POS)    | pos.petpooja.com | /api/v1/save_order            | Menu Sharing Code  |
+ *   | Purchases/invoices  | api.petpooja.com | /V1/thirdparty/get_purchase/  | Menu Sharing Code  |
+ *   | Stock balances      | api.petpooja.com | /V1/thirdparty/get_stock/     | Menu Sharing Code  |
  *
  * ─────────────────────────────────────────────────────────────────────────
- * ⚠ UNVERIFIED VENDOR CONTRACT
+ * VERIFIED VENDOR CONTRACT (probed live against outlet cq5hnj3629, 2026-07-24)
  * ─────────────────────────────────────────────────────────────────────────
- * PetPooja's Inventory API reference (https://inventory.petpooja.com/inventory_api)
- * is a client-rendered page and returns an empty document to HTTP fetchers, so
- * the endpoint path, the request-body key names and the response shape below
- * could NOT be read from the spec. They are best-effort guesses modelled on the
- * POS API's conventions.
+ * An earlier revision of this file guessed the contract, because the vendor's
+ * reference page is client-rendered and could not be read. Every one of those
+ * guesses was wrong; recorded here so the same wrong turns are not retaken:
  *
- * Everything that depends on those guesses is confined to this file, and the
- * response parser (`normalizePurchaseResponse`) is deliberately shape-agnostic:
- * it walks whatever JSON comes back looking for purchase-line-shaped objects
- * under a broad set of key aliases, rather than binding to one schema. So a
- * wrong guess degrades to "zero lines parsed + a logged warning", never to a
- * crash or to bad prices.
+ *   | Thing        | Guessed                        | Actual                        |
+ *   |--------------|--------------------------------|-------------------------------|
+ *   | host         | inventory.petpooja.com         | api.petpooja.com              |
+ *   | purchase     | /api/get_purchase              | /V1/thirdparty/get_purchase/  |
+ *   | stock        | /api/get_stock                 | /V1/thirdparty/get_stock/     |
+ *   | identifier   | RID 355738                     | sharing code cq5hnj3629       |
+ *   | date keys    | start_date/end_date            | from_date/to_date             |
+ *   | failure      | non-2xx HTTP                   | HTTP 200 + success:"0"        |
  *
- * To correct a guess, override via env (no code change / redeploy of logic):
- *   PETPOOJA_INVENTORY_BASE_URL      default https://inventory.petpooja.com
- *   PETPOOJA_PURCHASE_PATH           default /api/get_purchase
- *   PETPOOJA_STOCK_PATH              default /api/get_stock          (Slice B)
+ * `inventory.petpooja.com` 404s every API path tried — it serves the billing
+ * web UI, not the API. The numeric RID is rejected with code 103 ("error in
+ * restaurant mapping"); the Menu Sharing Code is what `restID` wants, and the
+ * response echoes it back. Confirmed constraints:
+ *
+ *   - get_purchase takes `from_date`/`to_date` (YYYY-MM-DD) and refuses a span
+ *     wider than about a month with code 101. `MAX_PURCHASE_RANGE_DAYS` clamps.
+ *   - A reversed range (to < from) is NOT an error — it returns "No record
+ *     found." So a date bug reads as a quiet empty day. Refused locally.
+ *   - get_stock takes `date`, and for this outlet answers code 301 "Provide
+ *     date is not in your date range" with an EMPTY available_range for every
+ *     date tried across a year and every format tried. Stock history appears
+ *     not to be provisioned yet; purchases work fine. Until that is fixed with
+ *     PetPooja the stock sync has nothing to read — which is exactly why it
+ *     ships dry-run.
+ *
+ * Everything above is still env-overridable, so a vendor change is a config
+ * edit rather than a redeploy:
+ *   PETPOOJA_INVENTORY_BASE_URL      default https://api.petpooja.com
+ *   PETPOOJA_PURCHASE_PATH           default /V1/thirdparty/get_purchase/
+ *   PETPOOJA_STOCK_PATH              default /V1/thirdparty/get_stock/
+ *   PETPOOJA_INVENTORY_REST_ID       default = menu sharing code
  *
  * The whole module is inert unless the three PetPooja secrets AND
  * PETPOOJA_INVENTORY_RID are present — `petpoojaInventoryConfig()` returns null
  * and every caller no-ops, exactly like `petpoojaConfig()` in petpoojaClient.ts.
+ * The RID is kept as that arming switch even though it is not sent as `restID`:
+ * it is the thing PetPooja provisioned inventory against, so "an operator has
+ * confirmed this outlet is wired up" is precisely what its presence means.
  */
 
 export interface PetpoojaInventoryConfig {
   appKey: string;
   appSecret: string;
   accessToken: string;
-  /** Inventory RID (e.g. "355738") — NOT the menu sharing code. */
+  /**
+   * The outlet's numeric inventory RID (e.g. "355738"). Recorded because it is
+   * what PetPooja provisioned against and what any support thread will quote —
+   * but deliberately NOT sent to the API, which rejects it with code 103. Its
+   * presence is the arming switch; `restId` is the wire value.
+   */
   rid: string;
+  /** Menu Sharing Code (e.g. "cq5hnj3629") — the value `restID` wants. */
+  restId: string;
   baseUrl: string;
   purchasePath: string;
   stockPath: string;
@@ -54,10 +82,19 @@ export interface InventoryLogger {
   error?: (obj: unknown, msg?: string) => void;
 }
 
-const DEFAULT_BASE_URL = "https://inventory.petpooja.com";
-const DEFAULT_PURCHASE_PATH = "/api/get_purchase";
-const DEFAULT_STOCK_PATH = "/api/get_stock";
+const DEFAULT_BASE_URL = "https://api.petpooja.com";
+const DEFAULT_PURCHASE_PATH = "/V1/thirdparty/get_purchase/";
+const DEFAULT_STOCK_PATH = "/V1/thirdparty/get_stock/";
 const REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * Widest `from_date`..`to_date` span get_purchase accepts. The vendor says
+ * "maximum 1 month" (code 101); probing put the real cut-off between 32 and 36
+ * days, so this sits safely inside it rather than on the edge — the penalty for
+ * being conservative is one extra request, and for being wrong is a sync that
+ * fetches nothing and reports success.
+ */
+export const MAX_PURCHASE_RANGE_DAYS = 31;
 
 /** Fully-configured inventory config, or null when the integration is off. */
 export function petpoojaInventoryConfig(): PetpoojaInventoryConfig | null {
@@ -65,12 +102,20 @@ export function petpoojaInventoryConfig(): PetpoojaInventoryConfig | null {
   const appSecret = process.env["PETPOOJA_APP_SECRET"];
   const accessToken = process.env["PETPOOJA_ACCESS_TOKEN"];
   const rid = process.env["PETPOOJA_INVENTORY_RID"];
-  if (!appKey || !appSecret || !accessToken || !rid) return null;
+  // The sharing code the POS integration already uses, unless explicitly
+  // overridden. Falling back to PETPOOJA_RESTAURANT_ID mirrors
+  // petpoojaClient.ts, where the sharing code defaults to it when unset.
+  const restId =
+    process.env["PETPOOJA_INVENTORY_REST_ID"] ||
+    process.env["PETPOOJA_MENU_SHARING_CODE"] ||
+    process.env["PETPOOJA_RESTAURANT_ID"];
+  if (!appKey || !appSecret || !accessToken || !rid || !restId) return null;
   return {
     appKey,
     appSecret,
     accessToken,
     rid,
+    restId,
     baseUrl: (process.env["PETPOOJA_INVENTORY_BASE_URL"] || DEFAULT_BASE_URL).replace(/\/+$/, ""),
     purchasePath: process.env["PETPOOJA_PURCHASE_PATH"] || DEFAULT_PURCHASE_PATH,
     stockPath: process.env["PETPOOJA_STOCK_PATH"] || DEFAULT_STOCK_PATH,
@@ -110,7 +155,18 @@ const QTY_KEYS = [
   "quantity", "qty", "purchase_qty", "purchaseqty", "received_qty",
   "item_quantity", "itemquantity", "recd_qty", "purchase_quantity",
 ];
-const UNIT_KEYS = ["unit", "uom", "unit_name", "unitname", "item_unit", "measurement"];
+/**
+ * `lbl_unit` FIRST and `unit` last, which is not cosmetic: PetPooja sends both,
+ * and `unit` is an internal numeric id ("4365934") while `lbl_unit` is the human
+ * label ("Kg", "Ltr.", "Piece", "BOX"). Reading the id is not a parse failure —
+ * it is a perfectly good string — it just makes every downstream unit
+ * conversion miss, so the feed silently matches nothing and looks like an empty
+ * pantry rather than a bug. `sanitizeUnit` is the backstop.
+ */
+const UNIT_KEYS = [
+  "lbl_unit", "lblunit", "unit_label", "unitlabel",
+  "uom", "unit_name", "unitname", "item_unit", "measurement", "unit",
+];
 const UNIT_PRICE_KEYS = [
   "rate", "unit_price", "unitprice", "purchase_price", "purchaseprice",
   "item_rate", "itemrate", "price", "cost", "unit_cost",
@@ -119,13 +175,26 @@ const LINE_TOTAL_KEYS = [
   "amount", "total", "line_total", "linetotal", "net_amount", "netamount",
   "taxable_amount", "item_amount", "itemamount", "total_amount", "gross_amount",
 ];
+/**
+ * `receiver_name` is PetPooja's word for the supplier: on a purchase the outlet
+ * is the *sender* ("Tanmatra") and the supplier is the *receiver* of the order.
+ * `sender_name` is deliberately absent from this list — picking it up would
+ * label every invoice as bought from ourselves.
+ */
 const SUPPLIER_KEYS = [
-  "supplier_name", "suppliername", "vendor_name", "vendorname",
-  "party_name", "partyname", "supplier", "vendor", "party",
+  "supplier_name", "suppliername", "receiver_name", "receivername",
+  "vendor_name", "vendorname", "party_name", "partyname",
+  "supplier", "vendor", "party",
 ];
+/**
+ * `invoice_number` is usually "" on this outlet's data (only 1 of 6 invoices
+ * carried one), so `purchase_id` — stable and unique — is the real fallback.
+ * `mrn_no` is last: it is a per-outlet sequence that has been observed as "0".
+ */
 const INVOICE_NO_KEYS = [
   "invoice_no", "invoiceno", "invoice_number", "invoicenumber",
   "bill_no", "billno", "purchase_no", "purchaseno", "reference_no", "referenceno",
+  "purchase_id", "purchaseid", "mrn_no", "mrnno",
 ];
 const INVOICE_DATE_KEYS = [
   "invoice_date", "invoicedate", "bill_date", "billdate",
@@ -220,6 +289,33 @@ export function toIsoDate(v: unknown): string | null {
   return s;
 }
 
+/** Trimmed non-empty string, or null. Numbers are stringified (ids arrive both ways). */
+function asTrimmed(v: unknown): string | null {
+  if (typeof v === "number") return Number.isFinite(v) ? String(v) : null;
+  if (typeof v !== "string") return null;
+  return v.trim() || null;
+}
+
+/**
+ * Normalize a vendor unit label, and refuse the ones that are not units.
+ *
+ * Two specific hazards, both observed live:
+ *   - "4365934" — PetPooja's internal unit id, which is what the `unit` field
+ *     actually holds. An all-digit "unit" can never be real, and letting it
+ *     through would have every conversion miss silently.
+ *   - "Ltr." — a trailing period, which would not equal "ltr" anywhere
+ *     downstream. Stripped along with case and surrounding space.
+ *
+ * Returns "" for anything unusable, which callers already treat as "no unit".
+ */
+export function sanitizeUnit(v: unknown): string {
+  const raw = asTrimmed(v);
+  if (!raw) return "";
+  const cleaned = raw.toLowerCase().replace(/\.+$/, "").trim();
+  if (!cleaned || /^\d+$/.test(cleaned)) return "";
+  return cleaned;
+}
+
 interface HeaderCtx {
   supplierName: string | null;
   invoiceNo: string | null;
@@ -254,11 +350,10 @@ function asLine(
   }
   if (unitPricePaise === null || unitPricePaise <= 0) return null;
 
-  const unitRaw = pickString(flat, UNIT_KEYS);
   return {
     product,
     qty,
-    unit: (unitRaw ?? "").toLowerCase().trim(),
+    unit: sanitizeUnit(pick(flat, UNIT_KEYS)),
     unitPricePaise,
     lineTotalPaise: lineTotalPaise ?? Math.round(unitPricePaise * qty),
     ...header,
@@ -305,11 +400,89 @@ function walk<T, H>(
 }
 
 /**
- * Shape-agnostic parser: pull every purchase-line-shaped object out of the
- * vendor response, inheriting supplier/invoice fields from enclosing objects.
- * Returns `[]` (never throws) when nothing matches.
+ * Header fields for one verified-shape purchase.
+ *
+ * The supplier is the reason this cannot be left to `walk`. It lives at
+ * `restaurant_details.receiver.receiver_name`, which is a SIBLING subtree of
+ * `item_details`, not an ancestor of it — and `walk` only ever inherits header
+ * fields downward from enclosing objects. No widening of the alias lists fixes
+ * that; it is a shape problem, not a naming one. So the verified shape gets a
+ * parser that knows where to look.
+ */
+function verifiedPurchaseHeader(p: Rec): HeaderCtx {
+  const details = isRec(p["restaurant_details"]) ? p["restaurant_details"] : null;
+  const receiver = details && isRec(details["receiver"]) ? details["receiver"] : null;
+  const flat = flatten(p);
+  return {
+    // `sender` is us; only ever read `receiver`.
+    supplierName: receiver ? asTrimmed(receiver["receiver_name"]) : null,
+    invoiceNo:
+      asTrimmed(p["invoice_number"]) ??
+      asTrimmed(p["purchase_id"]) ??
+      asTrimmed(p["mrn_no"]),
+    invoiceDate: toIsoDate(pickString(flat, INVOICE_DATE_KEYS)),
+  };
+}
+
+/**
+ * Exact parser for the verified `{ purchases: [{ …, item_details: [...] }] }`
+ * shape. Returns null — not [] — when the body is not that shape, so the caller
+ * can tell "not this contract, try the generic walker" apart from "this
+ * contract, no invoices".
+ */
+function parseVerifiedPurchases(body: unknown): PetpoojaPurchaseLine[] | null {
+  if (!isRec(body) || !Array.isArray(body["purchases"])) return null;
+  const out: PetpoojaPurchaseLine[] = [];
+  for (const p of body["purchases"]) {
+    if (!isRec(p)) continue;
+    const header = verifiedPurchaseHeader(p);
+    const items = p["item_details"];
+    if (!Array.isArray(items)) continue;
+    for (const it of items) {
+      if (!isRec(it)) continue;
+      const product = asTrimmed(it["itemname"]);
+      if (!product) continue;
+      const qty = toNumber(it["qty"]);
+      if (qty === null || qty <= 0) continue;
+
+      const lineTotalPaise = toPaise(it["amount"]);
+      // `price` is per `lbl_unit`; `weighted_price` is the same number on the
+      // rows observed, kept as a fallback. A zero-priced line (free stock, or
+      // an invoice still being drafted) is dropped rather than learned from —
+      // a 0 would otherwise land in buying_price_paise as a real price.
+      let unitPricePaise = toPaise(it["price"]) ?? toPaise(it["weighted_price"]);
+      if (unitPricePaise === null && lineTotalPaise !== null) {
+        unitPricePaise = Math.round(lineTotalPaise / qty);
+      }
+      if (unitPricePaise === null || unitPricePaise <= 0) continue;
+
+      out.push({
+        product,
+        qty,
+        unit: sanitizeUnit(it["lbl_unit"] ?? it["unit"]),
+        unitPricePaise,
+        lineTotalPaise: lineTotalPaise ?? Math.round(unitPricePaise * qty),
+        supplierName: header.supplierName,
+        invoiceNo: header.invoiceNo,
+        invoiceDate: toIsoDate(asTrimmed(it["invoice_date"])) ?? header.invoiceDate,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Parse the vendor response into purchase lines. Tries the verified shape
+ * first, then falls back to the shape-agnostic walker.
+ *
+ * The walker is kept rather than deleted because it costs nothing and covers
+ * the case this file has already been burned by once: the vendor's actual
+ * contract differing from the one we believed. Returns `[]` (never throws).
  */
 export function normalizePurchaseResponse(body: unknown): PetpoojaPurchaseLine[] {
+  const verified = parseVerifiedPurchases(body);
+  if (verified && verified.length > 0) return verified;
+
   const out: PetpoojaPurchaseLine[] = [];
   walk<PetpoojaPurchaseLine, HeaderCtx>(
     body,
@@ -318,7 +491,9 @@ export function normalizePurchaseResponse(body: unknown): PetpoojaPurchaseLine[]
     0,
     { mergeHeader, asLine },
   );
-  return out;
+  // An empty `purchases: []` is a real, correct answer ("no invoices that
+  // window"); prefer it over whatever the walker scavenged from the envelope.
+  return out.length > 0 ? out : (verified ?? out);
 }
 
 // ── Stock ───────────────────────────────────────────────────────────────────
@@ -366,11 +541,10 @@ function asStockLine(
   const qty = toNumber(raw);
   if (qty === null || qty < 0) return null;
 
-  const unitRaw = pickString(flat, UNIT_KEYS);
   return {
     product,
     qty,
-    unit: (unitRaw ?? "").toLowerCase().trim(),
+    unit: sanitizeUnit(pick(flat, UNIT_KEYS)),
     asOfDate: header.asOfDate,
   };
 }
@@ -393,11 +567,14 @@ export interface PurchaseDateRange {
 }
 
 /**
- * ⚠ UNVERIFIED. Request body for Get Purchase. Credentials mirror the POS Save
- * Order convention (body-level app_key/app_secret/access_token). Both the
- * identifier key and the date-range keys are sent under their plausible
- * aliases, because the spec could not be read — extra keys are ignored by
- * every PetPooja endpoint we have observed, a missing key is a hard failure.
+ * Request body for Get Purchase. VERIFIED: credentials at body level, `restID`
+ * = the menu sharing code, and `from_date`/`to_date` as the date keys.
+ *
+ * The earlier version of this also sent `start_date`/`end_date` as aliases, on
+ * the theory that extra keys are free. They are not quite free: with only
+ * `start_date`/`end_date` present the endpoint answers code 100 "Please provide
+ * all request parameters", so the aliases were never doing anything, and having
+ * them there disguised which pair was load-bearing.
  */
 export function buildPurchaseRequestBody(
   cfg: PetpoojaInventoryConfig,
@@ -407,19 +584,16 @@ export function buildPurchaseRequestBody(
     app_key: cfg.appKey,
     app_secret: cfg.appSecret,
     access_token: cfg.accessToken,
-    restID: cfg.rid,
-    restaurantid: cfg.rid,
-    start_date: range.startDate,
-    end_date: range.endDate,
+    restID: cfg.restId,
     from_date: range.startDate,
     to_date: range.endDate,
   };
 }
 
 /**
- * ⚠ UNVERIFIED. Request body for Get Stock. PetPooja support described this as
- * "stock levels for a given date", so one date is sent under every plausible
- * key, including a degenerate start==end range in case it is range-shaped.
+ * Request body for Get Stock. VERIFIED key name (`date`); the endpoint reads it
+ * and answers about the date's validity, which is how we know it is the right
+ * key. `stock_date` alone gets code 100.
  */
 export function buildStockRequestBody(
   cfg: PetpoojaInventoryConfig,
@@ -429,13 +603,43 @@ export function buildStockRequestBody(
     app_key: cfg.appKey,
     app_secret: cfg.appSecret,
     access_token: cfg.accessToken,
-    restID: cfg.rid,
-    restaurantid: cfg.rid,
+    restID: cfg.restId,
     date: opts.date,
-    stock_date: opts.date,
-    start_date: opts.date,
-    end_date: opts.date,
   };
+}
+
+/** The vendor's verdict on a request, read out of the body rather than the status. */
+export interface VendorEnvelope {
+  /** False when PetPooja rejected the request, whatever the HTTP status said. */
+  ok: boolean;
+  /** `code` ("101") or `errorCode` ("GN_105"), depending which layer refused. */
+  code: string | null;
+  message: string | null;
+}
+
+/**
+ * Read PetPooja's success flag out of a response body.
+ *
+ * This exists because PetPooja answers **HTTP 200 for everything** — including
+ * `{"success":"0","message":"Invalid client credentials.","errorCode":"GN_105"}`.
+ * Trusting the status code turns a wrong password into "zero rows parsed",
+ * which then reads as a response-shape problem and sends whoever is on call to
+ * the parser instead of to the credentials. Both failure envelopes have been
+ * observed live: `code` for endpoint-level refusals (100/101/103/301) and
+ * `errorCode` for gateway-level ones (GN_103/GN_105).
+ *
+ * A body with no `success` field at all is treated as OK-but-unknown rather
+ * than as a failure: that is the vendor-changed-shape case, and the parsers
+ * below are the better judge of it than a missing flag is.
+ */
+export function readVendorEnvelope(parsed: unknown): VendorEnvelope {
+  if (!isRec(parsed)) return { ok: true, code: null, message: null };
+  const code = asTrimmed(parsed["code"]) ?? asTrimmed(parsed["errorCode"]);
+  const message = asTrimmed(parsed["message"]);
+  if (!("success" in parsed)) return { ok: true, code, message };
+  const success = parsed["success"];
+  const ok = success === "1" || success === 1 || success === true;
+  return { ok, code, message };
 }
 
 export interface PurchaseFetchResult {
@@ -469,13 +673,20 @@ interface RawPost {
 }
 
 /**
- * One POST to the inventory host. Never throws: a vendor outage must not take
- * down the scheduler. Credentials go in the body (mirroring the POS API's Save
- * Order convention) AND in headers, because which one this service wants could
- * not be read from the spec.
+ * One POST to the vendor. Never throws: a vendor outage must not take down the
+ * scheduler.
+ *
+ * Credentials go in the body and ONLY in the body. An earlier revision also
+ * mirrored them into `app-key`/`app-secret`/`access-token` request headers,
+ * hedging on which the service wanted; a body-only request is now confirmed to
+ * work, so the headers are gone. Headers are the copy that leaks — they are
+ * what proxies, gateways and HTTP client debug logs echo by default.
+ *
+ * POST rather than GET despite the vendor's example using `GET` with a body:
+ * both were confirmed to return identical responses, and a GET with a body is
+ * outside the fetch spec — Node's own `fetch` rejects it outright.
  */
 async function postToInventory(
-  cfg: PetpoojaInventoryConfig,
   url: string,
   body: Record<string, string>,
   label: string,
@@ -488,13 +699,7 @@ async function postToInventory(
   try {
     const res = await doFetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Header-style credentials, in case this service authenticates that way.
-        "app-key": cfg.appKey,
-        "app-secret": cfg.appSecret,
-        "access-token": cfg.accessToken,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       signal: controller.signal,
     });
@@ -521,6 +726,51 @@ async function postToInventory(
   }
 }
 
+/** Whole days between two `YYYY-MM-DD` strings, or null if either is unparseable. */
+function daysBetween(startDate: string, endDate: string): number | null {
+  const a = Date.parse(`${startDate}T00:00:00Z`);
+  const b = Date.parse(`${endDate}T00:00:00Z`);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return Math.round((b - a) / 86_400_000);
+}
+
+/**
+ * Clamp a requested window to what the vendor will actually serve.
+ *
+ * Two distinct hazards, both silent:
+ *   - Too wide → code 101, zero lines, and (before `readVendorEnvelope`) an
+ *     "ok" result. Clamped forward, keeping `endDate`, because recent prices
+ *     are the ones the reorder engine is about to use.
+ *   - Reversed (`end` < `start`) → the vendor cheerfully answers "No record
+ *     found." rather than complaining, so a date bug looks exactly like a quiet
+ *     week. Refused here instead.
+ */
+function clampPurchaseRange(
+  range: PurchaseDateRange,
+  log: InventoryLogger | undefined,
+): PurchaseDateRange | null {
+  const span = daysBetween(range.startDate, range.endDate);
+  if (span === null) {
+    log?.error?.({ range }, "petpooja inventory: get_purchase range is not a valid date pair");
+    return null;
+  }
+  if (span < 0) {
+    log?.error?.(
+      { range },
+      "petpooja inventory: get_purchase refused — end date precedes start date (the vendor would answer 'No record found' and hide this)",
+    );
+    return null;
+  }
+  if (span <= MAX_PURCHASE_RANGE_DAYS) return range;
+  const start = new Date(Date.parse(`${range.endDate}T00:00:00Z`) - MAX_PURCHASE_RANGE_DAYS * 86_400_000);
+  const clamped = { startDate: start.toISOString().slice(0, 10), endDate: range.endDate };
+  log?.warn?.(
+    { requested: range, clamped, maxDays: MAX_PURCHASE_RANGE_DAYS },
+    "petpooja inventory: get_purchase window wider than the vendor allows — clamped to the most recent window",
+  );
+  return clamped;
+}
+
 /**
  * Fetch supplier-invoice lines for a date range. Returns `{ ok: false }` on any
  * failure rather than throwing.
@@ -536,11 +786,14 @@ export async function fetchPurchases(
     opts.log?.info?.({ range }, "petpooja inventory: get_purchase skipped — not configured");
     return { ok: false, skipped: true, lines: [] };
   }
+  const window = clampPurchaseRange(range, opts.log);
+  if (!window) {
+    return { ok: false, lines: [], error: "invalid_date_range" };
+  }
   const url = `${cfg.baseUrl}${cfg.purchasePath}`;
   const res = await postToInventory(
-    cfg,
     url,
-    buildPurchaseRequestBody(cfg, range),
+    buildPurchaseRequestBody(cfg, window),
     "get_purchase",
     opts.log,
     opts.fetchImpl,
@@ -548,11 +801,27 @@ export async function fetchPurchases(
   if (!res.ok) {
     return { ok: false, status: res.status, lines: [], error: res.error };
   }
+  const envelope = readVendorEnvelope(res.parsed);
+  if (!envelope.ok) {
+    opts.log?.error?.(
+      { url, range: window, status: res.status, code: envelope.code, message: envelope.message },
+      "petpooja inventory: get_purchase rejected by the vendor",
+    );
+    return {
+      ok: false,
+      status: res.status,
+      lines: [],
+      error: `${envelope.code ?? "vendor_error"}: ${envelope.message ?? "rejected"}`,
+    };
+  }
   const lines = normalizePurchaseResponse(res.parsed);
   if (lines.length === 0) {
-    opts.log?.warn?.(
-      { url, range, status: res.status },
-      "petpooja inventory: get_purchase returned no parseable lines — the response shape may differ from the assumed contract",
+    // Now that a vendor rejection is caught above, "accepted but empty" really
+    // does mean no invoices in the window — a normal, common answer for a
+    // kitchen that buys weekly. Logged at info, not warn.
+    opts.log?.info?.(
+      { url, range: window, status: res.status, message: envelope.message },
+      "petpooja inventory: get_purchase returned no invoice lines for the window",
     );
   }
   return { ok: true, status: res.status, lines };
@@ -573,7 +842,6 @@ export async function fetchStock(
   }
   const url = `${cfg.baseUrl}${cfg.stockPath}`;
   const res = await postToInventory(
-    cfg,
     url,
     buildStockRequestBody(cfg, { date }),
     "get_stock",
@@ -583,11 +851,33 @@ export async function fetchStock(
   if (!res.ok) {
     return { ok: false, status: res.status, lines: [], error: res.error };
   }
+  const envelope = readVendorEnvelope(res.parsed);
+  if (!envelope.ok) {
+    // Code 301 ("Provide date is not in your date range", with an empty
+    // available_range) is the answer this outlet gives for EVERY date tried
+    // across a year and every date format — i.e. stock history is not
+    // provisioned yet. That is a PetPooja-side fix, not a code change, so it is
+    // surfaced as a vendor rejection with the code intact rather than being
+    // flattened into "no rows".
+    opts.log?.error?.(
+      { url, date, status: res.status, code: envelope.code, message: envelope.message },
+      "petpooja inventory: get_stock rejected by the vendor",
+    );
+    return {
+      ok: false,
+      status: res.status,
+      lines: [],
+      error: `${envelope.code ?? "vendor_error"}: ${envelope.message ?? "rejected"}`,
+    };
+  }
   const lines = normalizeStockResponse(res.parsed);
   if (lines.length === 0) {
+    // An accepted-but-empty stock response is NOT routine the way an empty
+    // purchase window is: a working kitchen always holds something, so zero
+    // rows means the shape changed or the outlet genuinely has nothing.
     opts.log?.warn?.(
-      { url, date, status: res.status },
-      "petpooja inventory: get_stock returned no parseable rows — the response shape may differ from the assumed contract",
+      { url, date, status: res.status, message: envelope.message },
+      "petpooja inventory: get_stock was accepted but returned no parseable rows",
     );
   }
   return { ok: true, status: res.status, lines };

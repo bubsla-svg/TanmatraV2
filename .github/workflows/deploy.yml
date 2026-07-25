@@ -88,7 +88,13 @@ jobs:
     # Petpooja issues TWO distinct non-secret identifiers for this outlet and
     # they are NOT interchangeable:
     #   • Menu Sharing Code  cq5hnj3629  — ordering/menu integration (pos.petpooja.com)
-    #   • RID                355738      — Inventory API (inventory.petpooja.com)
+    #                                    — AND the Inventory API (api.petpooja.com),
+    #                                      verified by probing the live outlet
+    #   • RID                355738      — what Petpooja provisioned inventory
+    #                                      against and what a support thread will
+    #                                      quote. Used ONLY as the arming switch;
+    #                                      the Inventory API rejects it as an
+    #                                      identifier with code 103. Do not send it.
     # PETPOOJA_MENU_SHARING_CODE is pinned explicitly below rather than left to
     # petpoojaConfig()'s `|| restId` fallback, so the sharing code no longer
     # rides on PETPOOJA_RESTAURANT_ID. That fallback silently coupled the two:
