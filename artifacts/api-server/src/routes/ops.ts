@@ -1,4 +1,10 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import {
+  Router,
+  type IRouter,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import { logger } from "../lib/logger";
 import {
   db,
@@ -26,12 +32,27 @@ import { sendDeliveryDelaySms } from "../lib/sms";
 
 const router: IRouter = Router();
 
-function requireOps(req: Request, res: Response): boolean {
-  return gateRequireOps(req, res) !== null;
-}
+/**
+ * Ops scope is required for EVERY route on this router, enforced here as
+ * router-level middleware rather than as a call at the top of each handler.
+ *
+ * That distinction is not stylistic. The per-handler form shipped four routes
+ * without the guard — `/inventory`, `/packaging`, `/recipes` and
+ * `/recipes/:slug` — which served the full inventory list, the packaging list
+ * and the recipe book (`food_cost_paise`, i.e. our unit economics, included) to
+ * any unauthenticated caller who could reach the API. Nothing flagged it,
+ * because "did the author remember to write one line?" is not a checkable
+ * invariant. "Is there a router.use gate?" is.
+ *
+ * gateRequireOps sends its own 403 and returns null on failure, so a rejected
+ * request must NOT call next().
+ */
+router.use((req: Request, res: Response, next: NextFunction) => {
+  if (gateRequireOps(req, res) === null) return; // 403 already written
+  next();
+});
 
 router.get("/anomalies", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const status = (typeof req.query.status === "string" ? req.query.status : "active") as
     | "open"
     | "ack"
@@ -43,8 +64,7 @@ router.get("/anomalies", async (req: Request, res: Response) => {
   res.json({ rows });
 });
 
-router.post("/anomalies/scan", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.post("/anomalies/scan", async (_req: Request, res: Response) => {
   const results = await runAnomalyScan();
   res.json({ results });
 });
@@ -55,7 +75,6 @@ const snoozeBody = z.object({
 });
 
 router.post("/anomalies/:id/ack", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = idParam.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid id" });
@@ -70,7 +89,6 @@ router.post("/anomalies/:id/ack", async (req: Request, res: Response) => {
 });
 
 router.post("/anomalies/:id/snooze", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const idP = idParam.safeParse(req.params);
   const bodyP = snoozeBody.safeParse(req.body);
   if (!idP.success || !bodyP.success) {
@@ -90,7 +108,6 @@ router.post("/anomalies/:id/snooze", async (req: Request, res: Response) => {
 });
 
 router.post("/anomalies/:id/close", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = idParam.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid id" });
@@ -104,14 +121,12 @@ router.post("/anomalies/:id/close", async (req: Request, res: Response) => {
   res.json({ alert: row });
 });
 
-router.get("/anomalies/digest", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.get("/anomalies/digest", async (_req: Request, res: Response) => {
   const digest = await buildDailyDigest();
   res.json(digest);
 });
 
-router.post("/anomalies/digest/send", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.post("/anomalies/digest/send", async (_req: Request, res: Response) => {
   const out = await sendDailyDigest();
   res.json(out);
 });
@@ -202,8 +217,7 @@ router.get("/recipes/:slug", async (req: Request, res: Response) => {
   res.json({ recipe, ingredients });
 });
 
-router.get("/kds/orders", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.get("/kds/orders", async (_req: Request, res: Response) => {
   const rows = await db
     .select({
       id: ordersTable.id,
@@ -224,7 +238,6 @@ router.get("/kds/orders", async (req: Request, res: Response) => {
 });
 
 router.post("/kds/orders/:id/ready", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const orderId = parseInt(String(req.params.id ?? ""), 10);
   await db
     .update(ordersTable)
@@ -242,7 +255,6 @@ const deliveryBatchSchema = z.object({
 });
 
 router.post("/supplier/deliver", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = deliveryBatchSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload", issues: parsed.error.issues });
@@ -285,7 +297,6 @@ const intakeSchema = z.object({
 });
 
 router.post("/supplier/intake", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const parsed = intakeSchema.safeParse(req.body);
   if (!parsed.success) {
     res
@@ -380,7 +391,6 @@ router.post("/supplier/intake", async (req: Request, res: Response) => {
 });
 
 router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
   const orderId = parseInt(String(req.params.id ?? ""), 10);
   
   // Set createdAt to 25 minutes ago
