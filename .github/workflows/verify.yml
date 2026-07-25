@@ -165,6 +165,7 @@ jobs:
           ./src/routes/payments.integrity.test.ts
           ./src/routes/payments.webhook.test.ts
           ./src/routes/payments.subscriptionOrder.test.ts
+          ./src/routes/delivery.opsGate.test.ts
           ./src/routes/refunds.test.ts
           ./src/routes/orders.mine.test.ts
           ./src/lib/trialRedemption.test.ts

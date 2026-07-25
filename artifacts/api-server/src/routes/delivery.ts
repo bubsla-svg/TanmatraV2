@@ -23,6 +23,10 @@ import { recordRiderPosition, startSimulation, stopSimulation } from "../lib/rid
 
 const router: IRouter = Router();
 
+function resolveOps(req: Request): boolean {
+  return isOpsRequest(req).allowed;
+}
+
 router.get("/delivery/:orderId/timeline", async (req: Request, res: Response) => {
   const orderId = Number(req.params.orderId);
   if (!Number.isFinite(orderId)) {
@@ -45,8 +49,8 @@ const eventBody = z.object({
 });
 
 router.post("/delivery/events", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
+  if (!resolveOps(req)) {
+    res.status(403).json({ error: "ops scope required" });
     return;
   }
   const parsed = eventBody.safeParse(req.body);
@@ -72,8 +76,8 @@ const riderPositionBody = z.object({
 });
 
 router.post("/delivery/rider-position", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
+  if (!resolveOps(req)) {
+    res.status(403).json({ error: "ops scope required" });
     return;
   }
   const parsed = riderPositionBody.safeParse(req.body);
@@ -93,8 +97,8 @@ const advanceBody = z.object({
 });
 
 router.post("/delivery/schedule-advance", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
+  if (!resolveOps(req)) {
+    res.status(403).json({ error: "ops scope required" });
     return;
   }
   const parsed = advanceBody.safeParse(req.body);
@@ -138,8 +142,8 @@ router.post("/delivery/schedule-advance", async (req: Request, res: Response) =>
 const autoAssignBody = z.object({ orderId: z.number().int().positive() });
 
 router.post("/delivery/auto-assign", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
+  if (!resolveOps(req)) {
+    res.status(403).json({ error: "ops scope required" });
     return;
   }
   const parsed = autoAssignBody.safeParse(req.body);
@@ -246,8 +250,8 @@ const recordActualBody = z.object({
 });
 
 router.post("/delivery/eta/record-actual", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
+  if (!resolveOps(req)) {
+    res.status(403).json({ error: "ops scope required" });
     return;
   }
   const parsed = recordActualBody.safeParse(req.body);
@@ -266,9 +270,7 @@ router.post("/delivery/eta/record-actual", async (req: Request, res: Response) =
   res.json({ ok: true, ...out });
 });
 
-function resolveOps(req: Request): boolean {
-  return isOpsRequest(req).allowed;
-}
+
 
 // ─── Smart dispatch & batching ─────────────────────────────────────────────
 
