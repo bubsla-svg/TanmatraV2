@@ -49,6 +49,7 @@ import vitalsRouter from "./vitals";
 import eventsRouter from "./events";
 import complianceRouter from "./compliance";
 import petpoojaRouter from "./petpooja";
+import { petpoojaWebhooksMounted } from "../lib/petpoojaClient";
 import wearableRouter from "./wearable";
 import catalogRouter from "./catalog";
 import cspReportRouter from "./cspReport";
@@ -110,7 +111,13 @@ router.use(refundsRouter);
 router.use(vitalsRouter);
 router.use(eventsRouter);
 router.use(complianceRouter);
-router.use(petpoojaRouter);
+// Petpooja's inbound webhook surface is mounted only when the integration is
+// actually configured. Decommissioning means UNMOUNTING (PETPOOJA_WEBHOOKS_ENABLED=false
+// or simply not configuring it), not blanking PETPOOJA_* env and leaving the
+// routes reachable — see the SECURITY CORRECTION note in lib/petpoojaClient.ts.
+if (petpoojaWebhooksMounted()) {
+  router.use(petpoojaRouter);
+}
 router.use(wearableRouter);
 
 export default router;

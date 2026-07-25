@@ -139,6 +139,45 @@ API origin), all authenticated by the same app key/secret:
 | Store status get / update | `/integrations/petpooja/get_store_status`, `/update_store_status` |
 | Menu fetch / push | `/integrations/petpooja/fetchmenu`, `/push-menu` |
 
+Every one of these requires credentials — either `app_key` + `app_secret` in the
+body, or the shared secret as an `x-petpooja-app-secret` header. There is no
+route on this surface that accepts an anonymous request. If Petpooja reports
+`401` on any of them, the sender is not presenting a credential; that is the
+sender's configuration to fix, not something to relax on our side.
+
+`/push-menu` deserves specific mention when handing these over: it bulk-upserts
+`menu_items`, prices included. It only ever accepts a **fully** correct
+`app_key` + `app_secret` pair (or the header secret). Petpooja's sender must be
+configured with both.
+
+## Turning the integration OFF
+
+**Do not decommission by blanking the `PETPOOJA_*` secrets.** Until 25 Jul 2026
+that would have *disabled authentication while leaving every endpoint mounted* —
+including the menu/price write path. That specific failure mode is fixed (an
+unconfigured integration now rejects every inbound request), but blanking
+secrets is still the wrong lever: it leaves a live URL surface answering `401`,
+and it silently breaks outbound order push with no signal that it was deliberate.
+
+To switch the integration off, unmount it:
+
+```bash
+gcloud run services update wellness-foods --region asia-south2 \
+  --project brand-tanmatra-tmg \
+  --update-env-vars PETPOOJA_WEBHOOKS_ENABLED=false
+```
+
+The routes then 404 rather than 401 — the honest answer for an endpoint that no
+longer exists. Set it back to `true` (or remove the variable) to re-mount. The
+surface is also unmounted automatically whenever the four required
+`PETPOOJA_*` secrets are not all present, so a half-configured deploy never
+exposes a webhook it cannot authenticate.
+
+There is one escape hatch, `PETPOOJA_WEBHOOKS_INSECURE_ALLOW_UNAUTHENTICATED`,
+which mounts the surface with authentication bypassed. It is refused outright
+when `NODE_ENV=production`. It exists for local development. It must never be
+set on a deployed service.
+
 ## Known follow-up (Cloud Run multi-replica)
 
 Store on/off status (`get_store_status` / `update_store_status`) is held
