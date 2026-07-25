@@ -9,7 +9,11 @@ type ServerEventName =
   | "order_created"
   | "payment_succeeded"
   | "subscription_started"
-  | "trial_started";
+  | "trial_started"
+  | "delivery_completed"
+  | "meal_swapped"
+  | "consult_booked"
+  | "subscription_order_reconciled";
 
 /**
  * Insert a server-emitted funnel event. Never throws and never blocks the

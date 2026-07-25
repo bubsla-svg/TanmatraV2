@@ -261,6 +261,7 @@ type OrderRow = {
   deliveryInstructions: string | null;
   priority: string | null;
   scheduledFor: Date | null;
+  orderKind?: string | null;
 };
 
 /** Build the Petpooja Save Order payload from one of our order rows. */
@@ -278,7 +279,8 @@ export function serializeOrderToPetpooja(
     price: number;
   }>;
   const when = order.scheduledFor ? new Date(order.scheduledFor) : now;
-  const addressParts = [order.addressLine, order.city, order.pincode].filter(Boolean).join(", ");
+  const isB2B = order.orderKind === "corporate_b2b" || order.orderKind === "b2b_planner";
+  const addressParts = [isB2B ? "[B2B BULK DROP]" : "", order.addressLine, order.city, order.pincode].filter(Boolean).join(", ");
 
   return {
     app_key: cfg.appKey,
@@ -317,7 +319,7 @@ export function serializeOrderToPetpooja(
             tax_total: "0",
             discount_total: "0",
             urgent_order: order.priority === "urgent" || order.priority === "stat",
-            description: order.deliveryInstructions || "",
+            description: (isB2B ? "[BATCH CONSOLIDATED VEHICLE DISPATCH] " : "") + (order.deliveryInstructions || ""),
             created_on: `${fmtDate(now)} ${fmtTime(now)}`,
           },
         },

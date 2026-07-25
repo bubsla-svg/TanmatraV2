@@ -37,7 +37,8 @@ export type ClinicalContraindication =
   | "gerd"
   | "kidney_disease"
   | "celiac"
-  | "pregnancy";
+  | "pregnancy"
+  | "pcos";
 
 export const userPreferencesTable = pgTable("user_preferences", {
   userId: varchar("user_id")

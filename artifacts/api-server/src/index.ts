@@ -22,6 +22,7 @@ import {
   startSubscriptionAbandonmentScheduler,
   stopSubscriptionAbandonmentScheduler,
 } from "./lib/subscriptionAbandonmentScheduler";
+import { startReconciliationScheduler, stopReconciliationScheduler } from "./lib/reconciliationScheduler";
 import { ensureSafeViews } from "./lib/safeSql";
 import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
@@ -90,6 +91,7 @@ if (!schedulersDisabled) {
 // at all unless PETPOOJA_INVENTORY_RID + the three PETPOOJA_* secrets are
 // present, so it is inert everywhere the integration has not been wired up.
 startPetpoojaInventoryScheduler();
+startReconciliationScheduler();
 
 // Bootstrap the curated safe_* views and reader role BEFORE we start
 // listening, so the very first /analytics/* request can never race view
@@ -238,6 +240,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  stopTrialLifecycleScheduler();
  stopChargeMandateScheduler();
  stopSubscriptionAbandonmentScheduler();
+ stopReconciliationScheduler();
  clearInterval(purgeTimer);
  clearInterval(slotReclaimTimer);
  clearInterval(opsAuditOutboxTimer);

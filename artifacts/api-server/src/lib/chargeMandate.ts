@@ -49,6 +49,8 @@ import {
   generateDeliveriesForSubscription,
   pauseUpcomingDeliveries,
 } from "../routes/subscriptions";
+import { pushOrderToPetpooja } from "./petpoojaClient";
+import { emitServerEvent } from "./serverEvents";
 
 export type ChargeLogger = {
   info: (...args: any[]) => void;
@@ -592,6 +594,29 @@ export async function chargeMandateCore(
         })
         .where(eq(subscriptionMandatesTable.id, mandate.id));
     });
+
+    if (orderId != null) {
+      const [createdOrder] = await db
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.id, orderId))
+        .limit(1);
+      const [orderUser] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, sub.userId))
+        .limit(1);
+      if (createdOrder && createdOrder.orderKind !== "marketplace") {
+        const fullName = [orderUser?.firstName, orderUser?.lastName].filter(Boolean).join(" ");
+        pushOrderToPetpooja(createdOrder, {
+          name: fullName || "Subscription Member",
+          email: orderUser?.email || null,
+        }, log).catch((err) => {
+          log.error({ err, orderId: createdOrder.id }, "charge-mandate: failed to push recurring order to Petpooja KDS");
+        });
+        void emitServerEvent("subscription_order_reconciled", { orderId: createdOrder.id, subscriptionId: sub.id }, sub.userId);
+      }
+    }
   } catch (err) {
     // The gateway charge already succeeded — money moved. A DB persistence
     // failure here must not be reported to the caller as a failed charge

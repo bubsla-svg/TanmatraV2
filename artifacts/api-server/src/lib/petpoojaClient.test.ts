@@ -317,3 +317,13 @@ test("store status persists across update → get", () => {
   setStoreStatus("1", null, null);
   assert.equal(getStoreStatus().status, "1");
 });
+
+test("serializeOrderToPetpooja injects B2B BULK DROP routing tags for corporate orders", () => {
+  const cfg = { appKey: "k", appSecret: "s", accessToken: "a", restId: "r", restName: "RN", saveOrderUrl: "url", menuSharingCode: "code" };
+  const b2bOrder = { ...sampleOrder, orderKind: "corporate_b2b" };
+  const res = serializeOrderToPetpooja(b2bOrder as any, cfg, { name: "IT Park" }, new Date("2026-07-25T10:00:00Z"));
+  const oi = res.orderinfo!.OrderInfo;
+  assert.ok(oi.Customer.details.address.startsWith("[B2B BULK DROP]"));
+  assert.ok((oi.Order.details.description ?? "").startsWith("[BATCH CONSOLIDATED VEHICLE DISPATCH]"));
+});
+
