@@ -856,6 +856,7 @@ export async function finalizeOrder(args: {
       .insert(ordersTable)
       .values({
         userId: args.userId,
+        orderChannel: "own_app",
         externalOrderId: args.orderId,
         status: "placed",
         totalPaise: discountedGross,

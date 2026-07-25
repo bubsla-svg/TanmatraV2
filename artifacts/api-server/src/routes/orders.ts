@@ -73,9 +73,16 @@ router.get("/orders/active", async (req: Request, res: Response) => {
   // This is a clinical patient-order feed (STAT cancel from RdConsole) —
   // marketplace rows have no clinical/delivery-slot meaning and shouldn't
   // appear next to real patient meal orders here.
+  // ...and an aggregator's order is not a patient order at all. A Petpooja
+  // push whose customer email happens to match a registered user would
+  // otherwise land in this feed wearing that patient's name, offering a
+  // clinician a STAT-cancel button for an order we cannot cancel, on food we
+  // did not compose against their chart. `own_app` is the honest predicate:
+  // this panel lists the orders we are actually answerable for.
   const baseWhere = and(
     inArray(ordersTable.status, ACTIVE_STATUSES),
     eq(ordersTable.orderKind, "meal"),
+    eq(ordersTable.orderChannel, "own_app"),
   );
   const where = callerIsClinician
     ? baseWhere
@@ -134,7 +141,19 @@ router.get("/orders/mine", async (req: Request, res: Response) => {
       items: ordersTable.items,
     })
     .from(ordersTable)
-    .where(and(eq(ordersTable.userId, req.user.id), eq(ordersTable.orderKind, "meal")))
+    .where(
+      and(
+        eq(ordersTable.userId, req.user.id),
+        eq(ordersTable.orderKind, "meal"),
+        // An order this user placed on Zomato is theirs, but it is not ours to
+        // show here: the storefront renders every row in this list with our
+        // tracker and a reorder CTA, and both are lies about an aggregator
+        // order. The reorder seed is the sharper edge — it replays `items`
+        // into our cart, and a Petpooja row's `items` carry that POS's ids and
+        // prices, not our menu's.
+        eq(ordersTable.orderChannel, "own_app"),
+      ),
+    )
     .orderBy(desc(ordersTable.createdAt))
     .limit(100);
   res.json({
@@ -145,9 +164,11 @@ router.get("/orders/mine", async (req: Request, res: Response) => {
       totalPaise: r.totalPaise,
       addressLabel: r.addressLabel,
       createdAt: r.createdAt,
-      // orderKind is filtered to "meal" above, so these are always the
-      // {id,name,qty,price} meal lines — the storefront's reorder seed
-      // (SF-09 tail / CUJ-09). Read-only exposure of the caller's own rows.
+      // orderKind is filtered to "meal" AND orderChannel to "own_app" above,
+      // so these are always the {id,name,qty,price} meal lines *our* checkout
+      // wrote — the storefront's reorder seed (SF-09 tail / CUJ-09). Both
+      // filters are what makes the ids in here safe to replay into our cart.
+      // Read-only exposure of the caller's own rows.
       items: r.items,
     })),
   });

@@ -312,7 +312,7 @@ test("POST /integrations/petpooja/callback updates order status and rider info",
     assert.equal(table, ordersTable);
     const mockUpdateBuilder = {
       set: (values: any) => {
-        assert.equal(values.status, "confirmed");
+        assert.equal(values.status, "preparing");
         assert.equal(values.riderId, 808);
         const mockValuesBuilder = {
           where: (condition: any) => Promise.resolve(),
@@ -326,7 +326,7 @@ test("POST /integrations/petpooja/callback updates order status and rider info",
   const payload = {
     restID: "rest123",
     orderID: "A-1",
-    status: "1", // Accepted -> confirmed
+    status: "1", // Accepted -> preparing (acceptance IS the start of prep)
     cancel_reason: "",
     minimum_prep_time: 20,
     minimum_delivery_time: "",
@@ -417,7 +417,7 @@ test("POST /integrations/petpooja/rider-info resolves order and registers/assign
         where: (condition: any) => ({
           limit: (n: number) => {
             if (table === ordersTable) {
-              return Promise.resolve([{ id: 105, externalOrderId: "101010527", status: "confirmed", orderKind: "meal" }]);
+              return Promise.resolve([{ id: 105, externalOrderId: "101010527", status: "preparing", orderKind: "meal" }]);
             }
             if (table === ridersTable) {
               return Promise.resolve([]);
@@ -451,7 +451,10 @@ test("POST /integrations/petpooja/rider-info resolves order and registers/assign
     assert.equal(table, ordersTable);
     const mockUpdateBuilder = {
       set: (values: any) => {
-        assert.equal(values.status, "dispatched");
+        // rider-assigned, not picked up: the order is still batchable, so it
+        // must land on rider_assigned (dispatch.ts partnerStatuses) rather
+        // than being pushed straight to out_for_delivery.
+        assert.equal(values.status, "rider_assigned");
         assert.equal(values.riderId, 909);
         const mockValuesBuilder = {
           where: (condition: any) => Promise.resolve(),

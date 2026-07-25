@@ -49,6 +49,22 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck (libs + all artifact packages)
         run: pnpm run typecheck
+      # Every step below enumerates its test files BY NAME, which makes the list
+      # authoritative and leaves one hole: a test named nowhere runs nowhere. It
+      # stays green in the tree and reports nothing. #384 and #388 both exist
+      # only because whole suites had been written, passed locally, and were in
+      # no workflow — and nothing said so. This gate fails on a test file that
+      # no workflow command would execute, so the next one is caught here
+      # instead of being discovered months later.
+      #
+      # It also backstops the merge hazard: these lists are a contention point
+      # (every money PR appends to the same one), and the dangerous resolution
+      # is the one that silently DROPS an entry. A dropped entry now fails.
+      #
+      # Lives in this job because it needs no database and no build — it reads
+      # the workflow files and the tree.
+      - name: Test-reach gate — no test file runs in no workflow
+        run: pnpm run lint:test-reach
 
   money-unit:
     runs-on: ubuntu-latest
@@ -130,6 +146,28 @@ jobs:
       # creditback (S5b): the one-per-phone ledger + grant service, the paid-time
       # seam, and the create-time gate — all enforced by real Postgres UNIQUE
       # constraints, so they cannot run DB-free.
+      #
+      # addons.test.ts belongs here for the same reason as the rest: it pins
+      # that POST /addons/attach never moves orders.total_paise or
+      # orders.charge_paise, which are finalizeOrder's to write and the payment
+      # path's to reconcile against.
+      #
+      # ops.refundCap covers the same authority question in the outbound
+      # direction: how much the ops agent's refund_order tool may send back
+      # against one order. It lives in this step rather than its own because
+      # refund authority IS a money path — the arithmetic half is DB-free and
+      # runs in money-unit (paymentIntegrity.test.ts); only "does the tool
+      # actually consult it, across both refund event dialects" needs Postgres.
+      # The marketplace pair closes a hole of the same shape this workflow was
+      # built for. Both files existed, both were green, and neither was named
+      # in any workflow — so nothing would have told us when they stopped
+      # being. What they pin: checkout decrements stock atomically and writes
+      # an `orders` row that `/payments/razorpay/order` can actually bill for
+      # the real amount (goods carry no GST/delivery layer, so `charge_paise`
+      # is null and the payment path falls back to `total_paise` — if that
+      # fallback ever breaks, marketplace orders bill zero), commission
+      # splitting for third-party items, and the ownership check that stops
+      # one user billing another user's order.
       - name: Money-path integration tests
         working-directory: artifacts/api-server
         # --test-force-exit: these suites hold real Postgres connections; on
@@ -156,3 +194,46 @@ jobs:
           ./src/routes/rdAdvisory.appointmentOrder.test.ts
           ./src/routes/vouchers.test.ts
           ./src/routes/premium.paymentOrder.test.ts
+          ./src/routes/addons.test.ts
+          ./src/lib/ai/agents/ops.refundCap.test.ts
+          ./src/routes/marketplace.checkout.test.ts
+          ./src/routes/marketplace.paymentsIntegration.test.ts
+      # Kept as its own step so a failure reads as "the kitchen board broke"
+      # rather than being buried in an eighteen-file money run. Not a money path,
+      # but it needs the same Postgres service and pushed schema, so it lives
+      # in this job. Two things are pinned: the board shows own_app + meal only
+      # (an aggregator ticket here gets cooked twice — Petpooja's own screen is
+      # already driving it), and POST ready advances only tickets the board can
+      # actually show (without the status predicate it would drag a delivered
+      # order back to ready, or resurrect a cancelled one onto the board).
+      - name: Kitchen-board route contract (KDS)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/ops.kds.test.ts
+      # The order-channel split's own test corpus. Every one of these files was
+      # written to guard the split and every one of them ran nowhere — this
+      # workflow enumerates test files by name, and none of these were named,
+      # in any workflow. They are green today; the point is that nothing would
+      # have told us when they stopped being. What they cover:
+      #
+      #   orderChannel.schema  — the DB check constraints agree with the TS
+      #                          tuples, order_channel is NOT NULL defaulting
+      #                          to own_app, and no channel value collides
+      #                          with an order-kind value.
+      #   dispatch.channel     — an aggregator's order never consumes one of
+      #                          our riders, through all three doors
+      #                          (dispatchOrder, overrideAssignment,
+      #                          findBatchPartner).
+      #   wellnessAutoLog      — marketplace orders do not write nutrition
+      #                          logs; you cannot eat a saucepan.
+      #   petpooja             — the status vocabulary the mappers emit is the
+      #                          vocabulary the readers recognise.
+      - name: Order-channel split integrity
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/orderChannel.schema.test.ts
+          ./src/lib/dispatch.channel.test.ts
+          ./src/lib/wellnessAutoLog.orderKind.test.ts
+          ./src/lib/petpooja.test.ts

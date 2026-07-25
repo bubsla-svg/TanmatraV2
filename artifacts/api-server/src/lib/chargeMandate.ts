@@ -521,6 +521,7 @@ export async function chargeMandateCore(
         .insert(ordersTable)
         .values({
           userId: sub.userId,
+          orderChannel: "own_app",
           // Unique per (userId, externalOrderId); one row per billed cycle.
           externalOrderId: `sub-${sub.id}-mandate-${mandate.id}-${chargeDateStr}`,
           razorpayOrderId: rpOrderId,

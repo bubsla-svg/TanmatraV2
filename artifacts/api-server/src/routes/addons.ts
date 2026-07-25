@@ -5,12 +5,32 @@ import {
   orderAddonsTable,
   ordersTable,
   type Addon,
+  type OrderStatus,
 } from "@workspace/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { userIsPremium as userIsPremiumUnsafe } from "./premium";
 
 const router: IRouter = Router();
+
+// Which order statuses may still take a bolt-on add-on.
+//
+// This is deliberately an ALLOW-list rather than a deny-list of terminal
+// states: when someone adds an eleventh value to orderStatusValues and forgets
+// this file, attach then fails CLOSED (refuses) instead of silently letting a
+// customer bolt a ₹499 supplement onto an order nobody will ever fulfil.
+// `delivered` is excluded for the same reason as the terminal states —
+// fulfilment is over, so no packer will ever see the add-on.
+//
+// Typed as a Set<OrderStatus> so a typo is a compile error, but held at
+// ReadonlySet<string> because orders.status is an untyped varchar column.
+const ATTACHABLE_STATUSES: ReadonlySet<string> = new Set<OrderStatus>([
+  "placed",
+  "preparing",
+  "ready",
+  "rider_assigned",
+  "out_for_delivery",
+]);
 
 const SEED_ADDONS: Array<Omit<Addon, "id">> = [
   {
@@ -170,11 +190,21 @@ const attachSchema = z.object({
     .min(1),
 });
 
+const ORDER_CLOSED_FOR_ADDONS = "order is no longer open for add-ons";
+
+type AttachOutcome =
+  | { ok: true; inserted: Array<typeof orderAddonsTable.$inferSelect> }
+  | { ok: false; httpStatus: number; error: string; orderStatus?: string };
+
 router.post("/addons/attach", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "unauthorized" });
     return;
   }
+  // Captured here, not read inside the transaction below: isAuthenticated()
+  // narrows req.user for straight-line code, but that narrowing does not
+  // survive into an arrow-function callback.
+  const userId = req.user.id;
   const parsed = attachSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -182,16 +212,21 @@ router.post("/addons/attach", async (req: Request, res: Response) => {
   }
   const { orderId, items } = parsed.data;
 
-  // Verify the order belongs to this user
-  const [order] = await db
-    .select()
+  // Cheap pre-check outside the lock: 404 an order that isn't the caller's and
+  // 409 one that has closed, both before we bother scoring the catalogue. Only
+  // id/status are selected so it is visually obvious that no money column is
+  // read here. The authoritative check is the FOR UPDATE re-read below.
+  const [pre] = await db
+    .select({ id: ordersTable.id, status: ordersTable.status })
     .from(ordersTable)
-    .where(
-      and(eq(ordersTable.id, orderId), eq(ordersTable.userId, req.user.id)),
-    )
+    .where(and(eq(ordersTable.id, orderId), eq(ordersTable.userId, userId)))
     .limit(1);
-  if (!order) {
+  if (!pre) {
     res.status(404).json({ error: "order not found" });
+    return;
+  }
+  if (!ATTACHABLE_STATUSES.has(pre.status)) {
+    res.status(409).json({ error: ORDER_CLOSED_FOR_ADDONS, status: pre.status });
     return;
   }
 
@@ -202,7 +237,10 @@ router.post("/addons/attach", async (req: Request, res: Response) => {
     .where(inArray(addonsTable.id, addonIds));
   const addonMap = new Map(addons.map((a) => [a.id, a]));
 
-  const isPremium = await userIsPremium(req.user.id);
+  // Premium lookup and row-building happen BEFORE the transaction so the row
+  // lock is held for the shortest possible time (userIsPremium goes to the
+  // global db handle, i.e. a different pooled connection).
+  const isPremium = await userIsPremium(userId);
   const rows: Array<typeof orderAddonsTable.$inferInsert> = [];
   let totalAddedPaise = 0;
   for (const it of items) {
@@ -224,13 +262,68 @@ router.post("/addons/attach", async (req: Request, res: Response) => {
     res.status(400).json({ error: "no valid addons" });
     return;
   }
-  const inserted = await db.insert(orderAddonsTable).values(rows).returning();
-  // Bump the order total for transparency in Orders page.
-  await db
-    .update(ordersTable)
-    .set({ totalPaise: order.totalPaise + totalAddedPaise })
-    .where(eq(ordersTable.id, orderId));
-  res.status(201).json({ addons: inserted, addedPaise: totalAddedPaise });
+
+  // Re-read the order under a row lock and re-apply both checks — between the
+  // pre-check and here the order may have been cancelled. A concurrent
+  // `UPDATE orders SET status = 'cancelled'` takes the same row-level
+  // exclusive lock, so FOR UPDATE blocks until that commits and then observes
+  // the new status. That closes the TOCTOU without the cancel path needing to
+  // know this route exists.
+  //
+  // NOTE — money authority. Nothing in this handler writes orders.total_paise
+  // or orders.charge_paise. Those are owned by finalizeOrder and are the only
+  // numbers the payment path bills and reconciles against. The old code did
+  //   set({ totalPaise: order.totalPaise + totalAddedPaise })
+  // which (a) still never billed the customer, (b) made
+  // isCaptureAmountReconciled reject a LEGITIMATE capture on rows whose
+  // charge_paise is null, because the expected total moved after the Razorpay
+  // order was created, and (c) manufactured refund headroom for money that
+  // never arrived. Add-ons attached after checkout are therefore NOT charged —
+  // see the `billed` flag on the response.
+  const outcome: AttachOutcome = await db.transaction(async (tx) => {
+    const [order] = await tx
+      .select({ id: ordersTable.id, status: ordersTable.status })
+      .from(ordersTable)
+      .where(and(eq(ordersTable.id, orderId), eq(ordersTable.userId, userId)))
+      .for("update")
+      .limit(1);
+    if (!order) {
+      return { ok: false, httpStatus: 404, error: "order not found" };
+    }
+    if (!ATTACHABLE_STATUSES.has(order.status)) {
+      return {
+        ok: false,
+        httpStatus: 409,
+        error: ORDER_CLOSED_FOR_ADDONS,
+        orderStatus: order.status,
+      };
+    }
+    const inserted = await tx
+      .insert(orderAddonsTable)
+      .values(rows)
+      .returning();
+    return { ok: true, inserted };
+  });
+
+  if (!outcome.ok) {
+    res.status(outcome.httpStatus).json({
+      error: outcome.error,
+      ...(outcome.orderStatus ? { status: outcome.orderStatus } : {}),
+    });
+    return;
+  }
+
+  // `billed: false` is stated explicitly at the API boundary so no client can
+  // mistake a 201 here for a charge. addedPaise is what the add-ons WOULD cost;
+  // it has not been taken from the customer. Flip this to true only when
+  // add-ons reach the server before finalizeOrder computes charge_paise —
+  // which is blocked on the food-vs-supplement GST rate (see the branch
+  // commit body and claude/money-authority-findings.md).
+  res.status(201).json({
+    addons: outcome.inserted,
+    addedPaise: totalAddedPaise,
+    billed: false,
+  });
 });
 
 router.get("/orders/:id/addons", async (req: Request, res: Response) => {
