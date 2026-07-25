@@ -35,15 +35,19 @@ node --test --import tsx ./src/lib/mealPlanner.test.ts
 node --test --import tsx ./src/routes/groupOrders.test.ts
 ```
 
-The storefront's tests are the exception: it has **no `test` script**, so the root
-`pnpm run test` silently skips them. Run them from `artifacts/storefront`, where the
-`@/` tsconfig paths resolve:
+The storefront's tests are the exception: it has **no `test` script**, and it does not
+declare `tsx`, so the root `pnpm run test` silently skips all 43 files / 211 tests. Drive
+them through the api-server's `tsx` loader — that package does declare it, so this works on
+a clean `pnpm install` (a bare `pnpm exec tsx` inside `artifacts/storefront` only appears to
+work when the machine happens to have a global `tsx` on `PATH`):
 ```bash
-pnpm exec tsx --test lib/catalog.test.ts   # one file
-pnpm exec tsx --test lib/*.test.ts         # all storefront wire tests
+cd artifacts/api-server
+node --test --import tsx ../storefront/lib/catalog.test.ts   # one file
+node --test --import tsx ../storefront/lib/*.test.ts         # all storefront wire tests
 ```
-CI runs them in `.github/workflows/storefront.yml`, so they are gated on PRs — but a
-green root `pnpm run test` is not evidence that they pass.
+This is the same invocation `.github/workflows/storefront.yml` uses, so they are gated on
+PRs that touch the storefront — but a green root `pnpm run test` is not evidence that they
+pass.
 
 **API codegen (after changing `lib/api-spec/openapi.yaml`)**
 ```bash
