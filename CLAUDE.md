@@ -35,10 +35,10 @@ node --test --import tsx ./src/lib/mealPlanner.test.ts
 node --test --import tsx ./src/routes/groupOrders.test.ts
 ```
 
-The storefront runs its own suite — 43 files, 211 tests, all in `artifacts/storefront/lib/`
+The storefront runs its own suite — 49 files, 257 tests, all in `artifacts/storefront/lib/`
 and all DB- and network-free (every API client takes an injectable `fetchImpl`):
 ```bash
-pnpm --filter @workspace/storefront run test     # all 211, ~18s
+pnpm --filter @workspace/storefront run test     # all 257, ~18s
 cd artifacts/storefront
 node --test --import tsx ./lib/catalog.test.ts   # one file
 ```
@@ -46,10 +46,18 @@ node --test --import tsx ./lib/catalog.test.ts   # one file
 (`node --test --import tsx ../storefront/lib/*.test.ts`). That form predates the storefront
 declaring its own `tsx` and is still correct — either works.
 
-**`artifacts/tanmatra` (the legacy SPA) has no `test` script**, so the root `pnpm run test`
-skips it. Its money-math tests run only through the hand-written file list in `verify.yml`'s
-`money-unit` job — adding a test file under `artifacts/tanmatra/` without also adding it to
-that list means it runs nowhere.
+The legacy SPA (`artifacts/tanmatra`) also has a `test` script, and `verify.yml`'s
+`money-unit` job drives both packages by **glob**, not by a hand-written list:
+
+```
+node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 79 tests
+node --test --import tsx "../storefront/lib/**/*.test.ts"   # 257 tests
+```
+
+The quotes are load-bearing — Actions runs `run:` under bash with globstar OFF, where `**`
+collapses to a single level and silently runs a subset while still going green. Let **node**
+expand the glob. `scripts/lint-test-reach.ts` understands these patterns and fails the build
+on any test file no workflow reaches.
 
 **API codegen (after changing `lib/api-spec/openapi.yaml`)**
 ```bash
