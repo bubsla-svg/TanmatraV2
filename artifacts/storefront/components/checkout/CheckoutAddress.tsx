@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StepDots } from "./StepDots";
 import { formatPaise } from "@/lib/format";
 import { CERTAINTY } from "@/lib/checkout";
+import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
 /**
  * Screen 2 — Address (02c §3). One decision: where. PIN pre-fills from the
@@ -20,6 +21,7 @@ export function CheckoutAddress({
 }) {
   const [pincode, setPincode] = useState("");
   const [line, setLine] = useState("");
+  const [pickingLocation, setPickingLocation] = useState(false);
   const pinValid = pincode.replace(/\D/g, "").length === 6;
   const lineValid = line.trim().length > 3;
   const valid = pinValid && lineValid;
@@ -30,7 +32,28 @@ export function CheckoutAddress({
         <StepDots current={step} total={total} />
         <span className="tabular text-sm font-semibold text-ink">{formatPaise(total)}</span>
       </div>
-      <h1 className="text-lg font-semibold text-ink">Delivery address</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-ink">Delivery address</h1>
+        <button
+          type="button"
+          onClick={() => setPickingLocation(true)}
+          className="flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3.5 py-2 text-xs font-bold text-[var(--primary)] shadow-xs hover:bg-bg"
+        >
+          <span>⌖</span>
+          <span>Pick on map</span>
+        </button>
+      </div>
+      {pickingLocation && (
+        <LocationPickerFlow
+          onClose={() => setPickingLocation(false)}
+          onSelectLocation={(place) => {
+            setPickingLocation(false);
+            if (place.pincode) setPincode(place.pincode);
+            if (place.formattedAddress) setLine(place.formattedAddress);
+          }}
+          onManualFallback={() => setPickingLocation(false)}
+        />
+      )}
       <div className="grid grid-cols-1 gap-3">
         <div>
           <label htmlFor="co-pin" className="mb-1.5 block text-sm font-medium text-ink">
