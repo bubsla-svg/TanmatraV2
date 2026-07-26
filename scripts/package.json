@@ -11,6 +11,7 @@
     "backfill-macros": "tsx ./src/backfill-macros.ts",
     "backfill-encrypt-subscription-members": "tsx ./src/backfill-encrypt-subscription-members.ts",
     "verify-ledger": "tsx ./src/verify-ledger.ts",
+    "audit-order-status": "tsx ./src/audit-order-status.ts",
     "verify-dpdpa": "tsx ./src/verify-dpdpa-kms.ts",
     "verify-allergen-gate": "tsx ./src/verify-allergen-gate.ts",
     "verify-dish-integrity": "tsx ./src/verify-dish-integrity.ts",
