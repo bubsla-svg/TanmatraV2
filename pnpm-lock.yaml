@@ -748,6 +748,9 @@ importers:
       tailwindcss:
         specifier: 'catalog:'
         version: 4.2.1
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
 
   artifacts/tanmatra:
     dependencies:
