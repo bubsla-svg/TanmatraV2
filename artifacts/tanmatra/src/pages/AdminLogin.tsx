@@ -69,7 +69,7 @@ export default function AdminLogin() {
             <ShieldCheck size={22} />
             <span className="text-sm uppercase tracking-wide">Admin</span>
           </div>
-          <CardTitle>Sign in to the Tanmatra admin</CardTitle>
+          <CardTitle><h1 className="text-lg font-semibold">Sign in to the Tanmatra admin</h1></CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">

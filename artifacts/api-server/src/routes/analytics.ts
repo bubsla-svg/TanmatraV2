@@ -235,6 +235,11 @@ router.post("/analytics/wbr/simulate", async (req: Request, res: Response) => {
       fuelFactor,
       netMarginPct: sim.marginPct,
       thresholdAlert: sim.marginPct < 35.0,
+      // The alert above is a comparison against a number that may be part
+      // assumption. Ship the coverage with it so "no alert" can be read as
+      // "we measured and we're fine" rather than "we didn't measure".
+      foodCostCoveragePct: sim.foodCostCoveragePct,
+      unmatchedItemNames: sim.unmatchedItemNames,
     });
   } catch (err) {
     sendError(res, err);

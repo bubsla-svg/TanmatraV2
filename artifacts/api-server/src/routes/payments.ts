@@ -15,6 +15,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
+import { commitSubsidyForOrder } from "../lib/corporateSubsidy";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 import {
@@ -496,6 +497,24 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
       );
     }
 
+    // The customer's card has now been debited an amount already NET of the
+    // company's share, so the company owes that share. Commit the reservation
+    // taken at pricing time.
+    //
+    // Deliberately outside the `if (updated[0])` above: if the webhook won the
+    // placed→preparing race, this caller still saw a verified capture and must
+    // not skip the company charge on that account. commitSubsidyForOrder is
+    // idempotent on the order's reservation row, so whichever path arrives
+    // second is a no-op rather than a double charge.
+    try {
+      await commitSubsidyForOrder(order.id);
+    } catch (err) {
+      // Never fail a verified payment over this. The webhook retries the same
+      // commit, and the reservation stays `reserved` until one of them lands —
+      // which reads as "owed but not yet collected", not as lost.
+      req.log.error({ err, orderId }, "corporate subsidy commit failed after verify");
+    }
+
     const mandateResult = await registerAutopayMandate(order.id, razorpayPaymentId, keyId, keySecret, req.log);
     if (mandateResult) {
       autopayDisclaimer = mandateResult.autopayDisclaimer;
@@ -839,6 +858,18 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
             .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
             .returning({ id: ordersTable.id });
+          // Capture confirmed: the customer paid an amount already net of the
+          // company's share, so commit that share. Idempotent, and outside the
+          // fresh-transition guard on purpose — losing the race to verify must
+          // not skip the company charge.
+          try {
+            await commitSubsidyForOrder(order.id);
+          } catch (err) {
+            req.log.error(
+              { err, orderId: order.id },
+              "corporate subsidy commit failed in webhook",
+            );
+          }
           if (updated[0]) {
             void sendOrderConfirmation(updated[0].id);
             // Part 8 A4 — server-truth payment_succeeded (webhook won the
@@ -916,6 +947,18 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
             .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
             .returning({ id: ordersTable.id });
+          // Capture confirmed: the customer paid an amount already net of the
+          // company's share, so commit that share. Idempotent, and outside the
+          // fresh-transition guard on purpose — losing the race to verify must
+          // not skip the company charge.
+          try {
+            await commitSubsidyForOrder(order.id);
+          } catch (err) {
+            req.log.error(
+              { err, orderId: order.id },
+              "corporate subsidy commit failed in webhook",
+            );
+          }
           if (updated[0]) {
             void sendOrderConfirmation(updated[0].id);
             // Part 8 A4 — server-truth payment_succeeded (UPI payment-link

@@ -99,6 +99,48 @@
       "when": 1784955032361,
       "tag": "0013_order_channel",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1784974625992,
+      "tag": "0014_voucher_razorpay",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1784994936230,
+      "tag": "0015_company_subsidy_charges",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785008070019,
+      "tag": "0016_sturdy_speed_demon",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1785009423889,
+      "tag": "0017_bent_golden_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785015289351,
+      "tag": "0018_tidy_the_enforcers",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785017835322,
+      "tag": "0019_tense_zeigeist",
+      "breakpoints": true
     }
   ]
 }

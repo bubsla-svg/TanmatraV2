@@ -2,6 +2,7 @@ import { db, ordersTable, nutritionLogsTable, isMealOrderItem } from "@workspace
 import { eq } from "drizzle-orm";
 import { getDishById, type DishData } from "@workspace/menu-catalog";
 import { logger } from "./logger";
+import { emitServerEvent } from "./serverEvents";
 
 const VEG_CATEGORIES = new Set<DishData["category"]>([
   "salads",
@@ -59,6 +60,7 @@ export async function autoLogDeliveredOrder(orderId: number): Promise<number> {
     .values(rows)
     .onConflictDoNothing({ target: [nutritionLogsTable.userId, nutritionLogsTable.dedupeKey] });
   logger.info({ orderId, lines: rows.length }, "wellness auto-logged delivered order");
+  void emitServerEvent("delivery_completed", { orderId }, order.userId);
   // Keep streaks fresh after delivered orders so the dashboard reflects them
   // without requiring the user to perform another action.
   try {
