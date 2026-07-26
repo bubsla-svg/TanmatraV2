@@ -100,7 +100,7 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
         <>
           <label htmlFor="pa-code" className="text-sm font-medium text-ink">Enter the 6-digit code</label>
           <input
-            id="pa-code" type="text" inputMode="numeric" autoComplete="one-time-code" value={code}
+            id="pa-code" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" maxLength={6} value={code}
             onChange={(e) => setCode(e.target.value)} placeholder="123456" className={inputCls}
           />
           <div className="flex items-center gap-3">

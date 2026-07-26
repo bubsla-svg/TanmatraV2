@@ -341,6 +341,16 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/ops.kds.test.ts
+      - name: Front-door serviceability & checkout gate authority (OB-1)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/serviceability.test.ts
+      - name: Notify-me serviceability interest capture (OB-3)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/serviceabilityInterest.test.ts
       # The order-channel split's own test corpus. Every one of these files was
       # written to guard the split and every one of them ran nowhere — this
       # workflow enumerates test files by name, and none of these were named,

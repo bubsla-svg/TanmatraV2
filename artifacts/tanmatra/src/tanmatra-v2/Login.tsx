@@ -165,7 +165,7 @@ export default function V2Login() {
           ) : (
             <>
               <div className="lab mb6">Verification code</div>
-              <div className="inp"><input autoFocus inputMode="numeric" autoComplete="one-time-code" placeholder="123456" value={code} maxLength={6}
+              <div className="inp"><input autoFocus type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" placeholder="123456" value={code} maxLength={6}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} onKeyDown={(e) => { if (e.key === "Enter") void verifyOtp(); }}
                 style={{ letterSpacing: "0.4em", textAlign: "center", fontSize: 18 }} /></div>
               {import.meta.env.DEV && devCode && <div className="fine mt6" style={{ color: "var(--sage)" }}><i className="ph-bold ph-chat-text" /> Dev mode — your code is <span className="mono">{devCode}</span></div>}

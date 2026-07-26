@@ -1,6 +1,6 @@
 {
-  "id": "8183515e-4ce7-443e-a5fd-e320716cb4d8",
-  "prevId": "6891e43b-fedd-41a3-a392-4be483d830cf",
+  "id": "68038c85-4ce6-49e0-8d48-8782eecb12c3",
+  "prevId": "8183515e-4ce7-443e-a5fd-e320716cb4d8",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -10548,7 +10548,7 @@
         },
         "team_size_band": {
           "name": "team_size_band",
-          "type": "varchar(16)",
+          "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true
         },
@@ -10573,6 +10573,18 @@
         "source": {
           "name": "source",
           "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rd_reg_no": {
+          "name": "rd_reg_no",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "practice_setting": {
+          "name": "practice_setting",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false
         },

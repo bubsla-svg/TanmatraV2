@@ -4,6 +4,7 @@ import { ConsumerPlansGrid } from "@/components/landing/ConsumerPlansGrid";
 import { ProofStrip } from "@/components/landing/ProofStrip";
 import { FaqAccordion } from "@/components/landing/FaqAccordion";
 import { StickyCtaBar } from "@/components/landing/StickyCtaBar";
+import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 import { formatPaise } from "@/lib/format";
 
 const PROOF_ITEMS = [
@@ -98,6 +99,13 @@ export default async function HomePage() {
             >
               Browse menu &amp; à-la-carte
             </Link>
+          </div>
+
+          {/* OB-2's front-door serviceability check. The L-2 homepage replaced
+              the hero this used to live in; it belongs here, not lost in the
+              merge — advisory only, it never blocks browsing. */}
+          <div className="mt-8">
+            <ServiceabilityBar placement="hero" />
           </div>
         </div>
       </section>
