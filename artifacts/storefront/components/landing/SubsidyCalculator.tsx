@@ -1,15 +1,20 @@
-"use client";
-// Client island: the corporate subsidy ESTIMATOR. Every figure derives from
-// PER_MEAL_PAISE × GST_RATE (imported live) — no price is hardcoded, and this is
-// an estimate, not a quote (the form returns real pilot pricing). Pick a model,
-// drag the team size, read the monthly number.
+"use client"; // Justification: client-side team size range slider and interactive corporate subsidy computation.
 import { useState } from "react";
-import { PER_MEAL_PAISE, GST_RATE } from "@workspace/subscription-rules";
+import { PER_MEAL_PAISE, GST_RATE, computeCorporateTeamsQuote } from "@workspace/subscription-rules";
 import { formatPaise } from "@/lib/format";
 import { SUBSIDY_MODELS, type SubsidyModel } from "@/content/landing/corporate";
+import { emitLpEvent } from "@/lib/lpEvents";
 
 /** GST-inclusive monthly employer cost for ONE employee under a model. */
-function perEmployeePaise(m: SubsidyModel): number {
+function perEmployeePaise(m: SubsidyModel, teamSize: number): number {
+  if (teamSize >= 10) {
+    try {
+      const quote = computeCorporateTeamsQuote(teamSize, "veg", m.mealsPerMonth);
+      return Math.round(quote.pricePerMealPaise * m.mealsPerMonth * m.companyShare);
+    } catch {
+      /* fall back to PER_MEAL_PAISE if computation fails */
+    }
+  }
   return Math.round(m.mealsPerMonth * PER_MEAL_PAISE * m.companyShare * (1 + GST_RATE));
 }
 
@@ -17,7 +22,13 @@ export function SubsidyCalculator() {
   const [modelId, setModelId] = useState<SubsidyModel["id"]>("full");
   const [teamSize, setTeamSize] = useState<number>(40);
   const model = SUBSIDY_MODELS.find((m) => m.id === modelId) ?? SUBSIDY_MODELS[0]!;
-  const monthlyPaise = teamSize * perEmployeePaise(model);
+  const monthlyPaise = teamSize * perEmployeePaise(model, teamSize);
+
+  const handleTeamSizeChange = (val: number) => {
+    setTeamSize(val);
+    emitLpEvent("calc_interact", { page: "/corporate-wellness", seats: val, model: modelId });
+  };
+
 
   return (
     <section className="py-12">
@@ -47,7 +58,7 @@ export function SubsidyCalculator() {
               </div>
               <p className="mt-2 text-xs leading-relaxed text-ink-muted">{m.desc}</p>
               <p className="tabular mt-2 text-sm font-bold text-gold-text">
-                {formatPaise(perEmployeePaise(m))}
+                {formatPaise(perEmployeePaise(m, teamSize))}
                 <span className="text-[10px] font-medium text-ink-faint"> /employee/month</span>
               </p>
             </button>
@@ -70,7 +81,7 @@ export function SubsidyCalculator() {
               max={500}
               step={5}
               value={teamSize}
-              onChange={(e) => setTeamSize(Number(e.target.value))}
+              onChange={(e) => handleTeamSizeChange(Number(e.target.value))}
               className="mt-2 w-full accent-[var(--gold)]"
             />
             <p className="mt-1 text-[11px] text-ink-faint">
@@ -86,7 +97,7 @@ export function SubsidyCalculator() {
               <span className="text-xs font-medium text-ink-faint"> /month</span>
             </p>
             <p className="tabular mt-1 text-[11px] text-ink-muted">
-              {formatPaise(perEmployeePaise(model))} per employee · GST included
+              {formatPaise(perEmployeePaise(model, teamSize))} per employee · GST included
             </p>
           </div>
         </div>
