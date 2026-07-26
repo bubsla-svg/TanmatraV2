@@ -743,7 +743,7 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
     res.status(rejection.status).json(rejection.body);
     return;
   }
-  const q = computePlanQuote(data.planId);
+  const q = computePlanQuote(data.planId, track);
 
   const { items: addOnItems, rejected } = resolveAddOns(
     data.planId,
@@ -911,7 +911,7 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     return;
   }
   const planV2AddOns: AddOnLineItem[] = resolvedAddOns.items;
-  const q = computePlanQuote(data.planId);
+  const q = computePlanQuote(data.planId, track);
   const planReviewAddOnPaise = planV2AddOns
     .filter((a) => a.attachPoint === "plan_review")
     .reduce((sum, a) => sum + a.pricePaise, 0);

@@ -190,3 +190,17 @@ test("(c) a new-signup request that names no catalog plan is 400/409, never a â‚
   assert.equal(createLegacy.status, 400, "Must reject signup request without planId");
   assert.equal(createLegacy.json?.code, "legacy_pricing_disabled");
 });
+
+test("(d) variant pricing deltas applied through /subscriptions/quote router endpoint", async () => {
+  await boot();
+  const user = await makeUser();
+
+  const qEgg = await api("POST", "/subscriptions/quote", { planId: "desk_fuel", track: "egg", cadence: "monthly" }, user);
+  assert.equal(qEgg.status, 200, JSON.stringify(qEgg.json));
+  assert.equal(qEgg.json.totalPaise, 459800, "desk_fuel egg monthly quote must be 459800");
+
+  const qNonveg = await api("POST", "/subscriptions/quote", { planId: "protein_build", track: "nonveg", cadence: "monthly" }, user);
+  assert.equal(qNonveg.status, 200, JSON.stringify(qNonveg.json));
+  assert.equal(qNonveg.json.totalPaise, 613800, "protein_build nonveg monthly quote must be 613800");
+});
+
