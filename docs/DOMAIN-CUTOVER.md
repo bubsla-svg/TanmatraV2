@@ -1,220 +1,120 @@
-# Domain cutover runbook — `tanmatra.food` → storefront
+# Domain cutover — tanmatra.food → the storefront service
 
-**Audience:** a GCP operator/agent with access to project `brand-tanmatra-tmg`.
-**Goal:** make `https://tanmatra.food` render the **`storefront`** Cloud Run
-service (Next.js) instead of the legacy **`tanmatra`** service (Vite SPA).
+**Status: complete.** `tanmatra.food` and `www.tanmatra.food` are served by the
+**storefront** Cloud Run service (Next.js), not by the legacy `tanmatra` SPA
+service. Verified from the outside on 2026-07-25; evidence in §2.
 
-> Status: pre-launch — **not live**, so a hard swap with a brief HTTPS gap is
-> acceptable. Option 1 is the immediate path; Option 2 is the zero-404 path to
-> run before real users.
-
----
-
-## Constants
-
-| Thing | Value |
-|---|---|
-| Project | `brand-tanmatra-tmg` |
-| Region | `asia-south2` |
-| Domain | `tanmatra.food` (and `www.tanmatra.food` if in use) |
-| Target service | `storefront` |
-| Current service on the domain | `tanmatra` (legacy SPA) |
-| api-server (do **not** touch) | `wellness-foods` |
-
-**How the domain works today:** `tanmatra.food` is a **Cloud Run domain mapping
-on the `tanmatra` service** (Google Frontend). The swap re-points that mapping to
-`storefront`. The storefront proxies `/api/*` → api-server and `/images/*` → the
-legacy `tanmatra` **run.app URL**, both same-origin — so no CORS, cookie, or DNS
-work is required just to render.
+Not to be confused with [`LIVE-CUTOVER.md`](LIVE-CUTOVER.md), which is the
+*money-path* cutover — turning the storefront's checkout stubs into live
+Razorpay calls. This file is only about which service the public domain points
+at. Four comments in the repo point here: `.github/workflows/deploy.yml` lines
+372, 440 and 565, and `artifacts/storefront/Dockerfile` line 42.
 
 ---
 
-## Preconditions (verify before any change)
+## 1. The three services
+
+All three live in GCP project `brand-tanmatra-tmg`, region `asia-south2`, and
+are deployed by `.github/workflows/deploy.yml` (manual `workflow_dispatch`
+only — there is no push trigger).
+
+| Cloud Run service | Package | Role |
+|---|---|---|
+| `wellness-foods` | `artifacts/api-server` | Express API. Owns every amount. |
+| `tanmatra` | `artifacts/tanmatra` | Legacy React/Vite SPA. **No longer fronted by the domain.** Still deployed; still the source of `/images` for the storefront (`IMAGE_UPSTREAM`). |
+| `storefront` | `artifacts/storefront` | Next.js rebuild. **This is what tanmatra.food serves.** |
+
+The storefront reaches the API two ways, and they are configured at different
+times. `API_BASE_URL` is a **runtime** env var (`--update-env-vars`) read by
+server-component fetches. `API_UPSTREAM` and `IMAGE_UPSTREAM` must be **build
+args**: `next.config`'s `rewrites()` are evaluated during `next build` and
+baked into `routes-manifest.json`, so a runtime value cannot enable the
+same-origin `/api` and `/images` proxy hops. deploy.yml passes them both ways;
+only the build-arg pass is load-bearing for the rewrites.
+`NEXT_PUBLIC_API_BASE` is deliberately built empty so the browser always takes
+the same-origin hop rather than a cross-origin one.
+
+## 2. How to verify, and what it proved
+
+Every claim about what is deployed is settled by the deploy-truth endpoint —
+`app/api/build/route.ts` in the storefront, `server/static-server.mjs` in the
+legacy SPA. The two return **different shapes**, which is what makes them
+useful for telling the services apart:
 
 ```bash
-gcloud config set project brand-tanmatra-tmg
+curl -s https://tanmatra.food/api/build
+# {"sha":"e43e51c8…","builtAt":"2026-07-25T02:21:39.173Z","app":"tanmatra-web"}
 
-# 1. Executing identity can manage domain mappings (needs roles/run.admin or
-#    run.domainmappings.* ). Confirm you can list mappings:
-gcloud beta run domain-mappings list --region asia-south2
+curl -s https://storefront-475157072474.asia-south2.run.app/api/build
+# {"sha":"e43e51c8…","builtAt":"2026-07-25T02:21:39.173Z","app":"tanmatra-web"}
 
-# 2. Domain is verified for this project (delete+create retains verification —
-#    it's account-level via Search Console, independent of the mapping):
-gcloud domains list-user-verified   # expect tanmatra.food in the list
-
-# 3. Target service is healthy and on the intended build:
-gcloud run services describe storefront --region asia-south2 \
-  --format='value(status.url)'
-curl -sS https://storefront-475157072474.asia-south2.run.app/api/build
-#   → expect {"sha":"<current>","app":"tanmatra-web", ...}
+curl -s https://tanmatra-475157072474.asia-south2.run.app/api/build
+# {"sha":"5176c113…","builtAt":"2026-07-23T08:51:17Z","service":"tanmatra"}
 ```
 
-**Do NOT delete or stop the legacy `tanmatra` service** — the storefront pulls
-dish photos from its run.app URL (`IMAGE_UPSTREAM`) until images move to a
-bucket/CDN. The swap only moves the *hostname*, not the service.
+The domain and the storefront service return the same `sha` **and the same
+`builtAt` to the millisecond**. `builtAt` is process boot time, so identical
+values mean the same running process, not merely the same commit. The legacy
+service answers with a different, older sha and the key `service` rather than
+`app`. Headers agree: the domain sends `x-powered-by: Next.js` and
+`x-nextjs-prerender`, the legacy origin sends neither.
 
----
-
-## Step 0 — capture current state (rollback safety)
+This is external evidence. The authoritative check is the mapping itself, which
+needs gcloud credentials this repo's CI does not hand out for reads:
 
 ```bash
-# Record the existing mapping (current service + the required DNS resourceRecords):
-gcloud beta run domain-mappings describe --domain tanmatra.food \
-  --region asia-south2 > tanmatra-mapping-BEFORE.txt
-cat tanmatra-mapping-BEFORE.txt   # note spec.routeName == "tanmatra" and the DNS records
-
-# Record what the domain serves right now (for verification/rollback):
-curl -sS https://tanmatra.food/api/build   # → expect {"service":"tanmatra", ...}
+gcloud run domain-mappings list --region asia-south2 --project brand-tanmatra-tmg
 ```
 
----
+## 3. What the four in-repo references mean now
 
-## Step 1 — the mapping swap (Option 1, pre-launch)
+`deploy.yml` line 372 — the `frontend-cloud-run` job's "Domain notice". It
+deploys the legacy `tanmatra` service and then reports that `tanmatra.food` is
+not on that revision. Post-cutover that mismatch is permanent and expected, so
+the step is now a standing no-op notice. It is non-fatal by design; leave it
+non-fatal. Do not confuse it with the *deploy-truth* assert added to the same
+job later (PR #403), which compares the running revision's `/api/build` sha
+against the deployed commit and IS fatal — that one guards against the service
+serving a stale revision, which is a different failure from the domain pointing
+elsewhere.
 
-A host can map to only **one** service per region, so the old mapping must be
-deleted before the new one is created (this opens a brief unreachable/HTTPS-invalid
-window — acceptable while not live).
+`deploy.yml` line 440 — `NEXT_PUBLIC_SITE_URL=https://tanmatra.food` as a
+storefront build arg. This is now correct rather than aspirational: canonical
+tags, `robots.txt`, `sitemap.xml` and every JSON-LD `@id` (all sourced from
+`lib/siteUrl.ts`) point at the domain that actually serves the pages.
 
-```bash
-# 1a. Remove the mapping from the legacy service
-gcloud beta run domain-mappings delete --domain tanmatra.food \
-  --region asia-south2 --quiet
+`deploy.yml` line 565 — the `storefront-cloud-run` job's domain notice, which
+checks that `tanmatra.food` reports both this workflow's sha and
+`app=tanmatra-web`. That condition is now satisfiable, so the comment's own
+instruction ("flip to fatal once the domain is permanently on the storefront")
+is unblocked. It is deliberately still non-fatal — see §4.
 
-# 1b. Create the mapping on the storefront service
-gcloud beta run domain-mappings create --service storefront \
-  --domain tanmatra.food --region asia-south2
+`artifacts/storefront/Dockerfile` line 42 — documents the
+`NEXT_PUBLIC_SITE_URL` ARG. The default stays `""` so a bare `docker build`
+falls back to the run.app origin in `lib/siteUrl.ts`; production gets the real
+value from deploy.yml.
 
-# 1c. (only if www is used) map the www host too
-gcloud beta run domain-mappings create --service storefront \
-  --domain www.tanmatra.food --region asia-south2
-```
+## 4. Open follow-ups (owner decisions, not code changes to make blindly)
 
-**DNS:** the `create` command prints the `resourceRecords` the domain needs.
-Compare them to `tanmatra-mapping-BEFORE.txt`:
-- Apex `tanmatra.food` already points at Google's standard ghs A/AAAA set (that's
-  how it reached the `tanmatra` service). Cloud Run uses the **same** frontend for
-  all services, so the records are **identical** → **no DNS change needed**.
-- Only if `create` shows records that differ from what's live, update them at the
-  registrar/DNS provider, then wait for propagation.
+**Flip the storefront domain check to fatal.** The gate would then fail a
+storefront deploy whose revision never reaches `tanmatra.food`. The reason to
+wait: a certificate-propagation blip or a deliberate temporary rollback would
+red an otherwise-good deploy, and the fatal `Assert deployed sha` step against
+the service's own run.app URL already catches the failure this would catch.
+Worth doing once the mapping has been stable across several deploys.
 
-**Wait for the managed cert on the new mapping:**
-```bash
-watch -n 30 "gcloud beta run domain-mappings describe --domain tanmatra.food \
-  --region asia-south2 --format='value(status.conditions)'"
-# proceed when the CertificateProvisioned / Ready conditions are True
-```
+**Decide the legacy `tanmatra` service's fate.** It is still built and deployed
+on every change under `artifacts/tanmatra/**` or `lib/**`, and no user-facing
+domain routes to it. It is not dead weight yet — the storefront's
+`IMAGE_UPSTREAM` points at it for `/images`, so switching it off would break
+imagery. Either move the image assets and retire the service, or keep it and
+say so here, but do not leave the question implicit.
 
----
+## 5. Rolling back
 
-## Step 2 — verify the cutover
-
-```bash
-# Serves the storefront (app marker + storefront sha):
-curl -sS https://tanmatra.food/api/build
-#   → {"sha":"<storefront sha>","app":"tanmatra-web", ...}   (NOT "service":"tanmatra")
-
-# Home + a storefront-only route render:
-curl -s -o /dev/null -w '/ %{http_code}\n'                 https://tanmatra.food/
-curl -s -o /dev/null -w '/account/preferences %{http_code}\n' https://tanmatra.food/account/preferences
-#   → both 200  (/account/preferences exists on storefront, not the legacy SPA)
-
-# TLS is valid (0 = verified):
-curl -sS -o /dev/null -w 'tls_verify=%{ssl_verify_result}\n' https://tanmatra.food/
-
-# api proxy still first-party through the new host:
-curl -s -o /dev/null -w '/api/menu/public %{http_code}\n' https://tanmatra.food/api/menu/public
-#   → 200
-
-# images still proxy (dish photo through the storefront on the domain):
-curl -s -o /dev/null -w '/images %{http_code}\n' "https://tanmatra.food/images/dishes/$(
-  curl -s https://tanmatra.food/api/menu/public | python3 -c 'import json,sys;d=json.load(sys.stdin);i=d if isinstance(d,list) else d.get("dishes") or d.get("items") or [];print((i[0].get("slug","") if i else "")+".jpg")')"
-#   → 200 (or the image host's success code)
-```
-
----
-
-## Rollback (one command pair)
-
-```bash
-gcloud beta run domain-mappings delete --domain tanmatra.food \
-  --region asia-south2 --quiet
-gcloud beta run domain-mappings create --service tanmatra \
-  --domain tanmatra.food --region asia-south2
-# verify: curl -sS https://tanmatra.food/api/build  → {"service":"tanmatra", ...}
-```
-
----
-
-## Coherence follow-ups (engineering — not the GCP agent)
-
-These are code/config changes tracked separately; the GCP agent should just be
-aware:
-
-1. **`deploy.yml` will red-fail after cutover.** The `frontend-cloud-run`
-   (tanmatra) job asserts `curl tanmatra.food/api/build == <sha>`. Once the domain
-   serves the storefront, that assert returns the storefront's sha and the legacy
-   job fails. Eng will relocate the domain deploy-truth assert to the `storefront`
-   job. **Until then, a failing `frontend-cloud-run` domain assert is expected —
-   not a real outage.**
-2. **`synthetic-prod-check.yml`** curls `https://tanmatra.food` — eng repoints its
-   assertions to the storefront.
-3. **SEO** — eng sets `NEXT_PUBLIC_SITE_URL=https://tanmatra.food` (build arg) so
-   `robots.txt` / `sitemap.xml` / canonical / OG stop emitting the run.app origin.
-4. **Firebase Authorized domains** — confirm `tanmatra.food` is listed (it is, for
-   the legacy app) so OTP sign-in works.
-
----
-
-## Consequence to accept (Option 1)
-
-A straight swap means **every route not yet ported to the storefront 404s on
-`tanmatra.food`** — the ~43 route-parity routes **and** the 18 `admin/*` routes.
-`tanmatra.food/admin/*` becomes reachable only via the legacy `tanmatra` run.app
-URL. Fine while not live; not acceptable for real users mid-migration — use
-Option 2 before launch.
-
----
-
-## Option 2 — zero-404 incremental cutover (external HTTPS load balancer)
-
-Run this **before real users** so admin + not-yet-ported routes keep working while
-the parity waves land. It replaces the Cloud Run domain mapping with a global
-external Application Load Balancer whose URL map routes by path.
-
-High-level (global external Application LB, project `brand-tanmatra-tmg`):
-
-1. **Remove the Cloud Run domain mapping** for `tanmatra.food` (LB and domain
-   mapping can't both own the host).
-2. **Reserve a global static IP:**
-   `gcloud compute addresses create tanmatra-lb-ip --global`
-3. **Serverless NEGs** (region `asia-south2`), one per service:
-   `gcloud compute network-endpoint-groups create neg-storefront --region asia-south2 --network-endpoint-type serverless --cloud-run-service storefront`
-   (and `neg-tanmatra` → `tanmatra`).
-4. **Backend services** (global, `EXTERNAL_MANAGED`) each with its NEG as backend.
-5. **URL map** — default backend → `storefront`; path matchers → `tanmatra`:
-   - `/admin/*`, `/rd-console/*`
-   - every not-yet-ported customer path (shrinks as parity waves ship —
-     drive the list from `docs/STOREFRONT-ROUTE-PARITY.md`).
-6. **Google-managed cert** for `tanmatra.food` (+ `www`), **target HTTPS proxy**,
-   and a **global forwarding rule** on the reserved IP (:443). Add an HTTP→HTTPS
-   redirect forwarding rule on :80.
-7. **DNS** — point `tanmatra.food` A/AAAA at the reserved LB IP (this **does**
-   change DNS, away from the domain-mapping ghs records). Wait for cert + DNS.
-8. **Verify** each path class routes to the right backend (a storefront route →
-   storefront; `/admin/login` → legacy).
-9. **As each parity wave ships**, delete its path from the `tanmatra` matcher so
-   the storefront serves it — until only genuinely-legacy paths (admin) remain.
-
----
-
-## Gotchas
-
-- **One host → one service per region.** Delete before create (Option 1 gap).
-- **Keep the legacy `tanmatra` service running** — image proxy + (Option 2)
-  admin/legacy backend depend on it.
-- **Never touch `wellness-foods`** (api-server) or its URL — the storefront and
-  the legacy SPA both depend on it.
-- **Cert provisioning** on a fresh mapping/LB can take minutes (occasionally up to
-  ~24h); HTTPS may warn until Ready.
-- Cloud Run domain mappings are **regional** and supported in `asia-south2` (the
-  current mapping proves it) — no region migration needed for Option 1.
+Re-point the domain mapping at the `tanmatra` service. Two consequences to
+expect: the storefront's baked `NEXT_PUBLIC_SITE_URL` still says
+`https://tanmatra.food`, so its canonicals would advertise a domain it no
+longer serves until the next build; and the legacy service's last deployed sha
+may lag main by however long the cutover lasted, so redeploy it rather than
+assuming the running revision is current.
