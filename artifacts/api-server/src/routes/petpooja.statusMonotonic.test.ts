@@ -45,6 +45,20 @@ import { db, ordersTable, ridersTable } from "@workspace/db";
 
 import petpoojaRouter from "./petpooja";
 
+// main's inbound Petpooja surface fails closed (landed after this branch was
+// cut): unconfigured rejects, and no mode admits a credential-less request.
+// These suites exercise idempotency and status-ladder handling, not auth, so
+// they configure the integration and authenticate every call with the shared
+// secret header. Auth itself is covered by petpooja.auth.test.ts.
+// `verifyPetpoojaAuth` calls `petpoojaConfig()` per request, so setting these
+// here — after the static import — is sufficient.
+process.env.PETPOOJA_APP_KEY = "key-abc";
+process.env.PETPOOJA_APP_SECRET = "secret-xyz";
+process.env.PETPOOJA_ACCESS_TOKEN = "token-123";
+process.env.PETPOOJA_RESTAURANT_ID = "rest-42";
+const AUTH = { "x-petpooja-app-secret": "secret-xyz" } as const;
+
+
 const RUN = randomUUID().slice(0, 8);
 const ext = (name: string) => `PPM-${name}-${RUN}`;
 const phone = (name: string) => `+9188${RUN}${name}`.slice(0, 20);
@@ -212,7 +226,7 @@ async function orderRow(id: number) {
 async function post(path: string, body: unknown): Promise<{ status: number; json: any }> {
   const res = await fetch(`${baseUrl}/integrations/petpooja/${path}`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...AUTH },
     body: JSON.stringify(body),
   });
   return { status: res.status, json: await res.json() };

@@ -11,6 +11,8 @@ const {
   isPetpoojaEnabled,
   verifyPetpoojaAuth,
   petpoojaAuthOk,
+  petpoojaAllowUnauthenticated,
+  petpoojaWebhooksMounted,
   serializeOrderToPetpooja,
   pushOrderToPetpooja,
   getStoreStatus,
@@ -30,6 +32,8 @@ function configure() {
 function unconfigure() {
   for (const k of Object.keys(CFG)) delete process.env[k];
   delete process.env["PETPOOJA_SAVE_ORDER_URL"];
+  delete process.env["PETPOOJA_WEBHOOKS_ENABLED"];
+  delete process.env["PETPOOJA_WEBHOOKS_INSECURE_ALLOW_UNAUTHENTICATED"];
 }
 
 function fakeReq(body: unknown, headers: Record<string, string> = {}): Request {
@@ -80,15 +84,19 @@ test("integration is ON only when all four required vars are set", () => {
 });
 
 // ── webhook auth ─────────────────────────────────────────────────────────────
-test("verifyPetpoojaAuth: unconfigured allows through (configured:false)", () => {
+// These endpoints FAIL CLOSED. "Unconfigured" is not a pass, and "no
+// credentials presented" is not a pass in either mode. The pre-25-Jul-2026
+// behaviour — where both of those returned true — left /push-menu, which writes
+// menu_items.price_paise, unauthenticated in every deployment state.
+test("verifyPetpoojaAuth: unconfigured is NOT a pass (fails closed)", () => {
   const r = verifyPetpoojaAuth(fakeReq({ app_key: "anything" }));
-  assert.deepEqual(r, { ok: true, configured: false, presented: false });
+  assert.deepEqual(r, { ok: false, configured: false, presented: false, secretMatches: false });
 });
 
 test("verifyPetpoojaAuth: configured accepts matching body credentials", () => {
   configure();
   const r = verifyPetpoojaAuth(fakeReq({ app_key: CFG.PETPOOJA_APP_KEY, app_secret: CFG.PETPOOJA_APP_SECRET }));
-  assert.deepEqual(r, { ok: true, configured: true, presented: true });
+  assert.deepEqual(r, { ok: true, configured: true, presented: true, secretMatches: true });
 });
 
 test("verifyPetpoojaAuth: configured rejects wrong credentials", () => {
@@ -96,6 +104,7 @@ test("verifyPetpoojaAuth: configured rejects wrong credentials", () => {
   const r = verifyPetpoojaAuth(fakeReq({ app_key: CFG.PETPOOJA_APP_KEY, app_secret: "WRONG" }));
   assert.equal(r.ok, false);
   assert.equal(r.presented, true);
+  assert.equal(r.secretMatches, false);
 });
 
 test("verifyPetpoojaAuth: configured accepts header shared-secret", () => {
@@ -111,19 +120,89 @@ test("verifyPetpoojaAuth: configured + no creds presented → not ok", () => {
   assert.equal(r.presented, false);
 });
 
-test("petpoojaAuthOk: strict rejects no-creds; lenient allows no-creds; both reject wrong-creds", () => {
+test("verifyPetpoojaAuth: right secret + missing app_key → not ok, but secretMatches", () => {
   configure();
-  // no creds
-  assert.equal(petpoojaAuthOk(fakeReq({}), nullLog, "strict"), false);
-  assert.equal(petpoojaAuthOk(fakeReq({}), nullLog, "lenient"), true);
-  // wrong creds
-  assert.equal(petpoojaAuthOk(fakeReq({ app_key: "x", app_secret: "y" }), nullLog, "lenient"), false);
-  // right creds
-  assert.equal(petpoojaAuthOk(fakeReq({ app_key: CFG.PETPOOJA_APP_KEY, app_secret: CFG.PETPOOJA_APP_SECRET }), nullLog, "strict"), true);
+  const r = verifyPetpoojaAuth(fakeReq({ app_secret: CFG.PETPOOJA_APP_SECRET }));
+  assert.equal(r.ok, false, "app_key is absent, so this is not a full match");
+  assert.equal(r.secretMatches, true, "the shared secret itself is correct");
 });
 
-test("petpoojaAuthOk: unconfigured always allows", () => {
+test("petpoojaAuthOk: NEITHER mode admits a credential-less request", () => {
+  configure();
+  assert.equal(petpoojaAuthOk(fakeReq({}), nullLog, "strict"), false);
+  assert.equal(
+    petpoojaAuthOk(fakeReq({}), nullLog, "lenient"),
+    false,
+    "lenient used to wave this through — that was the push-menu hole",
+  );
+});
+
+test("petpoojaAuthOk: both modes reject wrong credentials", () => {
+  configure();
+  assert.equal(petpoojaAuthOk(fakeReq({ app_key: "x", app_secret: "y" }), nullLog, "strict"), false);
+  assert.equal(petpoojaAuthOk(fakeReq({ app_key: "x", app_secret: "y" }), nullLog, "lenient"), false);
+});
+
+test("petpoojaAuthOk: both modes accept fully-correct credentials", () => {
+  configure();
+  const req = fakeReq({ app_key: CFG.PETPOOJA_APP_KEY, app_secret: CFG.PETPOOJA_APP_SECRET });
+  assert.equal(petpoojaAuthOk(req, nullLog, "strict"), true);
+  assert.equal(petpoojaAuthOk(req, nullLog, "lenient"), true);
+});
+
+test("petpoojaAuthOk: lenient (only) tolerates a correct secret with no app_key", () => {
+  configure();
+  const req = fakeReq({ app_secret: CFG.PETPOOJA_APP_SECRET });
+  assert.equal(petpoojaAuthOk(req, nullLog, "strict"), false);
+  assert.equal(petpoojaAuthOk(req, nullLog, "lenient"), true);
+});
+
+test("petpoojaAuthOk: unconfigured REJECTS — blanking env must not open the surface", () => {
+  assert.equal(petpoojaAuthOk(fakeReq({}), nullLog, "strict"), false);
+  assert.equal(petpoojaAuthOk(fakeReq({}), nullLog, "lenient"), false);
+  assert.equal(
+    petpoojaAuthOk(fakeReq({ app_key: "anything", app_secret: "anything" }), nullLog, "lenient"),
+    false,
+    "there is no secret to check against, so nobody can authenticate",
+  );
+});
+
+// ── the dev escape hatch, and the mount switch ───────────────────────────────
+test("petpoojaAllowUnauthenticated: opt-in only, and never in production", () => {
+  assert.equal(petpoojaAllowUnauthenticated(), false, "absent flag → off");
+  process.env["PETPOOJA_WEBHOOKS_INSECURE_ALLOW_UNAUTHENTICATED"] = "true";
+  assert.equal(petpoojaAllowUnauthenticated(), true);
+
+  const prevNodeEnv = process.env["NODE_ENV"];
+  process.env["NODE_ENV"] = "production";
+  assert.equal(
+    petpoojaAllowUnauthenticated(),
+    false,
+    "production refuses the flag no matter how it is set",
+  );
+  if (prevNodeEnv === undefined) delete process.env["NODE_ENV"];
+  else process.env["NODE_ENV"] = prevNodeEnv;
+});
+
+test("petpoojaAuthOk: the dev flag is the ONLY way an unconfigured surface admits anyone", () => {
+  process.env["PETPOOJA_WEBHOOKS_INSECURE_ALLOW_UNAUTHENTICATED"] = "true";
   assert.equal(petpoojaAuthOk(fakeReq({}), nullLog, "strict"), true);
+});
+
+test("petpoojaWebhooksMounted: unconfigured → unmounted; configured → mounted", () => {
+  assert.equal(petpoojaWebhooksMounted(), false, "nothing configured → no surface");
+  configure();
+  assert.equal(petpoojaWebhooksMounted(), true);
+});
+
+test("petpoojaWebhooksMounted: PETPOOJA_WEBHOOKS_ENABLED=false decommissions a configured integration", () => {
+  configure();
+  for (const off of ["false", "0", "off", "no", "FALSE"]) {
+    process.env["PETPOOJA_WEBHOOKS_ENABLED"] = off;
+    assert.equal(petpoojaWebhooksMounted(), false, `${off} → unmounted`);
+  }
+  process.env["PETPOOJA_WEBHOOKS_ENABLED"] = "true";
+  assert.equal(petpoojaWebhooksMounted(), true);
 });
 
 // ── outbound serialization ───────────────────────────────────────────────────
@@ -238,3 +317,4 @@ test("store status persists across update → get", () => {
   setStoreStatus("1", null, null);
   assert.equal(getStoreStatus().status, "1");
 });
+

@@ -3,6 +3,7 @@ import { db, ordersTable, refundRequestsTable, deliveryEventsTable } from "@work
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { requireOps } from "../lib/adminGate";
+import { REFUND_EVENT_NAMES, remainingRefundablePaise } from "../lib/paymentIntegrity";
 
 const router: IRouter = Router();
 
@@ -120,6 +121,85 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
       .set({ status: "failed", note: "no razorpay_payment_id on order" })
       .where(eq(refundRequestsTable.id, id));
     res.status(409).json({ error: "no captured payment to refund against" });
+    return;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Cap the payout against the ORDER, not against the request row.
+  //
+  // Until now this route sent `claimed.amountPaise` to Razorpay having never
+  // read the order it belongs to. That amount is a snapshot the cancel path
+  // wrote (`routes/orders.ts` — chargePaise ?? totalPaise at cancel time), and
+  // a snapshot is not an authority:
+  //
+  //   * It nets off nothing already refunded. The ops agent's `refund_order`
+  //     tool records `refund_issued` against the order without ever touching
+  //     refund_requests, so an order it has already refunded still carries a
+  //     full-value pending request here, and this route pays it in full. That
+  //     is a bookkeeping contradiction today — the agent tool records intent
+  //     and does not call the gateway — but it is the guard that has to exist
+  //     BEFORE that TODO is wired, not after.
+  //   * A `failed` request is re-approvable (the claim CAS above accepts it),
+  //     and "failed" includes a gateway 5xx returned after Razorpay accepted
+  //     the refund. Retrying then pays a second time.
+  //   * If the order's charge_paise is corrected downward after the request is
+  //     raised, the stale higher number is still what gets sent.
+  //
+  // So re-derive the headroom from the order plus its refund history at the
+  // moment of payout, and refuse — do not silently clamp — when the request
+  // exceeds it. Clamping would pay a different amount than the console shows
+  // its operator, which is its own kind of wrong.
+  //
+  // No netting of other in-flight requests is needed: `uniq_refund_requests_
+  // order` allows exactly one refund_requests row per order, and the claim CAS
+  // above serializes approvals of that row. There is no second request to race.
+  const [order] = await db
+    .select({ chargePaise: ordersTable.chargePaise, totalPaise: ordersTable.totalPaise })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, claimed.orderId))
+    .limit(1);
+  const priorRefundEvents = order
+    ? await db
+        .select({ meta: deliveryEventsTable.meta })
+        .from(deliveryEventsTable)
+        .where(
+          and(
+            eq(deliveryEventsTable.orderId, claimed.orderId),
+            inArray(deliveryEventsTable.event, [...REFUND_EVENT_NAMES]),
+          ),
+        )
+    : [];
+  const remainingPaise = order ? remainingRefundablePaise(order, priorRefundEvents) : null;
+  if (remainingPaise == null || claimed.amountPaise > remainingPaise) {
+    // Park it back as `failed` (re-approvable, and visible in the console with
+    // the reason) rather than leaving it stuck in `processing` with no money
+    // moved. A deterministic refusal will refuse again on retry — which is
+    // correct: it needs the amount corrected, not another attempt.
+    const note =
+      remainingPaise == null
+        ? "refund cap unknown: order missing or unreadable refund history"
+        : `exceeds refundable balance (${remainingPaise} paise left of order)`;
+    req.log.error(
+      {
+        refundRequestId: claimed.id,
+        orderId: claimed.orderId,
+        requestedPaise: claimed.amountPaise,
+        remainingPaise,
+      },
+      "refund approval refused: amount exceeds what is still refundable on the order",
+    );
+    await db
+      .update(refundRequestsTable)
+      .set({ status: "failed", note })
+      .where(eq(refundRequestsTable.id, id));
+    res.status(409).json({
+      error:
+        remainingPaise == null
+          ? "cannot establish how much is still refundable on this order"
+          : "refund exceeds the amount still refundable on this order",
+      requestedPaise: claimed.amountPaise,
+      ...(remainingPaise == null ? {} : { remainingPaise }),
+    });
     return;
   }
 

@@ -1,5 +1,5 @@
 {
-  "id": "3693756b-2e73-4bf0-b8b6-36d96ef17fbd",
+  "id": "d375728f-1e80-46b5-93d4-b46c3ab02263",
   "prevId": "9352bc34-1d8a-496c-8321-788db3892c94",
   "version": "7",
   "dialect": "postgresql",
@@ -565,22 +565,6 @@
           ],
           "isUnique": true,
           "where": "external_order_id is not null",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "uniq_orders_external_pos": {
-          "name": "uniq_orders_external_pos",
-          "columns": [
-            {
-              "expression": "external_order_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "external_order_id is not null and order_channel <> 'own_app'",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -10117,7 +10101,19 @@
           "type": "varchar(16)",
           "primaryKey": false,
           "notNull": true,
-          "default": "'active'"
+          "default": "'pending_payment'"
+        },
+        "razorpay_order_id": {
+          "name": "razorpay_order_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "razorpay_payment_id": {
+          "name": "razorpay_payment_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
         },
         "redeemed_by_user_id": {
           "name": "redeemed_by_user_id",
@@ -10169,6 +10165,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "idx_vouchers_razorpay_order": {
+          "name": "idx_vouchers_razorpay_order",
+          "columns": [
+            {
+              "expression": "razorpay_order_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -10202,7 +10213,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "vouchers_status_chk": {
+          "name": "vouchers_status_chk",
+          "value": "\"vouchers\".\"status\" in ('pending_payment','active','redeemed','cancelled')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.corporate_leads": {

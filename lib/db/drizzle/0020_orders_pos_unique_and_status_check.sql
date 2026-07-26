@@ -1,3 +1,26 @@
+-- Two guards for the orders table, renumbered from the original 0014/0015
+-- on claude/analytics-order-channel-visible (main reached 0019 meanwhile).
+--
+-- One row per POS order id. Makes POST /integrations/petpooja/saveorder
+-- idempotent against the webhook retries it will inevitably receive.
+--
+-- PRE-FLIGHT: this statement FAILS if the table already holds duplicates,
+-- which is the bug it exists to prevent. Run first, and reconcile any hits:
+--
+--   select external_order_id, count(*)
+--   from orders
+--   where external_order_id is not null and order_channel <> 'own_app'
+--   group by 1 having count(*) > 1;
+--
+-- Expected to return zero rows: no aggregator order is known to have been
+-- written by that route yet (see claude/order-channel-split.md §7). If it
+-- returns anything, each group is one meal that was ticketed more than once.
+--
+-- Takes a SHARE lock on `orders` for the duration — writes block, reads do
+-- not. Fine at current volume; if the table is large by the time this runs,
+-- apply it by hand as CREATE UNIQUE INDEX CONCURRENTLY outside a transaction.
+CREATE UNIQUE INDEX "uniq_orders_external_pos" ON "orders" USING btree ("external_order_id") WHERE external_order_id is not null and order_channel <> 'own_app';
+--> statement-breakpoint
 -- Close the order-status vocabulary at the database.
 --
 -- `orders.status` has always been a bare varchar(32). `orderStatusValues` in

@@ -59,6 +59,7 @@ export type OrderChannel = (typeof orderChannelValues)[number];
 //   • artifacts/api-server/src/routes/ops.ts       the KDS queue filter
 //   • artifacts/api-server/src/lib/dispatch.ts     liveStatuses, partnerStatuses
 //   • artifacts/api-server/src/lib/etaModel.ts     ACTIVE_STATUSES
+//   • artifacts/api-server/src/routes/addons.ts    ATTACHABLE_STATUSES
 //   • artifacts/storefront/lib/orderStatus.ts      STATUS_LABELS, TRACKABLE_STATUSES
 export const orderStatusValues = [
   // Pre-kitchen.

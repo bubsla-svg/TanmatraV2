@@ -351,6 +351,7 @@ export function mapPetpoojaItem(
     macrosAreEstimate: true,
     rdVerified: false,
     allergenReviewState: "reviewed",
+    fulfillmentType: "MTO" as const,
     customizations: customizations.length > 0 ? customizations : null,
   };
 }

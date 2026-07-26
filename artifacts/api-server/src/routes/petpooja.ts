@@ -12,8 +12,12 @@ function unauthorized(res: Response) {
   res.status(401).json({ success: "0", message: "unauthorized: invalid Petpooja credentials" });
 }
 
+// STRICT, and it must stay strict. This handler bulk-upserts `menu_items`,
+// `price_paise` included — it is the single most dangerous inbound route in the
+// service. It used to run "lenient", which at the time meant a request with no
+// credentials at all was waved through. Do not relax it.
 router.post("/integrations/petpooja/push-menu", async (req: Request, res: Response) => {
-  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
+  if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
   const payload = req.body as PetpoojaPushMenuPayload;
 
   if (!payload || !payload.items || !Array.isArray(payload.items)) {
@@ -71,7 +75,11 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
   }
 });
 
+// Reads out the entire menu (every item, price and macro) in one response.
+// It had no auth guard at all; an unauthenticated caller could dump the
+// catalogue. Lenient, because Petpooja's menu-pull sender may omit app_key.
 router.post("/integrations/petpooja/fetchmenu", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const { restID } = req.body;
 
   if (!restID) {
@@ -729,6 +737,7 @@ router.post("/integrations/petpooja/item_stock_off", async (req: Request, res: R
 });
 
 router.post("/integrations/petpooja/get_store_status", async (req: Request, res: Response) => {
+  if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
   const { restID } = req.body;
 
   if (!restID) {
