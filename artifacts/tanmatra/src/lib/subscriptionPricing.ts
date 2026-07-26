@@ -18,6 +18,7 @@ export const CADENCE_WEEKS: Record<SubscriptionCadence, number> = {
   weekly: 1,
   fortnightly: 2,
   monthly: 6,
+  quarterly: 18,
 };
 
 /** Weeks in one cycle, defaulting to 1 for any unexpected cadence value. */

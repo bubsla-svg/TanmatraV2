@@ -26,12 +26,17 @@ const F = (paise: number): string =>
 
 describe("CADENCE_WEEKS", () => {
   it("maps each cadence to its billed-week count", () => {
-    assert.deepEqual(CADENCE_WEEKS, { weekly: 1, fortnightly: 2, monthly: 6 });
+    assert.deepEqual(CADENCE_WEEKS, { weekly: 1, fortnightly: 2, monthly: 6, quarterly: 18 });
   });
   it("cadenceWeeks defaults to 1 for a weekly cadence", () => {
     assert.equal(cadenceWeeks("weekly"), 1);
     assert.equal(cadenceWeeks("fortnightly"), 2);
     assert.equal(cadenceWeeks("monthly"), 6);
+    // 126 days / 7 — three 6-week protocol cycles, matching CADENCE_DAYS.quarterly
+    // on the server. The two maps are separate declarations in separate packages,
+    // so this assertion is the only thing keeping the SPA's billed-week count
+    // from drifting away from what the server actually charges for.
+    assert.equal(cadenceWeeks("quarterly"), 18);
   });
 });
 

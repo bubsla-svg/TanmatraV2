@@ -275,6 +275,31 @@ test("GST identity gst = total − round(total/1.05) holds for all plan and vari
   }
 });
 
+
+// ── §3 Prepaid quarterly cycle math (02e Table II.1) ─────────────────────────
+test("computePlanQuote — quarterly cycle uses Table II.1 flat totals and derives perMealPaise over 66 meals", () => {
+  const dfQ = computePlanQuote("desk_fuel", "veg", "quarterly");
+  assert.equal(dfQ.cycle, "quarterly");
+  assert.equal(dfQ.mealsPerCycle, 66);
+  assert.equal(dfQ.cycleTotalPaise, 1199900); // ₹11,999 flat cycle total
+  assert.equal(dfQ.pricePerMealPaise, Math.round(1199900 / 66)); // derived for display
+  assert.equal(dfQ.preTaxPaise, Math.round(1199900 / 1.05));
+  assert.equal(dfQ.gstPaise, 1199900 - dfQ.preTaxPaise);
+
+  const pbQ = computePlanQuote("protein_build", "veg", "quarterly");
+  assert.equal(pbQ.cycleTotalPaise, 1499900); // ₹14,999 flat cycle total
+  assert.equal(pbQ.mealsPerCycle, 66);
+  assert.equal(pbQ.pricePerMealPaise, Math.round(1499900 / 66));
+  assert.equal(pbQ.preTaxPaise, Math.round(1499900 / 1.05));
+  assert.equal(pbQ.gstPaise, 1499900 - pbQ.preTaxPaise);
+});
+
+test("quarterly variant totals exactly match Table II.1 for egg and nonveg", () => {
+  assert.equal(computePlanQuote("desk_fuel", "egg", "quarterly").cycleTotalPaise, 1259900);
+  assert.equal(computePlanQuote("desk_fuel", "nonveg", "quarterly").cycleTotalPaise, 1319900);
+  assert.equal(computePlanQuote("protein_build", "egg", "quarterly").cycleTotalPaise, 1559900);
+  assert.equal(computePlanQuote("protein_build", "nonveg", "quarterly").cycleTotalPaise, 1679900);
+
 // ── B2B Corporate Teams Seat Tiers (02e Table II.2) ──────────────────────────
 test("computeCorporateTeamsQuote exactly matches Table II.2 across all 9 variant × tier combinations", () => {
   // Tier 1 (10-24 seats)
