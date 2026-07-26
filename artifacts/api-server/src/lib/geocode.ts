@@ -52,61 +52,74 @@ function rememberCoord(key: string, coord: { lat: number; lng: number }): void {
 async function googleGeocode(
   addr: GeocodeAddress,
 ): Promise<{ lat: number; lng: number } | null> {
-  const apiKey = process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_API_KEY"];
-  if (!apiKey) return null;
+  const apiKeys = [process.env["GOOGLE_MAPS_API_KEY"], process.env["GOOGLE_API_KEY"]].filter(
+    (k): k is string => typeof k === "string" && k.trim().length > 0,
+  );
+  if (apiKeys.length === 0) return null;
   const parts = [addr.line, addr.city, addr.pincode, "India"]
     .map((p) => (p ?? "").trim())
     .filter((p) => p.length > 0);
   if (parts.length === 0) return null;
-  const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
-  url.searchParams.set("address", parts.join(", "));
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("region", "in");
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), GEOCODE_TIMEOUT_MS);
-  try {
-    const res = await fetch(url.toString(), { signal: ctrl.signal });
-    if (!res.ok) {
-      logger.warn(
-        { status: res.status },
-        "geocode: google maps non-200, falling back to synthetic",
-      );
-      return null;
-    }
-    const json = (await res.json()) as {
-      status?: string;
-      results?: Array<{ geometry?: { location?: { lat: number; lng: number } } }>;
-    };
-    if (json.status !== "OK") {
-      // ZERO_RESULTS is a normal outcome for sparse addresses.
-      if (json.status && json.status !== "ZERO_RESULTS") {
+
+  for (const apiKey of new Set(apiKeys)) {
+    const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+    url.searchParams.set("address", parts.join(", "));
+    url.searchParams.set("key", apiKey);
+    url.searchParams.set("region", "in");
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), GEOCODE_TIMEOUT_MS);
+    try {
+      const res = await fetch(url.toString(), { signal: ctrl.signal });
+      if (!res.ok) {
         logger.warn(
-          { status: json.status },
-          "geocode: google maps non-OK status",
+          { status: res.status },
+          "geocode: google maps non-200, trying fallback key or synthetic",
         );
+        continue;
       }
-      return null;
+      const json = (await res.json()) as {
+        status?: string;
+        results?: Array<{ geometry?: { location?: { lat: number; lng: number } } }>;
+      };
+      if (json.status !== "OK") {
+        // ZERO_RESULTS is a normal outcome for sparse addresses.
+        if (json.status && json.status !== "ZERO_RESULTS") {
+          logger.warn(
+            { status: json.status },
+            "geocode: google maps non-OK status on candidate key, retrying fallback if available",
+          );
+          if (
+            ["REQUEST_DENIED", "OVER_QUERY_LIMIT", "OVER_DAILY_LIMIT", "INVALID_REQUEST", "UNKNOWN_ERROR"].includes(
+              json.status,
+            )
+          ) {
+            continue;
+          }
+        }
+        return null;
+      }
+      const loc = json.results?.[0]?.geometry?.location;
+      if (
+        !loc ||
+        typeof loc.lat !== "number" ||
+        typeof loc.lng !== "number" ||
+        Number.isNaN(loc.lat) ||
+        Number.isNaN(loc.lng)
+      ) {
+        return null;
+      }
+      return { lat: loc.lat, lng: loc.lng };
+    } catch (err) {
+      logger.warn(
+        { err: (err as Error).message },
+        "geocode: google maps lookup failed on key, trying fallback",
+      );
+      continue;
+    } finally {
+      clearTimeout(timer);
     }
-    const loc = json.results?.[0]?.geometry?.location;
-    if (
-      !loc ||
-      typeof loc.lat !== "number" ||
-      typeof loc.lng !== "number" ||
-      Number.isNaN(loc.lat) ||
-      Number.isNaN(loc.lng)
-    ) {
-      return null;
-    }
-    return { lat: loc.lat, lng: loc.lng };
-  } catch (err) {
-    logger.warn(
-      { err: (err as Error).message },
-      "geocode: google maps lookup failed",
-    );
-    return null;
-  } finally {
-    clearTimeout(timer);
   }
+  return null;
 }
 
 /**

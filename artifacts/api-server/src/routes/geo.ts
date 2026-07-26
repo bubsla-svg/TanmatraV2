@@ -38,8 +38,14 @@ interface GeoPlace {
 // Geocoding API from these routes (observed live 2026-07-20: the rotated key
 // was Gemini-only and every /geo/* call started returning REQUEST_DENIED).
 // GOOGLE_MAPS_API_KEY, when set, decouples Maps from that blast radius.
-function mapsApiKey(): string | undefined {
-  return process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_API_KEY"];
+// Dual-key resilience: return all configured unique keys so if the primary key
+// expires or returns REQUEST_DENIED/OVER_QUERY_LIMIT, we automatically retry
+// against the fallback key before surfacing an outage.
+function getMapsApiKeys(): string[] {
+  const keys = [process.env["GOOGLE_MAPS_API_KEY"], process.env["GOOGLE_API_KEY"]].filter(
+    (k): k is string => typeof k === "string" && k.trim().length > 0,
+  );
+  return Array.from(new Set(keys));
 }
 
 // Geocoding statuses that mean the KEY/QUOTA is broken, not "no matches".
@@ -74,18 +80,67 @@ function rememberSearch(key: string, value: GeoPlace[]): void {
   searchCache.set(key, value);
 }
 
-/** Pull locality + postal_code out of a Google address_components array. */
+/**
+ * High-precision geographic place extraction for Indian addresses and NCR sectors.
+ * Scans across all returned geocoder polygon tiers (premise → sector → sublocality → district)
+ * to locate an authoritative 6-digit postal code and descriptive locality name,
+ * while preferring clean street formatting over cryptic standalone plus codes.
+ */
+export function precisePlaceFrom(
+  results: Array<{
+    formatted_address?: string;
+    address_components?: Array<{ long_name: string; types: string[] }>;
+  }>,
+): GeoPlace {
+  if (!results.length) return { formattedAddress: "", city: "", pincode: "" };
+
+  // Prefer human-readable formatted address over raw standalone plus-code prefixes
+  let formattedAddress = results[0]?.formatted_address ?? "";
+  if (formattedAddress.includes("+") && results.length > 1) {
+    for (const r of results) {
+      if (r.formatted_address && !r.formatted_address.split(",")[0]?.includes("+")) {
+        formattedAddress = r.formatted_address;
+        break;
+      }
+    }
+  }
+
+  let city = "";
+  let pincode = "";
+
+  // Harvest PIN code across all geometric polygon tiers in the geocode response
+  for (const r of results) {
+    for (const comp of r.address_components ?? []) {
+      if (!pincode && comp.types.includes("postal_code") && /^[0-9]{4,10}$/.test(comp.long_name.trim())) {
+        pincode = comp.long_name.trim();
+      }
+    }
+  }
+
+  // Harvest city/locality using hierarchical fallback: locality -> sublocality_level_1 -> sublocality -> administrative_area_level_2
+  const cityTypes = ["locality", "sublocality_level_1", "sublocality", "administrative_area_level_2"];
+  for (const targetType of cityTypes) {
+    if (city) break;
+    for (const r of results) {
+      for (const comp of r.address_components ?? []) {
+        if (comp.types.includes(targetType) && comp.long_name.trim().length > 1) {
+          city = comp.long_name.trim();
+          break;
+        }
+      }
+      if (city) break;
+    }
+  }
+
+  return { formattedAddress, city, pincode };
+}
+
+/** Pull locality + postal_code out of a single Google address_components array. */
 function placeFrom(result: {
   formatted_address?: string;
   address_components?: Array<{ long_name: string; types: string[] }>;
 }): GeoPlace {
-  let city = "";
-  let pincode = "";
-  for (const comp of result.address_components ?? []) {
-    if (comp.types.includes("locality")) city = comp.long_name;
-    else if (comp.types.includes("postal_code")) pincode = comp.long_name;
-  }
-  return { formattedAddress: result.formatted_address ?? "", city, pincode };
+  return precisePlaceFrom([result]);
 }
 
 router.get("/geo/reverse", async (req: Request, res: Response) => {
@@ -116,57 +171,62 @@ router.get("/geo/reverse", async (req: Request, res: Response) => {
     return;
   }
 
-  const apiKey = mapsApiKey();
-  if (!apiKey) {
+  const apiKeys = getMapsApiKeys();
+  if (!apiKeys.length) {
     res.status(503).json({ ok: false, error: "geocoding not configured" });
     return;
   }
 
-  const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
-  url.searchParams.set("latlng", `${lat},${lng}`);
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("region", "in");
+  let lastStatus = "502";
+  for (const apiKey of apiKeys) {
+    const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+    url.searchParams.set("latlng", `${lat},${lng}`);
+    url.searchParams.set("key", apiKey);
+    url.searchParams.set("region", "in");
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), REVERSE_TIMEOUT_MS);
-  try {
-    const gres = await fetch(url.toString(), { signal: ctrl.signal });
-    if (!gres.ok) {
-      logger.warn({ status: gres.status }, "geo/reverse: google non-200");
-      res.status(502).json({ ok: false, error: "geocoder unavailable" });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), REVERSE_TIMEOUT_MS);
+    try {
+      const gres = await fetch(url.toString(), { signal: ctrl.signal });
+      if (!gres.ok) {
+        logger.warn({ status: gres.status }, "geo/reverse: google non-200, retrying fallback key if available");
+        continue;
+      }
+      const json = (await gres.json()) as {
+        status?: string;
+        error_message?: string;
+        results?: Array<{
+          formatted_address?: string;
+          address_components?: Array<{ long_name: string; types: string[] }>;
+        }>;
+      };
+      if (json.status && KEY_FAILURE_STATUSES.has(json.status)) {
+        lastStatus = json.status;
+        logger.warn(
+          { status: json.status },
+          "geo/reverse: geocoder key failure on current candidate, retrying fallback key if available",
+        );
+        continue;
+      }
+      if (json.status !== "OK" || !json.results?.length) {
+        // ZERO_RESULTS is a normal outcome (e.g. open water) — not an error.
+        res.json({ ok: true, formattedAddress: "", city: "", pincode: "" });
+        return;
+      }
+      const value = precisePlaceFrom(json.results);
+      remember(key, value);
+      res.json({ ok: true, ...value });
       return;
+    } catch (err) {
+      logger.warn({ err: (err as Error).message }, "geo/reverse: request failed/timed out on candidate key");
+      continue;
+    } finally {
+      clearTimeout(timer);
     }
-    const json = (await gres.json()) as {
-      status?: string;
-      error_message?: string;
-      results?: Array<{
-        formatted_address?: string;
-        address_components?: Array<{ long_name: string; types: string[] }>;
-      }>;
-    };
-    if (json.status && KEY_FAILURE_STATUSES.has(json.status)) {
-      // Key/quota failure — a real outage, not "no address here".
-      logger.error(
-        { status: json.status, errorMessage: json.error_message },
-        "geo/reverse: geocoder key/quota failure",
-      );
-      res.status(502).json({ ok: false, error: "geocoder unavailable" });
-      return;
-    }
-    if (json.status !== "OK" || !json.results?.[0]) {
-      // ZERO_RESULTS is a normal outcome (e.g. open water) — not an error.
-      res.json({ ok: true, formattedAddress: "", city: "", pincode: "" });
-      return;
-    }
-    const value = placeFrom(json.results[0]);
-    remember(key, value);
-    res.json({ ok: true, ...value });
-  } catch (err) {
-    logger.warn({ err }, "geo/reverse: request failed/timed out");
-    res.status(502).json({ ok: false, error: "geocoder unavailable" });
-  } finally {
-    clearTimeout(timer);
   }
+
+  logger.error({ status: lastStatus }, "geo/reverse: all configured geocoding API keys exhausted or unavailable");
+  res.status(502).json({ ok: false, error: "geocoder unavailable" });
 });
 
 /**
@@ -199,62 +259,66 @@ router.get("/geo/search", async (req: Request, res: Response) => {
     return;
   }
 
-  const apiKey = mapsApiKey();
-  if (!apiKey) {
+  const apiKeys = getMapsApiKeys();
+  if (!apiKeys.length) {
     res.status(503).json({ ok: false, error: "geocoding not configured" });
     return;
   }
 
-  const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
-  url.searchParams.set("address", q);
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("region", "in");
-  url.searchParams.set("components", "country:IN");
-  // Viewport-bias toward the NCR service area (south,west|north,east) so a
-  // partial query like "sector 18" resolves locally, not across India.
-  url.searchParams.set("bounds", "28.20,76.80|28.95,77.75");
+  let lastStatus = "502";
+  for (const apiKey of apiKeys) {
+    const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+    url.searchParams.set("address", q);
+    url.searchParams.set("key", apiKey);
+    url.searchParams.set("region", "in");
+    url.searchParams.set("components", "country:IN");
+    // Viewport-bias toward the NCR service area (south,west|north,east) so a
+    // partial query like "sector 18" resolves locally, not across India.
+    url.searchParams.set("bounds", "28.20,76.80|28.95,77.75");
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), SEARCH_TIMEOUT_MS);
-  try {
-    const gres = await fetch(url.toString(), { signal: ctrl.signal });
-    if (!gres.ok) {
-      logger.warn({ status: gres.status }, "geo/search: google non-200");
-      res.status(502).json({ ok: false, error: "geocoder unavailable" });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), SEARCH_TIMEOUT_MS);
+    try {
+      const gres = await fetch(url.toString(), { signal: ctrl.signal });
+      if (!gres.ok) {
+        logger.warn({ status: gres.status }, "geo/search: google non-200, retrying fallback key if available");
+        continue;
+      }
+      const json = (await gres.json()) as {
+        status?: string;
+        error_message?: string;
+        results?: Array<{
+          formatted_address?: string;
+          address_components?: Array<{ long_name: string; types: string[] }>;
+        }>;
+      };
+      if (json.status && KEY_FAILURE_STATUSES.has(json.status)) {
+        lastStatus = json.status;
+        logger.warn(
+          { status: json.status },
+          "geo/search: geocoder key failure on current candidate, retrying fallback key if available",
+        );
+        continue;
+      }
+      if (json.status !== "OK" || !json.results?.length) {
+        // ZERO_RESULTS is a normal "no matches" outcome — not an error.
+        res.json({ ok: true, results: [] });
+        return;
+      }
+      const results = json.results.slice(0, 5).map((r) => placeFrom(r));
+      rememberSearch(norm, results);
+      res.json({ ok: true, results });
       return;
+    } catch (err) {
+      logger.warn({ err: (err as Error).message }, "geo/search: request failed/timed out on candidate key");
+      continue;
+    } finally {
+      clearTimeout(timer);
     }
-    const json = (await gres.json()) as {
-      status?: string;
-      error_message?: string;
-      results?: Array<{
-        formatted_address?: string;
-        address_components?: Array<{ long_name: string; types: string[] }>;
-      }>;
-    };
-    if (json.status && KEY_FAILURE_STATUSES.has(json.status)) {
-      // Key/quota failure — surface as an outage so the picker shows its
-      // "search unavailable" hint instead of a silent empty dropdown.
-      logger.error(
-        { status: json.status, errorMessage: json.error_message },
-        "geo/search: geocoder key/quota failure",
-      );
-      res.status(502).json({ ok: false, error: "geocoder unavailable" });
-      return;
-    }
-    if (json.status !== "OK" || !json.results?.length) {
-      // ZERO_RESULTS is a normal "no matches" outcome — not an error.
-      res.json({ ok: true, results: [] });
-      return;
-    }
-    const results = json.results.slice(0, 5).map(placeFrom);
-    rememberSearch(norm, results);
-    res.json({ ok: true, results });
-  } catch (err) {
-    logger.warn({ err }, "geo/search: request failed/timed out");
-    res.status(502).json({ ok: false, error: "geocoder unavailable" });
-  } finally {
-    clearTimeout(timer);
   }
+
+  logger.error({ status: lastStatus }, "geo/search: all configured geocoding API keys exhausted or unavailable");
+  res.status(502).json({ ok: false, error: "geocoder unavailable" });
 });
 
 export default router;
