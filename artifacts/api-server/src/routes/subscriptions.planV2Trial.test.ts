@@ -222,3 +222,30 @@ test("flag OFF: trial rules still enforced unconditionally under P-1 (legacy pri
   assert.equal(r.status, 409, JSON.stringify(r.json));
   assert.equal(r.json.code, "trial_already_redeemed");
 });
+
+test("attempting to purchase or quote a legacy ₹1,499 trial returns 410 Gone with redirect (P-5)", async () => {
+  const user = await makeUser();
+  const phone = freshPhone();
+
+  // Quote attempt for legacy trial
+  const quoteRes = await api(
+    "POST",
+    "/subscriptions/quote",
+    { cadence: "weekly", mealsPerDelivery: 3, planType: "trial" },
+    user,
+  );
+  assert.equal(quoteRes.status, 410, JSON.stringify(quoteRes.json));
+  assert.equal(quoteRes.json.code, "legacy_trial_retired");
+  assert.equal(quoteRes.json.redirect, "/plans/trial");
+
+  // Create attempt for legacy trial
+  const createRes = await api(
+    "POST",
+    "/subscriptions",
+    baseBody({ planType: "trial", phone, planId: undefined }),
+    user,
+  );
+  assert.equal(createRes.status, 410, JSON.stringify(createRes.json));
+  assert.equal(createRes.json.code, "legacy_trial_retired");
+  assert.equal(createRes.json.redirect, "/plans/trial");
+});
