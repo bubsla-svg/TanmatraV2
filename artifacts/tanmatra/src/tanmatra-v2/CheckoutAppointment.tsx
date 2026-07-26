@@ -7,6 +7,9 @@ import {
   formatRupees,
   type AppointmentKind,
 } from "@/lib/rdBookingData";
+import { openRazorpayCheckout } from "@/lib/razorpayClient";
+import { httpStatusOf } from "@/lib/apiError";
+import { useRef } from "react";
 
 /* Full-parity re-port of the System-A CheckoutAppointment (git 2507084) into v2.
  * The payment handler, API call (rdAdvisoryApi.book), paymentStatus branching,
@@ -40,6 +43,8 @@ export default function V2CheckoutAppointment() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [appointmentId, setAppointmentId] = useState<number | null>(null);
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   if (!booking || !booking.rdSlug) {
     return (
@@ -66,35 +71,89 @@ export default function V2CheckoutAppointment() {
     if (!booking) return;
     setLastError(null);
     setProcessing(true);
-    // Mock payment processing UI delay — same pattern as the meal
-    // checkout flow. The actual payment is settled server-side via the
-    // HMAC-signed internal webhook when /rd/appointments resolves.
-    await new Promise((r) => setTimeout(r, 1200));
+
     try {
-      const { appointment } = await rdAdvisoryApi.book({
-        rdSlug: booking.rdSlug,
-        kind: booking.kind,
-        startAt: booking.startAt,
-        endAt: booking.endAt,
-        userQuestion: booking.userQuestion,
+      let apptId = appointmentId;
+      
+      // 1. Book appointment if not already done
+      if (!apptId) {
+        const { appointment } = await rdAdvisoryApi.book({
+          rdSlug: booking.rdSlug,
+          kind: booking.kind,
+          startAt: booking.startAt,
+          endAt: booking.endAt,
+          userQuestion: booking.userQuestion,
+        }, idempotencyKeyRef.current);
+        apptId = appointment.id;
+        setAppointmentId(apptId);
+      }
+
+      // 2. Get Razorpay order from server
+      const checkout = await rdAdvisoryApi.checkout(apptId);
+
+      // 3. Open Razorpay modal
+      const opened = await openRazorpayCheckout({
+        razorpayOrderId: checkout.razorpayOrderId,
+        amountPaise: checkout.amount,
+        description: `${meta.label} with ${booking.rdName ?? "RD"}`,
+        // The key the server opened THIS order with. Without it the modal falls
+        // back to the build-time VITE_RAZORPAY_KEY_ID, so a build with none
+        // reports "unavailable" even though the server is configured and just
+        // handed one over.
+        keyId: checkout.keyId,
       });
-      setConfirmOpen(false);
-      if (appointment.paymentStatus === "paid") {
+
+      if (opened.outcome !== "paid") {
+        throw new Error(opened.outcome);
+      }
+
+      // 4. Verify payment
+      try {
+        await rdAdvisoryApi.verify(apptId, {
+          razorpayPaymentId: opened.payment.razorpayPaymentId,
+          razorpayOrderId: opened.payment.razorpayOrderId,
+          razorpaySignature: opened.payment.razorpaySignature,
+        });
+        
+        setConfirmOpen(false);
         toast.success("Payment received", {
           description: `${meta.label} confirmed with ${booking.rdName ?? "your RD"}.`,
         });
-      } else if (appointment.paymentStatus === "pending") {
-        toast.error("Booking held — payment not configured", {
+        navigate("/appointments");
+      } catch (e) {
+        // The money is already captured at this point, so the two failures need
+        // opposite handling and must actually be told apart.
+        //
+        //   • The server answered and refused (bad signature, wrong
+        //     appointment, 401) — a real error the customer must see.
+        //   • We never reached the server (offline, DNS, CORS, tab suspended) —
+        //     the payment stands and reconciliation will settle it, so telling
+        //     the customer "booking failed" after taking their money is wrong.
+        //
+        // request<T>() throws `${status}: ${body}` on an HTTP error; fetch
+        // itself rejects with a TypeError carrying no status. So the presence of
+        // a leading status code IS the distinction.
+        if (httpStatusOf(e) != null) throw e;
+        setConfirmOpen(false);
+        toast.message("Confirming payment", {
           description:
-            "Server's payment processor is not set up. Booking saved as pending.",
+            "We're confirming your payment. Please check your appointments list shortly.",
         });
-      } else {
-        toast.success("Booking confirmed");
+        navigate("/appointments");
       }
-      navigate("/appointments");
+
     } catch (e) {
-      const msg = String(e);
-      if (msg.includes("409")) {
+      // `message`, not String(e): the modal outcomes are thrown as
+      // `new Error("cancelled" | "unavailable")`, and String(err) on an Error
+      // yields "Error: cancelled" — so comparing the stringified error to
+      // "cancelled" never matched and a customer who simply closed the modal
+      // was told the booking failed.
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === "cancelled") {
+        toast.message("Payment cancelled");
+      } else if (msg === "unavailable") {
+        toast.error("Payment gateway unavailable");
+      } else if (msg.includes("409")) {
         toast.error("Slot just taken", {
           description: "Please pick another time.",
         });

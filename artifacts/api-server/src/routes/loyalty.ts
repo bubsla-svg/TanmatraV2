@@ -266,6 +266,16 @@ const finalizeOrderSchema = z.object({
     })
     .optional(),
   applyCreditsPaise: z.number().int().nonnegative().max(10_000_000).optional(),
+  /**
+   * Corporate-subsidy INTENT, not an amount — deliberately a boolean so there
+   * is no field here a client could use to name what its company pays. The
+   * server derives the paise from company policy under a lock and subtracts it
+   * from charge_paise (lib/corporateSubsidy.ts).
+   *
+   * Omitted means "yes", matching the checkout toggle's default, so a client
+   * that predates this field keeps the behaviour its user already sees.
+   */
+  applySubsidy: z.boolean().optional(),
   scheduledFor: z.string().datetime().optional(),
   bundleSlugs: z.array(z.string().min(1).max(64)).max(10).optional(),
   deliverySlotId: z.number().int().positive().nullable().optional(),

@@ -39,6 +39,9 @@ import {
   subscriptionsTable,
   subscriptionMandatesTable,
   preDebitNotificationsTable,
+  companiesTable,
+  companyMembersTable,
+  companyBudgetUsageTable,
 } from "@workspace/db";
 
 import paymentsRouter from "./payments";
@@ -62,6 +65,14 @@ process.env["RD_ADMIN_TOKEN"] = ADMIN_TOKEN;
 
 let server: http.Server;
 let baseUrl = "";
+/**
+ * The user the test app is signed in as, or null for a guest.
+ *
+ * Ownership on /payments/razorpay/order means an order with a user_id can only
+ * be paid by that user, so any test seeding an OWNED order has to set this (and
+ * reset it afterwards) or the route answers 401 before the amount logic runs.
+ */
+let authedUserId: string | null = null;
 const CREATED_ORDER_IDS: number[] = [];
 const CREATED_EVENT_IDS: string[] = [];
 const CREATED_USER_IDS: string[] = [];
@@ -81,7 +92,11 @@ function makeApp(): Express {
   app.use("/payments/razorpay/webhook", express.raw({ type: "application/json" }));
   app.use(express.json());
   app.use((req, _res, next) => {
-    const r = req as unknown as { log: Record<string, (...a: unknown[]) => void> };
+    const r = req as unknown as {
+      log: Record<string, (...a: unknown[]) => void>;
+      isAuthenticated: () => boolean;
+      user?: { id: string };
+    };
     r.log = {
       error: () => {},
       info: () => {},
@@ -90,6 +105,11 @@ function makeApp(): Express {
       trace: () => {},
       fatal: () => {},
     };
+    // Session identity, driven by the module-level `authedUserId` so a single
+    // test can act as a signed-in user. Default null keeps every existing test
+    // a guest, which is what the guest-checkout paths below assume.
+    r.isAuthenticated = () => authedUserId !== null;
+    if (authedUserId !== null) r.user = { id: authedUserId };
     next();
   });
   app.use(paymentsRouter);
@@ -152,6 +172,8 @@ async function seedOrder(fields: {
   razorpayOrderId?: string | null;
   chargePaise?: number | null;
   totalPaise?: number;
+  /** Owner of the order. Needed by any path that resolves the caller's company. */
+  userId?: string | null;
 }): Promise<number> {
   const [row] = await db
     .insert(ordersTable)
@@ -161,6 +183,7 @@ async function seedOrder(fields: {
       razorpayOrderId: fields.razorpayOrderId ?? null,
       chargePaise: fields.chargePaise ?? null,
       totalPaise: fields.totalPaise ?? fields.chargePaise ?? 50000,
+      userId: fields.userId ?? null,
       items: [],
     })
     .returning({ id: ordersTable.id });
@@ -559,6 +582,136 @@ test("razorpay/order bills the order's authoritative chargePaise, ignoring a tam
     authoritativePaise,
     "the response must echo the server-derived amount, not the tampered client value",
   );
+});
+
+// ---------------------------------------------------------------------------
+// 7b. The same invariant for a caller who belongs to a company with unspent
+//     corporate-subsidy budget — the one principal for whom "the client sent a
+//     smaller number" has a plausible-sounding excuse.
+//
+// Why this exists as its own case: every tamper test above uses a fixture with
+// no company membership, so a change that accepts a low client amount *when the
+// caller is a corporate member* passes all of them and CI stays green. A
+// proposed fix for corporate double-billing did exactly that — on a mismatch it
+// looked up the member's remaining monthly budget and, if the shortfall fitted,
+// assigned `authoritativePaise = clientAmount` before opening the gateway
+// order. The client would then be naming its own price, bounded only by the
+// company's unspent monthly budget: an employee could pay ₹1 on a ₹1,000 order
+// and have the company silently billed the rest, with no check that the order
+// was subsidy-eligible or that the discount matched any subsidy policy.
+//
+// Server-owns-the-amount is not conditional on who is asking. A subsidy must be
+// computed server-side from policy and reflected in the order's own
+// charge_paise, never inferred from the gap between the server's number and the
+// client's. This test fails any implementation that reads the client's amount as
+// a subsidy signal.
+// ---------------------------------------------------------------------------
+
+test("razorpay/order ignores a tampered client amountPaise even for a corporate member with budget left", async () => {
+  const externalOrderId = ext("tamper-subsidy");
+  const authoritativePaise = 100000; // ₹1,000 — the real, server-priced total
+  const tamperedClientAmount = 100; // ₹1 — "the rest is my company's subsidy"
+  const monthlyBudgetPaise = 500000; // ₹5,000 unspent: the shortfall "fits"
+
+  const userId = randomUUID();
+  await db.insert(usersTable).values({
+    id: userId,
+    email: `payments-subsidy-${userId}@example.test`,
+    firstName: "Corporate",
+    lastName: "Member",
+  });
+  CREATED_USER_IDS.push(userId);
+
+  // companies.owner_user_id and company_members.user_id both cascade from
+  // users, and company_budget_usage cascades from companies, so the existing
+  // CREATED_USER_IDS cleanup in after() removes all of this.
+  const [company] = await db
+    .insert(companiesTable)
+    .values({
+      slug: `subsidy-co-${RUN}`,
+      name: "Subsidy Co",
+      ownerUserId: userId,
+      perEmployeeMonthlyBudgetPaise: monthlyBudgetPaise,
+    })
+    .returning({ id: companiesTable.id });
+  await db.insert(companyMembersTable).values({
+    companyId: company!.id,
+    userId,
+    email: `payments-subsidy-${userId}@example.test`,
+    role: "member",
+    status: "active",
+  });
+
+  const orderId = await seedOrder({
+    externalOrderId,
+    status: "placed",
+    chargePaise: authoritativePaise,
+    userId,
+  });
+
+  // The order is owned, so the route requires the owner's session. Act as the
+  // member: the attack this guards against is the legitimate account holder
+  // under-declaring their own amount, not an outsider paying someone else's
+  // order (which the ownership check above already refuses).
+  authedUserId = userId;
+  let res: { status: number; json: any };
+  let calls: any[];
+  try {
+    ({ result: res, calls } = await withMockedRazorpayFetch(
+      "api.razorpay.com/v1/orders",
+      (body) => ({ id: `order_mock_subsidy_${RUN}`, amount: body.amount, currency: "INR" }),
+      async () => {
+        const r = await fetch(`${baseUrl}/payments/razorpay/order`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            orderId: externalOrderId,
+            amountPaise: tamperedClientAmount,
+          }),
+        });
+        const json = (await r.json()) as any;
+        return { status: r.status, json };
+      },
+    ));
+  } finally {
+    // Restore guest identity even on failure — every other test in this file
+    // depends on it.
+    authedUserId = null;
+  }
+
+  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(calls.length, 1, "exactly one Razorpay order-creation call must have been made");
+  assert.equal(
+    calls[0].amount,
+    authoritativePaise,
+    "corporate membership must not turn a low client amountPaise into the billed " +
+      "amount — a subsidy is computed server-side from policy and lands in the " +
+      "order's charge_paise, it is never inferred from client/server divergence",
+  );
+  assert.notEqual(calls[0].amount, tamperedClientAmount);
+  assert.equal(res.json.amount, authoritativePaise);
+
+  // And nothing may have quietly billed the company for the difference. A
+  // company charge that appears as a side effect of the customer under-paying
+  // is the same defect seen from the other end of the ledger.
+  const usage = await db
+    .select({ spentPaise: companyBudgetUsageTable.spentPaise })
+    .from(companyBudgetUsageTable)
+    .where(eq(companyBudgetUsageTable.userId, userId));
+  assert.equal(
+    usage.length,
+    0,
+    "opening a gateway order must not write company budget usage; the shortfall " +
+      `was ${authoritativePaise - tamperedClientAmount} paise and the company was charged for it`,
+  );
+
+  // The order's own authoritative amount must be untouched by the attempt.
+  const [after] = await db
+    .select({ chargePaise: ordersTable.chargePaise })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId))
+    .limit(1);
+  assert.equal(after!.chargePaise, authoritativePaise);
 });
 
 // ---------------------------------------------------------------------------
