@@ -55,24 +55,52 @@ interface DishAccumulator {
   marginPaise: number;
 }
 
-interface PricedItem {
-  slug: string;
-  name: string;
-  pricePaise: number;
-  foodCostPaise: number | null;
-}
+/**
+ * A food cost in paise, or `null` meaning "we could not establish one".
+ *
+ * The distinction is load-bearing. Food does not cost zero, so a zero here is
+ * never a measurement — it is the absence of one. Conflating the two is how a
+ * dish with no matched ingredients came to be scored at 100% margin, ranked a
+ * star, and handed a +5% price rise. See `costPerUnitPaise` below.
+ */
+export type FoodCostPaise = number | null;
+
+/**
+ * Margin assumed when no food cost is known. It is a placeholder, not a
+ * finding — every dish scored on it is scored on the same guess.
+ */
+export const DEFAULT_MARGIN_PCT = 0.35;
+const DEFAULT_MARGIN_PCT_LABEL = `${Math.round(DEFAULT_MARGIN_PCT * 100)}%`;
 
 function parseGrams(text: string): number {
   const match = text.match(/(\d+)\s*g/i);
   return match ? parseInt(match[1], 10) : 0;
 }
 
-export async function loadDynamicRecipeCosts(): Promise<Map<string, number>> {
+interface PricedItem {
+  slug: string;
+  name: string;
+  pricePaise: number;
+  foodCostPaise: FoodCostPaise;
+}
+
+/**
+ * Per-recipe food cost, keyed by recipe slug.
+ *
+ * Returns `null` for any recipe whose cost we could not establish — no
+ * ingredient matched an inventory row, the quantities did not parse, the
+ * matched inventory rows carry no price, and `recipes.food_cost_paise` is unset
+ * or zero. Callers MUST NOT coerce that null to 0; see `costPerUnitPaise`.
+ */
+export async function loadDynamicRecipeCosts(): Promise<
+  Map<string, FoodCostPaise>
+> {
   const recipes = await db.select().from(recipesTable);
   const ingredients = await db.select().from(recipeIngredientsTable);
   const inventory = await db.select().from(inventoryItemsTable);
 
-  const recipeCostMap = new Map<string, number>();
+  const recipeCostMap = new Map<string, FoodCostPaise>();
+  const unknown: string[] = [];
 
   for (const recipe of recipes) {
     const recipeIngs = ingredients.filter((ing) => ing.recipeId === recipe.id);
@@ -94,10 +122,50 @@ export async function loadDynamicRecipeCosts(): Promise<Map<string, number>> {
       }
     }
 
-    recipeCostMap.set(recipe.slug, totalCostPaise > 0 ? totalCostPaise : (recipe.foodCostPaise ?? 0));
+    const computed =
+      totalCostPaise > 0 ? totalCostPaise : (recipe.foodCostPaise ?? 0);
+    if (computed > 0) {
+      recipeCostMap.set(recipe.slug, computed);
+    } else {
+      // Record the miss explicitly rather than storing 0. Ingredient→inventory
+      // matching is fuzzy substring matching, so misses are routine and silent.
+      recipeCostMap.set(recipe.slug, null);
+      unknown.push(recipe.slug);
+    }
+  }
+
+  if (unknown.length > 0) {
+    logger.warn(
+      { count: unknown.length, slugs: unknown.slice(0, 20) },
+      "recipe food cost could not be established — margin for these dishes is an estimate, not a measurement",
+    );
   }
 
   return recipeCostMap;
+}
+
+/**
+ * The cost to use for one unit of a dish.
+ *
+ * A known, positive cost is used as-is. Anything else — null, zero, or a
+ * negative from bad data — falls back to the default-margin estimate, the same
+ * fallback a dish with no recipe at all gets. Before this existed, `?? default`
+ * treated a stored 0 as a real measurement, so the dish we knew the LEAST about
+ * scored the HIGHEST margin and won the star ranking on the strength of missing
+ * data.
+ */
+export function costPerUnitPaise(
+  foodCostPaise: FoodCostPaise,
+  pricePaise: number,
+  defaultMarginPct: number,
+): { costPaise: number; estimated: boolean } {
+  if (foodCostPaise != null && foodCostPaise > 0) {
+    return { costPaise: foodCostPaise, estimated: false };
+  }
+  return {
+    costPaise: Math.max(0, Math.round(pricePaise * (1 - defaultMarginPct))),
+    estimated: true,
+  };
 }
 
 async function loadPricedItems(): Promise<Map<string, PricedItem>> {
@@ -112,7 +180,10 @@ async function loadPricedItems(): Promise<Map<string, PricedItem>> {
 
   const out = new Map<string, PricedItem>();
   for (const row of items) {
-    const cost = dynamicCosts.get(row.slug) ?? null;
+    const raw = dynamicCosts.get(row.slug);
+    // `undefined` (no recipe row at all) and `null` (recipe exists, cost
+    // unknown) are the same thing to us: unknown. A stored non-positive is too.
+    const cost: FoodCostPaise = raw != null && raw > 0 ? raw : null;
     out.set(row.slug, {
       slug: row.slug,
       name: row.name,
@@ -143,12 +214,18 @@ export interface AggregateResult {
   totalOrders: number;
   stats: DishAccumulator[];
   unmatchedItemNames: string[];
+  /**
+   * Slugs whose margin was computed from the default-margin estimate because
+   * no food cost could be established. Their scores are not measurements, and
+   * anything downstream that turns a score into money should say so.
+   */
+  estimatedCostSlugs: string[];
 }
 
 export async function aggregateDishStats(
   opts: AggregateOptions,
 ): Promise<AggregateResult> {
-  const defaultMarginPct = opts.defaultMarginPct ?? 0.35;
+  const defaultMarginPct = opts.defaultMarginPct ?? DEFAULT_MARGIN_PCT;
   const orders = await db
     .select({ id: ordersTable.id, items: ordersTable.items })
     .from(ordersTable)
@@ -162,6 +239,7 @@ export async function aggregateDishStats(
   const priced = await loadPricedItems();
   const accum = new Map<string, DishAccumulator>();
   const unmatched = new Set<string>();
+  const estimatedCost = new Set<string>();
   for (const order of orders) {
     if (!Array.isArray(order.items)) continue;
     for (const it of order.items) {
@@ -188,10 +266,13 @@ export async function aggregateDishStats(
         Math.round(Number(it.price ?? lookup.pricePaise)),
       );
       const revenuePaise = unitPricePaise * qty;
-      const costPaiseUnit =
-        lookup.foodCostPaise ??
-        Math.round(lookup.pricePaise * (1 - defaultMarginPct));
-      const marginPaise = (unitPricePaise - costPaiseUnit) * qty;
+      const cost = costPerUnitPaise(
+        lookup.foodCostPaise,
+        lookup.pricePaise,
+        defaultMarginPct,
+      );
+      if (cost.estimated) estimatedCost.add(lookup.slug);
+      const marginPaise = (unitPricePaise - cost.costPaise) * qty;
       const cur = accum.get(lookup.slug) ?? {
         slug: lookup.slug,
         name: lookup.name,
@@ -211,6 +292,7 @@ export async function aggregateDishStats(
     totalOrders: orders.length,
     stats: [...accum.values()],
     unmatchedItemNames: [...unmatched],
+    estimatedCostSlugs: [...estimatedCost],
   };
 }
 
@@ -370,6 +452,16 @@ export async function runMenuEngineering(opts: RunOptions): Promise<RunResult> {
   const windowEnd = new Date();
   const windowStart = new Date(windowEnd.getTime() - sinceDays * 86_400_000);
   const agg = await aggregateDishStats({ windowStart, windowEnd });
+  if (agg.estimatedCostSlugs.length > 0) {
+    logger.warn(
+      {
+        count: agg.estimatedCostSlugs.length,
+        of: agg.stats.length,
+        slugs: agg.estimatedCostSlugs.slice(0, 20),
+      },
+      "menu engineering: these dishes were scored on an ESTIMATED margin — fix their recipe/inventory costing before acting on their pricing suggestions",
+    );
+  }
   const classified = classifyDishes(agg.stats);
   const commentary = await generateBatchCommentary(
     classified.map((c) => ({
@@ -428,6 +520,8 @@ export async function runMenuEngineering(opts: RunOptions): Promise<RunResult> {
       runId: result.run.id,
       dishes: result.stats.length,
       unmatched: agg.unmatchedItemNames.length,
+      estimatedCost: agg.estimatedCostSlugs.length,
+      estimatedCostSlugs: agg.estimatedCostSlugs.slice(0, 50),
     },
     status: "success",
     reasoning: "scored dishes and generated commentary",
@@ -497,6 +591,7 @@ async function buildDishSuggestions(
   windowStart: Date,
   windowEnd: Date,
   nameToSlug: Map<string, string>,
+  costEstimated: boolean,
 ): Promise<Array<typeof pricingSuggestionsTable.$inferInsert>> {
   const orders = await db
     .select({
@@ -528,6 +623,13 @@ async function buildDishSuggestions(
     slices.set(key, cur);
   }
   const base = suggestPriceForClass(classification, currentPaise);
+  // Approving an "all/all" suggestion writes menu_items.price_paise, which is
+  // what the customer pays. If the margin behind it was assumed rather than
+  // measured, the human approving it has to be told — in the row itself, not
+  // in a log line nobody reads.
+  const rationale = costEstimated
+    ? `${base.rationale} ⚠ MARGIN IS ESTIMATED: no food cost could be established for this dish (no recipe ingredient matched an inventory row), so its margin is the flat ${DEFAULT_MARGIN_PCT_LABEL} assumption, not a measurement. Fix the recipe costing before applying a price change.`
+    : base.rationale;
   const rows: Array<typeof pricingSuggestionsTable.$inferInsert> = [
     {
       runId,
@@ -538,7 +640,7 @@ async function buildDishSuggestions(
       suggestedPaise: base.suggestedPaise,
       expectedRevenueDeltaPctLow: base.pctLowX10,
       expectedRevenueDeltaPctHigh: base.pctHighX10,
-      rationale: base.rationale,
+      rationale,
       status: "pending",
     },
   ];
@@ -555,7 +657,7 @@ async function buildDishSuggestions(
       suggestedPaise: base.suggestedPaise,
       expectedRevenueDeltaPctLow: base.pctLowX10,
       expectedRevenueDeltaPctHigh: base.pctHighX10,
-      rationale: `${base.rationale} (${slice.count} orders in ${slice.zone}/${slice.daypart}.)`,
+      rationale: `${rationale} (${slice.count} orders in ${slice.zone}/${slice.daypart}.)`,
       status: "pending",
     });
   }
@@ -589,6 +691,14 @@ export async function buildPricingSuggestionsForRun(
   const nameToSlug = new Map(
     items.map((i) => [i.name.toLowerCase(), i.slug] as const),
   );
+  // Re-derive which dishes have a real food cost. The dish-stats table records
+  // the margin but not whether it was measured, and that difference decides
+  // whether we can put a price rise in front of an operator without a caveat.
+  const costs = await loadDynamicRecipeCosts();
+  const costEstimatedFor = (slug: string): boolean => {
+    const c = costs.get(slug);
+    return !(c != null && c > 0);
+  };
   const allRows: Array<typeof pricingSuggestionsTable.$inferInsert> = [];
   for (const s of stats) {
     const currentPaise = priceMap.get(s.slug);
@@ -601,6 +711,7 @@ export async function buildPricingSuggestionsForRun(
       run.windowStart,
       run.windowEnd,
       nameToSlug,
+      costEstimatedFor(s.slug),
     );
     allRows.push(...rows);
   }

@@ -11,8 +11,9 @@ pnpm install
 
 **Run apps (always filter — never run `pnpm dev` at the workspace root)**
 ```bash
-pnpm --filter @workspace/api-server run dev       # Express API server
-pnpm --filter @workspace/tanmatra run dev          # Customer web app (Vite)
+pnpm --filter @workspace/api-server run dev        # Express API server
+pnpm --filter @workspace/storefront run dev        # Customer web app (Next.js) — new customer work goes here
+pnpm --filter @workspace/tanmatra run dev          # Legacy customer SPA (Vite) — still serves tanmatra.food
 pnpm --filter @workspace/tanmatra-mobile run dev   # Expo mobile app
 ```
 
@@ -25,14 +26,38 @@ pnpm run build              # typecheck + build all packages
 
 **Tests**
 ```bash
-pnpm run test                                               # All tests across the workspace
+pnpm run test                                              # Every package that HAS a `test` script
 pnpm --filter @workspace/api-server run test               # All api-server tests
-# Run a single test file (from api-server):
+# Run a single test file (from artifacts/api-server):
 node --test --import tsx ./src/lib/loyaltyEngine.checkout.test.ts
 node --test --import tsx ./src/lib/dispatch.bulkhead.test.ts
 node --test --import tsx ./src/lib/mealPlanner.test.ts
 node --test --import tsx ./src/routes/groupOrders.test.ts
 ```
+
+The storefront runs its own suite — 49 files, 257 tests, all in `artifacts/storefront/lib/`
+and all DB- and network-free (every API client takes an injectable `fetchImpl`):
+```bash
+pnpm --filter @workspace/storefront run test     # all 257, ~18s
+cd artifacts/storefront
+node --test --import tsx ./lib/catalog.test.ts   # one file
+```
+`.github/workflows/storefront.yml` drives the same files from `artifacts/api-server`
+(`node --test --import tsx ../storefront/lib/*.test.ts`). That form predates the storefront
+declaring its own `tsx` and is still correct — either works.
+
+The legacy SPA (`artifacts/tanmatra`) also has a `test` script, and `verify.yml`'s
+`money-unit` job drives both packages by **glob**, not by a hand-written list:
+
+```
+node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 79 tests
+node --test --import tsx "../storefront/lib/**/*.test.ts"   # 257 tests
+```
+
+The quotes are load-bearing — Actions runs `run:` under bash with globstar OFF, where `**`
+collapses to a single level and silently runs a subset while still going green. Let **node**
+expand the glob. `scripts/lint-test-reach.ts` understands these patterns and fails the build
+on any test file no workflow reaches.
 
 **API codegen (after changing `lib/api-spec/openapi.yaml`)**
 ```bash
@@ -57,25 +82,45 @@ This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and 
 
 | Path | Role |
 |------|------|
-| `artifacts/tanmatra` | Customer web app — React 19 + React Router v7 + Vite |
-| `artifacts/tanmatra-mobile` | Expo React Native app |
 | `artifacts/api-server` | Express 5 backend |
+| `artifacts/storefront` | **Customer web app — Next.js 16 App Router.** The rebuild; all new customer work goes here |
+| `artifacts/tanmatra` | Legacy customer SPA — React 19 + React Router v7 + Vite. Still the app mapped to `tanmatra.food` |
+| `artifacts/tanmatra-mobile` | Expo React Native app |
+| `artifacts/agents` | "Agency Agents Browser" — Vite + wouter app that browses the `lib/agency-agents` catalogue |
+| `artifacts/clinical-governance-engine` | `@tanmatra/clinical-governance-engine` — zero-dependency contraindication engine, packing-station interlock, AE webhooks, WORM audit logger |
 | `artifacts/mockup-sandbox` | Vite preview server for UI mockup work |
 | `lib/api-spec` | **OpenAPI source of truth** (`openapi.yaml`) + Orval codegen config |
 | `lib/api-client-react` | Generated React Query hooks + Zod schemas (do not edit manually) |
 | `lib/api-zod` | Shared Zod request/response schemas |
 | `lib/db` | Drizzle ORM schema + migrations (Postgres) |
+| `lib/tokens` | Design tokens — `src/tokens.css` (runtime source of truth) + a TS mirror for JS-side use |
 | `lib/menu-catalog` | Shared dish/menu data types |
 | `lib/preferences-match` | Shared dietary preference-matching logic |
+| `lib/subscription-rules` | Pure, DB-free subscription lifecycle rules. Holds the 24 h skip/swap cutoff so the API and the UI cannot drift |
+| `lib/agency-agents` | Bundled agent content (`content/<division>/<slug>.md`) + a generated index. One-time MIT import; see its `LICENSE` |
 | `lib/integrations-gemini-ai` | Gemini AI integration utilities |
 | `scripts/` | One-off data scripts (seeding, backfills, audits) |
+
+> **Agent workspaces are usually sparse checkouts.** `git sparse-checkout list` typically
+> materialises only `artifacts/api-server`, `artifacts/storefront`, `lib`, `scripts`, `docs`,
+> `.github` and `tasks`. The other packages above are fully tracked but absent from disk, and
+> `git status` stays clean because they are marked skip-worktree. **`ls artifacts/` is therefore
+> not evidence that a package was deleted** — check `git ls-tree -d --name-only HEAD artifacts/`,
+> and read excluded files with `git show HEAD:artifacts/tanmatra/…`.
 
 ### Contract-first API flow
 
 1. Edit `lib/api-spec/openapi.yaml` (single source of truth).
 2. Run `pnpm --filter @workspace/api-spec run codegen` — Orval regenerates `lib/api-client-react` (hooks) and `lib/api-zod` (schemas).
 3. The API server validates requests/responses using the same generated Zod schemas.
-4. The web app consumes the generated React Query hooks from `@workspace/api-client-react`.
+4. `artifacts/tanmatra`, `artifacts/tanmatra-mobile` and `artifacts/agents` consume the generated
+   React Query hooks from `@workspace/api-client-react`.
+
+**The storefront is deliberately outside this flow.** It does not depend on
+`@workspace/api-client-react` at all; it calls the API through hand-written typed clients in
+`artifacts/storefront/lib/` (see below). Changing `openapi.yaml` therefore does *not* propagate
+to the storefront — a contract change has to be mirrored into the relevant `lib/*Api.ts` client
+by hand, and that client's wire test is what catches the drift.
 
 ### API server internals (`artifacts/api-server`)
 
@@ -88,15 +133,57 @@ This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and 
 - **Realtime**: Socket.IO (`src/lib/realtime.ts`) for live order tracking events.
 - **Scheduled jobs**: `src/lib/analyticsScheduler.ts`, `mealPlanScheduler.ts`, `menuEngineeringScheduler.ts`, `loyaltyScheduler.ts`, `anomalyScheduler.ts`.
 
-### Web app internals (`artifacts/tanmatra`)
+### Storefront internals (`artifacts/storefront`) — the customer app under active development
+
+Next.js 16 App Router, server-first. It ships alongside the legacy SPA as its own Cloud Run
+service (`deploy.yml`'s `storefront-cloud-run` job) with **no domain mapped** — a dark preview.
+`tanmatra.food` still resolves to the `tanmatra` service, so both apps are live and only one
+is public. Cutover is a manual Cloud Run domain remap, done outside CI.
+
+> **`docs/DOMAIN-CUTOVER.md` does not exist.** `deploy.yml` (3×) and
+> `artifacts/storefront/Dockerfile` all cite it as the cutover runbook, and
+> `git ls-tree HEAD docs/` shows no such file — the closest is `docs/LIVE-CUTOVER.md`, which
+> covers the *money path*, not the domain. Don't follow those pointers expecting a procedure;
+> writing that runbook is open work.
+
+- **Routing**: directories under `app/` (`app/menu/page.tsx`, `app/dish/[slug]/`, …). No
+  `routes.ts` — the filesystem *is* the route table.
+- **Design tokens**: `@workspace/tokens/tokens.css` is imported in `app/layout.tsx` **before**
+  `app/globals.css`, which bridges those raw tokens onto Tailwind v4 utilities and onto the
+  shadcn/Radix semantic variable names. Add tokens in `lib/tokens`, never inline in a component.
+- **Global chrome**: `components/Header.tsx`, `components/BottomNav.tsx`, `components/Footer.tsx`,
+  `components/CommandMenu.tsx`. Note the flat paths — no `src/`, no `layout/` subdirectory.
+- **Data fetching**: hand-written clients in `lib/` over `lib/apiClient.ts`
+  (`apiGet/apiPost/apiPatch/apiPut/apiDelete(path, [body,] fetchImpl?)` → `${API_BASE}/api${path}`,
+  `credentials: "include"`, throwing `ApiError(status, code, message)`). `fetchImpl` is injectable
+  so every client is testable without a network — that is what `lib/*.test.ts` exercises.
+- **Auth-gated surfaces** are islands: try the call, and on 401 render `<PhoneAuth onVerified={reload}/>`
+  rather than redirecting. Admin-gated islands additionally branch on the membership role.
+- **Money path**: the server owns every amount. The browser never sends a price; it receives
+  `keyId` from the server's order response, and no Razorpay key is bundled.
+- **Anti-rot gates (hard CI checks, `storefront.yml`)**: `lint:filecap` — `.tsx` ≤ 150 lines, every
+  other file ≤ 300, and each `"use client"` must carry a justification; `lint:tokens` — no raw hex,
+  no palette classes, gold is the only interactive colour and sage must never paint an interactive
+  region. Both resolve paths from the repo root: `node --experimental-strip-types scripts/lint-tokens.ts artifacts/storefront`.
+- **`noUncheckedIndexedAccess` is on**, and `e2e/specs/**` is typechecked — keep specs type-clean.
+- **e2e**: `pnpm exec playwright test --config artifacts/storefront/e2e/playwright.config.ts`.
+  `E2E_BASE_URL` targets a local prod build (`next start`) or the deployed service; the same specs
+  serve both. In a sandbox, point `E2E_CHROMIUM_PATH` at the pre-installed Chromium.
+- **Stale `.next` is a real trap**: clear it with an absolute path (`rm -rf /home/claude/wf/artifacts/storefront/.next`).
+  A shell cwd persists between commands, so a relative path can silently no-op and leave
+  cross-branch `.next/types` behind, which then fails typecheck for reasons unrelated to your change.
+
+### Legacy web app internals (`artifacts/tanmatra`)
 
 - **Routing**: File-based via React Router v7 (`src/routes.ts`). Admin routes are behind `AdminAuthLayout`; RD console behind `RdAuthLayout`.
 - **Design system**: `src/index.css` is the single source of truth for all CSS custom properties (`@theme`): colors, type scale, radii, shadows, motion durations/easings. JS tokens are mirrored in `src/lib/motion.ts` for Framer Motion.
 - **Global chrome**: `src/components/layout/Header.tsx` (desktop) and `BottomNav.tsx` (mobile). IA grouping: **Eat / Plan / Track / Community / Account**. Update both when adding customer routes.
 - **Command palette**: `src/components/CommandPalette.tsx` — global ⌘K; register new customer routes here.
 - **Data fetching**: `@workspace/api-client-react` generated hooks + TanStack Query. `useMenuCatalog()` falls back to `STATIC_DISHES` so the UI never blanks.
-- **Icons**: Phosphor (`@phosphor-icons/react`) on new customer surfaces; Lucide (`lucide-react`) on legacy admin/RD screens.
-- **Live styleguide**: `/__styleguide` route (`src/pages/Styleguide.tsx`) — keep in sync when adding tokens.
+- **Icons**: Phosphor (`@phosphor-icons/react`) on customer surfaces; Lucide (`lucide-react`) on
+  admin/RD screens. The storefront uses Lucide only.
+- **No styleguide route here any more.** It moved to the storefront (`/styleguide`,
+  `app/styleguide/page.tsx`); nothing under `artifacts/tanmatra/src` matches `styleguide`.
 
 ### Database (`lib/db`)
 
@@ -109,11 +196,18 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
 | `DATABASE_URL` | `lib/db`, `artifacts/api-server` |
 | `REDIS_URL` | `artifacts/api-server` (BullMQ queue — optional) |
 | `CLINICAL_KMS_MASTER_KEY` | `artifacts/api-server`, `lib/db` — AES-256-GCM key for encrypting subscription-member clinical fields at rest. **Required in production** (server fails to boot without it). 64 hex chars; aliases: `MASTER_KEY`, `DPDPA_MASTER_KEY_HEX`, `CLINICAL_MASTER_KEY_HEX`. |
+| `NEXT_PUBLIC_API_BASE` | `artifacts/storefront` — client-inlined API origin. Set to `""` in the deployed image so the browser calls same-origin `/api/*` and the session cookie stays first-party (a cross-site storefront→api topology drops it under Safari/ITP). |
+| `API_BASE_URL` | `artifacts/storefront` — where server components fetch the API directly, bypassing the rewrite. |
+| `API_UPSTREAM` / `IMAGE_UPSTREAM` | `artifacts/storefront` — **build-time only.** They enable the `/api/*` and `/images/*` rewrites, which Next bakes into `routes-manifest.json` at `next build`. Setting them at `next start` does nothing (verified empirically); repointing either one means a rebuild, not a restart. |
 
 ## Key conventions
 
 - **Colors**: Clinical Dark palette is locked — `#D4AF37` (clinical-gold), `#6BA3C8` (blue), `#7D9E7E` (sage). No new base colors without explicit approval.
-- **New design tokens**: Add to `src/index.css @theme` AND update `/__styleguide`.
+- **New design tokens**: storefront — add to `lib/tokens/src/tokens.css` (and its TS mirror in
+  `lib/tokens/src/index.ts` if JS needs the value), bridge in `artifacts/storefront/app/globals.css`,
+  and update `/styleguide`. Legacy SPA — add to `artifacts/tanmatra/src/index.css @theme`.
+  Either way the value goes in a token file, never inline: the storefront's `lint:tokens` gate
+  fails the build on a raw hex.
 - **Tabular numerals**: Use `.text-clinical-data` / `font-variant-numeric: tabular-nums` wherever clinical data is displayed.
 - **Combo cards on Menu**: Must be a single clickable card opening a Dialog listing constituent dishes (each linking to `/dish/:slug`) with an "Add Combo" CTA.
 - **Zod imports**: Use `zod/v4` (`import { z } from "zod/v4"`) — not the legacy `zod` entry.

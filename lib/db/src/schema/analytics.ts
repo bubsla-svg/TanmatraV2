@@ -58,6 +58,26 @@ export const wbrReportsTable = pgTable(
         topDishes: Array<{ name: string; units: number }>;
         anomaliesFired: number;
         netMarginPct?: number;
+        // What `revenuePaise` is actually made of. It has always summed every
+        // channel and every kind — aggregator orders, POS walk-ins and
+        // marketplace goods alongside our own storefront — and nothing said so.
+        // Optional because reports written before this existed do not carry it;
+        // readers must treat absence as "unknown mix", not as "all own-app".
+        revenueMix?: Array<{
+          channel: string;
+          orderKind: string;
+          orders: number;
+          revenuePaise: number;
+        }>;
+        ownAppRevenuePaise?: number;
+        ownAppRevenuePaisePrev?: number;
+        /**
+         * Share of units (0–100) whose food cost came from a costed recipe
+         * rather than the default-margin assumption. `netMarginPct` is only as
+         * trustworthy as this is high; a low value means the margin is largely
+         * assumed. Absent on reports generated before coverage was tracked.
+         */
+        foodCostCoveragePct?: number;
       }>(),
     chartSpec: jsonb("chart_spec").$type<{
       revenueByDay: Array<{ day: string; revenuePaise: number }>;

@@ -36,7 +36,7 @@ export default function AdminAuthLayout() {
   if (state === "checking") {
     return (
       <div className="px-4 py-12 text-center text-sm text-[var(--color-nn-secondary)]">
-        Checking admin session…
+        <h1 className="text-base font-medium">Checking admin session…</h1>
       </div>
     );
   }

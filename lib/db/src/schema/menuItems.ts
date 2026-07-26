@@ -14,6 +14,9 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+export const fulfillmentTypeValues = ["MTO", "FMCG"] as const;
+export type FulfillmentType = (typeof fulfillmentTypeValues)[number];
+
 // CMS-managed menu items (separate from the static lib/menu-catalog DISHES
 // seed). Editors create / edit items here via the CMS Assistant agent.
 //
@@ -93,6 +96,10 @@ export const menuItemsTable = pgTable(
     copyGeneratedBy: varchar("copy_generated_by", { length: 64 }),
     unavailableReason: text("unavailable_reason"),
     unavailableUntil: timestamp("unavailable_until", { withTimezone: true }),
+    fulfillmentType: varchar("fulfillment_type", { length: 16 })
+      .$type<FulfillmentType>()
+      .notNull()
+      .default("MTO"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -118,7 +125,9 @@ export const menuItemsTable = pgTable(
   ],
 );
 
-export const insertMenuItemSchema = createInsertSchema(menuItemsTable).omit({
+export const insertMenuItemSchema = createInsertSchema(menuItemsTable, {
+  fulfillmentType: z.enum(fulfillmentTypeValues).optional(),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
