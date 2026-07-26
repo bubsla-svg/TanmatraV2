@@ -65,6 +65,7 @@ export {
   type PoolPredicate,
   type TrackLaunchState,
   type PlanQuote,
+  type PlanPriceCycleAmounts,
   PLAN_PRICE_TABLE,
   PLAN_CATALOG,
   ADD_ONS,

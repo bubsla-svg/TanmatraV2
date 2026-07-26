@@ -351,6 +351,11 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/serviceabilityInterest.test.ts
+      - name: Geocoding precision and dual-key resilience
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/geo.test.ts
       # The order-channel split's own test corpus. Every one of these files was
       # written to guard the split and every one of them ran nowhere — this
       # workflow enumerates test files by name, and none of these were named,

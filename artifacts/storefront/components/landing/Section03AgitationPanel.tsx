@@ -1,0 +1,85 @@
+import React from "react";
+
+/**
+ * §3: "The 'healthy' bowl problem" Dark Agitation Panel.
+ * Contrasts typical commercial cloud-kitchen health bowls with Tanmatra's certified
+ * clinical nutrition protocol using semantic surface and border tokens.
+ */
+export function Section03AgitationPanel() {
+  const commercialFlaws = [
+    "Unverified macro estimates with hidden refined sugars in dressings",
+    "Industrial seed oils (palm, sunflower, soybean) used during bulk high-heat cooking",
+    "Eyeball portioning without calibrated ingredient weighing tolerances",
+    "High Glycemic Index carb loading inducing afternoon lethargy and glucose spikes",
+  ];
+
+  const clinicalAdvantages = [
+    "100% lab-verified macro readouts with weighed ±2g ingredient precision",
+    "Zero industrial oils — cooked exclusively with cold-pressed olive oil & pure desi ghee",
+    "Recipes and therapeutic diets engineered by IDA registered clinical dietitians (RD)",
+    "Low-Medium Glycemic Index formulations optimized for sustained cognition",
+  ];
+
+  return (
+    <section className="bg-surface-raised py-16 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+            Metabolic Reality Check
+          </span>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-4xl">
+            The &ldquo;Healthy&rdquo; Bowl Problem in Business Parks
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-ink-muted sm:text-base">
+            Why commercial salads and unverified health cafe meals fail long-term metabolic health and focus.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8">
+          <div className="flex flex-col rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8">
+            <div className="border-b border-line pb-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
+                Standard Cloud Kitchens
+              </span>
+              <h3 className="mt-1 text-lg font-bold text-ink">Commercial &ldquo;Healthy&rdquo; Bowls</h3>
+            </div>
+            <ul className="mt-6 flex flex-col gap-4 text-sm text-ink-muted">
+              {commercialFlaws.map((flaw, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-xs font-bold text-ink-faint">
+                    ✕
+                  </span>
+                  <span className="leading-relaxed">{flaw}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex flex-col rounded-2xl border-2 border-line-strong bg-surface p-6 shadow-md sm:p-8">
+            <div className="flex items-center justify-between border-b border-line pb-4">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+                  Certified Standard
+                </span>
+                <h3 className="mt-1 text-lg font-bold text-ink">Tanmatra Clinical Protocols</h3>
+              </div>
+              <span className="rounded-full bg-surface-raised px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-ink">
+                Verified
+              </span>
+            </div>
+            <ul className="mt-6 flex flex-col gap-4 text-sm text-ink-muted">
+              {clinicalAdvantages.map((adv, idx) => (
+                <li key={idx} className="flex items-start gap-3 text-ink">
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line bg-surface-subtle text-xs font-bold text-ink">
+                    ✓
+                  </span>
+                  <span className="leading-relaxed font-medium">{adv}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

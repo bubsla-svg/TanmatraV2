@@ -1,18 +1,11 @@
 "use client";
 // Client: owns the address list state + CRUD calls against the live api.
 import { useCallback, useEffect, useState } from "react";
-import {
-  getAddresses,
-  createAddress,
-  updateAddress,
-  deleteAddress,
-  ApiError,
-  type Address,
-  type AddressInput,
-} from "@/lib/api";
+import { getAddresses, createAddress, updateAddress, deleteAddress, ApiError, type Address, type AddressInput } from "@/lib/api";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { AddressList } from "./AddressList";
 import { AddressForm } from "./AddressForm";
+import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
 type Editing = null | "new" | Address;
 
@@ -32,6 +25,8 @@ export function AddressManager() {
   const [needsAuth, setNeedsAuth] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing>(null);
+  const [pickingLocation, setPickingLocation] = useState(false);
+  const [prefill, setPrefill] = useState<Partial<Address> | undefined>(undefined);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [formBusy, setFormBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -113,10 +108,17 @@ export function AddressManager() {
         onDelete={(id) => void mutate(id, () => deleteAddress(id))}
         onSetDefault={(id) => void mutate(id, () => updateAddress(id, { isDefault: true }))}
       />
+      {pickingLocation && (
+        <LocationPickerFlow
+          onClose={() => setPickingLocation(false)}
+          onSelectLocation={(p) => { setPickingLocation(false); setPrefill({ line1: p.formattedAddress, city: p.city, pincode: p.pincode }); setEditing("new"); }}
+          onManualFallback={() => { setPickingLocation(false); setPrefill(undefined); setEditing("new"); }}
+        />
+      )}
       {editing ? (
         <AddressForm
           key={editing === "new" ? "new" : editing.id}
-          initial={editing === "new" ? undefined : editing}
+          initial={editing === "new" ? prefill : editing}
           busy={formBusy}
           error={formError}
           submitLabel={editing === "new" ? "Save address" : "Update address"}
@@ -126,7 +128,7 @@ export function AddressManager() {
       ) : (
         <button
           type="button"
-          onClick={() => { setFormError(null); setEditing("new"); }}
+          onClick={() => { setFormError(null); setPrefill(undefined); setPickingLocation(true); }}
           className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
         >
           Add an address

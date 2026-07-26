@@ -15,7 +15,14 @@ export type LpEventName =
   | "lead_submit"
   | "lead_success"
   | "lead_error"
-  | "trial_checkout_start";
+  | "trial_checkout_start"
+  | "assessment_start"
+  | "assessment_step"
+  | "assessment_complete"
+  | "assessment_skip"
+  | "spec_card_flip"
+  | "protocol_card_select"
+  | "waitlist_join";
 
 export interface LpEventProps {
   page?: string;

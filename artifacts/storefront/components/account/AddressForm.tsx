@@ -21,7 +21,7 @@ export function AddressForm({
   onSubmit,
   onCancel,
 }: {
-  initial?: Address;
+  initial?: Partial<Address>;
   busy: boolean;
   error: string | null;
   submitLabel: string;

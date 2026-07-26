@@ -23,9 +23,23 @@ test("emitLpEvent handles all valid LP event names", () => {
     "lead_success",
     "lead_error",
     "trial_checkout_start",
+    "assessment_start",
+    "assessment_step",
+    "assessment_complete",
+    "assessment_skip",
+    "spec_card_flip",
+    "protocol_card_select",
+    "waitlist_join",
   ];
-  assert.equal(events.length, 11);
+  assert.equal(events.length, 18);
   for (const ev of events) {
     assert.doesNotThrow(() => emitLpEvent(ev));
   }
+});
+
+test("emitLpEvent accepts optional props for new assessment events", () => {
+  assert.doesNotThrow(() => {
+    emitLpEvent("assessment_step", { page: "/", section: "hero", step: 2 });
+    emitLpEvent("waitlist_join", { planId: "desk_fuel", track: "veg" });
+  });
 });
