@@ -6,6 +6,7 @@ import {
   PLAN_CATALOG,
   PLAN_PRICE_TABLE,
   ADD_ONS,
+  computeCorporateTeamsQuote,
   attachableAddOns,
   resolveAddOns,
   TRIAL_TRIOS,
@@ -274,6 +275,7 @@ test("GST identity gst = total − round(total/1.05) holds for all plan and vari
   }
 });
 
+
 // ── §3 Prepaid quarterly cycle math (02e Table II.1) ─────────────────────────
 test("computePlanQuote — quarterly cycle uses Table II.1 flat totals and derives perMealPaise over 66 meals", () => {
   const dfQ = computePlanQuote("desk_fuel", "veg", "quarterly");
@@ -297,5 +299,41 @@ test("quarterly variant totals exactly match Table II.1 for egg and nonveg", () 
   assert.equal(computePlanQuote("desk_fuel", "nonveg", "quarterly").cycleTotalPaise, 1319900);
   assert.equal(computePlanQuote("protein_build", "egg", "quarterly").cycleTotalPaise, 1559900);
   assert.equal(computePlanQuote("protein_build", "nonveg", "quarterly").cycleTotalPaise, 1679900);
+});
+
+// ── B2B Corporate Teams Seat Tiers (02e Table II.2) ──────────────────────────
+test("computeCorporateTeamsQuote exactly matches Table II.2 across all 9 variant × tier combinations", () => {
+  // Tier 1 (10-24 seats)
+  assert.equal(computeCorporateTeamsQuote(10, "veg").pricePerMealPaise, 20900);
+  assert.equal(computeCorporateTeamsQuote(24, "veg").pricePerMealPaise, 20900);
+  assert.equal(computeCorporateTeamsQuote(15, "egg").pricePerMealPaise, 21900);
+  assert.equal(computeCorporateTeamsQuote(20, "nonveg").pricePerMealPaise, 22900);
+  assert.equal(computeCorporateTeamsQuote(10, "veg").tier, 1);
+
+  // Tier 2 (25-49 seats)
+  assert.equal(computeCorporateTeamsQuote(25, "veg").pricePerMealPaise, 19900);
+  assert.equal(computeCorporateTeamsQuote(49, "veg").pricePerMealPaise, 19900);
+  assert.equal(computeCorporateTeamsQuote(30, "egg").pricePerMealPaise, 20900);
+  assert.equal(computeCorporateTeamsQuote(35, "nonveg").pricePerMealPaise, 21900);
+  assert.equal(computeCorporateTeamsQuote(25, "veg").tier, 2);
+
+  // Tier 3 (50+ seats) — veg is ₹189, deliberately ₹1 under meal-voucher ceiling
+  assert.equal(computeCorporateTeamsQuote(50, "veg").pricePerMealPaise, 18900);
+  assert.equal(computeCorporateTeamsQuote(100, "veg").pricePerMealPaise, 18900);
+  assert.equal(computeCorporateTeamsQuote(50, "egg").pricePerMealPaise, 19900);
+  assert.equal(computeCorporateTeamsQuote(200, "nonveg").pricePerMealPaise, 20900);
+  assert.equal(computeCorporateTeamsQuote(50, "veg").tier, 3);
+});
+
+test("computeCorporateTeamsQuote throws for <10 seats and calculates exact invoice totals and discountSource", () => {
+  assert.throws(() => computeCorporateTeamsQuote(9, "veg"), /minimum 10 seats required/);
+  assert.throws(() => computeCorporateTeamsQuote(0, "veg"), /minimum 10 seats required/);
+
+  const q = computeCorporateTeamsQuote(25, "veg", 22);
+  assert.equal(q.totalMeals, 25 * 22); // 550 meals
+  assert.equal(q.cycleTotalPaise, 550 * 19900); // 10945000 paise (₹109,450)
+  assert.equal(q.preTaxPaise, Math.round(q.cycleTotalPaise / 1.05));
+  assert.equal(q.gstPaise, q.cycleTotalPaise - q.preTaxPaise);
+  assert.ok(q.discountSource.includes("Corporate Teams Tier 2"));
 });
 
