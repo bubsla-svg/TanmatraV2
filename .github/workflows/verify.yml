@@ -329,3 +329,22 @@ jobs:
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
+      # The reporting half of the money path. These are not about billing a
+      # customer correctly; they are about the numbers the business reads back
+      # afterwards being what they claim to be — the WBR's revenue line
+      # partitioning into channels that add up, and the curated analytics views
+      # actually having the columns the LLM prompt says they have. Both need a
+      # real server: the safe-view contract rests on a Postgres rule
+      # (CREATE OR REPLACE VIEW appends only) that can only be proved against
+      # one, and the WBR aggregates read through the views themselves.
+      - name: Analytics-integrity integration tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/safeSql.schema.test.ts
+          ./src/lib/wbr.channel.test.ts
+          ./src/lib/orderStatus.schema.test.ts
+          ./src/lib/petpooja.moneyInvariant.test.ts
+          ./src/lib/petpooja.transition.test.ts
+          ./src/routes/petpooja.saveorder.test.ts
+          ./src/routes/petpooja.statusMonotonic.test.ts
