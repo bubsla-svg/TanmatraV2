@@ -3,7 +3,7 @@
  * Pure functions testable without rendering or live networks.
  * Keeps serviceability verdict checks and localStorage state management independent of auth.
  */
-import { apiGet, type FetchImpl } from "./apiClient";
+import { apiGet, apiPost, type FetchImpl } from "./apiClient";
 
 export type ServiceabilityVerdict = "unknown" | "serviceable" | "unserviceable";
 
@@ -76,3 +76,25 @@ export function clearServiceabilityState(): void {
     /* swallow errors */
   }
 }
+
+export interface ServiceabilityInterestResponse {
+  ok: boolean;
+  duplicate?: boolean;
+}
+
+/**
+ * Submit unserviceable interest lead (OB-3 / II.3).
+ * Posts {pincode, phone} to public POST /api/serviceability-interest.
+ */
+export async function submitServiceabilityInterest(
+  pincode: string,
+  phone: string,
+  fetchImpl?: FetchImpl,
+): Promise<ServiceabilityInterestResponse> {
+  return apiPost<ServiceabilityInterestResponse>(
+    "/serviceability-interest",
+    { pincode: pincode.trim(), phone: phone.trim() },
+    fetchImpl,
+  );
+}
+

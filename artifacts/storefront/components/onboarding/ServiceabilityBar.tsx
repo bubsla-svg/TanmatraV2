@@ -8,6 +8,7 @@ import {
   type ServiceabilityVerdict,
 } from "@/lib/serviceabilityApi";
 import { ApiError } from "@/lib/apiClient";
+import { NotifyMeForm } from "./NotifyMeForm";
 
 export interface ServiceabilityBarProps {
   /** Optional location label for diagnostic or analytics tagging. */
@@ -15,8 +16,9 @@ export interface ServiceabilityBarProps {
 }
 
 /**
- * ServiceabilityBar (OB-2 / II.1). Non-blocking front-door delivery gate.
+ * ServiceabilityBar (OB-2 & OB-3 / II.1 & II.3). Non-blocking front-door delivery gate.
  * Evaluates pincodes via public API without gating catalog visibility or requiring auth.
+ * Displays notify-me form on unserviceable verdict with graceful 404 degradation.
  */
 export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps) {
   const [verdict, setVerdict] = useState<ServiceabilityVerdict>("unknown");
@@ -78,15 +80,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
         <p className="text-sm font-semibold text-[var(--ink)]">
           We&rsquo;re not in {pincode} yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
         </p>
-        <div id="notify-me-slot" className="mt-3">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-xs font-medium underline text-gold-text hover:text-ink"
-          >
-            Check a different pincode &rarr;
-          </button>
-        </div>
+        <NotifyMeForm pincode={pincode} onReset={handleReset} />
       </div>
     );
   }
@@ -107,7 +101,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
           disabled={busy}
-          className="w-44 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-ink outline-none focus:border-line-strong disabled:opacity-50"
+          className="w-44 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
         />
         <button
           type="submit"

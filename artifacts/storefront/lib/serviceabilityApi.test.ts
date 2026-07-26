@@ -7,6 +7,7 @@ import test, { beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import {
   checkServiceability,
+  submitServiceabilityInterest,
   loadServiceabilityState,
   saveServiceabilityState,
   clearServiceabilityState,
@@ -97,3 +98,26 @@ test("loadServiceabilityState degrades safely without window or storage (SSR saf
   const ssrState = loadServiceabilityState();
   assert.deepEqual(ssrState, { verdict: "unknown", pincode: "" });
 });
+
+test("submitServiceabilityInterest posts pincode and phone to server and returns result", async () => {
+  const successFetch = (async (_url: string, opts: RequestInit) => {
+    assert.equal(opts.method, "POST");
+    assert.deepEqual(JSON.parse(opts.body as string), { pincode: "999888", phone: "9876543210" });
+    return {
+      ok: true,
+      text: async () => JSON.stringify({ ok: true }),
+    };
+  }) as unknown as typeof fetch;
+
+  const res = await submitServiceabilityInterest("999888 ", " 9876543210 ", successFetch);
+  assert.deepEqual(res, { ok: true });
+
+  const duplicateFetch = (async () => ({
+    ok: true,
+    text: async () => JSON.stringify({ ok: true, duplicate: true }),
+  })) as unknown as typeof fetch;
+
+  const resDup = await submitServiceabilityInterest("999888", "9876543210", duplicateFetch);
+  assert.deepEqual(resDup, { ok: true, duplicate: true });
+});
+

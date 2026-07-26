@@ -58,6 +58,7 @@ import geoRouter from "./geo";
 import ecosystemRouter from "./ecosystem";
 import savedMealsRouter from "./savedMeals";
 import serviceabilityRouter from "./serviceability";
+import serviceabilityInterestRouter from "./serviceabilityInterest";
 
 const router: IRouter = Router();
 
@@ -67,6 +68,7 @@ router.use(cspReportRouter);
 router.use(openApiContractRouter);
 router.use(geoRouter);
 router.use(serviceabilityRouter);
+router.use(serviceabilityInterestRouter);
 router.use(authRouter);
 router.use(adminAuthRouter);
 router.use(adminStatusRouter);
