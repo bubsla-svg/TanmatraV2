@@ -1,5 +1,5 @@
 import { sql, eq } from "drizzle-orm";
-import { type InsertMenuItem, type MenuItem, type InsertOrder, type OrderStatus, type OrderChannel, usersTable, menuItemsTable } from "@workspace/db/schema";
+import { type InsertMenuItem, type MenuItem, type InsertOrder, type OrderStatus, type OrderChannel, orderStatusLadderRank, orderStatusAcceptsExternalUpdate, isOrderStatus, usersTable, menuItemsTable } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
@@ -583,6 +583,38 @@ export async function mapPetpoojaOrderToDb(
     });
   }
 
+  // The aggregator's GRAND total — GST, delivery and packing included — and
+  // that is correct here, not the bug it looks like.
+  //
+  // `total_paise` is documented as "meal subtotal after discounts/credit (NO
+  // GST, NO delivery fee)", so writing a gross number into it reads like the
+  // inbound twin of the outbound charge-fidelity bug (branch 5). It is not.
+  // The invariant the money path actually depends on is stated in
+  // paymentIntegrity.ts: `chargePaise ?? totalPaise` IS the payable gross.
+  // `charge_paise` is the post-GST number only for orders WE priced; when it is
+  // null, `total_paise` carries the gross instead. The guest-checkout path is
+  // the sanctioned precedent — checkout.ts writes `totals.total` (GST and fee
+  // included) into `totalPaise` and never sets `chargePaise`.
+  //
+  // This mapper leaves `chargePaise` unset, deliberately: we never charge an
+  // aggregator order, the customer paid Zomato. So the gross belongs in
+  // `total_paise`, and every reader of `chargePaise ?? totalPaise` gets a true
+  // answer — including routes/orders.ts's cancel path, which seeds a refund
+  // request at exactly that expression with no channel predicate. "Fixing"
+  // this line to a recomputed subtotal would quote an operator less than the
+  // customer actually paid.
+  //
+  // And it would be a number we invented. The payload's components are not
+  // guaranteed to reconcile to `total`: in Petpooja's OWN documentation sample
+  // (the fixture in petpooja.test.ts) the items come to ₹220, and
+  // 220 + 50 delivery + 20 packing + 65.52 tax − 45 discount = ₹310.52 against
+  // a stated total of ₹560. Σ(components) is a guess; `total` is the one figure
+  // the aggregator asserts.
+  //
+  // What IS wrong is downstream, and it is not this column's fault: the
+  // analytics layer sums `total_paise` across every channel with no way to tell
+  // them apart. See claude/order-channel-split.md §6 rows 7-8.
+  // petpooja.moneyInvariant.test.ts pins all of the above.
   const totalPaise = Math.round(parseFloat(Order.details.total || "0") * 100);
 
   let fulfillmentType = "delivery";
@@ -599,7 +631,18 @@ export async function mapPetpoojaOrderToDb(
     userId,
     // Never 'own_app' — this order came from the POS, whoever originated it.
     orderChannel: mapPetpoojaOrderChannel(Order.details.order_from),
-    externalOrderId: Order.details.orderID,
+    // Trimmed because this is a dedupe key, not a label. `uniq_orders_external_pos`
+    // compares bytes, so " 4471" and "4471" would be two rows for one meal —
+    // exactly the duplicate the index exists to prevent, walking straight past
+    // it. Canonicalise once, here, where the value enters the system.
+    //
+    // Blank collapses to null, not "": a partial index keyed
+    // `external_order_id is not null` would happily treat "" as a real id and
+    // then dedupe every id-less order onto the first one. Null says what is
+    // true — this order has no handle — and keeps it out of the index. The
+    // route refuses such a payload outright, so this is the backstop for any
+    // other caller.
+    externalOrderId: (Order.details.orderID ?? "").trim() || null,
     status: "placed",
     totalPaise,
     addressLabel: "Delivery Address",
@@ -680,12 +723,10 @@ export function mapPetpoojaStatus(petpoojaStatus: string): OrderStatus {
  * would strip an order out of the batching pool and tell the customer the
  * food had left when it had not.
  *
- * Still open (pre-existing, not introduced here): neither this mapper's caller
- * nor the /callback and /orderstatus callers guard monotonicity, so an
- * out-of-order or replayed webhook can walk an order BACKWARDS — including out
- * of `delivered`. That was already true when these mappers returned "confirmed"
- * and "dispatched"; making the values real does not create it. The fix belongs
- * with the webhook handlers in routes/petpooja.ts, not here.
+ * Mapping low also interacts with monotonicity, and the interaction is the good
+ * one: an unrecognised string becomes the least advanced rider state, which
+ * classifyPosStatusTransition will then refuse to apply to an order that has
+ * already moved past it. A guess never drags an order backwards.
  */
 export function mapPetpoojaRiderStatus(status: string): OrderStatus {
   switch (status.toLowerCase()) {
@@ -699,4 +740,77 @@ export function mapPetpoojaRiderStatus(status: string): OrderStatus {
     default:
       return "rider_assigned";
   }
+}
+
+/**
+ * What a Petpooja status webhook is allowed to do to the order it names.
+ *
+ * The three status routes (/callback, /orderstatus, /rider-info) all used to
+ * write the incoming status unconditionally, which made the order's state a
+ * function of webhook ARRIVAL order rather than of what actually happened. That
+ * is not a hypothetical: webhook delivery is at-least-once and unordered, so a
+ * retried `rider-assigned` landing after `pickedup` walked a moving order back
+ * to `rider_assigned`, and a replayed accept walked a delivered order back into
+ * `preparing`. Backwards moves are not cosmetic — `rider_assigned` is in
+ * dispatch.ts's partnerStatuses, so an order that had already left could be
+ * batched onto a new one, and `preparing` is on the KDS board, so a delivered
+ * meal reappeared as a ticket to cook.
+ *
+ * Three outcomes rather than a boolean, because "not forward" is two different
+ * situations and collapsing them loses information the caller needs:
+ *
+ *   advance — strictly later on the ladder, or a cancellation from a live rung.
+ *             Write the status and anything that belongs to the event.
+ *   hold    — the same status we already hold. The status write is a no-op, but
+ *             the webhook is NOT stale: this is how a rider REASSIGNMENT
+ *             arrives (rider-assigned twice, second time a different courier).
+ *             Callers should still take identity-like fields, and must not
+ *             re-apply anything that accumulates — see the cancellation-reason
+ *             handling in routes/petpooja.ts, which a replay used to prepend
+ *             twice.
+ *   regress — earlier on the ladder, or any move at all out of a settled state.
+ *             The webhook contradicts something we already believe. Write
+ *             nothing, and say so in the log.
+ *
+ * `cancelled` is special-cased as an advance from any live rung on purpose: an
+ * outlet can reject an order at any point before it lands, so cancellation is
+ * forward motion even though it has no ladder rank. From `delivered` it is a
+ * regress — the food is with the customer, and a cancellation arriving after
+ * that is a contradiction, not an instruction.
+ *
+ * Note what this deliberately does NOT do: it is not wired into our own money
+ * path. `payments.ts` and the dispatch engine write `orders.status` directly
+ * and are unaffected. This is POS-webhook policy — the ladder it consults
+ * (orderStatusLadderRank, lib/db) is general, the decision to refuse rather
+ * than accept is specific to a channel that cannot be trusted to deliver its
+ * events in order.
+ */
+export type PosStatusTransition = "advance" | "hold" | "regress";
+
+// `from` is `string` rather than `OrderStatus` on purpose. `orders.status` is an
+// unconstrained varchar, so a row read back from the database really can hold a
+// value this vocabulary has never heard of, and the caller has no honest way to
+// narrow it. Deciding what to do about that is this function's job, not the
+// route's: an unrecognised current status means we cannot place the order on
+// the ladder, and moving an order whose position we cannot establish is exactly
+// the mistake the ladder exists to prevent. So it fails closed, as a regress.
+export function classifyPosStatusTransition(
+  from: string,
+  to: OrderStatus
+): PosStatusTransition {
+  if (!isOrderStatus(from)) return "regress";
+  if (from === to) return "hold";
+  if (!orderStatusAcceptsExternalUpdate[from]) return "regress";
+  if (to === "cancelled") return "advance";
+
+  const fromRank = orderStatusLadderRank[from];
+  const toRank = orderStatusLadderRank[to];
+  // Unreachable today: everything off the ladder is also settled, so a null
+  // `fromRank` was already caught above, and the POS mappers cannot produce an
+  // off-ladder `to` other than the `cancelled` handled above. It is here so
+  // that a status value added to the vocabulary without a rank fails closed —
+  // refusing an update is recoverable, corrupting an order's state is not.
+  if (fromRank === null || toRank === null) return "regress";
+
+  return toRank > fromRank ? "advance" : "regress";
 }

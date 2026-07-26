@@ -7,16 +7,23 @@ import {
   usersTable,
   subscriptionsTable,
   subscriptionDeliveriesTable,
+  refundRequestsTable,
+  deliveryEventsTable,
   isLiveTrialState,
 } from "@workspace/db";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
 import { commitSubsidyForOrder } from "../lib/corporateSubsidy";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
-import { isCaptureAmountReconciled, resolvePayableAmountPaise } from "../lib/paymentIntegrity";
+import {
+  isCaptureAmountReconciled,
+  resolvePayableAmountPaise,
+  refundedSoFarPaise,
+  REFUND_EVENT_NAMES,
+} from "../lib/paymentIntegrity";
 import { chargeMandateCore } from "../lib/chargeMandate";
 import { requireOps } from "../lib/adminGate";
 import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
@@ -643,6 +650,50 @@ router.post("/payments/upi/intent", async (req: Request, res: Response) => {
   });
 });
 
+/**
+ * Every event on an order that the payout cap counts as money already returned.
+ * Deliberately queried by NAME from `REFUND_EVENT_NAMES` and no wider: that
+ * constant is the exact set `refundedSoFarPaise` sums, so "is this refund
+ * already in the ledger" has to be asked of the same set. An audit record filed
+ * under any other name (`refund_reversed`, say) is not in the ledger and must
+ * not suppress a write.
+ */
+async function orderRefundLedger(orderId: number) {
+  return db
+    .select({
+      id: deliveryEventsTable.id,
+      event: deliveryEventsTable.event,
+      meta: deliveryEventsTable.meta,
+    })
+    .from(deliveryEventsTable)
+    .where(
+      and(
+        eq(deliveryEventsTable.orderId, orderId),
+        inArray(deliveryEventsTable.event, [...REFUND_EVENT_NAMES]),
+      ),
+    );
+}
+
+/**
+ * The ledger entries that belong to one particular gateway refund. Matched on
+ * either identifier we may hold: the gateway's own refund id (written by the
+ * console on success) or our refund_requests row id. Either alone is enough —
+ * requiring both would silently reverse nothing in exactly the case reversal
+ * exists for, which is that something about the first write went wrong.
+ */
+function entriesForRefund(
+  ledger: Awaited<ReturnType<typeof orderRefundLedger>>,
+  keys: { razorpayRefundId: string; refundRequestId: number | null },
+) {
+  return ledger.filter(
+    (row) =>
+      (keys.razorpayRefundId !== "" &&
+        row.meta?.["razorpayRefundId"] === keys.razorpayRefundId) ||
+      (keys.refundRequestId != null &&
+        row.meta?.["refundRequestId"] === keys.refundRequestId),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // POST /payments/razorpay/webhook
 // ---------------------------------------------------------------------------
@@ -699,6 +750,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     payload?: {
       payment?: { entity?: { order_id?: string; id?: string; amount?: number } };
       payment_link?: { entity?: { id?: string; reference_id?: string; amount?: number; amount_paid?: number; status?: string } };
+      refund?: {
+        entity?: {
+          id?: string;
+          payment_id?: string;
+          amount?: number;
+          status?: string;
+          notes?: Record<string, unknown>;
+        };
+      };
     };
   };
   try {
@@ -825,10 +885,13 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             // Marketplace (shelf-stable goods) orders never go through the
             // kitchen — only meal orders get pushed to Petpooja.
             if (order.orderKind !== "marketplace") {
+              // `req.log` is passed so the client's own diagnostics land in the
+              // request log rather than nowhere: a POS rejection, and the
+              // charge-not-reconciled warning, are both things ops has to see.
               pushOrderToPetpooja(order, {
                 name: fullName || "Guest Customer",
                 email: result.user?.email || null,
-              }).catch((err) => {
+              }, req.log).catch((err) => {
                 req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
               });
             }
@@ -912,10 +975,13 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               .filter(Boolean)
               .join(" ");
             if (order.orderKind !== "marketplace") {
+              // `req.log` is passed so the client's own diagnostics land in the
+              // request log rather than nowhere: a POS rejection, and the
+              // charge-not-reconciled warning, are both things ops has to see.
               pushOrderToPetpooja(order, {
                 name: fullName || "Guest Customer",
                 email: result.user?.email || null,
-              }).catch((err) => {
+              }, req.log).catch((err) => {
                 req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
               });
             }
@@ -939,6 +1005,211 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
           .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")));
       }
       req.log.warn({ razorpayOrderId }, "webhook: payment failed");
+    } else if (eventType === "refund.processed" || eventType === "refund.failed") {
+      // ─────────────────────────────────────────────────────────────────────
+      // The refund lifecycle. Nothing here handled it before, and the console
+      // (`routes/refunds.ts`) records a refund as settled the moment Razorpay's
+      // POST returns 200. For `speed: "normal"` — which is what the console
+      // sends — that 200 means *accepted*, not *paid*: the refund entity comes
+      // back `pending` and settles over the following days. It can also fail.
+      //
+      // Two consequences, both money-visible:
+      //
+      //   * A refund that FAILED still left an `order_refunded` event on the
+      //     order. That event is precisely what the payout cap subtracts, so a
+      //     failed refund permanently shrank the order's refundable headroom —
+      //     and the retry the operator is meant to make would be refused for
+      //     "exceeds refundable balance", against money that never left. The
+      //     worse the gateway failure, the more certainly that customer could
+      //     never be refunded through the console again.
+      //   * A refund issued straight from the Razorpay Dashboard — the thing a
+      //     support agent does at 2am — was recorded nowhere at all, so the cap
+      //     still believed the full amount was refundable and would send it a
+      //     second time.
+      //
+      // So `processed` writes the refund into the ledger exactly once, and
+      // `failed` unwinds the premature claim.
+      const refundEntity = event.payload?.refund?.entity;
+      const razorpayRefundId = refundEntity?.id ?? "";
+      const refundPaymentId = refundEntity?.payment_id ?? paymentEntity?.id ?? "";
+      const settled = eventType === "refund.processed";
+
+      // Find our record of this refund. `razorpay_refund_id` is what the
+      // console stores on success; `notes.refundRequestId` is the copy it puts
+      // on the gateway object at creation time, which still resolves when the
+      // DB write after the gateway call did not land.
+      let request: typeof refundRequestsTable.$inferSelect | undefined;
+      if (razorpayRefundId) {
+        [request] = await db
+          .select()
+          .from(refundRequestsTable)
+          .where(eq(refundRequestsTable.razorpayRefundId, razorpayRefundId))
+          .limit(1);
+      }
+      if (!request) {
+        const notedId = Number(refundEntity?.notes?.["refundRequestId"]);
+        if (Number.isInteger(notedId) && notedId > 0) {
+          [request] = await db
+            .select()
+            .from(refundRequestsTable)
+            .where(eq(refundRequestsTable.id, notedId))
+            .limit(1);
+        }
+      }
+
+      // The order this refund belongs to: through our request row when we have
+      // one, otherwise through the payment it was taken against. That second
+      // route is what catches a refund we did not initiate.
+      const [order] = request
+        ? await db.select().from(ordersTable).where(eq(ordersTable.id, request.orderId)).limit(1)
+        : refundPaymentId
+          ? await db
+              .select()
+              .from(ordersTable)
+              .where(eq(ordersTable.razorpayPaymentId, refundPaymentId))
+              .limit(1)
+          : [];
+
+      if (!order) {
+        req.log.error(
+          { razorpayRefundId, refundPaymentId, eventType },
+          "webhook: refund event matched neither a refund request nor a payment — reconcile by hand",
+        );
+      } else if (settled) {
+        const keys = { razorpayRefundId, refundRequestId: request?.id ?? null };
+        const existing = entriesForRefund(await orderRefundLedger(order.id), keys);
+        // The gateway's own number is the authority for what actually moved;
+        // our request row is the fallback when the entity is malformed.
+        const entityAmount = refundEntity?.amount;
+        const amountPaise =
+          typeof entityAmount === "number" && Number.isInteger(entityAmount) && entityAmount > 0
+            ? entityAmount
+            : (request?.amountPaise ?? null);
+
+        if (existing.length > 0) {
+          // Already in the ledger — the console's optimistic write, or an
+          // earlier delivery of this same event. Nothing to add; a second entry
+          // would double-count against the cap.
+          req.log.info(
+            { razorpayRefundId, orderId: order.id },
+            "webhook: refund settlement already recorded",
+          );
+        } else if (amountPaise == null) {
+          // An amount-less refund event makes the ORDER's whole history
+          // unreadable — `refundedSoFarPaise` returns null rather than guess,
+          // and every later refund on this order would then be refused. Money
+          // moved and we cannot say how much: alarm, but do not poison the
+          // ledger.
+          req.log.error(
+            { razorpayRefundId, orderId: order.id },
+            "webhook: refund settled with no readable amount — ledger NOT updated",
+          );
+        } else {
+          await db.insert(deliveryEventsTable).values({
+            orderId: order.id,
+            event: "order_refunded",
+            meta: {
+              amountPaise,
+              razorpayRefundId,
+              settledBy: "refund.processed",
+              ...(request
+                ? { refundRequestId: request.id }
+                : { source: "razorpay_dashboard" }),
+            },
+          });
+        }
+
+        if (request && request.status !== "refunded") {
+          await db
+            .update(refundRequestsTable)
+            .set({
+              status: "refunded",
+              razorpayRefundId: razorpayRefundId || request.razorpayRefundId,
+              note: "settled by gateway (refund.processed)",
+            })
+            .where(eq(refundRequestsTable.id, request.id));
+        }
+
+        // Flip the order only once the money back covers what was payable. A
+        // partial refund — a goodwill ₹100 on a ₹1,200 order — is real money
+        // returned but does not make this a refunded order, and saying so would
+        // hide a still-live delivery from every board that filters on status.
+        // (The console already flips the order at approve time regardless; that
+        // asymmetry is its to fix, not this branch's to reach across into.)
+        if (order.status !== "refunded") {
+          const payable = resolvePayableAmountPaise(order);
+          const backSoFar = refundedSoFarPaise(await orderRefundLedger(order.id));
+          if (payable != null && backSoFar != null && backSoFar >= payable) {
+            await db
+              .update(ordersTable)
+              .set({ status: "refunded" })
+              .where(eq(ordersTable.id, order.id));
+          }
+        }
+      } else {
+        // refund.failed — the money did not go back. Unwind the claim.
+        const keys = { razorpayRefundId, refundRequestId: request?.id ?? null };
+        const claimed = entriesForRefund(await orderRefundLedger(order.id), keys);
+
+        for (const entry of claimed) {
+          // Delete and re-file, rather than annotate in place.
+          // `refundedSoFarPaise` sums by event NAME, so anything left under
+          // `order_refunded` keeps eating this order's headroom no matter what
+          // we write into its meta — and the customer's order timeline would go
+          // on showing a refund that never happened. The record is not lost: it
+          // moves to `refund_reversed`, which the cap does not read.
+          await db.delete(deliveryEventsTable).where(eq(deliveryEventsTable.id, entry.id));
+          await db.insert(deliveryEventsTable).values({
+            orderId: order.id,
+            event: "refund_reversed",
+            meta: {
+              ...(entry.meta ?? {}),
+              reversedFrom: entry.event,
+              reversedAt: new Date().toISOString(),
+              reason: "refund.failed",
+              gatewayStatus: refundEntity?.status ?? null,
+            },
+          });
+        }
+
+        // Put the order back. `previousOrderStatus` is stamped by the console at
+        // approve time; `cancelled` is the fallback for refunds approved before
+        // that field existed, because the cancel path in `routes/orders.ts` is
+        // the only production creator of refund_requests rows and it always
+        // leaves the order `cancelled` — which is where an unwound refund
+        // belongs. The status predicate keeps this from touching an order some
+        // other path has since moved on.
+        const previousOrderStatus = claimed
+          .map((entry) => entry.meta?.["previousOrderStatus"])
+          .find((value): value is string => typeof value === "string" && value.length > 0);
+        if (order.status === "refunded") {
+          await db
+            .update(ordersTable)
+            .set({ status: previousOrderStatus ?? "cancelled" })
+            .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "refunded")));
+        }
+
+        if (request) {
+          await db
+            .update(refundRequestsTable)
+            .set({
+              status: "failed",
+              note: `gateway refund failed (${refundEntity?.status ?? "refund.failed"}) — re-approve to retry`,
+            })
+            .where(eq(refundRequestsTable.id, request.id));
+        }
+
+        req.log.error(
+          {
+            razorpayRefundId,
+            orderId: order.id,
+            refundRequestId: request?.id ?? null,
+            reversedEvents: claimed.length,
+            restoredStatus: previousOrderStatus ?? "cancelled",
+          },
+          "webhook: refund failed at the gateway — premature settlement reversed",
+        );
+      }
     }
 
     await db

@@ -13,7 +13,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./auth";
 
-export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly";
+export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly" | "quarterly";
 // "halted" mirrors a real Razorpay native subscription's `subscription.halted`
 // terminal state: billing gave up after MAX_CONSECUTIVE_CHARGE_FAILURES
 // consecutive failed debits (see chargeMandate.ts's failCharge) and will not
