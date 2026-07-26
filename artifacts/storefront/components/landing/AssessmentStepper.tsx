@@ -32,6 +32,13 @@ export function AssessmentStepper({
     if (defaultOpen) {
       emitLpEvent("assessment_start", { source: "default_open" });
     }
+    const handleOpen = () => {
+      setOpen(true);
+      setStepIdx(0);
+      emitLpEvent("assessment_start", { source: "custom_event" });
+    };
+    window.addEventListener("open_tanmatra_assessment", handleOpen);
+    return () => window.removeEventListener("open_tanmatra_assessment", handleOpen);
   }, [defaultOpen]);
 
   function handleStart() {

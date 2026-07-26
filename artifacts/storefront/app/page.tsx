@@ -1,29 +1,69 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
+import { Section00StickyNav } from "@/components/landing/Section00StickyNav";
+import { Section01ClinicalHero, deriveHeroContent } from "@/components/landing/Section01ClinicalHero";
+import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
+import { Section03AgitationPanel } from "@/components/landing/Section03AgitationPanel";
+import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
+import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
+import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
+import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
+import { Section08PricingStrip } from "@/components/landing/Section08PricingStrip";
+import { Section09AssessmentSection } from "@/components/landing/Section09AssessmentSection";
+import { Section10FaqAccordion } from "@/components/landing/Section10FaqAccordion";
+import { Section11StickyBottomBar } from "@/components/landing/Section11StickyBottomBar";
+import { Section12Footer } from "@/components/landing/Section12Footer";
 
-/** Home. Server-rendered, no money surface — a single appetite hero pointing at
- *  the menu. The plan/checkout surfaces arrive with the money path (Phase 2). */
-export default function HomePage() {
+/**
+ * Consumer Home (§0 to §12 Clinical Reconstruction).
+ * Server Component implementing DTR (Dynamic Tailored Referrals) personalization,
+ * inspecting tnm_ref cookie to tailor hero copy for clinical RDs, fitness gyms, or default professionals.
+ * Assembles all 13 modular sections under strict filecap and token governance.
+ */
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const refCookie = cookieStore.get("tnm_ref")?.value;
+  const heroData = deriveHeroContent(refCookie);
+
   return (
-    <section className="mx-auto max-w-5xl px-4 py-[var(--space-section)]">
-      <div className="max-w-2xl">
-        <p className="text-sm font-medium uppercase tracking-wider text-sage-text">
-          Now serving Noida
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight text-ink">
-          Clinical nutrition, cooked fresh — at your desk in 40&ndash;45 minutes.
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-ink-muted">
-          RD-designed lunches with verified macros. Real food first, the science
-          on the label.
-        </p>
-        <Link
-          href="/menu"
-          className="mt-8 inline-flex items-center gap-2 rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-        >
-          Browse the menu
-          <span aria-hidden>&rarr;</span>
-        </Link>
-      </div>
-    </section>
+    <div className="relative min-h-screen bg-surface text-ink pb-20 sm:pb-24">
+      {/* §0: Sticky Navigation Bar with Assessment CTA */}
+      <Section00StickyNav />
+
+      <main className="flex flex-col gap-12 sm:gap-16 lg:gap-20">
+        {/* §1: Clinical Hero with Pressure Valve to Desk Fuel */}
+        <Section01ClinicalHero hero={heroData} />
+
+        {/* §2: Qualification Chips Strip */}
+        <Section02QualificationChips />
+
+        {/* §3: "The 'Healthy' Bowl Problem" Dark Agitation Panel */}
+        <Section03AgitationPanel />
+
+        {/* §4: Protocols Tier Grid (Wellness, Performance, Clinical + Spec/Flip/Waitlist) */}
+        <Section04ProtocolsGrid />
+
+        {/* §5 to §7: Triple Verification Proofs (Macros, RD Panel, Kitchen Credentials) */}
+        <div id="proofs" className="flex flex-col gap-12 sm:gap-16">
+          <Section05ProofMacros />
+          <Section06ProofRdPanel />
+          <Section07ProofKitchen />
+        </div>
+
+        {/* §8: Pricing Transparency Strip */}
+        <Section08PricingStrip />
+
+        {/* §9: Interactive Assessment Stepper Banner & Modal Root */}
+        <Section09AssessmentSection />
+
+        {/* §10: FAQ Accordion with Mandatory Medical Treatment Disclaimer */}
+        <Section10FaqAccordion />
+      </main>
+
+      {/* §11: Sticky Bottom Conversion Bar */}
+      <Section11StickyBottomBar />
+
+      {/* §12: Footer */}
+      <Section12Footer />
+    </div>
   );
 }
