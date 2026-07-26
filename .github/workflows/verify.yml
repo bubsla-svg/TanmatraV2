@@ -329,3 +329,10 @@ jobs:
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
+      # Lead capture pipeline contracts (B2B corporate & partner acquisition).
+      - name: Lead capture route contracts (B2B and partners)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/corporateLeads.test.ts
+          ./src/routes/partnerLeads.test.ts
