@@ -1,6 +1,6 @@
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   companiesTable,
@@ -13,7 +13,12 @@ import {
   type OfficeOrderPick,
 } from "@workspace/db";
 import { makeBatchDishResolver } from "../lib/menuResolver";
+import { quoteSubsidyPaise } from "../lib/corporateSubsidy";
 import { corporateInquiryRateLimit } from "../middlewares/rateLimitMiddleware";
+import {
+  razorpayBasicAuth,
+  razorpayCredentials,
+} from "../lib/razorpayRecurring";
 import { sendMail } from "../lib/mail";
 import { logger } from "../lib/logger";
 import { computeCorporateTeamsQuote, type DietTrack } from "@workspace/subscription-rules";
@@ -400,132 +405,78 @@ router.post(
 
 // ---------- Subsidy at checkout ----------
 
+/**
+ * The subsidy the caller would get on an order of `subtotal` right now.
+ *
+ * An ESTIMATE for the UI, and labelled as one: the authoritative number is the
+ * one reserved under a lock when the order is priced. The client must never
+ * bill from this — it does not send an amount at all any more.
+ *
+ * `remainingPaise` nets out reservations held by the caller's other in-flight
+ * orders, not just committed spend, so two checkouts open at once cannot both
+ * be quoted the same money.
+ */
 router.get("/me/company-subsidy", async (req: Request, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
   const subtotal = Math.max(0, Number(req.query.subtotal ?? 0));
-  const period = currentMonth();
-  // Pick the first active membership (v1: one company at a time).
-  const [row] = await db
-    .select({
-      company: companiesTable,
-      member: companyMembersTable,
-    })
-    .from(companyMembersTable)
-    .innerJoin(
-      companiesTable,
-      eq(companyMembersTable.companyId, companiesTable.id),
-    )
-    .where(
-      and(
-        eq(companyMembersTable.userId, auth.id),
-        eq(companyMembersTable.status, "active"),
-      ),
-    )
-    .limit(1);
-  if (!row) {
+  const quote = await quoteSubsidyPaise(auth.id, subtotal);
+  if (!quote.active || quote.companyId === null) {
     res.json({ active: false });
     return;
   }
-  const monthlyBudget =
-    row.member.perEmployeeBudgetPaiseOverride ??
-    row.company.perEmployeeMonthlyBudgetPaise;
-  const [usage] = await db
-    .select()
-    .from(companyBudgetUsageTable)
-    .where(
-      and(
-        eq(companyBudgetUsageTable.companyId, row.company.id),
-        eq(companyBudgetUsageTable.userId, auth.id),
-        eq(companyBudgetUsageTable.periodMonth, period),
-      ),
-    );
-  const spent = usage?.spentPaise ?? 0;
-  const remaining = Math.max(0, monthlyBudget - spent);
-  const subsidyPaise = Math.min(remaining, subtotal);
+  const [company] = await db
+    .select({
+      id: companiesTable.id,
+      slug: companiesTable.slug,
+      name: companiesTable.name,
+    })
+    .from(companiesTable)
+    .where(eq(companiesTable.id, quote.companyId));
   res.json({
     active: true,
-    company: { id: row.company.id, slug: row.company.slug, name: row.company.name },
-    monthlyBudgetPaise: monthlyBudget,
-    spentThisMonthPaise: spent,
-    remainingPaise: remaining,
-    subsidyPaise,
+    company,
+    monthlyBudgetPaise: quote.monthlyBudgetPaise,
+    spentThisMonthPaise: quote.committedPaise,
+    // Held by this employee's other priced-but-unpaid orders. Surfaced so a
+    // "why is my budget lower than I expect" question has an answer.
+    reservedThisMonthPaise: quote.reservedPaise,
+    remainingPaise: quote.remainingPaise,
+    subsidyPaise: quote.subsidyPaise,
   });
 });
 
-const chargeSchema = z.object({
-  companyId: z.number().int().positive(),
-  paise: z.number().int().positive(),
-  orderRef: z.string().max(64).optional(),
-});
-
+/**
+ * POST /me/company-subsidy/charge — GONE (410).
+ *
+ * This let a signed-in member tell the server how much to bill their own
+ * company, tied to no order, bounded only by the monthly budget. The checkout
+ * called it after payment, best-effort, which is how the company's share came
+ * to be collected IN ADDITION to a card charge that was never reduced: the UI
+ * showed a net total, the gateway billed gross from orders.charge_paise, and
+ * then this endpoint billed the company on top.
+ *
+ * The subsidy is now part of the order's own price — reserved inside the
+ * pricing transaction and committed when the payment is captured. There is no
+ * client-callable way to spend a company's budget, and there should not be.
+ *
+ * Kept as an explicit 410 rather than deleted: a browser running a cached
+ * pre-fix bundle will still call this after paying, and that call must be an
+ * inert no-op instead of a second charge. The old client treats a failure here
+ * as non-fatal (a toast), so a 410 degrades exactly as intended.
+ */
 router.post(
   "/me/company-subsidy/charge",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
-    if (!auth) return;
-    const parsed = chargeSchema.safeParse(req.body ?? {});
-    if (!parsed.success) {
-      res.status(400).json({ error: "invalid payload" });
-      return;
-    }
-    const m = await loadMembership(parsed.data.companyId, auth.id);
-    if (!m || m.status !== "active") {
-      res.status(403).json({ error: "not a member" });
-      return;
-    }
-    const [company] = await db
-      .select()
-      .from(companiesTable)
-      .where(eq(companiesTable.id, parsed.data.companyId));
-    if (!company) {
-      res.status(404).json({ error: "not found" });
-      return;
-    }
-    const monthlyBudget =
-      m.perEmployeeBudgetPaiseOverride ?? company.perEmployeeMonthlyBudgetPaise;
-    const period = currentMonth();
-    try {
-      const out = await db.transaction(async (tx) => {
-        await tx.execute(
-          sql`select pg_advisory_xact_lock(hashtextextended(${"subsidy:" + company.id + ":" + auth.id + ":" + period}, 0))`,
-        );
-        const [existing] = await tx
-          .select()
-          .from(companyBudgetUsageTable)
-          .where(
-            and(
-              eq(companyBudgetUsageTable.companyId, company.id),
-              eq(companyBudgetUsageTable.userId, auth.id),
-              eq(companyBudgetUsageTable.periodMonth, period),
-            ),
-          );
-        const currentSpent = existing?.spentPaise ?? 0;
-        const remaining = Math.max(0, monthlyBudget - currentSpent);
-        const charged = Math.min(remaining, parsed.data.paise);
-        if (charged <= 0) {
-          return { charged: 0, balanceRemaining: remaining };
-        }
-        if (existing) {
-          await tx
-            .update(companyBudgetUsageTable)
-            .set({ spentPaise: currentSpent + charged })
-            .where(eq(companyBudgetUsageTable.id, existing.id));
-        } else {
-          await tx.insert(companyBudgetUsageTable).values({
-            companyId: company.id,
-            userId: auth.id,
-            periodMonth: period,
-            spentPaise: charged,
-          });
-        }
-        return { charged, balanceRemaining: remaining - charged };
-      });
-      res.json({ chargedPaise: out.charged, remainingPaise: out.balanceRemaining });
-    } catch (err) {
-      req.log.error({ err }, "subsidy charge failed");
-      res.status(500).json({ error: "charge failed" });
-    }
+    req.log.warn(
+      { userId: req.user?.id ?? null },
+      "deprecated /me/company-subsidy/charge called — subsidy is now billed server-side at order pricing; ignoring",
+    );
+    res.status(410).json({
+      error: "gone",
+      detail:
+        "corporate subsidy is applied server-side when the order is priced; this endpoint no longer bills anything",
+    });
   },
 );
 
@@ -783,6 +734,23 @@ router.post(
 );
 
 // ---------- Vouchers ----------
+//
+// A voucher is bearer money: redeeming one writes `amountPaise` straight into
+// credit_ledger, which checkout spends like cash. So the ONLY way a voucher may
+// reach `active` is a Razorpay capture whose signature verifies server-side.
+//
+// The buyer picks the denomination — that part is legitimate for a gift card;
+// what is not legitimate is honouring the denomination without charging for it.
+// So the amount the client asks for is not trusted as *value*, it is trusted
+// only as the amount to OPEN A GATEWAY ORDER FOR. The row is born
+// `pending_payment` (the column default, so a forgetful future insert lands on
+// the worthless value), carries the gateway order id, and is flipped to
+// `active` by exactly one guarded UPDATE in POST /vouchers/verify.
+//
+// The `code` is allocated at insert time because the unique-index retry loop
+// needs it, but it is deliberately withheld from every response until that
+// capture is verified — handing the buyer a code before payment would hand
+// them a string that LOOKS spendable.
 
 const purchaseVoucherSchema = z.object({
   amountPaise: z.number().int().min(10_000).max(5_000_000),
@@ -791,6 +759,14 @@ const purchaseVoucherSchema = z.object({
   message: z.string().max(512).optional(),
 });
 
+/**
+ * Opens checkout for a NEW voucher. Unlike premium (where a user has at most
+ * one membership, so the pending row is reused), every voucher is a distinct
+ * gift with its own recipient and message — reusing an abandoned pending row
+ * would silently retarget an earlier gift at a new recipient. So each checkout
+ * mints its own row; abandoned ones stay `pending_payment` forever, invisible
+ * and worthless.
+ */
 router.post("/vouchers", async (req: Request, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
@@ -799,6 +775,14 @@ router.post("/vouchers", async (req: Request, res: Response) => {
     res.status(400).json({ error: "invalid payload" });
     return;
   }
+  const creds = razorpayCredentials();
+  if (!creds) {
+    // No silent free voucher when the gateway is unconfigured — refuse.
+    res.status(503).json({ error: "payment gateway not configured" });
+    return;
+  }
+  const [keyId, keySecret] = creds;
+
   let attempt = 0;
   let inserted: typeof vouchersTable.$inferSelect | undefined;
   while (attempt < 5 && !inserted) {
@@ -812,7 +796,7 @@ router.post("/vouchers", async (req: Request, res: Response) => {
         recipientEmail: parsed.data.recipientEmail?.toLowerCase(),
         recipientName: parsed.data.recipientName,
         message: parsed.data.message,
-        status: "active",
+        status: "pending_payment",
       })
       .onConflictDoNothing({ target: vouchersTable.code })
       .returning();
@@ -823,16 +807,140 @@ router.post("/vouchers", async (req: Request, res: Response) => {
     res.status(500).json({ error: "could not allocate code" });
     return;
   }
-  res.json({ voucher: inserted });
+
+  const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: inserted.amountPaise,
+      currency: "INR",
+      receipt: `voucher-${inserted.id}`,
+      payment_capture: 1,
+    }),
+  });
+  if (!rpRes.ok) {
+    let body: unknown;
+    try {
+      body = await rpRes.json();
+    } catch {
+      body = await rpRes.text();
+    }
+    req.log.error(
+      { status: rpRes.status, body, voucherId: inserted.id },
+      "Razorpay voucher order creation failed",
+    );
+    res.status(502).json({ error: "payment gateway error" });
+    return;
+  }
+  const rp = (await rpRes.json()) as {
+    id: string;
+    amount: number;
+    currency: string;
+  };
+  await db
+    .update(vouchersTable)
+    .set({ razorpayOrderId: rp.id })
+    .where(eq(vouchersTable.id, inserted.id));
+
+  // No `code` in this response, and no voucher row either — both would leak
+  // the code. The client gets back only what it needs to open the modal.
+  res.json({
+    voucherId: inserted.id,
+    razorpayOrderId: rp.id,
+    amount: rp.amount,
+    currency: rp.currency,
+    keyId,
+  });
+});
+
+const voucherVerifySchema = z.object({
+  razorpayPaymentId: z.string().min(1).max(64),
+  razorpayOrderId: z.string().min(1).max(64),
+  razorpaySignature: z.string().min(1).max(256),
+});
+
+/**
+ * Verifies a captured payment and funds the voucher. The guarded UPDATE binds
+ * THIS payment to the `pending_payment` row whose stored `razorpayOrderId`
+ * matches AND whose purchaser is the caller — replaying another order's valid
+ * signature, or re-posting a signature for an already-funded voucher, updates
+ * zero rows (→ 409). This is the only code path in the app allowed to write
+ * `status: "active"` onto a voucher.
+ */
+router.post("/vouchers/verify", async (req: Request, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  const parsed = voucherVerifySchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+  const { razorpayPaymentId, razorpayOrderId, razorpaySignature } = parsed.data;
+  const creds = razorpayCredentials();
+  if (!creds) {
+    res.status(503).json({ error: "payment gateway not configured" });
+    return;
+  }
+  const [, keySecret] = creds;
+
+  const expected = createHmac("sha256", keySecret)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+    .digest("hex");
+  let valid = false;
+  try {
+    valid = timingSafeEqual(
+      Buffer.from(expected, "hex"),
+      Buffer.from(razorpaySignature, "hex"),
+    );
+  } catch {
+    valid = false;
+  }
+  if (!valid) {
+    req.log.warn(
+      { userId: auth.id, razorpayOrderId },
+      "invalid voucher payment signature",
+    );
+    res.status(400).json({ error: "invalid payment signature" });
+    return;
+  }
+
+  const [row] = await db
+    .update(vouchersTable)
+    .set({ status: "active", razorpayPaymentId })
+    .where(
+      and(
+        eq(vouchersTable.purchasedByUserId, auth.id),
+        eq(vouchersTable.razorpayOrderId, razorpayOrderId),
+        eq(vouchersTable.status, "pending_payment"),
+      ),
+    )
+    .returning();
+  if (!row) {
+    res.status(409).json({ error: "payment could not be applied" });
+    return;
+  }
+  // Payment is captured and bound — only now is the code real, so only now is
+  // it disclosed.
+  res.json({ voucher: row });
 });
 
 router.get("/vouchers/mine", async (req: Request, res: Response) => {
   const auth = requireAuth(req, res);
   if (!auth) return;
+  // `pending_payment` rows are excluded: an unpaid voucher has no code worth
+  // showing and listing it would present abandoned checkouts as gift cards.
   const purchased = await db
     .select()
     .from(vouchersTable)
-    .where(eq(vouchersTable.purchasedByUserId, auth.id))
+    .where(
+      and(
+        eq(vouchersTable.purchasedByUserId, auth.id),
+        ne(vouchersTable.status, "pending_payment"),
+      ),
+    )
     .orderBy(desc(vouchersTable.createdAt));
   const redeemed = await db
     .select()
@@ -854,7 +962,10 @@ router.post("/vouchers/preview", async (req: Request, res: Response) => {
     .select()
     .from(vouchersTable)
     .where(eq(vouchersTable.code, parsed.data.code.toUpperCase()));
-  if (!v) {
+  // An unpaid voucher is indistinguishable from one that does not exist. This
+  // endpoint is unauthenticated, so anything softer would let a guessed code
+  // confirm a pending row — and would show a value that was never funded.
+  if (!v || v.status === "pending_payment") {
     res.status(404).json({ error: "voucher not found" });
     return;
   }
@@ -884,7 +995,12 @@ router.post("/vouchers/redeem", async (req: Request, res: Response) => {
         .select()
         .from(vouchersTable)
         .where(eq(vouchersTable.code, code));
-      if (!v) return { error: "not_found" as const };
+      // Fail-closed on anything that is not `active`. An unpaid voucher is
+      // reported as not_found rather than already_redeemed: it was never
+      // funded, so "already redeemed" would be a lie that also confirms the
+      // code exists.
+      if (!v || v.status === "pending_payment")
+        return { error: "not_found" as const };
       if (v.status !== "active") return { error: "already_redeemed" as const };
       const [updated] = await tx
         .update(vouchersTable)

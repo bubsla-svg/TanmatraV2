@@ -3,6 +3,7 @@ import { db, ordersTable, refundRequestsTable, deliveryEventsTable } from "@work
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { requireOps } from "../lib/adminGate";
+import { REFUND_EVENT_NAMES, remainingRefundablePaise } from "../lib/paymentIntegrity";
 
 const router: IRouter = Router();
 
@@ -123,9 +124,111 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
     return;
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // Cap the payout against the ORDER, not against the request row.
+  //
+  // Until now this route sent `claimed.amountPaise` to Razorpay having never
+  // read the order it belongs to. That amount is a snapshot the cancel path
+  // wrote (`routes/orders.ts` — chargePaise ?? totalPaise at cancel time), and
+  // a snapshot is not an authority:
+  //
+  //   * It nets off nothing already refunded. The ops agent's `refund_order`
+  //     tool records `refund_issued` against the order without ever touching
+  //     refund_requests, so an order it has already refunded still carries a
+  //     full-value pending request here, and this route pays it in full. That
+  //     is a bookkeeping contradiction today — the agent tool records intent
+  //     and does not call the gateway — but it is the guard that has to exist
+  //     BEFORE that TODO is wired, not after.
+  //   * A `failed` request is re-approvable (the claim CAS above accepts it),
+  //     and "failed" includes a gateway 5xx returned after Razorpay accepted
+  //     the refund. Retrying then pays a second time.
+  //   * If the order's charge_paise is corrected downward after the request is
+  //     raised, the stale higher number is still what gets sent.
+  //
+  // So re-derive the headroom from the order plus its refund history at the
+  // moment of payout, and refuse — do not silently clamp — when the request
+  // exceeds it. Clamping would pay a different amount than the console shows
+  // its operator, which is its own kind of wrong.
+  //
+  // No netting of other in-flight requests is needed: `uniq_refund_requests_
+  // order` allows exactly one refund_requests row per order, and the claim CAS
+  // above serializes approvals of that row. There is no second request to race.
+  const [order] = await db
+    .select({
+      chargePaise: ordersTable.chargePaise,
+      totalPaise: ordersTable.totalPaise,
+      // Read for the reversal path, not the cap: a `speed: normal` refund is
+      // only *accepted* by the gateway here, and can still fail days later. The
+      // `refund.failed` webhook has to put the order back where it was, and the
+      // only moment that value is knowable is right now, before we overwrite it.
+      status: ordersTable.status,
+    })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, claimed.orderId))
+    .limit(1);
+  const priorRefundEvents = order
+    ? await db
+        .select({ meta: deliveryEventsTable.meta })
+        .from(deliveryEventsTable)
+        .where(
+          and(
+            eq(deliveryEventsTable.orderId, claimed.orderId),
+            inArray(deliveryEventsTable.event, [...REFUND_EVENT_NAMES]),
+          ),
+        )
+    : [];
+  const remainingPaise = order ? remainingRefundablePaise(order, priorRefundEvents) : null;
+  // `!order` is already implied by `remainingPaise == null` — it is spelled out
+  // so the compiler narrows `order` for the settlement block below, which needs
+  // its pre-refund status.
+  if (!order || remainingPaise == null || claimed.amountPaise > remainingPaise) {
+    // Park it back as `failed` (re-approvable, and visible in the console with
+    // the reason) rather than leaving it stuck in `processing` with no money
+    // moved. A deterministic refusal will refuse again on retry — which is
+    // correct: it needs the amount corrected, not another attempt.
+    const note =
+      remainingPaise == null
+        ? "refund cap unknown: order missing or unreadable refund history"
+        : `exceeds refundable balance (${remainingPaise} paise left of order)`;
+    req.log.error(
+      {
+        refundRequestId: claimed.id,
+        orderId: claimed.orderId,
+        requestedPaise: claimed.amountPaise,
+        remainingPaise,
+      },
+      "refund approval refused: amount exceeds what is still refundable on the order",
+    );
+    await db
+      .update(refundRequestsTable)
+      .set({ status: "failed", note })
+      .where(eq(refundRequestsTable.id, id));
+    res.status(409).json({
+      error:
+        remainingPaise == null
+          ? "cannot establish how much is still refundable on this order"
+          : "refund exceeds the amount still refundable on this order",
+      requestedPaise: claimed.amountPaise,
+      ...(remainingPaise == null ? {} : { remainingPaise }),
+    });
+    return;
+  }
+
   // Issue the refund against the payment. Idempotency-Key makes a retry safe:
   // Razorpay returns the same refund instead of creating a second one.
+  //
+  // `speed: "normal"` is ASYNCHRONOUS. A 200 here means Razorpay accepted the
+  // instruction, not that the customer has their money — the entity comes back
+  // with status `pending` and settles over the following days, and it can still
+  // fail. We nevertheless record settlement optimistically below, for one
+  // reason: the reconciling webhook is not registered in every environment yet,
+  // and a refund that silently sat in `processing` forever would be worse than
+  // one recorded early and corrected late. `refund.processed` /`refund.failed`
+  // in `routes/payments.ts` are what make that optimism safe — `failed` deletes
+  // the premature `order_refunded` event (so the cap stops counting money that
+  // never left) and restores `previousOrderStatus` from its meta.
   let refundId: string;
+  let gatewayRefundStatus: string | null = null;
   try {
     const rpRes = await fetch(
       `https://api.razorpay.com/v1/payments/${encodeURIComponent(claimed.razorpayPaymentId)}/refund`,
@@ -154,8 +257,9 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
       res.status(502).json({ error: "payment gateway error" });
       return;
     }
-    const refund = (await rpRes.json()) as { id: string };
+    const refund = (await rpRes.json()) as { id: string; status?: string };
     refundId = refund.id;
+    gatewayRefundStatus = typeof refund.status === "string" ? refund.status : null;
   } catch (err) {
     req.log.error({ err, refundId: claimed.id }, "razorpay refund threw");
     await db
@@ -184,6 +288,14 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
       amountPaise: claimed.amountPaise,
       razorpayRefundId: refundId,
       approvedBy: operatorId,
+      // What the gateway actually said when it accepted the instruction —
+      // usually "pending" for speed: normal. Recorded so this row does not
+      // read as a settlement it has not yet earned.
+      gatewayStatus: gatewayRefundStatus,
+      // The order's status immediately before this line overwrote it. The
+      // `refund.failed` webhook restores it; without it a failed refund leaves
+      // the order permanently displaying "refunded" with no money returned.
+      previousOrderStatus: order.status,
     },
   });
 

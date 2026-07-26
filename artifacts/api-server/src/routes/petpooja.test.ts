@@ -8,6 +8,16 @@ import { usersTable, menuItemsTable, ordersTable, ridersTable } from "@workspace
 // Set a dummy DATABASE_URL before importing the DB library so it doesn't throw
 process.env.DATABASE_URL = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
 
+// The inbound webhook surface fails closed: unconfigured rejects, and no mode
+// admits a credential-less request. These tests exercise payload handling, so
+// they configure the integration and authenticate every call with the shared
+// secret header. Auth itself is covered in petpooja.auth.test.ts.
+process.env.PETPOOJA_APP_KEY = "key-abc";
+process.env.PETPOOJA_APP_SECRET = "secret-xyz";
+process.env.PETPOOJA_ACCESS_TOKEN = "token-123";
+process.env.PETPOOJA_RESTAURANT_ID = "rest-42";
+const AUTH = { "x-petpooja-app-secret": "secret-xyz" } as const;
+
 const { db } = await import("@workspace/db");
 const { default: petpoojaRouter } = await import("./petpooja");
 
@@ -19,8 +29,13 @@ function makeApp(): Express {
   app.use(express.json());
   // Mock logger on request
   app.use((req: any, _res: any, next: any) => {
+    // `warn` is not optional decoration: the route calls `req.log?.warn(...)`
+    // on the missing-orderID and duplicate-order paths, and `?.` guards only
+    // `req.log` — a logger without `warn` turns a warning into a TypeError and
+    // a 500, which is the same disguised failure as the mock above.
     req.log = {
       info: () => {},
+      warn: () => {},
       error: () => {},
     };
     next();
@@ -44,7 +59,7 @@ after(async () => {
 test("POST /integrations/petpooja/push-menu rejects invalid payload with 400", async () => {
   const res = await fetch(`${baseUrl}/integrations/petpooja/push-menu`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify({ success: "1" }), // missing items
   });
 
@@ -94,7 +109,7 @@ test("POST /integrations/petpooja/push-menu processes valid payload and returns 
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/push-menu`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -132,7 +147,7 @@ test("POST /integrations/petpooja/fetchmenu returns serialized menu payload", as
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/fetchmenu`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify({ restID: "rest123" }),
   });
 
@@ -166,25 +181,40 @@ test("POST /integrations/petpooja/saveorder parses payload, inserts order, and r
     return mockSelectResult;
   });
 
+  // The chain modelled here has to be the chain the route actually calls. It
+  // is `.values().onConflictDoNothing().returning()` — the `onConflictDoNothing`
+  // link arrived with the saveorder idempotency fix and this mock did not
+  // follow it, so `.values()` returned an object with no such method, the
+  // TypeError landed in the route's catch, and the route answered 500. The
+  // symptom read exactly like a broken handler; the handler was fine.
+  //
+  // That is the hazard with a hand-rolled builder mock: it fails loudly but
+  // blames the wrong file. Returning `this` from each link keeps it honest —
+  // a future link added to the real chain resolves against the same object
+  // instead of being undefined.
   t.mock.method(db, "insert", (table: any) => {
     assert.equal(table, ordersTable);
-    const mockInsertBuilder = {
+    const mockInsertBuilder: any = {
       values: (values: any) => {
         assert.equal(values.externalOrderId, "A-1");
         assert.equal(values.totalPaise, 56000);
         assert.equal(values.userId, "usr_abc123");
-        const mockValuesBuilder = {
-          returning: () => Promise.resolve([{ id: 26 }]),
-        };
-        return mockValuesBuilder;
+        return mockInsertBuilder;
       },
+      onConflictDoNothing: () => mockInsertBuilder,
+      // A row came back, so this is the first-write path: the route uses the
+      // id directly and never reaches the conflict lookup. The lookup path is
+      // covered against a real database in petpooja.saveorder.test.ts, which
+      // is where it belongs — a mock that returns [] here would only be
+      // asserting that the mock returns [].
+      returning: () => Promise.resolve([{ id: 26 }]),
     };
     return mockInsertBuilder;
   });
 
   const payload = {
-    app_key: "key",
-    app_secret: "secret",
+    app_key: "key-abc",
+    app_secret: "secret-xyz",
     access_token: "token",
     orderinfo: {
       OrderInfo: {
@@ -247,7 +277,7 @@ test("POST /integrations/petpooja/saveorder parses payload, inserts order, and r
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/saveorder`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -327,7 +357,7 @@ test("POST /integrations/petpooja/callback updates order status and rider info",
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/callback`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -375,8 +405,8 @@ test("POST /integrations/petpooja/orderstatus cancels order and saves cancelReas
   });
 
   const payload = {
-    app_key: "key",
-    app_secret: "secret",
+    app_key: "key-abc",
+    app_secret: "secret-xyz",
     access_token: "token",
     restID: "rest123",
     orderID: "26",
@@ -387,7 +417,7 @@ test("POST /integrations/petpooja/orderstatus cancels order and saves cancelReas
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/orderstatus`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -456,8 +486,8 @@ test("POST /integrations/petpooja/rider-info resolves order and registers/assign
   });
 
   const payload = {
-    app_key: "key",
-    app_secret: "secret",
+    app_key: "key-abc",
+    app_secret: "secret-xyz",
     access_token: "token",
     order_id: 101010527,
     outlet_id: "outlet123",
@@ -471,7 +501,7 @@ test("POST /integrations/petpooja/rider-info resolves order and registers/assign
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/rider-info`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -512,7 +542,7 @@ test("POST /integrations/petpooja/item_stock updates availability status of item
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/item_stock`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -556,7 +586,7 @@ test("POST /integrations/petpooja/item_stock_off marks items as out of stock", a
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/item_stock_off`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -575,7 +605,7 @@ test("POST /integrations/petpooja/get_store_status returns store operational sta
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/get_store_status`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 
@@ -597,7 +627,7 @@ test("POST /integrations/petpooja/update_store_status updates operational status
 
   const res = await fetch(`${baseUrl}/integrations/petpooja/update_store_status`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AUTH },
     body: JSON.stringify(payload),
   });
 

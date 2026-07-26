@@ -49,6 +49,22 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck (libs + all artifact packages)
         run: pnpm run typecheck
+      # Every step below enumerates its test files BY NAME, which makes the list
+      # authoritative and leaves one hole: a test named nowhere runs nowhere. It
+      # stays green in the tree and reports nothing. #384 and #388 both exist
+      # only because whole suites had been written, passed locally, and were in
+      # no workflow — and nothing said so. This gate fails on a test file that
+      # no workflow command would execute, so the next one is caught here
+      # instead of being discovered months later.
+      #
+      # It also backstops the merge hazard: these lists are a contention point
+      # (every money PR appends to the same one), and the dangerous resolution
+      # is the one that silently DROPS an entry. A dropped entry now fails.
+      #
+      # Lives in this job because it needs no database and no build — it reads
+      # the workflow files and the tree.
+      - name: Test-reach gate — no test file runs in no workflow
+        run: pnpm run lint:test-reach
 
   money-unit:
     runs-on: ubuntu-latest
@@ -74,21 +90,140 @@ jobs:
           ./src/lib/subscriptionPricing.test.ts
           ./src/lib/flags.test.ts
           ./src/lib/trialEligibility.test.ts
+          ./src/lib/corporateSubsidy.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
-      # The web half of the money-path lockstep rule: these have no wired test
-      # script in @workspace/tanmatra, so CI ran them nowhere. Drive them
-      # through the api-server tsx loader (the documented manual command).
-      - name: Money-math unit tests (web)
+      # The web half of the money-path lockstep rule, for the legacy SPA that is
+      # still the app on tanmatra.food. It had no wired test script, so CI ran
+      # these nowhere; they are driven through the api-server tsx loader.
+      #
+      # This was a hand-written list of seven files. The package has ten, so
+      # three ran in no CI job at all — planMacroGuard (plan macro-deviation
+      # warnings), useWizardState (parsing untrusted URL/draft input) and
+      # sessionReplay: 28 tests, 40% of the package's corpus, all passing, all
+      # invisible. Enumeration is the bug, so this is a glob.
+      #
+      # The glob is QUOTED so **node** expands it, not the shell — the quotes
+      # are load-bearing, not style. Actions runs `run:` under bash with
+      # globstar OFF, and there `**` is just `*`: `src/**/*.test.ts` means
+      # "exactly one directory below src". Measured, unquoted, in this repo:
+      # bash yields the six files in `src/lib/` and silently drops the four in
+      # `src/components/*/` — the step goes green having run 6 of 10, which is
+      # harder to notice than running none. Node's expander treats `**` as
+      # zero-or-more segments, so quoted it finds all ten. Same reason the
+      # api-server's own `test` script quotes `"./src/**/*.test.ts"`.
+      #
+      # Verified all ten are DB-free and network-free: 70 tests, 70 pass, with
+      # DATABASE_URL and REDIS_URL unset.
+      - name: Money-math unit tests (web — legacy SPA)
+        working-directory: artifacts/api-server
+        run: node --test --import tsx "../tanmatra/src/**/*.test.ts"
+
+      # The step above predates the storefront and covers only the legacy SPA,
+      # so the money path that is actually live — a-la-carte checkout, plan
+      # checkout, trial creditback, post-checkout attach, the Razorpay adapter —
+      # was gated by storefront.yml alone. That workflow's path filter does not
+      # fire on most `lib/**` changes, so a change under `lib/` could reach main
+      # without these ever running. Same tsx-loader trick: the storefront
+      # declares no `tsx` of its own.
+      #
+      # Deliberately a glob, not a hand-listed set. The list above went stale the
+      # moment a second web app appeared, and enumerating files is what let that
+      # happen silently. Every one of these is DB-free and network-free (the
+      # clients take an injectable `fetchImpl`), so the whole suite is safe in
+      # this job and costs ~20s.
+      #
+      # Quoted for the same reason as the step above, though here it is
+      # future-proofing rather than a fix: all 43 files sit directly in `lib/`,
+      # so the previous `lib/*.test.ts` and this `lib/**/*.test.ts` both yield
+      # 211 tests today. The quoting is what keeps that true once someone adds
+      # a subdirectory — unquoted, bash's one-level `**` would match the nested
+      # files and drop all 43 of these.
+      - name: Wire + money-path unit tests (web — storefront)
+        working-directory: artifacts/api-server
+        run: node --test --import tsx "../storefront/lib/**/*.test.ts"
+      # Inbound Petpooja authentication. These three files existed and passed
+      # locally while running in no workflow at all — they were on the
+      # test-reach baseline — which is precisely why two fail-open branches in
+      # petpoojaAuthOk() survived unnoticed: `/push-menu` bulk-upserts
+      # menu_items including price_paise, and nothing was checking that the
+      # guard in front of it still held. Wiring them removes three entries from
+      # scripts/test-reach-baseline.txt.
+      #
+      # DB-free: every case is credential/signature arithmetic over a request,
+      # so no Postgres is needed. Its own step, so a failure reads as "inbound
+      # Petpooja auth broke" rather than being buried in a money run.
+      - name: Petpooja inbound auth contract
         working-directory: artifacts/api-server
         run: >
           node --test --import tsx
-          ../tanmatra/src/lib/checkoutLedger.test.ts
-          ../tanmatra/src/lib/subscriptionPricing.test.ts
-          ../tanmatra/src/lib/rdPlans.pricing.test.ts
-          ../tanmatra/src/components/primitives/logic.test.ts
-          ../tanmatra/src/components/plans/planDisplay.test.ts
-          ../tanmatra/src/components/cuj/cuj.test.ts
-          ../tanmatra/src/components/checkout02c/checkout02c.test.ts
+          ./src/lib/petpoojaClient.test.ts
+          ./src/routes/petpooja.auth.test.ts
+          ./src/routes/petpooja.test.ts
+      # Access-control contract for the /ops router. Its own step, and named for
+      # what it is, so a failure reads as "the ops gate broke" rather than being
+      # buried in a money run — same reasoning as the KDS step below.
+      #
+      # It lives in money-unit because it is DB-free: the gate rejects before
+      # any handler runs, so no query is ever issued. The suite enumerates every
+      # route registered on the router and asserts each 403s without
+      # credentials, so a route added later is covered without editing a list —
+      # which is the point, given four routes shipped unguarded precisely
+      # because a per-handler check is a thing an author can forget.
+      - name: Ops router access-control contract
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/routes/ops.gate.test.ts
+      # Same access-control question for /delivery, where five mutating
+      # endpoints were gated on `req.isAuthenticated()` — "somebody is signed
+      # in" — so any customer with a session could write delivery events, move a
+      # rider's position, advance a schedule, or auto-assign riders.
+      #
+      # Sits beside the /ops gate contract rather than in money-integration
+      # because it is DB-free by construction: gated routes reject before their
+      # handler runs, and the three deliberately-public routes all validate
+      # input before querying, so every assertion resolves without Postgres.
+      # Its own step so a failure reads as "the delivery gate broke".
+      - name: Delivery router access-control contract
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/routes/delivery.opsGate.test.ts
+      # Food-cost resolution for the weekly business review. Not a billed
+      # amount, but it decides a number people act on: the WBR's margin per
+      # dish and the 35%-margin threshold alert. The lookup it replaces asked a
+      # slug-keyed cost map for a lowercased display name, so every dish's food
+      # cost resolved to `?? 0` — margins read ~80% where they were ~30%, and
+      # the alert could not fire at all. A pure resolver with an explicit
+      # `basis` ("recipe" | "estimate" | "none") makes an unknown dish
+      # countable instead of free.
+      #
+      # DB-free: the index is built from plain menu/recipe rows the caller
+      # supplies, so every case here is key normalisation and arithmetic. Its
+      # own step so a failure reads as "dish cost resolution broke".
+      - name: Dish food-cost resolution (WBR margin inputs)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/dishCostIndex.test.ts
+      # Menu-engineering cost authority. This one DOES reach the money path, by
+      # a long route: an unknown food cost recorded as 0 became a 100% margin,
+      # margin is an axis of the star/plowhorse/puzzle/dog matrix, a star draws
+      # a +5% pricing suggestion, and approving that suggestion writes
+      # menu_items.price_paise — the price checkout charges. Missing data raised
+      # a real price. The guard makes null/0/negative all mean "unknown" and
+      # fall back identically.
+      #
+      # DB-free: only pure functions (costPerUnitPaise, classifyDishes) are
+      # exercised; the suite sets a dummy DATABASE_URL itself so the module's
+      # db import can be constructed without a server. Its own step so a
+      # failure reads as "dish cost authority broke".
+      - name: Menu-engineering cost authority (zero is not a measurement)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/menuEngineering.cost.test.ts
+
 
   money-integration:
     runs-on: ubuntu-latest
@@ -183,6 +318,14 @@ jobs:
           ./src/lib/ai/agents/ops.refundCap.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
+          ./src/routes/corporate.subsidyLedger.test.ts
+          ./src/lib/reconciliationScheduler.test.ts
+          ./src/routes/savedMeals.test.ts
+          ./src/routes/ecosystem.test.ts
+          ./src/lib/bomEngine.test.ts
+          ./src/lib/guardrailEngines.test.ts
+          ./src/lib/logisticsEngine.test.ts
+          ./src/lib/wmsFefoEngine.test.ts
           ./src/routes/corporate.teams.test.ts
       # Kept as its own step so a failure reads as "the kitchen board broke"
       # rather than being buried in an eighteen-file money run. Not a money path,
@@ -223,3 +366,22 @@ jobs:
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
+      # The reporting half of the money path. These are not about billing a
+      # customer correctly; they are about the numbers the business reads back
+      # afterwards being what they claim to be — the WBR's revenue line
+      # partitioning into channels that add up, and the curated analytics views
+      # actually having the columns the LLM prompt says they have. Both need a
+      # real server: the safe-view contract rests on a Postgres rule
+      # (CREATE OR REPLACE VIEW appends only) that can only be proved against
+      # one, and the WBR aggregates read through the views themselves.
+      - name: Analytics-integrity integration tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/safeSql.schema.test.ts
+          ./src/lib/wbr.channel.test.ts
+          ./src/lib/orderStatus.schema.test.ts
+          ./src/lib/petpooja.moneyInvariant.test.ts
+          ./src/lib/petpooja.transition.test.ts
+          ./src/routes/petpooja.saveorder.test.ts
+          ./src/routes/petpooja.statusMonotonic.test.ts

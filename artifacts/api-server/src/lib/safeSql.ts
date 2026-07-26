@@ -25,16 +25,42 @@ export const SAFE_SCHEMA: SafeTable[] = [
   {
     name: "safe_orders",
     source: "orders",
-    description: "Orders. items is jsonb [{name,qty,price (paise)}].",
+    description:
+      "EVERY order the business touched, from every channel and of every kind — not just our own customers'. Filter with order_channel / order_kind before calling any total 'revenue'. items is jsonb [{name,qty,price (paise)}].",
     columns: [
       { name: "id", type: "int" },
       { name: "user_id", type: "varchar" },
       { name: "status", type: "varchar" },
-      { name: "total_paise", type: "int" },
+      {
+        name: "total_paise",
+        type: "int",
+        description:
+          "gross order value in paise, GST and delivery included. NOTE: rows differ in composition — own_app rows priced by our checkout carry the same gross, aggregator rows carry the aggregator's grand total. Summing across channels mixes our revenue with a marketplace's gross merchandise value",
+      },
       { name: "city", type: "varchar" },
       { name: "pincode", type: "varchar" },
       { name: "items", type: "jsonb" },
       { name: "created_at", type: "timestamptz" },
+      // ── appended 2026-07 ──────────────────────────────────────────────────
+      // New columns MUST go at the end of this list. ensureSafeViews uses
+      // CREATE OR REPLACE VIEW, and Postgres accepts added columns only at the
+      // tail: inserting one mid-list fails with 42P16 ("cannot change name of
+      // view column"), which leaves the OLD view in place while
+      // describeSchemaForPrompt() starts advertising a column the database does
+      // not have. See classifySafeViewError below — that failure used to be
+      // logged as "source missing", which is the opposite of what happened.
+      {
+        name: "order_channel",
+        type: "varchar",
+        description:
+          "how the order reached us: 'own_app' (our storefront — the only rows that are our own customers), 'zomato', 'swiggy', 'pos' (arrived via the POS, provenance unstated), 'other'. Use order_channel = 'own_app' for anything describing OUR revenue, customers or funnel",
+      },
+      {
+        name: "order_kind",
+        type: "varchar",
+        description:
+          "'meal' (kitchen-prepared delivery) or 'marketplace' (shelf-stable goods). Food metrics want order_kind = 'meal'",
+      },
     ],
   },
   {
@@ -79,11 +105,34 @@ export const SAFE_SCHEMA: SafeTable[] = [
   {
     name: "safe_subscriptions",
     source: "subscriptions",
-    description: "Active customer meal subscriptions.",
+    description:
+      "Customer meal subscriptions, every status — filter on status for active ones. There is no single 'plan' column: a subscription is priced by cadence × meals_per_delivery.",
     columns: [
       { name: "id", type: "int" },
-      { name: "status", type: "varchar" },
-      { name: "plan", type: "varchar" },
+      { name: "user_id", type: "varchar" },
+      { name: "status", type: "varchar", description: "'active', 'paused', 'cancelled'" },
+      // `plan` used to be listed here and does not exist on `subscriptions` —
+      // it never has, in any migration. So this view has never been created in
+      // any environment: every `create or replace view safe_subscriptions` has
+      // failed with 42703 since the day it was written, the analytics prompt
+      // has advertised it the whole time, and the boot log called it "source
+      // missing", which sent anyone who looked to check a table that was there.
+      // The drift check added alongside this is what found it.
+      //
+      // Removing a column would normally be the one edit CREATE OR REPLACE
+      // VIEW cannot do (see classifySafeViewError). It is free here precisely
+      // because there is no existing view to replace.
+      {
+        name: "cadence",
+        type: "varchar",
+        description: "'weekly', 'fortnightly' or 'monthly' — the delivery frequency",
+      },
+      { name: "meals_per_delivery", type: "int" },
+      {
+        name: "price_per_delivery_paise",
+        type: "int",
+        description: "what this subscriber is billed per delivery, in paise",
+      },
       { name: "created_at", type: "timestamptz" },
     ],
   },
@@ -336,6 +385,103 @@ export function hasFromCommaJoin(s: string): boolean {
 // tables" because the role has no privileges on them.
 export const SAFE_ROLE = "safe_analytics_reader";
 
+/**
+ * Why a `create or replace view` was refused. The two causes need opposite
+ * responses and used to be logged identically, as "source missing".
+ *
+ *   source-missing     the base table has not been migrated in yet (e.g.
+ *                      nps_responses on a fresh database). Benign: the rest of
+ *                      the pack still works and the view appears on the next
+ *                      boot after the migration. Warn and carry on.
+ *
+ *   column-missing     the source table is there but SAFE_SCHEMA names a column
+ *                      it does not have. Never benign and never self-healing:
+ *                      the view is not created at all, so the prompt describes
+ *                      a view that does not exist. This is not hypothetical —
+ *                      safe_subscriptions declared a `plan` column the
+ *                      subscriptions table has never had, and every boot since
+ *                      logged it as "source missing", which pointed the reader
+ *                      at a table that was present the whole time.
+ *
+ *   definition-refused Postgres 42P16 — CREATE OR REPLACE VIEW may only ADD
+ *                      columns at the END of the list. Someone inserted or
+ *                      reordered one in SAFE_SCHEMA. This is the dangerous one:
+ *                      the PREVIOUS view definition survives untouched, so the
+ *                      database silently keeps the old column set while
+ *                      describeSchemaForPrompt() hands the analytics model a
+ *                      schema listing a column that does not exist. Every query
+ *                      the model then writes against it fails at runtime, and
+ *                      the log says the source table is missing. It is not.
+ *
+ * Exported so the behaviour is unit-testable without provoking a real failure.
+ */
+export type SafeViewErrorKind =
+  | "source-missing"
+  | "column-missing"
+  | "definition-refused"
+  | "unknown";
+
+export function classifySafeViewError(err: unknown): SafeViewErrorKind {
+  const code = (err as { code?: unknown } | null)?.code;
+  if (code === "42P01") return "source-missing"; // undefined_table
+  if (code === "42703") return "column-missing"; // undefined_column
+  if (code === "42P16") return "definition-refused"; // invalid_object_definition
+  return "unknown";
+}
+
+/**
+ * What each failure means, written for whoever finds it in a boot log at 2am
+ * with no context. Every one of these ends with the edit that fixes it.
+ */
+const SAFE_VIEW_FAILURE_MESSAGE: Record<SafeViewErrorKind, string> = {
+  "source-missing": "safe view NOT created (source table missing)",
+  "column-missing":
+    "safe view NOT created — SAFE_SCHEMA names a column the source table does not have. The view does not exist at all, so describeSchemaForPrompt() is advertising a view the analytics model cannot query. Fix the column list in safeSql.ts to match the table.",
+  "definition-refused":
+    "safe view NOT replaced — CREATE OR REPLACE VIEW only accepts new columns appended at the END of the column list. The previous definition is still live and no longer matches SAFE_SCHEMA, so the analytics prompt is describing columns the database does not have. Move the new column to the end, or drop the view and let it be recreated.",
+  unknown: "safe view NOT replaced",
+};
+
+/**
+ * Compare each safe view's real column list against SAFE_SCHEMA and return the
+ * views that disagree. The allowlist is only a safety boundary while the two
+ * match: if they drift, `describeSchemaForPrompt` is describing a schema that
+ * is not there. Views whose source table has not been migrated in yet are
+ * reported as `actual: []` rather than being hidden, because "absent" and
+ * "wrong shape" both mean the prompt is wrong.
+ */
+export async function findSafeViewDrift(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+): Promise<Array<{ view: string; expected: string[]; actual: string[] }>> {
+  const names = SAFE_SCHEMA.map((t) => t.name);
+  const res = await client.query(
+    `select table_name, column_name
+       from information_schema.columns
+      where table_schema = 'public' and table_name = any($1)
+      order by table_name, ordinal_position`,
+    [names],
+  );
+  const actualByView = new Map<string, string[]>();
+  for (const row of res.rows) {
+    const view = String(row.table_name);
+    const list = actualByView.get(view) ?? [];
+    list.push(String(row.column_name));
+    actualByView.set(view, list);
+  }
+  const drift: Array<{ view: string; expected: string[]; actual: string[] }> = [];
+  for (const t of SAFE_SCHEMA) {
+    const expected = t.columns.map((c) => c.name);
+    const actual = actualByView.get(t.name) ?? [];
+    // Order matters as much as membership: it is the ordering rule that
+    // CREATE OR REPLACE enforces, so an out-of-order match is a latent failure
+    // on the next edit, not a cosmetic difference.
+    if (expected.length !== actual.length || expected.some((c, i) => c !== actual[i])) {
+      drift.push({ view: t.name, expected, actual });
+    }
+  }
+  return drift;
+}
+
 export async function ensureSafeViews(): Promise<void> {
   // Idempotent: run on startup. Each view selects only the explicitly listed
   // columns from its source table. CREATE OR REPLACE means we can edit the
@@ -373,10 +519,31 @@ export async function ensureSafeViews(): Promise<void> {
         await client.query(ddl);
         await client.query(`grant select on ${t.name} to ${SAFE_ROLE}`);
       } catch (err) {
-        // The source table may not exist yet (e.g. nps_responses before its
-        // first migration); log and continue so the rest of the pack works.
-        logger.warn({ err, view: t.name }, "skipping safe view (source missing)");
+        const kind = classifySafeViewError(err);
+        if (kind === "source-missing") {
+          // Benign: the base table has not been migrated in yet. Log and
+          // continue so the rest of the pack still works.
+          logger.warn({ err, view: t.name }, "skipping safe view (source table missing)");
+        } else {
+          logger.error({ err, view: t.name, kind }, SAFE_VIEW_FAILURE_MESSAGE[kind]);
+        }
       }
+    }
+
+    // Whatever happened above, state plainly whether the views now match what
+    // describeSchemaForPrompt() will tell the model. A replace that was refused
+    // leaves the OLD view in place and no exception anywhere downstream, so
+    // without this check the drift is invisible until a generated query errors.
+    try {
+      const drift = await findSafeViewDrift(client);
+      if (drift.length > 0) {
+        logger.error(
+          { drift },
+          "safe views do not match SAFE_SCHEMA — the analytics schema prompt is describing columns that are not there",
+        );
+      }
+    } catch (err) {
+      logger.warn({ err }, "safe view drift check failed");
     }
   } finally {
     client.release();

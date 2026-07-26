@@ -202,6 +202,13 @@ async function seedOrder(fields: {
   razorpayOrderId?: string | null;
   razorpayPaymentId?: string | null;
   chargePaise?: number | null;
+  /**
+   * Defaults to chargePaise so most fixtures can set one number. Set it apart
+   * from chargePaise to exercise the real schema relationship: total_paise is
+   * the meal subtotal (no GST, no delivery fee) and charge_paise is what was
+   * billed, so charge_paise >= total_paise on every finalized order.
+   */
+  totalPaise?: number | null;
   userId?: string | null;
 }): Promise<number> {
   const [row] = await db
@@ -213,12 +220,21 @@ async function seedOrder(fields: {
       razorpayOrderId: fields.razorpayOrderId ?? null,
       razorpayPaymentId: fields.razorpayPaymentId ?? null,
       chargePaise: fields.chargePaise ?? null,
-      totalPaise: fields.chargePaise ?? 50000,
+      totalPaise: fields.totalPaise ?? fields.chargePaise ?? 50000,
       items: [],
     })
     .returning({ id: ordersTable.id });
   CREATED_ORDER_IDS.push(row!.id);
   return row!.id;
+}
+
+/**
+ * Record a refund against an order the way the ops agent's `refund_order` tool
+ * does — a delivery_events row, no refund_requests row involved. This is the
+ * cross-path history the approve route has to read.
+ */
+async function seedAgentRefundEvent(orderId: number, meta: Record<string, unknown>) {
+  await db.insert(deliveryEventsTable).values({ orderId, event: "refund_issued", meta });
 }
 
 async function seedRefund(fields: {
@@ -529,4 +545,147 @@ test("cancelling a PAID order raises a pending refund_requests row for that orde
   assert.equal(rr!.status, "pending");
   assert.equal(rr!.amountPaise, 40000);
   assert.equal(rr!.razorpayPaymentId, "pay_Y");
+});
+
+// ---------------------------------------------------------------------------
+// 8-12. The payout cap: approve may never send more than the order still owes.
+//
+// Before this guard, approve sent `refund_requests.amount_paise` to Razorpay
+// having never read the order. That column is a snapshot the cancel path wrote
+// and it nets off nothing already refunded — so an order the ops agent had
+// already refunded still carried a full-value request here, and approve paid
+// it in full.
+// ---------------------------------------------------------------------------
+
+test("cap: an amount exceeding the order's payable is refused — 409, no gateway call, row parked failed", async () => {
+  resetRzp("success");
+  const orderId = await seedOrder({
+    externalOrderId: ext("capover"),
+    status: "preparing",
+    razorpayPaymentId: "pay_CAP",
+    chargePaise: 40000,
+  });
+  // A request asking for more than the order was ever charged. However this
+  // arises — a stale snapshot, a corrected charge, a hand-edited row — the
+  // gateway call is the wrong place to find out.
+  const refundId = await seedRefund({
+    orderId,
+    externalOrderId: ext("capover"),
+    amountPaise: 50000,
+    razorpayPaymentId: "pay_CAP",
+  });
+
+  const r = await admin("POST", `/admin/refunds/${refundId}/approve`);
+  assert.equal(r.status, 409, JSON.stringify(r.json));
+  assert.equal(r.json.remainingPaise, 40000, "the refusal must say how much IS refundable");
+  assert.equal(r.json.requestedPaise, 50000);
+  assert.equal(rzpCalls.length, 0, "an over-cap refund must never reach the gateway");
+  assert.equal((await refundRow(refundId)).status, "failed");
+  assert.equal(await orderStatus(orderId), "preparing", "order must NOT be marked refunded");
+});
+
+test("cap: refunds the ops agent already issued are netted off", async () => {
+  resetRzp("success");
+  const orderId = await seedOrder({
+    externalOrderId: ext("capagent"),
+    status: "preparing",
+    razorpayPaymentId: "pay_AGENT",
+    chargePaise: 50000,
+  });
+  // The agent tool refunded ₹200 of this order and recorded it under its own
+  // event name. The cancel path then raised a full-value request, because it
+  // reads no refund history either.
+  await seedAgentRefundEvent(orderId, { amountPaise: 20000, reason: "late delivery" });
+  const refundId = await seedRefund({
+    orderId,
+    externalOrderId: ext("capagent"),
+    amountPaise: 50000,
+    razorpayPaymentId: "pay_AGENT",
+  });
+
+  const r = await admin("POST", `/admin/refunds/${refundId}/approve`);
+  assert.equal(r.status, 409, JSON.stringify(r.json));
+  assert.equal(r.json.remainingPaise, 30000, "₹500 charged − ₹200 already refunded = ₹300 left");
+  assert.equal(rzpCalls.length, 0, "the ₹700 total payout must never reach the gateway");
+  assert.equal((await refundRow(refundId)).status, "failed");
+});
+
+test("cap: a request WITHIN the remaining headroom still goes through", async () => {
+  // The counterpart to the test above — the cap nets, it does not simply block
+  // every order with any refund history. A ₹300 request after a ₹200 agent
+  // refund on a ₹500 order is exactly right and must pay out.
+  resetRzp("success");
+  const orderId = await seedOrder({
+    externalOrderId: ext("capfits"),
+    status: "preparing",
+    razorpayPaymentId: "pay_FITS",
+    chargePaise: 50000,
+  });
+  await seedAgentRefundEvent(orderId, { amountPaise: 20000, reason: "partial" });
+  const refundId = await seedRefund({
+    orderId,
+    externalOrderId: ext("capfits"),
+    amountPaise: 30000,
+    razorpayPaymentId: "pay_FITS",
+  });
+
+  const r = await admin("POST", `/admin/refunds/${refundId}/approve`);
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.equal(r.json.refund.status, "refunded");
+  assert.equal(rzpCalls.length, 1);
+  assert.equal(rzpCalls[0]!.body.amount, 30000);
+});
+
+test("cap: the ceiling is charge_paise, not total_paise — GST and delivery fee stay refundable", async () => {
+  // The under-refund direction, and the reason the cap could not just be
+  // `order.totalPaise`. total_paise is the meal subtotal; the customer paid
+  // charge_paise. Capping at 40000 here would quietly keep ₹112 of their money.
+  resetRzp("success");
+  const orderId = await seedOrder({
+    externalOrderId: ext("capgst"),
+    status: "preparing",
+    razorpayPaymentId: "pay_GST",
+    chargePaise: 51200,
+    totalPaise: 40000,
+  });
+  const refundId = await seedRefund({
+    orderId,
+    externalOrderId: ext("capgst"),
+    amountPaise: 51200,
+    razorpayPaymentId: "pay_GST",
+  });
+
+  const r = await admin("POST", `/admin/refunds/${refundId}/approve`);
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.equal(rzpCalls.length, 1);
+  assert.equal(rzpCalls[0]!.body.amount, 51200, "the full charged amount must be refundable");
+  assert.equal(await orderStatus(orderId), "refunded");
+});
+
+test("cap: an unreadable refund history refuses rather than guessing", async () => {
+  // A refund event carrying no readable amount means we cannot establish what
+  // has already gone back. Treating that as zero would over-permit the very
+  // number we are about to send to the gateway, so it must refuse — and the
+  // note has to say why, because a human in the console is the fallback path.
+  resetRzp("success");
+  const orderId = await seedOrder({
+    externalOrderId: ext("capunread"),
+    status: "preparing",
+    razorpayPaymentId: "pay_UNREAD",
+    chargePaise: 50000,
+  });
+  await seedAgentRefundEvent(orderId, { reason: "goodwill" }); // no amountPaise
+  const refundId = await seedRefund({
+    orderId,
+    externalOrderId: ext("capunread"),
+    amountPaise: 10000,
+    razorpayPaymentId: "pay_UNREAD",
+  });
+
+  const r = await admin("POST", `/admin/refunds/${refundId}/approve`);
+  assert.equal(r.status, 409, JSON.stringify(r.json));
+  assert.equal(rzpCalls.length, 0);
+  const row = await refundRow(refundId);
+  assert.equal(row.status, "failed");
+  assert.match(String(row.note), /cap unknown/i);
 });

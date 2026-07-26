@@ -448,7 +448,7 @@ function ApptCard({
       className="fx ac gap8 mt12"
       style={isUpcoming ? { borderTop: "1px solid var(--ln)", paddingTop: 12 } : undefined}
     >
-      {appt.joinUrl && appt.status === "scheduled" && (
+      {appt.joinUrl && appt.status === "scheduled" && appt.paymentStatus !== "pending" && (
         <a
           className={isUpcoming ? "btn btn-p" : "linkq"}
           href={appt.joinUrl}
