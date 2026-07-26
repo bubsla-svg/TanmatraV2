@@ -732,6 +732,14 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
   // shape as the legacy quote plus planId/track, so the client renders it
   // identically. Blocked/sales-led plans and unserved tracks return a typed
   // 422 with `waitlist: true` rather than a bookable quote (02e §7).
+  if (data.planType === "trial" && data.planId !== "trial_3day") {
+    res.status(410).json({
+      error: "legacy trial retired; use plan catalog trial trios",
+      code: "legacy_trial_retired",
+      redirect: "/plans/trial",
+    });
+    return;
+  }
   if (!data.planId) {
     res.status(400).json({
       error: "planId is required for subscription quotes; legacy pricing is disabled",
@@ -886,6 +894,14 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
   minStart.setUTCHours(0, 0, 0, 0);
   if (startDate < minStart) {
     res.status(400).json({ error: "startDate must be today or later" });
+    return;
+  }
+  if (data.planType === "trial" && data.planId !== "trial_3day") {
+    res.status(410).json({
+      error: "legacy trial retired; use plan catalog trial trios",
+      code: "legacy_trial_retired",
+      redirect: "/plans/trial",
+    });
     return;
   }
   if (!data.planId) {
