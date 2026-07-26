@@ -133,8 +133,10 @@ function tomorrowISO(): string {
 
 function baseBody(extra: Record<string, unknown>) {
   return {
-    cadence: "weekly",
-    mealsPerDelivery: 5,
+    planId: "desk_fuel",
+    track: "veg",
+    cadence: "monthly",
+    mealsPerDelivery: 22,
     deliveryWindow: "12:00-14:00",
     startDate: tomorrowISO(),
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
@@ -265,13 +267,13 @@ test("trial purchase: the alacarte bridge credit applies first; ledger credit co
   const created = await api(
     "POST",
     "/subscriptions",
-    baseBody({ planType: "trial", mealsPerDelivery: 6 }),
+    baseBody({ planType: "trial", planId: "trial_3day", mealsPerDelivery: 3 }),
     user,
   );
   assert.equal(created.status, 201, JSON.stringify(created.json));
   const sub = created.json.subscription;
 
-  const expectedBridge = bridgeCreditDiscountPaise(1, 6, sub.pricePerDeliveryPaise);
+  const expectedBridge = bridgeCreditDiscountPaise(1, 3, sub.pricePerDeliveryPaise);
   assert.equal(created.json.bridgeCreditPaise, expectedBridge);
   assert.equal(
     created.json.creditAppliedPaise,

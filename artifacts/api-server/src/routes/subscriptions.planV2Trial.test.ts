@@ -203,7 +203,7 @@ test("a phone that already redeemed a trial is refused at create with 409", asyn
   assert.equal(r.json.code, "trial_already_redeemed");
 });
 
-test("flag OFF: the gate is dark — an already-redeemed phone still creates", async () => {
+test("flag OFF: trial rules still enforced unconditionally under P-1 (legacy pricing disabled)", async () => {
   process.env["FLAG_PLAN_V2"] = "";
   const user = await makeUser();
   const phone = freshPhone();
@@ -211,14 +211,14 @@ test("flag OFF: the gate is dark — an already-redeemed phone still creates", a
   SEEDED_PHONE_HASHES.push(phoneHash);
   await db.insert(trialRedemptionsTable).values({ phoneHash, userId: user.id });
 
-  // With the flag off, planId is ignored entirely — this is a normal
-  // (standard) subscription create, unaffected by the trial ledger.
+  // Under P-1, catalog pricing and trial rules apply unconditionally to new signups.
+  // An already-redeemed phone is refused with 409 regardless of FLAG_PLAN_V2.
   const r = await api(
     "POST",
     "/subscriptions",
     baseBody({ planId: "trial_3day", track: "veg", phone }),
     user,
   );
-  assert.equal(r.status, 201, JSON.stringify(r.json));
-  assert.notEqual(r.json.subscription.trialState, "trial_purchased");
+  assert.equal(r.status, 409, JSON.stringify(r.json));
+  assert.equal(r.json.code, "trial_already_redeemed");
 });

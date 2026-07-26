@@ -308,6 +308,8 @@ async function createSubscription(
     "POST",
     "/subscriptions",
     {
+      planId: "desk_fuel",
+      track: "veg",
       cadence,
       mealsPerDelivery: 5,
       deliveryWindow: "12:00-14:00",
