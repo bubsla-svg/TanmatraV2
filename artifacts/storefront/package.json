@@ -8,6 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --import tsx \"./lib/**/*.test.ts\"",
     "lint:filecap": "node --experimental-strip-types ../../scripts/lint-filecap.ts artifacts/storefront",
     "lint:tokens": "node --experimental-strip-types ../../scripts/lint-tokens.ts artifacts/storefront"
   },
@@ -34,6 +35,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "tailwindcss": "catalog:"
+    "tailwindcss": "catalog:",
+    "tsx": "catalog:"
   }
 }

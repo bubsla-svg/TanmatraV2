@@ -2045,6 +2045,7 @@ router.post(
       return;
     }
     invalidateUserBrief(userId);
+    void emitServerEvent("meal_swapped", { deliveryId, subscriptionId: found.subscription.id }, userId);
     res.json({ delivery: updated });
   },
 );
