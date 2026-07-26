@@ -49,6 +49,8 @@ import {
   generateDeliveriesForSubscription,
   pauseUpcomingDeliveries,
 } from "../routes/subscriptions";
+import { pushOrderToPetpooja } from "./petpoojaClient";
+import { emitServerEvent } from "./serverEvents";
 
 export type ChargeLogger = {
   info: (...args: any[]) => void;
@@ -521,6 +523,7 @@ export async function chargeMandateCore(
         .insert(ordersTable)
         .values({
           userId: sub.userId,
+          orderChannel: "own_app",
           // Unique per (userId, externalOrderId); one row per billed cycle.
           externalOrderId: `sub-${sub.id}-mandate-${mandate.id}-${chargeDateStr}`,
           razorpayOrderId: rpOrderId,
@@ -591,6 +594,37 @@ export async function chargeMandateCore(
         })
         .where(eq(subscriptionMandatesTable.id, mandate.id));
     });
+
+    if (orderId != null) {
+      const [createdOrder] = await db
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.id, orderId))
+        .limit(1);
+      const [orderUser] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, sub.userId))
+        .limit(1);
+      if (createdOrder && createdOrder.orderKind === "meal") {
+        const fullName = [orderUser?.firstName, orderUser?.lastName].filter(Boolean).join(" ");
+        pushOrderToPetpooja(createdOrder, {
+          name: fullName || "Subscription Member",
+          email: orderUser?.email || null,
+        }, log).catch((err) => {
+          log.error({ err, orderId: createdOrder.id }, "charge-mandate: failed to push recurring order to Petpooja KDS");
+        });
+        // A mandate charge is a captured payment, not a reconciliation —
+        // and the webhook never emits for mandate orders (they are born
+        // "billed", so its placed→preparing CAS never matches). Emit the
+        // standard event here so recurring revenue is in the funnel.
+        void emitServerEvent("payment_succeeded", {
+          charge_paise: createdOrder.chargePaise ?? createdOrder.totalPaise,
+          recurring: true,
+          subscription_id: sub.id,
+        }, sub.userId);
+      }
+    }
   } catch (err) {
     // The gateway charge already succeeded — money moved. A DB persistence
     // failure here must not be reported to the caller as a failed charge

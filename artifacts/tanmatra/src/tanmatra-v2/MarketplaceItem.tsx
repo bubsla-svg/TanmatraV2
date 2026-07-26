@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import {
   marketplaceApi,
   marketplaceCheckoutIdempotencyKey,
+  type MarketplaceOrder,
 } from "@/lib/marketplaceApi";
+import { payWithRazorpay, razorpayConfigured } from "@/lib/razorpayClient";
 import { formatPrice } from "@/lib/api/adapter";
 import { useOrders } from "@/lib/ordersContext";
 import { onDishImageError } from "@/lib/imgFallback";
@@ -27,6 +29,19 @@ export default function V2MarketplaceItem() {
   // NOT create a second order). Cleared on success so the next
   // distinct purchase intent gets its own key.
   const idempotencyRef = useRef<string | null>(null);
+  // An order that checkout created but that has NOT been paid for.
+  //
+  // `POST /marketplace/checkout` already decremented stock and wrote the
+  // row at `status: "placed"` — which in this codebase means CREATED AND
+  // UNPAID (`preparing` and later are the paid states). Holding the order
+  // here means a retry after a dismissed Razorpay modal finishes paying
+  // for THAT order rather than minting a second one and burning a second
+  // unit of stock.
+  const [unpaidOrder, setUnpaidOrder] = useState<MarketplaceOrder | null>(null);
+  const [paymentIssue, setPaymentIssue] = useState<{
+    reason: "cancelled" | "unavailable";
+    message: string;
+  } | null>(null);
 
   const q = useQuery({
     queryKey: ["marketplace", "item", slug],
@@ -86,10 +101,80 @@ export default function V2MarketplaceItem() {
     .filter((o) => o.serverOrderId)
     .slice(0, 5);
 
+  /**
+   * The delivery promise. Only reachable once the SERVER has verified the
+   * Razorpay signature and moved the order out of `placed`. Never call it
+   * off the back of a bare checkout — that is precisely the leak this
+   * screen used to ship.
+   */
+  const announcePaid = (order: MarketplaceOrder) => {
+    toast.success(
+      order.deliveryMode === "ship"
+        ? "Paid — arrives in 24–48 hours"
+        : "Paid — bundled with your next meal delivery",
+      {
+        action: { label: "View Orders", onClick: () => navigate("/orders") },
+      },
+    );
+    navigate(`/marketplace?ordered=${order.id}`);
+  };
+
+  /**
+   * Bills an order that already exists server-side.
+   *
+   * `amountPaise` is display-only: `/payments/razorpay/order` looks the row
+   * up by `externalOrderId` and bills `chargePaise ?? totalPaise` from the
+   * database, ignoring anything the client claims. Resolves true only when
+   * `/payments/razorpay/verify` accepted the signature.
+   */
+  const collectPayment = async (order: MarketplaceOrder): Promise<boolean> => {
+    // A missing publishable key is NOT a free pass. An unpaid order is
+    // unpaid in every environment, so an unconfigured gateway has to read
+    // as "we could not charge you" — not as a silent delivery promise.
+    const outcome = razorpayConfigured()
+      ? await payWithRazorpay({
+          amountPaise: order.totalPaise,
+          receipt: order.externalOrderId,
+          description: `${item.name} × ${qty}`,
+        })
+      : ("unavailable" as const);
+
+    if (outcome === "paid") {
+      setUnpaidOrder(null);
+      setPaymentIssue(null);
+      return true;
+    }
+
+    // Hold the order so the next click resumes payment for it instead of
+    // creating a second one.
+    setUnpaidOrder(order);
+    setPaymentIssue({
+      reason: outcome,
+      message:
+        outcome === "cancelled"
+          ? "You were not charged, and this order is not confirmed. Your items are still held — tap Complete payment to finish."
+          : "We could not reach the payment gateway. You were not charged, and this order is not confirmed. Your items are still held — try again in a moment.",
+    });
+    toast.error(
+      outcome === "cancelled"
+        ? "Payment cancelled — order not confirmed"
+        : "Payment unavailable — order not confirmed",
+    );
+    return false;
+  };
+
   const handleCheckout = async () => {
     if (qty < 1) return;
     setSubmitting(true);
     try {
+      // Resume leg. An order already exists and is unpaid, so re-running
+      // checkout would write a SECOND row and decrement stock twice. Retry
+      // only the payment.
+      if (unpaidOrder) {
+        if (await collectPayment(unpaidOrder)) announcePaid(unpaidOrder);
+        return;
+      }
+
       if (!idempotencyRef.current) {
         idempotencyRef.current = marketplaceCheckoutIdempotencyKey();
       }
@@ -100,17 +185,12 @@ export default function V2MarketplaceItem() {
         bundleWithOrderId:
           deliveryMode === "bundle_with_meal" ? bundleOrderId : null,
       });
-      // Terminal success — next "Buy" click is a new intent.
+      // Terminal for the KEY — the next distinct purchase intent gets a
+      // fresh one. Not terminal for the purchase: the row exists, stock is
+      // gone, and nothing has been billed yet.
       idempotencyRef.current = null;
-      toast.success(
-        deliveryMode === "ship"
-          ? "Order placed — arrives in 24–48 hours"
-          : "Bundled with your next meal delivery",
-        {
-          action: { label: "View Orders", onClick: () => navigate("/orders") },
-        },
-      );
-      navigate(`/marketplace?ordered=${r.order.id}`);
+      setPaymentIssue(null);
+      if (await collectPayment(r.order)) announcePaid(r.order);
     } catch (e) {
       const msg = String((e as Error).message);
       if (msg.includes("401")) {
@@ -148,8 +228,14 @@ export default function V2MarketplaceItem() {
     : null;
 
   const bundleDisabled = recentOrders.length === 0;
+  // While an unpaid order is held, the inputs that shaped it are frozen.
+  // Quantity and delivery mode are already fixed on the server row, so
+  // editing them here would let the button's price drift away from the
+  // amount actually being charged.
+  const inputsLocked = submitting || unpaidOrder !== null;
   const buyDisabled =
-    submitting || (deliveryMode === "bundle_with_meal" && !bundleOrderId);
+    submitting ||
+    (!unpaidOrder && deliveryMode === "bundle_with_meal" && !bundleOrderId);
 
   return (
     <div
@@ -219,6 +305,7 @@ export default function V2MarketplaceItem() {
             <button
               className="qbtn"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
+              disabled={inputsLocked}
               aria-label="Decrease"
             >
               <i className="ph-bold ph-minus" />
@@ -232,6 +319,7 @@ export default function V2MarketplaceItem() {
             <button
               className="qbtn"
               onClick={() => setQty((q) => Math.min(20, q + 1))}
+              disabled={inputsLocked}
               aria-label="Increase"
             >
               <i className="ph-bold ph-plus" />
@@ -247,6 +335,7 @@ export default function V2MarketplaceItem() {
             type="button"
             className={deliveryMode === "ship" ? "opt on" : "opt"}
             onClick={() => setDeliveryMode("ship")}
+            disabled={inputsLocked}
             style={{ alignItems: "flex-start" }}
           >
             <i className="ph-bold ph-truck" style={{ marginTop: 1 }} />
@@ -267,7 +356,7 @@ export default function V2MarketplaceItem() {
             onClick={() => {
               if (!bundleDisabled) setDeliveryMode("bundle_with_meal");
             }}
-            disabled={bundleDisabled}
+            disabled={bundleDisabled || inputsLocked}
             style={{ alignItems: "flex-start", opacity: bundleDisabled ? 0.45 : 1 }}
           >
             <i className="ph-bold ph-package" style={{ marginTop: 1 }} />
@@ -289,6 +378,7 @@ export default function V2MarketplaceItem() {
             <select
               className="inp mb10"
               style={{ cursor: "pointer", background: "var(--tnm-surface-ink-2)", border: "1px solid var(--ln)" }}
+              disabled={inputsLocked}
               value={bundleOrderId ?? ""}
               onChange={(e) =>
                 setBundleOrderId(
@@ -334,15 +424,38 @@ export default function V2MarketplaceItem() {
 
         {/* Buy dock */}
         <div className="dock bg-[var(--tnm-surface-ink)] border-t border-white/[0.08]">
+          {/* Deliberately NOT `.note` — that token is sage-tinted and reads
+              as reassurance. A failed charge has to look like a failed
+              charge, so this mirrors the Subscribe.tsx alert card. */}
+          {paymentIssue && (
+            <div
+              role="alert"
+              className="card flex flex-col gap-2 mb10"
+              style={{ background: "var(--s2)", borderColor: "var(--tnm-alert)" }}
+            >
+              <div className="flex items-center gap-2 text-xs font-semibold text-[var(--tnm-alert)]">
+                <i className="ph-fill ph-warning-circle" />
+                Payment didn't go through
+              </div>
+              <p className="fine text-white/60">{paymentIssue.message}</p>
+            </div>
+          )}
           <button
             className={"btn btn-p btn-lg btn-blk" + (buyDisabled ? " dis" : "")}
             onClick={handleCheckout}
             disabled={buyDisabled}
           >
             <i className="ph-bold ph-shopping-bag" />
-            {submitting
-              ? "Placing order…"
-              : `Place order · ${formatPrice(item.pricePaise * qty)}`}
+            {/* The amount on the button is the amount being charged. While an
+                unpaid order is held it must track THAT row's total, not the
+                live qty spinner — hence the frozen inputs above. */}
+            {unpaidOrder
+              ? submitting
+                ? "Opening payment…"
+                : `Complete payment · ${formatPrice(unpaidOrder.totalPaise)}`
+              : submitting
+                ? "Placing order…"
+                : `Place order · ${formatPrice(item.pricePaise * qty)}`}
           </button>
         </div>
       </div>

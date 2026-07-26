@@ -22,6 +22,7 @@ import {
   startSubscriptionAbandonmentScheduler,
   stopSubscriptionAbandonmentScheduler,
 } from "./lib/subscriptionAbandonmentScheduler";
+import { startReconciliationScheduler, stopReconciliationScheduler } from "./lib/reconciliationScheduler";
 import { ensureSafeViews } from "./lib/safeSql";
 import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
@@ -82,6 +83,13 @@ if (!schedulersDisabled) {
   // scheduler's first tick is delayed past that. FUNNEL_ROLLUP_DISABLED=1
   // gates it off individually.
   startFunnelRollupScheduler();
+  // Razorpay dropped-webhook backstop. INSIDE the gate on purpose: it does
+  // not self-gate (a timer registers whenever Razorpay creds exist), and it
+  // moves order state — production disabled schedulers deliberately, and a
+  // money-touching timer must not be the one exception smuggled past that.
+  // Arming it in prod is an operator decision (dedicated flag or an external
+  // scheduler hitting an admin endpoint), not a default.
+  startReconciliationScheduler();
   void resumeActiveSimulations();
 }
 
@@ -238,6 +246,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  stopTrialLifecycleScheduler();
  stopChargeMandateScheduler();
  stopSubscriptionAbandonmentScheduler();
+ stopReconciliationScheduler();
  clearInterval(purgeTimer);
  clearInterval(slotReclaimTimer);
  clearInterval(opsAuditOutboxTimer);

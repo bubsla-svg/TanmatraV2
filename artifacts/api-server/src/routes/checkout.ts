@@ -197,6 +197,9 @@ router.post("/orders", async (req: Request, res: Response) => {
       .insert(ordersTable)
       .values({
         userId: authUserId,
+        // Stated rather than defaulted: this is our own checkout, so the
+        // channel is a decision here, not an accident of the column default.
+        orderChannel: "own_app",
         externalOrderId,
         status: "placed",
         totalPaise,

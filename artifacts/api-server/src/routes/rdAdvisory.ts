@@ -4,6 +4,7 @@ import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { emitRdMessage } from "../lib/realtime";
+import { emitServerEvent } from "../lib/serverEvents";
 import { razorpayCredentials, razorpayBasicAuth } from "../lib/razorpayRecurring";
 import {
   db,
@@ -517,6 +518,9 @@ router.post("/rd/appointments", async (req: Request, res: Response) => {
       return inserted;
     });
     req.log.info({ apptId: row?.id, rdSlug, userId }, "rd appointment booked");
+    if (row) {
+      void emitServerEvent("consult_booked", { appointmentId: row.id, rdSlug }, userId);
+    }
     // Free intros insert as paymentStatus:"free". Paid consults insert as
     // "pending" and are charged out-of-band via /checkout → Razorpay → /verify
     // (below) — booking never marks a paid consult as paid.

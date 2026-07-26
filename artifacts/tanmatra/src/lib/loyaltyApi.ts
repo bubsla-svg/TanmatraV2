@@ -135,6 +135,12 @@ export const loyaltyApi = {
       phone?: string | null;
     };
     applyCreditsPaise?: number;
+    /**
+     * Whether to spend the member's corporate allowance on this order. INTENT,
+     * not an amount — the server prices the subsidy from company policy and
+     * subtracts it from chargePaise. Omitted means yes.
+     */
+    applySubsidy?: boolean;
     scheduledFor?: string;
     bundleSlugs?: string[];
     deliverySlotId?: number | null;
@@ -162,6 +168,12 @@ export const loyaltyApi = {
       gstPaise: number;
       deliveryFeePaise: number;
       chargePaise: number;
+      /**
+       * The company's share of this order, ALREADY SUBTRACTED from chargePaise
+       * by the server. Present so the confirmation can show the line — never to
+       * be subtracted again here.
+       */
+      subsidyPaise?: number;
       balancePaise: number;
       duplicate: boolean;
       referral:

@@ -58,6 +58,13 @@ export const wbrReportsTable = pgTable(
         topDishes: Array<{ name: string; units: number }>;
         anomaliesFired: number;
         netMarginPct?: number;
+        /**
+         * Share of units (0–100) whose food cost came from a costed recipe
+         * rather than the default-margin assumption. `netMarginPct` is only as
+         * trustworthy as this is high; a low value means the margin is largely
+         * assumed. Absent on reports generated before coverage was tracked.
+         */
+        foodCostCoveragePct?: number;
       }>(),
     chartSpec: jsonb("chart_spec").$type<{
       revenueByDay: Array<{ day: string; revenuePaise: number }>;

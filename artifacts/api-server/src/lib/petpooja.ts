@@ -1,5 +1,5 @@
 import { sql, eq } from "drizzle-orm";
-import { type InsertMenuItem, type MenuItem, type InsertOrder, usersTable, menuItemsTable } from "@workspace/db/schema";
+import { type InsertMenuItem, type MenuItem, type InsertOrder, type OrderStatus, type OrderChannel, usersTable, menuItemsTable } from "@workspace/db/schema";
 
 export interface PetpoojaItem {
   itemid: string;
@@ -135,6 +135,13 @@ export interface PetpoojaSaveOrderPayload {
           urgent_order?: boolean;
           description?: string;
           created_on: string;
+          // The originating channel, e.g. "Zomato" / "Swiggy". Petpooja's READ
+          // API (get_orders_api) reports this; whether their push payload
+          // carries it is unconfirmed with the vendor, so it is optional and
+          // its absence is handled — see mapPetpoojaOrderChannel. Modelling it
+          // is what makes the field survive: req.body is cast straight to this
+          // interface, so anything not declared here is silently dropped.
+          order_from?: string;
         };
       };
       OrderItem: {
@@ -344,6 +351,7 @@ export function mapPetpoojaItem(
     macrosAreEstimate: true,
     rdVerified: false,
     allergenReviewState: "reviewed",
+    fulfillmentType: "MTO" as const,
     customizations: customizations.length > 0 ? customizations : null,
   };
 }
@@ -513,6 +521,31 @@ export function serializeMenuToPetpooja(dbItems: MenuItem[]): PetpoojaPushMenuPa
   } as any;
 }
 
+/**
+ * Petpooja's channel label → our closed `order_channel` vocabulary.
+ *
+ * Petpooja's read API reports the channel as `order_from` with values like
+ * "Zomato" / "Swiggy"; per the live probe this outlet's orders are
+ * overwhelmingly Zomato. Whether the push payload carries the same field is
+ * unconfirmed with the vendor (claude/order-channel-split.md §7), so this is
+ * best-effort and degrades in the right direction:
+ *
+ *   absent / blank        → 'pos'    "arrived via the POS, provenance unstated"
+ *   "Zomato" / "Swiggy"   → itself   (case- and whitespace-insensitive)
+ *   anything else present → 'other'  keeps the fact that a channel was named
+ *
+ * It can never return 'own_app'. An order we did not originate must not be
+ * able to claim it did — that would put an aggregator's customer straight back
+ * onto the clinical console this column exists to keep them off.
+ */
+export function mapPetpoojaOrderChannel(orderFrom: string | null | undefined): OrderChannel {
+  const normalized = (orderFrom ?? "").trim().toLowerCase();
+  if (!normalized) return "pos";
+  if (normalized === "zomato") return "zomato";
+  if (normalized === "swiggy") return "swiggy";
+  return "other";
+}
+
 export async function mapPetpoojaOrderToDb(
   payload: PetpoojaSaveOrderPayload,
   dbClient: any
@@ -564,6 +597,8 @@ export async function mapPetpoojaOrderToDb(
 
   return {
     userId,
+    // Never 'own_app' — this order came from the POS, whoever originated it.
+    orderChannel: mapPetpoojaOrderChannel(Order.details.order_from),
     externalOrderId: Order.details.orderID,
     status: "placed",
     totalPaise,
@@ -580,15 +615,51 @@ export async function mapPetpoojaOrderToDb(
   };
 }
 
-export function mapPetpoojaStatus(petpoojaStatus: string): string {
+/**
+ * Petpooja numeric order status → our order-status vocabulary.
+ *
+ * The return type is `OrderStatus` (lib/db/src/schema/orders.ts) on purpose.
+ * These two mappers used to return `string` and emitted "confirmed" and
+ * "dispatched" — two values NOTHING in the system reads. Neither appears in
+ * orders.ts's ACTIVE_STATUSES or CANCELLABLE, payments.ts's PAID_STATES,
+ * dispatch.ts's liveStatuses or partnerStatuses, etaModel.ts's ACTIVE_STATUSES,
+ * the ops.ts KDS queue filter, or the storefront's TRACKABLE_STATUSES. An order
+ * the POS moved to either one silently dropped out of the customer's active
+ * list, the dispatch sweep and the tracker — losing tracking at exactly the
+ * moment the food was on its way. Typing the return closes that door.
+ *
+ * Petpooja's codes (per the Online Ordering API status callback):
+ *   1  Accepted        — the kitchen has taken the order and started on it.
+ *                        We have no separate "confirmed" state; acceptance IS
+ *                        the start of prep, so this is `preparing` (which is
+ *                        also what our own money path writes on payment
+ *                        capture — payments.ts:477).
+ *   -1 Cancelled by outlet, 2 Rejected — both terminal, both `cancelled`.
+ *   5  Dispatched      — out the door with a rider: `out_for_delivery`.
+ *   6  Delivered       — `delivered`.
+ *   anything else      — `placed`, the safe pre-kitchen default.
+ *
+ * Consequence worth stating: `preparing` is in the KDS queue filter
+ * (ops.ts /kds/orders, ["placed","preparing"]), so on status alone a
+ * POS-originated order is visible to every reader that matters. Before this
+ * mapper was typed they were not "correctly excluded" — they were accidentally
+ * invisible, which is a different and worse thing.
+ *
+ * What keeps them off our surfaces now is `orders.order_channel`, which is the
+ * right tool for it: ops.ts, orders.ts and dispatch.ts filter on the channel,
+ * not on a status value no reader understands. The two mechanisms are
+ * deliberately separate — status says how far along an order is, channel says
+ * whose order it is, and conflating them is what produced the original bug.
+ */
+export function mapPetpoojaStatus(petpoojaStatus: string): OrderStatus {
   switch (petpoojaStatus) {
     case "1":
-      return "confirmed";
+      return "preparing";
     case "-1":
     case "2":
       return "cancelled";
     case "5":
-      return "dispatched";
+      return "out_for_delivery";
     case "6":
       return "delivered";
     default:
@@ -596,9 +667,36 @@ export function mapPetpoojaStatus(petpoojaStatus: string): string {
   }
 }
 
-export function mapPetpoojaRiderStatus(status: string): string {
-  if (status.toLowerCase() === "delivered") {
-    return "delivered";
+/**
+ * Petpooja rider-info status string → our order-status vocabulary.
+ *
+ * The two rider states are distinct for us and must not be collapsed:
+ * `rider_assigned` is in dispatch.ts's partnerStatuses (so a rider-assigned
+ * order can still be batched with a nearby one) while `out_for_delivery` is
+ * not — once the food is moving, batching it is wrong.
+ *
+ * An unrecognised string maps to `rider_assigned`, the LEAST advanced of the
+ * rider states. Guessing low is the safe direction: over-stating progress
+ * would strip an order out of the batching pool and tell the customer the
+ * food had left when it had not.
+ *
+ * Still open (pre-existing, not introduced here): neither this mapper's caller
+ * nor the /callback and /orderstatus callers guard monotonicity, so an
+ * out-of-order or replayed webhook can walk an order BACKWARDS — including out
+ * of `delivered`. That was already true when these mappers returned "confirmed"
+ * and "dispatched"; making the values real does not create it. The fix belongs
+ * with the webhook handlers in routes/petpooja.ts, not here.
+ */
+export function mapPetpoojaRiderStatus(status: string): OrderStatus {
+  switch (status.toLowerCase()) {
+    case "delivered":
+      return "delivered";
+    case "pickedup":
+      return "out_for_delivery";
+    case "rider-assigned":
+    case "rider-arrived":
+      return "rider_assigned";
+    default:
+      return "rider_assigned";
   }
-  return "dispatched"; // rider-assigned, rider-arrived, pickedup map to dispatched
 }
