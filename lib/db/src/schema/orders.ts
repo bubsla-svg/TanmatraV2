@@ -81,6 +81,76 @@ export const orderStatusValues = [
 ] as const;
 export type OrderStatus = (typeof orderStatusValues)[number];
 
+// Position on the forward delivery ladder — the order in which an order is
+// supposed to move through the world. `null` means "not on the ladder": an end
+// state, or a settlement state that is not part of the delivery story at all.
+//
+// The vocabulary above says which values exist; this says which way time runs
+// between them. That was missing, and its absence is a live bug on the three
+// Petpooja status webhooks — none of them compared the incoming status to the
+// one already stored, so a replayed or out-of-order webhook could walk an order
+// BACKWARDS, including out of `delivered`. See classifyPosStatusTransition in
+// artifacts/api-server/src/lib/petpooja.ts, which is what consumes this.
+//
+// Deliberately a Record and not a lookup function: a new value added to
+// `orderStatusValues` fails to compile here until someone decides where on the
+// ladder it sits. That tripwire is the point — this table is only correct while
+// it is exhaustive, and "someone will remember to update it" is not a mechanism.
+export const orderStatusLadderRank: Record<OrderStatus, number | null> = {
+  placed: 0,
+  preparing: 1,
+  ready: 2,
+  rider_assigned: 3,
+  out_for_delivery: 4,
+  delivered: 5,
+  // Off the ladder. `cancelled` is reachable from any live rung — an outlet can
+  // cancel an order at any point before it lands — but nothing is reachable
+  // from it, so it has no rank of its own.
+  cancelled: null,
+  failed: null,
+  refunded: null,
+  billed: null,
+};
+
+// The runtime gate for a status that came out of the database rather than out
+// of this file. It stays necessary even now that `orders_status_chk` exists,
+// and that is worth being explicit about, because the constraint looks like it
+// makes the check redundant: migration 0015 adds it as NOT VALID, which binds
+// every INSERT and UPDATE from the moment it runs but deliberately makes no
+// claim about rows written before it. Until an owner runs `VALIDATE
+// CONSTRAINT` (see that migration's header), a row read back really can hold a
+// value outside the vocabulary — which is why the column is not typed
+// `$type<OrderStatus>()`. A read is `string`, and anything reasoning about
+// where an order sits must be able to say "I do not recognise this" rather
+// than casting and hoping.
+export function isOrderStatus(value: string): value is OrderStatus {
+  return (orderStatusValues as readonly string[]).includes(value);
+}
+
+// Whether an external status webhook is allowed to move an order out of this
+// state at all. False means settled: the order's delivery story is over, and a
+// webhook claiming otherwise is stale, replayed, or wrong.
+//
+// `delivered` is false despite being the top of the ladder. The only status
+// that legitimately follows it is `refunded`, which is written by our own
+// refund path against a payment we control — never by the POS, whose mappers
+// cannot even produce the value.
+//
+// Same Record-not-function reasoning as the ladder above: adding a status value
+// must be a decision made in both tables, and the compiler is what makes it one.
+export const orderStatusAcceptsExternalUpdate: Record<OrderStatus, boolean> = {
+  placed: true,
+  preparing: true,
+  ready: true,
+  rider_assigned: true,
+  out_for_delivery: true,
+  delivered: false,
+  cancelled: false,
+  failed: false,
+  refunded: false,
+  billed: false,
+};
+
 // Meal-order line item: {id,name,qty,price}. Marketplace-order lines use
 // MarketplaceOrderLine (see ./marketplace) instead. orders.items is a
 // union of the two shapes — see isMealOrderItem below.
@@ -135,7 +205,13 @@ export const ordersTable = pgTable(
     // for historical/ops continuity — do not use this to charge.
     totalPaise: integer("total_paise").notNull(),
     // THE authoritative amount to charge, in paise: post-discount meal total
-    // + 18% GST + delivery fee. Written once by finalizeOrder and is the ONLY
+    // + 5% GST on that meal value + the delivery fee + 18% GST on that fee.
+    // (The previous wording here said "+ 18% GST", which is the rate on the
+    // delivery service, not on food — see computeChargePaise, which is the
+    // implementation this comment describes and has always split the two.)
+    // The composition matters beyond bookkeeping: it is the breakdown the POS
+    // is sent per order, so the outlet files GST against it.
+    // Written once by finalizeOrder and is the ONLY
     // number the payment path may bill or reconcile against (mirrors Medusa's
     // "the order carries its own payable total" rule). Nullable so legacy rows
     // and the guest-checkout path — whose total_paise already includes GST+fee
@@ -202,9 +278,56 @@ export const ordersTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [
+    // Scoped by user, so it is NULL-blind: Postgres treats NULLs as distinct
+    // in a unique index, and every order the POS pushes us whose customer
+    // email matches no user of ours gets `user_id = null`. Three own-app money
+    // writers infer their ON CONFLICT spec against this exact index
+    // (loyaltyEngine.ts, chargeMandate.ts, subscriptions.ts) — including the
+    // partial predicate, which Postgres requires to match — so it must not be
+    // dropped or altered. The companion index below covers what it cannot.
     uniqueIndex("uniq_orders_user_external")
       .on(table.userId, table.externalOrderId)
       .where(sql`external_order_id is not null`),
+    // The other half of the same guarantee: one row per POS order id.
+    //
+    // POST /integrations/petpooja/saveorder writes `external_order_id` from
+    // Petpooja's own `orderID`, and a webhook that is not acknowledged is a
+    // webhook that gets retried. Without this index a retry inserts a second
+    // row — a second KDS ticket, a second dispatch, one meal — and nothing
+    // anywhere notices. Demonstrated against a real Postgres: three identical
+    // aggregator inserts, three rows, no error.
+    //
+    // Keyed on `external_order_id` ALONE, deliberately, not on
+    // (order_channel, external_order_id):
+    //   - Petpooja assigns the id, so it is already unique within the outlet
+    //     across every channel it serves. A wider key would let a retry whose
+    //     `order_from` differed — a field our push interface does not even
+    //     model — slip past as a "different" order, which is the precise
+    //     failure this index exists to stop.
+    //   - The rest of the system already assumes this. /callback,
+    //     /orderstatus and /rider-info all resolve an order with
+    //     `where external_order_id = ? limit 1` and no channel predicate. If
+    //     two POS rows ever shared an id, those routes would already be
+    //     picking one arbitrarily. This makes an existing assumption
+    //     enforceable rather than introducing a new one.
+    //
+    // `order_channel <> 'own_app'` in the predicate is load-bearing, not a
+    // tidy-up. Own-app orders derive `external_order_id` from a client-supplied
+    // order id, so two users could legitimately present the same string; a
+    // global unique index would 500 the second user's checkout on a violation
+    // their ON CONFLICT (user_id, external_order_id) spec does not cover.
+    // Excluding own_app puts those rows entirely outside this index, so the
+    // three money writers above cannot collide with it at all.
+    //
+    // Migration caveat: creating this index FAILS if prod already holds
+    // duplicate POS rows — which is exactly the bug being fixed. Run
+    //   select external_order_id, count(*) from orders
+    //   where external_order_id is not null and order_channel <> 'own_app'
+    //   group by 1 having count(*) > 1;
+    // and reconcile any hits before applying migration 0014.
+    uniqueIndex("uniq_orders_external_pos")
+      .on(table.externalOrderId)
+      .where(sql`external_order_id is not null and order_channel <> 'own_app'`),
     // Postgres does NOT auto-index FK columns. These three indexes back
     // the most common access patterns:
     //   - "my orders" page (filter by user, sort by createdAt desc)
@@ -241,6 +364,30 @@ export const ordersTable = pgTable(
       "orders_order_channel_chk",
       sql`${table.orderChannel} in ('own_app','zomato','swiggy','pos','other')`,
     ),
+    // The status vocabulary, finally enforced by the database rather than only
+    // described by `orderStatusValues`. Keep this literal in step with that
+    // tuple — orderStatus.schema.test.ts compares the two and fails on drift.
+    //
+    // This is the constraint whose absence let the Petpooja mappers write
+    // "confirmed" and "dispatched" into production: two values no reader in the
+    // system recognised, so an order the POS moved to either one vanished from
+    // the customer's active-order list, the dispatch sweep and the tracker. The
+    // mappers were fixed in claude/petpooja-status-vocabulary; this is what
+    // makes the *next* one impossible rather than merely unlikely.
+    //
+    // MIGRATION 0015 ADDS THIS AS `NOT VALID`, deliberately. See that file: the
+    // constraint binds every new INSERT and UPDATE immediately, while existing
+    // rows go unscanned, because we cannot see production from here and do not
+    // know whether any row still holds a stranded value. Drizzle's `check()`
+    // helper has no way to express NOT VALID, so the declaration here and the
+    // migration differ in exactly that one clause until an owner runs
+    // `VALIDATE CONSTRAINT` — at which point they converge and this comment can
+    // go. `pnpm --filter @workspace/scripts run audit-order-status` is what
+    // tells them whether it is safe to.
+    check(
+      "orders_status_chk",
+      sql`${table.status} in ('placed','preparing','ready','rider_assigned','out_for_delivery','delivered','cancelled','failed','refunded','billed')`,
+    ),
     // Speeds up dispatch.ts's live-order scans, which now must filter to
     // orderKind = 'meal' on every query.
     index("idx_orders_kind_status").on(table.orderKind, table.status),
@@ -260,6 +407,18 @@ export const insertOrderSchema = createInsertSchema(ordersTable, {
   // DEFAULT earns it. Without it, every writer that legitimately omits the
   // field — relying on the 'own_app' default — would fail validation.
   orderChannel: z.enum(orderChannelValues).optional(),
+  // Same treatment for status, and note the asymmetry it creates on purpose:
+  // the WRITE side is closed here, while the READ side stays `string`.
+  //
+  // The obvious-looking move is `$type<OrderStatus>()` on the column, which
+  // would type reads as OrderStatus too. That would be a lie while migration
+  // 0015's constraint is still NOT VALID — a row written before it existed can
+  // hold anything, and telling the compiler otherwise is how `isOrderStatus`
+  // stops being called and the fail-closed paths quietly become unreachable.
+  // Writes are a different matter: every one of them happens after the
+  // constraint, so closing them costs nothing and turns a runtime constraint
+  // violation into a parse error with a readable message.
+  status: z.enum(orderStatusValues).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof ordersTable.$inferSelect;

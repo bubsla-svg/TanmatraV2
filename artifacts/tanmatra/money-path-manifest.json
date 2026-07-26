@@ -1,11 +1,5 @@
 [
   "/",
-  "/menu",
-  "/dish/*",
-  "/plans",
-  "/subscribe",
-  "/checkout/*",
-  "/order/confirmed/*",
-  "/account/plan",
-  "/account/billing"
+  "/admin",
+  "/admin/login"
 ]

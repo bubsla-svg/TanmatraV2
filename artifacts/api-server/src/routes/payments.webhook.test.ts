@@ -13,9 +13,16 @@ import http from "node:http";
 
 import express, { type Express } from "express";
 import { and, eq, inArray } from "drizzle-orm";
-import { db, ordersTable, webhookInboxTable } from "@workspace/db";
+import {
+  db,
+  ordersTable,
+  webhookInboxTable,
+  deliveryEventsTable,
+  refundRequestsTable,
+} from "@workspace/db";
 
 import paymentsRouter from "./payments";
+import { REFUND_EVENT_NAMES, remainingRefundablePaise } from "../lib/paymentIntegrity";
 
 const WEBHOOK_SECRET = "test_razorpay_secret_12345";
 let server: http.Server;
@@ -227,4 +234,362 @@ test("webhook retry recovery: does not swallow retry if previous delivery failed
   assert.equal(recoveredRow!.status, "processed");
   assert.equal(recoveredRow!.error, null);
   assert.equal(recoveredRow!.attempts, 2, "attempts count must increment from 1 to 2");
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Refund lifecycle: refund.processed / refund.failed
+//
+// A `speed: "normal"` refund is asynchronous. The console records settlement
+// optimistically the moment Razorpay's POST returns 200, so these two events
+// are what make that optimism honest — and what stops a FAILED refund from
+// permanently eating the order's refundable headroom (the payout cap in
+// routes/refunds.ts subtracts exactly the events asserted on here).
+// ───────────────────────────────────────────────────────────────────────────
+
+async function seedOrder(fields: {
+  status: string;
+  chargePaise?: number | null;
+  totalPaise?: number;
+  razorpayPaymentId?: string;
+}): Promise<number> {
+  const [row] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      externalOrderId: `ord_refund_${randomUUID()}`,
+      status: fields.status,
+      totalPaise: fields.totalPaise ?? fields.chargePaise ?? 50000,
+      chargePaise: fields.chargePaise ?? null,
+      razorpayPaymentId: fields.razorpayPaymentId ?? null,
+      addressLabel: "Test",
+      addressLine: "1 Test Rd",
+      city: "Noida",
+      pincode: "201301",
+      phone: "9999999999",
+      items: [{ id: 1, name: "Test Dish", qty: 1, price: 50000 }],
+      fulfillmentType: "delivery",
+    })
+    .returning({ id: ordersTable.id });
+  return row!.id;
+}
+
+async function seedRefundRequest(fields: {
+  orderId: number;
+  amountPaise: number;
+  status: string;
+  razorpayRefundId?: string;
+  razorpayPaymentId?: string;
+}): Promise<number> {
+  const [row] = await db
+    .insert(refundRequestsTable)
+    .values({
+      orderId: fields.orderId,
+      amountPaise: fields.amountPaise,
+      status: fields.status,
+      razorpayRefundId: fields.razorpayRefundId ?? null,
+      razorpayPaymentId: fields.razorpayPaymentId ?? null,
+    })
+    .returning({ id: refundRequestsTable.id });
+  return row!.id;
+}
+
+/** The console's optimistic settlement write, exactly as routes/refunds.ts makes it. */
+async function seedOptimisticSettlement(
+  orderId: number,
+  meta: Record<string, unknown>,
+): Promise<void> {
+  await db.insert(deliveryEventsTable).values({ orderId, event: "order_refunded", meta });
+}
+
+/** Only the events the payout cap reads. */
+async function refundLedger(orderId: number) {
+  return db
+    .select({ event: deliveryEventsTable.event, meta: deliveryEventsTable.meta })
+    .from(deliveryEventsTable)
+    .where(
+      and(
+        eq(deliveryEventsTable.orderId, orderId),
+        inArray(deliveryEventsTable.event, [...REFUND_EVENT_NAMES]),
+      ),
+    );
+}
+
+async function allEvents(orderId: number) {
+  return db
+    .select({ event: deliveryEventsTable.event, meta: deliveryEventsTable.meta })
+    .from(deliveryEventsTable)
+    .where(eq(deliveryEventsTable.orderId, orderId));
+}
+
+async function cleanupOrder(orderId: number): Promise<void> {
+  await db.delete(deliveryEventsTable).where(eq(deliveryEventsTable.orderId, orderId));
+  await db.delete(refundRequestsTable).where(eq(refundRequestsTable.orderId, orderId));
+  await db.delete(ordersTable).where(eq(ordersTable.id, orderId));
+}
+
+test("refund.failed: the premature settlement is reversed and the headroom comes back", async () => {
+  const eventId = `evt_rfnd_fail_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const refundId = `rfnd_fail_${randomUUID().slice(0, 8)}`;
+  // charge_paise > total_paise, as on every order the loyalty finalize path
+  // writes: 40000 meal + GST + fee = 51200 actually billed.
+  const orderId = await seedOrder({
+    status: "refunded",
+    chargePaise: 51200,
+    totalPaise: 40000,
+    razorpayPaymentId: "pay_fail_1",
+  });
+  try {
+    const requestId = await seedRefundRequest({
+      orderId,
+      amountPaise: 51200,
+      status: "refunded",
+      razorpayRefundId: refundId,
+      razorpayPaymentId: "pay_fail_1",
+    });
+    await seedOptimisticSettlement(orderId, {
+      refundRequestId: requestId,
+      amountPaise: 51200,
+      razorpayRefundId: refundId,
+      approvedBy: "ops-1",
+      gatewayStatus: "pending",
+      previousOrderStatus: "cancelled",
+    });
+
+    const res = await postWebhook(
+      {
+        event: "refund.failed",
+        payload: {
+          refund: {
+            entity: {
+              id: refundId,
+              payment_id: "pay_fail_1",
+              amount: 51200,
+              status: "failed",
+              notes: { refundRequestId: String(requestId) },
+            },
+          },
+        },
+      },
+      eventId,
+    );
+    assert.equal(res.status, 200);
+
+    const ledger = await refundLedger(orderId);
+    assert.equal(ledger.length, 0, "a failed refund must leave NOTHING the cap counts as money returned");
+
+    const events = await allEvents(orderId);
+    const reversed = events.filter((e) => e.event === "refund_reversed");
+    assert.equal(reversed.length, 1, "the record is re-filed, not destroyed");
+    assert.equal(reversed[0]!.meta?.["amountPaise"], 51200);
+    assert.equal(reversed[0]!.meta?.["reversedFrom"], "order_refunded");
+    assert.equal(reversed[0]!.meta?.["reason"], "refund.failed");
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
+    assert.equal(order!.status, "cancelled", "an order whose refund failed is not a refunded order");
+
+    const [request] = await db
+      .select()
+      .from(refundRequestsTable)
+      .where(eq(refundRequestsTable.id, requestId));
+    assert.equal(request!.status, "failed", "failed is the re-approvable state — ops must be able to retry");
+    assert.match(request!.note ?? "", /re-approve to retry/);
+
+    // The assertion this whole branch exists for: the operator's retry is not
+    // capped at zero by a refund that never happened.
+    assert.equal(
+      remainingRefundablePaise(
+        { chargePaise: order!.chargePaise, totalPaise: order!.totalPaise },
+        await refundLedger(orderId),
+      ),
+      51200,
+      "the full charge must be refundable again after a failed refund",
+    );
+  } finally {
+    await cleanupOrder(orderId);
+  }
+});
+
+test("refund.failed: restores the status the order actually had, not a hardcoded one", async () => {
+  const eventId = `evt_rfnd_prev_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const refundId = `rfnd_prev_${randomUUID().slice(0, 8)}`;
+  const orderId = await seedOrder({
+    status: "refunded",
+    chargePaise: 30000,
+    razorpayPaymentId: "pay_prev_1",
+  });
+  try {
+    const requestId = await seedRefundRequest({
+      orderId,
+      amountPaise: 30000,
+      status: "refunded",
+      razorpayRefundId: refundId,
+    });
+    // A goodwill refund raised against an order that was already delivered.
+    await seedOptimisticSettlement(orderId, {
+      refundRequestId: requestId,
+      amountPaise: 30000,
+      razorpayRefundId: refundId,
+      previousOrderStatus: "delivered",
+    });
+
+    const res = await postWebhook(
+      {
+        event: "refund.failed",
+        payload: {
+          refund: { entity: { id: refundId, payment_id: "pay_prev_1", amount: 30000, status: "failed" } },
+        },
+      },
+      eventId,
+    );
+    assert.equal(res.status, 200);
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
+    assert.equal(order!.status, "delivered", "a delivered order must not be filed back as cancelled");
+  } finally {
+    await cleanupOrder(orderId);
+  }
+});
+
+test("refund.processed: a Dashboard-issued refund we never initiated is written into the ledger", async () => {
+  const eventId = `evt_rfnd_dash_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const refundId = `rfnd_dash_${randomUUID().slice(0, 8)}`;
+  const paymentId = `pay_dash_${randomUUID().slice(0, 8)}`;
+  const orderId = await seedOrder({
+    status: "delivered",
+    chargePaise: 60000,
+    razorpayPaymentId: paymentId,
+  });
+  try {
+    const res = await postWebhook(
+      {
+        event: "refund.processed",
+        payload: {
+          refund: { entity: { id: refundId, payment_id: paymentId, amount: 60000, status: "processed" } },
+        },
+      },
+      eventId,
+    );
+    assert.equal(res.status, 200);
+
+    const ledger = await refundLedger(orderId);
+    assert.equal(ledger.length, 1, "a refund taken outside the console still has to reach the ledger");
+    assert.equal(ledger[0]!.meta?.["amountPaise"], 60000);
+    assert.equal(ledger[0]!.meta?.["source"], "razorpay_dashboard");
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
+    assert.equal(order!.status, "refunded", "a full refund settles the order");
+
+    assert.equal(
+      remainingRefundablePaise(
+        { chargePaise: order!.chargePaise, totalPaise: order!.totalPaise },
+        ledger,
+      ),
+      0,
+      "the console must not be able to send this money a second time",
+    );
+  } finally {
+    await cleanupOrder(orderId);
+  }
+});
+
+test("refund.processed: a PARTIAL refund is ledgered but does not mark the order refunded", async () => {
+  const eventId = `evt_rfnd_part_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const refundId = `rfnd_part_${randomUUID().slice(0, 8)}`;
+  const paymentId = `pay_part_${randomUUID().slice(0, 8)}`;
+  const orderId = await seedOrder({
+    status: "delivered",
+    chargePaise: 60000,
+    razorpayPaymentId: paymentId,
+  });
+  try {
+    const res = await postWebhook(
+      {
+        event: "refund.processed",
+        payload: {
+          refund: { entity: { id: refundId, payment_id: paymentId, amount: 10000, status: "processed" } },
+        },
+      },
+      eventId,
+    );
+    assert.equal(res.status, 200);
+
+    const ledger = await refundLedger(orderId);
+    assert.equal(ledger.length, 1);
+    assert.equal(ledger[0]!.meta?.["amountPaise"], 10000);
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
+    assert.equal(order!.status, "delivered", "₹100 back on a ₹600 order is not a refunded order");
+
+    assert.equal(
+      remainingRefundablePaise(
+        { chargePaise: order!.chargePaise, totalPaise: order!.totalPaise },
+        ledger,
+      ),
+      50000,
+      "the rest of the order stays refundable",
+    );
+  } finally {
+    await cleanupOrder(orderId);
+  }
+});
+
+test("refund.processed: settlement of a refund already in the ledger is not counted twice", async () => {
+  const eventId = `evt_rfnd_dup_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const refundId = `rfnd_dup_${randomUUID().slice(0, 8)}`;
+  const orderId = await seedOrder({
+    status: "refunded",
+    chargePaise: 51200,
+    totalPaise: 40000,
+    razorpayPaymentId: "pay_dup_1",
+  });
+  try {
+    // The console already claimed settlement optimistically and left the row
+    // mid-flight; this is the confirming event arriving days later.
+    const requestId = await seedRefundRequest({
+      orderId,
+      amountPaise: 51200,
+      status: "processing",
+      razorpayRefundId: refundId,
+    });
+    await seedOptimisticSettlement(orderId, {
+      refundRequestId: requestId,
+      amountPaise: 51200,
+      razorpayRefundId: refundId,
+      gatewayStatus: "pending",
+      previousOrderStatus: "cancelled",
+    });
+
+    const res = await postWebhook(
+      {
+        event: "refund.processed",
+        payload: {
+          refund: { entity: { id: refundId, payment_id: "pay_dup_1", amount: 51200, status: "processed" } },
+        },
+      },
+      eventId,
+    );
+    assert.equal(res.status, 200);
+
+    const ledger = await refundLedger(orderId);
+    assert.equal(ledger.length, 1, "confirming a refund must not add a second ledger entry");
+    assert.equal(
+      remainingRefundablePaise({ chargePaise: 51200, totalPaise: 40000 }, ledger),
+      0,
+      "double-counting would drive the headroom below zero and hide a real overpayment",
+    );
+
+    const [request] = await db
+      .select()
+      .from(refundRequestsTable)
+      .where(eq(refundRequestsTable.id, requestId));
+    assert.equal(request!.status, "refunded", "the in-flight request settles on the webhook");
+    assert.match(request!.note ?? "", /refund\.processed/);
+  } finally {
+    await cleanupOrder(orderId);
+  }
 });

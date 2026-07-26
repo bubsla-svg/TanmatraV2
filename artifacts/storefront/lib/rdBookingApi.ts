@@ -96,3 +96,14 @@ export async function payForAppointment(
   const paid = await razorpay.open(order);
   return verifyAppointment(id, paid, fetchImpl);
 }
+
+/** Fetch all RD appointments for the authenticated user. [] on error or unauthed. */
+export async function getMyAppointments(fetchImpl?: FetchImpl): Promise<Appointment[]> {
+  try {
+    const data = await apiGet<{ appointments?: Appointment[] }>("/rd/appointments", fetchImpl);
+    return data.appointments ?? [];
+  } catch {
+    return [];
+  }
+}
+

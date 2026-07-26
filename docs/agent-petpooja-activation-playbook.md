@@ -244,13 +244,24 @@ Do not pick unilaterally — it's a capacity/cost trade-off.
 |---|---|---|
 | `Deploy` fails: `Secret … was not found` / permission denied | §4 secret missing or §5 IAM not granted | Complete §4–§5, re-run the deploy (`workflow_dispatch` on `Deploy`, or push an empty commit) |
 | Logs show `petpooja: off` after a green deploy | One of the four vars didn't land | Check all three secrets have a version + binding, and `PETPOOJA_RESTAURANT_ID` is present in `deploy.yml`'s `--update-env-vars`; redeploy |
-| Inbound webhook returns 401 for a legit Petpooja call | Petpooja sending a different key/secret than stored | Reconcile the values in Secret Manager with what Petpooja has for this restaurant; `versions add` the correct ones |
+| Inbound webhook returns 401 for a legit Petpooja call | Petpooja sending a different key/secret than stored, or sending none at all | Reconcile the values in Secret Manager with what Petpooja has for this restaurant; `versions add` the correct ones. **Do not** work around it by relaxing the guard |
+| Inbound webhook returns 404 | The surface is unmounted — `PETPOOJA_WEBHOOKS_ENABLED=false`, or the four vars are not all set | Complete §4–§6, or remove the kill switch |
 | Outbound never pushes | `petpooja: off`, or the order path didn't reach payment-verify | Confirm activation first; outbound fires from the payment webhook in `routes/payments.ts` |
 
 ## Guardrails — do NOT
 
 - Do not edit application code to "make it work" — activation is pure config.
 - Do not weaken inbound auth or the strict/lenient guards in `petpoojaClient.ts`.
+  Both modes now require a credential; "lenient" only means the sender may omit
+  `app_key` if the shared secret is right. `/push-menu` is strict and must stay
+  strict — it bulk-writes `menu_items.price_paise`.
+- Do not decommission by blanking the `PETPOOJA_*` secrets. Unmount instead:
+  `PETPOOJA_WEBHOOKS_ENABLED=false`. Blanking credentials used to disable
+  *authentication* rather than the *endpoints*, which is how the menu-price
+  write path ended up reachable without credentials in every deployment state.
+- Do not set `PETPOOJA_WEBHOOKS_INSECURE_ALLOW_UNAUTHENTICATED` anywhere except
+  a local dev machine. It is refused when `NODE_ENV=production`; setting it on a
+  staging service is still wrong.
 - Do not put any credential value in `deploy.yml`, a repo variable used for
   secrets, a commit, a PR comment, or logs.
 - Do not merge PR #117 before §4–§6 are green (the deploy will fail).

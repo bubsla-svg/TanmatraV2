@@ -1,0 +1,81 @@
+-- Two guards for the orders table, renumbered from the original 0014/0015
+-- on claude/analytics-order-channel-visible (main reached 0019 meanwhile).
+--
+-- One row per POS order id. Makes POST /integrations/petpooja/saveorder
+-- idempotent against the webhook retries it will inevitably receive.
+--
+-- PRE-FLIGHT: this statement FAILS if the table already holds duplicates,
+-- which is the bug it exists to prevent. Run first, and reconcile any hits:
+--
+--   select external_order_id, count(*)
+--   from orders
+--   where external_order_id is not null and order_channel <> 'own_app'
+--   group by 1 having count(*) > 1;
+--
+-- Expected to return zero rows: no aggregator order is known to have been
+-- written by that route yet (see claude/order-channel-split.md §7). If it
+-- returns anything, each group is one meal that was ticketed more than once.
+--
+-- Takes a SHARE lock on `orders` for the duration — writes block, reads do
+-- not. Fine at current volume; if the table is large by the time this runs,
+-- apply it by hand as CREATE UNIQUE INDEX CONCURRENTLY outside a transaction.
+CREATE UNIQUE INDEX "uniq_orders_external_pos" ON "orders" USING btree ("external_order_id") WHERE external_order_id is not null and order_channel <> 'own_app';
+--> statement-breakpoint
+-- Close the order-status vocabulary at the database.
+--
+-- `orders.status` has always been a bare varchar(32). `orderStatusValues` in
+-- lib/db/src/schema/orders.ts describes the ten legal values, but nothing
+-- enforced them, and the Petpooja webhook mappers duly wrote two that were not
+-- on the list — "confirmed" and "dispatched". No reader recognised either, so
+-- an order the POS moved to one of them dropped out of the customer's
+-- active-order list, the dispatch sweep and the storefront tracker at once.
+--
+-- ADDED `NOT VALID`, AND THAT IS THE WHOLE DESIGN.
+--
+-- A plain ADD CONSTRAINT scans every existing row and aborts the migration if
+-- any one of them fails. We cannot see production from here, so we do not know
+-- whether a stranded 'confirmed' row survives; a migration that might abort is
+-- one nobody applies. NOT VALID skips the scan. The constraint is fully
+-- enforced against every INSERT and UPDATE from the moment this runs — which is
+-- the entire point of it — and merely declines to make a claim about rows
+-- written before it existed.
+--
+-- It also takes only a brief ACCESS EXCLUSIVE lock to write the catalog entry,
+-- rather than holding one for a full table scan.
+--
+-- OWNER FOLLOW-UP, in this order:
+--
+--   1. Report what is actually there:
+--
+--        pnpm --filter @workspace/scripts run audit-order-status
+--
+--      or by hand:
+--
+--        select status, count(*), min(created_at), max(created_at)
+--        from orders
+--        where status not in (
+--          'placed','preparing','ready','rider_assigned','out_for_delivery',
+--          'delivered','cancelled','failed','refunded','billed'
+--        )
+--        group by 1 order by 2 desc;
+--
+--   2. If it returns nothing, go straight to step 4.
+--
+--   3. If it returns rows, each one needs a decision, and the decision is NOT
+--      mechanical. 'confirmed' maps to 'preparing' and 'dispatched' maps to
+--      'out_for_delivery' in the current mappers — but blindly applying that to
+--      a months-old row would resurrect a long-since-eaten meal into the live
+--      KDS queue and the dispatch sweep. Old rows almost certainly want
+--      'delivered' or 'cancelled'. The audit script prints the age range for
+--      exactly this reason. That judgement is why this migration does not
+--      backfill anything.
+--
+--   4. Then promote the constraint to fully checked:
+--
+--        ALTER TABLE orders VALIDATE CONSTRAINT orders_status_chk;
+--
+--      VALIDATE takes only SHARE UPDATE EXCLUSIVE — it does not block reads or
+--      writes — so it is safe to run against a live table. After it succeeds,
+--      the schema declaration in orders.ts and the database agree exactly, and
+--      the NOT VALID note in that file can be deleted.
+ALTER TABLE "orders" ADD CONSTRAINT "orders_status_chk" CHECK ("orders"."status" in ('placed','preparing','ready','rider_assigned','out_for_delivery','delivered','cancelled','failed','refunded','billed')) NOT VALID;

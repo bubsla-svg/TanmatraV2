@@ -156,6 +156,20 @@ export const premiumApi = {
       `/premium/subscribe`,
       { method: "POST" },
     ),
+  checkout: () =>
+    request<{ razorpayOrderId: string; amount: number; currency: string; keyId: string }>(
+      `/premium/checkout`,
+      { method: "POST" },
+    ),
+  verify: (payment: {
+    razorpayPaymentId: string;
+    razorpayOrderId: string;
+    razorpaySignature: string;
+  }) =>
+    request<{ membership: PremiumMembership; isPremium: true }>(`/premium/verify`, {
+      method: "POST",
+      body: JSON.stringify(payment),
+    }),
   cancel: () =>
     request<{ membership: PremiumMembership }>(`/premium/cancel`, {
       method: "POST",

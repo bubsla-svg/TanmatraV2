@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -8,6 +9,8 @@ import {
   jsonb,
   timestamp,
   index,
+  uniqueIndex,
+  check,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -108,3 +111,29 @@ export const insertMarketplaceItemSchema = createInsertSchema(
 export type InsertMarketplaceItem = z.infer<typeof insertMarketplaceItemSchema>;
 export type MarketplaceItem = typeof marketplaceItemsTable.$inferSelect;
 export type MarketplaceOrder = typeof marketplaceOrdersTable.$inferSelect;
+
+export const marketplaceBatchesTable = pgTable(
+  "marketplace_batches",
+  {
+    id: serial("id").primaryKey(),
+    inventoryItemId: integer("inventory_item_id")
+      .notNull()
+      .references(() => marketplaceItemsTable.id, { onDelete: "cascade" }),
+    batchNumber: varchar("batch_number", { length: 64 }).notNull(),
+    expiryDate: timestamp("expiry_date", { withTimezone: true }).notNull(),
+    currentQty: integer("current_qty").notNull().default(0),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("uniq_marketplace_batch").on(table.inventoryItemId, table.batchNumber),
+    index("idx_marketplace_batches_expiry").on(table.inventoryItemId, table.expiryDate),
+    check("marketplace_batch_qty_chk", sql`${table.currentQty} >= 0`),
+  ],
+);
+
+export type MarketplaceBatch = typeof marketplaceBatchesTable.$inferSelect;
+export type InsertMarketplaceBatch = typeof marketplaceBatchesTable.$inferInsert;

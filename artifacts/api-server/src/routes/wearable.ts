@@ -19,6 +19,7 @@ import {
   groupMetricsByDay,
   type NormalizedMetric,
 } from "../lib/wearableClient";
+import { processBiometricAnomaly, getPatientIngredientLockouts } from "../lib/clinicalGuardrailEngine";
 
 const router: IRouter = Router();
 
@@ -373,6 +374,41 @@ router.post("/wearable/disconnect", async (req: Request, res: Response) => {
     .where(where);
 
   res.json({ ok: true });
+});
+
+const biometricAnomalySchema = z.object({
+  glucoseReadingMgDl: z.number().int().positive(),
+});
+
+// Phase 3: Automated Wearable Biometric Target Calibration & RD Alerting
+router.post("/wearable/biometric-anomaly", async (req: Request, res: Response) => {
+  const userId = await requireAuth(req, res);
+  if (!userId) return;
+
+  const parsed = biometricAnomalySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "malformed glucoseReadingMgDl parameter" });
+    return;
+  }
+  try {
+    const result = await processBiometricAnomaly(userId, parsed.data.glucoseReadingMgDl);
+    res.json({ ok: true, anomalyResult: result });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to evaluate biometric anomaly profile" });
+  }
+});
+
+// Phase 3: Retrieve patient dietary ingredient exclusions forced by biometric anomalies
+router.get("/wearable/patient-lockouts", async (req: Request, res: Response) => {
+  const userId = await requireAuth(req, res);
+  if (!userId) return;
+
+  try {
+    const lockouts = await getPatientIngredientLockouts(userId);
+    res.json(lockouts);
+  } catch {
+    res.status(500).json({ error: "Failed to resolve patient ingredient lockouts" });
+  }
 });
 
 export default router;

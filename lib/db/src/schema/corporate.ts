@@ -1,4 +1,5 @@
 import {
+  check,
   pgTable,
   serial,
   varchar,
@@ -8,12 +9,22 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { usersTable } from "./auth";
 
 export type CompanyMemberRole = "admin" | "member";
 export type CompanyMemberStatus = "invited" | "active" | "removed";
 export type OfficeOrderStatus = "open" | "closed" | "delivered" | "cancelled";
-export type VoucherStatus = "active" | "redeemed" | "cancelled";
+/**
+ * `pending_payment` is the state a voucher is BORN in: the row exists so a
+ * Razorpay order can be bound to it, but it carries no spendable value until a
+ * verified capture flips it to `active`. Only `active` may be redeemed.
+ */
+export type VoucherStatus =
+  | "pending_payment"
+  | "active"
+  | "redeemed"
+  | "cancelled";
 
 export interface OfficeOrderAddress {
   label?: string;
@@ -127,6 +138,83 @@ export const companyBudgetUsageTable = pgTable(
   ],
 );
 
+/**
+ * One row per order that a corporate subsidy was applied to — the ledger that
+ * makes "the company pays part of this order" a fact about a specific order
+ * rather than a running total nobody can attribute.
+ *
+ * Lifecycle, and why it has one:
+ *
+ *   reserved  — written in the SAME transaction that prices the order, so the
+ *               customer's charge_paise is already net of it. Counts against
+ *               the monthly budget immediately, which is what stops a second
+ *               concurrent checkout from being promised the same money.
+ *   committed — the payment for that order was captured. Only now does the
+ *               amount land in company_budget_usage.spent_paise, which is what
+ *               the QBR reports on, so an abandoned checkout never inflates
+ *               reported spend.
+ *   released   — the order was cancelled or never paid. The reservation stops
+ *               counting and the budget is the employee's again.
+ *
+ * `uniq_company_subsidy_charges_order` is the idempotency key. Commit and
+ * release are both driven off it, so a webhook that fires twice, or a verify
+ * and a webhook that both land, cannot bill the company twice for one order.
+ */
+export type CompanySubsidyChargeStatus = "reserved" | "committed" | "released";
+
+export const companySubsidyChargesTable = pgTable(
+  "company_subsidy_charges",
+  {
+    id: serial("id").primaryKey(),
+    companyId: integer("company_id")
+      .notNull()
+      .references(() => companiesTable.id, { onDelete: "cascade" }),
+    userId: varchar("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    /**
+     * The orders row this subsidy belongs to. Unique — one subsidy per order.
+     *
+     * No FK: the payment path resolves orders by their serial id and the
+     * reservation must survive an order row being hard-deleted by a test or a
+     * backfill without taking the company's ledger with it. Orphans are
+     * harmless because every read is scoped by company + user + period.
+     */
+    orderId: integer("order_id").notNull(),
+    periodMonth: varchar("period_month", { length: 7 }).notNull(), // yyyy-mm
+    paise: integer("paise").notNull(),
+    status: varchar("status", { length: 16 })
+      .notNull()
+      .default("reserved")
+      .$type<CompanySubsidyChargeStatus>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("uniq_company_subsidy_charges_order").on(table.orderId),
+    // The hot read: "how much of this employee's budget is already promised or
+    // spent this month" filters on exactly these four.
+    index("idx_company_subsidy_charges_period").on(
+      table.companyId,
+      table.userId,
+      table.periodMonth,
+      table.status,
+    ),
+    check(
+      "company_subsidy_charges_status_chk",
+      sql`${table.status} in ('reserved','committed','released')`,
+    ),
+    // A zero or negative subsidy is not a subsidy. Enforced here so no code
+    // path can record one and quietly make the arithmetic unfalsifiable.
+    check("company_subsidy_charges_paise_chk", sql`${table.paise} > 0`),
+  ],
+);
+
 export const officeOrdersTable = pgTable(
   "office_orders",
   {
@@ -177,10 +265,17 @@ export const vouchersTable = pgTable(
     recipientEmail: varchar("recipient_email", { length: 256 }),
     recipientName: varchar("recipient_name", { length: 128 }),
     message: varchar("message", { length: 512 }),
+    // Fail-safe default: a row inserted by any future code path that forgets
+    // to think about money is WORTHLESS, not funded. Only the verified-capture
+    // update in POST /vouchers/verify may write "active".
     status: varchar("status", { length: 16 })
       .notNull()
-      .default("active")
+      .default("pending_payment")
       .$type<VoucherStatus>(),
+    /** Gateway order opened for exactly `amountPaise`; bound before checkout. */
+    razorpayOrderId: varchar("razorpay_order_id", { length: 64 }),
+    /** Captured payment that funded this voucher. Set once, at verify. */
+    razorpayPaymentId: varchar("razorpay_payment_id", { length: 64 }),
     redeemedByUserId: varchar("redeemed_by_user_id").references(
       () => usersTable.id,
       { onDelete: "set null" },
@@ -193,6 +288,15 @@ export const vouchersTable = pgTable(
   (table) => [
     uniqueIndex("uniq_vouchers_code").on(table.code),
     index("idx_vouchers_purchaser").on(table.purchasedByUserId),
+    index("idx_vouchers_razorpay_order").on(table.razorpayOrderId),
+    // DB-level guard mirroring orders_order_channel_chk. A voucher row is
+    // spendable money: no raw SQL, backfill script or future route may write a
+    // status outside this set, and in particular cannot invent a fifth value
+    // that /vouchers/redeem's `status !== "active"` check would wave through.
+    check(
+      "vouchers_status_chk",
+      sql`${table.status} in ('pending_payment','active','redeemed','cancelled')`,
+    ),
   ],
 );
 

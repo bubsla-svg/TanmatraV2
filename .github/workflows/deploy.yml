@@ -296,6 +296,28 @@ jobs:
             --update-env-vars "API_UPSTREAM=${API_URL%/api},BUILD_SHA=${{ github.sha }},BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --quiet
 
+      # This step used to be absent, deliberately: while tanmatra.food was served
+      # BY this service, a traffic pin was the safety rail and promotion was done
+      # by revision name outside CI.
+      #
+      # That rationale has expired. tanmatra.food is now mapped to the
+      # `storefront` service — it answers /api/build with app=tanmatra-web — so
+      # the pin no longer protects the production domain. All it does now is
+      # strand deploys: run 30166329200 deployed 8e33968212 successfully and this
+      # service kept serving 5176c1131c, two days old, because 0% of traffic ever
+      # moved. Nine merges' worth of legacy-app fixes sat undelivered.
+      #
+      # If a pin is ever wanted here again, re-add it deliberately — the
+      # deploy-truth assert below will then fail loudly instead of leaving a
+      # green check over a stale serve.
+      - name: Route traffic to the new revision
+        run: |
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --to-latest \
+            --quiet
+
       - name: Smoke-test /checkout serves the SPA shell
         run: |
           URL=$(gcloud run services describe ${SERVICE} \
@@ -314,6 +336,35 @@ jobs:
             sleep 5
           done
           echo "checkout still not serving the SPA shell"; exit 1
+
+      # Deploy-truth (the TNM-OPS-01 pattern the storefront job already carries).
+      #
+      # The smoke test above cannot catch a stale serve: a 2-day-old revision
+      # also returns a sub-20KB /checkout shell, so it passed green throughout
+      # run 30166329200 while this service served the wrong build. A smoke test
+      # proves the service is UP; only comparing the running revision's reported
+      # commit to the one we deployed proves it is the RIGHT build.
+      #
+      # Fatal on purpose. "Deployed but not serving" is the failure this job
+      # exists to prevent, and the previous non-fatal notice below demonstrably
+      # did not prevent it.
+      - name: Assert deployed sha (/api/build == pushed commit)
+        run: |
+          URL=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.url)')
+          for i in 1 2 3 4 5 6; do
+            BODY=$(curl -sf "$URL/api/build" || true)
+            echo "attempt $i: $BODY"
+            DEPLOYED=$(echo "$BODY" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+            if [ "$DEPLOYED" = "${{ github.sha }}" ]; then
+              echo "deploy-truth OK: $DEPLOYED"; exit 0
+            fi
+            sleep 5
+          done
+          echo "deploy-truth FAILED: /api/build sha never matched ${{ github.sha }}"
+          echo "The revision was created but traffic is not on it (check for a traffic pin), or BUILD_SHA drifted."
+          exit 1
 
       # Domain promotion is deliberately manual / out-of-CI (the tanmatra service
       # revision is deployed above, but traffic to tanmatra.food is promoted by
@@ -461,9 +512,13 @@ jobs:
       # stray traffic pin left run 30002863468's deploy stranded at 0% — the
       # home smoke passed against the OLD revision and the deploy-truth
       # assert below (correctly) failed. A preview service must serve what it
-      # deploys, so route to latest explicitly. The tanmatra job carries NO
-      # such step: its pin protects the production domain and traffic there
-      # is promoted by name, deliberately, outside CI.
+      # deploys, so route to latest explicitly.
+      #
+      # The tanmatra job now carries the same pair (route-to-latest + a fatal
+      # deploy-truth assert). It used to carry neither, because a pin guarded
+      # tanmatra.food while that service served the domain; the domain moved to
+      # this one, and the pin then stranded a deploy for two days without
+      # reddening anything.
       - name: Route traffic to the new revision (dark preview service only)
         run: |
           gcloud run services update-traffic ${SERVICE} \

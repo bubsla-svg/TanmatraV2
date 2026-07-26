@@ -3,20 +3,36 @@
 # the cap, adds an unjustified "use client", or breaks the server build fails.
 name: Storefront
 
+# Trigger paths must cover EVERY workspace package the storefront compiles
+# against, or a change to one of them merges without ever running the
+# storefront's typecheck, build or wire tests. `artifacts/storefront/package.json`
+# declares exactly four: tokens, menu-catalog, preferences-match and
+# subscription-rules. The last two were missing here — which mattered most for
+# subscription-rules, the package that exists specifically to hold the 24 h
+# skip/swap cutoff so the API and the UI cannot drift. Editing the cutoff there
+# skipped the very UI tests that assert it. Keep this list in sync with that
+# package.json.
 on:
   pull_request:
     paths:
       - "artifacts/storefront/**"
       - "lib/tokens/**"
       - "lib/menu-catalog/**"
+      - "lib/preferences-match/**"
+      - "lib/subscription-rules/**"
       - "scripts/lint-filecap.ts"
       - "scripts/lint-tokens.ts"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/storefront.yml"
   push:
     branches: [main]
     paths:
       - "artifacts/storefront/**"
       - "lib/tokens/**"
+      - "lib/menu-catalog/**"
+      - "lib/preferences-match/**"
+      - "lib/subscription-rules/**"
       - ".github/workflows/storefront.yml"
   workflow_dispatch: {}
 
@@ -39,9 +55,16 @@ jobs:
         run: pnpm --filter @workspace/storefront run lint:tokens
       - name: Typecheck
         run: pnpm --filter @workspace/storefront run typecheck
+      # Quoted so **node** expands the glob, not the shell. Actions runs `run:`
+      # under bash with globstar off, where `**` is only `*` — one directory
+      # level, no more and no less. All 43 files sit directly in `lib/` today,
+      # so the previous `lib/*.test.ts` and this `lib/**/*.test.ts` both yield
+      # 211 tests; the quoting is what keeps that true once someone adds a
+      # subdirectory. Unquoted it would silently invert — bash would match the
+      # nested files and drop all 43 of these.
       - name: Money-path invariants (checkout · trial · attach)
         working-directory: artifacts/api-server
-        run: node --test --import tsx ../storefront/lib/*.test.ts
+        run: node --test --import tsx "../storefront/lib/**/*.test.ts"
       - name: Build (server-first, no money path)
         run: pnpm --filter @workspace/storefront run build
       # CUJ specs against the built app (TNM-SF-01 §6). Same specs re-run
