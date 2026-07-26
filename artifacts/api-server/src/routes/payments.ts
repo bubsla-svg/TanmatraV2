@@ -885,10 +885,13 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             // Marketplace (shelf-stable goods) orders never go through the
             // kitchen — only meal orders get pushed to Petpooja.
             if (order.orderKind !== "marketplace") {
+              // `req.log` is passed so the client's own diagnostics land in the
+              // request log rather than nowhere: a POS rejection, and the
+              // charge-not-reconciled warning, are both things ops has to see.
               pushOrderToPetpooja(order, {
                 name: fullName || "Guest Customer",
                 email: result.user?.email || null,
-              }).catch((err) => {
+              }, req.log).catch((err) => {
                 req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
               });
             }
@@ -972,10 +975,13 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               .filter(Boolean)
               .join(" ");
             if (order.orderKind !== "marketplace") {
+              // `req.log` is passed so the client's own diagnostics land in the
+              // request log rather than nowhere: a POS rejection, and the
+              // charge-not-reconciled warning, are both things ops has to see.
               pushOrderToPetpooja(order, {
                 name: fullName || "Guest Customer",
                 email: result.user?.email || null,
-              }).catch((err) => {
+              }, req.log).catch((err) => {
                 req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
               });
             }
