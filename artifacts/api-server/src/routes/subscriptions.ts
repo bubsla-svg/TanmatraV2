@@ -73,7 +73,7 @@ import { hasRedeemedTrialPhone } from "../lib/trialRedemption";
 
 const router: IRouter = Router();
 
-const cadenceSchema = z.enum(["weekly", "fortnightly", "monthly"]);
+const cadenceSchema = z.enum(["weekly", "fortnightly", "monthly", "quarterly"]);
 const dietSchema = z.enum(["any", "veg", "nonveg"]);
 
 const memberInputSchema = z.object({
@@ -207,6 +207,7 @@ export const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
   weekly: 7,
   fortnightly: 14,
   monthly: 42, // mapped to 6-week protocol (42 days)
+  quarterly: 126, // mapped to 3 × 6-week protocol cycles (126 days)
 };
 
 // With a per-day plan every plan generates ~4 weeks of dated deliveries
@@ -215,6 +216,7 @@ export const CADENCE_CYCLES_AHEAD: Record<SubscriptionCadence, number> = {
   weekly: 4,
   fortnightly: 2,
   monthly: 1, // generates 1 cycle (6 weeks) ahead
+  quarterly: 1, // generates 1 quarterly cycle ahead
 };
 
 // Price math (PER_MEAL_PAISE, CADENCE_DISCOUNT, trial pricing) lives in the pure
@@ -743,7 +745,7 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
     res.status(rejection.status).json(rejection.body);
     return;
   }
-  const q = computePlanQuote(data.planId, track);
+  const q = computePlanQuote(data.planId, track, data.cadence as any);
 
   const { items: addOnItems, rejected } = resolveAddOns(
     data.planId,
@@ -911,7 +913,7 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     return;
   }
   const planV2AddOns: AddOnLineItem[] = resolvedAddOns.items;
-  const q = computePlanQuote(data.planId, track);
+  const q = computePlanQuote(data.planId, track, data.cadence as any);
   const planReviewAddOnPaise = planV2AddOns
     .filter((a) => a.attachPoint === "plan_review")
     .reduce((sum, a) => sum + a.pricePaise, 0);

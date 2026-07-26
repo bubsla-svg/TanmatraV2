@@ -16,7 +16,7 @@
  * `@workspace/db` (`lib/db/src/schema/subscriptions.ts`) — kept as a local
  * literal union so this module stays browser-safe with no DB dependency.
  */
-export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly";
+export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly" | "quarterly";
 
 /** Base list price per meal (₹750). */
 export const PER_MEAL_PAISE = 75000;
@@ -26,6 +26,7 @@ export const CADENCE_DISCOUNT: Record<SubscriptionCadence, number> = {
   weekly: 0.95,
   fortnightly: 0.9,
   monthly: 0.85,
+  quarterly: 0.8,
 };
 
 /**

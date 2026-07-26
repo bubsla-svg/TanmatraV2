@@ -1,4 +1,4 @@
-export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly";
+export type SubscriptionCadence = "weekly" | "fortnightly" | "monthly" | "quarterly";
 // "halted" = billing gave up after repeated consecutive charge failures (see
 // api-server's chargeMandate.ts MAX_CONSECUTIVE_CHARGE_FAILURES). Distinct
 // from "paused" (the customer's own choice, no billing implication) — a
@@ -411,12 +411,14 @@ export const CADENCE_LABEL: Record<SubscriptionCadence, string> = {
   weekly: "Weekly",
   fortnightly: "Fortnightly",
   monthly: "Monthly",
+  quarterly: "Quarterly",
 };
 
 export const CADENCE_DAYS: Record<SubscriptionCadence, number> = {
   weekly: 7,
   fortnightly: 14,
   monthly: 30,
+  quarterly: 90,
 };
 
 export function formatScheduledDate(iso: string): string {

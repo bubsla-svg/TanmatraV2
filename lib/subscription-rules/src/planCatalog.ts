@@ -44,7 +44,7 @@ export type PlanId =
  *  (02e §2: a track that can't be filled is a §2.6 violation → refund). */
 export type DietTrack = "veg" | "egg" | "nonveg";
 
-export type PlanCycle = "weekly" | "monthly" | "one_off";
+export type PlanCycle = "weekly" | "monthly" | "quarterly" | "one_off";
 export type PlanSlot = "lunch" | "dinner" | "snack";
 export type AddOnId = "rd_bump" | "evening_add";
 
@@ -397,19 +397,40 @@ export interface PlanQuote {
   gstPaise: number;
 }
 
-export function computePlanQuote(planId: PlanId, track: DietTrack = "veg"): PlanQuote {
+export function computePlanQuote(
+  planId: PlanId,
+  track: DietTrack = "veg",
+  requestedCycle?: PlanCycle,
+): PlanQuote {
   const p = PLAN_CATALOG[planId];
-  const pricePerMeal = p.variantPrices?.[track] ?? p.pricePerMealPaise;
-  const cycleTotalPaise =
-    pricePerMeal != null
-      ? pricePerMeal * p.mealsPerCycle
-      : (p.flatPricePaise ?? 0);
+  const cycle = requestedCycle ?? p.cycle;
+  let mealsPerCycle = p.mealsPerCycle;
+  let pricePerMeal: number | null = p.variantPrices?.[track] ?? p.pricePerMealPaise;
+  let cycleTotalPaise: number;
+
+  const tableEntry = (PLAN_PRICE_TABLE as any)[planId]?.[track];
+
+  if (cycle === "quarterly" && tableEntry?.quarterlyTotalPaise != null) {
+    mealsPerCycle = p.mealsPerCycle * 3; // 66 meals for 22-meal monthly plans
+    cycleTotalPaise = tableEntry.quarterlyTotalPaise;
+    pricePerMeal = Math.round(cycleTotalPaise / mealsPerCycle);
+  } else if (cycle === "weekly" && tableEntry?.weeklyTotalPaise != null) {
+    mealsPerCycle = Math.round(p.mealsPerCycle / 4); // 5 or 6 meals per week
+    cycleTotalPaise = tableEntry.weeklyTotalPaise;
+    if (tableEntry.perMealPaise != null) pricePerMeal = tableEntry.perMealPaise;
+  } else {
+    cycleTotalPaise =
+      pricePerMeal != null
+        ? pricePerMeal * mealsPerCycle
+        : (p.flatPricePaise ?? 0);
+  }
+
   const preTaxPaise = Math.round(cycleTotalPaise / (1 + GST_RATE));
   const gstPaise = cycleTotalPaise - preTaxPaise;
   return {
     planId,
-    cycle: p.cycle,
-    mealsPerCycle: p.mealsPerCycle,
+    cycle,
+    mealsPerCycle,
     pricePerMealPaise: pricePerMeal,
     cycleTotalPaise,
     preTaxPaise,
