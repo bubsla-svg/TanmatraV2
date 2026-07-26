@@ -284,6 +284,7 @@ jobs:
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
+          ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
           ./src/routes/savedMeals.test.ts
           ./src/routes/ecosystem.test.ts

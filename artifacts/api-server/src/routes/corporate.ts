@@ -21,6 +21,7 @@ import {
 } from "../lib/razorpayRecurring";
 import { sendMail } from "../lib/mail";
 import { logger } from "../lib/logger";
+import { computeCorporateTeamsQuote, type DietTrack } from "@workspace/subscription-rules";
 
 const router: IRouter = Router();
 
@@ -1106,4 +1107,88 @@ router.post(
   },
 );
 
+// ── B2B Corporate Teams Seat Tier Quotes & Invoices (Table II.2) ─────────────
+
+const corporateTeamsQuoteSchema = z.object({
+  seats: z.number().int().min(1),
+  track: z.enum(["veg", "egg", "nonveg"]).default("veg"),
+  mealsPerCycle: z.number().int().min(1).default(22),
+});
+
+router.post("/corporate/teams/quote", async (req: Request, res: Response) => {
+  const parsed = corporateTeamsQuoteSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid quote payload", issues: parsed.error.issues });
+    return;
+  }
+  const { seats, track, mealsPerCycle } = parsed.data;
+  if (seats < 10) {
+    res.status(400).json({
+      error: "minimum 10 seats required for corporate Teams tiers",
+      code: "insufficient_seats",
+      minSeats: 10,
+    });
+    return;
+  }
+  try {
+    const quote = computeCorporateTeamsQuote(seats, track as DietTrack, mealsPerCycle);
+    res.json({ ok: true, quote });
+  } catch (err: any) {
+    res.status(400).json({ error: err?.message || "quote failure" });
+  }
+});
+
+const corporateTeamsInvoiceSchema = z.object({
+  seats: z.number().int().min(1),
+  track: z.enum(["veg", "egg", "nonveg"]).default("veg"),
+  mealsPerCycle: z.number().int().min(1).default(22),
+  companyName: z.string().min(1).max(200),
+  contactEmail: z.email().max(200),
+  clientTotalPaise: z.number().int().min(0).optional(),
+});
+
+router.post("/corporate/teams/invoice", async (req: Request, res: Response) => {
+  const parsed = corporateTeamsInvoiceSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid invoice payload", issues: parsed.error.issues });
+    return;
+  }
+  const { seats, track, mealsPerCycle, companyName, contactEmail, clientTotalPaise } = parsed.data;
+  if (seats < 10) {
+    res.status(400).json({
+      error: "minimum 10 seats required for corporate Teams tiers",
+      code: "insufficient_seats",
+      minSeats: 10,
+    });
+    return;
+  }
+
+  // Authoritative server-side pricing computation per Table II.2
+  // Never trust client-supplied invoice amounts
+  const quote = computeCorporateTeamsQuote(seats, track as DietTrack, mealsPerCycle);
+
+  if (clientTotalPaise !== undefined && clientTotalPaise !== quote.cycleTotalPaise) {
+    logger.warn(
+      { clientTotalPaise, serverTotalPaise: quote.cycleTotalPaise, seats, track },
+      "corporate.teams.invoice_amount_mismatch",
+    );
+  }
+
+  logger.info(
+    { companyName, contactEmail, seats, track, quote, discountSource: quote.discountSource },
+    "corporate.teams.invoice.generated",
+  );
+
+  res.json({
+    ok: true,
+    invoice: {
+      ...quote,
+      companyName,
+      contactEmail,
+      authoritative: true,
+    },
+  });
+});
+
 export default router;
+

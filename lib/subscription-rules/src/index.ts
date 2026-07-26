@@ -88,4 +88,8 @@ export {
   planIsSelfServiceLaunchable,
   planServesTrack,
   ROUTER_ANSWER_TO_PLAN,
+  type B2BSeatTier,
+  type CorporateInvoiceQuote,
+  TEAMS_SEAT_TIERS,
+  computeCorporateTeamsQuote,
 } from "./planCatalog.js";
