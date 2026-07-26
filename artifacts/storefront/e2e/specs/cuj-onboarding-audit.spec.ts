@@ -30,9 +30,14 @@ test.describe("OB-6 Onboarding Conversion Gate & Auth Audit", () => {
       await page.goto(path);
       // Ensure page does NOT redirect to /login
       expect(page.url()).not.toContain("/login");
-      // Assert zero auth modals or OTP blockers intercept public browsing
+      // Assert zero auth modals or OTP blockers intercept public browsing.
+      // Target <PhoneAuth/>'s own inputs (#pa-phone / autocomplete=one-time-code),
+      // not any tel field: the homepage's §4 clinical waitlist asks for a phone
+      // number too, and that is unauthenticated marketing capture, not a wall.
+      // Matching `input[type='tel']` failed on it while the actual invariant —
+      // no auth island intercepts a logged-out browser — still held.
       await expect(page.locator("input[autocomplete='one-time-code']")).toHaveCount(0);
-      await expect(page.locator("input[type='tel']")).toHaveCount(0);
+      await expect(page.locator("#pa-phone")).toHaveCount(0);
     }
     expect(errors).toEqual([]);
   });

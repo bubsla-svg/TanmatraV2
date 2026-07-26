@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { Section00StickyNav } from "@/components/landing/Section00StickyNav";
-import { Section01ClinicalHero, deriveHeroContent } from "@/components/landing/Section01ClinicalHero";
+import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
+import { deriveHeroContent } from "@/lib/heroContent";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
 import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 import { Section03AgitationPanel } from "@/components/landing/Section03AgitationPanel";
