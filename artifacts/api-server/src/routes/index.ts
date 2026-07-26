@@ -57,6 +57,7 @@ import openApiContractRouter from "./openApiContract";
 import geoRouter from "./geo";
 import ecosystemRouter from "./ecosystem";
 import savedMealsRouter from "./savedMeals";
+import serviceabilityRouter from "./serviceability";
 
 const router: IRouter = Router();
 
@@ -65,6 +66,7 @@ router.use(catalogRouter);
 router.use(cspReportRouter);
 router.use(openApiContractRouter);
 router.use(geoRouter);
+router.use(serviceabilityRouter);
 router.use(authRouter);
 router.use(adminAuthRouter);
 router.use(adminStatusRouter);
