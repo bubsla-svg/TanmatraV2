@@ -44,7 +44,6 @@ import {
   planServesTrack,
   resolveAddOns,
 } from "@workspace/subscription-rules";
-import { isPlanV2Enabled } from "../lib/flags";
 
 // Marker written into a subscription's `notes` so a plan-v2 subscription is
 // attributable to its PlanId without a schema migration (the subscriptions
@@ -731,148 +730,99 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
   // shape as the legacy quote plus planId/track, so the client renders it
   // identically. Blocked/sales-led plans and unserved tracks return a typed
   // 422 with `waitlist: true` rather than a bookable quote (02e §7).
-  if (isPlanV2Enabled() && data.planId) {
-    const track: DietTrack = data.track ?? "veg";
-    const rejection = planV2Rejection(data.planId, track);
-    if (rejection) {
-      res.status(rejection.status).json(rejection.body);
-      return;
-    }
-    const q = computePlanQuote(data.planId);
-
-    // Resolve any requested add-ons against the plan's allow-list. A not-allowed
-    // add-on is a client error (422); this never happens for the default flow.
-    const { items: addOnItems, rejected } = resolveAddOns(
-      data.planId,
-      data.addOns ?? [],
-    );
-    if (rejected.length > 0) {
-      res.status(422).json({
-        error: "add-on not available for this plan",
-        code: "addon_not_allowed",
-        planId: data.planId,
-        rejected,
-        allowed: PLAN_CATALOG[data.planId].addOnsAllowed,
-      });
-      return;
-    }
-    // Only plan-review add-ons (rd_bump) are billed into the plan-review quote;
-    // post_purchase add-ons (evening_add) are surfaced as available but never
-    // block or inflate this total (02c: the pay screen shows the real number).
-    const planReviewAddOns = addOnItems.filter(
-      (a) => a.attachPoint === "plan_review",
-    );
-    const addOnTotalPaise = planReviewAddOns.reduce(
-      (sum, a) => sum + a.pricePaise,
-      0,
-    );
-    const totalPaise = q.cycleTotalPaise + addOnTotalPaise;
-    // Re-derive the GST split on the combined (GST-inclusive) total.
-    const preTaxPaise = Math.round(totalPaise / (1 + GST_RATE));
-
-    // Signed-in preview of the credits the create route WILL redeem against
-    // this first bill, in its exact order: the à-la-carte→trial bridge credit
-    // first (trial only), then the general ledger balance against what's left
-    // (02e §6). The create route feeds bridgeCreditDiscountPaise the SAME
-    // inputs this uses — the storefront sends mealsPerDelivery = this quote's
-    // q.mealsPerCycle, and pricePerDeliveryPaise there === totalPaise here — so
-    // payableTotalPaise below equals the amount create charges, never a
-    // client-side guess that misses the bridge step. READ-ONLY: nothing is
-    // consumed; create re-derives and redeems atomically at pay time. Absent
-    // for anonymous callers (no req.user) — the pre-OTP quote just shows the
-    // gross total, and PlanCheckout re-quotes once signed in.
-    let bridgeCreditPaise = 0;
-    let creditAppliedPaise = 0;
-    const previewUserId = req.user?.id;
-    if (previewUserId) {
-      if (data.planId === "trial_3day") {
-        const [credit] = await db
-          .select({ amount: mealCreditsTable.amount })
-          .from(mealCreditsTable)
-          .where(
-            and(
-              eq(mealCreditsTable.userId, previewUserId),
-              eq(mealCreditsTable.reason, "alacarte_bridge"),
-              isNull(mealCreditsTable.consumedAt),
-              or(
-                isNull(mealCreditsTable.expiresAt),
-                gt(mealCreditsTable.expiresAt, new Date()),
-              ),
-            ),
-          )
-          .limit(1);
-        if (credit) {
-          bridgeCreditPaise = bridgeCreditDiscountPaise(
-            credit.amount,
-            q.mealsPerCycle,
-            totalPaise,
-          );
-        }
-      }
-      const balancePaise = await getCreditBalancePaise(previewUserId);
-      creditAppliedPaise = Math.min(
-        balancePaise,
-        Math.max(0, totalPaise - bridgeCreditPaise),
-      );
-    }
-    const payableTotalPaise = Math.max(
-      0,
-      totalPaise - bridgeCreditPaise - creditAppliedPaise,
-    );
-
-    res.json({
-      planId: data.planId,
-      track,
-      mealsPerDelivery: q.mealsPerCycle,
-      pricePerMealPaise: q.pricePerMealPaise,
-      pricePerDeliveryPaise: q.cycleTotalPaise,
-      addOns: addOnItems,
-      addOnTotalPaise,
-      discountPaise: 0,
-      deliveryFeePaise: 0,
-      gstPaise: totalPaise - preTaxPaise,
-      totalPaise,
-      // Credit preview (signed-in only) — see the block above.
-      bridgeCreditPaise,
-      creditAppliedPaise,
-      payableTotalPaise,
+  if (!data.planId) {
+    res.status(400).json({
+      error: "planId is required for subscription quotes; legacy pricing is disabled",
+      code: "legacy_pricing_disabled",
     });
     return;
   }
+  const track: DietTrack = data.track ?? "veg";
+  const rejection = planV2Rejection(data.planId, track);
+  if (rejection) {
+    res.status(rejection.status).json(rejection.body);
+    return;
+  }
+  const q = computePlanQuote(data.planId, track);
 
-  const isTrial = data.planType === "trial";
-  const meals = data.dayPlan
-    ? data.dayPlan.reduce(
-        (total, d) => total + d.items.reduce((s, it) => s + it.quantity, 0),
-        0,
-      )
-    : (data.mealsPerDelivery ?? 0);
+  const { items: addOnItems, rejected } = resolveAddOns(
+    data.planId,
+    data.addOns ?? [],
+  );
+  if (rejected.length > 0) {
+    res.status(422).json({
+      error: "add-on not available for this plan",
+      code: "addon_not_allowed",
+      planId: data.planId,
+      rejected,
+      allowed: PLAN_CATALOG[data.planId].addOnsAllowed,
+    });
+    return;
+  }
+  const planReviewAddOns = addOnItems.filter(
+    (a) => a.attachPoint === "plan_review",
+  );
+  const addOnTotalPaise = planReviewAddOns.reduce(
+    (sum, a) => sum + a.pricePaise,
+    0,
+  );
+  const totalPaise = q.cycleTotalPaise + addOnTotalPaise;
+  const preTaxPaise = Math.round(totalPaise / (1 + GST_RATE));
 
-  const pricePerMealPaise = PER_MEAL_PAISE;
-  const baseSubtotal = meals * pricePerMealPaise;
-  let finalSubtotal = isTrial ? computeTrialPricePaise(meals) : computeDeliveryPricePaise(data.cadence, meals);
-  const discountPaise = baseSubtotal - finalSubtotal;
-  
-  // Delivery is free for subscriptions (delivery included)
-  const deliveryFeePaise = 0;
-  
-  // finalSubtotal is already GST-inclusive (computeDeliveryPricePaise /
-  // computeTrialPricePaise both bake in 5% GST). Derive the GST component for
-  // display by splitting finalSubtotal into its pre-tax/post-tax parts —
-  // do NOT apply a second 5% on top, or the quote double-counts tax versus
-  // what /subscriptions actually bills via /payments/charge-mandate.
-  const preTaxSubtotalPaise = Math.round(finalSubtotal / (1 + GST_RATE));
-  const gstPaise = finalSubtotal - preTaxSubtotalPaise;
-  const totalPaise = finalSubtotal + deliveryFeePaise;
+  let bridgeCreditPaise = 0;
+  let creditAppliedPaise = 0;
+  const previewUserId = req.user?.id;
+  if (previewUserId) {
+    if (data.planId === "trial_3day") {
+      const [credit] = await db
+        .select({ amount: mealCreditsTable.amount })
+        .from(mealCreditsTable)
+        .where(
+          and(
+            eq(mealCreditsTable.userId, previewUserId),
+            eq(mealCreditsTable.reason, "alacarte_bridge"),
+            isNull(mealCreditsTable.consumedAt),
+            or(
+              isNull(mealCreditsTable.expiresAt),
+              gt(mealCreditsTable.expiresAt, new Date()),
+            ),
+          ),
+        )
+        .limit(1);
+      if (credit) {
+        bridgeCreditPaise = bridgeCreditDiscountPaise(
+          credit.amount,
+          q.mealsPerCycle,
+          totalPaise,
+        );
+      }
+    }
+    const balancePaise = await getCreditBalancePaise(previewUserId);
+    creditAppliedPaise = Math.min(
+      balancePaise,
+      Math.max(0, totalPaise - bridgeCreditPaise),
+    );
+  }
+  const payableTotalPaise = Math.max(
+    0,
+    totalPaise - bridgeCreditPaise - creditAppliedPaise,
+  );
 
   res.json({
-    mealsPerDelivery: meals,
-    pricePerMealPaise,
-    pricePerDeliveryPaise: baseSubtotal,
-    discountPaise,
-    deliveryFeePaise,
-    gstPaise,
+    planId: data.planId,
+    track,
+    mealsPerDelivery: q.mealsPerCycle,
+    pricePerMealPaise: q.pricePerMealPaise,
+    pricePerDeliveryPaise: q.cycleTotalPaise,
+    addOns: addOnItems,
+    addOnTotalPaise,
+    discountPaise: 0,
+    deliveryFeePaise: 0,
+    gstPaise: totalPaise - preTaxPaise,
     totalPaise,
+    bridgeCreditPaise,
+    creditAppliedPaise,
+    payableTotalPaise,
   });
 });
 
@@ -936,102 +886,61 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     res.status(400).json({ error: "startDate must be today or later" });
     return;
   }
-  // A trial is any request that asks for planType:"trial" OR carries a
-  // recognised trial marker in notes (keeps old RD-plan trial links working).
-  // The plan-v2 `trial_3day` plan also flips this on below (once the flag +
-  // plan gates pass), so it persists trialState — without which the paid-time
-  // creditback seam (isLiveTrialState) would never fire.
-  let isTrial =
-    data.planType === "trial" || isTrialSubscription({ notes: data.notes ?? null });
+  if (!data.planId) {
+    res.status(400).json({
+      error: "planId is required for new subscription signups; legacy pricing is disabled",
+      code: "legacy_pricing_disabled",
+    });
+    return;
+  }
+  const track: DietTrack = data.track ?? "veg";
+  const rejection = planV2Rejection(data.planId, track);
+  if (rejection) {
+    res.status(rejection.status).json(rejection.body);
+    return;
+  }
+  const resolvedAddOns = resolveAddOns(data.planId, data.addOns ?? []);
+  if (resolvedAddOns.rejected.length > 0) {
+    res.status(422).json({
+      error: "add-on not available for this plan",
+      code: "addon_not_allowed",
+      planId: data.planId,
+      rejected: resolvedAddOns.rejected,
+      allowed: PLAN_CATALOG[data.planId].addOnsAllowed,
+    });
+    return;
+  }
+  const planV2AddOns: AddOnLineItem[] = resolvedAddOns.items;
+  const q = computePlanQuote(data.planId, track);
+  const planReviewAddOnPaise = planV2AddOns
+    .filter((a) => a.attachPoint === "plan_review")
+    .reduce((sum, a) => sum + a.pricePaise, 0);
+  const pricePerDeliveryPaise = q.cycleTotalPaise + planReviewAddOnPaise;
 
-  // With a day plan the meal count is server-authoritative: sum of item
-  // quantities across the cycle. The client's mealsPerDelivery is ignored
-  // so displayed price can never drift from billed price.
   const mealsPerDelivery = data.dayPlan
     ? data.dayPlan.reduce(
         (total, d) => total + d.items.reduce((s, it) => s + it.quantity, 0),
         0,
       )
-    : data.mealsPerDelivery;
-  let pricePerDeliveryPaise = computeDeliveryPricePaise(
-    data.cadence,
-    mealsPerDelivery,
-  );
+    : (q.mealsPerCycle ?? data.mealsPerDelivery);
   let generateCount = data.dayPlan ? CADENCE_CYCLES_AHEAD[data.cadence] : 4;
-  // Normalise the persisted note so downstream trial detection is stable
-  // regardless of which entry point created it.
   let notes = data.notes;
-  // Plan-v2 add-ons resolved from the request, persisted with the subscription
-  // inside the create transaction below (empty unless the plan-v2 branch fills
-  // it).
-  let planV2AddOns: AddOnLineItem[] = [];
+  let isTrial = data.planType === "trial" || isTrialSubscription({ notes: data.notes ?? null });
 
-  if (isTrial) {
-    pricePerDeliveryPaise = computeTrialPricePaise(mealsPerDelivery);
-    generateCount = 1; // one-off 3-day sampler — does not recur
-    notes = notes && notes !== LEGACY_TRIAL_NOTE ? notes : TRIAL_NOTE;
-    if (notes !== TRIAL_NOTE && notes !== LEGACY_TRIAL_NOTE) {
-      // Caller sent custom notes; append the canonical marker so the
-      // trial is still recognisable later.
-      notes = `${TRIAL_NOTE} — ${notes}`.slice(0, 512);
-    }
-  }
-
-  // Plan-v2 (FLAG_PLAN_V2): price and gate by the corpus plan spine. This wins
-  // over the cadence/trial pricing above — the plan's cycle total is the
-  // server-authoritative billed amount — and tags the subscription with its
-  // PlanId in notes (no schema migration). Blocked/sales-led plans and unserved
-  // tracks are refused here, so a bad combo can never reach mandate creation.
-  if (isPlanV2Enabled() && data.planId) {
-    const track: DietTrack = data.track ?? "veg";
-    const rejection = planV2Rejection(data.planId, track);
-    if (rejection) {
-      res.status(rejection.status).json(rejection.body);
-      return;
-    }
-    // Resolve requested add-ons against the plan's allow-list — the same gate
-    // the quote uses. A not-allowed add-on is a 422, never silently priced.
-    const resolvedAddOns = resolveAddOns(data.planId, data.addOns ?? []);
-    if (resolvedAddOns.rejected.length > 0) {
-      res.status(422).json({
-        error: "add-on not available for this plan",
-        code: "addon_not_allowed",
-        planId: data.planId,
-        rejected: resolvedAddOns.rejected,
-        allowed: PLAN_CATALOG[data.planId].addOnsAllowed,
+  if (data.planId === "trial_3day") {
+    generateCount = 1; // one-off sampler — does not recur
+    isTrial = true; // persist trialState so the paid-time creditback fires
+    const phoneHash = hashTrialPhone(data.phone);
+    if (phoneHash && (await hasRedeemedTrialPhone(phoneHash))) {
+      res.status(409).json({
+        error: "This phone number has already used its 3-Day Taste Test.",
+        code: "trial_already_redeemed",
       });
       return;
     }
-    planV2AddOns = resolvedAddOns.items;
-    const q = computePlanQuote(data.planId);
-    // Only plan-review add-ons (rd_bump, monthly) are billed into this first
-    // cycle — the same rule as /quote. A post_purchase add-on (evening_add) is
-    // still persisted active below, but billed by the recurring charge, never
-    // inflating this order.
-    const planReviewAddOnPaise = planV2AddOns
-      .filter((a) => a.attachPoint === "plan_review")
-      .reduce((sum, a) => sum + a.pricePaise, 0);
-    pricePerDeliveryPaise = q.cycleTotalPaise + planReviewAddOnPaise;
-    if (data.planId === "trial_3day") {
-      generateCount = 1; // one-off sampler — does not recur
-      isTrial = true; // persist trialState so the paid-time creditback fires
-      // One 3-Day Taste Test per phone, EVER (02b/02e §6). This is a friendly
-      // early rejection — the durable enforcement is the trial_redemptions
-      // UNIQUE that the paid-time grant writes (a create whose payment never
-      // lands must not burn the allowance, so we only READ here). An
-      // unidentifiable phone hashes to "" and is not gated.
-      const phoneHash = hashTrialPhone(data.phone);
-      if (phoneHash && (await hasRedeemedTrialPhone(phoneHash))) {
-        res.status(409).json({
-          error: "This phone number has already used its 3-Day Taste Test.",
-          code: "trial_already_redeemed",
-        });
-        return;
-      }
-    }
-    const planTag = `${PLAN_V2_NOTE_PREFIX}${data.planId}`;
-    notes = notes ? `${planTag} — ${notes}`.slice(0, 512) : planTag;
   }
+  const planTag = `${PLAN_V2_NOTE_PREFIX}${data.planId}`;
+  notes = notes ? `${planTag} — ${notes}`.slice(0, 512) : planTag;
 
   // A single-member subscription's sole member unambiguously IS the account
   // holder, so it's safe to backfill their macro-cap target from their own

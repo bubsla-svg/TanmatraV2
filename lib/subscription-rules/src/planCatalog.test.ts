@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { DISHES } from "@workspace/menu-catalog";
 import {
   PLAN_CATALOG,
+  PLAN_PRICE_TABLE,
   ADD_ONS,
   attachableAddOns,
   resolveAddOns,
@@ -205,3 +206,71 @@ test("isServable treats absent rdReviewState as reviewed and honours availabilit
   assert.equal(isServable({ ...sample, rdReviewState: "blocked" }), false);
   assert.equal(isServable({ ...sample, rdReviewState: "pending_review" }), false);
 });
+
+// ── §2 Variant pricing deltas (02e Table II.1) ────────────────────────────────
+test("PLAN_PRICE_TABLE and computePlanQuote exactly match Table II.1 variant totals", () => {
+  // desk_fuel variants
+  const dfVeg = computePlanQuote("desk_fuel", "veg");
+  assert.equal(dfVeg.pricePerMealPaise, 19900);
+  assert.equal(dfVeg.cycleTotalPaise, 437800);
+
+  const dfEgg = computePlanQuote("desk_fuel", "egg");
+  assert.equal(dfEgg.pricePerMealPaise, 20900);
+  assert.equal(dfEgg.cycleTotalPaise, 459800);
+
+  const dfNonveg = computePlanQuote("desk_fuel", "nonveg");
+  assert.equal(dfNonveg.pricePerMealPaise, 21900);
+  assert.equal(dfNonveg.cycleTotalPaise, 481800);
+
+  // protein_build variants
+  const pbVeg = computePlanQuote("protein_build", "veg");
+  assert.equal(pbVeg.pricePerMealPaise, 24900);
+  assert.equal(pbVeg.cycleTotalPaise, 547800);
+
+  const pbEgg = computePlanQuote("protein_build", "egg");
+  assert.equal(pbEgg.pricePerMealPaise, 25900);
+  assert.equal(pbEgg.cycleTotalPaise, 569800);
+
+  const pbNonveg = computePlanQuote("protein_build", "nonveg");
+  assert.equal(pbNonveg.pricePerMealPaise, 27900);
+  assert.equal(pbNonveg.cycleTotalPaise, 613800);
+
+  // steady (single variant nonveg)
+  const stNonveg = computePlanQuote("steady", "nonveg");
+  assert.equal(stNonveg.pricePerMealPaise, 22900);
+  assert.equal(stNonveg.cycleTotalPaise, 503800);
+});
+
+test("variant delta invariants: egg is veg + ₹10; non-veg is +₹20 (Desk Fuel) or +₹30 (Protein Build)", () => {
+  const df = PLAN_PRICE_TABLE.desk_fuel;
+  assert.equal(df.egg.perMealPaise, df.veg.perMealPaise! + 1000, "desk_fuel egg delta must be +₹10/meal");
+  assert.equal(df.nonveg.perMealPaise, df.veg.perMealPaise! + 2000, "desk_fuel nonveg delta must be +₹20/meal");
+
+  const pb = PLAN_PRICE_TABLE.protein_build;
+  assert.equal(pb.egg.perMealPaise, pb.veg.perMealPaise! + 1000, "protein_build egg delta must be +₹10/meal");
+  assert.equal(pb.nonveg.perMealPaise, pb.veg.perMealPaise! + 3000, "protein_build nonveg delta must be +₹30/meal");
+});
+
+test("GST identity gst = total − round(total/1.05) holds for all plan and variant quotes", () => {
+  const testCases: Array<[string, string]> = [
+    ["desk_fuel", "veg"],
+    ["desk_fuel", "egg"],
+    ["desk_fuel", "nonveg"],
+    ["protein_build", "veg"],
+    ["protein_build", "egg"],
+    ["protein_build", "nonveg"],
+    ["steady", "nonveg"],
+    ["glp1_companion", "nonveg"],
+    ["teams", "veg"],
+    ["trial_3day", "veg"],
+  ];
+
+  for (const [planId, track] of testCases) {
+    const q = computePlanQuote(planId as any, track as any);
+    const expectedPreTax = Math.round(q.cycleTotalPaise / 1.05);
+    const expectedGst = q.cycleTotalPaise - expectedPreTax;
+    assert.equal(q.preTaxPaise, expectedPreTax, `preTax mismatch for ${planId} (${track})`);
+    assert.equal(q.gstPaise, expectedGst, `gst mismatch for ${planId} (${track})`);
+  }
+});
+
