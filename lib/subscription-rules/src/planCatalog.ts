@@ -604,3 +604,67 @@ export const ROUTER_ANSWER_TO_PLAN: ReadonlyArray<{
 }> = (Object.values(PLAN_CATALOG) as PlanConfig[])
   .filter((p): p is PlanConfig & { routerAnswer: string } => p.routerAnswer !== null)
   .map((p) => ({ answer: p.routerAnswer, planId: p.id }));
+
+// ── Corporate Teams Seat Tiers (Table II.2) ──────────────────────────────────
+export interface B2BSeatTier {
+  tier: 1 | 2 | 3;
+  minSeats: number;
+  maxSeats: number | null;
+  pricesPaise: Record<DietTrack, number>;
+}
+
+export const TEAMS_SEAT_TIERS: readonly B2BSeatTier[] = [
+  { tier: 1, minSeats: 10, maxSeats: 24, pricesPaise: { veg: 20900, egg: 21900, nonveg: 22900 } },
+  { tier: 2, minSeats: 25, maxSeats: 49, pricesPaise: { veg: 19900, egg: 20900, nonveg: 21900 } },
+  { tier: 3, minSeats: 50, maxSeats: null, pricesPaise: { veg: 18900, egg: 19900, nonveg: 20900 } },
+] as const;
+
+export interface CorporateInvoiceQuote {
+  seats: number;
+  mealsPerCycle: number;
+  tier: 1 | 2 | 3;
+  track: DietTrack;
+  pricePerMealPaise: number;
+  totalMeals: number;
+  cycleTotalPaise: number;
+  preTaxPaise: number;
+  gstPaise: number;
+  discountSource: string;
+}
+
+export function computeCorporateTeamsQuote(
+  seats: number,
+  track: DietTrack = "veg",
+  mealsPerCycle: number = 22,
+): CorporateInvoiceQuote {
+  if (!Number.isInteger(seats) || seats < 10) {
+    throw new Error("minimum 10 seats required for corporate Teams tiers");
+  }
+  let selectedTier: B2BSeatTier = TEAMS_SEAT_TIERS[0]!;
+  if (seats >= 50) {
+    selectedTier = TEAMS_SEAT_TIERS[2]!;
+  } else if (seats >= 25) {
+    selectedTier = TEAMS_SEAT_TIERS[1]!;
+  }
+
+  const pricePerMealPaise = selectedTier.pricesPaise[track];
+  const totalMeals = seats * mealsPerCycle;
+  const cycleTotalPaise = totalMeals * pricePerMealPaise;
+  const preTaxPaise = Math.round(cycleTotalPaise / (1 + GST_RATE));
+  const gstPaise = cycleTotalPaise - preTaxPaise;
+  const discountSource = `Corporate Teams Tier ${selectedTier.tier} (${selectedTier.minSeats}${selectedTier.maxSeats ? "-" + selectedTier.maxSeats : "+"} seats: ₹${pricePerMealPaise / 100}/meal)`;
+
+  return {
+    seats,
+    mealsPerCycle,
+    tier: selectedTier.tier,
+    track,
+    pricePerMealPaise,
+    totalMeals,
+    cycleTotalPaise,
+    preTaxPaise,
+    gstPaise,
+    discountSource,
+  };
+}
+
