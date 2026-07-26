@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { Section00StickyNav } from "@/components/landing/Section00StickyNav";
 import { Section01ClinicalHero, deriveHeroContent } from "@/components/landing/Section01ClinicalHero";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
+import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 import { Section03AgitationPanel } from "@/components/landing/Section03AgitationPanel";
 import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
 import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
@@ -34,7 +35,14 @@ export default async function HomePage() {
         <Section01ClinicalHero hero={heroData} />
 
         {/* §2: Qualification Chips Strip */}
-        <Section02QualificationChips />
+        {/* OB-2's front-door serviceability check. The M3 layout supersedes the
+          L-2 homepage this was mounted on, and none of the §0–§12 sections
+          carry it — without this line the merge would silently drop the
+          feature. Advisory only: it never blocks browsing. */}
+      <div className="mx-auto max-w-5xl px-4">
+        <ServiceabilityBar placement="hero" />
+      </div>
+      <Section02QualificationChips />
 
         {/* §3: "The 'Healthy' Bowl Problem" Dark Agitation Panel */}
         <Section03AgitationPanel />

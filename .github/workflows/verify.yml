@@ -319,6 +319,7 @@ jobs:
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
+          ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
           ./src/routes/savedMeals.test.ts
           ./src/routes/ecosystem.test.ts
@@ -345,6 +346,11 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/serviceability.test.ts
+      - name: Notify-me serviceability interest capture (OB-3)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/serviceabilityInterest.test.ts
       - name: Geocoding precision and dual-key resilience
         working-directory: artifacts/api-server
         run: >
@@ -395,3 +401,10 @@ jobs:
           ./src/lib/petpooja.transition.test.ts
           ./src/routes/petpooja.saveorder.test.ts
           ./src/routes/petpooja.statusMonotonic.test.ts
+      # Lead capture pipeline contracts (B2B corporate & partner acquisition).
+      - name: Lead capture route contracts (B2B and partners)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/corporateLeads.test.ts
+          ./src/routes/partnerLeads.test.ts

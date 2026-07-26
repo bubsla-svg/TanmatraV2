@@ -5,6 +5,7 @@ import { LandingIcon } from "@/components/landing/LandingIcon";
 import { SubsidyCalculator } from "@/components/landing/SubsidyCalculator";
 import { CorporateLeadForm } from "@/components/corporate/CorporateLeadForm";
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
+import { StickyCtaBar } from "@/components/landing/StickyCtaBar";
 import { SITE_URL } from "@/lib/siteUrl";
 import {
   CORPORATE_META,
@@ -82,6 +83,14 @@ export default function CorporateWellnessPage() {
         <h2 className="text-2xl font-semibold tracking-tight text-ink">What HR asks us</h2>
         <FaqAccordion items={CORPORATE_FAQ} />
       </section>
+
+      <StickyCtaBar
+        pageSlug="/corporate-wellness"
+        title="Corporate Team Wellness"
+        subtitle="Custom pilot pricing for office lunches & subsidies."
+        ctaLabel="Book Pilot Call"
+        ctaHref="#pilot-form"
+      />
     </div>
   );
 }

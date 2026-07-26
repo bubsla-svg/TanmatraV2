@@ -1,9 +1,7 @@
-"use client";
-// Client: public corporate/gym/club lead-capture form. The server owns
-// validation + the per-IP rate limit; this gathers input and reflects the
-// server's 201 / 400 / 429. No auth, no money surface.
+"use client"; // Justification: client-side form field state and network lead submission.
 import { useState } from "react";
 import { ApiError } from "@/lib/apiClient";
+import { emitLpEvent } from "@/lib/lpEvents";
 import {
   submitCorporateLead,
   TEAM_SIZE_BANDS,
@@ -59,6 +57,7 @@ export function CorporateLeadForm({
     if (!valid) return;
     setBusy(true);
     setError(null);
+    emitLpEvent("lead_submit", { page: source, kind, seats_band: teamSizeBand });
     try {
       await submitCorporateLead({
         kind,
@@ -71,15 +70,16 @@ export function CorporateLeadForm({
         message: message.trim() || undefined,
         source,
       });
+      emitLpEvent("lead_success", { page: source, kind, seats_band: teamSizeBand });
       setDone(true);
     } catch (e) {
-      setError(
-        e instanceof ApiError && e.status === 429
-          ? "Too many submissions from this network — please try again shortly."
-          : e instanceof ApiError
-            ? e.message
-            : "Couldn't send that just now — please try again.",
-      );
+      const errMsg = e instanceof ApiError && e.status === 429
+        ? "Too many submissions from this network — please try again shortly."
+        : e instanceof ApiError
+          ? e.message
+          : "Couldn't send that just now — please try again.";
+      setError(errMsg);
+      emitLpEvent("lead_error", { page: source, error: errMsg });
     } finally {
       setBusy(false);
     }

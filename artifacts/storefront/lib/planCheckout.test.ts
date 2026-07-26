@@ -74,3 +74,17 @@ test("nextWeekdayISO: Friday → Monday, weekday → next day, never a weekend",
   // 2026-07-25 is a Saturday → +1 = Sun → skip to Mon 2026-07-27.
   assert.equal(nextWeekdayISO(new Date("2026-07-25T09:00:00Z")), "2026-07-27");
 });
+
+test("buildSubscriptionInput: threads ref parameter when provided (L-7)", () => {
+  const base = {
+    planId: "desk_fuel", track: "veg" as const, cadence: "monthly" as const,
+    mealsPerDelivery: 5, startDate: "2026-07-27", members: MEMBERS,
+    address: { line1: "Flat 3B", city: "Noida", pincode: "201301" }, phone: "+911",
+  };
+  const withRef = buildSubscriptionInput({ ...base, ref: "dietitian_dr_sharma" });
+  assert.equal(withRef.ref, "dietitian_dr_sharma");
+
+  const withoutRef = buildSubscriptionInput(base);
+  assert.ok(!("ref" in withoutRef), "absent ref omitted");
+});
+
