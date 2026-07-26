@@ -14,6 +14,7 @@ import {
   slotReservationsTable,
   subscriptionDeliveriesTable,
   subscriptionsTable,
+  companySubsidyChargesTable,
   userProfileTable,
   type CreditLedgerReason,
   type LoyaltyConfig,
@@ -23,6 +24,7 @@ import {
 import { inArray } from "drizzle-orm";
 import { makeBatchDishResolver } from "./menuResolver";
 import { computeBundleDiscountPaise } from "./bundlePricing";
+import { reserveSubsidyForOrder } from "./corporateSubsidy";
 import {
   evaluateDishForPreferences,
   type PreferencesForMatch,
@@ -505,6 +507,13 @@ export async function finalizeOrder(args: {
   ecoPackagingOptIn?: boolean;
   deliveryInstructions?: string | null;
   subscriptionId?: number | null;
+  /**
+   * The member's INTENT to spend their corporate allowance on this order — not
+   * an amount. Defaults to true, matching the checkout toggle's default; the
+   * server computes the paise from company policy under a lock and subtracts it
+   * from charge_paise. See lib/corporateSubsidy.ts.
+   */
+  applySubsidy?: boolean;
 }): Promise<{
   orderId: string;
   serverOrderId: number;
@@ -518,6 +527,11 @@ export async function finalizeOrder(args: {
   gstPaise: number;
   deliveryFeePaise: number;
   chargePaise: number;
+  /**
+   * The company's share, already SUBTRACTED from chargePaise. Present so a
+   * receipt can show the line; the payment path must keep billing chargePaise.
+   */
+  subsidyPaise: number;
   balancePaise: number;
   duplicate: boolean;
   referral: AwardReferralResult;
@@ -856,6 +870,7 @@ export async function finalizeOrder(args: {
       .insert(ordersTable)
       .values({
         userId: args.userId,
+        orderChannel: "own_app",
         externalOrderId: args.orderId,
         status: "placed",
         totalPaise: discountedGross,
@@ -954,6 +969,24 @@ export async function finalizeOrder(args: {
         subtotalPaise: grossPaise,
         fulfillmentType,
       });
+      // Read the subsidy already reserved for this order rather than
+      // recomputing it: the first finalize subtracted THAT number from the
+      // persisted charge_paise, and a replay must report the same figure or
+      // the client would show a total the gateway will not bill. Recomputing
+      // could differ — budget may have moved since.
+      const [dupSubsidy] = await tx
+        .select({ paise: companySubsidyChargesTable.paise })
+        .from(companySubsidyChargesTable)
+        .where(
+          and(
+            eq(companySubsidyChargesTable.orderId, serverOrderId),
+            inArray(companySubsidyChargesTable.status, [
+              "reserved",
+              "committed",
+            ]),
+          ),
+        );
+      const dupSubsidyPaise = dupSubsidy?.paise ?? 0;
       return {
         orderId: args.orderId,
         serverOrderId,
@@ -966,7 +999,8 @@ export async function finalizeOrder(args: {
         finalPaise: dupFinalPaise,
         gstPaise: dupCharge.gstPaise,
         deliveryFeePaise: dupCharge.deliveryFeePaise,
-        chargePaise: dupCharge.chargePaise,
+        chargePaise: Math.max(0, dupCharge.chargePaise - dupSubsidyPaise),
+        subsidyPaise: dupSubsidyPaise,
         balancePaise: balance,
         duplicate: true,
         referral: {
@@ -1038,11 +1072,32 @@ export async function finalizeOrder(args: {
     const finalPaise = discountedGross - redeemed;
 
     // Authoritative payable amount — the ONLY number the payment path bills.
-    const { chargePaise, gstPaise, deliveryFeePaise } = computeChargePaise({
-      finalPaise,
-      subtotalPaise: grossPaise,
-      fulfillmentType,
+    const { chargePaise: grossChargePaise, gstPaise, deliveryFeePaise } =
+      computeChargePaise({
+        finalPaise,
+        subtotalPaise: grossPaise,
+        fulfillmentType,
+      });
+
+    // Corporate subsidy. Reserved HERE, inside the pricing transaction, and
+    // subtracted from charge_paise — so the company's share is part of the
+    // order's own price rather than a client-side subtraction the server never
+    // saw. Everything downstream is then correct without knowing subsidies
+    // exist: the gateway bills charge_paise, the webhook reconciles against
+    // charge_paise, and the refund cap derives from charge_paise, so a refund
+    // can never hand back more than the customer actually paid.
+    //
+    // The reservation shares this transaction, so a rollback un-reserves the
+    // budget automatically — there is no window where the money is held against
+    // an order that does not exist.
+    const reservation = await reserveSubsidyForOrder(tx, {
+      userId: args.userId,
+      serverOrderId,
+      grossPaise: grossChargePaise,
+      optIn: args.applySubsidy ?? true,
     });
+    const subsidyPaise = reservation?.paise ?? 0;
+    const chargePaise = Math.max(0, grossChargePaise - subsidyPaise);
 
     // 4. Persist actual amounts on the claim and the order.
     //    charge_paise is written unconditionally (it is the payment source of
@@ -1093,6 +1148,7 @@ export async function finalizeOrder(args: {
       gstPaise,
       deliveryFeePaise,
       chargePaise,
+      subsidyPaise,
       balancePaise,
       duplicate: false,
       referral,

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { premiumApi } from "@/lib/marketplaceApi";
 import { formatPrice } from "@/lib/api/adapter";
 import { DELIVERY_ETA_TEXT } from "@/lib/deliveryPromise";
+import { openRazorpayCheckout } from "@/lib/razorpayClient";
 
 const BENEFITS = [
   {
@@ -37,7 +38,34 @@ export default function V2Premium() {
   });
 
   const subscribe = useMutation({
-    mutationFn: premiumApi.subscribe,
+    mutationFn: async () => {
+      // 1. Get Razorpay order from server
+      const checkout = await premiumApi.checkout();
+      
+      // 2. Open Razorpay modal
+      const opened = await openRazorpayCheckout({
+        razorpayOrderId: checkout.razorpayOrderId,
+        amountPaise: checkout.amount,
+        description: "Tanmatra Premium Membership",
+        // The key the server opened THIS order with. Without it the modal falls
+        // back to the build-time VITE_RAZORPAY_KEY_ID, so a build with none
+        // reports "unavailable" even though the server is configured and just
+        // handed one over — and a mismatched build key could open a modal
+        // against a different Razorpay account than the order.
+        keyId: checkout.keyId,
+      });
+
+      if (opened.outcome !== "paid") {
+        throw new Error(opened.outcome);
+      }
+
+      // 3. Verify payment
+      return premiumApi.verify({
+        razorpayPaymentId: opened.payment.razorpayPaymentId,
+        razorpayOrderId: opened.payment.razorpayOrderId,
+        razorpaySignature: opened.payment.razorpaySignature,
+      });
+    },
     onSuccess: () => {
       toast.success("Welcome to Tanmatra Premium", {
         description: "Premium-only dishes are now unlocked across the menu.",
@@ -50,7 +78,11 @@ export default function V2Premium() {
     },
     onError: (err) => {
       const msg = String((err as Error).message);
-      if (msg.includes("401")) {
+      if (msg === "cancelled") {
+        toast.message("Subscription cancelled");
+      } else if (msg === "unavailable") {
+        toast.error("Payment gateway unavailable");
+      } else if (msg.includes("401")) {
         toast.error("Sign in to subscribe", {
           action: {
             label: "Sign in",

@@ -940,9 +940,11 @@ export default function V2Checkout() {
   // subsidy → payable arithmetic lives in (and is unit-tested by)
   // lib/checkoutLedger.ts. GST stays EXCLUSIVE (5% food + 18% delivery),
   // charged on the discounted base and rounded per component. addonTotal is
-  // intentionally excluded from the Razorpay amount — it is captured separately
-  // via POST /addons/attach after payment, so folding it in would show a total
-  // higher than what's actually charged.
+  // intentionally excluded from the Razorpay amount — it is RECORDED (not
+  // charged) via POST /addons/attach after payment, so folding it in would show
+  // a total higher than what is actually taken. That endpoint returns
+  // `billed: false` to say so at the API boundary; the summary row below must
+  // keep matching it.
   const ledger = computeCheckoutLedger({
     preFirstOrderSubtotal,
     firstOrderDiscount,
@@ -1177,10 +1179,6 @@ export default function V2Checkout() {
     // for the post-payment local order record (`out` is scoped to the try).
     let serverSubtotalPaise = subtotal;
     let serverDeliveryFeePaise = deliveryFee;
-    // Corporate subsidy actually applied to the customer's card charge (the
-    // company is billed this amount post-payment). Captured here so the
-    // subsidy-charge step below bills exactly what reduced the card total.
-    let subsidyApplied = 0;
     try {
       const out = await loyaltyApi.finalizeOrder({
         // Same key for every retry of THIS submit attempt; the server
@@ -1202,6 +1200,10 @@ export default function V2Checkout() {
           phone: activeAddr.phone,
         },
         applyCreditsPaise: creditApplied > 0 ? creditApplied : undefined,
+        // Intent only — whether to spend this month's corporate allowance on
+        // this order. The server derives the amount from company policy; there
+        // is deliberately no way to send one from here.
+        applySubsidy,
         scheduledFor: preorderTomorrow ? tomorrowSlot.toISOString() : undefined,
         bundleSlugs: bundleSlugs.length > 0 ? bundleSlugs : undefined,
         fulfillmentType,
@@ -1256,14 +1258,16 @@ export default function V2Checkout() {
       // discounts / credits are already inside chargePaise — do NOT re-add
       // them here or the customer is double-charged), so the amount we show
       // in the modal / "Pay" button must match that exactly.
-      // Corporate subsidy is a client/corporate-side reduction that the server
-      // order total does NOT model: the company is billed `subsidyApplied` and
-      // the customer's card is charged the remainder. Cap it to the payable so
-      // the card charge can never go negative, and bill the company exactly the
-      // amount that reduced the card charge (avoids over-collecting).
-      const grossPayable = out.chargePaise;
-      subsidyApplied = Math.min(Math.max(0, subsidyAvailable), grossPayable);
-      const finalCharge = Math.max(0, grossPayable - subsidyApplied);
+      // Corporate subsidy is now INSIDE out.chargePaise: the server reserves
+      // the company's share in the same transaction that prices the order and
+      // writes charge_paise already net of it. So there is nothing to subtract
+      // here, and nothing to bill the company afterwards.
+      //
+      // The client used to do both, and the result was over-collection: this
+      // screen promised the net figure while /payments/razorpay/order billed
+      // gross from charge_paise (correctly ignoring any client number), and
+      // then a post-payment call billed the company on top.
+      const finalCharge = out.chargePaise;
 
       // Cancel the (already-created) unpaid server order so it never sits in
       // the kitchen queue when payment doesn't complete. Mirrors CartDrawer.
@@ -1616,22 +1620,10 @@ export default function V2Checkout() {
       return;
     }
 
-    // Record the company subsidy AFTER the order is finalized + paid. The
-    // customer's card was charged `finalCharge` (already net of the subsidy),
-    // so we bill the company exactly `subsidyApplied` — the amount that reduced
-    // the card charge — keeping customer-charge + company-charge == the total.
-    if (subsidyApplied > 0 && subsidy?.active && subsidy.company) {
-      try {
-        await corporateApi.chargeSubsidy(
-          subsidy.company.id,
-          subsidyApplied,
-          orderId,
-        );
-      } catch {
-        // Non-fatal: order is placed, just log a soft warning.
-        toast.warning("Company subsidy could not be applied to this order");
-      }
-    }
+    // No company-billing call here any more, and no subsidy arithmetic: the
+    // share was reserved when the server priced the order and is committed when
+    // the payment is captured — in the payment path, atomically and
+    // idempotently, rather than from a browser that may already be closed.
 
     const selectedSlot = slots.find((s) => s.id === selectedSlotId);
     const slotLabel = selectedSlot
@@ -2840,7 +2832,7 @@ export default function V2Checkout() {
                 </div>
                 {addonTotal > 0 && (
                   <div className="billrow" style={{ padding: "4px 0 0", color: "var(--mut)", fontSize: 12 }}>
-                    <span>Add-ons (billed separately, not charged now)</span>
+                    <span>Add-ons (added to your order — not charged)</span>
                     <span className="mono" style={{ color: "var(--mut)" }}>{formatPrice(addonTotal)}</span>
                   </div>
                 )}
@@ -3032,7 +3024,7 @@ function V2MobilePayBar({
           </div>
           {addonTotal > 0 && (
             <div className="billrow" style={{ padding: "6px 0 0", color: "var(--mut)", fontSize: 12 }}>
-              <span>Add-ons (billed separately, not charged now)</span>
+              <span>Add-ons (added to your order — not charged)</span>
               <span className="mono" style={{ color: "var(--mut)" }}>{formatPrice(addonTotal)}</span>
             </div>
           )}

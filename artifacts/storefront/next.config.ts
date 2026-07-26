@@ -78,6 +78,14 @@ const nextConfig: NextConfig = {
       { source: "/terms", destination: "/legal/terms", permanent: true },
       { source: "/privacy", destination: "/legal/privacy", permanent: true },
       { source: "/refunds", destination: "/legal/refunds", permanent: true },
+      // Legacy standalone /cart → canonical B2C checkout page.
+      { source: "/cart", destination: "/checkout", permanent: true },
+      // Legacy plural plan detail URLs (e.g. /plans/pcos-balance) → canonical singular /plan/:id home.
+      // Using :path+ ensures only sub-paths are matched, preserving bare /plans as the active catalog list.
+      { source: "/plans/:path+", destination: "/plan/:path+", permanent: true },
+      // Legacy clinical advisory schedules → canonical account appointments dashboard.
+      { source: "/appointments", destination: "/account/appointments", permanent: true },
+      { source: "/checkout-appointment", destination: "/account/appointments", permanent: true },
     ];
   },
   // Explicit dimensions on the <img> keep CLS at zero without pulling in the

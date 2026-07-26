@@ -126,6 +126,22 @@ async function kitchenQueueDepth(): Promise<number> {
   // and don't move through preparing/ready/rider_assigned/out_for_delivery in
   // the meal sense — exclude them so the ETA model's queue-depth feature
   // reflects actual kitchen load, not marketplace fulfillment volume.
+  //
+  // DELIBERATELY NOT filtered by orderChannel, unlike orders.ts, ops.ts and
+  // dispatch.ts. Those readers answer "whose order is this?" — a question
+  // about ownership, where an aggregator's row is noise. This one answers
+  // "how busy is the kitchen?" — a question about physics. There is one
+  // kitchen. A Zomato order occupies the same burner for the same minutes as
+  // ours, and dropping it here would understate the queue and quote an
+  // optimistic ETA — an error in the direction that shows up as a late
+  // delivery, which is the expensive direction. Narrowing this for symmetry
+  // with its neighbours would be a regression; if you came here to do that,
+  // this comment is the answer.
+  //
+  // Caveat worth knowing: this counts anything sitting in ACTIVE_STATUSES, so
+  // a POS-pushed order that never receives a terminal status update inflates
+  // the depth forever. That is a staleness problem, not a channel one, and it
+  // is already true of our own abandoned rows.
   const [row] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(ordersTable)

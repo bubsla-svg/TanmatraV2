@@ -94,14 +94,65 @@ test("saveorder WITH correct credentials → passes auth (not 401)", async () =>
   assert.notEqual(r.status, 401, "authenticated request must not be rejected as unauthorized");
 });
 
-// ── lenient webhooks: allow when no creds, reject when wrong creds ────────────
-test("push-menu with NO creds → allowed through to validation (400 on bad payload, not 401)", async () => {
-  const r = await post(`${P}/push-menu`, { success: "1" }); // missing items[]
-  assert.equal(r.status, 400);
+// ── push-menu: the menu/price write path. STRICT, in every state. ────────────
+// Regression guard. This route bulk-upserts menu_items including price_paise.
+// Until 25 Jul 2026 it ran "lenient", and lenient admitted requests carrying no
+// credentials at all — so an anonymous POST could rewrite the entire menu and
+// every price on it. If any of these three assertions ever flips back to
+// allowing the request, that hole is open again.
+test("push-menu with NO creds → 401 (must never reach the upsert)", async () => {
+  const r = await post(`${P}/push-menu`, { success: "1", items: [] });
+  assert.equal(r.status, 401, "credential-less menu writes must be rejected");
+  assert.equal(r.json.success, "0");
 });
 
-test("push-menu with WRONG creds → 401 (lenient still rejects presented-but-wrong)", async () => {
+test("push-menu with WRONG creds → 401", async () => {
   const r = await post(`${P}/push-menu`, { app_key: "key-abc", app_secret: "NOPE", items: [] });
+  assert.equal(r.status, 401);
+});
+
+test("push-menu with the secret but no app_key → 401 (strict route, no lenient fallback)", async () => {
+  const r = await post(`${P}/push-menu`, { app_secret: "secret-xyz", items: [] });
+  assert.equal(r.status, 401);
+});
+
+test("push-menu with correct creds → passes auth (400 on bad payload, not 401)", async () => {
+  const r = await post(`${P}/push-menu`, { ...CREDS, success: "1" }); // missing items[]
+  assert.equal(r.status, 400, "authenticated request must get past the auth guard");
+});
+
+// ── the other previously-unguarded routes ────────────────────────────────────
+test("fetchmenu with NO creds → 401 (it dumps the whole catalogue)", async () => {
+  const r = await post(`${P}/fetchmenu`, { restID: "rest-42" });
+  assert.equal(r.status, 401);
+});
+
+test("get_store_status with NO creds → 401", async () => {
+  const r = await post(`${P}/get_store_status`, { restID: "rest-42" });
+  assert.equal(r.status, 401);
+});
+
+test("callback with NO creds → 401", async () => {
+  const r = await post(`${P}/callback`, { orderID: "X", status: "1" });
+  assert.equal(r.status, 401);
+});
+
+test("item_stock with NO creds → 401", async () => {
+  const r = await post(`${P}/item_stock`, { restID: "rest-42", inStock: "1", itemID: ["1"] });
+  assert.equal(r.status, 401);
+});
+
+test("item_stock_off with NO creds → 401", async () => {
+  const r = await post(`${P}/item_stock_off`, { restID: "rest-42", itemID: ["1"] });
+  assert.equal(r.status, 401);
+});
+
+test("update_store_status with NO creds → 401", async () => {
+  const r = await post(`${P}/update_store_status`, {
+    restID: "rest-42",
+    store_status: "0",
+    turn_on_time: "2026-07-08 09:00:00",
+  });
   assert.equal(r.status, 401);
 });
 
@@ -115,7 +166,11 @@ test("update_store_status (header secret) then get_store_status reflects it", as
   assert.equal(upd.status, 200);
   assert.equal(upd.json.status, "success");
 
-  const get = await post(`${P}/get_store_status`, { restID: "rest-42" });
+  const get = await post(
+    `${P}/get_store_status`,
+    { restID: "rest-42" },
+    { "x-petpooja-app-secret": "secret-xyz" },
+  );
   assert.equal(get.status, 200);
   assert.equal(get.json.store_status, "0", "get must reflect the update we just made");
 

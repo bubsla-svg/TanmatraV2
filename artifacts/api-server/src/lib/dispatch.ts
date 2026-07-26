@@ -346,6 +346,19 @@ async function findBatchPartner(
     .from(ordersTable)
     .where(
       and(
+        // Only our own orders may be batch partners. The Petpooja rider
+        // webhook (routes/petpooja.ts) writes `rider_id` on ANY meal order it
+        // is told about — inserting a rider row for the aggregator's courier
+        // if the phone is unknown — and `mapPetpoojaRiderStatus` maps straight
+        // into `rider_assigned`/`ready`. Without this predicate a Zomato order
+        // carrying a Zomato courier satisfies every condition below, and the
+        // caller then assigns OUR order to THAT rider: a patient's clinical
+        // meal handed to a courier we have no contract, tracking or cold-chain
+        // assurance with. Today `rider.status !== "online"` further down
+        // usually catches it (the webhook writes riders as "active"), but that
+        // is incidental — it fails the moment the courier's phone matches one
+        // of our own online riders.
+        eq(ordersTable.orderChannel, "own_app"),
         inArray(ordersTable.status, partnerStatuses),
         sql`${ordersTable.riderId} is not null`,
         // Symmetric guard: a routine order also refuses to share a bag
@@ -372,6 +385,9 @@ async function findBatchPartner(
       .from(ordersTable)
       .where(
         and(
+          // Same channel guard as the bbox query above — this fallback is a
+          // second door into the same decision, not a lesser one.
+          eq(ordersTable.orderChannel, "own_app"),
           inArray(ordersTable.status, partnerStatuses),
           sql`${ordersTable.riderId} is not null`,
           sql`${ordersTable.priority} <> 'stat'`,
@@ -466,6 +482,26 @@ async function dispatchOrderInner(
       strategy: "smart",
       decisionId: null,
       reason: "order not found",
+    };
+  }
+  // Chokepoint. Every dispatch path converges here — the sweep below, the
+  // BullMQ worker (lib/queue.ts), the ops AI agent (lib/ai/agents/ops.ts) and
+  // POST /api/delivery/dispatch (routes/delivery.ts) all call dispatchOrder
+  // with an orderId they got from somewhere else. Narrowing only the sweep's
+  // scans would leave those three doors open, so the invariant is asserted
+  // once, here: an order that did not arrive through our app never consumes
+  // one of our riders. Zomato and Swiggy dispatch their own couriers; a bare
+  // `pos` order is the counter's to hand over.
+  if (orderPeek.orderChannel !== "own_app") {
+    return {
+      ok: false,
+      orderId,
+      riderId: null,
+      batched: false,
+      batchKey: "",
+      strategy: "smart",
+      decisionId: null,
+      reason: "not an own-app order",
     };
   }
   const drop = orderDropLatLng(orderPeek);
@@ -706,6 +742,12 @@ export async function dispatchReadyOrders(opts: {
       .where(
         and(
           eq(ordersTable.orderKind, "meal"),
+          // Load-bearing, not merely tidy. dispatchOrder now refuses a
+          // non-own_app order outright, and this loop counts a non-NO_RIDERS
+          // failure as *progress* — so it would neither assign the row nor
+          // break, re-page the same row forever and spin. The scan must not
+          // return rows the chokepoint will refuse.
+          eq(ordersTable.orderChannel, "own_app"),
           inArray(ordersTable.status, liveStatuses),
           isNull(ordersTable.riderId),
           eq(ordersTable.priority, "stat"),
@@ -743,6 +785,10 @@ export async function dispatchReadyOrders(opts: {
     .where(
       and(
         eq(ordersTable.orderKind, "meal"),
+        // Must match the STAT scan exactly. If this counted a channel the scan
+        // skips, the gate would see a STAT order "still pending" that the scan
+        // can never assign, and the routine pass would be starved forever.
+        eq(ordersTable.orderChannel, "own_app"),
         inArray(ordersTable.status, liveStatuses),
         isNull(ordersTable.riderId),
         eq(ordersTable.priority, "stat"),
@@ -765,6 +811,9 @@ export async function dispatchReadyOrders(opts: {
       .where(
         and(
           eq(ordersTable.orderKind, "meal"),
+          // Same reason as the STAT scan: this loop has the identical
+          // re-page-on-no-progress shape.
+          eq(ordersTable.orderChannel, "own_app"),
           inArray(ordersTable.status, liveStatuses),
           isNull(ordersTable.riderId),
           sql`${ordersTable.priority} <> 'stat'`,
@@ -971,6 +1020,12 @@ export async function overrideAssignment(args: {
     .where(eq(ordersTable.id, args.orderId))
     .limit(1);
   if (!order) return { ok: false, reason: "order not found", code: "not_found" };
+  // The manual override is the one path that assigns a rider without going
+  // through dispatchOrder, so it needs the invariant stated separately: an
+  // operator cannot hand one of our riders to an order that arrived through
+  // someone else's app, however deliberately they click.
+  if (order.orderChannel !== "own_app")
+    return { ok: false, reason: "not an own-app order", code: "not_found" };
   const [rider] = await overrideDb
     .select()
     .from(ridersTable)

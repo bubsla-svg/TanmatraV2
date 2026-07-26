@@ -11,6 +11,10 @@ import { definePrompt } from "../prompts";
 import { defineTool } from "../tools";
 import { registerAgent } from "../agentRegistry";
 import { recordOpsAction } from "../../opsAudit";
+import {
+  REFUND_EVENT_NAMES,
+  remainingRefundablePaise,
+} from "../../paymentIntegrity";
 import { emitDeliveryEvent } from "../../realtime";
 import { dispatchOrder, overrideAssignment } from "../../dispatch";
 import { ackAlert, listAlerts, snoozeAlert } from "../../anomalies";
@@ -305,10 +309,48 @@ const refundOrder = defineTool({
       .where(eq(ordersTable.id, orderId))
       .limit(1);
     if (!order) return { success: false as const, error: "Order not found" };
-    if (amountPaise > order.totalPaise) {
+
+    // How much of this order is still refundable. Two things this must not be:
+    //
+    //   * `order.totalPaise` — the meal subtotal, which the schema says in as
+    //     many words is not the charged amount (no GST, no delivery fee). Used
+    //     as the cap it refuses to return money the customer actually paid.
+    //   * a per-call comparison — the cap has to net off refunds already
+    //     issued, or the same full-value refund passes it every time it is
+    //     asked. This tool takes its amount from an LLM acting on a chat
+    //     message; "ask again" is not a hypothetical attack on it, it is the
+    //     normal failure mode of a retried tool call.
+    //
+    // Both event dialects are read (see REFUND_EVENT_NAMES): the refunds
+    // console records `order_refunded`, this tool records `refund_issued`, and
+    // reading only our own would net off nothing for an order the console has
+    // already paid out on.
+    const priorRefundEvents = await db
+      .select({ meta: deliveryEventsTable.meta })
+      .from(deliveryEventsTable)
+      .where(
+        and(
+          eq(deliveryEventsTable.orderId, orderId),
+          inArray(deliveryEventsTable.event, [...REFUND_EVENT_NAMES]),
+        ),
+      );
+    const remainingPaise = remainingRefundablePaise(order, priorRefundEvents);
+    if (remainingPaise == null) {
+      // Either no resolvable payable amount, or a refund history we cannot
+      // read. Refuse rather than guess: the refunds console is the
+      // authoritative path and a human can see what this cannot.
       return {
         success: false as const,
-        error: `Refund amount ${amountPaise} exceeds order total ${order.totalPaise}.`,
+        error: `Cannot establish how much of order #${orderId} is refundable (no payable amount on the order, or an unreadable refund history). Issue this refund through the refunds console instead.`,
+      };
+    }
+    if (amountPaise > remainingPaise) {
+      return {
+        success: false as const,
+        error:
+          remainingPaise === 0
+            ? `Order #${orderId} has already been refunded in full. Nothing further can be refunded against it.`
+            : `Refund amount ${amountPaise} exceeds the ${remainingPaise} paise still refundable on order #${orderId} (refunds already issued against it have been deducted).`,
       };
     }
 

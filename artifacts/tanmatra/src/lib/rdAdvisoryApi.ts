@@ -118,6 +118,20 @@ export const rdAdvisoryApi = {
       `/rd/appointments/${id}/cancel`,
       { method: "POST" },
     ),
+  checkout: (id: number) =>
+    request<{ razorpayOrderId: string; amount: number; currency: string; keyId: string }>(
+      `/rd/appointments/${id}/checkout`,
+      { method: "POST" },
+    ),
+  verify: (id: number, payment: {
+    razorpayPaymentId: string;
+    razorpayOrderId: string;
+    razorpaySignature: string;
+  }) =>
+    request<{ appointment: RdAppointment }>(`/rd/appointments/${id}/verify`, {
+      method: "POST",
+      body: JSON.stringify(payment),
+    }),
 
   messages: (rdSlug: string) =>
     request<{ messages: RdMessage[] }>(

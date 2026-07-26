@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import {
   db,
   marketplaceItemsTable,
+  marketplaceBatchesTable,
   ordersTable,
   type MarketplaceItem,
   type MarketplaceOrderLine,
@@ -9,11 +10,12 @@ import {
 import { idempotencyMiddleware } from "../middlewares/idempotency";
 import { incMarketplaceCheckoutRollback } from "../lib/saga-metrics";
 import { getDecryptedPreferences } from "../lib/userPreferences";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { randomUUID } from "node:crypto";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { emitServerEvent } from "../lib/serverEvents";
+import { executeNightlyExpirySweep, getActiveLiquidationDeals } from "../lib/wmsFefoEngine";
 
 const router: IRouter = Router();
 
@@ -162,6 +164,47 @@ router.get("/marketplace/items/:slug", async (req: Request, res: Response) => {
     return;
   }
   res.json({ item: row });
+});
+
+router.get("/marketplace/items/:slug/availability", async (req: Request, res: Response) => {
+  const slug = String(req.params.slug ?? "");
+  const [item] = await db
+    .select()
+    .from(marketplaceItemsTable)
+    .where(eq(marketplaceItemsTable.slug, slug))
+    .limit(1);
+  if (!item) {
+    res.status(404).json({ error: "not found" });
+    return;
+  }
+  const now = new Date();
+  const batches = await db
+    .select()
+    .from(marketplaceBatchesTable)
+    .where(
+      and(
+        eq(marketplaceBatchesTable.inventoryItemId, item.id),
+        gt(marketplaceBatchesTable.currentQty, 0),
+        gt(marketplaceBatchesTable.expiryDate, now),
+      ),
+    );
+  const totalAvailableQty = batches.reduce((acc, b) => acc + b.currentQty, 0);
+  const inStock = totalAvailableQty > 0 || item.stockQty > 0;
+  res.json({
+    itemId: item.id,
+    slug: item.slug,
+    totalAvailableQty: totalAvailableQty > 0 ? totalAvailableQty : item.stockQty,
+    inStock,
+    nextExpiryDate: batches.length ? batches[0]!.expiryDate.toISOString().slice(0, 10) : null,
+  });
+});
+
+router.get("/marketplace/liquidation-deals", async (_req: Request, res: Response) => {
+  let deals = getActiveLiquidationDeals();
+  if (deals.length === 0) {
+    deals = await executeNightlyExpirySweep();
+  }
+  res.json({ deals });
 });
 
 const checkoutSchema = z.object({
@@ -402,6 +445,8 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
         .values({
           userId,
           orderKind: "marketplace",
+          // Orthogonal to orderKind: a marketplace order is still one of ours.
+          orderChannel: "own_app",
           externalOrderId,
           status: "placed",
           totalPaise,

@@ -514,6 +514,7 @@ async function createOrderForNewSubscription(
     .insert(ordersTable)
     .values({
       userId: sub.userId,
+      orderChannel: "own_app",
       externalOrderId: `sub-${sub.id}`,
       status: "placed",
       totalPaise: chargePaise,
@@ -2119,6 +2120,7 @@ router.post(
       return;
     }
     invalidateUserBrief(userId);
+    void emitServerEvent("meal_swapped", { deliveryId, subscriptionId: found.subscription.id }, userId);
     res.json({ delivery: updated });
   },
 );
