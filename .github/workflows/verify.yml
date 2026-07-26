@@ -272,6 +272,7 @@ jobs:
           ./src/routes/subscriptions.planV2Trial.test.ts
           ./src/routes/subscriptions.creditLedger.test.ts
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
+          ./src/routes/subscriptions.catalogQuote.test.ts
           ./src/routes/loyalty.referral.test.ts
           ./src/routes/dishRationales.test.ts
           ./src/routes/coachAgent.test.ts

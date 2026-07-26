@@ -203,7 +203,7 @@ test("a phone that already redeemed a trial is refused at create with 409", asyn
   assert.equal(r.json.code, "trial_already_redeemed");
 });
 
-test("flag OFF: the gate is dark — an already-redeemed phone still creates", async () => {
+test("flag OFF: trial rules still enforced unconditionally under P-1 (legacy pricing disabled)", async () => {
   process.env["FLAG_PLAN_V2"] = "";
   const user = await makeUser();
   const phone = freshPhone();
@@ -211,14 +211,41 @@ test("flag OFF: the gate is dark — an already-redeemed phone still creates", a
   SEEDED_PHONE_HASHES.push(phoneHash);
   await db.insert(trialRedemptionsTable).values({ phoneHash, userId: user.id });
 
-  // With the flag off, planId is ignored entirely — this is a normal
-  // (standard) subscription create, unaffected by the trial ledger.
+  // Under P-1, catalog pricing and trial rules apply unconditionally to new signups.
+  // An already-redeemed phone is refused with 409 regardless of FLAG_PLAN_V2.
   const r = await api(
     "POST",
     "/subscriptions",
     baseBody({ planId: "trial_3day", track: "veg", phone }),
     user,
   );
-  assert.equal(r.status, 201, JSON.stringify(r.json));
-  assert.notEqual(r.json.subscription.trialState, "trial_purchased");
+  assert.equal(r.status, 409, JSON.stringify(r.json));
+  assert.equal(r.json.code, "trial_already_redeemed");
+});
+
+test("attempting to purchase or quote a legacy ₹1,499 trial returns 410 Gone with redirect (P-5)", async () => {
+  const user = await makeUser();
+  const phone = freshPhone();
+
+  // Quote attempt for legacy trial
+  const quoteRes = await api(
+    "POST",
+    "/subscriptions/quote",
+    { cadence: "weekly", mealsPerDelivery: 3, planType: "trial" },
+    user,
+  );
+  assert.equal(quoteRes.status, 410, JSON.stringify(quoteRes.json));
+  assert.equal(quoteRes.json.code, "legacy_trial_retired");
+  assert.equal(quoteRes.json.redirect, "/plans/trial");
+
+  // Create attempt for legacy trial
+  const createRes = await api(
+    "POST",
+    "/subscriptions",
+    baseBody({ planType: "trial", phone, planId: undefined }),
+    user,
+  );
+  assert.equal(createRes.status, 410, JSON.stringify(createRes.json));
+  assert.equal(createRes.json.code, "legacy_trial_retired");
+  assert.equal(createRes.json.redirect, "/plans/trial");
 });

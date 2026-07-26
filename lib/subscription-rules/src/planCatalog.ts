@@ -64,8 +64,10 @@ export interface PlanConfig {
   id: PlanId;
   /** 02d §2 router answer; null = not router-reachable. */
   routerAnswer: string | null;
-  /** null = flat-priced plan. */
+  /** null = flat-priced plan. Holds the default/veg base price. */
   pricePerMealPaise: number | null;
+  /** Per-variant meal pricing in paise, when variant deltas apply. */
+  variantPrices?: Partial<Record<DietTrack, number>>;
   flatPricePaise: number | null;
   mealsPerCycle: number;
   cycle: PlanCycle;
@@ -80,16 +82,56 @@ export interface PlanConfig {
   blockers: string[];
 }
 
-// ── §2 Plan table ────────────────────────────────────────────────────────────
-// Prices in paise. desk_fuel ₹199/meal × 22 = ₹4,378/mo (437800). Weekly entry
-// tier ₹1,199 (119900) is offered as an alternate duration, never the default
-// (02e §5) — represented in PRICING helpers below, not as a separate plan.
+// ── §2 Plan table & Canonical Price Table ─────────────────────────────────────
+export interface PlanPriceCycleAmounts {
+  perMealPaise: number | null;
+  weeklyTotalPaise: number | null;
+  monthlyTotalPaise: number | null;
+  quarterlyTotalPaise: number | null;
+  flatPricePaise: number | null;
+}
+
+/**
+ * THE single source of truth for all plan pricing across cycles and diet tracks
+ * per Catalog Pricing Specification Table II.1. All amounts GST-inclusive in paise.
+ * One table to review, one to diff, one for the storefront to read.
+ */
+export const PLAN_PRICE_TABLE = {
+  desk_fuel: {
+    veg: { perMealPaise: 19900, weeklyTotalPaise: 119900, monthlyTotalPaise: 437800, quarterlyTotalPaise: 1199900, flatPricePaise: null },
+    egg: { perMealPaise: 20900, weeklyTotalPaise: 124900, monthlyTotalPaise: 459800, quarterlyTotalPaise: 1259900, flatPricePaise: null },
+    nonveg: { perMealPaise: 21900, weeklyTotalPaise: 129900, monthlyTotalPaise: 481800, quarterlyTotalPaise: 1319900, flatPricePaise: null },
+  },
+  protein_build: {
+    veg: { perMealPaise: 24900, weeklyTotalPaise: 149900, monthlyTotalPaise: 547800, quarterlyTotalPaise: 1499900, flatPricePaise: null },
+    egg: { perMealPaise: 25900, weeklyTotalPaise: 154900, monthlyTotalPaise: 569800, quarterlyTotalPaise: 1559900, flatPricePaise: null },
+    nonveg: { perMealPaise: 27900, weeklyTotalPaise: 164900, monthlyTotalPaise: 613800, quarterlyTotalPaise: 1679900, flatPricePaise: null },
+  },
+  steady: {
+    nonveg: { perMealPaise: 22900, weeklyTotalPaise: null, monthlyTotalPaise: 503800, quarterlyTotalPaise: null, flatPricePaise: null },
+  },
+  glp1_companion: {
+    intro: { perMealPaise: null, weeklyTotalPaise: null, monthlyTotalPaise: 599900, quarterlyTotalPaise: null, flatPricePaise: 599900 },
+    regular: { perMealPaise: null, weeklyTotalPaise: null, monthlyTotalPaise: 699900, quarterlyTotalPaise: null, flatPricePaise: 699900 },
+  },
+  teams: {
+    default: { perMealPaise: 18900, weeklyTotalPaise: null, monthlyTotalPaise: null, quarterlyTotalPaise: null, flatPricePaise: null },
+  },
+  trial_3day: {
+    one_off: { perMealPaise: null, weeklyTotalPaise: 39900, monthlyTotalPaise: null, quarterlyTotalPaise: null, flatPricePaise: 39900 },
+  },
+} as const;
 
 export const PLAN_CATALOG: Record<PlanId, PlanConfig> = {
   desk_fuel: {
     id: "desk_fuel",
     routerAnswer: "Get me through the workday",
-    pricePerMealPaise: 19900, // ₹199
+    pricePerMealPaise: PLAN_PRICE_TABLE.desk_fuel.veg.perMealPaise, // ₹199 base
+    variantPrices: {
+      veg: PLAN_PRICE_TABLE.desk_fuel.veg.perMealPaise,
+      egg: PLAN_PRICE_TABLE.desk_fuel.egg.perMealPaise,
+      nonveg: PLAN_PRICE_TABLE.desk_fuel.nonveg.perMealPaise,
+    },
     flatPricePaise: null,
     mealsPerCycle: 22,
     cycle: "monthly",
@@ -106,7 +148,10 @@ export const PLAN_CATALOG: Record<PlanId, PlanConfig> = {
   steady: {
     id: "steady",
     routerAnswer: "Keep my sugar steady",
-    pricePerMealPaise: 22900, // ₹229
+    pricePerMealPaise: PLAN_PRICE_TABLE.steady.nonveg.perMealPaise, // ₹229 (nonveg only)
+    variantPrices: {
+      nonveg: PLAN_PRICE_TABLE.steady.nonveg.perMealPaise,
+    },
     flatPricePaise: null,
     mealsPerCycle: 22,
     cycle: "monthly",
@@ -126,7 +171,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanConfig> = {
     id: "glp1_companion",
     routerAnswer: "I'm on a GLP-1",
     pricePerMealPaise: null,
-    flatPricePaise: 599900, // ₹5,999 intro (regular ₹6,999 = 699900) — 02e §2
+    flatPricePaise: PLAN_PRICE_TABLE.glp1_companion.intro.flatPricePaise, // ₹5,999 intro
     mealsPerCycle: 60, // "60 meals + 30 snacks" — snack sub-cycle noted, not modelled (see header)
     cycle: "monthly",
     slots: ["lunch", "dinner", "snack"], // 2 meals + snack — 02e §2
@@ -144,12 +189,17 @@ export const PLAN_CATALOG: Record<PlanId, PlanConfig> = {
   protein_build: {
     id: "protein_build",
     routerAnswer: "Build muscle",
-    pricePerMealPaise: 24900, // ₹249
+    pricePerMealPaise: PLAN_PRICE_TABLE.protein_build.veg.perMealPaise, // ₹249 base
+    variantPrices: {
+      veg: PLAN_PRICE_TABLE.protein_build.veg.perMealPaise,
+      egg: PLAN_PRICE_TABLE.protein_build.egg.perMealPaise,
+      nonveg: PLAN_PRICE_TABLE.protein_build.nonveg.perMealPaise,
+    },
     flatPricePaise: null,
     mealsPerCycle: 22,
     cycle: "monthly",
     slots: ["lunch"], // (+PM meal) — 02e §2
-    dietTracks: ["veg", "nonveg"],
+    dietTracks: ["veg", "egg", "nonveg"],
     poolQuery: "protein_build",
     requiresRdSignoff: false,
     customizable: true,
@@ -161,7 +211,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanConfig> = {
   teams: {
     id: "teams",
     routerAnswer: null,
-    pricePerMealPaise: 18900, // ₹189 @ 25+ seats
+    pricePerMealPaise: PLAN_PRICE_TABLE.teams.default.perMealPaise, // ₹189 @ 25+ seats
     flatPricePaise: null,
     mealsPerCycle: 22,
     cycle: "monthly",
@@ -179,7 +229,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanConfig> = {
     id: "trial_3day",
     routerAnswer: null, // secondary CTA
     pricePerMealPaise: null,
-    flatPricePaise: 39900, // ₹399
+    flatPricePaise: PLAN_PRICE_TABLE.trial_3day.one_off.flatPricePaise, // ₹399
     mealsPerCycle: 3,
     cycle: "one_off",
     slots: ["lunch"],
@@ -347,11 +397,12 @@ export interface PlanQuote {
   gstPaise: number;
 }
 
-export function computePlanQuote(planId: PlanId): PlanQuote {
+export function computePlanQuote(planId: PlanId, track: DietTrack = "veg"): PlanQuote {
   const p = PLAN_CATALOG[planId];
+  const pricePerMeal = p.variantPrices?.[track] ?? p.pricePerMealPaise;
   const cycleTotalPaise =
-    p.pricePerMealPaise != null
-      ? p.pricePerMealPaise * p.mealsPerCycle
+    pricePerMeal != null
+      ? pricePerMeal * p.mealsPerCycle
       : (p.flatPricePaise ?? 0);
   const preTaxPaise = Math.round(cycleTotalPaise / (1 + GST_RATE));
   const gstPaise = cycleTotalPaise - preTaxPaise;
@@ -359,7 +410,7 @@ export function computePlanQuote(planId: PlanId): PlanQuote {
     planId,
     cycle: p.cycle,
     mealsPerCycle: p.mealsPerCycle,
-    pricePerMealPaise: p.pricePerMealPaise,
+    pricePerMealPaise: pricePerMeal,
     cycleTotalPaise,
     preTaxPaise,
     gstPaise,
