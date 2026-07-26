@@ -8,13 +8,21 @@ import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import express, { type Express } from "express";
 import http from "node:http";
-import { db, serviceabilityInterestTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, serviceabilityInterestTable, rateLimitsTable } from "@workspace/db";
+import { eq, like } from "drizzle-orm";
 import serviceabilityInterestRouter from "./serviceabilityInterest";
 
 let app: Express;
 let server: http.Server;
 let baseUrl: string;
+
+// The endpoint is rate-limited (5/hour) because it is an unauthenticated public
+// write. That counter lives in a table, so it survives across runs: without this
+// the suite passes once and then 429s for the rest of the hour. Cleared on both
+// sides so a crashed run cannot poison the next one either.
+async function clearInterestRateLimits(): Promise<void> {
+  await db.delete(rateLimitsTable).where(like(rateLimitsTable.key, "serviceability:interest:%"));
+}
 
 before(async () => {
   app = express();
@@ -31,10 +39,12 @@ before(async () => {
 
   // Clean test rows before running
   await db.delete(serviceabilityInterestTable).where(eq(serviceabilityInterestTable.pincode, "999888"));
+  await clearInterestRateLimits();
 });
 
 after(async () => {
   await db.delete(serviceabilityInterestTable).where(eq(serviceabilityInterestTable.pincode, "999888"));
+  await clearInterestRateLimits();
   if (server) await new Promise<void>((res) => server.close(() => res()));
 });
 

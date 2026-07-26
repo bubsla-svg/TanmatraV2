@@ -8,8 +8,21 @@ import { Router, type Request, type Response } from "express";
 import { z } from "zod/v4";
 import { db, serviceabilityInterestTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { rateLimitMiddleware } from "../middlewares/rateLimitMiddleware";
 
 const router = Router();
+
+// Unauthenticated public write. Without a limiter anyone can fill this table
+// with arbitrary (pincode, phone) pairs — the duplicate check dedupes a repeat
+// of the SAME pair, it does not bound distinct ones. Matched to the other
+// public lead-capture endpoints rather than invented: partner:leads is 5/hour
+// and corporate:inquiry is 5/day. A person checking a couple of pincodes for
+// their home and office stays well inside this; a script does not.
+const serviceabilityInterestRateLimit = rateLimitMiddleware(
+  "serviceability:interest",
+  5,
+  60 * 60_000,
+);
 
 const interestSchema = z.object({
   pincode: z
@@ -22,7 +35,10 @@ const interestSchema = z.object({
     .regex(/^(\+91|0)?[1-9]\d{9}$/, "must be a valid Indian mobile number"),
 });
 
-router.post("/serviceability-interest", async (req: Request, res: Response) => {
+router.post(
+  "/serviceability-interest",
+  serviceabilityInterestRateLimit,
+  async (req: Request, res: Response) => {
   const parsed = interestSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({
