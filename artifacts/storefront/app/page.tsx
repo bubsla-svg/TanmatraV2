@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ConsumerPlansGrid } from "@/components/landing/ConsumerPlansGrid";
 import { ProofStrip } from "@/components/landing/ProofStrip";
 import { FaqAccordion } from "@/components/landing/FaqAccordion";
@@ -27,24 +28,61 @@ const FAQ_ITEMS = [
   },
 ];
 
+function deriveHeroContent(refCookie?: string) {
+  const ref = (refCookie ?? "").toLowerCase();
+  if (ref.startsWith("rd_") || ref.startsWith("dietitian_") || ref.includes("diet") || ref.includes("clinic") || ref.startsWith("dr_")) {
+    return {
+      eyebrow: "Referred by your Registered Dietitian",
+      headline: "Clinical meal prescription cooked fresh — verified macro precision at your desk.",
+      blurb: `Formulated to align strictly with your dietitian's therapeutic nutritional targets. Zero industrial oils, weighed macro tolerances. Starting from ${formatPaise(19900)} per meal.`,
+      badge: "Clinical Adherence Priority",
+    };
+  }
+  if (ref.startsWith("gym_") || ref.startsWith("trainer_") || ref.includes("fit") || ref.includes("gym") || ref.startsWith("coach_")) {
+    return {
+      eyebrow: "Referred by your Fitness Club & Trainer",
+      headline: "Performance macro recovery cooked fresh — delivered straight to your office or gym.",
+      blurb: `Engineered for peak hypertrophy and glycemic stability with lab-tested lean proteins and clean complex carbohydrates. Starting from ${formatPaise(19900)} per meal.`,
+      badge: "Performance Recovery Protocol",
+    };
+  }
+  return {
+    eyebrow: "Now serving Noida",
+    headline: "Clinical nutrition, cooked fresh — at your desk in 40–45 minutes.",
+    blurb: `RD-designed lunches with verified macros. Real food first, the science on the label. Starting from ${formatPaise(19900)} per meal.`,
+    badge: null,
+  };
+}
+
 /**
- * Consumer Home (L-2 rework per §2).
- * Integrates live P-2 plan variants grid, parity strip, and shared conversion primitives.
+ * Consumer Home with DTR Personalization (L-7 / L-2).
+ * Inspects tnm_ref attribution cookie to dynamically tailor hero messaging
+ * for clinical RD and performance gym referrals.
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const refCookie = cookieStore.get("tnm_ref")?.value;
+  const hero = deriveHeroContent(refCookie);
+
   return (
     <div className="pb-24">
       <section className="mx-auto max-w-5xl px-4 py-[var(--space-section)]">
         <div className="max-w-2xl">
-          <p className="text-sm font-medium uppercase tracking-wider text-sage-text">
-            Now serving Noida
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium uppercase tracking-wider text-sage-text">
+              {hero.eyebrow}
+            </p>
+            {hero.badge && (
+              <span className="rounded-full bg-[var(--gold)]/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-text border border-[var(--gold)]/30">
+                {hero.badge}
+              </span>
+            )}
+          </div>
           <h1 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-5xl">
-            Clinical nutrition, cooked fresh — at your desk in 40&ndash;45 minutes.
+            {hero.headline}
           </h1>
           <p className="mt-4 text-base leading-relaxed text-ink-muted sm:text-lg">
-            RD-designed lunches with verified macros. Real food first, the science
-            on the label. Starting from {formatPaise(19900)} per meal.
+            {hero.blurb}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link

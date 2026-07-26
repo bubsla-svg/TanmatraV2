@@ -44,6 +44,8 @@ export function buildSubscriptionInput(params: {
   /** Plan-review add-ons to bill with the create (server re-validates against
    *  the allow-list and re-prices from canonical config — 422, never silent). */
   addOns?: AddOnId[];
+  /** Optional attribution ref cookie parameter (L-7 personalization/attribution). */
+  ref?: string;
 }): CreateSubscriptionInput {
   return {
     planId: params.planId,
@@ -55,6 +57,7 @@ export function buildSubscriptionInput(params: {
     members: params.members,
     planType: "standard",
     ...(params.addOns && params.addOns.length > 0 ? { addOns: params.addOns } : {}),
+    ...(params.ref ? { ref: params.ref } : {}),
     addressLabel: params.address.label ?? "Delivery address",
     addressLine: [params.address.line1, params.address.line2].filter(Boolean).join(", "),
     city: params.address.city,
