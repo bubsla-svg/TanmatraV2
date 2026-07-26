@@ -7,7 +7,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-export type CorporateLeadKind = "corporate" | "gym" | "fitness_club";
+export type CorporateLeadKind = "corporate" | "gym" | "fitness_club" | "rd" | "trainer" | "dietitian";
 export type CorporateLeadStatus = "new" | "contacted" | "qualified" | "closed";
 
 /**
@@ -25,11 +25,13 @@ export const corporateLeadsTable = pgTable(
     name: varchar("name", { length: 80 }).notNull(),
     workEmail: varchar("work_email", { length: 256 }).notNull(),
     company: varchar("company", { length: 120 }).notNull(),
-    teamSizeBand: varchar("team_size_band", { length: 16 }).notNull(),
+    teamSizeBand: varchar("team_size_band", { length: 32 }).notNull(),
     parkOrSector: varchar("park_or_sector", { length: 120 }),
     phone: varchar("phone", { length: 20 }),
     message: text("message"),
     source: varchar("source", { length: 160 }),
+    rdRegNo: varchar("rd_reg_no", { length: 80 }),
+    practiceSetting: varchar("practice_setting", { length: 64 }),
     status: varchar("status", { length: 16 })
       .notNull()
       .default("new")
