@@ -299,6 +299,7 @@ test("quarterly variant totals exactly match Table II.1 for egg and nonveg", () 
   assert.equal(computePlanQuote("desk_fuel", "nonveg", "quarterly").cycleTotalPaise, 1319900);
   assert.equal(computePlanQuote("protein_build", "egg", "quarterly").cycleTotalPaise, 1559900);
   assert.equal(computePlanQuote("protein_build", "nonveg", "quarterly").cycleTotalPaise, 1679900);
+});
 
 // ── B2B Corporate Teams Seat Tiers (02e Table II.2) ──────────────────────────
 test("computeCorporateTeamsQuote exactly matches Table II.2 across all 9 variant × tier combinations", () => {
