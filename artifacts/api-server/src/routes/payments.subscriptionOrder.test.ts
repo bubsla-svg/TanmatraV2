@@ -302,7 +302,7 @@ function futureISO(daysAhead: number): string {
 /** Create a subscription via the REAL /subscriptions route (not a DB seed). */
 async function createSubscription(
   user: TestUser,
-  cadence: "weekly" | "fortnightly" | "monthly",
+  cadence: "weekly" | "fortnightly" | "monthly" | "quarterly",
 ): Promise<{ subId: number }> {
   const res = await api(
     "POST",
@@ -525,6 +525,33 @@ test("monthly cadence never mints a recurring token even with a correctly-owned 
   assert.equal(verifyRes.status, 200, JSON.stringify(verifyRes.json));
   assert.equal(verifyRes.json.autopayDisclaimer, undefined, "no mandate ⇒ no autopay disclaimer");
   assert.equal(await mandateRow(subId), null, "no mandate row for a monthly plan");
+});
+
+test("quarterly cadence never mints a recurring token even with a correctly-owned subscriptionId, and verify writes no mandate (prepaid single charge)", async () => {
+  const user = await makeUser("quarterly");
+  const { subId } = await createSubscription(user, "quarterly");
+  const externalOrderId = `sub-${subId}`;
+
+  const customerCallsBefore = rzpCustomerCalls.length;
+
+  const orderRes = await api(
+    "POST",
+    "/payments/razorpay/order",
+    { orderId: externalOrderId, subscriptionId: subId },
+    user,
+  );
+  assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
+  const razorpayOrderId = orderRes.json.razorpayOrderId as string;
+
+  assert.equal(
+    rzpCustomerCalls.length,
+    customerCallsBefore,
+    "quarterly cadence must never create a Razorpay customer or recurring mandate",
+  );
+  const rzpCall = rzpOrderCalls.find((c) => c.id === razorpayOrderId);
+  assert.ok(rzpCall);
+  assert.equal(rzpCall!.body.customer_id, undefined);
+  assert.equal(rzpCall!.body.token, undefined);
 });
 
 // ---------------------------------------------------------------------------

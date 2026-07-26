@@ -19,7 +19,7 @@ import { apiPost, apiGet, apiPatch, apiDelete, type FetchImpl } from "./apiClien
 
 export type DietTrack = "veg" | "egg" | "nonveg";
 export type AddOnId = "rd_bump" | "evening_add";
-export type PlanCadence = "weekly" | "fortnightly" | "monthly";
+export type PlanCadence = "weekly" | "fortnightly" | "monthly" | "quarterly";
 
 // ── Quote (no auth, no secret — the one seam that runs without a gateway) ─────
 export interface PlanQuoteResponse {
