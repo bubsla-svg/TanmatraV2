@@ -92,21 +92,55 @@ jobs:
           ./src/lib/trialEligibility.test.ts
           ./src/lib/corporateSubsidy.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
-      # The web half of the money-path lockstep rule: these have no wired test
-      # script in @workspace/tanmatra, so CI ran them nowhere. Drive them
-      # through the api-server tsx loader (the documented manual command).
-      - name: Money-math unit tests (web)
+      # The web half of the money-path lockstep rule, for the legacy SPA that is
+      # still the app on tanmatra.food. It had no wired test script, so CI ran
+      # these nowhere; they are driven through the api-server tsx loader.
+      #
+      # This was a hand-written list of seven files. The package has ten, so
+      # three ran in no CI job at all — planMacroGuard (plan macro-deviation
+      # warnings), useWizardState (parsing untrusted URL/draft input) and
+      # sessionReplay: 28 tests, 40% of the package's corpus, all passing, all
+      # invisible. Enumeration is the bug, so this is a glob.
+      #
+      # The glob is QUOTED so **node** expands it, not the shell — the quotes
+      # are load-bearing, not style. Actions runs `run:` under bash with
+      # globstar OFF, and there `**` is just `*`: `src/**/*.test.ts` means
+      # "exactly one directory below src". Measured, unquoted, in this repo:
+      # bash yields the six files in `src/lib/` and silently drops the four in
+      # `src/components/*/` — the step goes green having run 6 of 10, which is
+      # harder to notice than running none. Node's expander treats `**` as
+      # zero-or-more segments, so quoted it finds all ten. Same reason the
+      # api-server's own `test` script quotes `"./src/**/*.test.ts"`.
+      #
+      # Verified all ten are DB-free and network-free: 70 tests, 70 pass, with
+      # DATABASE_URL and REDIS_URL unset.
+      - name: Money-math unit tests (web — legacy SPA)
         working-directory: artifacts/api-server
-        run: >
-          node --test --import tsx
-          ../tanmatra/src/lib/checkoutLedger.test.ts
-          ../tanmatra/src/lib/subscriptionPricing.test.ts
-          ../tanmatra/src/lib/rdPlans.pricing.test.ts
-          ../tanmatra/src/lib/apiError.test.ts
-          ../tanmatra/src/components/primitives/logic.test.ts
-          ../tanmatra/src/components/plans/planDisplay.test.ts
-          ../tanmatra/src/components/cuj/cuj.test.ts
-          ../tanmatra/src/components/checkout02c/checkout02c.test.ts
+        run: node --test --import tsx "../tanmatra/src/**/*.test.ts"
+
+      # The step above predates the storefront and covers only the legacy SPA,
+      # so the money path that is actually live — a-la-carte checkout, plan
+      # checkout, trial creditback, post-checkout attach, the Razorpay adapter —
+      # was gated by storefront.yml alone. That workflow's path filter does not
+      # fire on most `lib/**` changes, so a change under `lib/` could reach main
+      # without these ever running. Same tsx-loader trick: the storefront
+      # declares no `tsx` of its own.
+      #
+      # Deliberately a glob, not a hand-listed set. The list above went stale the
+      # moment a second web app appeared, and enumerating files is what let that
+      # happen silently. Every one of these is DB-free and network-free (the
+      # clients take an injectable `fetchImpl`), so the whole suite is safe in
+      # this job and costs ~20s.
+      #
+      # Quoted for the same reason as the step above, though here it is
+      # future-proofing rather than a fix: all 43 files sit directly in `lib/`,
+      # so the previous `lib/*.test.ts` and this `lib/**/*.test.ts` both yield
+      # 211 tests today. The quoting is what keeps that true once someone adds
+      # a subdirectory — unquoted, bash's one-level `**` would match the nested
+      # files and drop all 43 of these.
+      - name: Wire + money-path unit tests (web — storefront)
+        working-directory: artifacts/api-server
+        run: node --test --import tsx "../storefront/lib/**/*.test.ts"
       # Inbound Petpooja authentication. These three files existed and passed
       # locally while running in no workflow at all — they were on the
       # test-reach baseline — which is precisely why two fail-open branches in
@@ -189,6 +223,7 @@ jobs:
         run: >
           node --test --import tsx
           ./src/lib/menuEngineering.cost.test.ts
+
 
   money-integration:
     runs-on: ubuntu-latest
