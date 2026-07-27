@@ -60,13 +60,22 @@ export function Section04ProtocolsGrid() {
               <li className="flex items-center gap-2">✓ 1-click hybrid delivery routing (Home &amp; Office)</li>
             </ul>
           </div>
-          <Link
-            href="/trial"
-            onClick={() => handlePlanSelect("weight_loss_jumpstart")}
-            className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-gold py-3.5 text-sm font-bold text-[var(--gold-ink)] transition-opacity hover:opacity-90 active:scale-95"
-          >
-            Start Your 3-Day Trial — {trialPrice}
-          </Link>
+          <div className="mt-8 flex flex-col gap-2">
+            <Link
+              href="/plan/desk_fuel"
+              onClick={() => handlePlanSelect("weight_loss_jumpstart_plan")}
+              className="inline-flex w-full items-center justify-center rounded-xl bg-ink py-3.5 text-sm font-bold text-surface transition-opacity hover:opacity-90 active:scale-95"
+            >
+              View Subscription Options
+            </Link>
+            <Link
+              href="/trial"
+              onClick={() => handlePlanSelect("weight_loss_jumpstart")}
+              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface py-3.5 text-sm font-bold text-ink transition-opacity hover:bg-surface-muted active:scale-95"
+            >
+              Start 3-Day Trial — {trialPrice}
+            </Link>
+          </div>
         </div>
 
         {/* Card 2: PCOS Hormone Balance */}
@@ -93,13 +102,22 @@ export function Section04ProtocolsGrid() {
               <FlipCard />
             </div>
           </div>
-          <Link
-            href="/trial"
-            onClick={() => handlePlanSelect("pcos_hormone_balance")}
-            className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-gold py-3.5 text-sm font-bold text-[var(--gold-ink)] transition-opacity hover:opacity-90 active:scale-95"
-          >
-            Start Your 3-Day Trial — {trialPrice}
-          </Link>
+          <div className="mt-8 flex flex-col gap-2">
+            <Link
+              href="/plan/steady"
+              onClick={() => handlePlanSelect("pcos_hormone_balance_plan")}
+              className="inline-flex w-full items-center justify-center rounded-xl bg-gold py-3.5 text-sm font-bold text-[var(--gold-ink)] transition-opacity hover:opacity-90 active:scale-95"
+            >
+              View Subscription Options
+            </Link>
+            <Link
+              href="/trial"
+              onClick={() => handlePlanSelect("pcos_hormone_balance")}
+              className="inline-flex w-full items-center justify-center rounded-xl border border-gold bg-surface py-3.5 text-sm font-bold text-gold-text transition-opacity hover:bg-surface-muted active:scale-95"
+            >
+              Start 3-Day Trial — {trialPrice}
+            </Link>
+          </div>
         </div>
 
         {/* Card 3: Lean Muscle Builder */}
@@ -125,13 +143,22 @@ export function Section04ProtocolsGrid() {
               <li className="flex items-center gap-2">✓ Tailored for high-performance training</li>
             </ul>
           </div>
-          <Link
-            href="/trial"
-            onClick={() => handlePlanSelect("lean_muscle_builder")}
-            className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-gold py-3.5 text-sm font-bold text-[var(--gold-ink)] transition-opacity hover:opacity-90 active:scale-95"
-          >
-            Start Your 3-Day Trial — {trialPrice}
-          </Link>
+          <div className="mt-8 flex flex-col gap-2">
+            <Link
+              href="/plan/protein_build"
+              onClick={() => handlePlanSelect("lean_muscle_builder_plan")}
+              className="inline-flex w-full items-center justify-center rounded-xl bg-ink py-3.5 text-sm font-bold text-surface transition-opacity hover:opacity-90 active:scale-95"
+            >
+              View Subscription Options
+            </Link>
+            <Link
+              href="/trial"
+              onClick={() => handlePlanSelect("lean_muscle_builder")}
+              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface-raised py-3.5 text-sm font-bold text-ink transition-opacity hover:bg-surface-muted active:scale-95"
+            >
+              Start 3-Day Trial — {trialPrice}
+            </Link>
+          </div>
         </div>
       </div>
     </section>
