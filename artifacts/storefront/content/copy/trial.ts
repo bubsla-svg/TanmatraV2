@@ -5,8 +5,9 @@ export const trialCopy = {
   },
   benefits: {
     item1: "Full access to personalized protocol meals",
-    item2: "Dedicated dietitian guidance",
-    item3: "No long-term commitment",
+    item2: "Dedicated dietitian guidance and initial assessment",
+    item3: "No long-term commitment — pause or stop anytime",
   },
   cta: "Claim Trial",
+  notice: "Trial pricing applies to first-time subscribers only.",
 } as const;
