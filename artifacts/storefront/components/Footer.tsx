@@ -20,7 +20,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-line bg-surface">
       <LayoutFooter>
         <div className="mx-auto max-w-5xl px-4 py-10">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-6 md:gap-8 md:grid-cols-4">
             {COLUMNS.map((col) => (
               <nav key={col.label} aria-label={col.label} className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">

@@ -70,7 +70,7 @@ export function AlacarteCheckout() {
         if (!idempotencyKey.current) idempotencyKey.current = `alc-${crypto.randomUUID()}`;
         const order: AlacarteOrderInput = {
           externalOrderId: idempotencyKey.current,
-          items: cart.lines.map((l) => ({ dishId: l.dishId, qty: l.qty })),
+          items: cart.lines.filter((l) => l.kind === "dish").map((l) => ({ dishId: l.dishId, qty: l.qty })),
           phone: contact,
           address,
           consent: { accepted: true, policyVersion: DPDP_POLICY_VERSION },
@@ -98,10 +98,15 @@ export function AlacarteCheckout() {
     return (
       <div className="flex flex-col items-start gap-4">
         <h1 className="text-xl font-semibold text-ink">Your cart is empty</h1>
-        <p className="text-sm text-ink-muted">Add a dish and it&rsquo;ll show up here to check out.</p>
-        <Link href="/menu" className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]">
-          Browse the menu
-        </Link>
+        <p className="text-sm text-ink-muted">Add a dish or a pantry item and it&rsquo;ll show up here to check out.</p>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/menu" className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]">
+            Browse meals
+          </Link>
+          <Link href="/marketplace" className="rounded-xl border border-line bg-surface px-5 py-3 text-sm font-semibold text-ink hover:bg-surface-raised">
+            Browse marketplace
+          </Link>
+        </div>
       </div>
     );
   }

@@ -37,7 +37,7 @@ test("off-menu and unavailable lines are dropped BY NAME, never silently", () =>
 
 test("merges into an existing cart and clamps at the per-line max", () => {
   const current: CartState = {
-    lines: [{ dishId: 1, slug: "quinoa-khichdi", name: "Quinoa Khichdi", pricePaise: 24900, qty: 8 }],
+    lines: [{ dishId: 1, kind: "dish", slug: "quinoa-khichdi", name: "Quinoa Khichdi", pricePaise: 24900, qty: 8 }],
   };
   const r = reorderIntoCart(current, [{ id: 1, name: "Quinoa Khichdi", qty: 5, price: 24900 }], MENU);
   assert.equal(r.cart.lines[0]?.qty, MAX_QTY_PER_LINE); // 8 + 5 clamps to 9

@@ -27,7 +27,7 @@ export function Header() {
           }
           endContent={
             <nav aria-label="Primary" className="flex items-center gap-2">
-              <div className="hidden lg:block">
+              <div>
                 <ServiceabilityBar placement="menu" />
               </div>
               <CommandMenu />

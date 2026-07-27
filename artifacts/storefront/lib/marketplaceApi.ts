@@ -79,7 +79,7 @@ export function checkout(
 export type DeliveryMode = "ship" | "bundle_with_meal";
 
 export async function payForMarketplace(
-  line: { itemId: number; qty: number },
+  items: { itemId: number; qty: number }[],
   razorpay: RazorpayAdapter,
   opts: { deliveryMode?: DeliveryMode; bundleWithOrderId?: number | null } = {},
   fetchImpl?: FetchImpl,
@@ -87,7 +87,7 @@ export async function payForMarketplace(
   const { order } = await checkout(
     {
       idempotencyKey: newIdempotencyKey(),
-      items: [line],
+      items,
       deliveryMode: opts.deliveryMode ?? "ship",
       bundleWithOrderId: opts.bundleWithOrderId ?? null,
     },

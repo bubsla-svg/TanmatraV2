@@ -49,7 +49,7 @@ export function GroupOrderView({ code }: { code: string }) {
       for (const l of closed.items) {
         const dish = DISHES.find((d) => d.id === l.dishId);
         if (!dish) { skipped++; continue; }
-        for (let i = 0; i < l.quantity; i++) next = addLine(next, { dishId: dish.id, slug: dish.slug, name: dish.name, pricePaise: l.unitPrice });
+        for (let i = 0; i < l.quantity; i++) next = addLine(next, { dishId: dish.id, kind: "dish", slug: dish.slug, name: dish.name, pricePaise: l.unitPrice });
       }
       setCart(next);
       if (skipped > 0) setError(`${skipped} item(s) couldn't be transferred.`);

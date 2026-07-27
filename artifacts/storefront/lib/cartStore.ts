@@ -15,6 +15,7 @@
 
 export interface CartLine {
   dishId: number;
+  kind: "dish" | "marketplace";
   slug: string;
   name: string;
   /** Server menu price snapshot, paise. Display-only; server re-prices at order. */
@@ -30,18 +31,23 @@ export const EMPTY_CART: CartState = { lines: [] };
 export const MAX_QTY_PER_LINE = 9;
 
 export function addLine(state: CartState, line: Omit<CartLine, "qty">): CartState {
-  const existing = state.lines.find((l) => l.dishId === line.dishId);
-  if (existing) return setQty(state, line.dishId, existing.qty + 1);
-  return { lines: [...state.lines, { ...line, qty: 1 }] };
+  return addOrUpdateQty(state, line, 1);
 }
 
-export function setQty(state: CartState, dishId: number, qty: number): CartState {
+export function addOrUpdateQty(state: CartState, line: Omit<CartLine, "qty">, qty: number): CartState {
+  const existing = state.lines.find((l) => l.dishId === line.dishId && l.kind === line.kind);
+  if (existing) return setQty(state, line.dishId, line.kind, existing.qty + qty);
+  const clamped = Math.max(1, Math.min(MAX_QTY_PER_LINE, Math.trunc(qty)));
+  return { lines: [...state.lines, { ...line, qty: clamped }] };
+}
+
+export function setQty(state: CartState, dishId: number, kind: "dish" | "marketplace", qty: number): CartState {
   const clamped = Math.max(0, Math.min(MAX_QTY_PER_LINE, Math.trunc(qty)));
   if (clamped === 0) {
-    return { lines: state.lines.filter((l) => l.dishId !== dishId) };
+    return { lines: state.lines.filter((l) => !(l.dishId === dishId && l.kind === kind)) };
   }
   return {
-    lines: state.lines.map((l) => (l.dishId === dishId ? { ...l, qty: clamped } : l)),
+    lines: state.lines.map((l) => (l.dishId === dishId && l.kind === kind ? { ...l, qty: clamped } : l)),
   };
 }
 
@@ -54,8 +60,8 @@ export function subtotalPaise(state: CartState): number {
   return state.lines.reduce((s, l) => s + l.pricePaise * l.qty, 0);
 }
 
-export function qtyOf(state: CartState, dishId: number): number {
-  return state.lines.find((l) => l.dishId === dishId)?.qty ?? 0;
+export function qtyOf(state: CartState, dishId: number, kind: "dish" | "marketplace"): number {
+  return state.lines.find((l) => l.dishId === dishId && l.kind === kind)?.qty ?? 0;
 }
 
 // ── Guarded persistence ──────────────────────────────────────────────────────
@@ -67,6 +73,7 @@ function isValidLine(x: unknown): x is CartLine {
   const l = x as Record<string, unknown>;
   return (
     typeof l.dishId === "number" &&
+    (l.kind === "dish" || l.kind === "marketplace") &&
     typeof l.slug === "string" &&
     typeof l.name === "string" &&
     typeof l.pricePaise === "number" &&
