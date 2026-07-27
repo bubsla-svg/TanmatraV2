@@ -202,7 +202,15 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
 
 ## Key conventions
 
-- **Colors**: Clinical Dark palette is locked — `#D4AF37` (clinical-gold), `#6BA3C8` (blue), `#7D9E7E` (sage). No new base colors without explicit approval.
+- **Colors**: Clinical Dark palette — `#D4AF37` (clinical-gold), `#6BA3C8` (blue), `#7D9E7E` (sage).
+  Still locked for `artifacts/tanmatra` (the legacy SPA): no new base colors there without explicit approval.
+  **Lifted for `artifacts/storefront`** by owner decision (2026-07-27) adopting the Astryx Design System;
+  the storefront's palette is now whatever `lib/themes/tanmatra.ts` declares. That theme keeps the three
+  brand hues as its dark-mode values and adds light-mode counterparts where the dark ones fail contrast —
+  `#7F6921` is the light-mode gold, because `#D4AF37` measures below AA on a light background.
+  Note the gate's reach: `lint:tokens` scans only `artifacts/storefront/{components,app}`, so a raw hex in
+  `lib/themes/` is invisible to it. Theme files are the one place colours are meant to live; everywhere
+  else the gate still catches them.
 - **New design tokens**: storefront — add to `lib/tokens/src/tokens.css` (and its TS mirror in
   `lib/tokens/src/index.ts` if JS needs the value), bridge in `artifacts/storefront/app/globals.css`,
   and update `/styleguide`. Legacy SPA — add to `artifacts/tanmatra/src/index.css @theme`.
