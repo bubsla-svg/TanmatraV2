@@ -20,6 +20,7 @@ import { MiniCartBar } from "@/components/cart/MiniCartBar";
 import { Footer } from "@/components/Footer";
 import { BottomNav } from "@/components/BottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
+import { ChromeGate } from "@/components/ChromeGate";
 import { SITE_URL } from "@/lib/siteUrl";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
@@ -104,12 +105,21 @@ export default function RootLayout({
             Skip to main content
           </a>
           <CartProvider>
-            <Header />
+            {/* Global chrome is suppressed on the homepage — the M3 landing
+                brings its own nav (§0), bottom bar (§11) and footer (§12);
+                without the gate the page rendered two logos, two navs and
+                two footers. See ChromeGate for the full story. MiniCartBar
+                is gated too: it and §11 are both bottom-fixed and overlap. */}
+            <ChromeGate>
+              <Header />
+            </ChromeGate>
             <main id="main">{children}</main>
-            {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
-            <MiniCartBar />
-            <Footer />
-            <BottomNav />
+            <ChromeGate>
+              {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
+              <MiniCartBar />
+              <Footer />
+              <BottomNav />
+            </ChromeGate>
           </CartProvider>
         </ThemeProvider>
       </body>
