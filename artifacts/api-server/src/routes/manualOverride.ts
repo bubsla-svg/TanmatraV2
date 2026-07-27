@@ -17,7 +17,7 @@
  * What it MUST keep:
  *   - cookie-parser + auth (mounted at app level, runs before any
  *     router) — we do not bypass authentication. The handler still
- *     calls `resolveOps()` to enforce the ops scope.
+ *     calls `isOpsRequest().allowed` to enforce the ops scope.
  *   - the global error handler (last `app.use` in app.ts).
  */
 import { Router, type IRouter, type Request, type Response } from "express";
@@ -33,14 +33,12 @@ const overrideBody = z.object({
   notes: z.string().max(256).optional(),
 });
 
-function resolveOps(req: Request): boolean {
-  return isOpsRequest(req).allowed;
-}
+
 
 overrideRouter.post(
   "/api/delivery/dispatch/override",
   async (req: Request, res: Response) => {
-    if (!resolveOps(req)) {
+    if (!isOpsRequest(req).allowed) {
       res.status(403).json({ error: "ops scope required" });
       return;
     }
