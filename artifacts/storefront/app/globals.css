@@ -63,6 +63,13 @@
     "SFMono-Regular", Menlo, monospace;
 }
 
+/* The Astryx token bridge lives in @/lib/themes/tanmatraBridge.css (imported
+ * by app/layout.tsx after the theme CSS). It was here first, reading Astryx's
+ * --color-* names — see that file's header for why it moved and why it pins
+ * concrete values. Do not re-introduce var(--color-*) reads here: Tailwind's
+ * own theme layer emits :root definitions for the SAME names mapped to our
+ * neutrals, and whichever layer lands last silently wins. */
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);

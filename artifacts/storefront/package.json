@@ -13,6 +13,10 @@
     "lint:tokens": "node --experimental-strip-types ../../scripts/lint-tokens.ts artifacts/storefront"
   },
   "dependencies": {
+    "@astryxdesign/core": "0.1.8",
+    "@astryxdesign/theme-neutral": "0.1.8",
+    "@heroicons/react": "^2.2.0",
+    "@stylexjs/stylex": "^0.19.0",
     "@workspace/menu-catalog": "workspace:*",
     "@workspace/preferences-match": "workspace:*",
     "@workspace/subscription-rules": "workspace:*",
@@ -33,6 +37,7 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@astryxdesign/cli": "0.1.8",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/leaflet": "^1.9.21",
     "@types/node": "catalog:",

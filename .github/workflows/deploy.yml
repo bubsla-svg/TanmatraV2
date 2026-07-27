@@ -1,8 +1,22 @@
 name: Deploy
 
 on:
-  #push:
-    #branches: [main]
+  # Push auto-deploys the STOREFRONT ONLY (see each job's `if:`). It was
+  # commented out in e09c21e1 — not as policy, but as the last flip of a
+  # toggle sequence that used the trigger as a manual deploy button
+  # (5500ce73 on, 5d094548 on, e09c21e1 off, all within 20 minutes).
+  # workflow_dispatch landed 31 minutes later and made the hack unnecessary;
+  # nobody re-enabled push, so main silently stopped reaching the live site
+  # and drifted 82 commits behind before anyone noticed.
+  #
+  # Restored for the storefront because that service IS tanmatra.food, it is
+  # the surface under active iteration, it applies no migrations, and it
+  # self-verifies and rolls itself back (see the storefront job).
+  # api-server and the legacy tanmatra SPA stay dispatch-only: the api-server
+  # has no migration step in this pipeline, so auto-deploying it ahead of a
+  # pending migration breaks checkout.
+  push:
+    branches: [main]
   # Manual dispatch deploys ALL THREE services from the chosen ref.
   # paths-filter cannot diff a dispatch event (no before/after commits), so
   # the deploy jobs explicitly bypass the filter on dispatch — without this,
@@ -68,7 +82,13 @@ jobs:
   # files changed.
   cloud-run:
     needs: changes
-    if: (github.event_name == 'workflow_dispatch' && !inputs.only_storefront) || needs.changes.outputs.api == 'true'
+    # DISPATCH ONLY — deliberately not reachable from a push. The `api` filter
+    # matches lib/** and pnpm-lock.yaml, so the old `|| needs.changes.outputs.api`
+    # clause would have auto-rolled the api-server on almost every merge. This
+    # pipeline never applies Drizzle migrations, so a deploy that lands ahead of
+    # a pending one breaks corporate checkout and the lead routes. Releasing the
+    # backend stays a human action: migrate first, then dispatch.
+    if: github.event_name == 'workflow_dispatch' && !inputs.only_storefront
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -199,9 +219,12 @@ jobs:
   # frontend fixes); only a cancelled run aborts it.
   frontend-cloud-run:
     needs: [changes, cloud-run]
+    # DISPATCH ONLY. The legacy SPA no longer fronts the domain, so there is
+    # nothing to gain from auto-rolling it on every merge — and its `web`
+    # filter also matches lib/**, which would have fired it constantly.
     if: |
       always() &&
-      ((github.event_name == 'workflow_dispatch' && !inputs.only_storefront) || needs.changes.outputs.web == 'true') &&
+      github.event_name == 'workflow_dispatch' && !inputs.only_storefront &&
       needs.cloud-run.result != 'cancelled'
     runs-on: ubuntu-latest
     permissions:
@@ -508,18 +531,26 @@ jobs:
             --cpu-boost \
             --quiet
 
-      # The storefront is the DARK preview service (no domain mapped). A
-      # stray traffic pin left run 30002863468's deploy stranded at 0% — the
-      # home smoke passed against the OLD revision and the deploy-truth
-      # assert below (correctly) failed. A preview service must serve what it
-      # deploys, so route to latest explicitly.
+      # NOTE: this service is NO LONGER a dark preview — tanmatra.food is
+      # mapped to it (docs/DOMAIN-CUTOVER.md §1). Routing to latest here puts
+      # the new revision in front of real customers, and since push now
+      # auto-deploys this job, that happens unattended on every merge. Hence
+      # the stable-revision capture below and the rollback step at the end.
       #
-      # The tanmatra job now carries the same pair (route-to-latest + a fatal
-      # deploy-truth assert). It used to carry neither, because a pin guarded
-      # tanmatra.food while that service served the domain; the domain moved to
-      # this one, and the pin then stranded a deploy for two days without
-      # reddening anything.
-      - name: Route traffic to the new revision (dark preview service only)
+      # Routing explicitly (rather than relying on the deploy default) is still
+      # required: a stray traffic pin once left run 30002863468 stranded at 0%,
+      # the home smoke passed against the OLD revision, and only the
+      # deploy-truth assert caught it.
+      - name: Capture the currently-serving revision (rollback target)
+        id: stable
+        run: |
+          STABLE_REV=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.traffic[0].revisionName)')
+          echo "stable revision before this deploy: $STABLE_REV"
+          echo "rev=$STABLE_REV" >> "$GITHUB_OUTPUT"
+
+      - name: Route traffic to the new revision
         run: |
           gcloud run services update-traffic ${SERVICE} \
             --region ${GCP_REGION} \
@@ -559,6 +590,24 @@ jobs:
             sleep 5
           done
           echo "deploy-truth FAILED: /api/build sha never matched ${{ github.sha }}"; exit 1
+
+      # Auto-rollback. Restored from the pipeline deleted in e09c21e1 — the same
+      # commit that disabled the push trigger also removed the canary, the
+      # promote gate and this rollback, leaving a failed verify to simply exit
+      # with the bad revision still serving 100%. That was survivable while
+      # every deploy was a human watching a dispatch; it is not, now that a
+      # merge ships unattended. If either check above failed, put the previous
+      # revision back before anyone sees the broken one.
+      - name: Roll back on failed verification
+        if: failure() && steps.stable.outputs.rev != ''
+        run: |
+          echo "verification failed — restoring ${{ steps.stable.outputs.rev }}"
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --to-revisions "${{ steps.stable.outputs.rev }}=100" \
+            --quiet
+          echo "rolled back. The deploy is red on purpose — fix forward and merge again."
 
       # Non-fatal check of the production domain. The fatal deploy-truth above
       # runs against this service's own run.app URL. Once tanmatra.food is mapped

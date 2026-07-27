@@ -4,9 +4,13 @@ import { fileURLToPath } from "node:url";
 
 // Anti-rot gate for the rebuild storefront (Phase 1). Enforces the size and
 // server-first rules as CI checks, not aspirations:
-//   • no file over 300 lines
-//   • no component (.tsx) over 150 lines
-//   • every "use client" carries a one-line justification comment
+//   • no file over 300 lines (non-component)
+//   • no component (.tsx) over 400 lines — raised from 150 for DS-0 (owner
+//     decision, 2026-07-27): Astryx page templates run ~300 lines and are
+//     sanctioned for verbatim adoption; 400 leaves headroom for real data
+//     wiring. Decomposition is still good practice, no longer a gate.
+//   • ("use client" justification requirement REVOKED same decision —
+//     injected Astryx templates carry a bare directive.)
 //   • no "@/" path-alias imports inside lib/ (see ALIAS_NOTE below)
 //
 // Usage: node --experimental-strip-types scripts/lint-filecap.ts [targetDir]
@@ -17,7 +21,7 @@ const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const TARGET = path.resolve(REPO_ROOT, process.argv[2] ?? "artifacts/storefront");
 
 const FILE_CAP = 300;
-const COMPONENT_CAP = 150;
+const COMPONENT_CAP = 400;
 const SKIP_DIRS = new Set(["node_modules", ".next", "dist", ".turbo"]);
 
 // ALIAS_NOTE — why lib/ may not use the "@/*" alias.
@@ -60,19 +64,6 @@ function isComment(line: string): boolean {
   return t.startsWith("//") || t.startsWith("*") || t.startsWith("/*");
 }
 
-/** A "use client" line is justified if it carries a trailing comment, or the
- *  next non-blank line is a comment. */
-function useClientJustified(lines: string[], idx: number): boolean {
-  const line = lines[idx];
-  if (/\/\//.test(line.replace(/^['"]use client['"];?/, ""))) return true;
-  for (let i = idx + 1; i < lines.length; i++) {
-    const t = lines[i].trim();
-    if (t === "") continue;
-    return t.startsWith("//") || t.startsWith("/*") || t.startsWith("*");
-  }
-  return false;
-}
-
 function run(): void {
   if (!fs.existsSync(TARGET)) {
     console.error(`file-cap lint: target not found at ${TARGET}`);
@@ -91,13 +82,6 @@ function run(): void {
         `${rel}: ${count} lines exceeds the ${isComponent ? "component" : "file"} cap of ${cap} — split it.`,
       );
     }
-    lines.forEach((line, i) => {
-      if (/^\s*['"]use client['"]\s*;?\s*(\/\/.*)?$/.test(line) && !useClientJustified(lines, i)) {
-        violations.push(
-          `${rel}:${i + 1}: "use client" must carry a one-line justification comment.`,
-        );
-      }
-    });
   }
 
   // Path-alias guard for the runner-executed lib/ tree. Tests are included
