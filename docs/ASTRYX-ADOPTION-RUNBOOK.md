@@ -69,19 +69,32 @@ pnpm exec astryx template <name> --skeleton      # layout skeleton with spacing/
 pnpm exec astryx template <name> <path>          # inject the full source at <path>
 ```
 
-The recommended loop per surface: `search` for the need → `--skeleton` to read
-the composition → **inject into a scratch path** (never straight into `app/` —
-templates arrive as one big `"use client"` page that fails lint:filecap and
-would demote a server route) → transplant the composition into decomposed
-≤150-line components, keeping our data wiring. Delete the scratch file before
-committing. Never keep injected source verbatim: templates use
-`@heroicons/react` (NOT installed; this repo uses `lucide-react`) and
-placeholder data with fabricated prices, and display names differ from inject
-names ("Checkout Form" is `payment-form` — trust the arrow in the search
-output).
+**The 3-step study workflow — run it for EVERY surface before writing code:**
 
-Also available when useful: `astryx docs <Component>` (per-component API
-docs), `astryx doctor` (integration sanity check).
+1. `astryx template --list` (or `astryx search <need> --type template`) —
+   find a related page pattern to use as reference.
+2. `astryx template <name> --skeleton` — study the layout structure: the
+   annotated component tree with spacing and nesting.
+3. `astryx component <Name>` — read the docs for **every component the
+   skeleton uses** before using it. This is not just a props table: it
+   carries anatomy, and do/don't best-practice rules that the design system
+   expects you to follow (e.g. Card: "not the default layout tool — don't
+   wrap page sections in cards, don't nest cards"). Flags: `--props` (table
+   only), `--source`, `--showcase` (example code), `--blocks` (related
+   example blocks).
+
+Then implement: **inject into a scratch path** (`astryx template <name>
+<path>` — never straight into `app/`; templates arrive as one big
+`"use client"` page that fails lint:filecap and would demote a server route)
+→ transplant the composition into decomposed ≤150-line components, keeping
+our data wiring → delete the scratch file before committing. Never keep
+injected source verbatim: templates use `@heroicons/react` (NOT installed;
+this repo uses `lucide-react`) and placeholder data with fabricated prices,
+and display names differ from inject names ("Checkout Form" is
+`payment-form` — trust the arrow in the search output).
+
+Also available when useful: `astryx component --list` (all components by
+category), `astryx doctor` (integration sanity check).
 
 **371 of 501 built modules are client components — and the directive hides.**
 `'use client'` sits on **line 3**, under a copyright header. `head -2` and
