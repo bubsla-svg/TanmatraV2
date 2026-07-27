@@ -6,6 +6,9 @@ import { Section02QualificationChips } from "@/components/landing/Section02Quali
 import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 import { Section03AgitationPanel } from "@/components/landing/Section03AgitationPanel";
 import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
+import { Section03B2BEnterprise } from "@/components/landing/Section03B2BEnterprise";
+import { Section04TelehealthTracking } from "@/components/landing/Section04TelehealthTracking";
+import { Section05LogisticsMoat } from "@/components/landing/Section05LogisticsMoat";
 import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
@@ -16,10 +19,9 @@ import { Section11StickyBottomBar } from "@/components/landing/Section11StickyBo
 import { Section12Footer } from "@/components/landing/Section12Footer";
 
 /**
- * Consumer Home (§0 to §12 Clinical Reconstruction).
+ * Consumer Home — 3-Pillar Revenue Architecture.
  * Server Component implementing DTR (Dynamic Tailored Referrals) personalization,
- * inspecting tnm_ref cookie to tailor hero copy for clinical RDs, fitness gyms, or default professionals.
- * Assembles all 13 modular sections under strict filecap and token governance.
+ * assembling D2C Subscriptions, B2B Corporate Volume, Telehealth & Noida IoT Logistics Moat.
  */
 export default async function HomePage() {
   const cookieStore = await cookies();
@@ -32,46 +34,44 @@ export default async function HomePage() {
       <Section00StickyNav />
 
       <main className="flex flex-col gap-12 sm:gap-16 lg:gap-20">
-        {/* §1: Clinical Hero with Pressure Valve to Desk Fuel */}
+        {/* Pillar 1 Hero: Clinical Authority Hook with Dual CTAs & Trust Bar */}
         <Section01ClinicalHero hero={heroData} />
 
-        {/* §2: Qualification Chips Strip */}
-        {/* OB-2's front-door serviceability check. The M3 layout supersedes the
-          L-2 homepage this was mounted on, and none of the §0–§12 sections
-          carry it — without this line the merge would silently drop the
-          feature. Advisory only: it never blocks browsing. */}
-      <div className="mx-auto max-w-5xl px-4">
-        <ServiceabilityBar placement="hero" />
-      </div>
-      <Section02QualificationChips />
+        {/* Front-door Serviceability Check */}
+        <div className="mx-auto max-w-5xl px-4">
+          <ServiceabilityBar placement="hero" />
+        </div>
+        <Section02QualificationChips />
 
-        {/* §3: "The 'Healthy' Bowl Problem" Dark Agitation Panel */}
-        <Section03AgitationPanel />
-
-        {/* §4: Protocols Tier Grid (Wellness, Performance, Clinical + Spec/Flip/Waitlist) */}
+        {/* Pillar 1: D2C Therapeutic Subscriptions (Section 2 - Choose Your Protocol) */}
         <Section04ProtocolsGrid />
 
-        {/* §5 to §7: Triple Verification Proofs (Macros, RD Panel, Kitchen Credentials) */}
+        {/* Pillar 2: B2B Corporate Wellness Integration (Section 3 - Corporate Volume) */}
+        <Section03B2BEnterprise />
+
+        {/* Pillar 3: Telehealth & Clinical Tracking (Section 4 - Consultations & Tech) */}
+        <Section04TelehealthTracking />
+
+        {/* Section 5: The "Noida-Proof" IoT Cold-Chain Logistics Moat */}
+        <Section05LogisticsMoat />
+
+        {/* Agitation Panel & Triple Verification Proofs */}
+        <Section03AgitationPanel />
         <div id="proofs" className="flex flex-col gap-12 sm:gap-16">
           <Section05ProofMacros />
           <Section06ProofRdPanel />
           <Section07ProofKitchen />
         </div>
 
-        {/* §8: Pricing Transparency Strip */}
-        <Section08PricingStrip />
-
-        {/* §9: Interactive Assessment Stepper Banner & Modal Root */}
+        {/* Interactive 60-Second Metabolic Assessment Stepper Banner & Modal */}
         <Section09AssessmentSection />
 
-        {/* §10: FAQ Accordion with Mandatory Medical Treatment Disclaimer */}
+        {/* FAQ Accordion with Mandatory Medical Disclaimer */}
         <Section10FaqAccordion />
       </main>
 
-      {/* §11: Sticky Bottom Conversion Bar */}
+      {/* Sticky Bottom Conversion Bar & Footer */}
       <Section11StickyBottomBar />
-
-      {/* §12: Footer */}
       <Section12Footer />
     </div>
   );

@@ -27,6 +27,7 @@ export function AssessmentStepper({
   const [open, setOpen] = useState(defaultOpen);
   const [stepIdx, setStepIdx] = useState(0);
   const [state, setState] = useState<AssessmentState>(INITIAL_ASSESSMENT_STATE);
+  const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
     if (defaultOpen) {
@@ -35,6 +36,7 @@ export function AssessmentStepper({
     const handleOpen = () => {
       setOpen(true);
       setStepIdx(0);
+      setShowResult(false);
       emitLpEvent("assessment_start", { source: "custom_event" });
     };
     window.addEventListener("open_tanmatra_assessment", handleOpen);
@@ -44,6 +46,7 @@ export function AssessmentStepper({
   function handleStart() {
     setOpen(true);
     setStepIdx(0);
+    setShowResult(false);
     emitLpEvent("assessment_start", { source: "user_trigger" });
   }
 
@@ -73,13 +76,13 @@ export function AssessmentStepper({
       conditions: state.conditions.join(",") || "none",
       diet: state.dietTrack,
     });
-    setOpen(false);
-    window.location.href = outcome;
+    setShowResult(true);
   }
 
   function handleSkip() {
     emitLpEvent("assessment_skip", { step: stepIdx + 1 });
     setOpen(false);
+    setShowResult(false);
     window.location.href = "#plans";
   }
 
@@ -105,7 +108,20 @@ export function AssessmentStepper({
   }
 
   const currentConfig = ASSESSMENT_STEPS[stepIdx];
-  if (!currentConfig) return null;
+  if (!currentConfig && !showResult) return null;
+
+  const hasPcos = state.conditions.includes("pcos") || state.primaryGoal === "glucose_stability";
+  const hasMuscle = state.primaryGoal === "lean_muscle";
+  const recTitle = hasPcos
+    ? "PCOS Hormone Balance & Low-GI Protocol"
+    : hasMuscle
+      ? "Lean Muscle Hypertrophy & Protein Protocol"
+      : "Weight-Loss Jumpstart & Metabolic Reset Protocol";
+  const recSpecs = hasPcos
+    ? "1,700 kcal · 100g verified protein · Anti-inflammatory low-GI"
+    : hasMuscle
+      ? "2,400 kcal · 160g protein surplus · Recovery-tuned"
+      : "1,500 kcal · 90g protein · 25g+ soluble fiber";
 
   return (
     <div
@@ -129,18 +145,62 @@ export function AssessmentStepper({
           </button>
         </div>
 
-        <div className="my-auto py-2">
-          <AssessmentScreen step={currentConfig} state={state} onUpdateState={setState} />
-        </div>
+        {showResult ? (
+          <div className="my-auto flex flex-col gap-6 py-4">
+            <div className="rounded-2xl border-2 border-gold/40 bg-surface-raised p-6 shadow-md">
+              <span className="rounded-full bg-gold/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-gold-text">
+                Recommended Clinical Plan
+              </span>
+              <h2 className="mt-3 text-2xl font-bold text-ink">{recTitle}</h2>
+              <p className="mt-1 text-sm font-medium text-ink-muted">{recSpecs}</p>
 
-        <AssessmentControls
-          currentStep={stepIdx}
-          totalSteps={ASSESSMENT_STEPS.length}
-          onBack={handleBack}
-          onNext={handleNext}
-          onSkip={handleSkip}
-          isLastStep={stepIdx === ASSESSMENT_STEPS.length - 1}
-        />
+              <div className="mt-6 rounded-xl border border-line bg-surface p-4">
+                <span className="text-xs font-semibold uppercase text-gold-text">
+                  Low-Friction Trial Recommendation
+                </span>
+                <p className="mt-1 text-xs text-ink-muted">
+                  Test your protocol for 3 days before committing to full monthly billing cycles. 100% creditback towards monthly subscriptions.
+                </p>
+                <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <a
+                    href="/trial"
+                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-[var(--gold-ink)] shadow-sm hover:opacity-90"
+                  >
+                    Start 3-Day Trial Pack — ₹5,316 →
+                  </a>
+                  <a
+                    href={`/plans?goal=${state.primaryGoal}`}
+                    className="inline-flex items-center justify-center rounded-xl border border-line px-5 py-3.5 text-xs font-semibold text-ink hover:border-line-strong"
+                  >
+                    View Monthly Protocol
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {state.conditions.some((c) => ["t2d", "pcos", "ckd", "cardiac"].includes(c)) && (
+              <div className="rounded-xl border border-sage/30 bg-sage-soft p-4 flex items-center justify-between gap-4 text-xs text-sage-text">
+                <span>Clinical condition flagged: Free 15-minute consultation available with Dr. Anjali Nair, RD.</span>
+                <a href="/rd" className="shrink-0 font-bold underline">Book RD Consult &rarr;</a>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="my-auto py-2">
+              <AssessmentScreen step={currentConfig!} state={state} onUpdateState={setState} />
+            </div>
+
+            <AssessmentControls
+              currentStep={stepIdx}
+              totalSteps={ASSESSMENT_STEPS.length}
+              onBack={handleBack}
+              onNext={handleNext}
+              onSkip={handleSkip}
+              isLastStep={stepIdx === ASSESSMENT_STEPS.length - 1}
+            />
+          </>
+        )}
       </div>
     </div>
   );

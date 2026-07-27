@@ -5,6 +5,7 @@ import { formatPaise } from "@/lib/format";
 import type { Subscription, SubscriptionStatus } from "@/lib/subscriptionsApi";
 import { DeliveryList } from "./DeliveryList";
 import { ChangePlanPanel } from "./ChangePlanPanel";
+import { HybridWorkToggle } from "./HybridWorkToggle";
 
 export type SubAction = "pause" | "resume" | "cancel" | "reactivate-billing";
 
@@ -33,7 +34,6 @@ function fmtDate(iso: string | null): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
-
 export function SubscriptionCard({
   sub,
   busy,
@@ -70,6 +70,13 @@ export function SubscriptionCard({
       )}
       {sub.addressLine && (
         <p className="mt-0.5 text-xs text-ink-faint">{[sub.addressLine, sub.city, sub.pincode].filter(Boolean).join(", ")}</p>
+      )}
+
+      {sub.status === "active" && (
+        <HybridWorkToggle
+          subscriptionId={sub.id}
+          currentLocation={sub.addressLine ?? "Sector 150 Home"}
+        />
       )}
       {sub.pendingCadence && (
         <p className="mt-1.5 text-xs font-medium text-sage-text">

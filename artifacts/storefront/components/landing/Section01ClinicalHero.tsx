@@ -18,53 +18,73 @@ import type { HeroContent } from "@/lib/heroContent";
 export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
   const deskFuelPrice = formatPaise(PLAN_PRICE_TABLE.desk_fuel.veg.perMealPaise!);
 
-  const handleHeroClick = () => {
-    emitLpEvent("hero_cta_click", { page: "/", label: "Explore Protocols Hero" });
+  const handleAssessmentClick = () => {
+    emitLpEvent("hero_cta_click", { page: "/", label: "Take Metabolic Assessment" });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("open_tanmatra_assessment"));
+    }
+  };
+
+  const handleCorporateClick = () => {
+    emitLpEvent("hero_cta_click", { page: "/", label: "Subsidize Team Lunch" });
   };
 
   return (
     <section className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-12 sm:pb-16 lg:pt-16">
-      <div className="max-w-3xl">
+      <div className="max-w-4xl">
         <div className="flex flex-wrap items-center gap-2.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-sage-text sm:text-sm">
-            {hero.eyebrow}
+          <p className="text-xs font-bold uppercase tracking-wider text-sage-text sm:text-sm">
+            FSSAI-Certified Therapeutic Kitchen · Noida
           </p>
-          {hero.badge && (
-            <span className="rounded-full border border-line bg-surface-raised px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-text">
-              {hero.badge}
-            </span>
-          )}
+          <span className="rounded-full border border-line bg-surface-raised px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-text">
+            IoT Cold-Chain Telemetry Active
+          </span>
         </div>
 
-        <h1 className="mt-4 text-3xl font-bold leading-[1.1] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          {hero.headline}
+        <h1 className="mt-4 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          Precision Nutrition for Noida’s High-Performers. <span className="text-gold-text">Engineered by Science.</span>
         </h1>
 
         <p className="mt-5 text-base leading-relaxed text-ink-muted sm:text-xl">
-          {hero.blurb}
+          FSSAI-certified therapeutic meals formulated by registered dietitians. Delivered flawlessly to your home or office via active IoT cold-chain tracking—guaranteed fresh, regardless of the heat.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-4 sm:mt-10">
-          <a
-            href="#protocols"
-            onClick={handleHeroClick}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] shadow-sm transition-transform active:scale-[0.98]"
+          <button
+            type="button"
+            onClick={handleAssessmentClick}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-[var(--gold-ink)] shadow-md transition-transform active:scale-[0.98]"
           >
-            Explore clinical protocols
+            Take the Metabolic Assessment
             <span aria-hidden>&rarr;</span>
-          </a>
+          </button>
 
           <Link
-            href="/menu"
-            className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:border-line-strong active:scale-95"
+            href="/corporate-wellness"
+            onClick={handleCorporateClick}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gold-text bg-surface px-6 py-3.5 text-sm font-bold text-ink transition-colors hover:bg-surface-raised active:scale-95"
           >
-            Pressure Valve: Quick Desk Fuel ({deskFuelPrice}/meal)
+            Subsidize Your Team's Lunch
           </Link>
         </div>
 
-        <p className="mt-4 text-xs font-medium text-ink-faint">
-          Zero subscription lock-in. Immediate hot lunch delivery across Noida enterprise corridors.
-        </p>
+        {/* Clinical Authority Trust Bar */}
+        <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line/80 pt-6 text-xs text-ink-muted">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sage-soft text-sage-text font-bold text-[11px]">✓</span>
+            ISO 22000:2018 Certified Kitchen
+          </div>
+          <span className="hidden sm:inline text-line-strong">•</span>
+          <div className="flex items-center gap-2 font-medium">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sage-soft text-sage-text font-bold text-[11px]">✓</span>
+            FSSAI Lic. 22725926001018
+          </div>
+          <span className="hidden sm:inline text-line-strong">•</span>
+          <div className="flex items-center gap-2 font-medium">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sage-soft text-sage-text font-bold text-[11px]">✓</span>
+            Supervised by Dr. Anjali Nair, RD
+          </div>
+        </div>
       </div>
     </section>
   );

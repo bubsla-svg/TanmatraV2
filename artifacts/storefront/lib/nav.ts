@@ -131,6 +131,8 @@ export function navGroup(key: NavGroupKey): NavGroup {
 export const PRIMARY_NAV: NavLink[] = [
   { label: "Menu", href: "/menu" },
   { label: "Plans", href: "/plans" },
+  { label: "Metabolic Care", href: "/metabolic" },
+  { label: "Corporate Wellness", href: "/corporate-wellness" },
   { label: "Account", href: "/account" },
 ];
 

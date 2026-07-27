@@ -1,0 +1,78 @@
+"use client";
+import React from "react";
+import Link from "next/link";
+import { emitLpEvent } from "@/lib/lpEvents";
+
+/**
+ * Section 4: Telehealth & Clinical Tracking (Revenue Stream 3 - Consultations & Tech).
+ * Promotes dietitian consultations and digital metabolic tracking dashboard.
+ */
+export function Section04TelehealthTracking() {
+  const handleClick = () => {
+    emitLpEvent("hero_cta_click", { page: "/", label: "Book Intro Consult" });
+  };
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <div className="rounded-3xl border border-line bg-surface p-8 shadow-sm lg:p-12">
+        <div className="grid items-center gap-8 lg:grid-cols-2">
+          {/* Visual: Dashboard Preview */}
+          <div className="order-2 lg:order-1 rounded-2xl border border-line bg-surface-raised p-6 shadow-xs">
+            <div className="flex items-center justify-between border-b border-line pb-3 text-xs font-semibold text-ink">
+              <span>Tanmatra Metabolic Dashboard</span>
+              <span className="tabular text-gold-text">Glucose &amp; Macro Log</span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 text-center">
+              <div className="rounded-xl border border-line bg-surface p-3">
+                <span className="text-[10px] uppercase font-bold text-ink-faint">Daily Protein</span>
+                <p className="tabular text-lg font-bold text-ink">104g / 100g</p>
+                <span className="text-[10px] text-sage-text font-semibold">✓ Target Met</span>
+              </div>
+              <div className="rounded-xl border border-line bg-surface p-3">
+                <span className="text-[10px] uppercase font-bold text-ink-faint">Glycemic Index</span>
+                <p className="tabular text-lg font-bold text-ink">Low (&lt;45)</p>
+                <span className="text-[10px] text-sage-text font-semibold">✓ Spike Buffer</span>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-line bg-surface p-3 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-base">👩‍⚕️</span>
+                <div>
+                  <p className="font-bold text-ink">Dr. Anjali Nair, RD</p>
+                  <p className="text-[10px] text-ink-muted">ADA Diabetes Educator</p>
+                </div>
+              </div>
+              <span className="rounded-md bg-gold/10 px-2 py-1 text-[10px] font-bold text-gold-text">
+                Review Synced
+              </span>
+            </div>
+          </div>
+
+          <div className="order-1 lg:order-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
+              Revenue Stream 3 · Telehealth &amp; Clinical Tech
+            </span>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+              Real-Time Dietitian Support.
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-ink-muted sm:text-base">
+              Precision requires data. Book a 30-minute consultation with our ADA Diabetes Educators and Registered Dietitians for ₹1,200. Log your meals, track your water, and monitor your metabolic progress directly in the Tanmatra Wellness Dashboard.
+            </p>
+
+            <div className="mt-8">
+              <Link
+                href="/rd"
+                onClick={handleClick}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-[var(--gold-ink)] shadow-md transition-opacity hover:opacity-90 active:scale-95"
+              >
+                Book Your Free 15-Minute Intro Consult &rarr;
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
