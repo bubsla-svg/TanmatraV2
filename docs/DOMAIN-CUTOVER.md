@@ -15,8 +15,13 @@ at. Four comments in the repo point here: `.github/workflows/deploy.yml` lines
 ## 1. The three services
 
 All three live in GCP project `brand-tanmatra-tmg`, region `asia-south2`, and
-are deployed by `.github/workflows/deploy.yml` (manual `workflow_dispatch`
-only — there is no push trigger).
+are deployed by `.github/workflows/deploy.yml`. **A push to `main` auto-deploys
+the `storefront` service only** — which, since the cutover, is the service
+behind `tanmatra.food`, so a merge reaches customers unattended. It captures
+the serving revision first and rolls itself back if the smoke or deploy-truth
+check fails. `wellness-foods` (api-server) and the legacy `tanmatra` service
+remain manual `workflow_dispatch` only, because this pipeline applies no
+database migrations.
 
 | Cloud Run service | Package | Role |
 |---|---|---|

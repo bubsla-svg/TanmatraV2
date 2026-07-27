@@ -313,6 +313,10 @@ cd artifacts/storefront && node --test --import tsx ./lib/planCheckout.test.ts .
   on storefront-only diffs — that is path filtering, not a failure.
   `bulkhead-smoke` fires when `pnpm-lock.yaml` changes and has flaked once on
   a Docker Hub pull timeout — re-run before diagnosing.
-- Merging #434 and deploying are the owner's calls. Deploys are manual
-  `workflow_dispatch`; the `only_storefront` input rolls just the storefront
-  service. No migrations are involved in any of stages 3–5.
+- Merging #434 is the owner's call. **Deploying is no longer manual for the
+  storefront**: a merge to `main` that touches `artifacts/storefront/**`,
+  `lib/**` or the lockfile auto-deploys the storefront service, which is what
+  `tanmatra.food` serves. So a merged stage goes live on its own — check the
+  Deploy run, and expect an auto-rollback (not a broken site) if the smoke or
+  deploy-truth check fails. api-server and the legacy SPA are still manual
+  `workflow_dispatch`. No migrations are involved in any of stages 3–5.
