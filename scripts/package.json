@@ -22,7 +22,8 @@
     "test": "tsx ./src/verify-dish-integrity.ts",
     "stress-test-ledger": "tsx ./src/stress-test-ledger.ts",
     "optimize-images": "tsx ./src/optimize-dish-images.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "apply-migrations": "tsx ./src/apply-migrations.ts"
   },
   "dependencies": {
     "@workspace/api-server": "workspace:*",
@@ -31,12 +32,14 @@
     "@workspace/preferences-match": "workspace:*",
     "drizzle-orm": "catalog:",
     "express": "^5",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "lighthouse": "^13.2.0",
-    "tsx": "catalog:"
+    "tsx": "catalog:",
+    "@types/pg": "^8.11.0"
   }
 }

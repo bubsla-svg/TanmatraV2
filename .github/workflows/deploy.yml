@@ -1,31 +1,29 @@
 name: Deploy
 
 on:
-  # Push auto-deploys the STOREFRONT ONLY (see each job's `if:`). It was
-  # commented out in e09c21e1 — not as policy, but as the last flip of a
-  # toggle sequence that used the trigger as a manual deploy button
-  # (5500ce73 on, 5d094548 on, e09c21e1 off, all within 20 minutes).
-  # workflow_dispatch landed 31 minutes later and made the hack unnecessary;
-  # nobody re-enabled push, so main silently stopped reaching the live site
-  # and drifted 82 commits behind before anyone noticed.
+  # A merge to main deploys EVERYTHING IT TOUCHED, automatically — owner
+  # decision (2026-07-27): "every commit pushed by the engg agent passes all
+  # the checks and goes live as intended without any blocker."
   #
-  # Restored for the storefront because that service IS tanmatra.food, it is
-  # the surface under active iteration, it applies no migrations, and it
-  # self-verifies and rolls itself back (see the storefront job).
-  # api-server and the legacy tanmatra SPA stay dispatch-only: the api-server
-  # has no migration step in this pipeline, so auto-deploying it ahead of a
-  # pending migration breaks checkout.
+  # The path from merge to live, per service:
+  #   storefront   push -> gate -> deploy (capture/no-traffic/route/verify/rollback)
+  #   api-server   push -> gate -> migrate-db (replays committed drizzle
+  #                migrations, fail-closed) -> deploy -> livez smoke
+  #   tanmatra     push -> gate -> deploy (same rollback pattern). Also serves
+  #                /images to the storefront, so dish-image merges ship here.
+  #
+  # `gate` re-runs the load-bearing checks ON THE MERGE COMMIT (root
+  # typecheck, all lint gates, test-reach, money-path unit + integration
+  # suites against a real Postgres). PR CI tests the branch tip; the gate
+  # tests what is actually deploying — a direct push or a stale-branch merge
+  # cannot reach production unchecked. Every deploy job requires it on push.
+  #
+  # History: the trigger was disabled in e09c21e1 as a leftover toggle-hack
+  # (see git log around 5500ce73/5d094548), which silently stopped merges
+  # from shipping at all; it came back storefront-only first, then full-
+  # project once the migration step existed.
   push:
     branches: [main]
-  # Manual dispatch deploys ALL THREE services from the chosen ref.
-  # paths-filter cannot diff a dispatch event (no before/after commits), so
-  # the deploy jobs explicitly bypass the filter on dispatch — without this,
-  # a dispatch silently deployed nothing, and deploying required committing
-  # push-trigger toggles to main (which happened twice; see e09c21e1).
-  #
-  # only_storefront rolls JUST the dark-preview `storefront` service and leaves
-  # the production api-server + domain `tanmatra` untouched — for verifying a
-  # storefront change on its deployed URL without a full three-service release.
   workflow_dispatch:
     inputs:
       only_storefront:
@@ -77,18 +75,160 @@ jobs:
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
 
+  # The merge-commit check. Everything here also runs in PR CI — the point is
+  # running it on the EXACT sha that deploys. Push-only: a dispatch is a human
+  # decision and stays immediate.
+  gate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tanmatra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/tanmatra_test
+      GOOGLE_API_KEY: test
+      NODE_ENV: test
+      CLINICAL_KMS_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Root typecheck
+        run: pnpm run typecheck
+      - name: Lint gates (filecap, tokens, test-reach)
+        run: |
+          node --experimental-strip-types scripts/lint-filecap.ts artifacts/storefront
+          node --experimental-strip-types scripts/lint-tokens.ts artifacts/storefront
+          pnpm run lint:test-reach
+      - name: Money-path unit suites (both web packages, by glob)
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx "../storefront/lib/**/*.test.ts"
+          node --test --import tsx "../tanmatra/src/**/*.test.ts"
+      - name: Money-path unit tests (api-server + plan spine)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/cartMath.test.ts
+          ./src/lib/bundlePricing.test.ts
+          ./src/lib/paymentIntegrity.test.ts
+          ./src/lib/subscriptionPricing.test.ts
+          ./src/lib/flags.test.ts
+          ./src/lib/trialEligibility.test.ts
+          ./src/lib/corporateSubsidy.test.ts
+          ../../lib/subscription-rules/src/planCatalog.test.ts
+      - name: Push schema to the test database
+        run: pnpm --filter @workspace/db run push-force
+      - name: Money-path integration tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/payments.integrity.test.ts
+
+  # Replay committed drizzle migrations against production BEFORE the
+  # api-server rolls. This is the step whose absence kept the backend deploy
+  # human-gated: code that reads a column its migration creates must not land
+  # before the column exists. scripts/src/apply-migrations.ts is journal-
+  # ordered, transactional per migration, baselines a hand-migrated database
+  # without executing anything, and refuses destructive statements unless the
+  # migration file itself carries "-- ci:allow-destructive". Fail-closed: if
+  # this job fails, cloud-run does not run.
+  migrate-db:
+    needs: [changes, gate]
+    if: |
+      !cancelled() &&
+      ((github.event_name == 'workflow_dispatch' && !inputs.only_storefront) || needs.changes.outputs.api == 'true') &&
+      (github.event_name != 'push' || needs.gate.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      GCP_REGION: asia-south2
+      SQL_INSTANCE: brand-tanmatra-tmg:asia-south2:brand-tanmatra-db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Start Cloud SQL Auth Proxy
+        run: |
+          curl -sfL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.2/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy --credentials-file "$GOOGLE_APPLICATION_CREDENTIALS" \
+            --address 127.0.0.1 --port 5433 "$SQL_INSTANCE" &
+          for i in $(seq 1 20); do
+            (echo > /dev/tcp/127.0.0.1/5433) 2>/dev/null && { echo "proxy up"; exit 0; }
+            sleep 1
+          done
+          echo "cloud-sql-proxy never came up — check the deploy SA has roles/cloudsql.client"; exit 1
+      - name: Apply pending migrations (dry-run first, then real)
+        run: |
+          RAW=$(gcloud secrets versions access latest \
+            --secret=brand-tanmatra-database-url --project "$GCP_PROJECT") || {
+            echo "cannot read secret brand-tanmatra-database-url — grant the deploy SA roles/secretmanager.secretAccessor"; exit 1; }
+          # Rewrite the URL to go through the proxy, handling both hostful
+          # (…@HOST:PORT/db) and unix-socket (…@/db?host=/cloudsql/…) shapes.
+          export DATABASE_URL=$(python3 - "$RAW" <<'EOF'
+          import sys, urllib.parse as u
+          raw = sys.argv[1]
+          p = u.urlsplit(raw)
+          q = dict(u.parse_qsl(p.query))
+          q.pop("host", None)  # unix-socket param, replaced by the proxy
+          # Pass the userinfo through VERBATIM. urlsplit does not decode it,
+          # so re-quoting would double-encode an already-encoded password
+          # (p%40ss -> p%2540ss) and fail auth. The original string was a
+          # working URL; its encoding is already correct.
+          auth = p.netloc.rsplit("@", 1)[0] + "@" if "@" in p.netloc else ""
+          query = ("?" + u.urlencode(q)) if q else ""
+          print(f"{p.scheme}://{auth}127.0.0.1:5433{p.path}{query}")
+          EOF
+          )
+          pnpm --filter @workspace/scripts run apply-migrations --dry-run
+          pnpm --filter @workspace/scripts run apply-migrations
+
   # Build the api-server Docker image with Cloud Build, then roll the
   # `wellness-foods` Cloud Run service. Runs only when backend-relevant
   # files changed.
   cloud-run:
-    needs: changes
-    # DISPATCH ONLY — deliberately not reachable from a push. The `api` filter
-    # matches lib/** and pnpm-lock.yaml, so the old `|| needs.changes.outputs.api`
-    # clause would have auto-rolled the api-server on almost every merge. This
-    # pipeline never applies Drizzle migrations, so a deploy that lands ahead of
-    # a pending one breaks corporate checkout and the lead routes. Releasing the
-    # backend stays a human action: migrate first, then dispatch.
-    if: github.event_name == 'workflow_dispatch' && !inputs.only_storefront
+    needs: [changes, gate, migrate-db]
+    # Push-enabled since the migrate-db step exists: the reason this was
+    # dispatch-only was that nothing applied migrations, so a deploy landing
+    # ahead of a pending one broke checkout. Now the ordering is enforced by
+    # `needs` + the migrate-db success requirement (fail-closed: migration
+    # failure blocks the deploy). On push the gate must also be green.
+    if: |
+      !cancelled() &&
+      ((github.event_name == 'workflow_dispatch' && !inputs.only_storefront) || needs.changes.outputs.api == 'true') &&
+      needs.migrate-db.result == 'success' &&
+      (github.event_name != 'push' || needs.gate.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -218,21 +358,20 @@ jobs:
   # (the frontend targets a STABLE API URL, so a backend blip must not block
   # frontend fixes); only a cancelled run aborts it.
   frontend-cloud-run:
-    needs: [changes, cloud-run]
-    # DISPATCH ONLY. The legacy SPA no longer fronts the domain, so there is
-    # nothing to gain from auto-rolling it on every merge — and its `web`
-    # filter also matches lib/**, which would have fired it constantly.
-    # DO NOT append `|| needs.changes...` to this expression: with no parens,
-    # `A && B && C || D` parses as `(A && B && C) || D` and D alone would
-    # auto-deploy this service on every merge.
-    # NOTE this service is still the storefront's IMAGE_UPSTREAM (/images
-    # proxy; dish assets live in artifacts/tanmatra/public/dishes) — after
-    # merging new dish images, dispatch a deploy of this service or the
-    # storefront will render 404 images. Moving assets to a bucket is the fix.
+    needs: [changes, gate, cloud-run]
+    # Push-enabled on the `web` filter. The domain no longer routes here, but
+    # this service is the storefront's IMAGE_UPSTREAM (/images proxy; dish
+    # assets live in artifacts/tanmatra/public/dishes) — while it was
+    # dispatch-only, a merged dish photo left the storefront rendering 404
+    # images until someone remembered to dispatch. Auto-deploying on web
+    # changes closes that trap. `needs: cloud-run` keeps ordering when both
+    # deploy, but a backend failure must not block a frontend fix, so its
+    # result is deliberately not consulted (!cancelled() is the only status
+    # guard). The || group is parenthesised — keep it that way.
     if: |
-      always() &&
-      github.event_name == 'workflow_dispatch' && !inputs.only_storefront &&
-      needs.cloud-run.result != 'cancelled'
+      !cancelled() &&
+      ((github.event_name == 'workflow_dispatch' && !inputs.only_storefront) || needs.changes.outputs.web == 'true') &&
+      (github.event_name != 'push' || needs.gate.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -314,6 +453,19 @@ jobs:
           done
           echo "Timed out waiting for Cloud Build"; exit 1
 
+      # Same capture-before-deploy + --no-traffic + rollback pattern as the
+      # storefront job, for the same reason: this job now runs unattended on
+      # merge. See the storefront job's comments for why the ORDER is the
+      # whole point.
+      - name: Capture the currently-serving revision (rollback target)
+        id: stable
+        run: |
+          STABLE_REV=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.traffic.filter("percent:100").extract(revisionName).flatten())' || true)
+          echo "stable revision before this deploy: ${STABLE_REV:-<none>}"
+          echo "rev=$STABLE_REV" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${SERVICE} \
@@ -324,6 +476,7 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --update-env-vars "API_UPSTREAM=${API_URL%/api},BUILD_SHA=${{ github.sha }},BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --no-traffic \
             --quiet
 
       # This step used to be absent, deliberately: while tanmatra.food was served
@@ -341,6 +494,7 @@ jobs:
       # deploy-truth assert below will then fail loudly instead of leaving a
       # green check over a stale serve.
       - name: Route traffic to the new revision
+        id: route
         run: |
           gcloud run services update-traffic ${SERVICE} \
             --region ${GCP_REGION} \
@@ -402,6 +556,19 @@ jobs:
       # service (docs/DOMAIN-CUTOVER.md), tanmatra.food stops reflecting this job
       # at all. So this is a NON-FATAL notice, not a gate — the storefront job
       # owns the domain deploy-truth post-cutover.
+      - name: Roll back on failed verification
+        if: failure() && steps.route.outcome == 'success' && steps.stable.outputs.rev != ''
+        env:
+          REV: ${{ steps.stable.outputs.rev }}
+        run: |
+          echo "verification failed — restoring $REV"
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --to-revisions "$REV=100" \
+            --quiet
+          echo "rolled back. The deploy is red on purpose — fix forward and merge again."
+
       - name: Domain notice (non-fatal — promotion/cutover is manual)
         run: |
           DEPLOYED=$(curl -sf https://tanmatra.food/api/build | jq -r '.sha // "unknown"' 2>/dev/null || echo "unreachable")
@@ -418,7 +585,7 @@ jobs:
   # change is needed. NOTE: the plan-v2 surfaces need FLAG_PLAN_V2=true on the
   # api-server (a separate go-live switch, not flipped here).
   storefront-cloud-run:
-    needs: [changes, cloud-run]
+    needs: [changes, gate, cloud-run]
     # !cancelled(), NOT always(): always() jobs still start after the run is
     # cancelled, so the abort button would not stop a production deploy — and
     # with concurrency cancel-in-progress:false, a superseded run could land
@@ -427,7 +594,8 @@ jobs:
     # cloud-run need (needs.<id>.result is 'skipped' on every push).
     if: |
       !cancelled() &&
-      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.storefront == 'true')
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.storefront == 'true') &&
+      (github.event_name != 'push' || needs.gate.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
