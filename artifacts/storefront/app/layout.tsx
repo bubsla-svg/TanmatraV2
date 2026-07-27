@@ -108,21 +108,12 @@ export default function RootLayout({
               Skip to main content
             </a>
             <CartProvider>
-              {/* Global chrome is suppressed on the homepage — the M3 landing
-                  brings its own nav (§0), bottom bar (§11) and footer (§12);
-                  without the gate the page rendered two logos, two navs and
-                  two footers. See ChromeGate for the full story. MiniCartBar
-                  is gated too: it and §11 are both bottom-fixed and overlap. */}
-              <ChromeGate>
-                <Header />
-              </ChromeGate>
+              <Header />
               <main id="main">{children}</main>
-              <ChromeGate>
-                {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
-                <MiniCartBar />
-                <Footer />
-                <BottomNav />
-              </ChromeGate>
+              {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
+              <MiniCartBar />
+              <Footer />
+              <BottomNav />
             </CartProvider>
           </ThemeProvider>
         </PostHogProvider>

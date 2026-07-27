@@ -7,17 +7,17 @@ import React from "react";
  */
 export function Section03AgitationPanel() {
   const commercialFlaws = [
-    "Unverified macro estimates with hidden refined sugars in dressings",
-    "Industrial seed oils (palm, sunflower, soybean) used during bulk high-heat cooking",
-    "Eyeball portioning without calibrated ingredient weighing tolerances",
-    "High Glycemic Index carb loading inducing afternoon lethargy and glucose spikes",
+    "Hidden sugars in dressings and sauces",
+    "Cheap, low-quality oils used in bulk cooking",
+    "Inconsistent portion sizes and nutrition estimates",
+    "Heavy carbs that leave you tired and sluggish by afternoon",
   ];
 
   const clinicalAdvantages = [
-    "100% lab-verified macro readouts with weighed ±2g ingredient precision",
-    "Zero industrial oils — cooked exclusively with cold-pressed olive oil & pure desi ghee",
-    "Recipes and therapeutic diets engineered by IDA registered clinical dietitians (RD)",
-    "Low-Medium Glycemic Index formulations optimized for sustained cognition",
+    "Precisely measured ingredients for accurate nutrition",
+    "Zero low-quality oils — cooked with premium olive oil & pure desi ghee",
+    "Meals designed and approved by Registered Dietitians",
+    "Balanced energy to keep you focused and full all day",
   ];
 
   return (
@@ -25,13 +25,13 @@ export function Section03AgitationPanel() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-            Metabolic Reality Check
+            The Tanmatra Difference
           </span>
           <h2 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-4xl">
-            The &ldquo;Healthy&rdquo; Bowl Problem in Business Parks
+            The Truth About &ldquo;Healthy&rdquo; Takeout
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-ink-muted sm:text-base">
-            Why commercial salads and unverified health cafe meals fail long-term metabolic health and focus.
+            Not all health bowls are created equal. Hidden sugars and low-quality oils can derail your goals and leave you tired. Here is how we are different.
           </p>
         </div>
 
@@ -39,7 +39,7 @@ export function Section03AgitationPanel() {
           <div className="flex flex-col rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8">
             <div className="border-b border-line pb-4">
               <span className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-                Standard Cloud Kitchens
+                Standard Takeout
               </span>
               <h3 className="mt-1 text-lg font-bold text-ink">Commercial &ldquo;Healthy&rdquo; Bowls</h3>
             </div>
@@ -59,9 +59,9 @@ export function Section03AgitationPanel() {
             <div className="flex items-center justify-between border-b border-line pb-4">
               <div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-                  Certified Standard
+                  The Tanmatra Standard
                 </span>
-                <h3 className="mt-1 text-lg font-bold text-ink">Tanmatra Clinical Protocols</h3>
+                <h3 className="mt-1 text-lg font-bold text-ink">Our Healthy Meal Plans</h3>
               </div>
               <span className="rounded-full bg-surface-raised px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-ink">
                 Verified

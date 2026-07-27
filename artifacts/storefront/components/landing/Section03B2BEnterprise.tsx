@@ -18,27 +18,27 @@ export function Section03B2BEnterprise() {
         <div className="grid items-center gap-8 lg:grid-cols-2">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
-              Revenue Stream 2 · B2B Volume & Corporate Wellness
+              Corporate Wellness &amp; Team Lunches
             </span>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Upgrade Your Team's Productivity.
+              Keep Your Team Energized and Productive.
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-ink-muted sm:text-base">
-              We seamlessly integrate with your company's digital health wallets. Subsidize daily, macro-perfect lunches for your office in Noida's IT corridors to prevent afternoon energy slumps and reduce medical absenteeism.
+              Offer your team healthy, dietitian-approved lunches without the hassle. We integrate with your corporate perks to make healthy eating the easy choice at work.
             </p>
 
             <ul className="mt-6 flex flex-col gap-3 text-xs text-ink">
               <li className="flex items-center gap-2.5">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-[10px]">⚡</span>
-                <span>Direct API sync with corporate cafeteria wallets &amp; employee ID badges</span>
+                <span>Easy integration with employee benefits and meal allowances</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-[10px]">⚡</span>
-                <span>Bulk thermal delivery dispatches directly to IT park reception desks</span>
+                <span>Fresh, group deliveries straight to your office</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-[10px]">⚡</span>
-                <span>Measurable health insurance claim reductions &amp; absenteeism recovery</span>
+                <span>Boost focus and reduce afternoon fatigue for your team</span>
               </li>
             </ul>
 

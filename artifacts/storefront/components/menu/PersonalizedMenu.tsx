@@ -55,7 +55,7 @@ export function PersonalizedMenu({ dishes }: { dishes: DishData[] }) {
 
     resolveInitialDietChip()
       .then((c) => {
-        if (live && c !== "all") setChip(c);
+        if (live && c !== "all") setChip((curr) => (curr === "all" ? c : curr));
       })
       .catch(() => {
         // Fallback cleanly to "all"

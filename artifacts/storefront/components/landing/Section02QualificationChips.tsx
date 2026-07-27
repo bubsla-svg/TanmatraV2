@@ -13,19 +13,19 @@ export function Section02QualificationChips() {
   const chips = [
     {
       value: "40–45m",
-      label: "Punctual Hot Desk Delivery in Noida",
+      label: "Fast Delivery in Noida",
     },
     {
       value: "100%",
-      label: "Verified Macros & Zero Industrial Oil",
+      label: "Clean Ingredients, Healthy Fats",
     },
     {
       value: "FSSAI & ISO",
-      label: "Noida Medical-Grade Kitchen Hygiene",
+      label: "Certified Safe & Hygienic",
     },
     {
       value: `${deskFuelBase}/meal`,
-      label: "Tax-Free Desk Fuel Base Cadence",
+      label: "Affordable Daily Options",
     },
   ];
 

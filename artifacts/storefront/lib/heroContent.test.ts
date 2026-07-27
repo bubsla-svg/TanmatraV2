@@ -11,7 +11,7 @@ const basePrice = formatPaise(PLAN_PRICE_TABLE.desk_fuel.veg.perMealPaise!);
 test("an RD/clinic referral cookie yields the clinical-adherence hero", () => {
   for (const ref of ["rd_sharma", "dietitian_kaur", "apollo_clinic", "dr_mehta", "DIET_partner"]) {
     const hero = deriveHeroContent(ref);
-    assert.equal(hero.badge, "Clinical Adherence Priority", `${ref} should read as clinical`);
+    assert.equal(hero.badge, "Priority Health Plan", `${ref} should read as clinical`);
     assert.match(hero.eyebrow, /Registered Dietitian/);
   }
 });
@@ -19,7 +19,7 @@ test("an RD/clinic referral cookie yields the clinical-adherence hero", () => {
 test("a gym/trainer referral cookie yields the performance hero", () => {
   for (const ref of ["gym_cult", "trainer_47", "fitfirst", "coach_raj"]) {
     const hero = deriveHeroContent(ref);
-    assert.equal(hero.badge, "Performance Recovery Protocol", `${ref} should read as performance`);
+    assert.equal(hero.badge, "Workout Recovery Plan", `${ref} should read as performance`);
     assert.match(hero.eyebrow, /Fitness Club/);
   }
 });

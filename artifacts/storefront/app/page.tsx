@@ -13,6 +13,7 @@ import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros"
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
 import { Section09AssessmentSection } from "@/components/landing/Section09AssessmentSection";
+import { Section09bRecipesBridge } from "@/components/landing/Section09bRecipesBridge";
 import { Section10FaqAccordion } from "@/components/landing/Section10FaqAccordion";
 /**
  * Consumer Home — 3-Pillar Revenue Architecture.
@@ -62,6 +63,9 @@ export default async function HomePage() {
 
         {/* Interactive 60-Second Metabolic Assessment Stepper Banner & Modal */}
         <Section09AssessmentSection />
+
+        {/* Recipes Bridge: DIY vs Done-for-You */}
+        <Section09bRecipesBridge />
 
         {/* FAQ Accordion with Mandatory Medical Disclaimer */}
         <Section10FaqAccordion />

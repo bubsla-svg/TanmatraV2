@@ -2,7 +2,8 @@
 // Client: controlled address/consent inputs for the guest money path.
 import { useEffect, useRef, useState } from "react";
 import { formatPaise } from "@/lib/format";
-import { subtotalPaise, type CartState } from "@/lib/cartStore";
+import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
+import { useCart } from "@/components/cart/CartProvider";
 import { DPDP_CONSENT_COPY } from "@/lib/consent";
 
 export interface AlacarteAddress {
@@ -48,6 +49,7 @@ export function AlacarteDetails({
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
   const [consent, setConsent] = useState(false);
   const prefilled = useRef(false);
+  const { setCart } = useCart();
 
   // A saved address may arrive AFTER mount (async sign-in fetch). Seed the
   // fields once — but only while they're still untouched, so a customer who
@@ -72,9 +74,21 @@ export function AlacarteDetails({
       <div className="rounded-xl bg-surface p-4">
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
-            <li key={l.dishId} className="flex justify-between py-1.5 text-sm">
-              <span className="text-ink-muted">{l.qty}× {l.name}</span>
-              <span className="tabular text-ink">{formatPaise(l.pricePaise * l.qty)}</span>
+            <li key={l.dishId} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-ink">{l.name}</p>
+                <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center rounded-lg border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
+                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, qtyOf(cart, l.dishId) - 1))} className="min-h-8 min-w-8 text-ink">−</button>
+                  <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
+                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, qtyOf(cart, l.dishId) + 1))} className="min-h-8 min-w-8 text-ink">+</button>
+                </div>
+                <span className="tabular w-16 text-right text-sm font-semibold text-ink">
+                  {formatPaise(l.pricePaise * l.qty)}
+                </span>
+              </div>
             </li>
           ))}
         </ul>

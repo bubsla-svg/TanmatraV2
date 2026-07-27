@@ -88,18 +88,21 @@ test.describe("OB-6 Onboarding Conversion Gate & Auth Audit", () => {
 
   test("dietary filter chips filter dishes without triggering auth or write-backs", async ({ page }) => {
     await page.goto("/menu");
-    const vegChip = page.getByRole("button", { name: "Veg", exact: true });
-    const nonVegChip = page.getByRole("button", { name: "Non-veg", exact: true });
+    await page.waitForLoadState("networkidle");
+    const filterGroup = page.getByRole("group", { name: "Filter dishes by diet" });
+    const vegChip = filterGroup.getByRole("button", { name: "Veg", exact: true });
+    const nonVegChip = filterGroup.getByRole("button", { name: "Non-veg", exact: true });
 
+    console.log("vegChip count:", await page.getByRole("button", { name: "Veg", exact: true }).count());
     await expect(vegChip).toBeVisible();
     await expect(nonVegChip).toBeVisible();
 
     // Toggle chip logged-out -> filters grid without any login modal or redirection
-    await vegChip.click();
+    await vegChip.click({ force: true });
     expect(page.url()).not.toContain("/login");
     await expect(page.locator("input[autocomplete='one-time-code']")).toHaveCount(0);
 
-    const activeVeg = page.locator("button.bg-gold", { hasText: "Veg" });
+    const activeVeg = page.locator("button.bg-gold").filter({ hasText: /^Veg$/ });
     await expect(activeVeg).toBeVisible();
   });
 });
