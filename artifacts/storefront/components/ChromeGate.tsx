@@ -20,7 +20,7 @@ import { usePathname } from "next/navigation";
  * children stay server components (a client component may RENDER server
  * children passed as props), and the route list lives in exactly one place.
  */
-const SELF_CHROMED_ROUTES = new Set(["/"]);
+const SELF_CHROMED_ROUTES = new Set<string>([]);
 
 export function ChromeGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { Section00StickyNav } from "@/components/landing/Section00StickyNav";
 import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
 import { deriveHeroContent } from "@/lib/heroContent";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
@@ -12,12 +11,8 @@ import { Section05LogisticsMoat } from "@/components/landing/Section05LogisticsM
 import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
-import { Section08PricingStrip } from "@/components/landing/Section08PricingStrip";
 import { Section09AssessmentSection } from "@/components/landing/Section09AssessmentSection";
 import { Section10FaqAccordion } from "@/components/landing/Section10FaqAccordion";
-import { Section11StickyBottomBar } from "@/components/landing/Section11StickyBottomBar";
-import { Section12Footer } from "@/components/landing/Section12Footer";
-
 /**
  * Consumer Home — 3-Pillar Revenue Architecture.
  * Server Component implementing DTR (Dynamic Tailored Referrals) personalization,
@@ -30,8 +25,6 @@ export default async function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-surface text-ink pb-20 sm:pb-24">
-      {/* §0: Sticky Navigation Bar with Assessment CTA */}
-      <Section00StickyNav />
 
       <main className="flex flex-col gap-12 sm:gap-16 lg:gap-20">
         {/* Pillar 1 Hero: Clinical Authority Hook with Dual CTAs & Trust Bar */}
@@ -69,10 +62,6 @@ export default async function HomePage() {
         {/* FAQ Accordion with Mandatory Medical Disclaimer */}
         <Section10FaqAccordion />
       </main>
-
-      {/* Sticky Bottom Conversion Bar & Footer */}
-      <Section11StickyBottomBar />
-      <Section12Footer />
     </div>
   );
 }
