@@ -35,6 +35,7 @@ async function apiRequest<T>(
   const res = await fetchImpl(`${API_BASE}/api${path}`, {
     method,
     credentials: "include",
+    cache: "no-store",
     ...(body !== undefined
       ? { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }
       : {}),

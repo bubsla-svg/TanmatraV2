@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { firebaseConfigured } from "@/lib/firebase";
-import { getAuthUser } from "@/lib/api";
+import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { getAuthUser, verifyOtp } from "@/lib/api";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 /**
@@ -20,17 +21,43 @@ export function LoginCard({ next }: { next: string }) {
 
   useEffect(() => {
     let live = true;
+    let unsubscribe: (() => void) | null = null;
+
     getAuthUser()
-      .then(({ user }) => {
+      .then(async ({ user }) => {
         if (!live) return;
-        if (user) router.replace(next);
-        else setChecking(false);
+        if (user) {
+          router.replace(next);
+          return;
+        }
+
+        if (firebaseConfigured()) {
+          const auth = getFirebaseAuth();
+          unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+            if (!live) return;
+            if (fbUser) {
+              try {
+                const idToken = await fbUser.getIdToken(true);
+                await verifyOtp({ idToken });
+                if (live) router.replace(next);
+              } catch {
+                if (live) setChecking(false);
+              }
+            } else {
+              if (live) setChecking(false);
+            }
+          });
+        } else {
+          setChecking(false);
+        }
       })
       .catch(() => {
         if (live) setChecking(false);
       });
+
     return () => {
       live = false;
+      if (unsubscribe) unsubscribe();
     };
   }, [next, router]);
 
