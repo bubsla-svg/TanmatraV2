@@ -5,5 +5,7 @@ export const marketplaceCopy = {
   },
   bundleToggle: {
     label: "Bundle with daily meal delivery (Free shipping)",
+    subtext: "Delivered alongside your morning meal package.",
   },
+  addToCartCta: "Add to Order",
 } as const;

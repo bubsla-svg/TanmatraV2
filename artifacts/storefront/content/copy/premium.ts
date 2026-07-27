@@ -7,4 +7,5 @@ export const premiumCopy = {
   },
   // [OWNER] Gated perk list: null until entitlement API verification
   ownerPerksLeaf: null as CopyLeaf,
+  pricingNote: "Billed annually or monthly. Cancel anytime.",
 } as const;
