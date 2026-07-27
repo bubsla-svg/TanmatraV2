@@ -47,17 +47,41 @@ stages 3–5 land, fold anything still useful into `/styleguide` and delete it.
 
 **Where things live.** The component library is `@astryxdesign/core` (123
 export subpaths — `Button`, `Card`, `TopNav`, `MobileNav`, `FormLayout`, …).
-The templates are NOT exported; they ship inside the CLI package:
+The templates ship inside the CLI package (43 page templates + 156 blocks),
+and the **official catalog with visual previews is
+<https://astryx.atmeta.com/templates>** — browse there to pick by eye; the
+site and the pinned CLI (0.1.8) carry the same catalog. The site is a
+JS-rendered SPA, so fetch/curl gets an empty shell — use a real browser, or
+the CLI locally, which is authoritative for the installed version anyway.
 
-```
-node_modules/.pnpm/@astryxdesign+cli@0.1.8_*/node_modules/@astryxdesign/cli/templates/
-  pages/    43 full-page templates  (shell-top-nav, contact-form, payment-form, login-card, …)
-  blocks/components/   156 building blocks (TopNav*, MobileNav*, SideNav*, LayoutFooter, …)
+**Use the CLI workflow, not node_modules archaeology** (run from
+`artifacts/storefront`, where `@astryxdesign/cli` is a devDependency):
+
+```bash
+pnpm exec astryx template --list --type page     # catalog: display name + description
+pnpm exec astryx template --list --type block    # the 156 building blocks
+pnpm exec astryx search <need> --type template   # ranked search; each hit prints its
+                                                 # exact inject command, e.g.
+                                                 # "Checkout Form → pnpm exec astryx template payment-form"
+pnpm exec astryx template <name> --skeleton      # layout skeleton with spacing/nesting
+                                                 # annotations — the fastest way to read
+                                                 # a template's composition
+pnpm exec astryx template <name> <path>          # inject the full source at <path>
 ```
 
-Read the template, follow its composition, write your own file. Never copy one
-verbatim — they use `@heroicons/react` (NOT installed; this repo uses
-`lucide-react`) and placeholder data with fabricated prices.
+The recommended loop per surface: `search` for the need → `--skeleton` to read
+the composition → **inject into a scratch path** (never straight into `app/` —
+templates arrive as one big `"use client"` page that fails lint:filecap and
+would demote a server route) → transplant the composition into decomposed
+≤150-line components, keeping our data wiring. Delete the scratch file before
+committing. Never keep injected source verbatim: templates use
+`@heroicons/react` (NOT installed; this repo uses `lucide-react`) and
+placeholder data with fabricated prices, and display names differ from inject
+names ("Checkout Form" is `payment-form` — trust the arrow in the search
+output).
+
+Also available when useful: `astryx docs <Component>` (per-component API
+docs), `astryx doctor` (integration sanity check).
 
 **371 of 501 built modules are client components — and the directive hides.**
 `'use client'` sits on **line 3**, under a copyright header. `head -2` and
@@ -148,8 +172,10 @@ the existing glob — put new tests there and you're fine.
 
 ### Stage 3 — nav shell
 
-1. Read `templates/pages/shell-top-nav/page.tsx` and the `TopNav*`,
-   `MobileNav*`, `LayoutFooter` blocks.
+1. `pnpm exec astryx template shell-top-nav --skeleton`, then inject it and
+   the `TopNav*` / `MobileNav*` / `LayoutFooter` blocks into a scratch path
+   to read (§2 loop). Check the catalog site for near variants
+   (`shell-nav`, `shell-side-nav`) before committing to one.
 2. `Header.tsx` is currently a server component with a client CommandMenu
    island — keep that split. Compose `TopNav` primitives from the server file.
 3. `BottomNav.tsx` is the mobile IA (Eat / Plan / Track / Community /
@@ -163,7 +189,9 @@ the existing glob — put new tests there and you're fine.
 
 ### Stage 4 — forms + settings
 
-1. `FormLayout` + `Field` + `TextInput` + `FieldStatus` for
+1. `pnpm exec astryx template contact-form --skeleton` and
+   `form-two-column --skeleton` for the composition; build the fields from
+   `FormLayout` + `Field` + `TextInput` + `FieldStatus` for
    `CorporateLeadForm`, `LeadForm`, `NotifyMeForm`, `WaitlistFields`.
 2. These forms are rate-limited public writes — do not touch the submit
    handlers or the honeypot/burst-guard logic, only the field chrome.
@@ -174,9 +202,12 @@ the existing glob — put new tests there and you're fine.
 
 ### Stage 5 — checkout + auth chrome
 
-1. Smallest diffs of the whole adoption. `payment-form` styles the existing
-   `AlacarteDetails` / `CheckoutIdentity` / plan review; `login-card` styles
-   `PhoneAuth`'s card.
+1. Smallest diffs of the whole adoption. `payment-form` ("Checkout Form" on
+   the catalog site) styles the existing `AlacarteDetails` /
+   `CheckoutIdentity` / plan review; `login-card` styles `PhoneAuth`'s card.
+   Read both via `--skeleton` first; note payment-form's card-number/CVV
+   fields are for its fake gateway — ours come from Razorpay's widget and do
+   NOT get rebuilt as our inputs.
 2. Zero handler changes. Zero new fields. Zero redirects.
 3. Run per-step, not just at the end:
    money-unit glob + `planCheckout.test.ts` + full mobile e2e.
