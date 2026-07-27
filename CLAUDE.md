@@ -181,7 +181,8 @@ is public. Cutover is a manual Cloud Run domain remap, done outside CI.
 - **Command palette**: `src/components/CommandPalette.tsx` — global ⌘K; register new customer routes here.
 - **Data fetching**: `@workspace/api-client-react` generated hooks + TanStack Query. `useMenuCatalog()` falls back to `STATIC_DISHES` so the UI never blanks.
 - **Icons**: Phosphor (`@phosphor-icons/react`) on customer surfaces; Lucide (`lucide-react`) on
-  admin/RD screens. The storefront uses Lucide only.
+  admin/RD screens. The storefront allows Lucide **and** Heroicons (`@heroicons/react`) — the
+  Lucide-only rule was revoked for DS-0 so Astryx templates compile verbatim (they import Heroicons).
 - **No styleguide route here any more.** It moved to the storefront (`/styleguide`,
   `app/styleguide/page.tsx`); nothing under `artifacts/tanmatra/src` matches `styleguide`.
 
@@ -211,6 +212,22 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
   Note the gate's reach: `lint:tokens` scans only `artifacts/storefront/{components,app}`, so a raw hex in
   `lib/themes/` is invisible to it. Theme files are the one place colours are meant to live; everywhere
   else the gate still catches them.
+- **DS-0 rule revocations (owner decision, 2026-07-27) — storefront only.** To unblock end-to-end
+  Astryx adoption, the following are REVOKED for `artifacts/storefront` (all still apply to the
+  legacy SPA where stated):
+  - *Sage-never-interactive* and *gold-as-the-only-interactive-colour*: Astryx variants (Card/Badge
+    colour variants, success buttons, …) are sanctioned as shipped. `lint:tokens` now checks only
+    raw colour literals.
+  - *Tailwind palette-class ban*: removed from `lint:tokens`.
+  - *150-line `.tsx` cap*: raised to 400 (`lint:filecap`) so page templates land verbatim; the
+    `"use client"` justification-comment requirement is dropped for the same reason.
+  - *Lucide-only icons*: see the Icons bullet.
+  - *Anti-template guidance* (`.claude/rules/ecc/web/design-quality.md` and any similar rule pack):
+    superseded for the storefront. Astryx templates and blocks ARE the sanctioned starting point —
+    adopting them verbatim is the goal, not a smell. This file overrides the rule packs.
+  **Explicitly NOT revoked** (they render nothing and never block a design system): server owns
+  every amount (money path), auth-gated surfaces are islands (no `/login` redirects), PHI encryption,
+  `lint:test-reach`, and the `lib/` no-`@/`-alias rule (test-runner correctness, not design).
 - **New design tokens**: storefront — add to `lib/tokens/src/tokens.css` (and its TS mirror in
   `lib/tokens/src/index.ts` if JS needs the value), bridge in `artifacts/storefront/app/globals.css`,
   and update `/styleguide`. Legacy SPA — add to `artifacts/tanmatra/src/index.css @theme`.

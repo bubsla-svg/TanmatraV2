@@ -83,15 +83,20 @@ pnpm exec astryx template <name> <path>          # inject the full source at <pa
    only), `--source`, `--showcase` (example code), `--blocks` (related
    example blocks).
 
-Then implement: **inject into a scratch path** (`astryx template <name>
-<path>` — never straight into `app/`; templates arrive as one big
-`"use client"` page that fails lint:filecap and would demote a server route)
-→ transplant the composition into decomposed ≤150-line components, keeping
-our data wiring → delete the scratch file before committing. Never keep
-injected source verbatim: templates use `@heroicons/react` (NOT installed;
-this repo uses `lucide-react`) and placeholder data with fabricated prices,
-and display names differ from inject names ("Checkout Form" is
-`payment-form` — trust the arrow in the search output).
+Then implement. **Verbatim adoption is sanctioned** (owner decision,
+2026-07-27 — "we need the design system as it is rendering"): inject with
+`astryx template <name> <path>` and keep the template's composition and
+styling as shipped. The former blockers were revoked to make that true —
+the `.tsx` cap is now 400 (templates run ~300), the `"use client"`
+justification requirement is gone, the palette-class and sage-interactive
+lint rules are gone, and `@heroicons/react` is installed so template imports
+compile as-is. What still must change in injected source is DATA, not
+design: replace placeholder products/prices with our server-fed data (the
+fabricated template prices must never render), and mind the two server-side
+invariants in §3. Display names differ from inject names ("Checkout Form"
+is `payment-form` — trust the arrow in the search output). Decomposing big
+pages is still good practice where it costs nothing, but it is no longer a
+gate and never a reason to deviate from the template.
 
 Also available when useful: `astryx component --list` (all components by
 category), `astryx doctor` (integration sanity check).
@@ -167,13 +172,17 @@ card, never its page-level structure, and never introduce a redirect to
 exactly this; its public-route sweep asserts no `#pa-phone` and no
 `autocomplete=one-time-code` input on catalog routes.
 
-**Sage is a signal, never interactive** (`lint:tokens` enforces; two
-allow-listed legacy sites only). Gold is the only action colour.
+**REVOKED for the storefront (2026-07-27, recorded in CLAUDE.md):** the
+sage-never-interactive rule, gold-as-only-action-colour, the palette-class
+ban, the 150-line `.tsx` cap (now 400), the `"use client"` justification
+requirement, the Lucide-only icon rule, and the ECC anti-template policy.
+Astryx variants and templates render as designed. `lint:tokens` still bans
+raw colour literals in components/app — colours live in theme files.
 
-**File caps.** `.tsx` ≤ 150 lines, everything else ≤ 300, every `"use client"`
-carries a justification comment, and **no `@/` imports inside `lib/`**
-(relative only — the bare node test runner can't resolve the alias;
-`lint:filecap` fails the build on it).
+**File caps (current).** `.tsx` ≤ 400, everything else ≤ 300, and **no `@/`
+imports inside `lib/`** (relative only — the bare node test runner can't
+resolve the alias; `lint:filecap` fails the build on it — this one is
+correctness, not design governance, and stays).
 
 **Test reach.** Every new `*.test.ts` must be reachable by a workflow glob or
 `lint:test-reach` fails. Storefront `lib/**/*.test.ts` is already covered by
