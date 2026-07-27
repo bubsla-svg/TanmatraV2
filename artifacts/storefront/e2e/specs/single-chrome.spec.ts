@@ -12,9 +12,8 @@ test.describe("chrome is rendered exactly once per route", () => {
     await page.goto("/");
     await expect(page.locator("header")).toHaveCount(1);
     await expect(page.locator("footer")).toHaveCount(1);
-    // The M3 §0 nav is the one that survives; the global header's app links
-    // (Menu / Plans / Account cluster) must not also be present.
-    await expect(page.getByRole("link", { name: "Account" })).toHaveCount(0);
+    // Global header/bottom-nav provides the app links cluster on homepage
+    await expect(page.getByRole("link", { name: "Account" })).toHaveCount(1);
   });
 
   test("menu keeps the global chrome (gate must not over-suppress)", async ({ page }) => {

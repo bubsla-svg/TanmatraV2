@@ -20,6 +20,7 @@ import { MiniCartBar } from "@/components/cart/MiniCartBar";
 import { Footer } from "@/components/Footer";
 import { BottomNav } from "@/components/BottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
+import { ChromeGate } from "@/components/ChromeGate";
 import { SITE_URL } from "@/lib/siteUrl";
 import { PostHogProvider } from "@/components/PostHogProvider";
 

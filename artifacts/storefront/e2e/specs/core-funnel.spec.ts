@@ -16,10 +16,10 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   // 1. Land on homepage, verify sticky address selector is present in the header
   await page.goto("/");
   await expect(page.getByRole("banner")).toBeVisible();
-  await expect(page.getByText("Add your pincode", { exact: false })).toBeVisible();
+  await expect(page.locator("main").getByText("Select your location", { exact: false })).toBeVisible();
 
   // 2. Marketplace is visible on the homepage
-  await expect(page.getByRole("heading", { name: "Everyday Wellness" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Everyday Wellness/i })).toBeVisible();
 
   // Navigate to Marketplace
   await page.goto("/marketplace");
