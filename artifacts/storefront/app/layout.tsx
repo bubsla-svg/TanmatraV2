@@ -3,6 +3,7 @@ import { IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 // Order matters: tokens define the CSS custom properties, globals maps them to
 // Tailwind utilities and sets the document defaults.
 import "@workspace/tokens/tokens.css";
+import "@/lib/themes/tanmatra.css";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -78,6 +79,10 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="light"
+      // Astryx scopes its theme with `@scope ([data-astryx-theme="tanmatra"])`,
+      // so this attribute is what makes --color-* resolve. On <html> the whole
+      // document is in scope and the tokens inherit everywhere.
+      data-astryx-theme="tanmatra"
       suppressHydrationWarning
       className={`${ibmPlexSans.variable} ${jetbrainsMono.variable}`}
     >
