@@ -11,13 +11,13 @@ export function Section05LogisticsMoat() {
       <div className="rounded-3xl border border-line bg-surface-raised p-8 shadow-sm lg:p-12">
         <div className="mx-auto max-w-3xl text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
-            Hyperlocal Infrastructure Moat · Noida
+            Smart Delivery · Noida
           </span>
           <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            Heat-Defiant, Schedule-Perfect Delivery.
+            Always Fresh, No Matter the Heat.
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-ink-muted sm:text-base">
-            Standard 10-minute delivery apps fail when the temperature hits 45°C, leaving your food spoiled and drivers exhausted. Tanmatra utilizes advanced multi-sensor IoT telemetry. We log the internal temperature of your meal every 30 seconds during transit.
+            We keep your food at the perfect temperature from our kitchen to your door, even on Noida's hottest days. No soggy salads, no spoiled meals—just fresh food on time.
           </p>
         </div>
 
@@ -27,12 +27,12 @@ export function Section05LogisticsMoat() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold/10 text-2xl">
               🌡️
             </div>
-            <h3 className="mt-4 text-base font-bold text-ink">30s IoT Temp Logging</h3>
+            <h3 className="mt-4 text-base font-bold text-ink">Smart Temperature Tracking</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-              Multi-sensor telemetry tracks internal thermal safety boundaries continuously from kitchen pass to your doorstep.
+              We monitor your meal's temperature every step of the way to ensure it arrives fresh and safe.
             </p>
             <span className="mt-4 rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-bold text-sage-text">
-              Active Cold-Chain Sealed
+              Freshness Guaranteed
             </span>
           </div>
 
@@ -41,12 +41,12 @@ export function Section05LogisticsMoat() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold/10 text-2xl">
               ⏰
             </div>
-            <h3 className="mt-4 text-base font-bold text-ink">Double-Slot Dispatch</h3>
+            <h3 className="mt-4 text-base font-bold text-ink">On-Time Delivery Windows</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-              Dedicated morning (12:00-1:30 PM) and evening (7:30-9:00 PM) dispatch windows guarantee thermal perfection upon arrival.
+              Scheduled lunch and dinner deliveries mean your food arrives exactly when you expect it, ready to eat.
             </p>
             <span className="mt-4 rounded-full bg-gold/10 px-2.5 py-1 text-[10px] font-bold text-gold-text">
-              Predictable Office Slots
+              Predictable Slots
             </span>
           </div>
 
@@ -55,12 +55,12 @@ export function Section05LogisticsMoat() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold/10 text-2xl">
               🔀
             </div>
-            <h3 className="mt-4 text-base font-bold text-ink">Hybrid-Work Routing</h3>
+            <h3 className="mt-4 text-base font-bold text-ink">Flexible Delivery Locations</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-              1-click toggle between Sector 135 Office and Sector 150 Home anytime before 9:00 PM the night prior. Zero lock-in churn.
+              Easily switch delivery between home and office with one click before 9:00 PM the night before.
             </p>
             <span className="mt-4 rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-bold text-sage-text">
-              9 PM Cutoff Flexibility
+              Easy Location Switch
             </span>
           </div>
         </div>

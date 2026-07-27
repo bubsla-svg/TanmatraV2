@@ -19,20 +19,20 @@ export function Section04TelehealthTracking() {
           {/* Visual: Dashboard Preview */}
           <div className="order-2 lg:order-1 rounded-2xl border border-line bg-surface-raised p-6 shadow-xs">
             <div className="flex items-center justify-between border-b border-line pb-3 text-xs font-semibold text-ink">
-              <span>Tanmatra Metabolic Dashboard</span>
-              <span className="tabular text-gold-text">Glucose &amp; Macro Log</span>
+              <span>Tanmatra Health Tracker</span>
+              <span className="tabular text-gold-text">Nutrition &amp; Energy Log</span>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-center">
               <div className="rounded-xl border border-line bg-surface p-3">
-                <span className="text-[10px] uppercase font-bold text-ink-faint">Daily Protein</span>
+                <span className="text-[10px] uppercase font-bold text-ink-faint">Protein Goal</span>
                 <p className="tabular text-lg font-bold text-ink">104g / 100g</p>
                 <span className="text-[10px] text-sage-text font-semibold">✓ Target Met</span>
               </div>
               <div className="rounded-xl border border-line bg-surface p-3">
-                <span className="text-[10px] uppercase font-bold text-ink-faint">Glycemic Index</span>
-                <p className="tabular text-lg font-bold text-ink">Low (&lt;45)</p>
-                <span className="text-[10px] text-sage-text font-semibold">✓ Spike Buffer</span>
+                <span className="text-[10px] uppercase font-bold text-ink-faint">Sugar Control</span>
+                <p className="tabular text-lg font-bold text-ink">Balanced</p>
+                <span className="text-[10px] text-sage-text font-semibold">✓ Steady Energy</span>
               </div>
             </div>
 
@@ -52,13 +52,13 @@ export function Section04TelehealthTracking() {
 
           <div className="order-1 lg:order-2">
             <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
-              Revenue Stream 3 · Telehealth &amp; Clinical Tech
+              Expert Guidance &amp; Tracking
             </span>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Real-Time Dietitian Support.
+              Personal Support from Real Experts.
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-ink-muted sm:text-base">
-              Precision requires data. Book a 30-minute consultation with our ADA Diabetes Educators and Registered Dietitians for ₹1,200. Log your meals, track your water, and monitor your metabolic progress directly in the Tanmatra Wellness Dashboard.
+              Get guidance on your health journey. Book a chat with our Registered Dietitians to personalize your plan, or <Link href="/premium" className="font-bold text-gold-text underline">unlock it FREE with Tanmatra Premium</Link> along with priority delivery and exclusive dishes.
             </p>
 
             <div className="mt-8">

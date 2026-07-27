@@ -38,25 +38,25 @@ export function deriveHeroContent(refCookie?: string): HeroContent {
   if (ref.startsWith("rd_") || ref.startsWith("dietitian_") || ref.includes("diet") || ref.includes("clinic") || ref.startsWith("dr_")) {
     return {
       eyebrow: "Referred by your Registered Dietitian",
-      headline: "Clinical meal prescription cooked fresh — verified macro precision at your desk.",
-      blurb: `Formulated to align strictly with your dietitian's therapeutic nutritional targets. Zero industrial oils, weighed macro tolerances. Starting from ${basePrice} per meal.`,
-      badge: "Clinical Adherence Priority",
+      headline: "Expert-designed meals, cooked fresh — delivered straight to your desk.",
+      blurb: `Formulated to align strictly with your health goals. Zero low-quality oils, precisely measured ingredients. Starting from ${basePrice} per meal.`,
+      badge: "Priority Health Plan",
     };
   }
 
   if (ref.startsWith("gym_") || ref.startsWith("trainer_") || ref.includes("fit") || ref.includes("gym") || ref.startsWith("coach_")) {
     return {
       eyebrow: "Referred by your Fitness Club & Trainer",
-      headline: "Performance macro recovery cooked fresh — delivered straight to your office or gym.",
-      blurb: `Engineered for peak hypertrophy and glycemic stability with lab-tested lean proteins and clean complex carbohydrates. Starting from ${basePrice} per meal.`,
-      badge: "Performance Recovery Protocol",
+      headline: "High-protein recovery meals, cooked fresh — delivered to your office or gym.",
+      blurb: `Designed for muscle growth and steady energy with high-quality protein and healthy carbs. Starting from ${basePrice} per meal.`,
+      badge: "Workout Recovery Plan",
     };
   }
 
   return {
     eyebrow: "Now serving Noida",
-    headline: "Clinical nutrition, cooked fresh — at your desk in 40–45 minutes.",
-    blurb: `RD-designed lunches with verified macros. Real food first, the science on the label. Starting from ${basePrice} per meal.`,
+    headline: "Healthy meals, cooked fresh — at your desk in 40–45 minutes.",
+    blurb: `Dietitian-designed lunches with clear nutrition info. Real food, delivered fresh. Starting from ${basePrice} per meal.`,
     badge: null,
   };
 }

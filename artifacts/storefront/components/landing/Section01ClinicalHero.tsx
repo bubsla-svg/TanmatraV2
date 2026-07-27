@@ -34,19 +34,19 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
       <div className="max-w-4xl">
         <div className="flex flex-wrap items-center gap-2.5">
           <p className="text-xs font-bold uppercase tracking-wider text-sage-text sm:text-sm">
-            FSSAI-Certified Therapeutic Kitchen · Noida
+            Certified Healthy Kitchen · Noida
           </p>
           <span className="rounded-full border border-line bg-surface-raised px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-text">
-            IoT Cold-Chain Telemetry Active
+            Temperature Controlled Delivery
           </span>
         </div>
 
         <h1 className="mt-4 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          Precision Nutrition for Noida’s High-Performers. <span className="text-gold-text">Engineered by Science.</span>
+          Take the Guesswork Out of <span className="text-gold-text">Healthy Eating.</span>
         </h1>
 
         <p className="mt-5 text-base leading-relaxed text-ink-muted sm:text-xl">
-          FSSAI-certified therapeutic meals formulated by registered dietitians. Delivered flawlessly to your home or office via active IoT cold-chain tracking—guaranteed fresh, regardless of the heat.
+          Custom meal plans tailored to your health goals by Registered Dietitians. Fresh, verified, and delivered exactly when you need them.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-4 sm:mt-10">

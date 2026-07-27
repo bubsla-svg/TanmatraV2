@@ -11,9 +11,9 @@ export function Section09AssessmentSection() {
       <div className="rounded-2xl bg-surface-raised p-2 sm:p-4">
         <AssessmentStepper
           defaultOpen={false}
-          title="Match with your ideal clinical nutrition protocol in 60 seconds"
-          subtitle="Our interactive medical & dietary triage aligns your metabolic goals with certified RD formulations and meal tracks."
-          buttonLabel="Start Triage Assessment ➔"
+          title="Find Your Perfect Meal Plan in 60 Seconds"
+          subtitle="Answer a few quick questions about your goals and lifestyle, and we'll recommend the best plan for you."
+          buttonLabel="Find My Plan ➔"
         />
       </div>
     </section>
