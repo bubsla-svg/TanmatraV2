@@ -6,6 +6,7 @@ import { formatPaise } from "@/lib/format";
 import { DPDP_CONSENT_COPY } from "@/lib/consent";
 import type { PlanCheckoutAddress } from "@/lib/planCheckout";
 import { MemberIntake, EMPTY_MEMBER, draftToMember, type MemberDraft } from "./MemberIntake";
+import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
 const inputCls =
   "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
@@ -54,6 +55,8 @@ export function PlanDetails({
   const [city, setCity] = useState(initialAddress?.city ?? "");
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
   const [consent, setConsent] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
   const prefilled = useRef(false);
   const touched = useRef(false);
 
@@ -94,12 +97,52 @@ export function PlanDetails({
       <MemberIntake value={member} onChange={setMember} />
 
       <div className="flex flex-col gap-3">
-        <input aria-label="Flat / house · street" value={line1} onChange={(e) => { touched.current = true; setLine1(e.target.value); }} placeholder="Flat 3B, Sector 62" className={inputCls} />
-        <div className="grid grid-cols-2 gap-3">
-          <input aria-label="City" value={city} onChange={(e) => { touched.current = true; setCity(e.target.value); }} placeholder="Noida" className={inputCls} />
-          <input aria-label="PIN code" inputMode="numeric" value={pincode} onChange={(e) => { touched.current = true; setPincode(e.target.value); }} placeholder="201301" aria-invalid={pincode.length > 0 && !pinValid} className={inputCls} />
-        </div>
+        <span className="text-sm font-medium text-ink">Where should we deliver?</span>
+        {!manualMode ? (
+          <button
+            type="button"
+            onClick={() => setShowLocationPicker(true)}
+            className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-left text-sm text-ink shadow-sm transition-colors hover:border-line-strong"
+          >
+            <svg className="h-5 w-5 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="flex-1 truncate font-semibold text-ink-muted">
+              {line1 ? `${line1} ${city} ${pincode}` : "Select your location"}
+            </span>
+            <span className="shrink-0 text-xs font-bold text-gold">MAP</span>
+          </button>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <input aria-label="Flat / house · street" value={line1} onChange={(e) => { touched.current = true; setLine1(e.target.value); }} placeholder="Flat 3B, Sector 62" className={inputCls} />
+            <div className="grid grid-cols-2 gap-3">
+              <input aria-label="City" value={city} onChange={(e) => { touched.current = true; setCity(e.target.value); }} placeholder="Noida" className={inputCls} />
+              <input aria-label="PIN code" inputMode="numeric" value={pincode} onChange={(e) => { touched.current = true; setPincode(e.target.value); }} placeholder="201301" aria-invalid={pincode.length > 0 && !pinValid} className={inputCls} />
+            </div>
+            <button type="button" onClick={() => setManualMode(false)} className="self-start text-xs font-medium text-ink-muted underline hover:text-ink">
+              Use map instead
+            </button>
+          </div>
+        )}
       </div>
+
+      {showLocationPicker && (
+        <LocationPickerFlow
+          onClose={() => setShowLocationPicker(false)}
+          onSelectLocation={(place) => {
+            setShowLocationPicker(false);
+            if (place.formattedAddress) setLine1(place.formattedAddress);
+            if (place.city) setCity(place.city);
+            if (place.pincode) setPincode(place.pincode);
+            touched.current = true;
+          }}
+          onManualFallback={() => {
+            setShowLocationPicker(false);
+            setManualMode(true);
+          }}
+        />
+      )}
 
       <label className="flex items-start gap-3 text-sm text-ink-muted">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 shrink-0" />

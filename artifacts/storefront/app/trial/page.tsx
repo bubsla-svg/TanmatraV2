@@ -52,6 +52,16 @@ export default async function TrialPage() {
         <p className="text-sm leading-relaxed text-ink-muted">{TRIAL_COPY.creditLine}</p>
       </div>
 
+      <div className="rounded-xl border border-line bg-surface p-4">
+        <h2 className="text-sm font-semibold text-ink">What happens after the trial?</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+          After your Taste Test, you can start a regular subscription. Our most popular plan starts at <strong>{formatPaise(deskFuelWeekly.cycleTotalPaise)}/week</strong> or <strong>{formatPaise(deskFuelMonthly.cycleTotalPaise)}/month</strong>.
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+          There are no lock-ins — you can cancel anytime.
+        </p>
+      </div>
+
       <TrialStart trios={trios} pricePaise={TRIAL_PRICE_PAISE} />
 
       <div className="rounded-xl border border-line bg-surface p-4">
@@ -64,16 +74,6 @@ export default async function TrialPage() {
             trial costs nothing if you continue.
           </li>
         </ol>
-
-        <div className="mt-5 border-t border-line pt-4">
-          <h2 className="text-sm font-semibold text-ink">What happens after the trial?</h2>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            After your Taste Test, you can start a regular subscription. Our most popular plan starts at <strong>{formatPaise(deskFuelWeekly.cycleTotalPaise)}/week</strong> or <strong>{formatPaise(deskFuelMonthly.cycleTotalPaise)}/month</strong>.
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-            There are no lock-ins — you can cancel anytime.
-          </p>
-        </div>
       </div>
     </section>
   );

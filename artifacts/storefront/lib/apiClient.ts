@@ -5,7 +5,7 @@
  * CLIENT-inlined `NEXT_PUBLIC_API_BASE`. The whole of @/lib/api re-exports this.
  */
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? (typeof window === "undefined" ? "http://localhost:3000" : "");
 
 /** A non-2xx from the api-server. The server returns bare `{error, code?}` — no
  *  envelope — so we surface the status and code for the caller to branch on
