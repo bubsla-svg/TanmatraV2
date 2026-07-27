@@ -215,9 +215,8 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
 - **DS-0 rule revocations (owner decision, 2026-07-27) — storefront only.** To unblock end-to-end
   Astryx adoption, the following are REVOKED for `artifacts/storefront` (all still apply to the
   legacy SPA where stated):
-  - *Sage-never-interactive* and *gold-as-the-only-interactive-colour*: Astryx variants (Card/Badge
-    colour variants, success buttons, …) are sanctioned as shipped. `lint:tokens` now checks only
-    raw colour literals.
+  - *Sage-never-interactive*: Astryx variants (Card/Badge colour variants, success buttons, …) are
+    sanctioned as shipped. `lint:tokens` now checks only raw colour literals.
   - *Tailwind palette-class ban*: removed from `lint:tokens`.
   - *150-line `.tsx` cap*: raised to 400 (`lint:filecap`) so page templates land verbatim; the
     `"use client"` justification-comment requirement is dropped for the same reason.
@@ -228,6 +227,12 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
   **Explicitly NOT revoked** (they render nothing and never block a design system): server owns
   every amount (money path), auth-gated surfaces are islands (no `/login` redirects), PHI encryption,
   `lint:test-reach`, and the `lib/` no-`@/`-alias rule (test-runner correctness, not design).
+  **One design caveat survives: gold is still the only action colour.** Adopt templates verbatim
+  except their primary-CTA colour — repoint that to `--gold` / `--gold-ink`. Status badges, coloured
+  Cards and success/warning/error states keep their shipped colour (signal, not action). Held in
+  review, deliberately NOT re-added to `lint:tokens`: a gate here would re-create the blocker just
+  removed, and it could not reliably tell a primary CTA from a secondary. See
+  `docs/ASTRYX-ADOPTION-RUNBOOK.md` §3.
 - **New design tokens**: storefront — add to `lib/tokens/src/tokens.css` (and its TS mirror in
   `lib/tokens/src/index.ts` if JS needs the value), bridge in `artifacts/storefront/app/globals.css`,
   and update `/styleguide`. Legacy SPA — add to `artifacts/tanmatra/src/index.css @theme`.

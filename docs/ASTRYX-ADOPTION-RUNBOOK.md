@@ -173,11 +173,37 @@ exactly this; its public-route sweep asserts no `#pa-phone` and no
 `autocomplete=one-time-code` input on catalog routes.
 
 **REVOKED for the storefront (2026-07-27, recorded in CLAUDE.md):** the
-sage-never-interactive rule, gold-as-only-action-colour, the palette-class
-ban, the 150-line `.tsx` cap (now 400), the `"use client"` justification
-requirement, the Lucide-only icon rule, and the ECC anti-template policy.
-Astryx variants and templates render as designed. `lint:tokens` still bans
-raw colour literals in components/app — colours live in theme files.
+sage-never-interactive rule, the palette-class ban, the 150-line `.tsx` cap
+(now 400), the `"use client"` justification requirement, the Lucide-only
+icon rule, and the ECC anti-template policy. Astryx variants and templates
+render as designed. `lint:tokens` still bans raw colour literals in
+components/app — colours live in theme files.
+
+> ### ⚠️ The one caveat: gold stays the only action colour
+>
+> Adopt every template verbatim **except its primary-action colour.** Where a
+> template paints a primary CTA in its own accent — Astryx's default primary,
+> a blue/green variant, a coloured submit — repoint it to gold
+> (`--gold` / `bg-gold`, `--gold-ink` for the label). Everything else in the
+> template keeps the colour it shipped with: status badges, coloured Cards,
+> success/warning/error states, charts, decorative fills. Those are
+> categorisation and signal, not action, and they are explicitly in scope for
+> verbatim adoption.
+>
+> The reason is recognition, not taste. Across ~40 routes a customer learns
+> one thing — the gold pill is the button — and that association is worth more
+> than any single template's palette. It also keeps the retheme coherent: the
+> Astryx accent tuple (`#7F6921` light / `#D4AF37` dark) is already wired to
+> `--gold`, is already AA in both modes as fill and as text, and is the one
+> colour the whole app agrees on.
+>
+> **This is a review caveat, not a gate.** It is deliberately not re-added to
+> `lint:tokens` — a build-breaking rule here is exactly the kind of blocker
+> that was just removed, and the check would be unreliable anyway (it cannot
+> tell a primary CTA from a secondary or a link). Hold it in review: when a
+> surface lands, the primary actions on it should be gold. Sage remains
+> permitted on interactive elements — the sage-never-interactive rule is
+> genuinely revoked; only the *primary action* colour is constrained.
 
 **File caps (current).** `.tsx` ≤ 400, everything else ≤ 300, and **no `@/`
 imports inside `lib/`** (relative only — the bare node test runner can't
