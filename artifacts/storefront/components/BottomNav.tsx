@@ -74,7 +74,7 @@ export function BottomNav() {
               <Link
                 href={g.href}
                 aria-current={on ? "page" : undefined}
-                className={`flex flex-col items-center gap-1 py-2 text-[10px] font-medium ${on ? "text-ink" : "text-ink-faint"}`}
+                className={`flex flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors ${on ? "text-ink" : "text-ink-faint hover:text-ink-muted"}`}
               >
                 <svg
                   className="h-5 w-5"
@@ -97,3 +97,4 @@ export function BottomNav() {
     </nav>
   );
 }
+
