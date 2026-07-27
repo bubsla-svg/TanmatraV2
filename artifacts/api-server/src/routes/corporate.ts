@@ -13,6 +13,7 @@ import {
   type OfficeOrderPick,
 } from "@workspace/db";
 import { makeBatchDishResolver } from "../lib/menuResolver";
+import { requireAuthUser } from "../middlewares/requireAuth";
 import { quoteSubsidyPaise } from "../lib/corporateSubsidy";
 import { corporateInquiryRateLimit } from "../middlewares/rateLimitMiddleware";
 import {
@@ -25,21 +26,6 @@ import { computeCorporateTeamsQuote, type DietTrack } from "@workspace/subscript
 
 const router: IRouter = Router();
 
-function requireAuth(
-  req: Request,
-  res: Response,
-): { id: string; email: string | null; firstName: string | null } | null {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
-    return null;
-  }
-  const u = req.user as {
-    id: string;
-    email?: string | null;
-    firstName?: string | null;
-  };
-  return { id: u.id, email: u.email ?? null, firstName: u.firstName ?? null };
-}
 
 function slugify(name: string): string {
   return name
@@ -99,7 +85,10 @@ const createCompanySchema = z.object({
 });
 
 router.post("/companies", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const parsed = createCompanySchema.safeParse(req.body ?? {});
   if (!parsed.success) {
@@ -150,7 +139,10 @@ router.post("/companies", async (req: Request, res: Response) => {
 });
 
 router.get("/companies/mine", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const rows = await db
     .select({
@@ -173,7 +165,10 @@ router.get("/companies/mine", async (req: Request, res: Response) => {
 });
 
 router.get("/companies/:slug", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const slug = String(req.params.slug ?? "");
   const company = await loadCompanyBySlug(slug);
@@ -218,7 +213,10 @@ const budgetSchema = z.object({
 });
 
 router.put("/companies/:slug/budget", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const slug = String(req.params.slug ?? "");
   const company = await loadCompanyBySlug(slug);
@@ -254,7 +252,10 @@ const inviteSchema = z.object({
 });
 
 router.post("/companies/:slug/invite", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const slug = String(req.params.slug ?? "");
   const company = await loadCompanyBySlug(slug);
@@ -321,7 +322,10 @@ router.get(
 router.post(
   "/companies/invites/:token/accept",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
+    const userId = requireAuthUser(req, res);
+    if (!userId) return;
+    const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+    const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
     if (!auth) return;
     const token = String(req.params.token ?? "");
     const [m] = await db
@@ -365,7 +369,10 @@ router.post(
 router.post(
   "/companies/:slug/members/:memberId/remove",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
+    const userId = requireAuthUser(req, res);
+    if (!userId) return;
+    const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+    const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
     if (!auth) return;
     const slug = String(req.params.slug ?? "");
     const memberId = Number(req.params.memberId);
@@ -417,7 +424,10 @@ router.post(
  * be quoted the same money.
  */
 router.get("/me/company-subsidy", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const subtotal = Math.max(0, Number(req.query.subtotal ?? 0));
   const quote = await quoteSubsidyPaise(auth.id, subtotal);
@@ -498,7 +508,10 @@ const createOfficeOrderSchema = z.object({
 });
 
 router.post("/office-orders", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const parsed = createOfficeOrderSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
@@ -535,7 +548,10 @@ router.post("/office-orders", async (req: Request, res: Response) => {
 router.get(
   "/companies/:slug/office-orders",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
+    const userId = requireAuthUser(req, res);
+    if (!userId) return;
+    const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+    const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
     if (!auth) return;
     const company = await loadCompanyBySlug(String(req.params.slug ?? ""));
     if (!company) {
@@ -557,7 +573,10 @@ router.get(
 );
 
 router.get("/office-orders/:id", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const id = Number(req.params.id);
   if (!Number.isFinite(id) || id <= 0) {
@@ -595,7 +614,10 @@ const pickSchema = z.object({
 router.post(
   "/office-orders/:id/pick",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
+    const userId = requireAuthUser(req, res);
+    if (!userId) return;
+    const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+    const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
     if (!auth) return;
     const id = Number(req.params.id);
     if (!Number.isFinite(id) || id <= 0) {
@@ -700,7 +722,10 @@ router.post(
 router.post(
   "/office-orders/:id/close",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
+    const userId = requireAuthUser(req, res);
+    if (!userId) return;
+    const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+    const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
     if (!auth) return;
     const id = Number(req.params.id);
     if (!Number.isFinite(id) || id <= 0) {
@@ -768,7 +793,10 @@ const purchaseVoucherSchema = z.object({
  * and worthless.
  */
 router.post("/vouchers", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const parsed = purchaseVoucherSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
@@ -871,7 +899,10 @@ const voucherVerifySchema = z.object({
  * `status: "active"` onto a voucher.
  */
 router.post("/vouchers/verify", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const parsed = voucherVerifySchema.safeParse(req.body ?? {});
   if (!parsed.success) {
@@ -928,7 +959,10 @@ router.post("/vouchers/verify", async (req: Request, res: Response) => {
 });
 
 router.get("/vouchers/mine", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   // `pending_payment` rows are excluded: an unpaid voucher has no code worth
   // showing and listing it would present abandoned checkouts as gift cards.
@@ -978,7 +1012,10 @@ router.post("/vouchers/preview", async (req: Request, res: Response) => {
 });
 
 router.post("/vouchers/redeem", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; email?: string | null; firstName?: string | null };
+  const auth = { id: userId, email: u?.email ?? null, firstName: u?.firstName ?? null };
   if (!auth) return;
   const parsed = previewVoucherSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
