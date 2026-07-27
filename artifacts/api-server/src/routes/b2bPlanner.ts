@@ -35,30 +35,10 @@ import {
   updateQbrSections,
   upsertDietProfile,
 } from "../lib/b2b";
-import { hasAdminToken } from "../lib/adminGate";
+import { isOpsRequest } from "../lib/adminGate";
+import { requireAuthUser } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
-
-function isAdminRequest(req: Request): boolean {
-  // Constant-time x-admin-token / RD_ADMIN_TOKEN check via the shared admin
-  // gate; a signed admin session is the other accepted path.
-  if (hasAdminToken(req)) return true;
-  const session = (req as Request & { session?: { isAdmin?: boolean } })
-    .session;
-  return session?.isAdmin === true;
-}
-
-function requireAuth(
-  req: Request,
-  res: Response,
-): { id: string; email: string | null } | null {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
-    return null;
-  }
-  const u = req.user as { id: string; email?: string | null };
-  return { id: u.id, email: u.email ?? null };
-}
 
 async function loadCompanyBySlug(slug: string): Promise<Company | undefined> {
   const [c] = await db
@@ -100,11 +80,12 @@ async function resolveCompanyAccess(
     res.status(404).json({ error: "not found" });
     return null;
   }
-  if (isAdminRequest(req)) {
+  if (isOpsRequest(req).allowed) {
     return { company, isInternalAdmin: true };
   }
-  const auth = requireAuth(req, res);
-  if (!auth) return null;
+  const userId = requireAuthUser(req, res);
+  if (!userId) return null;
+  const auth = { id: userId };
   const m = await loadActiveMembership(company.id, auth.id);
   if (!m || m.status !== "active") {
     res.status(403).json({ error: "not a member" });
@@ -268,9 +249,10 @@ router.post(
     }
     // Auth: company admin OR internal admin.
     let actorId = "system";
-    if (!isAdminRequest(req)) {
-      const auth = requireAuth(req, res);
-      if (!auth) return;
+    if (!isOpsRequest(req).allowed) {
+      const userId = requireAuthUser(req, res);
+      if (!userId) return;
+      const auth = { id: userId };
       const m = await loadActiveMembership(company.id, auth.id);
       if (!m || m.role !== "admin" || m.status !== "active") {
         res.status(403).json({ error: "admin only" });
@@ -353,7 +335,7 @@ router.post(
 // ---------- Sales console (internal admin) ----------
 
 router.get("/sales/accounts", async (req: Request, res: Response) => {
-  if (!isAdminRequest(req)) {
+  if (!isOpsRequest(req).allowed) {
     res.status(403).json({ error: "admin only" });
     return;
   }
@@ -364,7 +346,7 @@ router.get("/sales/accounts", async (req: Request, res: Response) => {
 router.get(
   "/sales/accounts/:slug",
   async (req: Request, res: Response) => {
-    if (!isAdminRequest(req)) {
+    if (!isOpsRequest(req).allowed) {
       res.status(403).json({ error: "admin only" });
       return;
     }
@@ -385,7 +367,7 @@ router.get(
 router.post(
   "/sales/accounts/:slug/health/recompute",
   async (req: Request, res: Response) => {
-    if (!isAdminRequest(req)) {
+    if (!isOpsRequest(req).allowed) {
       res.status(403).json({ error: "admin only" });
       return;
     }
@@ -402,7 +384,7 @@ router.post(
 router.post(
   "/sales/accounts/:slug/qbr/generate",
   async (req: Request, res: Response) => {
-    if (!isAdminRequest(req)) {
+    if (!isOpsRequest(req).allowed) {
       res.status(403).json({ error: "admin only" });
       return;
     }
@@ -424,7 +406,7 @@ const qbrEditSchema = z.object({
 });
 
 router.put("/sales/qbr/:id", async (req: Request, res: Response) => {
-  if (!isAdminRequest(req)) {
+  if (!isOpsRequest(req).allowed) {
     res.status(403).json({ error: "admin only" });
     return;
   }
@@ -449,7 +431,7 @@ router.put("/sales/qbr/:id", async (req: Request, res: Response) => {
 });
 
 router.get("/sales/qbr/:id/export", async (req: Request, res: Response) => {
-  if (!isAdminRequest(req)) {
+  if (!isOpsRequest(req).allowed) {
     res.status(403).json({ error: "admin only" });
     return;
   }
