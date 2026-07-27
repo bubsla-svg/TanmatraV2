@@ -40,7 +40,9 @@ const router: IRouter = Router();
 // running on plain HTTP (local dev). Production / staging / preview
 // envs are HTTPS-only, so a typo in NODE_ENV (e.g. "prod") cannot
 // silently downgrade the cookie to be sent over HTTP.
-const isInsecureLocalDev = process.env["INSECURE_DEV_COOKIE"] === "1";
+const isInsecureLocalDev = 
+  process.env["NODE_ENV"] !== "production" || 
+  process.env["INSECURE_DEV_COOKIE"] === "1";
 
 // When the SPA and API live on different origins (e.g. tanmatra.food →
 // wellness-foods.run.app), cookies must be issued with SameSite=None so
