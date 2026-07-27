@@ -15,7 +15,7 @@ import {
 } from "../lib/challenges";
 import { audit } from "../lib/audit";
 import { adminModerationRateLimit } from "../middlewares/rateLimitMiddleware";
-import { hasAdminToken } from "../lib/adminGate";
+import { requireOps } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
@@ -130,29 +130,12 @@ router.post("/challenges/:slug/posts", async (req: Request, res: Response) => {
 
 // ---- Admin: post moderation ------------------------------------------------
 
-function isAdminRequest(req: Request): boolean {
-  // Constant-time x-admin-token / RD_ADMIN_TOKEN check via the shared admin
-  // gate; a signed admin session is the other accepted path.
-  if (hasAdminToken(req)) return true;
-  const session = (req as Request & { session?: { isAdmin?: boolean } })
-    .session;
-  return session?.isAdmin === true;
-}
-
-function requireAdmin(req: Request, res: Response): boolean {
-  if (!isAdminRequest(req)) {
-    res.status(403).json({ error: "admin required" });
-    return false;
-  }
-  return true;
-}
-
 function adminActorId(req: Request): string {
   return req.isAuthenticated() ? (req.user.id ?? "admin") : "admin";
 }
 
 router.get("/challenge-posts-mod", adminModerationRateLimit, async (req: Request, res: Response) => {
-  if (!requireAdmin(req, res)) return;
+  if (requireOps(req, res) === null) return;
   const posts = await listPostsForModeration(200);
   void audit(req, { actorId: adminActorId(req), actorRole: "admin", action: "admin.posts_mod_list", resourceType: "challenge_post" });
   res.json({ posts });
@@ -162,7 +145,7 @@ router.post(
   "/challenge-posts/:id/hide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if (!requireAdmin(req, res)) return;
+    if (requireOps(req, res) === null) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });
@@ -182,7 +165,7 @@ router.post(
   "/challenge-posts/:id/unhide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if (!requireAdmin(req, res)) return;
+    if (requireOps(req, res) === null) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });

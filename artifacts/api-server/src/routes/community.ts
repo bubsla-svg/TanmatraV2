@@ -30,26 +30,9 @@ import {
   nextMonday,
 } from "../lib/community";
 import { logger } from "../lib/logger";
-import { hasAdminToken } from "../lib/adminGate";
+import { requireOps } from "../lib/adminGate";
 
 const router: IRouter = Router();
-
-function isAdminRequest(req: Request): boolean {
-  // Constant-time x-admin-token / RD_ADMIN_TOKEN check via the shared admin
-  // gate; a signed admin session is the other accepted path.
-  if (hasAdminToken(req)) return true;
-  const session = (req as Request & { session?: { isAdmin?: boolean } })
-    .session;
-  return session?.isAdmin === true;
-}
-
-function requireAdmin(req: Request, res: Response): boolean {
-  if (!isAdminRequest(req)) {
-    res.status(403).json({ error: "admin required" });
-    return false;
-  }
-  return true;
-}
 
 function requireUser(req: Request, res: Response): string | null {
   if (!req.isAuthenticated()) {
@@ -115,7 +98,7 @@ router.get("/community/me", async (req: Request, res: Response) => {
 // ---- ADMIN COHORTS ---------------------------------------------------------
 
 router.get("/community/cohorts", async (req: Request, res: Response) => {
-  if (!requireAdmin(req, res)) return;
+  if (requireOps(req, res) === null) return;
   const cohorts = await listAllCohorts();
   const counts = await db
     .select({
@@ -150,7 +133,7 @@ const generateBody = z.object({
 router.post(
   "/community/cohorts/:slug/generate-challenge",
   async (req: Request, res: Response) => {
-    if (!requireAdmin(req, res)) return;
+    if (requireOps(req, res) === null) return;
     const slug = String(req.params["slug"] ?? "");
     // Make sure default cohorts exist on cold-start clusters before we look up.
     await ensureCohortSeeds();
@@ -180,7 +163,7 @@ router.post(
 );
 
 router.get("/community/challenges", async (req: Request, res: Response) => {
-  if (!requireAdmin(req, res)) return;
+  if (requireOps(req, res) === null) return;
   const rows = await db
     .select()
     .from(cohortChallengesTable)
@@ -194,7 +177,7 @@ router.get("/community/challenges", async (req: Request, res: Response) => {
 router.get(
   "/community/moderation/queue",
   async (req: Request, res: Response) => {
-    if (!requireAdmin(req, res)) return;
+    if (requireOps(req, res) === null) return;
     const rows = await db
       .select()
       .from(moderationDecisionsTable)
@@ -208,7 +191,7 @@ router.get(
 router.get(
   "/community/moderation/appeals",
   async (req: Request, res: Response) => {
-    if (!requireAdmin(req, res)) return;
+    if (requireOps(req, res) === null) return;
     const rows = await db
       .select({
         appeal: moderationAppealsTable,
@@ -285,7 +268,7 @@ const resolveBody = z.object({
 router.post(
   "/community/moderation/appeals/:id/resolve",
   async (req: Request, res: Response) => {
-    if (!requireAdmin(req, res)) return;
+    if (requireOps(req, res) === null) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id)) {
       res.status(400).json({ error: "bad id" });
