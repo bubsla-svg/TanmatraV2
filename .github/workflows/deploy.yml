@@ -222,6 +222,13 @@ jobs:
     # DISPATCH ONLY. The legacy SPA no longer fronts the domain, so there is
     # nothing to gain from auto-rolling it on every merge — and its `web`
     # filter also matches lib/**, which would have fired it constantly.
+    # DO NOT append `|| needs.changes...` to this expression: with no parens,
+    # `A && B && C || D` parses as `(A && B && C) || D` and D alone would
+    # auto-deploy this service on every merge.
+    # NOTE this service is still the storefront's IMAGE_UPSTREAM (/images
+    # proxy; dish assets live in artifacts/tanmatra/public/dishes) — after
+    # merging new dish images, dispatch a deploy of this service or the
+    # storefront will render 404 images. Moving assets to a bucket is the fix.
     if: |
       always() &&
       github.event_name == 'workflow_dispatch' && !inputs.only_storefront &&
@@ -412,10 +419,15 @@ jobs:
   # api-server (a separate go-live switch, not flipped here).
   storefront-cloud-run:
     needs: [changes, cloud-run]
+    # !cancelled(), NOT always(): always() jobs still start after the run is
+    # cancelled, so the abort button would not stop a production deploy — and
+    # with concurrency cancel-in-progress:false, a superseded run could land
+    # an older sha after a newer one. !cancelled() is still a status function,
+    # so it overrides the implicit success() requirement on the skipped
+    # cloud-run need (needs.<id>.result is 'skipped' on every push).
     if: |
-      always() &&
-      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.storefront == 'true') &&
-      needs.cloud-run.result != 'cancelled'
+      !cancelled() &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.storefront == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -511,6 +523,24 @@ jobs:
           done
           echo "Timed out waiting for Cloud Build"; exit 1
 
+      # ORDER IS THE WHOLE POINT. This must run BEFORE `gcloud run deploy`:
+      # without --no-traffic a deploy migrates 100% of traffic itself, so a
+      # capture placed after it reads the revision just shipped and the
+      # "rollback" restores the broken build to itself while claiming success.
+      # That exact bug existed for one commit (caught in adversarial review
+      # before merging); the deploy below now also uses --no-traffic so the
+      # explicit Route step is the ONLY thing that moves traffic.
+      # `status.traffic` is filtered to the percent=100 entry because tagged
+      # revisions appear in the list at 0% and traffic[0] can be one of them.
+      - name: Capture the currently-serving revision (rollback target)
+        id: stable
+        run: |
+          STABLE_REV=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.traffic.filter("percent:100").extract(revisionName).flatten())' || true)
+          echo "stable revision before this deploy: ${STABLE_REV:-<none — first deploy or fully tagged>}"
+          echo "rev=$STABLE_REV" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Cloud Run
         run: |
           # API_BASE_URL — server components fetch the api directly.
@@ -526,6 +556,7 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --update-env-vars "API_BASE_URL=${API_URL%/api},API_UPSTREAM=${API_URL%/api},IMAGE_UPSTREAM=${IMAGE_URL},BUILD_SHA=${{ github.sha }}" \
+            --no-traffic \
             --memory=512Mi \
             --cpu=1 \
             --cpu-boost \
@@ -541,16 +572,8 @@ jobs:
       # required: a stray traffic pin once left run 30002863468 stranded at 0%,
       # the home smoke passed against the OLD revision, and only the
       # deploy-truth assert caught it.
-      - name: Capture the currently-serving revision (rollback target)
-        id: stable
-        run: |
-          STABLE_REV=$(gcloud run services describe ${SERVICE} \
-            --region ${GCP_REGION} --project ${GCP_PROJECT} \
-            --format='value(status.traffic[0].revisionName)')
-          echo "stable revision before this deploy: $STABLE_REV"
-          echo "rev=$STABLE_REV" >> "$GITHUB_OUTPUT"
-
       - name: Route traffic to the new revision
+        id: route
         run: |
           gcloud run services update-traffic ${SERVICE} \
             --region ${GCP_REGION} \
@@ -599,15 +622,32 @@ jobs:
       # merge ships unattended. If either check above failed, put the previous
       # revision back before anyone sees the broken one.
       - name: Roll back on failed verification
-        if: failure() && steps.stable.outputs.rev != ''
+        # Gated on the ROUTE step having succeeded: before it, no traffic has
+        # moved and there is nothing to roll back (a Build/Deploy failure would
+        # otherwise fire a pointless re-route). Interpolation goes through env,
+        # not inline expression in the script (injection posture).
+        if: failure() && steps.route.outcome == 'success' && steps.stable.outputs.rev != ''
+        env:
+          REV: ${{ steps.stable.outputs.rev }}
         run: |
-          echo "verification failed — restoring ${{ steps.stable.outputs.rev }}"
+          echo "verification failed — restoring $REV"
           gcloud run services update-traffic ${SERVICE} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --to-revisions "${{ steps.stable.outputs.rev }}=100" \
+            --to-revisions "$REV=100" \
             --quiet
+          # Trust nothing: prove the restored revision is what is serving.
+          URL=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.url)')
+          for i in 1 2 3 4 5 6; do
+            SHA=$(curl -sf "$URL/api/build" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+            if [ -n "$SHA" ] && [ "$SHA" != "${{ github.sha }}" ]; then echo "rollback verified: serving $SHA"; break; fi
+            sleep 5
+          done
           echo "rolled back. The deploy is red on purpose — fix forward and merge again."
+          # NOTE: --to-revisions pins the service (clears latestRevision). The
+          # next run's Route step (--to-latest) un-pins it automatically.
 
       # Non-fatal check of the production domain. The fatal deploy-truth above
       # runs against this service's own run.app URL. Once tanmatra.food is mapped
