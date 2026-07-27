@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { DishData } from "@workspace/menu-catalog";
+import { computePlanQuote } from "@workspace/subscription-rules";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_TRIO, TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
@@ -36,6 +37,9 @@ export default async function TrialPage() {
     nonveg: resolveTrio("nonveg", dishes),
   };
 
+  const deskFuelWeekly = computePlanQuote("desk_fuel", "veg", "weekly");
+  const deskFuelMonthly = computePlanQuote("desk_fuel", "veg", "monthly");
+
   return (
     <section className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
       <div className="flex flex-col gap-2">
@@ -60,6 +64,16 @@ export default async function TrialPage() {
             trial costs nothing if you continue.
           </li>
         </ol>
+
+        <div className="mt-5 border-t border-line pt-4">
+          <h2 className="text-sm font-semibold text-ink">What happens after the trial?</h2>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            After your Taste Test, you can start a regular subscription. Our most popular plan starts at <strong>{formatPaise(deskFuelWeekly.cycleTotalPaise)}/week</strong> or <strong>{formatPaise(deskFuelMonthly.cycleTotalPaise)}/month</strong>.
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+            There are no lock-ins — you can cancel anytime.
+          </p>
+        </div>
       </div>
     </section>
   );

@@ -65,7 +65,15 @@ export function AccountHub() {
     return (
       <div className="mt-4 flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to see your orders, plans and addresses.</p>
-        <PhoneAuth onVerified={() => void load()} />
+        <PhoneAuth onVerified={(u) => {
+          setUser(u);
+          void getActiveOrders()
+            .then(({ callerIsClinician, orders }) => {
+              if (callerIsClinician) return;
+              setLive(orders.find((o) => TRACKABLE_STATUSES.has(o.status)) ?? null);
+            })
+            .catch(() => setLive(null));
+        }} />
       </div>
     );
   }
