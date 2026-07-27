@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId, type DietTrack } from "@workspace/subscription-rules";
-import { planDisplay, planQuoteView, bookingBlock } from "@/lib/plans";
+import { planDisplay, planQuoteView, bookingBlock, getPlanBuilderData } from "@/lib/plans";
 import { PlanBuilder } from "@/components/plans/PlanBuilder";
 import { Waitlist } from "@/components/plans/Waitlist";
 
@@ -35,6 +35,8 @@ export default async function PlanPage({ params, searchParams }: Props) {
   const defaultTrack: DietTrack = q.servedTracks[0] ?? "veg";
   const blocked = !planIsSelfServiceLaunchable(id) || waitlist === "1";
 
+  const builderData = getPlanBuilderData(id);
+
   return (
     <section className="mx-auto max-w-xl px-4 py-10">
       {blocked ? (
@@ -44,7 +46,7 @@ export default async function PlanPage({ params, searchParams }: Props) {
           reason={bookingBlock(id, defaultTrack) ?? "it isn't open for self-serve booking yet"}
         />
       ) : (
-        <PlanBuilder planId={id} defaultTrack={defaultTrack} />
+        <PlanBuilder planId={id} defaultTrack={defaultTrack} builderData={builderData} />
       )}
     </section>
   );
