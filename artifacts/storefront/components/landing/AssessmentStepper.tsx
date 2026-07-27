@@ -1,6 +1,8 @@
-"use client"; // Interactive full-screen assessment modal and step state management
-// Full-screen clinical & wellness triage stepper routing to RD consult or plan checkout
+"use client";
+
 import { useState, useEffect } from "react";
+import { formatPaise } from "@/lib/format";
+import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { emitLpEvent } from "@/lib/lpEvents";
 import {
   ASSESSMENT_STEPS,
@@ -166,7 +168,7 @@ export function AssessmentStepper({
                     href="/trial"
                     className="inline-flex flex-1 items-center justify-center rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-[var(--gold-ink)] shadow-sm hover:opacity-90"
                   >
-                    Start 3-Day Trial Pack — ₹5,316 →
+                    Start 3-Day Trial Pack — {formatPaise(TRIAL_PRICE_PAISE)} →
                   </a>
                   <a
                     href={`/plans?goal=${state.primaryGoal}`}
@@ -178,7 +180,7 @@ export function AssessmentStepper({
               </div>
             </div>
 
-            {state.conditions.some((c) => ["t2d", "pcos", "ckd", "cardiac"].includes(c)) && (
+            {state.conditions.some((c: string) => ["t2d", "pcos", "ckd", "cardiac"].includes(c)) && (
               <div className="rounded-xl border border-sage/30 bg-sage-soft p-4 flex items-center justify-between gap-4 text-xs text-sage-text">
                 <span>Clinical condition flagged: Free 15-minute consultation available with Dr. Anjali Nair, RD.</span>
                 <a href="/rd" className="shrink-0 font-bold underline">Book RD Consult &rarr;</a>
