@@ -12,6 +12,10 @@ on:
   #   tanmatra     push -> gate -> deploy (same rollback pattern). Also serves
   #                /images to the storefront, so dish-image merges ship here.
   #
+  # Dispatch behaviour is unchanged EXCEPT that api-server dispatches now run
+  # migrate-db first (fail-closed) — the first such run exercises the deploy
+  # SA's cloudsql.client + secretAccessor grants.
+  #
   # `gate` re-runs the load-bearing checks ON THE MERGE COMMIT (root
   # typecheck, all lint gates, test-reach, money-path unit + integration
   # suites against a real Postgres). PR CI tests the branch tip; the gate
@@ -33,6 +37,12 @@ on:
         default: false
 
 # Don't let two pushes to main race each other into the Cloud Run services.
+# KNOWN GAP (accepted): GitHub keeps ONE pending run per group. Run A in
+# progress, merge B queued, merge C arrives → B's run is superseded and C's
+# paths-filter diffs only B..C — so a service ONLY B touched may not deploy,
+# with nothing red. Latest-pending-wins is monotonic (no older-sha-after-newer
+# risk); the residual fix when you notice a skipped service is a manual
+# dispatch or an empty follow-up commit.
 concurrency:
   group: deploy-main
   cancel-in-progress: false
@@ -77,7 +87,11 @@ jobs:
 
   # The merge-commit check. Everything here also runs in PR CI — the point is
   # running it on the EXACT sha that deploys. Push-only: a dispatch is a human
-  # decision and stays immediate.
+  # decision and stays immediate. Scope: root typecheck, the lint gates, the
+  # money-path unit suites, the FULL money-integration list from verify.yml,
+  # and the inbound-auth/access-control contracts. Not verify.yml's entire
+  # matrix — the KDS/geo/analytics feature steps stay PR-only — so "checked"
+  # here means the money path, auth surfaces, types and lint gates.
   gate:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -134,13 +148,51 @@ jobs:
           ./src/lib/trialEligibility.test.ts
           ./src/lib/corporateSubsidy.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
+      - name: Inbound-auth + access-control contracts
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/petpoojaClient.test.ts \
+            ./src/routes/petpooja.auth.test.ts \
+            ./src/routes/petpooja.test.ts
+          node --test --import tsx ./src/routes/ops.gate.test.ts
+          node --test --import tsx ./src/routes/delivery.opsGate.test.ts
       - name: Push schema to the test database
         run: pnpm --filter @workspace/db run push-force
-      - name: Money-path integration tests
+      - name: Money-path integration tests (verify.yml's full list)
         working-directory: artifacts/api-server
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/payments.integrity.test.ts
+          ./src/routes/payments.webhook.test.ts
+          ./src/routes/payments.subscriptionOrder.test.ts
+          ./src/routes/refunds.test.ts
+          ./src/routes/orders.mine.test.ts
+          ./src/lib/trialRedemption.test.ts
+          ./src/routes/payments.trialCreditback.test.ts
+          ./src/routes/subscriptions.planV2Trial.test.ts
+          ./src/routes/subscriptions.creditLedger.test.ts
+          ./src/routes/subscriptions.quoteCreditPreview.test.ts
+          ./src/routes/subscriptions.catalogQuote.test.ts
+          ./src/routes/loyalty.referral.test.ts
+          ./src/routes/dishRationales.test.ts
+          ./src/routes/coachAgent.test.ts
+          ./src/routes/rdAdvisory.appointmentOrder.test.ts
+          ./src/routes/vouchers.test.ts
+          ./src/routes/premium.paymentOrder.test.ts
+          ./src/routes/addons.test.ts
+          ./src/lib/ai/agents/ops.refundCap.test.ts
+          ./src/routes/marketplace.checkout.test.ts
+          ./src/routes/marketplace.paymentsIntegration.test.ts
+          ./src/routes/corporate.subsidyLedger.test.ts
+          ./src/routes/corporate.teams.test.ts
+          ./src/lib/reconciliationScheduler.test.ts
+          ./src/routes/savedMeals.test.ts
+          ./src/routes/ecosystem.test.ts
+          ./src/lib/bomEngine.test.ts
+          ./src/lib/guardrailEngines.test.ts
+          ./src/lib/logisticsEngine.test.ts
+          ./src/lib/wmsFefoEngine.test.ts
 
   # Replay committed drizzle migrations against production BEFORE the
   # api-server rolls. This is the step whose absence kept the backend deploy
@@ -194,6 +246,7 @@ jobs:
           RAW=$(gcloud secrets versions access latest \
             --secret=brand-tanmatra-database-url --project "$GCP_PROJECT") || {
             echo "cannot read secret brand-tanmatra-database-url — grant the deploy SA roles/secretmanager.secretAccessor"; exit 1; }
+          echo "::add-mask::$RAW"
           # Rewrite the URL to go through the proxy, handling both hostful
           # (…@HOST:PORT/db) and unix-socket (…@/db?host=/cloudsql/…) shapes.
           export DATABASE_URL=$(python3 - "$RAW" <<'EOF'
@@ -201,7 +254,10 @@ jobs:
           raw = sys.argv[1]
           p = u.urlsplit(raw)
           q = dict(u.parse_qsl(p.query))
-          q.pop("host", None)  # unix-socket param, replaced by the proxy
+          q.pop("host", None)     # unix-socket param, replaced by the proxy
+          q.pop("sslmode", None)  # the proxy listener is plaintext-local and
+          q.pop("ssl", None)      # already TLS-tunnelled; sslmode=require here
+                                  # would make node-postgres refuse to connect
           # Pass the userinfo through VERBATIM. urlsplit does not decode it,
           # so re-quoting would double-encode an already-encoded password
           # (p%40ss -> p%2540ss) and fail auth. The original string was a
@@ -318,6 +374,15 @@ jobs:
           done
           echo "Timed out waiting for Cloud Build"; exit 1
 
+      - name: Capture the currently-serving revision (rollback target)
+        id: stable
+        run: |
+          STABLE_REV=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.traffic.filter("percent:100").extract(revisionName).flatten())' || true)
+          echo "stable revision before this deploy: ${STABLE_REV:-<none>}"
+          echo "rev=$STABLE_REV" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${SERVICE} \
@@ -330,6 +395,16 @@ jobs:
             --memory=1Gi \
             --cpu=1 \
             --cpu-boost \
+            --no-traffic \
+            --quiet
+
+      - name: Route traffic to the new revision
+        id: route
+        run: |
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --to-latest \
             --quiet
 
       - name: Smoke-test /api/livez
@@ -345,6 +420,23 @@ jobs:
             echo "livez attempt $i failed, retrying..."; sleep 5
           done
           echo "livez never returned 200"; exit 1
+
+      # Same rollback discipline as the frontend jobs — this service serves
+      # the money path and now deploys unattended on merge. Schema-ahead-of-
+      # code is the safe direction (migrations are additive by policy), so a
+      # rollback after a successful migrate-db leaves nothing broken.
+      - name: Roll back on failed verification
+        if: failure() && steps.route.outcome == 'success' && steps.stable.outputs.rev != ''
+        env:
+          REV: ${{ steps.stable.outputs.rev }}
+        run: |
+          echo "livez failed — restoring $REV"
+          gcloud run services update-traffic ${SERVICE} \
+            --region ${GCP_REGION} \
+            --project ${GCP_PROJECT} \
+            --to-revisions "$REV=100" \
+            --quiet
+          echo "rolled back. The deploy is red on purpose — fix forward and merge again."
 
   # Build the SPA image and roll the `tanmatra` Cloud Run service — the
   # service the production domain (tanmatra.food) actually serves. This

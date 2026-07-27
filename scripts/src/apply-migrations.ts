@@ -21,14 +21,16 @@
  *  1. Reads lib/db/drizzle/meta/_journal.json for the canonical order.
  *  2. Ensures a tracking table `ci_applied_migrations` (tag PK, applied_at).
  *  3. BASELINE CASE — the one subtle branch: production predates this runner
- *     and was migrated by hand, so it has the full schema and no tracking
- *     table. If the tracking table is empty AND public.orders exists, every
- *     journal entry is recorded as applied WITHOUT executing anything, and
- *     the run stops there. A fresh empty database (no orders table) skips
- *     the baseline and applies the full chain. The heuristic is deliberate:
- *     orders is the oldest, most load-bearing table in the system — a
- *     database that has it but no tracking rows can only be a hand-migrated
- *     one.
+ *     and was migrated by hand. A database with public.orders but no
+ *     tracking rows is hand-migrated — but that alone proves nothing about
+ *     HOW FAR. The baseline therefore also requires currency probes
+ *     (artefacts of the chain tip at the time this runner shipped: 0020's
+ *     constraint, 0021's table, 0022's column). Probes pass → record all
+ *     journal entries in one transaction, execute nothing. Probes fail →
+ *     REFUSE (exit 1) and demand either hand-application of the tail or an
+ *     explicit MIGRATE_BASELINE_THROUGH=<tag>, which records only up to
+ *     <tag> and lets this same run apply the rest. A fresh empty database
+ *     (no orders table) skips the baseline and applies the full chain.
  *  4. Applies each missing migration: file split on drizzle's
  *     `--> statement-breakpoint`, all statements in ONE transaction, then the
  *     tracking row in the same transaction — a failed migration leaves no
@@ -99,23 +101,92 @@ async function main(): Promise<void> {
     const applied = new Set(appliedRows.rows.map((r: { tag: string }) => r.tag));
 
     // Baseline: hand-migrated database, first run of this runner.
+    //
+    // "public.orders exists" only proves the database was hand-migrated AT
+    // SOME POINT (orders is created in 0000). Baselining on that alone would
+    // silently mark an unapplied tail (e.g. a prod stuck at 0019) as applied
+    // — green deploy, three broken features, unrecoverable once the tracking
+    // rows exist. So the baseline additionally requires CURRENCY PROBES: one
+    // distinctive artefact from each of the newest migrations at the time
+    // this runner was introduced (the chain tip was 0022). The probes are
+    // deliberately FROZEN — they only guard the one-time first run; once any
+    // tracking rows exist this branch is never taken again, so they must
+    // never be "updated" for later migrations.
+    //
+    // If the schema is present but a probe fails, the runner REFUSES to
+    // guess and exits 1. A human then either hand-applies the missing tail
+    // (per docs/runbook-prod-migration-baseline.md) or sets
+    // MIGRATE_BASELINE_THROUGH=<tag> to record only the migrations up to and
+    // including <tag> as applied — after which this same run applies the
+    // rest normally.
     if (applied.size === 0) {
-      const probe = await client.query("SELECT to_regclass('public.orders') AS t");
-      if (probe.rows[0]?.t) {
-        console.log(
-          `BASELINE: schema present (public.orders exists) but no tracking rows — ` +
-          `recording all ${entries.length} journal entries as already applied, executing nothing.`,
-        );
-        if (!DRY_RUN) {
-          for (const e of entries) {
-            await client.query(
-              `INSERT INTO ${TRACKING_TABLE} (tag) VALUES ($1) ON CONFLICT DO NOTHING`,
-              [e.tag],
+      const handMigrated = (await client.query("SELECT to_regclass('public.orders') AS t")).rows[0]?.t;
+      if (handMigrated) {
+        const throughTag = process.env.MIGRATE_BASELINE_THROUGH;
+        let baselineEntries: JournalEntry[] | null = null;
+
+        if (throughTag) {
+          const at = entries.findIndex((e) => e.tag === throughTag);
+          if (at === -1) throw new Error(`MIGRATE_BASELINE_THROUGH=${throughTag} is not a journal tag.`);
+          baselineEntries = entries.slice(0, at + 1);
+          console.log(`BASELINE (explicit): recording ${baselineEntries.length} entries through ${throughTag}; the rest apply below.`);
+        } else {
+          const probes: Array<[string, string]> = [
+            ["orders_status_chk constraint (0020)",
+              "SELECT 1 FROM pg_constraint WHERE conname = 'orders_status_chk'"],
+            ["serviceability_interest table (0021)",
+              "SELECT 1 WHERE to_regclass('public.serviceability_interest') IS NOT NULL"],
+            ["corporate_leads.rd_reg_no column (0022)",
+              "SELECT 1 FROM information_schema.columns WHERE table_name='corporate_leads' AND column_name='rd_reg_no'"],
+          ];
+          const missing: string[] = [];
+          for (const [label, sqlText] of probes) {
+            const r = await client.query(sqlText);
+            if (r.rowCount === 0) missing.push(label);
+          }
+          if (missing.length > 0) {
+            throw new Error(
+              `REFUSING TO BASELINE: schema present but NOT current.\n` +
+              `Missing: ${missing.join("; ")}.\n` +
+              `This database was hand-migrated part-way; blind baselining would mark the ` +
+              `unapplied tail as applied and never revisit it.\n` +
+              `Either hand-apply the missing migrations and re-run, or set ` +
+              `MIGRATE_BASELINE_THROUGH=<last hand-applied tag> so this runner applies the rest.`,
             );
           }
+          baselineEntries = entries;
+          console.log(
+            `BASELINE: schema present and currency probes pass — recording all ` +
+            `${entries.length} journal entries as applied, executing nothing.`,
+          );
         }
-        console.log(DRY_RUN ? "(dry run — nothing written)" : "Baseline recorded. Up to date.");
-        return;
+
+        if (!DRY_RUN) {
+          // One transaction: a crash mid-loop must not leave partial tracking,
+          // or the next run would EXECUTE the unrecorded tail against an
+          // already-migrated database.
+          await client.query("BEGIN");
+          try {
+            for (const e of baselineEntries) {
+              await client.query(
+                `INSERT INTO ${TRACKING_TABLE} (tag) VALUES ($1) ON CONFLICT DO NOTHING`,
+                [e.tag],
+              );
+            }
+            await client.query("COMMIT");
+          } catch (err) {
+            await client.query("ROLLBACK");
+            throw err;
+          }
+          for (const e of baselineEntries) applied.add(e.tag);
+        } else {
+          console.log("(dry run — baseline not written)");
+          for (const e of baselineEntries) applied.add(e.tag);
+        }
+        if (applied.size >= entries.length && !throughTag) {
+          console.log(DRY_RUN ? "Would be up to date after baseline." : "Baseline recorded. Up to date.");
+          return;
+        }
       }
     }
 
@@ -126,15 +197,17 @@ async function main(): Promise<void> {
     }
 
     console.log(`${pending.length} pending migration(s): ${pending.map((e) => e.tag).join(", ")}`);
-    if (DRY_RUN) {
-      console.log("(dry run — nothing applied)");
-      return;
-    }
 
+    // Destructive scan happens BEFORE the dry-run early-return, so a dry run
+    // reports exactly what the real run would refuse — not a green plan that
+    // aborts mid-chain later. Comments are stripped first: this repo's
+    // migrations carry long explanatory headers, and prose like "we do not
+    // DROP TABLE here" must not abort the chain.
     for (const e of pending) {
       const { statements, raw } = statementsOf(e.tag);
       for (const stmt of statements) {
-        if (DESTRUCTIVE.test(stmt) && !raw.includes(ALLOW_MARKER)) {
+        const code = stmt.replace(/--[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+        if (DESTRUCTIVE.test(code) && !raw.includes(ALLOW_MARKER)) {
           throw new Error(
             `${e.tag} contains a destructive statement and no "${ALLOW_MARKER}" marker.\n` +
             `Statement: ${stmt.slice(0, 200)}\n` +
@@ -143,6 +216,14 @@ async function main(): Promise<void> {
           );
         }
       }
+    }
+    if (DRY_RUN) {
+      console.log("(dry run — nothing applied)");
+      return;
+    }
+
+    for (const e of pending) {
+      const { statements } = statementsOf(e.tag);
       console.log(`Applying ${e.tag} (${statements.length} statement(s))…`);
       await client.query("BEGIN");
       try {
