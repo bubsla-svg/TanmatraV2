@@ -63,63 +63,12 @@
     "SFMono-Regular", Menlo, monospace;
 }
 
-/*
- * ─── Astryx bridge (DS-0) ──────────────────────────────────────────────────
- *
- * Re-points the raw tokens from @workspace/tokens at the Astryx theme's
- * per-mode values. Every utility below and every component class keeps its
- * current NAME and MEANING — only the resolved colour changes — so the whole
- * app rethemes without touching a single component.
- *
- * WHY NOT @astryxdesign/core/tailwind-theme.css, the sanctioned bridge?
- * Because its Tailwind namespace collides with ours on names that mean
- * opposite things. This file has defined --color-accent / --color-secondary /
- * --color-muted as NEUTRAL surfaces since §3.1 ("never a rival hue"); Astryx
- * defines --color-accent as the gold. Importing it would silently flip
- * `bg-accent` from a neutral panel to a saffron fill everywhere it appears.
- * Bridging one layer lower — at the raw token, not the utility — keeps our
- * semantics intact and still gets Astryx's values.
- *
- * Specificity note: (0,2,0), matching tokens.css's `:root[data-theme="dark"]`.
- * Both files are unlayered, so the tie is broken by source order, and layout
- * imports tokens.css before globals.css. That ordering is load-bearing.
- *
- * Astryx resolves light/dark with CSS light-dark(), driven by `color-scheme`,
- * which its own stylesheet keys off `html[data-theme=...]` — the same
- * attribute next-themes already toggles. So the existing theme switch drives
- * both systems and there is no second source of truth.
- */
-:root[data-astryx-theme="tanmatra"] {
-  --bg: var(--color-background-app);
-  --surface: var(--color-background-surface);
-  --surface-raised: var(--color-background-raised);
-
-  --ink: var(--color-text-primary);
-  --ink-muted: var(--color-text-secondary);
-  --ink-faint: var(--color-text-tertiary);
-
-  --line: var(--color-border);
-  --line-strong: var(--color-border-strong);
-
-  /* Gold. Astryx gives the accent a per-mode value, so the old split between
-     --gold (bright fill) and --gold-text (a separately darkened AA foreground)
-     collapses: one accent that is already AA in its own mode, both as a fill
-     and as text. --gold-ink flips with it — white on the dark light-mode gold,
-     near-black on the bright dark-mode gold. */
-  --gold: var(--color-accent);
-  --gold-text: var(--color-accent);
-  --gold-ink: var(--color-accent-ink);
-
-  /* Sage stays a signal, never interactive (§3.2, enforced by lint:tokens). */
-  --sage: var(--color-sage);
-  --sage-text: var(--color-sage);
-  --sage-ink: var(--color-on-accent);
-
-  --blue: var(--color-blue);
-  --success: var(--color-success);
-  --warning: var(--color-warning);
-  --danger: var(--color-danger);
-}
+/* The Astryx token bridge lives in @/lib/themes/tanmatraBridge.css (imported
+ * by app/layout.tsx after the theme CSS). It was here first, reading Astryx's
+ * --color-* names — see that file's header for why it moved and why it pins
+ * concrete values. Do not re-introduce var(--color-*) reads here: Tailwind's
+ * own theme layer emits :root definitions for the SAME names mapped to our
+ * neutrals, and whichever layer lands last silently wins. */
 
 @theme inline {
   --color-bg: var(--bg);

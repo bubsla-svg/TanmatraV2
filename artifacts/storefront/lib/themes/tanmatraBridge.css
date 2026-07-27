@@ -1,0 +1,60 @@
+/*
+ * ─── Astryx bridge (DS-0), value-pinned ────────────────────────────────────
+ *
+ * Re-points the raw @workspace/tokens custom properties at the Astryx
+ * tanmatra theme's per-mode values, so every existing Tailwind utility and
+ * component class rethemes without being edited.
+ *
+ * WHY CONCRETE light-dark() TUPLES, NOT var(--color-accent) etc.
+ * The first bridge read Astryx's system names (--color-accent, --color-border,
+ * …) and it broke in production styling the moment a third stylesheet joined:
+ * Tailwind v4's own theme layer emits `:root { --color-accent: var(--accent) }`
+ * for OUR utility names, and `accent` in this app is deliberately a NEUTRAL
+ * (§3.1). Layer order put Tailwind's emission last, so on <html> the system
+ * name resolved to surface-raised and every .bg-gold painted white-on-white.
+ * Any consumer of a shared --color-* name is one `:root` re-definition away
+ * from that; concrete values cannot be shadowed.
+ *
+ * THE TUPLES ARE NOT A SECOND SOURCE OF TRUTH. lib/themes/tanmatraTheme.ts is
+ * the source; astryxBridge.test.ts parses both files and fails if any tuple
+ * here drifts from the theme definition there.
+ *
+ * light-dark() is driven by color-scheme, which tanmatra.css keys off the
+ * html[data-theme] attribute next-themes already toggles — same switch, both
+ * systems, no second source of mode truth.
+ *
+ * Lives in lib/themes/ (not app/) with the other colour-bearing theme files:
+ * lint:tokens scans {components,app} and would rightly flag raw values there.
+ */
+:root[data-astryx-theme="tanmatra"] {
+  /* Surfaces */
+  --bg: light-dark(#fbfaf7, #0e0f11);
+  --surface: light-dark(#ffffff, #17191c);
+  --surface-raised: light-dark(#ffffff, #1e2125);
+
+  /* Ink */
+  --ink: light-dark(#1a1c1e, #e9ecee);
+  --ink-muted: light-dark(#5c6367, #8b9398);
+  --ink-faint: light-dark(#6b7378, #7f878c);
+
+  /* Borders */
+  --line: light-dark(#e7e3da, #262a2e);
+  --line-strong: light-dark(#d8d3c7, #333940);
+
+  /* Gold. One accent per mode, AA as both fill and text (owner-approved:
+     the light mode moves to the dark gold; dark mode keeps the saffron).
+     The old --gold vs --gold-text split collapses. */
+  --gold: light-dark(#7F6921, #D4AF37);
+  --gold-text: light-dark(#7F6921, #D4AF37);
+  --gold-ink: light-dark(#ffffff, #111318);
+
+  /* Sage stays a signal, never interactive (§3.2, lint:tokens-enforced). */
+  --sage: light-dark(#3D5C3E, #7D9E7E);
+  --sage-text: light-dark(#3D5C3E, #7D9E7E);
+  --sage-ink: light-dark(#ffffff, #171717);
+
+  --blue: light-dark(#2D6A8F, #6BA3C8);
+  --success: light-dark(#3D5C3E, #7D9E7E);
+  --warning: light-dark(#7A5E12, #D8B45E);
+  --danger: light-dark(#8C3214, #C2603F);
+}
