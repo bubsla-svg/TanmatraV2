@@ -11,20 +11,11 @@ import { resolveDishById } from "../lib/menuResolver";
 import { rateLimit } from "../lib/rateLimit";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
+import { requireAuthUser } from "../middlewares/requireAuth";
 
 const MAX_LINES_PER_GROUP = 50;
 
 const router: IRouter = Router();
-
-function requireAuth(req: Request, res: Response): { id: string; name: string } | null {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "unauthorized" });
-    return null;
-  }
-  const u = req.user as { id: string; firstName?: string | null; email?: string | null };
-  const name = u.firstName ?? (u.email ? u.email.split("@")[0]! : "Friend");
-  return { id: u.id, name };
-}
 
 function generateGroupCode(): string {
   // 6 hex chars, easy to share verbally
@@ -36,8 +27,10 @@ const createSchema = z.object({
 });
 
 router.post("/group-orders", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
-  if (!auth) return;
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; firstName?: string | null; email?: string | null };
+  const auth = { id: userId, name: u.firstName ?? (u.email ? u.email.split("@")[0]! : "Friend") };
   const parsed = createSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -112,8 +105,10 @@ const itemSchema = z.object({
 });
 
 router.post("/group-orders/:code/items", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
-  if (!auth) return;
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; firstName?: string | null; email?: string | null };
+  const auth = { id: userId, name: u.firstName ?? (u.email ? u.email.split("@")[0]! : "Friend") };
   const code = String(req.params.code ?? "").toUpperCase();
   const parsed = itemSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -214,8 +209,10 @@ router.post("/group-orders/:code/items", async (req: Request, res: Response) => 
 router.post(
   "/group-orders/:code/remove-line",
   async (req: Request, res: Response) => {
-    const auth = requireAuth(req, res);
-    if (!auth) return;
+    const userId = requireAuthUser(req, res);
+    if (!userId) return;
+    const u = req.user as { id: string; firstName?: string | null; email?: string | null };
+    const auth = { id: userId, name: u.firstName ?? (u.email ? u.email.split("@")[0]! : "Friend") };
     const code = String(req.params.code ?? "").toUpperCase();
     const lineId = String((req.body as { lineId?: string })?.lineId ?? "");
     if (!lineId) {
@@ -250,8 +247,10 @@ router.post(
 );
 
 router.post("/group-orders/:code/close", async (req: Request, res: Response) => {
-  const auth = requireAuth(req, res);
-  if (!auth) return;
+  const userId = requireAuthUser(req, res);
+  if (!userId) return;
+  const u = req.user as { id: string; firstName?: string | null; email?: string | null };
+  const auth = { id: userId, name: u.firstName ?? (u.email ? u.email.split("@")[0]! : "Friend") };
   const code = String(req.params.code ?? "").toUpperCase();
   // Take the same per-group advisory lock as add-item so an in-flight
   // add cannot land between our read and the status flip. Whatever the
