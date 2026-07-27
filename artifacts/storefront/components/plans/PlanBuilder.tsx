@@ -9,7 +9,8 @@ import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { emitFunnel } from "@/lib/funnel";
 import { OrderBump } from "./OrderBump";
-import type { PlanId, DietTrack } from "@workspace/subscription-rules";
+import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
+import type { PlanBuilderData } from "@/lib/plans";
 
 const TRACK_LABEL: Record<DietTrack, string> = { veg: "Veg", egg: "Egg", nonveg: "Non-veg" };
 
@@ -27,11 +28,18 @@ const RD_VALUE_LINES: [string, string] = ["2 video sessions a month", "Weekly tu
  * flat), so there's no layout jump. The server re-quotes authoritatively at
  * checkout — this figure is the honest preview.
  */
-export function PlanBuilder({ planId, defaultTrack }: { planId: PlanId; defaultTrack: DietTrack }) {
+export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: PlanId; defaultTrack: DietTrack; builderData: PlanBuilderData }) {
   const d = planDisplay(planId);
-  const q = planQuoteView(planId);
   const router = useRouter();
+  
   const [track, setTrack] = useState<DietTrack>(defaultTrack);
+  const trackConfig = builderData.servedTracks.find(t => t.track === track) ?? builderData.servedTracks[0]!;
+  
+  const hasMonthly = trackConfig.quotes.some(q => q.cycle === "monthly");
+  const [cycle, setCycle] = useState<PlanCycle>(hasMonthly ? "monthly" : trackConfig.quotes[0]!.cycle);
+  
+  const currentQuote = trackConfig.quotes.find(q => q.cycle === cycle) ?? trackConfig.quotes[0]!;
+
   const [bump, setBump] = useState(false);
 
   // The RD bump is the only upsell here (02d stage 4), offered only where the
@@ -39,12 +47,12 @@ export function PlanBuilder({ planId, defaultTrack }: { planId: PlanId; defaultT
   // honest generic offer — no fabricated name/face.
   const canBump = planAllowsAddOn(planId, "rd_bump");
   const rdBump = addOnView("rd_bump");
-  const total = q.cycleTotalPaise + (bump ? rdBump.pricePaise : 0);
+  const total = currentQuote.cycleTotalPaise + (bump ? rdBump.pricePaise : 0);
 
   function confirm() {
-    emitFunnel("cuj_builder_confirm", { planId, track, bump });
-    emitFunnel("cuj_checkout_start", { planId, track, bump });
-    router.push(`/checkout?plan=${planId}${bump ? "&bump=1" : ""}`);
+    emitFunnel("cuj_builder_confirm", { planId, track, cycle, bump });
+    emitFunnel("cuj_checkout_start", { planId, track, cycle, bump });
+    router.push(`/checkout?plan=${planId}&track=${track}&cycle=${cycle}${bump ? "&bump=1" : ""}`);
   }
 
   return (
@@ -52,37 +60,76 @@ export function PlanBuilder({ planId, defaultTrack }: { planId: PlanId; defaultT
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-ink">{d.name}</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          {q.mealsPerCycle} lunches a month · delivered 12:30&ndash;1:30 · pause or skip anytime
+          {currentQuote.mealsPerCycle} lunches a {cycle === "weekly" ? "week" : cycle === "quarterly" ? "quarter" : "month"} · delivered 12:30&ndash;1:30 · pause or skip anytime
         </p>
       </div>
 
-      <div>
-        <p id="pref-label" className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Preference</p>
-        <div role="group" aria-labelledby="pref-label" className="inline-flex rounded-xl border border-line p-1">
-          {q.servedTracks.map((t) => (
-            <button
-              key={t}
-              type="button"
-              aria-pressed={track === t}
-              onClick={() => {
-                setTrack(t);
-                emitFunnel("cuj_track_selected", { planId, track: t });
-              }}
-              className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-              style={
-                track === t
-                  ? { background: "var(--gold)", color: "var(--gold-ink)" }
-                  : { color: "var(--ink-muted)" }
-              }
-            >
-              {TRACK_LABEL[t]}
-            </button>
-          ))}
+      <div className="flex flex-col gap-4">
+        <div>
+          <p id="pref-label" className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Preference</p>
+          <div role="group" aria-labelledby="pref-label" className="inline-flex flex-wrap gap-2 rounded-xl border border-line p-1">
+            {builderData.servedTracks.map((t) => (
+              <button
+                key={t.track}
+                type="button"
+                aria-pressed={track === t.track}
+                onClick={() => {
+                  setTrack(t.track);
+                  // Preserve cycle if available in new track, else fallback
+                  const newTrackConfig = builderData.servedTracks.find(st => st.track === t.track)!;
+                  if (!newTrackConfig.quotes.some(q => q.cycle === cycle)) {
+                    setCycle(newTrackConfig.quotes[0]!.cycle);
+                  }
+                  emitFunnel("cuj_track_selected", { planId, track: t.track });
+                }}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                style={
+                  track === t.track
+                    ? { background: "var(--gold)", color: "var(--gold-ink)" }
+                    : { color: "var(--ink-muted)" }
+                }
+              >
+                {TRACK_LABEL[t.track]}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {trackConfig.quotes.length > 1 && (
+          <div>
+            <p id="cycle-label" className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Duration</p>
+            <div role="group" aria-labelledby="cycle-label" className="inline-flex flex-wrap gap-2 rounded-xl border border-line p-1">
+              {trackConfig.quotes.map((q) => (
+                <button
+                  key={q.cycle}
+                  type="button"
+                  aria-pressed={cycle === q.cycle}
+                  onClick={() => setCycle(q.cycle)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  style={
+                    cycle === q.cycle
+                      ? { background: "var(--gold)", color: "var(--gold-ink)" }
+                      : { color: "var(--ink-muted)" }
+                  }
+                >
+                  {q.cycle.charAt(0).toUpperCase() + q.cycle.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
+      {currentQuote.pricePerMealPaise != null && trackConfig.poolMedianPaise != null && (
+        <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-4 py-2 text-sm font-medium text-ink-muted">
+          <span className="text-ink">₹{Math.round(currentQuote.pricePerMealPaise / 100)}/meal</span> on plan
+          <span>·</span>
+          <span>₹{Math.round(trackConfig.poolMedianPaise / 100)} avg à la carte</span>
+        </div>
+      )}
+
       <div className="flex items-baseline justify-between rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
-        <span className="text-sm text-ink-muted">Monthly total</span>
+        <span className="text-sm text-ink-muted capitalize">{cycle} total</span>
         <span className="tabular text-xl font-semibold text-ink">{formatPaise(total)}</span>
       </div>
 
@@ -97,13 +144,18 @@ export function PlanBuilder({ planId, defaultTrack }: { planId: PlanId; defaultT
         />
       )}
 
-      <button
-        type="button"
-        onClick={confirm}
-        className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-      >
-        Continue to checkout
-      </button>
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={confirm}
+          className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+        >
+          Continue to checkout
+        </button>
+        <p className="text-center text-[10px] uppercase tracking-wide text-ink-faint">
+          No platform fee. No surge. Prices include all taxes.
+        </p>
+      </div>
     </section>
   );
 }

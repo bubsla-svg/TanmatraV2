@@ -5,7 +5,12 @@ import {
   planServesTrack,
   type PlanId,
   type DietTrack,
+  type PlanQuote,
+  type PlanCycle,
+  PLAN_PRICE_TABLE,
+  poolForPlan,
 } from "@workspace/subscription-rules";
+import { DISHES } from "@workspace/menu-catalog";
 
 /**
  * Storefront adapter over the pure plan spine. The spine is the single source
@@ -80,4 +85,64 @@ export function bookingBlock(id: PlanId, track: DietTrack): string | null {
     return `the ${track} track isn't served by ${planDisplay(id).name} yet`;
   }
   return null;
+}
+
+function computeMedian(prices: number[]): number | null {
+  if (prices.length === 0) return null;
+  const sorted = [...prices].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0
+    ? sorted[mid] as number
+    : Math.round(((sorted[mid - 1] as number) + (sorted[mid] as number)) / 2);
+}
+
+export interface TrackConfig {
+  track: DietTrack;
+  quotes: PlanQuote[];
+  poolMedianPaise: number | null;
+}
+
+export interface PlanBuilderData {
+  planId: PlanId;
+  launchable: boolean;
+  servedTracks: TrackConfig[];
+}
+
+export function getPlanBuilderData(id: PlanId): PlanBuilderData {
+  const cfg = PLAN_CATALOG[id];
+  const served = DIET_TRACKS.filter((t) => planServesTrack(id, t));
+
+  const servedTracks = served.map((track) => {
+    const pool = poolForPlan(id, track, DISHES);
+    const poolMedianPaise = computeMedian(pool.map((d) => d.price));
+
+    const quotes: PlanQuote[] = [];
+    const tableEntry = (PLAN_PRICE_TABLE as any)[id]?.[track];
+
+    if (cfg.cycle === "monthly") {
+      if (tableEntry?.weeklyTotalPaise) {
+        quotes.push(computePlanQuote(id, track, "weekly"));
+      }
+      if (tableEntry?.monthlyTotalPaise) {
+        quotes.push(computePlanQuote(id, track, "monthly"));
+      }
+      if (tableEntry?.quarterlyTotalPaise) {
+        quotes.push(computePlanQuote(id, track, "quarterly"));
+      }
+    } else {
+      quotes.push(computePlanQuote(id, track, cfg.cycle));
+    }
+
+    return {
+      track,
+      quotes,
+      poolMedianPaise,
+    };
+  });
+
+  return {
+    planId: id,
+    launchable: planIsSelfServiceLaunchable(id),
+    servedTracks,
+  };
 }

@@ -2,33 +2,14 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, aiRunsTable } from "@workspace/db";
 import { desc, eq, and, lt, type SQL } from "drizzle-orm";
 import { listAgents } from "../lib/ai";
-import { hasAdminToken } from "../lib/adminGate";
+import { isOpsRequest } from "../lib/adminGate";
 
 const router: IRouter = Router();
-
-/**
- * Admin gating for telemetry endpoints.
- *
- * Admin access is granted by either:
- *   - HTTP header `x-admin-token` matching env `RD_ADMIN_TOKEN`, or
- *   - cookie/session attribute `req.session.isAdmin === true` (set by the
- *     web AdminGate after a token exchange — out of scope here).
- *
- * If `RD_ADMIN_TOKEN` is unset, admin elevation via header is disabled.
- */
-function isAdminRequest(req: Request): boolean {
-  // Constant-time x-admin-token / RD_ADMIN_TOKEN check via the shared admin
-  // gate; a signed admin session is the other accepted path.
-  if (hasAdminToken(req)) return true;
-  const session = (req as Request & { session?: { isAdmin?: boolean } })
-    .session;
-  return session?.isAdmin === true;
-}
 
 router.get("/ai/agents", (req: Request, res: Response) => {
   // Internal telemetry endpoint: exposes agent + tool metadata. Gated to
   // authenticated users or admin to reduce reconnaissance surface.
-  if (!isAdminRequest(req) && !req.isAuthenticated()) {
+  if (!isOpsRequest(req).allowed && !req.isAuthenticated()) {
     res.status(401).json({ error: "unauthorized" });
     return;
   }
@@ -48,7 +29,7 @@ router.get("/ai/agents", (req: Request, res: Response) => {
 });
 
 router.get("/ai/runs", async (req: Request, res: Response) => {
-  const admin = isAdminRequest(req);
+  const admin = isOpsRequest(req).allowed;
   if (!admin && !req.isAuthenticated()) {
     res.status(401).json({ error: "unauthorized" });
     return;
