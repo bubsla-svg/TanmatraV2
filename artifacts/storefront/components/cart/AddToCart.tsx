@@ -63,8 +63,8 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
 /** One-tap Add → in-place qty stepper (§4.1). Local cart; server re-prices at /orders. */
 function CartAdd({ dish }: { dish: Dish }) {
   const { cart, setCart } = useCart();
-  const qty = qtyOf(cart, dish.id);
-  const line = { dishId: dish.id, slug: dish.slug, name: dish.name, pricePaise: dish.price };
+  const qty = qtyOf(cart, dish.id, "dish");
+  const line = { dishId: dish.id, kind: "dish" as const, slug: dish.slug, name: dish.name, pricePaise: dish.price };
 
   if (qty === 0) {
     return (
@@ -80,11 +80,11 @@ function CartAdd({ dish }: { dish: Dish }) {
 
   return (
     <div className="flex items-center rounded-lg border border-line-strong bg-surface" role="group" aria-label={`${dish.name} quantity`}>
-      <button type="button" aria-label="Decrease quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, qty - 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink">
+      <button type="button" aria-label="Decrease quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty - 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink">
         −
       </button>
       <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{qty}</span>
-      <button type="button" aria-label="Increase quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, qty + 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink">
+      <button type="button" aria-label="Increase quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty + 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink">
         +
       </button>
     </div>

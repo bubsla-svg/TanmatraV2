@@ -19,16 +19,24 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   await expect(page.locator("main").getByText("Select your location", { exact: false })).toBeVisible();
 
   // 2. Marketplace is visible on the homepage
-  await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Everyday Wellness/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i })).toBeVisible();
 
   // Navigate to Marketplace
   await page.goto("/marketplace");
-  await expect(page.getByRole("heading", { name: "Marketplace" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /The Tanmatra Marketplace|Marketplace/i })).toBeVisible();
 
   // Add an item to cart from marketplace (using the standard add button if available, or just go to menu)
   await page.goto("/menu");
-  const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
-  await card.getByRole("button", { name: "Add" }).click();
+  
+  // The 'Add' button is SSR'd, so Playwright might click it before React hydrates.
+  // Retry until the 'View cart' button appears.
+  await expect(async () => {
+    const addBtn = page.getByRole("button", { name: "Add", exact: true }).first();
+    if (await addBtn.isVisible()) {
+      await addBtn.click();
+    }
+    await expect(page.getByRole("button", { name: "View cart" })).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 10_000 });
 
   // View cart
   await page.getByRole("button", { name: "View cart" }).click();

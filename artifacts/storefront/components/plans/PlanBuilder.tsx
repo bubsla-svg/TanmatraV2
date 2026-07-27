@@ -11,6 +11,7 @@ import { emitFunnel } from "@/lib/funnel";
 import { OrderBump } from "./OrderBump";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
+import { Leaf, Egg, Bone } from "lucide-react";
 
 const TRACK_LABEL: Record<DietTrack, string> = { veg: "Veg", egg: "Egg", nonveg: "Non-veg" };
 
@@ -89,7 +90,12 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
                     : { color: "var(--ink-muted)" }
                 }
               >
-                {TRACK_LABEL[t.track]}
+                <div className="flex items-center gap-2">
+                  {t.track === "veg" && <Leaf size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
+                  {t.track === "egg" && <Egg size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
+                  {t.track === "nonveg" && <Bone size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
+                  <span>{TRACK_LABEL[t.track]}</span>
+                </div>
               </button>
             ))}
           </div>

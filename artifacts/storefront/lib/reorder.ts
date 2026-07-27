@@ -49,15 +49,16 @@ export function reorderIntoCart(
       dropped.push(it.name);
       continue;
     }
-    const existingQty = cart.lines.find((l) => l.dishId === dish.id)?.qty ?? 0;
+    const existingQty = cart.lines.find((l) => l.dishId === dish.id && l.kind === "dish")?.qty ?? 0;
     cart = addLine(cart, {
       dishId: dish.id,
+      kind: "dish",
       slug: dish.slug,
       name: dish.name,
       pricePaise: dish.price,
     });
     // addLine bumped by 1; set the true merged quantity (clamped by the store).
-    cart = setQty(cart, dish.id, existingQty + it.qty);
+    cart = setQty(cart, dish.id, "dish", existingQty + it.qty);
     added += 1;
   }
   return { cart, added, dropped };

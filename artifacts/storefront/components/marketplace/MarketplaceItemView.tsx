@@ -11,8 +11,11 @@ import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
 import { getItem, payForMarketplace, type MarketplaceItem } from "@/lib/marketplaceApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { BundlePicker } from "./BundlePicker";
+import { useCart } from "@/components/cart/CartProvider";
+import { addOrUpdateQty } from "@/lib/cartStore";
 
 export function MarketplaceItemView({ slug }: { slug: string }) {
+  const { cart, setCart } = useCart();
   const [item, setItem] = useState<MarketplaceItem | null>(null);
   const [qty, setQty] = useState(1);
   const [needsAuth, setNeedsAuth] = useState(false);
@@ -37,7 +40,7 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
     setBusy(true); setError(null);
     try {
       await payForMarketplace(
-        { itemId: item.id, qty },
+        [{ itemId: item.id, qty }],
         createRazorpayAdapter(),
         mode === "bundle" ? { deliveryMode: "bundle_with_meal", bundleWithOrderId: bundleId } : {},
       );
@@ -102,7 +105,7 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
             </button>
           ))}
         </div>
-        {mode === "bundle" && <div className="mt-3"><BundlePicker selected={bundleId} onSelect={setBundleId} onAuthError={() => setNeedsAuth(true)} /></div>}
+        {mode === "bundle" && <div className="mt-3"><BundlePicker key={String(needsAuth)} selected={bundleId} onSelect={setBundleId} onAuthError={() => setNeedsAuth(true)} /></div>}
       </div>
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
@@ -110,12 +113,26 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
       {needsAuth ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-ink-muted">Sign in to place your order.</p>
-          <PhoneAuth onVerified={() => { setNeedsAuth(false); void buy(); }} />
+          <PhoneAuth onVerified={() => {
+            setNeedsAuth(false);
+            if (!(mode === "bundle" && bundleId === null)) {
+              void buy();
+            }
+          }} />
         </div>
       ) : (
-        <button type="button" onClick={buy} disabled={busy} className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
-          {busy ? "Opening payment…" : `Place order · ${formatPaise(item.pricePaise * qty)}`}
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setCart(addOrUpdateQty(cart, { dishId: item.id, kind: "marketplace", slug: item.slug, name: item.name, pricePaise: item.pricePaise }, qty))}
+            className="rounded-xl border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink hover:bg-surface-raised"
+          >
+            Add to Cart
+          </button>
+          <button type="button" onClick={buy} disabled={busy} className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+            {busy ? "Opening payment…" : `Place order · ${formatPaise(item.pricePaise * qty)}`}
+          </button>
+        </div>
       )}
       <p className="text-[11px] text-ink-faint">7-day return on unopened items. Sealed supplements are non-returnable for safety.</p>
     </div>
