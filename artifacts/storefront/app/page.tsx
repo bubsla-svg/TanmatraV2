@@ -4,6 +4,7 @@ import { deriveHeroContent } from "@/lib/heroContent";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
 import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 import { Section03AgitationPanel } from "@/components/landing/Section03AgitationPanel";
+import { Section04bMarketplace } from "@/components/landing/Section04bMarketplace";
 import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
 import { Section03B2BEnterprise } from "@/components/landing/Section03B2BEnterprise";
 import { Section04TelehealthTracking } from "@/components/landing/Section04TelehealthTracking";
@@ -38,6 +39,9 @@ export default async function HomePage() {
 
         {/* Pillar 1: D2C Therapeutic Subscriptions (Section 2 - Choose Your Protocol) */}
         <Section04ProtocolsGrid />
+
+        {/* Marketplace Upsell */}
+        <Section04bMarketplace />
 
         {/* Pillar 2: B2B Corporate Wellness Integration (Section 3 - Corporate Volume) */}
         <Section03B2BEnterprise />

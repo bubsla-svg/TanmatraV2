@@ -4,10 +4,11 @@
 import { useEffect, useState } from "react";
 import { formatPaise } from "@/lib/format";
 import { getMyOrders, type OrderSummary } from "@/lib/ordersApi";
+import { ApiError } from "@/lib/apiClient";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
-export function BundlePicker({ selected, onSelect }: { selected: number | null; onSelect: (id: number) => void }) {
+export function BundlePicker({ selected, onSelect, onAuthError }: { selected: number | null; onSelect: (id: number) => void; onAuthError?: () => void }) {
   const [orders, setOrders] = useState<OrderSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +16,14 @@ export function BundlePicker({ selected, onSelect }: { selected: number | null; 
     let live = true;
     getMyOrders()
       .then((r) => { if (live) setOrders(r.orders.slice(0, 6)); })
-      .catch(() => { if (live) setError("Couldn't load your orders."); });
+      .catch((e) => {
+        if (!live) return;
+        if (e instanceof ApiError && e.status === 401 && onAuthError) {
+          onAuthError();
+        } else {
+          setError("Couldn't load your orders.");
+        }
+      });
     return () => { live = false; };
   }, []);
 

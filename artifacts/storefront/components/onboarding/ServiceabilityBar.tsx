@@ -96,7 +96,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
 
   if (verdict === "serviceable") {
     return (
-      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface-subtle)] px-4 py-2 text-xs font-medium text-[var(--ink)] shadow-sm">
+      <div className={`${placement === 'menu' ? '' : 'mb-6'} inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface-subtle)] px-4 py-2 text-xs font-medium text-[var(--ink)] shadow-sm`}>
         <span className="text-[var(--success)] font-semibold">Delivering in {pincode} ✓</span>
         <button type="button" onClick={handleReset} className="ml-2 underline text-[var(--ink-muted)] hover:text-[var(--ink)]">
           Change
@@ -107,7 +107,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
 
   if (verdict === "unserviceable") {
     return (
-      <div className="mb-6 rounded-2xl border border-[var(--danger)]/30 bg-[var(--surface)] p-5 text-left shadow-sm max-w-lg">
+      <div className={`${placement === 'menu' ? '' : 'mb-6'} rounded-2xl border border-[var(--danger)]/30 bg-[var(--surface)] p-5 text-left shadow-sm max-w-lg`}>
         <p className="text-sm font-semibold text-[var(--ink)]">
           We&rsquo;re not in {pincode} yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
         </p>
@@ -118,10 +118,12 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
 
   if (manualMode) {
     return (
-      <form onSubmit={handleSubmit} className="mb-6 flex flex-wrap items-center gap-2 max-w-md">
-        <label htmlFor={`pin-input-${placement}`} className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
-          Where should we deliver? Enter your pincode
-        </label>
+      <form onSubmit={handleSubmit} className={`${placement === 'menu' ? '' : 'mb-6'} flex flex-wrap items-center gap-2 max-w-md`}>
+        {placement !== 'menu' && (
+          <label htmlFor={`pin-input-${placement}`} className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
+            Where should we deliver? Enter your pincode
+          </label>
+        )}
         <div className="flex w-full items-center gap-2">
           <input
             id={`pin-input-${placement}`}
@@ -156,10 +158,12 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
   }
 
   return (
-    <div className="mb-6 flex flex-col items-start gap-2 max-w-md">
-      <label className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
-        Where should we deliver?
-      </label>
+    <div className={`${placement === 'menu' ? '' : 'mb-6'} flex flex-col items-start gap-2 max-w-md`}>
+      {placement !== 'menu' && (
+        <label className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
+          Where should we deliver?
+        </label>
+      )}
       <div className="flex w-full items-center gap-3">
         <button
           type="button"

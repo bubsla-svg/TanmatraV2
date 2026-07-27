@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TopNav } from "@astryxdesign/core/TopNav";
 import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
+import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 
 /**
  * Global chrome shell. Server component itself; it hosts one small client island
@@ -25,7 +26,10 @@ export function Header() {
             </Link>
           }
           endContent={
-            <nav aria-label="Primary" className="flex items-center gap-1">
+            <nav aria-label="Primary" className="flex items-center gap-2">
+              <div className="hidden lg:block">
+                <ServiceabilityBar placement="menu" />
+              </div>
               <CommandMenu />
               <div className="hidden items-center gap-1 md:flex">
                 {PRIMARY_NAV.map((l) => (

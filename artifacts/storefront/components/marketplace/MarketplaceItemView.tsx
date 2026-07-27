@@ -102,7 +102,7 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
             </button>
           ))}
         </div>
-        {mode === "bundle" && <div className="mt-3"><BundlePicker selected={bundleId} onSelect={setBundleId} /></div>}
+        {mode === "bundle" && <div className="mt-3"><BundlePicker selected={bundleId} onSelect={setBundleId} onAuthError={() => setNeedsAuth(true)} /></div>}
       </div>
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}

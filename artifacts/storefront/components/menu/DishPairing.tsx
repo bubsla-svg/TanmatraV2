@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
+import { isAlaCarteEnabled } from "@workspace/menu-catalog";
+import { AddToCart } from "@/components/cart/AddToCart";
 
 /** Compact dish tile used by both the pairing card and the related rail. */
 function MiniCard({ dish }: { dish: DishData }) {
@@ -19,6 +21,13 @@ function MiniCard({ dish }: { dish: DishData }) {
           {formatPaise(dish.price)}
         </span>
       </div>
+      {isAlaCarteEnabled(dish) && (
+        <div className="border-t border-line px-3 py-3">
+          <div className="w-full [&>button]:w-full [&>button]:min-h-9 [&>button]:py-1.5 [&>div]:w-full [&>div>button]:min-h-9">
+            <AddToCart dish={dish} />
+          </div>
+        </div>
+      )}
     </Link>
   );
 }
