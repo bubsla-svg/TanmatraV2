@@ -22,6 +22,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { ChromeGate } from "@/components/ChromeGate";
 import { SITE_URL } from "@/lib/siteUrl";
+import { PostHogProvider } from "@/components/PostHogProvider";
+
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
 // next/font self-hosts the files and exposes each as a CSS variable that
@@ -97,31 +99,33 @@ export default function RootLayout({
     >
       <body className="pb-16 md:pb-0">
         <SiteStructuredData />
-        <ThemeProvider>
-          <a
-            href="#main"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-gold focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--gold-ink)]"
-          >
-            Skip to main content
-          </a>
-          <CartProvider>
-            {/* Global chrome is suppressed on the homepage — the M3 landing
-                brings its own nav (§0), bottom bar (§11) and footer (§12);
-                without the gate the page rendered two logos, two navs and
-                two footers. See ChromeGate for the full story. MiniCartBar
-                is gated too: it and §11 are both bottom-fixed and overlap. */}
-            <ChromeGate>
-              <Header />
-            </ChromeGate>
-            <main id="main">{children}</main>
-            <ChromeGate>
-              {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
-              <MiniCartBar />
-              <Footer />
-              <BottomNav />
-            </ChromeGate>
-          </CartProvider>
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider>
+            <a
+              href="#main"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-gold focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--gold-ink)]"
+            >
+              Skip to main content
+            </a>
+            <CartProvider>
+              {/* Global chrome is suppressed on the homepage — the M3 landing
+                  brings its own nav (§0), bottom bar (§11) and footer (§12);
+                  without the gate the page rendered two logos, two navs and
+                  two footers. See ChromeGate for the full story. MiniCartBar
+                  is gated too: it and §11 are both bottom-fixed and overlap. */}
+              <ChromeGate>
+                <Header />
+              </ChromeGate>
+              <main id="main">{children}</main>
+              <ChromeGate>
+                {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
+                <MiniCartBar />
+                <Footer />
+                <BottomNav />
+              </ChromeGate>
+            </CartProvider>
+          </ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
