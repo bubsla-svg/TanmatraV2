@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchOrderStatus, statusLabel } from "@/lib/orderStatus";
 import { PlanPerks } from "@/components/order/PlanPerks";
+import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendations";
 
 export const metadata: Metadata = {
   title: "Order confirmed",
@@ -77,6 +78,7 @@ export default async function ConfirmedPage({
         </Link>
       </div>
       <PlanPerks orderId={orderId} />
+      <ThankYouRecommendations />
     </section>
   );
 }
