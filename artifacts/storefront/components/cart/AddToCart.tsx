@@ -3,7 +3,7 @@
 // the URL carries ?group=CODE (an invitee arriving from a group order), the add
 // POSTs the pick to the shared group instead — the host pays at close.
 import type { DishData } from "@workspace/menu-catalog";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { addLine, qtyOf, setQty } from "@/lib/cartStore";
@@ -15,9 +15,7 @@ type Dish = Pick<DishData, "id" | "slug" | "name" | "price">;
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 export function AddToCart({ dish }: { dish: Dish }) {
-  const raw = useSearchParams().get("group");
-  const groupCode = raw && GROUP_CODE.test(raw) ? raw.toUpperCase() : null;
-  return groupCode ? <GroupAdd code={groupCode} dish={dish} /> : <CartAdd dish={dish} />;
+  return <CartAdd dish={dish} />;
 }
 
 /** Add my pick to the shared group order (server resolves price + safety). */
@@ -70,7 +68,10 @@ function CartAdd({ dish }: { dish: Dish }) {
     return (
       <button
         type="button"
-        onClick={(e) => { e.preventDefault(); setCart(addLine(cart, line)); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setCart(addLine(cart, line));
+        }}
         className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
       >
         Add

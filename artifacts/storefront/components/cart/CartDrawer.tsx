@@ -1,11 +1,12 @@
 "use client";
 // "use client" justification: interactive cart surface (steppers, drawer).
 import type { ReactNode } from "react";
-import { qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
+import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { useCart } from "@/components/cart/CartProvider";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { CartUpsellRail, type UpsellCandidate } from "./CartUpsellRail";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
@@ -69,6 +70,20 @@ export function CartDrawer({
               <li className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
             )}
           </ul>
+          <CartUpsellRail
+            cartLines={cart.lines}
+            onAdd={(item: UpsellCandidate) => {
+              setCart(
+                addLine(cart, {
+                  dishId: item.dishId,
+                  slug: item.slug,
+                  name: item.name,
+                  pricePaise: item.pricePaise,
+                  kind: item.kind,
+                })
+              );
+            }}
+          />
           <div className="mt-3 border-t border-line pt-3">
             <div className="mb-3 flex items-center justify-between text-sm">
               <span className="text-ink-muted">Subtotal (before delivery &amp; GST)</span>

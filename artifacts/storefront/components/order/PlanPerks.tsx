@@ -4,9 +4,9 @@
 import { useEffect, useState } from "react";
 import { PLAN_CATALOG, type PlanId } from "@workspace/subscription-rules";
 import { readCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
-import { planAllowsAddOn, addOnView } from "@/lib/addons";
+import { planAllowsAddOn } from "@/lib/addons";
 import { formatPaise } from "@/lib/format";
-import { EveningAddOffer } from "@/components/checkout/EveningAddOffer";
+import { PostCheckoutAddOns } from "./PostCheckoutAddOns";
 
 /**
  * Perks the money event just produced, rendered on the confirmation screen:
@@ -68,10 +68,7 @@ export function PlanPerks({ orderId }: { orderId: string }) {
         </p>
       )}
       {eveningAddSubId !== null && (
-        <EveningAddOffer
-          pricePaise={addOnView("evening_add").pricePaise}
-          subscriptionId={eveningAddSubId}
-        />
+        <PostCheckoutAddOns subscriptionId={eveningAddSubId} />
       )}
       {perks.autopayDisclaimer && (
         <p className="rounded-xl border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-ink-muted">
