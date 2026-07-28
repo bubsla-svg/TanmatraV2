@@ -18,7 +18,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { MiniCartBar } from "@/components/cart/MiniCartBar";
 import { Footer } from "@/components/Footer";
-import { BottomNav } from "@/components/BottomNav";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { ChromeGate } from "@/components/ChromeGate";
 import { SITE_URL } from "@/lib/siteUrl";
@@ -113,7 +113,7 @@ export default function RootLayout({
               {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
               <MiniCartBar />
               <Footer />
-              <BottomNav />
+              <MobileBottomNav />
             </CartProvider>
           </ThemeProvider>
         </PostHogProvider>
