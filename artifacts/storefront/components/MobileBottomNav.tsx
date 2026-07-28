@@ -31,7 +31,7 @@ const TABS: TabConfig[] = [
     href: "/menu",
     icon: (
       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        <path d="M18 8V3M14 8V3M18 13v8M14 13v8M6 21v-8a4 4 0 0 1 4-4v0a4 4 0 0 1 4 4v8M6 3v5a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4V3" />
       </svg>
     ),
   },
@@ -41,7 +41,11 @@ const TABS: TabConfig[] = [
     href: "/plans",
     icon: (
       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
       </svg>
     ),
   },
