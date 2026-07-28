@@ -34,8 +34,7 @@ export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
     // wraps it with display:contents — zero layout impact, and each dish stays
     // a self-contained article for screen readers (and for the e2e locators,
     // which rightly target the semantic element, not a class).
-    <article className="contents">
-    <Card padding={0} className="group flex h-full flex-col overflow-hidden transition-transform hover:-translate-y-0.5">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-transform hover:-translate-y-0.5">
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex flex-col">
         <div className="relative overflow-hidden bg-surface-raised">
           <AspectRatio ratio={4 / 3}>
@@ -81,7 +80,7 @@ export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
       </Link>
 
       {/* Sibling of the Link — see the a11y note above. */}
-      <div className="mt-auto p-3 pt-2">
+      <div className="relative z-10 mt-auto p-3 pt-2">
         <HStack gap={2} vAlign="center" className="justify-between">
           <VStack gap={0}>
             {/* hasTabularNumbers is the Astryx equivalent of .text-clinical-data:
@@ -98,7 +97,6 @@ export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
           {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
         </HStack>
       </div>
-    </Card>
     </article>
   );
 }

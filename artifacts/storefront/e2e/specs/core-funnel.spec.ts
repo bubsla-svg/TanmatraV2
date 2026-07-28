@@ -13,7 +13,7 @@ import { collectErrors, ORDERABLE_DISH } from "../fixtures";
 test("core funnel: address -> marketplace -> cart -> checkout login prompt", async ({ page }) => {
   const errors = collectErrors(page);
   
-  // 1. Land on homepage, verify sticky address selector is present in the header
+  // 1. Land on homepage, verify sticky address/serviceability bar is present
   await page.goto("/");
   await expect(page.getByRole("banner")).toBeVisible();
   await expect(page.locator("main").getByText("Select your location", { exact: false })).toBeVisible();
@@ -27,19 +27,21 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
 
   // Add an item to cart from marketplace (using the standard add button if available, or just go to menu)
   await page.goto("/menu");
-  
-  // The 'Add' button is SSR'd, so Playwright might click it before React hydrates.
-  // Retry until the 'View cart' button appears.
+  await page.waitForLoadState("networkidle");
   await expect(async () => {
-    const addBtn = page.getByRole("button", { name: "Add", exact: true }).first();
+    const card = page.locator("article").filter({ hasText: ORDERABLE_DISH.name }).first();
+    await card.scrollIntoViewIfNeeded();
+    const addBtn = card.getByRole("button", { name: "Add" });
     if (await addBtn.isVisible()) {
       await addBtn.click();
     }
-    await expect(page.getByRole("button", { name: "View cart" })).toBeVisible({ timeout: 1000 });
+    await expect(page.getByRole("button", { name: "View cart" })).toBeVisible({ timeout: 1500 });
   }).toPass({ timeout: 10_000 });
 
   // View cart
-  await page.getByRole("button", { name: "View cart" }).click();
+  const viewCartBtn = page.getByRole("button", { name: "View cart" });
+  await expect(viewCartBtn).toBeVisible();
+  await viewCartBtn.click();
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { name: "Your cart" })).toBeVisible();
 
