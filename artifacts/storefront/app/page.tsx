@@ -27,47 +27,42 @@ export default async function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-surface text-ink pb-20 sm:pb-24">
-
-      <main className="flex flex-col gap-12 sm:gap-16 lg:gap-20">
-        {/* Pillar 1 Hero: Clinical Authority Hook with Dual CTAs & Trust Bar */}
+      <main className="flex flex-col gap-10 sm:gap-16 lg:gap-20">
+        {/* Pillar 1 Hero: Food-First D2C Hook with Hero Meal Photo & Dual CTAs */}
         <Section01ClinicalHero hero={heroData} />
 
-        {/* Front-door Serviceability Check */}
-        <div className="mx-auto max-w-5xl px-4">
+        {/* Front-door Serviceability Check (Hidden on mobile to eliminate header redundancy) */}
+        <div className="hidden sm:block mx-auto max-w-5xl px-4">
           <ServiceabilityBar placement="hero" />
         </div>
         <Section02QualificationChips />
 
-        {/* Pillar 1: D2C Therapeutic Subscriptions (Section 2 - Choose Your Protocol) */}
+        {/* D2C Food Tech Core 1: Choose Your Therapeutic Protocol */}
         <Section04ProtocolsGrid />
 
-        {/* Marketplace Upsell */}
+        {/* D2C Food Tech Core 2: Dietitian-Approved Marketplace Pantry */}
         <Section04bMarketplace />
 
-        {/* Pillar 2: B2B Corporate Wellness Integration (Section 3 - Corporate Volume) */}
-        <Section03B2BEnterprise />
-
-        {/* Pillar 3: Telehealth & Clinical Tracking (Section 4 - Consultations & Tech) */}
-        <Section04TelehealthTracking />
-
-        {/* Section 5: The "Noida-Proof" IoT Cold-Chain Logistics Moat */}
-        <Section05LogisticsMoat />
-
-        {/* Agitation Panel & Triple Verification Proofs */}
-        <Section03AgitationPanel />
-        <div id="proofs" className="flex flex-col gap-12 sm:gap-16">
-          <Section05ProofMacros />
-          <Section06ProofRdPanel />
-          <Section07ProofKitchen />
-        </div>
-
-        {/* Interactive 60-Second Metabolic Assessment Stepper Banner & Modal */}
+        {/* Interactive 60-Second Metabolic Assessment Stepper */}
         <Section09AssessmentSection />
 
         {/* Recipes Bridge: DIY vs Done-for-You */}
         <Section09bRecipesBridge />
 
-        {/* FAQ Accordion with Mandatory Medical Disclaimer */}
+        {/* Proofs: Macros, RD Panel & Certified Kitchen */}
+        <div id="proofs" className="flex flex-col gap-10 sm:gap-16">
+          <Section05ProofMacros />
+          <Section06ProofRdPanel />
+          <Section07ProofKitchen />
+        </div>
+
+        {/* Supporting Pillars: B2B Enterprise & Telehealth */}
+        <Section03B2BEnterprise />
+        <Section04TelehealthTracking />
+        <Section05LogisticsMoat />
+        <Section03AgitationPanel />
+
+        {/* FAQ Accordion */}
         <Section10FaqAccordion />
       </main>
     </div>
