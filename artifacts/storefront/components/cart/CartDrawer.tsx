@@ -79,6 +79,7 @@ export function CartDrawer({
                   slug: item.slug,
                   name: item.name,
                   pricePaise: item.pricePaise,
+                  kind: item.kind,
                 })
               );
             }}

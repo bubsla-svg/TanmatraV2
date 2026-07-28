@@ -19,7 +19,7 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   await expect(page.locator("main").getByText("Select your location", { exact: false })).toBeVisible();
 
   // 2. Marketplace is visible on the homepage
-  await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i }).first()).toBeVisible();
 
   // Navigate to Marketplace
   await page.goto("/marketplace");
