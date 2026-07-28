@@ -1,32 +1,32 @@
 import { defineTheme } from '@astryxdesign/core/theme';
-import { neutralTheme } from '@astryxdesign/theme-neutral';
+import { stoneTheme } from './stone/stoneTheme';
 
 export const tanmatraTheme = defineTheme({
   name: 'tanmatra',
-  extends: neutralTheme,
+  extends: stoneTheme,
   tokens: {
-    /* ── Locked brand accents & semantic status (light, dark tuples) ────── */
-    '--color-accent': ['#7F6921', '#D4AF37'],
-    '--color-accent-ink': ['#ffffff', '#111318'],
-    '--color-blue': ['#2D6A8F', '#6BA3C8'],
-    '--color-sage': ['#3D5C3E', '#7D9E7E'],
-    '--color-success': ['#3D5C3E', '#7D9E7E'],
-    '--color-warning': ['#7A5E12', '#D8B45E'],
-    '--color-danger': ['#8C3214', '#C2603F'],
+    /* ── Stone Theme Palette (Warm, Earthy Neutrals & Natural Sandstone) ───── */
+    '--color-accent': ['#28282a', '#f3f3f5'],
+    '--color-accent-ink': ['#ffffff', '#171719'],
+    '--color-blue': ['#506072', '#99adc6'],
+    '--color-sage': ['#4e6357', '#9bb19a'],
+    '--color-success': ['#4e6357', '#9bb19a'],
+    '--color-warning': ['#79693f', '#b6aa90'],
+    '--color-danger': ['#775751', '#c7a39d'],
 
     /* ── Background & Surface Ramp ───────────────────────────────────────── */
-    '--color-background-app': ['#fbfaf7', '#0e0f11'],
-    '--color-background-surface': ['#ffffff', '#17191c'],
-    '--color-background-raised': ['#ffffff', '#1e2125'],
+    '--color-background-app': ['#f3f3f5', '#111015'],
+    '--color-background-surface': ['#ffffff', '#1b1b1f'],
+    '--color-background-raised': ['#ffffff', '#25252a'],
 
     /* ── Text & Ink Ramp ─────────────────────────────────────────────────── */
-    '--color-text-primary': ['#1a1c1e', '#e9ecee'],
-    '--color-text-secondary': ['#5c6367', '#8b9398'],
-    '--color-text-tertiary': ['#6b7378', '#7f878c'],
+    '--color-text-primary': ['#28282a', '#f3f3f5'],
+    '--color-text-secondary': ['#5e5e5e', '#ababb0'],
+    '--color-text-tertiary': ['#84848b', '#84848b'],
 
     /* ── Border & Divider Ramp ───────────────────────────────────────────── */
-    '--color-border': ['#e7e3da', '#262a2e'],
-    '--color-border-strong': ['#d8d3c7', '#333940'],
+    '--color-border': ['#d8d8db', '#343438'],
+    '--color-border-strong': ['#84848b', '#5e5e5e'],
 
     /* ── Radii & Duration ────────────────────────────────────────────────── */
     '--radius-sm': '6px',
