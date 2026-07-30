@@ -1,33 +1,52 @@
 "use client";
 // Client: interactive macro history dashboard aggregating consumed daily nutrition vs target ceilings.
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import Link from "next/link";
+import { ApiError } from "@/lib/apiClient";
 import { getMyNutritionHistory, type NutritionHistorySummary } from "@/lib/ecosystemApi";
+import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 export function MealHistoryDashboard() {
   const [data, setData] = useState<NutritionHistorySummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsAuth, setNeedsAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    getMyNutritionHistory()
-      .then((res) => {
-        setData(res);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Please sign in to inspect your verified macro adherence logs.");
-        setLoading(false);
-      });
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getMyNutritionHistory();
+      setData(res);
+      setNeedsAuth(false);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
+      else setError(e instanceof ApiError ? e.message : "Couldn't load your nutrition history.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  if (needsAuth) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-ink-muted">Sign in to inspect your verified macro adherence logs.</p>
+        <PhoneAuth onVerified={() => void load()} />
+      </div>
+    );
+  }
 
   if (loading) return <div className="p-8 text-center text-xs font-semibold text-ink-muted">Aggregating nutrition history…</div>;
   if (error || !data) {
     return (
       <div className="rounded-2xl border border-line bg-surface p-8 text-center flex flex-col gap-3 shadow-sm">
         <p className="text-sm font-medium text-ink">{error ?? "No nutritional history records located yet."}</p>
-        <Link href="/menu" className="mt-2 mx-auto rounded-xl bg-gold px-6 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-gold/90 transition-colors">
-          Explore Therapeutic Menu &rarr;
+        <Link href="/menu" className="mt-2 mx-auto rounded-xl bg-gold px-6 py-2.5 text-xs font-semibold text-[var(--gold-ink)] shadow-sm hover:bg-gold/90 transition-colors">
+          Explore Therapeutic Menu →
         </Link>
       </div>
     );
@@ -38,15 +57,17 @@ export function MealHistoryDashboard() {
   const totalProt = logs.reduce((s, l) => s + (l.proteinGrams || 0), 0);
   const totalFiber = logs.reduce((s, l) => s + (l.fiberGrams || 0), 0);
 
+  const metrics = [
+    { label: "Calorie Adherence", val: `${totalKcal} kcal`, target: `Target: ${targets.calorieTarget}/day` },
+    { label: "Protein Volume", val: `${totalProt}g`, target: `Target: ${targets.proteinTargetGrams}g/day` },
+    { label: "Prebiotic Fiber", val: `${totalFiber}g`, target: `Target: ${targets.fiberTargetGrams}g/day` },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {[
-          { label: "Calorie Adherence", val: `${totalKcal} kcal`, target: `Target: ${targets.calorieTarget || 2000}/day` },
-          { label: "Protein Volume", val: `${totalProt}g`, target: `Target: ${targets.proteinTargetGrams || 80}g/day` },
-          { label: "Prebiotic Fiber", val: `${totalFiber}g`, target: `Target: ${targets.fiberTargetGrams || 28}g/day` },
-        ].map((m, i) => (
-          <div key={i} className="rounded-2xl border border-line bg-surface p-5 shadow-sm flex flex-col justify-between gap-2">
+        {metrics.map((m) => (
+          <div key={m.label} className="rounded-2xl border border-line bg-surface p-5 shadow-sm flex flex-col justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">{m.label}</span>
             <span className="text-2xl font-bold text-ink">{m.val}</span>
             <span className="text-xs font-semibold text-gold-text">{m.target}</span>

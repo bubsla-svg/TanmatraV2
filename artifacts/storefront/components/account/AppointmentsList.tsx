@@ -71,7 +71,7 @@ export function AppointmentsList() {
             <span className="font-semibold text-ink capitalize">
               {a.kind.replace(/_/g, " ")}
             </span>
-            <span className="rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-medium text-sage-800">
+            <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text">
               {a.status}
             </span>
           </div>
