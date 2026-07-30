@@ -20,8 +20,6 @@ let server: http.Server;
 let baseUrl = "";
 
 const SANDWICH_DISH_ID = 121;
-const SANDWICH_BASE_PAISE = 26000;
-const MULTIGRAIN_MODIFIER_PAISE = 1500;
 
 function makeApp(): Express {
   const app = express();
@@ -48,14 +46,23 @@ async function placeOrder(body: unknown) {
 
 // A servicable pincode + accepted consent, so requests reach item resolution
 // rather than being rejected earlier in the pipeline (checkout.consent.test.ts
-// covers the consent gate itself).
+// covers the consent gate itself). allergenAck is set because the sandwich
+// fixture (id 121) carries declared allergens (Dairy, Gluten) — an anonymous
+// guest who declares nothing is otherwise held at allergen_ack_required
+// (checkoutSafety.ts assessAllergenAck), which would mask the customisation
+// behaviour these tests actually exercise.
 function baseOrder(items: unknown[], extra: Record<string, unknown> = {}) {
   return {
     externalOrderId: `ord-custom-${randomUUID()}`,
     items,
     phone: "9999999999",
-    address: { line1: "1 Test Rd", city: "Noida", pincode: "110001" },
+    // A REAL serviceable pincode (SERVICEABLE_PINCODES, api-zod) — these tests
+    // are exercising item/customisation validation, which runs after the
+    // pincode gate, so an unserviceable code would 422 before ever reaching
+    // the code under test.
+    address: { line1: "1 Test Rd", city: "Noida", pincode: "201301" },
     consent: { accepted: true, policyVersion: "dpdp-v1" },
+    allergenAck: true,
     ...extra,
   };
 }
@@ -68,7 +75,7 @@ test("setup: start server", async () => {
 
 test("no customizations field → priced at the plain base price (back-compat)", async () => {
   const res = await placeOrder(baseOrder([{ dishId: SANDWICH_DISH_ID, qty: 1 }]));
-  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(res.status, 201, JSON.stringify(res.json));
 });
 
 test("selecting the non-default option adds its priceModifier to the bill", async () => {
@@ -82,17 +89,23 @@ test("selecting the non-default option adds its priceModifier to the bill", asyn
       },
     ]),
   );
-  assert.equal(plain.status, 200, JSON.stringify(plain.json));
-  assert.equal(customized.status, 200, JSON.stringify(customized.json));
-  // Neither response echoes the computed total directly, so this test's job is
-  // proving the request is ACCEPTED with the extra field — the actual paise
-  // arithmetic is pinned in dishCustomizations.test.ts (unit) and the
-  // total-vs-base delta is exercised precisely below via the 400 case, which
-  // fails fast rather than silently charging the base price.
+  assert.equal(plain.status, 201, JSON.stringify(plain.json));
+  assert.equal(customized.status, 201, JSON.stringify(customized.json));
   assert.notEqual(plain.json.serverOrderId, customized.json.serverOrderId);
+  // The response echoes the server's totalPaise. Assert the customised order
+  // billed strictly MORE than the plain one — not an exact delta, which would
+  // couple this test to cartMath.ts's GST/delivery-fee formula (not this
+  // file's concern) — proving the modifier was actually applied rather than
+  // silently dropped, which is the exact failure this whole slice exists to
+  // close (see BATCH-4-GROUNDING.md finding 1).
+  assert.ok(
+    customized.json.totalPaise > plain.json.totalPaise,
+    `expected customised total (${customized.json.totalPaise}) > plain total (${plain.json.totalPaise})`,
+  );
 });
 
 test("selecting the default option is accepted and contributes no price (matches an unset group)", async () => {
+  const plain = await placeOrder(baseOrder([{ dishId: SANDWICH_DISH_ID, qty: 1 }]));
   const res = await placeOrder(
     baseOrder([
       {
@@ -102,7 +115,9 @@ test("selecting the default option is accepted and contributes no price (matches
       },
     ]),
   );
-  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(res.status, 201, JSON.stringify(res.json));
+  // The default option prices at +0, so the total must match the plain order.
+  assert.equal(res.json.totalPaise, plain.json.totalPaise);
 });
 
 test("unknown group name → 422 invalid_customization, order NOT created", async () => {
