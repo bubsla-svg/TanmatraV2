@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Protocol Vault | Metabolic OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Satoshi:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "on-surface": "#e5e2e1",
+                  "on-secondary-fixed-variant": "#474746",
+                  "error-container": "#93000a",
+                  "outline-variant": "#4d4635",
+                  "inverse-on-surface": "#313030",
+                  "surface-container-lowest": "#0e0e0e",
+                  "sage-signal": "#7D9E7E",
+                  "primary-fixed": "#ffe088",
+                  "surface-tint": "#e9c349",
+                  "inverse-surface": "#e5e2e1",
+                  "on-background": "#e5e2e1",
+                  "tertiary-container": "#a1aff4",
+                  "background": "#131313",
+                  "secondary-fixed": "#e5e2e1",
+                  "ink-secondary": "#A3A3A3",
+                  "on-tertiary-container": "#32407e",
+                  "tertiary": "#c2cbff",
+                  "on-secondary-container": "#b7b4b4",
+                  "on-tertiary-fixed-variant": "#344280",
+                  "outline": "#99907c",
+                  "surface-container": "#201f1f",
+                  "on-primary-fixed": "#241a00",
+                  "tertiary-fixed": "#dde1ff",
+                  "surface-bright": "#3a3939",
+                  "on-primary-fixed-variant": "#574500",
+                  "error": "#ffb4ab",
+                  "on-primary": "#3c2f00",
+                  "tertiary-fixed-dim": "#b8c3ff",
+                  "primary-fixed-dim": "#e9c349",
+                  "hairline": "rgba(255, 255, 255, 0.06)",
+                  "secondary": "#c8c6c5",
+                  "primary-container": "#d4af37",
+                  "clay-danger": "#B0655A",
+                  "on-tertiary": "#1c2b68",
+                  "glass": "rgba(23, 23, 23, 0.72)",
+                  "surface-container-high": "#2a2a2a",
+                  "surface-container-low": "#1c1b1b",
+                  "surface-container-highest": "#353534",
+                  "on-error": "#690005",
+                  "ink-on-gold": "#111318",
+                  "surface-variant": "#353534",
+                  "on-secondary": "#313030",
+                  "ember-warning": "#B6892F",
+                  "secondary-fixed-dim": "#c8c6c5",
+                  "canvas": "#0A0A0A",
+                  "on-surface-variant": "#d0c5af",
+                  "on-secondary-fixed": "#1c1b1b",
+                  "on-error-container": "#ffdad6",
+                  "inverse-primary": "#735c00",
+                  "surface": "#171717",
+                  "on-primary-container": "#554300",
+                  "surface-dim": "#131313",
+                  "on-tertiary-fixed": "#021453",
+                  "primary": "#f2ca50",
+                  "ink-primary": "#F5F5F4",
+                  "secondary-container": "#474746"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "2xl": "1rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "section-gap": "clamp(3rem, 8vw, 6rem)",
+                  "card-padding": "1.5rem",
+                  "gutter": "1.5rem",
+                  "container-max": "1280px"
+          },
+          "fontFamily": {
+                  "label-caps": ["Satoshi", "sans-serif"],
+                  "body-sm": ["Satoshi", "sans-serif"],
+                  "clinical-data": ["JetBrains Mono", "monospace"],
+                  "headline-md": ["Satoshi", "sans-serif"],
+                  "headline-lg": ["Satoshi", "sans-serif"],
+                  "headline-lg-mobile": ["Satoshi", "sans-serif"],
+                  "body-lg": ["Satoshi", "sans-serif"]
+          },
+          "fontSize": {
+                  "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                  "body-sm": ["14px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                  "clinical-data": ["14px", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                  "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                  "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                  "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                  "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #0A0A0A;
+      color: #e5e2e1;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .stepper-btn:active {
+      transform: scale(0.9);
+    }
+    .glass-effect {
+      backdrop-filter: blur(12px);
+      background: rgba(23, 23, 23, 0.72);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-sm overflow-x-hidden">
+<!-- Main Content Canvas -->
+<main class="max-w-5xl mx-auto px-4 py-12 pb-32">
+<!-- Header Section -->
+<header class="mb-12 space-y-4">
+<div class="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
+<span class="font-label-caps text-label-caps text-primary uppercase">Personal Clinical Repository</span>
+</div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface tracking-tight">
+        My Protocol Vault
+      </h1>
+<p class="font-body-lg text-body-lg text-ink-secondary max-w-2xl leading-relaxed">
+        Your secure library of metabolism-optimizing culinary prescriptions. Revisit your high-performance favorites or re-queue them for your next clinical cycle.
+      </p>
+</header>
+<!-- Favorites Grid -->
+<section class="grid grid-cols-1 gap-8">
+<!-- Card 1: Keto-Cleanse Bowl -->
+<article class="bg-surface border border-hairline rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-black/40 group">
+<!-- Top Action Row -->
+<div class="flex justify-between items-center p-4">
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sage-signal/10 border border-sage-signal/20 text-sage-signal font-label-caps text-[10px] tracking-wider uppercase">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'wght' 700">check_circle</span>
+            Vault Saved
+          </span>
+<button class="text-ink-secondary hover:text-clay-danger transition-colors font-label-caps text-[10px] tracking-wider uppercase flex items-center gap-1">
+            Remove <span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Image Block -->
+<div class="px-4">
+<div class="relative aspect-video rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A top-down view of a vibrant Keto-Cleanse bowl featuring a perfectly poached egg with runny yolk, fresh avocado slices sprinkled with red pepper flakes, microgreens, roasted cherry tomatoes, and a mix of nutrient-dense seeds and grains. The lighting is clinical and sharp, highlighting the textures of the ingredients against a dark, professional kitchen surface. The aesthetic is clean, medical-grade culinary photography for a premium metabolic health app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhBAyFbkQm6NPTc7A_THRuhRRUmwNT9TslYk-6N9uMuXKjtnaaQXBHRf1OI3miTgVTKe9cVJt7_96eMd1xEJ9xEGHMUzMfII12owBEmWlacsju_of9CZQHRelG7URXrOoyXmziSRlpFcU8hBW1ReXNP5zlizTC2eSu3-tJyX5wh45ECr-3kwu0IoMlCuHmZsuOOaALUadp76rSYgHS2TAWVsrx0p0m-CNxCDwtVf1WiCp84NfAOPSlMM359VHtcWlYw51OZ-SVKN0"/>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-card-padding space-y-4">
+<div class="flex justify-between items-start">
+<a class="block group/link" href="/dish/keto-cleanse-bowl">
+<h2 class="font-headline-md text-headline-md text-on-surface group-hover/link:text-primary transition-colors">Keto-Cleanse Bowl</h2>
+</a>
+<span class="font-clinical-data text-clinical-data text-primary">$24.50</span>
+</div>
+<!-- Clinical Notes Panel -->
+<div class="bg-surface-container-low p-3 rounded-xl border border-hairline">
+<p class="font-body-sm text-body-sm text-ink-secondary italic leading-snug">
+              Note: Optimized for morning cortisol stabilization. High-bioavailability fats paired with fiber-rich cruciferous base.
+            </p>
+</div>
+<!-- Monospace Chips -->
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">32P · 12C · 41F</span>
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">Anti-Inflammatory</span>
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">Gluten-Free</span>
+</div>
+<!-- Divider -->
+<div class="h-px bg-hairline w-full"></div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-between gap-4">
+<!-- Stepper -->
+<div class="flex items-center bg-surface-container-high rounded-full p-1 border border-hairline">
+<button aria-label="Decrease quantity" class="stepper-btn w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-lg">remove</span>
+</button>
+<span class="font-clinical-data text-on-surface px-4 text-lg">1</span>
+<button aria-label="Increase quantity" class="stepper-btn w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+<!-- CTA -->
+<button class="flex-1 bg-primary text-ink-on-gold font-label-caps text-sm py-4 rounded-full font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-widest">
+              Add to Cart
+            </button>
+</div>
+</div>
+</article>
+<!-- Card 2: Grass-fed Beef Ragù -->
+<article class="bg-surface border border-hairline rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-black/40 group">
+<!-- Top Action Row -->
+<div class="flex justify-between items-center p-4">
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sage-signal/10 border border-sage-signal/20 text-sage-signal font-label-caps text-[10px] tracking-wider uppercase">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'wght' 700">check_circle</span>
+            Vault Saved
+          </span>
+<button class="text-ink-secondary hover:text-clay-danger transition-colors font-label-caps text-[10px] tracking-wider uppercase flex items-center gap-1">
+            Remove <span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Image Block -->
+<div class="px-4">
+<div class="relative aspect-video rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A dark ceramic bowl filled with Grass-fed Beef Ragù served over zucchini noodles (zoodles), garnished with freshly grated parmesan and chopped basil. A glass of dark red wine sits in the background. The scene is shot with high-contrast, moody lighting, emphasizing the rich, savory textures of the slow-cooked meat. The background is a dark obsidian surface, aligning with the minimalist corporate clinical OS aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbTcULwQYtEHdCJDDfoqB_8zg8O0nfTjpk1mMOeyGWGkyq4k6Bh12x_04WfxEKcEdYAhCgB-FqB3P3DHUQRrP94tiOuux8nLW9nNRWWINFtW31blBm3DTY527CZE_rVvrnpmmkhfx_d-XWAl_cFKkchfAngxTnrnez2lTKQmqhFfrcPVzVrp97VKsBkkNuQ13Y2rWn-NHvNMsEjau-ts6_JlvsZa-uyqx9IQavMEpmUJcmjk3uOeotMtLBPRaxq0jxqQ_wxKxuez0"/>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-card-padding space-y-4">
+<div class="flex justify-between items-start">
+<a class="block group/link" href="/dish/grass-fed-beef-ragu">
+<h2 class="font-headline-md text-headline-md text-on-surface group-hover/link:text-primary transition-colors">Grass-fed Beef Ragù</h2>
+</a>
+<span class="font-clinical-data text-clinical-data text-primary">$32.00</span>
+</div>
+<!-- Clinical Notes Panel -->
+<div class="bg-surface-container-low p-3 rounded-xl border border-hairline">
+<p class="font-body-sm text-body-sm text-ink-secondary italic leading-snug">
+              Prescribed for: Post-strength training recovery. High amino-acid density with insulin-neutral vegetable noodles.
+            </p>
+</div>
+<!-- Monospace Chips -->
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">48P · 08C · 22F</span>
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">Muscle Recovery</span>
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">Low Glycemic</span>
+</div>
+<!-- Divider -->
+<div class="h-px bg-hairline w-full"></div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-between gap-4">
+<!-- Stepper -->
+<div class="flex items-center bg-surface-container-high rounded-full p-1 border border-hairline">
+<button aria-label="Decrease quantity" class="stepper-btn w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-lg">remove</span>
+</button>
+<span class="font-clinical-data text-on-surface px-4 text-lg">2</span>
+<button aria-label="Increase quantity" class="stepper-btn w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+<!-- CTA -->
+<button class="flex-1 bg-primary text-ink-on-gold font-label-caps text-sm py-4 rounded-full font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-widest">
+              Add to Cart
+            </button>
+</div>
+</div>
+</article>
+<!-- Card 3: Seared Salmon & Asparagus -->
+<article class="bg-surface border border-hairline rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-black/40 group">
+<!-- Top Action Row -->
+<div class="flex justify-between items-center p-4">
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sage-signal/10 border border-sage-signal/20 text-sage-signal font-label-caps text-[10px] tracking-wider uppercase">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'wght' 700">check_circle</span>
+            Vault Saved
+          </span>
+<button class="text-ink-secondary hover:text-clay-danger transition-colors font-label-caps text-[10px] tracking-wider uppercase flex items-center gap-1">
+            Remove <span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Image Block -->
+<div class="px-4">
+<div class="relative aspect-video rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A macro shot of a seared wild-caught salmon fillet resting on a bed of bright green asparagus and a mixed greens salad with heirloom cherry tomatoes and radish. The salmon has a golden-brown crust and is drizzled with lemon-herb oil. Clinical lighting highlights the freshness and high-quality fats of the dish. Professional food styling on a dark wood background, emphasizing metabolic precision and culinary excellence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfBudcJUt2RcsqTLa3OnFz9x_qHryw1Rg1ykrXxDknFb48Gt24x2dR1_hsofs_2gGVR9q8zqx1yvgcTHX98TIbEyBjMsaiJfQFFJwzW4PghPPMeUtBuRx8pLqfDmS0N4-5bXCUW6xxdLZmq6zWCYcNpjOnvy1YOic7lCfjLFtBJJpvnWOU1HYeLCBFqzxk149p9qDSaq5C_3GZRD03lwH5RytcLYoCXaTGT80-n45eTXSE2csM3LGYBzLO1H40b54tKLli0Jw_b5s"/>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-card-padding space-y-4">
+<div class="flex justify-between items-start">
+<a class="block group/link" href="/dish/salmon-protocol">
+<h2 class="font-headline-md text-headline-md text-on-surface group-hover/link:text-primary transition-colors">Seared Salmon Protocol</h2>
+</a>
+<span class="font-clinical-data text-clinical-data text-primary">$28.90</span>
+</div>
+<!-- Clinical Notes Panel -->
+<div class="bg-surface-container-low p-3 rounded-xl border border-hairline">
+<p class="font-body-sm text-body-sm text-ink-secondary italic leading-snug">
+              Omega-3 loading protocol. Designed to modulate systemic inflammation through high EPA/DHA intake.
+            </p>
+</div>
+<!-- Monospace Chips -->
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">36P · 05C · 34F</span>
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">Brain Health</span>
+<span class="bg-surface-variant px-3 py-1 rounded-full font-clinical-data text-[11px] text-on-surface-variant uppercase">Paleo</span>
+</div>
+<!-- Divider -->
+<div class="h-px bg-hairline w-full"></div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-between gap-4">
+<!-- Stepper -->
+<div class="flex items-center bg-surface-container-high rounded-full p-1 border border-hairline">
+<button aria-label="Decrease quantity" class="stepper-btn w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-lg">remove</span>
+</button>
+<span class="font-clinical-data text-on-surface px-4 text-lg">1</span>
+<button aria-label="Increase quantity" class="stepper-btn w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+<!-- CTA -->
+<button class="flex-1 bg-primary text-ink-on-gold font-label-caps text-sm py-4 rounded-full font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-widest">
+              Add to Cart
+            </button>
+</div>
+</div>
+</article>
+</section>
+<!-- Mini Cart Bar (Floating) -->
+<div class="fixed bottom-20 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-lg z-40">
+<div class="glass-effect border border-hairline shadow-2xl rounded-2xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-ink-on-gold">
+<span class="font-clinical-data font-bold">4</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-ink-secondary uppercase">Staged Protocols</span>
+<span class="font-clinical-data text-on-surface">$109.40 Total</span>
+</div>
+</div>
+<button class="bg-on-surface text-canvas font-label-caps text-[11px] py-2 px-6 rounded-full font-bold uppercase transition-transform active:scale-95">
+          Checkout Now
+        </button>
+</div>
+</div>
+</main>
+<script>
+    // Simple micro-interaction for steppers
+    document.querySelectorAll('.stepper-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const span = this.parentElement.querySelector('span');
+        let val = parseInt(span.innerText);
+        if (this.ariaLabel === 'Increase quantity') {
+          val++;
+        } else if (val > 1) {
+          val--;
+        }
+        span.innerText = val;
+      });
+    });
+
+    // Intersection observer for card entrance animations
+    const observerOptions = {
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('article').forEach((card, i) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = `all 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.1}s`;
+      observer.observe(card);
+    });
+  </script>
+</body></html>

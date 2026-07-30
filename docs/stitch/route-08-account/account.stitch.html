@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Metabolic OS | Account Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#353534",
+                    "inverse-on-surface": "#313030",
+                    "secondary-fixed": "#e5e2e1",
+                    "primary-fixed": "#ffe088",
+                    "on-tertiary-fixed": "#021453",
+                    "surface-container": "#201f1f",
+                    "primary": "#f2ca50",
+                    "surface-tint": "#e9c349",
+                    "on-surface-variant": "#d0c5af",
+                    "error-container": "#93000a",
+                    "on-surface": "#e5e2e1",
+                    "error": "#ffb4ab",
+                    "surface-bright": "#3a3939",
+                    "clay-danger": "#B0655A",
+                    "tertiary-fixed": "#dde1ff",
+                    "outline-variant": "#4d4635",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "ink-secondary": "#A3A3A3",
+                    "secondary-container": "#474746",
+                    "glass": "rgba(23, 23, 23, 0.72)",
+                    "outline": "#99907c",
+                    "primary-fixed-dim": "#e9c349",
+                    "sage-signal": "#7D9E7E",
+                    "on-primary-container": "#554300",
+                    "hairline": "rgba(255, 255, 255, 0.06)",
+                    "on-tertiary-fixed-variant": "#344280",
+                    "on-background": "#e5e2e1",
+                    "surface-container-high": "#2a2a2a",
+                    "on-primary-fixed-variant": "#574500",
+                    "background": "#131313",
+                    "on-secondary-container": "#b7b4b4",
+                    "on-secondary-fixed-variant": "#474746",
+                    "surface-container-lowest": "#0e0e0e",
+                    "surface-container-low": "#1c1b1b",
+                    "surface": "#171717",
+                    "on-tertiary-container": "#32407e",
+                    "ink-on-gold": "#111318",
+                    "secondary": "#c8c6c5",
+                    "tertiary-container": "#a1aff4",
+                    "on-primary": "#3c2f00",
+                    "tertiary-fixed-dim": "#b8c3ff",
+                    "inverse-surface": "#e5e2e1",
+                    "surface-container-highest": "#353534",
+                    "on-error": "#690005",
+                    "on-secondary": "#313030",
+                    "on-error-container": "#ffdad6",
+                    "primary-container": "#d4af37",
+                    "tertiary": "#c2cbff",
+                    "on-primary-fixed": "#241a00",
+                    "ember-warning": "#B6892F",
+                    "ink-primary": "#F5F5F4",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "inverse-primary": "#735c00",
+                    "on-tertiary": "#1c2b68",
+                    "canvas": "#0A0A0A",
+                    "surface-dim": "#131313"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "3xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1280px",
+                    "card-padding": "1.5rem",
+                    "section-gap": "clamp(3rem, 8vw, 6rem)",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "label-caps": ["Satoshi"],
+                    "headline-lg-mobile": ["Satoshi"],
+                    "headline-lg": ["Satoshi"],
+                    "body-lg": ["Satoshi"],
+                    "clinical-data": ["JetBrains Mono"],
+                    "headline-md": ["Satoshi"],
+                    "body-sm": ["Satoshi"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "clinical-data": ["14px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #e5e2e1;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-tap:active {
+            transform: scale(0.98);
+            transition: transform 0.1s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+        .glass-blur {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-lg selection:bg-primary/30">
+<!-- Top App Bar -->
+<header class="sticky top-0 w-full z-50 backdrop-blur-md bg-glass border-b border-hairline">
+<div class="flex justify-between items-center px-gutter py-4 max-w-md mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="clinical_notes">clinical_notes</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">METABOLIC OS</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-hairline flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-ink-secondary text-sm" data-icon="person">person</span>
+</div>
+</div>
+</header>
+<main class="max-w-md mx-auto px-4 py-10 mb-20 space-y-8">
+<!-- Header & Profile Row -->
+<section class="flex items-end justify-between">
+<div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Account</h1>
+<p class="text-on-surface font-medium mt-1">Marcus Thorne</p>
+</div>
+<button class="text-body-sm font-label-caps text-on-surface-variant hover:text-on-surface transition-colors">
+                Sign out
+            </button>
+</section>
+<!-- Live Order Card -->
+<section class="relative group cursor-pointer kinetic-tap">
+<div class="bg-surface border border-hairline rounded-3xl p-6 shadow-black/40 overflow-hidden relative">
+<!-- Atmospheric light effect -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-sage-signal/5 blur-3xl rounded-full"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="font-clinical-data text-[10px] tracking-widest text-sage-signal uppercase">LIVE ORDER</span>
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-signal opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-sage-signal"></span>
+</span>
+</div>
+<div class="space-y-1">
+<h2 class="text-headline-md font-medium text-on-surface">In transit — Arriving in 14m</h2>
+<p class="font-clinical-data text-ink-secondary text-xs">#TM-8829-QX</p>
+</div>
+<div class="mt-6 flex items-center gap-1">
+<span class="text-primary-container font-label-caps text-sm">Track live</span>
+<span class="material-symbols-outlined text-primary-container text-sm" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</div>
+</section>
+<!-- Management Tiles -->
+<nav class="space-y-3">
+<!-- Plans -->
+<a class="flex items-center justify-between p-5 bg-surface border border-hairline rounded-xl kinetic-tap transition-all hover:bg-surface-container-low group" href="#">
+<div class="space-y-1">
+<p class="text-on-surface font-bold text-base">Plans</p>
+<p class="text-ink-secondary text-body-sm">Your active metabolic protocols</p>
+</div>
+<span class="material-symbols-outlined text-ink-secondary group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+<!-- Orders -->
+<a class="flex items-center justify-between p-5 bg-surface border border-hairline rounded-xl kinetic-tap transition-all hover:bg-surface-container-low group" href="#">
+<div class="space-y-1">
+<p class="text-on-surface font-bold text-base">Orders</p>
+<p class="text-ink-secondary text-body-sm">History and clinical summaries</p>
+</div>
+<span class="material-symbols-outlined text-ink-secondary group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+<!-- Addresses -->
+<a class="flex items-center justify-between p-5 bg-surface border border-hairline rounded-xl kinetic-tap transition-all hover:bg-surface-container-low group" href="#">
+<div class="space-y-1">
+<p class="text-on-surface font-bold text-base">Addresses</p>
+<p class="text-ink-secondary text-body-sm">Delivery locations</p>
+</div>
+<span class="material-symbols-outlined text-ink-secondary group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+<!-- Preferences -->
+<a class="flex items-center justify-between p-5 bg-surface border border-hairline rounded-xl kinetic-tap transition-all hover:bg-surface-container-low group" href="#">
+<div class="space-y-1">
+<p class="text-on-surface font-bold text-base">Preferences</p>
+<p class="text-ink-secondary text-body-sm">Dietary and clinical filters</p>
+</div>
+<span class="material-symbols-outlined text-ink-secondary group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+<!-- Rewards -->
+<a class="flex items-center justify-between p-5 bg-surface border border-hairline rounded-xl kinetic-tap transition-all hover:bg-surface-container-low group" href="#">
+<div class="space-y-1">
+<p class="text-on-surface font-bold text-base">Rewards</p>
+<p class="text-ink-secondary text-body-sm">Loyalty points and clinical credits</p>
+</div>
+<span class="material-symbols-outlined text-ink-secondary group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+</nav>
+<!-- Legal / App Version -->
+<footer class="pt-4 pb-8 space-y-4 text-center">
+<div class="flex justify-center gap-6 text-xs font-label-caps text-on-surface-variant uppercase tracking-widest">
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+<p class="font-clinical-data text-[10px] text-ink-secondary/40 uppercase">Metabolic OS v2.4.0 • Build 8829</p>
+</footer>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 backdrop-blur-md bg-glass border-t border-hairline rounded-t-xl">
+<div class="flex justify-around items-center px-4 pb-safe pt-2 h-16 w-full max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors kinetic-tap" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors kinetic-tap" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
+<span class="font-label-caps text-label-caps mt-1">Menu</span>
+</a>
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors kinetic-tap" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-label-caps text-label-caps mt-1">Plans</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold kinetic-tap" href="#">
+<span class="material-symbols-outlined" data-icon="person" data-weight="fill">person</span>
+<span class="font-label-caps text-label-caps mt-1">Profile</span>
+</a>
+</div>
+</nav>
+<script>
+        // Micro-interaction: Active state feedback for tiles
+        document.querySelectorAll('.kinetic-tap').forEach(el => {
+            el.addEventListener('touchstart', () => {
+                el.classList.add('scale-[0.98]');
+            });
+            el.addEventListener('touchend', () => {
+                el.classList.remove('scale-[0.98]');
+            });
+        });
+    </script>
+</body></html>

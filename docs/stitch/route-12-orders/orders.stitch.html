@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Clinical History | Orders</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#735c00",
+                    "primary": "#f2ca50",
+                    "tertiary": "#c2cbff",
+                    "on-secondary-fixed-variant": "#474746",
+                    "tertiary-fixed-dim": "#b8c3ff",
+                    "hairline": "rgba(255, 255, 255, 0.06)",
+                    "secondary-container": "#474746",
+                    "on-error-container": "#ffdad6",
+                    "on-error": "#690005",
+                    "surface-container": "#201f1f",
+                    "secondary-fixed": "#e5e2e1",
+                    "outline-variant": "#4d4635",
+                    "inverse-on-surface": "#313030",
+                    "on-surface": "#e5e2e1",
+                    "surface-container-high": "#2a2a2a",
+                    "ember-warning": "#B6892F",
+                    "clay-danger": "#B0655A",
+                    "surface-dim": "#131313",
+                    "surface-bright": "#3a3939",
+                    "sage-signal": "#7D9E7E",
+                    "ink-primary": "#F5F5F4",
+                    "on-primary-fixed": "#241a00",
+                    "surface-tint": "#e9c349",
+                    "surface-container-highest": "#353534",
+                    "on-tertiary-fixed": "#021453",
+                    "on-tertiary": "#1c2b68",
+                    "background": "#131313",
+                    "tertiary-container": "#a1aff4",
+                    "surface-container-low": "#1c1b1b",
+                    "on-surface-variant": "#d0c5af",
+                    "primary-container": "#d4af37",
+                    "secondary": "#c8c6c5",
+                    "tertiary-fixed": "#dde1ff",
+                    "outline": "#99907c",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-variant": "#353534",
+                    "on-primary-fixed-variant": "#574500",
+                    "glass": "rgba(23, 23, 23, 0.72)",
+                    "on-secondary": "#313030",
+                    "surface": "#171717",
+                    "on-secondary-container": "#b7b4b4",
+                    "error": "#ffb4ab",
+                    "on-primary-container": "#554300",
+                    "inverse-surface": "#e5e2e1",
+                    "ink-secondary": "#A3A3A3",
+                    "ink-on-gold": "#111318",
+                    "primary-fixed-dim": "#e9c349",
+                    "on-tertiary-fixed-variant": "#344280",
+                    "on-tertiary-container": "#32407e",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-background": "#e5e2e1",
+                    "error-container": "#93000a",
+                    "canvas": "#0A0A0A",
+                    "on-primary": "#3c2f00",
+                    "primary-fixed": "#ffe088"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "clamp(3rem, 8vw, 6rem)",
+                    "container-max": "1280px",
+                    "card-padding": "1.5rem",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "headline-md": ["Satoshi"],
+                    "headline-lg": ["Satoshi"],
+                    "body-lg": ["Satoshi"],
+                    "headline-lg-mobile": ["Satoshi"],
+                    "body-sm": ["Satoshi"],
+                    "label-caps": ["Satoshi"],
+                    "clinical-data": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "clinical-data": ["14px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #E5E2E1;
+            font-family: 'Satoshi', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab {
+            border-bottom: 2px solid #f2ca50;
+            color: #f2ca50;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="selection:bg-primary selection:text-ink-on-gold">
+<!-- Top App Bar (As defined in JSON) -->
+<header class="fixed top-0 w-full z-50 bg-glass backdrop-blur-md border-b border-hairline">
+<div class="flex items-center px-gutter h-16 max-w-md mx-auto">
+<button aria-label="Go Back" class="mr-4 hover:opacity-80 transition-opacity scale-[0.98] active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-primary" style="font-size: 24px;">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-surface">Orders</h1>
+</div>
+</header>
+<main class="max-w-md mx-auto pt-20 pb-24 px-gutter">
+<!-- Header Section -->
+<section class="mb-8">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tight mb-1">Orders</h2>
+<p class="text-ink-secondary font-body-sm text-body-sm">Your clinical history and metabolic logs.</p>
+</section>
+<!-- Underline Tab Bar (Horizontally Scrollable) -->
+<nav class="sticky top-16 z-40 bg-canvas/80 backdrop-blur-sm -mx-gutter mb-8 border-b border-hairline overflow-x-auto no-scrollbar">
+<div class="flex px-gutter space-x-6">
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap text-ink-secondary hover:text-primary transition-colors" href="#">Plans</a>
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap active-tab font-bold" href="#">Orders</a>
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap text-ink-secondary hover:text-primary transition-colors" href="#">Consults</a>
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap text-ink-secondary hover:text-primary transition-colors" href="#">Billing</a>
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap text-ink-secondary hover:text-primary transition-colors" href="#">Addresses</a>
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap text-ink-secondary hover:text-primary transition-colors" href="#">Preferences</a>
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap text-ink-secondary hover:text-primary transition-colors" href="#">Health</a>
+<a class="py-3 font-label-caps text-label-caps whitespace-nowrap text-ink-secondary hover:text-primary transition-colors" href="#">Rewards</a>
+</div>
+</nav>
+<!-- Order Cards List -->
+<div class="space-y-4">
+<!-- Order 1: Out for Delivery -->
+<div class="rounded-xl border border-hairline bg-surface p-4 shadow-black/40 transition-all duration-200 active:scale-[0.98]">
+<div class="flex justify-between items-start mb-2">
+<span class="font-headline-md text-body-sm font-semibold text-sage-signal flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-sage-signal animate-pulse"></span>
+                        Out for delivery
+                    </span>
+<span class="font-clinical-data text-clinical-data text-on-surface font-semibold">₹1,450</span>
+</div>
+<div class="font-clinical-data text-clinical-data text-ink-secondary mb-4">
+                    #TM-9921-ZA · Today · <span class="text-on-surface-variant">Home</span>
+</div>
+<div class="flex gap-4">
+<a class="text-primary font-label-caps text-label-caps hover:opacity-80 flex items-center gap-1 group" href="#">
+                        Track <span class="group-hover:translate-x-1 transition-transform">→</span>
+</a>
+<button class="text-primary font-label-caps text-label-caps hover:opacity-80">Reorder</button>
+</div>
+</div>
+<!-- Order 2: Delivered -->
+<div class="rounded-xl border border-hairline bg-surface p-4 shadow-black/40 transition-all duration-200 active:scale-[0.98]">
+<div class="flex justify-between items-start mb-2">
+<span class="font-headline-md text-body-sm font-semibold text-on-surface-variant">Delivered</span>
+<span class="font-clinical-data text-clinical-data text-on-surface font-semibold">₹4,900</span>
+</div>
+<div class="font-clinical-data text-clinical-data text-ink-secondary mb-4">
+                    #TM-8829-QX · 21 Oct 2024
+                </div>
+<div>
+<button class="text-primary font-label-caps text-label-caps hover:opacity-80">Reorder</button>
+</div>
+</div>
+<!-- Visual Break/Hero Imagery for appetite appeal -->
+<div class="relative h-48 rounded-xl overflow-hidden group">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" data-alt="A top-down professional food photography shot of a vibrant, gourmet metabolic health bowl featuring wild salmon, avocado, deep green kale, and roasted turmeric cauliflower. The lighting is cinematic with soft directional shadows, creating a high-end restaurant aesthetic. The colors are rich and natural against a dark, textured slate surface. Minimalist and appetizing." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBgbUm_L2WFDyhnCmlcbpGw7Ig1OqdByWDziGHpRh29IkYTq3aSduO6NjoQu4dYGXdS4B3QHPBCK8pOazcUzLUOkKMXarrwgcIDgqLfEmp3L1AoA7UPXKCd5otGDxyFHXaciowgQfKRSM6zFC-tmT6eZLPgVM1PatmjyoFQD8HR1CofKwmMk_aF60BsF84SKvQHmoBDtgVAl4zz1ZrvDFB-PcoY2eareAVjGWKLjOcKd_kt4K1HBSN2bn_jETxJreVL6P9PgRo1XT8')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<p class="font-label-caps text-label-caps text-primary mb-1">METABOLIC FAVORITE</p>
+<p class="font-headline-md text-headline-md text-white font-bold">The Nordic Fuel Bowl</p>
+</div>
+</div>
+<!-- Order 3: Delivered -->
+<div class="rounded-xl border border-hairline bg-surface p-4 shadow-black/40 transition-all duration-200 active:scale-[0.98]">
+<div class="flex justify-between items-start mb-2">
+<span class="font-headline-md text-body-sm font-semibold text-on-surface-variant">Delivered</span>
+<span class="font-clinical-data text-clinical-data text-on-surface font-semibold">₹2,650</span>
+</div>
+<div class="font-clinical-data text-clinical-data text-ink-secondary mb-4">
+                    #TM-7712-BT · 14 Oct 2024 · <span class="text-on-surface-variant">Office</span>
+</div>
+<div>
+<button class="text-primary font-label-caps text-label-caps hover:opacity-80">Reorder</button>
+</div>
+</div>
+<!-- Order 4: Payment Failed -->
+<div class="rounded-xl border border-hairline bg-surface p-4 shadow-black/40 transition-all duration-200 active:scale-[0.98] opacity-60">
+<div class="flex justify-between items-start mb-2">
+<span class="font-headline-md text-body-sm font-semibold text-clay-danger">Payment failed</span>
+<span class="font-clinical-data text-clinical-data text-on-surface font-semibold">₹1,200</span>
+</div>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">
+                    #TM-6601-PL · 07 Oct 2024
+                </div>
+<div class="mt-4">
+<p class="text-[10px] text-ink-secondary uppercase tracking-widest font-bold">Incomplete Transaction</p>
+</div>
+</div>
+<!-- Bottom Spacer for Safe Area -->
+<div class="h-16"></div>
+</div>
+</main>
+<!-- Bottom Nav Bar (As defined in JSON) -->
+<nav class="fixed bottom-0 w-full z-50 h-[4rem] bg-surface dark:bg-surface border-t border-hairline shadow-black/40 pb-safe">
+<div class="flex justify-around items-center h-full px-4 max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined mb-1">restaurant_menu</span>
+<span class="font-label-caps text-label-caps">Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined mb-1">outdoor_grill</span>
+<span class="font-label-caps text-label-caps">Kitchen</span>
+</a>
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined mb-1">biotech</span>
+<span class="font-label-caps text-label-caps">Labs</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</div>
+</nav>
+<script>
+        // Micro-interaction for tabs
+        const tabs = document.querySelectorAll('nav a');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                if (tab.textContent === 'Orders') return; // Stay on orders for this demo
+                tabs.forEach(t => t.classList.remove('active-tab', 'font-bold'));
+                tabs.forEach(t => t.classList.add('text-ink-secondary'));
+                tab.classList.remove('text-ink-secondary');
+                tab.classList.add('active-tab', 'font-bold');
+            });
+        });
+
+        // Scroll listener for Top Bar elevation effect
+        const header = document.querySelector('header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-lg', 'bg-glass/95');
+            } else {
+                header.classList.remove('shadow-lg', 'bg-glass/95');
+            }
+        });
+    </script>
+</body></html>
