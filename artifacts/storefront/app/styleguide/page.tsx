@@ -14,6 +14,7 @@ const SURFACES: Token[] = [
   { name: "bg", var: "--bg" },
   { name: "surface", var: "--surface" },
   { name: "surface-raised", var: "--surface-raised" },
+  { name: "surface-subtle", var: "--surface-subtle" },
 ];
 const INK: Token[] = [
   { name: "ink", var: "--ink" },

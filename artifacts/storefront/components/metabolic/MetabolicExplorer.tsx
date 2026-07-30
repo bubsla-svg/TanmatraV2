@@ -1,7 +1,8 @@
 "use client";
-// Client island: the metabolic goal toggle. Flipping fat-loss / muscle-gain
-// re-filters the LIVE catalog (server-passed) and re-points the recommended
-// plan. Pricing is never here — the program cards below are server-quoted.
+// Client island: the metabolic goal toggle (Stitch brief 15 restyle). Flipping
+// fat-loss / muscle-gain re-filters the LIVE catalog (server-passed) and
+// re-points the recommended plan. Pricing is never here — the program cards
+// below are server-quoted.
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { LandingIcon } from "@/components/landing/LandingIcon";
@@ -30,12 +31,15 @@ function pick(dishes: MetabolicDish[], goal: MetabolicGoal): MetabolicDish[] {
     .slice(0, 6);
 }
 
-function stat(d: MetabolicDish, goal: MetabolicGoal): string {
-  return goal.filter === "high_protein"
-    ? `${Math.round(d.protein)}g protein · ${Math.round(d.calories)} kcal`
-    : `${Math.round(d.calories)} kcal · ${Math.round(d.fiber)}g fibre`;
-}
+const chipCls =
+  "tabular rounded-full border border-line bg-bg px-2.5 py-1 text-[10px] text-ink-muted";
 
+/**
+ * Macro chips are labelled in full ("42g protein", not "42P"). The compressed
+ * single-letter form the brief's mock uses is ambiguous between fat and fibre,
+ * and this surface publishes clinical data — a mislabelled macro is worse than
+ * a wider chip.
+ */
 export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
   const [goalId, setGoalId] = useState<GoalId>("fat_loss");
   const goal = GOALS.find((g) => g.id === goalId) ?? GOALS[0]!;
@@ -44,52 +48,68 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
 
   return (
     <div>
-      <div role="group" aria-label="Choose your goal" className="inline-flex items-center gap-1 rounded-full border border-line bg-surface p-1">
-        {GOALS.map((g) => {
-          const on = g.id === goalId;
-          return (
-            <button
-              key={g.id}
-              type="button"
-              aria-pressed={on}
-              onClick={() => setGoalId(g.id)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-semibold transition-colors ${
-                on ? "bg-gold text-[var(--gold-ink)]" : "text-ink-muted hover:text-ink"
-              }`}
-            >
-              <LandingIcon name={g.icon} className="h-4 w-4" />
-              {g.label}
-            </button>
-          );
-        })}
+      <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-4">
+        <div
+          role="group"
+          aria-label="Choose your goal"
+          className="inline-flex w-max items-center gap-1 rounded-full bg-bg p-1"
+        >
+          {GOALS.map((g) => {
+            const on = g.id === goalId;
+            return (
+              <button
+                key={g.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setGoalId(g.id)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-semibold transition-colors ${
+                  on ? "bg-gold text-[var(--gold-ink)]" : "text-ink-muted hover:text-ink"
+                }`}
+              >
+                <LandingIcon name={g.icon} className="h-4 w-4" />
+                {g.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="max-w-xl text-sm leading-relaxed text-ink-muted">{goal.weekOneSub}</p>
+        <p className="text-sm">
+          <span className="text-ink-faint">Recommended program: </span>
+          <Link href={`/plan/${goal.planId}`} className="font-semibold text-gold-text hover:underline">
+            {plan.name} &rarr;
+          </Link>
+        </p>
       </div>
 
-      <p className="mt-4 max-w-xl text-sm leading-relaxed text-ink-muted">{goal.weekOneSub}</p>
-      <p className="mt-2 text-sm">
-        <span className="text-ink-faint">Recommended program: </span>
-        <Link href={`/plan/${goal.planId}`} className="font-semibold text-gold-text hover:underline">
-          {plan.name} &rarr;
-        </Link>
-      </p>
-
       {preview.length > 0 && (
-        <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
+        <div className="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
           {preview.map((d) => (
             <Link
               key={d.slug}
               href={`/dish/${d.slug}`}
-              className="w-44 shrink-0 overflow-hidden rounded-2xl border border-line bg-surface"
+              className="w-64 shrink-0 snap-center overflow-hidden rounded-3xl border border-line bg-surface transition-colors hover:border-line-strong"
             >
-              <div className="relative h-28 bg-surface-raised">
+              <div className="relative h-40 bg-surface-raised">
                 {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
                 <img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover" />
-                <span className="absolute left-2 top-2 rounded bg-[var(--ink)]/70 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                  {d.isVeg ? "VEG" : "NON-VEG"}
+                <span
+                  className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md ${
+                    d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-destructive"
+                  }`}
+                >
+                  {d.isVeg ? "Veg" : "Non-veg"}
                 </span>
               </div>
-              <div className="p-2.5">
-                <p className="truncate text-xs font-semibold text-ink">{d.name}</p>
-                <p className="tabular mt-0.5 text-[10px] text-ink-muted">{stat(d, goal)}</p>
+              <div className="flex flex-col gap-3 p-5">
+                <h3 className="truncate text-base font-semibold leading-tight text-ink">{d.name}</h3>
+                <div className="flex flex-wrap gap-2">
+                  <span className={chipCls}>{Math.round(d.protein)}g protein</span>
+                  <span className={chipCls}>{Math.round(d.fiber)}g fibre</span>
+                  <span className="tabular rounded-full border border-[var(--gold)]/30 bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] px-2.5 py-1 text-[10px] text-gold-text">
+                    GI {d.gi}
+                  </span>
+                  <span className={chipCls}>{Math.round(d.calories)} kcal</span>
+                </div>
               </div>
             </Link>
           ))}

@@ -26,6 +26,13 @@
      composites over whatever surface it lands on. */
   --sage-soft: color-mix(in srgb, var(--sage) 12%, transparent);
 
+  /* Recessed surface for panels and chips sitting INSIDE a --surface card, so
+     they read as inset wells rather than more raised cards. Aliases the page
+     background (NOT a new base colour), which is exactly one step back from
+     --surface in both themes: bone behind white in light, near-black behind
+     graphite in dark. Themed automatically because --bg is. */
+  --surface-subtle: var(--bg);
+
   /* Semantic status (shared) */
   --success: #7d9e7e;
   --warning: #d8b45e;
