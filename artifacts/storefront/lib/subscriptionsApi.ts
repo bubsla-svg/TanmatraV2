@@ -184,3 +184,28 @@ export function confirmChangePlanReauth(
 ): Promise<{ subscription: Subscription; requiresReauth: false }> {
   return apiPost(`/subscriptions/${id}/change-plan/confirm`, input, fetchImpl);
 }
+
+// ── Trial recap (subscription/bridge) ────────────────────────────────────────
+
+export interface TrialRecapStats {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
+export interface TrialRecapResponse {
+  stats: TrialRecapStats;
+  holdExpiration: string;
+}
+
+/** Real, server-verified trial state for the bridge screen: 404 if the id
+ *  isn't this caller's subscription, 400 if it's not a live/eligible trial
+ *  (already converted or abandoned). Never guess the credit amount — the
+ *  server only confirms eligibility here; the credit figure itself is the
+ *  spine constant (lib/trial.ts's TRIAL_CREDITBACK_PAISE), the same one the
+ *  rest of the trial flow displays. */
+export function trialRecap(id: number, fetchImpl?: FetchImpl): Promise<TrialRecapResponse> {
+  return apiGet(`/subscriptions/${id}/trial-recap`, fetchImpl);
+}

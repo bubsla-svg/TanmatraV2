@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Frequently Asked Questions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1e",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#735c00",
+                        "surface-container": "#eeeef0",
+                        "on-tertiary-fixed-variant": "#7d2d10",
+                        "surface-container-high": "#e8e8ea",
+                        "inverse-primary": "#e9c349",
+                        "secondary-fixed-dim": "#adcfad",
+                        "background": "#f9f9fc",
+                        "on-primary-fixed-variant": "#574500",
+                        "primary": "#735c00",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#f0f0f3",
+                        "on-surface-variant": "#4d4635",
+                        "secondary": "#476649",
+                        "primary-fixed": "#ffe088",
+                        "tertiary-fixed": "#ffdbd0",
+                        "primary-fixed-dim": "#e9c349",
+                        "surface-container-highest": "#e2e2e5",
+                        "on-primary-fixed": "#241a00",
+                        "outline": "#7f7663",
+                        "surface-container-low": "#f3f3f6",
+                        "outline-variant": "#d0c5af",
+                        "on-surface": "#1a1c1e",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "tertiary": "#9c4325",
+                        "on-secondary-fixed-variant": "#304e33",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#dadadc",
+                        "inverse-surface": "#2f3133",
+                        "surface-bright": "#f9f9fc",
+                        "on-primary-container": "#554300",
+                        "secondary-container": "#c8ecc8",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#03210b",
+                        "on-tertiary-fixed": "#390b00",
+                        "on-secondary-container": "#4d6c4f",
+                        "surface": "#f9f9fc",
+                        "primary-container": "#d4af37",
+                        "surface-variant": "#e2e2e5",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#ff9876",
+                        "on-tertiary-container": "#7b2b0e",
+                        "secondary-fixed": "#c8ecc8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "inline-gap": "12px",
+                        "stack-gap": "24px",
+                        "card-gap": "16px",
+                        "container-padding": "32px"
+                    },
+                    "fontFamily": {
+                        "data-md": ["JetBrains Mono"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "data-lg": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "data-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "data-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { background-color: #FBFAF7; }
+        .hairline-border { border-color: #E7E3DA; }
+        .gold-border { border-color: #D4AF37; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased min-h-screen pt-20 pb-32 flex justify-center">
+<main class="w-full max-w-[800px] px-container-padding flex flex-col gap-[64px]">
+<!-- Masthead -->
+<header class="flex flex-col gap-4 text-center items-center">
+<span class="font-label-caps text-label-caps text-outline uppercase">HELP CENTRE</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Frequently asked questions</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">Everything you need to know about the Metabolic OS, billing, and clinical support.</p>
+</header>
+<!-- FAQ Accordion -->
+<section class="flex flex-col border-t border-solid hairline-border">
+<!-- Expanded Row -->
+<article class="flex flex-col gap-2 py-6 border-b border-solid gold-border bg-surface-container-lowest px-4 -mx-4 rounded-xl shadow-[0_4px_24px_rgba(26,28,30,0.02)] relative z-10 transition-all duration-300">
+<button class="flex justify-between items-center w-full text-left focus:outline-none group">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">How does the continuous glucose monitoring integration work?</h3>
+<span class="material-symbols-outlined text-primary-container transform rotate-180 transition-transform duration-300">expand_more</span>
+</button>
+<div class="pt-2">
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                        Our platform syncs automatically with most major CGM devices via our secure API. Once you authorize the connection in your settings, data is pulled every 15 minutes to provide real-time metabolic insights. Your clinical team is immediately notified of any significant excursions outside your target zones.
+                    </p>
+</div>
+</article>
+<!-- Collapsed Row 1 -->
+<article class="flex flex-col gap-2 py-6 border-b border-solid hairline-border transition-colors hover:bg-surface-container-lowest/50 px-4 -mx-4 rounded-xl cursor-pointer">
+<button class="flex justify-between items-center w-full text-left focus:outline-none group">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">What is the expected response time from my dedicated RD?</h3>
+<span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors duration-200">expand_more</span>
+</button>
+</article>
+<!-- Collapsed Row 2 -->
+<article class="flex flex-col gap-2 py-6 border-b border-solid hairline-border transition-colors hover:bg-surface-container-lowest/50 px-4 -mx-4 rounded-xl cursor-pointer">
+<button class="flex justify-between items-center w-full text-left focus:outline-none group">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Can I pause my subscription during travel?</h3>
+<span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors duration-200">expand_more</span>
+</button>
+</article>
+<!-- Collapsed Row 3 -->
+<article class="flex flex-col gap-2 py-6 border-b border-solid hairline-border transition-colors hover:bg-surface-container-lowest/50 px-4 -mx-4 rounded-xl cursor-pointer">
+<button class="flex justify-between items-center w-full text-left focus:outline-none group">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">How is my clinical data secured?</h3>
+<span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors duration-200">expand_more</span>
+</button>
+</article>
+<!-- Collapsed Row 4 -->
+<article class="flex flex-col gap-2 py-6 border-b border-solid hairline-border transition-colors hover:bg-surface-container-lowest/50 px-4 -mx-4 rounded-xl cursor-pointer">
+<button class="flex justify-between items-center w-full text-left focus:outline-none group">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Are the supplements included in the monthly tier?</h3>
+<span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors duration-200">expand_more</span>
+</button>
+</article>
+<!-- Collapsed Row 5 -->
+<article class="flex flex-col gap-2 py-6 border-b border-solid hairline-border transition-colors hover:bg-surface-container-lowest/50 px-4 -mx-4 rounded-xl cursor-pointer">
+<button class="flex justify-between items-center w-full text-left focus:outline-none group">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">How do I interpret the Metabolic Flexibility score?</h3>
+<span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors duration-200">expand_more</span>
+</button>
+</article>
+</section>
+<!-- Closing CTA Card -->
+<section class="bg-surface-container-lowest border border-solid hairline-border rounded-xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left mt-8">
+<div class="flex flex-col gap-2">
+<h2 class="font-headline-md text-headline-md text-on-surface">Still have questions?</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Our clinical team is available to help clarify your program.</p>
+</div>
+<button class="flex-shrink-0 px-6 py-3 rounded-full border-[1.5px] border-solid gold-border text-primary-container font-body-md text-body-md font-medium hover:bg-primary-container/10 transition-colors duration-200">
+                Talk to an RD
+            </button>
+</section>
+</main>
+<script>
+        // Simple script to handle accordion toggling visually
+        document.querySelectorAll('article button').forEach(button => {
+            button.addEventListener('click', () => {
+                const article = button.closest('article');
+                const isExpanded = article.classList.contains('gold-border');
+                
+                // Close all
+                document.querySelectorAll('article').forEach(a => {
+                    a.classList.remove('gold-border', 'bg-surface-container-lowest', 'shadow-[0_4px_24px_rgba(26,28,30,0.02)]', 'z-10');
+                    a.classList.add('hairline-border');
+                    const icon = a.querySelector('.material-symbols-outlined');
+                    icon.classList.remove('rotate-180', 'text-primary-container');
+                    icon.classList.add('text-outline');
+                    const content = a.querySelector('div');
+                    if(content) content.remove();
+                });
+
+                // Open clicked if it wasn't already open
+                if (!isExpanded) {
+                    article.classList.remove('hairline-border');
+                    article.classList.add('gold-border', 'bg-surface-container-lowest', 'shadow-[0_4px_24px_rgba(26,28,30,0.02)]', 'z-10');
+                    const icon = button.querySelector('.material-symbols-outlined');
+                    icon.classList.remove('text-outline');
+                    icon.classList.add('rotate-180', 'text-primary-container');
+                    
+                    // Mock content injection for demonstration
+                    const content = document.createElement('div');
+                    content.className = 'pt-2 animate-[fadeIn_0.3s_ease-out]';
+                    content.innerHTML = `<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">This is a placeholder answer demonstrating the expanded state. For actual implementation, content would be mapped to each specific question.</p>`;
+                    article.appendChild(content);
+                }
+            });
+        });
+    </script>
+</body></html>

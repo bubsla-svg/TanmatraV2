@@ -12,8 +12,10 @@ export default async function MarketplaceItemPage({ params }: { params: Promise<
   const { slug } = await params;
   return (
     <section className="mx-auto max-w-lg px-4 py-8">
-      <Link href="/marketplace" className="text-sm text-ink-muted hover:text-ink">&larr; Marketplace</Link>
-      <div className="mt-4">
+      <Link href="/marketplace" className="text-sm text-ink-muted transition-colors hover:text-ink">
+        &larr; Marketplace
+      </Link>
+      <div className="mt-6">
         <MarketplaceItemView slug={slug} />
       </div>
     </section>

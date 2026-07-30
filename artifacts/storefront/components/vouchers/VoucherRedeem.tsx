@@ -3,6 +3,7 @@
 // wallet ledger (not a charge) and the balance refreshes from the server. Auth-
 // gated: an unauthenticated load 401s → inline PhoneAuth, then reload.
 import { useCallback, useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { getWalletBalancePaise, getMyVouchers, redeemVoucher, type VoucherLite } from "@/lib/vouchersApi";
@@ -56,7 +57,7 @@ export function VoucherRedeem() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-2">
       <div className="rounded-2xl border border-line bg-surface p-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Wallet balance</p>
         <p className="tabular mt-1 text-3xl font-bold text-gold-text">{balance === null ? "…" : formatPaise(balance)}</p>
@@ -65,40 +66,56 @@ export function VoucherRedeem() {
 
       <div className="rounded-2xl border border-line bg-surface p-6">
         <label htmlFor="voucher-code" className="text-sm font-semibold text-ink">Redeem a voucher</label>
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-          <input
-            id="voucher-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
-            onKeyDown={(e) => { if (e.key === "Enter") void doRedeem(); }}
-            placeholder="Enter your code" autoCapitalize="characters" autoComplete="off"
-            className="tabular w-full rounded-xl border border-line bg-surface px-4 py-3 text-base tracking-wide text-ink outline-none focus:border-line-strong"
-          />
-          <button
-            type="button" onClick={() => void doRedeem()} disabled={busy || !code.trim()}
-            className="shrink-0 rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
-          >
-            {busy ? "Redeeming…" : "Redeem"}
-          </button>
-        </div>
-        {msg && <p className="mt-3 text-xs font-medium text-sage-text">{msg}</p>}
+        <input
+          id="voucher-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onKeyDown={(e) => { if (e.key === "Enter") void doRedeem(); }}
+          placeholder="Enter your code" autoCapitalize="characters" autoComplete="off"
+          className="tabular mt-3 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base tracking-wide text-ink outline-none focus:border-line-strong"
+        />
+        {msg && (
+          <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
+            <CheckCircle2 size={16} className="shrink-0 text-sage-text" aria-hidden="true" />
+            <p className="text-xs font-medium text-sage-text">{msg}</p>
+          </div>
+        )}
         {error && <p role="alert" className="mt-3 text-xs font-medium text-[var(--danger)]">{error}</p>}
       </div>
 
       {redeemed.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-ink">Redeemed vouchers</h2>
-          <ul className="mt-3 flex flex-col gap-2">
+          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-faint">Redeemed vouchers</h2>
+          <ul className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
             {redeemed.map((v) => (
-              <li key={v.id} className="flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-sm">
-                <span className="tabular font-medium text-ink">{v.code}</span>
-                <span className="tabular text-ink-muted">
-                  {formatPaise(v.amountPaise)}
-                  {v.redeemedAt ? ` · ${new Date(v.redeemedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : ""}
-                </span>
+              <li key={v.id} className="flex items-center justify-between p-4 transition-colors hover:bg-surface-raised">
+                <div className="flex flex-col gap-1">
+                  <span className="tabular text-sm font-medium tracking-wide text-ink">{v.code}</span>
+                  <span className="text-xs text-ink-faint">
+                    {v.redeemedAt
+                      ? `Redeemed · ${new Date(v.redeemedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
+                      : "Redeemed"}
+                  </span>
+                </div>
+                <span className="tabular text-sm font-semibold text-ink">{formatPaise(v.amountPaise)}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      {/* Glass sticky footer (checkout/trial vocabulary, BATCH-4-BRIEFS.md) —
+          the ONE redeem CTA on this screen. Stays a plain verb, no amount
+          printed on it: the code's value isn't known until the server
+          validates it (money-CTA rule, BATCH-9-BRIEFS.md Brief 57). */}
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+        <div className="mx-auto max-w-md px-4 py-3">
+          <button
+            type="button" onClick={() => void doRedeem()} disabled={busy || !code.trim()}
+            className="w-full rounded-full bg-gold px-8 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+          >
+            {busy ? "Redeeming…" : "Redeem"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
