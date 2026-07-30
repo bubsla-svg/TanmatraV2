@@ -31,7 +31,7 @@ export function MiniCartBar() {
     <>
       <div data-stitch="dark" className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <p className="tabular font-mono text-sm text-ink">
+          <p className="tabular text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}
             {count === 1 ? "item" : "items"}{" "}
             <span aria-hidden className="text-ink-faint">·</span>{" "}

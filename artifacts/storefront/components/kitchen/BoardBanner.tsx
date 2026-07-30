@@ -64,10 +64,10 @@ export function BoardBanner({
     // assertive region would re-announce the same sentence every few seconds.
     <div
       role="status"
-      className="mb-4 rounded-xl border-2 border-destructive bg-surface p-4"
+      className="mb-4 rounded-xl border-2 border-[var(--danger)] bg-surface p-4"
     >
       {alerts.map((line) => (
-        <p key={line} className="text-sm font-semibold text-destructive">
+        <p key={line} className="text-sm font-semibold text-[var(--danger)]">
           {line}
         </p>
       ))}

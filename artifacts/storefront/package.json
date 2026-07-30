@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test --import tsx \"./lib/**/*.test.ts\"",
     "lint:filecap": "node --experimental-strip-types ../../scripts/lint-filecap.ts artifacts/storefront",
-    "lint:tokens": "node --experimental-strip-types ../../scripts/lint-tokens.ts artifacts/storefront"
+    "lint:tokens": "node --experimental-strip-types ../../scripts/lint-tokens.ts artifacts/storefront",
+    "lint:component-drift": "node --experimental-strip-types ../../scripts/lint-component-drift.ts artifacts/storefront"
   },
   "dependencies": {
     "@astryxdesign/core": "0.1.8",

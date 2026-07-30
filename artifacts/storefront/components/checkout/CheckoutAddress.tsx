@@ -40,7 +40,7 @@ export function CheckoutAddress({
             4be36f56, found during the Stitch restyle). Renders the server's
             quoted amount now, and nothing at all when it is absent. */}
         {typeof totalPaise === "number" && (
-          <span className="font-mono tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
+          <span className="tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
         )}
       </div>
       <div className="flex items-center justify-between">

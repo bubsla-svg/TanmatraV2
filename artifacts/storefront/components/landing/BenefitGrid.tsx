@@ -69,7 +69,7 @@ export function BenefitGrid({
           {benefits.map((b) => (
             <div key={b.title} className="rounded-2xl border border-line bg-surface p-5">
               {variant === "tiles" ? (
-                <LandingIcon name={b.icon} className="h-7 w-7 text-destructive" />
+                <LandingIcon name={b.icon} className="h-7 w-7 text-[var(--danger)]" />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-gold-text">
                   <LandingIcon name={b.icon} className="h-5 w-5" />

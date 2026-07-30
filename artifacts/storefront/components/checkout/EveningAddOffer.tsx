@@ -62,7 +62,7 @@ export function EveningAddOffer({
     <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-ink">Add dinner to your plan?</h3>
-        <span className="font-mono tabular text-sm font-semibold text-ink">{formatPaise(pricePaise)}/wk</span>
+        <span className="tabular text-sm font-semibold text-ink">{formatPaise(pricePaise)}/wk</span>
       </div>
       <p className="text-sm text-ink-muted">An evening meal each weekday. Cancel anytime.</p>
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}

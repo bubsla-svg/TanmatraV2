@@ -1,0 +1,9 @@
+# Baseline for scripts/lint-component-drift.ts.
+#
+# Empty by design: the 2026-07-30 audit that introduced this gate fixed every
+# existing destructive-alias and redundant-font-mono-tabular instance found at
+# the time (31 sites across 15 files), so the gate starts at zero debt rather
+# than a pre-approved backlog. Add an entry here ONLY for a pre-existing
+# violation discovered later that isn't being fixed in the same change — never
+# for new code. One `path/to/file.tsx:LINE` per line, same format as
+# scripts/test-reach-baseline.txt.

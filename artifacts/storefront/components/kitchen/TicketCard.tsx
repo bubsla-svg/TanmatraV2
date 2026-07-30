@@ -26,7 +26,7 @@ import {
 const TIER: Record<Urgency, { word: string; frame: string; stamp: string }> = {
   fresh: { word: "New", frame: "border-line", stamp: "text-ink-muted" },
   due: { word: "Due now", frame: "border-gold", stamp: "text-gold-text" },
-  late: { word: "LATE", frame: "border-destructive", stamp: "text-destructive" },
+  late: { word: "LATE", frame: "border-[var(--danger)]", stamp: "text-[var(--danger)]" },
 };
 
 export function TicketCard({
@@ -61,7 +61,7 @@ export function TicketCard({
       </div>
 
       {unreadable ? (
-        <p className="mt-3 text-sm font-semibold text-destructive">
+        <p className="mt-3 text-sm font-semibold text-[var(--danger)]">
           This ticket&rsquo;s items could not be read. Check the order in ops
           before cooking it.
         </p>
@@ -74,12 +74,12 @@ export function TicketCard({
                   ×{line.qty}
                 </span>
                 <span
-                  className={`text-base ${line.suspect ? "text-destructive" : "text-ink"}`}
+                  className={`text-base ${line.suspect ? "text-[var(--danger)]" : "text-ink"}`}
                 >
                   {line.name}
                 </span>
                 {line.suspect && (
-                  <span className="text-xs font-semibold uppercase text-destructive">
+                  <span className="text-xs font-semibold uppercase text-[var(--danger)]">
                     check
                   </span>
                 )}

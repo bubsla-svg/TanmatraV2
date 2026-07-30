@@ -33,7 +33,7 @@ export function CheckoutPay({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <StepDots current={step} total={stepCount} />
-        <span className="font-mono tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
+        <span className="tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
       </div>
       <h1 className="text-lg font-semibold text-ink">Review &amp; pay</h1>
 
@@ -44,7 +44,7 @@ export function CheckoutPay({
             {formatPaise(creditPaise)} credit applied
           </p>
         )}
-        <p className="font-mono tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(totalPaise)}</p>
+        <p className="tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(totalPaise)}</p>
       </div>
 
       {/* Sticky pay bar — the screen's single gold pill, above the 4rem
