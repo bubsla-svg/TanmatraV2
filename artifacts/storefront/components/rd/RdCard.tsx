@@ -41,9 +41,15 @@ export function RdCard({ rd }: { rd: RdProfile }) {
 
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3">
         <p className="text-xs text-ink-muted">
-          {hasFreeIntro(rd.pricing) && <span className="font-semibold text-sage-text">Free 15-min intro</span>}
-          {hasFreeIntro(rd.pricing) && from != null && " · "}
-          {from != null && <span className="tabular">from {formatPaise(from)}</span>}
+          {!rd.bookable ? (
+            <span className="text-ink-faint">Not currently accepting bookings</span>
+          ) : (
+            <>
+              {hasFreeIntro(rd.pricing) && <span className="font-semibold text-sage-text">Free 15-min intro</span>}
+              {hasFreeIntro(rd.pricing) && from != null && " · "}
+              {from != null && <span className="tabular">from {formatPaise(from)}</span>}
+            </>
+          )}
         </p>
         <Link href={`/rd/${rd.slug}`} className="shrink-0 text-sm font-semibold text-gold-text hover:underline">
           View profile &rarr;

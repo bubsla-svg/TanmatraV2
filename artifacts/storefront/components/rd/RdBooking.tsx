@@ -24,7 +24,7 @@ const fmt = (iso: string) =>
     weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata",
   });
 
-export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: RdPricing } }) {
+export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: RdPricing; bookable: boolean } }) {
   const [kind, setKind] = useState<SessionKind>("intro_15m");
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [sel, setSel] = useState<Slot | null>(null);
@@ -56,6 +56,15 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
       else if (e instanceof ApiError && e.status === 409) { setError("That slot was just taken — pick another."); void loadSlots(); }
       else setError(e instanceof ApiError ? e.message : "Couldn't complete that — please try again.");
     } finally { setBusy(false); }
+  }
+
+  if (!rd.bookable) {
+    return (
+      <div className="rounded-2xl border border-line bg-surface p-5">
+        <p className="text-sm font-semibold text-ink">Not currently accepting bookings</p>
+        <p className="mt-1 text-xs text-ink-muted">{rd.name} isn&rsquo;t taking new consults right now — check back soon.</p>
+      </div>
+    );
   }
 
   if (needsAuth) {

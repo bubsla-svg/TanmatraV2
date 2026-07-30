@@ -14,7 +14,7 @@ export function CoachActionCard({ action }: { action: CoachAction }) {
         <p className="text-sm font-semibold text-ink">Talk to a Registered Dietitian</p>
         <p className="mt-0.5 text-xs text-ink-muted">
           {action.urgency === "soon" ? "Worth booking soon — " : "They can review your situation properly."}
-          {consults ? ` You have ${consults} free consult${consults === 1 ? "" : "s"}.` : ""}
+          {consults != null ? ` You have ${consults} free consult${consults === 1 ? "" : "s"}.` : ""}
         </p>
         <Link href={action.href} className="mt-2 inline-block rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)]">
           Book a dietitian &rarr;

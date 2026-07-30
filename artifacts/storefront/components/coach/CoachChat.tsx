@@ -52,7 +52,11 @@ export function CoachChat() {
         else if (ev.type === "error") setError(ev.message);
       });
     } catch (e) {
-      if (e instanceof ApiError && e.status === 401) { setUser(null); return; }
+      if (e instanceof ApiError && e.status === 401) {
+        setUser(null);
+        setError("Your session expired — sign in again to continue.");
+        return;
+      }
       setError(e instanceof ApiError && e.status === 429 ? "You've sent a lot of messages — give it a minute." : "Coach is unavailable right now. Please try again.");
     } finally {
       setStreaming(false);
@@ -64,6 +68,7 @@ export function CoachChat() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to chat with your nutrition coach.</p>
+        {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
         <PhoneAuth onVerified={() => void loadUser()} />
       </div>
     );

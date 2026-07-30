@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getRds, getRd, type RdProfile } from "@/lib/rdApi";
+import { getRds, getRdOrReason, type RdProfile } from "@/lib/rdApi";
 import { formatPaise } from "@/lib/format";
 import { RdBooking } from "@/components/rd/RdBooking";
 
@@ -15,9 +15,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const rd = await getRd(slug);
-  if (!rd) return { title: "Dietitian not found" };
-  return { title: `${rd.name} — ${rd.title}`, description: rd.bio };
+  const lookup = await getRdOrReason(slug);
+  if (!lookup.ok) return { title: lookup.reason === "not_found" ? "Dietitian not found" : "Dietitian profile" };
+  return { title: `${lookup.rd.name} — ${lookup.rd.title}`, description: lookup.rd.bio };
 }
 
 function personJsonLd(rd: RdProfile) {
@@ -43,8 +43,21 @@ const SESSIONS: { key: keyof RdProfile["pricing"]; label: string }[] = [
  *  slice; the CTA points to the live nutrition coach in the meantime. */
 export default async function RdProfilePage({ params }: Params) {
   const { slug } = await params;
-  const rd = await getRd(slug);
-  if (!rd) notFound();
+  const lookup = await getRdOrReason(slug);
+  if (!lookup.ok && lookup.reason === "not_found") notFound();
+  if (!lookup.ok) {
+    return (
+      <section className="mx-auto max-w-2xl px-4 py-10">
+        <Link href="/rd" className="text-sm text-ink-muted hover:text-ink">
+          &larr; Our dietitians
+        </Link>
+        <p className="mt-6 text-sm text-ink-muted">
+          This profile is briefly unavailable — please check back shortly.
+        </p>
+      </section>
+    );
+  }
+  const rd = lookup.rd;
 
   return (
     <article className="mx-auto max-w-2xl px-4 py-10">
@@ -93,7 +106,7 @@ export default async function RdProfilePage({ params }: Params) {
       </div>
 
       <div className="mt-4">
-        <RdBooking rd={{ slug: rd.slug, name: rd.name, pricing: rd.pricing }} />
+        <RdBooking rd={{ slug: rd.slug, name: rd.name, pricing: rd.pricing, bookable: rd.bookable }} />
       </div>
     </article>
   );
