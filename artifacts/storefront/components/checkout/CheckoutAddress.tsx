@@ -13,10 +13,15 @@ import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 export function CheckoutAddress({
   step,
   total,
+  totalPaise,
   onDeliver,
 }: {
   step: number;
+  /** Step COUNT for the dots — not an amount. */
   total: number;
+  /** Server-quoted order amount, rendered verbatim. Optional so the header
+   *  simply omits it rather than inventing a number when it is absent. */
+  totalPaise?: number;
   onDeliver: () => void;
 }) {
   const [pincode, setPincode] = useState("");
@@ -30,7 +35,13 @@ export function CheckoutAddress({
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <StepDots current={step} total={total} />
-        <span className="font-mono tabular text-sm font-semibold text-ink">{formatPaise(total)}</span>
+        {/* Was formatPaise(total) — i.e. the STEP COUNT formatted as money, so a
+            3-screen flow displayed 3 paise as the order amount (shipped in
+            4be36f56, found during the Stitch restyle). Renders the server's
+            quoted amount now, and nothing at all when it is absent. */}
+        {typeof totalPaise === "number" && (
+          <span className="font-mono tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
+        )}
       </div>
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-ink">Delivery address</h1>

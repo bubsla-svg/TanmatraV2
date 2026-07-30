@@ -100,7 +100,7 @@ export function CheckoutFlow({
     return <CheckoutIdentity planSummary={planSummary} step={step} total={total} onSubmitPhone={advance} />;
   }
   if (screen === "address") {
-    return <CheckoutAddress step={step} total={total} onDeliver={advance} />;
+    return <CheckoutAddress step={step} total={total} totalPaise={totalPaise} onDeliver={advance} />;
   }
   return (
     <CheckoutPay
