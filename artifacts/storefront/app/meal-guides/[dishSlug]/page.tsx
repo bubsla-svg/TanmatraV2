@@ -27,10 +27,13 @@ export default async function MealGuidePage({ params }: Params) {
   return (
     <section className="mx-auto max-w-3xl px-4 py-12 flex flex-col gap-8">
       <div className="flex flex-col gap-3">
-        <Link href={`/dish/${dish.slug}`} className="text-xs font-semibold uppercase tracking-wider text-gold-text hover:underline">
-          &larr; Back to {dish.name} Details
+        <Link
+          href={`/dish/${dish.slug}`}
+          className="inline-flex w-fit items-center gap-2 text-sm text-ink-muted hover:text-ink transition-colors"
+        >
+          <span aria-hidden>&larr;</span> Back to {dish.name} Details
         </Link>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">
           {dish.name} &mdash; Culinary Guide
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted">
@@ -41,7 +44,7 @@ export default async function MealGuidePage({ params }: Params) {
       <ThermalInstructions dish={dish} />
       <SourcingTransparency dish={dish} />
 
-      <div className="rounded-2xl border border-line bg-surface p-5 text-center flex flex-col gap-2">
+      <div className="rounded-2xl border border-line bg-surface p-6 text-center flex flex-col gap-2 shadow-sm">
         <h3 className="text-sm font-semibold text-ink">Have questions regarding ingredient preparation?</h3>
         <p className="text-xs text-ink-muted leading-relaxed">
           Our on-call Registered Dietitians answer clinical nutrition inquiries Monday through Friday.

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Challenges Directory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap');
+        
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://cdn.fontshare.com/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KQT/7QGQKNEQOJ3K4QKC3RK4XZXZVNOK5GQT/Satoshi-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://cdn.fontshare.com/wf/LAFFD4SDUCRNCKUWWXYX3H5XZNNCGHCQ/7QGQKNEQOJ3K4QKC3RK4XZXZVNOK5GQT/Satoshi-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://cdn.fontshare.com/wf/X4J6L5Y2Z3BF3P6Y5BQT3IV2VNOK6FL2/7QGQKNEQOJ3K4QKC3RK4XZXZVNOK5GQT/Satoshi-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#03210b",
+                        "tertiary": "#9c4325",
+                        "on-primary-container": "#554300",
+                        "surface-container": "#efeeeb",
+                        "primary-fixed": "#ffe088",
+                        "primary-container": "#d4af37",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e3e2e0",
+                        "outline": "#7f7663",
+                        "surface-tint": "#735c00",
+                        "background": "#faf9f6",
+                        "on-error-container": "#93000a",
+                        "on-secondary-container": "#4d6c4f",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#241a00",
+                        "secondary-fixed-dim": "#adcfad",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#574500",
+                        "on-tertiary-container": "#7b2b0e",
+                        "on-surface-variant": "#4d4635",
+                        "surface-container-highest": "#e3e2e0",
+                        "on-background": "#1a1c1a",
+                        "secondary-fixed": "#c8ecc8",
+                        "on-error": "#ffffff",
+                        "surface": "#faf9f6",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "inverse-surface": "#2f312f",
+                        "inverse-on-surface": "#f1f1ee",
+                        "on-tertiary-fixed": "#390b00",
+                        "tertiary-fixed": "#ffdbd0",
+                        "tertiary-container": "#ff9876",
+                        "surface-container-low": "#f4f3f1",
+                        "surface-container-high": "#e9e8e5",
+                        "on-secondary": "#ffffff",
+                        "primary": "#735c00",
+                        "on-secondary-fixed-variant": "#304e33",
+                        "surface-dim": "#dbdad7",
+                        "secondary-container": "#c8ecc8",
+                        "secondary": "#476649",
+                        "inverse-primary": "#e9c349",
+                        "on-tertiary-fixed-variant": "#7d2d10",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#d0c5af",
+                        "surface-bright": "#faf9f6",
+                        "on-surface": "#1a1c1a",
+                        "primary-fixed-dim": "#e9c349"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "24px",
+                        "container-max": "1280px",
+                        "lg": "48px",
+                        "xs": "4px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Satoshi"],
+                        "display-lg-mobile": ["Satoshi"],
+                        "label-sm": ["Satoshi"],
+                        "headline-md": ["Satoshi"],
+                        "body-md": ["Satoshi"],
+                        "data-mono": ["JetBrains Mono"],
+                        "display-lg": ["Satoshi"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#FBFAF7] font-body-lg text-on-surface antialiased min-h-screen pb-24">
+<!-- Header Section -->
+<header class="px-md md:px-lg pt-lg pb-md max-w-container-max mx-auto">
+<p class="text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2">Group Challenges</p>
+<h1 class="text-3xl font-semibold mb-3 tracking-tight">Challenges worth joining</h1>
+<p class="text-on-surface-variant max-w-xl text-base leading-relaxed">
+            Commit to structured protocols led by clinical dietitians. Connect with peers, track your progress, and optimize your health markers.
+        </p>
+</header>
+<!-- Main Content: Cards -->
+<main class="px-md md:px-lg max-w-container-max mx-auto space-y-6">
+<!-- Card 1: Active & Featured -->
+<article class="bg-white rounded-2xl border border-[#E7E3DA] overflow-hidden flex flex-col md:flex-row transition-transform hover:-translate-y-1 duration-300">
+<!-- Image Area -->
+<div class="relative w-full md:w-5/12 aspect-[16/9] md:aspect-auto">
+<img alt="High-end food photography of a vibrant, colorful plant-forward meal" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDM0YqMz4kJ7UtvLkBqZ1isvzT0xZSzikbptidT5FYexg5VPYkI7AcAdhAlISonmUMEkV2KWh1wL-um22MWq-OL1dXd6l6n3UZfNaQXFELvyq_33aAvh0ZKprP2W5TYFDVqx0LHEsCkCku1lonNn3r-syZyMjuvZHWcQHtCCAUJckc8cXlYHKOpr_rfoWj4LyZJ9RItF5mVUfDPBeOaBp-jdcOSHNzFNBE7UpF_te11BNPCncx5H-xKUeWZI0eguzDvtRg1edydX4"/>
+<!-- Overlays -->
+<div class="absolute top-4 left-4 z-10">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#7D9E7E]/12 text-[#7D9E7E] backdrop-blur-sm">
+                        Active
+                    </span>
+</div>
+<div class="absolute top-4 right-4 z-10">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#D4AF37] text-[#1A1C1E] shadow-sm">
+                        Featured
+                    </span>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-6 md:p-8 flex-1 flex flex-col justify-between">
+<div>
+<h2 class="text-2xl font-semibold mb-2 text-on-surface">14-Day Fibre Reset</h2>
+<p class="text-on-surface-variant text-sm mb-4 leading-relaxed">Improve gut microbiome diversity through clinical plant-sequencing protocols.</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA] text-xs font-medium text-on-surface-variant bg-[#FBFAF7]/50">Gut health</span>
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA] text-xs font-medium text-on-surface-variant bg-[#FBFAF7]/50">Plant-forward</span>
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA] text-xs font-medium text-on-surface-variant bg-[#FBFAF7]/50">Beginner</span>
+</div>
+</div>
+<div class="pt-4 border-t border-[#E7E3DA]/50">
+<div class="flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface tabular-nums">14 days · 218 members</span>
+<span class="text-xs text-on-surface-variant hidden sm:inline-block">Led by RD Ananya Nair · 4–18 Aug</span>
+</div>
+<span class="text-xs text-on-surface-variant sm:hidden block mt-1">Led by RD Ananya Nair · 4–18 Aug</span>
+</div>
+</div>
+</article>
+<!-- Card 2: Upcoming -->
+<article class="bg-white rounded-2xl border border-[#E7E3DA] overflow-hidden flex flex-col md:flex-row transition-transform hover:-translate-y-1 duration-300">
+<!-- Image Area -->
+<div class="relative w-full md:w-5/12 aspect-[16/9] md:aspect-auto">
+<img alt="High-end food photography of a balanced protein-rich meal" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMecTntBeo6HQGqOOZ-4WYJtRVb1aV-g_QkzN2cu3ewivqUumvfKTFqx0qYLRCERoJ0-3sViom-umhcIfnGYEW16qGXrgYzwCyy-oWHFhJlAe6CQVXt1SwvSaoKqLKYaVZ4GJSbaCGYmma1rq9X8Mbf9OqkMdNG7sKb44jo_mKQ65jrYJcc8gKjSVoEi1BSTfdk41mnmRGvUCnKTypAgMM1IY4nHsfLCtsuv2puwA1T3aHlMz0jKclQ_WrIB55Z_-0biBwOI3DhTc"/>
+<!-- Overlays -->
+<div class="absolute top-4 left-4 z-10">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/90 border border-[#E7E3DA] text-[#5C6367] backdrop-blur-sm shadow-sm">
+                        Starts 20 Aug
+                    </span>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-6 md:p-8 flex-1 flex flex-col justify-between">
+<div>
+<h2 class="text-2xl font-semibold mb-2 text-on-surface">Metabolic Protein Sprint</h2>
+<p class="text-on-surface-variant text-sm mb-4 leading-relaxed">Optimize lean mass preservation during protocol-led caloric deficits.</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA] text-xs font-medium text-on-surface-variant bg-[#FBFAF7]/50">Weight Loss</span>
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA] text-xs font-medium text-on-surface-variant bg-[#FBFAF7]/50">High Protein</span>
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA] text-xs font-medium text-on-surface-variant bg-[#FBFAF7]/50">Advanced</span>
+</div>
+</div>
+<div class="pt-4 border-t border-[#E7E3DA]/50">
+<div class="flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface tabular-nums">7 days · 142 members</span>
+<span class="text-xs text-on-surface-variant hidden sm:inline-block">Led by RD Marcus Vance · 20–27 Aug</span>
+</div>
+<span class="text-xs text-on-surface-variant sm:hidden block mt-1">Led by RD Marcus Vance · 20–27 Aug</span>
+</div>
+</div>
+</article>
+<!-- Card 3: Ended (Muted) -->
+<article class="bg-white rounded-2xl border border-[#E7E3DA] overflow-hidden flex flex-col md:flex-row opacity-80 transition-opacity hover:opacity-100 duration-300">
+<!-- Image Area -->
+<div class="relative w-full md:w-5/12 aspect-[16/9] md:aspect-auto">
+<img alt="High-end food photography of a metabolic-friendly breakfast bowl" class="absolute inset-0 w-full h-full object-cover saturate-50 mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApOX6UcASJU8CmAgaWeXgF5-bzooXjuwFApW0ISoJUaz5vSGqObmo4wuLfkiXlpUyvwkMPzt2_2Iit2ZKLYy7baGzGDDrSjYpanVKpeVmTUGOlXgv0Nr4ZAutPTj3EvSd99Z47Z2aMR-SOj_K7VqVKXo7SFW_ghKo3__XcG37OsaZdArxMhbLZC0Oib8nGRCFSpo5o-VNrL2aWfJXdscJyhoHtCVGxMk50dKrNHWIrg6kXeNR_l8hYJwghUeg7YZc57N_MbQJMsHA"/>
+<div class="absolute inset-0 bg-[#FBFAF7]/10 pointer-events-none"></div>
+<!-- Overlays -->
+<div class="absolute top-4 left-4 z-10">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-surface-variant/80 text-on-surface-variant backdrop-blur-sm border border-transparent">
+                        Ended
+                    </span>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-6 md:p-8 flex-1 flex flex-col justify-between">
+<div>
+<h2 class="text-2xl font-semibold mb-2 text-on-surface/80">Summer Satiety Trial</h2>
+<p class="text-on-surface-variant text-sm mb-4 leading-relaxed">Master the art of high-volume, low-density metabolic cooking.</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA]/70 text-xs font-medium text-on-surface-variant/80 bg-[#FBFAF7]/30">Satiety</span>
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA]/70 text-xs font-medium text-on-surface-variant/80 bg-[#FBFAF7]/30">Veg-forward</span>
+<span class="px-3 py-1 rounded-full border border-[#E7E3DA]/70 text-xs font-medium text-on-surface-variant/80 bg-[#FBFAF7]/30">All levels</span>
+</div>
+</div>
+<div class="pt-4 border-t border-[#E7E3DA]/50">
+<div class="flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface/80 tabular-nums">3 days · 512 members</span>
+<span class="text-xs text-on-surface-variant/80 hidden sm:inline-block">Completed 15 Jul</span>
+</div>
+<span class="text-xs text-on-surface-variant/80 sm:hidden block mt-1">Completed 15 Jul</span>
+</div>
+</div>
+</article>
+</main>
+<!-- Bottom Navigation Bar (Shared Component) -->
+<nav class="fixed bottom-0 w-full z-50 md:hidden bg-surface/80 backdrop-blur-md border-t-0 bg-surface dark:bg-surface-dim" style="box-shadow: 0 -4px 20px rgba(0,0,0,0.02);">
+<div class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe">
+<!-- Explore (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors active:scale-95 duration-150 ease-in-out group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:fill-current">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<!-- Challenges (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-full px-6 py-1.5 active:scale-95 duration-150 ease-in-out group" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-label-sm text-label-sm">Challenges</span>
+</a>
+<!-- Health (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors active:scale-95 duration-150 ease-in-out group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:fill-current">analytics</span>
+<span class="font-label-sm text-label-sm">Health</span>
+</a>
+<!-- Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors active:scale-95 duration-150 ease-in-out group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:fill-current">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</div>
+</nav>
+<!-- Desktop Side Nav Spacer (Hidden on Mobile) -->
+<div class="hidden md:block fixed left-0 top-0 h-full w-20 xl:w-64 border-r border-[#E7E3DA] bg-white z-40">
+<!-- Simplified representation of side nav for desktop to maintain layout structure without full implementation request -->
+<div class="h-full flex flex-col items-center xl:items-start pt-8 pb-4 px-4 xl:px-6">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center mb-12">
+<span class="font-headline-md text-headline-md text-on-primary-container">C</span>
+</div>
+<div class="space-y-4 w-full">
+<a class="flex items-center xl:justify-start justify-center p-3 text-on-surface-variant hover:bg-surface-variant rounded-xl transition-colors w-full group" href="#">
+<span class="material-symbols-outlined xl:mr-3 group-hover:text-primary">explore</span>
+<span class="hidden xl:block font-body-md text-body-md font-medium">Explore</span>
+</a>
+<a class="flex items-center xl:justify-start justify-center p-3 bg-secondary-container text-on-secondary-container rounded-xl transition-colors w-full" href="#">
+<span class="material-symbols-outlined xl:mr-3" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="hidden xl:block font-body-md text-body-md font-medium">Challenges</span>
+</a>
+<a class="flex items-center xl:justify-start justify-center p-3 text-on-surface-variant hover:bg-surface-variant rounded-xl transition-colors w-full group" href="#">
+<span class="material-symbols-outlined xl:mr-3 group-hover:text-primary">analytics</span>
+<span class="hidden xl:block font-body-md text-body-md font-medium">Health</span>
+</a>
+</div>
+<div class="mt-auto w-full">
+<a class="flex items-center xl:justify-start justify-center p-3 text-on-surface-variant hover:bg-surface-variant rounded-xl transition-colors w-full group" href="#">
+<span class="material-symbols-outlined xl:mr-3 group-hover:text-primary">person</span>
+<span class="hidden xl:block font-body-md text-body-md font-medium">Profile</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Add padding for desktop side nav -->
+<style>
+        @media (min-width: 768px) {
+            body { padding-left: 5rem; }
+        }
+        @media (min-width: 1280px) {
+            body { padding-left: 16rem; }
+        }
+    </style>
+</body></html>
