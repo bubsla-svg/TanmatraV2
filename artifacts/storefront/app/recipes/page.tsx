@@ -22,7 +22,7 @@ export default async function RecipesPage() {
         Dietitian-designed recipes with verified macros. Filter by your goal, your diet, and the
         time you have.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <RecipesBrowser recipes={recipes} />
       </div>
     </section>
