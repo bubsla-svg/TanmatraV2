@@ -10,5 +10,9 @@
   "screenId": "c3e1f024a18d493db70a37a526fc35c5",
   "title": "Clinical Menu List",
   "edit": "single-column rows: title + excerpt + rating stars (owner redline)"
+ },
+ "v3": {
+  "screenId": "c3e1f024a18d493db70a37a526fc35c5",
+  "edit": "text left, image right (owner redline; in-place edit)"
  }
 }
