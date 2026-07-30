@@ -61,9 +61,14 @@ export function LoginCard({ next }: { next: string }) {
     };
   }, [next, router]);
 
+  // Same card language as the plan flow's identity gate
+  // (checkout/plan/PlanIdentityGate.tsx) — one bordered surface, heading
+  // always present (an e2e spec asserts the "Sign in" heading regardless of
+  // which of the three states below is showing), state-specific content
+  // beneath it.
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold text-ink">Sign in</h1>
+    <div className="flex flex-col gap-6 rounded-3xl border border-line bg-surface p-6 md:p-8">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">Sign in</h1>
       {checking ? (
         <p className="text-sm text-ink-muted">Checking your session…</p>
       ) : firebaseConfigured() ? (
@@ -78,7 +83,7 @@ export function LoginCard({ next }: { next: string }) {
           </p>
           <Link
             href="/menu"
-            className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
+            className="self-start rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
           >
             Browse the menu
           </Link>

@@ -37,7 +37,7 @@ export function InstantPlanPreview({
 
   if (recs.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
+      <div className="rounded-3xl border border-line bg-surface p-5 text-center">
         <p className="text-sm text-ink-muted">No exact therapeutic matches found without clinical adjustments.</p>
         <Link href="/rd" className="mt-3 inline-block font-semibold text-gold-text hover:underline text-xs uppercase tracking-wide">
           Consult a Dietitian &rarr;
@@ -48,26 +48,31 @@ export function InstantPlanPreview({
 
   return (
     <div className="flex flex-col gap-4 mt-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+      <h3 className="text-xs font-semibold uppercase tracking-widest text-gold-text pl-1">
         Top 3 Therapeutic Meal Matches
       </h3>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {recs.map(({ dish, badge, rationale }) => (
           <div
             key={dish.id}
-            className="rounded-2xl border border-line bg-surface p-4 shadow-sm flex flex-col gap-3 transition-transform duration-200 hover:scale-[1.01]"
+            className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition-colors hover:border-line-strong"
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-ink">{dish.name}</span>
-              <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text shrink-0">
+            <div className="relative h-40 w-full bg-surface-raised">
+              {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
+              <img src={dish.image} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
+              <span className="absolute left-3 top-3 rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-sage-text backdrop-blur-md">
                 {badge}
               </span>
             </div>
-            <p className="text-xs leading-relaxed text-ink-muted">{rationale}</p>
-            <div className="flex items-center justify-between border-t border-line pt-2 mt-1 text-xs">
-              <span className="font-semibold text-ink">{formatPaise(dish.price)}</span>
-              <div className="w-fit">
-                <AddToCart dish={{ id: dish.id, slug: dish.slug, name: dish.name, price: dish.price }} />
+            <div className="flex flex-col gap-3 p-4">
+              <span className="text-sm font-semibold text-ink leading-tight">{dish.name}</span>
+              <p className="text-xs leading-relaxed text-ink-muted">{rationale}</p>
+              <div className="flex items-center justify-between border-t border-line pt-3 mt-1">
+                <span className="tabular text-sm font-semibold text-ink">{formatPaise(dish.price)}</span>
+                <div className="w-fit">
+                  <AddToCart dish={{ id: dish.id, slug: dish.slug, name: dish.name, price: dish.price }} />
+                </div>
               </div>
             </div>
           </div>
@@ -75,9 +80,9 @@ export function InstantPlanPreview({
       </div>
       <Link
         href="/plans"
-        className="mt-2 flex w-full items-center justify-center rounded-2xl bg-gold py-3.5 text-sm font-semibold text-[var(--gold-ink)] shadow-sm hover:bg-gold/90 transition-colors"
+        className="mt-2 flex w-full items-center justify-center rounded-full bg-gold py-3.5 text-sm font-semibold uppercase tracking-wide text-[var(--gold-ink)] shadow-sm hover:bg-gold/90 transition-all active:scale-[0.98]"
       >
-        Activate Recurring Subscription &rarr;
+        Activate Recurring Subscription
       </Link>
     </div>
   );

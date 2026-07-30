@@ -46,21 +46,29 @@ export function TrialStart({
 
   return (
     <section className="flex flex-col gap-5" aria-label="Start the 3-day taste test">
-      <div>
-        <p id="trial-pref-label" className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Preference</p>
-        <div role="group" aria-labelledby="trial-pref-label" className="inline-flex rounded-xl border border-line p-1">
+      <div className="flex flex-col items-center gap-2">
+        <p
+          id="trial-pref-label"
+          className="text-xs font-semibold uppercase tracking-wide text-ink-faint"
+        >
+          Preference
+        </p>
+        <div
+          role="group"
+          aria-labelledby="trial-pref-label"
+          className="inline-flex gap-1 rounded-full border border-line bg-surface p-1"
+        >
           {TRACKS.map((t) => (
             <button
               key={t.id}
               type="button"
               aria-pressed={track === t.id}
               onClick={() => setTrack(t.id)}
-              className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-              style={
+              className={`rounded-full px-6 py-2 text-sm font-medium transition-colors active:scale-[0.98] ${
                 track === t.id
-                  ? { background: "var(--gold)", color: "var(--gold-ink)" }
-                  : { color: "var(--ink-muted)" }
-              }
+                  ? "bg-gold text-[var(--gold-ink)]"
+                  : "text-ink-muted hover:text-ink"
+              }`}
             >
               {t.label}
             </button>
@@ -68,11 +76,14 @@ export function TrialStart({
         </div>
       </div>
 
+      {/* The trio is the highest-intent moment for dish appeal in this funnel
+          (BATCH-4-BRIEFS.md, Brief 23) — real catalogue photos, given room to
+          read as food, not a strip of thumbnails. */}
       <ul className="grid grid-cols-3 gap-3">
         {trio.map((dish) => (
           <li
             key={dish.slug}
-            className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface"
+            className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
           >
             <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
               {/* eslint-disable-next-line @next/next/no-img-element -- fixed
@@ -85,19 +96,28 @@ export function TrialStart({
                 className="h-full w-full object-cover"
               />
             </div>
-            <p className="p-2 text-xs font-medium leading-snug text-ink">{dish.name}</p>
+            <p className="p-2.5 text-center text-xs font-semibold leading-snug text-ink">
+              {dish.name}
+            </p>
           </li>
         ))}
       </ul>
 
-      <button
-        type="button"
-        onClick={start}
-        className="rounded-xl bg-gold px-5 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-      >
-        Start the taste test · {formatPaise(pricePaise)}
-      </button>
-      <p className="text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
+      {/* Glass sticky footer (checkout vocabulary, BATCH-4-BRIEFS.md) — the ONE
+          money-bearing CTA on this screen, since starting the trial IS the
+          commitment moment, same treatment as CheckoutPay's Pay button. */}
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+        <div className="mx-auto max-w-md px-4 py-3">
+          <button
+            type="button"
+            onClick={start}
+            className="w-full rounded-full bg-gold px-8 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+          >
+            Start the taste test · {formatPaise(pricePaise)}
+          </button>
+          <p className="mt-2 text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
+        </div>
+      </div>
     </section>
   );
 }

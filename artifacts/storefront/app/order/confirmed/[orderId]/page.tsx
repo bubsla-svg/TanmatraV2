@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+// Stitch dark scope (route-scoped) — see lib/themes/stitch.css. This is the
+// tail of the checkout funnel; it must read as the same product as /checkout.
+import "@/lib/themes/stitch.css";
 import { fetchOrderStatus, statusLabel, statusTone, TRACKABLE_STATUSES } from "@/lib/orderStatus";
 import { PlanPerks } from "@/components/order/PlanPerks";
 import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendations";
@@ -35,24 +38,26 @@ export default async function ConfirmedPage({
 
   if (result.kind !== "ok") {
     return (
-      <section className="mx-auto max-w-xl px-4 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
-          {result.kind === "not_found"
-            ? "We can't find that order"
-            : "We can't reach the kitchen right now"}
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          {result.kind === "not_found"
-            ? "Check the link from your confirmation message."
-            : "Your order is unaffected — try this page again in a moment."}
-        </p>
-        <Link
-          href="/menu"
-          className="mt-6 inline-block rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
-        >
-          Back to the menu
-        </Link>
-      </section>
+      <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+        <section className="mx-auto max-w-md px-4 py-10 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+            {result.kind === "not_found"
+              ? "We can't find that order"
+              : "We can't reach the kitchen right now"}
+          </h1>
+          <p className="mt-2 text-sm text-ink-muted">
+            {result.kind === "not_found"
+              ? "Check the link from your confirmation message."
+              : "Your order is unaffected — try this page again in a moment."}
+          </p>
+          <Link
+            href="/menu"
+            className="mt-8 inline-block rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+          >
+            Back to the menu
+          </Link>
+        </section>
+      </div>
     );
   }
 
@@ -62,46 +67,67 @@ export default async function ConfirmedPage({
   // delivered or cancelled order gets no dead Track CTA.
   const trackable = TRACKABLE_STATUSES.has(status);
   return (
-    <section className="mx-auto max-w-xl px-4 py-10">
-      <p className="text-sm font-semibold uppercase tracking-wider text-sage-text">
-        Order confirmed
-      </p>
-      <h1 className={`mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight ${TONE_TEXT[tone]}`}>
-        {tone === "live" && (
-          <span aria-hidden className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-sage" />
-        )}
-        {statusLabel(status)}
-      </h1>
-      <p className="tabular mt-1 text-sm text-ink-muted">#{orderId}</p>
-      {trackable && (
-        <p className="mt-3 text-sm text-ink-muted">
-          Estimated arrival in{" "}
-          <span className="tabular font-semibold text-ink">{etaMinutes} min</span>
-        </p>
-      )}
-      {tone === "failed" && (
-        <p className="mt-3 text-sm font-semibold text-destructive">
-          This order did not complete — you have not been charged for it.
-        </p>
-      )}
-      <div className="mt-6 flex gap-3">
-        {trackable && (
-          <Link
-            href={`/track/${encodeURIComponent(orderId)}`}
-            className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+      <section className="mx-auto max-w-md px-4 py-10">
+        {/* Status card — the single largest, most prominent element on the
+            screen. This is a confirmation, not a celebration: no confetti,
+            no oversized checkmark, just the status the server actually sent. */}
+        <div className="flex flex-col items-center text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-text">
+            Order confirmed
+          </p>
+          <h1
+            className={`mt-3 flex items-center justify-center gap-2.5 text-3xl font-semibold tracking-tight ${TONE_TEXT[tone]}`}
           >
-            Track live
-          </Link>
-        )}
-        <Link
-          href="/menu"
-          className="rounded-lg border border-line-strong px-5 py-3 text-sm font-semibold text-ink"
-        >
-          Back to the menu
-        </Link>
-      </div>
-      <PlanPerks orderId={orderId} />
-      <ThankYouRecommendations />
-    </section>
+            {tone === "live" && (
+              <span
+                aria-hidden
+                className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-sage"
+              />
+            )}
+            {statusLabel(status)}
+          </h1>
+          <p className="tabular mt-3 text-xs uppercase tracking-widest text-ink-faint">
+            #{orderId}
+          </p>
+          {trackable && (
+            <p className="mt-2 text-sm text-ink-muted">
+              Estimated arrival in{" "}
+              <span className="tabular font-semibold text-ink">{etaMinutes} min</span>
+            </p>
+          )}
+          {tone === "failed" && (
+            <p className="mt-3 text-sm font-semibold text-destructive">
+              This order did not complete — you have not been charged for it.
+            </p>
+          )}
+          <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row">
+            {trackable && (
+              <Link
+                href={`/track/${encodeURIComponent(orderId)}`}
+                className="flex-1 rounded-full bg-gold px-6 py-3.5 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+              >
+                Track live
+              </Link>
+            )}
+            <Link
+              href="/menu"
+              className="flex-1 rounded-full border border-line-strong bg-transparent px-6 py-3.5 text-center text-sm font-semibold text-ink transition-colors hover:bg-surface-raised active:scale-[0.98]"
+            >
+              Back to the menu
+            </Link>
+          </div>
+        </div>
+
+        {/* Secondary, visually subordinate, stacked below a clear break from
+            the status block above: perks the money event produced, then the
+            generic next-steps grid. ThankYouRecommendations supplies its own
+            border-top rule, so this wrapper only adds the gap beneath the hero. */}
+        <div className="mt-10">
+          <PlanPerks orderId={orderId} />
+          <ThankYouRecommendations />
+        </div>
+      </section>
+    </div>
   );
 }

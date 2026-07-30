@@ -15,6 +15,7 @@ import { InstantPlanPreview } from "./InstantPlanPreview";
 import { ApiError } from "@/lib/apiClient";
 import { savePreferences, type DietaryStyle, type WellnessGoal } from "@/lib/preferencesApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { StepDots } from "@/components/checkout/StepDots";
 
 const GOALS = [
   { id: "lose_weight", label: "Fat Loss & Metabolic Reset", desc: "Calorie-controlled volume density" },
@@ -43,6 +44,15 @@ function toWireGoal(id: string): WellnessGoal {
 }
 
 type SaveState = "idle" | "busy" | "saved" | "needsAuth" | "error";
+
+const STEP_LABELS: Record<1 | 2 | 3, string> = { 1: "Goal", 2: "Allergens", 3: "Diet Profile" };
+
+function headingTone(state: SaveState): string {
+  if (state === "saved") return "text-sage-text";
+  if (state === "error") return "text-[var(--danger)]";
+  if (state === "needsAuth") return "text-gold-text";
+  return "text-ink-muted";
+}
 
 export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -101,17 +111,19 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
 
     return (
       <div className="flex flex-col gap-6">
-        <div className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-3">
+        <div className="rounded-3xl border border-line bg-surface p-5 flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">{heading}</span>
-              <p className="text-sm font-medium text-ink mt-1">
+            <div className="flex flex-col gap-1">
+              <span className={`text-[11px] font-semibold uppercase tracking-widest ${headingTone(saveState)}`}>
+                {heading}
+              </span>
+              <p className="text-sm font-medium text-ink">
                 Goal: {goal.replace("_", " ").toUpperCase()} &bull; Style: {dietaryStyle}
               </p>
             </div>
             <button
               onClick={() => setStep(1)}
-              className="text-xs font-semibold text-gold-text hover:underline uppercase shrink-0"
+              className="text-xs font-semibold text-gold-text hover:underline uppercase shrink-0 transition-transform active:scale-[0.95]"
             >
               Edit &rarr;
             </button>
@@ -129,7 +141,7 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
               </p>
               <button
                 onClick={() => void attemptSave()}
-                className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink shrink-0"
+                className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink shrink-0 transition-transform active:scale-[0.95]"
               >
                 Retry
               </button>
@@ -148,14 +160,12 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
   }
 
   return (
-    <div className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-5 shadow-sm">
-      <div className="flex items-center justify-between text-xs font-semibold uppercase text-ink-muted border-b border-line pb-3">
-        <span>Step {step} of 3 &mdash; {step === 1 ? "Goal" : step === 2 ? "Allergens" : "Diet Profile"}</span>
-        <div className="flex gap-1">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className={`h-1.5 w-6 rounded-full ${s <= step ? "bg-gold" : "bg-line-strong"}`} />
-          ))}
-        </div>
+    <div className="rounded-3xl border border-line bg-surface p-5 flex flex-col gap-6 shadow-sm">
+      <div className="flex flex-col gap-4 border-b border-line pb-5">
+        <StepDots current={step} total={3} />
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-ink-muted">
+          Step {step} of 3 &mdash; {STEP_LABELS[step]}
+        </span>
       </div>
 
       {step === 1 && (
@@ -164,8 +174,8 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
             <button
               key={g.id}
               onClick={() => setGoal(g.id)}
-              className={`rounded-xl border p-4 text-left transition-all ${
-                goal === g.id ? "border-gold bg-gold/5 font-medium shadow-sm" : "border-line hover:border-ink/20"
+              className={`rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
+                goal === g.id ? "border-gold bg-gold/10 font-medium shadow-sm" : "border-line hover:border-line-strong"
               }`}
             >
               <div className="text-sm font-semibold text-ink">{g.label}</div>
@@ -176,79 +186,103 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
       )}
 
       {step === 2 && (
-        <div className="flex flex-col gap-3">
-          <p className="text-xs text-ink-muted">Select dietary allergens our kitchen must strictly omit:</p>
-          {ALLERGIES.map((a) => {
-            const active = allergens.includes(a.id);
-            return (
-              <button
-                key={a.id}
-                onClick={() => toggleAllergen(a.id)}
-                className={`rounded-xl border p-3.5 flex items-center justify-between text-sm ${
-                  active ? "border-gold bg-gold/5 font-medium" : "border-line text-ink-muted hover:border-ink/20"
-                }`}
-              >
-                <span>{a.label}</span>
-                <span className="text-xs font-bold text-gold-text">{active ? "Excluding ✓" : "+ Add"}</span>
-              </button>
-            );
-          })}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold leading-snug text-ink">
+            Select dietary allergens our kitchen must strictly omit
+          </h2>
+          <div className="flex flex-col gap-3">
+            {ALLERGIES.map((a) => {
+              const active = allergens.includes(a.id);
+              return (
+                <button
+                  key={a.id}
+                  onClick={() => toggleAllergen(a.id)}
+                  className={`rounded-2xl border p-4 flex items-center justify-between text-sm transition-all active:scale-[0.98] ${
+                    active ? "border-gold bg-gold/10 font-medium text-ink" : "border-line text-ink hover:border-line-strong"
+                  }`}
+                >
+                  <span>{a.label}</span>
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-wide ${active ? "text-gold-text" : "text-ink-muted"}`}
+                  >
+                    {active ? "Excluding ✓" : "+ Add"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {step === 3 && (
-        <div className="flex flex-col gap-3">
-          <p className="text-xs text-ink-muted">Select kitchen dietary style and clinical conditions:</p>
-          {STYLES.filter((c) => c.type === "style").map((c) => {
-            const active = dietaryStyle === c.id;
-            return (
-              <button
-                key={c.id}
-                onClick={() => setDietaryStyle(c.id)}
-                className={`rounded-xl border p-3.5 flex items-center justify-between text-sm ${
-                  active ? "border-gold bg-gold/5 font-medium" : "border-line text-ink-muted hover:border-ink/20"
-                }`}
-              >
-                <span className="text-ink">{c.label}</span>
-                <span className="text-xs font-bold text-gold-text">{active ? "Active ✓" : "+ Select"}</span>
-              </button>
-            );
-          })}
-          <p className="text-xs text-ink-muted">
-            These conditions shape today’s preview only — they are not saved to your account. For a real,
-            consent-gated clinical record, visit{" "}
-            <Link href="/account/health-information" className="font-semibold text-gold-text hover:underline">
-              Health Information
-            </Link>
-            .
-          </p>
-          {STYLES.filter((c) => c.type === "condition").map((c) => {
-            const active = conditions.includes(c.id);
-            return (
-              <button
-                key={c.id}
-                onClick={() => toggleCondition(c.id)}
-                className={`rounded-xl border p-3.5 flex items-center justify-between text-sm ${
-                  active ? "border-gold bg-gold/5 font-medium" : "border-line text-ink-muted hover:border-ink/20"
-                }`}
-              >
-                <span className="text-ink">{c.label}</span>
-                <span className="text-xs font-bold text-gold-text">{active ? "Active ✓" : "+ Select"}</span>
-              </button>
-            );
-          })}
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Kitchen dietary style</p>
+            {STYLES.filter((c) => c.type === "style").map((c) => {
+              const active = dietaryStyle === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setDietaryStyle(c.id)}
+                  className={`rounded-2xl border p-4 flex items-center justify-between text-sm transition-all active:scale-[0.98] ${
+                    active ? "border-gold bg-gold/10 font-medium text-ink" : "border-line text-ink hover:border-line-strong"
+                  }`}
+                >
+                  <span>{c.label}</span>
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-wide ${active ? "text-gold-text" : "text-ink-muted"}`}
+                  >
+                    {active ? "Active ✓" : "+ Select"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line bg-bg p-4">
+            <p className="text-xs leading-relaxed text-ink-faint">
+              These conditions shape today’s preview only — they are not saved to your account. For a real,
+              consent-gated clinical record, visit{" "}
+              <Link href="/account/health-information" className="font-semibold text-gold-text hover:underline">
+                Health Information
+              </Link>
+              .
+            </p>
+            {STYLES.filter((c) => c.type === "condition").map((c) => {
+              const active = conditions.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => toggleCondition(c.id)}
+                  className={`rounded-xl border border-dashed p-3 flex items-center justify-between text-xs transition-all active:scale-[0.98] ${
+                    active ? "border-gold text-ink" : "border-line-strong text-ink-faint hover:text-ink-muted"
+                  }`}
+                >
+                  <span>{c.label}</span>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wide ${active ? "text-gold-text" : "text-ink-faint"}`}
+                  >
+                    {active ? "Active ✓" : "+ Select"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-3 pt-3 border-t border-line">
+      <div className="flex items-center gap-3 pt-3 border-t border-line">
         {step > 1 && (
-          <button onClick={() => setStep((step - 1) as any)} className="rounded-xl border border-line px-4 py-2 text-xs text-ink">
+          <button
+            onClick={() => setStep((step - 1) as any)}
+            className="flex-1 rounded-full border border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink text-center transition-all active:scale-[0.98]"
+          >
             Back
           </button>
         )}
         <button
           onClick={handleContinue}
-          className="rounded-xl bg-gold px-6 py-2.5 text-xs font-semibold text-[var(--gold-ink)] shadow-sm hover:bg-gold/90"
+          className="flex-[2] rounded-full bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--gold-ink)] shadow-sm text-center transition-all hover:bg-gold/90 active:scale-[0.98]"
         >
           {step === 3 ? "See Customized Menu" : "Continue →"}
         </button>

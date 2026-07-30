@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { fetchMenu } from "@/lib/catalog";
 import { CustomBuildHub } from "@/components/custom/CustomBuildHub";
+// Stitch dark scope (route-scoped) — see lib/themes/stitch.css. Brief 25 binds
+// this route to the same dark-scope vocabulary as /checkout. Unlike /quick-setup
+// or /trial, /custom-build is not a funnel step — it carries no StepDots and no
+// sticky footer; the order-summary card's own lg:sticky anchors the one action.
+import "@/lib/themes/stitch.css";
 
 export const metadata: Metadata = {
   title: "Order Customization & Macro Build Hub | Tanmatra",
@@ -12,23 +17,25 @@ export default async function CustomBuildPage() {
   const { dishes } = await fetchMenu();
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 flex flex-col gap-10">
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-          Precision Gastronomy Builder
-        </span>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Order Customization Hub
-        </h1>
-        <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Choose a dish and configure it using its own customisation options — where a dish
-          offers them, such as bread type, sauce or portion size — before adding it to your order.
-        </p>
-      </div>
+    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+      <section className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-12">
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+            Precision Gastronomy Builder
+          </span>
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+            Order Customization Hub
+          </h1>
+          <p className="max-w-2xl text-sm leading-relaxed text-ink-muted">
+            Choose a dish and configure it using its own customisation options — where a dish
+            offers them, such as bread type, sauce or portion size — before adding it to your order.
+          </p>
+        </div>
 
-      <Suspense fallback={<p className="text-sm text-ink-muted">Booting clinical customization builder…</p>}>
-        <CustomBuildHub dishes={dishes} />
-      </Suspense>
-    </section>
+        <Suspense fallback={<p className="text-sm text-ink-muted">Booting clinical customization builder…</p>}>
+          <CustomBuildHub dishes={dishes} />
+        </Suspense>
+      </section>
+    </div>
   );
 }

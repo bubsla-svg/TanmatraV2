@@ -84,113 +84,174 @@ export function CustomBuildHub({ dishes }: { dishes: DishData[] }) {
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-      <div className="flex flex-col gap-4 lg:col-span-7">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gold-text">1. Select a Dish</h2>
-        <div className="flex flex-col gap-3 max-h-[420px] overflow-y-auto pr-1">
-          {dishes.slice(0, 8).map((d) => {
-            const active = d.slug === selectedDish.slug;
-            return (
-              <button
-                key={d.id}
-                onClick={() => setSelectedSlug(d.slug)}
-                className={`rounded-2xl border p-4 text-left transition-all ${
-                  active ? "border-gold bg-gold/5 shadow-sm font-semibold" : "border-line bg-surface hover:border-ink/20"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-ink">{d.name}</span>
-                  <span className="text-xs font-bold text-ink">{formatPaise(d.price)}</span>
-                </div>
-                <div className="text-[11px] text-ink-muted mt-1">
-                  {d.macros.calories} kcal &bull; {d.macros.protein}g Protein &bull; {d.kitchen.toUpperCase()} Kitchen
-                </div>
-              </button>
-            );
-          })}
+      <div className="flex flex-col gap-8 lg:col-span-7">
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold tracking-tight text-ink">Select a Dish</h2>
+          <div className="flex max-h-[440px] flex-col gap-3 overflow-y-auto pr-1">
+            {dishes.slice(0, 8).map((d) => {
+              const active = d.slug === selectedDish.slug;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setSelectedSlug(d.slug)}
+                  aria-pressed={active}
+                  className={`flex items-center gap-4 rounded-2xl border p-3 text-left transition-all active:scale-[0.99] ${
+                    active ? "border-gold bg-gold/5 shadow-[var(--shadow-card)]" : "border-line bg-surface hover:border-line-strong"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- fixed thumbnail box, zero CLS */}
+                  <img
+                    src={d.image}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="h-16 w-16 shrink-0 rounded-xl border border-line object-cover"
+                  />
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-sm font-semibold ${active ? "text-gold-text" : "text-ink"}`}>
+                        {d.name}
+                      </span>
+                      <span className="tabular text-xs font-bold text-ink">{formatPaise(d.price)}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+                        {d.macros.calories} kcal
+                      </span>
+                      <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+                        {d.macros.protein}g protein
+                      </span>
+                      <span className="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+                        {d.kitchen.toUpperCase()} kitchen
+                      </span>
+                    </div>
+                  </div>
+                  {active && (
+                    <span aria-hidden="true" className="shrink-0 text-lg font-bold text-gold-text">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gold-text mt-4">2. Customise</h2>
-        {selectedDish.customizations.length === 0 ? (
-          <p className="rounded-xl border border-line bg-surface p-4 text-xs text-ink-muted">
-            No customisation options for this dish.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {selectedDish.customizations.map((group) => (
-              <div key={group.groupName} className="flex flex-col gap-2">
-                <span className="text-xs font-semibold text-ink">{group.groupName}</span>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {group.options.map((option) => {
-                    const active = (selection[group.groupName] ?? []).includes(option.name);
-                    return (
-                      <button
-                        key={option.name}
-                        type="button"
-                        onClick={() =>
-                          group.type === "single"
-                            ? selectSingle(group.groupName, option.name)
-                            : toggleMultiple(group.groupName, option.name)
-                        }
-                        aria-pressed={active}
-                        className={`rounded-xl border p-3 text-left flex items-center justify-between gap-2 transition-all ${
-                          active
-                            ? "border-gold bg-gold text-[var(--gold-ink)] shadow-sm font-semibold"
-                            : "border-line bg-surface text-ink hover:border-ink/20"
-                        }`}
-                      >
-                        <span className="text-xs">{option.name}</span>
-                        <span className="text-[10px] font-bold">
-                          {option.priceModifier > 0 ? `+${formatPaise(option.priceModifier)}` : "Included"}
-                        </span>
-                      </button>
-                    );
-                  })}
+        <div className="border-t border-line" />
+
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold tracking-tight text-ink">Customise</h2>
+          {selectedDish.customizations.length === 0 ? (
+            <p className="rounded-2xl border border-line bg-surface p-4 text-xs text-ink-muted">
+              No customisation options for this dish.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {selectedDish.customizations.map((group) => (
+                <div key={group.groupName} className="flex flex-col gap-3">
+                  <span className="text-sm font-semibold text-ink">{group.groupName}</span>
+                  {group.type === "single" ? (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {group.options.map((option) => {
+                        const active = (selection[group.groupName] ?? []).includes(option.name);
+                        return (
+                          <button
+                            key={option.name}
+                            type="button"
+                            onClick={() => selectSingle(group.groupName, option.name)}
+                            aria-pressed={active}
+                            className={`flex items-center justify-between gap-2 rounded-full border px-4 py-3 text-sm font-medium transition-all active:scale-[0.98] ${
+                              active
+                                ? "border-gold bg-gold text-[var(--gold-ink)] shadow-[var(--shadow-card)]"
+                                : "border-line bg-surface text-ink hover:border-line-strong"
+                            }`}
+                          >
+                            <span>{option.name}</span>
+                            <span className="tabular text-xs font-bold">
+                              {option.priceModifier > 0 ? `+${formatPaise(option.priceModifier)}` : "Included"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-3">
+                      {group.options.map((option) => {
+                        const active = (selection[group.groupName] ?? []).includes(option.name);
+                        return (
+                          <button
+                            key={option.name}
+                            type="button"
+                            onClick={() => toggleMultiple(group.groupName, option.name)}
+                            aria-pressed={active}
+                            className={`flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-all active:scale-[0.98] ${
+                              active
+                                ? "border-gold bg-gold text-[var(--gold-ink)] shadow-[var(--shadow-card)]"
+                                : "border-line bg-surface text-ink hover:border-line-strong"
+                            }`}
+                          >
+                            <span aria-hidden="true">{active ? "✓" : "+"}</span>
+                            <span>{option.name}</span>
+                            <span className="tabular text-xs font-bold">
+                              {option.priceModifier > 0 ? `+${formatPaise(option.priceModifier)}` : "Included"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="lg:col-span-5 flex flex-col gap-6 rounded-2xl border border-line bg-surface p-6 shadow-sm h-fit sticky top-6">
-        <div>
+      {/* Order summary — sticky, doing the primary-action job a fixed footer
+          would otherwise do (Brief 25: no second sticky footer on this route). */}
+      <div className="relative flex h-fit flex-col gap-6 overflow-hidden rounded-3xl border border-line bg-surface p-6 shadow-[var(--shadow-card)] lg:sticky lg:top-6 lg:col-span-5">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gold/10 blur-3xl" />
+
+        <div className="relative flex flex-col gap-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">Order Summary</span>
-          <h3 className="text-lg font-semibold text-ink mt-1">{selectedDish.name}</h3>
-          <p className="text-xs text-ink-muted mt-1 leading-relaxed">
+          <h3 className="text-xl font-semibold tracking-tight text-ink">{selectedDish.name}</h3>
+          <p className="text-xs leading-relaxed text-ink-muted">
             {preview.labels.length > 0
               ? `Customised: ${preview.labels.join(", ")}`
               : "No customisations selected — standard preparation."}
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 border-y border-line py-4 text-xs">
+        <div className="tabular relative flex flex-col gap-3 border-y border-line py-4 text-sm">
           <div className="flex items-center justify-between text-ink-muted">
-            <span>Base price:</span>
+            <span>Base price</span>
             <span className="font-semibold text-ink">{formatPaise(basePrice)}</span>
           </div>
           <div className="flex items-center justify-between text-ink-muted">
-            <span>Customisations:</span>
+            <span>Customisations</span>
             <span className="font-semibold text-ink">{formatPaise(preview.modifierPaise)}</span>
           </div>
-          <div className="flex items-center justify-between pt-2 text-sm font-bold text-ink">
-            <span>Estimated total:</span>
-            <span>{formatPaise(totalQuote)}</span>
+          <div className="flex items-center justify-between pt-2 text-base font-bold text-ink">
+            <span>Estimated total</span>
+            <span className="text-gold-text">{formatPaise(totalQuote)}</span>
           </div>
-          <p className="text-[10px] text-sage-text bg-sage-soft p-2 rounded-lg font-medium text-center">
-            Your selections travel with the order to checkout, where our server computes the final price.
-            This total is a preview.
-          </p>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <p className="relative rounded-xl bg-sage-soft px-4 py-3 text-xs leading-relaxed text-sage-text">
+          Your selections travel with the order to checkout, where our server computes the final price.
+          This total is a preview.
+        </p>
+
+        <div className="relative flex flex-col gap-3">
           <button
             type="button"
             onClick={handleAddToCart}
-            className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
+            className="w-full rounded-full bg-gold px-6 py-4 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
           >
             {added ? "Added ✓" : "Add to cart"}
           </button>
-          <div className="w-full flex justify-center">
+          <div className="flex w-full justify-center">
             <SaveToVaultButton dishSlug={selectedDish.slug} dishName={vaultDishName} />
           </div>
         </div>

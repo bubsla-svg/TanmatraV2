@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra - Sign In</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-bright": "#3a3939",
+                      "secondary-fixed": "#dde1ff",
+                      "inverse-primary": "#735c00",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-highest": "#353534",
+                      "surface-container-low": "#1c1b1b",
+                      "tertiary": "#bfcdff",
+                      "surface-dim": "#131313",
+                      "surface-variant": "#353534",
+                      "inverse-on-surface": "#313030",
+                      "on-secondary-fixed-variant": "#344280",
+                      "sage-signal": "#7D9E7E",
+                      "on-primary-container": "#554300",
+                      "on-secondary": "#1c2b68",
+                      "primary-fixed": "#ffe088",
+                      "on-surface": "#e5e2e1",
+                      "off-white-ink": "#F5F5F4",
+                      "clay-danger": "#B0655A",
+                      "on-tertiary-fixed-variant": "#27438a",
+                      "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                      "error": "#ffb4ab",
+                      "secondary-container": "#344280",
+                      "inverse-surface": "#e5e2e1",
+                      "on-primary": "#3c2f00",
+                      "on-tertiary-fixed": "#00174b",
+                      "surface-container-lowest": "#0e0e0e",
+                      "surface-container": "#201f1f",
+                      "secondary": "#b8c3ff",
+                      "ember-warning": "#B6892F",
+                      "background": "#131313",
+                      "primary": "#f2ca50",
+                      "primary-container": "#d4af37",
+                      "tertiary-container": "#97b0ff",
+                      "surface-tint": "#e9c349",
+                      "on-tertiary": "#082b72",
+                      "tertiary-fixed-dim": "#b4c5ff",
+                      "tertiary-fixed": "#dbe1ff",
+                      "on-tertiary-container": "#254188",
+                      "surface": "#131313",
+                      "on-surface-variant": "#d0c5af",
+                      "muted-steel": "#A3A3A3",
+                      "on-error": "#690005",
+                      "on-background": "#e5e2e1",
+                      "on-primary-fixed": "#241a00",
+                      "graphite-surface": "#171717",
+                      "surface-container-high": "#2a2a2a",
+                      "outline-variant": "#4d4635",
+                      "secondary-fixed-dim": "#b8c3ff",
+                      "primary-fixed-dim": "#e9c349",
+                      "ink-on-gold": "#111318",
+                      "on-secondary-fixed": "#021453",
+                      "error-container": "#93000a",
+                      "on-secondary-container": "#a4b1f7",
+                      "on-primary-fixed-variant": "#574500",
+                      "outline": "#99907c",
+                      "whisper-hairline": "rgba(255, 255, 255, 0.06)"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "card-padding": "1.5rem",
+                      "mobile-margin": "1.25rem",
+                      "section-gap": "clamp(3rem, 8vw, 6rem)",
+                      "max-width": "1280px",
+                      "gutter": "1rem",
+                      "desktop-margin": "2rem"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "label-small-caps": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "display-lg": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "clinical-data": [
+                              "JetBrains Mono", "monospace"
+                      ],
+                      "body-base": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "body-muted": [
+                              "Satoshi", "sans-serif"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "2rem",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-small-caps": [
+                              "0.75rem",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "clamp(2.5rem, 5vw, 4rem)",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "clinical-data": [
+                              "0.8125rem",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-base": [
+                              "1rem",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-muted": [
+                              "0.875rem",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap');
+        
+        body {
+            background-color: #0a0a0a; /* Fallback for obsidian canvas */
+            color: #F5F5F4;
+            font-family: 'Satoshi', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .clinical-data-nums {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen bg-background flex items-center justify-center p-mobile-margin md:p-desktop-margin selection:bg-primary-container selection:text-ink-on-gold">
+<main class="w-full max-w-[400px] flex flex-col gap-6 relative z-10">
+<!-- Primary Sign In Card -->
+<article class="bg-graphite-surface border border-whisper-hairline rounded-3xl p-6 md:p-8 shadow-2xl">
+<header class="mb-8">
+<h1 class="text-[1.75rem] font-medium text-off-white-ink mb-2 leading-tight">Sign in</h1>
+<p class="text-body-muted font-body-muted text-muted-steel">A code by SMS, no passwords</p>
+</header>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="block font-label-small-caps text-label-small-caps text-muted-steel uppercase tracking-widest" for="phone">Phone number</label>
+<div class="relative flex items-center">
+<span class="absolute left-4 text-muted-steel clinical-data-nums font-clinical-data text-clinical-data select-none">+1</span>
+<input autocomplete="tel" class="w-full bg-surface-container-lowest border border-whisper-hairline rounded-xl py-3 pl-12 pr-4 text-off-white-ink clinical-data-nums font-clinical-data text-clinical-data focus:outline-none focus:ring-1 focus:ring-primary-container focus:border-primary-container transition-all placeholder:text-surface-variant h-12" id="phone" name="phone" placeholder="(555) 000-0000" type="tel"/>
+</div>
+</div>
+<button class="w-full bg-primary-container text-ink-on-gold font-body-base text-body-base font-medium rounded-full py-3 px-6 active:scale-[0.98] transition-all duration-200 ease-out hover:opacity-90 flex items-center justify-center gap-2 h-12" type="button">
+                    Send code
+                    <span class="material-symbols-outlined text-[1.25rem]">arrow_forward</span>
+</button>
+</form>
+<!-- Empty div for widget verification -->
+<div class="mt-4 min-h-[40px] rounded-lg" id="verification-widget-container"></div>
+</article>
+<!-- Secondary Fallback Card -->
+<article class="bg-graphite-surface border border-whisper-hairline rounded-2xl p-5 shadow-lg flex flex-col gap-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-clay-danger shrink-0 mt-0.5 text-[1.25rem]">info</span>
+<p class="text-body-muted font-body-muted text-clay-danger leading-relaxed">
+                    Sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
+                </p>
+</div>
+<button class="w-full bg-primary-container text-ink-on-gold font-body-base text-body-base font-medium rounded-full py-2.5 px-6 active:scale-[0.98] transition-all duration-200 ease-out hover:opacity-90" type="button">
+                Browse the menu
+            </button>
+</article>
+</main>
+<!-- Decorative ambient glow behind cards -->
+<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center">
+<div class="w-[600px] h-[600px] bg-primary-container/5 rounded-full blur-[100px] opacity-30 mix-blend-screen"></div>
+</div>
+</body></html>
