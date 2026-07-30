@@ -145,7 +145,7 @@ export function CorporateLeadForm({
         Anything we should know? <span className="normal-case tracking-normal text-ink-faint">(optional)</span>
         <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Order windows, floors, dietary constraints…" rows={3} className={inputCls} />
       </label>
-      {error && <p role="alert" className="text-xs font-medium text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       <button
         type="button" disabled={!valid || busy} onClick={() => void submit()}
         className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"

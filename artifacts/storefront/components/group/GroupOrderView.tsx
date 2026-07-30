@@ -19,13 +19,14 @@ export function GroupOrderView({ code }: { code: string }) {
   const { cart, setCart } = useCart();
   const [group, setGroup] = useState<GroupOrder | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
+    setState("loading");
     getGroup(code).then((r) => { setGroup(r.group); setState("ready"); })
-      .catch((e) => setState(e instanceof ApiError && e.status === 404 ? "missing" : "ready"));
+      .catch((e) => setState(e instanceof ApiError && e.status === 404 ? "missing" : "error"));
     getAuthUser().then((r) => setUserId(r.user?.id ?? null)).catch(() => {});
   }, [code]);
   useEffect(() => { load(); }, [load]);
@@ -58,7 +59,15 @@ export function GroupOrderView({ code }: { code: string }) {
   }
 
   if (state === "loading") return <p className="text-sm text-ink-muted">Loading group…</p>;
-  if (state === "missing" || !group) return <p className="text-sm text-ink-muted">Group {code} was not found — it may have been closed or the code is incorrect.</p>;
+  if (state === "missing") return <p className="text-sm text-ink-muted">Group {code} was not found — it may have been closed or the code is incorrect.</p>;
+  if (state === "error" || !group) {
+    return (
+      <p className="text-sm text-ink-muted">
+        Couldn&rsquo;t load this group order.{" "}
+        <button type="button" onClick={load} className="font-medium text-gold-text hover:underline">Try again</button>
+      </p>
+    );
+  }
 
   const closed = group.status === "closed";
   return (
