@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { StepDots } from "./StepDots";
 import { formatPaise } from "@/lib/format";
 import { MEALCARD_RAIL_ENABLED } from "@/lib/flags";
@@ -51,13 +52,13 @@ export function CheckoutPay({
           bottom-nav band on mobile. Amount is the server-quoted total verbatim. */}
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
         <div className="mx-auto max-w-md px-4 py-3">
-          <button
+          <Button
             type="button"
             onClick={onPay}
-            className="w-full rounded-full bg-gold px-8 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            shape="pill" size="fluid" className="w-full px-8 py-4 text-center text-base font-semibold"
           >
             Pay {formatPaise(totalPaise)} with UPI
-          </button>
+          </Button>
         </div>
       </div>
 

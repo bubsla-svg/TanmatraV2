@@ -1,6 +1,7 @@
 "use client";
 // Client: Firebase phone-auth is browser-only (reCAPTCHA + SMS confirmation).
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { firebaseConfigured, friendlyFirebaseError } from "@/lib/firebase";
 import { sendPhoneOtp, toE164, type PhoneVerification } from "@/lib/phoneAuth";
 import { verifyOtp, ApiError, type AuthUser } from "@/lib/api";
@@ -89,12 +90,12 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
             id="pa-phone" type="tel" inputMode="numeric" autoComplete="tel" value={phone}
             onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls}
           />
-          <button
+          <Button
             type="button" disabled={!phoneValid || busy} onClick={send}
-            className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+            shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
           >
             {busy ? "Sending…" : "Send code"}
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -104,12 +105,12 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
             onChange={(e) => setCode(e.target.value)} placeholder="123456" className={inputCls}
           />
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="button" disabled={!codeValid || busy} onClick={verify}
-              className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+              shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
             >
               {busy ? "Verifying…" : "Verify"}
-            </button>
+            </Button>
             <button type="button" onClick={() => setStage("phone")} className="-m-2 p-2 text-xs font-medium text-ink-muted hover:underline">
               Resend
             </button>

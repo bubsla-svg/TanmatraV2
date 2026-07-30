@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { screensForUser, type CheckoutUser } from "@/lib/checkout";
 import { emitFunnel } from "@/lib/funnel";
 import { formatPaise } from "@/lib/format";
@@ -70,9 +71,9 @@ export function CheckoutFlow({
           Subscription purchase goes live in the next wave. Ordering individual
           dishes from the menu is live now.
         </p>
-        <Link href="/menu" className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">
-          Order from the menu
-        </Link>
+        <Button asChild shape="pill" size="fluid" className="px-6 py-3 font-semibold">
+          <Link href="/menu">Order from the menu</Link>
+        </Button>
       </div>
     );
   }

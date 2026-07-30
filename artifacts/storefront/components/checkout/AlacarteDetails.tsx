@@ -1,6 +1,7 @@
 "use client";
 // Client: controlled address/consent inputs for the guest money path.
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
 import { useCart } from "@/components/cart/CartProvider";
@@ -149,13 +150,13 @@ export function AlacarteDetails({
             <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted">Est. total</span>
             <span className="tabular text-lg font-bold text-ink">{formatPaise(subtotalPaise(cart))}</span>
           </div>
-          <button
+          <Button
             type="button" disabled={!valid || busy}
             onClick={() => onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") })}
-            className="rounded-full bg-gold px-8 py-3.5 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+            shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40"
           >
             {busy ? "Opening payment…" : "Continue to payment"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

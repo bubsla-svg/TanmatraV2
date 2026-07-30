@@ -7,6 +7,7 @@
 import "@/lib/themes/stitch.css";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { useCart } from "@/components/cart/CartProvider";
@@ -37,13 +38,13 @@ export function MiniCartBar() {
             <span aria-hidden className="text-ink-faint">·</span>{" "}
             <span className="tabular font-semibold">{formatPaise(subtotalPaise(cart))}</span>
           </p>
-          <button
+          <Button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="min-h-11 rounded-full bg-gold px-5 py-2 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            shape="pill" size="fluid" className="min-h-11 px-5 py-2 font-semibold"
           >
             View cart
-          </button>
+          </Button>
         </div>
       </div>
       <CartDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
