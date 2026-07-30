@@ -5,7 +5,7 @@ import { CustomBuildHub } from "@/components/custom/CustomBuildHub";
 
 export const metadata: Metadata = {
   title: "Order Customization & Macro Build Hub | Tanmatra",
-  description: "Configure personalized clinical lunch bowls, adjust bioavailable protein extensions, and save custom routines directly to your Protocol Vault.",
+  description: "Pick a dish, adjust its real customisation options — bread, sauce, portion size and more where available — and add it to your order.",
 };
 
 export default async function CustomBuildPage() {
@@ -21,7 +21,8 @@ export default async function CustomBuildPage() {
           Order Customization Hub
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Construct custom daily nutrition bowls by pairing canonical culinary recipes with verified organic prebiotic fiber and muscle hypertrophy protein extensions.
+          Choose a dish and configure it using its own customisation options — where a dish
+          offers them, such as bread type, sauce or portion size — before adding it to your order.
         </p>
       </div>
 

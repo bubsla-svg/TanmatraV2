@@ -59,15 +59,15 @@ export function InstantPlanPreview({
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold text-ink">{dish.name}</span>
-              <span className="rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-medium text-sage-800 shrink-0">
+              <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text shrink-0">
                 {badge}
               </span>
             </div>
             <p className="text-xs leading-relaxed text-ink-muted">{rationale}</p>
             <div className="flex items-center justify-between border-t border-line pt-2 mt-1 text-xs">
-              <span className="font-semibold text-ink">{formatPaise(dish.price ?? 35000)}</span>
+              <span className="font-semibold text-ink">{formatPaise(dish.price)}</span>
               <div className="w-fit">
-                <AddToCart dish={{ id: dish.id, slug: dish.slug, name: dish.name, price: dish.price ?? 35000 }} />
+                <AddToCart dish={{ id: dish.id, slug: dish.slug, name: dish.name, price: dish.price }} />
               </div>
             </div>
           </div>
@@ -75,7 +75,7 @@ export function InstantPlanPreview({
       </div>
       <Link
         href="/plans"
-        className="mt-2 flex w-full items-center justify-center rounded-2xl bg-gold py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-gold/90 transition-colors"
+        className="mt-2 flex w-full items-center justify-center rounded-2xl bg-gold py-3.5 text-sm font-semibold text-[var(--gold-ink)] shadow-sm hover:bg-gold/90 transition-colors"
       >
         Activate Recurring Subscription &rarr;
       </Link>
