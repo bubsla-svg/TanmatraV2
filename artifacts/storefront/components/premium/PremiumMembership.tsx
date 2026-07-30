@@ -21,7 +21,10 @@ export function PremiumMembership() {
 
   const load = useCallback(async () => {
     try { setMe(await getPremium()); setNeedsAuth(false); }
-    catch (e) { setError(e instanceof ApiError ? e.message : "Couldn't load Premium."); }
+    catch (e) {
+      if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
+      else setError(e instanceof ApiError ? e.message : "Couldn't load Premium.");
+    }
   }, []);
   useEffect(() => { void load(); }, [load]);
 

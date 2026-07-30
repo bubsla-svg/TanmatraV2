@@ -82,8 +82,8 @@ export default function AboutPage() {
               </div>
               <h3 className="text-[15px] font-semibold text-ink">{d.name}</h3>
               <p className="text-xs text-gold-text">{d.title}</p>
-              <Link href="/rd" className="mt-4 text-xs font-semibold text-gold-text hover:underline">
-                Meet the team &rarr;
+              <Link href={`/rd/${d.slug}`} className="mt-4 text-xs font-semibold text-gold-text hover:underline">
+                Meet {d.name.split(" ")[0]} &rarr;
               </Link>
             </div>
           ))}

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const BENEFITS: { title: string; body: string }[] = [
   { title: "Priority delivery", body: "Your orders jump the kitchen queue and ship in our first rider wave — a kitchen-queue benefit, not a delivery-time guarantee." },
-  { title: "1 free RD consult / month", body: "A 30-minute video session with a registered dietitian — worth ₹1,499 — included every billing period." },
+  { title: "1 free RD consult / month", body: "A 30-minute video session with a registered dietitian — included every billing period." },
   { title: "Premium-only meals", body: "Chef-table dishes reserved for members, unlocked across the menu." },
   { title: "Exclusive add-ons", body: "Marine collagen, chef-curated tonics, and limited pantry drops in your checkout add-on rail." },
 ];

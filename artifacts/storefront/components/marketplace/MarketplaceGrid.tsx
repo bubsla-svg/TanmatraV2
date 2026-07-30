@@ -14,6 +14,7 @@ export function MarketplaceGrid() {
   const [category, setCategory] = useState<string>("all");
   const [items, setItems] = useState<MarketplaceItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { cart, setCart } = useCart();
 
   useEffect(() => {
     let live = true;
@@ -49,7 +50,6 @@ export function MarketplaceGrid() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items?.map((it) => {
-          const { cart, setCart } = useCart();
           return (
             <div key={it.id} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface">
               <Link href={`/marketplace/${it.slug}`} className="flex flex-1 flex-col">

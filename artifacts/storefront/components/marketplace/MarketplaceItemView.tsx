@@ -90,7 +90,9 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
           <span className="tabular w-5 text-center text-sm text-ink">{qty}</span>
           <button type="button" onClick={() => setQty((q) => Math.min(20, item.stockQty, q + 1))} aria-label="Increase" className="text-ink-muted hover:text-ink">+</button>
         </div>
-        <span className="text-xs text-ink-faint">{item.stockQty} in stock</span>
+        <span className={`text-xs ${item.stockQty === 0 ? "font-medium text-[var(--danger)]" : "text-ink-faint"}`}>
+          {item.stockQty === 0 ? "Out of stock" : `${item.stockQty} in stock`}
+        </span>
       </div>
 
       {item.longDescription && <p className="whitespace-pre-line text-xs leading-relaxed text-ink-muted">{item.longDescription}</p>}
@@ -122,16 +124,24 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => setCart(addOrUpdateQty(cart, { dishId: item.id, kind: "marketplace", slug: item.slug, name: item.name, pricePaise: item.pricePaise }, qty))}
-            className="rounded-xl border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink hover:bg-surface-raised"
-          >
-            Add to Cart
-          </button>
-          <button type="button" onClick={buy} disabled={busy} className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
-            {busy ? "Opening payment…" : `Place order · ${formatPaise(item.pricePaise * qty)}`}
-          </button>
+          {item.stockQty === 0 ? (
+            <p className="rounded-xl border border-line bg-surface-raised px-6 py-3 text-center text-sm font-medium text-ink-muted">
+              Currently out of stock
+            </p>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setCart(addOrUpdateQty(cart, { dishId: item.id, kind: "marketplace", slug: item.slug, name: item.name, pricePaise: item.pricePaise }, qty))}
+                className="rounded-xl border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink hover:bg-surface-raised"
+              >
+                Add to Cart
+              </button>
+              <button type="button" onClick={buy} disabled={busy} className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+                {busy ? "Opening payment…" : `Place order · ${formatPaise(item.pricePaise * qty)}`}
+              </button>
+            </>
+          )}
         </div>
       )}
       <p className="text-[11px] text-ink-faint">7-day return on unopened items. Sealed supplements are non-returnable for safety.</p>
