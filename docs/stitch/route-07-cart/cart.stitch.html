@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Clinical Metabolic OS - Cart</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#99907c",
+                    "on-surface-variant": "#d0c5af",
+                    "canvas": "#0A0A0A",
+                    "inverse-primary": "#735c00",
+                    "surface-container-lowest": "#0e0e0e",
+                    "tertiary-fixed": "#dde1ff",
+                    "on-primary-fixed-variant": "#574500",
+                    "on-tertiary": "#1c2b68",
+                    "error": "#ffb4ab",
+                    "surface-container": "#201f1f",
+                    "surface-container-low": "#1c1b1b",
+                    "primary": "#f2ca50",
+                    "tertiary-fixed-dim": "#b8c3ff",
+                    "on-secondary-fixed-variant": "#474746",
+                    "inverse-on-surface": "#313030",
+                    "surface": "#171717",
+                    "on-error-container": "#ffdad6",
+                    "surface-dim": "#131313",
+                    "secondary-fixed": "#e5e2e1",
+                    "primary-fixed-dim": "#e9c349",
+                    "background": "#131313",
+                    "error-container": "#93000a",
+                    "surface-container-high": "#2a2a2a",
+                    "on-tertiary-container": "#32407e",
+                    "on-primary-fixed": "#241a00",
+                    "on-tertiary-fixed-variant": "#344280",
+                    "ink-secondary": "#A3A3A3",
+                    "on-primary": "#3c2f00",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "hairline": "rgba(255, 255, 255, 0.06)",
+                    "on-secondary-container": "#b7b4b4",
+                    "on-primary-container": "#554300",
+                    "surface-variant": "#353534",
+                    "primary-fixed": "#ffe088",
+                    "tertiary-container": "#a1aff4",
+                    "on-tertiary-fixed": "#021453",
+                    "on-secondary": "#313030",
+                    "clay-danger": "#B0655A",
+                    "tertiary": "#c2cbff",
+                    "ember-warning": "#B6892F",
+                    "secondary": "#c8c6c5",
+                    "surface-tint": "#e9c349",
+                    "ink-primary": "#F5F5F4",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-error": "#690005",
+                    "surface-container-highest": "#353534",
+                    "inverse-surface": "#e5e2e1",
+                    "primary-container": "#d4af37",
+                    "sage-signal": "#7D9E7E",
+                    "glass": "rgba(23, 23, 23, 0.72)",
+                    "surface-bright": "#3a3939",
+                    "outline-variant": "#4d4635",
+                    "secondary-container": "#474746",
+                    "on-background": "#e5e2e1",
+                    "ink-on-gold": "#111318",
+                    "on-surface": "#e5e2e1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "clamp(3rem, 8vw, 6rem)",
+                    "card-padding": "1.5rem",
+                    "container-max": "1280px",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "label-caps": ["Satoshi"],
+                    "headline-lg": ["Satoshi"],
+                    "body-sm": ["Satoshi"],
+                    "body-lg": ["Satoshi"],
+                    "clinical-data": ["JetBrains Mono"],
+                    "headline-md": ["Satoshi"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                    "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                    "body-sm": ["14px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "clinical-data": ["14px", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                    "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #F5F5F4;
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .drag-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+        .cart-drawer-anim {
+            animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .background-blur-overlay {
+            backdrop-filter: blur(12px) brightness(0.4);
+        }
+        .stepper-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .stepper-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="font-body-lg text-body-lg">
+<!-- Blurred Background Context (Simulated Screen) -->
+<main class="fixed inset-0 z-0 background-blur-overlay">
+<!-- Using SCREEN_12 as requested in the context -->
+<div class="h-full w-full opacity-30 grayscale pointer-events-none">
+<img class="w-full h-full object-cover" data-alt="A background context showing the main menu of the Metabolic OS application, with darkened clinical laboratory aesthetics and food imagery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1SKBMSUgE1EICSx_zxhBzL226KXVuL9rm7Vm982dYgg9soG2RVPLI9Y4JHs4H_3FDA3H-PJuK4eRvQPOOzJ1TIgbd5N8uuSpVZblOCrNg_827rGM3MlUUPNFRPbu6HW_xf1SjSO-1fJ-k9nKfar6aYVHZNpSgPhMolFnfNV_7L-G9cORtM_GxlNFqjeE1WInRDyqZJtnlJ_0Sat_OK8_4PgwcpC9w2qUXEdMRFeF9E_dvzouvfRAt0ho757slZVXEBf6Ac7G0mCU"/>
+</div>
+</main>
+<!-- Cart Drawer Bottom Sheet -->
+<div class="fixed inset-0 z-50 flex items-end justify-center px-0 md:px-gutter">
+<div class="cart-drawer-anim w-full max-w-container-max bg-surface/95 backdrop-blur-md border-t border-hairline rounded-t-[2.5rem] shadow-2xl shadow-black/80 flex flex-col max-h-[90vh]">
+<!-- Drawer Header -->
+<div class="flex flex-col items-center pt-3 pb-6 px-gutter relative">
+<div class="drag-handle mb-4"></div>
+<div class="w-full flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-ink-primary">Your Cart</h2>
+<button class="p-2 text-on-surface-variant hover:text-ink-primary transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<!-- Line Items Scroll Area -->
+<div class="flex-1 overflow-y-auto px-gutter pb-8 space-y-6">
+<!-- Line Item 1 -->
+<div class="flex items-center gap-4 group">
+<div class="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 border border-hairline">
+<img class="w-full h-full object-cover" data-alt="Close-up of clinical keto-cleanse salmon salad with asparagus, gourmet plating on a dark moody background." src="https://lh3.googleusercontent.com/aida/AP1WRLtPz_MdfrxSJSykhcoyOkGZFhlyNe8lWTHY1YN4MzMPYquRJGsM5goB0mjQtdiMDqN6nq-HR9g_CNm6-k5XKiR6XmXjluPiH2O3cBUQwQOAf72tz11spmdQLBs1u93XmQ03p4z_C1WtuaNKMRs8psZSOsLB3Jy8Co1ti1bK7MKmYthf4QCoIzQV7oDBYcHRpJNQPO59OBugaP4WlI6AOptyBn9mX27iax1ZHCg1lcSmVKf0rX7qmcTdZhs"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-md text-[18px] text-ink-primary truncate">Keto Salmon Cleanse</h3>
+<p class="font-clinical-data text-clinical-data text-ink-secondary mt-1">₹1,650</p>
+</div>
+<div class="flex flex-col items-end gap-3">
+<div class="flex items-center gap-3 bg-surface-container-low rounded-full px-1 py-1 border border-hairline">
+<button class="stepper-btn"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-clinical-data text-ink-primary w-4 text-center">1</span>
+<button class="stepper-btn"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+<p class="font-clinical-data text-primary text-[16px] font-bold">₹1,650</p>
+</div>
+</div>
+<!-- Line Item 2 -->
+<div class="flex items-center gap-4 group">
+<div class="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 border border-hairline">
+<img class="w-full h-full object-cover" data-alt="Top-down shot of high-protein grass-fed beef ragu with zucchini noodles, clinical presentation on a dark background." src="https://lh3.googleusercontent.com/aida/AP1WRLvOyYQjpVPJSK5ZPbXoOdb9QrCBuaPet9ANqOn2idXYF9VH2rPfxTGO9MATzttqzT9DX2FalDc306xvFh7fuOpSua2SRH3yLuIQvXWX-KwpMg4Egu_wUgndlP7VD63qq7R69khTJl7r9dYIIW_Bltf4E_8wnDcMQ7Mh2B0WqaQJCogwaPma-3q7KkMCcFFQHfz4t9vquB8EvXetoQkM-WNnncKLGRvQI474FF_eUllkf3G5XIMnkshCKSg"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-md text-[18px] text-ink-primary truncate">Beef Ragu w/ Zoodles</h3>
+<p class="font-clinical-data text-clinical-data text-ink-secondary mt-1">₹1,450</p>
+</div>
+<div class="flex flex-col items-end gap-3">
+<div class="flex items-center gap-3 bg-surface-container-low rounded-full px-1 py-1 border border-hairline">
+<button class="stepper-btn"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-clinical-data text-ink-primary w-4 text-center">2</span>
+<button class="stepper-btn"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+<p class="font-clinical-data text-primary text-[16px] font-bold">₹2,900</p>
+</div>
+</div>
+<!-- Line Item 3 -->
+<div class="flex items-center gap-4 group">
+<div class="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 border border-hairline">
+<img class="w-full h-full object-cover" data-alt="Vibrant metabolic breakfast bowl with avocado and seeds, nutritious clinical meal for biohacking health." src="https://lh3.googleusercontent.com/aida/AP1WRLt5kximSRcLAruTFzU77k3ofX-hd0456SpyMkyCGJtdqDbevlEg8lxlz2wDHNcGnHBMGfNl3On4Ry2fbmWyCZsiYcmPcYbc7K_rvXhoFPqPV363ZZQkEra5VtomKlFCixqf6omHBour4OAeFivxclgeryHnqd3xF5laxLaWEuQxjo2qhRJ8UmZ-4rCC893wFc6NWSWayHm5OqRhJC9BRpM7RRkkuqpHodL_RcNfgae9pYoGL1G4E-OlReA"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-md text-[18px] text-ink-primary truncate">Metabolic Morning Bowl</h3>
+<p class="font-clinical-data text-clinical-data text-ink-secondary mt-1">₹350</p>
+</div>
+<div class="flex flex-col items-end gap-3">
+<div class="flex items-center gap-3 bg-surface-container-low rounded-full px-1 py-1 border border-hairline">
+<button class="stepper-btn"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-clinical-data text-ink-primary w-4 text-center">1</span>
+<button class="stepper-btn"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+<p class="font-clinical-data text-primary text-[16px] font-bold">₹350</p>
+</div>
+</div>
+</div>
+<!-- Drawer Footer -->
+<div class="bg-surface-container-lowest border-t border-hairline px-gutter pt-6 pb-10 rounded-t-3xl">
+<div class="flex justify-between items-end mb-6">
+<div class="flex flex-col gap-1">
+<p class="font-label-caps text-label-caps text-on-surface-variant">Subtotal (before delivery &amp; GST)</p>
+<p class="font-clinical-data text-3xl text-ink-primary">₹4,900</p>
+</div>
+<span class="font-clinical-data text-sage-signal text-sm bg-sage-signal/10 px-2 py-1 rounded">Tax Included</span>
+</div>
+<a class="block w-full bg-primary-container text-ink-on-gold font-bold py-4 rounded-full text-center transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20" href="/checkout">
+                    CHECKOUT
+                </a>
+<p class="text-center mt-4 font-body-sm text-body-sm text-ink-secondary opacity-60">
+                    Checkout goes live with the payment slice — your cart is saved
+                </p>
+</div>
+</div>
+</div>
+<!-- MiniCartBar (Underneath/Above Bottom Nav) -->
+<nav class="fixed bottom-14 left-0 right-0 z-40 px-gutter pb-safe">
+<div class="max-w-container-max mx-auto h-16 bg-surface-container-high/80 backdrop-blur-md border border-hairline rounded-2xl flex items-center justify-between px-6 shadow-2xl">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined text-primary">shopping_bag</span>
+<span class="absolute -top-1 -right-1 bg-primary text-ink-on-gold text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">3</span>
+</div>
+<div class="flex flex-col">
+<p class="font-clinical-data text-ink-primary">3 items · ₹4,900</p>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Delivery estimate: 32m</p>
+</div>
+</div>
+<button class="bg-primary/10 border border-primary/20 text-primary px-5 py-2 rounded-full font-label-caps text-label-caps hover:bg-primary/20 transition-all">
+                VIEW CART
+            </button>
+</div>
+</nav>
+<!-- Shared Components Integration -->
+<!-- BottomNavBar (Hidden by Drawer, but following hierarchy) -->
+<nav class="fixed bottom-0 w-full z-50 h-[4rem] bg-surface dark:bg-surface border-t border-hairline flex justify-around items-center px-4 pb-safe shadow-black/40">
+<div class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-label-caps text-label-caps mt-1">Plan</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary font-bold transition-all cursor-pointer scale-[0.98]">
+<span class="material-symbols-outlined">outdoor_grill</span>
+<span class="font-label-caps text-label-caps mt-1">Kitchen</span>
+</div>
+<div class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">biotech</span>
+<span class="font-label-caps text-label-caps mt-1">Labs</span>
+</div>
+<div class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps mt-1">Profile</span>
+</div>
+</nav>
+<!-- Micro-interaction Script -->
+<script>
+        // Simple scale effect for list items
+        document.querySelectorAll('.group').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                item.style.transform = 'translateX(4px)';
+                item.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+</body></html>

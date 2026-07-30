@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra | Plans</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Satoshi:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#a1aff4",
+                        "on-secondary-fixed-variant": "#474746",
+                        "glass": "rgba(23, 23, 23, 0.72)",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-tertiary-fixed": "#021453",
+                        "inverse-primary": "#735c00",
+                        "on-secondary-container": "#b7b4b4",
+                        "clay-danger": "#B0655A",
+                        "tertiary-fixed": "#dde1ff",
+                        "on-primary-container": "#554300",
+                        "on-primary-fixed-variant": "#574500",
+                        "on-error": "#690005",
+                        "canvas": "#0A0A0A",
+                        "on-tertiary-fixed-variant": "#344280",
+                        "secondary-container": "#474746",
+                        "on-background": "#e5e2e1",
+                        "surface-variant": "#353534",
+                        "primary": "#f2ca50",
+                        "ink-secondary": "#A3A3A3",
+                        "sage-signal": "#7D9E7E",
+                        "tertiary": "#c2cbff",
+                        "surface-dim": "#131313",
+                        "surface-bright": "#3a3939",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "ink-primary": "#F5F5F4",
+                        "surface": "#171717",
+                        "primary-fixed": "#ffe088",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#b8c3ff",
+                        "inverse-on-surface": "#313030",
+                        "surface-tint": "#e9c349",
+                        "surface-container-highest": "#353534",
+                        "on-surface-variant": "#d0c5af",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-container": "#201f1f",
+                        "on-primary-fixed": "#241a00",
+                        "surface-container-low": "#1c1b1b",
+                        "error-container": "#93000a",
+                        "on-primary": "#3c2f00",
+                        "ember-warning": "#B6892F",
+                        "outline-variant": "#4d4635",
+                        "on-tertiary": "#1c2b68",
+                        "secondary": "#c8c6c5",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "outline": "#99907c",
+                        "on-error-container": "#ffdad6",
+                        "hairline": "rgba(255, 255, 255, 0.06)",
+                        "on-tertiary-container": "#32407e",
+                        "on-secondary": "#313030",
+                        "ink-on-gold": "#111318",
+                        "surface-container-lowest": "#0e0e0e",
+                        "primary-container": "#d4af37",
+                        "background": "#131313",
+                        "inverse-surface": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "clamp(3rem, 8vw, 6rem)",
+                        "gutter": "1.5rem",
+                        "card-padding": "1.5rem",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Satoshi"],
+                        "headline-lg-mobile": ["Satoshi"],
+                        "headline-lg": ["Satoshi"],
+                        "body-sm": ["Satoshi"],
+                        "body-lg": ["Satoshi"],
+                        "label-caps": ["Satoshi"],
+                        "clinical-data": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "clinical-data": ["14px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #F5F5F4;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-blur {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .kinetic-tap:active {
+            transform: scale(0.98);
+            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .bg-graphite {
+            background-color: #171717;
+        }
+    </style>
+</head>
+<body class="font-body-lg text-on-surface selection:bg-primary selection:text-ink-on-gold">
+<main class="min-h-screen px-gutter pb-24 pt-12 flex flex-col items-center">
+<!-- GoalRouter Quiz Block -->
+<section class="w-full max-w-md mb-12">
+<div class="mb-8 text-center md:text-left">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-ink-primary">
+                    What is your primary metabolism goal?
+                </h1>
+</div>
+<div class="flex flex-col gap-3">
+<button class="kinetic-tap group w-full flex items-center justify-between p-5 rounded-3xl bg-surface-container border border-hairline hover:border-primary/40 transition-colors" onclick="location.href='/plan/stability'">
+<span class="font-headline-md text-[18px] text-ink-primary">Glucose Stability</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<button class="kinetic-tap group w-full flex items-center justify-between p-5 rounded-3xl bg-surface-container border border-hairline hover:border-primary/40 transition-colors" onclick="location.href='/plan/performance'">
+<span class="font-headline-md text-[18px] text-ink-primary">Performance</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<button class="kinetic-tap group w-full flex items-center justify-between p-5 rounded-3xl bg-surface-container border border-hairline hover:border-primary/40 transition-colors" onclick="location.href='/plan/longevity'">
+<span class="font-headline-md text-[18px] text-ink-primary">Longevity</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+<div class="mt-6 text-center">
+<a class="font-label-caps text-ink-secondary hover:text-primary transition-colors" href="#">Just browsing</a>
+</div>
+</section>
+<!-- TrialCard (Secondary) -->
+<section class="w-full max-w-md mb-12">
+<div class="relative overflow-hidden rounded-3xl border border-hairline p-8 bg-gradient-to-br from-surface-container-low to-canvas">
+<!-- Background visual reference -->
+<div class="absolute top-0 right-0 w-32 h-32 opacity-20 -mr-8 -mt-8 pointer-events-none">
+<img alt="Decorative Plating" class="w-full h-full object-cover rounded-full grayscale blur-sm" src="https://lh3.googleusercontent.com/aida/AP1WRLuEjFf2gxIqjz0-BVmfaKR-R8As2_logXeR47fTFMXFXAjVHzCX_msxCJ7Gpc-lAri4pQWWLU_rDdn19MhgdgMO5l-5gQVDzzvVcofeqCyGIa5eiSYpdkBiXmCv5snt4DR7eM6qP-M0FeAo35Jc3LvxjxayL_hZ2W28yn8QLrLDTR74iJZPVYhcJA6E5HEJ3EfO8YqsfYsFs-LtKOX6FofgUlMlyVFrGqklLZ7szq7SVNtydZ5rsJH4Z5Y"/>
+</div>
+<div class="relative z-10">
+<div class="inline-flex items-center gap-2 mb-4 bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
+<span class="material-symbols-outlined text-[16px]">science</span>
+<span class="font-label-caps">Limited Trial</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-ink-primary mb-2">3-Day Metabolic Trial</h2>
+<p class="font-body-sm text-ink-secondary mb-6 leading-relaxed">Experience precision-engineered nutrition and glucose tracking before committing to a full protocol.</p>
+<button class="kinetic-tap w-full py-4 border border-hairline rounded-full font-label-caps text-ink-primary hover:bg-white/5 transition-colors">
+                        ACTIVATE TRIAL
+                    </button>
+</div>
+</div>
+</section>
+<!-- PlanCard Comparison List -->
+<section class="w-full max-w-md flex flex-col gap-6">
+<!-- Plan: Desk Fuel -->
+<div class="bg-graphite border border-hairline rounded-3xl overflow-hidden shadow-xl shadow-black/20">
+<div class="p-card-padding">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline-md text-[20px] text-ink-primary">Desk Fuel</h3>
+<p class="font-body-sm text-ink-secondary">Optimized for cognitive clarity</p>
+</div>
+<div class="flex gap-2">
+<div class="h-8 w-8 rounded-full border border-hairline flex items-center justify-center text-ink-secondary">
+<span class="material-symbols-outlined text-[18px]">eco</span>
+</div>
+<div class="h-8 w-8 rounded-full border border-hairline flex items-center justify-center text-ink-secondary">
+<span class="material-symbols-outlined text-[18px]">egg</span>
+</div>
+</div>
+</div>
+<div class="flex items-baseline gap-2 mb-8">
+<span class="font-clinical-data text-[24px] text-primary">₹450</span>
+<span class="font-clinical-data text-ink-secondary">/meal</span>
+<div class="ml-auto text-right">
+<span class="block font-clinical-data text-ink-primary">₹12,600</span>
+<span class="block font-label-caps text-[10px] text-ink-secondary uppercase">Monthly billing</span>
+</div>
+</div>
+<button class="kinetic-tap w-full py-4 bg-primary text-ink-on-gold rounded-full font-label-caps flex items-center justify-center gap-2">
+                        SELECT PLAN
+                    </button>
+</div>
+</div>
+<!-- Plan: Protein Build -->
+<div class="bg-graphite border border-hairline rounded-3xl overflow-hidden">
+<div class="p-card-padding">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline-md text-[20px] text-ink-primary">Protein Build</h3>
+<p class="font-body-sm text-ink-secondary">Hypertrophy &amp; recovery focus</p>
+</div>
+<div class="flex gap-2">
+<div class="h-8 w-8 rounded-full border border-hairline flex items-center justify-center text-ink-secondary">
+<span class="material-symbols-outlined text-[18px]">restaurant</span>
+</div>
+</div>
+</div>
+<div class="flex items-baseline gap-2 mb-8">
+<span class="font-clinical-data text-[24px] text-primary">₹580</span>
+<span class="font-clinical-data text-ink-secondary">/meal</span>
+<div class="ml-auto text-right">
+<span class="block font-clinical-data text-ink-primary">₹16,240</span>
+<span class="block font-label-caps text-[10px] text-ink-secondary uppercase text-right">Monthly billing</span>
+</div>
+</div>
+<button class="kinetic-tap w-full py-4 bg-primary text-ink-on-gold rounded-full font-label-caps flex items-center justify-center gap-2">
+                        SELECT PLAN
+                    </button>
+</div>
+</div>
+<!-- Plan: Steady (Waitlist) -->
+<div class="bg-graphite/40 border border-hairline rounded-3xl overflow-hidden opacity-80">
+<div class="p-card-padding">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline-md text-[20px] text-ink-primary">Steady</h3>
+<p class="font-body-sm text-ink-secondary">Insulin sensitivity protocol</p>
+</div>
+<span class="font-label-caps text-primary bg-primary/10 px-2 py-1 rounded">SOON</span>
+</div>
+<div class="flex items-baseline gap-2 mb-8">
+<span class="font-clinical-data text-[24px] text-ink-secondary">₹720</span>
+<span class="font-clinical-data text-ink-secondary">/meal</span>
+</div>
+<button class="kinetic-tap w-full py-4 border border-primary/40 text-primary rounded-full font-label-caps hover:bg-primary/5 transition-colors">
+                        JOIN WAITLIST
+                    </button>
+</div>
+</div>
+<!-- Plan: GLP-1 (Waitlist) -->
+<div class="bg-graphite/40 border border-hairline rounded-3xl overflow-hidden opacity-80">
+<div class="p-card-padding">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline-md text-[20px] text-ink-primary">GLP-1 Support</h3>
+<p class="font-body-sm text-ink-secondary">Muscle-sparing medical diet</p>
+</div>
+<span class="font-label-caps text-primary bg-primary/10 px-2 py-1 rounded">SOON</span>
+</div>
+<div class="flex items-baseline gap-2 mb-8">
+<span class="font-clinical-data text-[24px] text-ink-secondary">₹950</span>
+<span class="font-clinical-data text-ink-secondary">/meal</span>
+</div>
+<button class="kinetic-tap w-full py-4 border border-primary/40 text-primary rounded-full font-label-caps hover:bg-primary/5 transition-colors">
+                        JOIN WAITLIST
+                    </button>
+</div>
+</div>
+<!-- B2B Section -->
+<div class="mt-8 mb-12 flex flex-col items-center border-t border-hairline pt-8">
+<h4 class="font-label-caps text-ink-secondary mb-2">Corporate Solutions</h4>
+<h3 class="font-headline-md text-[18px] text-ink-primary mb-4 text-center">Tanmatra for Teams</h3>
+<a class="font-body-sm text-primary flex items-center gap-1 group" href="#">
+                    Talk to Sales
+                    <span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+</a>
+</div>
+</section>
+<!-- Aesthetic Backdrop Elements (Hidden on mobile scroll, fixed on desktop) -->
+<div class="fixed top-1/4 -left-64 w-96 h-96 bg-primary/5 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<div class="fixed bottom-1/4 -right-64 w-96 h-96 bg-primary/5 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+</main>
+<!-- Footer Space for Global Chrome -->
+<div class="h-16 w-full pointer-events-none"></div>
+<script>
+        // Micro-interaction: Active state spring physics simulation
+        document.querySelectorAll('.kinetic-tap').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.style.transform = 'scale(0.96)';
+            });
+            button.addEventListener('mouseup', () => {
+                button.style.transform = 'scale(1)';
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

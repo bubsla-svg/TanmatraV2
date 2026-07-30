@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Desk Fuel | Subscription Configuration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&f[]=jet-brains-mono@500,400&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#c2cbff",
+                    "surface-dim": "#131313",
+                    "ink-secondary": "#A3A3A3",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-primary-container": "#554300",
+                    "surface-bright": "#3a3939",
+                    "secondary-container": "#474746",
+                    "on-surface": "#e5e2e1",
+                    "primary-fixed-dim": "#e9c349",
+                    "on-secondary-fixed-variant": "#474746",
+                    "on-tertiary": "#1c2b68",
+                    "surface-variant": "#353534",
+                    "on-secondary-container": "#b7b4b4",
+                    "background": "#131313",
+                    "on-tertiary-fixed-variant": "#344280",
+                    "on-surface-variant": "#d0c5af",
+                    "outline-variant": "#4d4635",
+                    "on-error": "#690005",
+                    "surface": "#171717",
+                    "ink-primary": "#F5F5F4",
+                    "surface-container-low": "#1c1b1b",
+                    "secondary": "#c8c6c5",
+                    "ink-on-gold": "#111318",
+                    "inverse-primary": "#735c00",
+                    "tertiary-container": "#a1aff4",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "primary": "#f2ca50",
+                    "on-primary-fixed-variant": "#574500",
+                    "on-primary": "#3c2f00",
+                    "on-secondary": "#313030",
+                    "surface-tint": "#e9c349",
+                    "surface-container-highest": "#353534",
+                    "outline": "#99907c",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-container-high": "#2a2a2a",
+                    "inverse-surface": "#e5e2e1",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#b8c3ff",
+                    "hairline": "rgba(255, 255, 255, 0.06)",
+                    "surface-container": "#201f1f",
+                    "glass": "rgba(23, 23, 23, 0.72)",
+                    "on-primary-fixed": "#241a00",
+                    "ember-warning": "#B6892F",
+                    "sage-signal": "#7D9E7E",
+                    "on-tertiary-fixed": "#021453",
+                    "error-container": "#93000a",
+                    "error": "#ffb4ab",
+                    "canvas": "#0A0A0A",
+                    "primary-container": "#d4af37",
+                    "on-tertiary-container": "#32407e",
+                    "on-background": "#e5e2e1",
+                    "inverse-on-surface": "#313030",
+                    "clay-danger": "#B0655A",
+                    "primary-fixed": "#ffe088",
+                    "tertiary-fixed": "#dde1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "3xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "clamp(3rem, 8vw, 6rem)",
+                    "gutter": "1.5rem",
+                    "card-padding": "1.5rem",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Satoshi"],
+                    "label-caps": ["Satoshi"],
+                    "headline-lg": ["Satoshi"],
+                    "headline-md": ["Satoshi"],
+                    "headline-lg-mobile": ["Satoshi"],
+                    "clinical-data": ["JetBrains Mono"],
+                    "body-sm": ["Satoshi"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "clinical-data": ["14px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-ring {
+            box-shadow: 0 0 0 2px #f2ca50;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0A0A0A;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-canvas text-on-surface font-body-lg selection:bg-primary selection:text-ink-on-gold overflow-x-hidden">
+<!-- Main Content Wrapper -->
+<main class="max-w-screen-xl mx-auto px-gutter pt-8 pb-32">
+<!-- Header Section -->
+<header class="mb-section-gap">
+<p class="font-label-caps text-label-caps text-primary mb-2 uppercase tracking-[0.2em]">Subscription Setup</p>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-ink-primary mb-2">Configure Your Protocol</h1>
+<p class="font-body-lg text-body-lg text-ink-secondary">Desk Fuel — Optimized for Cognitive Clarity</p>
+</header>
+<!-- Stepper Indicators (URL Driven Logic Simulation) -->
+<div class="flex gap-4 mb-12">
+<div class="h-1 flex-1 bg-primary rounded-full"></div>
+<div class="h-1 flex-1 bg-surface-container-highest rounded-full"></div>
+<div class="h-1 flex-1 bg-surface-container-highest rounded-full"></div>
+</div>
+<!-- Section 1: Protein Track -->
+<section class="mb-section-gap">
+<div class="flex items-center gap-3 mb-6">
+<span class="font-clinical-data text-clinical-data bg-surface-container px-3 py-1 rounded-full border border-hairline">01</span>
+<h2 class="font-headline-md text-headline-md text-ink-primary">Select Protein Track</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Veg Card -->
+<button class="group relative flex flex-col text-left bg-surface border border-hairline rounded-3xl overflow-hidden transition-all duration-300 hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary active-ring" onclick="selectProtein(this)">
+<div class="h-64 w-full relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent z-10"></div>
+<img alt="Nutritious gourmet vegetarian meal" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida/AP1WRLsDqj-AKWLpHdH1xubRSnbsvM7NfZGH_oowX9d9dtN6V3qnO46d1NF5UpGe5oYWFsM1m2O1EeaV4wyYrL3YpFcEhdG3NiSdVr65kcdR0Zx2lnolQIHCc6mMuZ6otPQQSQ490i6Mzg7al3mWmaoKuRiDC-xR-wW04tOrP7eTqrsmVBs452f260i8af3bFUOxC7VlIidq0agScT3vs8Df1eVvGALUuQOgAFN6ZWGhvv7tTFyX-KVnIlhBx_U"/>
+</div>
+<div class="p-card-padding relative z-20 -mt-12">
+<h3 class="font-headline-md text-headline-md text-ink-primary">Vegetarian</h3>
+<p class="font-body-sm text-body-sm text-ink-secondary mt-1">Plant-based excellence with high-fiber grains.</p>
+<div class="mt-4 font-clinical-data text-clinical-data text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">full_hd</span>
+<span>SOCIALLY CONSCIOUS</span>
+</div>
+</div>
+</button>
+<!-- Egg Card -->
+<button class="group relative flex flex-col text-left bg-surface border border-hairline rounded-3xl overflow-hidden transition-all duration-300 hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary" onclick="selectProtein(this)">
+<div class="h-64 w-full relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent z-10"></div>
+<div class="w-full h-full bg-surface-container" data-alt="A high-contrast macro shot of perfectly poached eggs with vibrant orange yolks on a bed of microgreens, styled with clinical precision on a dark basalt plate, premium food photography, cinematic lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAvTstGIgg2J7d6ljDlrHMUXpyGHB5pc9dKh3eCQvdjfcLqDFa88ekDPucVo-LozhZpTTiTK6f85uXL3ZR8_CBeSxa6upRE3PPPgVOmfPpMuQ9-9rpZ5Cq7pRsuFJ67y98sQ8ZpMwGU8NVTEEUU3sKbz2DyNEw7wCuUvin2_oQf7dcu6dZxVskL8dnV0Iz86Q8xkcb2b4tJEAqsv5KoJ-NncLz0kOFC2RdO1za3SbK9_3cJwTxytEHepQWTwl7gUs7mBVewgeu2nQY')"></div>
+</div>
+<div class="p-card-padding relative z-20 -mt-12">
+<h3 class="font-headline-md text-headline-md text-ink-primary">Eggitarian</h3>
+<p class="font-body-sm text-body-sm text-ink-secondary mt-1">Bio-available proteins with organic farm eggs.</p>
+<div class="mt-4 font-clinical-data text-clinical-data text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">egg</span>
+<span>MAX ABSORPTION</span>
+</div>
+</div>
+</button>
+<!-- Non-Veg Card -->
+<button class="group relative flex flex-col text-left bg-surface border border-hairline rounded-3xl overflow-hidden transition-all duration-300 hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary" onclick="selectProtein(this)">
+<div class="h-64 w-full relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent z-10"></div>
+<div class="w-full h-full bg-surface-container" data-alt="Tender, sous-vide chicken breast sliced thinly across a dark stone platter, garnished with clinical precision with edible flowers and herb-infused oils, dark moody laboratory aesthetic, 8k professional studio shot." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBp7bKfbKZ20xe0piLuc-rPO8ojGEZDdRVt5apus_R7wy3wTXFs4_mR5_3mvK6YGnxkSPjizVylMSftOGjwaWgkFTBIZlcgPDOv5m-_rxs0ziYds7m796gltDpv-ZsUdXk_QGxNj4E3VGjCL2XfRIV5MAe1F3K_Yrpf9cE1xdrxLXfGpUP8Zlriko2Qr42UgP0jWT4d1pPqnntypSyFyTuYx3YgwFog2sCHkjK1WU08xTATBCMV3nvtBjVb3CtF8JFC8sumePEZvvY')"></div>
+</div>
+<div class="p-card-padding relative z-20 -mt-12">
+<h3 class="font-headline-md text-headline-md text-ink-primary">Non-Vegetarian</h3>
+<p class="font-body-sm text-body-sm text-ink-secondary mt-1">Premium lean meats for metabolic endurance.</p>
+<div class="mt-4 font-clinical-data text-clinical-data text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">restaurant</span>
+<span>COMPLETE PROFILE</span>
+</div>
+</div>
+</button>
+</div>
+</section>
+<!-- Section 2: Billing Cycle -->
+<section class="mb-section-gap">
+<div class="flex items-center gap-3 mb-6">
+<span class="font-clinical-data text-clinical-data bg-surface-container px-3 py-1 rounded-full border border-hairline">02</span>
+<h2 class="font-headline-md text-headline-md text-ink-primary">Billing Cycle</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+<!-- Weekly -->
+<div class="cursor-pointer group flex items-center justify-between p-6 bg-surface border border-hairline rounded-2xl hover:border-primary/40 transition-all duration-200" onclick="selectBilling(this)">
+<div class="flex items-center gap-4">
+<div class="w-5 h-5 rounded-full border-2 border-hairline flex items-center justify-center group-[.active]:border-primary transition-colors">
+<div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 group-[.active]:opacity-100"></div>
+</div>
+<div>
+<p class="font-headline-md text-headline-md text-ink-primary leading-none">Weekly</p>
+<p class="font-body-sm text-body-sm text-ink-secondary mt-1">Billed every 7 days</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-clinical-data text-headline-md text-ink-primary">₹3,200</p>
+<p class="font-clinical-data text-[12px] text-ink-secondary">PER WEEK</p>
+</div>
+</div>
+<!-- Monthly (Selected by default) -->
+<div class="active cursor-pointer group flex items-center justify-between p-6 bg-surface border border-primary rounded-2xl hover:border-primary/40 transition-all duration-200 active" onclick="selectBilling(this)">
+<div class="flex items-center gap-4">
+<div class="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+</div>
+<div>
+<p class="font-headline-md text-headline-md text-ink-primary leading-none">Monthly</p>
+<p class="font-body-sm text-body-sm text-sage-signal mt-1">Most Popular • Save 15%</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-clinical-data text-headline-md text-ink-primary">₹12,600</p>
+<p class="font-clinical-data text-[12px] text-ink-secondary">PER MONTH</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Order Summary -->
+<section class="max-w-2xl">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary">receipt_long</span>
+<h2 class="font-headline-md text-headline-md text-ink-primary">Current Quote</h2>
+</div>
+<div class="bg-surface border border-hairline rounded-3xl p-8 space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-ink-secondary font-body-lg">Subtotal</span>
+<span class="font-clinical-data text-body-lg text-ink-primary tabular-nums">₹12,600</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-ink-secondary font-body-lg">GST</span>
+<span class="font-clinical-data text-body-lg text-ink-primary uppercase">Incl.</span>
+</div>
+<div class="flex justify-between items-center py-2 border-y border-hairline">
+<span class="text-sage-signal font-body-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+                        Credit Applied
+                    </span>
+<span class="font-clinical-data text-body-lg text-sage-signal tabular-nums">-₹500</span>
+</div>
+<div class="flex justify-between items-center pt-2">
+<span class="font-headline-md text-headline-md text-ink-primary">Estimated Total</span>
+<span class="font-clinical-data text-[32px] text-primary tabular-nums tracking-tighter">₹12,100</span>
+</div>
+</div>
+<!-- Policy Microcopy -->
+<div class="mt-6 flex items-start gap-3 px-4">
+<span class="material-symbols-outlined text-ink-secondary text-[20px]">info</span>
+<p class="text-ink-secondary text-body-sm italic">
+                    All protocols are clinical-grade and managed via the Metabolic OS. Cancellations require 48-hour notice prior to the next billing cycle.
+                </p>
+</div>
+</section>
+</main>
+<!-- Sticky Bottom Bar -->
+<div class="fixed bottom-0 left-0 w-full bg-glass backdrop-blur-md border-t border-hairline z-[60] pb-safe">
+<div class="max-w-screen-xl mx-auto px-gutter h-24 flex items-center justify-between gap-6">
+<div class="flex flex-col">
+<span class="font-clinical-data text-[12px] text-ink-secondary uppercase tracking-widest">Total Payable</span>
+<span class="font-clinical-data text-[28px] text-ink-primary tabular-nums leading-tight">₹12,100</span>
+</div>
+<button class="flex-1 md:flex-none md:min-w-[280px] bg-primary text-ink-on-gold font-label-caps text-label-caps py-4 rounded-full flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_20px_rgba(242,202,80,0.3)] group">
+                CONTINUE TO PAYMENT
+                <span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+<!-- Safety Margin for System Bottom Nav (4rem as requested) -->
+<div class="h-16 w-full"></div>
+</div>
+<script>
+        function selectProtein(element) {
+            // Remove active-ring from all siblings
+            const parent = element.parentElement;
+            parent.querySelectorAll('button').forEach(btn => {
+                btn.classList.remove('active-ring');
+                btn.classList.remove('border-primary');
+            });
+            // Add to current
+            element.classList.add('active-ring');
+            element.classList.add('border-primary');
+            
+            // Interaction feedback
+            element.style.transform = 'scale(0.98)';
+            setTimeout(() => { element.style.transform = 'scale(1)'; }, 100);
+        }
+
+        function selectBilling(element) {
+            const parent = element.parentElement;
+            parent.querySelectorAll('div').forEach(item => {
+                item.classList.remove('border-primary', 'active');
+                item.classList.add('border-hairline');
+            });
+            element.classList.remove('border-hairline');
+            element.classList.add('border-primary', 'active');
+        }
+    </script>
+</body></html>
