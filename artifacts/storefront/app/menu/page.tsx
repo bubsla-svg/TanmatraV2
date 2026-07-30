@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
+import "@/lib/themes/stitch.css";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
@@ -28,7 +30,8 @@ export default async function MenuPage({
   const openDish = dishSlug ? findDish(dishSlug, dishes) : undefined;
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-8">
+    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <section className="mx-auto max-w-screen-xl px-4 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">The menu</h1>
         <p className="mt-1 mb-4 text-sm text-ink-muted">
@@ -40,5 +43,6 @@ export default async function MenuPage({
       <PersonalizedMenu dishes={orderable} />
       {openDish && <DishDrawer dish={openDish} />}
     </section>
+    </div>
   );
 }
