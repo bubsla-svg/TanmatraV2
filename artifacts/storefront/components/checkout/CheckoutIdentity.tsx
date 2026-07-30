@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { StepDots } from "./StepDots";
 import { CERTAINTY } from "@/lib/checkout";
 
@@ -46,14 +47,14 @@ export function CheckoutIdentity({
         <p className="mt-1.5 text-xs text-ink-faint">We use this to reach you about your order — no passwords, ever.</p>
       </div>
       <p className="text-xs font-medium text-sage-text">{CERTAINTY.identity}</p>
-      <button
+      <Button
         type="button"
         disabled={!valid}
         onClick={() => onSubmitPhone(phone)}
-        className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+        shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
       >
         Continue
-      </button>
+      </Button>
     </div>
   );
 }

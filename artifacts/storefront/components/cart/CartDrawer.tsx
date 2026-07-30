@@ -9,6 +9,7 @@ import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { useCart } from "@/components/cart/CartProvider";
+import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { CartUpsellRail, type UpsellCandidate } from "./CartUpsellRail";
 
@@ -31,12 +32,9 @@ export function CartDrawer({
   let footer: ReactNode;
   if (LIVE_CHECKOUT_ENABLED) {
     footer = (
-      <a
-        href="/checkout?mode=alacarte"
-        className="block min-h-11 rounded-full bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-      >
-        Checkout
-      </a>
+      <Button asChild shape="pill" size="fluid" className="block min-h-11 px-5 py-3 text-center font-semibold">
+        <a href="/checkout?mode=alacarte">Checkout</a>
+      </Button>
     );
   } else {
     footer = (

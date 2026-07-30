@@ -1,6 +1,7 @@
 "use client";
 // Client: the plan flow's sign-in gate.
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { firebaseConfigured } from "@/lib/firebase";
 import { PhoneAuth } from "../PhoneAuth";
 import type { AuthUser } from "@/lib/api";
@@ -30,9 +31,9 @@ export function PlanIdentityGate({
           <p role="alert" className="text-sm font-medium text-[var(--danger)]">
             Plan sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>
-          <Link href="/menu" className="self-start rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">
-            Browse the menu
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="self-start px-5 py-3 font-semibold">
+            <Link href="/menu">Browse the menu</Link>
+          </Button>
         </div>
       )}
     </div>

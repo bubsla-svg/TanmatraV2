@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
 import { itemCount, type CartState } from "@/lib/cartStore";
 import { runAlacarteCheckout, finishAlacartePayment } from "@/lib/moneyPath";
@@ -116,12 +117,12 @@ export function AlacarteCheckout() {
         <h1 className="text-xl font-semibold text-ink">Your cart is empty</h1>
         <p className="text-sm text-ink-muted">Add a dish or a pantry item and it&rsquo;ll show up here to check out.</p>
         <div className="flex flex-wrap gap-2">
-          <Link href="/menu" className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">
-            Browse meals
-          </Link>
-          <Link href="/marketplace" className="rounded-full border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink transition-transform hover:bg-surface-raised active:scale-[0.98]">
-            Browse marketplace
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="px-6 py-3 font-semibold">
+            <Link href="/menu">Browse meals</Link>
+          </Button>
+          <Button asChild variant="outline" shape="pill" size="fluid" className="bg-surface px-6 py-3 font-semibold">
+            <Link href="/marketplace">Browse marketplace</Link>
+          </Button>
         </div>
       </div>
     );
@@ -134,9 +135,9 @@ export function AlacarteCheckout() {
         <p className="text-sm text-ink-muted">
           Pantry &amp; marketplace items ship separately from meals and aren&rsquo;t part of this checkout — buy them from their own product page.
         </p>
-        <Link href="/marketplace" className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">
-          Go to marketplace
-        </Link>
+        <Button asChild shape="pill" size="fluid" className="px-6 py-3 font-semibold">
+          <Link href="/marketplace">Go to marketplace</Link>
+        </Button>
       </div>
     );
   }

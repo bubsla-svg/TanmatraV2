@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { StepDots } from "./StepDots";
 import { formatPaise } from "@/lib/format";
 import { CERTAINTY } from "@/lib/checkout";
@@ -104,14 +105,14 @@ export function CheckoutAddress({
       </div>
       <p className="text-xs text-ink-muted">Delivered 12:30&ndash;1:30, weekdays.</p>
       <p className="text-xs font-medium text-sage-text">{CERTAINTY.address}</p>
-      <button
+      <Button
         type="button"
         disabled={!valid}
         onClick={onDeliver}
-        className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+        shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
       >
         Deliver here
-      </button>
+      </Button>
     </div>
   );
 }
