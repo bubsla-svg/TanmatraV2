@@ -191,3 +191,29 @@ restart to take effect.
 web UI where generation isn't capped at 60 s and the id is visible, then drop the
 returned HTML into `docs/stitch/route-NN-*/` and the wiring can proceed here as it
 did for Batches 1–2.
+
+### Root cause found (follow-up session, 2026-07-30)
+
+The 60 s cap is **client-side**: this environment launches with
+`MCP_TOOL_TIMEOUT=60000`, which bounds every MCP call regardless of server. The
+official endpoint (`https://stitch.googleapis.com/mcp`, `X-Goog-Api-Key` header)
+serves tools fine once the schema-reference issue is absent — the whole ladder
+above was re-run against it with identical results: five briefs at ~1–2 KB all
+timed out; one four-line prompt (Flash, run alone) completed in-window; the same
+terse prompt timed out when run concurrently with four others or on a Pro model.
+"Length-bound" was really *duration*-bound all along.
+
+Two more properties confirmed against the official endpoint:
+
+- **Timeout is still terminal**: `list_screens` returns `{}` and
+  `list_projects.screenInstances` stays `0` even for a screen the success payload
+  itself confirmed COMPLETE moments earlier. There is no recovery handle.
+- **The API key selects the account**: a per-key Stitch account owns its own
+  projects. The `AQ.…efMOm6g` key sees a 24-project account where
+  `12062470764535558612` (Batches 1–2) does not exist — reads against it fail
+  with `Requested entity was not found`, which looks like a data-loss bug but is
+  just the wrong account.
+
+**Fix**: relaunch the session with `MCP_TOOL_TIMEOUT=600000` (10 min) — the env
+var is read at CLI start and cannot be changed mid-session — and run one
+generation at a time. Or use the Stitch web UI as above.
