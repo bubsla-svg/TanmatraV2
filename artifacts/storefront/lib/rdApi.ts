@@ -60,6 +60,30 @@ export async function getRd(
   return rds.find((r) => r.slug === slug) ?? null;
 }
 
+export type RdLookup =
+  | { ok: true; rd: RdProfile }
+  | { ok: false; reason: "not_found" | "unavailable" };
+
+/**
+ * Like `getRd`, but distinguishes "no such slug" from "couldn't reach the
+ * directory" — `getRd`/`getRds` collapse both to a falsy value, which made
+ * `/rd/[slug]` 404 a real dietitian's profile during a transient API outage.
+ */
+export async function getRdOrReason(
+  slug: string,
+  fetchImpl: FetchImpl = fetch,
+): Promise<RdLookup> {
+  try {
+    const res = await fetchImpl(`${API_BASE}/api/rd/directory`, REVALIDATE);
+    if (!res.ok) return { ok: false, reason: "unavailable" };
+    const data = (await res.json()) as { rds?: RdProfile[] };
+    const rd = (data.rds ?? []).find((r) => r.slug === slug);
+    return rd ? { ok: true, rd } : { ok: false, reason: "not_found" };
+  } catch {
+    return { ok: false, reason: "unavailable" };
+  }
+}
+
 /** Whether the RD offers a free 15-minute intro. */
 export function hasFreeIntro(p: RdPricing): boolean {
   return p.intro_15m === 0;
