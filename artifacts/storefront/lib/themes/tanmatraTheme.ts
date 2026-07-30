@@ -22,7 +22,12 @@ export const tanmatraTheme = defineTheme({
     /* ── Text & Ink Ramp ─────────────────────────────────────────────────── */
     '--color-text-primary': ['#28282a', '#f3f3f5'],
     '--color-text-secondary': ['#5e5e5e', '#ababb0'],
-    '--color-text-tertiary': ['#84848b', '#84848b'],
+    // Stone neutral T45 light / T55 dark. NOT one shared #84848b (T55-ish):
+    // that measures 3.71:1 on the light surface and 3.40:1 on the light app
+    // background — below AA for body text, which tanmatraTheme.test.ts asserts
+    // for every text token. Both stops below are real Stone ramp values, so the
+    // palette stays on-ramp: light 5.38 / 4.85, dark 5.02 / 4.55.
+    '--color-text-tertiary': ['#6a6a6f', '#838388'],
 
     /* ── Border & Divider Ramp ───────────────────────────────────────────── */
     '--color-border': ['#d8d8db', '#343438'],
