@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { ProofStrip } from "@/components/landing/ProofStrip";
-import { FaqAccordion } from "@/components/landing/FaqAccordion";
+import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { StickyCtaBar } from "@/components/landing/StickyCtaBar";
 import { LeadForm } from "@/components/landing/LeadForm";
 import { SITE_URL } from "@/lib/siteUrl";
@@ -66,16 +66,16 @@ const CLINICAL_PILLARS = [
 
 const FAQ_ITEMS = [
   {
-    question: "How are contraindications and food allergies verified before cooking?",
-    answer: "Every patient formulation runs through our therapeutic governance engine against known allergies and medical profiles before our culinary desk begins preparation.",
+    q: "How are contraindications and food allergies verified before cooking?",
+    a: "Every patient formulation runs through our therapeutic governance engine against known allergies and medical profiles before our culinary desk begins preparation.",
   },
   {
-    question: "What is the requirement for the IDA / RD license registration number?",
-    answer: "To maintain strict clinical integrity, we only enroll certified registered dietitians and clinical nutritionists. Your license number is verified against medical registries by our partnership committee.",
+    q: "What is the requirement for the IDA / RD license registration number?",
+    a: "To maintain strict clinical integrity, we only enroll certified registered dietitians and clinical nutritionists. Your license number is verified against medical registries by our partnership committee.",
   },
   {
-    question: "Can I adjust macronutrient targets mid-cycle if a patient's metabolic response shifts?",
-    answer: "Absolutely. You can modify macro split targets or therapeutic exclusions through the partner desk at any time with immediate effect on next-day preparation.",
+    q: "Can I adjust macronutrient targets mid-cycle if a patient's metabolic response shifts?",
+    a: "Absolutely. You can modify macro split targets or therapeutic exclusions through the partner desk at any time with immediate effect on next-day preparation.",
   },
 ];
 
@@ -107,7 +107,10 @@ export default function DietitiansPartnerPage() {
         </div>
       </section>
 
-      <FaqAccordion pageSlug="/partners/dietitians" items={FAQ_ITEMS} />
+      <section className="border-t border-line py-12">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">Frequently Asked Questions</h2>
+        <FaqAccordion pageSlug="/partners/dietitians" items={FAQ_ITEMS} defaultOpen={null} />
+      </section>
 
       <section id="rd-apply" className="border-t border-line py-12">
         <div className="mx-auto max-w-xl">

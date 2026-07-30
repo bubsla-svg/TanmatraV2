@@ -4,7 +4,7 @@ import { BenefitGrid } from "@/components/landing/BenefitGrid";
 import { GymRevenueCalculator } from "@/components/landing/GymRevenueCalculator";
 import { CorporateLeadForm } from "@/components/corporate/CorporateLeadForm";
 import { ProofStrip } from "@/components/landing/ProofStrip";
-import { FaqAccordion } from "@/components/landing/FaqAccordion";
+import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { StickyCtaBar } from "@/components/landing/StickyCtaBar";
 import { GYMS_LANDING as L, GYM_MODELS } from "@/content/landing/partners";
 import { SITE_URL } from "@/lib/siteUrl";
@@ -33,16 +33,16 @@ const PROOF_ITEMS = [
 
 const FAQ_ITEMS = [
   {
-    question: "How does the revenue split and payout work?",
-    answer: "Commission is computed automatically on every active subscription from your gym members and paid out monthly via direct NEFT transfer.",
+    q: "How does the revenue split and payout work?",
+    a: "Commission is computed automatically on every active subscription from your gym members and paid out monthly via direct NEFT transfer.",
   },
   {
-    question: "Do we need kitchen space or meal handling staff?",
-    answer: "Zero operations required on your end. We handle prep in our hygienic central facilities and provide direct last-mile delivery to your members' doorsteps or desks.",
+    q: "Do we need kitchen space or meal handling staff?",
+    a: "Zero operations required on your end. We handle prep in our hygienic central facilities and provide direct last-mile delivery to your members' doorsteps or desks.",
   },
   {
-    question: "Can our personal trainers customize meal macros for clients?",
-    answer: "Yes! Your trainers can coordinate directly with our clinical desk to adjust caloric targets, protein load, and preference overrides.",
+    q: "Can our personal trainers customize meal macros for clients?",
+    a: "Yes! Your trainers can coordinate directly with our clinical desk to adjust caloric targets, protein load, and preference overrides.",
   },
 ];
 
@@ -80,7 +80,10 @@ export default function GymsPartnerPage() {
         </div>
       </section>
 
-      <FaqAccordion pageSlug="/partners/gyms" items={FAQ_ITEMS} />
+      <section className="border-t border-line py-12">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">Frequently Asked Questions</h2>
+        <FaqAccordion pageSlug="/partners/gyms" items={FAQ_ITEMS} defaultOpen={null} />
+      </section>
 
       <section id="lead-form" className="border-t border-line py-12">
         <div className="mx-auto max-w-xl">
