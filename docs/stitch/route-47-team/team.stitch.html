@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra - The Team</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container": "#eeeef0",
+                      "tertiary": "#9c4325",
+                      "surface-bright": "#f9f9fc",
+                      "on-secondary-fixed-variant": "#304e33",
+                      "surface-container-low": "#f3f3f6",
+                      "on-tertiary-fixed-variant": "#7d2d10",
+                      "on-secondary-fixed": "#03210b",
+                      "primary-fixed": "#ffe088",
+                      "tertiary-fixed": "#ffdbd0",
+                      "on-surface-variant": "#4d4635",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#d0c5af",
+                      "secondary-container": "#c8ecc8",
+                      "primary-fixed-dim": "#e9c349",
+                      "secondary-fixed-dim": "#adcfad",
+                      "primary-container": "#d4af37",
+                      "tertiary-fixed-dim": "#ffb59d",
+                      "on-tertiary-container": "#7b2b0e",
+                      "surface-variant": "#e2e2e5",
+                      "surface-container-high": "#e8e8ea",
+                      "tertiary-container": "#ff9876",
+                      "on-primary-container": "#554300",
+                      "surface-container-highest": "#e2e2e5",
+                      "on-primary-fixed": "#241a00",
+                      "inverse-surface": "#2f3133",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#390b00",
+                      "on-secondary": "#ffffff",
+                      "secondary": "#476649",
+                      "inverse-primary": "#e9c349",
+                      "secondary-fixed": "#c8ecc8",
+                      "on-background": "#1a1c1e",
+                      "surface-tint": "#735c00",
+                      "inverse-on-surface": "#f0f0f3",
+                      "on-primary-fixed-variant": "#574500",
+                      "surface-dim": "#dadadc",
+                      "error-container": "#ffdad6",
+                      "outline": "#7f7663",
+                      "primary": "#735c00",
+                      "on-error": "#ffffff",
+                      "on-surface": "#1a1c1e",
+                      "surface": "#f9f9fc",
+                      "background": "#f9f9fc",
+                      "on-error-container": "#93000a",
+                      "on-secondary-container": "#4d6c4f",
+                      "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "2xl": "1rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "container-max": "1200px",
+                      "unit": "4px",
+                      "card-padding": "24px"
+              },
+              "fontFamily": {
+                      "headline-sm": [
+                              "Satoshi"
+                      ],
+                      "body-md": [
+                              "Satoshi"
+                      ],
+                      "body-sm": [
+                              "Satoshi"
+                      ],
+                      "display-lg": [
+                              "Satoshi"
+                      ],
+                      "body-lg": [
+                              "Satoshi"
+                      ],
+                      "macro-numeric": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Satoshi"
+                      ],
+                      "macro-label": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "headline-sm": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "macro-numeric": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "macro-label": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #FBFAF7;
+        }
+        .hairline-border {
+            border: 1px solid #E7E3DA;
+        }
+        .gold-text {
+            color: #D4AF37;
+        }
+        .bg-soft-gold {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        .bg-soft-blue {
+            background-color: rgba(71, 102, 73, 0.1); /* Using secondary color tint for "blue" to match clinical OS */
+        }
+        .bg-soft-sage {
+            background-color: rgba(163, 177, 138, 0.15); /* Sage tint */
+        }
+        .squircle {
+            border-radius: 20px;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            box-shadow: 0 4px 20px rgba(26, 28, 30, 0.04);
+            transform: translateY(-2px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface antialiased min-h-screen">
+<!-- Top Navigation (Shell structure from JSON) -->
+<header class="bg-background dark:bg-background border-b border-outline-variant flex justify-between items-center w-full px-margin-mobile md:px-gutter max-w-container-max mx-auto h-16 sticky top-0 z-40 bg-opacity-90 backdrop-blur-sm">
+<div class="flex items-center gap-4">
+<button aria-label="Menu" class="text-primary dark:text-primary-fixed hover:bg-surface-container-low transition-colors p-2 rounded-full hidden md:flex">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight">Tanmatra</div>
+</div>
+<!-- Desktop Nav -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-macro-label text-macro-label text-on-surface-variant hover:text-primary transition-all" href="#">Home</a>
+<a class="font-macro-label text-macro-label text-primary font-bold hover:text-primary transition-all flex flex-col items-center" href="#">Team</a>
+<a class="font-macro-label text-macro-label text-on-surface-variant hover:text-primary transition-all" href="#">Nutrition</a>
+<a class="font-macro-label text-macro-label text-on-surface-variant hover:text-primary transition-all" href="#">Profile</a>
+</nav>
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A small circular avatar placeholder image showing a minimalistic abstract clinical portrait of a patient. The background is a soft beige tone (#FBFAF7) typical of a high-end apothecary. The lighting is soft and flattering." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCOLteoHMQhi2DcDLevN7aUlC5a0sPjZG7eN0n8U1HTHv3-mPIi6BmN0oA-Cooejg2wSkMDVUFUPLAFu2f1JbGvZXVeQ3OsWfS5UI4iInW4MagKZ15MLZyhojKD-tZ91tXZI0V_cMXYgNiBHTcpaYlBBEE4iytga55jxMtwcucBIZ9Y-84Hl3kZLWky4QCfJLPovk8NHtEUXiJw_l4Ggn3zYl9L7Slxq4u2776Est9awWhmfExDgkn2R5eYr5sYWZkQCdeMJfKC9s"/>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-gutter py-16 md:py-24">
+<!-- Header Section -->
+<section class="mb-16 md:mb-24 text-center md:text-left max-w-3xl">
+<h2 class="font-macro-label text-macro-label gold-text uppercase tracking-widest mb-4">THE TEAM</h2>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-6">The people behind your plate</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">A clinical and culinary collective dedicated to your metabolic health.</p>
+</section>
+<!-- Section 1: Registered dietitians -->
+<section class="mb-20">
+<div class="flex items-center mb-8">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Registered dietitians</h3>
+<div class="h-px bg-[#E7E3DA] flex-grow ml-6"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Card 1 -->
+<article class="bg-surface-container-lowest rounded-2xl hairline-border p-8 card-hover flex flex-col h-full squircle relative group">
+<div class="flex items-start justify-between mb-6">
+<div class="w-16 h-16 rounded-full bg-soft-gold flex items-center justify-center font-headline-sm text-primary shrink-0 relative">
+                            AN
+                        </div>
+<div class="bg-primary-container text-on-primary-container font-macro-label text-macro-label px-3 py-1 rounded-full absolute top-8 right-8">
+                            RD
+                        </div>
+</div>
+<div class="mb-auto">
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-1">Dr. Anjali Nair</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Lead Metabolic Dietitian</p>
+<blockquote class="font-body-md text-body-md text-on-surface italic border-l-2 border-outline-variant pl-4 py-1 mb-6">
+                            "Food is the most powerful clinical intervention we have."
+                        </blockquote>
+</div>
+<div class="flex items-center justify-between mt-6 pt-6 border-t border-outline-variant/30">
+<div class="font-macro-numeric text-macro-numeric text-on-surface-variant bg-surface px-3 py-1 rounded-md">8 years</div>
+<a class="font-macro-label text-macro-label gold-text hover:opacity-80 transition-opacity flex items-center gap-1 group-hover:gap-2 duration-300" href="#">
+                            View profile <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-lowest rounded-2xl hairline-border p-8 card-hover flex flex-col h-full squircle relative group">
+<div class="flex items-start justify-between mb-6">
+<div class="w-16 h-16 rounded-full bg-soft-blue flex items-center justify-center font-headline-sm text-secondary shrink-0 relative">
+                            MV
+                        </div>
+<div class="bg-primary-container text-on-primary-container font-macro-label text-macro-label px-3 py-1 rounded-full absolute top-8 right-8">
+                            RD
+                        </div>
+</div>
+<div class="mb-auto">
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-1">Marcus Vance</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Specialist Dietitian, MS RD</p>
+<blockquote class="font-body-md text-body-md text-on-surface italic border-l-2 border-outline-variant pl-4 py-1 mb-6">
+                            "Precision nutrition bridges the gap between lab data and the lunch table."
+                        </blockquote>
+</div>
+<div class="flex items-center justify-between mt-6 pt-6 border-t border-outline-variant/30">
+<div class="font-macro-numeric text-macro-numeric text-on-surface-variant bg-surface px-3 py-1 rounded-md">10 years</div>
+<a class="font-macro-label text-macro-label gold-text hover:opacity-80 transition-opacity flex items-center gap-1 group-hover:gap-2 duration-300" href="#">
+                            View profile <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</article>
+</div>
+</section>
+<!-- Section 2: Chefs -->
+<section class="mb-16">
+<div class="flex items-center mb-8">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Chefs</h3>
+<div class="h-px bg-[#E7E3DA] flex-grow ml-6"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Card 1 -->
+<article class="bg-surface-container-lowest rounded-2xl hairline-border p-8 card-hover flex flex-col h-full squircle group">
+<div class="flex items-start justify-between mb-6">
+<div class="w-16 h-16 rounded-full bg-soft-gold flex items-center justify-center font-headline-sm text-primary shrink-0">
+                            RK
+                        </div>
+</div>
+<div class="mb-auto">
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-1">Chef Riya Kapoor</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Executive Culinary Lead</p>
+<blockquote class="font-body-md text-body-md text-on-surface italic border-l-2 border-outline-variant pl-4 py-1 mb-6">
+                            "Clinical food must first be delicious to be sustainable."
+                        </blockquote>
+</div>
+<div class="flex items-center justify-between mt-6 pt-6 border-t border-outline-variant/30">
+<div class="font-macro-numeric text-macro-numeric text-on-surface-variant bg-surface px-3 py-1 rounded-md">12 years</div>
+<a class="font-macro-label text-macro-label gold-text hover:opacity-80 transition-opacity flex items-center gap-1 group-hover:gap-2 duration-300" href="#">
+                            View profile <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-lowest rounded-2xl hairline-border p-8 card-hover flex flex-col h-full squircle group">
+<div class="flex items-start justify-between mb-6">
+<div class="w-16 h-16 rounded-full bg-soft-sage flex items-center justify-center font-headline-sm text-[#5B6E41] shrink-0">
+                            SJ
+                        </div>
+</div>
+<div class="mb-auto">
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-1">Sam Jain</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Head of Metabolic Kitchen</p>
+<blockquote class="font-body-md text-body-md text-on-surface italic border-l-2 border-outline-variant pl-4 py-1 mb-6">
+                            "We design for flavor profiles that respect your glucose baseline."
+                        </blockquote>
+</div>
+<div class="flex items-center justify-between mt-6 pt-6 border-t border-outline-variant/30">
+<div class="font-macro-numeric text-macro-numeric text-on-surface-variant bg-surface px-3 py-1 rounded-md">6 years</div>
+<a class="font-macro-label text-macro-label gold-text hover:opacity-80 transition-opacity flex items-center gap-1 group-hover:gap-2 duration-300" href="#">
+                            View profile <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (Mobile Shell from JSON) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center py-2 bg-surface-container-lowest border-t border-outline-variant md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all scale-95 active:scale-90 p-2" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">home</span>
+<span class="font-macro-label text-macro-label">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold hover:text-primary transition-all scale-95 active:scale-90 p-2" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-macro-label text-macro-label">Team</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all scale-95 active:scale-90 p-2" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">restaurant</span>
+<span class="font-macro-label text-macro-label">Nutrition</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all scale-95 active:scale-90 p-2" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">person</span>
+<span class="font-macro-label text-macro-label">Profile</span>
+</a>
+</nav>
+<div class="h-16 md:hidden"></div> <!-- Spacer for mobile nav -->
+</body></html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Meal Guide - Dish Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#1a1c1e",
+                        "surface-container-high": "#e8e8ea",
+                        "secondary-fixed-dim": "#adcfad",
+                        "on-primary-fixed-variant": "#574500",
+                        "on-primary-fixed": "#241a00",
+                        "on-error": "#ffffff",
+                        "primary": "#735c00",
+                        "tertiary": "#415ba4",
+                        "on-secondary-container": "#4d6c4f",
+                        "tertiary-container": "#97b0ff",
+                        "tertiary-fixed": "#dbe1ff",
+                        "primary-fixed": "#ffe088",
+                        "on-secondary-fixed": "#03210b",
+                        "outline": "#7f7663",
+                        "inverse-primary": "#e9c349",
+                        "surface-bright": "#f9f9fc",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#2f3133",
+                        "on-secondary-fixed-variant": "#304e33",
+                        "inverse-on-surface": "#f0f0f3",
+                        "surface-container-low": "#f3f3f6",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "surface-container": "#eeeef0",
+                        "secondary-fixed": "#c8ecc8",
+                        "on-secondary": "#ffffff",
+                        "surface": "#f9f9fc",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#476649",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#1a1c1e",
+                        "on-tertiary-fixed": "#00174b",
+                        "on-primary-container": "#554300",
+                        "surface-container-highest": "#e2e2e5",
+                        "secondary-container": "#c8ecc8",
+                        "surface-variant": "#e2e2e5",
+                        "primary-container": "#d4af37",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#254188",
+                        "surface-dim": "#dadadc",
+                        "background": "#f9f9fc",
+                        "on-surface-variant": "#4d4635",
+                        "outline-variant": "#d0c5af",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#e9c349",
+                        "surface-tint": "#735c00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "page-margin": "20px",
+                        "card-gap": "16px",
+                        "section-gap": "32px",
+                        "inline-md": "12px",
+                        "inline-xs": "4px",
+                        "inline-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "title-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "data-sm": ["JetBrains Mono"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "data-lg": ["JetBrains Mono"],
+                        "label-caps": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "title-sm": ["18px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "data-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-lg": ["20px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #FBFAF7;
+        }
+        .hairline-border {
+            border: 1px solid #E7E3DA;
+        }
+        .hairline-divider {
+            border-bottom: 1px solid #E7E3DA;
+        }
+        .bg-clinical-white {
+            background-color: #FFFFFF;
+        }
+        .text-clinical-gold {
+            color: #D4AF37;
+        }
+        .bg-clinical-gold {
+            background-color: #D4AF37;
+        }
+        .text-ink {
+            color: #1A1C1E;
+        }
+        .text-muted {
+            color: #5C6367;
+        }
+        .bg-neutral-light {
+            background-color: #FBFAF7;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased text-on-background font-body-md min-h-screen pb-20">
+<main class="px-page-margin py-8 max-w-2xl mx-auto space-y-section-gap">
+<!-- Back Link -->
+<a class="inline-flex items-center text-muted font-body-md hover:opacity-80 transition-opacity" href="#">
+<span class="mr-2">←</span> Back to the dish
+        </a>
+<!-- Card 1: Reheating & shelf life -->
+<article class="bg-clinical-white hairline-border rounded-2xl p-5 md:p-6 shadow-sm shadow-surface-container-high/20 transition-transform duration-200 hover:scale-[0.99] active:scale-[0.98]">
+<div class="mb-5">
+<p class="font-label-caps text-label-caps text-clinical-gold mb-1">STORAGE</p>
+<h2 class="font-headline-md text-headline-md text-ink">Reheating &amp; shelf life</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+<div class="bg-surface hairline-border rounded-xl p-4">
+<h3 class="font-title-sm text-title-sm text-ink mb-2">Cold storage</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Keep refrigerated at 4°C. Consume within 3 days of delivery.</p>
+</div>
+<div class="bg-surface hairline-border rounded-xl p-4">
+<h3 class="font-title-sm text-title-sm text-ink mb-2">Container safety</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Lid is not microwave safe. Transfer to ceramic if heating in oven.</p>
+</div>
+</div>
+<div class="hairline-divider mb-6 w-full"></div>
+<div>
+<h3 class="font-title-sm text-title-sm text-ink mb-4">Microwave reheating</h3>
+<ol class="space-y-4">
+<li class="flex items-start">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-clinical-gold flex items-center justify-center font-data-sm text-data-sm text-ink mr-3 mt-0.5">1</span>
+<p class="font-body-md text-body-md text-on-surface-variant pt-0.5">Remove lid and sprinkle a teaspoon of water over the grains.</p>
+</li>
+<li class="flex items-start">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-clinical-gold flex items-center justify-center font-data-sm text-data-sm text-ink mr-3 mt-0.5">2</span>
+<p class="font-body-md text-body-md text-on-surface-variant pt-0.5">Heat on high for 2 minutes or until steaming throughout.</p>
+</li>
+<li class="flex items-start">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-clinical-gold flex items-center justify-center font-data-sm text-data-sm text-ink mr-3 mt-0.5">3</span>
+<p class="font-body-md text-body-md text-on-surface-variant pt-0.5">Let stand for 1 minute before serving to ensure even heat.</p>
+</li>
+</ol>
+</div>
+</article>
+<!-- Card 2: Ingredient sourcing -->
+<article class="bg-clinical-white hairline-border rounded-2xl p-5 md:p-6 shadow-sm shadow-surface-container-high/20 transition-transform duration-200 hover:scale-[0.99] active:scale-[0.98]">
+<div class="mb-5">
+<p class="font-label-caps text-label-caps text-clinical-gold mb-1">SOURCING</p>
+<h2 class="font-headline-md text-headline-md text-ink">Ingredient sourcing</h2>
+</div>
+<div class="space-y-3 mb-6">
+<div class="bg-neutral-light hairline-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-baseline gap-2">
+<span class="font-label-caps text-label-caps text-ink shrink-0 sm:w-28">PROVENANCE</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Our wild-caught salmon is sourced from sustainable MSC-certified fisheries in the North Atlantic.</p>
+</div>
+<div class="bg-neutral-light hairline-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-baseline gap-2">
+<span class="font-label-caps text-label-caps text-ink shrink-0 sm:w-28">TRACEABILITY</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Every batch is tracked from the docks to our kitchen to ensure peak nutrient density.</p>
+</div>
+<div class="bg-neutral-light hairline-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-baseline gap-2">
+<span class="font-label-caps text-label-caps text-ink shrink-0 sm:w-28">QUALITY</span>
+<p class="font-body-md text-body-md text-on-surface-variant">We use cold-pressed organic oils and mineral-rich salts to protect your metabolic health.</p>
+</div>
+</div>
+<div class="hairline-divider mb-6 w-full"></div>
+<div>
+<h3 class="font-label-caps text-label-caps text-ink mb-3 tracking-widest uppercase">CONTAINS</h3>
+<div class="flex flex-wrap gap-2 mb-4">
+<span class="inline-flex items-center px-3 py-1 bg-neutral-light hairline-border rounded-full font-body-md text-body-md text-ink">Peanuts</span>
+<span class="inline-flex items-center px-3 py-1 bg-neutral-light hairline-border rounded-full font-body-md text-body-md text-ink">Dairy</span>
+<span class="inline-flex items-center px-3 py-1 bg-neutral-light hairline-border rounded-full font-body-md text-body-md text-ink">Soy</span>
+<span class="inline-flex items-center px-3 py-1 bg-neutral-light hairline-border rounded-full font-body-md text-body-md text-ink">Gluten</span>
+</div>
+<p class="font-body-md text-body-md text-muted italic">Produced in a kitchen that also handles tree nuts and sesame. While we take every precaution, traces may be present.</p>
+</div>
+</article>
+</main>
+</body></html>
