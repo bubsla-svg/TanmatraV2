@@ -56,8 +56,21 @@ console.log("Checking:", BASE, "\n");
   check("home: title present", /<title>[^<]*Tanmatra/i.test(home));
   check("home: not the bare fallback", !/^<title>Loading/.test(home));
 
+  // Count dish links, not a headline string. tanmatra.food serves the
+  // storefront now, whose menu heading is copy that marketing rewrites (it was
+  // "Clinical Menu", it is "The menu"); asserting on it made this check fail
+  // for a page that was serving 71 dishes perfectly. Cards link either to the
+  // PDP (/dish/<slug>) or to the on-page quick view (/menu?dish=<slug>) — both
+  // count, because what matters is that the menu came back with dishes in it.
   const menu = await fetch(`${BASE}/menu`).then((r) => r.text());
-  check("menu: prerendered content", /Clinical Menu/i.test(menu) && menu.length > 20000, `${menu.length}B`);
+  const menuDishLinks = new Set(
+    [...menu.matchAll(/href="\/(?:dish\/|menu\?dish=)([a-z0-9-]+)"/g)].map((m) => m[1]),
+  ).size;
+  check(
+    "menu: prerendered with dishes",
+    menuDishLinks >= 5 && menu.length > 20000,
+    `${menuDishLinks} dishes, ${menu.length}B`,
+  );
 
   const dish = await fetch(`${BASE}/dish/signature-quinoa-salad`).then((r) => r.text());
   check("dish PDP: prerendered + structured data", /application\/ld\+json/.test(dish) && /Signature Quinoa/i.test(dish));
@@ -66,8 +79,13 @@ console.log("Checking:", BASE, "\n");
   const locs = (sitemap.match(/<loc>/g) || []).length;
   check("sitemap: >100 URLs", locs > 100, `${locs} URLs`);
 
+  // The storefront's contract (app/robots.ts): allow the whole public site,
+  // Disallow only /api/, and de-index session surfaces per-route via
+  // `robots: { index: false }` — a Disallowed URL can never be crawled to see
+  // its noindex. The old assertion wanted "Disallow: /admin", which belongs to
+  // the legacy SPA; the storefront has no /admin route to disallow.
   const robots = await fetch(`${BASE}/robots.txt`).then((r) => r.text());
-  check("robots.txt: disallows private surfaces", /Disallow: \/admin/.test(robots) && /Sitemap:/.test(robots));
+  check("robots.txt: shields /api and points at the sitemap", /Disallow: \/api\//.test(robots) && /Sitemap:/.test(robots));
 }
 
 // ---- 2. same-origin API proxy (the login-fix load-bearing wall) ---------
@@ -101,18 +119,41 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
 
   await page.goto(`${BASE}/menu`, { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.waitForTimeout(2500);
-  const dishCards = await page.evaluate(() => document.querySelectorAll(".dcard,.card").length);
+  // Structure, not class names. ".dcard,.card" were the legacy SPA's hand-written
+  // classes; the storefront's cards are Astryx primitives whose StyleX classes are
+  // content-hashed, so that selector reported "0 cards" against a menu rendering 71.
+  // An <article> containing a dish link is the framework-independent shape of a card.
+  const dishCards = await page.evaluate(
+    () =>
+      [...document.querySelectorAll("article")].filter((a) =>
+        a.querySelector('a[href*="/dish/"], a[href*="?dish="]'),
+      ).length,
+  );
   check(`${engineName}: menu renders dish cards`, dishCards >= 5, `${dishCards} cards`);
 
   // Login page: typed digits must survive (guards the hydration-wipe bug).
+  // Two changes from the legacy version, both because /login is now an island:
+  //  1. WAIT for the field. The storefront ships no input in the server HTML —
+  //     LoginCard probes the session and mounts PhoneAuth after it resolves. A
+  //     fixed 2s sleep raced that and read an element that did not exist yet.
+  //  2. CLICK before typing. The legacy page autofocused its phone field;
+  //     PhoneAuth does not, so unfocused keystrokes went to <body> and this
+  //     reported value="" on a login page that works.
+  // A field that never mounts still fails here, which is the regression we care
+  // about — it just fails as "no phone input" instead of an empty value.
   await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForTimeout(2000);
-  await page.keyboard.type("9876543210", { delay: 40 });
-  await page.waitForTimeout(800);
-  const typed = await page.evaluate(() => {
-    const el = document.querySelector('input[inputmode="numeric"]');
-    return el ? el.value.replace(/\D/g, "") : "";
-  });
+  const phoneSel = '#pa-phone, input[type="tel"], input[inputmode="numeric"]';
+  let typed = "";
+  try {
+    const field = await page.waitForSelector(phoneSel, { timeout: 15000, state: "visible" });
+    await field.click();
+    await page.keyboard.type("9876543210", { delay: 40 });
+    await page.waitForTimeout(600);
+    typed = (await field.inputValue()).replace(/\D/g, "");
+  } catch {
+    typed = "";
+    console.log(`  (${engineName}: no phone input mounted on /login within 15s)`);
+  }
   check(`${engineName}: login input keeps typed digits`, typed.includes("9876543210") || typed.length >= 10, `value="${typed}"`);
 
   // Benign, WebKit-specific harness artifacts — NOT real user-facing errors:
