@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra - Marketplace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-high": "#ece6ee",
+                      "tertiary-fixed-dim": "#e7c365",
+                      "surface": "#fdf7ff",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#e9ddff",
+                      "surface-tint": "#6750a4",
+                      "on-background": "#1d1b20",
+                      "tertiary-fixed": "#ffdf93",
+                      "on-primary-container": "#e0d2ff",
+                      "on-secondary-fixed": "#1f1635",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#cfbcff",
+                      "secondary": "#63597c",
+                      "inverse-surface": "#322f35",
+                      "on-primary-fixed": "#22005d",
+                      "on-error": "#ffffff",
+                      "outline": "#7a7582",
+                      "on-secondary": "#ffffff",
+                      "on-surface": "#1d1b20",
+                      "secondary-container": "#e1d4fd",
+                      "secondary-fixed-dim": "#cdc0e9",
+                      "on-secondary-container": "#645a7d",
+                      "surface-dim": "#ded8e0",
+                      "primary-fixed-dim": "#cfbcff",
+                      "surface-container-low": "#f8f2fa",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#cbc4d2",
+                      "surface-variant": "#e6e0e9",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#4f378a",
+                      "primary": "#4f378a",
+                      "tertiary": "#765b00",
+                      "on-secondary-fixed-variant": "#4b4263",
+                      "primary-container": "#6750a4",
+                      "on-tertiary-fixed": "#241a00",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#c9a74d",
+                      "background": "#fdf7ff",
+                      "surface-container": "#f2ecf4",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#e6e0e9",
+                      "on-tertiary-fixed-variant": "#594400",
+                      "inverse-on-surface": "#f5eff7",
+                      "on-tertiary-container": "#503d00",
+                      "on-surface-variant": "#494551",
+                      "surface-bright": "#fdf7ff",
+                      "secondary-fixed": "#e9ddff",
+                      // Custom brand colors based on prompt
+                      "brand-bone": "#FBFAF7",
+                      "brand-white": "#FFFFFF",
+                      "brand-border": "#E7E3DA",
+                      "brand-gold": "#D4AF37",
+                      "brand-ink": "#1A1C1E",
+                      "brand-sage": "#7D9E7E",
+                      "brand-sage-bg": "rgba(125, 158, 126, 0.12)",
+                      "brand-muted": "#5C6367"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "2xl": "1rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "max-width": "1200px",
+                      "stack-gap": "16px",
+                      "container-padding": "24px",
+                      "grid-gutter": "20px"
+              },
+              "fontFamily": {
+                      "data-lg": ["JetBrains Mono", "monospace"],
+                      "data-md": ["JetBrains Mono", "monospace"],
+                      "body-lg": ["Inter", "sans-serif"],
+                      "h1": ["Inter", "sans-serif"],
+                      "h2": ["Inter", "sans-serif"],
+                      "h1-mobile": ["Inter", "sans-serif"],
+                      "body-md": ["Inter", "sans-serif"],
+                      "label-caps": ["Inter", "sans-serif"]
+              },
+              "fontSize": {
+                      "data-lg": ["20px", { "lineHeight": "24px", "fontWeight": "500" }],
+                      "data-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                      "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                      "h1": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                      "h2": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                      "h1-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                      "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                      "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #FBFAF7; /* brand-bone */
+            color: #1A1C1E; /* brand-ink */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-brand-bone min-h-screen">
+<main class="max-w-[max-width] mx-auto px-4 md:px-container-padding py-8 md:py-12 flex flex-col gap-8">
+<!-- Header Section -->
+<header class="flex flex-col gap-2">
+<span class="font-label-caps text-label-caps text-brand-gold uppercase">PANTRY &amp; MARKETPLACE</span>
+<h1 class="font-h1-mobile text-h1-mobile md:font-h1 md:text-h1 text-brand-ink">Beyond the meal</h1>
+<p class="font-body-lg text-body-lg text-brand-muted">Clinical-grade essentials for your metabolic pantry.</p>
+</header>
+<!-- Filter Rail -->
+<nav class="flex overflow-x-auto hide-scrollbar gap-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-brand-gold text-brand-ink font-body-md text-body-md font-medium transition-transform active:scale-95">All</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-transparent border border-brand-border text-brand-muted font-body-md text-body-md hover:bg-brand-white transition-colors active:scale-95">Oils</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-transparent border border-brand-border text-brand-muted font-body-md text-body-md hover:bg-brand-white transition-colors active:scale-95">Sauces</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-transparent border border-brand-border text-brand-muted font-body-md text-body-md hover:bg-brand-white transition-colors active:scale-95">Supplements</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-transparent border border-brand-border text-brand-muted font-body-md text-body-md hover:bg-brand-white transition-colors active:scale-95">Snacks</button>
+<button class="whitespace-nowrap px-6 py-2.5 rounded-full bg-transparent border border-brand-border text-brand-muted font-body-md text-body-md hover:bg-brand-white transition-colors active:scale-95">Pantry</button>
+</nav>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<article class="bg-brand-white border border-brand-border rounded-2xl overflow-hidden flex flex-col group hover:border-brand-gold/30 transition-colors">
+<div class="relative aspect-square w-full bg-brand-bone overflow-hidden">
+<img alt="Artisan Extra Virgin Olive Oil" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-U5SF--1TlU5237q6W_je6eKtFe52e2DANei6YhSzES5oKkfjhdpdvgJoo6aakU1SluGJQDoGB4NMu7rxbD4XBMhgcMiMDBXLeESnF_koSd0gKDqATjE4FrfaN2-_EjbadfhlCO410AulXmfm_qI4lBa87ERonwm2mRnVdy-M3OBXVEXZhfF73xFMQAEbdtQANfYKLIKsNPWNW2MJFzu5eBmjs33qSiwbzv1NM_sI_lFQXeTR6EZrb83ipzlN7hscXxVdD44YYOQ"/>
+<div class="absolute top-4 left-4 bg-[#7D9E7E1F] text-brand-sage font-label-caps text-label-caps px-3 py-1.5 rounded-full backdrop-blur-sm border border-brand-sage/20 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                        RD-VERIFIED
+                    </div>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-4 justify-between">
+<div class="flex flex-col gap-2">
+<h2 class="font-h2 text-h2 text-brand-ink line-clamp-1">Artisan Extra Virgin Olive Oil</h2>
+<p class="font-body-md text-body-md text-brand-muted line-clamp-2">Cold-pressed, high-polyphenol oil sourced from single-estate groves.</p>
+</div>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-brand-border/50">
+<span class="font-data-md text-data-md text-brand-ink tracking-tight tabular-nums">₹1,249 · 500ml</span>
+<button class="px-4 py-2 rounded-full border border-brand-border text-brand-ink font-body-md text-body-md hover:bg-brand-bone hover:border-brand-ink/20 transition-all active:scale-95">Quick Add</button>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-brand-white border border-brand-border rounded-2xl overflow-hidden flex flex-col group hover:border-brand-gold/30 transition-colors">
+<div class="relative aspect-square w-full bg-brand-bone overflow-hidden">
+<img alt="Metabolic Revive Powder" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRx7_1AL7fgdHpiOx45UNfOuaLHxUyfL6hkwr3TWmiAw0nHM6I-xD5yuRlj0yDbsuCCZ7KGzBosO0tHxWHcGq9HRKQKbZQTT2XhayKjag83OepjZRiX8O9w0kjbopsC3EKYbrYg79MBmev0TwJkV0g97u58T5YRRtzZNq_Az63slkQpHLbouSaudS5QgV8PTUfYri8Svi-cB3Gm-5vWobbLnTTSo9Ypy--w8urDCdZbHrEgR-KLZmR3R66HPkTPZqNZLCwrB383Qg"/>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-4 justify-between">
+<div class="flex flex-col gap-2">
+<h2 class="font-h2 text-h2 text-brand-ink line-clamp-1">Metabolic Revive Powder</h2>
+<p class="font-body-md text-body-md text-brand-muted line-clamp-2">Advanced micronutrient formula designed to support cellular energy production.</p>
+</div>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-brand-border/50">
+<span class="font-data-md text-data-md text-brand-ink tracking-tight tabular-nums">₹2,850 · 300g</span>
+<button class="px-4 py-2 rounded-full border border-brand-border text-brand-ink font-body-md text-body-md hover:bg-brand-bone hover:border-brand-ink/20 transition-all active:scale-95">Quick Add</button>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-brand-white border border-brand-border rounded-2xl overflow-hidden flex flex-col group hover:border-brand-gold/30 transition-colors">
+<div class="relative aspect-square w-full bg-brand-bone overflow-hidden">
+<img alt="Organic Almond Butter" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAS-LG4u3iyJEZXT8Iewm1sUXwMpLYEsFQnrqutkMhHqPPQx52VkmwpS8T2V0Gvy6UJlmHMViU9O8jdUzrjkzR7RoUimkagUYMGF6cEP0k9Sr3Bh3Xi5xXHcZ9oG0CoOmzn6br3PjvDTrXqZjZ-PU9z5lGHbOblQxoVC0C8SnURt1AC7cOo_4kAIxVBFGwVNJf3WoOHLXf3aR9MytMORiz1GtbfxwLWWiZYSuT_gC2pXrzgGk4vCl_1-RrGN0a6NBiAsBUL6RFhx4"/>
+</div>
+<div class="p-6 flex flex-col flex-grow gap-4 justify-between">
+<div class="flex flex-col gap-2">
+<h2 class="font-h2 text-h2 text-brand-ink line-clamp-1">Organic Almond Butter</h2>
+<p class="font-body-md text-body-md text-brand-muted line-clamp-2">Small-batch, slow-roasted almonds with zero added sugars or seed oils.</p>
+</div>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-brand-border/50">
+<span class="font-data-md text-data-md text-brand-ink tracking-tight tabular-nums">₹650 · 250g</span>
+<button class="px-4 py-2 rounded-full border border-brand-border text-brand-ink font-body-md text-body-md hover:bg-brand-bone hover:border-brand-ink/20 transition-all active:scale-95">Quick Add</button>
+</div>
+</div>
+</article>
+</div>
+</main>
+</body></html>
