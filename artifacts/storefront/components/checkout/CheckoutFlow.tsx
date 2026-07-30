@@ -70,7 +70,7 @@ export function CheckoutFlow({
           Subscription purchase goes live in the next wave. Ordering individual
           dishes from the menu is live now.
         </p>
-        <Link href="/menu" className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]">
+        <Link href="/menu" className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">
           Order from the menu
         </Link>
       </div>
@@ -81,7 +81,7 @@ export function CheckoutFlow({
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="tabular text-2xl font-semibold text-ink">{formatPaise(totalPaise)} paid.</h1>
+          <h1 className="font-mono tabular text-2xl font-semibold text-ink">{formatPaise(totalPaise)} paid.</h1>
           <p className="text-sm text-ink-muted">First lunch next weekday, 12:30&ndash;1:30. {futureLine}</p>
         </div>
         {eveningAddPaise != null && <EveningAddOffer pricePaise={eveningAddPaise} />}

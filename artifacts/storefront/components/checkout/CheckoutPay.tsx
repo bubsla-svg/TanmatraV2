@@ -33,27 +33,33 @@ export function CheckoutPay({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <StepDots current={step} total={stepCount} />
-        <span className="tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
+        <span className="font-mono tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
       </div>
       <h1 className="text-lg font-semibold text-ink">Review &amp; pay</h1>
 
-      <div className="rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]">
+      <div className="rounded-3xl border border-line bg-surface p-5">
         <p className="text-sm text-ink-muted">{planSummary}</p>
         {creditPaise > 0 && (
           <p className="mt-1 text-sm font-medium text-sage-text">
             {formatPaise(creditPaise)} credit applied
           </p>
         )}
-        <p className="tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(totalPaise)}</p>
+        <p className="font-mono tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(totalPaise)}</p>
       </div>
 
-      <button
-        type="button"
-        onClick={onPay}
-        className="rounded-xl bg-gold px-5 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-      >
-        Pay {formatPaise(totalPaise)} with UPI
-      </button>
+      {/* Sticky pay bar — the screen's single gold pill, above the 4rem
+          bottom-nav band on mobile. Amount is the server-quoted total verbatim. */}
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+        <div className="mx-auto max-w-md px-4 py-3">
+          <button
+            type="button"
+            onClick={onPay}
+            className="w-full rounded-full bg-gold px-8 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+          >
+            Pay {formatPaise(totalPaise)} with UPI
+          </button>
+        </div>
+      </div>
 
       <button
         type="button"

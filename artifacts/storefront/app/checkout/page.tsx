@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
+import "@/lib/themes/stitch.css";
 import { redirect } from "next/navigation";
 import {
   PLAN_CATALOG,
@@ -42,9 +44,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // pricing at POST /orders. Reached from the cart drawer's Checkout CTA.
   if (mode === "alacarte") {
     return (
-      <section className="mx-auto max-w-md px-4 py-10">
-        <AlacarteCheckout />
-      </section>
+      <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+        <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+          <AlacarteCheckout />
+        </section>
+      </div>
     );
   }
 
@@ -74,17 +78,19 @@ export default async function CheckoutPage({ searchParams }: Props) {
       track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
     const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
     return (
-      <section className="mx-auto max-w-md px-4 py-10">
-        <PlanCheckout
-          planId={id}
-          planName={d.name}
-          servedTracks={q.servedTracks}
-          initialTrack={requestedTrack}
-          addOns={withRdBump ? ["rd_bump"] : undefined}
-          finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
-          successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
-        />
-      </section>
+      <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+        <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+          <PlanCheckout
+            planId={id}
+            planName={d.name}
+            servedTracks={q.servedTracks}
+            initialTrack={requestedTrack}
+            addOns={withRdBump ? ["rd_bump"] : undefined}
+            finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
+            successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
+          />
+        </section>
+      </div>
     );
   }
 
@@ -109,16 +115,18 @@ export default async function CheckoutPage({ searchParams }: Props) {
     : "Next billing next month · pause or cancel anytime.";
 
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <CheckoutFlow
-        planId={id}
-        planSummary={`${d.name} · ${q.mealsPerCycle} lunches${applyBump ? " · + dietitian" : ""}`}
-        totalPaise={total}
-        futureLine={futureLine}
-        creditPaise={creditPaise}
-        eveningAddPaise={eveningAddPaise}
-        user={{ signedIn: isReturning, hasSavedAddress: isReturning }}
-      />
-    </section>
+    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+      <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+        <CheckoutFlow
+          planId={id}
+          planSummary={`${d.name} · ${q.mealsPerCycle} lunches${applyBump ? " · + dietitian" : ""}`}
+          totalPaise={total}
+          futureLine={futureLine}
+          creditPaise={creditPaise}
+          eveningAddPaise={eveningAddPaise}
+          user={{ signedIn: isReturning, hasSavedAddress: isReturning }}
+        />
+      </section>
+    </div>
   );
 }

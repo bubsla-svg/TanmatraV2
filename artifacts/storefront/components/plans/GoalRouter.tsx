@@ -21,25 +21,25 @@ export function GoalRouter() {
   }
 
   return (
-    <section aria-label="What's lunch for?" className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold text-ink">What&rsquo;s lunch for?</h2>
-      <div className="flex flex-col gap-2">
+    <section aria-label="What's lunch for?" className="flex flex-col gap-4">
+      <h2 className="text-2xl font-semibold tracking-tight text-ink">What&rsquo;s lunch for?</h2>
+      <div className="flex flex-col gap-3">
         {plans.map((p) => (
           <button
             key={p.id}
             type="button"
             onClick={() => choose(p.id, p.promise)}
-            className="flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-left text-sm font-medium text-ink transition-colors hover:border-line-strong"
+            className="flex items-center justify-between gap-3 rounded-3xl border border-line bg-surface p-5 text-left text-base font-medium text-ink transition-colors hover:border-line-strong active:scale-[0.98]"
           >
             {p.promise}
-            <span aria-hidden className="text-ink-faint">
+            <span aria-hidden className="text-gold-text">
               &rarr;
             </span>
           </button>
         ))}
         <a
           href="/menu"
-          className="-m-2 mt-1 self-start p-2 text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
+          className="-m-2 mt-2 self-center p-2 text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
         >
           Just browsing &rarr;
         </a>

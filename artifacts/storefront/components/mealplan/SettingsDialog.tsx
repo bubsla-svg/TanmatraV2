@@ -34,12 +34,12 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
     } catch { setError("Couldn't save settings."); setBusy(false); }
   }
 
-  const input = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-[var(--gold)]";
+  const input = "w-full rounded-2xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-[var(--gold)]";
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-[var(--ink)]/40 backdrop-blur-sm" />
-        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-50 w-[92vw] max-w-sm -translate-x-1/2 rounded-xl border border-line bg-surface p-5 shadow-lg">
+        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-50 w-[92vw] max-w-sm -translate-x-1/2 rounded-3xl border border-line bg-surface p-5 shadow-lg">
           <Dialog.Title className="text-sm font-semibold text-ink">Meal planner settings</Dialog.Title>
           <div className="mt-4 flex flex-col gap-4">
             <label className="flex items-center justify-between gap-3 text-sm text-ink-muted">
@@ -55,8 +55,8 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
             {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <Dialog.Close className="rounded-lg px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>
-            <button type="button" onClick={save} disabled={busy} className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">{busy ? "Saving…" : "Save"}</button>
+            <Dialog.Close className="rounded-full px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>
+            <button type="button" onClick={save} disabled={busy} className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)] active:scale-[0.98] disabled:opacity-60">{busy ? "Saving…" : "Save"}</button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

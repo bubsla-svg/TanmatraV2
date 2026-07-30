@@ -14,7 +14,7 @@ export interface AlacarteAddress {
 }
 
 const inputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
 
 /**
  * À-la-carte details (SF-05). One screen: contact phone (controlled by the
@@ -71,30 +71,31 @@ export function AlacarteDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-xl bg-surface p-4">
+      <div className="rounded-3xl border border-line bg-surface p-5">
+        <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
             <li key={`${l.kind}-${l.dishId}`} className="flex items-center justify-between gap-3 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-ink">{l.name}</p>
-                <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                <p className="font-mono tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center rounded-lg border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
-                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) - 1))} className="min-h-8 min-w-8 text-ink">−</button>
-                  <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
-                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) + 1))} className="min-h-8 min-w-8 text-ink">+</button>
+                <div className="flex items-center rounded-full border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
+                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) - 1))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">−</button>
+                  <span aria-live="polite" className="font-mono tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
+                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) + 1))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">+</button>
                 </div>
-                <span className="tabular w-16 text-right text-sm font-semibold text-ink">
+                <span className="font-mono tabular w-16 text-right text-sm font-semibold text-ink">
                   {formatPaise(l.pricePaise * l.qty)}
                 </span>
               </div>
             </li>
           ))}
         </ul>
-        <div className="mt-2 flex justify-between border-t border-line pt-2 text-sm">
+        <div className="mt-2 flex justify-between gap-3 border-t border-line pt-3 text-sm">
           <span className="text-ink-muted">Subtotal · server bills the final total (incl. GST)</span>
-          <span className="tabular font-semibold text-ink">{formatPaise(subtotalPaise(cart))}</span>
+          <span className="font-mono tabular font-semibold text-gold-text">{formatPaise(subtotalPaise(cart))}</span>
         </div>
       </div>
 
@@ -132,16 +133,28 @@ export function AlacarteDetails({
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
-      <button
-        type="button" disabled={!valid || busy}
-        onClick={() => onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") })}
-        className="rounded-xl bg-gold px-5 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
-      >
-        {busy ? "Opening payment…" : "Continue to payment"}
-      </button>
       <p className="text-center text-[11px] text-ink-faint">
         UPI · FSSAI licensed · RD-reviewed kitchen · you won&rsquo;t be charged until you confirm in the payment step.
       </p>
+
+      {/* Sticky pay bar — sits above the 4rem bottom-nav band on mobile. The
+          amount shown is the same DISPLAY subtotal as the summary card; the
+          CTA itself stays amount-free (server prices the order). */}
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted">Est. total</span>
+            <span className="font-mono tabular text-lg font-bold text-ink">{formatPaise(subtotalPaise(cart))}</span>
+          </div>
+          <button
+            type="button" disabled={!valid || busy}
+            onClick={() => onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") })}
+            className="rounded-full bg-gold px-8 py-3.5 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+          >
+            {busy ? "Opening payment…" : "Continue to payment"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

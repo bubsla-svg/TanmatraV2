@@ -1,5 +1,9 @@
 "use client";
 // "use client" justification: interactive cart surface (steppers, drawer).
+// Stitch dark scope (component-scoped — the sheet floats over light and dark
+// routes alike, so data-stitch sits on the sheet root, not a page wrapper) —
+// see lib/themes/stitch.css.
+import "@/lib/themes/stitch.css";
 import type { ReactNode } from "react";
 import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
@@ -29,14 +33,14 @@ export function CartDrawer({
     footer = (
       <a
         href="/checkout?mode=alacarte"
-        className="block min-h-11 rounded-xl bg-primary px-5 py-3 text-center text-sm font-semibold text-primary-foreground"
+        className="block min-h-11 rounded-full bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
       >
         Checkout
       </a>
     );
   } else {
     footer = (
-      <p role="status" className="rounded-lg border border-line bg-muted px-4 py-3 text-center text-xs text-muted-foreground">
+      <p role="status" className="rounded-2xl border border-line bg-surface-raised px-4 py-3 text-center text-xs text-ink-muted">
         Checkout goes live with the payment slice — your cart is saved.
       </p>
     );
