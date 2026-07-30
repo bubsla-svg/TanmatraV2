@@ -25,20 +25,29 @@ export function FaqAccordion({
     if (next === i && pageSlug) emitLpEvent("faq_open", { page: pageSlug, question });
   };
   return (
-    <div className="mt-8 border-t border-line">
+    <div className="mt-8 flex flex-col border-t border-line">
       {items.map((item, i) => {
         const isOpen = open === i;
         return (
-          <div key={item.q} className="border-b border-line">
+          <div
+            key={item.q}
+            className={`transition-colors ${
+              isOpen
+                ? "my-2 rounded-2xl border border-line bg-surface-raised px-4 shadow-sm"
+                : "border-b border-line"
+            }`}
+          >
             <button
               type="button"
               onClick={() => toggle(i, item.q)}
               aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-3 py-4 text-left"
+              className="group flex w-full items-center justify-between gap-4 py-5 text-left"
             >
-              <span className="text-sm font-medium text-ink">{item.q}</span>
+              <span className="text-sm font-semibold text-ink">{item.q}</span>
               <svg
-                className={`h-4 w-4 shrink-0 text-ink-faint transition-transform ${isOpen ? "rotate-180" : ""}`}
+                className={`h-4 w-4 shrink-0 transition-transform duration-300 ${
+                  isOpen ? "rotate-180 text-gold-text" : "text-ink-faint group-hover:text-gold-text"
+                }`}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -51,7 +60,7 @@ export function FaqAccordion({
               </svg>
             </button>
             {isOpen && (
-              <p className="pb-4 pr-7 text-sm leading-relaxed text-ink-muted">{item.a}</p>
+              <p className="pb-5 pr-7 text-sm leading-relaxed text-ink-muted">{item.a}</p>
             )}
           </div>
         );

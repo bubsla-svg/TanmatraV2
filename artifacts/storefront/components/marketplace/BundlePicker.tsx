@@ -36,7 +36,9 @@ export function BundlePicker({ selected, onSelect, onAuthError }: { selected: nu
       {orders.map((o) => (
         <label
           key={o.serverOrderId}
-          className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-3 py-2 ${selected === o.serverOrderId ? "border-[var(--gold)]" : "border-line"}`}
+          className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+            selected === o.serverOrderId ? "border-[var(--gold)] bg-surface-raised" : "border-line hover:bg-surface-raised"
+          }`}
         >
           <span className="flex min-w-0 items-center gap-2">
             <input type="radio" name="bundle-order" checked={selected === o.serverOrderId} onChange={() => onSelect(o.serverOrderId)} className="accent-[var(--gold)]" />

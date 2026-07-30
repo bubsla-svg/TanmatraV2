@@ -5,6 +5,7 @@
 // a recent order (still its own paid order — bundleWithOrderId only links delivery).
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { AlertCircle, CheckCircle2, Circle, Minus, Plus } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
@@ -62,35 +63,50 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
   );
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="aspect-square overflow-hidden rounded-2xl bg-surface-raised">
+    <div className="flex flex-col gap-6">
+      <div className="aspect-square overflow-hidden rounded-2xl border border-line bg-surface-raised">
         {item.image && (
           // eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config
           <img src={item.image} alt="" className="h-full w-full object-cover" />
         )}
       </div>
+
       {item.badges.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {item.badges.map((b) => <span key={b} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-ink-muted">{b}</span>)}
+        <div className="flex flex-wrap gap-2">
+          {item.badges.map((b) => (
+            <span key={b} className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink">
+              {b}
+            </span>
+          ))}
         </div>
       )}
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">{item.name}</h1>
-        <p className="mt-1 text-sm text-ink-muted">{item.description}</p>
-        <p className="tabular mt-3 text-lg font-bold text-ink">
-          {formatPaise(item.pricePaise)}
-          {(item.weightLabel || item.supplierName) && <span className="text-xs font-normal text-ink-faint"> · {[item.weightLabel, item.supplierName].filter(Boolean).join(" · ")}</span>}
-        </p>
+
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold tracking-tight text-ink">{item.name}</h1>
+        <p className="text-sm text-ink-muted">{item.description}</p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-ink-muted">Quantity</span>
-        <div className="flex items-center gap-3 rounded-lg border border-line px-2 py-1">
-          <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease" className="text-ink-muted hover:text-ink">−</button>
+      <p className="tabular flex items-end gap-2 text-2xl font-bold text-ink">
+        {formatPaise(item.pricePaise)}
+        {(item.weightLabel || item.supplierName) && (
+          <span className="pb-0.5 text-xs font-normal text-ink-faint">
+            {[item.weightLabel, item.supplierName].filter(Boolean).join(" · ")}
+          </span>
+        )}
+      </p>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 rounded-full border border-line bg-surface px-2 py-1.5">
+          <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease" className="flex h-7 w-7 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink">
+            <Minus size={16} />
+          </button>
           <span className="tabular w-5 text-center text-sm text-ink">{qty}</span>
-          <button type="button" onClick={() => setQty((q) => Math.min(20, item.stockQty, q + 1))} aria-label="Increase" className="text-ink-muted hover:text-ink">+</button>
+          <button type="button" onClick={() => setQty((q) => Math.min(20, item.stockQty, q + 1))} aria-label="Increase" className="flex h-7 w-7 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink">
+            <Plus size={16} />
+          </button>
         </div>
-        <span className={`text-xs ${item.stockQty === 0 ? "font-medium text-[var(--danger)]" : "text-ink-faint"}`}>
+        <span className={`flex items-center gap-1 text-xs font-medium ${item.stockQty === 0 ? "text-[var(--danger)]" : "text-ink-faint"}`}>
+          {item.stockQty === 0 ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
           {item.stockQty === 0 ? "Out of stock" : `${item.stockQty} in stock`}
         </span>
       </div>
@@ -98,12 +114,22 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
       {item.longDescription && <p className="whitespace-pre-line text-xs leading-relaxed text-ink-muted">{item.longDescription}</p>}
 
       <div>
-        <p className="text-sm text-ink-muted">Delivery</p>
-        <div className="mt-2 flex gap-2">
+        <p className="text-sm font-medium text-ink-muted">Delivery</p>
+        <div className="mt-2 flex flex-col gap-2">
           {(["ship", "bundle"] as const).map((m) => (
-            <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${mode === m ? "border-[var(--gold)] text-ink" : "border-line text-ink-muted hover:text-ink"}`}>
-              {m === "ship" ? "Ship separately" : "Add to a recent order"}
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              aria-pressed={mode === m}
+              className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
+                mode === m ? "border-2 border-[var(--gold)] bg-surface-raised" : "border-line hover:bg-surface-raised"
+              }`}
+            >
+              <span className={`text-sm font-semibold ${mode === m ? "text-ink" : "text-ink-muted"}`}>
+                {m === "ship" ? "Ship separately" : "Add to a recent order"}
+              </span>
+              {mode === m ? <CheckCircle2 size={18} className="text-gold-text" /> : <Circle size={18} className="text-ink-faint" />}
             </button>
           ))}
         </div>
@@ -125,26 +151,27 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
       ) : (
         <div className="flex flex-col gap-2">
           {item.stockQty === 0 ? (
-            <p className="rounded-xl border border-line bg-surface-raised px-6 py-3 text-center text-sm font-medium text-ink-muted">
+            <div className="flex cursor-not-allowed items-center justify-center gap-2 rounded-full bg-surface-raised px-6 py-4 text-center text-sm font-semibold text-ink-faint">
+              <AlertCircle size={16} className="text-[var(--danger)]" />
               Currently out of stock
-            </p>
+            </div>
           ) : (
             <>
               <button
                 type="button"
                 onClick={() => setCart(addOrUpdateQty(cart, { dishId: item.id, kind: "marketplace", slug: item.slug, name: item.name, pricePaise: item.pricePaise }, qty))}
-                className="rounded-xl border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink hover:bg-surface-raised"
+                className="rounded-full border border-line bg-surface px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-raised"
               >
                 Add to Cart
               </button>
-              <button type="button" onClick={buy} disabled={busy} className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+              <button type="button" onClick={buy} disabled={busy} className="rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90 disabled:opacity-60">
                 {busy ? "Opening payment…" : `Place order · ${formatPaise(item.pricePaise * qty)}`}
               </button>
             </>
           )}
         </div>
       )}
-      <p className="text-[11px] text-ink-faint">7-day return on unopened items. Sealed supplements are non-returnable for safety.</p>
+      <p className="text-center text-[11px] uppercase tracking-wide text-ink-faint">7-day return on unopened items. Sealed supplements are non-returnable for safety.</p>
     </div>
   );
 }

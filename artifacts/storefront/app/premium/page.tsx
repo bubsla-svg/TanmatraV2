@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PremiumMembership } from "@/components/premium/PremiumMembership";
+import { LandingIcon } from "@/components/landing/LandingIcon";
+import type { LandingIconName } from "@/content/landing/partners";
 
 export const metadata: Metadata = {
   title: "Tanmatra Premium",
@@ -8,11 +10,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/premium" },
 };
 
-const BENEFITS: { title: string; body: string }[] = [
-  { title: "Priority delivery", body: "Your orders jump the kitchen queue and ship in our first rider wave — a kitchen-queue benefit, not a delivery-time guarantee." },
-  { title: "1 free RD consult / month", body: "A 30-minute video session with a registered dietitian — included every billing period." },
-  { title: "Premium-only meals", body: "Chef-table dishes reserved for members, unlocked across the menu." },
-  { title: "Exclusive add-ons", body: "Marine collagen, chef-curated tonics, and limited pantry drops in your checkout add-on rail." },
+// Same shape as landing's BenefitGrid `grid` variant (icon chip + title + body)
+// so this hand-built section reads as one visual family with the rest of the
+// storefront — see BATCH-9-BRIEFS.md Brief 56 for why it isn't the imported
+// component itself (its section padding is tuned for full landing sections,
+// not this narrower account/money shell).
+const BENEFITS: { title: string; body: string; icon: LandingIconName }[] = [
+  { icon: "timer", title: "Priority delivery", body: "Your orders jump the kitchen queue and ship in our first rider wave — a kitchen-queue benefit, not a delivery-time guarantee." },
+  { icon: "clipboard", title: "1 free RD consult / month", body: "A 30-minute video session with a registered dietitian — included every billing period." },
+  { icon: "fork-knife", title: "Premium-only meals", body: "Chef-table dishes reserved for members, unlocked across the menu." },
+  { icon: "coffee", title: "Exclusive add-ons", body: "Marine collagen, chef-curated tonics, and limited pantry drops in your checkout add-on rail." },
 ];
 
 /**
@@ -33,17 +40,20 @@ export default function PremiumPage() {
         <PremiumMembership />
       </div>
 
-      <h2 className="mt-10 text-sm font-semibold text-ink">What&rsquo;s included</h2>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <h2 className="mt-10 text-base font-semibold text-ink">What&rsquo;s included</h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {BENEFITS.map((b) => (
-          <div key={b.title} className="rounded-2xl border border-line bg-surface p-4">
-            <p className="text-sm font-semibold text-ink">{b.title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-ink-muted">{b.body}</p>
+          <div key={b.title} className="rounded-2xl border border-line bg-surface p-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-gold-text">
+              <LandingIcon name={b.icon} className="h-5 w-5" />
+            </div>
+            <h3 className="mt-4 text-base font-semibold text-ink">{b.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{b.body}</p>
           </div>
         ))}
       </div>
 
-      <p className="mt-6 text-[11px] leading-relaxed text-ink-faint">
+      <p className="mt-6 text-xs leading-relaxed text-ink-faint">
         Premium is operated directly by Tanmatra. RD consults are conducted by registered dietitians on our care team.
         Priority delivery is a kitchen-queue benefit — not a delivery-time guarantee. Cancel anytime from your account.
       </p>

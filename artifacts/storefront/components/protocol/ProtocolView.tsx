@@ -40,19 +40,19 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
         <div className="flex flex-wrap items-center justify-center gap-3.5">
           <Link
             href="/menu"
-            className="inline-flex items-center gap-2 rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
           >
             See the dishes <LandingIcon name="arrow-right" className="h-4 w-4" />
           </Link>
           <Link
             href={consultCta.href}
-            className="inline-flex items-center rounded-xl border border-line px-6 py-3 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
+            className="inline-flex items-center justify-center rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
           >
             {consultCta.label}
           </Link>
         </div>
         {qualifying > 0 && (
-          <p className="tabular text-xs text-ink-faint">
+          <p className="tabular inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-xs text-ink-faint">
             {qualifying} qualifying dishes · 1 program{protocolRds.length > 0 ? ` · ${protocolRds.length} specialist RD${protocolRds.length > 1 ? "s" : ""}` : ""}
           </p>
         )}
@@ -101,13 +101,13 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href={consultCta.href}
-            className="w-full rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] sm:w-auto"
+            className="w-full rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] sm:w-auto"
           >
             {consultCta.label}
           </Link>
           <Link
             href="/trial"
-            className="w-full rounded-xl border border-line px-6 py-3 text-sm font-semibold text-ink transition-colors hover:border-line-strong sm:w-auto"
+            className="w-full rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong sm:w-auto"
           >
             Try 3 days first
           </Link>

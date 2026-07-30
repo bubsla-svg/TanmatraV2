@@ -67,18 +67,23 @@ export function PremiumMembership() {
           <p className="rounded-lg bg-sage-soft px-3 py-2 text-sm font-medium text-sage-text">
             Active membership — {m.status === "cancelled" ? "ends" : "renews"} on {day(m.currentPeriodEnd)}.
           </p>
-          <p className="tabular text-xs text-ink-muted">RD consults used this period: {m.rdConsultsUsedThisPeriod} / {m.rdConsultsPerPeriod}</p>
-          <Link href="/rd" className="rounded-xl bg-gold px-5 py-2.5 text-center text-sm font-semibold text-[var(--gold-ink)]">Book your free RD consult</Link>
-          {m.status === "cancelled"
-            ? <button type="button" onClick={resume} disabled={busy} className="text-sm font-medium text-gold-text hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
-            : <button type="button" onClick={cancel} disabled={busy} className="text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-60">{busy ? "Working…" : "Cancel renewal"}</button>}
+          <div className="flex items-center justify-between border-y border-line py-3">
+            <span className="text-sm text-ink-muted">RD consults used this period</span>
+            <span className="tabular text-sm font-semibold text-ink">{m.rdConsultsUsedThisPeriod} / {m.rdConsultsPerPeriod}</span>
+          </div>
+          <Link href="/rd" className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)]">Book your free RD consult</Link>
+          <div className="flex justify-center pt-1">
+            {m.status === "cancelled"
+              ? <button type="button" onClick={resume} disabled={busy} className="text-sm font-medium text-gold-text hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
+              : <button type="button" onClick={cancel} disabled={busy} className="text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-60">{busy ? "Working…" : "Cancel renewal"}</button>}
+          </div>
         </div>
       ) : (
-        <div className="mt-4 flex flex-col gap-2">
-          <button type="button" onClick={join} disabled={busy} className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+        <div className="mt-5 flex flex-col gap-3">
+          <button type="button" onClick={join} disabled={busy} className="rounded-xl bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
             {busy ? "Opening payment…" : "Join Tanmatra Premium"}
           </button>
-          <p className="text-xs text-ink-faint">Cancel anytime · your first RD consult is included every period.</p>
+          <p className="text-center text-xs text-ink-faint">Cancel anytime · your first RD consult is included every period.</p>
         </div>
       )}
     </div>
