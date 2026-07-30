@@ -3,7 +3,8 @@ import { getSourcingForDish } from "@/lib/catalog";
 
 export function SourcingTransparency({ dish }: { dish: DishData }) {
   const sourcing = getSourcingForDish(dish);
-  const allergens = (dish.allergens && dish.allergens.length > 0) ? dish.allergens : ["None reported"];
+  const hasAllergens = !!dish.allergens && dish.allergens.length > 0;
+  const allergens = hasAllergens ? dish.allergens : ["None reported"];
 
   return (
     <div className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-6 shadow-sm">
@@ -32,7 +33,12 @@ export function SourcingTransparency({ dish }: { dish: DishData }) {
         <h3 className="text-xs font-bold uppercase tracking-wide text-ink">Strict Allergen Clarification</h3>
         <div className="flex flex-wrap gap-2 mt-1">
           {allergens.map((a, idx) => (
-            <span key={idx} className="rounded-full border border-sage-200 bg-sage-100 px-3 py-1 text-xs font-semibold text-sage-800 capitalize">
+            <span
+              key={idx}
+              className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                hasAllergens ? "border border-line bg-surface-raised text-ink" : "bg-sage-soft text-sage-text"
+              }`}
+            >
               {a}
             </span>
           ))}

@@ -32,15 +32,15 @@ export function ThermalInstructions({ dish }: { dish: DishData }) {
         <h3 className="text-sm font-semibold text-ink">Recommended Microwave Reheating Sequence</h3>
         <ol className="flex flex-col gap-2.5 text-xs text-ink-muted leading-relaxed">
           <li className="flex items-start gap-2.5">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-white font-bold shrink-0 text-[10px]">1</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[var(--gold-ink)] font-bold shrink-0 text-[10px]">1</span>
             <span>Remove any fresh cold garnish tubs, chilled dressings, or fermented dips prior to thermal activation.</span>
           </li>
           <li className="flex items-start gap-2.5">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-white font-bold shrink-0 text-[10px]">2</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[var(--gold-ink)] font-bold shrink-0 text-[10px]">2</span>
             <span>Cover tray loosely with eco-lid and microwave on high (800W) for exactly <strong className="text-ink">2 minutes and 30 seconds</strong>.</span>
           </li>
           <li className="flex items-start gap-2.5">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-white font-bold shrink-0 text-[10px]">3</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[var(--gold-ink)] font-bold shrink-0 text-[10px]">3</span>
             <span>Allow to rest for 60 seconds so thermal heat disperses evenly without breaking delicate cold-pressed oil emulsions.</span>
           </li>
         </ol>
