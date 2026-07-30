@@ -6,6 +6,7 @@
 // unlocked clinical profile.
 import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck, CheckCircle2, Lock, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getAuthUser } from "@/lib/api";
 import { getPreferences, deleteAccount, type UserPreferences } from "@/lib/preferencesApi";
 import {
@@ -104,15 +105,15 @@ export function HealthInfoHub() {
                 </li>
               ))}
             </ul>
-            <button
+            <Button
               type="button"
               onClick={grant}
               disabled={busy}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-gold py-4 text-xs font-bold uppercase tracking-wider text-[var(--gold-ink)] transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+              shape="pill" size="fluid" className="w-full py-4 text-xs font-bold uppercase tracking-wider disabled:opacity-60"
             >
               {busy ? "Recording…" : "I agree — save my health details"}
               {!busy && <ArrowRight aria-hidden className="h-4 w-4" />}
-            </button>
+            </Button>
           </div>
 
           {/* Locked preview: the real fields, disabled, so the scope of what is

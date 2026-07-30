@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 // Stitch dark scope (route-scoped) — see lib/themes/stitch.css. This is the
 // tail of the checkout funnel; it must read as the same product as /checkout.
 import "@/lib/themes/stitch.css";
@@ -50,12 +51,9 @@ export default async function ConfirmedPage({
               ? "Check the link from your confirmation message."
               : "Your order is unaffected — try this page again in a moment."}
           </p>
-          <Link
-            href="/menu"
-            className="mt-8 inline-block rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-          >
-            Back to the menu
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="mt-8 inline-block px-6 py-3.5 font-semibold">
+            <Link href="/menu">Back to the menu</Link>
+          </Button>
         </section>
       </div>
     );
@@ -103,19 +101,13 @@ export default async function ConfirmedPage({
           )}
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row">
             {trackable && (
-              <Link
-                href={`/track/${encodeURIComponent(orderId)}`}
-                className="flex-1 rounded-full bg-gold px-6 py-3.5 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-              >
-                Track live
-              </Link>
+              <Button asChild shape="pill" size="fluid" className="flex-1 px-6 py-3.5 text-center font-semibold">
+                <Link href={`/track/${encodeURIComponent(orderId)}`}>Track live</Link>
+              </Button>
             )}
-            <Link
-              href="/menu"
-              className="flex-1 rounded-full border border-line-strong bg-transparent px-6 py-3.5 text-center text-sm font-semibold text-ink transition-colors hover:bg-surface-raised active:scale-[0.98]"
-            >
-              Back to the menu
-            </Link>
+            <Button asChild variant="outline" shape="pill" size="fluid" className="flex-1 border-line-strong bg-transparent px-6 py-3.5 text-center font-semibold">
+              <Link href="/menu">Back to the menu</Link>
+            </Button>
           </div>
         </div>
 
