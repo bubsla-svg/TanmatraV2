@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra - History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Satoshi:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#dbe1ff",
+                        "ember-warning": "#B6892F",
+                        "clay-danger": "#B0655A",
+                        "secondary": "#b8c3ff",
+                        "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                        "secondary-fixed": "#dde1ff",
+                        "secondary-container": "#344280",
+                        "surface-container": "#201f1f",
+                        "on-secondary-container": "#a4b1f7",
+                        "inverse-on-surface": "#313030",
+                        "on-primary-fixed-variant": "#574500",
+                        "surface-container-low": "#1c1b1b",
+                        "background": "#131313",
+                        "on-tertiary-container": "#254188",
+                        "on-primary": "#3c2f00",
+                        "primary-container": "#d4af37",
+                        "muted-steel": "#A3A3A3",
+                        "graphite-surface": "#171717",
+                        "tertiary-container": "#97b0ff",
+                        "on-tertiary": "#082b72",
+                        "primary-fixed": "#ffe088",
+                        "inverse-primary": "#735c00",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "surface-variant": "#353534",
+                        "on-surface-variant": "#d0c5af",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                        "surface": "#131313",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#0e0e0e",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-primary-container": "#554300",
+                        "surface-container-high": "#2a2a2a",
+                        "outline-variant": "#4d4635",
+                        "on-tertiary-fixed": "#00174b",
+                        "inverse-surface": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#344280",
+                        "primary": "#f2ca50",
+                        "error-container": "#93000a",
+                        "sage-signal": "#7D9E7E",
+                        "on-background": "#e5e2e1",
+                        "off-white-ink": "#F5F5F4",
+                        "tertiary": "#bfcdff",
+                        "surface-tint": "#e9c349",
+                        "on-primary-fixed": "#241a00",
+                        "ink-on-gold": "#111318",
+                        "on-error-container": "#ffdad6",
+                        "outline": "#99907c",
+                        "on-secondary": "#1c2b68",
+                        "surface-dim": "#131313",
+                        "surface-container-highest": "#353534",
+                        "on-surface": "#e5e2e1",
+                        "surface-bright": "#3a3939",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#021453"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "clamp(3rem, 8vw, 6rem)",
+                        "mobile-margin": "1.25rem",
+                        "max-width": "1280px",
+                        "desktop-margin": "2rem",
+                        "card-padding": "1.5rem",
+                        "gutter": "1rem"
+                    },
+                    "fontFamily": {
+                        "body-base": ["Satoshi", "sans-serif"],
+                        "body-muted": ["Satoshi", "sans-serif"],
+                        "label-small-caps": ["Satoshi", "sans-serif"],
+                        "display-lg": ["Satoshi", "sans-serif"],
+                        "clinical-data": ["JetBrains Mono", "monospace"],
+                        "headline-md": ["Satoshi", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-base": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-muted": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-small-caps": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["clamp(2.5rem, 5vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "clinical-data": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "headline-md": ["2rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            /* Override background for light mode request despite dark mode theme config */
+            .custom-light-bg { background-color: #FBFAF7; }
+            .custom-white-card { background-color: #FFFFFF; }
+            .custom-hairline { border-color: #E7E3DA; }
+            .custom-gold { color: #D4AF37; }
+            .custom-gold-border { border-color: #D4AF37; }
+            .custom-primary-text { color: #1A1C1E; }
+            .custom-secondary-text { color: #5C6367; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="custom-light-bg font-body-base text-body-base min-h-screen text-[#1A1C1E] antialiased">
+<!-- Top Navigation Strip -->
+<nav class="sticky top-0 z-50 custom-white-card border-b custom-hairline px-mobile-margin md:px-desktop-margin pt-4">
+<div class="max-w-[1280px] mx-auto overflow-x-auto scrollbar-hide">
+<ul class="flex space-x-8 min-w-max pb-px">
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Plans</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Orders</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Consults</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Billing</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Addresses</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Preferences</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Health</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Rewards</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-secondary-text hover:text-[#1A1C1E] transition-colors" href="#">Symptoms</a></li>
+<li><a class="block pb-4 text-sm font-medium custom-primary-text border-b-2 custom-gold-border" href="#">History</a></li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="max-w-[1280px] mx-auto px-mobile-margin md:px-desktop-margin py-8 space-y-12 pb-32">
+<!-- Metric Tiles -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Calorie Adherence -->
+<div class="custom-white-card rounded-[2rem] border custom-hairline p-8 flex flex-col justify-between">
+<h3 class="font-body-muted text-body-muted custom-secondary-text mb-4">Calorie Adherence</h3>
+<div>
+<div class="font-clinical-data text-3xl font-bold tracking-tight mb-1">4,200 <span class="text-xl font-normal">kcal</span></div>
+<div class="font-clinical-data text-xs custom-gold">Target: 2000/day</div>
+</div>
+</div>
+<!-- Protein Volume -->
+<div class="custom-white-card rounded-[2rem] border custom-hairline p-8 flex flex-col justify-between">
+<h3 class="font-body-muted text-body-muted custom-secondary-text mb-4">Protein Volume</h3>
+<div>
+<div class="font-clinical-data text-3xl font-bold tracking-tight mb-1">168<span class="text-xl font-normal">g</span></div>
+<div class="font-clinical-data text-xs custom-gold">Target: 80g/day</div>
+</div>
+</div>
+<!-- Prebiotic Fiber -->
+<div class="custom-white-card rounded-[2rem] border custom-hairline p-8 flex flex-col justify-between">
+<h3 class="font-body-muted text-body-muted custom-secondary-text mb-4">Prebiotic Fiber</h3>
+<div>
+<div class="font-clinical-data text-3xl font-bold tracking-tight mb-1">96<span class="text-xl font-normal">g</span></div>
+<div class="font-clinical-data text-xs custom-gold">Target: 28g/day</div>
+</div>
+</div>
+</section>
+<!-- Recent Verified Meal Intake Logs Section -->
+<section>
+<div class="custom-white-card rounded-[2rem] border custom-hairline overflow-hidden">
+<div class="p-6 md:p-8 border-b custom-hairline">
+<h2 class="font-headline-md text-xl md:text-2xl font-bold">Recent Verified Meal Intake Logs</h2>
+</div>
+<div class="divide-y custom-hairline">
+<!-- Log Row 1 -->
+<div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<div class="font-body-base font-medium mb-1">Grilled Paneer Bowl</div>
+<div class="font-body-muted text-body-muted custom-secondary-text">Logged for: <span class="font-clinical-data">24 Jul 2026</span></div>
+</div>
+<div class="font-clinical-data text-sm bg-gray-50 px-4 py-2 rounded-full border custom-hairline self-start md:self-auto tabular-nums">
+                            420 kcal • 28g Prot • 9g Fiber
+                        </div>
+</div>
+<!-- Log Row 2 -->
+<div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<div class="font-body-base font-medium mb-1">Spirulina Recovery Bowl</div>
+<div class="font-body-muted text-body-muted custom-secondary-text">Logged for: <span class="font-clinical-data">23 Jul 2026</span></div>
+</div>
+<div class="font-clinical-data text-sm bg-gray-50 px-4 py-2 rounded-full border custom-hairline self-start md:self-auto tabular-nums">
+                            380 kcal • 24g Prot • 12g Fiber
+                        </div>
+</div>
+<!-- Log Row 3 -->
+<div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<div class="font-body-base font-medium mb-1">Turmeric Chicken Quinoa</div>
+<div class="font-body-muted text-body-muted custom-secondary-text">Logged for: <span class="font-clinical-data">22 Jul 2026</span></div>
+</div>
+<div class="font-clinical-data text-sm bg-gray-50 px-4 py-2 rounded-full border custom-hairline self-start md:self-auto tabular-nums">
+                            450 kcal • 38g Prot • 6g Fiber
+                        </div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

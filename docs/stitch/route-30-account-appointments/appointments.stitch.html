@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account Hub - Consults</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#343027",
+                        "tertiary-container": "#97b0ff",
+                        "on-background": "#1f1b13",
+                        "on-secondary-fixed-variant": "#324d34",
+                        "outline": "#7f7663",
+                        "primary": "#735c00",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#d4af37",
+                        "surface-container": "#f5eddf",
+                        "primary-fixed": "#ffe088",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#735c00",
+                        "background": "#FBFAF7", // Adjusted to Bone
+                        "inverse-primary": "#e9c349",
+                        "surface-dim": "#e1d9cc",
+                        "on-tertiary-fixed": "#00174b",
+                        "on-secondary-container": "#4f6b50",
+                        "surface-container-low": "#fbf3e5",
+                        "tertiary-fixed": "#dbe1ff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#254188",
+                        "surface": "#ffffff", // Adjusted to White for cards
+                        "surface-variant": "#eae1d4",
+                        "secondary-fixed-dim": "#b0cfae",
+                        "secondary-fixed": "#cbebc9",
+                        "on-surface": "#1A1C1E", // Adjusted to Ink
+                        "on-primary-fixed-variant": "#574500",
+                        "inverse-on-surface": "#f8f0e2",
+                        "secondary-container": "#cbebc9",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "secondary": "#49654a",
+                        "on-surface-variant": "#5C6367", // Adjusted to Secondary text
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "tertiary": "#415ba4",
+                        "surface-container-high": "#efe7da",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#eae1d4",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-primary-fixed": "#241a00",
+                        "on-secondary-fixed": "#06210c",
+                        "on-primary-container": "#1A1C1E", // Adjusted to Ink for buttons
+                        "outline-variant": "#E7E3DA", // Adjusted to Hairline
+                        "surface-bright": "#fff8f0",
+                        "sage-text": "#7D9E7E",
+                        "sage-bg": "rgba(125, 158, 126, 0.12)"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "16px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "container-max": "1440px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Satoshi", "sans-serif"],
+                        "display-lg": ["Satoshi", "sans-serif"],
+                        "label-caps": ["Satoshi", "sans-serif"],
+                        "data-lg": ["JetBrains Mono", "monospace"],
+                        "headline-md": ["Satoshi", "sans-serif"],
+                        "body-lg": ["Satoshi", "sans-serif"],
+                        "data-md": ["JetBrains Mono", "monospace"],
+                        "headline-sm": ["Satoshi", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700", "textTransform": "uppercase"}],
+                        "data-lg": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "data-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Satoshi', sans-serif; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        /* Hide scrollbar for horizontal scrolling tabs */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased">
+<!-- Top Navigation Tabs -->
+<div class="sticky top-0 z-10 bg-background border-b border-outline-variant">
+<nav class="flex overflow-x-auto no-scrollbar px-margin-mobile">
+<ul class="flex items-center space-x-6 whitespace-nowrap h-12">
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Plans</a></li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Orders</a></li>
+<li class="relative">
+<a class="font-body-md text-on-surface font-semibold py-3 block" href="#">Consults</a>
+<div class="absolute bottom-0 left-0 w-full h-[2px] bg-primary-container"></div>
+</li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Billing</a></li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Addresses</a></li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Preferences</a></li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Health</a></li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Rewards</a></li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">Symptoms</a></li>
+<li><a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors py-3 block" href="#">History</a></li>
+</ul>
+</nav>
+</div>
+<!-- Main Content List -->
+<main class="p-margin-mobile space-y-4 max-w-md mx-auto">
+<!-- Card 1 -->
+<article class="bg-surface rounded-2xl border border-outline-variant p-4">
+<header class="flex justify-between items-center mb-3">
+<span class="font-label-caps text-on-surface-variant">VIDEO CONSULT</span>
+<span class="bg-[#7D9E7E1F] text-sage-text font-label-caps px-3 py-1 rounded-full">Confirmed</span>
+</header>
+<div class="mb-4">
+<p class="font-data-md text-on-surface tabular-nums">Thu, 6 Aug, 4:00 PM — 4:30 PM</p>
+</div>
+<hr class="border-outline-variant mb-3"/>
+<footer class="flex justify-between items-center">
+<div class="flex items-center space-x-3">
+<img alt="Profile photo of Aanya Kapoor, professional dietitian, softly lit in a clinical setting" class="w-8 h-8 rounded-full object-cover" data-alt="Profile photo of Aanya Kapoor, professional dietitian, softly lit in a clinical setting, soft natural light, professional headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCK1MiBe2AR6-Z-52nEj3TeL7rLlK6N2REq6O6yOgu_j2DQF4pfyJNM7ZG1obD_IvaFmcRrTyny4CIQz6-l4kYpW6Pb-nUQfkSU42KhHYjZ9yArOA5jnypJTysXey-2LZcHpAXEK4zsO9mzsoi4jdywBEhLSSCtJCAIaWYcfxb4p5iG6TgTzhMsA4UOaVUR4fZx0xBHVLxMY9TJ0ch80aJDX-AL0aUBN5s9z84bKMSDgEmgARQG3h1gPIXT09PSdH7hTJecp2WwfMw"/>
+<span class="font-body-md text-on-surface-variant">Dietitian Specialist: Aanya Kapoor</span>
+</div>
+<span class="font-data-md text-on-surface">₹499</span>
+</footer>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface rounded-2xl border border-outline-variant p-4">
+<header class="flex justify-between items-center mb-3">
+<span class="font-label-caps text-on-surface-variant">VIDEO CONSULT</span>
+<span class="bg-[#7D9E7E1F] text-sage-text font-label-caps px-3 py-1 rounded-full">Confirmed</span>
+</header>
+<div class="mb-4">
+<p class="font-data-md text-on-surface tabular-nums">Mon, 10 Aug, 10:00 AM — 10:30 AM</p>
+</div>
+<hr class="border-outline-variant mb-3"/>
+<footer class="flex justify-between items-center">
+<div class="flex items-center space-x-3">
+<img alt="Profile photo of Dr. Aris Thorne, softly lit in a clinical setting" class="w-8 h-8 rounded-full object-cover" data-alt="Profile photo of Dr. Aris Thorne, male physician, softly lit in a bright modern clinical setting, professional headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRqnTAw8s6OrkqGcQgUoyJK99IZePyhSBPfR9H3wkAHpvkeFRx0RjF3rCB6lLiz85VXLK-be2YS2VEw482cz00i0CsS7Zyd-gJmx4G6bIQn0I9ht45CB0qKZf5jsgT3qp5znTwfAyBdhiAEu0VhFGUj5w1qnSktk_MEk9QwzOCALOqBfJ8Fikn_eKkb-G5Pku-iHfnNSEuwbRKKG5frKChokOapUIDKche5G6mpQ16-5uBS0c6cvzXsLzQtdXIKxcysL_IzGbFWX8"/>
+<span class="font-body-md text-on-surface-variant">Metabolic Expert: Dr. Aris Thorne</span>
+</div>
+<span class="font-data-md text-on-surface">₹499</span>
+</footer>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface rounded-2xl border border-outline-variant p-4">
+<header class="flex justify-between items-center mb-3">
+<span class="font-label-caps text-on-surface-variant">VIDEO CONSULT</span>
+<span class="bg-[#7D9E7E1F] text-sage-text font-label-caps px-3 py-1 rounded-full">Confirmed</span>
+</header>
+<div class="mb-4">
+<p class="font-data-md text-on-surface tabular-nums">Fri, 14 Aug, 2:00 PM — 2:15 PM</p>
+</div>
+<hr class="border-outline-variant mb-3"/>
+<footer class="flex justify-between items-center">
+<div class="flex items-center space-x-3">
+<img alt="Profile photo of Dr. Sarah Chen, female doctor, softly lit in a clinical setting" class="w-8 h-8 rounded-full object-cover" data-alt="Profile photo of Dr. Sarah Chen, female doctor, softly lit in a modern bright clinical setting, professional headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7FBLWcA3b3XuN8zdXUIddzBuEcNytML6EJdBHqYVNl-Z9N0lBi2aMLXnSoSLqZbUryXcdTYnumy9OG_L88uZO6ZCF_SZOy8ffmMQwc5O0i7Tvjf5YlS7gmlWScMANiC9iayZ-sIgLQneabRILidhSBzeZ9yNGKnU2u6TcqWC13FrFBdbjDlYPnSSSIDqlRSAvczReUjOLDrYTW7RvaSC_r7GnL-Owstj-Z8urVb6oBJ_ffzkGXHymPiE3s5RcnVxVlQvxVyXEboo"/>
+<span class="font-body-md text-on-surface-variant">Intake Specialist: Dr. Sarah Chen</span>
+</div>
+<div class="flex items-center space-x-1 border border-primary-container px-2 py-1 rounded-md bg-surface-container-low">
+<span class="material-symbols-outlined text-primary-container text-sm" style="font-size: 14px; font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-caps text-primary-container">Free Intro</span>
+</div>
+</footer>
+</article>
+</main>
+<!-- BottomNavBar JSON injection (Semantic Shell Mandate check: This is an account sub-view, but represents a top-level tab context for the user hub. However, layout specifically requests 'Page content only (no site header/footer)'. So suppressing BottomNavBar per instruction.) -->
+</body></html>
