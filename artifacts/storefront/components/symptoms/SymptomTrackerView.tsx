@@ -68,7 +68,7 @@ export function SymptomTrackerView() {
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-      <form onSubmit={handleSubmit} className="lg:col-span-5 flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 shadow-sm h-fit">
+      <form onSubmit={handleSubmit} className="lg:col-span-5 flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 h-fit">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">Physiological Telemetry</span>
           <h3 className="text-lg font-semibold text-ink mt-1">Log Post-Meal Symptom</h3>
@@ -80,7 +80,7 @@ export function SymptomTrackerView() {
         {msg && <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs font-semibold text-gold-text">{msg}</div>}
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="font-semibold text-ink">Symptom Classification</label>
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
           <select
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
@@ -94,9 +94,9 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <div className="flex justify-between font-semibold text-ink">
-            <span>Reaction Severity</span>
-            <span>{severity} / 5</span>
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Reaction Severity</span>
+            <span className="tabular text-sm font-semibold text-ink">{severity} / 5</span>
           </div>
           <input
             type="range"
@@ -106,10 +106,14 @@ export function SymptomTrackerView() {
             onChange={(e) => setSeverity(Number(e.target.value))}
             className="w-full accent-gold cursor-pointer"
           />
+          <div className="flex justify-between px-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink-faint">
+            <span>Mild</span>
+            <span>Severe</span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="font-semibold text-ink">Related Dish or Meal (Optional)</label>
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Related Dish or Meal (Optional)</label>
           <input
             type="text"
             value={dishSlug}
@@ -120,7 +124,7 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="font-semibold text-ink">Clinical Annotations</label>
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Clinical Annotations</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -133,9 +137,9 @@ export function SymptomTrackerView() {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-xl bg-gold py-3 text-xs font-semibold text-[var(--gold-ink)] shadow-sm hover:bg-gold/90 transition-colors mt-2"
+          className="rounded-full bg-gold py-3 text-xs font-semibold text-[var(--gold-ink)] hover:bg-gold/90 transition-colors mt-2"
         >
-          {busy ? "Recording Telemetry…" : "+ Record Symptom Log →"}
+          {busy ? "Recording Telemetry…" : "Record Symptom Log →"}
         </button>
       </form>
 
@@ -152,22 +156,22 @@ export function SymptomTrackerView() {
         ) : (
           <div className="flex flex-col gap-3.5">
             {logs.map((l) => (
-              <div key={l.id} className="rounded-2xl border border-line bg-surface p-4 shadow-sm flex flex-col gap-2.5">
+              <div key={l.id} className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-bold text-sage-text uppercase">
+                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-sage-text">
                     {l.symptomType.replace("_", " ")}
                   </span>
-                  <span className="text-xs font-semibold text-ink-muted">{l.loggedDate}</span>
+                  <span className="text-xs font-medium text-ink-muted">{l.loggedDate}</span>
                 </div>
-                <div className="text-xs font-semibold text-ink">
-                  Severity: <strong className="text-gold-text font-bold">{l.severity} / 5</strong>
+                <div className="text-xs font-medium text-ink-muted">
+                  Severity: <strong className="tabular text-sm font-bold text-gold-text">{l.severity} / 5</strong>
                   {l.relatedDishSlug && (
                     <>
-                      {" "}&bull; Correlated with: <span className="underline">{l.relatedDishSlug}</span>
+                      {" "}&bull; Correlated with: <span className="font-mono text-ink">{l.relatedDishSlug}</span>
                     </>
                   )}
                 </div>
-                {l.notes && <p className="text-xs text-ink-muted italic border-t border-line pt-2 mt-1">&ldquo;{l.notes}&rdquo;</p>}
+                {l.notes && <p className="text-xs text-ink-muted italic border-t border-line pt-2.5 mt-0.5">&ldquo;{l.notes}&rdquo;</p>}
               </div>
             ))}
           </div>

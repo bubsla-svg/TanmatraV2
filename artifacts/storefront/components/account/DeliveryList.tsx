@@ -68,9 +68,9 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
     .slice(0, SHOW_AT_MOST);
 
   return (
-    <div className="mt-3 flex flex-col gap-2 border-t border-line pt-3">
+    <div className="mt-3 flex flex-col gap-2.5 border-t border-line pt-4">
       {detail.mandate && (
-        <p className="text-xs font-medium text-sage-text">
+        <p className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage-text">
           UPI Autopay active — you&rsquo;ll be notified at least 24h before each charge.
         </p>
       )}
@@ -80,7 +80,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map((d) => (
-            <li key={d.id} className="flex items-center justify-between gap-2 text-sm">
+            <li key={d.id} className="flex items-center justify-between gap-2 rounded-xl bg-bg px-3 py-2.5 text-sm">
               <span className={d.status === "skipped" ? "text-ink-faint line-through" : "text-ink"}>
                 {fmtDay(d.scheduledFor)}
                 {d.deliveryWindow ? <span className="text-ink-faint"> · {d.deliveryWindow}</span> : null}
@@ -97,7 +97,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
           ))}
         </ul>
       )}
-      <p className="text-[11px] text-ink-faint">
+      <p className="mt-0.5 text-[11px] text-ink-faint">
         Skips up to 24h ahead come back as meal credits.
       </p>
     </div>

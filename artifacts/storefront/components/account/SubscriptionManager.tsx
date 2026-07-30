@@ -2,6 +2,7 @@
 // Client: owns the subscription list + lifecycle transitions against the api.
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Gift } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import {
   getSubscriptions,
@@ -104,7 +105,8 @@ export function SubscriptionManager() {
   return (
     <div className="flex flex-col gap-4">
       {creditBalance !== null && creditBalance > 0 && (
-        <p className="tabular self-start rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage-text">
+        <p className="tabular inline-flex items-center gap-1.5 self-start rounded-full bg-sage-soft px-3.5 py-1.5 text-xs font-medium text-sage-text">
+          <Gift aria-hidden className="h-3.5 w-3.5 shrink-0" />
           {creditBalance} meal credit{creditBalance === 1 ? "" : "s"} — skipped deliveries come back as credits
         </p>
       )}
@@ -115,7 +117,7 @@ export function SubscriptionManager() {
           <Link href="/plans" className="font-medium text-gold-text hover:underline">Browse plans</Link>.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {subs.map((s) => (
             <SubscriptionCard
               key={s.id}

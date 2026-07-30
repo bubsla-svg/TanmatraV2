@@ -87,11 +87,11 @@ export function ChangePlanPanel({ sub, onDone }: { sub: Subscription; onDone: ()
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-3 border-t border-line pt-3">
+    <div className="mt-3 flex flex-col gap-3.5 border-t border-line pt-4">
       {step.kind === "awaiting-reauth" ? (
         <>
-          <p className="text-sm text-ink">
-            This raises your bill to {formatPaise(step.newPricePerDeliveryPaise)}/delivery — confirm with a
+          <p className="text-sm leading-relaxed text-ink">
+            This raises your bill to <span className="tabular font-semibold">{formatPaise(step.newPricePerDeliveryPaise)}</span>/delivery — confirm with a
             one-time payment authorisation to protect your autopay mandate&rsquo;s limit.
           </p>
           {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
@@ -104,11 +104,11 @@ export function ChangePlanPanel({ sub, onDone }: { sub: Subscription; onDone: ()
         </>
       ) : (
         <>
-          <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
             Cadence
             <select
               value={cadence} onChange={(e) => setCadence(e.target.value as SubscriptionCadence)}
-              className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm"
+              className="rounded-xl border border-line bg-bg px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-ink outline-none focus:border-line-strong"
             >
               {CADENCES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
@@ -118,16 +118,16 @@ export function ChangePlanPanel({ sub, onDone }: { sub: Subscription; onDone: ()
               Your meals are set by your day-by-day schedule — edit individual deliveries to change them.
             </p>
           ) : (
-            <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
               Meals per delivery
               <input
                 type="number" min={1} max={50} value={meals}
                 onChange={(e) => setMeals(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
-                className="tabular rounded-lg border border-line bg-surface px-2 py-1.5 text-sm"
+                className="tabular rounded-xl border border-line bg-bg px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-ink outline-none focus:border-line-strong"
               />
             </label>
           )}
-          <p className="tabular text-sm text-ink-muted">
+          <p className="tabular rounded-xl bg-bg px-3 py-2.5 text-sm text-ink-muted">
             {noChange
               ? `${formatPaise(sub.pricePerDeliveryPaise)}/delivery`
               : `New price: ${formatPaise(previewPrice)}/delivery (currently ${formatPaise(sub.pricePerDeliveryPaise)})`}

@@ -71,7 +71,7 @@ export function AddressForm({
       </div>
       <input aria-label="Phone" type="tel" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls} />
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-      <div className="flex items-center gap-3">
+      <div className="mt-1 flex items-center gap-3 border-t border-line pt-3">
         <button type="button" disabled={!valid || busy} onClick={submit} className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40">
           {busy ? "Saving…" : submitLabel}
         </button>

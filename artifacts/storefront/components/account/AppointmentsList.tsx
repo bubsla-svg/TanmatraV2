@@ -64,25 +64,31 @@ export function AppointmentsList() {
   }
 
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col gap-2.5">
       {appts.map((a) => (
-        <li key={a.id} className="rounded-xl border border-line bg-surface p-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-ink capitalize">
+        <li key={a.id} className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
               {a.kind.replace(/_/g, " ")}
             </span>
             <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text">
               {a.status}
             </span>
           </div>
-          <p className="text-sm text-ink-muted">
+          <p className="tabular text-sm font-medium text-ink">
             {formatApptTime(a.startAt)} &mdash; {new Date(a.endAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}
           </p>
-          <div className="flex items-center justify-between border-t border-line pt-2 mt-1 text-xs text-ink-muted">
-            <span>Dietitian Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}</span>
-            <span className="font-medium text-ink">
-              {a.pricePaise === 0 ? "Free Intro" : formatPaise(a.pricePaise)}
+          <div className="mt-1 flex items-center justify-between border-t border-line pt-2.5">
+            <span className="text-xs text-ink-muted">
+              Dietitian Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}
             </span>
+            {a.pricePaise === 0 ? (
+              <span className="inline-flex items-center rounded-full bg-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--gold-ink)]">
+                Free Intro
+              </span>
+            ) : (
+              <span className="tabular text-sm font-semibold text-ink">{formatPaise(a.pricePaise)}</span>
+            )}
           </div>
         </li>
       ))}
