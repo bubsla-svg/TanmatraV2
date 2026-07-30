@@ -14,10 +14,12 @@ export const metadata: Metadata = {
 export default function CoachPage() {
   return (
     <section className="mx-auto flex min-h-[70vh] max-w-md flex-col px-4 py-8">
-      <h1 className="text-lg font-semibold text-ink">Nutrition coach</h1>
-      <p className="mt-1 text-xs text-ink-muted">
-        General nutrition guidance, not medical advice. Clinical questions go to a Registered Dietitian.
-      </p>
+      <div className="border-b border-line pb-4">
+        <h1 className="text-xl font-bold text-ink">Nutrition coach</h1>
+        <p className="mt-1 text-xs text-ink-muted">
+          General nutrition guidance, not medical advice. Clinical questions go to a Registered Dietitian.
+        </p>
+      </div>
       <div className="mt-5 flex-1">
         <CoachChat />
       </div>

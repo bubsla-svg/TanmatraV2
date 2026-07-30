@@ -17,7 +17,7 @@ export function RdCard({ rd }: { rd: RdProfile }) {
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-sm font-semibold text-gold-text"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-sm font-semibold text-gold-text"
         >
           {initials(rd.name)}
         </span>
@@ -27,9 +27,9 @@ export function RdCard({ rd }: { rd: RdProfile }) {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-1.5">
+      <div className="mt-4 flex flex-wrap gap-2">
         {rd.specialties.slice(0, 4).map((s) => (
-          <span key={s} className="rounded bg-surface-raised px-2 py-0.5 text-[11px] text-ink-muted">
+          <span key={s} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-ink-muted">
             {s}
           </span>
         ))}
@@ -40,17 +40,21 @@ export function RdCard({ rd }: { rd: RdProfile }) {
       </p>
 
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3">
-        <p className="text-xs text-ink-muted">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-ink-muted">
           {!rd.bookable ? (
             <span className="text-ink-faint">Not currently accepting bookings</span>
           ) : (
             <>
-              {hasFreeIntro(rd.pricing) && <span className="font-semibold text-sage-text">Free 15-min intro</span>}
+              {hasFreeIntro(rd.pricing) && (
+                <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text">
+                  Free 15-min intro
+                </span>
+              )}
               {hasFreeIntro(rd.pricing) && from != null && " · "}
               {from != null && <span className="tabular">from {formatPaise(from)}</span>}
             </>
           )}
-        </p>
+        </div>
         <Link href={`/rd/${rd.slug}`} className="shrink-0 text-sm font-semibold text-gold-text hover:underline">
           View profile &rarr;
         </Link>
