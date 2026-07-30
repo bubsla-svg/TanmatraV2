@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>METABOLIC OS | Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/jetbrains-mono@1.0.6/css/jetbrains-mono.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Satoshi font would typically be linked here; using sans-serif fallback for demo consistency -->
+<style>
+        @import url('https://fonts.cdnfonts.com/css/satoshi');
+        body {
+            font-family: 'Satoshi', sans-serif;
+            background-color: #0A0A0A;
+            color: #F5F5F4;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed-variant": "#474746",
+                      "on-tertiary-fixed": "#021453",
+                      "on-tertiary": "#1c2b68",
+                      "on-secondary-container": "#b7b4b4",
+                      "surface-tint": "#e9c349",
+                      "on-tertiary-fixed-variant": "#344280",
+                      "primary-fixed": "#ffe088",
+                      "ink-primary": "#F5F5F4",
+                      "surface-container-lowest": "#0e0e0e",
+                      "surface-container-low": "#1c1b1b",
+                      "primary-fixed-dim": "#e9c349",
+                      "on-tertiary-container": "#32407e",
+                      "inverse-surface": "#e5e2e1",
+                      "error-container": "#93000a",
+                      "glass": "rgba(23, 23, 23, 0.72)",
+                      "background": "#131313",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "tertiary-fixed": "#dde1ff",
+                      "ember-warning": "#B6892F",
+                      "on-primary": "#3c2f00",
+                      "ink-secondary": "#A3A3A3",
+                      "surface-container": "#201f1f",
+                      "outline": "#99907c",
+                      "sage-signal": "#7D9E7E",
+                      "on-primary-fixed-variant": "#574500",
+                      "on-error": "#690005",
+                      "on-primary-fixed": "#241a00",
+                      "on-primary-container": "#554300",
+                      "on-background": "#e5e2e1",
+                      "surface-container-high": "#2a2a2a",
+                      "primary": "#f2ca50",
+                      "tertiary-container": "#a1aff4",
+                      "clay-danger": "#B0655A",
+                      "surface-dim": "#131313",
+                      "tertiary-fixed-dim": "#b8c3ff",
+                      "secondary": "#c8c6c5",
+                      "secondary-fixed": "#e5e2e1",
+                      "on-surface-variant": "#d0c5af",
+                      "on-secondary": "#313030",
+                      "surface-variant": "#353534",
+                      "inverse-primary": "#735c00",
+                      "canvas": "#0A0A0A",
+                      "surface-container-highest": "#353534",
+                      "ink-on-gold": "#111318",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "on-error-container": "#ffdad6",
+                      "surface": "#171717",
+                      "secondary-container": "#474746",
+                      "tertiary": "#c2cbff",
+                      "surface-bright": "#3a3939",
+                      "inverse-on-surface": "#313030",
+                      "on-surface": "#e5e2e1",
+                      "primary-container": "#d4af37",
+                      "hairline": "rgba(255, 255, 255, 0.06)",
+                      "outline-variant": "#4d4635",
+                      "error": "#ffb4ab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "3xl": "1.5rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "1.5rem",
+                      "section-gap": "clamp(3rem, 8vw, 6rem)",
+                      "card-padding": "1.5rem",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "body-sm": ["Satoshi"],
+                      "headline-lg": ["Satoshi"],
+                      "headline-md": ["Satoshi"],
+                      "clinical-data": ["JetBrains Mono"],
+                      "label-caps": ["Satoshi"],
+                      "headline-lg-mobile": ["Satoshi"],
+                      "body-lg": ["Satoshi"]
+              },
+              "fontSize": {
+                      "body-sm": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                      "clinical-data": ["14px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-canvas text-ink-primary overflow-x-hidden">
+<!-- Global TopAppBar - Executed from JSON -->
+<header class="fixed top-0 w-full z-50 backdrop-blur-md border-b border-hairline bg-glass flex items-center justify-between px-gutter h-16 w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 transition-transform">menu</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">METABOLIC OS</span>
+</div>
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 transition-transform">shopping_bag</span>
+</header>
+<main class="pt-20 px-gutter max-w-container-max mx-auto pb-32">
+<!-- Title Block -->
+<section class="mb-6">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg mb-1">The Menu</h1>
+<div class="flex items-center gap-2 text-ink-secondary font-body-sm text-body-sm">
+<span>24 Clinically Optimized Dishes</span>
+<span class="w-1 h-1 rounded-full bg-hairline"></span>
+<span>Scientifically verified for your profile</span>
+</div>
+</section>
+<!-- Serviceability Slot -->
+<div class="w-full h-12 mb-8 rounded-xl bg-surface border border-hairline flex items-center px-4 gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+<span class="text-body-sm font-body-sm text-ink-secondary">Delivering to <span class="text-ink-primary font-bold">Downtown Core</span></span>
+<span class="material-symbols-outlined text-ink-secondary text-[16px] ml-auto">expand_more</span>
+</div>
+<!-- Sticky Filter Rail -->
+<nav class="sticky top-16 z-40 bg-canvas/80 backdrop-blur-md -mx-gutter px-gutter py-4 mb-6 border-b border-hairline overflow-x-auto hide-scrollbar flex gap-2">
+<button class="px-6 py-2 rounded-full whitespace-nowrap text-label-caps font-label-caps bg-primary text-ink-on-gold transition-all">
+                All
+            </button>
+<button class="px-6 py-2 rounded-full whitespace-nowrap text-label-caps font-label-caps border border-hairline hover:bg-surface-variant transition-all">
+                Vegetarian
+            </button>
+<button class="px-6 py-2 rounded-full whitespace-nowrap text-label-caps font-label-caps border border-hairline hover:bg-surface-variant transition-all">
+                High-Protein
+            </button>
+<button class="px-6 py-2 rounded-full whitespace-nowrap text-label-caps font-label-caps border border-hairline hover:bg-surface-variant transition-all">
+                Low-Carb
+            </button>
+<button class="px-6 py-2 rounded-full whitespace-nowrap text-label-caps font-label-caps border border-hairline hover:bg-surface-variant transition-all">
+                Gluten-Free
+            </button>
+</nav>
+<!-- Dish Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+<!-- Card 1 -->
+<article class="group cursor-pointer active:scale-[0.98] transition-transform duration-200 flex flex-col bg-surface border border-hairline rounded-3xl overflow-hidden shadow-black/40 shadow-xl">
+<div class="aspect-square relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A high-end, professionally lit culinary photograph of a Keto-Cleanse Bowl featuring vibrant avocado slices, roasted pumpkin seeds, fresh organic kale, and a perfectly soft-boiled egg. The lighting is sophisticated and directional, creating deep shadows on a dark graphite plate, aligning with a premium clinical laboratory aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuApaQVt2REvyMWUerg9WNPf9f2Ynv0PfIiRw5gbemypyJ0IxLsDSKoMSJVGyrEta3X8cboSIqBir0OkAUqtEMjIE9Am-oTfONklSN9pqnJhIZH2a_r7TNsMQRjCSUQDWJiPVzur16UDdNV2pq8h4sS97_oU_sotn_903Z1qQFmGY1cO-gQp6Vg6Al_-QhziXd9dUHybfHyG3JxP5GULPvay0LeWS8ZSF4XgIj0v8cLBKm8QnixN0m7Rw6BhiBTiVkj8SuH_AqRmXRo"/>
+<div class="absolute top-3 right-3 px-3 py-1 bg-sage-signal/20 backdrop-blur-sm border border-sage-signal/30 rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-sage-signal"></span>
+<span class="text-[10px] font-bold tracking-widest text-sage-signal uppercase">Fits You</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<div class="flex items-start justify-between">
+<h3 class="font-headline-md text-[18px] leading-tight text-ink-primary">Keto-Cleanse Bowl</h3>
+<div class="w-2.5 h-2.5 border border-sage-signal rounded-sm flex items-center justify-center mt-1">
+<div class="w-1.5 h-1.5 bg-sage-signal rounded-full"></div>
+</div>
+</div>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">
+                        480 kcal · 38P · 12C · 22F
+                    </div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-clinical-data text-primary text-lg">$14.50</span>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="group cursor-pointer active:scale-[0.98] transition-transform duration-200 flex flex-col bg-surface border border-hairline rounded-3xl overflow-hidden shadow-black/40 shadow-xl">
+<div class="aspect-square relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Exquisite food photography of Miso Glazed Tempeh served with steamed bok choy and black forbidden rice. The glaze reflects clinical studio lighting, creating a high-contrast, premium look. The scene is set on a dark, textured charcoal background with subtle steam rising, emphasizing fresh, chef-quality preparation in a minimalist dark-mode style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQmWvKGNc74rxKO8KkAJgkm1oHxXIzz5qEa4DfkFePvECjjE4SX1xSBQ_xiT5O2cP-cYq7T5EKOEDLdWBbS0dz3LeHuz_8xJaiq9MOaKlCmFANzxwwzCZnZslMpEZ-J6x0E5uTup-1CBtA7GZN3g4Fd01YO5O7Urr4597kkoXKyXTImvW-h6nMe6kc7nPd2zMYuOBI1Hizjv8MghW55jk5mPdP_stf_qdqlu0spq4-VYsJ6NfRsNHYYLRpAqTqpebRXFJb85QUKP8"/>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<div class="flex items-start justify-between">
+<h3 class="font-headline-md text-[18px] leading-tight text-ink-primary">Miso Glazed Tempeh</h3>
+<div class="w-2.5 h-2.5 border border-sage-signal rounded-sm flex items-center justify-center mt-1">
+<div class="w-1.5 h-1.5 bg-sage-signal rounded-full"></div>
+</div>
+</div>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">
+                        320 kcal · 24P · 28C · 08F
+                    </div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-clinical-data text-primary text-lg">$12.00</span>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="group cursor-pointer active:scale-[0.98] transition-transform duration-200 flex flex-col bg-surface border border-hairline rounded-3xl overflow-hidden shadow-black/40 shadow-xl">
+<div class="aspect-square relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Gourmet presentation of Wild-Caught Salmon fillet with charred asparagus and lemon zest. The salmon is perfectly seared, showcasing its natural orange hue against the dark instrumentation backdrop. The lighting is crisp and surgical, highlighting the textures of the fish and vegetables with precise, clinical clarity. Minimalist and authoritative." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4L1Zrc0p5y-D_EKiBO5-PGtVnZcrsWH4qQdLLiXa9vgENfwXI5EkxO7dbpn4H0MkkEnvVeU4MTdGdDhUjQ9HbhXsQQf9sXlJcx2E7YOwCGfkfqi-_711XcoweFwm-CH8a6mJxxXXAVansI8iDLnd2nPrRpUetvVNRHl102dV2ACJjTFT21pMTCkuD79pq4nIb1W7JrG-16TWeevWDe3OPayP5jDsNBWp29v0aT34DI_WYKXg3yiK7y--JG4DWhgrnVeAm_FNjMCQ"/>
+<div class="absolute top-3 right-3 px-3 py-1 bg-sage-signal/20 backdrop-blur-sm border border-sage-signal/30 rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-sage-signal"></span>
+<span class="text-[10px] font-bold tracking-widest text-sage-signal uppercase">Fits You</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<h3 class="font-headline-md text-[18px] leading-tight text-ink-primary">Wild Salmon & Asparagus</h3>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">
+                        510 kcal · 42P · 06C · 28F
+                    </div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-clinical-data text-primary text-lg">$18.50</span>
+</div>
+</div>
+</article>
+<!-- Card 4 -->
+<article class="group cursor-pointer active:scale-[0.98] transition-transform duration-200 flex flex-col bg-surface border border-hairline rounded-3xl overflow-hidden shadow-black/40 shadow-xl">
+<div class="aspect-square relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A sophisticated plate of Grass-fed Beef Ragù over zucchini noodles, topped with a dusting of micro-planed parmesan. The colors are rich and earthy, focused solely on the food while the background remains a deep obsidian void. High-end food photography that feels like a professional chef's final pass in a modern, dark kitchen." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZtGcY4vMQk_LydxpeD2NarD3aHLch2rw-inNo0O2NwPpIoBfaJ6cM7K3V6E8FJgdPs2tHAtAPVatfPJbUSN5JjXYkbqUBlh2XixNb9vQQ9E91Ao8F0TK43kJdmIQ-fvpxU-ebGUBudff4412mlkRL2GPF705tMkDgyS9ogG5uK3XJArCpMZqGBB6bA7kMF6h5Wr6wbSIKRJbcelYW2NzWCAZfkvAqwIDoI9LN_TMwpvUOyGo2L0HMW94tdwagjLWy3yF7ZjD0OuY"/>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<h3 class="font-headline-md text-[18px] leading-tight text-ink-primary">Grass-fed Beef Ragù</h3>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">
+                        640 kcal · 48P · 14C · 34F
+                    </div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-clinical-data text-primary text-lg">$16.00</span>
+</div>
+</div>
+</article>
+<!-- Card 5 -->
+<article class="group cursor-pointer active:scale-[0.98] transition-transform duration-200 flex flex-col bg-surface border border-hairline rounded-3xl overflow-hidden shadow-black/40 shadow-xl">
+<div class="aspect-square relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Tuna Tataki with ginger-soy glaze and radish sprouts on a ceramic plate. The aesthetic is clean and Japanese-inspired, focusing on precision cuts and natural colors. The dark mode theme is maintained with deep charcoal surfaces and clinical lighting that makes the pink tuna the center of attention." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzmHG1t2cviH7ieKZYIihDCguts1t0CBACNITzg62MgYO4eC2IZYHHzKnYu9N61K3ji29495w443qB5lEQV_WoIF37Z86zjpeHLEL5gJcXBIln0D3GX63QC5sx7p6_RzocUtCPCEADa284PQ0I3UQJr-59BFPdVtdmmBdipp3Sdx_Yhol4BBKG3MK-t_oMAU7Vz2oBR4pdVdngIVSP3piFVoYJKQvcQM2i3ouC7qYh90pzthYKfO9LZ9NGQuRnJhZgvM2bzC47AIc"/>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<h3 class="font-headline-md text-[18px] leading-tight text-ink-primary">Seared Tuna Tataki</h3>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">
+                        280 kcal · 32P · 04C · 06F
+                    </div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-clinical-data text-primary text-lg">$19.00</span>
+</div>
+</div>
+</article>
+<!-- Card 6 -->
+<article class="group cursor-pointer active:scale-[0.98] transition-transform duration-200 flex flex-col bg-surface border border-hairline rounded-3xl overflow-hidden shadow-black/40 shadow-xl">
+<div class="aspect-square relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Roasted Cauliflower Steaks with chimichurri sauce and pomegranate seeds. A vibrant vegetarian option presented with dramatic, moody lighting. The emerald green of the sauce pops against the golden cauliflower and the dark, instrumentation-style backdrop of the Metabolic OS design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAocUUsCF1UQNUx754qWKHBR7oVxFbeSx_Dln9G3bqB9DZuqAKiMa19TAV98bEAQ4RLIi03Y4AFYufFq_sJeDhFPh9qx8pUxLdc-7UNgaCc21on6ZgZCsjaohD6Y0LBL_txtClWbj-EI1dS15Rj0ro41ZbH9ladMkMa6RHq3z43Z3eQfLC3a5x88Ziozq17ZftUt_Qr5IRTn3OK67i-1irshGqpmU_6n3QEtaqgGFVdQmmyY3PKggNgzTLOEGi-sLzWwB8zOKIeh2E"/>
+<div class="absolute top-3 right-3 px-3 py-1 bg-sage-signal/20 backdrop-blur-sm border border-sage-signal/30 rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-sage-signal"></span>
+<span class="text-[10px] font-bold tracking-widest text-sage-signal uppercase">Fits You</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<div class="flex items-start justify-between">
+<h3 class="font-headline-md text-[18px] leading-tight text-ink-primary">Chimichurri Cauliflower</h3>
+<div class="w-2.5 h-2.5 border border-sage-signal rounded-sm flex items-center justify-center mt-1">
+<div class="w-1.5 h-1.5 bg-sage-signal rounded-full"></div>
+</div>
+</div>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">
+                        210 kcal · 08P · 18C · 12F
+                    </div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-clinical-data text-primary text-lg">$11.50</span>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- MiniCartBar Placeholder -->
+<div class="fixed bottom-20 left-4 right-4 z-40 md:left-auto md:right-8 md:bottom-24 md:w-80">
+<div class="bg-primary px-6 py-4 rounded-3xl flex items-center justify-between shadow-2xl shadow-primary/20 active:scale-95 transition-all cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-ink-on-gold">shopping_cart</span>
+<span class="font-label-caps text-label-caps text-ink-on-gold">2 ITEMS IN CART</span>
+</div>
+<span class="font-clinical-data text-ink-on-gold font-bold">$26.50</span>
+</div>
+</div>
+<!-- Global BottomNavBar - Executed from JSON -->
+<nav class="fixed bottom-0 w-full z-50 backdrop-blur-md border-t border-hairline bg-glass flex justify-around items-center h-16 w-full px-4 pb-safe">
+<div class="flex flex-col items-center justify-center text-ink-secondary group">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">analytics</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary bg-primary-container/10 rounded-xl px-3 py-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Menu</span>
+</div>
+<div class="flex flex-col items-center justify-center text-ink-secondary group">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">assignment_turned_in</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Plans</span>
+</div>
+<div class="flex flex-col items-center justify-center text-ink-secondary group">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Profile</span>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for filters
+        const filterButtons = document.querySelectorAll('nav button');
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-ink-on-gold');
+                    b.classList.add('border', 'border-hairline');
+                });
+                btn.classList.remove('border', 'border-hairline');
+                btn.classList.add('bg-primary', 'text-ink-on-gold');
+            });
+        });
+
+        // Add scroll behavior to the header for glass effect transition
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 20) {
+                header.classList.add('shadow-black/40', 'shadow-lg');
+            } else {
+                header.classList.remove('shadow-black/40', 'shadow-lg');
+            }
+        });
+    </script>
+</body></html>
