@@ -144,6 +144,48 @@ shape — Stitch must not flatten it into a grid of separately-tappable dish til
 is a palette utility, not a raw hex, and the palette-class ban was revoked for the
 storefront under DS-0. Fix during wiring.
 
+## Batch 3 is a shared kit, not seven bespoke pages
+
+The decisive structural finding. These routes are thin server components that
+compose a **common landing kit** and read their copy from `content/landing/*`:
+
+| Kit component | LOC | Used by |
+|---|---|---|
+| `landing/LandingHero` | 58 | corporate-wellness, partners/gyms |
+| `landing/BenefitGrid` | 43 | corporate-wellness (×3), metabolic, partners/gyms, care |
+| `landing/LandingIcon` | 147 | corporate-wellness, metabolic |
+| `landing/StickyCtaBar` | 53 | corporate-wellness, partners/gyms |
+| `landing/SubsidyCalculator` | 137 | corporate-wellness |
+| `landing/GymRevenueCalculator` | 84 | partners/gyms |
+| `landing/ProofStrip` | 52 | partners/gyms |
+| `corporate/CorporateLeadForm` | 142 | corporate-wellness, partners/gyms |
+| `faq/FaqAccordion` | 43 | corporate-wellness, metabolic |
+| `landing/FaqAccordion` | 78 | partners/gyms |
+
+Route-specific islands on top: `metabolic/MetabolicExplorer` (100),
+`care/{CareHero,CareRdRoster,CareEvidence}` (33/69/53),
+`premium/PremiumMembership` (83), `rd-partners/{PartnerHero,PartnerWizard}` (53/123),
+`deals/{BundleOfferCard,DealsFilterBar}` (85/76),
+`recommendations/{SmartRecommendationsGrid,RecommendationCard}` (73/48).
+
+Consequence for briefing: design the **kit** once and every Batch 3 route inherits
+a coherent look, instead of asking Stitch for seven unrelated page comps that
+would each re-invent the hero and the lead form. Brief 14 (`/corporate-wellness`)
+is therefore the kit-defining brief — it exercises hero + benefit grid + calculator
++ lead form + FAQ + sticky bar in one screen — and Briefs 15–20 layer only their
+own islands on that established vocabulary.
+
+**Pre-existing duplication worth collapsing during wiring:** there are two
+different `FaqAccordion` components (`components/faq/` at 43 LOC and
+`components/landing/` at 78 LOC) used by different routes in the same batch. One
+of them should win.
+
+**`SubsidyCalculator` / `GymRevenueCalculator` are estimators, not the money
+path.** They do client-side arithmetic over a local model table and render through
+`formatPaise()`. That is legitimate marketing math, but it must stay visibly an
+estimate — the money-path rule (server owns every amount) is not violated so long
+as neither is ever styled or worded as a committed price or a checkout total.
+
 ## Wiring checklist for Batch 3
 
 - [ ] `LeadForm.tsx` keeps both endpoint branches and the conditional `rdRegNo` rule
