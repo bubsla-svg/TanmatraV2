@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Building2 } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import { getInvite, acceptInvite, type CompanyMember, type Company } from "@/lib/companyApi";
 
@@ -35,31 +36,54 @@ export function CompanyInvite({ token }: { token: string }) {
     }
   }
 
-  if (state === "loading") return <p className="text-sm text-ink-muted">Fetching your invitation…</p>;
+  if (state === "loading") {
+    return (
+      <div className="flex flex-col items-center gap-4 py-16 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
+          <Building2 className="h-7 w-7 text-gold-text" strokeWidth={1.75} />
+        </div>
+        <p className="text-sm text-ink-muted">Fetching your invitation…</p>
+      </div>
+    );
+  }
   if (state === "missing" || !invite) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-6 text-center">
-        <p className="text-sm font-semibold text-ink">Invite unavailable</p>
-        <p className="mt-1 text-sm text-ink-muted">This link may have expired or already been used. Ask your company admin for a fresh invite.</p>
-        <Link href="/corporate" className="mt-3 inline-block text-sm font-medium text-gold-text hover:underline">Back to Corporate</Link>
+      <div className="flex flex-col items-center gap-2 rounded-3xl border border-line bg-surface p-8 text-center">
+        <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
+          <Building2 className="h-7 w-7 text-ink-faint" strokeWidth={1.75} />
+        </div>
+        <p className="text-base font-semibold text-ink">Invite unavailable</p>
+        <p className="text-sm text-ink-muted">This link may have expired or already been used. Ask your company admin for a fresh invite.</p>
+        <Link href="/corporate" className="mt-2 inline-block text-sm font-medium text-gold-text hover:underline">Back to Corporate</Link>
       </div>
     );
   }
   return (
-    <div className="rounded-2xl border border-line bg-surface p-6">
-      <h1 className="text-lg font-semibold text-ink">{company?.name ?? "Company meal program"}</h1>
-      <p className="mt-1 text-sm text-ink-muted">
+    <div className="flex flex-col items-center rounded-3xl border border-line bg-surface p-8 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
+        <Building2 className="h-7 w-7 text-gold-text" strokeWidth={1.75} />
+      </div>
+      <h1 className="mt-5 text-xl font-semibold tracking-tight text-ink">{company?.name ?? "Company meal program"}</h1>
+      <p className="mt-2 text-sm text-ink-muted">
         You&rsquo;ve been invited as a{invite.role === "admin" ? "n" : ""} <span className="font-medium text-ink">{invite.role}</span>. Accept to start using the company meal program.
       </p>
-      <div className="mt-4 rounded-xl border border-line bg-surface-raised p-4">
+
+      <div className="mt-6 w-full rounded-2xl border border-line bg-surface-raised p-4 text-left">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Invitation for</p>
         <p className="mt-1 text-sm text-ink">{invite.email}</p>
       </div>
-      {error && <p role="alert" className="mt-3 text-xs font-medium text-[var(--danger)]">{error}</p>}
-      <button type="button" onClick={accept} disabled={busy} className="mt-4 w-full rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+
+      {error && <p role="alert" className="mt-4 text-xs font-medium text-[var(--danger)]">{error}</p>}
+
+      <button
+        type="button"
+        onClick={accept}
+        disabled={busy}
+        className="mt-6 w-full rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-opacity disabled:opacity-60"
+      >
         {busy ? "Joining…" : "Accept invite"}
       </button>
-      <p className="mt-3 text-center text-[11px] text-ink-faint">Secure corporate invitation.</p>
+      <p className="mt-4 text-[11px] text-ink-faint">Secure corporate invitation.</p>
     </div>
   );
 }

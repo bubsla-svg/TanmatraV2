@@ -58,63 +58,78 @@ export function GroupOrderView({ code }: { code: string }) {
     } catch (e) { setError(e instanceof ApiError ? e.message : "Couldn't close the group."); setBusy(false); }
   }
 
-  if (state === "loading") return <p className="text-sm text-ink-muted">Loading group…</p>;
-  if (state === "missing") return <p className="text-sm text-ink-muted">Group {code} was not found — it may have been closed or the code is incorrect.</p>;
+  if (state === "loading") return <p className="py-10 text-center text-sm text-ink-muted">Loading group…</p>;
+
+  if (state === "missing") {
+    return (
+      <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
+        <p className="text-sm font-semibold text-ink">Group {code} was not found</p>
+        <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">It may have been closed, or the code is incorrect.</p>
+      </div>
+    );
+  }
+
   if (state === "error" || !group) {
     return (
-      <p className="text-sm text-ink-muted">
-        Couldn&rsquo;t load this group order.{" "}
-        <button type="button" onClick={load} className="font-medium text-gold-text hover:underline">Try again</button>
-      </p>
+      <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
+        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load this group order</p>
+        <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">Something went wrong on our end — this usually clears up on retry.</p>
+        <button type="button" onClick={load} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+      </div>
     );
   }
 
   const closed = group.status === "closed";
   return (
-    <div className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-line bg-surface p-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="tabular text-lg font-bold tracking-widest text-ink">{group.code}</p>
+    <div className="flex flex-col gap-6">
+      <div className="rounded-2xl border border-line bg-surface p-6 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <p className="tabular text-xl font-bold tracking-widest text-ink">{group.code}</p>
           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase ${closed ? "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted" : "bg-sage text-sage-foreground"}`}>{group.status}</span>
         </div>
-        <p className="mt-1 text-sm text-ink-muted">Hosted by {group.hostName} · {group.participants.length} participant{group.participants.length === 1 ? "" : "s"}</p>
-        <p className="mt-3 text-xs leading-relaxed text-ink-faint">Share code <span className="font-semibold text-ink-muted">{group.code}</span>. Anyone with the link can add their own items — the host closes the order and pays for everyone.</p>
+        <p className="mt-2 text-sm text-ink-muted">Hosted by {group.hostName} · {group.participants.length} participant{group.participants.length === 1 ? "" : "s"}</p>
+        <p className="mx-auto mt-3 max-w-xs text-xs leading-relaxed text-ink-faint">Share code <span className="font-semibold text-ink-muted">{group.code}</span>. Anyone with the link can add their own items — the host closes the order and pays for everyone.</p>
       </div>
 
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-medium text-[var(--danger)]">{error}</p>}
 
       {group.items.length === 0 ? (
-        <p className="text-sm text-ink-muted">No items yet. Share the code with friends to get started.</p>
+        <div className="rounded-xl border border-dashed border-line px-4 py-8 text-center">
+          <p className="text-sm text-ink-muted">No items yet. Share the code with friends to get started.</p>
+        </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2.5">
           {group.items.map((l) => (
-            <li key={l.lineId} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3">
+            <li key={l.lineId} className="flex items-start justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-ink">{l.name}</p>
-                <p className="text-xs text-ink-faint">Added by {l.addedByName} · Qty {l.quantity}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="tabular text-sm font-semibold text-ink">{formatPaise(l.unitPrice * l.quantity)}</span>
+                <p className="mt-0.5 text-xs text-ink-faint">Added by {l.addedByName} · Qty {l.quantity}</p>
                 {!closed && (isHost || l.addedBy === userId) && (
-                  <button type="button" onClick={() => remove(l.lineId)} disabled={busy} aria-label="Remove" className="text-xs text-ink-faint hover:text-[var(--danger)] disabled:opacity-50">Remove</button>
+                  <button type="button" onClick={() => remove(l.lineId)} disabled={busy} aria-label="Remove" className="mt-1.5 text-xs font-medium text-ink-faint hover:text-[var(--danger)] disabled:opacity-50">Remove</button>
                 )}
               </div>
+              <span className="tabular shrink-0 pt-0.5 text-sm font-medium text-ink">{formatPaise(l.unitPrice * l.quantity)}</span>
             </li>
           ))}
         </ul>
       )}
 
-      {group.items.length > 0 && <p className="tabular text-right text-sm font-semibold text-ink">Subtotal {formatPaise(groupSubtotalPaise(group))}</p>}
+      {group.items.length > 0 && (
+        <div className="flex items-baseline justify-between border-t border-line pt-4">
+          <p className="text-sm font-medium text-ink-muted">Subtotal</p>
+          <p className="tabular text-lg font-bold text-ink">{formatPaise(groupSubtotalPaise(group))}</p>
+        </div>
+      )}
 
       {closed ? (
-        <p className="text-center text-sm text-ink-muted">This group order is closed.</p>
+        <p className="rounded-xl border border-line bg-surface px-4 py-3 text-center text-sm text-ink-muted">This group order is closed.</p>
       ) : isHost ? (
         <div>
-          <button type="button" onClick={closeAndCheckout} disabled={busy} className="w-full rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">{busy ? "Closing…" : "Close & checkout"}</button>
+          <button type="button" onClick={closeAndCheckout} disabled={busy} className="w-full rounded-xl bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-60">{busy ? "Closing…" : "Close & checkout"}</button>
           <p className="mt-2 text-center text-[11px] text-ink-faint">Only you (the host) can close this order and pay for everyone.</p>
         </div>
       ) : (
-        <Link href={`/menu?group=${group.code}`} className="w-full rounded-xl bg-gold px-6 py-3 text-center text-sm font-semibold text-[var(--gold-ink)]">Add your items</Link>
+        <Link href={`/menu?group=${group.code}`} className="block w-full rounded-xl bg-gold px-6 py-3.5 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">Add your items</Link>
       )}
     </div>
   );

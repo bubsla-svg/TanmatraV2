@@ -25,14 +25,14 @@ const PROOF_ITEMS = [
 export default function CorporatePage() {
   return (
     <div className="pb-24">
-      <section className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-4xl">Meal programs for teams</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-muted sm:text-base">
+      <section className="mx-auto max-w-3xl px-4 py-[var(--space-section)]">
+        <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Meal programs for teams</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-muted sm:text-base">
           RD-designed lunches for offices, gyms, and fitness clubs across Delhi NCR. Tell us about your
           team and we&rsquo;ll put together a plan that fits.
         </p>
-        <p className="mt-3 text-sm">
-          <Link href="/corporate-wellness" className="font-medium text-gold-text hover:underline">
+        <p className="mt-4 text-sm">
+          <Link href="/corporate-wellness" className="font-medium text-gold-text hover:underline underline-offset-4">
             See the full corporate-wellness pitch — subsidy calculator &amp; FAQ &rarr;
           </Link>
         </p>
@@ -40,22 +40,26 @@ export default function CorporatePage() {
 
       <ProofStrip heading="Enterprise lunch program credentials" items={PROOF_ITEMS} />
 
-      <section id="lead-capture" className="mx-auto max-w-md px-4 py-10">
-        <h2 className="text-xl font-semibold text-ink mb-2">Request your team pilot</h2>
+      <section id="lead-capture" className="scroll-mt-20 mx-auto max-w-md px-4 py-[var(--space-section)]">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink mb-6">Request your team pilot</h2>
         <CorporateLeadForm source="web:/corporate" />
-        <div className="mt-8 border-t border-line pt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Run a gym or club?</p>
-          <ul className="mt-3 flex flex-col gap-2">
-            {PARTNER_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="text-sm font-medium text-gold-text hover:underline">
-                  {l.label} &rarr;
-                </Link>
-                {l.desc && <span className="ml-2 text-xs text-ink-muted">{l.desc}</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
+      </section>
+
+      <section className="mx-auto max-w-md border-t border-line px-4 pb-[var(--space-section)] pt-8">
+        <h2 className="text-xl font-semibold tracking-tight text-ink">Run a gym or club?</h2>
+        <ul className="mt-4 flex flex-col gap-3">
+          {PARTNER_LINKS.map((l) => (
+            <li key={l.href}>
+              <Link
+                href={l.href}
+                className="text-sm font-medium text-gold-text hover:underline underline-offset-4"
+              >
+                {l.label} &rarr;
+              </Link>
+              {l.desc && <span className="ml-2 text-xs text-ink-muted">{l.desc}</span>}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <StickyCtaBar

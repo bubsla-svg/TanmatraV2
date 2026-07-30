@@ -74,21 +74,26 @@ export function LunchPlanner({ slug }: { slug: string }) {
         <p className="mt-1 text-sm text-ink-muted">Set your team&rsquo;s diet profile, generate a week of lunches, then schedule them for the office.</p>
       </div>
 
-      <section>
-        <h2 className="text-sm font-semibold text-ink">1 &middot; Team diet profile</h2>
-        <p className="text-xs text-ink-faint">Drives which dishes the planner may pick.</p>
-        <div className="mt-3"><DietProfileForm initial={profile} busy={busy === "save"} saved={saved} error={busy === "save" ? error : null} onSubmit={save} /></div>
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">1 &middot; Team diet profile</h2>
+          <p className="mt-0.5 text-sm text-ink-muted">Drives which dishes the planner may pick.</p>
+        </div>
+        <DietProfileForm initial={profile} busy={busy === "save"} saved={saved} error={busy === "save" ? error : null} onSubmit={save} />
       </section>
 
-      <section>
-        <div className="flex items-center justify-between gap-3">
-          <div><h2 className="text-sm font-semibold text-ink">2 &middot; Weekly plan</h2><p className="text-xs text-ink-faint">Generated against the saved profile.</p></div>
+      <section className="flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-ink">2 &middot; Weekly plan</h2>
+            <p className="mt-0.5 text-sm text-ink-muted">Generated against the saved profile.</p>
+          </div>
           <button type="button" onClick={generate} disabled={!profile || busy !== null} className="shrink-0 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40">
             {busy === "generate" ? "Generating…" : proposal ? "Regenerate" : "Generate plan"}
           </button>
         </div>
-        {error && busy !== "save" && <p role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">{error}</p>}
-        <div className="mt-3"><LunchPlanPreview proposal={proposal} onSchedule={schedule} scheduling={busy === "schedule"} perEmployeePaise={PER_EMPLOYEE_PAISE} scheduledHour={SCHEDULED_HOUR} /></div>
+        {error && busy !== "save" && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+        <LunchPlanPreview proposal={proposal} onSchedule={schedule} scheduling={busy === "schedule"} perEmployeePaise={PER_EMPLOYEE_PAISE} scheduledHour={SCHEDULED_HOUR} />
       </section>
     </div>
   );
