@@ -11,8 +11,12 @@ import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 const SECTIONS = [
   { href: "/account/subscriptions", label: "Plans", sub: "Your active metabolic protocols" },
   { href: "/account/orders", label: "Orders", sub: "History and clinical summaries" },
+  { href: "/account/appointments", label: "Consults", sub: "Dietitian video and chat sessions" },
   { href: "/account/addresses", label: "Addresses", sub: "Delivery locations" },
+  { href: "/account/billing", label: "Billing", sub: "Credit ledger and wallet balance" },
   { href: "/account/preferences", label: "Preferences", sub: "Dietary and clinical filters" },
+  { href: "/account/symptoms", label: "Symptoms", sub: "Post-meal reaction log" },
+  { href: "/account/history", label: "History", sub: "Macro intake vs. your targets" },
   { href: "/account/loyalty", label: "Rewards", sub: "Loyalty points and clinical credits" },
 ] as const;
 

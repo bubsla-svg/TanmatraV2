@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account Subscriptions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f3f3f6",
+                        "inverse-surface": "#2f3133",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#241a00",
+                        "on-error-container": "#93000a",
+                        "primary": "#735c00",
+                        "secondary": "#476649",
+                        "on-tertiary-container": "#7b2b0e",
+                        "on-primary-container": "#554300",
+                        "primary-fixed-dim": "#e9c349",
+                        "tertiary": "#9c4325",
+                        "surface-dim": "#dadadc",
+                        "secondary-container": "#c8ecc8",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#ff9876",
+                        "surface-tint": "#735c00",
+                        "surface-container-high": "#e8e8ea",
+                        "outline": "#7f7663",
+                        "on-secondary-fixed": "#03210b",
+                        "surface-bright": "#f9f9fc",
+                        "inverse-on-surface": "#f0f0f3",
+                        "surface-variant": "#e2e2e5",
+                        "surface": "#f9f9fc",
+                        "secondary-fixed": "#c8ecc8",
+                        "on-primary-fixed-variant": "#574500",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbd0",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#4d4635",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#e9c349",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "on-surface": "#1a1c1e",
+                        "on-background": "#1a1c1e",
+                        "primary-container": "#d4af37",
+                        "primary-fixed": "#ffe088",
+                        "on-tertiary-fixed": "#390b00",
+                        "background": "#FBFAF7", 
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#4d6c4f",
+                        "surface-container-highest": "#e2e2e5",
+                        "surface-container": "#eeeef0",
+                        "on-secondary-fixed-variant": "#304e33",
+                        "outline-variant": "#d0c5af",
+                        "secondary-fixed-dim": "#adcfad",
+                        "on-tertiary-fixed-variant": "#7d2d10",
+                        "clinical-gold": "#D4AF37",
+                        "clinical-sage": "#7D9E7E",
+                        "clinical-sage-bg": "#EBF2EB",
+                        "clinical-alert": "#C2603F",
+                        "clinical-border": "#E7E3DA",
+                        "clinical-text": "#1A1C1E",
+                        "clinical-muted": "#6B7280"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "squircle": "24px" 
+                    },
+                    spacing: {
+                        "container-margin": "20px",
+                        "section-gap": "32px",
+                        "inline-gap": "8px",
+                        "card-padding": "20px",
+                        "stack-gap": "16px"
+                    },
+                    fontFamily: {
+                        "label-caps": ["Satoshi", "sans-serif"],
+                        "display-lg-mobile": ["Satoshi", "sans-serif"],
+                        "body-md": ["Satoshi", "sans-serif"],
+                        "headline-md": ["Satoshi", "sans-serif"],
+                        "display-lg": ["Satoshi", "sans-serif"],
+                        "data-sm": ["JetBrains Mono", "monospace"],
+                        "data-lg": ["JetBrains Mono", "monospace"],
+                        "body-lg": ["Satoshi", "sans-serif"],
+                        "sans": ["Satoshi", "sans-serif"]
+                    },
+                    fontSize: {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-sm": ["14px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "data-lg": ["20px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-clinical-text font-sans antialiased min-h-screen">
+<div class="max-w-4xl mx-auto pb-24">
+<!-- Tab Strip -->
+<div class="sticky top-0 z-10 bg-background/90 backdrop-blur-md border-b border-clinical-border pt-4">
+<div class="flex overflow-x-auto no-scrollbar px-container-margin gap-6 items-center">
+<a class="pb-3 border-b-2 border-clinical-gold text-clinical-text font-medium whitespace-nowrap text-sm" href="#">Plans</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Orders</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Consults</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Billing</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Addresses</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Preferences</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Health</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Rewards</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">Symptoms</a>
+<a class="pb-3 border-b-2 border-transparent text-clinical-muted hover:text-clinical-text font-medium whitespace-nowrap text-sm transition-colors" href="#">History</a>
+</div>
+</div>
+<div class="px-container-margin pt-section-gap flex flex-col gap-stack-gap">
+<!-- Credit Banner -->
+<div class="inline-flex items-center gap-2 bg-[#7D9E7E]/10 px-4 py-2 rounded-full self-start">
+<span class="material-symbols-outlined text-[18px] text-[#4F6B50]">redeem</span>
+<span class="text-sm font-medium text-[#4F6B50]">3 meal credits — skipped deliveries come back as credits</span>
+</div>
+<!-- Subscription Cards -->
+<div class="flex flex-col gap-stack-gap mt-4">
+<!-- Card 1 (Active) -->
+<div class="bg-surface-container-lowest border border-clinical-border rounded-[24px] p-card-padding flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<h2 class="font-headline-md text-headline-md-mobile md:text-headline-md">Weekly · 5 meals / delivery</h2>
+<span class="bg-clinical-sage-bg text-clinical-sage px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Active</span>
+</div>
+<div class="flex flex-col gap-1">
+<p class="font-data-lg tabular-nums">₹189 <span class="font-body-md text-clinical-muted">/ delivery · 12:30–2:00 PM</span></p>
+<p class="text-sm text-clinical-muted">Next delivery: <span class="font-data-sm tabular-nums text-clinical-text">Oct 24, 2023</span></p>
+<p class="text-sm text-clinical-text mt-1">Home - 123 Metabolic Way, Suite 400</p>
+</div>
+<div class="bg-[#7D9E7E]/10 px-4 py-3 rounded-xl text-sm text-[#4F6B50] flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">info</span>
+                        Plan change to Monthly · 6 meals takes effect next cycle.
+                    </div>
+<div class="pt-4 border-t border-clinical-border flex gap-4 mt-2">
+<button class="text-sm font-medium text-clinical-text hover:text-clinical-gold transition-colors">Pause</button>
+<button class="text-sm font-medium text-clinical-text hover:text-clinical-gold transition-colors">Change plan</button>
+<button class="text-sm font-medium text-clinical-text hover:text-clinical-gold transition-colors">Deliveries</button>
+</div>
+</div>
+<!-- Card 2 (Paused) -->
+<div class="bg-surface-container-lowest border border-clinical-border rounded-[24px] p-card-padding flex flex-col gap-4 opacity-75">
+<div class="flex justify-between items-start">
+<h2 class="font-headline-md text-headline-md-mobile md:text-headline-md">Weekly · 5 meals / delivery</h2>
+<span class="border border-clinical-border text-clinical-muted px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Paused</span>
+</div>
+<div class="flex flex-col gap-1">
+<p class="font-data-lg tabular-nums">₹189 <span class="font-body-md text-clinical-muted">/ delivery</span></p>
+<p class="text-sm text-clinical-muted">Resumes: <span class="font-data-sm tabular-nums text-clinical-text">Nov 14, 2023</span></p>
+<p class="text-sm text-clinical-text mt-1">Work - 456 Zenith Tower, Floor 12</p>
+</div>
+<div class="pt-4 border-t border-clinical-border flex gap-4 mt-2">
+<button class="text-sm font-medium text-clinical-gold hover:text-primary-container transition-colors">Resume</button>
+<button class="text-sm font-medium text-clinical-alert hover:opacity-80 transition-opacity">Cancel</button>
+<button class="text-sm font-medium text-clinical-text hover:text-clinical-gold transition-colors">Change plan</button>
+<button class="text-sm font-medium text-clinical-text hover:text-clinical-gold transition-colors">Deliveries</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

@@ -68,7 +68,10 @@ export async function getMySymptomLogs(): Promise<SymptomLogEntry[]> {
   return apiGet<SymptomLogEntry[]>("/symptom-logs");
 }
 
-export async function recordSymptomLog(input: Omit<SymptomLogEntry, "id">): Promise<SymptomLogEntry> {
+/** relatedDishSlug is optional server-side (defaults to "") — omit it when the caller has no dish to attach. */
+export async function recordSymptomLog(
+  input: Omit<SymptomLogEntry, "id" | "relatedDishSlug"> & { relatedDishSlug?: string },
+): Promise<SymptomLogEntry> {
   return apiPost<SymptomLogEntry>("/symptom-logs", input);
 }
 

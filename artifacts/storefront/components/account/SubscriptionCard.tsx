@@ -1,11 +1,11 @@
 "use client";
 // Client: presentational subscription row + status-driven actions.
 import { useState } from "react";
+import { Info } from "lucide-react";
 import { formatPaise } from "@/lib/format";
 import type { Subscription, SubscriptionStatus } from "@/lib/subscriptionsApi";
 import { DeliveryList } from "./DeliveryList";
 import { ChangePlanPanel } from "./ChangePlanPanel";
-import { HybridWorkToggle } from "./HybridWorkToggle";
 
 export type SubAction = "pause" | "resume" | "cancel" | "reactivate-billing";
 
@@ -51,46 +51,49 @@ export function SubscriptionCard({
   const [showDeliveries, setShowDeliveries] = useState(false);
   const [showChangePlan, setShowChangePlan] = useState(false);
   return (
-    <li className="rounded-xl border border-line bg-surface p-4">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-ink">
+    <li className="rounded-3xl border border-line bg-surface p-5">
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-base font-semibold text-ink">
           {sub.cadence} · {sub.mealsPerDelivery} meals / delivery
         </span>
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLE[sub.status]}`}>
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${STATUS_STYLE[sub.status]}`}
+        >
           {STATUS_LABEL[sub.status]}
         </span>
       </div>
-      <p className="tabular mt-1 text-sm text-ink-muted">
-        {formatPaise(sub.pricePerDeliveryPaise)} / delivery · {sub.deliveryWindow}
+      <p className="tabular mt-2 text-sm text-ink">
+        {formatPaise(sub.pricePerDeliveryPaise)}
+        <span className="text-ink-muted"> / delivery · {sub.deliveryWindow}</span>
       </p>
       {sub.status !== "cancelled" && (
-        <p className="mt-0.5 text-xs text-ink-faint">
-          {sub.status === "paused" ? "Paused" : "Next delivery"}: {fmtDate(sub.status === "paused" ? sub.pausedAt : sub.nextDeliveryAt)}
+        <p className="mt-1 text-xs text-ink-faint">
+          {sub.status === "paused" ? "Paused" : "Next delivery"}:{" "}
+          <span className="tabular text-ink-muted">
+            {fmtDate(sub.status === "paused" ? sub.pausedAt : sub.nextDeliveryAt)}
+          </span>
         </p>
       )}
       {sub.addressLine && (
-        <p className="mt-0.5 text-xs text-ink-faint">{[sub.addressLine, sub.city, sub.pincode].filter(Boolean).join(", ")}</p>
+        <p className="mt-1 text-xs text-ink-muted">{[sub.addressLine, sub.city, sub.pincode].filter(Boolean).join(", ")}</p>
       )}
 
-      {sub.status === "active" && (
-        <HybridWorkToggle
-          subscriptionId={sub.id}
-          currentLocation={sub.addressLine ?? "Sector 150 Home"}
-        />
-      )}
       {sub.pendingCadence && (
-        <p className="mt-1.5 text-xs font-medium text-sage-text">
-          Plan change to {sub.pendingCadence} · {sub.pendingMealsPerDelivery} meals
-          {sub.pendingChangeReauthRequired ? " awaiting authorisation — " : " takes effect next cycle."}
-          {sub.pendingChangeReauthRequired && (
-            <button type="button" onClick={() => setShowChangePlan(true)} className="underline">
-              Complete authorisation
-            </button>
-          )}
-        </p>
+        <div className="mt-3 flex items-start gap-2 rounded-xl bg-sage-soft px-3 py-2.5 text-xs font-medium text-sage-text">
+          <Info aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <p>
+            Plan change to {sub.pendingCadence} · {sub.pendingMealsPerDelivery} meals
+            {sub.pendingChangeReauthRequired ? " awaiting authorisation — " : " takes effect next cycle."}
+            {sub.pendingChangeReauthRequired && (
+              <button type="button" onClick={() => setShowChangePlan(true)} className="underline">
+                Complete authorisation
+              </button>
+            )}
+          </p>
+        </div>
       )}
       {(actionsFor(sub.status).length > 0 || sub.status !== "cancelled") && (
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-medium">
+        <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-line pt-3 text-sm font-medium">
           {actionsFor(sub.status).map((a) => (
             <button
               key={a}
