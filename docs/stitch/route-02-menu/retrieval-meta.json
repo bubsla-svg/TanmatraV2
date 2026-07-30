@@ -12,7 +12,9 @@
   "edit": "single-column rows: title + excerpt + rating stars (owner redline)"
  },
  "v3": {
-  "screenId": "c3e1f024a18d493db70a37a526fc35c5",
-  "edit": "text left, image right (owner redline; in-place edit)"
+  "screenId": "d97dc79c759049979e736cf332654646",
+  "title": "Mirrored Clinical Menu List",
+  "edit": "text left / photo right via generate_variants (REFINE, LAYOUT) \u2014 edit_screens applied only to a session layer, artifact never changed; variants mint real screens",
+  "note": "Stitch's own bottom cart bar + tab nav in the mock are standalone chrome \u2014 stripped at wiring; mock $ prices replaced by server-formatted amounts"
  }
 }
