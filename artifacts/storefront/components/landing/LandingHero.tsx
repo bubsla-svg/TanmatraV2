@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { LandingIcon } from "./LandingIcon";
 import type { LandingHero as HeroData } from "@/content/landing/partners";
 
@@ -41,20 +42,16 @@ export function LandingHero({
       </h1>
       <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">{hero.subtitle}</p>
       <div className="mt-8 flex flex-wrap items-center gap-3">
-        <a
-          href={ctaHref}
-          className="inline-flex items-center gap-2 rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-        >
-          {ctaLabel}
-          <LandingIcon name="arrow-right" className="h-4 w-4" />
-        </a>
-        {secondaryCta && (
-          <a
-            href={secondaryCta.href}
-            className="inline-flex items-center rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
-          >
-            {secondaryCta.label}
+        <Button asChild shape="pill" size="fluid" className="px-8 py-4 font-semibold">
+          <a href={ctaHref}>
+            {ctaLabel}
+            <LandingIcon name="arrow-right" className="h-4 w-4" />
           </a>
+        </Button>
+        {secondaryCta && (
+          <Button asChild variant="outline" shape="pill" size="fluid" className="px-8 py-4 font-semibold hover:border-line-strong">
+            <a href={secondaryCta.href}>{secondaryCta.label}</a>
+          </Button>
         )}
       </div>
       {hero.trust.length > 0 && (

@@ -1,5 +1,6 @@
 "use client"; // Interactive stepper navigation buttons and progress bar
 // Thumb-zone navigation controls and progress indicator for mobile-first stepper
+import { Button } from "@/components/ui/button";
 
 export interface AssessmentControlsProps {
   currentStep: number;
@@ -52,13 +53,13 @@ export function AssessmentControls({
           >
             ← Back
           </button>
-          <button
+          <Button
             type="button"
             onClick={onNext}
-            className="flex-[2] rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90"
+            shape="xl" size="fluid" className="flex-[2] px-6 py-3 font-semibold"
           >
             {isLastStep ? "Complete & View Recommendation ➔" : "Next Step ➔"}
-          </button>
+          </Button>
         </div>
 
         <div className="flex items-center justify-center pt-1">

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
 
 /**
@@ -50,14 +51,14 @@ export function Section00StickyNav() {
           >
             Browse Menu
           </Link>
-          <button
+          <Button
             type="button"
             onClick={handleAssessmentClick}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-semibold text-[var(--gold-ink)] shadow-sm transition-transform active:scale-95"
+            shape="xl" size="fluid" className="gap-1.5 px-4 py-2 text-xs font-semibold shadow-sm"
             aria-label="Start interactive clinical nutrition assessment"
           >
             Start Assessment <span aria-hidden>&rarr;</span>
-          </button>
+          </Button>
         </div>
       </div>
     </header>

@@ -1,6 +1,7 @@
 "use client"; // Interactive clinical waitlist capture form state and lead pipeline submission
 // Lead capture module for gated clinical tiers (Steady Meal Plan & GLP-1 Companion)
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { submitCorporateLead } from "@/lib/corporateApi";
 import { emitLpEvent } from "@/lib/lpEvents";
@@ -111,13 +112,13 @@ export function WaitlistForm({
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={!valid || busy}
-        className="rounded-xl bg-gold py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        shape="xl" size="fluid" className="py-3.5 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
       >
         {busy ? "Submitting Registration…" : submitLabel}
-      </button>
+      </Button>
     </form>
   );
 }

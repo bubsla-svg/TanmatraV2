@@ -1,5 +1,6 @@
 "use client"; // Justification: interactive click event emitter for analytics and scrolling action.
 
+import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { LandingIcon } from "./LandingIcon";
 
@@ -45,14 +46,12 @@ export function StickyCtaBar({
           {title && <p className="truncate text-sm font-semibold text-ink">{title}</p>}
           {subtitle && <p className="truncate text-xs text-ink-muted">{subtitle}</p>}
         </div>
-        <a
-          href={ctaHref}
-          onClick={handleClick}
-          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] sm:w-auto"
-        >
-          {ctaLabel}
-          <LandingIcon name="arrow-right" className="h-4 w-4" />
-        </a>
+        <Button asChild shape="pill" size="fluid" className="w-full shrink-0 gap-2 px-8 py-4 font-semibold sm:w-auto">
+          <a href={ctaHref} onClick={handleClick}>
+            {ctaLabel}
+            <LandingIcon name="arrow-right" className="h-4 w-4" />
+          </a>
+        </Button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
 import type { HeroContent } from "@/lib/heroContent";
 
@@ -71,20 +72,22 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3.5 sm:mt-9">
-            <Link
-              href="/menu"
-              onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Explore Today's Menu" })}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-bold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-            >
-              Explore today&rsquo;s menu
-            </Link>
-            <Link
-              href="/plans"
-              onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "See Plans" })}
-              className="inline-flex items-center justify-center rounded-full border border-line-strong px-6 py-3.5 text-sm font-semibold text-ink transition-transform hover:bg-surface active:scale-[0.98]"
-            >
-              See plans
-            </Link>
+            <Button asChild shape="pill" size="fluid" className="px-7 py-3.5 font-bold">
+              <Link
+                href="/menu"
+                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Explore Today's Menu" })}
+              >
+                Explore today&rsquo;s menu
+              </Link>
+            </Button>
+            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-6 py-3.5 font-semibold hover:bg-surface">
+              <Link
+                href="/plans"
+                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "See Plans" })}
+              >
+                See plans
+              </Link>
+            </Button>
             <button
               type="button"
               onClick={handleAssessmentClick}
@@ -125,12 +128,9 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
                     480 kcal · 38P · Anti-Inflammatory
                   </p>
                 </div>
-                <Link
-                  href="/menu"
-                  className="shrink-0 rounded-full bg-gold px-3.5 py-1.5 text-xs font-bold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-                >
-                  Order
-                </Link>
+                <Button asChild shape="pill" size="fluid" className="shrink-0 px-3.5 py-1.5 text-xs font-bold">
+                  <Link href="/menu">Order</Link>
+                </Button>
               </div>
             </div>
           </div>
