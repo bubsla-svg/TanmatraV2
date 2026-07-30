@@ -14,6 +14,7 @@ const SURFACES: Token[] = [
   { name: "bg", var: "--bg" },
   { name: "surface", var: "--surface" },
   { name: "surface-raised", var: "--surface-raised" },
+  { name: "surface-subtle", var: "--surface-subtle" },
 ];
 const INK: Token[] = [
   { name: "ink", var: "--ink" },
@@ -28,6 +29,7 @@ const ACCENTS: Token[] = [
   { name: "gold", var: "--gold", onDark: true },
   { name: "blue", var: "--blue", onDark: true },
   { name: "sage", var: "--sage", onDark: true },
+  { name: "sage-soft", var: "--sage-soft" },
 ];
 const STATUS: Token[] = [
   { name: "success", var: "--success", onDark: true },

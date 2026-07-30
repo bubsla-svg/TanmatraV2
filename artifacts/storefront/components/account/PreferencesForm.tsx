@@ -28,7 +28,12 @@ const ACTIVITY: { id: ActivityLevel; label: string }[] = [
 const SPICE: { id: SpiceLevel; label: string }[] = [
   { id: "none", label: "None" }, { id: "mild", label: "Mild" }, { id: "medium", label: "Medium" }, { id: "hot", label: "Hot" },
 ];
-const selectCls = "rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink";
+
+/** route-11 brief: each control sits on its own raised card, gold caps label
+ *  above, the value itself set large and unchromed. */
+const CARD = "rounded-3xl border border-line bg-surface p-6 transition-colors hover:bg-surface-raised";
+const CAPS = "mb-3 block text-xs font-bold uppercase tracking-wider text-gold-text";
+const SELECT = "w-full border-none bg-transparent p-0 text-lg text-ink focus:ring-0";
 
 export function PreferencesForm({
   initial,
@@ -52,40 +57,74 @@ export function PreferencesForm({
   const [cuisines, setCuisines] = useState<string[]>(initial?.cuisines ?? []);
 
   return (
-    <div className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-        Dietary style
-        <select value={dietaryStyle} onChange={(e) => setDietaryStyle(e.target.value as DietaryStyle)} className={selectCls}>
-          {DIETARY.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-        Goal
-        <select value={goal} onChange={(e) => setGoal(e.target.value as WellnessGoal)} className={selectCls}>
-          {GOAL.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-        Activity level
-        <select value={activityLevel} onChange={(e) => setActivityLevel(e.target.value as ActivityLevel)} className={selectCls}>
-          {ACTIVITY.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-        Spice level
-        <select value={spiceLevel} onChange={(e) => setSpiceLevel(e.target.value as SpiceLevel)} className={selectCls}>
-          {SPICE.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
-      </label>
-      <ChipInput label="Allergens" values={allergens} placeholder="Add an allergen…" onChange={setAllergens} />
-      <ChipInput label="Ingredients you dislike" values={disliked} placeholder="Add an ingredient…" onChange={setDisliked} />
-      <ChipInput label="Preferred cuisines" values={cuisines} placeholder="Add a cuisine…" onChange={setCuisines} />
+    <div className="flex flex-col gap-10">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className={CARD}>
+          <label className={CAPS} htmlFor="pref-dietary">Dietary style</label>
+          <select
+            id="pref-dietary"
+            value={dietaryStyle}
+            onChange={(e) => setDietaryStyle(e.target.value as DietaryStyle)}
+            className={SELECT}
+          >
+            {DIETARY.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        </div>
+        <div className={CARD}>
+          <label className={CAPS} htmlFor="pref-goal">Primary goal</label>
+          <select
+            id="pref-goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value as WellnessGoal)}
+            className={SELECT}
+          >
+            {GOAL.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        </div>
+        <div className={CARD}>
+          <label className={CAPS} htmlFor="pref-activity">Activity level</label>
+          <select
+            id="pref-activity"
+            value={activityLevel}
+            onChange={(e) => setActivityLevel(e.target.value as ActivityLevel)}
+            className={`${SELECT} tabular`}
+          >
+            {ACTIVITY.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        </div>
+        <div className={CARD}>
+          <label className={CAPS} htmlFor="pref-spice">Spice tolerance</label>
+          <select
+            id="pref-spice"
+            value={spiceLevel}
+            onChange={(e) => setSpiceLevel(e.target.value as SpiceLevel)}
+            className={SELECT}
+          >
+            {SPICE.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        <div className={CARD}>
+          <ChipInput label="Allergens" tone="signal" values={allergens} placeholder="Add an allergen…" onChange={setAllergens} />
+        </div>
+        <div className={CARD}>
+          <ChipInput label="Ingredients you dislike" values={disliked} placeholder="Add an ingredient…" onChange={setDisliked} />
+        </div>
+        <div className={CARD}>
+          <ChipInput label="Preferred cuisines" values={cuisines} placeholder="Add a cuisine…" onChange={setCuisines} />
+        </div>
+      </div>
+
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-      <div className="flex items-center gap-3">
+
+      <div className="flex flex-col items-center gap-3">
         <button
-          type="button" disabled={busy}
+          type="button"
+          disabled={busy}
           onClick={() => onSubmit({ dietaryStyle, goal, activityLevel, spiceLevel, allergens, dislikedIngredients: disliked, cuisines })}
-          className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
+          className="w-full rounded-full bg-gold py-5 text-xs font-bold uppercase tracking-wider text-[var(--gold-ink)] transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40"
         >
           {busy ? "Saving…" : "Save preferences"}
         </button>

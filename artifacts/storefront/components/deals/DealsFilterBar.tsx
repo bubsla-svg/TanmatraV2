@@ -1,72 +1,94 @@
 "use client";
-// Client: interactive macro-density value sorting with kinetic segmented tabs and 1-click ordering.
+// Client: macro-density value sorting for `/meal-deals` (Stitch brief 18).
+//
+// MONEY: this file used to bill `dish.price ?? 35000` — twice, and one of them
+// fed the AddToCart payload, so a soft price would have offered a cart add at an
+// invented ₹350. DishData.price is non-nullable, so both fallbacks are gone: the
+// price renders verbatim, and the add is gated on isAlaCarteEnabled exactly as
+// DishCard gates it. A dish that is not à-la-carte links to its PDP instead of
+// offering an add it cannot honour.
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import type { DishData } from "@workspace/menu-catalog";
+import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { sortDishesByValue, type ValueMetric } from "@/lib/dealSort";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { formatPaise } from "@/lib/format";
 
 const TABS: { id: ValueMetric; label: string; desc: string }[] = [
-  { id: "protein_per_rupee", label: "Max Protein Value", desc: "Grams of protein per ₹100 spent" },
-  { id: "fiber_per_rupee", label: "Max Fiber Density", desc: "Grams of prebiotic fiber per ₹100 spent" },
-  { id: "calorie_density", label: "Satiety Energy Value", desc: "Total clean calories per ₹100 spent" },
-  { id: "price_low", label: "Lowest Price First", desc: "Standard à-la-carte delivery fee sorting" },
+  { id: "protein_per_rupee", label: "Max protein value", desc: "Grams of protein per ₹100 spent" },
+  { id: "fiber_per_rupee", label: "Max fibre density", desc: "Grams of prebiotic fibre per ₹100 spent" },
+  { id: "calorie_density", label: "Satiety energy value", desc: "Total clean calories per ₹100 spent" },
+  { id: "price_low", label: "Lowest price first", desc: "Standard à-la-carte price, ascending" },
 ];
 
 export function DealsFilterBar({ dishes }: { dishes: DishData[] }) {
   const [metric, setMetric] = useState<ValueMetric>("protein_per_rupee");
-
   const sorted = useMemo(() => sortDishesByValue(dishes, metric), [dishes, metric]);
+  const active = TABS.find((t) => t.id === metric);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-line bg-surface p-2 shadow-sm">
-        {TABS.map((t) => {
-          const active = metric === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setMetric(t.id)}
-              className={`flex-1 min-w-[150px] rounded-xl border px-4 py-3 text-left transition-all ${
-                active ? "border-gold bg-gold text-white font-semibold shadow-sm" : "border-transparent bg-transparent text-ink-muted hover:text-ink hover:border-ink/20"
-              }`}
-            >
-              <div className={`text-xs ${active ? "text-white" : "text-ink font-semibold"}`}>{t.label}</div>
-              <div className={`text-[10px] mt-0.5 ${active ? "text-white/80" : "text-ink-muted"}`}>{t.desc}</div>
-            </button>
-          );
-        })}
+    <div className="flex flex-col gap-6">
+      <div>
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+          {TABS.map((t) => {
+            const on = metric === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setMetric(t.id)}
+                className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+                  on
+                    ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] text-gold-text"
+                    : "border-line text-ink-muted hover:border-line-strong"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        {active && <p className="mt-2 text-xs text-ink-muted">{active.desc}</p>}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sorted.slice(0, 9).map(({ dish, valueLabel }) => (
           <div
             key={dish.id}
-            className="rounded-2xl border border-line bg-surface p-4 shadow-sm flex flex-col justify-between gap-4 transition-transform duration-200 hover:scale-[1.015]"
+            className="flex flex-col justify-between gap-4 rounded-3xl border border-line bg-surface p-5 transition-colors hover:border-line-strong"
           >
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-bold text-sage-800 shrink-0">
-                  &starf; {valueLabel}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-2">
+                <span className="tabular rounded-full bg-sage-soft px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-sage-text">
+                  {valueLabel}
                 </span>
-                <span className="text-xs font-bold text-ink">{formatPaise(dish.price ?? 35000)}</span>
+                <span className="tabular shrink-0 text-sm font-semibold text-ink">
+                  {formatPaise(dish.price)}
+                </span>
               </div>
-              <Link href={`/dish/${dish.slug}`} className="block font-semibold text-ink hover:text-gold-text transition-colors mt-1">
-                <h3 className="text-base font-semibold leading-snug">{dish.name}</h3>
+              <Link href={`/dish/${dish.slug}`} className="transition-colors hover:text-gold-text">
+                <h3 className="text-base font-semibold leading-snug text-ink">{dish.name}</h3>
               </Link>
-              <p className="text-xs text-ink-muted mt-2 leading-relaxed line-clamp-2">
+              <p className="line-clamp-2 text-sm leading-relaxed text-ink-muted">
                 {dish.tasteDescription || dish.description}
               </p>
             </div>
 
-            <div className="flex items-center justify-between border-t border-line pt-3 text-xs">
-              <div className="text-[11px] text-ink-muted">
-                <span>{dish.macros?.protein ?? 0}g Protein</span> &bull; <span>{dish.macros?.fiber ?? 0}g Fiber</span>
-              </div>
-              <div className="w-fit">
-                <AddToCart dish={{ id: dish.id, slug: dish.slug, name: dish.name, price: dish.price ?? 35000 }} />
-              </div>
+            <div className="flex items-center justify-between gap-3 border-t border-line pt-4">
+              <span className="tabular text-[11px] text-ink-muted">
+                {dish.macros?.protein ?? 0}g protein &bull; {dish.macros?.fiber ?? 0}g fibre
+              </span>
+              {isAlaCarteEnabled(dish) ? (
+                <AddToCart dish={{ id: dish.id, slug: dish.slug, name: dish.name, price: dish.price }} />
+              ) : (
+                <Link
+                  href={`/dish/${dish.slug}`}
+                  className="shrink-0 text-xs font-semibold text-gold-text hover:underline"
+                >
+                  View dish &rarr;
+                </Link>
+              )}
             </div>
           </div>
         ))}

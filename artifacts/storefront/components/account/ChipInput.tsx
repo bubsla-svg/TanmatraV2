@@ -4,15 +4,24 @@
 // an obvious same-session duplicate; casing is normalised on the round-trip.
 import { useState } from "react";
 
+/** route-11 brief distinguishes the two chip kinds: allergens carry a clinical
+ *  signal tint, plain taste lists stay neutral. */
+const TONE_CHIP = {
+  signal: "bg-sage-soft text-sage-text",
+  neutral: "bg-surface-raised text-ink",
+} as const;
+
 export function ChipInput({
   label,
   values,
   placeholder,
+  tone = "neutral",
   onChange,
 }: {
   label: string;
   values: string[];
   placeholder?: string;
+  tone?: keyof typeof TONE_CHIP;
   onChange: (next: string[]) => void;
 }) {
   const [draft, setDraft] = useState("");
@@ -26,14 +35,14 @@ export function ChipInput({
   }
 
   return (
-    <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">
-      {label}
+    <label className="flex flex-col gap-3 text-sm font-medium text-ink">
+      <span className="text-xs font-bold uppercase tracking-wider text-gold-text">{label}</span>
       {values.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
+        <ul className="flex flex-wrap gap-2">
           {values.map((v) => (
             <li
               key={v}
-              className="flex items-center gap-1 rounded-full bg-sage-soft px-2.5 py-1 text-xs font-medium text-sage-text"
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-medium uppercase tracking-wider ${TONE_CHIP[tone]}`}
             >
               {v}
               <button

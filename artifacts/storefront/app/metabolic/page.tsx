@@ -32,9 +32,13 @@ const jsonLd = {
 };
 
 /** `/metabolic` — fat-loss / muscle-gain acquisition lander (route-parity Wave
- *  B). The goal toggle re-filters the live catalog; the program cards are the
- *  storefront's authoritative PLAN_CATALOG plans (server-quoted), not the
- *  legacy per-week RD_PLANS. */
+ *  B, Stitch brief 15). The goal toggle re-filters the live catalog; the program
+ *  cards are the storefront's authoritative PLAN_CATALOG plans (server-quoted),
+ *  not the legacy per-week RD_PLANS.
+ *
+ *  The brief's mock invents three protocol tiers with hardcoded monthly prices.
+ *  Neither ships: the tiers here are METABOLIC_PLAN_IDS and every amount comes
+ *  from the pricing spine through PlanCard. */
 export default async function MetabolicPage() {
   const { dishes } = await fetchMenu();
   const slim: MetabolicDish[] = dishes.map((d) => ({
@@ -52,50 +56,64 @@ export default async function MetabolicPage() {
     <div className="mx-auto max-w-5xl px-4">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <header className="py-12">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{H.eyebrow}</p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
-          {H.title} <span className="text-gold-text">{H.accent}</span>
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">{H.subtitle}</p>
-        <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Link href="/plans" className="inline-flex items-center gap-2 rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)]">
-            Find your plan <LandingIcon name="arrow-right" className="h-4 w-4" />
-          </Link>
-          <Link href="/trial" className="inline-flex items-center rounded-xl border border-line px-6 py-3 text-sm font-semibold text-ink hover:border-line-strong">
-            Start a 3-day trial
-          </Link>
+      <header className="grid items-center gap-12 py-[var(--space-section)] lg:grid-cols-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-gold-text">{H.eyebrow}</p>
+          <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
+            {H.title} <span className="text-gold-text">{H.accent}</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-muted">{H.subtitle}</p>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/plans"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            >
+              Find your plan <LandingIcon name="arrow-right" className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/trial"
+              className="inline-flex items-center justify-center rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
+            >
+              Start a 3-day trial
+            </Link>
+          </div>
         </div>
-        <div className="mt-8">
-          <MetabolicExplorer dishes={slim} />
-        </div>
+        <MetabolicExplorer dishes={slim} />
       </header>
 
-      <BenefitGrid eyebrow="The 1 PM problem" heading="You already know how this goes" benefits={PAIN_CARDS} />
+      <BenefitGrid
+        variant="tiles"
+        eyebrow="The 1 PM problem"
+        heading="You already know how this goes"
+        benefits={PAIN_CARDS}
+      />
 
-      <section className="py-12">
+      <section className="py-[var(--space-section)]">
         <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">RD-reviewed programs</p>
         <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Pick your program</h2>
-        <p className="mt-2 max-w-2xl text-sm text-ink-muted">
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
           Every program is designed and signed off by a registered dietitian, with published macros on
           every dish. Prices are per-meal and shown before you commit.
         </p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {METABOLIC_PLAN_IDS.map((id) => (
             <PlanCard key={id} id={id} />
           ))}
         </div>
       </section>
 
-      <section className="border-t border-line py-12">
+      <section className="border-t border-line py-[var(--space-section)]">
         <h2 className="text-2xl font-semibold tracking-tight text-ink">Questions</h2>
-        <FaqAccordion items={METABOLIC_FAQ} />
+        <FaqAccordion items={METABOLIC_FAQ} pageSlug="/metabolic" defaultOpen={null} />
       </section>
 
-      <section className="mb-12 rounded-2xl border border-line bg-surface p-6 text-center">
+      <section className="mb-12 rounded-3xl border border-line bg-surface p-8 text-center">
         <h2 className="text-lg font-semibold text-ink">Try three days first.</h2>
         <p className="mt-1 text-sm text-ink-muted">Three RD-reviewed lunches, full creditback if you continue.</p>
-        <Link href="/trial" className="mt-4 inline-block rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)]">
+        <Link
+          href="/trial"
+          className="mt-6 inline-flex items-center justify-center rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+        >
           Start your 3-day trial &rarr;
         </Link>
       </section>

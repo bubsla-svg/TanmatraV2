@@ -1,123 +1,188 @@
 "use client";
-// Client: interactive application wizard for independent Dietitians and Nutritionists.
+// RD partner application wizard (Stitch brief 16) — replaces the previous
+// local-state dead end, which rendered "Application Submitted" without ever
+// transmitting anything.
+//
+// STATE: one draft, owned here and never unmounted, plus one sessionId minted
+// once. The brief allows searchParams or a store; a store is used because the
+// draft carries the applicant's name, email and phone, and putting PII in the
+// URL leaks it into history, referrers and analytics. What the brief actually
+// guards against — a per-step useState that silently drops the opt-in and the
+// funnel id when the step remounts — cannot happen here: the step bodies are
+// stateless and every value lives in this component.
+//
+// SUCCESS: rendered only after submitRdApplication resolves, i.e. after the row
+// is persisted. Breadcrumbs are best-effort and never block or fail the wizard.
+
 import { useState } from "react";
+import {
+  newRdSessionId,
+  submitRdApplication,
+  trackRdWizardEvent,
+  type RdApplicationRow,
+} from "@/lib/rdPartnerApi";
+import {
+  emptyRdDraft,
+  rdStepErrors,
+  canLeaveRdStep,
+  isRdDraftComplete,
+  toRdApplicationInput,
+  rdSubmitProblem,
+  type RdDraft,
+  type RdSubmitProblem,
+} from "@/lib/rdWizard";
+import { RD_WIZARD_STEPS } from "@/content/landing/rdPartners";
+import { WizardStepBody } from "./PartnerWizardSteps";
+
+const LAST_STEP = RD_WIZARD_STEPS.length - 1;
+
+/** Fire-and-forget funnel breadcrumb — a failure here must never reach the UI. */
+function breadcrumb(sessionId: string, eventName: string, step?: number, applicationId?: number) {
+  void trackRdWizardEvent({
+    sessionId,
+    eventName,
+    ...(step !== undefined && { step }),
+    ...(applicationId !== undefined && { applicationId }),
+  }).catch(() => {});
+}
 
 export function PartnerWizard() {
-  const [step, setStep] = useState<"info" | "credentials" | "submitted">("info");
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    licenseNumber: "",
-    specialties: "",
-    experienceYears: "5+",
-  });
+  const [sessionId] = useState(newRdSessionId);
+  const [draft, setDraft] = useState<RdDraft>(emptyRdDraft);
+  const [step, setStep] = useState(0);
+  const [showErrors, setShowErrors] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<RdSubmitProblem | null>(null);
+  const [submitted, setSubmitted] = useState<RdApplicationRow | null>(null);
 
-  if (step === "submitted") {
+  const errors = rdStepErrors(draft, step);
+  const patch = (p: Partial<RdDraft>) => setDraft((d) => ({ ...d, ...p }));
+
+  function next() {
+    if (!canLeaveRdStep(draft, step)) {
+      setShowErrors(true);
+      return;
+    }
+    setShowErrors(false);
+    breadcrumb(sessionId, "step_complete", step);
+    setStep((s) => Math.min(s + 1, LAST_STEP));
+  }
+
+  function back() {
+    setShowErrors(false);
+    setProblem(null);
+    setStep((s) => Math.max(s - 1, 0));
+  }
+
+  async function submit() {
+    if (!isRdDraftComplete(draft)) {
+      setShowErrors(true);
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    breadcrumb(sessionId, "submit_attempt", step);
+    try {
+      const result = await submitRdApplication(toRdApplicationInput(draft, sessionId));
+      setSubmitted(result.application);
+      breadcrumb(sessionId, "submit_success", step, result.application.id);
+    } catch (e) {
+      setProblem(rdSubmitProblem(e));
+      breadcrumb(sessionId, "submit_error", step);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Confirmed by the server — the only path that reaches this panel.
+  if (submitted) {
     return (
-      <div className="rounded-xl border border-line bg-surface p-6 flex flex-col gap-4 text-center">
-        <h2 className="text-xl font-semibold text-ink">Application Submitted</h2>
-        <p className="text-sm text-ink-muted leading-relaxed">
-          Thank you, Dr. {formData.fullName || "Partner"}. Our Clinical Governance board reviews all credentials within 48 hours. We will contact you at {formData.email || "your email"} regarding network onboarding and portal access.
+      <div className="rounded-3xl border border-line bg-surface p-8 text-center">
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-sage-soft text-lg text-sage-text">
+          ✓
+        </span>
+        <h2 className="mt-6 text-xl font-semibold tracking-tight text-ink">Application received</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+          Thanks, {submitted.fullName}. Our clinical governance team reviews credentials and will contact
+          you at {submitted.email}.
+        </p>
+        <p className="tabular mt-4 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+          Reference #{submitted.id}
         </p>
       </div>
     );
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (step === "info") setStep("credentials");
-        else setStep("submitted");
-      }}
-      className="rounded-xl border border-line bg-surface p-5 flex flex-col gap-5"
-    >
-      <div className="flex items-center justify-between text-xs font-semibold uppercase text-ink-muted">
-        <span>{step === "info" ? "Step 1: Contact Information" : "Step 2: Clinical Credentials"}</span>
-        <span>{step === "info" ? "1 of 2" : "2 of 2"}</span>
-      </div>
+    <div className="flex flex-col gap-8">
+      <nav aria-label="Progress">
+        <ol className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {RD_WIZARD_STEPS.map((s, i) => {
+            const done = i < step;
+            const current = i === step;
+            return (
+              <li key={s.label} className="flex items-center gap-3">
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    done || current ? "bg-gold" : "border border-line bg-transparent"
+                  }`}
+                />
+                <span
+                  aria-current={current ? "step" : undefined}
+                  className={`text-[10px] font-semibold uppercase tracking-widest ${
+                    current ? "text-gold-text" : done ? "text-ink-muted" : "text-ink-faint"
+                  }`}
+                >
+                  {s.label}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
-      {step === "info" ? (
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-ink mb-1">Full Name & Title</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Dt. Anjali Nair"
-              value={formData.fullName}
-              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm text-ink bg-transparent outline-none focus:border-gold"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink mb-1">Professional Email</label>
-            <input
-              type="email"
-              required
-              placeholder="doctor@clinic.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm text-ink bg-transparent outline-none focus:border-gold"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink mb-1">WhatsApp / Phone Number</label>
-            <input
-              type="tel"
-              required
-              placeholder="+91 98765 43210"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm text-ink bg-transparent outline-none focus:border-gold"
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-ink mb-1">IDA / Registration License Number</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. RD/DEL/2018/042"
-              value={formData.licenseNumber}
-              onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm text-ink bg-transparent outline-none focus:border-gold"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink mb-1">Primary Specialties (Diabetes, PCOS, GERD, etc.)</label>
-            <input
-              type="text"
-              required
-              placeholder="PCOS, Gestational Diabetes, Gut Health"
-              value={formData.specialties}
-              onChange={(e) => setFormData({ ...formData, specialties: e.target.value })}
-              className="w-full rounded-lg border border-line px-3 py-2.5 text-sm text-ink bg-transparent outline-none focus:border-gold"
-            />
-          </div>
+      {problem && (
+        <div role="alert" className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 pl-5">
+          <span className="absolute inset-y-0 left-0 w-1 bg-destructive" aria-hidden />
+          <p className="text-sm font-medium text-ink">{problem.title}</p>
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted">{problem.detail}</p>
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-line">
-        {step === "credentials" && (
+      <div className="overflow-hidden rounded-3xl border border-line bg-surface">
+        <div className="flex flex-col gap-8 p-6 md:p-8">
+          <h2 className="text-xl font-semibold tracking-tight text-ink">{RD_WIZARD_STEPS[step]?.heading}</h2>
+          <WizardStepBody
+            step={step}
+            draft={draft}
+            errors={showErrors ? errors : {}}
+            patch={patch}
+            sessionId={sessionId}
+          />
+        </div>
+
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-line bg-bg p-6 sm:flex-row">
+          {step > 0 ? (
+            <button
+              type="button"
+              onClick={back}
+              className="order-2 text-sm text-ink-muted transition-colors hover:text-ink sm:order-1"
+            >
+              &larr; Back
+            </button>
+          ) : (
+            <span className="order-2 sm:order-1" />
+          )}
           <button
             type="button"
-            onClick={() => setStep("info")}
-            className="rounded-xl border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface/80 transition-colors"
+            disabled={busy || (step === LAST_STEP && problem?.terminal === true)}
+            onClick={() => void (step === LAST_STEP ? submit() : next())}
+            className="order-1 w-full rounded-full bg-gold px-8 py-4 text-[10px] font-semibold uppercase tracking-widest text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40 sm:order-2 sm:w-auto"
           >
-            Back
+            {busy ? "Submitting…" : step === LAST_STEP ? "Submit application" : "Continue"}
           </button>
-        )}
-        <button
-          type="submit"
-          className="rounded-xl bg-gold px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gold/90 transition-colors"
-        >
-          {step === "info" ? "Continue to Credentials" : "Submit Application"}
-        </button>
+        </div>
       </div>
-    </form>
+    </div>
   );
 }

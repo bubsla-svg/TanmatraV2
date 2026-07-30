@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { BenefitGrid } from "@/components/landing/BenefitGrid";
-import { CorporateLeadForm } from "@/components/corporate/CorporateLeadForm";
+import { PartnerLeadForm } from "@/components/partners/PartnerLeadForm";
 import { FITNESS_LANDING as L, FITNESS_MENU } from "@/content/landing/partners";
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -21,8 +21,9 @@ const jsonLd = {
 };
 
 /** `/partners/fitness-clubs` — morning running/cycling-club lander (route-parity
- *  Wave B). Static marketing; the lead form POSTs to /corporate-leads tagged
- *  kind=fitness_club. Dish macros are illustrative — the live menu is /menu. */
+ *  Wave B; Stitch brief 17 — inherits the /partners/gyms design). Static
+ *  marketing; the lead form POSTs to /partners/leads tagged kind=fitness_club.
+ *  Dish macros are illustrative — the live menu is /menu. */
 export default function FitnessClubsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4">
@@ -30,7 +31,7 @@ export default function FitnessClubsPage() {
       <LandingHero hero={L.hero} ctaLabel="Register your club" ctaHref="#lead-form" />
       <BenefitGrid heading={L.benefitsHeading} sub={L.benefitsSub} benefits={L.benefits} />
 
-      <section className="py-12">
+      <section className="py-[var(--space-section)]">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-ink">Perfect post-run fuel</h2>
@@ -51,13 +52,13 @@ export default function FitnessClubsPage() {
         </div>
       </section>
 
-      <section id="lead-form" className="border-t border-line py-12">
+      <section id="lead-form" className="scroll-mt-20 border-t border-line py-[var(--space-section)]">
         <div className="mx-auto max-w-xl">
           <h2 className="text-2xl font-semibold tracking-tight text-ink">{L.form.heading}</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">{L.form.blurb}</p>
-          <div className="mt-6">
-            <CorporateLeadForm
-              defaultKind={L.form.kind}
+          <div className="mt-8">
+            <PartnerLeadForm
+              defaultKind="fitness_club"
               lockKind
               source={L.form.source}
               submitLabel={L.form.submitLabel}

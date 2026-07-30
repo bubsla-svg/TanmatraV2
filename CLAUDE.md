@@ -35,10 +35,10 @@ node --test --import tsx ./src/lib/mealPlanner.test.ts
 node --test --import tsx ./src/routes/groupOrders.test.ts
 ```
 
-The storefront runs its own suite — 49 files, 257 tests, all in `artifacts/storefront/lib/`
+The storefront runs its own suite — 66 files, 372 tests, all under `artifacts/storefront/lib/`
 and all DB- and network-free (every API client takes an injectable `fetchImpl`):
 ```bash
-pnpm --filter @workspace/storefront run test     # all 257, ~18s
+pnpm --filter @workspace/storefront run test     # all 372, ~8s
 cd artifacts/storefront
 node --test --import tsx ./lib/catalog.test.ts   # one file
 ```
@@ -51,7 +51,7 @@ The legacy SPA (`artifacts/tanmatra`) also has a `test` script, and `verify.yml`
 
 ```
 node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 79 tests
-node --test --import tsx "../storefront/lib/**/*.test.ts"   # 257 tests
+node --test --import tsx "../storefront/lib/**/*.test.ts"   # 372 tests
 ```
 
 The quotes are load-bearing — Actions runs `run:` under bash with globstar OFF, where `**`

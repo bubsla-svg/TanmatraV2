@@ -21,6 +21,17 @@
   --sage: #7d9e7e;
   --sage-ink: #14170f; /* text on a sage fill — AA on #7d9e7e in both themes */
   --sage-text: #4f6b50; /* sage AS foreground text — AA (5.9:1 on white); raw --sage is 3.0:1 and fails */
+  /* Sage at signal strength for chip/badge fills. Derived from --sage via
+     color-mix (NOT a new base colour) and left semi-transparent so it
+     composites over whatever surface it lands on. */
+  --sage-soft: color-mix(in srgb, var(--sage) 12%, transparent);
+
+  /* Recessed surface for panels and chips sitting INSIDE a --surface card, so
+     they read as inset wells rather than more raised cards. Aliases the page
+     background (NOT a new base colour), which is exactly one step back from
+     --surface in both themes: bone behind white in light, near-black behind
+     graphite in dark. Themed automatically because --bg is. */
+  --surface-subtle: var(--bg);
 
   /* Semantic status (shared) */
   --success: #7d9e7e;
@@ -85,6 +96,8 @@
      sage 5.9:1), so the text variants point back at them. */
   --gold-text: #d4af37;
   --sage-text: #7d9e7e;
+  /* Slightly stronger mix so the tint stays legible against dark surfaces. */
+  --sage-soft: color-mix(in srgb, var(--sage) 18%, transparent);
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.5);

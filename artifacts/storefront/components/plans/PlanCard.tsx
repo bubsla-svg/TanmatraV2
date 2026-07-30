@@ -4,42 +4,54 @@ import { planDisplay, planQuoteView } from "@/lib/plans";
 import type { PlanId } from "@workspace/subscription-rules";
 
 /**
- * Plan surface card (02f §2). Server component. A launchable plan links into
- * its builder; a blocked plan (empty pool / pending SKUs) routes to waitlist
- * capture instead — never a dead end (02d §8). Prices are spine-quoted.
+ * Plan surface card (02f §2; Stitch brief 15 restyle — shared by /metabolic,
+ * /care and /protocol). Server component. A launchable plan links into its
+ * builder; a blocked plan (empty pool / pending SKUs) routes to waitlist
+ * capture instead — never a dead end (02d §8).
+ *
+ * Money-path presentation is fixed: prices are spine-quoted via planQuoteView
+ * and rendered verbatim in tabular figures, and gold appears ONLY on the action
+ * pill — never on the amount, so the price can never read as a promotion. The
+ * brief's "PROTOCOL 01" style badge is bound to the plan's real RD-reviewed
+ * flag rather than inventing a tier label.
  */
 export function PlanCard({ id }: { id: PlanId }) {
   const d = planDisplay(id);
   const q = planQuoteView(id);
   const href = q.launchable ? `/plan/${id}` : `/plan/${id}?waitlist=1`;
 
-  const price =
-    q.perMealPaise != null
-      ? `${formatPaise(q.perMealPaise)}/meal · ${formatPaise(q.cycleTotalPaise)}/mo`
-      : `${formatPaise(q.cycleTotalPaise)}/mo`;
-
   return (
     <Link
       href={href}
-      className="flex flex-col gap-3 rounded-xl border bg-surface p-5 shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5"
+      className="flex h-full flex-col rounded-3xl border bg-surface p-6 shadow-[var(--shadow-card)] transition-colors hover:border-line-strong"
       style={{ borderColor: q.launchable ? "var(--line-strong)" : "var(--line)" }}
     >
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-ink">{d.name}</h3>
-        {d.clinical && (
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sage-text ring-1 ring-sage/40">
-            RD-reviewed
-          </span>
-        )}
-      </div>
-      <p className="text-sm leading-relaxed text-ink-muted">{d.subtitle}</p>
+      {d.clinical && (
+        <span className="mb-6 w-max rounded-full border border-blue/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-blue">
+          RD-reviewed
+        </span>
+      )}
+      <h3 className="text-xl font-semibold tracking-tight text-ink">{d.name}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-ink-muted">{d.subtitle}</p>
 
-      <div className="mt-auto flex items-end justify-between pt-2">
-        <span className="tabular text-sm font-semibold text-ink">{price}</span>
+      <div className="mt-auto flex items-end justify-between gap-3 border-t border-line pt-6">
+        <span className="flex flex-col">
+          {q.perMealPaise != null && (
+            <span className="tabular text-lg font-semibold text-ink">
+              {formatPaise(q.perMealPaise)}
+              <span className="text-xs font-normal text-ink-muted">/meal</span>
+            </span>
+          )}
+          <span className="tabular text-xs text-ink-muted">{formatPaise(q.cycleTotalPaise)}/mo</span>
+        </span>
         {q.launchable ? (
-          <span className="text-sm font-semibold text-gold-text">Choose &rarr;</span>
+          <span className="shrink-0 rounded-full bg-gold px-6 py-2.5 text-sm font-semibold text-[var(--gold-ink)]">
+            Select
+          </span>
         ) : (
-          <span className="text-xs font-medium text-ink-faint">Join waitlist &rarr;</span>
+          <span className="shrink-0 rounded-full border border-line-strong px-6 py-2.5 text-sm font-semibold text-ink">
+            Join waitlist
+          </span>
         )}
       </div>
     </Link>

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function AccountPage() {
   return (
     <section className="mx-auto max-w-md px-4 py-10">
-      <h1 className="text-lg font-semibold text-ink">Account</h1>
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">Account</h1>
       <AccountHub />
     </section>
   );

@@ -39,6 +39,9 @@ export default async function CarePage({ params }: Params) {
     slug: d.slug, name: d.name, image: toProxiedImage(d.image), gi: d.glycaemicIndex,
     calories: d.macros.calories, carbs: d.macros.carbs, fiber: d.macros.fiber, sugarPerServing: d.sugarPerServing,
   }));
+  // A real low-GI plate for the hero — the same population CareEvidence draws
+  // from, so the image is never off-protocol for the condition.
+  const heroDish = careDishes.find((d) => d.gi === "low");
   const science: LandingBenefit[] = [
     SCIENCE_LOW_GI,
     { icon: "scale", title: "Macro caps, printed", body: cfg.capsBody },
@@ -52,28 +55,31 @@ export default async function CarePage({ params }: Params) {
   return (
     <div className="mx-auto max-w-5xl px-4">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <CareHero cfg={cfg} />
+      <CareHero
+        cfg={cfg}
+        image={heroDish ? { src: heroDish.image, alt: heroDish.name } : undefined}
+      />
       <CareRdRoster rds={rds} />
-      <BenefitGrid eyebrow="The protocol" heading="How it works" benefits={PROTOCOL_STEPS} />
+      <BenefitGrid variant="steps" eyebrow="The protocol" heading="How it works" benefits={PROTOCOL_STEPS} />
 
       <BenefitGrid eyebrow="The science, honestly" heading="Claims we can measure. Nothing we can’t." benefits={science} />
       <p className="-mt-6 text-[11px] leading-relaxed text-ink-faint">
         Macros are lab-informed estimates; when a value is provisional, we label it provisional.
       </p>
       {cfg.marketStat && (
-        <div className="mt-4 rounded-2xl border border-line bg-surface-raised p-5">
+        <div className="mt-4 rounded-3xl border border-line bg-surface-subtle p-5">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">{cfg.marketStat.label}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{cfg.marketStat.body}</p>
         </div>
       )}
 
-      <section id="program" className="scroll-mt-20 py-12">
+      <section id="program" className="scroll-mt-20 py-[var(--space-section)]">
         <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">The program</p>
         <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">An RD-designed low-GI program</h2>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">
           Your dietitian builds your weekly rotation from this program. Pricing is per-meal and shown before you commit.
         </p>
-        <div className="mt-6 max-w-md">
+        <div className="mt-8 max-w-md">
           <PlanCard id={cfg.planId} />
         </div>
       </section>
@@ -81,20 +87,20 @@ export default async function CarePage({ params }: Params) {
       <CareEvidence dishes={careDishes} sort={cfg.dishSort} />
 
       <section className="py-6">
-        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--sage)_35%,transparent)] bg-[color-mix(in_srgb,var(--sage)_7%,transparent)] p-5">
+        <div className="rounded-3xl border border-[color-mix(in_srgb,var(--sage)_35%,transparent)] bg-sage-soft p-5">
           <p className="text-sm font-semibold text-ink">{CARE_SAFETY.headline}</p>
           <p className="mt-1 text-xs leading-relaxed text-ink-muted">{CARE_SAFETY.body}</p>
         </div>
       </section>
 
-      <section className="mb-12 mt-6 rounded-2xl border border-line bg-surface p-8 text-center">
+      <section className="mb-12 mt-6 rounded-3xl border border-line bg-surface p-8 text-center">
         <h2 className="text-xl font-semibold tracking-tight text-ink">{CARE_CLOSE.headline}</h2>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-muted">{CARE_CLOSE.body}</p>
-        <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href={CONSULT_HREF} className="w-full rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] sm:w-auto">
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link href={CONSULT_HREF} className="w-full rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] sm:w-auto">
             Book the free consult
           </Link>
-          <Link href="/trial" className="w-full rounded-xl border border-line px-6 py-3 text-sm font-semibold text-ink hover:border-line-strong sm:w-auto">
+          <Link href="/trial" className="w-full rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong sm:w-auto">
             Try 3 days first
           </Link>
         </div>
