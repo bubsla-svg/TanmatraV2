@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Therapeutic Meal Recommendations</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#021453",
+                        "surface-variant": "#353534",
+                        "on-primary": "#3c2f00",
+                        "off-white-ink": "#F5F5F4",
+                        "sage-signal": "#7D9E7E",
+                        "on-background": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "primary-fixed": "#ffe088",
+                        "error": "#ffb4ab",
+                        "primary-fixed-dim": "#e9c349",
+                        "primary": "#f2ca50",
+                        "outline": "#99907c",
+                        "on-primary-fixed-variant": "#574500",
+                        "ink-on-gold": "#111318",
+                        "clay-danger": "#B0655A",
+                        "outline-variant": "#4d4635",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-bright": "#3a3939",
+                        "surface-container-high": "#2a2a2a",
+                        "on-secondary": "#1c2b68",
+                        "surface-container": "#201f1f",
+                        "surface-tint": "#e9c349",
+                        "on-error": "#690005",
+                        "tertiary": "#bfcdff",
+                        "on-secondary-fixed-variant": "#344280",
+                        "secondary-container": "#344280",
+                        "tertiary-container": "#97b0ff",
+                        "on-secondary-container": "#a4b1f7",
+                        "on-primary-container": "#554300",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#dde1ff",
+                        "on-surface": "#e5e2e1",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "on-surface-variant": "#d0c5af",
+                        "on-error-container": "#ffdad6",
+                        "muted-steel": "#A3A3A3",
+                        "surface-dim": "#131313",
+                        "inverse-on-surface": "#313030",
+                        "on-tertiary": "#082b72",
+                        "inverse-surface": "#e5e2e1",
+                        "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                        "surface-container-highest": "#353534",
+                        "on-tertiary-fixed": "#00174b",
+                        "surface": "#131313",
+                        "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "secondary": "#b8c3ff",
+                        "primary-container": "#d4af37",
+                        "inverse-primary": "#735c00",
+                        "graphite-surface": "#171717",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "tertiary-fixed": "#dbe1ff",
+                        "ember-warning": "#B6892F",
+                        "on-tertiary-container": "#254188",
+                        "on-primary-fixed": "#241a00",
+                        "background": "#131313"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "1.5rem",
+                        "section-gap": "clamp(3rem, 8vw, 6rem)",
+                        "mobile-margin": "1.25rem",
+                        "desktop-margin": "2rem",
+                        "max-width": "1280px",
+                        "gutter": "1rem"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Satoshi"],
+                        "body-muted": ["Satoshi"],
+                        "clinical-data": ["JetBrains Mono"],
+                        "display-lg": ["Satoshi"],
+                        "label-small-caps": ["Satoshi"],
+                        "body-base": ["Satoshi"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["2rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-muted": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "clinical-data": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display-lg": ["clamp(2.5rem, 5vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-small-caps": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-base": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased font-body-base pb-safe selection:bg-primary-container selection:text-ink-on-gold">
+<main class="max-w-max-width mx-auto px-mobile-margin md:px-desktop-margin py-section-gap">
+<!-- Header Section -->
+<header class="mb-12 md:mb-16">
+<h1 class="font-display-lg text-display-lg text-off-white-ink max-w-3xl leading-tight">
+                Clinical protocols curated for your metabolic signature.
+            </h1>
+</header>
+<!-- Offset Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter md:gap-6 items-start">
+<!-- Column 1 (Normal flow) -->
+<div class="flex flex-col gap-gutter md:gap-6">
+<!-- Card 1 (With Rating) -->
+<article class="bg-graphite-surface rounded-xl border border-whisper-hairline overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-transform duration-300 hover:-translate-y-1">
+<div class="aspect-[4/3] w-full relative p-2">
+<img class="w-full h-full object-cover rounded-lg" data-alt="A macro, top-down shot of a meticulously plated pan-seared salmon fillet over a bed of vibrant, dark green wilted spinach and quinoa. The dish is illuminated by crisp, cinematic, moody studio lighting, highlighting the oily sheen of the salmon against a deep charcoal slate plate. High-end food photography, clinical precision, dark mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEJbKE-ysol11_oUR6axwfgCsvggelLuNCueb9pEc9cljtYRejdprsuN-HzpjcR5JCJkuvY-Y9RjT55ZHqkBMVmPOtHvuhpsYAN-ZGVZCo0UhteysCsC6sFmj4i7KJGfci0P8oh3SeNnhelyUZGlJmsakg3x_jBFvAhIdHBCmrJ0EXr1smyE3YfY44d4Y_oOPjOB0GQuMCSd-erzKqfUOsLoekuSEvop4oAjA15VF2G8zdVcge7SAOJFmhzd1tr3cPLFvJ9-fCVNg"/>
+</div>
+<div class="p-card-padding flex flex-col gap-4">
+<div class="flex justify-between items-start gap-4">
+<div>
+<h3 class="font-headline-md text-headline-md-mobile md:text-headline-md text-off-white-ink mb-1">Wild Salmon Reset</h3>
+<p class="font-body-muted text-body-muted text-muted-steel line-clamp-1">Low-GI base steadies the 3 PM crash</p>
+</div>
+</div>
+<div class="flex items-center gap-1 text-primary-fixed-dim">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star_half</span>
+</div>
+<div class="flex items-center justify-between mt-2 pt-4 border-t border-whisper-hairline">
+<div class="bg-surface-variant/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-whisper-hairline">
+<span class="font-clinical-data text-clinical-data text-on-surface-variant">32P · 12F · 450 kcal</span>
+</div>
+<button class="bg-primary-container text-ink-on-gold rounded-full px-4 py-2 flex items-center gap-2 hover:bg-primary transition-colors duration-200 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="font-label-small-caps text-label-small-caps uppercase">Add</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Skeleton 1 -->
+<article class="bg-graphite-surface rounded-xl border border-whisper-hairline overflow-hidden h-[400px] flex flex-col p-2">
+<div class="aspect-[4/3] w-full rounded-lg bg-surface-container-high shimmer"></div>
+<div class="p-4 flex flex-col gap-4 flex-1 justify-end">
+<div class="h-6 w-2/3 bg-surface-container-high rounded shimmer mb-2"></div>
+<div class="h-4 w-full bg-surface-container-high rounded shimmer"></div>
+<div class="flex justify-between items-center pt-4 border-t border-whisper-hairline mt-auto">
+<div class="h-8 w-32 bg-surface-container-high rounded-full shimmer"></div>
+<div class="h-8 w-24 bg-surface-container-high rounded-full shimmer"></div>
+</div>
+</div>
+</article>
+</div>
+<!-- Column 2 (Offset on Desktop) -->
+<div class="flex flex-col gap-gutter md:gap-6 md:mt-12">
+<!-- Card 2 (No Rating) -->
+<article class="bg-graphite-surface rounded-xl border border-whisper-hairline overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-transform duration-300 hover:-translate-y-1">
+<div class="aspect-[4/3] w-full relative p-2">
+<img class="w-full h-full object-cover rounded-lg" data-alt="A close-up shot of a pristine, vibrant green matcha smoothie bowl topped with geometric slices of kiwi, chia seeds, and a precise drizzle of raw honey. Served in a matte black ceramic bowl against a dark slate background. The lighting is focused, casting soft, deep shadows, emphasizing a fresh, clean, clinical-grade nutrition aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeIxxZ-FUISXPXqFVVm6ZTMS6Ttxww78B5Lg_DqCveNS6mNi8-IpcupSwfBKxEiSAX6t3h1ddJi4dfZXv3imyhij8JqsmdqSLsfosp41_Azjptdha98dnUltiBTa5Wa0xBLq93BkgLYf65rJ3qh-TnKwMbRcJIquTHkXa_2C7ffsCu1vIkX3LmqFwlZ-nAVSPkV-UmMu4PUTU2wVISCm-ONSVtRE9VL4Fa9v1NEVUohqPiRQLhJEE3k3q9MOwyt6MJJX56cHRtMoc"/>
+</div>
+<div class="p-card-padding flex flex-col gap-4">
+<div class="flex justify-between items-start gap-4">
+<div>
+<h3 class="font-headline-md text-headline-md-mobile md:text-headline-md text-off-white-ink mb-1">Matcha Metabolic Matrix</h3>
+<p class="font-body-muted text-body-muted text-muted-steel line-clamp-1">Optimizes morning fat oxidation rates</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-4 border-t border-whisper-hairline">
+<div class="bg-surface-variant/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-whisper-hairline">
+<span class="font-clinical-data text-clinical-data text-on-surface-variant">15P · 8F · 280 kcal</span>
+</div>
+<button class="bg-primary-container text-ink-on-gold rounded-full px-4 py-2 flex items-center gap-2 hover:bg-primary transition-colors duration-200 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="font-label-small-caps text-label-small-caps uppercase">Add</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Skeleton 2 -->
+<article class="bg-graphite-surface rounded-xl border border-whisper-hairline overflow-hidden h-[400px] flex flex-col p-2">
+<div class="aspect-[4/3] w-full rounded-lg bg-surface-container-high shimmer"></div>
+<div class="p-4 flex flex-col gap-4 flex-1 justify-end">
+<div class="h-6 w-3/4 bg-surface-container-high rounded shimmer mb-2"></div>
+<div class="h-4 w-5/6 bg-surface-container-high rounded shimmer"></div>
+<div class="flex justify-between items-center pt-4 border-t border-whisper-hairline mt-auto">
+<div class="h-8 w-28 bg-surface-container-high rounded-full shimmer"></div>
+<div class="h-8 w-24 bg-surface-container-high rounded-full shimmer"></div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</main>
+</body></html>

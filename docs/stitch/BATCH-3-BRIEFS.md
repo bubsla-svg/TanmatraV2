@@ -1,10 +1,11 @@
 # Batch 3 — Route Briefs 14–20 (transmittable payloads)
 
 > Phase 1 payloads for the acquisition/landing batch, compiled against real code
-> (see `BATCH-3-GROUNDING.md` for the contracts each one encodes). Banked here
-> verbatim because the MCP generation path cannot currently return them — see
-> **Transmission blocker** at the bottom. Anyone with a working Stitch session can
-> paste these straight in.
+> (see `BATCH-3-GROUNDING.md` for the contracts each one encodes). Originally
+> banked because the MCP generation path could not return them; **that blocker is
+> now RESOLVED** — all seven screens are generated and banked under
+> `route-14-*/` … `route-20-*/`. See **Transmission blocker → Resolution** at the
+> bottom for the mechanism and the screen ids.
 >
 > Brief 14 is the **kit-defining** brief: `/corporate-wellness` exercises hero +
 > benefit grid + calculator + lead form + FAQ + sticky bar, which are the shared
@@ -217,3 +218,52 @@ Two more properties confirmed against the official endpoint:
 **Fix**: relaunch the session with `MCP_TOOL_TIMEOUT=600000` (10 min) — the env
 var is read at CLI start and cannot be changed mid-session — and run one
 generation at a time. Or use the Stitch web UI as above.
+
+### Resolution (same day, this session)
+
+The relaunch arrived still carrying `MCP_TOOL_TIMEOUT=60000`, so the harness MCP
+client stayed capped — but the cap is *client*-side, so the fix was to stop using
+that client: speak MCP JSON-RPC to `https://stitch.googleapis.com/mcp` directly
+with `curl` (`X-Goog-Api-Key` auth, `initialize` → `tools/call`, SSE-or-JSON
+response handling) under a 10-minute curl timeout. The server is stateless — no
+session header needed. The API key lives outside the repo; never commit it.
+
+Timings vindicate the diagnosis completely: the seven generations took **56 s –
+2 m 20 s** each — almost all just past the 60 s cap, which is why every in-harness
+attempt died and the four-line Flash prompt (alone) survived.
+
+All seven briefs generated against project `9085082841997152511`
+("Tanmatra Storefront — Clinical Metabolic OS (Batches 3–5)", the account keyed
+by the current API key; Batches 1–2 live in `12062470764535558612` on the *other*
+key's account) with design system `assets/0b599b1692164d81b3389c7121485392`
+("Tanmatra", built from `docs/stitch/DESIGN.md` via
+`create_design_system_from_design_md`), `GEMINI_3_1_PRO`, `MOBILE`, one at a time:
+
+| Brief | Screen id | Title | Size | Banked at |
+|---|---|---|---|---|
+| 14 | `e59e85e442624c56bb26e55dcf925ba4` | Corporate Wellness Landing Page | 780×4888 | `route-14-corporate-wellness/` |
+| 15 | `2ec0a417061c411595260fb57644d317` | Metabolic Optimization Landing Page | 780×6982 | `route-15-metabolic/` |
+| 16 | `20f227e59af647f8aa6d8c7ddb4a057c` | RD Partner Application — Practice Step | 780×4214 | `route-16-rd-partners/` |
+| 17 | `50fb55d9849d4751a080be80dd1593ec` | Gym Partnership Landing Page | 780×7654 | `route-17-partners-gyms/` (+1 hero imagery) |
+| 18 | `83dab8d9e3524cd68e80804571264276` | Meal Bundles with Detail Modal | 780×3076 | `route-18-meal-deals/` |
+| 19 | `9de9d8ff1fdc422bbe16dfac757e5c34` | Smart Meal Recommendations | 780×4104 | `route-19-meal-recommendations/` |
+| 20 | `523c32f93b0940a2a41b38b025c687a9` | Diabetes Clinical Care Landing Page | 780×6580 | `route-20-care-condition/` (+2 imagery) |
+
+Brief 18 needed one `edit_screens` round: the first pass
+(`661aa6fdb8324e8b95527299d9e09779`) leaked global chrome (fixed header + bottom
+nav) and flattened the combo Dialog into an inline section. The edit removed the
+chrome and produced the proper open Dialog overlay with per-dish rows and a gold
+"ADD COMBO" pill — the banked file is the edited screen.
+
+Two properties of the official endpoint worth keeping: `get_screen` exists (a
+recovery handle Batches 1–2 never had), and generated screens are returned in
+`outputComponents[].design.screens[]` where the page is the `text/html` entry and
+sibling entries are generated hero-imagery assets (banked as `hero-imagery-*.png`,
+matching the Batch 1 convention).
+
+QA pass over all seven banked files: gold defined once per file, no
+white-ink-on-gold, no indigo on buttons, no global chrome (route 16's `<nav>` is
+the wizard stepper, correct semantics), skeleton shimmer present in 19, combo
+Dialog + "ADD COMBO" CTA present in 18. Known cosmetic nit for the wiring stage:
+18's density chip reads "/$" where the shipped copy is "per ₹100" — copy binds
+from code at wiring time anyway.

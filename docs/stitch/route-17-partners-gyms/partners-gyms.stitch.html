@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gym &amp; Fitness Partnership | Metabolic OS</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Satoshi Fallback (using Inter as closest standard replacement for unhosted font) -->
+<style>
+        @font-face {
+            font-family: 'Satoshi';
+            src: local('Inter'); /* Fallback for demo purposes */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Hide scrollbar for snap rail */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #f2ca50; /* primary */
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(242, 202, 80, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+    </style>
+<!-- Tailwind Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-high": "#2a2a2a",
+                        "inverse-surface": "#e5e2e1",
+                        "surface": "#131313",
+                        "ember-warning": "#B6892F",
+                        "surface-container": "#201f1f",
+                        "surface-dim": "#131313",
+                        "secondary-container": "#344280",
+                        "muted-steel": "#A3A3A3",
+                        "on-tertiary": "#082b72",
+                        "on-primary": "#3c2f00",
+                        "inverse-primary": "#735c00",
+                        "on-secondary-fixed-variant": "#344280",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#554300",
+                        "secondary-fixed": "#dde1ff",
+                        "surface-container-low": "#1c1b1b",
+                        "error-container": "#93000a",
+                        "surface-tint": "#e9c349",
+                        "secondary": "#b8c3ff",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-surface-variant": "#d0c5af",
+                        "on-secondary": "#1c2b68",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#dbe1ff",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "inverse-on-surface": "#313030",
+                        "surface-container-highest": "#353534",
+                        "on-primary-fixed-variant": "#574500",
+                        "sage-signal": "#7D9E7E",
+                        "primary-container": "#d4af37",
+                        "on-tertiary-fixed": "#00174b",
+                        "clay-danger": "#B0655A",
+                        "tertiary-container": "#97b0ff",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "ink-on-gold": "#111318",
+                        "on-tertiary-container": "#254188",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "on-surface": "#e5e2e1",
+                        "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                        "on-secondary-fixed": "#021453",
+                        "surface-variant": "#353534",
+                        "on-secondary-container": "#a4b1f7",
+                        "background": "#131313",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-bright": "#3a3939",
+                        "primary": "#f2ca50",
+                        "outline": "#99907c",
+                        "on-background": "#e5e2e1",
+                        "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                        "off-white-ink": "#F5F5F4",
+                        "on-primary-fixed": "#241a00",
+                        "outline-variant": "#4d4635",
+                        "tertiary": "#bfcdff",
+                        "on-error": "#690005",
+                        "primary-fixed": "#ffe088",
+                        "graphite-surface": "#171717"
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        lg: "2rem",
+                        xl: "3rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        "card-padding": "1.5rem",
+                        "section-gap": "clamp(3rem, 8vw, 6rem)",
+                        "mobile-margin": "1.25rem",
+                        "gutter": "1rem",
+                        "desktop-margin": "2rem",
+                        "max-width": "1280px"
+                    },
+                    fontFamily: {
+                        "body-muted": ["Satoshi", "sans-serif"],
+                        "clinical-data": ["JetBrains Mono", "monospace"],
+                        "display-lg": ["Satoshi", "sans-serif"],
+                        "headline-md": ["Satoshi", "sans-serif"],
+                        "label-small-caps": ["Satoshi", "sans-serif"],
+                        "body-base": ["Satoshi", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-base antialiased pb-24 selection:bg-primary-container selection:text-on-primary-container">
+<!-- Hero Section -->
+<section class="max-w-[1280px] mx-auto pt-16 px-mobile-margin md:px-desktop-margin">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-section-gap items-center">
+<div class="flex flex-col items-start space-y-6 order-2 lg:order-1">
+<span class="font-label-small-caps text-[0.75rem] font-semibold tracking-[0.05em] text-primary uppercase">
+                    Partnership
+                </span>
+<h1 class="font-display-lg text-[clamp(2.5rem,5vw,4rem)] font-bold leading-[1.1] tracking-[-0.02em] text-off-white-ink">
+                    Monetize Metabolism.
+                </h1>
+<p class="font-body-base text-[1rem] leading-[1.6] text-muted-steel max-w-lg">
+                    Precision nutrition for your high-performance community. Integrate our clinical-grade culinary ecosystem directly into your facility's offerings.
+                </p>
+<a class="inline-flex items-center justify-center bg-primary text-ink-on-gold font-clinical-data text-[0.8125rem] font-medium leading-[1.4] rounded-full px-8 py-4 active:scale-[0.98] transition-transform duration-300 hover:opacity-90" href="#lead-form">
+                    Apply for partnership
+                </a>
+</div>
+<div class="order-1 lg:order-2 w-full h-[400px] lg:h-[600px] rounded-xl overflow-hidden border border-whisper-hairline bg-graphite-surface relative shadow-lg">
+<img alt="" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgA0OSa9QAKcZlhhB04DbW4sK_LSO-iSCdKKjCAwI3XYAt7UWyAZgJ4_fpmbODbtChJJd9HuR88XvJPrNIPUQs29F_TYe_v1WrtedbZUVUy0TVYB_8YM5L96WQh_7s1W9j3nG8UIya0KFLV8QRu0-XcNj__1TKwCWtrsYxjtT2xF1pxtUfWy9lxabO91W599Qz3sqyxPHOAAldn51CSQqejqghV8CejF90zgd53Xy4DO0ffaWN-J0t-pgi_pAyjbBAyOnessn8OI0"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent"></div>
+</div>
+</div>
+</section>
+<!-- Proof Strip -->
+<section class="max-w-[1280px] mx-auto mt-16 md:mt-24 px-mobile-margin md:px-desktop-margin">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-graphite-surface border border-whisper-hairline rounded-lg p-card-padding flex flex-col items-center justify-center text-center">
+<span class="font-clinical-data text-[1.25rem] md:text-[1.5rem] font-semibold text-primary tabular-nums mb-1">₹45,000</span>
+<span class="font-label-small-caps text-[0.65rem] text-muted-steel uppercase tracking-widest">AVG EARNINGS/MO</span>
+</div>
+<div class="bg-graphite-surface border border-whisper-hairline rounded-lg p-card-padding flex flex-col items-center justify-center text-center">
+<span class="font-clinical-data text-[1.25rem] md:text-[1.5rem] font-semibold text-primary tabular-nums mb-1">0</span>
+<span class="font-label-small-caps text-[0.65rem] text-muted-steel uppercase tracking-widest">INVENTORY RISK</span>
+</div>
+<div class="bg-graphite-surface border border-whisper-hairline rounded-lg p-card-padding flex flex-col items-center justify-center text-center">
+<span class="font-clinical-data text-[1.25rem] md:text-[1.5rem] font-semibold text-primary tabular-nums mb-1">&lt;24h</span>
+<span class="font-label-small-caps text-[0.65rem] text-muted-steel uppercase tracking-widest">ONBOARDING</span>
+</div>
+<div class="bg-graphite-surface border border-whisper-hairline rounded-lg p-card-padding flex flex-col items-center justify-center text-center">
+<span class="font-clinical-data text-[1.25rem] md:text-[1.5rem] font-semibold text-primary tabular-nums mb-1">4.8★</span>
+<span class="font-label-small-caps text-[0.65rem] text-muted-steel uppercase tracking-widest">SATISFACTION</span>
+</div>
+</div>
+</section>
+<!-- Benefit Grid -->
+<section class="max-w-[1280px] mx-auto mt-section-gap px-mobile-margin md:px-desktop-margin">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-graphite-surface border border-whisper-hairline rounded-lg p-card-padding flex items-start space-x-4">
+<span class="material-symbols-outlined text-primary text-2xl shrink-0" style="font-variation-settings: 'FILL' 1;">biotech</span>
+<div class="font-body-base text-off-white-ink font-medium self-center">
+                    Clinical Precision
+                </div>
+</div>
+<div class="bg-graphite-surface border border-whisper-hairline rounded-lg p-card-padding flex items-start space-x-4">
+<span class="material-symbols-outlined text-primary text-2xl shrink-0" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+<div class="font-body-base text-off-white-ink font-medium self-center">
+                    Kitchen-to-Gym Logistics
+                </div>
+</div>
+<div class="bg-graphite-surface border border-whisper-hairline rounded-lg p-card-padding flex items-start space-x-4">
+<span class="material-symbols-outlined text-primary text-2xl shrink-0" style="font-variation-settings: 'FILL' 1;">group_add</span>
+<div class="font-body-base text-off-white-ink font-medium self-center">
+                    Member Retention
+                </div>
+</div>
+</div>
+</section>
+<!-- Revenue Calculator -->
+<section class="max-w-[1280px] mx-auto mt-section-gap px-mobile-margin md:px-desktop-margin">
+<div class="bg-graphite-surface border border-whisper-hairline rounded-xl p-card-padding md:p-12 relative overflow-hidden">
+<!-- Subtle background effect -->
+<div class="absolute -right-24 -top-24 w-96 h-96 bg-primary-container/5 rounded-full blur-[100px] pointer-events-none"></div>
+<h2 class="font-headline-md text-[2rem] font-semibold text-off-white-ink mb-10">Revenue Calculator</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+<div class="space-y-10">
+<!-- Slider -->
+<div>
+<div class="flex justify-between items-end mb-4">
+<label class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest">Active Members</label>
+<span class="font-clinical-data text-[1.25rem] text-off-white-ink tabular-nums" id="member-count">250</span>
+</div>
+<input id="member-slider" max="1000" min="0" step="10" type="range" value="250"/>
+</div>
+<!-- Commission Model -->
+<div>
+<label class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest block mb-4">Commission Model</label>
+<div class="flex space-x-4">
+<label class="cursor-pointer group flex-1">
+<input checked="" class="peer sr-only" name="commission_model" type="radio" value="standard"/>
+<div class="px-4 py-3 text-center border border-whisper-hairline rounded-full font-body-base text-muted-steel peer-checked:bg-surface-container-high peer-checked:text-primary peer-checked:border-primary/50 transition-all">
+                                    Standard
+                                </div>
+</label>
+<label class="cursor-pointer group flex-1">
+<input class="peer sr-only" name="commission_model" type="radio" value="premium"/>
+<div class="px-4 py-3 text-center border border-whisper-hairline rounded-full font-body-base text-muted-steel peer-checked:bg-surface-container-high peer-checked:text-primary peer-checked:border-primary/50 transition-all">
+                                    Premium
+                                </div>
+</label>
+</div>
+</div>
+</div>
+<!-- Output -->
+<div class="flex flex-col justify-center bg-surface-container/50 border border-whisper-hairline rounded-lg p-8 h-full">
+<span class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest mb-2">Estimate — GST included</span>
+<div class="font-clinical-data text-[clamp(2.5rem,5vw,4rem)] font-bold text-primary tabular-nums tracking-tighter" id="revenue-output">
+                        ₹37,500
+                    </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Partner Rail -->
+<section class="mt-section-gap">
+<div class="max-w-[1280px] mx-auto px-mobile-margin md:px-desktop-margin mb-6">
+<h2 class="font-headline-md text-[2rem] font-semibold text-off-white-ink">Partnership Tiers</h2>
+</div>
+<div class="flex overflow-x-auto snap-x snap-mandatory space-x-6 pb-8 px-mobile-margin md:px-desktop-margin hide-scrollbar">
+<!-- Card 1 -->
+<div class="snap-center shrink-0 w-[300px] md:w-[350px] bg-graphite-surface border border-whisper-hairline rounded-xl p-card-padding">
+<span class="inline-block border border-whisper-hairline rounded-full px-3 py-1 font-label-small-caps text-[0.65rem] text-muted-steel mb-6 uppercase tracking-widest">GYM</span>
+<ul class="space-y-4">
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">Volume discounting on bulk orders</span>
+</li>
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">Custom branded ordering portal</span>
+</li>
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">Dedicated account manager</span>
+</li>
+</ul>
+</div>
+<!-- Card 2 -->
+<div class="snap-center shrink-0 w-[300px] md:w-[350px] bg-graphite-surface border border-whisper-hairline rounded-xl p-card-padding">
+<span class="inline-block border border-whisper-hairline rounded-full px-3 py-1 font-label-small-caps text-[0.65rem] text-muted-steel mb-6 uppercase tracking-widest">TRAINER</span>
+<ul class="space-y-4">
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">Direct client referral commission</span>
+</li>
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">Macro-matching integration</span>
+</li>
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">Personal complimentary meals</span>
+</li>
+</ul>
+</div>
+<!-- Card 3 -->
+<div class="snap-center shrink-0 w-[300px] md:w-[350px] bg-graphite-surface border border-whisper-hairline rounded-xl p-card-padding">
+<span class="inline-block border border-whisper-hairline rounded-full px-3 py-1 font-label-small-caps text-[0.65rem] text-muted-steel mb-6 uppercase tracking-widest">CLUB</span>
+<ul class="space-y-4">
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">API Integration for apps</span>
+</li>
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">On-site kiosk deployment</span>
+</li>
+<li class="flex items-start space-x-3">
+<div class="w-1.5 h-1.5 rounded-full bg-sage-signal mt-2 shrink-0"></div>
+<span class="font-body-muted text-[0.875rem] text-off-white-ink">White-label options available</span>
+</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- Lead Form -->
+<section class="max-w-[800px] mx-auto mt-section-gap px-mobile-margin md:px-desktop-margin scroll-mt-24" id="lead-form">
+<div class="bg-graphite-surface border border-whisper-hairline rounded-xl p-card-padding md:p-10">
+<h2 class="font-headline-md text-[2rem] font-semibold text-off-white-ink mb-8">Apply for Partnership</h2>
+<form class="space-y-6">
+<!-- Segment Chooser -->
+<div class="flex space-x-2 bg-surface-container-high p-1 rounded-lg border border-whisper-hairline overflow-x-auto hide-scrollbar">
+<label class="cursor-pointer flex-1 min-w-[100px]">
+<input checked="" class="peer sr-only" name="partner_type" type="radio" value="gym"/>
+<div class="px-3 py-2 text-center rounded-md font-clinical-data text-[0.8125rem] text-muted-steel peer-checked:bg-graphite-surface peer-checked:text-off-white-ink peer-checked:shadow-sm transition-all whitespace-nowrap">
+                            Gym
+                        </div>
+</label>
+<label class="cursor-pointer flex-1 min-w-[100px]">
+<input class="peer sr-only" name="partner_type" type="radio" value="trainer"/>
+<div class="px-3 py-2 text-center rounded-md font-clinical-data text-[0.8125rem] text-muted-steel peer-checked:bg-graphite-surface peer-checked:text-off-white-ink peer-checked:shadow-sm transition-all whitespace-nowrap">
+                            Trainer
+                        </div>
+</label>
+<label class="cursor-pointer flex-1 min-w-[100px]">
+<input class="peer sr-only" name="partner_type" type="radio" value="dietitian"/>
+<div class="px-3 py-2 text-center rounded-md font-clinical-data text-[0.8125rem] text-muted-steel peer-checked:bg-graphite-surface peer-checked:text-off-white-ink peer-checked:shadow-sm transition-all whitespace-nowrap">
+                            Dietitian
+                        </div>
+</label>
+<label class="cursor-pointer flex-1 min-w-[100px]">
+<input class="peer sr-only" name="partner_type" type="radio" value="club"/>
+<div class="px-3 py-2 text-center rounded-md font-clinical-data text-[0.8125rem] text-muted-steel peer-checked:bg-graphite-surface peer-checked:text-off-white-ink peer-checked:shadow-sm transition-all whitespace-nowrap">
+                            Club
+                        </div>
+</label>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest block">Full Name</label>
+<input class="w-full bg-background border border-whisper-hairline rounded-lg px-4 py-3 font-body-base text-off-white-ink placeholder-muted-steel focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors" placeholder="Jane Doe" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest block">Work Email</label>
+<input class="w-full bg-background border border-whisper-hairline rounded-lg px-4 py-3 font-body-base text-off-white-ink placeholder-muted-steel focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors" placeholder="jane@facility.com" type="email"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest block">Company / Facility Name</label>
+<input class="w-full bg-background border border-whisper-hairline rounded-lg px-4 py-3 font-body-base text-off-white-ink placeholder-muted-steel focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors" placeholder="Apex Fitness" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest block">Phone Number</label>
+<input class="w-full bg-background border border-whisper-hairline rounded-lg px-4 py-3 font-body-base text-off-white-ink placeholder-muted-steel focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors" placeholder="+91 00000 00000" type="tel"/>
+</div>
+</div>
+<!-- Dynamic Dietitian Field -->
+<div class="hidden space-y-2 bg-surface-container-low p-4 rounded-lg border border-whisper-hairline" id="dietitian-field">
+<label class="font-label-small-caps text-[0.75rem] text-primary uppercase tracking-widest block">RD Registration Number</label>
+<input class="w-full bg-background border border-whisper-hairline rounded-lg px-4 py-3 font-clinical-data text-off-white-ink placeholder-muted-steel focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors" placeholder="IDA/RD/XXXX" type="text"/>
+<p class="font-clinical-data text-[0.7rem] text-muted-steel mt-1">Enter valid RD ID for clinical verification.</p>
+</div>
+<div class="space-y-2">
+<label class="font-label-small-caps text-[0.75rem] text-muted-steel uppercase tracking-widest block">Message (Optional)</label>
+<textarea class="w-full bg-background border border-whisper-hairline rounded-lg px-4 py-3 font-body-base text-off-white-ink placeholder-muted-steel focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors resize-none" placeholder="Tell us about your member demographic..." rows="3"></textarea>
+</div>
+<button class="w-full bg-primary text-ink-on-gold font-clinical-data text-[0.8125rem] font-medium leading-[1.4] rounded-full px-8 py-4 active:scale-[0.98] transition-transform duration-300 hover:opacity-90" type="submit">
+                    Submit Application
+                </button>
+</form>
+</div>
+</section>
+<!-- FAQ -->
+<section class="max-w-[800px] mx-auto mt-section-gap mb-section-gap px-mobile-margin md:px-desktop-margin">
+<h2 class="font-headline-md text-[2rem] font-semibold text-off-white-ink mb-8">Frequently Asked Questions</h2>
+<div class="space-y-1">
+<details class="group bg-transparent border-b border-whisper-hairline">
+<summary class="flex justify-between items-center font-body-base font-semibold text-off-white-ink cursor-pointer list-none py-5 outline-none">
+<span>What is the minimum member count required?</span>
+<span class="transition group-open:rotate-180">
+<span class="material-symbols-outlined text-muted-steel" style="font-variation-settings: 'wght' 300;">expand_more</span>
+</span>
+</summary>
+<div class="text-muted-steel font-body-muted pb-6 pr-8">
+                    We require a minimum of 50 active recurring members to establish a branded tier partnership. For independent trainers, we offer a specialized affiliate structure with no minimums.
+                </div>
+</details>
+<details class="group bg-transparent border-b border-whisper-hairline">
+<summary class="flex justify-between items-center font-body-base font-semibold text-off-white-ink cursor-pointer list-none py-5 outline-none">
+<span>How does logistics and delivery work?</span>
+<span class="transition group-open:rotate-180">
+<span class="material-symbols-outlined text-muted-steel" style="font-variation-settings: 'wght' 300;">expand_more</span>
+</span>
+</summary>
+<div class="text-muted-steel font-body-muted pb-6 pr-8">
+                    We handle end-to-end cold-chain logistics. Meals can be delivered directly to your facility's dedicated commercial fridge (provided by us) or directly to your members' homes, depending on your preferred operational model.
+                </div>
+</details>
+<details class="group bg-transparent border-b border-whisper-hairline">
+<summary class="flex justify-between items-center font-body-base font-semibold text-off-white-ink cursor-pointer list-none py-5 outline-none">
+<span>Is there an upfront cost?</span>
+<span class="transition group-open:rotate-180">
+<span class="material-symbols-outlined text-muted-steel" style="font-variation-settings: 'wght' 300;">expand_more</span>
+</span>
+</summary>
+<div class="text-muted-steel font-body-muted pb-6 pr-8">
+                    Zero upfront cost for standard integration. Premium integrations requiring on-site kiosks or heavy API customization may incur nominal setup fees, which are offset against first-quarter commissions.
+                </div>
+</details>
+</div>
+</section>
+<!-- Sticky Bottom Bar (Mobile/Universal CTA) -->
+<div class="fixed bottom-0 left-0 w-full z-50 px-4 pt-4 pb-safe bg-smoked-glass backdrop-blur-md border-t border-whisper-hairline flex justify-center">
+<a class="w-full max-w-sm bg-primary text-ink-on-gold font-clinical-data text-[0.8125rem] font-bold leading-[1.4] rounded-full px-6 py-4 text-center active:scale-[0.98] transition-transform duration-300 shadow-[0_0_20px_rgba(212,175,55,0.2)]" href="#lead-form">
+            Apply for partnership
+        </a>
+</div>
+<!-- Interactive Scripts -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Revenue Calculator Logic
+            const slider = document.getElementById('member-slider');
+            const memberCountDisplay = document.getElementById('member-count');
+            const revenueOutput = document.getElementById('revenue-output');
+            const commissionRadios = document.querySelectorAll('input[name="commission_model"]');
+
+            const calculateRevenue = () => {
+                const members = parseInt(slider.value);
+                const isPremium = document.querySelector('input[name="commission_model"]:checked').value === 'premium';
+                
+                // Base formula: Members * Rate
+                const rate = isPremium ? 250 : 150; 
+                let revenue = members * rate;
+
+                // Format as INR
+                const formattedRevenue = new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                }).format(revenue);
+
+                memberCountDisplay.textContent = members;
+                revenueOutput.textContent = formattedRevenue;
+            };
+
+            slider.addEventListener('input', calculateRevenue);
+            commissionRadios.forEach(radio => radio.addEventListener('change', calculateRevenue));
+            
+            // Initial calculation
+            calculateRevenue();
+
+
+            // Form Toggle Logic
+            const partnerTypeRadios = document.querySelectorAll('input[name="partner_type"]');
+            const dietitianField = document.getElementById('dietitian-field');
+
+            partnerTypeRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'dietitian') {
+                        dietitianField.classList.remove('hidden');
+                        dietitianField.classList.add('block');
+                    } else {
+                        dietitianField.classList.add('hidden');
+                        dietitianField.classList.remove('block');
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>
