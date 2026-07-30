@@ -68,18 +68,25 @@ export function TicketCard({
       ) : (
         <ul className="mt-3 space-y-1">
           {lines.map((line, i) => (
-            <li key={`${i}-${line.name}`} className="flex items-baseline gap-2">
-              <span className="tabular w-10 shrink-0 text-base font-semibold text-ink">
-                ×{line.qty}
-              </span>
-              <span
-                className={`text-base ${line.suspect ? "text-destructive" : "text-ink"}`}
-              >
-                {line.name}
-              </span>
-              {line.suspect && (
-                <span className="text-xs font-semibold uppercase text-destructive">
-                  check
+            <li key={`${i}-${line.name}`} className="flex flex-col gap-0.5">
+              <div className="flex items-baseline gap-2">
+                <span className="tabular w-10 shrink-0 text-base font-semibold text-ink">
+                  ×{line.qty}
+                </span>
+                <span
+                  className={`text-base ${line.suspect ? "text-destructive" : "text-ink"}`}
+                >
+                  {line.name}
+                </span>
+                {line.suspect && (
+                  <span className="text-xs font-semibold uppercase text-destructive">
+                    check
+                  </span>
+                )}
+              </div>
+              {line.customizations.length > 0 && (
+                <span className="ml-10 text-sm font-semibold text-gold-text">
+                  {line.customizations.join(", ")}
                 </span>
               )}
             </li>

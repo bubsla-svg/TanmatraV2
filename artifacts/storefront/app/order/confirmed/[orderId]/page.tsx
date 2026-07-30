@@ -1,8 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchOrderStatus, statusLabel } from "@/lib/orderStatus";
+import { fetchOrderStatus, statusLabel, statusTone, TRACKABLE_STATUSES } from "@/lib/orderStatus";
 import { PlanPerks } from "@/components/order/PlanPerks";
 import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendations";
+
+/** Tone → status-label colour — same mapping as route-12's OrderRow, so a
+ *  customer landing here straight from checkout and later revisiting via
+ *  /account/orders sees one consistent treatment, not two. */
+const TONE_TEXT = {
+  live: "text-sage-text",
+  settled: "text-ink-muted",
+  failed: "text-destructive",
+} as const;
 
 export const metadata: Metadata = {
   title: "Order confirmed",
@@ -48,28 +57,42 @@ export default async function ConfirmedPage({
   }
 
   const { status, etaMinutes } = result.status;
+  const tone = statusTone(status);
+  // Allowlist, fails safe — see TRACKABLE_STATUSES in lib/orderStatus. A
+  // delivered or cancelled order gets no dead Track CTA.
+  const trackable = TRACKABLE_STATUSES.has(status);
   return (
     <section className="mx-auto max-w-xl px-4 py-10">
       <p className="text-sm font-semibold uppercase tracking-wider text-sage-text">
         Order confirmed
       </p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">
+      <h1 className={`mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight ${TONE_TEXT[tone]}`}>
+        {tone === "live" && (
+          <span aria-hidden className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-sage" />
+        )}
         {statusLabel(status)}
       </h1>
       <p className="tabular mt-1 text-sm text-ink-muted">#{orderId}</p>
-      {status !== "delivered" && status !== "cancelled" && (
+      {trackable && (
         <p className="mt-3 text-sm text-ink-muted">
           Estimated arrival in{" "}
           <span className="tabular font-semibold text-ink">{etaMinutes} min</span>
         </p>
       )}
+      {tone === "failed" && (
+        <p className="mt-3 text-sm font-semibold text-destructive">
+          This order did not complete — you have not been charged for it.
+        </p>
+      )}
       <div className="mt-6 flex gap-3">
-        <Link
-          href={`/track/${encodeURIComponent(orderId)}`}
-          className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
-        >
-          Track live
-        </Link>
+        {trackable && (
+          <Link
+            href={`/track/${encodeURIComponent(orderId)}`}
+            className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+          >
+            Track live
+          </Link>
+        )}
         <Link
           href="/menu"
           className="rounded-lg border border-line-strong px-5 py-3 text-sm font-semibold text-ink"

@@ -143,7 +143,14 @@ export function createSubscription(
 export interface AlacarteOrderInput {
   /** Client-generated idempotency key; also the id used to poll status. */
   externalOrderId: string;
-  items: { dishId: number; qty: number }[];
+  items: {
+    dishId: number;
+    qty: number;
+    /** Customisation SELECTIONS, never a price — the server resolves the
+     *  price against its own copy of the dish's customisation groups
+     *  (dishCustomizations.ts). Omit entirely for a plain, uncustomised line. */
+    customizations?: { groupName: string; optionNames: string[] }[];
+  }[];
   phone: string;
   address: { label?: string; line1: string; line2?: string; city: string; pincode: string };
   consent: { accepted: true; policyVersion: string };

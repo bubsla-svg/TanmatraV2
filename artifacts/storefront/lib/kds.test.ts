@@ -100,9 +100,39 @@ test("well-formed lines pass through unflagged", () => {
     { id: 2, name: "  Dal Tadka  ", qty: 1, price: 18_000 },
   ]);
   assert.deepEqual(lines, [
-    { name: "Millet Khichdi", qty: 2, suspect: false },
-    { name: "Dal Tadka", qty: 1, suspect: false },
+    { name: "Millet Khichdi", qty: 2, suspect: false, customizations: [] },
+    { name: "Dal Tadka", qty: 1, suspect: false, customizations: [] },
   ]);
+});
+
+test("customisation labels reach the cook — the kitchen must know a boost was billed", () => {
+  // The concrete bug this closes: a customer pays for "Multigrain Bread" and
+  // the kitchen fires the plain dish because the label never reached the
+  // board (see BATCH-4-GROUNDING.md finding 1 and dishCustomizations.ts).
+  const lines = ticketLines([
+    { id: 1, name: "Grilled Veggie Sandwich", qty: 1, price: 27500, customizations: ["Multigrain Bread"] },
+  ]);
+  assert.deepEqual(lines, [
+    { name: "Grilled Veggie Sandwich", qty: 1, suspect: false, customizations: ["Multigrain Bread"] },
+  ]);
+});
+
+test("a line with no customisations field gets an empty array, not undefined", () => {
+  const lines = ticketLines([{ id: 1, name: "Plain Dal", qty: 1 }]);
+  assert.deepEqual(lines[0]?.customizations, []);
+});
+
+test("a malformed customizations field is tolerated — treated as none, not a parse failure", () => {
+  // customizations riding shotgun on jsonb is just as unvalidated as name/qty;
+  // garbage there must not make an otherwise-good line `suspect`.
+  const lines = ticketLines([{ id: 1, name: "Dal", qty: 1, customizations: "not an array" }]);
+  assert.equal(lines[0]?.suspect, false);
+  assert.deepEqual(lines[0]?.customizations, []);
+});
+
+test("non-string entries inside customizations are dropped, not fabricated as text", () => {
+  const lines = ticketLines([{ id: 1, name: "Dal", qty: 1, customizations: ["Extra Spice", 42, null, "  "] }]);
+  assert.deepEqual(lines[0]?.customizations, ["Extra Spice"]);
 });
 
 test("a malformed line is kept, flagged, and counted — never dropped", () => {

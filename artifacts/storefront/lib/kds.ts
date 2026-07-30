@@ -39,6 +39,12 @@ export interface TicketLine {
   name: string;
   qty: number;
   suspect: boolean;
+  /** Non-default customisation selections billed on this line (e.g.
+   *  ["Multigrain Bread"]) — the kitchen must see these or it fires the plain
+   *  dish while the customer paid for, and expects, the modification. Absent
+   *  or empty on a line with no customisations; never fabricated when unclear
+   *  — a malformed entry here is simply dropped, not guessed at. */
+  customizations: string[];
 }
 
 export type Urgency = "fresh" | "due" | "late";
@@ -128,12 +134,17 @@ export function ticketLines(items: unknown): TicketLine[] {
     const row = (typeof raw === "object" && raw !== null ? raw : {}) as Record<string, unknown>;
     const rawName = row["name"];
     const rawQty = row["qty"];
+    const rawCustomizations = row["customizations"];
     const nameOk = typeof rawName === "string" && rawName.trim() !== "";
     const qtyOk = typeof rawQty === "number" && Number.isInteger(rawQty) && rawQty > 0;
+    const customizations = Array.isArray(rawCustomizations)
+      ? rawCustomizations.filter((c): c is string => typeof c === "string" && c.trim() !== "")
+      : [];
     return {
       name: nameOk ? (rawName as string).trim() : "Unreadable item — check the order",
       qty: qtyOk ? (rawQty as number) : 1,
       suspect: !nameOk || !qtyOk,
+      customizations,
     };
   });
 }
