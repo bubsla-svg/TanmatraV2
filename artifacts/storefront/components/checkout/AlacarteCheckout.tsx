@@ -70,7 +70,15 @@ export function AlacarteCheckout() {
         if (!idempotencyKey.current) idempotencyKey.current = `alc-${crypto.randomUUID()}`;
         const order: AlacarteOrderInput = {
           externalOrderId: idempotencyKey.current,
-          items: cart.lines.filter((l) => l.kind === "dish").map((l) => ({ dishId: l.dishId, qty: l.qty })),
+          items: cart.lines
+            .filter((l) => l.kind === "dish")
+            .map((l) => ({
+              dishId: l.dishId,
+              qty: l.qty,
+              ...(l.customizationSelections && l.customizationSelections.length > 0
+                ? { customizations: l.customizationSelections }
+                : {}),
+            })),
           phone: contact,
           address,
           consent: { accepted: true, policyVersion: DPDP_POLICY_VERSION },

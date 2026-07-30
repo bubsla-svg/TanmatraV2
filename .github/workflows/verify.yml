@@ -91,6 +91,7 @@ jobs:
           ./src/lib/flags.test.ts
           ./src/lib/trialEligibility.test.ts
           ./src/lib/corporateSubsidy.test.ts
+          ./src/lib/dishCustomizations.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
@@ -341,6 +342,17 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/ops.kds.test.ts
+      # POST /orders customisation pricing (Batch-4 grounding finding 1): a
+      # dish's real customisation groups (bread type, sauce, portion...) are
+      # now priced server-side and the row inserted into Postgres, so this
+      # needs the same DB service as the rest of this job rather than
+      # money-unit. Own step so a failure reads as "customisation billing
+      # broke" rather than being buried in the eighteen-file money run above.
+      - name: Dish customisation pricing (checkout)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/routes/checkout.customizations.test.ts
       - name: Front-door serviceability & checkout gate authority (OB-1)
         working-directory: artifacts/api-server
         run: >

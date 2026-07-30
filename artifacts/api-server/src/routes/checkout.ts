@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import { calculateCartTotals } from "../lib/cartMath";
+import { resolveCustomizations, type CustomizationSelection } from "../lib/dishCustomizations";
 import type { DishData } from "@workspace/menu-catalog";
 import type { PreferencesForMatch } from "@workspace/preferences-match";
 import {
@@ -35,6 +36,19 @@ const placeOrderSchema = z.object({
       z.object({
         dishId: z.number().int().positive(),
         qty: z.number().int().min(1).max(20),
+        // Customisation SELECTIONS, never a price — pricing is resolved
+        // server-side against the dish's own `customizations` groups
+        // (dishCustomizations.ts). A client can name a group and options; it
+        // can never assert what those options cost.
+        customizations: z
+          .array(
+            z.object({
+              groupName: z.string().min(1).max(120),
+              optionNames: z.array(z.string().min(1).max(120)).max(20),
+            }),
+          )
+          .max(20)
+          .optional(),
       }),
     )
     .min(1)
@@ -145,7 +159,13 @@ router.post("/orders", async (req: Request, res: Response) => {
   const effectivePrefs = authPrefs ?? normalizeGuestPrefs(guestPrefs);
 
   // Validate every item and build the server-authoritative cart.
-  const validatedItems: Array<{ id: number; name: string; qty: number; price: number }> = [];
+  const validatedItems: Array<{
+    id: number;
+    name: string;
+    qty: number;
+    price: number;
+    customizations?: string[];
+  }> = [];
   const resolvedDishes: DishData[] = [];
   for (const item of items) {
     const dish = resolver.byId(item.dishId);
@@ -167,8 +187,27 @@ router.post("/orders", async (req: Request, res: Response) => {
       });
       return;
     }
+
+    const customization = resolveCustomizations(
+      dish.customizations,
+      item.customizations as CustomizationSelection[] | undefined,
+    );
+    if (!customization.ok) {
+      res.status(422).json({
+        error: `invalid customisation for ${dish.name}: ${customization.error}`,
+        code: "invalid_customization",
+      });
+      return;
+    }
+
     resolvedDishes.push(dish);
-    validatedItems.push({ id: dish.id, name: dish.name, qty: item.qty, price: dish.price });
+    validatedItems.push({
+      id: dish.id,
+      name: dish.name,
+      qty: item.qty,
+      price: dish.price + customization.modifierPaise,
+      ...(customization.labels.length > 0 && { customizations: customization.labels }),
+    });
   }
 
   // Guest with no declared dietary info + a cart carrying allergen/contra dishes

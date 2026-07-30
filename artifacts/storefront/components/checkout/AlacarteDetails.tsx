@@ -75,16 +75,19 @@ export function AlacarteDetails({
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
-            <li key={`${l.kind}-${l.dishId}`} className="flex items-center justify-between gap-3 py-3">
+            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-center justify-between gap-3 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-ink">{l.name}</p>
+                {l.customizations && l.customizations.length > 0 && (
+                  <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
+                )}
                 <p className="font-mono tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center rounded-full border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
-                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) - 1))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">−</button>
+                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">−</button>
                   <span aria-live="polite" className="font-mono tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
-                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) + 1))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">+</button>
+                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">+</button>
                 </div>
                 <span className="font-mono tabular w-16 text-right text-sm font-semibold text-ink">
                   {formatPaise(l.pricePaise * l.qty)}

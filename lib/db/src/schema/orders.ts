@@ -237,7 +237,18 @@ export const ordersTable = pgTable(
     // that used to live in the now-retired marketplace_orders.items).
     // Discriminate on orderKind before reading line-item fields.
     items: jsonb("items").notNull().$type<
-      | Array<{ id: number; name: string; qty: number; price: number }>
+      | Array<{
+          id: number;
+          name: string;
+          qty: number;
+          price: number;
+          /** Non-default customisation selections, e.g. ["Multigrain Bread"].
+           *  Priced into `price` already — this is display/kitchen-facing
+           *  only (see api-server/src/lib/dishCustomizations.ts). Optional
+           *  and additive: rows written before this field existed have none,
+           *  and every reader (kds.ts, order history) treats it as such. */
+          customizations?: string[];
+        }>
       | Array<{
           itemId: number;
           slug: string;

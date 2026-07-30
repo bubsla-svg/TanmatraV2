@@ -38,7 +38,7 @@ export function SaveToVaultButton({ dishSlug, dishName, defaultSaved = false }: 
           : "border-line bg-surface text-ink-muted hover:border-ink/30 hover:text-ink active:scale-95"
       }`}
     >
-      {saved ? "&starf; Saved to Vault" : "+ Save to Vault"}
+      {saved ? "★ Saved to Vault" : "+ Save to Vault"}
     </button>
   );
 }

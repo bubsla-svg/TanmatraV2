@@ -13,14 +13,32 @@
  * class of bug), and stored JSON is untrusted — both are contained here.
  */
 
+/** A customisation selection carried on a cart line, mirroring the wire shape
+ *  POST /orders accepts (checkout.ts) — a group name plus the option names
+ *  chosen within it. Never a price; the server re-resolves the price against
+ *  its own copy of the dish's customisation groups (dishCustomizations.ts on
+ *  both sides — server is authoritative, this is the checkout payload). */
+export interface CartLineCustomization {
+  groupName: string;
+  optionNames: string[];
+}
+
 export interface CartLine {
   dishId: number;
   kind: "dish" | "marketplace";
   slug: string;
   name: string;
-  /** Server menu price snapshot, paise. Display-only; server re-prices at order. */
+  /** Server menu price snapshot, paise, INCLUDING any customisation modifier
+   *  already summed in. Display-only; server re-prices at order. */
   pricePaise: number;
   qty: number;
+  /** Wire payload for POST /orders — set only by a customised add. */
+  customizationSelections?: CartLineCustomization[];
+  /** Non-default option names, for display (cart drawer, order summary).
+   *  Precomputed at add-time (see lib/dishCustomizations.ts previewCustomizations)
+   *  rather than re-derived here — this module doesn't have the dish's group
+   *  definitions to derive it from. */
+  customizations?: string[];
 }
 
 export interface CartState {
@@ -30,24 +48,46 @@ export interface CartState {
 export const EMPTY_CART: CartState = { lines: [] };
 export const MAX_QTY_PER_LINE = 9;
 
+/** Identity for line matching: a plain add and a customised add of the SAME
+ *  dish are different lines, and two DIFFERENT customisations of the same
+ *  dish are different lines from each other too. Every existing call site
+ *  that omits `customizations` gets the empty signature — i.e. matches only
+ *  the plain line for that dish, exactly today's behaviour, unchanged. */
+function lineSignature(customizations: string[] | undefined): string {
+  if (!customizations || customizations.length === 0) return "";
+  return [...customizations].sort().join("␟");
+}
+
+function sameLine(l: CartLine, dishId: number, kind: CartLine["kind"], signature: string): boolean {
+  return l.dishId === dishId && l.kind === kind && lineSignature(l.customizations) === signature;
+}
+
 export function addLine(state: CartState, line: Omit<CartLine, "qty">): CartState {
   return addOrUpdateQty(state, line, 1);
 }
 
 export function addOrUpdateQty(state: CartState, line: Omit<CartLine, "qty">, qty: number): CartState {
-  const existing = state.lines.find((l) => l.dishId === line.dishId && l.kind === line.kind);
-  if (existing) return setQty(state, line.dishId, line.kind, existing.qty + qty);
+  const signature = lineSignature(line.customizations);
+  const existing = state.lines.find((l) => sameLine(l, line.dishId, line.kind, signature));
+  if (existing) return setQty(state, line.dishId, line.kind, existing.qty + qty, line.customizations);
   const clamped = Math.max(1, Math.min(MAX_QTY_PER_LINE, Math.trunc(qty)));
   return { lines: [...state.lines, { ...line, qty: clamped }] };
 }
 
-export function setQty(state: CartState, dishId: number, kind: "dish" | "marketplace", qty: number): CartState {
+export function setQty(
+  state: CartState,
+  dishId: number,
+  kind: "dish" | "marketplace",
+  qty: number,
+  customizations?: string[],
+): CartState {
+  const signature = lineSignature(customizations);
   const clamped = Math.max(0, Math.min(MAX_QTY_PER_LINE, Math.trunc(qty)));
   if (clamped === 0) {
-    return { lines: state.lines.filter((l) => !(l.dishId === dishId && l.kind === kind)) };
+    return { lines: state.lines.filter((l) => !sameLine(l, dishId, kind, signature)) };
   }
   return {
-    lines: state.lines.map((l) => (l.dishId === dishId && l.kind === kind ? { ...l, qty: clamped } : l)),
+    lines: state.lines.map((l) => (sameLine(l, dishId, kind, signature) ? { ...l, qty: clamped } : l)),
   };
 }
 
@@ -60,13 +100,36 @@ export function subtotalPaise(state: CartState): number {
   return state.lines.reduce((s, l) => s + l.pricePaise * l.qty, 0);
 }
 
-export function qtyOf(state: CartState, dishId: number, kind: "dish" | "marketplace"): number {
-  return state.lines.find((l) => l.dishId === dishId && l.kind === kind)?.qty ?? 0;
+export function qtyOf(
+  state: CartState,
+  dishId: number,
+  kind: "dish" | "marketplace",
+  customizations?: string[],
+): number {
+  const signature = lineSignature(customizations);
+  return state.lines.find((l) => sameLine(l, dishId, kind, signature))?.qty ?? 0;
 }
 
 // ── Guarded persistence ──────────────────────────────────────────────────────
 
 const STORAGE_KEY = "storefront:cart:v1";
+
+function isStringArray(x: unknown): x is string[] {
+  return Array.isArray(x) && x.every((v) => typeof v === "string");
+}
+
+function isValidCustomizationSelections(x: unknown): x is CartLineCustomization[] {
+  return (
+    Array.isArray(x) &&
+    x.every(
+      (v) =>
+        typeof v === "object" &&
+        v !== null &&
+        typeof (v as Record<string, unknown>).groupName === "string" &&
+        isStringArray((v as Record<string, unknown>).optionNames),
+    )
+  );
+}
 
 function isValidLine(x: unknown): x is CartLine {
   if (typeof x !== "object" || x === null) return false;
@@ -80,7 +143,9 @@ function isValidLine(x: unknown): x is CartLine {
     l.pricePaise >= 0 &&
     typeof l.qty === "number" &&
     l.qty >= 1 &&
-    l.qty <= MAX_QTY_PER_LINE
+    l.qty <= MAX_QTY_PER_LINE &&
+    (l.customizations === undefined || isStringArray(l.customizations)) &&
+    (l.customizationSelections === undefined || isValidCustomizationSelections(l.customizationSelections))
   );
 }
 
