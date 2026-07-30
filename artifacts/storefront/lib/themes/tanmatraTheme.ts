@@ -6,8 +6,15 @@ export const tanmatraTheme = defineTheme({
   extends: stoneTheme,
   tokens: {
     /* ── Stone Theme Palette (Warm, Earthy Neutrals & Natural Sandstone) ───── */
-    '--color-accent': ['#28282a', '#f3f3f5'],
-    '--color-accent-ink': ['#ffffff', '#171719'],
+    // Gold is the action colour — the one design caveat that survived lifting
+    // the palette lock for DS-0 (owner decision; CLAUDE.md, runbook §3). Stone
+    // keeps everything else, but its accent is a neutral (#28282a/#f3f3f5),
+    // which made every primary CTA monochrome. These values also match
+    // tanmatra.css, the generated sheet Astryx's own components read — it was
+    // never regenerated for Stone, so accent had silently split in two: gold in
+    // Astryx components, near-black in our Tailwind utilities.
+    '--color-accent': ['#7F6921', '#D4AF37'],
+    '--color-accent-ink': ['#ffffff', '#111318'],
     '--color-blue': ['#506072', '#99adc6'],
     '--color-sage': ['#4e6357', '#9bb19a'],
     '--color-success': ['#4e6357', '#9bb19a'],
