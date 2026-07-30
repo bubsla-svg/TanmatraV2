@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Metabolic Workspace - Lunch Planner</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#fff8f0",
+                      "on-primary-container": "#554300",
+                      "secondary-container": "#c8ecc8",
+                      "on-secondary-fixed-variant": "#304e33",
+                      "on-secondary-container": "#4d6c4f",
+                      "on-surface-variant": "#4d4635",
+                      "surface-container-highest": "#eae1d4",
+                      "on-surface": "#1f1b13",
+                      "on-secondary-fixed": "#03210b",
+                      "inverse-on-surface": "#f8f0e2",
+                      "tertiary-container": "#97b0ff",
+                      "on-primary-fixed": "#241a00",
+                      "on-tertiary-fixed-variant": "#27438a",
+                      "surface-container": "#f5eddf",
+                      "surface-container-low": "#fbf3e5",
+                      "surface-bright": "#fff8f0",
+                      "outline-variant": "#d0c5af",
+                      "on-tertiary-fixed": "#00174b",
+                      "on-primary-fixed-variant": "#574500",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-container": "#d4af37",
+                      "on-error": "#ffffff",
+                      "primary-fixed": "#ffe088",
+                      "on-tertiary-container": "#254188",
+                      "on-error-container": "#93000a",
+                      "on-background": "#1f1b13",
+                      "tertiary-fixed": "#dbe1ff",
+                      "inverse-surface": "#343027",
+                      "primary": "#735c00",
+                      "secondary-fixed-dim": "#adcfad",
+                      "error": "#ba1a1a",
+                      "secondary": "#476649",
+                      "surface-tint": "#735c00",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed-dim": "#e9c349",
+                      "surface": "#fff8f0",
+                      "outline": "#7f7663",
+                      "secondary-fixed": "#c8ecc8",
+                      "surface-variant": "#eae1d4",
+                      "on-primary": "#ffffff",
+                      "surface-dim": "#e1d9cc",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#efe7da",
+                      "tertiary": "#415ba4",
+                      "inverse-primary": "#e9c349",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed-dim": "#b4c5ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "32px",
+                      "stack-lg": "32px",
+                      "stack-md": "16px",
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "margin-mobile": "16px",
+                      "stack-sm": "8px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Satoshi"
+                      ],
+                      "headline-md": [
+                              "Satoshi"
+                      ],
+                      "body-lg": [
+                              "Satoshi"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "body-sm": [
+                              "Satoshi"
+                      ],
+                      "data-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "Satoshi"
+                      ],
+                      "display-lg-mobile": [
+                              "Satoshi"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+          .material-symbols-outlined {
+              font-variation-settings: 'FILL' 1;
+          }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-lg antialiased min-h-screen">
+<!-- Shell Layout -->
+<div class="hidden lg:flex flex-col h-screen fixed left-0 top-0 z-40 bg-surface dark:bg-on-surface h-full w-64 border-r border-outline-variant">
+<div class="px-gutter py-stack-md border-b border-outline-variant">
+<h1 class="font-display-lg text-display-lg text-primary truncate">Metabolic Workspace</h1>
+</div>
+<div class="px-gutter py-stack-md border-b border-outline-variant flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden shrink-0">
+<img alt="Admin User" class="w-full h-full object-cover" data-alt="Close up corporate portrait photograph of a confident healthcare clinical administrator in a bright, modern office with soft white and light cream light-mode lighting, exuding professionalism and high precision minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQSkgI95QumbEN8ZIjUjoz584A2_gPzFkEwO-eqfuIB0PssuFSGcYwDnc7o8oBgH50rQ3sRQHJjGV1SuJpzJYdq52eTuabKSw1hVqj7NXU5mdYe5cF1iYnsKNm_agvY2W9VI6fa4LIlN3ZK2OCteo9oxpihluBWPhnPp_dXZUF3miiB9F3Fl9G6r687UByfJpIc0hE_UiqEGUi3JqFIfpWkt1p19hpEaxWmbDK-ATlnKXBT4vPDuZcOiwGLis4uShGcXBj69gs4Hg"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface font-bold truncate">Clinical Admin</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Metabolic Corp</p>
+<p class="font-label-caps text-label-caps text-outline truncate uppercase">Admin Access</p>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto py-stack-md flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-low transition-all scale-95 duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-primary-fixed font-bold bg-surface-container-low hover:bg-surface-container-low transition-all scale-95 duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]">restaurant</span>
+<span class="font-body-md text-body-md">Lunch Planner</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-low transition-all scale-95 duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="font-body-md text-body-md">Team Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-low transition-all scale-95 duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 p-margin-mobile md:p-container-padding flex flex-col gap-stack-lg max-w-4xl mx-auto w-full">
+<!-- Section 1: Team diet profile -->
+<section class="flex flex-col gap-stack-md">
+<h2 class="font-headline-md text-headline-md text-on-surface">1. Team diet profile</h2>
+<div class="bg-surface-container-lowest border border-[#E7E3DA] rounded-2xl p-gutter">
+<div class="flex flex-col gap-stack-md mb-stack-lg">
+<label class="font-body-sm text-body-sm text-on-surface font-semibold" for="headcount">Total Headcount</label>
+<input class="font-data-lg text-data-lg w-full md:w-48 bg-surface-bright border border-[#E7E3DA] rounded-lg px-4 py-3 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors" id="headcount" type="number" value="24"/>
+</div>
+<div class="flex flex-col gap-3 mb-stack-sm">
+<!-- Veg -->
+<div class="flex items-center justify-between py-2 border-b border-[#E7E3DA]">
+<span class="font-body-lg text-body-lg text-on-surface">Veg</span>
+<div class="flex items-center gap-4">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-data-lg text-data-lg w-8 text-center">8</span>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+</div>
+<!-- Vegan -->
+<div class="flex items-center justify-between py-2 border-b border-[#E7E3DA]">
+<span class="font-body-lg text-body-lg text-on-surface">Vegan</span>
+<div class="flex items-center gap-4">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-data-lg text-data-lg w-8 text-center">2</span>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+</div>
+<!-- Gluten-free -->
+<div class="flex items-center justify-between py-2 border-b border-[#E7E3DA]">
+<span class="font-body-lg text-body-lg text-on-surface">Gluten-free</span>
+<div class="flex items-center gap-4">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-data-lg text-data-lg w-8 text-center">1</span>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+</div>
+<!-- Jain -->
+<div class="flex items-center justify-between py-2 border-b border-[#E7E3DA]">
+<span class="font-body-lg text-body-lg text-on-surface">Jain</span>
+<div class="flex items-center gap-4">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-data-lg text-data-lg w-8 text-center">0</span>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+</div>
+<!-- Halal -->
+<div class="flex items-center justify-between py-2 border-b border-[#E7E3DA]">
+<span class="font-body-lg text-body-lg text-on-surface">Halal</span>
+<div class="flex items-center gap-4">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-data-lg text-data-lg w-8 text-center">1</span>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-lg">Non-vegetarian: <span class="font-data-sm text-data-sm">12</span></p>
+<div class="flex flex-col gap-3 mb-stack-lg">
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Common Allergens</span>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 rounded-full border border-[#E7E3DA] font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors">Peanuts</button>
+<button class="px-4 py-2 rounded-full border border-[#E7E3DA] font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors">Shellfish</button>
+<button class="px-4 py-2 rounded-full border-primary-container bg-primary-container text-on-primary-container font-body-sm text-body-sm transition-colors">Dairy</button>
+<button class="px-4 py-2 rounded-full border-primary-container bg-primary-container text-on-primary-container font-body-sm text-body-sm transition-colors">Gluten</button>
+<button class="px-4 py-2 rounded-full border border-[#E7E3DA] font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors">Soy</button>
+<button class="px-4 py-2 rounded-full border border-[#E7E3DA] font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors">Eggs</button>
+</div>
+</div>
+<div class="flex gap-4 mb-stack-lg">
+<div class="flex flex-col gap-2 flex-1">
+<label class="font-body-sm text-body-sm text-on-surface font-semibold" for="floor">Floor</label>
+<input class="font-data-lg text-data-lg w-full bg-surface-bright border border-[#E7E3DA] rounded-lg px-4 py-3 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors" id="floor" type="number" value="500"/>
+</div>
+<div class="flex flex-col gap-2 flex-1">
+<label class="font-body-sm text-body-sm text-on-surface font-semibold" for="ceiling">Ceiling</label>
+<input class="font-data-lg text-data-lg w-full bg-surface-bright border border-[#E7E3DA] rounded-lg px-4 py-3 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors" id="ceiling" type="number" value="900"/>
+</div>
+</div>
+<div class="flex flex-col gap-2 mb-stack-lg">
+<label class="font-body-sm text-body-sm text-on-surface font-semibold" for="notes">Internal Notes</label>
+<textarea class="w-full bg-surface-bright border border-[#E7E3DA] rounded-lg px-4 py-3 font-body-lg text-body-lg focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors resize-none" id="notes" rows="3"></textarea>
+</div>
+<button class="w-full py-4 rounded-full bg-primary-container text-on-primary-container font-body-lg text-body-lg font-semibold hover:bg-primary-fixed-dim transition-colors">Save profile</button>
+</div>
+</section>
+<!-- Section 2: This week's plan -->
+<section class="flex flex-col gap-stack-md mb-stack-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface">2. This week's plan</h2>
+<div class="bg-surface-container-lowest border border-[#E7E3DA] rounded-2xl p-gutter">
+<div class="flex flex-col gap-2 mb-stack-sm">
+<div class="inline-flex items-center gap-1 bg-surface-container-low text-primary px-3 py-1 rounded-full w-max">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+<span class="font-label-caps text-label-caps uppercase">AI-generated</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Week of 4 Aug</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">5 healthy lunches derived from team profile.</p>
+</div>
+<div class="flex flex-col mb-stack-lg">
+<!-- Mon -->
+<div class="py-4 border-b border-[#E7E3DA] flex gap-4">
+<div class="w-12 shrink-0 font-body-sm text-body-sm text-on-surface-variant font-semibold pt-1">Mon</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface">Wild Salmon Reset, Matcha Matrix</p>
+</div>
+</div>
+<!-- Tue -->
+<div class="py-4 border-b border-[#E7E3DA] flex gap-4">
+<div class="w-12 shrink-0 font-body-sm text-body-sm text-on-surface-variant font-semibold pt-1">Tue</div>
+<div class="flex flex-col gap-1">
+<p class="font-body-lg text-body-lg text-on-surface">Grass-fed Steak, Turmeric Quinoa</p>
+<div class="flex items-center gap-1 text-error">
+<span class="material-symbols-outlined text-sm">warning</span>
+<p class="font-body-sm text-body-sm">contains a listed allergen for <span class="font-data-sm text-data-sm">2</span> team members</p>
+</div>
+</div>
+</div>
+<!-- Wed -->
+<div class="py-4 border-b border-[#E7E3DA] flex gap-4">
+<div class="w-12 shrink-0 font-body-sm text-body-sm text-on-surface-variant font-semibold pt-1">Wed</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface">Spirulina Bowl, Lean Beef &amp; Roots</p>
+</div>
+</div>
+<!-- Thu -->
+<div class="py-4 border-b border-[#E7E3DA] flex gap-4">
+<div class="w-12 shrink-0 font-body-sm text-body-sm text-on-surface-variant font-semibold pt-1">Thu</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface">Tofu Scramble, Ginger Broth</p>
+</div>
+</div>
+<!-- Fri -->
+<div class="py-4 flex gap-4">
+<div class="w-12 shrink-0 font-body-sm text-body-sm text-on-surface-variant font-semibold pt-1">Fri</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface">Zucchini Noodles, Prawn Salad</p>
+</div>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-outline mb-stack-lg">Creates one office lunch per day at 1:00 PM, ₹400/person. Members pick within budget.</p>
+<button class="w-full py-4 rounded-full bg-primary-container text-on-primary-container font-body-lg text-body-lg font-semibold hover:bg-primary-fixed-dim transition-colors">Schedule this week</button>
+</div>
+</section>
+</main>
+</body></html>

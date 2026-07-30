@@ -15,6 +15,16 @@ type Dish = Pick<DishData, "id" | "slug" | "name" | "price">;
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 export function AddToCart({ dish }: { dish: Dish }) {
+  return (
+    <Suspense fallback={<CartAdd dish={dish} />}>
+      <AddToCartResolved dish={dish} />
+    </Suspense>
+  );
+}
+
+function AddToCartResolved({ dish }: { dish: Dish }) {
+  const group = useSearchParams().get("group");
+  if (group && GROUP_CODE.test(group)) return <GroupAdd code={group} dish={dish} />;
   return <CartAdd dish={dish} />;
 }
 

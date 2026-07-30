@@ -47,40 +47,50 @@ export function OfficeLunch({ id }: { id: number }) {
   const initial = Object.fromEntries((myPick?.items ?? []).map((i) => [i.dishId, i.quantity]));
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-3">
         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${open ? "bg-sage text-sage-foreground" : "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted"}`}>{open ? "Picks open" : order.status}</span>
-        <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">{order.title}</h1>
-        <p className="mt-1 text-sm text-ink-muted">{fmtWhen(order.scheduledFor)} · {order.address.line}, {order.address.city}</p>
-        <p className="text-xs text-ink-faint">Budget {formatPaise(order.perEmployeeBudgetPaise)} / person</p>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">{order.title}</h1>
+        <div className="flex flex-col gap-1 text-sm text-ink-muted">
+          <p>{fmtWhen(order.scheduledFor)} · {order.address.line}, {order.address.city}</p>
+          <p>Budget <span className="tabular font-medium text-ink">{formatPaise(order.perEmployeeBudgetPaise)}</span> / person</p>
+        </div>
       </div>
 
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-sm font-medium text-[var(--danger)]">{error}</p>}
 
       <div>
-        <h2 className="text-sm font-semibold text-ink">Pick your meal</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-ink">Pick your meal</h2>
         {open
-          ? <div className="mt-3"><OfficePicker dishes={AVAILABLE} initial={initial} budgetPaise={order.perEmployeeBudgetPaise} busy={busy} onSave={save} /></div>
-          : <p className="mt-2 text-sm text-ink-muted">The pick window has closed.</p>}
+          ? <div className="mt-3 rounded-2xl border border-line bg-surface p-6"><OfficePicker dishes={AVAILABLE} initial={initial} budgetPaise={order.perEmployeeBudgetPaise} busy={busy} onSave={save} /></div>
+          : <p className="mt-3 text-sm text-ink-muted">The pick window has closed.</p>}
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold text-ink">Team picks ({order.picks.length})</h2>
-        <p className="text-xs text-ink-faint">Aggregated total: {formatPaise(order.totalPaise)}</p>
-        {order.picks.length === 0 ? <p className="mt-2 text-sm text-ink-muted">No picks yet.</p> : (
-          <ul className="mt-3 flex flex-col gap-2">
-            {order.picks.map((p) => (
-              <li key={p.userId} className="rounded-xl border border-line bg-surface px-4 py-2.5">
-                <div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-medium text-ink">{p.userName}</p><span className="tabular shrink-0 text-xs text-ink-muted">{formatPaise(p.totalPaise)}</span></div>
-                <p className="mt-0.5 truncate text-xs text-ink-faint">{p.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</p>
-              </li>
-            ))}
-          </ul>
-        )}
+        <h2 className="text-lg font-semibold tracking-tight text-ink">Team picks <span className="text-sm font-normal text-ink-muted">({order.picks.length})</span></h2>
+        <div className="mt-3 rounded-2xl border border-line bg-surface p-6">
+          <div className="flex items-center justify-between gap-2 border-b border-line pb-4">
+            <span className="text-sm font-medium text-ink">Aggregated total</span>
+            <span className="tabular text-base font-semibold text-ink">{formatPaise(order.totalPaise)}</span>
+          </div>
+          {order.picks.length === 0 ? <p className="pt-4 text-sm text-ink-muted">No picks yet.</p> : (
+            <ul className="mt-4 flex flex-col gap-4">
+              {order.picks.map((p) => (
+                <li key={p.userId} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ink">{p.userName}</p>
+                    <p className="mt-0.5 truncate text-xs text-ink-faint">{p.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</p>
+                  </div>
+                  <span className="tabular shrink-0 text-sm text-ink-muted">{formatPaise(p.totalPaise)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       {me?.role === "admin" && open && (
-        <button type="button" onClick={close} disabled={busy} className="self-start rounded-xl border border-line px-5 py-2.5 text-sm font-semibold text-ink hover:border-line-strong disabled:opacity-60">Close picks</button>
+        <button type="button" onClick={close} disabled={busy} className="self-center text-sm font-semibold text-[var(--danger)] transition-opacity hover:opacity-80 disabled:opacity-40">Close picks</button>
       )}
     </div>
   );
