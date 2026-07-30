@@ -3,6 +3,7 @@
 // (routes/preferences.ts) owns validation and lowercases the free-text lists,
 // so this only gathers input; the parent re-seeds it from the saved response.
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ChipInput } from "./ChipInput";
 import type {
   ActivityLevel,
@@ -120,14 +121,14 @@ export function PreferencesForm({
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
       <div className="flex flex-col items-center gap-3">
-        <button
+        <Button
           type="button"
           disabled={busy}
           onClick={() => onSubmit({ dietaryStyle, goal, activityLevel, spiceLevel, allergens, dislikedIngredients: disliked, cuisines })}
-          className="w-full rounded-full bg-gold py-5 text-xs font-bold uppercase tracking-wider text-[var(--gold-ink)] transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40"
+          shape="pill" size="fluid" className="w-full py-5 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
         >
           {busy ? "Saving…" : "Save preferences"}
-        </button>
+        </Button>
         {saved && <span className="text-xs font-medium text-sage-text">Saved</span>}
       </div>
     </div>

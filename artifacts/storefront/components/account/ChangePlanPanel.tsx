@@ -6,6 +6,7 @@
 // a live autopay mandate needs a fresh Razorpay OTP authorisation first —
 // this panel walks both legs, mirroring moneyPath.ts's order→modal→verify.
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { computeDeliveryPricePaise, type SubscriptionCadence } from "@workspace/subscription-rules";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
@@ -95,12 +96,12 @@ export function ChangePlanPanel({ sub, onDone }: { sub: Subscription; onDone: ()
             one-time payment authorisation to protect your autopay mandate&rsquo;s limit.
           </p>
           {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-          <button
+          <Button
             type="button" disabled={busy} onClick={() => void authorize()}
-            className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
+            shape="xl" size="fluid" className="self-start px-5 py-3 font-semibold disabled:opacity-40"
           >
             {busy ? "Authorising…" : "Authorise new amount"}
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -133,12 +134,12 @@ export function ChangePlanPanel({ sub, onDone }: { sub: Subscription; onDone: ()
               : `New price: ${formatPaise(previewPrice)}/delivery (currently ${formatPaise(sub.pricePerDeliveryPaise)})`}
           </p>
           {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-          <button
+          <Button
             type="button" disabled={busy || noChange} onClick={() => void submit()}
-            className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
+            shape="xl" size="fluid" className="self-start px-5 py-3 font-semibold disabled:opacity-40"
           >
             {busy ? "Requesting…" : "Confirm change"}
-          </button>
+          </Button>
         </>
       )}
     </div>

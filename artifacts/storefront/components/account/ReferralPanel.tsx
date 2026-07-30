@@ -3,6 +3,7 @@
 // Data comes from the parent (GET /referral/me); this component owns only
 // the redeem-form's own local request state.
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { redeemReferralCode, type ReferralMe } from "@/lib/referralApi";
@@ -58,13 +59,13 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
 
       <div className="flex items-center justify-between gap-3 rounded-xl border border-line p-3">
         <span className="text-xl font-semibold tracking-[0.2em] text-ink">{data.code}</span>
-        <button
+        <Button
           type="button"
           onClick={() => void copyCode()}
-          className="shrink-0 rounded-full bg-gold px-6 py-2 text-sm font-semibold text-[var(--gold-ink)]"
+          shape="pill" size="fluid" className="shrink-0 px-6 py-2 font-semibold"
         >
           {copied ? "Copied" : "Copy"}
-        </button>
+        </Button>
       </div>
 
       <div className="border-t border-line pt-5">

@@ -1,6 +1,7 @@
 "use client";
 // Client: owns the address list state + CRUD calls against the live api.
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { getAddresses, createAddress, updateAddress, deleteAddress, ApiError, type Address, type AddressInput } from "@/lib/api";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { AddressList } from "./AddressList";
@@ -126,13 +127,13 @@ export function AddressManager() {
           onCancel={() => setEditing(null)}
         />
       ) : (
-        <button
+        <Button
           type="button"
           onClick={() => { setFormError(null); setPrefill(undefined); setPickingLocation(true); }}
-          className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
+          shape="xl" size="fluid" className="self-start px-5 py-3 font-semibold"
         >
           Add an address
-        </button>
+        </Button>
       )}
     </div>
   );

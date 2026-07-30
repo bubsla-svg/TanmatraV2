@@ -6,6 +6,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { CheckCircle2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { getMySavedMeals, removeMealFromVault, type SavedMeal } from "@/lib/savedMealsApi";
@@ -53,12 +54,9 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
         <p className="text-sm font-medium text-ink">
           {error ?? "You have not bookmarked any clinical meal protocols to your personal vault yet."}
         </p>
-        <Link
-          href="/menu"
-          className="mx-auto mt-2 rounded-full bg-gold px-6 py-2.5 text-xs font-semibold text-[var(--gold-ink)] transition-all hover:brightness-110"
-        >
-          Explore Therapeutic Menu &rarr;
-        </Link>
+        <Button asChild shape="pill" size="fluid" className="mx-auto mt-2 px-6 py-2.5 text-xs font-semibold">
+          <Link href="/menu">Explore Therapeutic Menu &rarr;</Link>
+        </Button>
       </div>
     );
   }
