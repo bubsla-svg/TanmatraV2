@@ -84,6 +84,7 @@
   --color-blue: var(--blue);
   --color-sage: var(--sage);
   --color-sage-text: var(--sage-text);
+  --color-sage-soft: var(--sage-soft);
   --color-sage-foreground: var(--sage-foreground);
 
   /* shadcn semantic utilities: bg-primary, text-muted-foreground, ring-ring… */

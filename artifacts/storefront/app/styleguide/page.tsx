@@ -28,6 +28,7 @@ const ACCENTS: Token[] = [
   { name: "gold", var: "--gold", onDark: true },
   { name: "blue", var: "--blue", onDark: true },
   { name: "sage", var: "--sage", onDark: true },
+  { name: "sage-soft", var: "--sage-soft" },
 ];
 const STATUS: Token[] = [
   { name: "success", var: "--success", onDark: true },
