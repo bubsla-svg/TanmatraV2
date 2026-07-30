@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Metabolic OS - Custom Build</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "surface-variant": "#353534",
+                        "primary-container": "#d4af37",
+                        "tertiary-fixed": "#dbe1ff",
+                        "on-primary": "#3c2f00",
+                        "ember-warning": "#B6892F",
+                        "surface-tint": "#e9c349",
+                        "surface-container-lowest": "#0e0e0e",
+                        "outline-variant": "#4d4635",
+                        "surface-container-low": "#1c1b1b",
+                        "surface": "#131313",
+                        "on-primary-container": "#554300",
+                        "on-surface": "#e5e2e1",
+                        "on-secondary-container": "#a4b1f7",
+                        "tertiary-container": "#97b0ff",
+                        "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                        "clay-danger": "#B0655A",
+                        "on-error": "#690005",
+                        "on-secondary-fixed-variant": "#344280",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "surface-container-high": "#2a2a2a",
+                        "background": "#131313",
+                        "on-primary-fixed": "#241a00",
+                        "surface-bright": "#3a3939",
+                        "inverse-primary": "#735c00",
+                        "surface-container-highest": "#353534",
+                        "sage-signal": "#7D9E7E",
+                        "ink-on-gold": "#111318",
+                        "primary": "#f2ca50",
+                        "surface-container": "#201f1f",
+                        "on-secondary": "#1c2b68",
+                        "muted-steel": "#A3A3A3",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed": "#ffe088",
+                        "on-tertiary": "#082b72",
+                        "outline": "#99907c",
+                        "surface-dim": "#131313",
+                        "secondary-fixed": "#dde1ff",
+                        "secondary-container": "#344280",
+                        "on-tertiary-fixed": "#00174b",
+                        "on-tertiary-container": "#254188",
+                        "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                        "inverse-surface": "#e5e2e1",
+                        "on-secondary-fixed": "#021453",
+                        "on-primary-fixed-variant": "#574500",
+                        "tertiary": "#bfcdff",
+                        "on-background": "#e5e2e1",
+                        "secondary": "#b8c3ff",
+                        "primary-fixed-dim": "#e9c349",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#d0c5af",
+                        "inverse-on-surface": "#313030",
+                        "graphite-surface": "#171717",
+                        "off-white-ink": "#F5F5F4",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "max-width": "1280px",
+                        "section-gap": "clamp(3rem, 8vw, 6rem)",
+                        "mobile-margin": "1.25rem",
+                        "gutter": "1rem",
+                        "desktop-margin": "2rem",
+                        "card-padding": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Satoshi", "sans-serif"],
+                        "body-muted": ["Satoshi", "sans-serif"],
+                        "clinical-data": ["JetBrains Mono", "monospace"],
+                        "body-base": ["Satoshi", "sans-serif"],
+                        "label-small-caps": ["Satoshi", "sans-serif"],
+                        "headline-md": ["Satoshi", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["clamp(2.5rem, 5vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-muted": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "clinical-data": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "body-base": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-small-caps": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["2rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0a0a0a; /* obsidian canvas equivalent */
+            color: #e5e2e1;
+            font-family: 'Satoshi', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
+
+        /* Hide scrollbar for clean aesthetic */
+        ::-webkit-scrollbar { width: 0px; height: 0px; }
+        
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Interactive scale utility */
+        .interactive:active {
+            transform: scale(0.98);
+        }
+        .interactive {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen bg-background text-on-background selection:bg-primary selection:text-ink-on-gold flex justify-center pb-safe pt-8 md:pt-16">
+<main class="w-full max-w-[1280px] px-mobile-margin md:px-desktop-margin flex flex-col gap-section-gap">
+<!-- Top Section: Stepper -->
+<header class="w-full flex flex-col items-center gap-4">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary opacity-60"></div>
+<div class="w-3 h-3 rounded-full bg-primary-container shadow-[0_0_12px_rgba(212,175,55,0.4)] animate-pulse"></div>
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+</div>
+<p class="font-label-small-caps text-label-small-caps text-muted-steel uppercase tracking-widest">Step 2 of 4: Custom Build</p>
+</header>
+<!-- Main Layout: 2 Column Stack on Mobile, Grid on Desktop -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+<!-- Left Column: Dish Selection & Customization -->
+<section class="col-span-1 md:col-span-7 flex flex-col gap-10">
+<!-- Clinical Dish List -->
+<div class="flex flex-col gap-4">
+<h2 class="font-headline-md text-headline-md text-off-white-ink mb-2">Select Primary Base</h2>
+<div class="flex flex-col gap-3 max-h-[442px] overflow-y-auto no-scrollbar pb-4 pr-2">
+<!-- Selected Row -->
+<div class="flex items-center gap-4 p-3 rounded-2xl bg-surface border border-primary-container relative overflow-hidden interactive cursor-pointer group">
+<div class="absolute inset-0 bg-primary opacity-[0.03] pointer-events-none"></div>
+<img class="w-20 h-20 rounded-xl object-cover border border-whisper-hairline shrink-0 shadow-md" data-alt="A top-down, high-resolution food photography shot of a perfectly seared piece of wild salmon resting on a bed of vibrant, dark green charred brassicas and delicate micro-greens. The plate is matte black ceramic, set against a dark obsidian background. Lighting is clinical, dramatic, and directional, creating deep shadows and highlighting the glistening oils on the fish. The mood is sophisticated, premium, and healthy, aligning with a luxury dark-mode culinary aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxEbO7tFL9ZtEKfQZA4MKmWZaVDEdFWlvVSAYI1cIB3-ghYXWcjUVTwrQlh9aBje3EWaqlQWU29fDUh15ukV_1W_H4ddPG4vxlGop96gQGcRhZ0b9bpK1FC9U6XIQtGt25ZfBZCjTbzPefiMaH0gbm32ENd4hzSqm2suQQ1_jEESAE8Fpf1xtOswDKLg5z_WwdoYfoKeW8T8HH83UBnBOH_5YlvlOFOB47AmeIgHXR82ohfFlyPqDAhdvO_KfY2Y1lt0lYtN7cfus"/>
+<div class="flex flex-col flex-grow justify-center gap-1">
+<div class="flex justify-between items-start w-full">
+<h3 class="font-body-base text-body-base font-medium text-off-white-ink group-hover:text-primary transition-colors">Wild Salmon Reset</h3>
+<span class="font-clinical-data text-clinical-data text-on-surface-variant tabular-nums">₹750</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-clinical-data text-[11px] text-muted-steel bg-surface-container-high px-2 py-0.5 rounded-full border border-whisper-hairline">32P</span>
+<span class="font-clinical-data text-[11px] text-muted-steel bg-surface-container-high px-2 py-0.5 rounded-full border border-whisper-hairline">12F</span>
+<span class="font-clinical-data text-[11px] text-muted-steel bg-surface-container-high px-2 py-0.5 rounded-full border border-whisper-hairline">450 kcal</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary-container absolute right-4 top-1/2 -translate-y-1/2 opacity-100 transition-opacity" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Inactive Row -->
+<div class="flex items-center gap-4 p-3 rounded-2xl bg-surface border border-whisper-hairline interactive cursor-pointer hover:border-outline-variant transition-colors group">
+<img class="w-20 h-20 rounded-xl object-cover border border-whisper-hairline shrink-0 grayscale-[0.2] group-hover:grayscale-0 transition-all duration-300" data-alt="A close-up macro shot of slices of perfectly medium-rare grass-fed steak, fanned out over charred broccolini and roasted wild mushrooms. The setting is on a textured charcoal slate board, illuminated by dramatic side lighting that creates a moody, high-end culinary atmosphere. The aesthetic matches a clinical, minimalist dark-mode interface, emphasizing protein and fresh, earthy greens." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrrbLvwrAO0cMzz3F85Nevjczx7844quMz7suGAuyTYBBPwdGrklVmlj6icV0rpsU1g2x0SYqDZxQ0SfPF6hixW8jg8LUaR8ouq9Ws7fOSoITvXSzbCQkSXL6IhpaT3vHnEixL9vAxubosRXc1DdOJhbMhtt5nQWl9_vQ26PL_iigDYUWzS31zb39NU4kbVVBIgLEEuYnUszZzlcjTyCMBc4vYtIIx4nsorR1DTO5BjD-9KSXEx1QRSCHMIxl1NkakcGCznkoW-0U"/>
+<div class="flex flex-col flex-grow justify-center gap-1">
+<div class="flex justify-between items-start w-full">
+<h3 class="font-body-base text-body-base font-medium text-muted-steel group-hover:text-off-white-ink transition-colors">Grass-fed Steak &amp; Brassicas</h3>
+<span class="font-clinical-data text-clinical-data text-muted-steel tabular-nums">₹890</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-clinical-data text-[11px] text-surface-variant bg-surface-container px-2 py-0.5 rounded-full border border-whisper-hairline">45P</span>
+<span class="font-clinical-data text-[11px] text-surface-variant bg-surface-container px-2 py-0.5 rounded-full border border-whisper-hairline">22F</span>
+<span class="font-clinical-data text-[11px] text-surface-variant bg-surface-container px-2 py-0.5 rounded-full border border-whisper-hairline">580 kcal</span>
+</div>
+</div>
+</div>
+<!-- Inactive Row 3 -->
+<div class="flex items-center gap-4 p-3 rounded-2xl bg-surface border border-whisper-hairline interactive cursor-pointer hover:border-outline-variant transition-colors group">
+<img class="w-20 h-20 rounded-xl object-cover border border-whisper-hairline shrink-0 grayscale-[0.2] group-hover:grayscale-0 transition-all duration-300" data-alt="A minimalist overhead view of a bowl containing roasted turmeric chicken breast sliced over a bed of tricolor quinoa and steamed dark leafy greens. The bowl is matte slate grey, resting on a dark stone surface. The lighting is crisp and cool, casting soft shadows, emphasizing a clean, clinical, and premium health-focused dining experience in a dark UI context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbvizzlurLWsUz1n6cVo-nJ5gBuh3lc4Pz9Ih2kXy8MJkFuUUx2AwzV8LnFKkWpJOi12X9QjaKObwl2Gorq4TWt9k_ueTbV7sAAjLQco0rZss0e-TYC4vHAGsUKU5UH4Olq53Z6UiwwBuEHgjeor_SPMVVGri2cRBA02DNnoY9_cvuETp1Uaquj1C03jspv2K6K4kiAW2mNR8O3x-n47TpTWe7TdnrdiFqBuces_8DSNiZ3x4SyorKdfbjYQpRpD7uiGGLNsgiHAk"/>
+<div class="flex flex-col flex-grow justify-center gap-1">
+<div class="flex justify-between items-start w-full">
+<h3 class="font-body-base text-body-base font-medium text-muted-steel group-hover:text-off-white-ink transition-colors">Turmeric Chicken &amp; Quinoa</h3>
+<span class="font-clinical-data text-clinical-data text-muted-steel tabular-nums">₹620</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-clinical-data text-[11px] text-surface-variant bg-surface-container px-2 py-0.5 rounded-full border border-whisper-hairline">38P</span>
+<span class="font-clinical-data text-[11px] text-surface-variant bg-surface-container px-2 py-0.5 rounded-full border border-whisper-hairline">9F</span>
+<span class="font-clinical-data text-[11px] text-surface-variant bg-surface-container px-2 py-0.5 rounded-full border border-whisper-hairline">410 kcal</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="h-px w-full bg-whisper-hairline my-2"></div>
+<!-- Customization Section -->
+<div class="flex flex-col gap-8">
+<!-- Group 1: Bread Type -->
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-end">
+<h3 class="font-body-base text-body-base font-medium text-off-white-ink">Choose Bread Type</h3>
+<span class="font-label-small-caps text-label-small-caps text-muted-steel">Required</span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center py-3 px-4 rounded-full bg-primary-container text-ink-on-gold font-body-muted text-body-muted font-medium interactive shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+                                Sourdough (Included)
+                            </button>
+<button class="flex items-center justify-center py-3 px-4 rounded-full bg-transparent border border-whisper-hairline text-off-white-ink font-body-muted text-body-muted interactive hover:bg-surface-container-low transition-colors">
+                                Multigrain (+₹15)
+                            </button>
+</div>
+</div>
+<!-- Group 2: Add-ons -->
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-end">
+<h3 class="font-body-base text-body-base font-medium text-off-white-ink">Enhancements</h3>
+<span class="font-label-small-caps text-label-small-caps text-muted-steel">Optional</span>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="flex items-center gap-2 py-2.5 px-4 rounded-full bg-primary-container text-ink-on-gold font-body-muted text-body-muted font-medium interactive shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                                Extra Greens (+₹45)
+                            </button>
+<button class="flex items-center gap-2 py-2.5 px-4 rounded-full bg-primary-container text-ink-on-gold font-body-muted text-body-muted font-medium interactive shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                                Avocado (+₹60)
+                            </button>
+<button class="flex items-center gap-2 py-2.5 px-4 rounded-full bg-transparent border border-whisper-hairline text-off-white-ink font-body-muted text-body-muted interactive hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                                Soft Egg (+₹30)
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Order Summary Card -->
+<aside class="col-span-1 md:col-span-5 md:sticky md:top-24">
+<div class="bg-graphite-surface rounded-3xl border border-whisper-hairline p-card-padding flex flex-col gap-6 shadow-[0_8px_30px_rgba(0,0,0,0.4)] relative overflow-hidden">
+<!-- Decorative subtle glow -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
+<!-- Header -->
+<div class="flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-off-white-ink tracking-tight" style="font-size: 1.5rem;">Wild Salmon Reset</h3>
+<p class="font-body-muted text-body-muted text-muted-steel leading-relaxed">
+                            Customised: Sourdough + Extra Greens + Avocado
+                        </p>
+</div>
+<div class="h-px w-full bg-whisper-hairline"></div>
+<!-- Price Breakdown -->
+<div class="flex flex-col gap-3 font-clinical-data text-clinical-data tabular-nums">
+<div class="flex justify-between items-center text-muted-steel">
+<span>Base</span>
+<span>₹750</span>
+</div>
+<div class="flex justify-between items-center text-muted-steel">
+<span>Customisations</span>
+<span>₹105</span>
+</div>
+<div class="flex justify-between items-center pt-3 border-t border-whisper-hairline mt-1">
+<span class="text-off-white-ink font-bold text-base">Total</span>
+<span class="text-primary-container font-bold text-base">₹855</span>
+</div>
+</div>
+<!-- Contextual Note -->
+<div class="flex items-start gap-3 bg-surface-container-low p-4 rounded-xl border border-whisper-hairline">
+<span class="material-symbols-outlined text-sage-signal text-[20px]" style="font-variation-settings: 'FILL' 1;">info</span>
+<p class="font-body-muted text-body-muted text-sage-signal text-sm leading-snug">
+                            Your selections travel with the order to checkout. Macros will dynamically update in your vault.
+                        </p>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-3 mt-4">
+<button class="w-full py-4 rounded-full bg-primary-container text-ink-on-gold font-body-base text-body-base font-bold interactive flex items-center justify-center gap-2 hover:bg-primary transition-colors">
+                            Add to cart
+                            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<button class="w-full py-4 rounded-full bg-transparent border border-whisper-hairline text-off-white-ink font-body-base text-body-base interactive hover:bg-surface-container-lowest transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+                            Save to Vault
+                        </button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

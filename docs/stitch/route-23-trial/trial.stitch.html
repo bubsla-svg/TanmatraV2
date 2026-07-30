@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra - Trial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-container": "#254188",
+                      "surface-container-lowest": "#0e0e0e",
+                      "on-background": "#e5e2e1",
+                      "inverse-on-surface": "#313030",
+                      "outline-variant": "#4d4635",
+                      "tertiary-fixed-dim": "#b4c5ff",
+                      "tertiary": "#bfcdff",
+                      "secondary": "#b8c3ff",
+                      "on-primary-fixed-variant": "#574500",
+                      "surface-dim": "#131313",
+                      "primary-container": "#d4af37",
+                      "tertiary-fixed": "#dbe1ff",
+                      "surface-container-highest": "#353534",
+                      "on-surface": "#e5e2e1",
+                      "inverse-surface": "#e5e2e1",
+                      "on-error-container": "#ffdad6",
+                      "error": "#ffb4ab",
+                      "on-tertiary-fixed": "#00174b",
+                      "on-tertiary": "#082b72",
+                      "ember-warning": "#B6892F",
+                      "primary-fixed": "#ffe088",
+                      "on-surface-variant": "#d0c5af",
+                      "surface-variant": "#353534",
+                      "surface-container-high": "#2a2a2a",
+                      "muted-steel": "#A3A3A3",
+                      "on-primary": "#3c2f00",
+                      "on-secondary": "#1c2b68",
+                      "on-error": "#690005",
+                      "on-primary-fixed": "#241a00",
+                      "on-tertiary-fixed-variant": "#27438a",
+                      "surface-tint": "#e9c349",
+                      "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                      "primary-fixed-dim": "#e9c349",
+                      "ink-on-gold": "#111318",
+                      "error-container": "#93000a",
+                      "on-primary-container": "#554300",
+                      "secondary-fixed": "#dde1ff",
+                      "on-secondary-fixed": "#021453",
+                      "graphite-surface": "#171717",
+                      "background": "#131313",
+                      "sage-signal": "#7D9E7E",
+                      "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                      "outline": "#99907c",
+                      "surface-container": "#201f1f",
+                      "off-white-ink": "#F5F5F4",
+                      "on-secondary-container": "#a4b1f7",
+                      "secondary-fixed-dim": "#b8c3ff",
+                      "surface": "#131313",
+                      "on-secondary-fixed-variant": "#344280",
+                      "surface-container-low": "#1c1b1b",
+                      "clay-danger": "#B0655A",
+                      "inverse-primary": "#735c00",
+                      "secondary-container": "#344280",
+                      "primary": "#f2ca50",
+                      "tertiary-container": "#97b0ff",
+                      "surface-bright": "#3a3939"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "max-width": "1280px",
+                      "desktop-margin": "2rem",
+                      "card-padding": "1.5rem",
+                      "mobile-margin": "1.25rem",
+                      "section-gap": "clamp(3rem, 8vw, 6rem)",
+                      "gutter": "1rem"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Satoshi"
+                      ],
+                      "body-muted": [
+                              "Satoshi"
+                      ],
+                      "label-small-caps": [
+                              "Satoshi"
+                      ],
+                      "headline-md": [
+                              "Satoshi"
+                      ],
+                      "clinical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "body-base": [
+                              "Satoshi"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "clamp(2.5rem, 5vw, 4rem)",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-muted": [
+                              "0.875rem",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-small-caps": [
+                              "0.75rem",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "2rem",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "clinical-data": [
+                              "0.8125rem",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-base": [
+                              "1rem",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 2rem);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-base min-h-screen flex flex-col md:hidden">
+<!-- Progress Dots -->
+<div class="px-mobile-margin pt-6 pb-2 flex items-center justify-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary-container shadow-[0_0_8px_rgba(212,175,55,0.4)]"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></div>
+</div>
+<main class="flex-1 flex flex-col px-mobile-margin pb-32">
+<!-- Hero Section -->
+<section class="mt-8 mb-10 text-center">
+<span class="font-label-small-caps text-label-small-caps text-muted-steel uppercase tracking-wider block mb-2">Not ready for a month?</span>
+<h1 class="font-headline-md text-headline-md text-off-white-ink mb-3 font-semibold">Try 3 lunches for ₹399</h1>
+<p class="font-body-muted text-body-muted text-on-surface-variant max-w-[280px] mx-auto">Full trial cost is credited back if you choose a plan.</p>
+</section>
+<!-- Toggle -->
+<div class="flex justify-center mb-8">
+<div class="bg-surface-container-low p-1 rounded-full flex border border-whisper-hairline">
+<button class="px-6 py-2 rounded-full font-label-small-caps text-label-small-caps text-ink-on-gold bg-primary-container transition-all">Veg</button>
+<button class="px-6 py-2 rounded-full font-label-small-caps text-label-small-caps text-on-surface-variant transition-all hover:text-on-surface">Non-Veg</button>
+</div>
+</div>
+<!-- Food Tiles (Snap Rail) -->
+<div class="flex gap-4 overflow-x-auto hide-scrollbar -mx-mobile-margin px-mobile-margin mb-12 snap-x snap-mandatory">
+<div class="snap-start flex-none w-48">
+<div class="aspect-square rounded-2xl border border-whisper-hairline overflow-hidden mb-3 relative bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="A meticulously plated grilled salmon fillet with a perfect golden crust, resting on a bed of dark quinoa and vibrant green asparagus spears. Shot top-down on a dark charcoal textured surface, surrounded by subtle gym equipment in the blurred background. High-key dramatic lighting highlighting the food textures. Dark mode clinical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_4fQJDa9eFASzNpvrwef6VmrSgMa_jIWRPqS2EMBjVbcqqrTn4q31moKOa9GQBf3OFPBBOgrMy0m2tPtxMsmoqkHsaLVSyB53CgYy1Ibz8uIuz0IyS7cd8pk5yXIgy2kNo-e1XTr4jaGSO_5qRe-tV8QZXd1LKtRbh5HhF-MLEELVHvFwyXAfpwZdO4xyLGKsou9NkuNg6S6-Gxi-_0cilYeJN5I7KeUcqAS2Dm6CFQbshXg3XEyui-LZk6l0Dt9Z9K4rAmChE7A"/>
+</div>
+<p class="font-clinical-data text-clinical-data text-on-surface">Miso Glazed Salmon</p>
+<p class="font-label-small-caps text-label-small-caps text-muted-steel mt-1">45g Protein</p>
+</div>
+<div class="snap-start flex-none w-48">
+<div class="aspect-square rounded-2xl border border-whisper-hairline overflow-hidden mb-3 relative bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="A sleek, minimalist presentation of a seared salmon portion next to a neat mound of fluffy couscous and vivid green asparagus. Set against a moody, dark grey backdrop with subtle hints of culinary tools and a dark napkin. Soft, directional studio lighting emphasizing the moist texture of the fish. Clinical metabolic design language." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6Qh7gVDfF9kTbhrFr-eKbKXN5CQfAzhOCx7xjblMIDfCQjmA4htPgQOme4X7GZBOLuiCMV6UQvrvk52j-kXBmwHKy45_qBEswDbVACouL2NokyGk73LVRnycwZ-DgF-vWtT2HKMn--PJGFFav8lvFiwB3ufejKEsPqQy9GSER-kKWZVqwVf_k2U2tccNfwFapFXzTC8_HtIM0AeyKcq9-kO7qhlHx9DMKJRdUAwBaOOfeoA9D_26kdH8q3sRHSp6sF27Aes2p060"/>
+</div>
+<p class="font-clinical-data text-clinical-data text-on-surface">Herb Crusted Fillet</p>
+<p class="font-label-small-caps text-label-small-caps text-muted-steel mt-1">42g Protein</p>
+</div>
+<div class="snap-start flex-none w-48">
+<div class="aspect-square rounded-2xl border border-whisper-hairline overflow-hidden mb-3 relative bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="Close up shot of a perfectly seared piece of fish with visible grill marks, accompanied by bright green asparagus. The composition is asymmetrical, leaving negative space on a dark graphite plate. The lighting is crisp and cool, casting soft shadows, fitting a high-end medical or fitness culinary brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx2dDtKCJCj0OEWLLqnnKcbrcdFyGnzm6b_q6iHSVZBMRvaRf4dnIZJCUmxDCqKRwOBIwB1fzNLsrDmCmv9u_iEIiKKF9WaPEfjfNT5Eo6GjXSkmV6_Hmm86WjtQRL_1plR9xSxF4NWNznTXCzXhpzFkUyuWUsl_YfUc1w0Ad0QByzWBvHLSBvQzg7CRbQokLZkRsNsNDfDeilrs4rs_5pKE0B9wsLSJfvUELxsG78QLcOYX4wwSFXjyPvzr4gW6qBoIapDPPpL4s"/>
+</div>
+<p class="font-clinical-data text-clinical-data text-on-surface">Grilled Asparagus Pair</p>
+<p class="font-label-small-caps text-label-small-caps text-muted-steel mt-1">38g Protein</p>
+</div>
+</div>
+<!-- Secondary Info Card -->
+<section class="bg-graphite-surface rounded-[2rem] p-6 border border-whisper-hairline mb-6">
+<h2 class="font-clinical-data text-clinical-data text-off-white-ink mb-4">What happens after the trial?</h2>
+<div class="space-y-4">
+<div class="flex justify-between items-center pb-4 border-b border-whisper-hairline">
+<span class="font-body-muted text-body-muted text-on-surface-variant">Weekly standard</span>
+<span class="font-clinical-data text-clinical-data text-on-surface">₹2,499</span>
+</div>
+<div class="flex justify-between items-center pb-4 border-b border-whisper-hairline">
+<span class="font-body-muted text-body-muted text-on-surface-variant">Monthly optimum</span>
+<span class="font-clinical-data text-clinical-data text-primary-container">₹8,999</span>
+</div>
+<p class="font-label-small-caps text-label-small-caps text-muted-steel uppercase pt-2">No lock-in, cancel anytime.</p>
+</div>
+</section>
+<!-- Explainer -->
+<section class="bg-graphite-surface rounded-[2rem] p-6 border border-whisper-hairline">
+<h2 class="font-clinical-data text-clinical-data text-off-white-ink mb-5">How the creditback works</h2>
+<ol class="space-y-4 relative before:absolute before:inset-y-0 before:left-[11px] before:w-[1px] before:bg-whisper-hairline ml-1">
+<li class="flex gap-4 relative">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border border-whisper-hairline flex items-center justify-center z-10 shrink-0">
+<span class="font-clinical-data text-[10px] text-muted-steel">1</span>
+</div>
+<p class="font-body-muted text-body-muted text-on-surface-variant pt-0.5">Pay ₹399 today for 3 trial meals.</p>
+</li>
+<li class="flex gap-4 relative">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border border-whisper-hairline flex items-center justify-center z-10 shrink-0">
+<span class="font-clinical-data text-[10px] text-muted-steel">2</span>
+</div>
+<p class="font-body-muted text-body-muted text-on-surface-variant pt-0.5">Enjoy your lunches over the next 3 days.</p>
+</li>
+<li class="flex gap-4 relative">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border border-whisper-hairline flex items-center justify-center z-10 shrink-0">
+<span class="font-clinical-data text-[10px] text-muted-steel">3</span>
+</div>
+<p class="font-body-muted text-body-muted text-on-surface-variant pt-0.5">Subscribe to any plan, and ₹399 is auto-applied to your first bill.</p>
+</li>
+</ol>
+</section>
+</main>
+<!-- Sticky Action Bar -->
+<div class="fixed bottom-0 left-0 w-full bg-smoked-glass backdrop-blur-md border-t border-whisper-hairline px-mobile-margin pt-4 pb-safe z-50">
+<p class="text-center font-label-small-caps text-label-small-caps text-muted-steel mb-3">Your card is only charged ₹399 — no auto-renewal</p>
+<button class="w-full bg-primary-container text-ink-on-gold font-clinical-data text-clinical-data py-4 rounded-full scale-[0.98] transition-transform duration-200 hover:opacity-90 active:scale-95 flex items-center justify-center gap-2">
+            Start the taste test · ₹399
+            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</body></html>
