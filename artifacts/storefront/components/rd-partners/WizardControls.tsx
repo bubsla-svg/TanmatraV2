@@ -29,7 +29,7 @@ export function Field({
         <label
           htmlFor={htmlFor}
           className={`text-[10px] font-semibold uppercase tracking-widest ${
-            error ? "text-destructive" : "text-ink-faint"
+            error ? "text-[var(--danger)]" : "text-ink-faint"
           }`}
         >
           {label}
@@ -38,7 +38,7 @@ export function Field({
       </div>
       {children}
       {error && (
-        <p role="alert" className="text-[11px] font-medium text-destructive">
+        <p role="alert" className="text-[11px] font-medium text-[var(--danger)]">
           {error}
         </p>
       )}
@@ -72,7 +72,7 @@ export function TextField({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       aria-invalid={invalid || undefined}
-      className={`${controlCls} ${invalid ? "border-destructive" : "border-line"} ${
+      className={`${controlCls} ${invalid ? "border-[var(--danger)]" : "border-line"} ${
         type === "number" || inputMode === "numeric" ? "tabular" : ""
       }`}
     />
@@ -102,7 +102,7 @@ export function TextAreaField({
       placeholder={placeholder}
       rows={rows}
       aria-invalid={invalid || undefined}
-      className={`${controlCls} resize-none ${invalid ? "border-destructive" : "border-line"}`}
+      className={`${controlCls} resize-none ${invalid ? "border-[var(--danger)]" : "border-line"}`}
     />
   );
 }
@@ -129,7 +129,7 @@ export function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={invalid || undefined}
-        className={`${controlCls} appearance-none pr-10 ${invalid ? "border-destructive" : "border-line"}`}
+        className={`${controlCls} appearance-none pr-10 ${invalid ? "border-[var(--danger)]" : "border-line"}`}
       >
         <option value="" disabled>
           {placeholder}

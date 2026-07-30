@@ -63,7 +63,7 @@ export function CartDrawer({
                   {l.customizations && l.customizations.length > 0 && (
                     <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                   )}
-                  <p className="tabular font-mono text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                  <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center rounded-full border border-line bg-surface-raised" role="group" aria-label={`${l.name} quantity`}>
@@ -71,7 +71,7 @@ export function CartDrawer({
                     <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
                     <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="min-h-10 min-w-10 rounded-full text-ink transition-transform active:scale-[0.98]">+</button>
                   </div>
-                  <span className="tabular font-mono w-16 text-right text-sm font-semibold text-ink">
+                  <span className="tabular w-16 text-right text-sm font-semibold text-ink">
                     {formatPaise(l.pricePaise * l.qty)}
                   </span>
                 </div>
@@ -98,7 +98,7 @@ export function CartDrawer({
           <div className="mt-3 border-t border-line pt-3">
             <div className="mb-3 flex items-center justify-between gap-3 text-sm">
               <span className="text-xs uppercase tracking-wider text-ink-muted">Subtotal (before delivery &amp; GST)</span>
-              <span className="tabular font-mono text-base font-semibold text-ink">{formatPaise(subtotalPaise(cart))}</span>
+              <span className="tabular text-base font-semibold text-ink">{formatPaise(subtotalPaise(cart))}</span>
             </div>
             {footer}
           </div>

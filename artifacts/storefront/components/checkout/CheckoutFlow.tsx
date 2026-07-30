@@ -81,7 +81,7 @@ export function CheckoutFlow({
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="font-mono tabular text-2xl font-semibold text-ink">{formatPaise(totalPaise)} paid.</h1>
+          <h1 className="tabular text-2xl font-semibold text-ink">{formatPaise(totalPaise)} paid.</h1>
           <p className="text-sm text-ink-muted">First lunch next weekday, 12:30&ndash;1:30. {futureLine}</p>
         </div>
         {eveningAddPaise != null && <EveningAddOffer pricePaise={eveningAddPaise} />}

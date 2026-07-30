@@ -22,6 +22,8 @@ on:
       - "lib/subscription-rules/**"
       - "scripts/lint-filecap.ts"
       - "scripts/lint-tokens.ts"
+      - "scripts/lint-component-drift.ts"
+      - "scripts/component-drift-baseline.txt"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - ".github/workflows/storefront.yml"
@@ -53,6 +55,8 @@ jobs:
         run: pnpm --filter @workspace/storefront run lint:filecap
       - name: Token gate — no raw colours / palette classes (TNM-UIF-01 §3.4)
         run: pnpm --filter @workspace/storefront run lint:tokens
+      - name: Component-drift gate — no duplicate-spelling class debt
+        run: pnpm --filter @workspace/storefront run lint:component-drift
       - name: Typecheck
         run: pnpm --filter @workspace/storefront run typecheck
       # Quoted so **node** expands the glob, not the shell. Actions runs `run:`

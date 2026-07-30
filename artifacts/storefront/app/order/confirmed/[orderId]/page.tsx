@@ -13,7 +13,7 @@ import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendati
 const TONE_TEXT = {
   live: "text-sage-text",
   settled: "text-ink-muted",
-  failed: "text-destructive",
+  failed: "text-[var(--danger)]",
 } as const;
 
 export const metadata: Metadata = {
@@ -97,7 +97,7 @@ export default async function ConfirmedPage({
             </p>
           )}
           {tone === "failed" && (
-            <p className="mt-3 text-sm font-semibold text-destructive">
+            <p className="mt-3 text-sm font-semibold text-[var(--danger)]">
               This order did not complete — you have not been charged for it.
             </p>
           )}

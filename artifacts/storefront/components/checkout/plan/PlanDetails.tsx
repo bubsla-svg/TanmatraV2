@@ -150,16 +150,16 @@ export function PlanDetails({
       </label>
 
       <div className="flex flex-col gap-2 rounded-3xl border border-line bg-surface p-5">
-        {addOnLine && <p className="font-mono tabular text-xs font-medium text-ink-muted">{addOnLine}</p>}
+        {addOnLine && <p className="tabular text-xs font-medium text-ink-muted">{addOnLine}</p>}
         {!!creditAppliedPaise && (
           <p className="flex items-baseline justify-between gap-3 border-y border-line py-2 text-xs font-medium text-sage-text">
             <span>Credit applied:</span>
-            <span className="font-mono tabular">−{formatPaise(creditAppliedPaise)}</span>
+            <span className="tabular">−{formatPaise(creditAppliedPaise)}</span>
           </p>
         )}
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-sm text-ink-muted">Billed each cycle (server-priced, incl. GST)</span>
-          <span className="font-mono tabular text-xl font-semibold text-gold-text">
+          <span className="tabular text-xl font-semibold text-gold-text">
             {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
           </span>
         </div>
@@ -183,7 +183,7 @@ export function PlanDetails({
         <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 flex-col">
             <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted">Billed each cycle</span>
-            <span className="font-mono tabular text-lg font-bold text-ink">
+            <span className="tabular text-lg font-bold text-ink">
               {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
             </span>
           </div>

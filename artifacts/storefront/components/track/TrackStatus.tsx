@@ -18,7 +18,7 @@ const POLL_MS = 20_000;
 const TONE_TEXT = {
   live: "text-sage-text",
   settled: "text-ink-muted",
-  failed: "text-destructive",
+  failed: "text-[var(--danger)]",
 } as const;
 
 /**
@@ -128,7 +128,7 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
         </div>
       )}
       {tone === "failed" && (
-        <p className="relative z-10 text-sm font-semibold text-destructive">
+        <p className="relative z-10 text-sm font-semibold text-[var(--danger)]">
           This order did not complete — you have not been charged for it.
         </p>
       )}

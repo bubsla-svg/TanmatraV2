@@ -81,15 +81,15 @@ export function AlacarteDetails({
                 {l.customizations && l.customizations.length > 0 && (
                   <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                 )}
-                <p className="font-mono tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center rounded-full border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
                   <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">−</button>
-                  <span aria-live="polite" className="font-mono tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
+                  <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
                   <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">+</button>
                 </div>
-                <span className="font-mono tabular w-16 text-right text-sm font-semibold text-ink">
+                <span className="tabular w-16 text-right text-sm font-semibold text-ink">
                   {formatPaise(l.pricePaise * l.qty)}
                 </span>
               </div>
@@ -98,7 +98,7 @@ export function AlacarteDetails({
         </ul>
         <div className="mt-2 flex justify-between gap-3 border-t border-line pt-3 text-sm">
           <span className="text-ink-muted">Subtotal · server bills the final total (incl. GST)</span>
-          <span className="font-mono tabular font-semibold text-gold-text">{formatPaise(subtotalPaise(cart))}</span>
+          <span className="tabular font-semibold text-gold-text">{formatPaise(subtotalPaise(cart))}</span>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ export function AlacarteDetails({
         <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 flex-col">
             <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted">Est. total</span>
-            <span className="font-mono tabular text-lg font-bold text-ink">{formatPaise(subtotalPaise(cart))}</span>
+            <span className="tabular text-lg font-bold text-ink">{formatPaise(subtotalPaise(cart))}</span>
           </div>
           <button
             type="button" disabled={!valid || busy}

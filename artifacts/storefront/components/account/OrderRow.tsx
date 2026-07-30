@@ -11,7 +11,7 @@ import { ReorderButton } from "./ReorderButton";
 const TONE_TEXT = {
   live: "text-sage-text",
   settled: "text-ink-muted",
-  failed: "text-destructive",
+  failed: "text-[var(--danger)]",
 } as const;
 
 export function OrderRow({ order }: { order: OrderSummary }) {

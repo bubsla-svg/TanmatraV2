@@ -166,7 +166,7 @@ export function PartnerLeadForm({
       </Field>
 
       {error && (
-        <p role="alert" className="text-xs font-medium text-destructive">
+        <p role="alert" className="text-xs font-medium text-[var(--danger)]">
           {error}
         </p>
       )}

@@ -143,7 +143,7 @@ export function PartnerWizard() {
 
       {problem && (
         <div role="alert" className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 pl-5">
-          <span className="absolute inset-y-0 left-0 w-1 bg-destructive" aria-hidden />
+          <span className="absolute inset-y-0 left-0 w-1 bg-[var(--danger)]" aria-hidden />
           <p className="text-sm font-medium text-ink">{problem.title}</p>
           <p className="mt-1 text-sm leading-relaxed text-ink-muted">{problem.detail}</p>
         </div>
