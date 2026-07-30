@@ -254,6 +254,6 @@ Hook logic is implemented in Node.js scripts for cross-platform behavior on Wind
 
 ## Related
 
-- [rules/common/hooks.md](../rules/common/hooks.md) — Hook architecture guidelines
+- [rules/common/hooks.md](../rules/ecc/common/hooks.md) — Hook architecture guidelines
 - [skills/strategic-compact/](../skills/strategic-compact/) — Strategic compaction skill
 - [scripts/hooks/](../scripts/hooks/) — Hook script implementations

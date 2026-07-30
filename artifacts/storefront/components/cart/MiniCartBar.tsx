@@ -1,6 +1,10 @@
 "use client";
 // "use client" justification: reads live cart state; hosts the cart drawer
 // open state (local, not URL — a cart is not shareable state).
+// Stitch dark scope (component-scoped — the bar floats over light and dark
+// routes alike, so data-stitch sits on the bar root, not a page wrapper) —
+// see lib/themes/stitch.css.
+import "@/lib/themes/stitch.css";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
@@ -25,9 +29,9 @@ export function MiniCartBar() {
 
   return (
     <>
-      <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:bottom-0">
+      <div data-stitch="dark" className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <p className="text-sm text-ink">
+          <p className="tabular font-mono text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}
             {count === 1 ? "item" : "items"}{" "}
             <span aria-hidden className="text-ink-faint">·</span>{" "}
@@ -36,7 +40,7 @@ export function MiniCartBar() {
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="min-h-11 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+            className="min-h-11 rounded-full bg-gold px-5 py-2 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
           >
             View cart
           </button>

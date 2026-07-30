@@ -19,21 +19,21 @@ export function PlanIdentityGate({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold text-ink">Start your {planName} plan</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">Start your {planName} plan</h1>
       {firebaseConfigured() ? (
         <>
           <p className="text-sm text-ink-muted">Sign in to set up delivery — a code by SMS, no passwords.</p>
           <PhoneAuth onVerified={onVerified} />
         </>
       ) : (
-        <>
+        <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-5">
           <p role="alert" className="text-sm font-medium text-[var(--danger)]">
             Plan sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>
-          <Link href="/menu" className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]">
+          <Link href="/menu" className="self-start rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">
             Browse the menu
           </Link>
-        </>
+        </div>
       )}
     </div>
   );

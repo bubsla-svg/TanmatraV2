@@ -7,15 +7,17 @@ import { AddToCart } from "@/components/cart/AddToCart";
 /** Compact dish tile used by both the pairing card and the related rail. */
 function MiniCard({ dish }: { dish: DishData }) {
   return (
-    <div className="group block overflow-hidden rounded-xl border border-line bg-surface-raised transition-transform active:scale-[0.99]">
+    <div className="group block overflow-hidden rounded-2xl border border-line bg-surface transition-transform active:scale-[0.98]">
       <Link href={`/dish/${dish.slug}`} className="block">
-        <div className="aspect-[16/9] w-full">
+        <div className="aspect-[16/9] w-full overflow-hidden rounded-t-2xl">
           {/* eslint-disable-next-line @next/next/no-img-element -- fixed aspect box; see DishCard */}
-          <img src={dish.image} alt="" className="h-full w-full object-cover" />
+          <img src={dish.image} alt="" className="h-full w-full rounded-t-2xl object-cover" />
         </div>
-        <div className="flex items-start justify-between gap-3 p-3">
-          <span className="text-sm font-medium text-ink group-hover:underline">{dish.name}</span>
-          <span className="tabular shrink-0 text-sm font-semibold text-ink">
+        <div className="p-3">
+          <span className="block truncate text-sm font-medium text-ink group-hover:underline">
+            {dish.name}
+          </span>
+          <span className="mt-1 block font-mono text-sm font-semibold text-gold-text">
             {formatPaise(dish.price)}
           </span>
         </div>
@@ -59,9 +61,9 @@ export function DishPairing({
       {related.length > 0 && (
         <section>
           <h2 className="text-sm font-semibold text-ink">More like this</h2>
-          <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <ul className="mt-3 flex snap-x gap-3 overflow-x-auto pb-2">
             {related.map((dish) => (
-              <li key={dish.slug}>
+              <li key={dish.slug} className="w-40 shrink-0 snap-start">
                 <MiniCard dish={dish} />
               </li>
             ))}

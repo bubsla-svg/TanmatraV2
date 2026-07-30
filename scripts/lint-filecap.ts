@@ -24,6 +24,25 @@ const FILE_CAP = 300;
 const COMPONENT_CAP = 400;
 const SKIP_DIRS = new Set(["node_modules", ".next", "dist", ".turbo"]);
 
+// VENDORED — files copied verbatim from the Astryx design system, exempt from
+// the size cap only.
+//
+// The cap exists to stop OUR files from rotting into unreviewable slabs.
+// stoneTheme.ts is not ours: it is the upstream Stone theme definition (one
+// defineTheme call plus `as const` colour ramps — data, no logic), and it is
+// the base that lib/themes/tanmatraTheme.ts extends. Splitting it would fork a
+// vendored artifact and make the next upstream re-import a manual merge, which
+// is the opposite of the DS-0 goal (owner decision, 2026-07-27: adopt Astryx
+// verbatim; that decision already raised the .tsx cap to 400 for the same
+// reason).
+//
+// This is an explicit path list, NOT a marker comment a file can opt into:
+// adding an entry is a visible, reviewable line in the diff. Hand-written code
+// does not qualify — if one of these files starts carrying our logic, it stops
+// being vendored and the entry comes out. Every other gate (lint:tokens,
+// typecheck, the alias guard below) still applies here.
+const VENDORED = new Set(["artifacts/storefront/lib/themes/stone/stoneTheme.ts"]);
+
 // ALIAS_NOTE — why lib/ may not use the "@/*" alias.
 //
 // CI executes the storefront's lib tests with the plain node test runner:
@@ -77,7 +96,7 @@ function run(): void {
     const count = lines.length;
     const isComponent = file.endsWith(".tsx");
     const cap = isComponent ? COMPONENT_CAP : FILE_CAP;
-    if (count > cap) {
+    if (count > cap && !VENDORED.has(rel)) {
       violations.push(
         `${rel}: ${count} lines exceeds the ${isComponent ? "component" : "file"} cap of ${cap} — split it.`,
       );

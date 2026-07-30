@@ -13,10 +13,15 @@ import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 export function CheckoutAddress({
   step,
   total,
+  totalPaise,
   onDeliver,
 }: {
   step: number;
+  /** Step COUNT for the dots — not an amount. */
   total: number;
+  /** Server-quoted order amount, rendered verbatim. Optional so the header
+   *  simply omits it rather than inventing a number when it is absent. */
+  totalPaise?: number;
   onDeliver: () => void;
 }) {
   const [pincode, setPincode] = useState("");
@@ -30,14 +35,20 @@ export function CheckoutAddress({
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <StepDots current={step} total={total} />
-        <span className="tabular text-sm font-semibold text-ink">{formatPaise(total)}</span>
+        {/* Was formatPaise(total) — i.e. the STEP COUNT formatted as money, so a
+            3-screen flow displayed 3 paise as the order amount (shipped in
+            4be36f56, found during the Stitch restyle). Renders the server's
+            quoted amount now, and nothing at all when it is absent. */}
+        {typeof totalPaise === "number" && (
+          <span className="font-mono tabular text-sm font-semibold text-ink">{formatPaise(totalPaise)}</span>
+        )}
       </div>
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-ink">Delivery address</h1>
         <button
           type="button"
           onClick={() => setPickingLocation(true)}
-          className="flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3.5 py-2 text-xs font-bold text-[var(--primary)] shadow-xs hover:bg-bg"
+          className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-2 text-xs font-bold text-ink transition-transform hover:bg-surface-raised active:scale-[0.98]"
         >
           <span>⌖</span>
           <span>Pick on map</span>
@@ -69,7 +80,7 @@ export function CheckoutAddress({
             placeholder="201301"
             aria-describedby="co-pin-hint"
             aria-invalid={pincode.length > 0 && !pinValid}
-            className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink focus:border-line-strong"
+            className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink focus:border-line-strong"
           />
           <p id="co-pin-hint" className="mt-1.5 text-xs text-ink-faint">
             6-digit PIN code &mdash; we check delivery to your area.
@@ -87,7 +98,7 @@ export function CheckoutAddress({
             onChange={(e) => setLine(e.target.value)}
             placeholder="Flat 3B, Sector 62"
             aria-invalid={line.length > 0 && !lineValid}
-            className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink focus:border-line-strong"
+            className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink focus:border-line-strong"
           />
         </div>
       </div>
@@ -97,7 +108,7 @@ export function CheckoutAddress({
         type="button"
         disabled={!valid}
         onClick={onDeliver}
-        className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+        className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
       >
         Deliver here
       </button>

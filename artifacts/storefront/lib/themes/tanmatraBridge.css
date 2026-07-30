@@ -35,16 +35,19 @@
   /* Ink (Stone Theme) */
   --ink: light-dark(#28282a, #f3f3f5);
   --ink-muted: light-dark(#5e5e5e, #ababb0);
-  --ink-faint: light-dark(#84848b, #84848b);
+  --ink-faint: light-dark(#6a6a6f, #838388);
 
   /* Borders (Stone Theme) */
   --line: light-dark(#d8d8db, #343438);
   --line-strong: light-dark(#84848b, #5e5e5e);
 
-  /* Gold / Accent (Stone Theme) */
-  --gold: light-dark(#28282a, #f3f3f5);
-  --gold-text: light-dark(#28282a, #f3f3f5);
-  --gold-ink: light-dark(#ffffff, #171719);
+  /* Gold / Accent — deliberately NOT Stone's neutral accent. Gold is the only
+     action colour (DS-0's surviving caveat), and these are the values
+     tanmatra.css already serves to Astryx's own components, so all three files
+     now agree. AA as both fill and text in both modes. */
+  --gold: light-dark(#7F6921, #D4AF37);
+  --gold-text: light-dark(#7F6921, #D4AF37);
+  --gold-ink: light-dark(#ffffff, #111318);
 
   /* Sage (Stone Theme Teal/Green) */
   --sage: light-dark(#4e6357, #9bb19a);

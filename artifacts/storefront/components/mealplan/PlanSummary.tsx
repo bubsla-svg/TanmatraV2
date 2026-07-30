@@ -13,10 +13,10 @@ export function PlanSummary({ plan, accepted }: { plan: MealPlan; accepted: Acce
   if (c.dailyProteinTargetGrams != null) targets.push(`${c.dailyProteinTargetGrams}g protein/day`);
 
   return (
-    <div className="rounded-2xl border border-line bg-surface p-5">
+    <div className="rounded-3xl border border-line bg-surface p-6">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-ink">Week of {formatPlanDay(plan.weekStartDate)}</p>
-        <span className="rounded-full bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] px-2.5 py-0.5 text-[11px] font-medium text-gold-text">
+        <span className="rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-gold-text">
           {plan.model ? "AI plan" : "Plan"}
         </span>
       </div>
@@ -28,7 +28,7 @@ export function PlanSummary({ plan, accepted }: { plan: MealPlan; accepted: Acce
       {targets.length > 0 && <p className="mt-3 text-xs text-ink-muted">{targets.join(" · ")}</p>}
       {c.allergens.length > 0 && <p className="mt-2 text-xs text-ink-faint">Avoiding: {c.allergens.join(", ")}</p>}
       {accepted && (
-        <p className="mt-3 rounded-lg bg-sage-soft px-3 py-2 text-xs font-medium text-sage-text">
+        <p className="mt-3 rounded-2xl bg-sage-soft px-3 py-2 text-xs font-medium text-sage-text">
           {accepted.deliveryIds.length > 0
             ? `Accepted — ${accepted.deliveryIds.length} deliveries scheduled on your weekly plan.`
             : "Accepted. Start a weekly subscription to schedule these as deliveries."}
@@ -42,7 +42,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="tabular text-lg font-bold text-ink">{value}</p>
-      <p className="text-[11px] text-ink-faint">{label}</p>
+      <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">{label}</p>
     </div>
   );
 }

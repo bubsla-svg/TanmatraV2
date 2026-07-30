@@ -1,4 +1,8 @@
 import { cookies } from "next/headers";
+// Stitch dark scope — route-scoped theme for the total-redesign programme.
+// Flips every token in this subtree via color-scheme + pinned Stitch values;
+// see lib/themes/stitch.css and docs/stitch/DESIGN.md.
+import "@/lib/themes/stitch.css";
 import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
 import { deriveHeroContent } from "@/lib/heroContent";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
@@ -26,7 +30,7 @@ export default async function HomePage() {
   const heroData = deriveHeroContent(refCookie);
 
   return (
-    <div className="relative min-h-screen bg-surface text-ink pb-20 sm:pb-24">
+    <div data-stitch="dark" className="relative min-h-screen bg-[var(--bg)] text-ink pb-20 sm:pb-24">
       <main className="flex flex-col gap-10 sm:gap-16 lg:gap-20">
         {/* Pillar 1 Hero: Food-First D2C Hook with Hero Meal Photo & Dual CTAs */}
         <Section01ClinicalHero hero={heroData} />

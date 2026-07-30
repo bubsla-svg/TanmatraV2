@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Tanmatra | Clinical Metabolic OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#735c00",
+                        "sage-signal": "#7D9E7E",
+                        "secondary-container": "#474746",
+                        "ink-primary": "#F5F5F4",
+                        "ink-on-gold": "#111318",
+                        "surface-container": "#201f1f",
+                        "canvas": "#0A0A0A",
+                        "surface": "#171717",
+                        "primary-fixed-dim": "#e9c349",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary-fixed": "#e5e2e1",
+                        "tertiary-fixed-dim": "#b8c3ff",
+                        "surface-tint": "#e9c349",
+                        "surface-dim": "#131313",
+                        "on-primary-container": "#554300",
+                        "primary-container": "#d4af37",
+                        "surface-container-lowest": "#0e0e0e",
+                        "primary": "#f2ca50",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-secondary-fixed-variant": "#474746",
+                        "tertiary": "#c2cbff",
+                        "error-container": "#93000a",
+                        "on-tertiary": "#1c2b68",
+                        "outline": "#99907c",
+                        "on-error": "#690005",
+                        "glass": "rgba(23, 23, 23, 0.72)",
+                        "surface-container-high": "#2a2a2a",
+                        "on-primary-fixed": "#241a00",
+                        "on-tertiary-fixed": "#021453",
+                        "surface-variant": "#353534",
+                        "inverse-surface": "#e5e2e1",
+                        "on-surface": "#e5e2e1",
+                        "tertiary-fixed": "#dde1ff",
+                        "surface-bright": "#3a3939",
+                        "inverse-on-surface": "#313030",
+                        "error": "#ffb4ab",
+                        "hairline": "rgba(255, 255, 255, 0.06)",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "tertiary-container": "#a1aff4",
+                        "on-primary": "#3c2f00",
+                        "on-tertiary-container": "#32407e",
+                        "ink-secondary": "#A3A3A3",
+                        "outline-variant": "#4d4635",
+                        "background": "#131313",
+                        "on-background": "#e5e2e1",
+                        "on-surface-variant": "#d0c5af",
+                        "on-primary-fixed-variant": "#574500",
+                        "primary-fixed": "#ffe088",
+                        "on-tertiary-fixed-variant": "#344280",
+                        "on-secondary": "#313030",
+                        "secondary": "#c8c6c5",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#b7b4b4",
+                        "ember-warning": "#B6892F",
+                        "surface-container-highest": "#353534",
+                        "clay-danger": "#B0655A"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "card-padding": "1.5rem",
+                        "section-gap": "clamp(3rem, 8vw, 6rem)",
+                        "gutter": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Satoshi", "sans-serif"],
+                        "body-lg": ["Satoshi", "sans-serif"],
+                        "headline-md": ["Satoshi", "sans-serif"],
+                        "headline-lg": ["Satoshi", "sans-serif"],
+                        "headline-lg-mobile": ["Satoshi", "sans-serif"],
+                        "clinical-data": ["JetBrains Mono", "monospace"],
+                        "body-sm": ["Satoshi", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #F5F5F4;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .snap-x::-webkit-scrollbar { display: none; }
+        .glass-blur { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .active-nav-pill {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-lg text-body-lg">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 backdrop-blur-md bg-glass border-b border-hairline h-16 flex items-center justify-between px-gutter">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 transition-transform">menu</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">METABOLIC OS</span>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8 items-center">
+<a class="font-label-caps text-label-caps text-primary" href="#">Dashboard</a>
+<a class="font-label-caps text-label-caps text-ink-secondary hover:text-primary transition-colors" href="#">Menu</a>
+<a class="font-label-caps text-label-caps text-ink-secondary hover:text-primary transition-colors" href="#">Plans</a>
+<a class="font-label-caps text-label-caps text-ink-secondary hover:text-primary transition-colors" href="#">Profile</a>
+</nav>
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 transition-transform">shopping_bag</span>
+</div>
+</header>
+<main class="pt-16 pb-24 md:pb-0 overflow-x-hidden">
+<!-- §01 Hero Section -->
+<section class="max-w-screen-xl mx-auto px-gutter py-section-gap">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+<!-- Hero Text -->
+<div class="md:col-span-7">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary font-clinical-data text-clinical-data mb-6">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                        METABOLIC PRECISION
+                    </div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-ink-primary leading-tight mb-8">
+                        Personalized Nutrition 
+                        <span class="inline-block align-middle mx-2 w-12 h-12 md:w-16 md:h-16 rounded-2xl overflow-hidden border border-hairline translate-y-[-2px]">
+<img class="w-full h-full object-cover" data-alt="A highly detailed, macro-photographic close-up of a vibrant, perfectly seared scallop nestled among colorful vegetable purées and edible flowers. The lighting is dramatic and precise, capturing the crystalline texture of salt flakes and the moisture on microgreens, set against a deep charcoal background consistent with a high-end clinical metabolic interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"/>
+</span>
+                        for Peak Metabolism
+                    </h1>
+<div class="flex flex-wrap gap-4 items-center">
+<a class="px-8 py-4 rounded-full bg-primary text-ink-on-gold font-label-caps text-label-caps hover:opacity-90 active:scale-[0.98] transition-all" href="/menu">Explore Menu</a>
+<a class="px-8 py-4 rounded-full border border-hairline text-ink-primary font-label-caps text-label-caps hover:bg-white/5 active:scale-[0.98] transition-all" href="/plans">View Plans</a>
+</div>
+</div>
+<!-- Hero Image Container -->
+<div class="md:col-span-5 relative group">
+<div class="rounded-3xl overflow-hidden border border-hairline shadow-2xl shadow-black/40 aspect-[4/5]">
+<img class="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700" data-alt="A top-down architectural food composition of grilled salmon, sliced avocado, and wild berry quinoa on a matte black ceramic plate. The scene is lit with sharp, professional chef-pass lighting that creates strong highlights and deep shadows on a dark charred wood surface. The aesthetic is clinical yet gourmet, emphasizing nutrient density and visual precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkXUatAbp7GpnFbDf0BTpJCPRd2FRuRIoRlbyoRY_B4NGgShl6G32eTYQQ1uxUSny6sOye9Rpm3Xe7cKS4wizt7QZgR72SoEfWc7C02yvSId2aujwgQ8RFWMZVmOfN4ckkE81T7Rkli2yA5Z-tVzDrRcgOmFT5r8klXpPd2k8EuassiZLq5821La5aJB_rvWSK_UQUdLuk5qZwIYRIVhJ85beF2yu9DY9gqtx9XAGuHIN_-stMpiWveI18_bU9E1qUpqZ9a_hlIrE"/>
+</div>
+<!-- Smoked Glass Badge -->
+<div class="absolute -bottom-6 -left-6 md:-left-12 glass-blur bg-glass border border-hairline p-6 rounded-2xl shadow-xl">
+<div class="font-clinical-data text-clinical-data text-primary mb-2">MACRO PROFILE</div>
+<div class="font-clinical-data text-[24px] text-ink-primary tracking-tighter">32P · 41C · 12F</div>
+<div class="mt-4 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[70%]"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- §02 Qualification Chips -->
+<section class="border-y border-hairline bg-surface-container-lowest py-8">
+<div class="max-w-screen-xl mx-auto px-gutter overflow-x-auto snap-x flex gap-4 no-scrollbar">
+<div class="flex-none px-6 py-2 rounded-full border border-hairline bg-surface font-clinical-data text-clinical-data text-ink-secondary hover:text-primary hover:border-primary/40 transition-all cursor-default">Metabolic Flex</div>
+<div class="flex-none px-6 py-2 rounded-full border border-hairline bg-surface font-clinical-data text-clinical-data text-ink-secondary hover:text-primary hover:border-primary/40 transition-all cursor-default">Glucose Stable</div>
+<div class="flex-none px-6 py-2 rounded-full border border-hairline bg-surface font-clinical-data text-clinical-data text-ink-secondary hover:text-primary hover:border-primary/40 transition-all cursor-default">Lipid Optimization</div>
+<div class="flex-none px-6 py-2 rounded-full border border-hairline bg-surface font-clinical-data text-clinical-data text-ink-secondary hover:text-primary hover:border-primary/40 transition-all cursor-default">Hormonal Balance</div>
+<div class="flex-none px-6 py-2 rounded-full border border-hairline bg-surface font-clinical-data text-clinical-data text-ink-secondary hover:text-primary hover:border-primary/40 transition-all cursor-default">Ketogenic Depth</div>
+<div class="flex-none px-6 py-2 rounded-full border border-hairline bg-surface font-clinical-data text-clinical-data text-ink-secondary hover:text-primary hover:border-primary/40 transition-all cursor-default">Insulin Sensitivity</div>
+</div>
+</section>
+<!-- §04 Protocols (Zig-Zag) -->
+<section class="max-w-screen-xl mx-auto px-gutter py-section-gap">
+<div class="flex flex-col gap-24">
+<!-- Protocol 1 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+<div class="order-2 md:order-1 relative rounded-3xl overflow-hidden border border-hairline aspect-[16/10]">
+<img class="w-full h-full object-cover" data-alt="A sophisticated close-up of vibrant plant-based dishes including beet tartare and emerald green herb emulsions. The food is plated with extreme precision, resembling a laboratory experiment in its cleanliness and detail, set against a dark, moody tabletop. Soft ambient lighting highlights the organic textures while maintaining a premium clinical atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8tcD3VKa01evZHrxo68XpH_08MIAKuTDkvRckuxtVnm0SwqjH7O7IwcPlHQvZSPlrA2OuC7Rt0NgDDqglZe3BG23N601pxPXt_ExIIFATKONCiJmxX6XQI6eyb93_VxOxyrthMUY0aUbzTf2lA3QzA9uVrByD5uL_yOmGq7XeUTBZORG4P4PGMMJKeh7VdIdtSPZLfEY1aGr3JcaM0DPkG_ZkwAh2k4yA6E7AIVgsjZSDR4ywLEiVPkA51UM4ikvAzM8RsGZrdCc"/>
+<div class="absolute top-4 right-4 px-4 py-1.5 rounded-full bg-blue-900/40 backdrop-blur-md border border-blue-400/30 font-label-caps text-[10px] text-blue-200 uppercase tracking-widest">Royal Indigo Protocol</div>
+</div>
+<div class="order-1 md:order-2 px-0 md:px-12">
+<h2 class="font-headline-md text-headline-md text-ink-primary mb-4">Precision Fasting Support</h2>
+<p class="text-ink-secondary mb-8 leading-relaxed">Engineered to maintain muscle mass while maximizing cellular autophagy. Each meal is timed to your circadian rhythm and glucose profile.</p>
+<ul class="space-y-4">
+<li class="flex items-center gap-3 font-clinical-data text-clinical-data text-ink-secondary">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                                Optimized Nutrient Windows
+                            </li>
+<li class="flex items-center gap-3 font-clinical-data text-clinical-data text-ink-secondary">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                                Glycemic Response Modeling
+                            </li>
+</ul>
+</div>
+</div>
+<!-- Protocol 2 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+<div class="px-0 md:px-12">
+<h2 class="font-headline-md text-headline-md text-ink-primary mb-4">Metabolic Foundation</h2>
+<p class="text-ink-secondary mb-8 leading-relaxed">The clinical baseline for insulin stability. High-fiber, moderate-protein compositions designed to eliminate metabolic variability.</p>
+<button class="flex items-center gap-2 text-primary font-label-caps text-label-caps group">
+                            LEARN SCIENTIFIC BASIS
+                            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+<div class="relative rounded-3xl overflow-hidden border border-hairline aspect-[16/10]">
+<img class="w-full h-full object-cover" data-alt="A sharp, minimalist overhead view of architectural food elements: grilled asparagus stalks perfectly aligned next to a slice of wild-caught salmon with precise grill marks. The plate is matte charcoal, resting on a textured obsidian surface. The lighting is cool-toned and clinical, highlighting the high-protein, low-carb nature of the meal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOzaK_sVkj9FMM7nk06qo_TDj-0gPfTXXClbZMhZCCJRUDCa3dvii7OujICYXO5B9TWvRLx8hxMo9AeCZwSskCapvYq8AQlpSZ8Y3yDPqVyEKuTaz7JnGxIE5LUEiinzPcgVFuDknkhz7Kz3k6kCnE0oAEdk04aVkiKFH23qzTRbHDL_vs6BRL5fIwCWlufz5m-Ch5ucEo8HEBvo-LqHmyXu57dhx--7wdKx4UYgoD8r8ojELLjS2DMVstGr_sV9GN6iTaFjAVdMg"/>
+<div class="absolute top-4 right-4 px-4 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 font-label-caps text-[10px] text-primary uppercase tracking-widest">Gold Standard</div>
+</div>
+</div>
+</div>
+</section>
+<!-- §04b Marketplace Scroll -->
+<section class="bg-surface-container-low py-section-gap">
+<div class="max-w-screen-xl mx-auto px-gutter mb-12 flex justify-between items-end">
+<div>
+<div class="font-clinical-data text-clinical-data text-primary mb-2">MARKETPLACE</div>
+<h2 class="font-headline-md text-headline-md text-ink-primary">Clinical Supplements</h2>
+</div>
+<a class="font-label-caps text-label-caps text-ink-secondary hover:text-primary" href="#">View All</a>
+</div>
+<div class="max-w-screen-xl mx-auto px-gutter flex gap-6 overflow-x-auto snap-x no-scrollbar pb-8">
+<!-- Product Card 1 -->
+<div class="flex-none w-[280px] snap-start group">
+<div class="rounded-2xl bg-surface border border-hairline overflow-hidden mb-4 transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-lg group-hover:shadow-black/60">
+<div class="h-48 bg-surface-container-high relative flex items-center justify-center p-8">
+<img class="h-full object-contain filter drop-shadow-2xl" data-alt="A minimalist, frosted glass bottle of high-end clinical supplements with a clean white label and gold typography. The product is set against a dark, moody background with a single dramatic spotlight. The overall aesthetic is pharmaceutical yet luxury, fitting a professional metabolic health platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDotMIZlnyn12XcT-H4p1RRE0jL0_MElvNaG84iK8SA-ThPUAHyCqkzE63vzjA2JpdggJLF0Q9ITiGDzJrmssuD4_aCtf8_40h4ExbWZrKx8G5-po2b5f0VjB3nCkEmV7KjpMPkBP6l5gzo83kZtUG4wu3TOOHgHSI4NSsZOStqsKF5uj31__0PLrNYe31m9V3nuUaNAzMdWJuL3Qd5_kn9LAUhI4JPzbD8VH8zaGK2QBPm_v6XaY5owhTZKE5y3kgjojkkzrh_7lY"/>
+</div>
+<div class="p-6">
+<div class="font-clinical-data text-clinical-data text-primary mb-1">$45.00</div>
+<h3 class="font-body-lg text-ink-primary mb-4">Glyco-Stabilize 30</h3>
+<button class="w-full py-2 rounded-full border border-hairline font-label-caps text-label-caps text-ink-secondary group-hover:bg-primary group-hover:text-ink-on-gold group-hover:border-primary transition-all">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="flex-none w-[280px] snap-start group">
+<div class="rounded-2xl bg-surface border border-hairline overflow-hidden mb-4 transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-lg group-hover:shadow-black/60">
+<div class="h-48 bg-surface-container-high relative flex items-center justify-center p-8">
+<img class="h-full object-contain filter drop-shadow-2xl" data-alt="A premium black glass jar of omega-3 clinical supplement with holographic detailing and minimalist monospaced text. The jar sits on a reflective surface in a dark room, creating an atmosphere of technological sophistication and precise health optimization." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0s_UJFy5K0jJLF7FB0vL_71dTimOfKFg0EU_RpmGHcagSqWMo9iJcMijTBpKQ-pNaZV7SiRxwtEmfHSqjmHQ3AqDD4bI0TSo2r5SLl-a4f7irdqNvwhO427Xe2L_F4jVN0QAwsHqt9p2u8RdbhNMem_u46fxl42n2l6xry_1HWHb8SVj-ML3zPZ90f1pXq6XCxC7HSIKnzwM2HcdHiALvPv5jESHrbtbrLQCE98-_ktAjYF-KdeOz4YrRH1PO86t4DBT4HQgoju4"/>
+</div>
+<div class="p-6">
+<div class="font-clinical-data text-clinical-data text-primary mb-1">$68.00</div>
+<h3 class="font-body-lg text-ink-primary mb-4">Omega-X Ultra Pure</h3>
+<button class="w-full py-2 rounded-full border border-hairline font-label-caps text-label-caps text-ink-secondary group-hover:bg-primary group-hover:text-ink-on-gold group-hover:border-primary transition-all">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="flex-none w-[280px] snap-start group">
+<div class="rounded-2xl bg-surface border border-hairline overflow-hidden mb-4 transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-lg group-hover:shadow-black/60">
+<div class="h-48 bg-surface-container-high relative flex items-center justify-center p-8">
+<img class="h-full object-contain filter drop-shadow-2xl" data-alt="Minimalist, sleek packaging for a daily probiotic powder, featuring a deep charcoal box with gold-stamped clinical data and clinical-gold branding. The product is presented as a high-precision health tool, emphasizing quality and efficacy in a premium corporate modern style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANC7OTlLjMdRrLLK0Las0LSoTD6FSn_K79QCZvnveiZwAxbJRLYPeaVRTC2q65QdhIq-qpXh97NQObNved8xte2G53NC4-2ACoqavAdVUDxxzo2-1eZ4exlH4CWTNqmtagYE5dyntW1GElV-9HKym9s3FqR7YyNbTf7PMHqiavaJVJshhE8fKz_c1yJg05pIlkQme91h-DsIVf7_kNeqCKmTvsb3JUiM0YgE37lxjRD1062pfQ9Y4fOVqDcvVfU3dppDQPDXqdHhY"/>
+</div>
+<div class="p-6">
+<div class="font-clinical-data text-clinical-data text-primary mb-1">$32.00</div>
+<h3 class="font-body-lg text-ink-primary mb-4">Gut-Barrier Formula</h3>
+<button class="w-full py-2 rounded-full border border-hairline font-label-caps text-label-caps text-ink-secondary group-hover:bg-primary group-hover:text-ink-on-gold group-hover:border-primary transition-all">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="flex-none w-[280px] snap-start group">
+<div class="rounded-2xl bg-surface border border-hairline overflow-hidden mb-4 transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-lg group-hover:shadow-black/60">
+<div class="h-48 bg-surface-container-high relative flex items-center justify-center p-8">
+<img class="h-full object-contain filter drop-shadow-2xl" data-alt="A professional-grade metabolic tracking wearable device in a sleek, minimalist black box with clinical gold accents. The design focuses on technological precision and data-driven health monitoring, captured with high-key product photography against a dark instrumentation backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChpYOwV3XAeCgOvOVQgzoZX_-f-OYWdxzzAiJNmMfvNAZus-EGaVrmoJt6a1hm42K6dnbIL6QtME7fss1MhcCj7P3-ZfqksjmcD8qR-1o_1n-uBBaihxcCBnTQrq-e9wGZSVr4Mjm6lPAuq4D05B2x7G5uB-H0EZCEQ1mxo7qyfuAJ7yheroneKptr1QuxDqxB2oE-68zOyjw5aj-QP2hsxzHDAKQY6MiJsztUi5vIjT1czvVEDh2-nm-HEq6QJvd9Z2Q4QXbVSYs"/>
+</div>
+<div class="p-6">
+<div class="font-clinical-data text-clinical-data text-primary mb-1">$199.00</div>
+<h3 class="font-body-lg text-ink-primary mb-4">Biosense Pro Tracker</h3>
+<button class="w-full py-2 rounded-full border border-hairline font-label-caps text-label-caps text-ink-secondary group-hover:bg-primary group-hover:text-ink-on-gold group-hover:border-primary transition-all">Add to Cart</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- §09 Assessment -->
+<section class="max-w-screen-xl mx-auto px-gutter py-section-gap">
+<div class="bg-surface rounded-[40px] p-8 md:p-16 border border-hairline relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-surface-container-high">
+<div class="h-full bg-primary transition-all duration-1000" id="assessment-progress" style="width: 25%"></div>
+</div>
+<div class="max-w-2xl mx-auto text-center">
+<div class="font-clinical-data text-clinical-data text-primary mb-4 uppercase tracking-[0.2em]">Step 01 / Metabolic Baseline</div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-ink-primary mb-8">What is your primary optimization goal?</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12 text-left">
+<button class="p-6 rounded-2xl border border-hairline bg-surface-container hover:border-primary transition-colors text-ink-primary text-left">
+<div class="font-label-caps text-label-caps mb-2 opacity-50">OPTION A</div>
+<div class="font-body-lg">Glucose Stability &amp; Longevity</div>
+</button>
+<button class="p-6 rounded-2xl border border-hairline bg-surface-container hover:border-primary transition-colors text-ink-primary text-left">
+<div class="font-label-caps text-label-caps mb-2 opacity-50">OPTION B</div>
+<div class="font-body-lg">Athletic Performance &amp; Power</div>
+</button>
+</div>
+<button class="px-12 py-5 rounded-full bg-primary text-ink-on-gold font-label-caps text-label-caps hover:opacity-90 active:scale-[0.98] transition-all">Start 60s Assessment</button>
+</div>
+</div>
+</section>
+<!-- §05-07 Proofs: Offset Split Panels -->
+<section class="max-w-screen-xl mx-auto px-gutter py-section-gap">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+<!-- Recipe Panel -->
+<div class="space-y-8">
+<div class="font-clinical-data text-clinical-data text-primary uppercase tracking-widest">Protocol-Ready Recipes</div>
+<div class="grid grid-cols-1 gap-6">
+<div class="p-6 rounded-2xl bg-surface border border-hairline flex gap-6 items-center">
+<div class="w-24 h-24 rounded-xl overflow-hidden flex-none border border-hairline">
+<img class="w-full h-full object-cover" data-alt="A close-up photograph of a vibrant metabolic salad with avocado, hemp seeds, and microgreens, emphasizing high fiber and healthy fats. The lighting is bright and professional, highlighting every organic texture against a dark, high-contrast background consistent with a precision health brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD98rM7KHu6JqtKMNCvfE_6ZGiylzoxBX7nsOsduCWkmG6xpfcHttbakefZuV4BTaZcg_fq4usOdRC3BSUaTKKSjEoQBL2KW-jT0I8xDMfTi1i8pyePvqXbTkbKxVO0WhCej1KFtF8c1XJuV0r1_ym1nMwDBE6xmnJsCSk3bu7X4Nxs1Jufr9mu71DG_9x3Dm9nk4sRAnJWsWyujcz8YlEoIyosbHiLAqtIPcVgGjdCRvABsiAZg4_LcwsvHcVFlytbW_6dt1NPArs"/>
+</div>
+<div>
+<h4 class="font-body-lg text-ink-primary mb-1">Keto-Cleanse Bowl</h4>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">15m Prep · 450 kcal</div>
+</div>
+</div>
+<div class="p-6 rounded-2xl bg-surface border border-hairline flex gap-6 items-center translate-x-4">
+<div class="w-24 h-24 rounded-xl overflow-hidden flex-none border border-hairline">
+<img class="w-full h-full object-cover" data-alt="A detailed, macro-view of seared tofu with ginger-soy glaze and steamed bok choy on a dark ceramic plate. The image uses shallow depth of field to focus on the caramelized edges of the tofu, emphasizing precision cooking and nutritional density for a clinical audience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8GjrscubiMJrkhbIRfZEZhKtc0yoQoKS3nJbdVtr3EPKfWopdUn3NYuU36X14JXLXFWgJWagZSsOdDSOifxKISNtlpZRjZW0Jw7gGEkPopi0QslYvX2TB23qmJKkeEBIVJvfXwkkIJ6XavJdQj7y28JBadYzNmkOoWRVAvvxwV_MZTEjHXVQ4itRxA_ddOR2M5SEEdC0RpQ8C6-kE5saYNlV3wfFcnBFznmzzXDTcjTArkbwcWHfSQ6L__Qr98RsGn-y70xfZUOA"/>
+</div>
+<div>
+<h4 class="font-body-lg text-ink-primary mb-1">Miso Glazed Tempeh</h4>
+<div class="font-clinical-data text-clinical-data text-ink-secondary">20m Prep · 380 kcal</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Macro/RD Proof Panel -->
+<div class="bg-surface border border-hairline rounded-3xl p-10 mt-12 lg:mt-0">
+<div class="font-clinical-data text-clinical-data text-primary mb-8 uppercase tracking-widest">Clinical Data Logs</div>
+<table class="w-full text-left font-clinical-data text-clinical-data">
+<thead>
+<tr class="border-b border-hairline text-ink-secondary">
+<th class="pb-4 font-normal">PARAMETER</th>
+<th class="pb-4 font-normal text-right">BASELINE</th>
+<th class="pb-4 font-normal text-right">TARGET</th>
+</tr>
+</thead>
+<tbody class="text-ink-primary">
+<tr class="border-b border-hairline">
+<td class="py-6">Hba1c (%)</td>
+<td class="py-6 text-right">5.8</td>
+<td class="py-6 text-right text-sage-signal">5.1</td>
+</tr>
+<tr class="border-b border-hairline">
+<td class="py-6">HOMA-IR</td>
+<td class="py-6 text-right">2.4</td>
+<td class="py-6 text-right text-sage-signal">&lt; 1.5</td>
+</tr>
+<tr class="border-b border-hairline">
+<td class="py-6">LDL-P (nmol/L)</td>
+<td class="py-6 text-right">1450</td>
+<td class="py-6 text-right text-sage-signal">980</td>
+</tr>
+<tr>
+<td class="py-6">VO2 Max</td>
+<td class="py-6 text-right">38</td>
+<td class="py-6 text-right text-sage-signal">45+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- §03-05 Bands (Quieter Sections) -->
+<section class="border-t border-hairline">
+<div class="grid grid-cols-1 md:grid-cols-3">
+<div class="p-12 border-b md:border-b-0 md:border-r border-hairline bg-indigo-950/10 group hover:bg-indigo-900/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-400 mb-6 text-4xl">corporate_fare</span>
+<h3 class="font-headline-md text-headline-md text-ink-primary mb-4">Corporate OS</h3>
+<p class="text-ink-secondary text-body-sm mb-6">Scalable metabolic health solutions for high-performance executive teams.</p>
+<a class="font-label-caps text-label-caps text-indigo-400 uppercase tracking-widest" href="#">Inquire B2B</a>
+</div>
+<div class="p-12 border-b md:border-b-0 md:border-r border-hairline bg-surface group hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-primary mb-6 text-4xl">video_chat</span>
+<h3 class="font-headline-md text-headline-md text-ink-primary mb-4">Telehealth</h3>
+<p class="text-ink-secondary text-body-sm mb-6">Direct access to functional medicine practitioners and nutritionists.</p>
+<a class="font-label-caps text-label-caps text-primary uppercase tracking-widest" href="#">Book Consultation</a>
+</div>
+<div class="p-12 bg-surface group hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-sage-signal mb-6 text-4xl">local_shipping</span>
+<h3 class="font-headline-md text-headline-md text-ink-primary mb-4">Smart Logistics</h3>
+<p class="text-ink-secondary text-body-sm mb-6">Cold-chain delivery optimized for nutrient preservation and freshness.</p>
+<a class="font-label-caps text-label-caps text-sage-signal uppercase tracking-widest" href="#">Track Order</a>
+</div>
+</div>
+</section>
+<!-- §10 FAQ Accordion -->
+<section class="max-w-3xl mx-auto px-gutter py-section-gap">
+<div class="text-center mb-16">
+<div class="font-clinical-data text-clinical-data text-primary mb-2">COMMON INQUIRIES</div>
+<h2 class="font-headline-md text-headline-md text-ink-primary">Metabolic Logic</h2>
+</div>
+<div class="divide-y divide-hairline">
+<details class="group py-6 cursor-pointer">
+<summary class="flex justify-between items-center list-none">
+<span class="font-body-lg text-ink-primary">How is Tanmatra different from standard meal delivery?</span>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-4 text-ink-secondary leading-relaxed">
+                        Every ingredient is selected for its clinical impact on your biomarker profile. We don't just count calories; we engineer glycemic responses using biometric data integration.
+                    </div>
+</details>
+<details class="group py-6 cursor-pointer">
+<summary class="flex justify-between items-center list-none">
+<span class="font-body-lg text-ink-primary">Can I sync my CGM (Continuous Glucose Monitor)?</span>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-4 text-ink-secondary leading-relaxed">
+                        Yes, Tanmatra integrates natively with Dexcom, Abbott, and Oura. Our OS adjusts your upcoming meal protocols based on real-time physiological data.
+                    </div>
+</details>
+<details class="group py-6 cursor-pointer">
+<summary class="flex justify-between items-center list-none">
+<span class="font-body-lg text-ink-primary">What certifications do your clinical kitchens hold?</span>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-4 text-ink-secondary leading-relaxed">
+                        All facilities are ISO 22000 certified and operate under strict bio-analytical hygiene standards, exceeding standard food safety regulations.
+                    </div>
+</details>
+</div>
+</section>
+<!-- Footer Info -->
+<footer class="border-t border-hairline py-20 bg-surface-container-lowest">
+<div class="max-w-screen-xl mx-auto px-gutter grid grid-cols-1 md:grid-cols-4 gap-12">
+<div class="md:col-span-2">
+<div class="font-headline-md text-headline-md font-bold tracking-tight text-primary mb-6">METABOLIC OS</div>
+<p class="text-ink-secondary max-w-sm">The precision instrument for biological optimization. Food-first health engineering for the modern high-performer.</p>
+</div>
+<div>
+<h5 class="font-label-caps text-label-caps text-ink-primary mb-6">PROTOCOLS</h5>
+<ul class="space-y-4 text-body-sm text-ink-secondary">
+<li><a class="hover:text-primary transition-colors" href="#">Flex-Keto</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Stable-Glucose</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Plant-Prime</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-label-caps text-label-caps text-ink-primary mb-6">PLATFORM</h5>
+<ul class="space-y-4 text-body-sm text-ink-secondary">
+<li><a class="hover:text-primary transition-colors" href="#">Diagnostics</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Wearable Sync</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Clinician Portal</a></li>
+</ul>
+</div>
+</div>
+<div class="max-w-screen-xl mx-auto px-gutter mt-20 pt-8 border-t border-hairline flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="font-clinical-data text-[12px] text-ink-secondary">© 2024 TANMATRA INC. ALL RIGHTS RESERVED.</div>
+<div class="flex gap-8 font-clinical-data text-[12px] text-ink-secondary">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Protocol</a>
+<a class="hover:text-primary transition-colors" href="#">Security</a>
+</div>
+</div>
+</footer>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 backdrop-blur-md bg-glass border-t border-hairline flex justify-around items-center h-16 px-4 pb-safe">
+<a class="flex flex-col items-center justify-center text-primary bg-primary-container/10 rounded-xl px-3 py-1" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-[10px] uppercase">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-label-caps text-[10px] uppercase">Menu</span>
+</a>
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+<span class="font-label-caps text-[10px] uppercase">Plans</span>
+</a>
+<a class="flex flex-col items-center justify-center text-ink-secondary hover:text-primary transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-[10px] uppercase">Profile</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions and subtle effects
+        document.querySelectorAll('details').forEach((el) => {
+            el.addEventListener('click', (e) => {
+                if (el.open) return;
+                document.querySelectorAll('details').forEach((other) => {
+                    if (other !== el) other.removeAttribute('open');
+                });
+            });
+        });
+
+        // Simple progress bar animation on scroll
+        window.addEventListener('scroll', () => {
+            const assessment = document.querySelector('#assessment-progress');
+            const rect = assessment.parentElement.getBoundingClientRect();
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+                assessment.style.width = '100%';
+            } else {
+                assessment.style.width = '25%';
+            }
+        });
+    </script>
+</body></html>

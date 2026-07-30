@@ -1,0 +1,20 @@
+{
+ "screenId": "c4f35b8471174fc2bcf00a4bfb17938c",
+ "name": "projects/12062470764535558612/screens/c4f35b8471174fc2bcf00a4bfb17938c",
+ "title": "Personalized Menu",
+ "sessionId": "13723152494142227940",
+ "project": "projects/12062470764535558612",
+ "designSystemAsset": "1294a81f8b0840eb8b1d8cf203e8a20d",
+ "transport": "MCP tools/call generate_screen_from_text @ https://stitch.googleapis.com/mcp",
+ "v2": {
+  "screenId": "c3e1f024a18d493db70a37a526fc35c5",
+  "title": "Clinical Menu List",
+  "edit": "single-column rows: title + excerpt + rating stars (owner redline)"
+ },
+ "v3": {
+  "screenId": "d97dc79c759049979e736cf332654646",
+  "title": "Mirrored Clinical Menu List",
+  "edit": "text left / photo right via generate_variants (REFINE, LAYOUT) \u2014 edit_screens applied only to a session layer, artifact never changed; variants mint real screens",
+  "note": "Stitch's own bottom cart bar + tab nav in the mock are standalone chrome \u2014 stripped at wiring; mock $ prices replaced by server-formatted amounts"
+ }
+}

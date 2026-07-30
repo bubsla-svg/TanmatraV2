@@ -15,8 +15,9 @@ export function DishAllergens({ dish }: { dish: DishData }) {
 
   return (
     <section
-      className="mt-6 rounded-lg border border-line bg-surface p-4"
-      style={warn ? { borderColor: "var(--danger)" } : undefined}
+      className={`mt-6 rounded-3xl border bg-surface p-5 ${
+        warn ? "border-[var(--danger)]" : "border-line"
+      }`}
     >
       <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
         Allergens
@@ -24,7 +25,7 @@ export function DishAllergens({ dish }: { dish: DishData }) {
       <p className="mt-1 text-sm font-semibold text-ink">{view.heading}</p>
 
       {view.items.length > 0 && (
-        <ul className="mt-2 flex flex-wrap gap-1.5">
+        <ul className="mt-2.5 flex flex-wrap gap-1.5">
           {view.items.map((item) => (
             <li
               key={item}
@@ -36,7 +37,16 @@ export function DishAllergens({ dish }: { dish: DishData }) {
         </ul>
       )}
 
-      <p className="mt-2 text-xs text-ink-faint">{view.note}</p>
+      {view.affirmativeNone ? (
+        /* Quiet check line — keyed off `affirmativeNone`, the one RD-reviewed
+           state allowed to affirm absence. Derived/unchecked never get it. */
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-sage-text">
+          <span aria-hidden="true">{"✓"}</span>
+          {view.note}
+        </p>
+      ) : (
+        <p className="mt-2 text-xs text-ink-faint">{view.note}</p>
+      )}
     </section>
   );
 }

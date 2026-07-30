@@ -30,6 +30,7 @@ const layout = readFileSync(path.join(root, "app/layout.tsx"), "utf8");
 const globals = readFileSync(path.join(root, "app/globals.css"), "utf8");
 const bridge = readFileSync(path.join(root, "lib/themes/tanmatraBridge.css"), "utf8");
 const themeTs = readFileSync(path.join(root, "lib/themes/tanmatraTheme.ts"), "utf8");
+const generated = readFileSync(path.join(root, "lib/themes/tanmatra.css"), "utf8");
 
 test("<html> carries the Astryx scope attribute", () => {
   assert.match(
@@ -106,6 +107,30 @@ test("every bridge tuple matches its tanmatraTheme.ts source", () => {
       bridgeTuple(raw),
       themeTuple(themeName),
       `${raw} must carry the same light/dark pair as ${themeName} — edit the theme, then mirror here`,
+    );
+  }
+});
+
+// ── Generated-sheet sync: tanmatra.css must agree with the theme too ───────
+// The bridge test above pins tanmatraBridge.css to tanmatraTheme.ts, but
+// tanmatra.css — the generated Astryx sheet that Astryx's OWN components read
+// for --color-accent — was outside every check. The Stone-theme merge edited
+// the theme and the bridge without regenerating it, so accent split in two:
+// Astryx buttons stayed gold while .bg-gold went near-black, live, invisibly.
+// Accent is the pair that matters (it paints actions); if a future theme change
+// regenerates the sheet, this fails until the theme is updated to match.
+function generatedTuple(name: string): [string, string] {
+  const m = generated.match(new RegExp(`${name}:\\s*light-dark\\((#[0-9a-fA-F]{3,8}),\\s*(#[0-9a-fA-F]{3,8})\\)`));
+  assert.ok(m, `${name} not found as a light-dark() pair in tanmatra.css`);
+  return [m![1]!.toLowerCase(), m![2]!.toLowerCase()];
+}
+
+test("the generated Astryx sheet carries the same accent as the theme", () => {
+  for (const name of ["--color-accent", "--color-accent-ink"]) {
+    assert.deepEqual(
+      generatedTuple(name),
+      themeTuple(name),
+      `tanmatra.css and tanmatraTheme.ts disagree on ${name} — regenerate the sheet, or fix the theme to match it`,
     );
   }
 });

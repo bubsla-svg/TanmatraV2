@@ -16,7 +16,13 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   // 1. Land on homepage, verify sticky address/serviceability bar is present
   await page.goto("/");
   await expect(page.getByRole("banner")).toBeVisible();
-  await expect(page.locator("main").getByText("Select your location", { exact: false })).toBeVisible();
+  // Page-scoped, not <main>-scoped. The serviceability entry point is rendered
+  // twice on purpose: the Header carries it at every width, and app/page.tsx
+  // adds an in-<main> copy only from `sm` up ("hidden sm:block" — mobile hides
+  // it to avoid header redundancy). Scoping to <main> therefore asserted a
+  // control the mobile layout deliberately hides, and failed every [mobile] run.
+  // What the funnel actually needs is that a location picker is reachable.
+  await expect(page.getByText("Select your location", { exact: false }).first()).toBeVisible();
 
   // 2. Marketplace is visible on the homepage
   await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i }).first()).toBeVisible();

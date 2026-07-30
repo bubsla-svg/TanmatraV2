@@ -12,28 +12,33 @@ export function DayCard({ day, editable, onSwap, onRegen }: {
   onRegen?: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-4">
+    <div className="rounded-3xl border border-line bg-surface p-5">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-ink">{formatPlanDay(day.date)}</p>
+        <p className="font-mono text-xs font-semibold uppercase tracking-widest text-ink">{formatPlanDay(day.date)}</p>
         {editable && onRegen && (
-          <button type="button" onClick={onRegen} className="rounded-lg border border-line px-2 py-0.5 text-[11px] font-medium text-ink-muted hover:border-[var(--gold)] hover:text-ink">Regen</button>
+          <button type="button" onClick={onRegen} className="rounded-full border border-line px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]">Regen</button>
         )}
       </div>
-      <ul className="mt-3 flex flex-col gap-2.5">
+      <ul className="mt-4 flex flex-col gap-4">
         {MEAL_SLOTS.map((slot) => {
           const entry = day[slot];
           return (
-            <li key={slot} className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">{SLOT_LABEL[slot]}</p>
-                {entry ? <SlotLine entry={entry} /> : <p className="text-sm italic text-ink-muted">No dish picked</p>}
+            <li key={slot} className="flex items-center gap-4">
+              {entry ? (
+                <img src={entry.image} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+              ) : (
+                <div aria-hidden className="h-16 w-16 shrink-0 rounded-2xl border border-dashed border-line bg-surface-raised" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">{SLOT_LABEL[slot]}</p>
+                {entry ? <SlotLine entry={entry} /> : <p className="mt-0.5 text-sm italic text-ink-muted">No dish picked</p>}
               </div>
               {editable && (
                 <button
                   type="button"
                   onClick={() => onSwap(slot)}
                   aria-label={`Swap ${SLOT_LABEL[slot]}`}
-                  className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink-muted hover:border-[var(--gold)] hover:text-ink"
+                  className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]"
                 >
                   Swap
                 </button>
@@ -49,8 +54,8 @@ export function DayCard({ day, editable, onSwap, onRegen }: {
 function SlotLine({ entry }: { entry: MealPlanSlotEntry }) {
   return (
     <>
-      <p className="truncate text-sm font-medium text-ink">{entry.name}</p>
-      <p className="tabular text-[11px] text-ink-muted">
+      <p className="mt-0.5 truncate text-sm font-medium text-ink">{entry.name}</p>
+      <p className="tabular mt-1 text-[11px] text-ink-muted">
         {entry.calories} kcal · {entry.protein}g · {formatPaise(entry.pricePaise)}
       </p>
     </>

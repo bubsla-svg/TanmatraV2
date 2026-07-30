@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
+import "@/lib/themes/stitch.css";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
@@ -13,6 +15,7 @@ import { DishReviews } from "@/components/menu/DishReviews";
 import { galleryImages } from "@/lib/gallery";
 import { dishCrossSell } from "@/lib/related";
 import { DishStructuredData } from "@/components/StructuredData";
+import { DishBuyBar } from "@/components/menu/DishBuyBar";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -44,6 +47,7 @@ export default async function DishPage({ params }: Params) {
   ];
 
   return (
+    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
     <article className="mx-auto max-w-3xl px-4 py-8">
       <DishStructuredData dish={dish} />
       <Link href="/menu" className="text-sm text-ink-muted hover:text-ink">
@@ -97,5 +101,7 @@ export default async function DishPage({ params }: Params) {
           renders dish A's held reviews/rating/eligibility before the refetch. */}
       <DishReviews key={dish.slug} slug={dish.slug} />
     </article>
+    <DishBuyBar dish={dish} />
+    </div>
   );
 }

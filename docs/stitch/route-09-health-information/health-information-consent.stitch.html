@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Health Information | Metabolic OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#690005",
+                    "on-surface-variant": "#d0c5af",
+                    "ember-warning": "#B6892F",
+                    "ink-secondary": "#A3A3A3",
+                    "outline": "#99907c",
+                    "tertiary-fixed-dim": "#b8c3ff",
+                    "surface-container": "#201f1f",
+                    "background": "#131313",
+                    "on-secondary-container": "#b7b4b4",
+                    "clay-danger": "#B0655A",
+                    "on-primary": "#3c2f00",
+                    "inverse-on-surface": "#313030",
+                    "on-tertiary": "#1c2b68",
+                    "on-tertiary-fixed": "#021453",
+                    "surface-tint": "#e9c349",
+                    "primary-fixed": "#ffe088",
+                    "secondary": "#c8c6c5",
+                    "tertiary-container": "#a1aff4",
+                    "tertiary": "#c2cbff",
+                    "surface": "#171717",
+                    "glass": "rgba(23, 23, 23, 0.72)",
+                    "surface-container-lowest": "#0e0e0e",
+                    "ink-on-gold": "#111318",
+                    "hairline": "rgba(255, 255, 255, 0.06)",
+                    "on-secondary-fixed-variant": "#474746",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "primary-fixed-dim": "#e9c349",
+                    "ink-primary": "#F5F5F4",
+                    "inverse-primary": "#735c00",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-container-highest": "#353534",
+                    "surface-variant": "#353534",
+                    "surface-dim": "#131313",
+                    "on-secondary": "#313030",
+                    "on-primary-container": "#554300",
+                    "inverse-surface": "#e5e2e1",
+                    "on-background": "#e5e2e1",
+                    "sage-signal": "#7D9E7E",
+                    "error": "#ffb4ab",
+                    "error-container": "#93000a",
+                    "secondary-container": "#474746",
+                    "surface-bright": "#3a3939",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-tertiary-container": "#32407e",
+                    "on-surface": "#e5e2e1",
+                    "on-primary-fixed-variant": "#574500",
+                    "surface-container-low": "#1c1b1b",
+                    "primary-container": "#d4af37",
+                    "surface-container-high": "#2a2a2a",
+                    "canvas": "#0A0A0A",
+                    "on-primary-fixed": "#241a00",
+                    "primary": "#f2ca50",
+                    "outline-variant": "#4d4635",
+                    "tertiary-fixed": "#dde1ff",
+                    "on-tertiary-fixed-variant": "#344280",
+                    "on-error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1280px",
+                    "card-padding": "1.5rem",
+                    "section-gap": "clamp(3rem, 8vw, 6rem)",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Satoshi"],
+                    "clinical-data": ["JetBrains Mono"],
+                    "headline-lg": ["Satoshi"],
+                    "body-sm": ["Satoshi"],
+                    "label-caps": ["Satoshi"],
+                    "headline-md": ["Satoshi"],
+                    "body-lg": ["Satoshi"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "clinical-data": ["14px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #e5e2e1;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-wash {
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0) 100%);
+        }
+        .locked-overlay {
+            mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="font-body-sm text-body-sm">
+<main class="max-w-md mx-auto min-h-screen relative flex flex-col pb-16">
+<!-- Premium Header Image Section -->
+<header class="relative w-full h-72 overflow-hidden mb-8">
+<div class="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-canvas/40 to-canvas"></div>
+<img alt="Clinical Food Presentation" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLsDqj-AKWLpHdH1xubRSnbsvM7NfZGH_oowX9d9dtN6V3qnO46d1NF5UpGe5oYWFsM1m2O1EeaV4wyYrL3YpFcEhdG3NiSdVr65kcdR0Zx2lnolQIHCc6mMuZ6otPQQSQ490i6Mzg7al3mWmaoKuRiDC-xR-wW04tOrP7eTqrsmVBs452f260i8af3bFUOxC7VlIidq0agScT3vs8Df1eVvGALUuQOgAFN6ZWGhvv7tTFyX-KVnIlhBx_U"/>
+<div class="absolute bottom-6 px-gutter z-20">
+<p class="font-label-caps text-label-caps text-primary tracking-[0.2em] mb-2 uppercase">DPDP COMPLIANCE &amp; PRIVACY</p>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-ink-primary">Health Information</h1>
+</div>
+</header>
+<!-- Intro Content -->
+<section class="px-gutter mb-8">
+<p class="text-on-surface-variant font-body-sm mb-6 leading-relaxed">
+                This clinical data is used exclusively for metabolic optimization and nutritional bio-individualization. This is not medical advice.
+            </p>
+<!-- Horizontal Tab Rail -->
+<nav class="flex overflow-x-auto hide-scrollbar gap-4 mb-8 border-b border-hairline pb-2">
+<button class="whitespace-nowrap font-label-caps text-label-caps px-2 py-2 border-b-2 border-primary text-primary">Health</button>
+<button class="whitespace-nowrap font-label-caps text-label-caps px-2 py-2 text-on-surface-variant border-b-2 border-transparent hover:text-ink-primary transition-colors">Activity</button>
+<button class="whitespace-nowrap font-label-caps text-label-caps px-2 py-2 text-on-surface-variant border-b-2 border-transparent hover:text-ink-primary transition-colors">Bio-Markers</button>
+<button class="whitespace-nowrap font-label-caps text-label-caps px-2 py-2 text-on-surface-variant border-b-2 border-transparent hover:text-ink-primary transition-colors">Preferences</button>
+</nav>
+</section>
+<!-- Consent Gate Card -->
+<section class="px-gutter mb-12">
+<div class="bg-surface-container border border-primary/30 rounded-xl p-card-padding glass-wash relative overflow-hidden group">
+<!-- Version Badge -->
+<div class="absolute top-4 right-4 bg-primary/10 px-2 py-1 rounded text-[10px] font-clinical-data text-primary uppercase tracking-widest">
+                    2023_DPDPA_v1
+                </div>
+<div class="mb-6">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'opsz' 20;">verified_user</span>
+<h3 class="font-headline-md text-headline-md text-ink-primary">Data Processing Consent</h3>
+</div>
+<p class="text-on-surface-variant leading-relaxed">
+                        To provide personalized metabolic insights, we process sensitive health data under the Digital Personal Data Protection Act (DPDPA). Your data is encrypted at rest and never sold.
+                    </p>
+</div>
+<ul class="space-y-3 mb-8">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-sage-signal text-sm mt-0.5">check_circle</span>
+<span class="text-on-surface-variant text-xs">Processing for nutritional bio-individualization only.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-sage-signal text-sm mt-0.5">check_circle</span>
+<span class="text-on-surface-variant text-xs">Direct control over your clinical data history.</span>
+</li>
+</ul>
+<button class="w-full bg-primary-container text-on-primary-fixed font-label-caps text-label-caps py-4 rounded-full flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span>I agree — save my health details</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- Disabled Form Preview -->
+<section class="px-gutter mb-16 opacity-40 pointer-events-none relative locked-overlay">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-headline-md text-headline-md text-ink-primary">Clinical Metrics</h4>
+<span class="material-symbols-outlined text-outline">lock</span>
+</div>
+<div class="space-y-6">
+<!-- Physiology Group -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Height (cm)</label>
+<div class="bg-surface-container border border-hairline px-4 py-3 rounded-lg font-clinical-data text-clinical-data">
+                            178.0
+                        </div>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Weight (kg)</label>
+<div class="bg-surface-container border border-hairline px-4 py-3 rounded-lg font-clinical-data text-clinical-data">
+                            74.5
+                        </div>
+</div>
+</div>
+<!-- Bio-Marker Preview -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">HbA1c Level (%)</label>
+<div class="bg-surface-container border border-hairline px-4 py-3 rounded-lg font-clinical-data text-clinical-data flex justify-between">
+<span>5.4</span>
+<span class="text-sage-signal uppercase">Optimal</span>
+</div>
+</div>
+<!-- Conditions -->
+<div class="space-y-4">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Active Conditions</label>
+<div class="grid grid-cols-1 gap-2">
+<div class="flex items-center gap-3 bg-surface-container/50 p-3 rounded-lg border border-hairline">
+<div class="w-4 h-4 rounded border border-outline"></div>
+<span class="text-on-surface-variant text-xs">Type 2 Diabetes</span>
+</div>
+<div class="flex items-center gap-3 bg-surface-container/50 p-3 rounded-lg border border-hairline">
+<div class="w-4 h-4 rounded border border-outline"></div>
+<span class="text-on-surface-variant text-xs">Hypertension</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Destructive Action Section -->
+<section class="px-gutter mb-12">
+<div class="border border-clay-danger/30 bg-clay-danger/5 rounded-xl p-card-padding">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-clay-danger">delete_forever</span>
+<h3 class="font-label-caps text-label-caps text-ink-primary">Section 12: Right to Erasure</h3>
+</div>
+<p class="text-on-surface-variant text-xs mb-6 leading-relaxed">
+                    You have the permanent right to withdraw consent and request the deletion of all metabolic logs and clinical profiles from our systems. This action is irreversible.
+                </p>
+<button class="w-full border border-clay-danger text-clay-danger font-label-caps text-label-caps py-3 rounded-full hover:bg-clay-danger/10 transition-colors active:scale-[0.98]">
+                    Delete account &amp; clinical data
+                </button>
+</div>
+</section>
+<!-- Safety Spacer for Chrome -->
+<div class="h-16"></div>
+</main>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('nav button');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => {
+                        t.classList.remove('border-primary', 'text-primary');
+                        t.classList.add('border-transparent', 'text-on-surface-variant');
+                    });
+                    tab.classList.remove('border-transparent', 'text-on-surface-variant');
+                    tab.classList.add('border-primary', 'text-primary');
+                });
+            });
+        });
+    </script>
+</body></html>

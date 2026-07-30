@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
+import "@/lib/themes/stitch.css";
 import { notFound } from "next/navigation";
 import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId, type DietTrack } from "@workspace/subscription-rules";
 import { planDisplay, planQuoteView, bookingBlock, getPlanBuilderData } from "@/lib/plans";
@@ -38,16 +40,18 @@ export default async function PlanPage({ params, searchParams }: Props) {
   const builderData = getPlanBuilderData(id);
 
   return (
-    <section className="mx-auto max-w-xl px-4 py-10">
-      {blocked ? (
-        <Waitlist
-          planId={id}
-          planName={planDisplay(id).name}
-          reason={bookingBlock(id, defaultTrack) ?? "it isn't open for self-serve booking yet"}
-        />
-      ) : (
-        <PlanBuilder planId={id} defaultTrack={defaultTrack} builderData={builderData} />
-      )}
-    </section>
+    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+      <section className="mx-auto max-w-xl px-4 pt-10 pb-32">
+        {blocked ? (
+          <Waitlist
+            planId={id}
+            planName={planDisplay(id).name}
+            reason={bookingBlock(id, defaultTrack) ?? "it isn't open for self-serve booking yet"}
+          />
+        ) : (
+          <PlanBuilder planId={id} defaultTrack={defaultTrack} builderData={builderData} />
+        )}
+      </section>
+    </div>
   );
 }

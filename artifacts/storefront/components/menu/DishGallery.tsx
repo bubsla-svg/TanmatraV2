@@ -19,7 +19,7 @@ export function DishGallery({ images, alt }: { images: string[]; alt: string }) 
 
   return (
     <div>
-      <div className="overflow-hidden rounded-xl border border-line bg-surface-raised">
+      <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised">
         <div className="aspect-[16/9] w-full">
           {/* eslint-disable-next-line @next/next/no-img-element -- fixed aspect
               box, zero CLS; see DishCard */}
@@ -38,8 +38,8 @@ export function DishGallery({ images, alt }: { images: string[]; alt: string }) 
                   aria-label={`View photo ${i + 1} of ${images.length}`}
                   aria-current={isActive}
                   onClick={() => setActive(i)}
-                  className={`overflow-hidden rounded-lg border-2 transition-transform active:scale-[0.98] ${
-                    isActive ? "border-primary" : "border-line"
+                  className={`overflow-hidden rounded-2xl border transition-transform active:scale-[0.98] ${
+                    isActive ? "border-gold" : "border-line opacity-70"
                   }`}
                 >
                   <span className="block h-14 w-20">

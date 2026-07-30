@@ -150,7 +150,8 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         />
       )}
 
-      <div className="flex flex-col gap-2">
+      {/* Sticky bottom CTA bar — Stitch plan-config design (route-05). Classes only. */}
+      <div className="sticky bottom-16 z-40 flex flex-col gap-2 rounded-xl border border-line bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-3 backdrop-blur-xl md:bottom-4">
         <button
           type="button"
           onClick={confirm}

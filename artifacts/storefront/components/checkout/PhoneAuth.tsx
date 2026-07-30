@@ -8,7 +8,7 @@ import { verifyOtp, ApiError, type AuthUser } from "@/lib/api";
 type Stage = "collapsed" | "phone" | "code";
 
 const inputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
 
 /**
  * Optional sign-in (SF-03). Firebase sends the SMS, its idToken is exchanged for
@@ -81,7 +81,7 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-6">
       {stage === "phone" ? (
         <>
           <label htmlFor="pa-phone" className="text-sm font-medium text-ink">Mobile number</label>
@@ -91,7 +91,7 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
           />
           <button
             type="button" disabled={!phoneValid || busy} onClick={send}
-            className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
+            className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
           >
             {busy ? "Sending…" : "Send code"}
           </button>
@@ -106,7 +106,7 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
           <div className="flex items-center gap-3">
             <button
               type="button" disabled={!codeValid || busy} onClick={verify}
-              className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
+              className="rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
             >
               {busy ? "Verifying…" : "Verify"}
             </button>
