@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import {
   CommandDialog,
@@ -37,12 +37,10 @@ import { useMenuCatalog } from "@/lib/menuData";
 import { usePreferences } from "@/lib/preferencesContext";
 import { evaluateDishForPreferences } from "@/lib/preferencesMatch";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { type CommandPaletteContextValue } from "@/hooks/useCommandPaletteHotkey";
 import MobileSearchSheet from "./MobileSearchSheet";
 
-export interface CommandPaletteContextValue {
-  open: boolean;
-  setOpen: (next: boolean) => void;
-}
+export type { CommandPaletteContextValue };
 
 export type RouteGroup = "Eat" | "Plan" | "Track" | "Community" | "Account";
 
@@ -97,21 +95,6 @@ const NAV_ROUTES: RouteEntry[] = [
   { label: "Vouchers", to: "/vouchers", icon: Gift, group: "Account" },
   { label: "Premium", to: "/premium", icon: Crown, group: "Account" },
 ];
-
-export function useCommandPaletteHotkey(): CommandPaletteContextValue {
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((v) => !v);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-  return { open, setOpen };
-}
 
 export default function CommandPalette({
   open,
