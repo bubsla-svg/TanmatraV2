@@ -1,4 +1,4 @@
-import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { generateText } from "ai";
 import {
   db,
@@ -12,6 +12,7 @@ import {
 } from "@workspace/db";
 import { DEFAULT_MODEL_ID, getModel } from "./ai/model";
 import { logger } from "./logger";
+import { invalidateMenuCatalogCache } from "./menuCatalogCache";
 
 // Customer reviews are slug-keyed so they're independent of menu_items
 // edits/deletes. Ratings are 1..5 inclusive; body is bounded.
@@ -255,11 +256,14 @@ export async function getSummariesForSlugs(
   slugs: string[],
 ): Promise<Map<string, DishReviewSummary>> {
   if (slugs.length === 0) return new Map();
+  // slug is the table's primary key, so this is a PK lookup rather than the
+  // full-table read + in-JS filter this used to do on every getMergedCatalog()
+  // call (i.e. on every menu request).
   const rows = await db
     .select()
-    .from(dishReviewSummariesTable);
-  const wanted = new Set(slugs);
-  return new Map(rows.filter((r) => wanted.has(r.slug)).map((r) => [r.slug, r]));
+    .from(dishReviewSummariesTable)
+    .where(inArray(dishReviewSummariesTable.slug, slugs));
+  return new Map(rows.map((r) => [r.slug, r]));
 }
 
 interface ReviewSummaryFields {
@@ -347,6 +351,7 @@ export async function summarizeReviewsForSlug(
     await db
       .delete(dishReviewSummariesTable)
       .where(eq(dishReviewSummariesTable.slug, slug));
+    invalidateMenuCatalogCache();
     return null;
   }
   const fields = await summarizeWithModel(reviews);
@@ -378,25 +383,94 @@ export async function summarizeReviewsForSlug(
       },
     })
     .returning();
+  if (row) invalidateMenuCatalogCache();
   return row ?? null;
 }
 
-// Summarize every slug that has reviews. Returns counts only — keeps the
-// caller log small even when many dishes are summarized.
+/**
+ * Decide whether a slug's summary is still current, given the visible-review
+ * state the summarizer would see now versus what it saw when it last ran.
+ *
+ * Two independent staleness signals, because neither alone is sufficient:
+ *
+ *  - `newestReviewAt > generatedAt` — a review arrived after the last run.
+ *  - `visibleCount !== sampleSize` — the *set* changed without the newest
+ *    timestamp moving. This is the moderation case: `setReviewHidden` flips
+ *    `hidden` without touching `created_at`, so hiding a 1-star review
+ *    genuinely changes the summary's input while leaving max(created_at)
+ *    exactly where it was. A timestamp-only check would skip that
+ *    regeneration and leave a summary quoting a review the UI no longer shows.
+ */
+export function summaryIsStale(input: {
+  visibleCount: number;
+  newestReviewAt: Date | string | null;
+  generatedAt: Date | string | null;
+  sampleSize: number | null;
+}): boolean {
+  // No summary yet — always generate.
+  if (input.generatedAt === null) return true;
+  if (input.sampleSize !== input.visibleCount) return true;
+  if (input.newestReviewAt === null) return false;
+  const newest = new Date(input.newestReviewAt).getTime();
+  const generated = new Date(input.generatedAt).getTime();
+  return newest > generated;
+}
+
+/**
+ * Summarize every slug whose summary is out of date. Returns counts only —
+ * keeps the caller log small even when many dishes are summarized.
+ *
+ * OA-MED-1.4 (TODO_optimization-auditor.md): this used to call
+ * `summarizeReviewsForSlug` — and therefore bill one Gemini call — for EVERY
+ * qualifying dish on every 6-hourly tick, whether or not a single review had
+ * changed. The scheduler's own comment already names Gemini billing as the
+ * reason for the long interval, but an interval alone only spaces redundant
+ * calls out; it doesn't stop them. On a catalog whose reviews are mostly
+ * static, that was ~4 full-catalog billings a day for identical output.
+ *
+ * The gate lives HERE and not inside `summarizeReviewsForSlug`, deliberately:
+ * `POST /dish-reviews/:slug/summarize` (routes/menuEngineering.ts) calls that
+ * function directly as an admin force-refresh, and moving the check inside
+ * would silently turn that button into a no-op.
+ */
 export async function summarizeAllReviews(): Promise<{
   attempted: number;
   summarized: number;
+  skippedFresh: number;
 }> {
+  // One pass: visible-review count + newest visible review per slug, left
+  // joined to whatever the last summary recorded. `hidden = 0` matches what
+  // `listReviews` (and therefore `summarizeWithModel`) actually sees — the
+  // old aggregate counted hidden rows too, so a dish could clear MIN_REVIEWS
+  // here and then fall short inside summarizeReviewsForSlug.
   const rows = await db
     .select({
       slug: dishReviewsTable.slug,
-      n: sql<number>`count(*)::int`.as("n"),
+      visibleCount: sql<number>`count(*)::int`.as("visible_count"),
+      newestReviewAt: sql<Date | null>`max(${dishReviewsTable.createdAt})`.as("newest_review_at"),
+      generatedAt: dishReviewSummariesTable.generatedAt,
+      sampleSize: dishReviewSummariesTable.sampleSize,
     })
     .from(dishReviewsTable)
-    .groupBy(dishReviewsTable.slug);
+    .leftJoin(
+      dishReviewSummariesTable,
+      eq(dishReviewSummariesTable.slug, dishReviewsTable.slug),
+    )
+    .where(eq(dishReviewsTable.hidden, 0))
+    .groupBy(
+      dishReviewsTable.slug,
+      dishReviewSummariesTable.generatedAt,
+      dishReviewSummariesTable.sampleSize,
+    );
+
   let summarized = 0;
+  let skippedFresh = 0;
   for (const r of rows) {
-    if (r.n < MIN_REVIEWS) continue;
+    if (r.visibleCount < MIN_REVIEWS) continue;
+    if (!summaryIsStale(r)) {
+      skippedFresh += 1;
+      continue;
+    }
     try {
       const out = await summarizeReviewsForSlug(r.slug);
       if (out) summarized += 1;
@@ -404,7 +478,7 @@ export async function summarizeAllReviews(): Promise<{
       logger.error({ err, slug: r.slug }, "review summarize failed");
     }
   }
-  return { attempted: rows.length, summarized };
+  return { attempted: rows.length, summarized, skippedFresh };
 }
 
 // Used by the menu engineering dashboard to attach a summary chip to dishes.

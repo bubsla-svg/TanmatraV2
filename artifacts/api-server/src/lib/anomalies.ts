@@ -296,6 +296,164 @@ const SAMPLERS: Record<
   low_rating_rate: sampleLowRatings,
 };
 
+// ─── Batch (grouped-by-hour) samplers for buildBaseline ────────────────────
+//
+// buildBaseline used to call a single-window SAMPLER once per hour across a
+// 168-hour lookback — 168 sequential round trips per metric, up to 840 per
+// scan. These batch variants fetch the WHOLE lookback window in one grouped
+// query (date_trunc('hour', ...) GROUP BY) and return a Map keyed by each
+// bucket's start-hour epoch ms, so buildBaseline can look up 168 buckets
+// from one already-fetched result instead of issuing 168 queries. Each one
+// mirrors its single-window counterpart's exact filtering/aggregation
+// logic — only the fetch is batched, not the semantics.
+
+type BucketMap = Map<number, WindowBucket>;
+
+function bucketOf(start: Date, sampleSize: number, value: number): WindowBucket {
+  return {start, end: new Date(start.getTime() + HOUR_MS), value, sampleSize};
+}
+
+async function batchRefundRate(lookbackStart: Date, windowEnd: Date): Promise<BucketMap> {
+  const rows = await db.execute<{bucket: Date; total: number; refunded: number}>(sql`
+    select date_trunc('hour', created_at) as bucket,
+           count(*)::int as total,
+           sum(case when status = 'refunded' then 1 else 0 end)::int as refunded
+    from ${ordersTable}
+    where created_at >= ${lookbackStart} and created_at < ${windowEnd}
+    group by bucket
+  `);
+  const map: BucketMap = new Map();
+  for (const r of rows.rows) {
+    const start = new Date(r.bucket);
+    const total = Number(r.total);
+    const refunded = Number(r.refunded);
+    map.set(start.getTime(), bucketOf(start, total, total > 0 ? refunded / total : 0));
+  }
+  return map;
+}
+
+async function batchKitchenReady(lookbackStart: Date, windowEnd: Date): Promise<BucketMap> {
+  // Same per-order shape as sampleKitchenReady: one row per order whose
+  // 'ready' event falls after its creation, bucketed by the ORDER's hour
+  // (matching the original's o.created_at-based windowing).
+  const rows = await db.execute<{bucket: Date; minutes: number}>(sql`
+    select date_trunc('hour', o.created_at) as bucket,
+           extract(epoch from (min(de.created_at) - o.created_at)) / 60.0 as minutes
+    from ${ordersTable} o
+    join ${deliveryEventsTable} de on de.order_id = o.id and de.event = 'ready'
+    where o.created_at >= ${lookbackStart} and o.created_at < ${windowEnd}
+    group by o.id, bucket
+  `);
+  const grouped = new Map<number, number[]>();
+  for (const r of rows.rows) {
+    const minutes = Number(r.minutes);
+    if (!Number.isFinite(minutes) || minutes <= 0 || minutes >= 240) continue;
+    const bucketMs = new Date(r.bucket).getTime();
+    const arr = grouped.get(bucketMs);
+    if (arr) arr.push(minutes);
+    else grouped.set(bucketMs, [minutes]);
+  }
+  const map: BucketMap = new Map();
+  for (const [bucketMs, minutesArr] of grouped) {
+    map.set(bucketMs, bucketOf(new Date(bucketMs), minutesArr.length, avg(minutesArr)));
+  }
+  return map;
+}
+
+async function batchRiderAcceptance(lookbackStart: Date, windowEnd: Date): Promise<BucketMap> {
+  // d2 (out_for_delivery) is intentionally NOT window-filtered here, exactly
+  // as sampleRiderAcceptance doesn't filter it either — only the d1
+  // (rider_assigned) event determines which bucket a handoff belongs to.
+  const rows = await db.execute<{bucket: Date; minutes: number}>(sql`
+    select date_trunc('hour', d1.created_at) as bucket,
+           extract(epoch from (min(d2.created_at) - min(d1.created_at))) / 60.0 as minutes
+    from ${deliveryEventsTable} d1
+    join ${deliveryEventsTable} d2
+      on d2.order_id = d1.order_id and d2.event = 'out_for_delivery'
+    where d1.event = 'rider_assigned'
+      and d1.created_at >= ${lookbackStart} and d1.created_at < ${windowEnd}
+    group by d1.order_id, bucket
+  `);
+  const grouped = new Map<number, number[]>();
+  for (const r of rows.rows) {
+    const minutes = Number(r.minutes);
+    if (!Number.isFinite(minutes) || minutes < 0 || minutes >= 120) continue;
+    const bucketMs = new Date(r.bucket).getTime();
+    const arr = grouped.get(bucketMs);
+    if (arr) arr.push(minutes);
+    else grouped.set(bucketMs, [minutes]);
+  }
+  const map: BucketMap = new Map();
+  for (const [bucketMs, minutesArr] of grouped) {
+    map.set(bucketMs, bucketOf(new Date(bucketMs), minutesArr.length, avg(minutesArr)));
+  }
+  return map;
+}
+
+async function batchPaymentFailures(lookbackStart: Date, windowEnd: Date): Promise<BucketMap> {
+  const [orderRows, failRows] = await Promise.all([
+    db.execute<{bucket: Date; total: number}>(sql`
+      select date_trunc('hour', created_at) as bucket, count(*)::int as total
+      from ${ordersTable}
+      where created_at >= ${lookbackStart} and created_at < ${windowEnd}
+      group by bucket
+    `),
+    db.execute<{bucket: Date; failed: number}>(sql`
+      select date_trunc('hour', created_at) as bucket, count(*)::int as failed
+      from ${deliveryEventsTable}
+      where event = 'payment_failed' and created_at >= ${lookbackStart} and created_at < ${windowEnd}
+      group by bucket
+    `),
+  ]);
+  const totals = new Map<number, number>();
+  for (const r of orderRows.rows) totals.set(new Date(r.bucket).getTime(), Number(r.total));
+  const failed = new Map<number, number>();
+  for (const r of failRows.rows) failed.set(new Date(r.bucket).getTime(), Number(r.failed));
+
+  const map: BucketMap = new Map();
+  for (const [bucketMs, total] of totals) {
+    const failedCount = failed.get(bucketMs) ?? 0;
+    map.set(bucketMs, bucketOf(new Date(bucketMs), total, total > 0 ? failedCount / total : 0));
+  }
+  return map;
+}
+
+async function batchLowRatings(lookbackStart: Date, windowEnd: Date): Promise<BucketMap> {
+  const rows = await db.execute<{bucket: Date; rating: number}>(sql`
+    select date_trunc('hour', created_at) as bucket, (meta->>'rating')::numeric as rating
+    from ${deliveryEventsTable}
+    where event = 'order_rated'
+      and created_at >= ${lookbackStart} and created_at < ${windowEnd}
+      and meta ? 'rating'
+  `);
+  const grouped = new Map<number, number[]>();
+  for (const r of rows.rows) {
+    const rating = Number(r.rating);
+    if (!Number.isFinite(rating)) continue;
+    const bucketMs = new Date(r.bucket).getTime();
+    const arr = grouped.get(bucketMs);
+    if (arr) arr.push(rating);
+    else grouped.set(bucketMs, [rating]);
+  }
+  const map: BucketMap = new Map();
+  for (const [bucketMs, ratings] of grouped) {
+    const low = ratings.filter((r) => r <= 2).length;
+    map.set(bucketMs, bucketOf(new Date(bucketMs), ratings.length, low / ratings.length));
+  }
+  return map;
+}
+
+const BATCH_SAMPLERS: Record<
+  MetricKey,
+  (lookbackStart: Date, windowEnd: Date) => Promise<BucketMap>
+> = {
+  refund_rate: batchRefundRate,
+  kitchen_ready_minutes: batchKitchenReady,
+  rider_acceptance_minutes: batchRiderAcceptance,
+  payment_failure_rate: batchPaymentFailures,
+  low_rating_rate: batchLowRatings,
+};
+
 // ─── Detector ──────────────────────────────────────────────────────────────
 
 function avg(xs: number[]): number {
@@ -320,12 +478,19 @@ async function buildBaseline(
   metric: MetricKey,
   windowEnd: Date,
 ): Promise<{ baseline: number | null; std: number | null }> {
-  const sampler = SAMPLERS[metric];
+  // The original per-hour loop produced buckets [windowEnd-2h, windowEnd-1h)
+  // (h=1, newest) through [windowEnd-169h, windowEnd-168h) (h=168, oldest) —
+  // 168 hours, deliberately EXCLUDING the current [windowEnd-1h, windowEnd)
+  // window (see the "excluding the current window" comment above). The
+  // batch fetch must use the same bounds: up to windowEnd-1h, not windowEnd.
+  const baselineEnd = new Date(windowEnd.getTime() - HOUR_MS);
+  const lookbackStart = new Date(baselineEnd.getTime() - LOOKBACK_HOURS * HOUR_MS);
+  const bucketMap = await BATCH_SAMPLERS[metric](lookbackStart, baselineEnd);
+
   const samples: WindowBucket[] = [];
   for (let h = 1; h <= LOOKBACK_HOURS; h++) {
-    const end = new Date(windowEnd.getTime() - h * HOUR_MS);
-    const start = new Date(end.getTime() - HOUR_MS);
-    samples.push(await sampler(start, end));
+    const start = new Date(windowEnd.getTime() - (h + 1) * HOUR_MS);
+    samples.push(bucketMap.get(start.getTime()) ?? bucketOf(start, 0, 0));
   }
   const valid = samples.filter((s) => s.sampleSize > 0);
   if (valid.length < 3) return { baseline: null, std: null };
@@ -520,26 +685,29 @@ async function evaluateMetric(
 export async function runAnomalyScan(
   now: Date = new Date(),
 ): Promise<DetectionResult[]> {
-  const results: DetectionResult[] = [];
-  for (const metric of Object.keys(METRICS) as MetricKey[]) {
-    try {
-      results.push(await evaluateMetric(metric, now));
-    } catch (err) {
-      logger.error({ err, metric }, "anomaly evaluator failed");
-      results.push({
-        metric,
-        alertId: null,
-        fired: false,
-        reason: `error: ${(err as Error).message}`,
-        value: 0,
-        baseline: null,
-        threshold: 0,
-        severity: null,
-        sampleSize: 0,
-      });
-    }
-  }
-  return results;
+  // The 5 metrics are independent — no reason to serialize them. Each still
+  // gets the same per-metric error isolation the old try/catch-in-a-loop
+  // gave: one metric throwing must not abort the others, so Promise.allSettled
+  // (not Promise.all) with Object.keys(METRICS) order preserved.
+  const settled = await Promise.allSettled(
+    (Object.keys(METRICS) as MetricKey[]).map((metric) => evaluateMetric(metric, now)),
+  );
+  return settled.map((result, i) => {
+    if (result.status === "fulfilled") return result.value;
+    const metric = (Object.keys(METRICS) as MetricKey[])[i]!;
+    logger.error({ err: result.reason, metric }, "anomaly evaluator failed");
+    return {
+      metric,
+      alertId: null,
+      fired: false,
+      reason: `error: ${(result.reason as Error).message}`,
+      value: 0,
+      baseline: null,
+      threshold: 0,
+      severity: null,
+      sampleSize: 0,
+    };
+  });
 }
 
 // ─── Alert lifecycle ──────────────────────────────────────────────────────
@@ -681,4 +849,41 @@ export async function buildDailyDigest(): Promise<{
     }),
     total: rows.length,
   };
+}
+
+// ─── Test-only golden-comparison exports ───────────────────────────────────
+//
+// OA-DEEP-1.2: buildBaseline was rewritten from 168 sequential single-hour
+// queries into 1-2 grouped queries per metric. __buildBaselineOldForTest is
+// a FROZEN copy of the pre-optimization algorithm (unreachable from any
+// production code path) that anomalies.golden.test.ts uses to assert the
+// optimized buildBaseline produces identical output against real seeded
+// data. Do not call these from application code.
+
+export async function __buildBaselineOldForTest(
+  metric: MetricKey,
+  windowEnd: Date,
+): Promise<{ baseline: number | null; std: number | null }> {
+  const sampler = SAMPLERS[metric];
+  const samples: WindowBucket[] = [];
+  for (let h = 1; h <= LOOKBACK_HOURS; h++) {
+    const end = new Date(windowEnd.getTime() - h * HOUR_MS);
+    const start = new Date(end.getTime() - HOUR_MS);
+    samples.push(await sampler(start, end));
+  }
+  const valid = samples.filter((s) => s.sampleSize > 0);
+  if (valid.length < 3) return { baseline: null, std: null };
+  const targetHour = new Date(windowEnd.getTime() - HOUR_MS).getUTCHours();
+  const seasonal = valid.filter((s) => s.start.getUTCHours() === targetHour);
+  const pool = seasonal.length >= 3 ? seasonal : valid;
+  const values = pool.map((s) => s.value);
+  const mean = avg(values);
+  return { baseline: mean, std: stdDev(values, mean) };
+}
+
+export async function __buildBaselineForTest(
+  metric: MetricKey,
+  windowEnd: Date,
+): Promise<{ baseline: number | null; std: number | null }> {
+  return buildBaseline(metric, windowEnd);
 }

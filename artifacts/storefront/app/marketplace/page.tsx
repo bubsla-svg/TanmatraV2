@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
+import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
 
 export const metadata: Metadata = {
   title: "The Tanmatra Marketplace",
@@ -9,11 +10,14 @@ export const metadata: Metadata = {
 };
 
 /**
- * Marketplace (route-parity Wave F). Public browse shell; the grid + item pages
- * are client islands, and buying settles through the shared Razorpay money-path
- * (see lib/marketplaceApi). Ship-only for v1; bundle-with-meal is deferred.
+ * Marketplace (route-parity Wave F). Server-fetches the catalog (revalidate
+ * hourly, same pattern as /menu) so first paint has real cards; the grid +
+ * item pages are still client islands for the category filter and cart, and
+ * buying settles through the shared Razorpay money-path (see
+ * lib/marketplaceApi). Ship-only for v1; bundle-with-meal is deferred.
  */
-export default function MarketplacePage() {
+export default async function MarketplacePage() {
+  const items = await fetchMarketplaceItemsServer();
   return (
     <section className="mx-auto max-w-5xl px-4 py-10">
       <p className="text-[11px] font-bold uppercase tracking-widest text-gold-text">RD-curated pantry</p>
@@ -23,7 +27,7 @@ export default function MarketplacePage() {
         registered dietitians. Look for the RD badge on dietitian-reviewed picks.
       </p>
       <div className="mt-8">
-        <MarketplaceGrid />
+        <MarketplaceGrid initialItems={items} />
       </div>
     </section>
   );
