@@ -79,8 +79,17 @@ jobs:
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
             storefront:
+              # OA-MED-1.25 (TODO_optimization-auditor.md): this used to be a
+              # blanket 'lib/**', so e.g. a lib/db-only change triggered a
+              # full E2_HIGHCPU_8 rebuild + redeploy of a storefront that
+              # doesn't import it. storefront.yml already encodes precisely
+              # which lib/ packages the storefront depends on — mirror that
+              # list instead of over-triggering.
               - 'artifacts/storefront/**'
-              - 'lib/**'
+              - 'lib/tokens/**'
+              - 'lib/menu-catalog/**'
+              - 'lib/preferences-match/**'
+              - 'lib/subscription-rules/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
@@ -368,13 +377,53 @@ jobs:
 
       - name: Build image with Cloud Build
         run: |
+          IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          CACHE_IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:buildcache
+          # OA-MED-1.24 (TODO_optimization-auditor.md): Cloud Build provisions
+          # a cache-empty VM every run, so pnpm install + the full build
+          # re-ran from scratch on every deploy despite the Dockerfile's
+          # layers being correctly ordered for caching. Pull the previous
+          # image (best-effort — `|| true`, since the very first build or a
+          # pruned registry has no cache tag yet) and build with
+          # --cache-from so unchanged layers reuse it; push both the sha tag
+          # and an updated cache tag for the next run to pull.
           # Submit async to avoid VPC-SC log-streaming errors from the
           # GitHub runner. Poll build status directly instead.
+          # BuildKit (not the classic builder) so --cache-from + the inline
+          # cache metadata cover EVERY stage of the multi-stage Dockerfile,
+          # not just the final image's own layers.
+          cat > /tmp/api-cloudbuild.yaml <<EOF
+          steps:
+            - name: gcr.io/cloud-builders/docker
+              entrypoint: bash
+              args:
+                - -c
+                - docker pull ${CACHE_IMAGE} || true
+            - name: gcr.io/cloud-builders/docker
+              env:
+                - DOCKER_BUILDKIT=1
+              args:
+                - build
+                - --cache-from
+                - ${CACHE_IMAGE}
+                - --build-arg
+                - BUILDKIT_INLINE_CACHE=1
+                - -t
+                - ${IMAGE}
+                - -t
+                - ${CACHE_IMAGE}
+                - .
+          images:
+            - ${IMAGE}
+            - ${CACHE_IMAGE}
+          options:
+            logging: CLOUD_LOGGING_ONLY
+          EOF
           BUILD_ID=$(gcloud builds submit \
-            --tag asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
+            --config /tmp/api-cloudbuild.yaml \
             --project ${GCP_PROJECT} \
             --async \
-            --format='value(id)')
+            --format='value(id)' .)
           echo "Cloud Build ID: $BUILD_ID"
           for i in $(seq 1 40); do
             STATUS=$(gcloud builds describe "$BUILD_ID" \
@@ -502,14 +551,32 @@ jobs:
       - name: Build image with Cloud Build
         run: |
           IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          CACHE_IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:buildcache
           # Custom Dockerfile + build-arg (VITE_API_BASE is baked into the
           # bundle), so we submit an inline build config rather than --tag.
           # Async + CLOUD_LOGGING_ONLY avoids VPC-SC log-streaming errors.
+          # OA-MED-1.24: pull the previous image (best-effort — the very
+          # first build or a pruned registry has no cache tag yet) and build
+          # with --cache-from so unchanged layers reuse it; push both the
+          # sha tag and an updated cache tag for the next run to pull.
           cat > /tmp/frontend-cloudbuild.yaml <<EOF
           steps:
             - name: gcr.io/cloud-builders/docker
+              entrypoint: bash
+              args:
+                - -c
+                - docker pull ${CACHE_IMAGE} || true
+            - name: gcr.io/cloud-builders/docker
+              # BuildKit so --cache-from covers every stage of the
+              # multi-stage Dockerfile, not just the final image's layers.
+              env:
+                - DOCKER_BUILDKIT=1
               args:
                 - build
+                - --cache-from
+                - ${CACHE_IMAGE}
+                - --build-arg
+                - BUILDKIT_INLINE_CACHE=1
                 - --build-arg
                 - VITE_API_BASE=/api
                 - --build-arg
@@ -534,11 +601,14 @@ jobs:
                 - VITE_RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}
                 - -t
                 - ${IMAGE}
+                - -t
+                - ${CACHE_IMAGE}
                 - -f
                 - artifacts/tanmatra/Dockerfile
                 - .
           images:
             - ${IMAGE}
+            - ${CACHE_IMAGE}
           options:
             logging: CLOUD_LOGGING_ONLY
             machineType: E2_HIGHCPU_8
@@ -731,6 +801,7 @@ jobs:
       - name: Build image with Cloud Build
         run: |
           IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          CACHE_IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:buildcache
           # Custom Dockerfile. NEXT_PUBLIC_API_BASE is left empty so the browser
           # uses the same-origin /api proxy. Live checkout (SF-05) is ON: the
           # à-la-carte guest money path needs only Razorpay creds on the
@@ -739,11 +810,27 @@ jobs:
           # NEXT_PUBLIC_FIREBASE_* values (SF-03 sign-in) are PUBLIC web config —
           # the same secrets the tanmatra SPA build consumes. Async +
           # CLOUD_LOGGING_ONLY avoids VPC-SC log-streaming errors.
+          # OA-MED-1.24: pull the previous image (best-effort — the very
+          # first build or a pruned registry has no cache tag yet) and build
+          # with BuildKit + --cache-from so unchanged layers reuse it across
+          # every stage of the multi-stage Dockerfile; push both the sha tag
+          # and an updated cache tag for the next run to pull.
           cat > /tmp/storefront-cloudbuild.yaml <<EOF
           steps:
             - name: gcr.io/cloud-builders/docker
+              entrypoint: bash
+              args:
+                - -c
+                - docker pull ${CACHE_IMAGE} || true
+            - name: gcr.io/cloud-builders/docker
+              env:
+                - DOCKER_BUILDKIT=1
               args:
                 - build
+                - --cache-from
+                - ${CACHE_IMAGE}
+                - --build-arg
+                - BUILDKIT_INLINE_CACHE=1
                 - --build-arg
                 - NEXT_PUBLIC_API_BASE=
                 - --build-arg
@@ -773,11 +860,14 @@ jobs:
                 - IMAGE_UPSTREAM=${IMAGE_URL}
                 - -t
                 - ${IMAGE}
+                - -t
+                - ${CACHE_IMAGE}
                 - -f
                 - artifacts/storefront/Dockerfile
                 - .
           images:
             - ${IMAGE}
+            - ${CACHE_IMAGE}
           options:
             logging: CLOUD_LOGGING_ONLY
             machineType: E2_HIGHCPU_8
