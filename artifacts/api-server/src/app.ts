@@ -13,6 +13,7 @@ import {
   publicMenuRateLimit,
   orderRateLimit,
   aiRateLimit,
+  aiStaffRateLimit,
   rationaleRateLimit,
   paymentRouteRateLimit,
   addressRateLimit,
@@ -172,9 +173,12 @@ app.use("/api/menu", publicMenuRateLimit);
 app.use("/api/dish", publicMenuRateLimit);
 app.use("/api/orders", orderRateLimit);
 app.use("/api/checkout", orderRateLimit);
-app.use("/api/cms-agent", aiRateLimit);
+// Staff (cms/ops) and customer (coach/support) agents get separate buckets —
+// office/VPN egress IPs would otherwise exhaust the shared customer quota.
+// See aiStaffRateLimit's comment (OA-MED-1.9).
+app.use("/api/cms-agent", aiStaffRateLimit);
+app.use("/api/ops-agent", aiStaffRateLimit);
 app.use("/api/coach-agent", aiRateLimit);
-app.use("/api/ops-agent", aiRateLimit);
 app.use("/api/support-agent", aiRateLimit);
 app.use("/api/dish-rationales", rationaleRateLimit);
 app.use("/api/payments", paymentRouteRateLimit);

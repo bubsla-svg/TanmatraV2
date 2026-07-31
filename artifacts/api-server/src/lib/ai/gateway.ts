@@ -117,6 +117,32 @@ function isTransientError(err: unknown): boolean {
   return false;
 }
 
+// OA-MED-1.5 (TODO_optimization-auditor.md): the retry loop below used to
+// re-attempt immediately on a transient error. Retrying a 429 with no delay
+// is how one rate-limit response becomes a cascade — every concurrent caller
+// re-hammers the same upstream in lockstep. Exponential backoff spaces the
+// attempts; full jitter breaks the lockstep so retries from separate requests
+// don't re-synchronise into the same burst. Mirrors the factor-2 shape of
+// lib/integrations-gemini-ai/src/batch/utils.ts (p-retry), inline rather than
+// pulling p-retry in — this is one loop with a known attempt cap, not a
+// batch-processing surface.
+const RETRY_BASE_DELAY_MS = 500;
+const RETRY_MAX_DELAY_MS = 8_000;
+
+export function retryDelayMs(
+  attempt: number,
+  rand: () => number = Math.random,
+): number {
+  const ceiling = Math.min(RETRY_MAX_DELAY_MS, RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
+  // Full jitter: uniform in [0, ceiling]. Keeps the expected delay growing
+  // exponentially while removing the synchronised-retry thundering herd.
+  return Math.round(rand() * ceiling);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function persistRun(row: {
   agent: string;
   userId: string | null;
@@ -356,10 +382,12 @@ export async function runAgent(
           lastErr = err;
           if (attempt >= maxAttempts || !isTransientError(err)) break;
           timedOut = false;
+          const delayMs = retryDelayMs(attempt);
           logger.warn(
-            { err, agent: agent.name, attempt },
-            "gateway transient error, retrying",
+            { err, agent: agent.name, attempt, delayMs },
+            "gateway transient error, retrying after backoff",
           );
+          await sleep(delayMs);
         }
       }
       if (lastErr) throw lastErr;

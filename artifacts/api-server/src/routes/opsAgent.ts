@@ -6,16 +6,13 @@ import { desc, eq, and, type SQL } from "drizzle-orm";
 import { runAgent, type GatewayEvent } from "../lib/ai";
 import { fetchLiveQueue } from "../lib/ai/agents/ops";
 import { isOpsRequest, requireOps } from "../lib/adminGate";
+import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
 
-const ChatTurnSchema = z.object({
-  role: z.enum(["user", "agent"]),
-  text: z.string(),
-});
 const ChatBodySchema = z.object({
   message: z.string().min(1).max(8000),
-  history: z.array(ChatTurnSchema).max(50).optional(),
+  history: ChatHistorySchema,
 });
 
 function writeEvent(res: Response, event: object): void {

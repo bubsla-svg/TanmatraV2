@@ -486,6 +486,7 @@ jobs:
           node --test --test-force-exit --import tsx
           ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
           ./src/lib/b2b/accountHealth.test.ts
+          ./src/lib/ai/aiHardening.test.ts
       # Not money-path — the anomaly-scan baseline golden test from the
       # optimization audit (TODO_optimization-auditor.md OA-DEEP-1.2). Needs
       # real Postgres to seed orders/delivery_events and compare the batched
