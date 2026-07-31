@@ -58,7 +58,7 @@ export default async function MetabolicPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <header className="grid items-center gap-12 py-[var(--space-section)] lg:grid-cols-2">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-widest text-gold-text">{H.eyebrow}</p>
           <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
             {H.title} <span className="text-gold-text">{H.accent}</span>

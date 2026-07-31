@@ -16,9 +16,14 @@ export function Section04TelehealthTracking() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <div className="rounded-3xl border border-line bg-surface p-8 shadow-sm lg:p-12">
+        {/* min-w-0 on both grid items: a CSS grid item's default min-width is
+            `auto` (its content's min-content size), not 0 — so on narrow
+            viewports the track refused to shrink below the dashboard-preview
+            card's intrinsic width and pushed this whole section past the
+            viewport edge. min-w-0 lets the track actually shrink to fit. */}
         <div className="grid items-center gap-8 lg:grid-cols-2">
           {/* Visual: Dashboard Preview */}
-          <div className="order-2 lg:order-1 rounded-2xl border border-line bg-surface-raised p-6 shadow-xs">
+          <div className="order-2 lg:order-1 min-w-0 rounded-2xl border border-line bg-surface-raised p-6 shadow-xs">
             <div className="flex items-center justify-between border-b border-line pb-3 text-xs font-semibold text-ink">
               <span>Tanmatra Health Tracker</span>
               <span className="tabular text-gold-text">Nutrition &amp; Energy Log</span>
@@ -51,7 +56,7 @@ export function Section04TelehealthTracking() {
             </div>
           </div>
 
-          <div className="order-1 lg:order-2">
+          <div className="order-1 lg:order-2 min-w-0">
             <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
               Expert Guidance &amp; Tracking
             </span>
@@ -63,7 +68,11 @@ export function Section04TelehealthTracking() {
             </p>
 
             <div className="mt-8">
-              <Button asChild shape="xl" size="fluid" className="px-6 py-3.5 font-bold shadow-md">
+              {/* whitespace-normal overrides the Button primitive's default
+                  nowrap: this label is long enough that nowrap made the
+                  button itself the widest thing on the page, dragging the
+                  whole section wider than the viewport on mobile. */}
+              <Button asChild shape="xl" size="fluid" className="whitespace-normal px-6 py-3.5 font-bold shadow-md">
                 <Link href="/rd" onClick={handleClick}>Book Your Free 15-Minute Intro Consult &rarr;</Link>
               </Button>
             </div>
