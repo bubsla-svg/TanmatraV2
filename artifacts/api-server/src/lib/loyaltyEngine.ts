@@ -1216,15 +1216,22 @@ export async function finalizeOrder(args: {
   return result;
 }
 
+/**
+ * OA-MED-1.2 (TODO_optimization-auditor.md): this and checkProteinStreak each
+ * issued their own identical `select * from user_profile where user_id = ?`.
+ * Since runLoyaltyEngineForUser calls this twice (birthday, then anniversary —
+ * the field is discriminated in JS, not in SQL) plus checkProteinStreak once,
+ * that was THREE byte-identical reads of the same row per user, per sweep.
+ * The row is now fetched once by the caller and threaded through.
+ */
+type LoyaltyProfile = typeof userProfileTable.$inferSelect;
+
 async function checkBirthdayOrAnniversary(
   userId: string,
   field: "birthDate" | "anniversaryDate",
   kind: "birthday" | "anniversary",
+  profile: LoyaltyProfile | null,
 ): Promise<Notification | null> {
-  const [profile] = await db
-    .select()
-    .from(userProfileTable)
-    .where(eq(userProfileTable.userId, userId));
   const value = profile?.[field];
   if (!value) return null;
   const config = await getLoyaltyConfig();
@@ -1383,12 +1390,11 @@ async function checkLoyalty(userId: string): Promise<Notification[]> {
   return out;
 }
 
-async function checkProteinStreak(userId: string): Promise<Notification | null> {
+async function checkProteinStreak(
+  userId: string,
+  profile: LoyaltyProfile | null,
+): Promise<Notification | null> {
   const config = await getLoyaltyConfig();
-  const [profile] = await db
-    .select()
-    .from(userProfileTable)
-    .where(eq(userProfileTable.userId, userId));
   if (!profile) return null;
   if ((profile.proteinShortfallStreak ?? 0) < config.proteinStreakThreshold)
     return null;
@@ -1406,18 +1412,28 @@ async function checkProteinStreak(userId: string): Promise<Notification | null> 
 export async function runLoyaltyEngineForUser(userId: string): Promise<{
   notifications: Notification[];
 }> {
+  // Fetched ONCE for all three checks that need it (OA-MED-1.2). `?? null`
+  // rather than leaving it undefined so the checks' `!profile` guards read
+  // the same either way.
+  const [profileRow] = await db
+    .select()
+    .from(userProfileTable)
+    .where(eq(userProfileTable.userId, userId));
+  const profile = profileRow ?? null;
+
   const out: Notification[] = [];
-  const bday = await checkBirthdayOrAnniversary(userId, "birthDate", "birthday");
+  const bday = await checkBirthdayOrAnniversary(userId, "birthDate", "birthday", profile);
   if (bday) out.push(bday);
   const anniv = await checkBirthdayOrAnniversary(
     userId,
     "anniversaryDate",
     "anniversary",
+    profile,
   );
   if (anniv) out.push(anniv);
   out.push(...(await checkWinback(userId)));
   out.push(...(await checkLoyalty(userId)));
-  const protein = await checkProteinStreak(userId);
+  const protein = await checkProteinStreak(userId, profile);
   if (protein) out.push(protein);
   return { notifications: out };
 }
@@ -1475,6 +1491,56 @@ export async function getSubscriptionLoyaltyProgress(
  * Sweep loyalty rules for users with any engagement signal. Idempotent
  * via dedupe keys + awardedAt guards.
  */
+/**
+ * Bounded-concurrency map. Deliberately small and local rather than a new
+ * dependency: this is the only fan-out in the file, and `p-limit` is not in
+ * the workspace.
+ */
+async function mapWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    for (;;) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      await fn(items[i]!);
+    }
+  });
+  await Promise.all(workers);
+}
+
+/**
+ * OA-MED-1.2: the sweep ran the entire engaged base strictly serially — one
+ * user fully finished before the next started, at ~5 queries + one per
+ * subscription each.
+ *
+ * Concurrency is capped LOW and env-tunable, not at the audit's suggested
+ * upper bound of 10, for two reasons this file's own surroundings make
+ * concrete:
+ *   - The main pg pool is 16 connections (PG_POOL_MAX) and is shared with
+ *     live request traffic. This sweep runs in-process alongside it, so a
+ *     high fan-out here starves request handlers rather than just finishing
+ *     sooner.
+ *   - `ensureNotification` fires `dispatchNotificationEmail` via setImmediate
+ *     for every email-eligible kind — which is every loyalty kind except
+ *     protein_streak. Each does 2 more reads plus an SMTP send, and has no
+ *     rate limiting of its own. N× user concurrency is N× concurrent
+ *     unbounded email sends; that is the highest-risk side effect here, not
+ *     the DB load.
+ *
+ * Parallelising ACROSS users is safe: dedupe keys are user-scoped and
+ * `ensureNotification` upserts with onConflictDoNothing, so two users can
+ * never contend. The per-user checks stay sequential — running them in
+ * parallel would multiply pool pressure for no throughput gain.
+ */
+const SWEEP_CONCURRENCY = Math.max(
+  1,
+  Math.min(10, Number(process.env["LOYALTY_SWEEP_CONCURRENCY"] ?? 5)),
+);
+
 export async function runLoyaltyEngineForAll(): Promise<{
   scanned: number;
   triggered: number;
@@ -1486,16 +1552,20 @@ export async function runLoyaltyEngineForAll(): Promise<{
       union select referee_user_id as user_id from ${referralRedemptionsTable}
     ) u`,
   );
+  const userIds = (rows.rows ?? []).map((r) => r.user_id);
   let triggered = 0;
-  for (const r of rows.rows ?? []) {
+  // try/catch stays INSIDE the mapped function, not around the whole fan-out:
+  // the sweep is best-effort per user, and a Promise.all-style abort on one
+  // user's failure would silently skip everyone after them.
+  await mapWithConcurrency(userIds, SWEEP_CONCURRENCY, async (userId) => {
     try {
-      const out = await runLoyaltyEngineForUser(r.user_id);
+      const out = await runLoyaltyEngineForUser(userId);
       triggered += out.notifications.length;
     } catch {
       // best-effort sweep; continue
     }
-  }
-  return { scanned: rows.rows?.length ?? 0, triggered };
+  });
+  return { scanned: userIds.length, triggered };
 }
 
 export async function listNotifications(userId: string): Promise<Notification[]> {

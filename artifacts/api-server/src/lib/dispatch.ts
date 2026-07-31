@@ -320,9 +320,31 @@ function newBatchKey(): string {
 // happens in JS exactly as before, so partner choice is a strict
 // superset of the previous behaviour — never worse.
 const KM_PER_LAT_DEGREE = 111.0;
+/**
+ * OA-MED-1.1 (TODO_optimization-auditor.md): the candidate loop below used to
+ * issue one `ridersTable` query PER candidate, awaited sequentially — and the
+ * bbox candidate query has no LIMIT, so the round-trip count scaled with open
+ * orders in the zone. The pathological case is a zone where many eligible
+ * partners' riders have gone offline: every one of them costs a round trip
+ * only to `continue`.
+ *
+ * `onlineById` is passed in rather than fetched here. The caller already runs
+ * `select * from riders where status = 'online'` a few lines later to rank
+ * candidates, and this loop only ever accepts an ONLINE rider — so that query
+ * is a strict superset of what the loop needs. Hoisting it above the call and
+ * indexing it costs **zero net queries**, which beats the audit's suggested
+ * `inArray` (that would have added one).
+ *
+ * Note the audit's second suggestion — "defer the dispatchDecisionsTable
+ * lookup until a partner is actually chosen" — describes what this code
+ * ALREADY does: that query sits after the online guard and immediately before
+ * an unconditional `return`, so it runs 0 or 1 times per call, never N. Left
+ * as-is; there was no N+1 there to fix.
+ */
 async function findBatchPartner(
   order: Order,
   drop: { lat: number; lng: number },
+  onlineById: Map<number, Rider>,
 ): Promise<{ rider: Rider; batchKey: string; partnerOrderId: number } | null> {
   // Patient-safety: a STAT order is single-drop-only. Pairing it with
   // a routine partner would silently extend its delivery time by the
@@ -414,12 +436,11 @@ async function findBatchPartner(
     );
     if (!elig.eligible) continue;
     if (partner.riderId == null) continue;
-    const [rider] = await db
-      .select()
-      .from(ridersTable)
-      .where(eq(ridersTable.id, partner.riderId))
-      .limit(1);
-    if (!rider || rider.status !== "online") continue;
+    // Map miss == "no such rider, or not online" — the map is built from the
+    // `status = 'online'` query, so this is exactly the old
+    // `!rider || rider.status !== "online"` guard with no round trip.
+    const rider = onlineById.get(partner.riderId);
+    if (!rider) continue;
     // Reuse partner's batchKey if one exists.
     const [partnerDecision] = await db
       .select({ batchKey: dispatchDecisionsTable.batchKey })
@@ -506,12 +527,28 @@ async function dispatchOrderInner(
   }
   const drop = orderDropLatLng(orderPeek);
 
+  // Fetch the online-rider pool ONCE, before both consumers. It was already
+  // fetched unconditionally a few lines below for ranking; hoisting it here
+  // lets findBatchPartner index it instead of issuing one query per candidate
+  // (OA-MED-1.1), at zero extra cost.
+  //
+  // Deliberately NOT locked or re-read: this is the pre-flight pass, and the
+  // comment below already documents that authoritative rider state is re-read
+  // `FOR UPDATE` inside the transaction. A batched rider that goes offline
+  // between here and the commit is caught there and surfaces as "batch partner
+  // rider unavailable" — so a marginally staler snapshot is already handled.
+  const onlineRiders = await db
+    .select()
+    .from(ridersTable)
+    .where(eq(ridersTable.status, "online"));
+  const onlineById = new Map(onlineRiders.map((r) => [r.id, r]));
+
   // 1. Try to batch onto an existing assignment.
   let batchKey = newBatchKey();
   let batchedRider: Rider | null = null;
   let batched = false;
   if (allowBatch) {
-    const partner = await findBatchPartner(orderPeek, drop);
+    const partner = await findBatchPartner(orderPeek, drop, onlineById);
     if (partner) {
       batchedRider = partner.rider;
       batchKey = partner.batchKey;
@@ -531,11 +568,8 @@ async function dispatchOrderInner(
   // rider while others idle. The actual claim — and the fallback to the
   // next-best candidate when the top one is already being claimed by a
   // concurrent transaction — happens under a row lock inside the
-  // transaction below.
-  const onlineRiders = await db
-    .select()
-    .from(ridersTable)
-    .where(eq(ridersTable.status, "online"));
+  // transaction below. (`onlineRiders` itself is fetched above, before the
+  // batch attempt, so findBatchPartner can share it.)
   const readyMin = readyInMinutes(orderPeek);
   const ranked = batchedRider
     ? []
