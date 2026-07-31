@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
+import { invalidateMenuCatalogCache } from "../lib/menuCatalogCache";
 import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, classifyPosStatusTransition } from "../lib/petpooja";
 import { petpoojaAuthOk, getStoreStatus, setStoreStatus } from "../lib/petpoojaClient";
 import {
@@ -79,6 +80,7 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
       }
     });
 
+    invalidateMenuCatalogCache();
     req.log?.info("petpooja push-menu sync completed successfully");
     res.status(200).json({ success: "1", message: "Menu synchronized successfully" });
   } catch (err: any) {
@@ -708,6 +710,7 @@ router.post("/integrations/petpooja/item_stock", async (req: Request, res: Respo
             sql`${menuItemsTable.tags} @> ${JSON.stringify([`petpooja:${id}`])}::jsonb`
           );
       }
+      invalidateMenuCatalogCache();
       req.log?.info({ itemID, inStock }, "successfully updated item stock status");
     } else {
       req.log?.warn(
@@ -756,6 +759,7 @@ router.post("/integrations/petpooja/item_stock_off", async (req: Request, res: R
             sql`${menuItemsTable.tags} @> ${JSON.stringify([`petpooja:${id}`])}::jsonb`
           );
       }
+      invalidateMenuCatalogCache();
       req.log?.info(
         { itemID, inStock, autoTurnOnTime, customTurnOnTime },
         "successfully marked items as out-of-stock"
