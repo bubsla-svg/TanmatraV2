@@ -4,17 +4,25 @@
 // useQuery (["marketplace","items"]) and category chips filter it client-side
 // — genuinely instant (no per-chip network round trip), matching the intent
 // of the comment this file already carried.
+//
+// `initialItems` comes from app/marketplace/page.tsx's server-side fetch
+// (fetchMarketplaceItemsServer, revalidate:3600 — the same pattern
+// lib/catalog.ts already uses for /menu) and seeds useQuery's initialData,
+// so first paint has real cards instead of an empty shell + "Loading
+// pantry…", matching every other catalog surface. The client-side query
+// stays wired for retry-on-error; it just doesn't need to run on mount to
+// have something to show.
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { formatPaise } from "@/lib/format";
-import { listItems } from "@/lib/marketplaceApi";
+import { listItems, type MarketplaceItem } from "@/lib/marketplaceApi";
 import { useCart } from "@/components/cart/CartProvider";
 import { addLine } from "@/lib/cartStore";
 
 const CATEGORIES = ["all", "oils", "sauces", "supplements", "snacks", "pantry"] as const;
 
-export function MarketplaceGrid() {
+export function MarketplaceGrid({ initialItems }: { initialItems: MarketplaceItem[] }) {
   const [category, setCategory] = useState<string>("all");
   const { cart, setCart } = useCart();
 
@@ -26,6 +34,7 @@ export function MarketplaceGrid() {
   } = useQuery({
     queryKey: ["marketplace", "items"],
     queryFn: () => listItems("all").then((r) => r.items),
+    initialData: initialItems.length > 0 ? initialItems : undefined,
   });
 
   const items = useMemo(() => {
