@@ -1,6 +1,7 @@
 "use client"; // Interactive card flip and state management
 // Tap-to-flip clinical dish photo card revealing specification sheet
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { PLAN_PRICE_TABLE } from "@workspace/subscription-rules";
@@ -110,13 +111,13 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
             {spec.macros.protein}g P
           </span>
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => toggleFlip(true)}
-          className="rounded-xl bg-gold px-3 py-1.5 text-xs font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90"
+          shape="xl" size="fluid" className="px-3 py-1.5 text-xs font-semibold"
         >
           View Specs
-        </button>
+        </Button>
       </div>
     </article>
   );

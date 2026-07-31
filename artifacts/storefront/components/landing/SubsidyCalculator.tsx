@@ -1,5 +1,6 @@
 "use client"; // Justification: client-side team size range slider and interactive corporate subsidy computation.
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { PER_MEAL_PAISE, GST_RATE, computeCorporateTeamsQuote } from "@workspace/subscription-rules";
 import { formatPaise } from "@/lib/format";
 import { SUBSIDY_MODELS, type SubsidyModel } from "@/content/landing/corporate";
@@ -109,12 +110,9 @@ export function SubsidyCalculator() {
               {formatPaise(monthlyPaise)}
             </span>
           </div>
-          <a
-            href="#pilot-form"
-            className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-          >
-            Get pilot pricing for {teamSize} people
-          </a>
+          <Button asChild shape="pill" size="fluid" className="mt-2 w-full px-8 py-4 font-semibold">
+            <a href="#pilot-form">Get pilot pricing for {teamSize} people</a>
+          </Button>
         </div>
       </div>
     </section>

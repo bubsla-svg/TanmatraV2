@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
 
 /**
@@ -43,13 +44,11 @@ export function Section03B2BEnterprise() {
             </ul>
 
             <div className="mt-8">
-              <Link
-                href="/corporate-wellness#pilot-form"
-                onClick={handleClick}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-[var(--gold-ink)] shadow-md transition-opacity hover:opacity-90 active:scale-95"
-              >
-                Calculate Your Team's ROI &amp; Request a Pilot &rarr;
-              </Link>
+              <Button asChild shape="xl" size="fluid" className="px-6 py-3.5 font-bold shadow-md">
+                <Link href="/corporate-wellness#pilot-form" onClick={handleClick}>
+                  Calculate Your Team's ROI &amp; Request a Pilot &rarr;
+                </Link>
+              </Button>
             </div>
           </div>
 

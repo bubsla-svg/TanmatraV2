@@ -1,6 +1,7 @@
 "use client"; // Interactive click event tracking and sticky bottom conversion bar
 
 import React from "react";
+import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { PLAN_PRICE_TABLE } from "@workspace/subscription-rules";
@@ -30,14 +31,14 @@ export function Section11StickyBottomBar() {
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
           onClick={handleCtaClick}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gold px-5 py-2.5 text-xs font-bold text-[var(--gold-ink)] shadow-sm transition-transform active:scale-95 sm:text-sm sm:px-6 sm:py-3"
+          shape="xl" size="fluid" className="shrink-0 gap-1.5 px-5 py-2.5 text-xs font-bold shadow-sm sm:text-sm sm:px-6 sm:py-3"
         >
           Start Assessment
           <span aria-hidden>&rarr;</span>
-        </button>
+        </Button>
       </div>
     </div>
   );
