@@ -4,6 +4,7 @@
 // Schedule button hands off to the parent (server fans out office_orders).
 import { formatPaise } from "@/lib/format";
 import type { LunchPlanProposal } from "@/lib/b2bPlannerApi";
+import { Button } from "@/components/ui/button";
 
 const dayLabel = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" });
 
@@ -67,9 +68,9 @@ export function LunchPlanPreview({ proposal, onSchedule, scheduling, perEmployee
         </p>
       ) : (
         <div className="flex flex-col gap-2 border-t border-line pt-5">
-          <button type="button" onClick={onSchedule} disabled={scheduling} className="w-full rounded-xl bg-gold px-5 py-3.5 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40">
+          <Button type="button" onClick={onSchedule} disabled={scheduling} shape="xl" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
             {scheduling ? "Scheduling…" : "Schedule this week"}
-          </button>
+          </Button>
           <p className="text-xs text-ink-faint">Creates one office lunch per day at {hour12} {ampm}, {formatPaise(perEmployeePaise)}/person. Members pick within budget.</p>
         </div>
       )}

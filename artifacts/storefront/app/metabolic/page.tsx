@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { fetchMenu, toProxiedImage } from "@/lib/catalog";
 import { PlanCard } from "@/components/plans/PlanCard";
 import { BenefitGrid } from "@/components/landing/BenefitGrid";
@@ -64,18 +65,14 @@ export default async function MetabolicPage() {
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-muted">{H.subtitle}</p>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/plans"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-            >
-              Find your plan <LandingIcon name="arrow-right" className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/trial"
-              className="inline-flex items-center justify-center rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
-            >
-              Start a 3-day trial
-            </Link>
+            <Button asChild shape="pill" size="fluid" className="px-8 py-4 font-semibold">
+              <Link href="/plans">
+                Find your plan <LandingIcon name="arrow-right" className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" shape="pill" size="fluid" className="px-8 py-4 font-semibold hover:border-line-strong">
+              <Link href="/trial">Start a 3-day trial</Link>
+            </Button>
           </div>
         </div>
         <MetabolicExplorer dishes={slim} />
@@ -110,12 +107,9 @@ export default async function MetabolicPage() {
       <section className="mb-12 rounded-3xl border border-line bg-surface p-8 text-center">
         <h2 className="text-lg font-semibold text-ink">Try three days first.</h2>
         <p className="mt-1 text-sm text-ink-muted">Three RD-reviewed lunches, full creditback if you continue.</p>
-        <Link
-          href="/trial"
-          className="mt-6 inline-flex items-center justify-center rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-        >
-          Start your 3-day trial &rarr;
-        </Link>
+        <Button asChild shape="pill" size="fluid" className="mt-6 px-8 py-4 font-semibold">
+          <Link href="/trial">Start your 3-day trial &rarr;</Link>
+        </Button>
       </section>
     </div>
   );

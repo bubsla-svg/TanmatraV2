@@ -4,6 +4,7 @@ import { useCallback, useState, useEffect } from "react";
 import { ApiError } from "@/lib/apiClient";
 import { getMySymptomLogs, recordSymptomLog, type SymptomLogEntry } from "@/lib/ecosystemApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 
 export function SymptomTrackerView() {
   const [logs, setLogs] = useState<SymptomLogEntry[] | null>(null);
@@ -134,13 +135,15 @@ export function SymptomTrackerView() {
           />
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={busy}
-          className="rounded-full bg-gold py-3 text-xs font-semibold text-[var(--gold-ink)] hover:bg-gold/90 transition-colors mt-2"
+          shape="pill"
+          size="fluid"
+          className="py-3 text-xs font-semibold mt-2"
         >
           {busy ? "Recording Telemetry…" : "Record Symptom Log →"}
-        </button>
+        </Button>
       </form>
 
       <div className="lg:col-span-7 flex flex-col gap-4">

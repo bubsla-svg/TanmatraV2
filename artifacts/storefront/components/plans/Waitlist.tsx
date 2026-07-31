@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { emitFunnel } from "@/lib/funnel";
+import { Button } from "@/components/ui/button";
 
 /**
  * Waitlist capture. When a plan or track isn't bookable (empty RD-signed pool,
@@ -58,12 +59,13 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
           aria-describedby={error ? "waitlist-error" : undefined}
           className="flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink focus:border-line-strong"
         />
-        <button
+        <Button
           type="submit"
-          className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)]"
+          size="fluid"
+          className="rounded-lg px-4 py-2 font-semibold"
         >
           Notify me
-        </button>
+        </Button>
       </div>
       {error && (
         <p id="waitlist-error" role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">

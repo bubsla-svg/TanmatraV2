@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Dialog } from "radix-ui";
 import { ApiError } from "@/lib/apiClient";
 import { logMeal, type ManualLogInput } from "@/lib/wellnessApi";
+import { Button } from "@/components/ui/button";
 
 const FIELDS: { key: keyof Omit<ManualLogInput, "label">; label: string }[] = [
   { key: "calories", label: "kcal" },
@@ -50,7 +51,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
           {error && <p role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">{error}</p>}
           <div className="mt-5 flex justify-end gap-3">
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>
-            <button type="button" onClick={save} disabled={busy} className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">{busy ? "Saving…" : "Save log"}</button>
+            <Button type="button" onClick={save} disabled={busy} size="fluid" className="rounded-lg px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save log"}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

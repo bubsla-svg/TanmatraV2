@@ -7,6 +7,7 @@ import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuthUser, verifyOtp } from "@/lib/api";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 
 /**
  * The /login card (SF account surfaces / CUJ-02). An already-signed-in visitor
@@ -81,12 +82,9 @@ export function LoginCard({ next }: { next: string }) {
           <p role="alert" className="text-sm font-medium text-[var(--danger)]">
             Sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>
-          <Link
-            href="/menu"
-            className="self-start rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-          >
-            Browse the menu
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="self-start px-5 py-3 font-semibold">
+            <Link href="/menu">Browse the menu</Link>
+          </Button>
         </>
       )}
     </div>

@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { getWalletBalancePaise, getMyVouchers, redeemVoucher, type VoucherLite } from "@/lib/vouchersApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 
 export function VoucherRedeem() {
   const [balance, setBalance] = useState<number | null>(null);
@@ -108,12 +109,14 @@ export function VoucherRedeem() {
           validates it (money-CTA rule, BATCH-9-BRIEFS.md Brief 57). */}
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
         <div className="mx-auto max-w-md px-4 py-3">
-          <button
+          <Button
             type="button" onClick={() => void doRedeem()} disabled={busy || !code.trim()}
-            className="w-full rounded-full bg-gold px-8 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+            shape="pill"
+            size="fluid"
+            className="w-full px-8 py-4 text-center text-base font-semibold disabled:opacity-40"
           >
             {busy ? "Redeeming…" : "Redeem"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { LandingIcon } from "@/components/landing/LandingIcon";
 import { CONSULT_HREF, type CareConfig } from "@/content/landing/care";
 
@@ -29,18 +30,25 @@ export function CareHero({ cfg, image }: { cfg: CareConfig; image?: { src: strin
       </h1>
       <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">{cfg.heroSub}</p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Link
-          href={CONSULT_HREF}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+        <Button
+          asChild
+          shape="pill"
+          size="fluid"
+          className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold"
         >
-          Book a free 15-min RD consult <LandingIcon name="arrow-right" className="h-4 w-4" />
-        </Link>
-        <a
-          href="#program"
-          className="inline-flex items-center justify-center rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
+          <Link href={CONSULT_HREF}>
+            Book a free 15-min RD consult <LandingIcon name="arrow-right" className="h-4 w-4" />
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          shape="pill"
+          size="fluid"
+          className="inline-flex items-center justify-center px-8 py-4 font-semibold"
         >
-          See the program
-        </a>
+          <a href="#program">See the program</a>
+        </Button>
       </div>
       <p className="mt-4 text-xs text-ink-faint">
         15 minutes, free, with a registered dietitian. No card required.

@@ -8,6 +8,7 @@ import { formatPaise } from "@/lib/format";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { emitFunnel } from "@/lib/funnel";
+import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
@@ -152,13 +153,15 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
 
       {/* Sticky bottom CTA bar — Stitch plan-config design (route-05). Classes only. */}
       <div className="sticky bottom-16 z-40 flex flex-col gap-2 rounded-xl border border-line bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-3 backdrop-blur-xl md:bottom-4">
-        <button
+        <Button
           type="button"
           onClick={confirm}
-          className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+          shape="xl"
+          size="fluid"
+          className="px-5 py-3 text-center font-semibold"
         >
           Continue to checkout
-        </button>
+        </Button>
         <p className="text-center text-[10px] uppercase tracking-wide text-ink-faint">
           No platform fee. No surge. Prices include all taxes.
         </p>

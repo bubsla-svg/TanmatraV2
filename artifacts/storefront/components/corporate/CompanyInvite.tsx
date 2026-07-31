@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Building2 } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import { getInvite, acceptInvite, type CompanyMember, type Company } from "@/lib/companyApi";
+import { Button } from "@/components/ui/button";
 
 export function CompanyInvite({ token }: { token: string }) {
   const router = useRouter();
@@ -75,14 +76,16 @@ export function CompanyInvite({ token }: { token: string }) {
 
       {error && <p role="alert" className="mt-4 text-xs font-medium text-[var(--danger)]">{error}</p>}
 
-      <button
+      <Button
         type="button"
         onClick={accept}
         disabled={busy}
-        className="mt-6 w-full rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-opacity disabled:opacity-60"
+        shape="pill"
+        size="fluid"
+        className="mt-6 w-full px-6 py-3.5 font-semibold disabled:opacity-60"
       >
         {busy ? "Joining…" : "Accept invite"}
-      </button>
+      </Button>
       <p className="mt-4 text-[11px] text-ink-faint">Secure corporate invitation.</p>
     </div>
   );

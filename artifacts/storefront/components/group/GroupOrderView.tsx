@@ -11,6 +11,7 @@ import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { addLine } from "@/lib/cartStore";
 import { useCart } from "@/components/cart/CartProvider";
+import { Button } from "@/components/ui/button";
 import { getAuthUser } from "@/lib/api";
 import { getGroup, removeLine, closeGroup, groupSubtotalPaise, type GroupOrder } from "@/lib/groupOrdersApi";
 
@@ -125,11 +126,13 @@ export function GroupOrderView({ code }: { code: string }) {
         <p className="rounded-xl border border-line bg-surface px-4 py-3 text-center text-sm text-ink-muted">This group order is closed.</p>
       ) : isHost ? (
         <div>
-          <button type="button" onClick={closeAndCheckout} disabled={busy} className="w-full rounded-xl bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-60">{busy ? "Closing…" : "Close & checkout"}</button>
+          <Button type="button" onClick={closeAndCheckout} disabled={busy} shape="xl" size="fluid" className="w-full px-6 py-3.5 font-semibold disabled:opacity-60">{busy ? "Closing…" : "Close & checkout"}</Button>
           <p className="mt-2 text-center text-[11px] text-ink-faint">Only you (the host) can close this order and pay for everyone.</p>
         </div>
       ) : (
-        <Link href={`/menu?group=${group.code}`} className="block w-full rounded-xl bg-gold px-6 py-3.5 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]">Add your items</Link>
+        <Button asChild shape="xl" size="fluid" className="block w-full text-center px-6 py-3.5 font-semibold">
+          <Link href={`/menu?group=${group.code}`}>Add your items</Link>
+        </Button>
       )}
     </div>
   );

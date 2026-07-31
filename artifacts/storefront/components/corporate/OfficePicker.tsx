@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { formatPaise } from "@/lib/format";
 import type { DishData } from "@workspace/menu-catalog";
+import { Button } from "@/components/ui/button";
 
 export function OfficePicker({ dishes, initial, budgetPaise, busy, onSave }: {
   dishes: Pick<DishData, "id" | "name" | "price">[];
@@ -48,9 +49,9 @@ export function OfficePicker({ dishes, initial, budgetPaise, busy, onSave }: {
         </div>
         {over && <p className="text-xs text-[var(--danger)]">Over your per-person budget.</p>}
       </div>
-      <button type="button" onClick={save} disabled={busy || over || total === 0} className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+      <Button type="button" onClick={save} disabled={busy || over || total === 0} shape="xl" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-60">
         {busy ? "Saving…" : Object.keys(initial).length ? "Update my pick" : "Lock my pick"}
-      </button>
+      </Button>
     </div>
   );
 }

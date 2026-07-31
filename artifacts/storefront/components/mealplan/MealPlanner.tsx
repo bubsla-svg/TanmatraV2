@@ -6,6 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMealPlan } from "./useMealPlan";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 import { PlanSummary } from "./PlanSummary";
 import { DayCard } from "./DayCard";
 import { SwapDialog } from "./SwapDialog";
@@ -95,32 +96,39 @@ export function MealPlanner() {
             >
               Discard
             </button>
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => void mp.generate()}
               disabled={mp.busy}
-              className="ml-auto shrink-0 rounded-full border border-line px-4 py-3 text-xs font-semibold text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98] disabled:opacity-60"
+              shape="pill"
+              size="fluid"
+              className="ml-auto shrink-0 px-4 py-3 text-xs font-semibold text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-60"
             >
               {mp.busy ? "Working…" : plan ? "Regenerate week" : "Generate my week"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => void mp.accept()}
               disabled={mp.busy}
-              className="shrink-0 rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] active:scale-[0.98] disabled:opacity-60"
+              shape="pill"
+              size="fluid"
+              className="shrink-0 px-5 py-3 font-semibold disabled:opacity-60"
             >
               Accept &amp; schedule
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
+          <Button
             type="button"
             onClick={() => void mp.generate()}
             disabled={mp.busy}
-            className="w-full rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] active:scale-[0.98] disabled:opacity-60"
+            shape="pill"
+            size="fluid"
+            className="w-full px-5 py-3 font-semibold disabled:opacity-60"
           >
             {mp.busy ? "Working…" : plan ? "Regenerate week" : "Generate my week"}
-          </button>
+          </Button>
         )}
       </div>
 

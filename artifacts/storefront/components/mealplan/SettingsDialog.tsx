@@ -3,6 +3,7 @@
 // auto-replan. Loads on open; saves via PUT /meal-plan-settings.
 import { useEffect, useState } from "react";
 import { Dialog } from "radix-ui";
+import { Button } from "@/components/ui/button";
 import { getSettings, updateSettings } from "@/lib/mealPlanApi";
 
 export function SettingsDialog({ onClose }: { onClose: () => void }) {
@@ -56,7 +57,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           </div>
           <div className="mt-5 flex justify-end gap-3">
             <Dialog.Close className="rounded-full px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>
-            <button type="button" onClick={save} disabled={busy} className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)] active:scale-[0.98] disabled:opacity-60">{busy ? "Saving…" : "Save"}</button>
+            <Button type="button" onClick={save} disabled={busy} shape="pill" size="fluid" className="px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save"}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

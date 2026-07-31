@@ -6,6 +6,7 @@
 import { useState, type FormEvent } from "react";
 import { submitDishReview } from "@/lib/dishReviewsApi";
 import { ApiError } from "@/lib/apiClient";
+import { Button } from "@/components/ui/button";
 
 const RATING_VALUES = [1, 2, 3, 4, 5];
 const MAX_BODY = 2000;
@@ -96,13 +97,15 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={rating === 0 || submitting}
-        className="mt-3 min-h-11 rounded-full bg-gold px-5 py-2 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-50"
+        shape="pill"
+        size="fluid"
+        className="mt-3 min-h-11 px-5 py-2 font-semibold disabled:opacity-50"
       >
         {submitting ? "Submitting…" : "Submit review"}
-      </button>
+      </Button>
     </form>
   );
 }

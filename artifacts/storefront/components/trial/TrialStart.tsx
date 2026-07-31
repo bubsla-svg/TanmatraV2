@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { emitFunnel } from "@/lib/funnel";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_COPY } from "@/lib/trial";
@@ -108,13 +109,15 @@ export function TrialStart({
           commitment moment, same treatment as CheckoutPay's Pay button. */}
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
         <div className="mx-auto max-w-md px-4 py-3">
-          <button
+          <Button
             type="button"
             onClick={start}
-            className="w-full rounded-full bg-gold px-8 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            shape="pill"
+            size="fluid"
+            className="w-full px-8 py-4 text-center text-base font-semibold"
           >
             Start the taste test · {formatPaise(pricePaise)}
-          </button>
+          </Button>
           <p className="mt-2 text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
         </div>
       </div>
