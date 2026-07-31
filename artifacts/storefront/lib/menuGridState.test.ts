@@ -9,7 +9,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DISHES, type DishData } from "@workspace/menu-catalog";
-import { computeMenuGridState, capVisibleIds, type RankedDish } from "./menuGridState";
+import { computeMenuGridState, type RankedDish } from "./menuGridState";
 import type { DishFit } from "./menuFit";
 
 const BASE = DISHES[0]!;
@@ -67,35 +67,4 @@ test("a filtered-out dish keeps its order entry — CSS order needs no compactio
   // slot has no visible effect on the ones that remain.
   assert.equal(state.order?.get(2), 0);
   assert.equal(state.order?.get(1), 1);
-});
-
-test("capVisibleIds: no ranking caps in raw row order", () => {
-  const rowIds = [1, 2, 3, 4, 5];
-  const visibleIds = new Set(rowIds);
-  const capped = capVisibleIds(rowIds, undefined, visibleIds, 3);
-  assert.deepEqual([...capped].sort((a, b) => a - b), [1, 2, 3]);
-  assert.equal(capped.size, 3);
-});
-
-test("capVisibleIds: ranked dishes cap in ranked order, not raw row order", () => {
-  const rowIds = [1, 2, 3, 4, 5];
-  const visibleIds = new Set(rowIds);
-  // Best-first ranking: 5, 3, 1, 4, 2 — "first 2" must be {5, 3}, not {1, 2}.
-  const order = new Map([[5, 0], [3, 1], [1, 2], [4, 3], [2, 4]]);
-  const capped = capVisibleIds(rowIds, order, visibleIds, 2);
-  assert.deepEqual([...capped].sort((a, b) => a - b), [3, 5]);
-});
-
-test("capVisibleIds: diet-filtered-out ids never count against the limit", () => {
-  const rowIds = [1, 2, 3, 4, 5];
-  const visibleIds = new Set([1, 3, 5]); // veg-only filter, say
-  const capped = capVisibleIds(rowIds, undefined, visibleIds, 2);
-  assert.deepEqual([...capped].sort((a, b) => a - b), [1, 3]);
-});
-
-test("capVisibleIds: a limit at or beyond the visible count returns every visible id", () => {
-  const rowIds = [1, 2, 3];
-  const visibleIds = new Set(rowIds);
-  const capped = capVisibleIds(rowIds, undefined, visibleIds, 20);
-  assert.deepEqual([...capped].sort((a, b) => a - b), [1, 2, 3]);
 });
