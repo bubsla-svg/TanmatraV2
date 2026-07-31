@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { collectErrors, ORDERABLE_DISH } from "../fixtures";
+import { collectErrors, ORDERABLE_DISH, revealAllDishes } from "../fixtures";
 
 /**
  * Core Revenue Funnel (Phase 2 Proactive QA)
@@ -34,6 +34,7 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   // Add an item to cart from marketplace (using the standard add button if available, or just go to menu)
   await page.goto("/menu");
   await page.waitForLoadState("networkidle");
+  await revealAllDishes(page);
   await expect(async () => {
     const card = page.locator("article").filter({ hasText: ORDERABLE_DISH.name }).first();
     await card.scrollIntoViewIfNeeded();
