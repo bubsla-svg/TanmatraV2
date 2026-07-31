@@ -445,3 +445,4 @@ jobs:
           node --test --test-force-exit --import tsx
           ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
           ./src/lib/b2b/accountHealth.test.ts
+          ./src/lib/ai/aiHardening.test.ts

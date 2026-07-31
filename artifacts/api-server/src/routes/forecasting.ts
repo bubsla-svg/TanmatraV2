@@ -20,18 +20,15 @@ import { recommendReorder, exportPurchaseOrderCsv } from "../lib/reorder";
 import { runAgent, type GatewayEvent } from "../lib/ai";
 import { z } from "zod/v4";
 import { requireOps as gate } from "../lib/adminGate";
+import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
 
 const SnapshotsRunBody = z.object({ zone: z.string().optional() });
 const BackfillBody = z.object({ sinceDays: z.coerce.number().int().min(1).max(365).optional() });
-const ChatTurnSchema = z.object({
-  role: z.enum(["user", "agent"]),
-  text: z.string(),
-});
 const ForecastChatBody = z.object({
   message: z.string().min(1).max(8000),
-  history: z.array(ChatTurnSchema).max(50).optional(),
+  history: ChatHistorySchema,
 });
 
 router.get("/forecasting/forecast", async (req: Request, res: Response) => {

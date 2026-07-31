@@ -5,16 +5,13 @@ import { db, opsActionsTable } from "@workspace/db";
 import { and, desc, eq, ilike, or, type SQL } from "drizzle-orm";
 import { runAgent, type GatewayEvent } from "../lib/ai";
 import { isCatalogRequest, requireCatalog } from "../lib/adminGate";
+import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
 
-const ChatTurnSchema = z.object({
-  role: z.enum(["user", "agent"]),
-  text: z.string(),
-});
 const ChatBodySchema = z.object({
   message: z.string().min(1).max(8000),
-  history: z.array(ChatTurnSchema).max(50).optional(),
+  history: ChatHistorySchema,
 });
 
 function writeEvent(res: Response, event: object): void {

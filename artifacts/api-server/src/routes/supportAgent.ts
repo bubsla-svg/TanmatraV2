@@ -5,19 +5,16 @@ import { runAgent, type GatewayEvent } from "../lib/ai";
 import { getUserBriefForRequest } from "../lib/userBrief";
 import { requireAuthUser } from "../middlewares/requireAuth";
 import { rateLimit } from "../lib/rateLimit";
+import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
 
 const SUPPORT_CHAT_WINDOW_MS = 5 * 60_000;
 const SUPPORT_CHAT_MAX = 20;
 
-const ChatTurnSchema = z.object({
-  role: z.enum(["user", "agent"]),
-  text: z.string(),
-});
 const ChatBodySchema = z.object({
   message: z.string().min(1).max(8000),
-  history: z.array(ChatTurnSchema).max(50).optional(),
+  history: ChatHistorySchema,
 });
 
 /**
