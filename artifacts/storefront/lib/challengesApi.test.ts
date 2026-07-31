@@ -10,6 +10,8 @@ import { ApiError } from "./apiClient";
 import {
   getChallenges,
   getChallenge,
+  getChallengeOrReason,
+  getChallengesOrReason,
   loadChallengeState,
   joinChallenge,
   postToChallenge,
@@ -54,6 +56,36 @@ test("getChallenge: unwraps {challenge,joined,posts,checkIns}; 404→null", asyn
   assert.equal(out?.challenge.slug, "sugar-reset");
   assert.equal(out?.posts.length, 1);
   assert.equal(await getChallenge("nope", fake([], { error: "not found" }, 404)), null);
+});
+
+test("getChallengeOrReason: ok:true with the detail on a normal hit", async () => {
+  const detail = { challenge: CH, joined: false, posts: [], checkIns: [] };
+  const out = await getChallengeOrReason("sugar-reset", fake([], detail));
+  assert.equal(out.ok, true);
+  assert.equal(out.ok && out.detail.challenge.slug, "sugar-reset");
+});
+
+test("getChallengeOrReason: 404 is reason:not_found (not a collapsed falsy value)", async () => {
+  const out = await getChallengeOrReason("nope", fake([], { error: "not found" }, 404));
+  assert.deepEqual(out, { ok: false, reason: "not_found" });
+});
+
+test("getChallengeOrReason: a 500 is reason:unavailable, distinct from not_found", async () => {
+  const out = await getChallengeOrReason("sugar-reset", fake([], { error: "boom" }, 500));
+  assert.deepEqual(out, { ok: false, reason: "unavailable" });
+});
+
+test("getChallengeOrReason: a thrown/network failure is reason:unavailable, not not_found", async () => {
+  const failing = (async () => { throw new Error("down"); }) as unknown as typeof fetch;
+  const out = await getChallengeOrReason("sugar-reset", failing);
+  assert.deepEqual(out, { ok: false, reason: "unavailable" });
+});
+
+test("getChallengesOrReason: ok:true with the list on a normal hit; unavailable (not ok:true empty) on failure", async () => {
+  const out = await getChallengesOrReason(fake([], { challenges: [CH] }));
+  assert.deepEqual(out, { ok: true, challenges: [CH] });
+  const failing = (async () => { throw new Error("down"); }) as unknown as typeof fetch;
+  assert.deepEqual(await getChallengesOrReason(failing), { ok: false, reason: "unavailable" });
 });
 
 test("loadChallengeState: cookie-authed GET returns the member view", async () => {

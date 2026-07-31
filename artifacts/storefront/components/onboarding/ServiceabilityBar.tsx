@@ -1,5 +1,6 @@
 "use client"; // Justification: client-side pincode entry, API serviceability verdict, and localStorage persistence.
 import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
 import {
   checkServiceability,
   loadServiceabilityState,
@@ -46,7 +47,6 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
   const [verdict, setVerdict] = useState<ServiceabilityVerdict>("unknown");
   const [pincode, setPincode] = useState("");
   const [inputVal, setInputVal] = useState("");
-  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const [pickingLocation, setPickingLocation] = useState(false);
@@ -60,7 +60,21 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
     }
   }, []);
 
-  const handleLocationSelect = async (place: any) => {
+  // A user-triggered check (button tap / location confirm), not data read for
+  // render — a mutation, even though the verb underneath is GET.
+  const checkMutation = useMutation({
+    mutationFn: (code: string) => checkServiceability(code),
+    onSuccess: (res) => {
+      saveServiceabilityState(res);
+      setVerdict(res.verdict);
+      setPincode(res.pincode);
+      setInputVal("");
+      setManualMode(false);
+    },
+  });
+  const busy = checkMutation.isPending;
+
+  const handleLocationSelect = (place: any) => {
     setPickingLocation(false);
     const code = place.pincode;
     if (!code) {
@@ -68,43 +82,27 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
       setManualMode(true);
       return;
     }
-    setBusy(true);
     setErr(null);
-    try {
-      const res = await checkServiceability(code);
-      saveServiceabilityState(res);
-      setVerdict(res.verdict);
-      setPincode(res.pincode);
-      setInputVal("");
-      setManualMode(false);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Unable to check serviceability right now.");
-      setManualMode(true);
-    } finally {
-      setBusy(false);
-    }
+    checkMutation.mutate(code, {
+      onError: (e) => {
+        setErr(e instanceof ApiError ? e.message : "Unable to check serviceability right now.");
+        setManualMode(true);
+      },
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^\d{6}$/.test(inputVal.trim())) {
       setErr("Please enter a valid 6-digit pincode");
       return;
     }
-    setBusy(true);
     setErr(null);
-    try {
-      const res = await checkServiceability(inputVal);
-      saveServiceabilityState(res);
-      setVerdict(res.verdict);
-      setPincode(res.pincode);
-      setInputVal("");
-      setManualMode(false);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Unable to check pincode right now.");
-    } finally {
-      setBusy(false);
-    }
+    checkMutation.mutate(inputVal, {
+      onError: (e) => {
+        setErr(e instanceof ApiError ? e.message : "Unable to check pincode right now.");
+      },
+    });
   };
 
   const handleReset = () => {

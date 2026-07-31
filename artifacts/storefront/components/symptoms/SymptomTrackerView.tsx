@@ -1,68 +1,50 @@
 "use client";
 // Client: interactive physiological symptom logger correlating post-meal reactions against macro intake.
-import { useCallback, useState, useEffect } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
-import { getMySymptomLogs, recordSymptomLog, type SymptomLogEntry } from "@/lib/ecosystemApi";
+import { getMySymptomLogs, recordSymptomLog } from "@/lib/ecosystemApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Button } from "@/components/ui/button";
 
+const isAuthError = (e: unknown) => e instanceof ApiError && e.status === 401;
+
 export function SymptomTrackerView() {
-  const [logs, setLogs] = useState<SymptomLogEntry[] | null>(null);
-  const [needsAuth, setNeedsAuth] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const logsQuery = useQuery({ queryKey: ["wellness", "symptoms"], queryFn: () => getMySymptomLogs() });
+
   const [symptom, setSymptom] = useState("bloating");
   const [severity, setSeverity] = useState(2);
   const [notes, setNotes] = useState("");
   const [dishSlug, setDishSlug] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoadError(null);
-    try {
-      const res = await getMySymptomLogs();
-      setLogs(res);
-      setNeedsAuth(false);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
-      else setLoadError(e instanceof ApiError ? e.message : "Couldn't load your symptom history.");
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setMsg(null);
-    try {
-      const entry = await recordSymptomLog({
-        loggedDate: new Date().toISOString().slice(0, 10),
-        symptomType: symptom,
-        severity,
-        notes,
-        ...(dishSlug.trim() ? { relatedDishSlug: dishSlug.trim() } : {}),
-      });
-      setLogs((p) => [entry, ...(p ?? [])]);
+  const recordMutation = useMutation({
+    mutationFn: (input: Parameters<typeof recordSymptomLog>[0]) => recordSymptomLog(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["wellness", "symptoms"] });
       setNotes("");
       setDishSlug("");
-      setMsg("Physiological response logged successfully to clinical record.");
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) setNeedsAuth(true);
-      else setMsg("Couldn't save this entry. Please try again.");
-    } finally {
-      setBusy(false);
-    }
+    },
+    onError: (e) => { if (isAuthError(e)) void logsQuery.refetch(); },
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (recordMutation.isPending) return;
+    recordMutation.mutate({
+      loggedDate: new Date().toISOString().slice(0, 10),
+      symptomType: symptom,
+      severity,
+      notes,
+      ...(dishSlug.trim() ? { relatedDishSlug: dishSlug.trim() } : {}),
+    });
   }
 
-  if (needsAuth) {
+  if (isAuthError(logsQuery.error)) {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to log and view your symptom history.</p>
-        <PhoneAuth onVerified={() => void load()} />
+        <PhoneAuth onVerified={() => void logsQuery.refetch()} />
       </div>
     );
   }
@@ -78,7 +60,16 @@ export function SymptomTrackerView() {
           </p>
         </div>
 
-        {msg && <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs font-semibold text-gold-text">{msg}</div>}
+        {recordMutation.isSuccess && (
+          <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs font-semibold text-gold-text">
+            Physiological response logged successfully to clinical record.
+          </div>
+        )}
+        {recordMutation.isError && (
+          <div role="alert" className="rounded-xl border border-line bg-surface p-3 text-xs font-semibold text-[var(--danger)]">
+            Couldn&rsquo;t save this entry. Please try again.
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5 text-xs">
           <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
@@ -137,28 +128,31 @@ export function SymptomTrackerView() {
 
         <Button
           type="submit"
-          disabled={busy}
+          disabled={recordMutation.isPending}
           shape="pill"
           size="fluid"
           className="py-3 text-xs font-semibold mt-2"
         >
-          {busy ? "Recording Telemetry…" : "Record Symptom Log →"}
+          {recordMutation.isPending ? "Recording Telemetry…" : "Record Symptom Log →"}
         </Button>
       </form>
 
       <div className="lg:col-span-7 flex flex-col gap-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-gold-text">Recorded Symptom History</h2>
-        {logs === null ? (
-          <div className="rounded-2xl border border-line bg-surface p-8 text-center text-xs text-ink-muted">
-            {loadError ?? "Loading your symptom history…"}
+        {logsQuery.isPending ? (
+          <SymptomHistorySkeleton />
+        ) : logsQuery.isError ? (
+          <div className="rounded-2xl border border-line bg-surface p-8 text-center flex flex-col gap-3">
+            <p className="text-xs font-semibold text-[var(--danger)]">Couldn&rsquo;t load your symptom history</p>
+            <button type="button" onClick={() => void logsQuery.refetch()} className="mx-auto rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
           </div>
-        ) : logs.length === 0 ? (
+        ) : logsQuery.data.length === 0 ? (
           <div className="rounded-2xl border border-line bg-surface p-8 text-center text-xs text-ink-muted">
             No physiological symptom observations recorded in this billing cycle yet.
           </div>
         ) : (
           <div className="flex flex-col gap-3.5">
-            {logs.map((l) => (
+            {logsQuery.data.map((l) => (
               <div key={l.id} className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
                   <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-sage-text">
@@ -179,6 +173,19 @@ export function SymptomTrackerView() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function SymptomHistorySkeleton() {
+  return (
+    <div className="flex flex-col gap-3.5">
+      <p className="sr-only">Loading your symptom history…</p>
+      <div aria-hidden className="flex flex-col gap-3.5">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface-raised" />
+        ))}
       </div>
     </div>
   );

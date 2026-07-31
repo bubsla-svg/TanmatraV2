@@ -2,43 +2,46 @@
 // Company workspace landing — the accept-redirect target and the planner's
 // back-link. Read-only: company header, office-lunch list, team roster. Admins
 // get a lunch-planner link. Session-gated (401 → PhoneAuth).
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
-import { getCompany, getCompanyOfficeOrders, officeWindowOpen, type Company, type CompanyMember, type OfficeOrder } from "@/lib/companyApi";
+import { getCompany, getCompanyOfficeOrders, officeWindowOpen } from "@/lib/companyApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 
 export function CompanyLanding({ slug }: { slug: string }) {
-  const [data, setData] = useState<{ company: Company; membership: CompanyMember | null; members: CompanyMember[] } | null>(null);
-  const [orders, setOrders] = useState<OfficeOrder[]>([]);
-  const [needsAuth, setNeedsAuth] = useState(false);
-  const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
+  const companyQuery = useQuery({
+    queryKey: ["corporate", "landing", slug],
+    queryFn: () => getCompany(slug),
+  });
+  const ordersQuery = useQuery({
+    queryKey: ["corporate", "landing", slug, "office-orders"],
+    queryFn: () => getCompanyOfficeOrders(slug).then((r) => r.officeOrders),
+    enabled: companyQuery.isSuccess,
+  });
 
-  const load = useCallback(async () => {
-    try {
-      const c = await getCompany(slug);
-      setData(c); setState("ready"); setNeedsAuth(false);
-      void getCompanyOfficeOrders(slug).then((r) => setOrders(r.officeOrders)).catch(() => {});
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
-      else setState("missing");
-    }
-  }, [slug]);
-  useEffect(() => { void load(); }, [load]);
-
+  const needsAuth = companyQuery.error instanceof ApiError && companyQuery.error.status === 401;
   if (needsAuth) return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-ink-muted">Sign in to view your company workspace.</p>
-      <PhoneAuth onVerified={() => void load()} />
+      <PhoneAuth onVerified={() => void companyQuery.refetch()} />
     </div>
   );
-  if (state === "loading") return <p className="text-sm text-ink-muted">Loading…</p>;
-  if (state === "missing" || !data) return <p className="text-sm text-ink-muted">This company workspace isn&rsquo;t available to you.</p>;
+  if (companyQuery.isPending) return <p className="text-sm text-ink-muted">Loading…</p>;
+  if (companyQuery.isError) {
+    const unavailable = companyQuery.error instanceof ApiError && (companyQuery.error.status === 404 || companyQuery.error.status === 403);
+    if (unavailable) return <p className="text-sm text-ink-muted">This company workspace isn&rsquo;t available to you.</p>;
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-6">
+        <p className="text-sm text-ink-muted">Couldn&rsquo;t load this company workspace. Please try again.</p>
+        <button type="button" onClick={() => void companyQuery.refetch()} className="shrink-0 text-sm font-semibold text-gold-text hover:underline">Try again</button>
+      </div>
+    );
+  }
 
-  const { company, membership, members } = data;
+  const { company, membership, members } = companyQuery.data;
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-2xl border border-line bg-surface p-6">
@@ -54,11 +57,18 @@ export function CompanyLanding({ slug }: { slug: string }) {
 
       <div>
         <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Office lunches</h2>
-        {orders.length === 0 ? (
+        {ordersQuery.isPending ? (
+          <p className="mt-2 text-sm text-ink-muted">Loading office lunches…</p>
+        ) : ordersQuery.isError ? (
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3">
+            <span className="text-sm text-ink-muted">Couldn&rsquo;t load office lunches.</span>
+            <button type="button" onClick={() => void ordersQuery.refetch()} className="shrink-0 text-xs font-semibold text-gold-text hover:underline">Try again</button>
+          </div>
+        ) : ordersQuery.data.length === 0 ? (
           <p className="mt-2 text-sm text-ink-muted">No office lunches scheduled yet.</p>
         ) : (
           <ul className="mt-3 flex flex-col gap-2">
-            {orders.map((o) => (
+            {ordersQuery.data.map((o) => (
               <li key={o.id}>
                 <Link href={`/office-lunch/${o.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 hover:border-[var(--gold)]">
                   <span className="min-w-0">

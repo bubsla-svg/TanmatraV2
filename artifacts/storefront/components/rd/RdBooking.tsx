@@ -3,7 +3,13 @@
 // book (auth-gated), and — for paid consults — settle via Razorpay. The client
 // NEVER authors a price: booking is server-priced, the Razorpay order comes from
 // the server, and /verify flips the status. Free 15-min intros skip payment.
-import { useCallback, useEffect, useState } from "react";
+// Slot loading is a useQuery for the shared cache/retry infra — key extends the
+// ["rd","booking"] convention with rd.slug + kind (both required for a correct
+// cache entry: a static key would serve stale slots across RDs/session kinds).
+// getSlots' own error handling is untouched: any failure still resolves to []
+// ("No open slots… check back soon"), matching its pre-migration behavior.
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
@@ -27,7 +33,6 @@ const fmt = (iso: string) =>
 
 export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: RdPricing; bookable: boolean } }) {
   const [kind, setKind] = useState<SessionKind>("intro_15m");
-  const [slots, setSlots] = useState<Slot[] | null>(null);
   const [sel, setSel] = useState<Slot | null>(null);
   const [booked, setBooked] = useState<Appointment | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
@@ -35,11 +40,15 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
   const [error, setError] = useState<string | null>(null);
   const price = rd.pricing[KINDS.find((k) => k.kind === kind)!.priceKey];
 
-  const loadSlots = useCallback(async () => {
-    setSlots(null); setSel(null);
-    try { setSlots(await getSlots(rd.slug, kind)); } catch { setSlots([]); }
-  }, [rd.slug, kind]);
-  useEffect(() => { void loadSlots(); }, [loadSlots]);
+  const { data: slots, refetch: reloadSlots } = useQuery({
+    queryKey: ["rd", "booking", rd.slug, kind],
+    queryFn: async () => {
+      try { return await getSlots(rd.slug, kind); } catch { return []; }
+    },
+  });
+  // Clears the previous kind's selection the moment either input changes —
+  // mirrors the old loadSlots()'s explicit setSel(null) on every reload.
+  useEffect(() => setSel(null), [rd.slug, kind]);
 
   const razorpay = createRazorpayAdapter({ name: "Tanmatra", description: `Consult · ${rd.name}` });
   const pending = booked?.paymentStatus === "pending" ? booked : null;
@@ -54,7 +63,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
       else if (e instanceof RazorpayDismissed) setError("Payment cancelled — your slot is held; tap Pay to finish.");
-      else if (e instanceof ApiError && e.status === 409) { setError("That slot was just taken — pick another."); void loadSlots(); }
+      else if (e instanceof ApiError && e.status === 409) { setError("That slot was just taken — pick another."); void reloadSlots(); }
       else setError(e instanceof ApiError ? e.message : "Couldn't complete that — please try again.");
     } finally { setBusy(false); }
   }
@@ -108,7 +117,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
         <div className="mt-5">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Available times (IST)</h3>
           <div className="mt-2">
-            {slots === null ? <p className="text-xs text-ink-muted">Loading slots…</p>
+            {slots === undefined ? <p className="text-xs text-ink-muted">Loading slots…</p>
               : slots.length === 0 ? <p className="text-xs text-ink-muted">No open slots in the next two weeks — check back soon.</p>
               : (
                 <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto">
