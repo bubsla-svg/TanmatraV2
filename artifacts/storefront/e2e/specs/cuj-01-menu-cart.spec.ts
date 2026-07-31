@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { collectErrors, ORDERABLE_DISH, revealAllDishes } from "../fixtures";
+import { collectErrors, ORDERABLE_DISH } from "../fixtures";
 
 /**
  * CUJ-01 (browse → PDP → cart), the shipped half of the à-la-carte money
@@ -22,7 +22,6 @@ test("menu renders the à-la-carte grid with live-or-fallback data", async ({ pa
 
 test("dish card opens the PDP bottom sheet; deep-link + back behave", async ({ page }) => {
   await page.goto("/menu");
-  await revealAllDishes(page);
   await page
     .locator('a[href="/menu?dish=' + ORDERABLE_DISH.slug + '"]')
     .first()
@@ -42,7 +41,6 @@ test("dish card opens the PDP bottom sheet; deep-link + back behave", async ({ p
 test("one-tap add → stepper in place → mini-bar; cart survives reload", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/menu");
-  await revealAllDishes(page);
 
   const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
   await card.getByRole("button", { name: "Add" }).click();
@@ -65,7 +63,6 @@ test("one-tap add → stepper in place → mini-bar; cart survives reload", asyn
 
 test("cart drawer shows lines + subtotal; dark checkout fails LOUD, never dead", async ({ page }) => {
   await page.goto("/menu");
-  await revealAllDishes(page);
   const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
   await card.getByRole("button", { name: "Add" }).click();
   await page.getByRole("button", { name: "View cart" }).click();
@@ -98,7 +95,6 @@ const liveCheckout = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip
 
 liveCheckout("cart → live à-la-carte checkout renders the guest details form", async ({ page }) => {
   await page.goto("/menu");
-  await revealAllDishes(page);
   const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
   await card.getByRole("button", { name: "Add" }).click();
   await page.getByRole("button", { name: "View cart" }).click();
@@ -119,7 +115,6 @@ liveCheckout("cart → live à-la-carte checkout renders the guest details form"
 
 test("every menu card is orderable — Add CTA on all cards, zero dead ends", async ({ page }) => {
   await page.goto("/menu");
-  await revealAllDishes(page);
   const addButtons = page.getByRole("button", { name: "Add", exact: true });
   const cards = page.locator('a[href^="/menu?dish="]');
   // À-la-carte-only grid: a card without an Add CTA is a browse-only dead

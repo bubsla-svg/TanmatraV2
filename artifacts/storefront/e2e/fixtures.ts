@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 /**
  * Shared spec fixtures (TNM-SF-01 §6), carrying the tanmatra harness's
@@ -35,36 +35,3 @@ export const ORDERABLE_DISH = {
   slug: "quinoa-khichdi",
   name: "Quinoa Khichdi",
 };
-
-/**
- * OA-MED-1.19 caps /menu's initial DOM-visible dish count and reveals more
- * via a "Show N more dishes" button (MenuGrid.tsx). Specs that need a
- * specific dish visible/clickable — or need every card interactable — must
- * click through it first; card elements are still in the DOM under a
- * `hidden` row wrapper, so a plain CSS locator would find them while
- * `getByRole` (which respects the accessibility tree) would not.
- *
- * Two races have to be handled, and a bare `while (isVisible()) click()`
- * loses to both. `isVisible()` resolves immediately rather than auto-waiting,
- * so probing a not-yet-painted page concludes there is nothing to reveal;
- * and the button ships in the SSR HTML before React hydrates, so an early
- * click lands on an element with no handler attached and silently does
- * nothing. Hence: wait for the grid first, then assert each click actually
- * grew the visible set before moving on.
- */
-export async function revealAllDishes(page: Page): Promise<void> {
-  const visibleCards = page.locator('a[href^="/menu?dish="]:visible');
-  const showMore = page.getByRole("button", { name: /show \d+ more dishes/i });
-  await visibleCards.first().waitFor({ state: "visible" });
-  // Bounded rather than `while (true)`: the reveal step is 20 and the
-  // catalog tops out around 124, so 10 iterations is slack, and a bug that
-  // stops the button disappearing fails the spec instead of hanging it.
-  for (let i = 0; i < 10; i++) {
-    if (!(await showMore.isVisible().catch(() => false))) return;
-    const before = await visibleCards.count();
-    await showMore.click();
-    await expect(async () => {
-      expect(await visibleCards.count()).toBeGreaterThan(before);
-    }).toPass({ timeout: 10_000 });
-  }
-}
