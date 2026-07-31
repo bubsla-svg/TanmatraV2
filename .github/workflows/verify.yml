@@ -224,6 +224,16 @@ jobs:
         run: >
           node --test --import tsx
           ./src/lib/menuEngineering.cost.test.ts
+      # Menu-catalog process cache (OA-DEEP-1.3, TODO_optimization-auditor.md).
+      # Not money-path, but pure cache logic (TTL, single-flight, the
+      # invalidation-during-in-flight-fetch race) against a fake fetcher —
+      # no DB needed. Its own step so a failure reads as "the catalog cache
+      # broke" rather than being buried in an unrelated run.
+      - name: Menu-catalog cache unit tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/menuCatalogCache.test.ts
 
 
   money-integration:
@@ -420,3 +430,13 @@ jobs:
           node --test --test-force-exit --import tsx
           ./src/routes/corporateLeads.test.ts
           ./src/routes/partnerLeads.test.ts
+      # Menu-catalog cache wiring (OA-DEEP-1.3): proves getMergedCatalog()
+      # actually serves from cache against real Postgres (not just
+      # "consistent"), and that the real write paths (updatePrice,
+      # setAvailability, updateItem) genuinely invalidate it. Pure cache
+      # logic is covered DB-free in money-unit's step above.
+      - name: Menu-catalog cache DB integration
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuResolver.cache.test.ts
