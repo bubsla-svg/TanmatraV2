@@ -13,6 +13,7 @@ import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { AlacarteCheckout } from "@/components/checkout/AlacarteCheckout";
 import { PlanCheckout } from "@/components/checkout/plan/PlanCheckout";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
+import { asBuilderCycle } from "@/lib/checkoutCycle";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
@@ -20,6 +21,7 @@ type Props = {
   searchParams: Promise<{
     plan?: string;
     track?: string;
+    cycle?: string;
     returning?: string;
     credit?: string;
     bump?: string;
@@ -35,7 +37,7 @@ type Props = {
  * comes off the first bill; `bump=1` = the RD add-on accepted at plan review.
  */
 export default async function CheckoutPage({ searchParams }: Props) {
-  const { plan, track, returning, credit, bump, mode } = await searchParams;
+  const { plan, track, cycle, returning, credit, bump, mode } = await searchParams;
 
   // À-la-carte (SF-05 / CUJ-01): the guest money path — no plan, no session.
   // The cart lives client-side, so this leg is a client island; the server owns
@@ -74,6 +76,13 @@ export default async function CheckoutPage({ searchParams }: Props) {
   if (LIVE_CHECKOUT_ENABLED) {
     const requestedTrack =
       track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
+    // The builder confirms a cycle (Weekly/Monthly/Quarterly, each a different
+    // price) and sends it here as ?cycle=. Previously dropped on the floor —
+    // this page quoted and billed every plan as monthly regardless of what the
+    // customer picked. Validate against the fixed set the builder can emit;
+    // an absent or unrecognised value falls back to monthly, the builder's
+    // own default, never a guess.
+    const requestedCadence = asBuilderCycle(cycle);
     const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
     return (
       <div className="min-h-dvh">
@@ -83,6 +92,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
             planName={d.name}
             servedTracks={q.servedTracks}
             initialTrack={requestedTrack}
+            cadence={requestedCadence}
             addOns={withRdBump ? ["rd_bump"] : undefined}
             finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
             successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
