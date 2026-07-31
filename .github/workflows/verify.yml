@@ -408,6 +408,19 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/lib/dispatch.concurrency.test.ts
+
+      # OA-MED-1.1/1.2. Both suites count queries against a counting proxy on
+      # the pg pool rather than asserting latency — the audit's own
+      # recommended shape for N+1 findings, and the only one that isn't flaky.
+      # Own step (not appended to the dispatch step above) because
+      # dispatch.concurrency is known to fail when it shares a process with
+      # another dispatch suite — pre-existing cross-file state pollution.
+      - name: N+1 query-count guards (batch partner, loyalty sweep)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/dispatch.batchPartnerQueries.test.ts
+          ./src/lib/loyaltyEngine.sweep.test.ts
       # The reporting half of the money path. These are not about billing a
       # customer correctly; they are about the numbers the business reads back
       # afterwards being what they claim to be — the WBR's revenue line
