@@ -6,8 +6,8 @@ import { SystemProofs } from "@/components/styleguide/SystemProofs";
 
 // The live token + component reference (IMP §17.10). Named `/styleguide`, not
 // `/__styleguide`: the App Router treats `_`-prefixed folders as private
-// (non-routable). Noindexed. Renders in the viewer's active theme — toggle
-// data-theme on <html> to compare light/dark.
+// (non-routable). Noindexed. Renders in the viewer's active theme — use the
+// Header's theme toggle to compare light/dark live.
 export const metadata: Metadata = { title: "Styleguide", robots: { index: false } };
 
 type Token = { name: string; var: string; onDark?: boolean };

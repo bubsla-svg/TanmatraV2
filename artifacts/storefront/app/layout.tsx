@@ -149,10 +149,13 @@ const STITCH_ROUTE_SCRIPT = `(function () {
 })();`;
 
 /**
- * Root layout. `data-theme="light"` is rendered on the server, so the correct
- * theme is present in the first byte of HTML — the light theme resolves before
- * first paint with no flash, no client theme script required (Phase 1 ships a
- * single default theme; the dark override exists in tokens for a later toggle).
+ * Root layout. `data-theme="light"` is the server-rendered fallback — correct
+ * for a visitor with no stored preference and no dark OS signal, so the first
+ * byte of HTML is right without waiting on the client. A visitor whose OS
+ * prefers dark, or who has toggled dark before (Header's ThemeToggle), needs
+ * next-themes' own beforeInteractive script to flip `data-theme` to "dark"
+ * before paint — same zero-flash mechanism as STITCH_ROUTE_SCRIPT below, just
+ * shipped by the next-themes package instead of hand-rolled here.
  *
  * `data-stitch="dark"` is the other half of that: the total-redesign routes
  * (lib/stitchRoutes.ts) render on the dark arm of every token, and the
