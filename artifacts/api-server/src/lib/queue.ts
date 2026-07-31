@@ -268,6 +268,16 @@ export async function scheduleOrderAdvance(
     `advance-${orderId}-${step}`,
     { orderId, step },
     {
+      // Dedup key. The name above is only a display label — without an
+      // explicit jobId, a retry of POST /delivery/schedule-advance (or a
+      // second dispatchRoutedFulfillment call) enqueues a SECOND job for
+      // the same (order, step), producing a duplicate delivery_events row
+      // and a duplicate customer push notification. An order only passes
+      // through each step once in its normal lifecycle, so a deliberate
+      // ops re-run of an already-completed step needs a fresh jobId (or
+      // the prior job removed first) — this is the one intentional
+      // behavior change from adding this key.
+      jobId: `advance-${orderId}-${step}`,
       delay: delayMs,
       attempts: 3,
       backoff: { type: "exponential", delay: 2000 },

@@ -141,6 +141,11 @@ function baseBody(extra: Record<string, unknown>) {
     deliveryWindow: "12:00-14:00",
     startDate: futureISO(2),
     planType: "standard",
+    // planId became required for new signups ("legacy pricing is disabled")
+    // after this file was written; other subscription test files already
+    // pass one (see subscriptions.macroCap.test.ts, .creditLedger.test.ts).
+    planId: "desk_fuel",
+    track: "veg",
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
     defaultItems: [],
     ...extra,
