@@ -47,7 +47,13 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
   const plan = planDisplay(goal.planId);
 
   return (
-    <div>
+    // min-w-0: this is the second item of app/metabolic/page.tsx's
+    // `grid ... lg:grid-cols-2` header. A grid item's default min-width is
+    // `auto`, not 0 — the dish-preview rail below is 6 cards wide
+    // (overflow-x-auto, meant to scroll internally), and without this the
+    // grid track refused to shrink below the rail's full unscrolled width,
+    // pushing the whole page to a measured 1632px in a 360px viewport.
+    <div className="min-w-0">
       <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-4">
         <div
           role="group"
