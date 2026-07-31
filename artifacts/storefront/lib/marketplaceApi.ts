@@ -35,6 +35,30 @@ export interface MarketplaceOrder {
   totalPaise: number;
 }
 
+// Server-only. `/marketplace/items` is a public, non-personalised catalog
+// listing, but MarketplaceGrid fetched it through the shared apiGet client,
+// which hardcodes `cache: "no-store"` — correct for the session-cookie-authed
+// per-user data most callers need, wrong for this one, and it meant the
+// route always shipped an empty shell + "Loading pantry…" on first paint,
+// unlike every other catalog surface. Mirrors lib/catalog.ts's fetchMenu:
+// server-side fetch with a revalidate window, empty array on failure (the
+// client-side query in MarketplaceGrid still retries from there).
+const SERVER_API_BASE = process.env.API_BASE_URL ?? "http://localhost:3000";
+
+export async function fetchMarketplaceItemsServer(): Promise<MarketplaceItem[]> {
+  try {
+    const res = await fetch(`${SERVER_API_BASE}/api/marketplace/items`, {
+      // Revalidate hourly — the catalog is not per-request data.
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) throw new Error(`marketplace items ${res.status}`);
+    const data = (await res.json()) as { items?: MarketplaceItem[] };
+    return data.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export function listItems(category?: string, fetchImpl?: FetchImpl): Promise<{ items: MarketplaceItem[] }> {
   const q = category && category !== "all" ? `?category=${encodeURIComponent(category)}` : "";
   return apiGet(`/marketplace/items${q}`, fetchImpl);

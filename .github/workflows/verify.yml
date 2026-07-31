@@ -224,6 +224,16 @@ jobs:
         run: >
           node --test --import tsx
           ./src/lib/menuEngineering.cost.test.ts
+      # Menu-catalog process cache (OA-DEEP-1.3, TODO_optimization-auditor.md).
+      # Not money-path, but pure cache logic (TTL, single-flight, the
+      # invalidation-during-in-flight-fetch race) against a fake fetcher —
+      # no DB needed. Its own step so a failure reads as "the catalog cache
+      # broke" rather than being buried in an unrelated run.
+      - name: Menu-catalog cache unit tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/menuCatalogCache.test.ts
 
 
   money-integration:
@@ -307,6 +317,7 @@ jobs:
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
           ./src/routes/subscriptions.creditLedger.test.ts
+          ./src/lib/loyaltyEngine.creditDerivation.test.ts
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
           ./src/routes/subscriptions.catalogQuote.test.ts
           ./src/routes/loyalty.referral.test.ts
@@ -319,6 +330,7 @@ jobs:
           ./src/lib/ai/agents/ops.refundCap.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
+          ./src/routes/marketplace.items.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
           ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
@@ -408,6 +420,22 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/lib/dispatch.concurrency.test.ts
+      # OA-DEEP-1.6: the CMS agent's bulk_regenerate_copy and
+      # bulk_generate_missing_heroes tools ran their per-item Gemini calls
+      # fully serially inside a single agent chat turn bounded by one 30s
+      # wall-clock timeout — a guaranteed timeout on any non-trivial run.
+      # Both now route through the shared batchProcess utility (bounded
+      # concurrency + automatic retry on rate limits). These are pure unit
+      # tests of that wiring (fake generators/appliers, no Gemini calls) —
+      # DB-free in behavior, but menuAssets.ts/cms.ts import `db` at module
+      # load, so they need DATABASE_URL just to import, hence this job
+      # rather than money-unit.
+      - name: CMS bulk-tool concurrency wiring
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuAssets.bulkHeroes.test.ts
+          ./src/lib/ai/agents/cms.bulkCopy.test.ts
       # The reporting half of the money path. These are not about billing a
       # customer correctly; they are about the numbers the business reads back
       # afterwards being what they claim to be — the WBR's revenue line
@@ -445,6 +473,49 @@ jobs:
           node --test --test-force-exit --import tsx
           ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
           ./src/lib/b2b/accountHealth.test.ts
+      # Not money-path — the anomaly-scan baseline golden test from the
+      # optimization audit (TODO_optimization-auditor.md OA-DEEP-1.2). Needs
+      # real Postgres to seed orders/delivery_events and compare the batched
+      # buildBaseline against a frozen copy of the pre-optimization
+      # algorithm, so it lives in this job rather than money-unit.
+      - name: Anomaly-baseline golden test (batched vs pre-optimization)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/anomalies.golden.test.ts
+      # Menu-catalog cache wiring (OA-DEEP-1.3): proves getMergedCatalog()
+      # actually serves from cache against real Postgres (not just
+      # "consistent"), and that the real write paths (updatePrice,
+      # setAvailability, updateItem) genuinely invalidate it. Pure cache
+      # logic is covered DB-free in money-unit's step above.
+      - name: Menu-catalog cache DB integration
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuResolver.cache.test.ts
+      # OA-DEEP-1.7: buildDishSuggestions used to independently re-fetch and
+      # re-scan the entire orders window for every dish in a pricing run —
+      # O(dishes × orders × items). buildSliceCountsBySlug fetches the
+      # window once and buckets every dish's slice counts from that single
+      # pass. Golden test: compares the new one-pass grouping against a
+      # frozen copy of the exact old per-dish scan on identical seeded data.
+      - name: Menu-engineering pricing-loop golden test
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuEngineering.sliceCounts.golden.test.ts
+      # OA-MED-1.16: loadDynamicRecipeCosts re-filtered the whole ingredient
+      # list per recipe and re-scanned the whole inventory per ingredient.
+      # Both are now pre-grouped/memoised. The ingredient->inventory match is
+      # a two-way fuzzy substring test where Array.find's first-match-wins
+      # order is load-bearing — a different winner is a different food cost,
+      # which feeds the margin axis and can move a real price. Golden test:
+      # compares against a frozen copy of the old algorithm on seeded data.
+      - name: Menu-engineering recipe-cost golden test
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuEngineering.recipeCosts.golden.test.ts
 
       # OA-MED-1.3/1.4/1.8. The pipeline-idempotency suite is the load-bearing
       # one: it asserts the prelude properties (no duplicate delivery_events

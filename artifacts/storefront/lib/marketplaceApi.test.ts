@@ -1,10 +1,46 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { RazorpayAdapter } from "./moneyPath";
-import { listItems, checkout, payForMarketplace } from "./marketplaceApi";
+import { listItems, checkout, payForMarketplace, fetchMarketplaceItemsServer } from "./marketplaceApi";
 
 const jsonRes = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+
+// fetchMarketplaceItemsServer calls the platform `fetch` directly (it's a
+// server-only helper, not one of the fetchImpl-injectable clients below), so
+// these two tests stub globalThis.fetch and restore it afterwards.
+test("fetchMarketplaceItemsServer returns the items array on success", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => jsonRes({ items: [{ id: 1 }] })) as unknown as typeof fetch;
+  try {
+    const items = await fetchMarketplaceItemsServer();
+    assert.deepEqual(items, [{ id: 1 }]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("fetchMarketplaceItemsServer falls back to an empty array on failure", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => { throw new Error("network down"); }) as unknown as typeof fetch;
+  try {
+    const items = await fetchMarketplaceItemsServer();
+    assert.deepEqual(items, []);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("fetchMarketplaceItemsServer falls back to an empty array on a non-OK response", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => jsonRes({}, 500)) as unknown as typeof fetch;
+  try {
+    const items = await fetchMarketplaceItemsServer();
+    assert.deepEqual(items, []);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("listItems appends ?category (and omits it for 'all')", async () => {
   const urls: string[] = [];

@@ -15,6 +15,9 @@
 import assert from 'node:assert/strict';
 import {
   AllergenTraceabilityService,
+  type DishProductionBatch,
+  type OrderTraceabilityRecord,
+  type RecallCommunicationGateway,
   type SupplierLotMetadata,
 } from './AllergenTraceabilityService';
 
@@ -93,3 +96,115 @@ function lot(overrides: Partial<SupplierLotMetadata>): SupplierLotMetadata {
 }
 
 console.log('✅ AllergenTraceabilityService.validateOrderAgainstHiddenMetadata: all assertions passed');
+
+/**
+ * OA-MED-1.22/1.23 (TODO_optimization-auditor.md): executeContaminationRecallDrill
+ * used to linear-scan every record ever registered, and activeRecords never
+ * evicted — so a recalled order stayed in the ledger (and kept costing scan
+ * time) forever. The batch index + eviction rewrite must:
+ *   1. Still find every order whose dishes reference the contaminated batch,
+ *      and only those orders (not orders on an unrelated batch).
+ *   2. Still take the right gateway action per order status and flip it to
+ *      CANCELLED_RECALLED.
+ *   3. Evict a recalled order from the ledger — proven by re-running the
+ *      drill against the same batch and getting zero, not the same order
+ *      re-identified.
+ *   4. Evict a multi-batch order from EVERY batch's index entry, not just
+ *      the one that triggered the recall — proven by running the drill on
+ *      the order's OTHER batch afterward and getting zero for it too.
+ */
+
+class FakeGateway implements RecallCommunicationGateway {
+  cancelled: string[] = [];
+  intercepted: string[] = [];
+  recalled: string[] = [];
+  async cancelKitchenPrepTicket(orderId: string): Promise<void> {
+    this.cancelled.push(orderId);
+  }
+  async interceptRiderTransit(orderId: string): Promise<void> {
+    this.intercepted.push(orderId);
+  }
+  async broadcastCustomerRecall(orderId: string): Promise<void> {
+    this.recalled.push(orderId);
+  }
+}
+
+function batch(id: string): DishProductionBatch {
+  return {
+    dish_id: `DISH_${id}`,
+    dish_name: `Dish ${id}`,
+    production_batch_id: id,
+    prep_bay: 'BAY_1',
+    ingredient_lots: [],
+  };
+}
+
+function order(
+  id: string,
+  status: OrderTraceabilityRecord['order_status'],
+  batchIds: string[],
+): OrderTraceabilityRecord {
+  return {
+    order_id: id,
+    patient_id: `PATIENT_${id}`,
+    kitchen_id: 'KITCHEN_1',
+    prep_bay: 'BAY_1',
+    packer_id: 'PACKER_1',
+    timestamp_sealed: new Date().toISOString(),
+    order_status: status,
+    patient_allergen_profile: [],
+    kds_critical_flag: 'STANDARD PREP - NO ALLERGEN FLAGS',
+    dishes: batchIds.map(batch),
+    tamper_seal_barcode: `SEAL_${id}`,
+  };
+}
+
+async function testRecallDrillIndexAndEviction() {
+  const gateway = new FakeGateway();
+  const svc = new AllergenTraceabilityService(gateway);
+
+  svc.registerOrderTraceability(order('O1', 'IN_PREP', ['B1']));
+  svc.registerOrderTraceability(order('O2', 'OUT_FOR_DELIVERY', ['B1']));
+  svc.registerOrderTraceability(order('O3', 'DELIVERED', ['B1', 'B2'])); // multi-batch
+  svc.registerOrderTraceability(order('O4', 'IN_PREP', ['B2']));
+
+  // 1 + 2: drill on B1 finds exactly O1/O2/O3, takes the right action each.
+  const drill1 = await svc.executeContaminationRecallDrill('B1', 'test contamination');
+  assert.equal(drill1.totalOrdersIdentified, 3, 'B1 should identify O1, O2, O3 only');
+  assert.equal(drill1.ordersInPrepCancelled, 1);
+  assert.equal(drill1.ridersIntercepted, 1);
+  assert.equal(drill1.customersRecalledWithin60Mins, 1);
+  assert.deepEqual(gateway.cancelled, ['O1']);
+  assert.deepEqual(gateway.intercepted, ['O2']);
+  assert.deepEqual(gateway.recalled, ['O3']);
+
+  // 3: re-running the SAME drill finds nothing — O1/O2/O3 were evicted, not
+  // just marked and left in the ledger to be re-identified (and re-counted)
+  // every subsequent call.
+  const drill1Retry = await svc.executeContaminationRecallDrill('B1', 'retry');
+  assert.equal(drill1Retry.totalOrdersIdentified, 0, 'a recalled order must not be re-identified');
+  assert.equal(gateway.cancelled.length, 1, 'no duplicate kitchen-cancel action');
+  assert.equal(gateway.intercepted.length, 1, 'no duplicate rider-intercept action');
+  assert.equal(gateway.recalled.length, 1, 'no duplicate customer-recall action');
+
+  // 4: O3 was multi-batch (B1 + B2). It must have been evicted from B2's
+  // index too, so drilling B2 now finds only O4 — not O3 a second time.
+  const drill2 = await svc.executeContaminationRecallDrill('B2', 'second contamination');
+  assert.equal(drill2.totalOrdersIdentified, 1, 'B2 should identify only O4 — O3 already retired');
+  assert.equal(drill2.ordersInPrepCancelled, 1);
+  assert.deepEqual(gateway.cancelled, ['O1', 'O4']);
+}
+
+// No top-level await under this package's CommonJS module setting; an
+// unhandled rejection crashes ts-node with a non-zero exit code on its own
+// (Node 15+ default), so rethrowing in .catch() is enough to fail the run.
+testRecallDrillIndexAndEviction()
+  .then(() => {
+    console.log(
+      '✅ AllergenTraceabilityService.executeContaminationRecallDrill: batch index + eviction assertions passed',
+    );
+  })
+  .catch((err) => {
+    console.error('❌ AllergenTraceabilityService.test.ts FAILED:', err);
+    throw err;
+  });

@@ -567,7 +567,8 @@ router.get(
       .select()
       .from(officeOrdersTable)
       .where(eq(officeOrdersTable.companyId, company.id))
-      .orderBy(desc(officeOrdersTable.createdAt));
+      .orderBy(desc(officeOrdersTable.createdAt))
+      .limit(100);
     res.json({ officeOrders: rows });
   },
 );
@@ -975,12 +976,14 @@ router.get("/vouchers/mine", async (req: Request, res: Response) => {
         ne(vouchersTable.status, "pending_payment"),
       ),
     )
-    .orderBy(desc(vouchersTable.createdAt));
+    .orderBy(desc(vouchersTable.createdAt))
+    .limit(50);
   const redeemed = await db
     .select()
     .from(vouchersTable)
     .where(eq(vouchersTable.redeemedByUserId, auth.id))
-    .orderBy(desc(vouchersTable.redeemedAt));
+    .orderBy(desc(vouchersTable.redeemedAt))
+    .limit(50);
   res.json({ purchased, redeemed });
 });
 
