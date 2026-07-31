@@ -172,6 +172,7 @@ jobs:
           ./src/lib/flags.test.ts
           ./src/lib/trialEligibility.test.ts
           ./src/lib/corporateSubsidy.test.ts
+          ./src/lib/dishCustomizations.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
       - name: Inbound-auth + access-control contracts
         working-directory: artifacts/api-server
@@ -197,6 +198,7 @@ jobs:
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
           ./src/routes/subscriptions.creditLedger.test.ts
+          ./src/lib/loyaltyEngine.creditDerivation.test.ts
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
           ./src/routes/subscriptions.catalogQuote.test.ts
           ./src/routes/loyalty.referral.test.ts
@@ -209,6 +211,7 @@ jobs:
           ./src/lib/ai/agents/ops.refundCap.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
+          ./src/routes/marketplace.items.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
           ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
