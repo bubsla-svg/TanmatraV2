@@ -491,3 +491,14 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/lib/menuResolver.cache.test.ts
+      # OA-DEEP-1.7: buildDishSuggestions used to independently re-fetch and
+      # re-scan the entire orders window for every dish in a pricing run —
+      # O(dishes × orders × items). buildSliceCountsBySlug fetches the
+      # window once and buckets every dish's slice counts from that single
+      # pass. Golden test: compares the new one-pass grouping against a
+      # frozen copy of the exact old per-dish scan on identical seeded data.
+      - name: Menu-engineering pricing-loop golden test
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuEngineering.sliceCounts.golden.test.ts

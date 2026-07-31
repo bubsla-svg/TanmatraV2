@@ -583,16 +583,22 @@ function suggestPriceForClass(
 // that slice; otherwise fall back to a single (all, all) suggestion.
 // `nameToSlug` MUST be the same lookup used in aggregation so the slice
 // counts correspond to the same orders that produced the run stats.
-async function buildDishSuggestions(
-  runId: number,
-  slug: string,
-  classification: DishClassification,
-  currentPaise: number,
+type SliceKey = string; // `${zone}:${daypart}`
+type SliceCounts = Map<SliceKey, { count: number; zone: string; daypart: Daypart }>;
+
+/**
+ * One-pass replacement for calling this window's order scan once per dish.
+ * `buildDishSuggestions` used to independently re-fetch and re-scan the
+ * *entire* orders window for every dish in the run — O(dishes × orders ×
+ * items) round-trips and JS work for a single pricing run. Fetch the window
+ * once here and bucket every dish's slice counts from the same pass, so the
+ * per-dish loop in `buildPricingSuggestionsForRun` becomes a map lookup.
+ */
+export async function buildSliceCountsBySlug(
   windowStart: Date,
   windowEnd: Date,
   nameToSlug: Map<string, string>,
-  costEstimated: boolean,
-): Promise<Array<typeof pricingSuggestionsTable.$inferInsert>> {
+): Promise<Map<string, SliceCounts>> {
   const orders = await db
     .select({
       pincode: ordersTable.pincode,
@@ -607,21 +613,40 @@ async function buildDishSuggestions(
         eq(ordersTable.orderKind, "meal"),
       ),
     );
-  const slices = new Map<string, { count: number; zone: string; daypart: Daypart }>();
+  const bySlug = new Map<string, SliceCounts>();
   for (const o of orders) {
     if (!Array.isArray(o.items)) continue;
-    const has = o.items.some((it) => {
-      const n = (it as { name?: string }).name ?? "";
-      return nameToSlug.get(n.toLowerCase()) === slug;
-    });
-    if (!has) continue;
     const zone = zoneFromPincode(o.pincode);
     const daypart = dayPartFromHour(o.createdAt.getUTCHours());
-    const key = `${zone}:${daypart}`;
-    const cur = slices.get(key) ?? { count: 0, zone, daypart };
-    cur.count += 1;
-    slices.set(key, cur);
+    const key: SliceKey = `${zone}:${daypart}`;
+    // An order counts once per dish it contains, matching the original
+    // per-dish `.some(...)` presence check — not once per matching item, so
+    // a duplicate line for the same dish in one order still counts as 1.
+    const slugsInOrder = new Set<string>();
+    for (const it of o.items) {
+      const n = (it as { name?: string }).name ?? "";
+      const slug = nameToSlug.get(n.toLowerCase());
+      if (slug) slugsInOrder.add(slug);
+    }
+    for (const slug of slugsInOrder) {
+      const slices = bySlug.get(slug) ?? new Map();
+      const cur = slices.get(key) ?? { count: 0, zone, daypart };
+      cur.count += 1;
+      slices.set(key, cur);
+      bySlug.set(slug, slices);
+    }
   }
+  return bySlug;
+}
+
+function buildDishSuggestions(
+  runId: number,
+  slug: string,
+  classification: DishClassification,
+  currentPaise: number,
+  slices: SliceCounts,
+  costEstimated: boolean,
+): Array<typeof pricingSuggestionsTable.$inferInsert> {
   const base = suggestPriceForClass(classification, currentPaise);
   // Approving an "all/all" suggestion writes menu_items.price_paise, which is
   // what the customer pays. If the margin behind it was assumed rather than
@@ -699,18 +724,21 @@ export async function buildPricingSuggestionsForRun(
     const c = costs.get(slug);
     return !(c != null && c > 0);
   };
+  const sliceCountsBySlug = await buildSliceCountsBySlug(
+    run.windowStart,
+    run.windowEnd,
+    nameToSlug,
+  );
   const allRows: Array<typeof pricingSuggestionsTable.$inferInsert> = [];
   for (const s of stats) {
     const currentPaise = priceMap.get(s.slug);
     if (currentPaise == null) continue;
-    const rows = await buildDishSuggestions(
+    const rows = buildDishSuggestions(
       runId,
       s.slug,
       s.classification as DishClassification,
       currentPaise,
-      run.windowStart,
-      run.windowEnd,
-      nameToSlug,
+      sliceCountsBySlug.get(s.slug) ?? new Map(),
       costEstimatedFor(s.slug),
     );
     allRows.push(...rows);
