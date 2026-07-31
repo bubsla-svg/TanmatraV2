@@ -1,4 +1,4 @@
-import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { generateText } from "ai";
 import {
   db,
@@ -12,6 +12,7 @@ import {
 } from "@workspace/db";
 import { DEFAULT_MODEL_ID, getModel } from "./ai/model";
 import { logger } from "./logger";
+import { invalidateMenuCatalogCache } from "./menuCatalogCache";
 
 // Customer reviews are slug-keyed so they're independent of menu_items
 // edits/deletes. Ratings are 1..5 inclusive; body is bounded.
@@ -255,11 +256,14 @@ export async function getSummariesForSlugs(
   slugs: string[],
 ): Promise<Map<string, DishReviewSummary>> {
   if (slugs.length === 0) return new Map();
+  // slug is the table's primary key, so this is a PK lookup rather than the
+  // full-table read + in-JS filter this used to do on every getMergedCatalog()
+  // call (i.e. on every menu request).
   const rows = await db
     .select()
-    .from(dishReviewSummariesTable);
-  const wanted = new Set(slugs);
-  return new Map(rows.filter((r) => wanted.has(r.slug)).map((r) => [r.slug, r]));
+    .from(dishReviewSummariesTable)
+    .where(inArray(dishReviewSummariesTable.slug, slugs));
+  return new Map(rows.map((r) => [r.slug, r]));
 }
 
 interface ReviewSummaryFields {
@@ -347,6 +351,7 @@ export async function summarizeReviewsForSlug(
     await db
       .delete(dishReviewSummariesTable)
       .where(eq(dishReviewSummariesTable.slug, slug));
+    invalidateMenuCatalogCache();
     return null;
   }
   const fields = await summarizeWithModel(reviews);
@@ -378,6 +383,7 @@ export async function summarizeReviewsForSlug(
       },
     })
     .returning();
+  if (row) invalidateMenuCatalogCache();
   return row ?? null;
 }
 

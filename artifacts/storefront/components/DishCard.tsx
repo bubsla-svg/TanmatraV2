@@ -4,7 +4,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
-import type { DishFit } from "@/lib/menuFit";
+import { DishFitBadge } from "@/components/menu/DishFitContext";
 
 /**
  * Dish row — Stitch Route Brief 02 v3, "Mirrored Clinical Menu List"
@@ -12,9 +12,18 @@ import type { DishFit } from "@/lib/menuFit";
  * column, TEXT column first (title → excerpt → stars → macros), square photo
  * flush at the row's right edge, monospace price with gold emphasis.
  *
- * STILL A SERVER COMPONENT — catalog data, the à-la-carte gate and the price
- * stay server-side; Astryx Text is a client primitive a server component may
- * render. Preserved deliberately from the previous card:
+ * A REAL Server Component: catalog data, the à-la-carte gate and the price
+ * are evaluated server-side and none of this file's own code ships to the
+ * client. (It used to claim this while being reached only through
+ * PersonalizedMenu's "use client" import chain — under RSC rules that
+ * silently compiled this whole file, MenuGrid, and everything below it into
+ * client JS regardless of the comment. Fixed by inverting the composition:
+ * app/menu/page.tsx renders DishCard directly and hands the resulting nodes
+ * to PersonalizedMenu/MenuGrid as data, not as an import.) The one piece of
+ * markup that genuinely depends on client-fetched state — the personalised
+ * fit badge — is isolated to the small client island in DishFitContext.tsx,
+ * rendered below at the position the inline fit check used to occupy.
+ * Preserved deliberately from the previous card:
  *   - The Link wraps browse content only; the footer (price · Add) is a
  *     SIBLING — a <button> inside an <a> is invalid HTML and an a11y failure.
  *   - Price renders dish.price exactly as the server sent it; stars render
@@ -41,7 +50,7 @@ function RatingStars({ average, count }: { average?: number | null; count?: numb
   );
 }
 
-export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
+export function DishCard({ dish }: { dish: DishData }) {
   const est = dish.macrosEstimated ? "~" : "";
   return (
     <article className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
@@ -68,16 +77,7 @@ export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
                 harmlessly under the atom once the layer order is repaired. */}
             <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
           </span>
-          {fit?.band === "conflict" && fit.conflictLabel && (
-            <Text type="supporting" weight="bold" className="text-[var(--danger)]">
-              {fit.conflictLabel}
-            </Text>
-          )}
-          {fit?.band === "high" && (
-            <Text type="supporting" weight="bold" className="text-sage-text">
-              Good match for you
-            </Text>
-          )}
+          <DishFitBadge dishId={dish.id} />
           <Text type="supporting" color="secondary" maxLines={2}>
             {dish.tasteDescription || dish.description}
           </Text>

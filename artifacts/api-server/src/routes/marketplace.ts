@@ -4,6 +4,7 @@ import {
   marketplaceItemsTable,
   marketplaceBatchesTable,
   ordersTable,
+  type MarketplaceCategory,
   type MarketplaceItem,
   type MarketplaceOrderLine,
 } from "@workspace/db";
@@ -136,19 +137,38 @@ async function ensureMarketplaceSeeded() {
   marketplaceSeeded = true;
 }
 
+const MARKETPLACE_CATEGORIES: readonly MarketplaceCategory[] = [
+  "oils",
+  "sauces",
+  "supplements",
+  "pantry",
+  "snacks",
+];
+function isMarketplaceCategory(v: string): v is MarketplaceCategory {
+  return (MARKETPLACE_CATEGORIES as readonly string[]).includes(v);
+}
+
 router.get("/marketplace/items", async (req: Request, res: Response) => {
   await ensureMarketplaceSeeded();
   const category = String(req.query.category ?? "").trim();
+  const wantsFilter = Boolean(category) && category !== "all";
+  if (wantsFilter && !isMarketplaceCategory(category)) {
+    // Unknown category: match nothing, same as the old JS-filter behavior —
+    // never silently fall back to "everything" for a bogus filter value.
+    res.json({ items: [] });
+    return;
+  }
+  const conds = [eq(marketplaceItemsTable.isActive, true)];
+  if (wantsFilter && isMarketplaceCategory(category)) {
+    conds.push(eq(marketplaceItemsTable.category, category));
+  }
   const rows = await db
     .select()
     .from(marketplaceItemsTable)
-    .where(eq(marketplaceItemsTable.isActive, true))
-    .orderBy(desc(marketplaceItemsTable.createdAt));
-  const filtered =
-    category && category !== "all"
-      ? rows.filter((r) => r.category === category)
-      : rows;
-  res.json({ items: filtered });
+    .where(and(...conds))
+    .orderBy(desc(marketplaceItemsTable.createdAt))
+    .limit(500);
+  res.json({ items: rows });
 });
 
 router.get("/marketplace/items/:slug", async (req: Request, res: Response) => {
@@ -517,7 +537,8 @@ router.get("/marketplace/orders", async (req: Request, res: Response) => {
     .select()
     .from(ordersTable)
     .where(and(eq(ordersTable.userId, req.user.id), eq(ordersTable.orderKind, "marketplace")))
-    .orderBy(desc(ordersTable.createdAt));
+    .orderBy(desc(ordersTable.createdAt))
+    .limit(50);
   res.json({ orders: rows });
 });
 

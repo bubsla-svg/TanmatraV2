@@ -64,6 +64,12 @@ export interface RecallCommunicationGateway {
 export class AllergenTraceabilityService {
   private activeRecords: Map<string, OrderTraceabilityRecord> = new Map();
   private lockedBatches: Set<string> = new Set();
+  // Secondary index: production_batch_id -> order ids whose dishes reference
+  // that batch. executeContaminationRecallDrill used to linear-scan every
+  // active record to find the ones touching a contaminated batch; the recall
+  // is time-boxed to a 60-minute SLA and the ledger only grows, so that scan
+  // gets slower on exactly the days it can least afford to.
+  private batchIndex: Map<string, Set<string>> = new Map();
 
   constructor(private commGateway: RecallCommunicationGateway) {}
 
@@ -72,6 +78,30 @@ export class AllergenTraceabilityService {
    */
   public registerOrderTraceability(record: OrderTraceabilityRecord): void {
     this.activeRecords.set(record.order_id, record);
+    for (const dish of record.dishes) {
+      const orders = this.batchIndex.get(dish.production_batch_id) ?? new Set();
+      orders.add(record.order_id);
+      this.batchIndex.set(dish.production_batch_id, orders);
+    }
+  }
+
+  /**
+   * Retires a record from the active ledger once it can never again be the
+   * target of a contamination scan or recall action — today that is exactly
+   * CANCELLED_RECALLED, the only terminal state this class itself assigns.
+   * This Map is working memory for in-flight orders, not the durable audit
+   * trail (that lives in WormAuditLogger) — an unretired record just grows
+   * the heap forever on a long-running process, and directly inflates the
+   * cost of the very scan the batch index above exists to avoid.
+   */
+  private evictRecord(orderId: string, record: OrderTraceabilityRecord): void {
+    this.activeRecords.delete(orderId);
+    for (const dish of record.dishes) {
+      const orders = this.batchIndex.get(dish.production_batch_id);
+      if (!orders) continue;
+      orders.delete(orderId);
+      if (orders.size === 0) this.batchIndex.delete(dish.production_batch_id);
+    }
   }
 
   /**
@@ -150,12 +180,13 @@ export class AllergenTraceabilityService {
     let interceptedRiders = 0;
     let recalledCustomers = 0;
 
-    // 2. Scan ledger for all orders referencing this batch
-    for (const [orderId, record] of this.activeRecords.entries()) {
-      const containsBatch = record.dishes.some(
-        (d) => d.production_batch_id === contaminatedBatchId,
-      );
-      if (!containsBatch) continue;
+    // 2. Look up orders referencing this batch via the secondary index
+    // instead of scanning every active record. Snapshot the id set first —
+    // evictRecord() below mutates the very set batchIndex.get() returns.
+    const affectedOrderIds = [...(this.batchIndex.get(contaminatedBatchId) ?? [])];
+    for (const orderId of affectedOrderIds) {
+      const record = this.activeRecords.get(orderId);
+      if (!record) continue; // defensive: index and ledger should never desync
 
       totalIdentified++;
 
@@ -166,6 +197,7 @@ export class AllergenTraceabilityService {
         );
         record.order_status = 'CANCELLED_RECALLED';
         cancelledPrep++;
+        this.evictRecord(orderId, record);
       } else if (record.order_status === 'OUT_FOR_DELIVERY') {
         await this.commGateway.interceptRiderTransit(
           orderId,
@@ -174,6 +206,7 @@ export class AllergenTraceabilityService {
         );
         record.order_status = 'CANCELLED_RECALLED';
         interceptedRiders++;
+        this.evictRecord(orderId, record);
       } else if (record.order_status === 'DELIVERED') {
         await this.commGateway.broadcastCustomerRecall(
           orderId,
@@ -182,6 +215,13 @@ export class AllergenTraceabilityService {
         );
         record.order_status = 'CANCELLED_RECALLED';
         recalledCustomers++;
+        this.evictRecord(orderId, record);
+      } else if (record.order_status === 'CANCELLED_RECALLED') {
+        // Already terminal — from a prior drill against a different
+        // contaminated batch this order's dishes also referenced. No new
+        // action to take, but it should have been evicted already; retire
+        // it now rather than let it linger un-actionable in the ledger.
+        this.evictRecord(orderId, record);
       }
     }
 

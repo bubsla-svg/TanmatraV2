@@ -95,6 +95,13 @@ router.post("/cms-agent/chat", async (req: Request, res: Response) => {
       messages,
       stream: true,
       onEvent,
+      // The gateway default (30s) covers a single tool call but not this
+      // agent's bulk tools (bulk_regenerate_copy, bulk_generate_missing_heroes),
+      // which — even after being routed through bounded concurrency — can take
+      // several rounds of per-item Gemini calls to clear a full ~25-item batch.
+      // The timeout bounds the whole turn, tool execution included, so it has
+      // to cover that, not just the model round-trip.
+      timeoutMs: 120_000,
     });
     res.end();
   } catch (err) {
