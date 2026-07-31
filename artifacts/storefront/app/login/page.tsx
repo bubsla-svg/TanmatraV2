@@ -17,7 +17,7 @@ export default async function LoginPage({
   const { next } = await searchParams;
   const safeNext = next && /^\/(?!\/)/.test(next) ? next : "/account";
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       {/* The plainest, most utilitarian screen in the batch (Brief 26): one
           centered card, generous whitespace, nothing competing with the OTP
           flow that lives inside it. */}

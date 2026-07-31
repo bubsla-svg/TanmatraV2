@@ -12,7 +12,7 @@ export default async function CustomBuildPage() {
   const { dishes } = await fetchMenu();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <section className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-12">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">

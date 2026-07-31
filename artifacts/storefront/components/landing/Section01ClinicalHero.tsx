@@ -1,6 +1,7 @@
 "use client"; // Interactive hero CTA clicks and assessment trigger event emission
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
@@ -59,10 +60,19 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
 
           <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
             {headStart}{" "}
-            <img
+            {/* Eager, not lazy: it sits inside the h1, above the fold at every
+                viewport (React 19 preloads any eager image, so this and the
+                hero photo below both preload — they are the only two).
+                width/height are the rendered box at the largest type step
+                (1.6em × 1.05em of text-6xl); the em classes still drive layout,
+                and both are overridden, so the ratio never fights the CSS. */}
+            <Image
               src="/images/landing/stitch-plate-inline.png"
               alt=""
               aria-hidden
+              width={96}
+              height={63}
+              loading="eager"
               className="inline-block h-[1.05em] w-[1.6em] rounded-2xl border border-line object-cover align-[-0.12em]"
             />{" "}
             {headEnd}
@@ -117,10 +127,20 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           )}
           <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised">
             <div className="relative aspect-[4/5] w-full sm:aspect-[3/4]">
-              <img
+              {/* The LCP candidate on desktop — `priority` (eager + a preload
+                  carrying the srcset). `fill` inside the aspect box keeps CLS
+                  at zero. sizes: the frame is lg:col-span-5 of a 12-col grid
+                  with gap-12 inside max-w-screen-xl px-6, i.e.
+                  5·(1232−528)/12 + 4·48 ≈ 486px once the container caps, ≈38vw
+                  between lg and that cap, and the full content width (100vw
+                  less the px-6/px-4 gutters) while the grid is single-column. */}
+              <Image
                 src="/images/landing/stitch-hero-tall.png"
                 alt="Chef-plated clinical meal, photographed from above"
-                className="h-full w-full object-cover"
+                fill
+                priority
+                sizes="(min-width: 1280px) 486px, (min-width: 1024px) 38vw, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
+                className="object-cover"
               />
               <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] px-4 py-3 backdrop-blur-md">
                 <div>

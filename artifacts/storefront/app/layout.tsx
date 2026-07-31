@@ -34,10 +34,16 @@ import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { ChromeGate } from "@/components/ChromeGate";
+import { NetworkStatusToast } from "@/components/NetworkStatusToast";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
+import { QueryProvider } from "@/components/QueryProvider";
 import { SITE_URL } from "@/lib/siteUrl";
 import { PostHogProvider } from "@/components/PostHogProvider";
-import { THEME_COLOR, STITCH_EXACT_ROUTES, STITCH_PREFIX_ROUTES } from "@/lib/stitchRoutes";
-
+import {
+  THEME_COLOR,
+  STITCH_EXACT_ROUTES,
+  STITCH_PREFIX_ROUTES,
+} from "@/lib/stitchRoutes";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
 // next/font self-hosts the files and exposes each as a CSS variable that
@@ -94,6 +100,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: THEME_COLOR.light,
+  // Without this, env(safe-area-inset-*) resolves to 0 on notched/Dynamic-Island
+  // devices, silently no-op'ing the app's .pb-safe/.mb-safe CSS and the fixed
+  // MobileBottomNav bottom-padding calc — see docs/WEB-APP-ENHANCEMENT-PLAN.md.
+  viewportFit: "cover",
 };
 
 /**
@@ -143,10 +153,13 @@ const STITCH_ROUTE_SCRIPT = `(function () {
 })();`;
 
 /**
- * Root layout. `data-theme="light"` is rendered on the server, so the correct
- * theme is present in the first byte of HTML — the light theme resolves before
- * first paint with no flash, no client theme script required (Phase 1 ships a
- * single default theme; the dark override exists in tokens for a later toggle).
+ * Root layout. `data-theme="light"` is the server-rendered fallback — correct
+ * for a visitor with no stored preference and no dark OS signal, so the first
+ * byte of HTML is right without waiting on the client. A visitor whose OS
+ * prefers dark, or who has toggled dark before (Header's ThemeToggle), needs
+ * next-themes' own beforeInteractive script to flip `data-theme` to "dark"
+ * before paint — same zero-flash mechanism as STITCH_ROUTE_SCRIPT below, just
+ * shipped by the next-themes package instead of hand-rolled here.
  *
  * `data-stitch="dark"` is the other half of that: the total-redesign routes
  * (lib/stitchRoutes.ts) render on the dark arm of every token, and the
@@ -186,30 +199,34 @@ export default function RootLayout({
         // scroll — the mini-cart bar sits above the nav and adds ~69px more.
         className="bg-[var(--bg)] text-ink pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0"
       >
-        <Script
-          id="stitch-route-scope"
-          strategy="beforeInteractive"
-        >
+        <Script id="stitch-route-scope" strategy="beforeInteractive">
           {STITCH_ROUTE_SCRIPT}
         </Script>
         <SiteStructuredData />
         <PostHogProvider>
-          <ThemeProvider>
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-gold focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--gold-ink)]"
-            >
-              Skip to main content
-            </a>
-            <CartProvider>
-              <Header />
-              <main id="main">{children}</main>
-              {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
-              <MiniCartBar />
-              <Footer />
-              <MobileBottomNav />
-            </CartProvider>
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider>
+              <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-gold focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--gold-ink)]"
+              >
+                Skip to main content
+              </a>
+              <CartProvider>
+                <Header />
+                <main id="main">{children}</main>
+                {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
+                <MiniCartBar />
+                <Footer />
+                <MobileBottomNav />
+                {/* Honest offline state — the service worker never serves a
+                  cached /checkout, /account or /api response, so a dropped
+                  connection has to be visible rather than silent. */}
+                <NetworkStatusToast />
+                <ServiceWorkerRegistrar />
+              </CartProvider>
+            </ThemeProvider>
+          </QueryProvider>
         </PostHogProvider>
       </body>
     </html>

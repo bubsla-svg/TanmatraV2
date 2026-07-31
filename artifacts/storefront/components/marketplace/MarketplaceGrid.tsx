@@ -1,10 +1,14 @@
 "use client";
 // Public marketplace browse: category filter + product cards. No auth (buying
-// is gated on the detail page). Client-fetched so category chips are instant.
-import { useEffect, useState } from "react";
+// is gated on the detail page). The full catalogue loads once through
+// useQuery (["marketplace","items"]) and category chips filter it client-side
+// — genuinely instant (no per-chip network round trip), matching the intent
+// of the comment this file already carried.
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { formatPaise } from "@/lib/format";
-import { listItems, type MarketplaceItem } from "@/lib/marketplaceApi";
+import { listItems } from "@/lib/marketplaceApi";
 import { useCart } from "@/components/cart/CartProvider";
 import { addLine } from "@/lib/cartStore";
 
@@ -12,19 +16,22 @@ const CATEGORIES = ["all", "oils", "sauces", "supplements", "snacks", "pantry"] 
 
 export function MarketplaceGrid() {
   const [category, setCategory] = useState<string>("all");
-  const [items, setItems] = useState<MarketplaceItem[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const { cart, setCart } = useCart();
 
-  useEffect(() => {
-    let live = true;
-    setItems(null);
-    setError(null);
-    listItems(category)
-      .then((r) => { if (live) setItems(r.items); })
-      .catch(() => { if (live) setError("Couldn't load the pantry."); });
-    return () => { live = false; };
-  }, [category]);
+  const {
+    data: allItems,
+    isPending,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["marketplace", "items"],
+    queryFn: () => listItems("all").then((r) => r.items),
+  });
+
+  const items = useMemo(() => {
+    if (!allItems) return null;
+    return category === "all" ? allItems : allItems.filter((it) => it.category === category);
+  }, [allItems, category]);
 
   return (
     <div>
@@ -44,9 +51,16 @@ export function MarketplaceGrid() {
         ))}
       </div>
 
-      {error && <p className="mt-6 text-sm text-ink-muted">{error}</p>}
-      {!error && items === null && <p className="mt-6 text-sm text-ink-muted">Loading pantry…</p>}
-      {items?.length === 0 && <p className="mt-6 text-sm text-ink-muted">No items on this shelf yet.</p>}
+      {isError && (
+        <div className="mt-6 flex items-center gap-3">
+          <p className="text-sm text-ink-muted">Couldn&rsquo;t load the pantry.</p>
+          <button type="button" onClick={() => void refetch()} className="text-xs font-semibold text-gold-text hover:underline">
+            Retry
+          </button>
+        </div>
+      )}
+      {!isError && isPending && <p className="mt-6 text-sm text-ink-muted">Loading pantry…</p>}
+      {!isError && items?.length === 0 && <p className="mt-6 text-sm text-ink-muted">No items on this shelf yet.</p>}
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {items?.map((it) => {

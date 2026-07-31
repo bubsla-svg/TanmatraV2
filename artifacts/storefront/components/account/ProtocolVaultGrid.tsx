@@ -3,31 +3,37 @@
 // notes, and 1-click cart addition. Stitch brief route-13 "Protocol Vault":
 // per-card image block, clinical-notes panel, monospace macro/tag chips, and a
 // gold add-to-cart footer.
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
+import { ApiError } from "@/lib/apiClient";
 import { getMySavedMeals, removeMealFromVault, type SavedMeal } from "@/lib/savedMealsApi";
 import { AddToCart } from "@/components/cart/AddToCart";
+import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
-  const [items, setItems] = useState<SavedMeal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    getMySavedMeals()
-      .then((res) => {
-        setItems(res);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Please sign in to access your personal Protocol Vault.");
-        setLoading(false);
-      });
-  }, []);
+  const vaultQuery = useQuery({
+    queryKey: ["account", "vault"],
+    queryFn: () => getMySavedMeals(),
+  });
+
+  // Finding #5: no optimistic removal — the row only disappears once the
+  // server confirms the delete, so a failed delete can never leave a row
+  // missing from the UI while it's still saved server-side.
+  const removeMutation = useMutation({
+    mutationFn: (slug: string) => removeMealFromVault(slug),
+    onSuccess: (_res, slug) => {
+      queryClient.setQueryData<SavedMeal[]>(["account", "vault"], (prev) =>
+        (prev ?? []).filter((i) => i.dishSlug !== slug),
+      );
+    },
+  });
 
   const dishMap = useMemo(() => {
     const map = new Map<string, DishData>();
@@ -35,24 +41,45 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
     return map;
   }, [dishes]);
 
-  const remove = async (slug: string) => {
-    try {
-      await removeMealFromVault(slug);
-      setItems((prev) => prev.filter((i) => i.dishSlug !== slug));
-    } catch {
-      // Offline fallback: optimistically remove from current view
-      setItems((prev) => prev.filter((i) => i.dishSlug !== slug));
+  if (vaultQuery.isPending) {
+    return <div className="p-8 text-center text-xs font-semibold text-ink-muted">Opening your vault…</div>;
+  }
+
+  // Finding #4: three distinct branches — 401, other errors, and the genuine
+  // empty case — instead of a load failure and "no items" looking identical.
+  if (vaultQuery.isError) {
+    if (vaultQuery.error instanceof ApiError && vaultQuery.error.status === 401) {
+      return (
+        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-8 text-center">
+          <p className="text-sm text-ink-muted">Sign in to access your personal Protocol Vault.</p>
+          <PhoneAuth onVerified={() => void vaultQuery.refetch()} />
+        </div>
+      );
     }
-  };
+    return (
+      <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-8 text-center">
+        <p className="text-sm font-semibold text-[var(--danger)]">
+          {vaultQuery.error instanceof ApiError ? vaultQuery.error.message : "Couldn't load your Protocol Vault."}
+        </p>
+        <button
+          type="button"
+          onClick={() => void vaultQuery.refetch()}
+          className="mx-auto rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
-  if (loading) return <div className="p-8 text-center text-xs font-semibold text-ink-muted">Opening your vault…</div>;
+  const items = vaultQuery.data;
 
-  if (error || items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-8 text-center">
         <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">Protocol Vault Empty</span>
         <p className="text-sm font-medium text-ink">
-          {error ?? "You have not bookmarked any clinical meal protocols to your personal vault yet."}
+          You have not bookmarked any clinical meal protocols to your personal vault yet.
         </p>
         <Button asChild shape="pill" size="fluid" className="mx-auto mt-2 px-6 py-2.5 text-xs font-semibold">
           <Link href="/menu">Explore Therapeutic Menu &rarr;</Link>
@@ -65,6 +92,8 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
       {items.map((saved) => {
         const dish = dishMap.get(saved.dishSlug);
+        const removing = removeMutation.isPending && removeMutation.variables === saved.dishSlug;
+        const removeFailed = removeMutation.isError && removeMutation.variables === saved.dishSlug;
         return (
           <article
             key={saved.id}
@@ -77,14 +106,21 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
               </span>
               <button
                 type="button"
-                onClick={() => remove(saved.dishSlug)}
-                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--danger)]"
+                onClick={() => removeMutation.mutate(saved.dishSlug)}
+                disabled={removing}
+                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--danger)] disabled:opacity-50"
                 title="Remove from Vault"
               >
-                Remove
+                {removing ? "Removing…" : "Remove"}
                 <X aria-hidden className="h-3.5 w-3.5" />
               </button>
             </div>
+
+            {removeFailed && (
+              <p role="alert" className="px-4 text-[11px] font-medium text-[var(--danger)]">
+                Couldn&rsquo;t remove this item. Try again.
+              </p>
+            )}
 
             {dish?.image && (
               <div className="px-4">

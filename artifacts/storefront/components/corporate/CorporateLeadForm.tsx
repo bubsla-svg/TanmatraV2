@@ -122,7 +122,7 @@ export function CorporateLeadForm({
         </label>
         <label className={`${labelCls} md:flex-1`}>
           Work email
-          <input type="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} placeholder="you@company.com" className={inputCls} />
+          <input type="email" autoComplete="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} placeholder="you@company.com" className={inputCls} />
         </label>
       </div>
       <div className="flex flex-col gap-4 md:flex-row">
@@ -145,7 +145,7 @@ export function CorporateLeadForm({
         </label>
         <label className={`${labelCls} md:flex-1`}>
           Phone <span className="normal-case tracking-normal text-ink-faint">(optional)</span>
-          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className={inputCls} />
+          <input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className={inputCls} />
         </label>
       </div>
       <label className={labelCls}>

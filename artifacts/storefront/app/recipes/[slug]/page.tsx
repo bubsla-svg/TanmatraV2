@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getRecipe, type Recipe } from "@/lib/recipesApi";
+import { getRecipeOrReason, type Recipe } from "@/lib/recipesApi";
 
 type Params = { params: Promise<{ slug: string }> };
 export const revalidate = 3600;
@@ -15,9 +15,9 @@ const GOAL_LABELS: Record<string, string> = {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const r = await getRecipe(slug);
-  if (!r) return { title: "Recipe not found" };
-  return { title: r.title, description: r.summary };
+  const lookup = await getRecipeOrReason(slug);
+  if (!lookup.ok) return { title: lookup.reason === "not_found" ? "Recipe not found" : "Recipe" };
+  return { title: lookup.recipe.title, description: lookup.recipe.summary };
 }
 
 /** schema.org/Recipe for rich results, built from the recipe's real fields. */
@@ -49,8 +49,24 @@ function recipeJsonLd(r: Recipe) {
 
 export default async function RecipePage({ params }: Params) {
   const { slug } = await params;
-  const r = await getRecipe(slug);
-  if (!r) notFound();
+  const lookup = await getRecipeOrReason(slug);
+  if (!lookup.ok && lookup.reason === "not_found") notFound();
+  if (!lookup.ok) {
+    return (
+      <section className="mx-auto max-w-2xl px-4 py-10">
+        <Link href="/recipes" className="text-sm text-ink-muted hover:text-ink">
+          &larr; Recipes
+        </Link>
+        <div className="mt-8 rounded-2xl border border-line bg-surface p-8 text-center">
+          <p className="text-sm font-semibold text-ink">This recipe is briefly unavailable</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            We couldn&rsquo;t reach the recipe just now — please check back shortly.
+          </p>
+        </div>
+      </section>
+    );
+  }
+  const r = lookup.recipe;
 
   const stats: [string, string][] = [["Time", `${r.timeMinutes} min`]];
   if (r.calories != null) stats.push(["Calories", `${r.calories} kcal`]);

@@ -1,10 +1,18 @@
 "use client";
-// Recipes browser — client-side filtering over the server-rendered list (SSR
-// paints the full grid → SEO-safe; filtering is in-memory, no re-fetch, since
-// the API caps the list at a browsable size).
+// Recipes browser — client-side filtering over the recipe list. The list
+// itself is fetched here via useQuery (key ["recipes","list"], no filter
+// state in the key: filtering stays in-memory over the one fetched list, it
+// doesn't refetch). `recipes` (server-fetched by the page, SSR-painted for
+// SEO) seeds `initialData` so there's no loading flash on the happy path, but
+// `staleTime: 0` overrides the QueryProvider default (30s) so a background
+// refetch fires immediately on mount instead of trusting stale/possibly
+// outage-masked SSR data for up to 30s — `isError` (not an empty array)
+// drives the "briefly unavailable" copy, so a transient API outage no longer
+// renders as "No recipes match those filters."
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import type { Recipe } from "@/lib/recipesApi";
+import { fetchRecipesList, type Recipe } from "@/lib/recipesApi";
 import { RecipeCard } from "./RecipeCard";
 
 const GOALS: [string, string][] = [
@@ -44,11 +52,18 @@ function Chips<T extends string | number>(props: {
   );
 }
 
-export function RecipesBrowser({ recipes }: { recipes: Recipe[] }) {
+export function RecipesBrowser({ recipes: initialRecipes }: { recipes: Recipe[] }) {
   const [goal, setGoal] = useState("all");
   const [diet, setDiet] = useState("all");
   const [maxTime, setMaxTime] = useState(0);
   const [q, setQ] = useState("");
+
+  const { data: recipes, isError } = useQuery({
+    queryKey: ["recipes", "list"],
+    queryFn: () => fetchRecipesList(),
+    initialData: initialRecipes,
+    staleTime: 0,
+  });
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -81,7 +96,11 @@ export function RecipesBrowser({ recipes }: { recipes: Recipe[] }) {
       <p className="tabular mt-6 text-xs font-medium text-ink-muted">
         {filtered.length} {filtered.length === 1 ? "recipe" : "recipes"}
       </p>
-      {filtered.length === 0 ? (
+      {isError ? (
+        <p className="mt-4 rounded-2xl border border-dashed border-line bg-surface px-4 py-10 text-center text-sm text-ink-muted">
+          Recipes are briefly unavailable — please check back shortly.
+        </p>
+      ) : filtered.length === 0 ? (
         <p className="mt-4 rounded-2xl border border-dashed border-line bg-surface px-4 py-10 text-center text-sm text-ink-muted">
           No recipes match those filters.
         </p>

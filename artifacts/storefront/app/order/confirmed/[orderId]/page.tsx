@@ -36,7 +36,7 @@ export default async function ConfirmedPage({
 
   if (result.kind !== "ok") {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-dvh">
         <section className="mx-auto max-w-md px-4 py-10 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">
             {result.kind === "not_found"
@@ -62,7 +62,7 @@ export default async function ConfirmedPage({
   // delivered or cancelled order gets no dead Track CTA.
   const trackable = TRACKABLE_STATUSES.has(status);
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <section className="mx-auto max-w-md px-4 py-10">
         {/* Status card — the single largest, most prominent element on the
             screen. This is a confirmation, not a celebration: no confetti,

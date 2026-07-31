@@ -45,7 +45,7 @@ export default async function DishPage({ params }: Params) {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
     <article className="mx-auto max-w-3xl px-4 py-8">
       <DishStructuredData dish={dish} />
       <Link href="/menu" className="text-sm text-ink-muted hover:text-ink">

@@ -14,7 +14,7 @@ import {
   orderRateLimit,
   aiRateLimit,
   rationaleRateLimit,
-  paymentRateLimit,
+  paymentRouteRateLimit,
   addressRateLimit,
 } from "./middlewares/rateLimitMiddleware";
 import { idempotencyMiddleware } from "./middlewares/idempotency";
@@ -177,7 +177,7 @@ app.use("/api/coach-agent", aiRateLimit);
 app.use("/api/ops-agent", aiRateLimit);
 app.use("/api/support-agent", aiRateLimit);
 app.use("/api/dish-rationales", rationaleRateLimit);
-app.use("/api/payments", paymentRateLimit);
+app.use("/api/payments", paymentRouteRateLimit);
 app.use("/api/addresses", addressRateLimit);
 
 // Surface body-parser failures as a clean 413 / 400 instead of a 500.

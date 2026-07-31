@@ -3,7 +3,7 @@
 // from PlanCheckout to keep the component under the file cap as add-ons (and
 // now credit) joined the quote.
 import { useEffect, useState } from "react";
-import { quotePlan, type AddOnId, type DietTrack } from "./api";
+import { quotePlan, type AddOnId, type DietTrack, type PlanCadence } from "./api";
 import { addOnLineFromQuote } from "./addons";
 
 export interface PlanQuoteState {
@@ -45,6 +45,7 @@ export function usePlanQuote(
   track: DietTrack,
   addOns?: AddOnId[],
   signedIn?: boolean,
+  cadence?: PlanCadence,
 ): { quote: PlanQuoteState | null; quoteLoading: boolean } {
   const [quote, setQuote] = useState<PlanQuoteState | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
@@ -60,7 +61,7 @@ export function usePlanQuote(
     // `signedIn` is a dep, not sent in the body: a re-quote after login carries
     // the session cookie (credentials:"include"), so the server folds in this
     // account's real credit; the pre-login quote shows the gross total.
-    quotePlan({ planId, track, cadence: "monthly", addOns: requested })
+    quotePlan({ planId, track, cadence: cadence ?? "monthly", addOns: requested })
       .then((q) => {
         if (!live) return;
         const payableTotalPaise = q.payableTotalPaise ?? q.totalPaise;
@@ -82,7 +83,7 @@ export function usePlanQuote(
     return () => {
       live = false;
     };
-  }, [planId, track, addOnsKey, signedIn]);
+  }, [planId, track, addOnsKey, signedIn, cadence]);
 
   return { quote, quoteLoading };
 }
