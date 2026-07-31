@@ -246,8 +246,18 @@ export async function redeemCreditAtomic(args: {
       },
       tx,
     );
-    const newBalance = await getCreditBalancePaise(args.userId, tx);
-    return { ok: true, balancePaise: newBalance } as const;
+    // Derived, not re-read. getCreditBalancePaise rebuilds the entire FIFO
+    // lot ledger from every credit_ledger row for this user, and calling it
+    // twice doubles that for no new information: we hold the advisory lock
+    // for the whole transaction, nothing between the read above and here
+    // issues credit for this user, and the guard above already proved
+    // balance >= paise. The redemption therefore consumes exactly `paise`
+    // from the same unexpired-lot set the balance above summed, so the
+    // post-redemption balance is that subtraction by construction.
+    //
+    // This does NOT generalise to finalizeOrder's pair of reads — see the
+    // note there; that one has an intervening referral award.
+    return { ok: true, balancePaise: balance - args.paise } as const;
   });
 }
 
@@ -1134,6 +1144,12 @@ export async function finalizeOrder(args: {
       );
     }
 
+    // Deliberately a fresh read, NOT `balance - redeemed`. Unlike
+    // redeemCreditAtomic (see the note there), this pair of balance reads
+    // has an intervening issuance: awardPendingReferralInTx above credits
+    // `refereeUserId` — which IS args.userId on a referred customer's first
+    // order — so the arithmetic shortcut would under-report the balance by
+    // the welcome bonus for exactly the customers who just earned one.
     const balancePaise = await getCreditBalancePaise(args.userId, tx);
     return {
       orderId: args.orderId,
