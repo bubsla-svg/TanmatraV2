@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { StepDots } from "@/components/checkout/StepDots";
 import { formatPaise } from "@/lib/format";
 import { ComponentProofs } from "@/components/styleguide/ComponentProofs";
+import { SystemProofs } from "@/components/styleguide/SystemProofs";
 
 // The live token + component reference (IMP §17.10). Named `/styleguide`, not
 // `/__styleguide`: the App Router treats `_`-prefixed folders as private
@@ -146,6 +147,7 @@ export default function StyleguidePage() {
         </div>
       </div>
       <ComponentProofs />
+      <SystemProofs />
     </section>
   );
 }
