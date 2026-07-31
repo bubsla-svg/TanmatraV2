@@ -34,6 +34,8 @@ import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { ChromeGate } from "@/components/ChromeGate";
+import { NetworkStatusToast } from "@/components/NetworkStatusToast";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { SITE_URL } from "@/lib/siteUrl";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { THEME_COLOR, STITCH_EXACT_ROUTES, STITCH_PREFIX_ROUTES } from "@/lib/stitchRoutes";
@@ -212,6 +214,11 @@ export default function RootLayout({
               <MiniCartBar />
               <Footer />
               <MobileBottomNav />
+              {/* Honest offline state — the service worker never serves a
+                  cached /checkout, /account or /api response, so a dropped
+                  connection has to be visible rather than silent. */}
+              <NetworkStatusToast />
+              <ServiceWorkerRegistrar />
             </CartProvider>
           </ThemeProvider>
         </PostHogProvider>
