@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Our Story",
@@ -103,12 +104,9 @@ export default function AboutPage() {
         <p className="mx-auto mt-4 max-w-sm text-base text-ink-muted">
           Choose a dietitian-designed plan tailored to your health goals.
         </p>
-        <Link
-          href="/plans"
-          className="mt-8 inline-flex h-[52px] items-center justify-center rounded-full bg-gold px-10 font-bold text-[var(--gold-ink)] transition-opacity hover:opacity-90"
-        >
-          Start your plan
-        </Link>
+        <Button asChild shape="pill" size="fluid" className="mt-8 h-[52px] px-10 font-bold">
+          <Link href="/plans">Start your plan</Link>
+        </Button>
       </section>
     </div>
   );

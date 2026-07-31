@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { fetchMenu, toProxiedImage } from "@/lib/catalog";
 import { getRds } from "@/lib/rdApi";
 import { PlanCard } from "@/components/plans/PlanCard";
@@ -97,12 +98,12 @@ export default async function CarePage({ params }: Params) {
         <h2 className="text-xl font-semibold tracking-tight text-ink">{CARE_CLOSE.headline}</h2>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-muted">{CARE_CLOSE.body}</p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href={CONSULT_HREF} className="w-full rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] sm:w-auto">
-            Book the free consult
-          </Link>
-          <Link href="/trial" className="w-full rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong sm:w-auto">
-            Try 3 days first
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="w-full px-8 py-4 font-semibold sm:w-auto">
+            <Link href={CONSULT_HREF}>Book the free consult</Link>
+          </Button>
+          <Button asChild variant="outline" shape="pill" size="fluid" className="w-full px-8 py-4 font-semibold sm:w-auto">
+            <Link href="/trial">Try 3 days first</Link>
+          </Button>
         </div>
       </section>
     </div>

@@ -8,6 +8,7 @@ import {
   type CorporateLeadKind,
   type TeamSizeBand,
 } from "@/lib/corporateApi";
+import { Button } from "@/components/ui/button";
 
 const KINDS: { id: CorporateLeadKind; label: string }[] = [
   { id: "corporate", label: "Corporate / office" },
@@ -152,12 +153,13 @@ export function CorporateLeadForm({
         <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Order windows, floors, dietary constraints…" rows={3} className={inputCls} />
       </label>
       {error && <p role="alert" className="text-sm font-medium text-[var(--danger)]">{error}</p>}
-      <button
+      <Button
         type="button" disabled={!valid || busy} onClick={() => void submit()}
-        className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition hover:opacity-90 active:scale-[0.98] disabled:opacity-40"
+        shape="pill" size="fluid"
+        className="mt-2 inline-flex w-full items-center justify-center px-8 py-4 font-semibold disabled:opacity-40"
       >
         {busy ? "Sending…" : submitLabel}
-      </button>
+      </Button>
       {whatsApp && (
         <p className="text-center text-xs text-ink-muted">
           or{" "}

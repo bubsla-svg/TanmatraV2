@@ -8,6 +8,7 @@ import {
   type ServiceabilityVerdict,
 } from "@/lib/serviceabilityApi";
 import { ApiError } from "@/lib/apiClient";
+import { Button } from "@/components/ui/button";
 import { NotifyMeForm } from "./NotifyMeForm";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
@@ -137,13 +138,15 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             disabled={busy}
             className="w-44 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
           />
-          <button
+          <Button
             type="submit"
             disabled={busy || inputVal.trim().length !== 6}
-            className="rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-[var(--gold-ink)] shadow-sm disabled:opacity-40 transition-transform active:scale-95"
+            shape="xl"
+            size="fluid"
+            className="px-5 py-2.5 font-semibold shadow-sm disabled:opacity-40"
           >
             {busy ? "Checking&hellip;" : "Check"}
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => setManualMode(false)}

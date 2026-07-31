@@ -11,6 +11,7 @@ import {
   type PartnerLeadKind,
 } from "@/lib/partnerLeadsApi";
 import { Field, TextField, TextAreaField, SelectField } from "@/components/rd-partners/WizardControls";
+import { Button } from "@/components/ui/button";
 
 /**
  * Partner lead form (Stitch brief 17) — posts to `/partners/leads`, NOT the
@@ -170,14 +171,16 @@ export function PartnerLeadForm({
           {error}
         </p>
       )}
-      <button
+      <Button
         type="button"
         disabled={busy}
         onClick={() => void submit()}
-        className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+        shape="pill"
+        size="fluid"
+        className="mt-2 inline-flex w-full items-center justify-center px-8 py-4 font-semibold disabled:opacity-40"
       >
         {busy ? "Sending…" : submitLabel}
-      </button>
+      </Button>
       {whatsApp && (
         <p className="text-center text-xs text-ink-muted">
           or{" "}

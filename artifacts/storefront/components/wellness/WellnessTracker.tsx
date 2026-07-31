@@ -7,6 +7,7 @@ import { Plus, Star, Droplet } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import { getToday, getWeek, logWater, deleteLog, pctOf, WATER_PRESETS, type WellnessToday, type WellnessWeek, type NutritionLog } from "@/lib/wellnessApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 import { NutritionRing } from "./NutritionRing";
 import { LogMealDialog } from "./LogMealDialog";
 import { WeekBars } from "./WeekBars";
@@ -66,10 +67,10 @@ export function WellnessTracker() {
             <button key={ml} type="button" onClick={() => void act(() => logWater(ml))} disabled={busy} className="tabular rounded-full border border-line px-4 py-2 text-xs text-ink-muted transition-colors hover:bg-surface hover:text-ink disabled:opacity-50">+{ml} ml</button>
           ))}
         </div>
-        <button type="button" onClick={() => setLogOpen(true)} className="flex shrink-0 items-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-all hover:brightness-110 active:scale-[0.98]">
+        <Button type="button" onClick={() => setLogOpen(true)} shape="pill" size="fluid" className="flex shrink-0 items-center gap-2 px-6 py-3 font-semibold hover:brightness-110">
           <Plus aria-hidden className="h-4 w-4" />
           Log meal
-        </button>
+        </Button>
       </div>
 
       {(streaks.protein || streaks.veg) && (

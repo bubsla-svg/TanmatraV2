@@ -11,6 +11,7 @@ import {
   type TeamDietProfile, type LunchPlanProposal, type DietSurveyInput,
 } from "@/lib/b2bPlannerApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 import { DietProfileForm } from "./DietProfileForm";
 import { LunchPlanPreview } from "./LunchPlanPreview";
 
@@ -88,9 +89,9 @@ export function LunchPlanner({ slug }: { slug: string }) {
             <h2 className="text-lg font-semibold tracking-tight text-ink">2 &middot; Weekly plan</h2>
             <p className="mt-0.5 text-sm text-ink-muted">Generated against the saved profile.</p>
           </div>
-          <button type="button" onClick={generate} disabled={!profile || busy !== null} className="shrink-0 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40">
+          <Button type="button" onClick={generate} disabled={!profile || busy !== null} shape="xl" size="fluid" className="shrink-0 px-4 py-2 font-semibold disabled:opacity-40">
             {busy === "generate" ? "Generating…" : proposal ? "Regenerate" : "Generate plan"}
-          </button>
+          </Button>
         </div>
         {error && busy !== "save" && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
         <LunchPlanPreview proposal={proposal} onSchedule={schedule} scheduling={busy === "schedule"} perEmployeePaise={PER_EMPLOYEE_PAISE} scheduledHour={SCHEDULED_HOUR} />

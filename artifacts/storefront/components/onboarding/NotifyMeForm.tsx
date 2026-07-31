@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { submitServiceabilityInterest } from "@/lib/serviceabilityApi";
 import { ApiError } from "@/lib/apiClient";
+import { Button } from "@/components/ui/button";
 
 export interface NotifyMeFormProps {
   pincode: string;
@@ -85,13 +86,14 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
           disabled={busy}
           className="w-48 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
         />
-        <button
+        <Button
           type="submit"
           disabled={busy || phone.trim().length < 10}
-          className="rounded-lg bg-gold px-4 py-2 text-xs font-semibold text-[var(--gold-ink)] shadow-sm disabled:opacity-40 transition-transform active:scale-95"
+          size="fluid"
+          className="rounded-lg px-4 py-2 text-xs font-semibold shadow-sm disabled:opacity-40"
         >
           {busy ? "Saving&hellip;" : "Notify me"}
-        </button>
+        </Button>
         <button
           type="button"
           onClick={onReset}

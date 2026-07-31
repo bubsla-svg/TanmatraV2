@@ -6,6 +6,7 @@
 // deterministic clinical-refusal gate, allergen-safe tools, and the mandatory
 // disclaimer live in the coach agent, not here.
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { getAuthUser, type AuthUser } from "@/lib/api";
 import { ApiError } from "@/lib/apiClient";
 import { streamCoachChat, type CoachAction } from "@/lib/coachApi";
@@ -112,9 +113,9 @@ export function CoachChat() {
           placeholder="Ask your coach…"
           className="flex-1 rounded-full border border-line bg-surface px-5 py-3 text-sm text-ink outline-none focus:border-line-strong"
         />
-        <button type="submit" disabled={streaming || !input.trim()} className="rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40">
+        <Button type="submit" disabled={streaming || !input.trim()} shape="pill" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
           {streaming ? "…" : "Send"}
-        </button>
+        </Button>
       </form>
     </div>
   );

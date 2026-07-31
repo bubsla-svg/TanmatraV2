@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Dialog } from "radix-ui";
 import { formatPaise } from "@/lib/format";
 import { addLine } from "@/lib/cartStore";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
 import type { BundleView } from "@/lib/mealBundles";
 
@@ -111,13 +112,15 @@ export function BundleOfferCard({ bundle }: { bundle: BundleView }) {
                   Added &mdash; view cart &rarr;
                 </Link>
               ) : (
-                <button
+                <Button
                   type="button"
                   onClick={addCombo}
-                  className="inline-flex w-full items-center justify-center rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+                  shape="pill"
+                  size="fluid"
+                  className="inline-flex w-full items-center justify-center px-6 py-3.5 font-semibold"
                 >
                   Add combo
-                </button>
+                </Button>
               )}
               <Dialog.Close className="text-xs text-ink-muted transition-colors hover:text-ink">
                 Close

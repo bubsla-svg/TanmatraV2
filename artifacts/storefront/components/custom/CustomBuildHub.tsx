@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import type { DishData, DishCustomGroup } from "@workspace/menu-catalog";
 import { addLine } from "@/lib/cartStore";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
 import { SaveToVaultButton } from "@/components/menu/SaveToVaultButton";
 import { previewCustomizations, defaultOptionName, type CustomizationSelection } from "@/lib/dishCustomizations";
@@ -244,13 +245,15 @@ export function CustomBuildHub({ dishes }: { dishes: DishData[] }) {
         </p>
 
         <div className="relative flex flex-col gap-3">
-          <button
+          <Button
             type="button"
             onClick={handleAddToCart}
-            className="w-full rounded-full bg-gold px-6 py-4 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            shape="pill"
+            size="fluid"
+            className="w-full px-6 py-4 text-center font-semibold"
           >
             {added ? "Added ✓" : "Add to cart"}
-          </button>
+          </Button>
           <div className="flex w-full justify-center">
             <SaveToVaultButton dishSlug={selectedDish.slug} dishName={vaultDishName} />
           </div>

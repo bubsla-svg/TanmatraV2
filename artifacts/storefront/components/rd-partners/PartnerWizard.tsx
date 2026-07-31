@@ -15,6 +15,7 @@
 // is persisted. Breadcrumbs are best-effort and never block or fail the wizard.
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   newRdSessionId,
   submitRdApplication,
@@ -173,14 +174,16 @@ export function PartnerWizard() {
           ) : (
             <span className="order-2 sm:order-1" />
           )}
-          <button
+          <Button
             type="button"
             disabled={busy || (step === LAST_STEP && problem?.terminal === true)}
             onClick={() => void (step === LAST_STEP ? submit() : next())}
-            className="order-1 w-full rounded-full bg-gold px-8 py-4 text-[10px] font-semibold uppercase tracking-widest text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40 sm:order-2 sm:w-auto"
+            shape="pill"
+            size="fluid"
+            className="order-1 w-full px-8 py-4 text-[10px] font-semibold uppercase tracking-widest disabled:opacity-40 sm:order-2 sm:w-auto"
           >
             {busy ? "Submitting…" : step === LAST_STEP ? "Submit application" : "Continue"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

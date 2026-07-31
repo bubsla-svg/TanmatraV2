@@ -10,6 +10,7 @@
 // to the parent draft; the code and transient errors stay local.
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { sendRdWhatsappOtp, verifyRdWhatsappOtp } from "@/lib/rdPartnerApi";
 import { RD_WHATSAPP_COPY as C } from "@/content/landing/rdPartners";
@@ -145,14 +146,16 @@ export function WhatsAppOptIn({
       )}
 
       {phase !== "unavailable" && (
-        <button
+        <Button
           type="button"
           disabled={busy || (phase === "idle" ? !canSend : code.trim().length === 0)}
           onClick={() => void (phase === "sent" ? verify() : send())}
-          className="self-start rounded-full bg-gold px-6 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+          shape="pill"
+          size="fluid"
+          className="self-start px-6 py-3 text-[10px] font-semibold uppercase tracking-widest disabled:opacity-40"
         >
           {busy ? "Working…" : phase === "sent" ? "Verify code" : "Send code"}
-        </button>
+        </Button>
       )}
 
       <p className="text-xs text-ink-faint">

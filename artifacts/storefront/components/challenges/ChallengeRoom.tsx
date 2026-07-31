@@ -11,6 +11,7 @@ import {
   type ChallengePost, type ChallengeCheckIn,
 } from "@/lib/challengesApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 import { PostFeed } from "./PostFeed";
 
 export function ChallengeRoom({ slug }: { slug: string }) {
@@ -112,14 +113,11 @@ export function ChallengeRoom({ slug }: { slug: string }) {
                     {new Date(ci.scheduledAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
-                <a
-                  href={ci.joinUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 rounded-full bg-gold px-5 py-2 text-center text-xs font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90"
-                >
-                  Join call
-                </a>
+                <Button asChild shape="pill" size="fluid" className="shrink-0 px-5 py-2 text-center text-xs font-semibold">
+                  <a href={ci.joinUrl} target="_blank" rel="noreferrer">
+                    Join call
+                  </a>
+                </Button>
               </li>
             ))}
           </ul>
@@ -142,13 +140,15 @@ export function ChallengeRoom({ slug }: { slug: string }) {
               placeholder="Share a win, a question, or your day-1 check-in…"
               className="w-full resize-none bg-transparent text-sm text-ink placeholder:text-ink-faint outline-none"
             />
-            <button
+            <Button
               type="submit"
               disabled={busy || !draft.trim()}
-              className="self-end rounded-full bg-gold px-5 py-2 text-sm font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90 disabled:opacity-40"
+              shape="pill"
+              size="fluid"
+              className="self-end px-5 py-2 font-semibold disabled:opacity-40"
             >
               Post
-            </button>
+            </Button>
           </form>
         ) : (
           <p className="mt-4 rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-ink-muted">

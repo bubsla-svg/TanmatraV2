@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/apiClient";
 import { getAuthUser, type AuthUser } from "@/lib/api";
 import { getMyChallengeTracker, type ChallengeTrackerData } from "@/lib/ecosystemApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 
 /** Whole days elapsed since joining, 1-indexed and clamped to the challenge length. */
 function daysElapsed(joinedAt: string, durationDays: number): number {
@@ -130,14 +131,11 @@ export function ChallengeTrackerView() {
                   <span className="text-sm font-semibold text-ink">{ci.title}</span>
                   <div className="tabular mt-1 text-xs text-ink-muted">{fmtCheckIn(ci.scheduledAt)}</div>
                 </div>
-                <a
-                  href={ci.joinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1 self-start rounded-full bg-gold px-5 py-2.5 text-xs font-semibold text-[var(--gold-ink)] transition-all hover:opacity-90 active:scale-95 sm:self-auto"
-                >
-                  Join session <span aria-hidden="true">&rarr;</span>
-                </a>
+                <Button asChild shape="pill" size="fluid" className="inline-flex shrink-0 items-center gap-1 self-start px-5 py-2.5 text-xs font-semibold sm:self-auto">
+                  <a href={ci.joinUrl} target="_blank" rel="noopener noreferrer">
+                    Join session <span aria-hidden="true">&rarr;</span>
+                  </a>
+                </Button>
               </li>
             ))}
           </ul>

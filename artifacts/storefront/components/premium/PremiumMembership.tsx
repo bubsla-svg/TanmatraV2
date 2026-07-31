@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
 import { getPremium, payForPremium, cancelPremium, resumePremium, type PremiumMe } from "@/lib/premiumApi";
+import { Button } from "@/components/ui/button";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 const day = (iso: string) =>
@@ -71,7 +72,9 @@ export function PremiumMembership() {
             <span className="text-sm text-ink-muted">RD consults used this period</span>
             <span className="tabular text-sm font-semibold text-ink">{m.rdConsultsUsedThisPeriod} / {m.rdConsultsPerPeriod}</span>
           </div>
-          <Link href="/rd" className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)]">Book your free RD consult</Link>
+          <Button asChild shape="xl" size="fluid" className="px-5 py-3 text-center font-semibold">
+            <Link href="/rd">Book your free RD consult</Link>
+          </Button>
           <div className="flex justify-center pt-1">
             {m.status === "cancelled"
               ? <button type="button" onClick={resume} disabled={busy} className="text-sm font-medium text-gold-text hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
@@ -80,9 +83,9 @@ export function PremiumMembership() {
         </div>
       ) : (
         <div className="mt-5 flex flex-col gap-3">
-          <button type="button" onClick={join} disabled={busy} className="rounded-xl bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+          <Button type="button" onClick={join} disabled={busy} shape="xl" size="fluid" className="px-6 py-3.5 font-semibold disabled:opacity-60">
             {busy ? "Opening payment…" : "Join Tanmatra Premium"}
-          </button>
+          </Button>
           <p className="text-center text-xs text-ink-faint">Cancel anytime · your first RD consult is included every period.</p>
         </div>
       )}

@@ -7,6 +7,7 @@ import { ArrowRight, BadgeCheck, Clock } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import { getAuthUser, type AuthUser } from "@/lib/api";
 import { getCommunityQaThreads, submitQuestionThread, type QaThread } from "@/lib/ecosystemApi";
+import { Button } from "@/components/ui/button";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 const CATEGORIES = [
@@ -163,14 +164,14 @@ export function CommunityQaForum() {
               </p>
             )}
 
-            <button type="submit" disabled={busy} className="mt-1 flex items-center justify-center gap-2 rounded-full bg-gold py-3 text-xs font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90 disabled:opacity-40">
+            <Button type="submit" disabled={busy} shape="pill" size="fluid" className="mt-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold disabled:opacity-40">
               {busy ? "Sending…" : (
                 <>
                   Send to our RDs
                   <ArrowRight aria-hidden className="h-3.5 w-3.5" />
                 </>
               )}
-            </button>
+            </Button>
           </form>
         )}
       </div>

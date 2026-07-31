@@ -4,6 +4,7 @@
 // NEVER authors a price: booking is server-priced, the Razorpay order comes from
 // the server, and /verify flips the status. Free 15-min intros skip payment.
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
@@ -133,10 +134,10 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
 
       {error && <p role="alert" className="mt-3 text-xs font-medium text-[var(--danger)]">{error}</p>}
 
-      <button type="button" onClick={() => void run()} disabled={busy || (!pending && !sel)}
-        className="mt-5 w-full rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-opacity disabled:opacity-40">
+      <Button type="button" onClick={() => void run()} disabled={busy || (!pending && !sel)}
+        shape="xl" size="fluid" className="mt-5 w-full px-5 py-3 font-semibold disabled:opacity-40">
         {busy ? "Working…" : pending ? `Pay ${formatPaise(price)}` : price === 0 ? "Book free intro" : `Book & pay ${formatPaise(price)}`}
-      </button>
+      </Button>
     </div>
   );
 }

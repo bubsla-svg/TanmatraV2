@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 /**
  * `/rd-partners` hero + programme summary (Stitch brief 16 restyle).
@@ -51,12 +52,14 @@ export function PartnerHero() {
           We invite Registered Dietitians (RD), Clinical Nutritionists with active institutional credentials,
           and Bariatric Care specialists operating across Delhi NCR.
         </p>
-        <Link
-          href="/rd-partners/apply"
-          className="inline-flex w-full items-center justify-center rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+        <Button
+          asChild
+          shape="pill"
+          size="fluid"
+          className="inline-flex w-full items-center justify-center px-8 py-4 font-semibold"
         >
-          Begin partner application
-        </Link>
+          <Link href="/rd-partners/apply">Begin partner application</Link>
+        </Button>
       </div>
     </div>
   );

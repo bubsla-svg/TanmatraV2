@@ -11,6 +11,7 @@ import { formatPaise } from "@/lib/format";
 import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
 import { getItem, payForMarketplace, type MarketplaceItem } from "@/lib/marketplaceApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 import { BundlePicker } from "./BundlePicker";
 import { useCart } from "@/components/cart/CartProvider";
 import { addOrUpdateQty } from "@/lib/cartStore";
@@ -157,16 +158,19 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
             </div>
           ) : (
             <>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                shape="pill"
+                size="fluid"
                 onClick={() => setCart(addOrUpdateQty(cart, { dishId: item.id, kind: "marketplace", slug: item.slug, name: item.name, pricePaise: item.pricePaise }, qty))}
-                className="rounded-full border border-line bg-surface px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-raised"
+                className="px-6 py-3.5 font-semibold text-ink bg-surface hover:bg-surface-raised"
               >
                 Add to Cart
-              </button>
-              <button type="button" onClick={buy} disabled={busy} className="rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90 disabled:opacity-60">
+              </Button>
+              <Button type="button" onClick={buy} disabled={busy} shape="pill" size="fluid" className="px-6 py-3.5 font-semibold hover:opacity-90 disabled:opacity-60">
                 {busy ? "Opening payment…" : `Place order · ${formatPaise(item.pricePaise * qty)}`}
-              </button>
+              </Button>
             </>
           )}
         </div>

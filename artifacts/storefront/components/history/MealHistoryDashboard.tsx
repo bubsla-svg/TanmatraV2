@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ApiError } from "@/lib/apiClient";
 import { getMyNutritionHistory, type NutritionHistorySummary } from "@/lib/ecosystemApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 
 export function MealHistoryDashboard() {
   const [data, setData] = useState<NutritionHistorySummary | null>(null);
@@ -45,9 +46,9 @@ export function MealHistoryDashboard() {
     return (
       <div className="rounded-2xl border border-line bg-surface p-8 text-center flex flex-col gap-3">
         <p className="text-sm font-medium text-ink">{error ?? "No nutritional history records located yet."}</p>
-        <Link href="/menu" className="mt-2 mx-auto rounded-xl bg-gold px-6 py-2.5 text-xs font-semibold text-[var(--gold-ink)] hover:bg-gold/90 transition-colors">
-          Explore Therapeutic Menu →
-        </Link>
+        <Button asChild shape="xl" size="fluid" className="mt-2 mx-auto px-6 py-2.5 text-xs font-semibold">
+          <Link href="/menu">Explore Therapeutic Menu →</Link>
+        </Button>
       </div>
     );
   }

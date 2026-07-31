@@ -11,6 +11,7 @@ import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
 import { trialRecap } from "@/lib/subscriptionsApi";
+import { Button } from "@/components/ui/button";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 type BridgeState =
@@ -156,12 +157,16 @@ export function BridgeView() {
           global MobileBottomNav band on mobile. */}
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
         <div className="mx-auto max-w-md px-4 py-3">
-          <Link
-            href="/plans"
-            className="flex w-full items-center justify-center rounded-full bg-gold px-8 py-4 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+          <Button
+            asChild
+            shape="pill"
+            size="fluid"
+            className="flex w-full items-center justify-center px-8 py-4 text-center font-semibold"
           >
-            Explore Dietitian Meal Plans &mdash; Claim {creditLabel} Credit
-          </Link>
+            <Link href="/plans">
+              Explore Dietitian Meal Plans &mdash; Claim {creditLabel} Credit
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

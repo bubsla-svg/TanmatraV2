@@ -5,6 +5,7 @@ import { PlanCard } from "@/components/plans/PlanCard";
 import { RdCard } from "@/components/rd/RdCard";
 import { BenefitGrid } from "@/components/landing/BenefitGrid";
 import { LandingIcon } from "@/components/landing/LandingIcon";
+import { Button } from "@/components/ui/button";
 import { ProtocolDishRail, matchesProtocolDish, type ProtocolDish } from "./ProtocolDishRail";
 import { PROTOCOL_CONFIG, type ProtocolKey } from "@/content/landing/protocol";
 import { CARE_SAFETY } from "@/content/landing/care";
@@ -38,18 +39,14 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
         </h1>
         <p className="max-w-2xl text-base leading-relaxed text-ink-muted sm:text-lg">{cfg.desc}</p>
         <div className="flex flex-wrap items-center justify-center gap-3.5">
-          <Link
-            href="/menu"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-          >
-            See the dishes <LandingIcon name="arrow-right" className="h-4 w-4" />
-          </Link>
-          <Link
-            href={consultCta.href}
-            className="inline-flex items-center justify-center rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
-          >
-            {consultCta.label}
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold">
+            <Link href="/menu">
+              See the dishes <LandingIcon name="arrow-right" className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline" shape="pill" size="fluid" className="inline-flex items-center justify-center px-8 py-4 font-semibold hover:border-line-strong">
+            <Link href={consultCta.href}>{consultCta.label}</Link>
+          </Button>
         </div>
         {qualifying > 0 && (
           <p className="tabular inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-xs text-ink-faint">
@@ -99,18 +96,12 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
       <section className="mb-16 rounded-2xl border border-line bg-surface p-10 text-center shadow-[var(--shadow-card)] sm:p-14">
         <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Ready when you are.</h2>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href={consultCta.href}
-            className="w-full rounded-full bg-gold px-8 py-4 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] sm:w-auto"
-          >
-            {consultCta.label}
-          </Link>
-          <Link
-            href="/trial"
-            className="w-full rounded-full border border-line px-8 py-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong sm:w-auto"
-          >
-            Try 3 days first
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="w-full px-8 py-4 font-semibold sm:w-auto">
+            <Link href={consultCta.href}>{consultCta.label}</Link>
+          </Button>
+          <Button asChild variant="outline" shape="pill" size="fluid" className="w-full px-8 py-4 font-semibold hover:border-line-strong sm:w-auto">
+            <Link href="/trial">Try 3 days first</Link>
+          </Button>
         </div>
       </section>
     </div>

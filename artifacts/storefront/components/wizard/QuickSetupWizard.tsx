@@ -10,6 +10,7 @@
 // /account/health-information surface, never this PATCH.
 import { useState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import type { DishData } from "@workspace/menu-catalog";
 import { InstantPlanPreview } from "./InstantPlanPreview";
 import { ApiError } from "@/lib/apiClient";
@@ -273,19 +274,24 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
 
       <div className="flex items-center gap-3 pt-3 border-t border-line">
         {step > 1 && (
-          <button
+          <Button
             onClick={() => setStep((step - 1) as any)}
-            className="flex-1 rounded-full border border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink text-center transition-all active:scale-[0.98]"
+            variant="outline"
+            shape="pill"
+            size="fluid"
+            className="flex-1 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center"
           >
             Back
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           onClick={handleContinue}
-          className="flex-[2] rounded-full bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--gold-ink)] shadow-sm text-center transition-all hover:bg-gold/90 active:scale-[0.98]"
+          shape="pill"
+          size="fluid"
+          className="flex-[2] px-6 py-3 text-xs font-semibold uppercase tracking-wide shadow-sm text-center"
         >
           {step === 3 ? "See Customized Menu" : "Continue →"}
-        </button>
+        </Button>
       </div>
     </div>
   );

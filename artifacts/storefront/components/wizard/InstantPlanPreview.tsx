@@ -2,6 +2,7 @@
 // Client: live instant plan recommendations driven by survey state.
 import { useMemo } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { recommendMenu, type SmartRecommendation } from "@/lib/recommendations";
 import { formatPaise } from "@/lib/format";
@@ -78,12 +79,9 @@ export function InstantPlanPreview({
           </div>
         ))}
       </div>
-      <Link
-        href="/plans"
-        className="mt-2 flex w-full items-center justify-center rounded-full bg-gold py-3.5 text-sm font-semibold uppercase tracking-wide text-[var(--gold-ink)] shadow-sm hover:bg-gold/90 transition-all active:scale-[0.98]"
-      >
-        Activate Recurring Subscription
-      </Link>
+      <Button asChild shape="pill" size="fluid" className="mt-2 flex w-full py-3.5 font-semibold uppercase tracking-wide shadow-sm">
+        <Link href="/plans">Activate Recurring Subscription</Link>
+      </Button>
     </div>
   );
 }

@@ -4,6 +4,7 @@
 // the constraint set the planner generates against. Gather-only; server validates.
 import { useState } from "react";
 import { ChipInput } from "@/components/account/ChipInput";
+import { Button } from "@/components/ui/button";
 import { ALLERGEN_OPTIONS, type DietSurveyInput, type TeamDietProfile } from "@/lib/b2bPlannerApi";
 
 type CountKey = "vegCount" | "veganCount" | "glutenFreeCount" | "jainCount" | "halalCount";
@@ -96,9 +97,9 @@ export function DietProfileForm({ initial, busy, saved, error, onSubmit }: {
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       <div className="flex flex-col gap-3 border-t border-line pt-5">
-        <button type="button" disabled={busy} onClick={submit} className="w-full rounded-xl bg-gold px-5 py-3.5 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40">
+        <Button type="button" disabled={busy} onClick={submit} shape="xl" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
           {busy ? "Saving…" : "Save team profile"}
-        </button>
+        </Button>
         {saved && <span className="text-xs font-medium text-sage-text">Saved</span>}
       </div>
     </div>
