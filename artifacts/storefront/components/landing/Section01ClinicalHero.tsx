@@ -21,7 +21,8 @@ import type { HeroContent } from "@/lib/heroContent";
  *
  * Stitch geometry: asymmetric split (copy 7/12, photo 5/12), one inline plate
  * photo embedded at type-height in the headline, gold pill as the single
- * primary CTA → /menu, ghost pill → /plans. The 60s assessment entry survives
+ * primary CTA → /menu; every other action on the screen — /plans and the
+ * in-photo "Order" — is a ghost pill. The 60s assessment entry survives
  * as a quiet text action firing the SAME analytics label + CustomEvent as
  * before — the on-page stepper (§09) remains its main door.
  */
@@ -128,7 +129,16 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
                     480 kcal · 38P · Anti-Inflammatory
                   </p>
                 </div>
-                <Button asChild shape="pill" size="fluid" className="shrink-0 px-3.5 py-1.5 text-xs font-bold">
+                {/* Ghost pill, NOT a second gold one. This and the headline CTA
+                    above are both default-variant pills to the same href, the
+                    same shape and the same colour, ~500px apart and both in view
+                    on desktop — and DESIGN.md §01 specifies exactly ONE primary
+                    pill per screen, everything else a hairline ghost. Demoted
+                    rather than deep-linked to the pictured bowl: this card is
+                    decorative art (stitch-hero-tall.png) with no catalogue dish
+                    behind it, so a /menu?dish=… href would be a guess that 404s
+                    the day the slug moves. */}
+                <Button asChild variant="outline" shape="pill" size="fluid" className="shrink-0 border-line-strong bg-transparent px-3.5 py-1.5 text-xs font-bold">
                   <Link href="/menu">Order</Link>
                 </Button>
               </div>

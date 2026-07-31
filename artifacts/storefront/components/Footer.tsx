@@ -17,7 +17,12 @@ const COLUMNS: { label: string; links: NavLink[] }[] = [
 
 export function Footer() {
   return (
-    <footer className="mt-16 border-t border-line bg-surface max-md:hidden">
+    // pt-16, not mt-16: the gap above the footer has to be INSIDE the footer's
+    // own background. A top margin here does not collapse — its previous
+    // sibling is <main> — so those 64px stayed transparent and let
+    // html{background:var(--bg)} show through, banding a light grey stripe
+    // between a dark page and this surface: a black → grey → white staircase.
+    <footer className="border-t border-line bg-surface pt-16 max-md:hidden">
       <LayoutFooter>
         <div className="mx-auto max-w-5xl px-4 py-10">
           <div className="grid grid-cols-2 gap-6 md:gap-8 md:grid-cols-4">
@@ -47,11 +52,17 @@ export function Footer() {
               </nav>
             ))}
           </div>
+          {/* Every <p> in here restates text-xs/text-ink-faint even though the
+              container already sets them. Not redundant: lib/themes/tanmatra.css
+              has a `:where(p){font-size;color}` reset that matches these tags
+              DIRECTLY, and a direct match beats an inherited value whatever the
+              specificity — so bare <p>s rendered 14px near-black and out-shouted
+              the nav columns above. A class on the tag itself is what wins. */}
           <div className="mt-10 flex flex-col gap-1 border-t border-line pt-6 text-xs text-ink-faint">
             <p className="text-sm font-semibold text-ink">{SITE.brand}</p>
-            <p>{SITE.tagline}</p>
-            <p className="mt-1">FSSAI Licence No. {SITE.fssai} · RD-reviewed kitchen · Made in India</p>
-            <p>&copy; {SITE.brand}. All rights reserved.</p>
+            <p className="text-xs text-ink-faint">{SITE.tagline}</p>
+            <p className="mt-1 text-xs text-ink-faint">FSSAI Licence No. {SITE.fssai} · RD-reviewed kitchen · Made in India</p>
+            <p className="text-xs text-ink-faint">&copy; {SITE.brand}. All rights reserved.</p>
           </div>
         </div>
       </LayoutFooter>

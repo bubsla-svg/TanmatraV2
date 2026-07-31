@@ -16,6 +16,10 @@
  *      SAME names mapped to our neutrals — layer order put Tailwind last, so
  *      --gold resolved to surface-raised and every .bg-gold painted
  *      white-on-white. A shared name is one late :root away from that.
+ *   4. Those tuples are the ONLY palette. Their dark arm is Stitch; stitch.css
+ *      re-declared ~20 of them with the same values until the two palettes were
+ *      merged, and is now one `color-scheme: dark`. A re-declaration there
+ *      would fork the palette again silently, so it is asserted against too.
  *
  * The tuples' source of truth is tanmatraTheme.ts; the sync test below parses
  * both files so the bridge cannot drift from the theme.
@@ -31,6 +35,7 @@ const globals = readFileSync(path.join(root, "app/globals.css"), "utf8");
 const bridge = readFileSync(path.join(root, "lib/themes/tanmatraBridge.css"), "utf8");
 const themeTs = readFileSync(path.join(root, "lib/themes/tanmatraTheme.ts"), "utf8");
 const generated = readFileSync(path.join(root, "lib/themes/tanmatra.css"), "utf8");
+const stitch = readFileSync(path.join(root, "lib/themes/stitch.css"), "utf8");
 
 test("<html> carries the Astryx scope attribute", () => {
   assert.match(
@@ -42,6 +47,12 @@ test("<html> carries the Astryx scope attribute", () => {
 
 test("stylesheets are imported in dependency order", () => {
   const order = [
+    // Must be literally first: layer rank is fixed at first declaration, and
+    // this bare @layer statement is what stops Tailwind's Preflight (declared
+    // inside globals.css, last) from outranking Astryx's base layer — see
+    // app/layers.css. Moving it later silently reopens that bug; CI would stay
+    // green on every other check here since none of them touch layer order.
+    "./layers.css",
     "@workspace/tokens/tokens.css",
     "@astryxdesign/core/astryx.css",
     "@/lib/themes/tanmatra.css",
@@ -52,7 +63,7 @@ test("stylesheets are imported in dependency order", () => {
   for (let k = 1; k < order.length; k++) {
     assert.ok(
       order[k - 1]!.i < order[k]!.i,
-      `${order[k - 1]!.s} must be imported before ${order[k]!.s} — base → theme → bridge → globals`,
+      `${order[k - 1]!.s} must be imported before ${order[k]!.s} — layers → base → theme → bridge → globals`,
     );
   }
 });
@@ -67,18 +78,22 @@ test("the bridge outranks the layered theme it overrides", () => {
 });
 
 // ── Value sync: bridge tuples must equal the theme's tuples ────────────────
-// tanmatraTheme.ts writes tokens as  '--name': ['#light', '#dark'],
-// tanmatraBridge.css writes          --raw: light-dark(#light, #dark);
+// tanmatraTheme.ts writes tokens as  '--name': ['light', 'dark'],
+// tanmatraBridge.css writes          --raw: light-dark(light, dark);
 // This maps each raw token to its theme source and compares the pair.
+// An arm is a hex OR an rgb()/rgba(): Stitch's dark hairlines are translucent
+// white, which no hex can express without inventing an opaque approximation.
+const ARM = String.raw`#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)`;
+const norm = (v: string) => v.toLowerCase().replace(/\s+/g, "");
 function themeTuple(name: string): [string, string] {
-  const m = themeTs.match(new RegExp(`'${name}':\\s*\\['(#[0-9a-fA-F]{3,8})',\\s*'(#[0-9a-fA-F]{3,8})'\\]`));
+  const m = themeTs.match(new RegExp(`'${name}':\\s*\\['(${ARM})',\\s*'(${ARM})'\\]`));
   assert.ok(m, `${name} not found as a tuple in tanmatraTheme.ts`);
-  return [m![1]!.toLowerCase(), m![2]!.toLowerCase()];
+  return [norm(m![1]!), norm(m![2]!)];
 }
 function bridgeTuple(raw: string): [string, string] {
-  const m = bridge.match(new RegExp(`${raw}:\\s*light-dark\\((#[0-9a-fA-F]{3,8}),\\s*(#[0-9a-fA-F]{3,8})\\)`));
+  const m = bridge.match(new RegExp(`${raw}:\\s*light-dark\\((${ARM}),\\s*(${ARM})\\)`));
   assert.ok(m, `${raw} not found as light-dark() in tanmatraBridge.css`);
-  return [m![1]!.toLowerCase(), m![2]!.toLowerCase()];
+  return [norm(m![1]!), norm(m![2]!)];
 }
 
 const PAIRS: ReadonlyArray<readonly [string, string]> = [
@@ -109,6 +124,64 @@ test("every bridge tuple matches its tanmatraTheme.ts source", () => {
       `${raw} must carry the same light/dark pair as ${themeName} — edit the theme, then mirror here`,
     );
   }
+});
+
+// ── Bridge-only tokens: no Astryx counterpart, but still two-armed ─────────
+// These name things Astryx's system has no token for, so tanmatraTheme.ts
+// cannot be their source and PAIRS above cannot cover them. What still has to
+// hold is that they are TUPLES. A one-armed token is the --glass bug: it was
+// declared only inside [data-stitch="dark"], so the shared sticky bars that
+// paint bg-[var(--glass)] — the buy bars, the mini-cart, the planner footer —
+// resolved it to nothing on the 53 light routes and rendered no fill at all.
+// bridgeTuple() throws unless the token is present as light-dark(a, b), so
+// calling it IS the tuple assertion.
+test("bridge-only tokens are light/dark tuples, not one-armed values", () => {
+  for (const raw of ["--sage-ink", "--sage-soft", "--glass"]) {
+    const [light, dark] = bridgeTuple(raw);
+    assert.notEqual(light, dark, `${raw} paints a surface — its two arms must differ`);
+  }
+});
+
+test("--scrim is dark in BOTH arms", () => {
+  // The deliberate exception to "the arms differ". A scrim is not a surface,
+  // it is the absence of one, and Radix portals it to document.body — outside
+  // every [data-stitch] wrapper. If it flipped with scope, a dialog opened
+  // from a dark route would get a white veil.
+  for (const arm of bridgeTuple("--scrim")) {
+    const channels = arm.match(/\d+(\.\d+)?/g)?.slice(0, 3).map(Number) ?? [];
+    assert.equal(channels.length, 3, `--scrim arm ${arm} must be an rgb()/rgba()`);
+    assert.ok(Math.max(...channels) < 64, `--scrim arm ${arm} is not dark`);
+  }
+});
+
+// ── One palette: stitch.css must not re-declare what the bridge themes ─────
+// Stitch's values used to be pinned here AND carried as the dark arm of the
+// bridge tuples — two dark palettes, ~90% identical, free to fork on any edit.
+// They are one now, so a colour token declared in both files is by definition
+// the fork re-opening. Declarations are matched on the raw property name; the
+// bridge is the allow-list, so this also catches a NEW token being introduced
+// in the scope file instead of as a tuple.
+function declaredTokens(css: string): string[] {
+  const code = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  return [...code.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map((m) => m[1]!);
+}
+
+test("stitch.css re-declares no token the bridge already supplies", () => {
+  const fromBridge = new Set(declaredTokens(bridge));
+  const forked = declaredTokens(stitch).filter((t) => fromBridge.has(t));
+  assert.deepEqual(
+    forked,
+    [],
+    "these are pinned in stitch.css AND tupled in tanmatraBridge.css — one palette, so drop the pin (or, if the value genuinely differs, it belongs in the tuple's dark arm)",
+  );
+});
+
+test("the Stitch scope still flips color-scheme", () => {
+  assert.match(
+    stitch,
+    /\[data-stitch="dark"\]\s*\{[^}]*color-scheme:\s*dark/,
+    "this one declaration IS the dark theme now — light-dark() resolves against the consuming element's color-scheme, so without it every redesigned route silently renders light",
+  );
 });
 
 // ── Generated-sheet sync: tanmatra.css must agree with the theme too ───────

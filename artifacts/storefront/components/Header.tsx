@@ -27,7 +27,20 @@ export function Header() {
           }
           endContent={
             <nav aria-label="Primary" className="flex items-center gap-2">
-              <div>
+              {/* EXACTLY ONE ServiceabilityBar may exist per page, and this is
+                  it. Its verdict/pincode state is per-instance — the component
+                  reads localStorage once at mount and never subscribes to
+                  `storage` — so a second copy desyncs permanently: check a
+                  pincode in one and the other still reads "Select your
+                  location" for the rest of the session. app/page.tsx used to
+                  render a second one (placement="hero", `hidden sm:block`), so
+                  both showed from sm up; that copy is gone. Deliberately NOT
+                  breakpoint-gated — being the only instance, it has to render
+                  at every width. min-w-0 lets it shrink (its label truncates)
+                  instead of shoving ⌘K off a 360px bar: Astryx's TopNav
+                  endContent slot is flex-shrink:0, so the cap has to come from
+                  the widget itself. */}
+              <div className="min-w-0">
                 <ServiceabilityBar placement="menu" />
               </div>
               <CommandMenu />

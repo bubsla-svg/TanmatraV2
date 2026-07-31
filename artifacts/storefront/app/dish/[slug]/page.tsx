@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
-import "@/lib/themes/stitch.css";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
@@ -47,7 +45,7 @@ export default async function DishPage({ params }: Params) {
   ];
 
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
     <article className="mx-auto max-w-3xl px-4 py-8">
       <DishStructuredData dish={dish} />
       <Link href="/menu" className="text-sm text-ink-muted hover:text-ink">

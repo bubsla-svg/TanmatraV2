@@ -13,6 +13,7 @@ import { TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
 import { trialRecap } from "@/lib/subscriptionsApi";
 import { Button } from "@/components/ui/button";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { useCart } from "@/components/cart/CartProvider";
 
 type BridgeState =
   | { status: "loading" }
@@ -31,6 +32,7 @@ const CARD_CENTERED = `${CARD} items-center gap-2 text-center`;
 
 export function BridgeView() {
   const searchParams = useSearchParams();
+  const { cart } = useCart();
   const subscriptionId = searchParams.get("subscription_id");
   const [state, setState] = useState<BridgeState>({ status: "loading" });
 
@@ -154,21 +156,28 @@ export function BridgeView() {
       {/* Glass sticky footer — the ONE money-bearing CTA on this screen
           (Batch 4/Brief 23 vocabulary, same treatment as /trial's TrialStart
           and /checkout's CheckoutPay). bottom-16/md:bottom-0 clears the
-          global MobileBottomNav band on mobile. */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
-        <div className="mx-auto max-w-md px-4 py-3">
-          <Button
-            asChild
-            shape="pill"
-            size="fluid"
-            className="flex w-full items-center justify-center px-8 py-4 text-center font-semibold"
-          >
-            <Link href="/plans">
-              Explore Dietitian Meal Plans &mdash; Claim {creditLabel} Credit
-            </Link>
-          </Button>
+          global MobileBottomNav band on mobile.
+          Renders only while the cart is EMPTY: MiniCartBar occupies that exact
+          band at the same z-30 and layout.tsx renders it AFTER <main>, so with
+          equal z-index the later sibling wins and would paint over this link
+          and swallow its clicks. Same guard DishBuyBar ships; once a line
+          exists, MiniCartBar owns the bottom edge. */}
+      {cart.lines.length === 0 && (
+        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+          <div className="mx-auto max-w-md px-4 py-3">
+            <Button
+              asChild
+              shape="pill"
+              size="fluid"
+              className="flex w-full items-center justify-center px-8 py-4 text-center font-semibold"
+            >
+              <Link href="/plans">
+                Explore Dietitian Meal Plans &mdash; Claim {creditLabel} Credit
+              </Link>
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

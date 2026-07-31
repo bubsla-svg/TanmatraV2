@@ -36,6 +36,26 @@ export function Section04ProtocolsGrid() {
         </p>
       </div>
 
+      {/* Two rules this grid used to break, both fixed in place:
+       *
+       * 1. ALL THREE plan CTAs are the same gold pill. Cards 1 and 3 carried
+       *    `bg-ink … text-surface`, and inside the Stitch dark scope --ink is
+       *    the bone ink — so the two NON-recommended plans rendered as near-
+       *    WHITE buttons measuring 16.1:1 on the canvas against gold's 7.7:1,
+       *    visually out-shouting the plan we recommend. Gold is the only action
+       *    colour (CLAUDE.md's one surviving DS-0 caveat) and DESIGN.md §4
+       *    sanctions gold-fill or hairline-ghost — a white fill is a third
+       *    treatment nobody approved. Card 2 keeps its lead by the `border-2
+       *    border-gold-text` frame, not by a different button colour. All three
+       *    are spelled `bg-primary`/`text-primary-foreground`: --primary IS
+       *    --gold (see globals.css §3.1), and one signal deserves one spelling.
+       *
+       * 2. The trial buttons hover on --surface-raised, not --surface-muted.
+       *    There is no --surface-muted token anywhere — not tokens.css, not the
+       *    Astryx bridge, not globals.css — so all three emitted no hover rule
+       *    at all and sat inert next to CTAs that do respond. --surface-raised
+       *    is the house hover for a bordered control on a card (AccountHub,
+       *    BillingPanel, VoucherRedeem, …). */}
       <div className="mt-12 grid gap-8 lg:grid-cols-3">
         {/* Card 1: Weight-Loss Jumpstart */}
         <div className="flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm">
@@ -64,14 +84,14 @@ export function Section04ProtocolsGrid() {
             <Link
               href="/plan/desk_fuel"
               onClick={() => handlePlanSelect("weight_loss_jumpstart_plan")}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-ink py-3.5 text-sm font-bold text-surface transition-opacity hover:opacity-90 active:scale-95"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               View Subscription Options
             </Link>
             <Link
               href="/trial"
               onClick={() => handlePlanSelect("weight_loss_jumpstart")}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface py-3.5 text-sm font-bold text-ink transition-opacity hover:bg-surface-muted active:scale-95"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface py-3.5 text-sm font-bold text-ink transition-colors hover:bg-surface-raised active:scale-95"
             >
               Start 3-Day Trial — {trialPrice}
             </Link>
@@ -106,14 +126,14 @@ export function Section04ProtocolsGrid() {
             <Link
               href="/plan/steady"
               onClick={() => handlePlanSelect("pcos_hormone_balance_plan")}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-gold py-3.5 text-sm font-bold text-[var(--gold-ink)] transition-opacity hover:opacity-90 active:scale-95"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               View Subscription Options
             </Link>
             <Link
               href="/trial"
               onClick={() => handlePlanSelect("pcos_hormone_balance")}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-gold bg-surface py-3.5 text-sm font-bold text-gold-text transition-opacity hover:bg-surface-muted active:scale-95"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-gold bg-surface py-3.5 text-sm font-bold text-gold-text transition-colors hover:bg-surface-raised active:scale-95"
             >
               Start 3-Day Trial — {trialPrice}
             </Link>
@@ -147,14 +167,17 @@ export function Section04ProtocolsGrid() {
             <Link
               href="/plan/protein_build"
               onClick={() => handlePlanSelect("lean_muscle_builder_plan")}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-ink py-3.5 text-sm font-bold text-surface transition-opacity hover:opacity-90 active:scale-95"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               View Subscription Options
             </Link>
+            {/* Rests on --surface like cards 1 and 2's trial button, not on
+                --surface-raised: this card's own fill IS --surface-raised, so a
+                raised button on a raised card had nowhere left to hover to. */}
             <Link
               href="/trial"
               onClick={() => handlePlanSelect("lean_muscle_builder")}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface-raised py-3.5 text-sm font-bold text-ink transition-opacity hover:bg-surface-muted active:scale-95"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface py-3.5 text-sm font-bold text-ink transition-colors hover:bg-surface-raised active:scale-95"
             >
               Start 3-Day Trial — {trialPrice}
             </Link>

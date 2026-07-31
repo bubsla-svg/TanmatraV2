@@ -2,6 +2,10 @@
 // Slot-swap picker. Fetches server-suggested alternatives (constraint-safe by
 // construction — the server filters allergens / repetition / availability) for
 // one (day, slot); picking one calls back to the island, which does the swap.
+// Only rendered from /meal-planner (a Stitch dark route, lib/stitchRoutes.ts).
+// Radix portals the panel to document.body, but data-stitch lives on <html>
+// (a DOM ancestor of body), so color-scheme inherits through the portal with
+// no scope attribute needed here.
 import { useEffect, useState } from "react";
 import { Dialog } from "radix-ui";
 import { formatPaise } from "@/lib/format";
@@ -29,10 +33,12 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-[var(--ink)]/40 backdrop-blur-sm" />
+        {/* Scrim: --scrim, never data-stitch — see the invariant on
+            components/ui/drawer.tsx's DrawerOverlay. */}
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-20 z-50 w-[92vw] max-w-md -translate-x-1/2 overflow-hidden rounded-3xl border border-line bg-surface shadow-lg"
+          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 overflow-hidden rounded-3xl border border-line bg-surface shadow-lg"
         >
           <Dialog.Title className="border-b border-line px-4 py-3 text-sm font-semibold text-ink">
             Swap {SLOT_LABEL[target.slot]}

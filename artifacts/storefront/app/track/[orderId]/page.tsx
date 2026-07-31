@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
-import "@/lib/themes/stitch.css";
 import { TrackStatus } from "@/components/track/TrackStatus";
 
 export const metadata: Metadata = {
@@ -21,7 +19,7 @@ export default async function TrackPage({
   const { orderId } = await params;
 
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       <section className="mx-auto flex max-w-lg flex-col items-center px-4 py-12 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">
           Tracking your order

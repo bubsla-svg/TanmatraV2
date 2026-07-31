@@ -18,9 +18,29 @@ export interface ServiceabilityBarProps {
 }
 
 /**
+ * Width clamp for the header-hosted (`menu`) instance. Astryx's TopNav renders
+ * endContent at flex-shrink:0, so nothing upstream will squeeze this widget —
+ * anything wider than the room left beside the wordmark just pushes the ⌘K
+ * button off the bar. min-w-0 lets the inner label truncate instead; the cap
+ * keeps it inside the ~208px a 360px viewport leaves after the wordmark and the
+ * search button, and relaxes from sm up. The `hero` arm keeps its own max-w-md.
+ */
+const MENU_FIT = "min-w-0 max-w-[13rem] sm:max-w-xs";
+
+/**
  * ServiceabilityBar (OB-2 & OB-3 / II.1 & II.3). Non-blocking front-door delivery gate.
  * Evaluates pincodes via public API without gating catalog visibility or requiring auth.
  * Displays notify-me form on unserviceable verdict with graceful 404 degradation.
+ *
+ * EXACTLY ONE INSTANCE MAY BE MOUNTED PER PAGE, and it is the one in
+ * components/Header.tsx (placement="menu"). Verdict and pincode are per-instance
+ * state seeded from localStorage once at mount (the effect below) with no
+ * `storage` listener, so two copies never learn each other's answer: check a
+ * pincode in one and the other keeps saying "Select your location" for the rest
+ * of the session. app/page.tsx used to mount a second copy (placement="hero")
+ * and that is exactly what happened from sm up. If a surface ever genuinely
+ * needs the widget in two places, lift the state into a provider — do not mount
+ * a second bar.
  */
 export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps) {
   const [verdict, setVerdict] = useState<ServiceabilityVerdict>("unknown");
@@ -119,7 +139,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
 
   if (manualMode) {
     return (
-      <form onSubmit={handleSubmit} className={`${placement === 'menu' ? '' : 'mb-6'} flex flex-wrap items-center gap-2 max-w-md`}>
+      <form onSubmit={handleSubmit} className={`${placement === 'menu' ? MENU_FIT : 'mb-6 max-w-md'} flex flex-wrap items-center gap-2`}>
         {placement !== 'menu' && (
           <label htmlFor={`pin-input-${placement}`} className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
             Where should we deliver? Enter your pincode
@@ -136,7 +156,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             disabled={busy}
-            className="w-44 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
+            className="w-44 min-w-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
           />
           <Button
             type="submit"
@@ -161,7 +181,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
   }
 
   return (
-    <div className={`${placement === 'menu' ? '' : 'mb-6'} flex flex-col items-start gap-2 max-w-md`}>
+    <div className={`${placement === 'menu' ? MENU_FIT : 'mb-6 max-w-md'} flex flex-col items-start gap-2`}>
       {placement !== 'menu' && (
         <label className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
           Where should we deliver?

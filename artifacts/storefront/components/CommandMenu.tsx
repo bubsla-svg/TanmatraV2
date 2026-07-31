@@ -3,6 +3,11 @@
 // ⌘K / Ctrl+K also toggles it. Lists every nav route from lib/nav.ts, so a route
 // becomes searchable the moment a wave registers it in the config. Radix Dialog
 // handles focus-trap, Escape, and scroll-lock.
+// ⌘K opens over light and dark routes alike. Radix portals the panel to
+// document.body, but that no longer means it escapes theme scope: data-stitch
+// lives on <html> (app/layout.tsx), a DOM ancestor of document.body, so
+// color-scheme inherits through the portal with no scope attribute needed
+// here — the panel just matches whatever route it was opened from.
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "radix-ui";
@@ -67,10 +72,12 @@ export function CommandMenu() {
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-[var(--ink)]/40 backdrop-blur-sm" />
+        {/* Scrim: --scrim, never data-stitch — see the invariant on
+            components/ui/drawer.tsx's DrawerOverlay. */}
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-20 z-50 w-[92vw] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
+          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
           <Dialog.Title className="sr-only">Search pages</Dialog.Title>
           <input

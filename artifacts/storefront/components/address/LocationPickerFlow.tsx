@@ -1,5 +1,6 @@
 "use client"; // Justification: client-side geolocation GPS capture, dynamic search queries, and map orchestration.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { reverseGeocode, searchLocation, DEFAULT_MAP_CENTER, type GeoPlace } from "@/lib/geoClient";
 import { LocationSummaryCard } from "./LocationSummaryCard";
@@ -25,6 +26,9 @@ export function LocationPickerFlow({
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GeoPlace[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const fetchPlace = useCallback(async (lat: number, lng: number) => {
     setLoading(true);
@@ -66,8 +70,22 @@ export function LocationPickerFlow({
     setSuggestions([]);
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg sm:mx-auto sm:my-8 sm:max-w-xl sm:rounded-3xl sm:border sm:border-line sm:shadow-2xl sm:overflow-hidden">
+  // PORTALLED TO document.body ON PURPOSE. Every caller renders this sheet in
+  // place, and one of them (ServiceabilityBar) sits inside the Header, which is
+  // `sticky top-0 z-10 backdrop-blur` — both the z-index and the filter open a
+  // stacking context. A `fixed` child cannot escape one: the sheet's own z was
+  // resolved INSIDE the header's context and so capped at 10 against the root,
+  // which left the --z-nav bottom bar painting straight over it. On a phone that
+  // hid the "I don't know the exact location" manual fallback completely and
+  // clipped the confirm button (all of it on a notched iPhone). Portalling makes
+  // body the parent, so the --z-modal tier below actually means what it says.
+  //
+  // Guarded on `mounted` because document does not exist during SSR/prerender.
+  // Callers mount this on a tap, so the skipped first frame is never seen.
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[var(--z-modal)] flex flex-col bg-bg sm:mx-auto sm:my-8 sm:max-w-xl sm:rounded-3xl sm:border sm:border-line sm:shadow-2xl sm:overflow-hidden">
       <div className="flex items-center gap-3 border-b border-line bg-surface px-4 py-3.5">
         <button type="button" onClick={onClose} aria-label="Go back" className="rounded-xl p-1 text-ink hover:bg-bg">
           <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -100,6 +118,7 @@ export function LocationPickerFlow({
       </div>
 
       <LocationSummaryCard place={place} loading={loading} onChangeTap={() => searchInputRef.current?.focus()} onConfirm={() => place && onSelectLocation({ ...place, lat: coords.lat, lng: coords.lng })} onManualFallback={onManualFallback} />
-    </div>
+    </div>,
+    document.body,
   );
 }

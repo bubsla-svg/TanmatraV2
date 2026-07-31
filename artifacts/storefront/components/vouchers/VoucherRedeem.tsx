@@ -9,8 +9,10 @@ import { formatPaise } from "@/lib/format";
 import { getWalletBalancePaise, getMyVouchers, redeemVoucher, type VoucherLite } from "@/lib/vouchersApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/components/cart/CartProvider";
 
 export function VoucherRedeem() {
+  const { cart } = useCart();
   const [balance, setBalance] = useState<number | null>(null);
   const [redeemed, setRedeemed] = useState<VoucherLite[]>([]);
   const [needsAuth, setNeedsAuth] = useState(false);
@@ -106,19 +108,27 @@ export function VoucherRedeem() {
       {/* Glass sticky footer (checkout/trial vocabulary, BATCH-4-BRIEFS.md) —
           the ONE redeem CTA on this screen. Stays a plain verb, no amount
           printed on it: the code's value isn't known until the server
-          validates it (money-CTA rule, BATCH-9-BRIEFS.md Brief 57). */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
-        <div className="mx-auto max-w-md px-4 py-3">
-          <Button
-            type="button" onClick={() => void doRedeem()} disabled={busy || !code.trim()}
-            shape="pill"
-            size="fluid"
-            className="w-full px-8 py-4 text-center text-base font-semibold disabled:opacity-40"
-          >
-            {busy ? "Redeeming…" : "Redeem"}
-          </Button>
+          validates it (money-CTA rule, BATCH-9-BRIEFS.md Brief 57).
+          Renders only while the cart is EMPTY: MiniCartBar occupies the same
+          `bottom-16 z-30` band and layout.tsx renders it AFTER <main>, so with
+          equal z-index the later sibling wins and would paint over this button
+          and swallow its clicks. Same guard DishBuyBar ships; once a line
+          exists, MiniCartBar owns the bottom edge. The Enter key on the code
+          field still submits, so the input keeps its own path to doRedeem. */}
+      {cart.lines.length === 0 && (
+        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+          <div className="mx-auto max-w-md px-4 py-3">
+            <Button
+              type="button" onClick={() => void doRedeem()} disabled={busy || !code.trim()}
+              shape="pill"
+              size="fluid"
+              className="w-full px-8 py-4 text-center text-base font-semibold disabled:opacity-40"
+            >
+              {busy ? "Redeeming…" : "Redeem"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

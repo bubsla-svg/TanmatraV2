@@ -5,11 +5,6 @@ import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_TRIO, TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
 import { TrialStart, type TrioDish } from "@/components/trial/TrialStart";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css. /trial is
-// priced as seriously as /checkout (BATCH-4-BRIEFS.md Brief 23: "this IS a
-// purchase decision"), so it shares checkout's dark scope + money-CTA
-// discipline rather than the lighter Astryx surfaces elsewhere in the app.
-import "@/lib/themes/stitch.css";
 
 export const metadata: Metadata = {
   title: "3-Day Taste Test",
@@ -46,7 +41,7 @@ export default async function TrialPage() {
   const deskFuelMonthly = computePlanQuote("desk_fuel", "veg", "monthly");
 
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       {/* pb-48 clears the sticky footer TrialStart renders (button + the
           no-auto-convert line) so the creditback card is never hidden behind
           it while scrolling — same reasoning as /checkout's pb-44. */}

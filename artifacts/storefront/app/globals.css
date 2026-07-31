@@ -53,6 +53,20 @@
   /* Brand-semantic extension (§3.2): sage is a SIGNAL, never action. */
   --sage-foreground: var(--sage-ink);
 
+  /* Stacking order, named. Authored z-indexes drifted into collision — a modal
+     shipped below the bottom nav because both were hand-picked numbers with
+     nothing relating them. Use `z-[var(--z-modal)]` etc. and the relationship
+     is declared, not remembered. The gaps are deliberate: a one-off can sit
+     between two tiers without renumbering anything.
+       chrome  sticky header / in-page sticky sections
+       bar     mini-cart, buy bars, sticky footers (over content, under nav)
+       nav     mobile bottom nav — the last thing a page may cover
+       modal   dialogs, drawers, their scrims — always above all chrome */
+  --z-chrome: 10;
+  --z-bar: 30;
+  --z-nav: 50;
+  --z-modal: 100;
+
   /* Typeface (TNM-UIF-01 §10.2 decision): IBM Plex Sans for UI, JetBrains Mono
      for macro/numeric data. The families are loaded via next/font in the root
      layout (exposed as the two vars below); this override wins over the system
@@ -124,6 +138,10 @@ html {
   font-family: var(--font-sans);
   -webkit-text-size-adjust: 100%;
 }
+
+/* data-stitch lives on <html> itself now (app/layout.tsx's STITCH_ROUTE_SCRIPT),
+ * so the color-scheme flip needs no :has() reach-up from <body> any more — the
+ * rule is colocated with the attribute selector in lib/themes/stitch.css. */
 
 body {
   margin: 0;
