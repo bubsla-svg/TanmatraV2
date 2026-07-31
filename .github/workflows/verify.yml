@@ -394,6 +394,22 @@ jobs:
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
+      # OA-DEEP-1.6: the CMS agent's bulk_regenerate_copy and
+      # bulk_generate_missing_heroes tools ran their per-item Gemini calls
+      # fully serially inside a single agent chat turn bounded by one 30s
+      # wall-clock timeout — a guaranteed timeout on any non-trivial run.
+      # Both now route through the shared batchProcess utility (bounded
+      # concurrency + automatic retry on rate limits). These are pure unit
+      # tests of that wiring (fake generators/appliers, no Gemini calls) —
+      # DB-free in behavior, but menuAssets.ts/cms.ts import `db` at module
+      # load, so they need DATABASE_URL just to import, hence this job
+      # rather than money-unit.
+      - name: CMS bulk-tool concurrency wiring
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuAssets.bulkHeroes.test.ts
+          ./src/lib/ai/agents/cms.bulkCopy.test.ts
       # The reporting half of the money path. These are not about billing a
       # customer correctly; they are about the numbers the business reads back
       # afterwards being what they claim to be — the WBR's revenue line
