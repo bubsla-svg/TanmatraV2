@@ -503,3 +503,15 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/lib/menuEngineering.sliceCounts.golden.test.ts
+      # OA-MED-1.16: loadDynamicRecipeCosts re-filtered the whole ingredient
+      # list per recipe and re-scanned the whole inventory per ingredient.
+      # Both are now pre-grouped/memoised. The ingredient->inventory match is
+      # a two-way fuzzy substring test where Array.find's first-match-wins
+      # order is load-bearing — a different winner is a different food cost,
+      # which feeds the margin axis and can move a real price. Golden test:
+      # compares against a frozen copy of the old algorithm on seeded data.
+      - name: Menu-engineering recipe-cost golden test
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/menuEngineering.recipeCosts.golden.test.ts
