@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Link, useLocation } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,9 +12,16 @@ import {
 } from "@phosphor-icons/react";
 import { useCart, useCartDrawer } from "@/lib/cartContext";
 import Logo from "./Logo";
-import CommandPalette, { useCommandPaletteHotkey } from "@/components/CommandPalette";
+import { useCommandPaletteHotkey } from "@/hooks/useCommandPaletteHotkey";
 import { MoreSheetTrigger } from "@/components/layout/BottomNav";
 import { usePreferences } from "@/lib/preferencesContext";
+
+// OA-MED-1.21: CommandPalette pulls in useMenuCatalog's 116-dish static
+// catalog (~154KB source), MobileSearchSheet, and the cmdk UI — real weight
+// that has no business shipping in Header's own chunk, since Header mounts
+// on every route including pages that never open the palette. Lazy-loading
+// it here splits that whole module graph into its own chunk.
+const CommandPalette = lazy(() => import("@/components/CommandPalette"));
 
 export default function Header() {
   const location = useLocation();
@@ -127,7 +135,9 @@ export default function Header() {
         </div>
       </header>
 
-      <CommandPalette open={palette.open} setOpen={palette.setOpen} />
+      <Suspense fallback={null}>
+        <CommandPalette open={palette.open} setOpen={palette.setOpen} />
+      </Suspense>
     </>
   );
 }
