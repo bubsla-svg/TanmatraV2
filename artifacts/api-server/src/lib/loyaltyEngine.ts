@@ -1487,5 +1487,6 @@ export async function listNotifications(userId: string): Promise<Notification[]>
     .select()
     .from(notificationsTable)
     .where(eq(notificationsTable.userId, userId))
-    .orderBy(desc(notificationsTable.createdAt));
+    .orderBy(desc(notificationsTable.createdAt))
+    .limit(100);
 }
