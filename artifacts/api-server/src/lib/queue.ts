@@ -2,7 +2,7 @@ import { Queue, Worker, type Processor } from "bullmq";
 import IORedis, { type Redis, type RedisOptions } from "ioredis";
 import { logger } from "./logger";
 import { db, deliveryEventsTable, ordersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 export const QUEUE_NAMES = {
   orderPipeline: "order-pipeline",
@@ -160,6 +160,28 @@ export function getOrderPipelineQueue(): Queue<OrderPipelineJob> | null {
   return orderPipelineQueue;
 }
 
+/**
+ * The delivery ladder, in order. Used to keep the pipeline's status write
+ * monotonic — see `advanceStatus` below. Terminal/settlement states
+ * (cancelled, failed, refunded, billed) are deliberately absent: a pipeline
+ * step must never overwrite one, and leaving them unranked is what makes the
+ * `inArray` guard exclude them.
+ */
+const DELIVERY_LADDER = [
+  "placed",
+  "preparing",
+  "ready",
+  "rider_assigned",
+  "out_for_delivery",
+  "delivered",
+] as const;
+
+/** Statuses a given pipeline step is allowed to advance FROM. */
+function statusesBelow(step: OrderPipelineJob["step"]): string[] {
+  const target = DELIVERY_LADDER.indexOf(step as (typeof DELIVERY_LADDER)[number]);
+  return DELIVERY_LADDER.slice(0, target) as unknown as string[];
+}
+
 const orderPipelineProcessor: Processor<OrderPipelineJob> = async (job) => {
   const { orderId, step } = job.data;
   const eventName =
@@ -170,10 +192,53 @@ const orderPipelineProcessor: Processor<OrderPipelineJob> = async (job) => {
         : step === "out_for_delivery"
           ? "order_picked_up"
           : "delivered";
-  await db.insert(deliveryEventsTable).values({ orderId, event: eventName });
-  await db.update(ordersTable).set({ status: step }).where(eq(ordersTable.id, orderId));
+
+  // OA-MED-1.3 (TODO_optimization-auditor.md): the side effects below used to
+  // swallow every error, so BullMQ marked the job completed and the configured
+  // `attempts: 3` + exponential backoff never applied to them — an
+  // auto-dispatch outage was invisible outside log volume. Two of them are now
+  // rethrown so the retry actually engages.
+  //
+  // That is only safe because this prelude is idempotent, and it was NOT
+  // before. A rethrown retry re-runs from the top, so previously it would have
+  // (a) inserted a duplicate delivery_events row — the exact harm
+  // scheduleOrderAdvance's jobId dedup key was added to prevent, just re-opened
+  // from the retry side — and (b) blind-overwritten `status`, walking an order
+  // that auto-dispatch had already moved to `rider_assigned` BACKWARDS to
+  // `ready`. Both are fixed here first; the rethrows come after.
+
+  // Insert-if-absent. delivery_events has no unique constraint (only two plain
+  // indexes), so `onConflictDoNothing` has no target to key on — hence the
+  // explicit NOT EXISTS. Safe without a lock because the jobId dedup key means
+  // retries of a given (order, step) are sequential, never concurrent.
+  await db.execute(sql`
+    insert into ${deliveryEventsTable} (order_id, event)
+    select ${orderId}, ${eventName}
+    where not exists (
+      select 1 from ${deliveryEventsTable}
+      where order_id = ${orderId} and event = ${eventName}
+    )
+  `);
+
+  // Monotonic: only advance from a status strictly earlier on the ladder.
+  // A retry that finds the order already at `rider_assigned` (auto-dispatch
+  // succeeded, something after it threw) now leaves it there instead of
+  // rewinding it to `ready`.
+  const below = statusesBelow(step);
+  if (below.length > 0) {
+    await db
+      .update(ordersTable)
+      .set({ status: step })
+      .where(and(eq(ordersTable.id, orderId), inArray(ordersTable.status, below)));
+  }
   logger.info({ orderId, step }, "order pipeline step advanced");
   // Auto-run smart dispatch when an order becomes ready and has no rider yet.
+  //
+  // RETHROWN. A silent failure here leaves the order sitting in `ready` with
+  // no rider — this file's own comment calls that class of failure "a clinical
+  // data integrity issue, not just a reliability one". Retry-safe: the
+  // riderId pre-check below plus dispatchOrder's own `locked.rider_id != null`
+  // guard mean a retry can never assign a second rider.
   if (step === "ready") {
     try {
       const [order] = await db
@@ -191,16 +256,28 @@ const orderPipelineProcessor: Processor<OrderPipelineJob> = async (job) => {
       }
     } catch (err) {
       logger.error({ err, orderId }, "auto-dispatch failed");
+      throw err;
     }
   }
-  // Auto-log nutrition for the user's wellness dashboard on delivery.
   if (step === "delivered") {
+    // Auto-log nutrition for the user's wellness dashboard.
+    //
+    // RETHROWN. Nutrition rows feed the clinical wellness dashboard; a lost
+    // log is silently wrong health data. Retry-safe: autoLogDeliveredOrder
+    // inserts with `dedupeKey: order:<id>:<line>` and onConflictDoNothing, so
+    // calling it twice is documented as a no-op.
     try {
       const { autoLogDeliveredOrder } = await import("./wellnessAutoLog");
       await autoLogDeliveredOrder(orderId);
     } catch (err) {
       logger.error({ err, orderId }, "wellness auto-log failed");
+      throw err;
     }
+    // NOT rethrown, deliberately. recordActualDelivery only backfills
+    // eta_predictions.actual_minutes for model-accuracy analytics; a missing
+    // row degrades a metric and nothing user-facing. Retrying the whole job
+    // three times — re-running dispatch and wellness logging with it — to
+    // salvage an analytics backfill is a worse trade than losing the row.
     try {
       const { recordActualDelivery } = await import("./etaModel");
       await recordActualDelivery(orderId);
@@ -208,7 +285,10 @@ const orderPipelineProcessor: Processor<OrderPipelineJob> = async (job) => {
       logger.error({ err, orderId }, "eta actual record failed");
     }
   }
-  // Hook for socket fanout — late-bound to avoid import cycle.
+  // NOT rethrown, and correctly so: emitDeliveryEvent is a pure socket.io
+  // broadcast with no persistence (`if (!io) return;`). Retrying it 2s later
+  // is pointless — the socket room has moved on — and the bare catch is the
+  // documented "realtime module not initialized yet" case.
   try {
     const { emitDeliveryEvent } = await import("./realtime");
     emitDeliveryEvent(orderId, { event: eventName });
@@ -216,6 +296,19 @@ const orderPipelineProcessor: Processor<OrderPipelineJob> = async (job) => {
     /* realtime module not initialized yet */
   }
 };
+
+/**
+ * Test seam for the pipeline processor. The prelude's idempotency is what
+ * makes the rethrows above safe, so it needs direct coverage — and driving it
+ * through a real BullMQ worker would require Redis for what is purely a
+ * Postgres-state assertion.
+ */
+export const _orderPipelineProcessorForTests = (
+  data: OrderPipelineJob,
+): Promise<unknown> =>
+  (orderPipelineProcessor as (job: { data: OrderPipelineJob }) => Promise<unknown>)({
+    data,
+  });
 
 export function startWorkers(): void {
   if (workersStarted) return;
