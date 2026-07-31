@@ -394,6 +394,20 @@ jobs:
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
+      # OA-DEEP-1.4/1.5: rider selection used to score a pre-transaction
+      # snapshot and commit to the top pick without ever locking it, so
+      # concurrent dispatchOrder calls (BullMQ worker, manual API, ops
+      # agent) could all read the same stale activeOrderCount and all
+      # stack onto the same rider. The fix claims the chosen rider under
+      # FOR UPDATE SKIP LOCKED inside the same transaction that locks the
+      # order, falling back to the next-best candidate on contention. Own
+      # step so a regression here reads as "dispatch load balancing broke"
+      # rather than being buried in an unrelated corpus.
+      - name: Dispatch concurrent rider-claim load balancing
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/dispatch.concurrency.test.ts
       # The reporting half of the money path. These are not about billing a
       # customer correctly; they are about the numbers the business reads back
       # afterwards being what they claim to be — the WBR's revenue line
