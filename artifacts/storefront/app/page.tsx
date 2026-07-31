@@ -1,12 +1,7 @@
 import { cookies } from "next/headers";
-// Stitch dark scope — route-scoped theme for the total-redesign programme.
-// Flips every token in this subtree via color-scheme + pinned Stitch values;
-// see lib/themes/stitch.css and docs/stitch/DESIGN.md.
-import "@/lib/themes/stitch.css";
 import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
 import { deriveHeroContent } from "@/lib/heroContent";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
-import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 import { Section03AgitationPanel } from "@/components/landing/Section03AgitationPanel";
 import { Section04bMarketplace } from "@/components/landing/Section04bMarketplace";
 import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
@@ -30,15 +25,20 @@ export default async function HomePage() {
   const heroData = deriveHeroContent(refCookie);
 
   return (
-    <div data-stitch="dark" className="relative min-h-screen bg-[var(--bg)] text-ink pb-20 sm:pb-24">
-      <main className="flex flex-col gap-10 sm:gap-16 lg:gap-20">
+    <div className="relative min-h-screen pb-20 sm:pb-24">
+      {/* A <div>, not a <main>: app/layout.tsx already opens `<main id="main">`
+          around children, and nesting a second one is invalid HTML — screen
+          readers announced two main regions on the entry route and the skip
+          link landed on the outer one. */}
+      <div className="flex flex-col gap-10 sm:gap-16 lg:gap-20">
         {/* Pillar 1 Hero: Food-First D2C Hook with Hero Meal Photo & Dual CTAs */}
         <Section01ClinicalHero hero={heroData} />
 
-        {/* Front-door Serviceability Check (Hidden on mobile to eliminate header redundancy) */}
-        <div className="hidden sm:block mx-auto max-w-5xl px-4">
-          <ServiceabilityBar placement="hero" />
-        </div>
+        {/* No ServiceabilityBar here. The Header's is the only instance allowed
+            to exist — its verdict/pincode is per-instance state read from
+            localStorage once at mount with no `storage` listener, so a second
+            copy desynced permanently from sm up: check a pincode in one and
+            the other kept saying "Select your location" all session. */}
         <Section02QualificationChips />
 
         {/* D2C Food Tech Core 1: Choose Your Therapeutic Protocol */}
@@ -68,7 +68,7 @@ export default async function HomePage() {
 
         {/* FAQ Accordion */}
         <Section10FaqAccordion />
-      </main>
+      </div>
     </div>
   );
 }

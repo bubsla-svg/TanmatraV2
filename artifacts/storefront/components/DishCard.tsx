@@ -56,7 +56,16 @@ export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
               }`}
               style={{ backgroundColor: dish.isVeg ? "var(--sage)" : "var(--danger)" }}
             />
-            <Text type="body" weight="bold" as="h3" maxLines={1}>{dish.name}</Text>
+            {/* `font-bold` duplicates `weight="bold"` on purpose, and only
+                here. Astryx's weight atom is emitted in @layer astryx-base;
+                while that layer is declared BEFORE Tailwind's, Preflight's
+                `h1..h6 { font-weight: inherit }` outranks it and every dish
+                name on the menu renders at 400 — but only on this one `as="h3"`
+                (the `span` default is untouched, which is why the price below
+                is correctly bold). The Tailwind utility sits in @layer
+                utilities and wins either way: today over Preflight, and
+                harmlessly under the atom once the layer order is repaired. */}
+            <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
           </span>
           {fit?.band === "conflict" && fit.conflictLabel && (
             <Text type="supporting" weight="bold" className="text-[var(--danger)]">

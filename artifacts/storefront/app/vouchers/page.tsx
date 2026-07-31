@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import { VoucherRedeem } from "@/components/vouchers/VoucherRedeem";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css. Money-adjacent
-// (BATCH-9-BRIEFS.md Brief 57): wallet + redeem shares /checkout and /trial's
-// dark scope + glass sticky footer rather than the lighter Astryx surfaces.
-import "@/lib/themes/stitch.css";
 
 export const metadata: Metadata = {
   title: "Wallet & vouchers",
@@ -16,7 +12,7 @@ export const metadata: Metadata = {
  *  automatically at checkout. Redeem-only — no charge path here. */
 export default function VouchersPage() {
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       {/* pb-44 clears the sticky footer VoucherRedeem renders (single Redeem
           button) — same reasoning as /checkout's pb-44. */}
       <section className="mx-auto max-w-md px-4 pt-10 pb-44">

@@ -127,8 +127,15 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         )}
       </div>
 
+      {/* The on-plan-vs-à-la-carte chip. Its fill was `bg-surface-muted`, and no
+          --surface-muted token exists anywhere — so the chip painted nothing and
+          its rounded, padded geometry was invisible. Nor is --surface-subtle the
+          answer: that aliases --bg, and this whole section sits directly on --bg
+          (app/plan/[planId]/page.tsx wraps it in bg-[var(--bg)]), so it would be
+          a second invisible fill. --surface is the one step up from the canvas,
+          the same fill the cycle-total row below uses. */}
       {currentQuote.pricePerMealPaise != null && trackConfig.poolMedianPaise != null && (
-        <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-4 py-2 text-sm font-medium text-ink-muted">
+        <div className="flex items-center gap-2 rounded-lg bg-surface px-4 py-2 text-sm font-medium text-ink-muted">
           <span className="text-ink">₹{Math.round(currentQuote.pricePerMealPaise / 100)}/meal</span> on plan
           <span>·</span>
           <span>₹{Math.round(trackConfig.poolMedianPaise / 100)} avg à la carte</span>

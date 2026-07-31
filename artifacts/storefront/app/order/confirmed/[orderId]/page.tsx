@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css. This is the
-// tail of the checkout funnel; it must read as the same product as /checkout.
-import "@/lib/themes/stitch.css";
 import { fetchOrderStatus, statusLabel, statusTone, TRACKABLE_STATUSES } from "@/lib/orderStatus";
 import { PlanPerks } from "@/components/order/PlanPerks";
 import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendations";
@@ -39,7 +36,7 @@ export default async function ConfirmedPage({
 
   if (result.kind !== "ok") {
     return (
-      <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+      <div className="min-h-screen">
         <section className="mx-auto max-w-md px-4 py-10 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">
             {result.kind === "not_found"
@@ -65,7 +62,7 @@ export default async function ConfirmedPage({
   // delivered or cancelled order gets no dead Track CTA.
   const trackable = TRACKABLE_STATUSES.has(status);
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       <section className="mx-auto max-w-md px-4 py-10">
         {/* Status card — the single largest, most prominent element on the
             screen. This is a confirmation, not a celebration: no confetti,

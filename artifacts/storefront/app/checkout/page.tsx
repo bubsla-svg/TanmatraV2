@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
-import "@/lib/themes/stitch.css";
 import { redirect } from "next/navigation";
 import {
   PLAN_CATALOG,
@@ -44,7 +42,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // pricing at POST /orders. Reached from the cart drawer's Checkout CTA.
   if (mode === "alacarte") {
     return (
-      <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+      <div className="min-h-screen">
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">
           <AlacarteCheckout />
         </section>
@@ -78,7 +76,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
       track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
     const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
     return (
-      <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+      <div className="min-h-screen">
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">
           <PlanCheckout
             planId={id}
@@ -115,7 +113,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
     : "Next billing next month · pause or cancel anytime.";
 
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       <section className="mx-auto max-w-md px-4 pt-10 pb-44">
         <CheckoutFlow
           planId={id}

@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { fetchMenu } from "@/lib/catalog";
 import { QuickSetupWizard } from "@/components/wizard/QuickSetupWizard";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css. Brief 24 binds
-// this route to the same dark-scope vocabulary as /checkout.
-import "@/lib/themes/stitch.css";
 
 export const metadata: Metadata = {
   title: "Quick Dietary Setup | Tanmatra",
@@ -15,7 +12,7 @@ export default async function QuickSetupPage() {
   const { dishes } = await fetchMenu();
 
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       <section className="mx-auto flex max-w-lg flex-col gap-8 px-4 py-12">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">

@@ -1,8 +1,29 @@
 "use client"; // Justification: interactive click event emitter for analytics and scrolling action.
 
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/components/cart/CartProvider";
+import { cn } from "@/lib/utils";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { LandingIcon } from "./LandingIcon";
+
+/**
+ * Bottom-offset variants. Written out as whole literal class strings and never
+ * assembled from interpolated fragments — Tailwind scans source text, so a
+ * template-built class name is simply never generated.
+ *
+ * RESTING is the historical position: clear of the MobileBottomNav band on
+ * mobile, flush to the bottom edge (and owning the safe-area inset itself)
+ * from `md` up.
+ *
+ * LIFTED stacks one MiniCartBar band higher. That bar is 4.5rem tall (1px
+ * border + py-3 + its 44px `min-h-11` button row) and pads the safe-area inset
+ * itself, so the extra offset is that band alone and the safe-area term is
+ * unchanged from RESTING.
+ */
+const RESTING =
+  "bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 md:pb-[calc(0.75rem+env(safe-area-inset-bottom))]";
+const LIFTED =
+  "bottom-[calc(4rem+4.5rem+env(safe-area-inset-bottom))] md:bottom-[calc(4.5rem+env(safe-area-inset-bottom))]";
 
 export interface StickyCtaBarProps {
   pageSlug: string;
@@ -25,6 +46,17 @@ export interface StickyCtaBarProps {
  * bar drops to the bottom edge and owns the safe-area padding itself. Pages
  * that render this bar reserve matching bottom padding so the last section
  * stays reachable.
+ *
+ * The same rule is why the bar is cart-aware. At z-40 it fully covered
+ * MiniCartBar's `bottom-16 z-30` band, and the four routes that render it
+ * (/corporate, /corporate-wellness, /partners/gyms, /partners/dietitians)
+ * expose no other way into the cart — no Header cart icon, no MobileBottomNav
+ * tab, no lib/nav.ts entry — so a shopper with items lost every route back to
+ * them. It STACKS above the mini-cart rather than hiding: this is the page's
+ * only conversion action, and the mini-cart is the page's only cart access, so
+ * suppressing either one strands the buyer. Unlike the guard DishBuyBar and
+ * the /trial, /vouchers and /subscription/bridge bars use, there is no
+ * alternative surface here to fall back to.
  */
 export function StickyCtaBar({
   pageSlug,
@@ -34,13 +66,20 @@ export function StickyCtaBar({
   subtitle,
   onCtaClick,
 }: StickyCtaBarProps) {
+  const { cart } = useCart();
+
   const handleClick = () => {
     emitLpEvent("sticky_cta_click", { page: pageSlug, label: ctaLabel });
     onCtaClick?.();
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur-md md:bottom-0 md:px-6 md:pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+    <div
+      className={cn(
+        "fixed inset-x-0 z-40 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur-md md:px-6",
+        cart.lines.length > 0 ? LIFTED : RESTING,
+      )}
+    >
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
         <div className="hidden flex-1 truncate sm:block">
           {title && <p className="truncate text-sm font-semibold text-ink">{title}</p>}

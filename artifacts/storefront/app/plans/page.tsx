@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css.
-import "@/lib/themes/stitch.css";
 import Link from "next/link";
 import { GoalRouter } from "@/components/plans/GoalRouter";
 import { PlanCardStitch } from "@/components/plans/PlanCardStitch";
@@ -22,7 +20,7 @@ export const metadata: Metadata = {
 export default function PlansPage() {
   const plans = routerPlans();
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       <section className="mx-auto flex max-w-md flex-col gap-10 px-4 py-10">
         <h1 className="sr-only">Choose your plan</h1>
         <GoalRouter />

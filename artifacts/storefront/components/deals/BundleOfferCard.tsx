@@ -11,6 +11,11 @@
 // computed in lib/mealBundles and passed in. Nothing is priced here, no discount
 // is claimed, and the cart lines carry the server price snapshot exactly as
 // AddToCart does — the server still re-prices at order.
+//
+// Rendered from /meal-deals, a light-canvas route (not in lib/stitchRoutes.ts).
+// Radix portals the combo Dialog to document.body, but that is a DOM
+// descendant of <html> either way, so it correctly inherits whichever
+// color-scheme the host route set — no scope override belongs here.
 import { useState } from "react";
 import Link from "next/link";
 import { Dialog } from "radix-ui";
@@ -69,10 +74,12 @@ export function BundleOfferCard({ bundle }: { bundle: BundleView }) {
 
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-[var(--ink)]/40 backdrop-blur-sm" />
+          {/* Scrim: --scrim, never data-stitch — see the invariant on
+              components/ui/drawer.tsx's DrawerOverlay. */}
+          <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
           <Dialog.Content
             aria-describedby={undefined}
-            className="fixed left-1/2 top-16 z-50 flex max-h-[80vh] w-[92vw] max-w-md -translate-x-1/2 flex-col overflow-hidden rounded-3xl border border-line bg-surface"
+            className="fixed left-1/2 top-16 z-[var(--z-modal)] flex max-h-[80vh] w-[92vw] max-w-md -translate-x-1/2 flex-col overflow-hidden rounded-3xl border border-line bg-surface"
           >
             <div className="border-b border-line px-5 py-4">
               <Dialog.Title className="text-base font-semibold text-ink">{bundle.title}</Dialog.Title>

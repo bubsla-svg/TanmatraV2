@@ -19,6 +19,14 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
  * pattern NCR users expect. Hidden on /checkout (its own money surface owns
  * the total there). Subtotal is display-only; the billed amount is always
  * the server's.
+ *
+ * `bottom-16` is the shared bottom-bar band — the same offset DishBuyBar,
+ * CheckoutPay, AlacarteDetails, PlanDetails, TrialStart, VoucherRedeem and
+ * BridgeView all sit at, so handing the edge from any of them to this bar
+ * doesn't move it. It used to be `bottom-14` (56px), left over from a
+ * BottomNav of that height that no longer exists — today's MobileBottomNav
+ * row is `h-16`, and the 8px mismatch showed as a visible jump the moment
+ * DishBuyBar swapped out for this bar.
  */
 export function MiniCartBar() {
   const { cart, hydrated } = useCart();
@@ -30,7 +38,7 @@ export function MiniCartBar() {
 
   return (
     <>
-      <div data-stitch="dark" className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur md:bottom-0">
+      <div data-stitch="dark" className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <p className="tabular text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}

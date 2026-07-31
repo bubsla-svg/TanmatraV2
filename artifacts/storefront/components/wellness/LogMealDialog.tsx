@@ -1,6 +1,10 @@
 "use client";
 // Manual food-log sheet: a label + the macro numbers. The label is required so
 // the entry is recognisable later; everything else defaults to 0 server-side.
+// Rendered from /account/wellness, a light-canvas route (not in
+// lib/stitchRoutes.ts). Radix portals the sheet to document.body, but that is
+// a DOM descendant of <html> either way, so it correctly inherits whichever
+// color-scheme the host route set — no scope override belongs here.
 import { useState } from "react";
 import { Dialog } from "radix-ui";
 import { ApiError } from "@/lib/apiClient";
@@ -35,8 +39,10 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-[var(--ink)]/40 backdrop-blur-sm" />
-        <Dialog.Content aria-describedby={undefined} className="fixed bottom-0 left-1/2 z-50 w-[92vw] max-w-md -translate-x-1/2 rounded-t-2xl border border-line bg-surface p-5 shadow-lg sm:bottom-auto sm:top-24 sm:rounded-2xl">
+        {/* Scrim: --scrim, never data-stitch — see the invariant on
+            components/ui/drawer.tsx's DrawerOverlay. */}
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Content aria-describedby={undefined} className="fixed bottom-0 left-1/2 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 rounded-t-2xl border border-line bg-surface p-5 shadow-lg sm:bottom-auto sm:top-24 sm:rounded-2xl">
           <Dialog.Title className="text-sm font-semibold text-ink">Log a meal or snack</Dialog.Title>
           <label className="mt-4 block text-sm text-ink-muted">What was it?
             <input autoFocus value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Greek yoghurt with berries" className={`mt-1 ${cls}`} />

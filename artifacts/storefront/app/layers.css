@@ -1,0 +1,32 @@
+/*
+ * ─── Cascade layer order, declared explicitly ──────────────────────────────
+ *
+ * A cascade layer's rank is fixed by where it is FIRST DECLARED, not by where
+ * its rules are written. app/layout.tsx imports globals.css (`@import
+ * "tailwindcss"`) LAST, so Tailwind's `base` layer — Preflight — was declared
+ * after Astryx's `astryx-base`, and therefore outranked it. Preflight's
+ * `*{margin:0;padding:0;border:0}` then deleted every padding Astryx sets:
+ * the header lost its gutter (0px nav padding, 47px tall instead of ~63px)
+ * and --color-accent resolved to white instead of the gold tuple.
+ *
+ * A bare `@layer` statement declares order without emitting a single rule, so
+ * importing this file FIRST pins the intended precedence no matter what order
+ * the sheets below it happen to load in. Everything after it that opens one of
+ * these layers slots into the rank named here; anything unlayered still wins
+ * over all of them, which is what tanmatraBridge.css's `:root[...]` block
+ * relies on.
+ *
+ * The order, low rank → high rank:
+ *   properties    @property registrations (Tailwind)
+ *   theme         Tailwind's @theme token emission
+ *   base          Tailwind Preflight — deliberately BELOW Astryx's base now
+ *   astryx-base   Astryx primitive geometry (Grid columns, Stack gaps, padding)
+ *   reset         Astryx's own normalisation
+ *   astryx-theme  Astryx theme overrides of its own base
+ *   components    shadcn/Radix component classes
+ *   utilities     Tailwind utilities — last, so a utility always wins
+ *
+ * KEEP THIS THE FIRST IMPORT IN app/layout.tsx. Move it and the bug returns
+ * silently: nothing errors, the header just loses its padding again.
+ */
+@layer properties, theme, base, astryx-base, reset, astryx-theme, components, utilities;

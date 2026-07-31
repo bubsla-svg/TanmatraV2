@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BridgeView } from "@/components/subscription/BridgeView";
-// Stitch dark scope (route-scoped) — see lib/themes/stitch.css. The bridge is
-// a single terminal conversion action (Batch 4/Brief 23 vocabulary: "this IS
-// a purchase decision"), so it shares /trial and /checkout's dark canvas +
-// glass sticky-footer treatment rather than the lighter Astryx surfaces
-// elsewhere in the app.
-import "@/lib/themes/stitch.css";
 
 export const metadata: Metadata = {
   title: "Trial Upgrade & Bridge Credit",
@@ -15,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function SubscriptionBridgePage() {
   return (
-    <div data-stitch="dark" className="min-h-screen bg-[var(--bg)] text-ink">
+    <div className="min-h-screen">
       {/* pb-48 clears BridgeView's sticky footer CTA (ready state) so the
           unlock card is never hidden behind it while scrolling — same
           reasoning as /trial's section padding. */}

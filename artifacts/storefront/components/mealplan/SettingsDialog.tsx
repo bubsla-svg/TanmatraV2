@@ -1,6 +1,10 @@
 "use client";
 // Planner settings: weekly budget (₹→paise), max repetitions per dish, and
 // auto-replan. Loads on open; saves via PUT /meal-plan-settings.
+// Only rendered from /meal-planner (a Stitch dark route, lib/stitchRoutes.ts).
+// Radix portals the panel to document.body, but data-stitch lives on <html>
+// (a DOM ancestor of body), so color-scheme inherits through the portal with
+// no scope attribute needed here.
 import { useEffect, useState } from "react";
 import { Dialog } from "radix-ui";
 import { Button } from "@/components/ui/button";
@@ -39,8 +43,10 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-[var(--ink)]/40 backdrop-blur-sm" />
-        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-50 w-[92vw] max-w-sm -translate-x-1/2 rounded-3xl border border-line bg-surface p-5 shadow-lg">
+        {/* Scrim: --scrim, never data-stitch — see the invariant on
+            components/ui/drawer.tsx's DrawerOverlay. */}
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-[var(--z-modal)] w-[92vw] max-w-sm -translate-x-1/2 rounded-3xl border border-line bg-surface p-5 shadow-lg">
           <Dialog.Title className="text-sm font-semibold text-ink">Meal planner settings</Dialog.Title>
           <div className="mt-4 flex flex-col gap-4">
             <label className="flex items-center justify-between gap-3 text-sm text-ink-muted">
