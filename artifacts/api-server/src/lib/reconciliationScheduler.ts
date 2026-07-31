@@ -108,7 +108,9 @@ export async function runOrderReconciliationSweep(opts?: {
 
           // The same side effects the webhook performs on a fresh promotion.
           // The CAS above means exactly one of (webhook | sweep) runs them.
-          void sendOrderConfirmation(order.id);
+          void sendOrderConfirmation(order.id).catch((err: unknown) =>
+            logger.error({ err, orderId: order.id }, "sendOrderConfirmation failed"),
+          );
           // Corporate subsidy: charge_paise is net of the company's share, so
           // a capture of it means the company now owes that share. Idempotent.
           try {

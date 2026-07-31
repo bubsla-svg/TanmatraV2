@@ -134,7 +134,11 @@ router.post("/orders", async (req: Request, res: Response) => {
     return;
   }
 
-  const authUserId = (req as any).user?.id ?? null;
+  // `?.()` (not a bare call): some test harnesses mount this router directly
+  // on a bare Express app without Passport, where `isAuthenticated` is absent
+  // — matches the guest-tolerant behaviour of the `(req as any).user?.id`
+  // this replaced.
+  const authUserId = req.isAuthenticated?.() ? req.user.id : null;
   const isGuest = authUserId === null;
   let authPrefs: PreferencesForMatch | null = null;
   if (authUserId) {
@@ -288,7 +292,9 @@ router.post("/orders", async (req: Request, res: Response) => {
     "dpdp consent recorded at checkout",
   );
 
-  void sendOrderConfirmation(row.id);
+  void sendOrderConfirmation(row.id).catch((err: unknown) =>
+    req.log.error({ err, orderId: row.id }, "sendOrderConfirmation failed"),
+  );
 
   res.status(201).json({
     orderId: externalOrderId,

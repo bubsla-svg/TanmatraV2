@@ -371,7 +371,7 @@ router.post("/marketplace/checkout", idempotencyMiddleware, async (req: Request,
         }
         const isFirstParty = item.supplierName?.startsWith("Tanmatra") ?? false;
         const lineTotal = item.pricePaise * it.qty;
-        const commissionPaise = isFirstParty ? 0 : Number((lineTotal * 0.15).toFixed(0));
+        const commissionPaise = isFirstParty ? 0 : Math.round((lineTotal * 15) / 100);
         const vendorPayoutPaise = lineTotal - commissionPaise;
 
         lines.push({

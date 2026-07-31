@@ -553,6 +553,14 @@ async function dispatchOrderInner(
   );
   const baseline = baselineNearest(drop, allRiders);
 
+  // Captured once, outside the closure: TS narrows `chosenRider` to non-null
+  // by this point (the `if (!chosenRider)` branch above either returns early
+  // or assigns it), but that narrowing doesn't survive across a `db.transaction`
+  // closure boundary — a `let` reassigned before an async callback can't be
+  // proven non-null inside it. `rider` carries the already-narrowed value in,
+  // so the transaction body never needs `chosenRider!`.
+  const rider = chosenRider;
+
   // 3. Persist assignment + audit trail under a row lock so concurrent
   //    dispatchers (queue worker + manual API call) don't double-assign.
   const txResult = await db.transaction(async (tx) => {
@@ -599,20 +607,20 @@ async function dispatchOrderInner(
     const before = { riderId: locked.rider_id, status: locked.status };
     await tx
       .update(ordersTable)
-      .set({ riderId: chosenRider!.id, status: "rider_assigned" })
+      .set({ riderId: rider.id, status: "rider_assigned" })
       .where(eq(ordersTable.id, orderId));
     await tx
       .update(ridersTable)
       .set({ activeOrderCount: sql`${ridersTable.activeOrderCount} + 1` })
-      .where(eq(ridersTable.id, chosenRider!.id));
+      .where(eq(ridersTable.id, rider.id));
     await tx.insert(deliveryEventsTable).values({
       orderId,
-      riderId: chosenRider!.id,
+      riderId: rider.id,
       event: "rider_assigned",
       meta: {
         strategy: batched ? "smart-batched" : "smart",
         batchKey,
-        riderName: chosenRider!.name,
+        riderName: rider.name,
       },
     });
     const [row] = await tx
@@ -620,7 +628,7 @@ async function dispatchOrderInner(
       .values({
         batchKey,
         orderId,
-        chosenRiderId: chosenRider!.id,
+        chosenRiderId: rider.id,
         chosenScore: chosenScore.score,
         chosenBreakdown:
           chosenScore.breakdown as unknown as Record<string, number | string>,
@@ -643,7 +651,7 @@ async function dispatchOrderInner(
           action: "dispatch_order",
           params: { orderId, batched },
           beforeState: before,
-          afterState: { riderId: chosenRider!.id, status: "rider_assigned" },
+          afterState: { riderId: rider.id, status: "rider_assigned" },
           status: "success",
           reasoning: opts.notes ?? "smart dispatch",
         },
