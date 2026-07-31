@@ -420,3 +420,14 @@ jobs:
           node --test --test-force-exit --import tsx
           ./src/routes/corporateLeads.test.ts
           ./src/routes/partnerLeads.test.ts
+      # Not money-path — general backend reliability tests from the
+      # optimization audit (TODO_optimization-auditor.md) — but they need real
+      # Postgres (rateLimitMiddleware's webhookExemption test exercises the
+      # Postgres-backed sliding-window limiter; accountHealth's test seeds
+      # companies + snapshots), so they live in this job rather than money-unit.
+      - name: Backend reliability (rate limiting, B2B account health)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
+          ./src/lib/b2b/accountHealth.test.ts
