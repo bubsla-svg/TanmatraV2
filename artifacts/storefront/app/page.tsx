@@ -25,7 +25,7 @@ export default async function HomePage() {
   const heroData = deriveHeroContent(refCookie);
 
   return (
-    <div className="relative min-h-screen pb-20 sm:pb-24">
+    <div className="relative min-h-dvh pb-20 sm:pb-24">
       {/* A <div>, not a <main>: app/layout.tsx already opens `<main id="main">`
           around children, and nesting a second one is invalid HTML — screen
           readers announced two main regions on the entry route and the skip

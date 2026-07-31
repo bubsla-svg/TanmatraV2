@@ -36,11 +36,19 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   
   const [track, setTrack] = useState<DietTrack>(defaultTrack);
   const trackConfig = builderData.servedTracks.find(t => t.track === track) ?? builderData.servedTracks[0]!;
-  
+
   const hasMonthly = trackConfig.quotes.some(q => q.cycle === "monthly");
-  const [cycle, setCycle] = useState<PlanCycle>(hasMonthly ? "monthly" : trackConfig.quotes[0]!.cycle);
-  
-  const currentQuote = trackConfig.quotes.find(q => q.cycle === cycle) ?? trackConfig.quotes[0]!;
+  // trackConfig.quotes can legitimately be empty — PLAN_PRICE_TABLE keys some
+  // plans (glp1_companion, teams) by "intro"/"regular"/"default" rather than by
+  // diet track. The host page only renders this component for a launchable
+  // plan today, so the array is never empty in practice, but a non-null
+  // assertion here would crash if that host check ever changed — fall back to
+  // "monthly" rather than dereferencing a quote that doesn't exist.
+  const [cycle, setCycle] = useState<PlanCycle>(
+    hasMonthly || trackConfig.quotes.length === 0 ? "monthly" : trackConfig.quotes[0]!.cycle,
+  );
+
+  const currentQuote = trackConfig.quotes.find(q => q.cycle === cycle) ?? trackConfig.quotes[0];
 
   const [bump, setBump] = useState(false);
 
@@ -49,12 +57,27 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   // honest generic offer — no fabricated name/face.
   const canBump = planAllowsAddOn(planId, "rd_bump");
   const rdBump = addOnView("rd_bump");
-  const total = currentQuote.cycleTotalPaise + (bump ? rdBump.pricePaise : 0);
+  const total = (currentQuote?.cycleTotalPaise ?? 0) + (bump ? rdBump.pricePaise : 0);
 
   function confirm() {
     emitFunnel("cuj_builder_confirm", { planId, track, cycle, bump });
     emitFunnel("cuj_checkout_start", { planId, track, cycle, bump });
     router.push(`/checkout?plan=${planId}&track=${track}&cycle=${cycle}${bump ? "&bump=1" : ""}`);
+  }
+
+  // Same "never a dead end" contract PlanCard applies to a blocked plan: a
+  // launchable plan whose price table has no entry for this track (the
+  // glp1_companion/teams shape) still needs somewhere honest to land, not a
+  // crash on an assumed quote.
+  if (!currentQuote) {
+    return (
+      <section className="flex flex-col gap-3" aria-label={`Build ${d.name}`}>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{d.name}</h1>
+        <p className="text-sm text-ink-muted">
+          Pricing for this plan isn&rsquo;t set up for the {TRACK_LABEL[track]} preference yet.
+        </p>
+      </section>
+    );
   }
 
   return (

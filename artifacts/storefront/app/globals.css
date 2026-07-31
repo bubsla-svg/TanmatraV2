@@ -223,6 +223,25 @@ html, body {
   justify-content: center;
 }
 
+/* Money-path controls (Pay, quantity steppers) get the stricter 48px target:
+   a mis-tap here costs an order, not a scroll position. */
+.touch-target-critical {
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card-grid isolation: keeps a re-render inside one card from forcing layout
+   recalculation across the whole grid. Deliberately NOT `contain: content` —
+   that implies paint containment, which clips anything a card intentionally
+   overflows (badges, focus rings, popovers). Layout+style is the win without
+   the clipping hazard. */
+.grid-contain > * {
+  contain: layout style;
+}
+
 /* 16px Minimum Input Rule to prevent iOS Safari auto-zoom */
 input[type="text"],
 input[type="tel"],

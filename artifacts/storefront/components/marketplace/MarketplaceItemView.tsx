@@ -3,13 +3,16 @@
 // purchase is session-gated (401 → PhoneAuth) and settles via the shared
 // Razorpay path (payForMarketplace). Ships separately, or bundles DELIVERY with
 // a recent order (still its own paid order — bundleWithOrderId only links delivery).
-import { useCallback, useEffect, useState } from "react";
+// The item GET runs through useQuery (["marketplace","item",slug]); `error`
+// below stays scoped to the buy() mutation, same as before the migration.
+import { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, Circle, Minus, Plus } from "lucide-react";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
 import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
-import { getItem, payForMarketplace, type MarketplaceItem } from "@/lib/marketplaceApi";
+import { getItem, payForMarketplace } from "@/lib/marketplaceApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Button } from "@/components/ui/button";
 import { BundlePicker } from "./BundlePicker";
@@ -18,23 +21,27 @@ import { addOrUpdateQty } from "@/lib/cartStore";
 
 export function MarketplaceItemView({ slug }: { slug: string }) {
   const { cart, setCart } = useCart();
-  const [item, setItem] = useState<MarketplaceItem | null>(null);
   const [qty, setQty] = useState(1);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [busy, setBusy] = useState(false);
   const [placed, setPlaced] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [missing, setMissing] = useState(false);
   const [mode, setMode] = useState<"ship" | "bundle">("ship");
   const [bundleId, setBundleId] = useState<number | null>(null);
 
-  const load = useCallback(() => {
-    getItem(slug).then((r) => setItem(r.item)).catch((e) => {
-      if (e instanceof ApiError && e.status === 404) setMissing(true);
-      else setError("Couldn't load this product.");
-    });
-  }, [slug]);
-  useEffect(() => { load(); }, [load]);
+  const {
+    data: item,
+    isPending,
+    isError: loadFailed,
+    error: loadError,
+    refetch,
+  } = useQuery({
+    queryKey: ["marketplace", "item", slug],
+    queryFn: () => getItem(slug).then((r) => r.item),
+    retry: (failureCount, e) => (e instanceof ApiError && e.status === 404 ? false : failureCount < 1),
+  });
+
+  const missing = loadFailed && loadError instanceof ApiError && loadError.status === 404;
 
   async function buy() {
     if (!item) return;
@@ -55,7 +62,17 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
   }
 
   if (missing) return <p className="text-sm text-ink-muted">Item not found. <Link href="/marketplace" className="font-medium text-gold-text hover:underline">Back to marketplace</Link>.</p>;
-  if (!item) return <p className="text-sm text-ink-muted">{error ?? "Loading…"}</p>;
+  if (isPending) return <p className="text-sm text-ink-muted">Loading…</p>;
+  if (loadFailed || !item) {
+    return (
+      <p className="text-sm text-ink-muted">
+        Couldn&rsquo;t load this product.{" "}
+        <button type="button" onClick={() => void refetch()} className="font-medium text-gold-text hover:underline">
+          Try again
+        </button>
+      </p>
+    );
+  }
   if (placed) return (
     <div className="rounded-2xl border border-line bg-surface p-6 text-center">
       <p className="text-sm font-semibold text-ink">Order placed &amp; paid</p>

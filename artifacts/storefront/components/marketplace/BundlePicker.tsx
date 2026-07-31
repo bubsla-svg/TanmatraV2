@@ -1,34 +1,46 @@
 "use client";
 // Recent-orders picker for bundle-with-meal delivery. The item still gets its
 // own paid order; bundleWithOrderId just links delivery to the chosen order.
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { formatPaise } from "@/lib/format";
-import { getMyOrders, type OrderSummary } from "@/lib/ordersApi";
+import { getMyOrders } from "@/lib/ordersApi";
 import { ApiError } from "@/lib/apiClient";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
 export function BundlePicker({ selected, onSelect, onAuthError }: { selected: number | null; onSelect: (id: number) => void; onAuthError?: () => void }) {
-  const [orders, setOrders] = useState<OrderSummary[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: orders,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["marketplace", "bundles"],
+    queryFn: () => getMyOrders().then((r) => r.orders.slice(0, 6)),
+  });
 
+  const authError = isError && error instanceof ApiError && error.status === 401;
+
+  // Same shape as before the migration: a 401 hands off to the parent's
+  // PhoneAuth flow via onAuthError and this island just keeps showing its
+  // loading copy underneath (the parent's CTA area is what actually switches).
   useEffect(() => {
-    let live = true;
-    getMyOrders()
-      .then((r) => { if (live) setOrders(r.orders.slice(0, 6)); })
-      .catch((e) => {
-        if (!live) return;
-        if (e instanceof ApiError && e.status === 401 && onAuthError) {
-          onAuthError();
-        } else {
-          setError("Couldn't load your orders.");
-        }
-      });
-    return () => { live = false; };
-  }, []);
+    if (authError) onAuthError?.();
+  }, [authError, onAuthError]);
 
-  if (error) return <p className="text-xs text-ink-muted">{error}</p>;
-  if (orders === null) return <p className="text-xs text-ink-muted">Loading your recent orders…</p>;
+  if (isError && !authError) {
+    return (
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-ink-muted">Couldn&rsquo;t load your orders.</p>
+        <button type="button" onClick={() => void refetch()} className="text-xs font-semibold text-gold-text hover:underline">
+          Retry
+        </button>
+      </div>
+    );
+  }
+  if (isPending || authError || !orders) return <p className="text-xs text-ink-muted">Loading your recent orders…</p>;
   if (orders.length === 0) return <p className="text-xs text-ink-muted">No recent orders to bundle with — it&rsquo;ll ship separately.</p>;
 
   return (

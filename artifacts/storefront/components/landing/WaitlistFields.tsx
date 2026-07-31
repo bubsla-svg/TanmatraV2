@@ -55,6 +55,7 @@ export function WaitlistFields({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <input
           aria-label="Full name"
+          autoComplete="name"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           placeholder="Your full name"
@@ -64,6 +65,7 @@ export function WaitlistFields({
         <input
           aria-label="Email address"
           type="email"
+          autoComplete="email"
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
           placeholder="Email address"
@@ -75,6 +77,8 @@ export function WaitlistFields({
       <input
         aria-label="Phone number"
         type="tel"
+        inputMode="tel"
+        autoComplete="tel"
         value={phone}
         onChange={(e) => onPhoneChange(e.target.value)}
         placeholder="Phone number (optional for priority WhatsApp)"

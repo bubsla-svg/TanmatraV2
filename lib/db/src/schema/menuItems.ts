@@ -114,6 +114,10 @@ export const menuItemsTable = pgTable(
       table.kitchenLocation,
     ),
     index("idx_menu_items_available").on(table.isAvailable),
+    // POS webhooks (petpooja.ts) filter tags with jsonb containment
+    // (`tags @> '["petpooja:<id>"]'`) inside a per-item loop, so an
+    // unindexed lookup here is multiplied by webhook payload size.
+    index("idx_menu_items_tags_gin").using("gin", table.tags),
     // Patient-safety: refuse rows whose review state isn't one of the
     // three known values. Combined with the NOT NULL + default, this
     // means a corrupted/migrated row can never silently appear as

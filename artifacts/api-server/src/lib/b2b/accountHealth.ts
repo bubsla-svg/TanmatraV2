@@ -12,7 +12,7 @@
  *   >=80 healthy, 65-79 watch, 40-64 at_risk, <40 critical
  */
 import { generateText } from "ai";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import {
   accountHealthSnapshotsTable,
   companiesTable,
@@ -250,13 +250,26 @@ export async function listAllAccountsWithHealth(): Promise<
     health: AccountHealthSnapshot | null;
   }>
 > {
-  const companies = await db.select().from(companiesTable);
-  const results = await Promise.all(
-    companies.map(async (c) => ({
-      company: c,
-      health: await getLatestHealth(c.id),
-    })),
-  );
+  // Was 1 + N round trips (one getLatestHealth call per company). drizzle-orm
+  // 0.45.2's pg-core has no DISTINCT ON support, so instead of N per-company
+  // queries this fetches every snapshot once, ordered newest-first, and keeps
+  // only the first (= latest) row per company — two fixed round trips
+  // regardless of company count.
+  const [companies, snapshots] = await Promise.all([
+    db.select().from(companiesTable),
+    db
+      .select()
+      .from(accountHealthSnapshotsTable)
+      .orderBy(desc(accountHealthSnapshotsTable.snapshotDate)),
+  ]);
+  const latestByCompany = new Map<number, AccountHealthSnapshot>();
+  for (const s of snapshots) {
+    if (!latestByCompany.has(s.companyId)) latestByCompany.set(s.companyId, s);
+  }
+  const results = companies.map((c) => ({
+    company: c,
+    health: latestByCompany.get(c.id) ?? null,
+  }));
   // Sort risk first so the sales console leads with hot accounts.
   const order: Record<AccountRiskLevel, number> = {
     critical: 0,

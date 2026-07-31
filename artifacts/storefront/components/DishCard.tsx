@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Text } from "@astryxdesign/core/Text";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
@@ -86,16 +87,16 @@ export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
           </span>
         </div>
 
-        {/* Photo LAST — square, flush right, fixed box (zero CLS) */}
+        {/* Photo LAST — square, flush right, fixed box (zero CLS). No `sizes`
+            on purpose: the box is 104px at every viewport, so next/image emits
+            a 1x/2x srcset, which is the right pair here. A `sizes` value would
+            replace that with the full width-descriptor ladder for no gain. */}
         <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-raised">
-          {/* eslint-disable-next-line @next/next/no-img-element -- plain img in
-              a fixed box for zero CLS; Astryx has no Image primitive, and
-              next/image + remotePatterns lands in a later phase. */}
-          <img
+          <Image
             src={dish.image}
             alt=""
-            loading="lazy"
-            decoding="async"
+            width={104}
+            height={104}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </div>
