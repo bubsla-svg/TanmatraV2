@@ -12,8 +12,8 @@
 | Layer | Technology |
 |---|---|
 | API | Express 5 + Drizzle ORM + PostgreSQL + Zod (`artifacts/api-server`, 352 ts files) |
-| Storefront | Next.js 16 App Router, server-first (`artifacts/storefront`, 471 ts/tsx files) — **dark preview, no domain mapped** |
-| Legacy SPA | React 19 + React Router v7 + Vite (`artifacts/tanmatra`, 341 ts/tsx files) — **live on `tanmatra.food`** |
+| Storefront | Next.js 16 App Router, server-first (`artifacts/storefront`, 471 ts/tsx files) — **live on `tanmatra.food`** since the 2026-07-25 domain cutover; see `docs/DOMAIN-CUTOVER.md` |
+| Legacy SPA | React 19 + React Router v7 + Vite (`artifacts/tanmatra`, 341 ts/tsx files) — **no longer fronted by the domain**; internal-only Admin ERP + RD console since 2026-07-26 |
 | Clinical engine | `@tanmatra/clinical-governance-engine` — zero-dependency contraindication / interlock / AE-webhook / WORM audit package |
 | Async | BullMQ + Redis (optional — skipped when `REDIS_URL` absent), 6 `setInterval` schedulers in-process |
 | Realtime | Socket.IO at `/api/socket.io` |
@@ -33,7 +33,18 @@ Structural facts that shape the risk profile:
 - The dispatch engine carries a **5-minute STAT SLA** — latency on that path is a clinical/ops commitment, not a nicety.
 - `chargeMandateScheduler` is the only thing that makes cycle-2+ subscription billing fire — it is on the money path.
 - The clinical governance engine sits on the packing-station interlock: its latency and failure modes are patient-safety-relevant.
-- The storefront runs as a **continuously-billed Cloud Run service with zero public traffic** (no domain mapped).
+- The storefront is the service `tanmatra.food` serves (since the 2026-07-25 domain cutover) — it is customer traffic, not a dark preview.
+
+> **Correction, applied before this doc landed on `main`:** at the time this audit was authored,
+> the Context table above had the storefront and legacy SPA's live/dark status reversed — it read
+> the storefront as a dark preview with zero public traffic and the legacy SPA as the app serving
+> `tanmatra.food`. `docs/DOMAIN-CUTOVER.md` records the opposite as complete since 2026-07-25. A
+> post-merge adversarial audit of the resulting remediation batch caught this; the table above and
+> OA-MED-1.20's annotation (§ below) are corrected to match `docs/DOMAIN-CUTOVER.md`. No customer
+> was affected — #486 (OA-MED-1.20/1.21) optimized the legacy SPA under the belief it was the live
+> app; per `CLAUDE.md` it is "now an internal-only Admin ERP + RD console," so the fix was harmless,
+> just misdirected. Re-read any remaining unimplemented items below against the corrected map, not
+> the original severity assignments, which were weighted under the inverted premise.
 
 ### Scope of audit
 
@@ -259,7 +270,7 @@ Architectural or multi-file changes. All verified Critical/High.
   - **Severity**: High
   - **Evidence**: `artifacts/storefront/components/menu/PersonalizedMenu.tsx` has `"use client"` at line 1 and statically imports `MenuGrid` at line 10, rendering it at line 112. `MenuGrid.tsx` in turn statically imports and renders `DishCard`. Under RSC semantics any module statically imported from a `"use client"` file compiles into the **client** bundle regardless of its own directives. Yet `MenuGrid.tsx`'s doc comment (lines 5-10) claims *"Server component: only DishCard's client primitives ship"* and `DishCard.tsx` (lines 14-16) claims *"STILL A SERVER COMPONENT — catalog data, the à-la-carte gate and the price stay server-side"*. **Both comments are false for the render path reached from `/menu`.** The full row markup for every dish — `RatingStars` star math, Astryx `<Text>`, `formatPaise`, `isAlaCarteEnabled` gating, the image box — ships and hydrates as client JS. The correct pattern is used elsewhere in the same repo (`app/dish/[slug]/page.tsx`).
   - **Fix**: Have the true Server Component (`app/menu/page.tsx`) pre-render the dish rows and pass them into `PersonalizedMenu` via `children`/named slots — the composition already used for `DishGallery`/`DishReviews` on the PDP. Keep only the diet chips and filter-trigger logic in the client boundary; toggle pre-rendered row visibility via CSS/data attributes keyed by dish id instead of re-mapping an array client-side. **Correct the two misleading comments** — they will otherwise re-mislead the next reader.
-  - **Tradeoffs**: CSS-based filtering ships all rows' markup to the DOM even when filtered out, trading DOM size for JS size. That is the right trade at ~124 dishes, but pair it with `OA-MED-1.19` (pagination) so DOM size stays bounded.
+  - **Tradeoffs**: CSS-based filtering ships all rows' markup to the DOM even when filtered out, trading DOM size for JS size. The dish count cited here at authoring time (~124) was wrong — the actual orderable catalog is 42 — and `OA-MED-1.19`'s pairing to bound DOM size turned out to be an unnecessary fix for a non-problem; see `OA-MED-1.19`'s own entry for what shipped and was reverted. The RSC-boundary fix here stands on its own regardless.
   - **Impact**: Removes the entire catalog's non-interactive row markup and helper logic from the client bundle on the storefront's highest-traffic route, leaving only the diet-chip filter and the existing AddToCart islands.
 
 - [ ] **OA-DEEP-1.9 Stop double-running the full test suite on every push to main**
@@ -301,8 +312,8 @@ Reported from direct source reading but **not** independently re-verified. Confi
 
 **Frontend**
 - [ ] **OA-MED-1.18** `/marketplace` is fetched 100% client-side with `cache:"no-store"` (`MarketplaceGrid.tsx`), shipping an empty shell plus a "Loading pantry…" string, unlike every other catalog surface. Apply the server-fetch + `revalidate:3600` pattern already used in `lib/catalog.ts`.
-- [ ] **OA-MED-1.19** `/menu` renders all ~124 dishes unpaginated and unvirtualized (`MenuGrid.tsx:20`). Cap the initial list with a "show more" (the `.slice(0, N)` pattern already exists on `DealsFilterBar`/`SmartRecommendationsGrid`). Pairs with `OA-DEEP-1.8`.
-- [ ] **OA-MED-1.20** *(legacy SPA, live on `tanmatra.food`)* `OrdersContext` builds a fresh value object every render with only `cancelOrder` memoized (`ordersContext.tsx:87-110,324`), so **every** socket `delivery:event` re-renders all 10 `useOrders()` consumers — Cart, Checkout, Menu, Track and 6 more. `useMemo` the value; `useCallback` the actions.
+- [x] ~~**OA-MED-1.19** `/menu` renders all ~124 dishes unpaginated and unvirtualized (`MenuGrid.tsx:20`). Cap the initial list with a "show more"...~~ **Implemented (#485), then reverted (#495).** The "~124 dishes" estimate was wrong — the actual orderable catalog is 42, never a measured DOM-size problem (all rows already ship in the server HTML per `OA-DEEP-1.8`'s own tradeoff; only `hidden` toggles). The cap that shipped sliced *raw catalog order* — alphabetical — for every anonymous visitor, since `PersonalizedMenu` returns a null rank whenever there's no meaningful preference signal. A post-merge adversarial audit caught the regression; #495 reverted it. If a cap is wanted for a genuinely larger catalog later, it needs a real merchandising order computed server-side first — an owner decision, not a mechanical fix.
+- [ ] **OA-MED-1.20** *(legacy SPA — no longer fronted by `tanmatra.food`; internal-only Admin ERP + RD console, see the Context correction above)* `OrdersContext` builds a fresh value object every render with only `cancelOrder` memoized (`ordersContext.tsx:87-110,324`), so **every** socket `delivery:event` re-renders all 10 `useOrders()` consumers — Cart, Checkout, Menu, Track and 6 more. `useMemo` the value; `useCallback` the actions.
 - [ ] **OA-MED-1.21** *(legacy SPA)* `STATIC_DISHES` — a 153,943-byte source module with 116 full dish records (5 image URLs, macros, customization groups, allergens each) — is statically imported into `CommandPalette`, i.e. global chrome, so it ships on **every** page including Billing, Track, and the RD console. `React.lazy` the palette, or give its search a lean id/slug/name/image projection.
 
 **Clinical engine**
@@ -315,11 +326,13 @@ Reported from direct source reading but **not** independently re-verified. Confi
 
 ### Cost note not captured as a code finding
 
-The storefront runs as a **continuously-billed Cloud Run service with no domain mapped and no
-public traffic** — a dark preview, per `CLAUDE.md`. That is a deliberate pre-cutover choice, not a
-defect, so it is not filed as a task. But it is a standing compute cost with zero user-facing
-return, and `OA-MED-1.25` means it is *also* rebuilt and redeployed for `lib/` changes it does not
-consume. If cutover is not imminent, `min-instances: 0` (if not already set) is the obvious lever.
+**Superseded — see the Context correction above.** This note originally claimed the storefront was
+a dark preview with no domain mapped; that was wrong even at authoring time (`docs/DOMAIN-CUTOVER.md`
+records the cutover as complete since 2026-07-25, three days before this audit doc's first commit).
+The storefront is the service `tanmatra.food` serves; `OA-MED-1.25`'s finding (the storefront being
+rebuilt/redeployed for `lib/` changes it doesn't consume) still stands on its own — it costs a real
+`E2_HIGHCPU_8` build cycle regardless of whether the service is dark or live — but not for the
+"standing cost with zero user-facing return" reason originally given.
 
 ---
 
