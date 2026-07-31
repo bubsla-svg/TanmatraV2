@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import { fetchMenu, findDish } from "@/lib/catalog";
+import { DishCard } from "@/components/DishCard";
+import type { MenuGridRow } from "@/components/MenuGrid";
 import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
 
@@ -12,6 +14,15 @@ export const metadata: Metadata = {
 /**
  * Menu route. Server component — awaits the catalog on the server so the grid
  * is present in first HTML paint for SEO and user experience.
+ *
+ * `DishCard` is rendered HERE, not inside PersonalizedMenu/MenuGrid — those
+ * are client components (diet-chip state, personalised ranking from
+ * client-fetched preferences), and importing DishCard from either would pull
+ * its entire markup into the client bundle under RSC's "anything statically
+ * imported from a client file compiles into client JS" rule. Rendering the
+ * rows here and handing the resulting nodes down as data (`rows`) keeps
+ * DishCard a true Server Component. See DishCard.tsx / MenuGrid.tsx for the
+ * rest of that split.
  */
 export default async function MenuPage({
   searchParams,
@@ -24,6 +35,10 @@ export default async function MenuPage({
   ]);
   const orderable = dishes.filter(isAlaCarteEnabled);
   const openDish = dishSlug ? findDish(dishSlug, dishes) : undefined;
+  const rows: MenuGridRow[] = orderable.map((dish) => ({
+    dishId: dish.id,
+    node: <DishCard key={dish.id} dish={dish} />,
+  }));
 
   return (
     <div className="min-h-dvh">
@@ -40,7 +55,7 @@ export default async function MenuPage({
         </p>
       </div>
       <h2 className="sr-only">Dishes</h2>
-      <PersonalizedMenu dishes={orderable} />
+      <PersonalizedMenu dishes={orderable} rows={rows} />
       {openDish && <DishDrawer dish={openDish} />}
     </section>
     </div>
