@@ -119,7 +119,7 @@ export function PartnerLeadForm({
         </Field>
       )}
       <Field label="Your name" error={err("name")} htmlFor="pl-name">
-        <TextField id="pl-name" value={name} onChange={setName} placeholder="Your name" invalid={!!err("name")} />
+        <TextField id="pl-name" autoComplete="name" value={name} onChange={setName} placeholder="Your name" invalid={!!err("name")} />
       </Field>
       <Field label="Work email" error={err("email") ?? err("workEmail")} htmlFor="pl-email">
         <TextField

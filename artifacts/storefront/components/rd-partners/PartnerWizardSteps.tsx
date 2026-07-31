@@ -70,6 +70,7 @@ function ProfileStep({ draft, errors, patch }: StepProps) {
       <Field label="Full name & title" error={errors.fullName} htmlFor="rd-name">
         <TextField
           id="rd-name"
+          autoComplete="name"
           value={draft.fullName}
           onChange={(v) => patch({ fullName: v })}
           placeholder="Dt. Anjali Nair"

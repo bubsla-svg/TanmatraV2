@@ -80,6 +80,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         <input
           type="tel"
           inputMode="tel"
+          autoComplete="tel"
           placeholder="10-digit mobile"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
