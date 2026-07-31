@@ -189,7 +189,10 @@ function planIdFromNotes(notes: string | null | undefined): PlanId | null {
 }
 
 const swapItemsSchema = z.object({
-  items: z.array(itemSchema).min(1),
+  // Capped to match mealsPerDelivery's own max (line ~111) — a swap replaces
+  // one delivery's items, so it can never legitimately exceed that delivery's
+  // own item ceiling.
+  items: z.array(itemSchema).min(1).max(50),
 });
 
 const rescheduleSchema = z.object({
@@ -645,6 +648,7 @@ async function validateMacroCapForSwap(
   deliveryId: number,
   scheduledFor: Date,
   newItems: SubscriptionItem[],
+  dishResolver: Awaited<ReturnType<typeof makeBatchDishResolver>>,
 ): Promise<{ blocked: boolean; reasons: any[] }> {
   const memberIds = Array.from(
     new Set(newItems.map((it) => it.memberId).filter((id): id is number => id != null)),
@@ -687,7 +691,7 @@ async function validateMacroCapForSwap(
 
     for (const item of newItems) {
       if (item.memberId !== memberId) continue;
-      const dish = await resolveDishBySlug(item.slug);
+      const dish = dishResolver.bySlug(item.slug);
       if (!dish) continue;
       if (dish.macros.calories > cap) {
         reasons.push({
@@ -860,11 +864,15 @@ router.post("/subscriptions", async (req: Request, res: Response) => {
     : data.defaultItems;
   if (itemsToValidate.length > 0) {
     // Validate each unique dish once — day plans repeat dishes across days.
+    // A day plan can carry up to 28 days x 10 items = 280 entries; resolving
+    // once here instead of per-unique-slug avoids up to that many redundant
+    // getMergedCatalog() round trips.
+    const dishResolver = await makeBatchDishResolver();
     const seenSlugs = new Set<string>();
     for (const item of itemsToValidate) {
       if (seenSlugs.has(item.slug)) continue;
       seenSlugs.add(item.slug);
-      const dish = await resolveDishBySlug(item.slug);
+      const dish = dishResolver.bySlug(item.slug);
       if (dish) {
         const match = await validateDishForSubscription(
           dish,
@@ -1994,8 +2002,12 @@ router.post(
       res.status(400).json({ error: "invalid payload" });
       return;
     }
+    // One batch resolve for the whole request — was one getMergedCatalog()
+    // round trip (2 DB reads) per item here, plus another per item inside
+    // validateMacroCapForSwap.
+    const dishResolver = await makeBatchDishResolver();
     for (const item of parsed.data.items) {
-      const dish = await resolveDishBySlug(item.slug);
+      const dish = dishResolver.bySlug(item.slug);
       if (dish) {
         const match = await validateDishForSubscription(
           dish,
@@ -2020,6 +2032,7 @@ router.post(
       deliveryId,
       found.delivery.scheduledFor,
       parsed.data.items,
+      dishResolver,
     );
     if (macroMatch.blocked) {
       res.status(422).json({

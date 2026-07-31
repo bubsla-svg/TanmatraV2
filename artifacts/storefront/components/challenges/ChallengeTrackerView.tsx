@@ -1,12 +1,16 @@
 "use client";
 // Client: the signed-in member's challenge streak tracker. Session-gated (401 →
 // PhoneAuth), same island pattern as ChallengeRoom. Progress is derived from the
-// real membership joinedAt — this surface never fabricates a streak.
+// real membership joinedAt — this surface never fabricates a streak. The
+// tracker fetch itself is a useQuery (key ["challenges","tracker"]) gated on
+// the signed-in user, for the shared cache/retry infra — its 401→sign-in vs
+// generic-error split is unchanged from the previous hand-rolled version.
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
 import { getAuthUser, type AuthUser } from "@/lib/api";
-import { getMyChallengeTracker, type ChallengeTrackerData } from "@/lib/ecosystemApi";
+import { getMyChallengeTracker } from "@/lib/ecosystemApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Button } from "@/components/ui/button";
 
@@ -25,8 +29,6 @@ const fmtCheckIn = (iso: string) =>
 
 export function ChallengeTrackerView() {
   const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
-  const [data, setData] = useState<ChallengeTrackerData | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const loadUser = useCallback(async () => {
     try { const { user: u } = await getAuthUser(); setUser(u); }
@@ -34,16 +36,14 @@ export function ChallengeTrackerView() {
   }, []);
   useEffect(() => { void loadUser(); }, [loadUser]);
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      setData(await getMyChallengeTracker());
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) { setUser(null); return; }
-      setError("Couldn't load your challenge progress just now.");
-    }
-  }, []);
-  useEffect(() => { if (user) void load(); }, [user, load]);
+  const { data, isError, error, refetch } = useQuery({
+    queryKey: ["challenges", "tracker"],
+    queryFn: getMyChallengeTracker,
+    enabled: !!user,
+  });
+  useEffect(() => {
+    if (error instanceof ApiError && error.status === 401) setUser(null);
+  }, [error]);
 
   if (user === undefined) return <p className="text-sm text-ink-muted">Loading…</p>;
   if (user === null) {
@@ -54,11 +54,11 @@ export function ChallengeTrackerView() {
       </div>
     );
   }
-  if (error) {
+  if (isError) {
     return (
       <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)]">
-        <p className="text-sm font-semibold text-[var(--danger)]">{error}</p>
-        <button type="button" onClick={() => void load()} className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong">
+        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your challenge progress just now.</p>
+        <button type="button" onClick={() => void refetch()} className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong">
           Try again
         </button>
       </div>

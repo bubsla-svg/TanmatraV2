@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getChallenge, challengeStatus, type Challenge } from "@/lib/challengesApi";
+import { getChallengeOrReason, challengeStatus, type Challenge } from "@/lib/challengesApi";
 import { ChallengeRoom } from "@/components/challenges/ChallengeRoom";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -11,9 +11,9 @@ const STATUS_LABEL: Record<string, string> = { live: "Live now", soon: "Starts s
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const data = await getChallenge(slug);
-  if (!data) return { title: "Challenge not found" };
-  return { title: data.challenge.title, description: data.challenge.tagline };
+  const lookup = await getChallengeOrReason(slug);
+  if (!lookup.ok) return { title: lookup.reason === "not_found" ? "Challenge not found" : "Challenge" };
+  return { title: lookup.detail.challenge.title, description: lookup.detail.challenge.tagline };
 }
 
 function eventJsonLd(c: Challenge) {
@@ -33,9 +33,24 @@ function eventJsonLd(c: Challenge) {
  *  membership + cohort feed is the ChallengeRoom client island. */
 export default async function ChallengePage({ params }: Params) {
   const { slug } = await params;
-  const data = await getChallenge(slug);
-  if (!data) notFound();
-  const c = data.challenge;
+  const lookup = await getChallengeOrReason(slug);
+  if (!lookup.ok && lookup.reason === "not_found") notFound();
+  if (!lookup.ok) {
+    return (
+      <section className="mx-auto max-w-2xl px-4 py-10">
+        <Link href="/challenges" className="text-sm font-medium text-ink-muted transition-colors hover:text-ink">
+          &larr; Challenges
+        </Link>
+        <div className="mt-8 rounded-2xl border border-line bg-surface p-8 text-center">
+          <p className="text-sm font-semibold text-ink">This challenge is briefly unavailable</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            We couldn&rsquo;t reach the challenge just now — please check back shortly.
+          </p>
+        </div>
+      </section>
+    );
+  }
+  const c = lookup.detail.challenge;
   const status = challengeStatus(c.startsAt, c.endsAt);
 
   return (

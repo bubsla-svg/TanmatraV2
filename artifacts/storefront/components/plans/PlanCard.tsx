@@ -23,7 +23,7 @@ export function PlanCard({ id }: { id: PlanId }) {
   return (
     <Link
       href={href}
-      className="flex h-full flex-col rounded-3xl border bg-surface p-6 shadow-[var(--shadow-card)] transition-colors hover:border-line-strong"
+      className="@container flex h-full flex-col rounded-3xl border bg-surface p-6 shadow-[var(--shadow-card)] transition-colors hover:border-line-strong"
       style={{ borderColor: q.launchable ? "var(--line-strong)" : "var(--line)" }}
     >
       {d.clinical && (
@@ -34,7 +34,7 @@ export function PlanCard({ id }: { id: PlanId }) {
       <h3 className="text-xl font-semibold tracking-tight text-ink">{d.name}</h3>
       <p className="mt-2 text-sm leading-relaxed text-ink-muted">{d.subtitle}</p>
 
-      <div className="mt-auto flex items-end justify-between gap-3 border-t border-line pt-6">
+      <div className="mt-auto flex flex-col items-start gap-3 border-t border-line pt-6 @xs:flex-row @xs:items-end @xs:justify-between">
         <span className="flex flex-col">
           {q.perMealPaise != null && (
             <span className="tabular text-lg font-semibold text-ink">

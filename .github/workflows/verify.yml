@@ -404,6 +404,20 @@ jobs:
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
+      # OA-DEEP-1.4/1.5: rider selection used to score a pre-transaction
+      # snapshot and commit to the top pick without ever locking it, so
+      # concurrent dispatchOrder calls (BullMQ worker, manual API, ops
+      # agent) could all read the same stale activeOrderCount and all
+      # stack onto the same rider. The fix claims the chosen rider under
+      # FOR UPDATE SKIP LOCKED inside the same transaction that locks the
+      # order, falling back to the next-best candidate on contention. Own
+      # step so a regression here reads as "dispatch load balancing broke"
+      # rather than being buried in an unrelated corpus.
+      - name: Dispatch concurrent rider-claim load balancing
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/dispatch.concurrency.test.ts
       # The reporting half of the money path. These are not about billing a
       # customer correctly; they are about the numbers the business reads back
       # afterwards being what they claim to be — the WBR's revenue line
@@ -430,6 +444,17 @@ jobs:
           node --test --test-force-exit --import tsx
           ./src/routes/corporateLeads.test.ts
           ./src/routes/partnerLeads.test.ts
+      # Not money-path — general backend reliability tests from the
+      # optimization audit (TODO_optimization-auditor.md) — but they need real
+      # Postgres (rateLimitMiddleware's webhookExemption test exercises the
+      # Postgres-backed sliding-window limiter; accountHealth's test seeds
+      # companies + snapshots), so they live in this job rather than money-unit.
+      - name: Backend reliability (rate limiting, B2B account health)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
+          ./src/lib/b2b/accountHealth.test.ts
       # Menu-catalog cache wiring (OA-DEEP-1.3): proves getMergedCatalog()
       # actually serves from cache against real Postgres (not just
       # "consistent"), and that the real write paths (updatePrice,

@@ -97,6 +97,64 @@ export async function getChallenge(
   }
 }
 
+export type ChallengeLookup =
+  | { ok: true; detail: ChallengeDetail }
+  | { ok: false; reason: "not_found" | "unavailable" };
+
+/**
+ * Like `getChallenge`, but distinguishes "no such slug" from "couldn't reach
+ * the api" — `getChallenge` collapses both to `null`, which made
+ * `/challenges/[slug]` 404 a real challenge during a transient API outage.
+ */
+export async function getChallengeOrReason(
+  slug: string,
+  fetchImpl: FetchImpl = fetch,
+): Promise<ChallengeLookup> {
+  try {
+    const res = await fetchImpl(`${SERVER_BASE}/api/challenges/${encodeURIComponent(slug)}`, REVALIDATE);
+    if (res.status === 404) return { ok: false, reason: "not_found" };
+    if (!res.ok) return { ok: false, reason: "unavailable" };
+    const data = (await res.json()) as Partial<ChallengeDetail>;
+    if (!data.challenge) return { ok: false, reason: "not_found" };
+    return {
+      ok: true,
+      detail: {
+        challenge: data.challenge,
+        joined: data.joined ?? false,
+        posts: data.posts ?? [],
+        checkIns: data.checkIns ?? [],
+      },
+    };
+  } catch {
+    return { ok: false, reason: "unavailable" };
+  }
+}
+
+export type ChallengesLookup =
+  | { ok: true; challenges: Challenge[] }
+  | { ok: false; reason: "unavailable" };
+
+/**
+ * Like `getChallenges`, but distinguishes "genuinely no active challenges"
+ * from "couldn't reach the api" — `getChallenges` collapsed both to `[]`,
+ * which let a transient outage render as "No active challenges right now."
+ * `app/challenges/page.tsx` calls this instead, mirroring `app/rd/page.tsx`'s
+ * "briefly unavailable" branch. The `revalidate = 3600` on that page can
+ * still pin a since-recovered outage render for up to an hour on its own
+ * schedule — this closes the *lying* half of the bug (the copy is honest
+ * once it does re-render), not the staleness window itself.
+ */
+export async function getChallengesOrReason(fetchImpl: FetchImpl = fetch): Promise<ChallengesLookup> {
+  try {
+    const res = await fetchImpl(`${SERVER_BASE}/api/challenges`, REVALIDATE);
+    if (!res.ok) return { ok: false, reason: "unavailable" };
+    const data = (await res.json()) as { challenges?: Challenge[] };
+    return { ok: true, challenges: data.challenges ?? [] };
+  } catch {
+    return { ok: false, reason: "unavailable" };
+  }
+}
+
 // ── Client (cookie-authed, via same-origin proxy) ────────────────────────────
 async function clientJson<T>(path: string, init: RequestInit, fetchImpl: FetchImpl): Promise<T> {
   const res = await fetchImpl(`${API_BASE}/api${path}`, { credentials: "include", ...init });

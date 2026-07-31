@@ -48,6 +48,26 @@ export const rationaleRateLimit = rateLimitMiddleware("ai:rationale", 40, 60_000
 /** Payment initiation — very tight to block synthetic order fraud. */
 export const paymentRateLimit = rateLimitMiddleware("payments", 10, 60_000);
 
+/**
+ * Mounted on /api/payments in app.ts. Applies paymentRateLimit to every
+ * payment route EXCEPT the Razorpay server-to-server webhook, which is
+ * authenticated by HMAC signature (see routes/payments.ts) and arrives from
+ * Razorpay's own small source-IP pool — without this exemption every
+ * customer's payment confirmation would share one 10-req/min IP bucket
+ * meant for throttling browser clients.
+ */
+export async function paymentRouteRateLimit(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  if (req.path === "/razorpay/webhook") {
+    next();
+    return;
+  }
+  await paymentRateLimit(req, res, next);
+}
+
 /** Admin moderation actions — prevents enumeration via compromised token. */
 export const adminModerationRateLimit = rateLimitMiddleware("admin:moderation", 60, 60_000);
 

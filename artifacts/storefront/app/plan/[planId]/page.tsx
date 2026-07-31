@@ -38,7 +38,7 @@ export default async function PlanPage({ params, searchParams }: Props) {
   const builderData = getPlanBuilderData(id);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <section className="mx-auto max-w-xl px-4 pt-10 pb-32">
         {blocked ? (
           <Waitlist
