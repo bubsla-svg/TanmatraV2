@@ -455,6 +455,16 @@ jobs:
           node --test --test-force-exit --import tsx
           ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
           ./src/lib/b2b/accountHealth.test.ts
+      # Not money-path — the anomaly-scan baseline golden test from the
+      # optimization audit (TODO_optimization-auditor.md OA-DEEP-1.2). Needs
+      # real Postgres to seed orders/delivery_events and compare the batched
+      # buildBaseline against a frozen copy of the pre-optimization
+      # algorithm, so it lives in this job rather than money-unit.
+      - name: Anomaly-baseline golden test (batched vs pre-optimization)
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/anomalies.golden.test.ts
       # Menu-catalog cache wiring (OA-DEEP-1.3): proves getMergedCatalog()
       # actually serves from cache against real Postgres (not just
       # "consistent"), and that the real write paths (updatePrice,
