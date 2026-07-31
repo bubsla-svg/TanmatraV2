@@ -92,8 +92,23 @@ jobs:
   # and the inbound-auth/access-control contracts. Not verify.yml's entire
   # matrix — the KDS/geo/analytics feature steps stay PR-only — so "checked"
   # here means the money path, auth surfaces, types and lint gates.
+  #
+  # OA-DEEP-1.9 (TODO_optimization-auditor.md): this job had no path filter
+  # at all, so it ran its full ~25min Postgres-backed suite on EVERY push to
+  # main — including docs-only commits and pushes that touched neither
+  # artifacts/ nor lib/. Gated on `changes` (the same paths-filter output
+  # verify.yml's own trigger and the deploy jobs below already key off) so
+  # it skips entirely when nothing it would actually check changed. This
+  # does not remove the overlap between this job and verify.yml on a push
+  # that DOES touch a relevant path — that's a structural workflow_run-based
+  # fix the audit doc flags as a separate, TOCTOU-sensitive follow-up, not
+  # this one. This is the low-risk half: stop paying for gate on pushes it
+  # has nothing to gate.
   gate:
-    if: github.event_name == 'push'
+    needs: changes
+    if: |
+      github.event_name == 'push' &&
+      (needs.changes.outputs.api == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.storefront == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
