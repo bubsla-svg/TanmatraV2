@@ -2,15 +2,25 @@
 // Client: personalisation and diet-filter overlay on the server-rendered menu (OB-4 / II.4).
 // User-initiated chips MAY hide dishes; system-inferred signals MAY ONLY rank and annotate.
 // SSR initial paint outputs the full menu ("all" chip default) preserving SEO and indexing.
+//
+// `rows` (pre-rendered DishCard markup, one per dish) come in from
+// app/menu/page.tsx — a real Server Component — instead of this component
+// building them from `dishes` itself. That is the whole RSC-boundary fix:
+// this file only ever computes WHICH dish ids to reorder/hide/annotate, it
+// never constructs a dish row, so DishCard's own markup and imports stay
+// out of the client bundle. `dishes` is still needed here alongside `rows`
+// because ranking/filtering are computed over the DishData themselves — only
+// the rendering is server-side now.
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { DishData } from "@workspace/menu-catalog";
 import type { PreferencesForMatch } from "@workspace/preferences-match";
 import { apiGet } from "@/lib/apiClient";
-import { MenuGrid } from "@/components/MenuGrid";
-import { isMeaningful, rankDishes, type DishFit } from "@/lib/menuFit";
+import { MenuGrid, type MenuGridRow } from "@/components/MenuGrid";
+import { DishFitProvider } from "@/components/menu/DishFitContext";
+import { isMeaningful, rankDishes } from "@/lib/menuFit";
+import { computeMenuGridState } from "@/lib/menuGridState";
 import {
-  filterDishesByDiet,
   resolveInitialDietChip,
   DIET_CHIP_OPTIONS,
   type DietFilterChip,
@@ -39,7 +49,13 @@ function toMatch(row: PrefsRow | null): PreferencesForMatch | null {
   };
 }
 
-export function PersonalizedMenu({ dishes }: { dishes: DishData[] }) {
+export function PersonalizedMenu({
+  dishes,
+  rows,
+}: {
+  dishes: DishData[];
+  rows: MenuGridRow[];
+}) {
   const [prefs, setPrefs] = useState<PreferencesForMatch | null>(null);
   const [chip, setChip] = useState<DietFilterChip>("all");
 
@@ -71,12 +87,10 @@ export function PersonalizedMenu({ dishes }: { dishes: DishData[] }) {
     return rankDishes(dishes, prefs);
   }, [prefs, dishes]);
 
-  const orderedDishes = ranked ? ranked.map((r) => r.dish) : dishes;
-  const filteredDishes = useMemo(
-    () => filterDishesByDiet(orderedDishes, chip),
-    [orderedDishes, chip],
+  const { order, visibleIds, fits } = useMemo(
+    () => computeMenuGridState(dishes, ranked, chip),
+    [dishes, ranked, chip],
   );
-  const fits = ranked ? new Map<number, DishFit>(ranked.map((r) => [r.dish.id, r.fit])) : undefined;
 
   return (
     <div className="flex flex-col gap-4">
@@ -109,7 +123,9 @@ export function PersonalizedMenu({ dishes }: { dishes: DishData[] }) {
           </p>
         )}
       </div>
-      <MenuGrid dishes={filteredDishes} fits={fits} />
+      <DishFitProvider fits={fits}>
+        <MenuGrid rows={rows} order={order} visibleIds={visibleIds} />
+      </DishFitProvider>
     </div>
   );
 }

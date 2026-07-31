@@ -7,6 +7,7 @@ import {
 } from "@workspace/menu-catalog";
 import { listMenuItems, type DbReadExecutor } from "./menu";
 import { getSummariesForSlugs } from "./dishReviews";
+import { getCachedOrFetch } from "./menuCatalogCache";
 
 const VALID_CATEGORIES = new Set<DishCategory>([
   "beverages",
@@ -42,8 +43,22 @@ export function syntheticIdFor(dbRowId: number): number {
 /** Build the merged DB-backed catalog: static DISHES with editable DB fields
  * (price, name, description, image, isAvailable, macros, etc.) overridden by
  * matching menu_items rows. CMS-only rows (no static counterpart) get
- * synthetic ids in the SYNTHETIC_ID_OFFSET+ range. */
+ * synthetic ids in the SYNTHETIC_ID_OFFSET+ range.
+ *
+ * Cached (30s TTL, single-flight) when called with no executor — the
+ * overwhelming majority of call sites. A caller that passes a transaction
+ * executor (e.g. loyaltyEngine.ts reading through `tx` for read-your-writes
+ * consistency inside a transaction) bypasses the cache entirely, since that
+ * usage is specifically about seeing uncommitted writes from earlier in the
+ * same transaction — a cached snapshot would defeat the purpose. */
 export async function getMergedCatalog(
+  executor?: DbReadExecutor,
+): Promise<DishData[]> {
+  if (executor) return fetchMergedCatalog(executor);
+  return getCachedOrFetch(() => fetchMergedCatalog());
+}
+
+async function fetchMergedCatalog(
   executor?: DbReadExecutor,
 ): Promise<DishData[]> {
   const dbRows = await listMenuItems({}, executor);
