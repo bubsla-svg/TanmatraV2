@@ -95,14 +95,16 @@ export class AllergenTraceabilityService {
     ingredientLots: SupplierLotMetadata[],
   ): {isSafe: boolean; conflictingLot?: SupplierLotMetadata; reason?: string} {
     for (const lot of ingredientLots) {
+      // Built once per lot rather than once per (lot, allergy) pair — this
+      // runs on the packing-station safety path for every dish's ingredient
+      // lots against every patient allergy.
+      const hiddenCarriers = new Set(
+        lot.hidden_carrier_allergens.map((a) => a.toUpperCase()),
+      );
       for (const allergy of patientAllergies) {
         const normAllergy = allergy.toUpperCase();
         // Check declared hidden carrier allergens
-        if (
-          lot.hidden_carrier_allergens
-            .map((a) => a.toUpperCase())
-            .includes(normAllergy)
-        ) {
+        if (hiddenCarriers.has(normAllergy)) {
           return {
             isSafe: false,
             conflictingLot: lot,
