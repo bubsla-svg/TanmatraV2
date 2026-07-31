@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TopNav } from "@astryxdesign/core/TopNav";
 import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
 
 /**
@@ -44,6 +45,7 @@ export function Header() {
                 <ServiceabilityBar placement="menu" />
               </div>
               <CommandMenu />
+              <ThemeToggle />
               <div className="hidden items-center gap-1 md:flex">
                 {PRIMARY_NAV.map((l) => (
                   <Link

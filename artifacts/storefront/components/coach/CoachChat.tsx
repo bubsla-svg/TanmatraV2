@@ -5,9 +5,14 @@
 // the session is in-memory (resets on reload). ALL safety is server-side — the
 // deterministic clinical-refusal gate, allergen-safe tools, and the mandatory
 // disclaimer live in the coach agent, not here.
+//
+// Only the auth probe below is a TanStack Query fetch — the chat itself is a
+// live NDJSON stream accumulated into local state event-by-event, which is not
+// a request/response cache read and stays a plain fetch.
 import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { getAuthUser, type AuthUser } from "@/lib/api";
+import { getAuthUser } from "@/lib/api";
 import { ApiError } from "@/lib/apiClient";
 import { streamCoachChat, type CoachAction } from "@/lib/coachApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
@@ -16,7 +21,11 @@ import { CoachActionCard } from "./CoachActionCard";
 interface Msg { id: number; role: "user" | "agent"; text: string; actions: CoachAction[] }
 
 export function CoachChat() {
-  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
+  const queryClient = useQueryClient();
+  const userQuery = useQuery({
+    queryKey: ["auth", "user"],
+    queryFn: () => getAuthUser().then((r) => r.user),
+  });
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -24,10 +33,6 @@ export function CoachChat() {
   const idRef = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
 
-  async function loadUser() {
-    try { const { user: u } = await getAuthUser(); setUser(u); } catch { setUser(null); }
-  }
-  useEffect(() => { void loadUser(); }, []);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   async function send() {
@@ -54,7 +59,7 @@ export function CoachChat() {
       });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
-        setUser(null);
+        queryClient.setQueryData(["auth", "user"], null);
         setError("Your session expired — sign in again to continue.");
         return;
       }
@@ -64,13 +69,14 @@ export function CoachChat() {
     }
   }
 
+  const user = userQuery.data;
   if (user === undefined) return <p className="text-sm text-ink-muted">Loading…</p>;
   if (user === null) {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to chat with your nutrition coach.</p>
         {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-        <PhoneAuth onVerified={() => void loadUser()} />
+        <PhoneAuth onVerified={() => void userQuery.refetch()} />
       </div>
     );
   }

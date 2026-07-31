@@ -6,10 +6,10 @@
 // Radix portals the panel to document.body, but data-stitch lives on <html>
 // (a DOM ancestor of body), so color-scheme inherits through the portal with
 // no scope attribute needed here.
-import { useEffect, useState } from "react";
 import { Dialog } from "radix-ui";
+import { useQuery } from "@tanstack/react-query";
 import { formatPaise } from "@/lib/format";
-import { getSwapSuggestions, type MealPlanSlot, type MealPlanSlotEntry } from "@/lib/mealPlanApi";
+import { getSwapSuggestions, type MealPlanSlot } from "@/lib/mealPlanApi";
 
 const SLOT_LABEL: Record<MealPlanSlot, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 
@@ -19,16 +19,11 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
   onClose: () => void;
   onPick: (dishId: number) => void;
 }) {
-  const [items, setItems] = useState<MealPlanSlotEntry[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let live = true;
-    getSwapSuggestions(planId, target.dayIndex, target.slot)
-      .then((r) => { if (live) setItems(r.suggestions); })
-      .catch(() => { if (live) setError("Couldn't load alternatives."); });
-    return () => { live = false; };
-  }, [planId, target.dayIndex, target.slot]);
+  const suggestionsQuery = useQuery({
+    queryKey: ["mealplan", "swap-options", planId, target.dayIndex, target.slot],
+    queryFn: () => getSwapSuggestions(planId, target.dayIndex, target.slot),
+  });
+  const items = suggestionsQuery.data?.suggestions ?? null;
 
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -44,8 +39,19 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
             Swap {SLOT_LABEL[target.slot]}
           </Dialog.Title>
           <div className="max-h-[60vh] overflow-y-auto p-2">
-            {error && <p className="p-3 text-sm text-ink-muted">{error}</p>}
-            {!error && items === null && <p className="p-3 text-sm text-ink-muted">Finding alternatives…</p>}
+            {suggestionsQuery.isPending && (
+              <div aria-hidden className="flex flex-col gap-2 p-1">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-14 animate-pulse rounded-2xl bg-surface-raised" />
+                ))}
+              </div>
+            )}
+            {suggestionsQuery.isError && (
+              <div className="flex flex-col items-center gap-2 p-4 text-center">
+                <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load alternatives</p>
+                <button type="button" onClick={() => void suggestionsQuery.refetch()} className="rounded-lg border border-line px-4 py-1.5 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+              </div>
+            )}
             {items?.length === 0 && <p className="p-3 text-sm text-ink-muted">No safe alternatives match your constraints.</p>}
             {items?.map((it) => (
               <button

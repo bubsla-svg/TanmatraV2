@@ -46,6 +46,13 @@ export function Field({
   );
 }
 
+/** type="email"/"tel" imply their own autoComplete hint unless the caller
+ *  overrides it — a plain "text" field (name, company, free text) has none. */
+const DEFAULT_AUTOCOMPLETE: Partial<Record<"text" | "email" | "tel" | "number", string>> = {
+  email: "email",
+  tel: "tel",
+};
+
 export function TextField({
   id,
   value,
@@ -54,6 +61,7 @@ export function TextField({
   type = "text",
   invalid = false,
   inputMode,
+  autoComplete,
 }: {
   id: string;
   value: string;
@@ -62,12 +70,14 @@ export function TextField({
   type?: "text" | "email" | "tel" | "number";
   invalid?: boolean;
   inputMode?: "numeric";
+  autoComplete?: string;
 }) {
   return (
     <input
       id={id}
       type={type}
       inputMode={inputMode}
+      autoComplete={autoComplete ?? DEFAULT_AUTOCOMPLETE[type]}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}

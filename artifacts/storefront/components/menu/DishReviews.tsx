@@ -2,8 +2,11 @@
 // client: reviews live under /dish-reviews. The GET is public, so signed-out
 // visitors still see the list + rating; `eligibleToReview` (server-computed from
 // the orders table) decides whether the submit form mounts. Best-effort — a
-// failed or in-flight fetch renders nothing, never blocking the rest of the PDP.
-import { useEffect, useState } from "react";
+// failed fetch stays silent (renders nothing), never blocking the rest of the
+// PDP; an in-flight fetch now reserves height with a skeleton instead (was a
+// CLS source on this money-path-adjacent surface — same `if (!data) return
+// null` covered both loading and failure).
+import { useQuery } from "@tanstack/react-query";
 import {
   getDishReviews,
   resolveReviewAggregate,
@@ -35,23 +38,22 @@ function GoldStars({ value, label }: { value: number; label?: string }) {
 }
 
 export function DishReviews({ slug }: { slug: string }) {
-  const [data, setData] = useState<DishReviewsResponse | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const { data, isPending, refetch } = useQuery<DishReviewsResponse>({
+    queryKey: ["dish", "reviews", slug],
+    queryFn: () => getDishReviews(slug),
+  });
 
-  useEffect(() => {
-    let live = true;
-    getDishReviews(slug)
-      .then((res) => {
-        if (live) setData(res);
-      })
-      .catch(() => {
-        // Offline / server error — leave the section out entirely (best-effort).
-      });
-    return () => {
-      live = false;
-    };
-  }, [slug, reloadKey]);
+  if (isPending) {
+    return (
+      <section className="mt-10 animate-pulse">
+        <div className="h-4 w-20 rounded bg-surface-raised" />
+        <div className="mt-4 h-20 rounded-2xl border border-line bg-surface-raised" />
+      </section>
+    );
+  }
 
+  // Offline / server error — leave the section out entirely (best-effort,
+  // unchanged from before the migration).
   if (!data) return null;
 
   const { reviews, summary, eligibleToReview } = data;
@@ -117,7 +119,7 @@ export function DishReviews({ slug }: { slug: string }) {
       )}
 
       {eligibleToReview && (
-        <DishReviewForm slug={slug} onSubmitted={() => setReloadKey((k) => k + 1)} />
+        <DishReviewForm slug={slug} onSubmitted={() => void refetch()} />
       )}
     </section>
   );

@@ -7,7 +7,7 @@ import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter"
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
-import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack } from "@/lib/api";
+import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 
@@ -25,6 +25,7 @@ export function PlanCheckout({
   planName,
   servedTracks,
   initialTrack,
+  cadence,
   addOns,
   finePrint,
   successPerks,
@@ -34,6 +35,9 @@ export function PlanCheckout({
   servedTracks: DietTrack[];
   /** Entry-surface track preselect (?track=…), host-validated against servedTracks. */
   initialTrack?: DietTrack;
+  /** Billing cadence the builder confirmed (?cycle=…), host-validated. Defaults
+   *  to "monthly" — the builder's own default — never invented client-side. */
+  cadence?: PlanCadence;
   /** Plan-review add-ons to bill (host-validated against the allow-list) —
    *  threaded through quote AND create so display always equals charge. */
   addOns?: AddOnId[];
@@ -45,9 +49,12 @@ export function PlanCheckout({
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [track, setTrack] = useState<DietTrack>(initialTrack ?? servedTracks[0] ?? "veg");
-  // Server quote per (plan, track, add-ons) — the billed total, net of any
-  // redeemable credit once signed in; gates the CTA.
-  const { quote, quoteLoading } = usePlanQuote(planId, track, addOns, user !== null);
+  const billedCadence = cadence ?? "monthly";
+  // Server quote per (plan, track, cadence, add-ons) — the billed total, net of
+  // any redeemable credit once signed in; gates the CTA. `cadence` must match
+  // what `buildSubscriptionInput` below sends to create, or the displayed quote
+  // and the actual charge disagree.
+  const { quote, quoteLoading } = usePlanQuote(planId, track, addOns, user !== null, billedCadence);
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +88,7 @@ export function PlanCheckout({
         const subscription = buildSubscriptionInput({
           planId,
           track,
-          cadence: "monthly",
+          cadence: billedCadence,
           mealsPerDelivery: quote.mealsPerDelivery,
           addOns,
           startDate: nextWeekdayISO(new Date()),

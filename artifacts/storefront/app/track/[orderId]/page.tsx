@@ -19,7 +19,7 @@ export default async function TrackPage({
   const { orderId } = await params;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <section className="mx-auto flex max-w-lg flex-col items-center px-4 py-12 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">
           Tracking your order

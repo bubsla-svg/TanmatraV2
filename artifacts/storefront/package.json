@@ -19,6 +19,7 @@
     "@heroicons/react": "^2.2.0",
     "@sentry/nextjs": "^10.68.0",
     "@stylexjs/stylex": "^0.19.0",
+    "@tanstack/react-query": "catalog:",
     "@workspace/menu-catalog": "workspace:*",
     "@workspace/preferences-match": "workspace:*",
     "@workspace/subscription-rules": "workspace:*",

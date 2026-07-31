@@ -4,6 +4,7 @@
 // track's three dishes are shown, never lets the buyer compose their own.
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
@@ -89,14 +90,16 @@ export function TrialStart({
             className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
           >
             <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
-              {/* eslint-disable-next-line @next/next/no-img-element -- fixed
-                  aspect box for zero CLS; next/image lands in a later phase. */}
-              <img
+              {/* `fill` inside the aspect-square box keeps CLS at zero. sizes:
+                  the trio sits in /trial's max-w-md (28rem) px-4 column, three
+                  columns with two 12px gaps — (448 − 32 − 24)/3 ≈ 131px once
+                  the container is capped, and (100vw − 56px)/3 below that. */}
+              <Image
                 src={dish.image}
                 alt=""
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover"
+                fill
+                sizes="(min-width: 28rem) 131px, calc((100vw - 3.5rem) / 3)"
+                className="object-cover"
               />
             </div>
             <p className="p-2.5 text-center text-xs font-semibold leading-snug text-ink">
