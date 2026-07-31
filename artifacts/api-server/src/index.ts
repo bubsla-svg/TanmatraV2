@@ -28,6 +28,7 @@ import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
 import { purgeExpiredSessions, purgeDeletedAccountsJob } from "./lib/auth";
 import { sweepExpiredIdempotencyKeys } from "./middlewares/idempotency";
+import { sweepExpiredUserBriefs } from "./lib/userBrief";
 import { sweepOrphanSlotReservations } from "./routes/fulfillment";
 import { drainOpsAuditOutbox } from "./lib/opsAudit";
 import { pool, overridePool } from "@workspace/db";
@@ -154,6 +155,16 @@ const purgeTimer = setInterval(() => {
  ]).catch(() => {
  /* swallowed above */
  });
+ // Same bug class, but a process-local Map rather than a table: userBrief's
+ // PROCESS_CACHE only evicted on a re-read of the same key, so a one-shot
+ // user's brief stayed resident forever. Synchronous, so it sits outside the
+ // Promise.all above. See sweepExpiredUserBriefs' comment (OA-MED-1.8).
+ try {
+ const purged = sweepExpiredUserBriefs();
+ if (purged > 0) logger.debug({ purged }, "swept expired user briefs");
+ } catch (err) {
+ logger.error({ err }, "sweepExpiredUserBriefs failed");
+ }
 }, HOUR);
 purgeTimer.unref();
 

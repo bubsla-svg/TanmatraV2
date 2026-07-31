@@ -516,3 +516,17 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/lib/menuEngineering.recipeCosts.golden.test.ts
+
+      # OA-MED-1.3/1.4/1.8. The pipeline-idempotency suite is the load-bearing
+      # one: it asserts the prelude properties (no duplicate delivery_events
+      # row, no backwards status walk) that make the processor's rethrows safe
+      # to retry. The other two are pure predicates, but their import chains
+      # reach @workspace/db, which needs DATABASE_URL at module load — hence
+      # this job rather than money-unit.
+      - name: Queue idempotency, summarizer freshness, userBrief cache sweep
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --import tsx
+          ./src/lib/queue.pipelineIdempotency.test.ts
+          ./src/lib/dishReviews.staleness.test.ts
+          ./src/lib/userBrief/cacheSweep.test.ts

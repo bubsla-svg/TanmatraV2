@@ -15,7 +15,9 @@ export type {
 export { getUserBrief, getUserBriefForRequest } from "./loader";
 export {
   invalidateUserBrief,
+  sweepExpiredUserBriefs,
   _resetUserBriefCacheForTests,
+  _userBriefCacheSizeForTests,
 } from "./cache";
 export {
   redactBrief,
