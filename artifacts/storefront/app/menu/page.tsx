@@ -26,7 +26,7 @@ export default async function MenuPage({
   const openDish = dishSlug ? findDish(dishSlug, dishes) : undefined;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
     <section className="mx-auto max-w-screen-xl px-4 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">The menu</h1>

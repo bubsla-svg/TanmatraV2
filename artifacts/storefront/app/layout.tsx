@@ -94,6 +94,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: THEME_COLOR.light,
+  // Without this, env(safe-area-inset-*) resolves to 0 on notched/Dynamic-Island
+  // devices, silently no-op'ing the app's .pb-safe/.mb-safe CSS and the fixed
+  // MobileBottomNav bottom-padding calc — see docs/WEB-APP-ENHANCEMENT-PLAN.md.
+  viewportFit: "cover",
 };
 
 /**

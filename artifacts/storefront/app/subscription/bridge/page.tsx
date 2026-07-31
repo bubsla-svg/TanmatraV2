@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function SubscriptionBridgePage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       {/* pb-48 clears BridgeView's sticky footer CTA (ready state) so the
           unlock card is never hidden behind it while scrolling — same
           reasoning as /trial's section padding. */}
