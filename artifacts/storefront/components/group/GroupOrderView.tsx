@@ -3,9 +3,19 @@
 // & pays for everyone. Close merges the group's picks into the local cart and
 // routes to /checkout (reusing the existing money-path). Adding picks happens on
 // /menu?group=CODE (deferred).
-import { useCallback, useEffect, useState } from "react";
+//
+// The group read runs through useQuery (["group-order", code]) for
+// consistency/caching with the rest of the client-fetched storefront; the
+// loading/missing/error/retry SHAPE below is unchanged from before the
+// migration — this is the one reference-quality state model other islands
+// were told to copy, so it's deliberately not restyled. Mutations
+// (remove/close) still write through `queryClient.setQueryData` instead of a
+// separate `group` useState so there is a single source of truth for the
+// group's contents.
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DISHES } from "@workspace/menu-catalog";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
@@ -18,26 +28,36 @@ import { getGroup, removeLine, closeGroup, groupSubtotalPaise, type GroupOrder }
 export function GroupOrderView({ code }: { code: string }) {
   const router = useRouter();
   const { cart, setCart } = useCart();
-  const [group, setGroup] = useState<GroupOrder | null>(null);
+  const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    setState("loading");
-    getGroup(code).then((r) => { setGroup(r.group); setState("ready"); })
-      .catch((e) => setState(e instanceof ApiError && e.status === 404 ? "missing" : "error"));
-    getAuthUser().then((r) => setUserId(r.user?.id ?? null)).catch(() => {});
-  }, [code]);
-  useEffect(() => { load(); }, [load]);
+  const queryKey = ["group-order", code];
+  const {
+    data: group,
+    isPending,
+    isError,
+    error: loadError,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey,
+    queryFn: () => getGroup(code).then((r) => r.group),
+    retry: (failureCount, e) => (e instanceof ApiError && e.status === 404 ? false : failureCount < 1),
+  });
 
+  useEffect(() => {
+    getAuthUser().then((r) => setUserId(r.user?.id ?? null)).catch(() => {});
+  }, []);
+
+  const missing = isError && loadError instanceof ApiError && loadError.status === 404;
   const isHost = !!group && !!userId && group.hostUserId === userId;
 
   async function remove(lineId: string) {
     if (!group) return;
     setBusy(true); setError(null);
-    try { setGroup((await removeLine(code, lineId)).group); }
+    try { queryClient.setQueryData(queryKey, (await removeLine(code, lineId)).group); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Couldn't remove that item."); }
     finally { setBusy(false); }
   }
@@ -47,6 +67,7 @@ export function GroupOrderView({ code }: { code: string }) {
     setBusy(true); setError(null);
     try {
       const { group: closed } = await closeGroup(code);
+      queryClient.setQueryData(queryKey, closed);
       let next = cart, skipped = 0;
       for (const l of closed.items) {
         const dish = DISHES.find((d) => d.id === l.dishId);
@@ -59,9 +80,9 @@ export function GroupOrderView({ code }: { code: string }) {
     } catch (e) { setError(e instanceof ApiError ? e.message : "Couldn't close the group."); setBusy(false); }
   }
 
-  if (state === "loading") return <p className="py-10 text-center text-sm text-ink-muted">Loading group…</p>;
+  if (isPending) return <p className="py-10 text-center text-sm text-ink-muted">Loading group…</p>;
 
-  if (state === "missing") {
+  if (missing) {
     return (
       <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
         <p className="text-sm font-semibold text-ink">Group {code} was not found</p>
@@ -70,12 +91,14 @@ export function GroupOrderView({ code }: { code: string }) {
     );
   }
 
-  if (state === "error" || !group) {
+  if (isError || !group) {
     return (
       <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load this group order</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">Something went wrong on our end — this usually clears up on retry.</p>
-        <button type="button" onClick={load} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+        <button type="button" onClick={() => void refetch()} disabled={isFetching} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80 disabled:opacity-50">
+          {isFetching ? "Retrying…" : "Try again"}
+        </button>
       </div>
     );
   }

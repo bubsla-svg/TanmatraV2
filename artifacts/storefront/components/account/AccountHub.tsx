@@ -1,12 +1,14 @@
 "use client";
-// Client: session + live-order state are cookie-authed browser reads.
-import { useCallback, useEffect, useState } from "react";
+// Client: session + live-order state are cookie-authed browser reads, owned
+// by TanStack Query (components/QueryProvider.tsx).
 import Link from "next/link";
 import { ChevronRight, ArrowRight } from "lucide-react";
-import { getAuthUser, logoutSession, type AuthUser } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getAuthUser, logoutSession, ApiError, type AuthUser } from "@/lib/api";
 import { getActiveOrders, type ActiveOrder } from "@/lib/ordersApi";
 import { statusLabel, TRACKABLE_STATUSES } from "@/lib/orderStatus";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SECTIONS = [
   { href: "/account/subscriptions", label: "Plans", sub: "Your active metabolic protocols" },
@@ -26,71 +28,112 @@ const LEGAL = [
   { href: "/faq", label: "Support" },
 ] as const;
 
+const ME_KEY = ["account", "me"] as const;
+const ACTIVE_ORDER_KEY = ["account", "me", "activeOrder"] as const;
+
+/** Shared by both "not signed in" paths below — a genuine 401 and a 200 with
+ *  `user: null` mean the same thing to this UI. */
+function SignInOffer({ onVerified }: { onVerified: (user: AuthUser) => void }) {
+  return (
+    <div className="mt-4 flex flex-col gap-4">
+      <p className="text-sm text-ink-muted">Sign in to see your orders, plans and addresses.</p>
+      <PhoneAuth onVerified={onVerified} />
+    </div>
+  );
+}
+
 /**
  * Account hub (§2 / CUJ-06 "live order" card), Stitch brief route-08
  * "Account Hub: Clinical Profile". Session from GET /auth/user; the card shows
  * the first in-flight order from the user-scoped GET /orders/active (a
- * clinician's cross-patient feed is NOT "your order" — suppressed). Every read
- * is best-effort: a failed probe renders the signed-out offer or simply no
- * card, never a crash (UIF §6).
+ * clinician's cross-patient feed is NOT "your order" — suppressed).
+ *
+ * The session read distinguishes a genuine 401 from any other failure
+ * (network/5xx): only a 401 (or a 200 with `user: null`) renders the
+ * sign-in offer. Any other error gets its own state with a retry — an
+ * outage used to collapse into the same "you're signed out" UI, wrongly
+ * demanding a fresh OTP from someone who never logged out (audit #14).
  *
  * The brief also draws a top app bar and a bottom tab bar; both are already
  * global chrome here (components/Header, components/BottomNav), so only the
  * page body is adopted.
  */
 export function AccountHub() {
-  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
-  const [live, setLive] = useState<ActiveOrder | null>(null);
+  const queryClient = useQueryClient();
 
-  const loadLiveOrder = useCallback(() => {
-    void getActiveOrders()
-      .then(({ callerIsClinician, orders }) => {
-        if (callerIsClinician) return;
-        setLive(orders.find((o) => TRACKABLE_STATUSES.has(o.status)) ?? null);
-      })
-      .catch(() => setLive(null));
-  }, []);
+  const {
+    data: user,
+    isPending: userPending,
+    isError: userIsError,
+    error: userError,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ME_KEY,
+    queryFn: async () => (await getAuthUser()).user,
+  });
 
-  const load = useCallback(async () => {
-    try {
-      const { user: u } = await getAuthUser();
-      setUser(u);
-      if (u) loadLiveOrder();
-    } catch {
-      setUser(null);
-    }
-  }, [loadLiveOrder]);
+  const { data: live } = useQuery({
+    queryKey: ACTIVE_ORDER_KEY,
+    queryFn: async (): Promise<ActiveOrder | null> => {
+      const { callerIsClinician, orders } = await getActiveOrders();
+      if (callerIsClinician) return null;
+      return orders.find((o) => TRACKABLE_STATUSES.has(o.status)) ?? null;
+    },
+    enabled: !!user,
+    // Best-effort card, matching the original fetch's own .catch(() => null):
+    // a failed probe simply means no live-order card, never a page error.
+    retry: false,
+    throwOnError: false,
+  });
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const signOut = useMutation({
+    mutationFn: async () => {
+      try {
+        await logoutSession();
+      } catch {
+        // A lapsed session is already signed out — same end state.
+      }
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(ME_KEY, null);
+      queryClient.removeQueries({ queryKey: ACTIVE_ORDER_KEY });
+    },
+  });
 
-  async function signOut() {
-    try {
-      await logoutSession();
-    } catch {
-      // A lapsed session is already signed out — same end state.
-    }
-    setUser(null);
-    setLive(null);
+  if (userPending) {
+    return (
+      <div className="mt-4 flex flex-col gap-3" aria-hidden>
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+      </div>
+    );
   }
 
-  if (user === undefined) {
-    return <p className="mt-4 text-sm text-ink-muted">Loading your account…</p>;
+  if (userIsError) {
+    if (userError instanceof ApiError && userError.status === 401) {
+      return <SignInOffer onVerified={(u) => queryClient.setQueryData(ME_KEY, u)} />;
+    }
+    return (
+      <div className="mt-4 rounded-xl border border-line bg-surface p-6 text-center">
+        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your account</p>
+        <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
+          Something went wrong on our end — this usually clears up on retry.
+        </p>
+        <button
+          type="button"
+          onClick={() => void refetchUser()}
+          className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (user === null) {
-    return (
-      <div className="mt-4 flex flex-col gap-4">
-        <p className="text-sm text-ink-muted">Sign in to see your orders, plans and addresses.</p>
-        <PhoneAuth
-          onVerified={(u) => {
-            setUser(u);
-            loadLiveOrder();
-          }}
-        />
-      </div>
-    );
+    return <SignInOffer onVerified={(u) => queryClient.setQueryData(ME_KEY, u)} />;
   }
 
   return (
@@ -101,10 +144,11 @@ export function AccountHub() {
         </p>
         <button
           type="button"
-          onClick={() => void signOut()}
-          className="-m-1 p-1 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+          onClick={() => signOut.mutate()}
+          disabled={signOut.isPending}
+          className="-m-1 p-1 text-sm font-medium text-ink-muted transition-colors hover:text-ink disabled:opacity-50"
         >
-          Sign out
+          {signOut.isPending ? "Signing out…" : "Sign out"}
         </button>
       </div>
 

@@ -35,15 +35,20 @@
 /*
  * !important is load-bearing, not decorative. next-themes (theme-provider.tsx)
  * injects its own beforeInteractive script that writes an inline
- * `style.colorScheme` onto <html> from `data-theme` (permanently "light" here
- * — single-theme app, no toggle shipped). An inline declaration outranks any
- * normal stylesheet rule regardless of selector, so without !important a dark
- * route would paint correctly for one tick and then flip light the instant
- * next-themes' script runs. !important promotes this declaration to a higher
- * cascade origin than any normal-weight inline style, inline or not, so it
- * wins even though it loads first. Stitch is a route scope, not a next-themes
- * theme, so the two are not otherwise in competition — this is the one point
- * they touch.
+ * `style.colorScheme` onto <html> from `data-theme` — now either "light" or
+ * "dark" depending on the visitor's OS preference or Header's ThemeToggle, not
+ * a fixed value. An inline declaration outranks any normal stylesheet rule
+ * regardless of selector, so without !important a Stitch route would paint
+ * correctly for one tick and then flip to whatever data-theme resolved to the
+ * instant next-themes' script runs — including flipping to LIGHT if the
+ * visitor's system/choice is light, which is the exact regression this rule
+ * exists to prevent. !important promotes this declaration to a higher cascade
+ * origin than any normal-weight inline style, inline or not, so it wins no
+ * matter which value next-themes writes or when. Stitch is a route scope, not
+ * a next-themes theme, so the two are not otherwise in competition — this is
+ * the one point they touch, and it is why every light-dark() tuple in
+ * tanmatraBridge.css resolves to its dark arm on a Stitch route regardless of
+ * the visitor's actual theme choice.
  */
 [data-stitch="dark"] {
   color-scheme: dark !important;

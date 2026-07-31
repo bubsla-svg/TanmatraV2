@@ -136,7 +136,12 @@ export const subscriptionsTable = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index("idx_subscriptions_user").on(table.userId)],
+  (table) => [
+    index("idx_subscriptions_user").on(table.userId),
+    // subscriptionAbandonmentScheduler filters status + createdAt on every
+    // tick; chargeMandateScheduler/preDebitScheduler join against status too.
+    index("idx_subscriptions_status_created").on(table.status, table.createdAt),
+  ],
 );
 
 export const subscriptionMembersTable = pgTable(
@@ -284,7 +289,13 @@ export const subscriptionMandatesTable = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("idx_subscription_mandates_sub").on(table.subscriptionId)],
+  (table) => [
+    index("idx_subscription_mandates_sub").on(table.subscriptionId),
+    // chargeMandateScheduler's per-tick predicate is exactly
+    // status = 'active' AND next_charge_at <= now() — this is the money
+    // path for cycle-2+ subscription billing.
+    index("idx_sub_mandates_active_next_charge").on(table.status, table.nextChargeAt),
+  ],
 );
 
 export const preDebitNotificationsTable = pgTable(

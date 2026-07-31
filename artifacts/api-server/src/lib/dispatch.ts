@@ -508,61 +508,62 @@ async function dispatchOrderInner(
 
   // 1. Try to batch onto an existing assignment.
   let batchKey = newBatchKey();
-  let chosenRider: Rider | null = null;
+  let batchedRider: Rider | null = null;
   let batched = false;
   if (allowBatch) {
     const partner = await findBatchPartner(orderPeek, drop);
     if (partner) {
-      chosenRider = partner.rider;
+      batchedRider = partner.rider;
       batchKey = partner.batchKey;
       batched = true;
     }
   }
 
-  // 2. Otherwise, score all online riders and pick the best.
-  const allRiders = await db.select().from(ridersTable);
+  // 2. Rank online riders by score. This is a read only — it does NOT
+  // claim a rider. OA-DEEP-1.4: filter to `status = 'online'` in SQL
+  // (idx_riders_status_load) instead of pulling every row and filtering
+  // in JS. OA-DEEP-1.5: the old code picked `scored[0]` here and
+  // committed to it before ever taking a lock — a read-then-write race.
+  // Under concurrent dispatch (BullMQ worker, manual API, ops agent all
+  // call dispatchOrder independently) every in-flight call reads the
+  // same stale `activeOrderCount`, so several orders can each score the
+  // same rider best and all commit to it, stacking assignments on one
+  // rider while others idle. The actual claim — and the fallback to the
+  // next-best candidate when the top one is already being claimed by a
+  // concurrent transaction — happens under a row lock inside the
+  // transaction below.
+  const onlineRiders = await db
+    .select()
+    .from(ridersTable)
+    .where(eq(ridersTable.status, "online"));
   const readyMin = readyInMinutes(orderPeek);
-  if (!chosenRider) {
-    const scored = allRiders
-      .filter((r) => r.status === "online")
-      .map((r) => ({
-        rider: r,
-        ...scoreRiderForOrder(r, drop, DEFAULT_WEIGHTS, readyMin),
-      }))
-      .sort((a, b) => b.score - a.score);
-    if (scored.length === 0) {
-      return {
-        ok: false,
-        orderId,
-        riderId: null,
-        batched: false,
-        batchKey,
-        strategy: "smart",
-        decisionId: null,
-        reason: "no riders available",
-      };
-    }
-    chosenRider = scored[0]!.rider;
+  const ranked = batchedRider
+    ? []
+    : onlineRiders
+        .map((r) => ({
+          rider: r,
+          ...scoreRiderForOrder(r, drop, DEFAULT_WEIGHTS, readyMin),
+        }))
+        .sort((a, b) => b.score - a.score);
+  if (!batchedRider && ranked.length === 0) {
+    return {
+      ok: false,
+      orderId,
+      riderId: null,
+      batched: false,
+      batchKey,
+      strategy: "smart",
+      decisionId: null,
+      reason: "no riders available",
+    };
   }
 
-  const chosenScore = scoreRiderForOrder(
-    chosenRider,
-    drop,
-    DEFAULT_WEIGHTS,
-    readyMin,
-  );
-  const baseline = baselineNearest(drop, allRiders);
+  const baseline = baselineNearest(drop, onlineRiders);
 
-  // Captured once, outside the closure: TS narrows `chosenRider` to non-null
-  // by this point (the `if (!chosenRider)` branch above either returns early
-  // or assigns it), but that narrowing doesn't survive across a `db.transaction`
-  // closure boundary — a `let` reassigned before an async callback can't be
-  // proven non-null inside it. `rider` carries the already-narrowed value in,
-  // so the transaction body never needs `chosenRider!`.
-  const rider = chosenRider;
-
-  // 3. Persist assignment + audit trail under a row lock so concurrent
-  //    dispatchers (queue worker + manual API call) don't double-assign.
+  // 3. Persist assignment + audit trail. The order row is locked first,
+  //    then the rider is claimed — same lock order in every caller
+  //    (dispatchOrderInner, runOverrideTx), so there is no cross-lock
+  //    deadlock risk.
   const txResult = await db.transaction(async (tx) => {
     // Task #7 bulkhead: the auto-dispatcher uses SKIP LOCKED so it
     // never queues behind a clinical override that holds the row lock.
@@ -604,23 +605,74 @@ async function dispatchOrderInner(
         existingRiderId: locked.rider_id,
       };
     }
+
+    // Atomic claim. SKIP LOCKED means we never block waiting on a rider
+    // row another transaction is mid-assignment to — we just fall
+    // through to the next-best candidate. Re-checking `status = 'online'`
+    // under the lock also closes the (much rarer) window where a rider
+    // went offline between the ranking read above and this claim.
+    let claimedRider: Rider;
+    let claimedScore: ReturnType<typeof scoreRiderForOrder>;
+    if (batchedRider) {
+      const riderRow = await tx.execute<{ id: number; status: string }>(
+        sql`select id, status from ${ridersTable}
+            where id = ${batchedRider.id} and status = 'online'
+            for update skip locked`,
+      );
+      const rr = (riderRow.rows ?? riderRow)[0] as
+        | { id: number; status: string }
+        | undefined;
+      if (!rr) {
+        return { ok: false as const, reason: "batch partner rider unavailable" };
+      }
+      claimedRider = batchedRider;
+      claimedScore = scoreRiderForOrder(batchedRider, drop, DEFAULT_WEIGHTS, readyMin);
+    } else {
+      let found: (typeof ranked)[number] | null = null;
+      for (const cand of ranked) {
+        const riderRow = await tx.execute<{ id: number; status: string }>(
+          sql`select id, status from ${ridersTable}
+              where id = ${cand.rider.id} and status = 'online'
+              for update skip locked`,
+        );
+        const rr = (riderRow.rows ?? riderRow)[0] as
+          | { id: number; status: string }
+          | undefined;
+        if (rr) {
+          found = cand;
+          break;
+        }
+      }
+      if (!found) {
+        // Every ranked candidate is either offline now or locked by a
+        // concurrent claim. Distinct from "no riders available" (which
+        // fires before the transaction when the fleet is genuinely
+        // empty) so the sweep in dispatchReadyOrders doesn't mistake
+        // transient contention for an exhausted rider pool — the order
+        // stays unassigned and is re-picked on the sweep's next pass.
+        return { ok: false as const, reason: "rider_claim_contended" };
+      }
+      claimedRider = found.rider;
+      claimedScore = { score: found.score, breakdown: found.breakdown };
+    }
+
     const before = { riderId: locked.rider_id, status: locked.status };
     await tx
       .update(ordersTable)
-      .set({ riderId: rider.id, status: "rider_assigned" })
+      .set({ riderId: claimedRider.id, status: "rider_assigned" })
       .where(eq(ordersTable.id, orderId));
     await tx
       .update(ridersTable)
       .set({ activeOrderCount: sql`${ridersTable.activeOrderCount} + 1` })
-      .where(eq(ridersTable.id, rider.id));
+      .where(eq(ridersTable.id, claimedRider.id));
     await tx.insert(deliveryEventsTable).values({
       orderId,
-      riderId: rider.id,
+      riderId: claimedRider.id,
       event: "rider_assigned",
       meta: {
         strategy: batched ? "smart-batched" : "smart",
         batchKey,
-        riderName: rider.name,
+        riderName: claimedRider.name,
       },
     });
     const [row] = await tx
@@ -628,11 +680,11 @@ async function dispatchOrderInner(
       .values({
         batchKey,
         orderId,
-        chosenRiderId: rider.id,
-        chosenScore: chosenScore.score,
+        chosenRiderId: claimedRider.id,
+        chosenScore: claimedScore.score,
         chosenBreakdown:
-          chosenScore.breakdown as unknown as Record<string, number | string>,
-        chosenDistanceKm: chosenScore.breakdown.distanceKm,
+          claimedScore.breakdown as unknown as Record<string, number | string>,
+        chosenDistanceKm: claimedScore.breakdown.distanceKm,
         baselineRiderId: baseline.rider?.id ?? null,
         baselineScore: baseline.score === -Infinity ? null : baseline.score,
         baselineDistanceKm:
@@ -651,14 +703,20 @@ async function dispatchOrderInner(
           action: "dispatch_order",
           params: { orderId, batched },
           beforeState: before,
-          afterState: { riderId: rider.id, status: "rider_assigned" },
+          afterState: { riderId: claimedRider.id, status: "rider_assigned" },
           status: "success",
           reasoning: opts.notes ?? "smart dispatch",
         },
         tx,
       );
     }
-    return { ok: true as const, decisionId: row?.id ?? null };
+    return {
+      ok: true as const,
+      decisionId: row?.id ?? null,
+      riderId: claimedRider.id,
+      riderName: claimedRider.name,
+      breakdown: claimedScore.breakdown,
+    };
   });
 
   if (!txResult.ok) {
@@ -673,12 +731,11 @@ async function dispatchOrderInner(
       reason: txResult.reason,
     };
   }
-  const decisionId = txResult.decisionId;
 
   emitDeliveryEvent(orderId, {
     event: "rider_assigned",
-    riderId: chosenRider.id,
-    riderName: chosenRider.name,
+    riderId: txResult.riderId,
+    riderName: txResult.riderName,
     batchKey,
     batched,
   });
@@ -686,12 +743,12 @@ async function dispatchOrderInner(
   return {
     ok: true,
     orderId,
-    riderId: chosenRider.id,
+    riderId: txResult.riderId,
     batched,
     batchKey,
     strategy: "smart",
-    decisionId,
-    breakdown: chosenScore.breakdown,
+    decisionId: txResult.decisionId,
+    breakdown: txResult.breakdown,
     baseline: {
       riderId: baseline.rider?.id ?? null,
       distanceKm:

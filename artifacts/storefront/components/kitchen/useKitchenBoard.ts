@@ -1,9 +1,10 @@
 "use client";
-// Kitchen board lifecycle: poll, tick the age clock, hold the last good board
-// across an outage, and own the optimistic Ready tap. Kept in a hook so
-// KitchenBoard.tsx stays thin — and so the three rules below live in one place
-// instead of tangled through JSX.
+// Kitchen board lifecycle: poll (via TanStack Query), tick the age clock, hold
+// the last good board across an outage, and own the optimistic Ready tap. Kept
+// in a hook so KitchenBoard.tsx stays thin — and so the three rules below live
+// in one place instead of tangled through JSX.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { readyOutcome, sortBoard, ticketLabel, type KdsTicket } from "@/lib/kds";
 import { fetchBoard, markReady } from "@/lib/kdsApi";
 
@@ -33,45 +34,42 @@ export interface UseKitchenBoard {
 
 export function useKitchenBoard(): UseKitchenBoard {
   const [tickets, setTickets] = useState<KdsTicket[] | null>(null);
-  const [health, setHealth] = useState<BoardHealth>("loading");
   const [dropped, setDropped] = useState(0);
   const [offsetMs, setOffsetMs] = useState(0);
   const [lastGoodAt, setLastGoodAt] = useState<number | null>(null);
   const [busyIds, setBusyIds] = useState<readonly number[]>([]);
   const [note, setNote] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(0);
-  // The same ids as `busyIds`, kept in a ref because the poll closure is built
-  // once and never re-created. A poll landing mid-tap still lists the ticket
-  // being advanced; without this the card flickers back and vanishes again.
+  // The same ids as `busyIds`, kept in a ref because the poll result below is
+  // applied from an effect that only closes over the latest render. A poll
+  // landing mid-tap still lists the ticket being advanced; without this the
+  // card flickers back and vanishes again.
   //
   // A SET, not one id: marks are independent, and serialising them would
   // silently swallow a second tap during the first one's flight — exactly the
   // dead-tap failure this screen exists to stop.
   const pending = useRef<Set<number>>(new Set());
 
+  // The transport never throws (see lib/kdsApi's header) — every poll settles
+  // with a `kind`, so this query is never itself "in error"; `health` below
+  // reads the `kind` out of the resolved data instead.
+  const boardQuery = useQuery({
+    queryKey: ["kitchen", "board"],
+    queryFn: () => fetchBoard(Date.now()),
+    refetchInterval: POLL_MS,
+  });
+
   useEffect(() => {
-    let cancelled = false;
-    const poll = async () => {
-      const result = await fetchBoard(Date.now());
-      if (cancelled) return;
-      if (result.kind === "ok") {
-        setTickets(sortBoard(result.tickets).filter((t) => !pending.current.has(t.id)));
-        setDropped(result.dropped);
-        setOffsetMs(result.serverOffsetMs);
-        setLastGoodAt(Date.now());
-      }
-      // Note what is NOT here: on forbidden or unavailable the last good board
-      // stays exactly where it is and only `health` changes. Blanking it would
-      // tell a kitchen there is nothing to cook — see the header of lib/kdsApi.
-      setHealth(result.kind);
-    };
-    void poll();
-    const id = setInterval(() => void poll(), POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
+    const result = boardQuery.data;
+    if (!result || result.kind !== "ok") return;
+    setTickets(sortBoard(result.tickets).filter((t) => !pending.current.has(t.id)));
+    setDropped(result.dropped);
+    setOffsetMs(result.serverOffsetMs);
+    setLastGoodAt(Date.now());
+    // Note what is NOT here: on forbidden or unavailable the last good board
+    // stays exactly where it is and only `health` changes. Blanking it would
+    // tell a kitchen there is nothing to cook — see the header of lib/kdsApi.
+  }, [boardQuery.data]);
 
   useEffect(() => {
     // Set on mount rather than at useState time: this island is server-rendered
@@ -80,6 +78,10 @@ export function useKitchenBoard(): UseKitchenBoard {
     const id = setInterval(() => setNowMs(Date.now()), TICK_MS);
     return () => clearInterval(id);
   }, []);
+
+  const readyMutation = useMutation({
+    mutationFn: (id: number) => markReady(id),
+  });
 
   const markTicketReady = useCallback(
     async (id: number) => {
@@ -93,7 +95,8 @@ export function useKitchenBoard(): UseKitchenBoard {
       // both plate it while the request is in flight.
       setTickets((prev) => (prev ?? []).filter((t) => t.id !== id));
 
-      const outcome = readyOutcome((await markReady(id)).kind, ticketLabel(target));
+      const result = await readyMutation.mutateAsync(id);
+      const outcome = readyOutcome(result.kind, ticketLabel(target));
       pending.current.delete(id);
       setBusyIds((prev) => prev.filter((b) => b !== id));
       setNote(outcome.note);
@@ -107,8 +110,10 @@ export function useKitchenBoard(): UseKitchenBoard {
         );
       }
     },
-    [tickets],
+    [tickets, readyMutation],
   );
+
+  const health: BoardHealth = boardQuery.isPending ? "loading" : (boardQuery.data?.kind ?? "loading");
 
   return {
     tickets,

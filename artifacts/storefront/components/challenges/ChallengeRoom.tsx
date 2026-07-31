@@ -2,49 +2,80 @@
 // Client: the interactive membership + cohort feed for a challenge. Session-
 // gated; on mount it loads the signed-in user's membership (joined + check-ins)
 // and handles join/leave/post. All PUBLIC challenge info is server-rendered by
-// the page — this owns only the authed, mutating parts.
+// the page — this owns only the authed, mutating parts. The membership load is
+// a useQuery (key ["challenges","room",slug]); join/leave/post still write
+// straight into that query's cache (`setQueryData`) for the same immediate,
+// no-refetch-needed UI feedback the previous hand-rolled state had. A non-401
+// load failure still resolves to the "not joined, empty feed" defaults rather
+// than a distinct error card — unchanged from before, since `loadChallengeState`
+// (the underlying client) already throws honestly; this component just never
+// surfaced that beyond the 401 case, and porting the mechanism isn't porting
+// new UI copy that wasn't asked for here.
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAuthUser, type AuthUser } from "@/lib/api";
 import { ApiError } from "@/lib/apiClient";
 import {
   loadChallengeState, joinChallenge, leaveChallenge, postToChallenge,
-  type ChallengePost, type ChallengeCheckIn,
+  type ChallengeDetail, type ChallengePost,
 } from "@/lib/challengesApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Button } from "@/components/ui/button";
 import { PostFeed } from "./PostFeed";
 
+type RoomState = Pick<ChallengeDetail, "joined" | "posts" | "checkIns">;
+const EMPTY_ROOM_STATE: RoomState = { joined: false, posts: [], checkIns: [] };
+
 export function ChallengeRoom({ slug }: { slug: string }) {
   const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
-  const [joined, setJoined] = useState(false);
-  const [posts, setPosts] = useState<ChallengePost[]>([]);
-  const [checkIns, setCheckIns] = useState<ChallengeCheckIn[]>([]);
-  const [loaded, setLoaded] = useState(false);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const roomKey = ["challenges", "room", slug] as const;
 
   async function loadUser() {
     try { const { user: u } = await getAuthUser(); setUser(u); } catch { setUser(null); }
   }
-  async function loadState() {
-    try {
-      const s = await loadChallengeState(slug);
-      setJoined(s.joined); setPosts(s.posts); setCheckIns(s.checkIns);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) setUser(null);
-    } finally {
-      setLoaded(true);
-    }
-  }
   useEffect(() => { void loadUser(); }, []);
-  useEffect(() => { if (user) void loadState(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data, isPending, error: loadError, refetch } = useQuery({
+    queryKey: roomKey,
+    queryFn: async (): Promise<RoomState> => {
+      try {
+        const s = await loadChallengeState(slug);
+        return { joined: s.joined, posts: s.posts, checkIns: s.checkIns };
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) throw e;
+        // Any other failure resolves to EMPTY_ROOM_STATE, matching the
+        // pre-migration behavior exactly (loadState()'s catch was 401-only
+        // too; the underlying client already throws honestly for outages,
+        // but this component never surfaced that beyond the 401 case).
+        return EMPTY_ROOM_STATE;
+      }
+    },
+    enabled: !!user,
+  });
+  useEffect(() => {
+    if (loadError instanceof ApiError && loadError.status === 401) setUser(null);
+  }, [loadError]);
+
+  const joined = data?.joined ?? false;
+  const posts = data?.posts ?? [];
+  const checkIns = data?.checkIns ?? [];
 
   async function toggleJoin() {
     setBusy(true); setError(null);
     try {
-      if (joined) { await leaveChallenge(slug); setJoined(false); setCheckIns([]); }
-      else { await joinChallenge(slug); await loadState(); }
+      if (joined) {
+        await leaveChallenge(slug);
+        queryClient.setQueryData<RoomState>(roomKey, (old) =>
+          old ? { ...old, joined: false, checkIns: [] } : old,
+        );
+      } else {
+        await joinChallenge(slug);
+        await refetch();
+      }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) { setUser(null); return; }
       setError("Something went wrong. Please try again.");
@@ -56,8 +87,11 @@ export function ChallengeRoom({ slug }: { slug: string }) {
     if (!body || busy) return;
     setBusy(true); setError(null);
     try {
-      const post = await postToChallenge(slug, body);
-      setPosts((p) => [post, ...p]); setDraft("");
+      const post: ChallengePost = await postToChallenge(slug, body);
+      queryClient.setQueryData<RoomState>(roomKey, (old) =>
+        old ? { ...old, posts: [post, ...old.posts] } : old,
+      );
+      setDraft("");
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) { setUser(null); return; }
       setError(e instanceof ApiError && e.status === 403 ? "Join the challenge to post." : "Couldn't post — try again.");
@@ -155,7 +189,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
             Join the challenge to post in the cohort feed.
           </p>
         )}
-        {loaded ? <PostFeed posts={posts} /> : <p className="mt-4 text-sm text-ink-muted">Loading the feed…</p>}
+        {isPending ? <p className="mt-4 text-sm text-ink-muted">Loading the feed…</p> : <PostFeed posts={posts} />}
       </div>
     </div>
   );

@@ -97,13 +97,11 @@ export async function payForAppointment(
   return verifyAppointment(id, paid, fetchImpl);
 }
 
-/** Fetch all RD appointments for the authenticated user. [] on error or unauthed. */
+/** Fetch all RD appointments for the authenticated user. Throws ApiError on
+ *  failure (401 → sign in) — callers branch on it, most recently
+ *  AppointmentsList.tsx's 401→PhoneAuth / else→error-with-retry split. */
 export async function getMyAppointments(fetchImpl?: FetchImpl): Promise<Appointment[]> {
-  try {
-    const data = await apiGet<{ appointments?: Appointment[] }>("/rd/appointments", fetchImpl);
-    return data.appointments ?? [];
-  } catch {
-    return [];
-  }
+  const data = await apiGet<{ appointments?: Appointment[] }>("/rd/appointments", fetchImpl);
+  return data.appointments ?? [];
 }
 

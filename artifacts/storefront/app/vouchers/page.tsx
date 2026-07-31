@@ -12,7 +12,7 @@ export const metadata: Metadata = {
  *  automatically at checkout. Redeem-only — no charge path here. */
 export default function VouchersPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       {/* pb-44 clears the sticky footer VoucherRedeem renders (single Redeem
           button) — same reasoning as /checkout's pb-44. */}
       <section className="mx-auto max-w-md px-4 pt-10 pb-44">

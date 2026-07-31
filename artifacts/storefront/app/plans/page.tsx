@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function PlansPage() {
   const plans = routerPlans();
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <section className="mx-auto flex max-w-md flex-col gap-10 px-4 py-10">
         <h1 className="sr-only">Choose your plan</h1>
         <GoalRouter />

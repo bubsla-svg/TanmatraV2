@@ -7,11 +7,21 @@
 import "@/lib/themes/stitch.css";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { useCart } from "@/components/cart/CartProvider";
-import { CartDrawer } from "@/components/cart/CartDrawer";
+
+// CartDrawer pulls in the Drawer primitive (Vaul — drag-physics + portal +
+// focus management, see components/ui/drawer.tsx) plus CartUpsellRail. A
+// static import here would ship all of that in the baseline JS for every
+// route, since MiniCartBar is mounted globally in app/layout.tsx — most
+// visits never open the drawer. Loaded on demand instead.
+const CartDrawer = dynamic(
+  () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
+  { ssr: false },
+);
 
 /**
  * Persistent mini-cart bar (§4.1/§4.3): once the cart is non-empty, a fixed

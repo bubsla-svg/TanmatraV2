@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { formatPaise } from "@/lib/format";
 
 /** A concrete, RD-signed identity for the bump. When absent (blocked on
@@ -60,11 +61,13 @@ export function OrderBump({
     <div className="flex flex-col gap-3 rounded-2xl border border-sage/40 bg-surface-raised p-4 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-3">
         {rd?.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- fixed 56px
-          // circle, zero CLS; next/image lands in a later phase.
-          <img
+          // Fixed 56px circle at every viewport — no `sizes`, so next/image
+          // emits the 1x/2x pair rather than the full width ladder.
+          <Image
             src={rd.photo}
             alt=""
+            width={56}
+            height={56}
             className="h-14 w-14 shrink-0 rounded-full object-cover"
           />
         ) : (

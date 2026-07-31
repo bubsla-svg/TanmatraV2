@@ -2,10 +2,11 @@
 // Client: community Q&A. Reading is public; asking requires a session (401 →
 // PhoneAuth). A failed submission surfaces a real error — this surface never
 // fabricates an "answered" thread or a submission that didn't reach the server.
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, BadgeCheck, Clock } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
-import { getAuthUser, type AuthUser } from "@/lib/api";
+import { getAuthUser } from "@/lib/api";
 import { getCommunityQaThreads, submitQuestionThread, type QaThread } from "@/lib/ecosystemApi";
 import { Button } from "@/components/ui/button";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
@@ -19,61 +20,63 @@ const CATEGORIES = [
 const categoryLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
 export function CommunityQaForum() {
-  const [threads, setThreads] = useState<QaThread[] | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
+  const queryClient = useQueryClient();
+  const userQuery = useQuery({
+    queryKey: ["auth", "user"],
+    queryFn: () => getAuthUser().then((r) => r.user),
+  });
+  const threadsQuery = useQuery({
+    queryKey: ["community", "qa"],
+    queryFn: () => getCommunityQaThreads(),
+  });
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [cat, setCat] = useState<string>("general");
-  const [busy, setBusy] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoadError(null);
-    try { setThreads(await getCommunityQaThreads()); }
-    catch { setLoadError("Couldn't load the forum just now."); }
-  }, []);
-
-  const loadUser = useCallback(async () => {
-    try { const { user: u } = await getAuthUser(); setUser(u); }
-    catch { setUser(null); }
-  }, []);
-
-  useEffect(() => { void load(); void loadUser(); }, [load, loadUser]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim() || !body.trim() || busy) return;
-    setBusy(true);
-    setSubmitError(null);
-    setSubmitted(false);
-    try {
-      const created = await submitQuestionThread({ questionTitle: title, questionBody: body, category: cat });
-      setThreads((p) => [created, ...(p ?? [])]);
+  const submitMutation = useMutation({
+    mutationFn: (input: { questionTitle: string; questionBody: string; category: string }) => submitQuestionThread(input),
+    onSuccess: (created) => {
+      queryClient.setQueryData<QaThread[]>(["community", "qa"], (old) => [created, ...(old ?? [])]);
       setTitle(""); setBody("");
-      setSubmitted(true);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) { setUser(null); setSubmitError("Your session expired — sign in again to post your question."); }
-      else setSubmitError(err instanceof ApiError ? err.message : "Couldn't send your question. Please try again.");
-    } finally {
-      setBusy(false);
-    }
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 401) queryClient.setQueryData(["auth", "user"], null);
+    },
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !body.trim() || submitMutation.isPending) return;
+    submitMutation.mutate({ questionTitle: title, questionBody: body, category: cat });
   }
+
+  const submitError = submitMutation.isError
+    ? (submitMutation.error instanceof ApiError && submitMutation.error.status === 401
+        ? "Your session expired — sign in again to post your question."
+        : (submitMutation.error instanceof ApiError ? submitMutation.error.message : "Couldn't send your question. Please try again."))
+    : null;
+
+  const user = userQuery.data;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
       <div className="flex flex-col gap-4 lg:col-span-8">
         <h2 className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">Questions answered by our RDs</h2>
-        {threads === null ? (
-          <p className="text-sm text-ink-muted">{loadError ?? "Loading questions…"}</p>
-        ) : threads.length === 0 ? (
+        {threadsQuery.isPending ? (
+          <p className="text-sm text-ink-muted">Loading questions…</p>
+        ) : threadsQuery.isError ? (
+          <p className="text-sm text-ink-muted">
+            Couldn&rsquo;t load the forum just now.{" "}
+            <button type="button" onClick={() => void threadsQuery.refetch()} className="font-medium text-gold-text hover:underline">Try again</button>
+          </p>
+        ) : threadsQuery.data.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line bg-surface-subtle p-10 text-center">
             <p className="text-sm text-ink-muted">No questions yet — be the first to ask our dietitians.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {threads.map((t) => (
+            {threadsQuery.data.map((t) => (
               <article key={t.id} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6">
                 <div className="flex items-center justify-between gap-2">
                   <span className="rounded-full bg-sage-soft px-3 py-1 font-mono text-[11px] font-semibold tracking-wide text-sage-text">{categoryLabel(t.category)}</span>
@@ -116,7 +119,7 @@ export function CommunityQaForum() {
                 {submitError}
               </p>
             )}
-            <PhoneAuth onVerified={() => void loadUser()} />
+            <PhoneAuth onVerified={() => void userQuery.refetch()} />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6 shadow-sm">
@@ -158,14 +161,14 @@ export function CommunityQaForum() {
                 {submitError}
               </p>
             )}
-            {submitted && (
+            {submitMutation.isSuccess && (
               <p className="rounded-xl border border-sage/40 bg-sage-soft px-3.5 py-2.5 text-xs font-semibold text-sage-text">
                 Sent — an RD will reply here once they&rsquo;ve reviewed it.
               </p>
             )}
 
-            <Button type="submit" disabled={busy} shape="pill" size="fluid" className="mt-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold disabled:opacity-40">
-              {busy ? "Sending…" : (
+            <Button type="submit" disabled={submitMutation.isPending} shape="pill" size="fluid" className="mt-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold disabled:opacity-40">
+              {submitMutation.isPending ? "Sending…" : (
                 <>
                   Send to our RDs
                   <ArrowRight aria-hidden className="h-3.5 w-3.5" />
