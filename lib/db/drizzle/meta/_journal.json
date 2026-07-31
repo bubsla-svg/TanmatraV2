@@ -162,6 +162,13 @@
       "when": 1785092082031,
       "tag": "0022_partner_lead_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1785501066600,
+      "tag": "0023_perf_indexes_delivery_events_subscriptions_menu_items_riders",
+      "breakpoints": true
     }
   ]
 }
