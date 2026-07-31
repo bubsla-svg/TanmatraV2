@@ -507,6 +507,7 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/lib/menuResolver.cache.test.ts
+          ./src/routes/petpooja.cacheInvalidation.test.ts
       # OA-DEEP-1.7: buildDishSuggestions used to independently re-fetch and
       # re-scan the entire orders window for every dish in a pricing run —
       # O(dishes × orders × items). buildSliceCountsBySlug fetches the

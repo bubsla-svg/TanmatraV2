@@ -53,8 +53,10 @@ export async function getCachedOrFetch<T>(fetcher: () => Promise<T>): Promise<T>
 }
 
 /** Call from any write path that mutates data the merged catalog reads:
- * menu-item CRUD (lib/menu.ts) and dish-review-summary writes
- * (lib/dishReviews.ts). */
+ * menu-item CRUD (lib/menu.ts), dish-review-summary writes
+ * (lib/dishReviews.ts), and the inbound Petpooja POS webhooks
+ * (routes/petpooja.ts's push-menu, item_stock, item_stock_off — these
+ * write price_paise/isAvailable directly via drizzle, bypassing lib/menu.ts). */
 export function invalidateMenuCatalogCache(): void {
   generation++;
   cached = null;
