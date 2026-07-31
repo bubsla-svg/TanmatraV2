@@ -102,17 +102,45 @@ export async function loadDynamicRecipeCosts(): Promise<
   const recipeCostMap = new Map<string, FoodCostPaise>();
   const unknown: string[] = [];
 
+  // Group ingredients by recipe once instead of re-filtering the whole
+  // ingredient list per recipe (was O(recipes × ingredients)).
+  const ingredientsByRecipe = new Map<number, typeof ingredients>();
+  for (const ing of ingredients) {
+    const list = ingredientsByRecipe.get(ing.recipeId);
+    if (list) list.push(ing);
+    else ingredientsByRecipe.set(ing.recipeId, [ing]);
+  }
+
+  // The ingredient→inventory match is a two-way fuzzy substring test, so it
+  // cannot become a hash lookup without changing which row wins. Memoise it
+  // by ingredient name instead: the same names recur across recipes, so this
+  // collapses O(ingredients × inventory) to O(distinct names × inventory)
+  // while preserving `Array.find`'s first-match-wins semantics exactly.
+  const lowerInventory = inventory.map((inv) => ({
+    inv,
+    product: inv.product.toLowerCase(),
+  }));
+  const matchCache = new Map<string, (typeof inventory)[number] | undefined>();
+  function matchInventory(
+    ingNameLower: string,
+  ): (typeof inventory)[number] | undefined {
+    const cached = matchCache.get(ingNameLower);
+    if (cached !== undefined || matchCache.has(ingNameLower)) return cached;
+    const found = lowerInventory.find(
+      (e) =>
+        e.product.includes(ingNameLower) || ingNameLower.includes(e.product),
+    )?.inv;
+    matchCache.set(ingNameLower, found);
+    return found;
+  }
+
   for (const recipe of recipes) {
-    const recipeIngs = ingredients.filter((ing) => ing.recipeId === recipe.id);
+    const recipeIngs = ingredientsByRecipe.get(recipe.id) ?? [];
     let totalCostPaise = 0;
 
     for (const ing of recipeIngs) {
       const ingNameLower = ing.ingredient.toLowerCase();
-      const match = inventory.find(
-        (inv) =>
-          inv.product.toLowerCase().includes(ingNameLower) ||
-          ingNameLower.includes(inv.product.toLowerCase())
-      );
+      const match = matchInventory(ingNameLower);
 
       if (match) {
         const grams = parseGrams(ing.quantityText || ing.rawText);
