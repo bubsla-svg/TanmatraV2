@@ -46,6 +46,15 @@ const slug = (name: string) => `test-${name}-${RUN}`;
 const USER_REGISTRY = new Map<string, { id: string }>();
 const CREATED_ROLE_OPERATOR_IDS: string[] = [];
 const CREATED_SLUGS: string[] = [];
+// legal_company_profile is a genuine singleton (unique singletonKey) with no
+// admin write route — the test below seeds it directly ONLY if no row exists
+// yet, reusing one it finds (e.g. a real migration already run against a
+// persistent DB). Only clean up the row in `after()` if this run is the one
+// that created it: unconditionally deleting it would destroy real seeded
+// data on a shared DB, and never deleting it would permanently block the
+// real seedLegalDocuments.ts migration from ever inserting the real company
+// profile in any database this test suite has touched.
+let createdCompanyProfile = false;
 
 function makeApp(): Express {
   const app = express();
@@ -85,6 +94,9 @@ after(async () => {
   for (const id of CREATED_ROLE_OPERATOR_IDS) {
     await db.delete(adminRolesTable).where(eq(adminRolesTable.userId, id));
     await db.delete(usersTable).where(eq(usersTable.id, id));
+  }
+  if (createdCompanyProfile) {
+    await db.delete(legalCompanyProfileTable).where(eq(legalCompanyProfileTable.singletonKey, "singleton"));
   }
 });
 
@@ -287,6 +299,7 @@ describe("Policy/Legal/Disclaimer CMS (ADM-20)", () => {
     // one-time migration seed populates it in production.
     const existing = await db.select().from(legalCompanyProfileTable).limit(1);
     if (existing.length === 0) {
+      createdCompanyProfile = true;
       await db.insert(legalCompanyProfileTable).values({
         legalName: "Test Legal Name Pvt Ltd",
         brand: "TestBrand",
