@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { apiPath } from "@/lib/apiBase";
+import { AdminShell } from "@/components/layout/AdminShell";
 
 type AdminAuthState = "checking" | "authed" | "anon";
 
@@ -50,5 +51,13 @@ export default function AdminAuthLayout() {
       />
     );
   }
-  return <Outlet />;
+  // The console's own chrome. root.tsx suppresses the consumer Header/Footer/
+  // BottomNav on every internal route (lib/internalSurfaces.ts) — mounting the
+  // shell HERE, inside the authed branch, means the nav appears only once a
+  // session is confirmed and never frames the login or the auth-check state.
+  return (
+    <AdminShell>
+      <Outlet />
+    </AdminShell>
+  );
 }

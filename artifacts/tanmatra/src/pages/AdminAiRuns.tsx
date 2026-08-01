@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_BASE } from "@/lib/apiBase";
+import { summariseAiFailure, dominantFailure } from "@/lib/aiRunFailure";
 
 interface AiRunRow {
   id: number;
@@ -22,6 +23,12 @@ interface AiRunRow {
   createdAt: string;
   output: string | null;
   toolCalls: Array<{ name: string; ok: boolean; ms: number }>;
+  /**
+   * The upstream failure message the gateway stored for this run. Present only
+   * under scope:"admin" — GET /ai/runs strips it for a customer reading their
+   * own history, because it is a raw provider string.
+   */
+  error?: string | null;
 }
 
 function fmtCost(micro: number): string {
@@ -30,6 +37,30 @@ function fmtCost(micro: number): string {
 }
 
 const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
+
+/**
+ * The cause of one failed run. Before this existed a failing run rendered a
+ * bare red "error" badge and nothing else, so a console full of dead agents
+ * was indistinguishable from a console full of dead agents for a different
+ * reason.
+ */
+function RunFailure({ error }: { error: string }) {
+  const summary = summariseAiFailure(error);
+  return (
+    <div className="rounded border border-destructive/40 bg-destructive/5 p-2 space-y-1">
+      <p className="text-xs font-semibold text-destructive">{summary.label}</p>
+      {/* The provider's own words, always. The classifier is a convenience and
+          must never be the only thing an operator can see — an unrecognised
+          message still has to be readable here. */}
+      <p className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-words">
+        {error}
+      </p>
+      {summary.hint && (
+        <p className="text-xs text-muted-foreground">{summary.hint}</p>
+      )}
+    </div>
+  );
+}
 
 export default function AdminAiRuns() {
   const [rows, setRows] = useState<AiRunRow[]>([]);
@@ -92,6 +123,9 @@ export default function AdminAiRuns() {
 
   const totalCost = rows.reduce((s, r) => s + r.costMicroUsd, 0);
   const totalTokens = rows.reduce((s, r) => s + r.totalTokens, 0);
+  // When most of the page failed the same way, say so once at the top instead
+  // of making an operator infer it from a column of identical red badges.
+  const outage = dominantFailure(rows);
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -207,6 +241,22 @@ export default function AdminAiRuns() {
         </Card>
       )}
 
+      {outage && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6 space-y-1">
+            <p className="text-sm font-semibold text-destructive">
+              {outage.summary.label} — {outage.failed} of {outage.total} runs
+              shown
+            </p>
+            {outage.summary.hint && (
+              <p className="text-xs text-muted-foreground">
+                {outage.summary.hint}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Recent runs</CardTitle>
@@ -253,6 +303,7 @@ export default function AdminAiRuns() {
                     <div>tools: {r.toolCalls?.length ?? 0}</div>
                     <div>user: {r.userId ?? "—"}</div>
                   </div>
+                  {r.error && <RunFailure error={r.error} />}
                   {r.output && (
                     <p className="text-sm whitespace-pre-wrap line-clamp-3">
                       {r.output}
