@@ -170,7 +170,10 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             size="fluid"
             className="px-5 py-2.5 font-semibold shadow-sm disabled:opacity-40"
           >
-            {busy ? "Checking&hellip;" : "Check"}
+            {/* A real ellipsis character — an entity inside a JS string is
+                LITERAL text, not markup; entities only resolve in JSX text
+                nodes. The busy state read "Checking&amp;hellip;" verbatim. */}
+            {busy ? "Checking…" : "Check"}
           </Button>
           <button
             type="button"

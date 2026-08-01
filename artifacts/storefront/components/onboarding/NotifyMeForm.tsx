@@ -130,7 +130,9 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
           size="fluid"
           className="rounded-lg px-4 py-2 text-xs font-semibold shadow-sm disabled:opacity-40"
         >
-          {busy ? "Saving&hellip;" : "Notify me"}
+          {/* Real ellipsis — entities do not resolve inside JS strings (see
+              ServiceabilityBar's Check button). */}
+          {busy ? "Saving…" : "Notify me"}
         </Button>
         <button
           type="button"

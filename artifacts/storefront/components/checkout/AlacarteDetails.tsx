@@ -85,10 +85,17 @@ export function AlacarteDetails({
                 <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
               </div>
               <div className="flex items-center gap-3">
+                {/* .touch-target-critical (48px): globals.css reserves the
+                    stricter tier for exactly this control — "Money-path
+                    controls (Pay, quantity steppers)... a mis-tap here costs
+                    an order". These were min-h-8/min-w-8 = 32px, the only
+                    sub-44px steppers in the storefront, live on the checkout
+                    screen where a fat-fingered − removes a dish from the
+                    order being paid for. */}
                 <div className="flex items-center rounded-full border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
-                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">−</button>
+                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">−</button>
                   <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
-                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="min-h-8 min-w-8 text-ink transition-transform active:scale-[0.98]">+</button>
+                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">+</button>
                 </div>
                 <span className="tabular w-16 text-right text-sm font-semibold text-ink">
                   {formatPaise(l.pricePaise * l.qty)}
