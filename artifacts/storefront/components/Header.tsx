@@ -3,7 +3,7 @@ import { TopNav } from "@astryxdesign/core/TopNav";
 import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ServiceabilityBar } from "@/components/onboarding/ServiceabilityBar";
+import { DeliveryAddressBar } from "@/components/onboarding/DeliveryAddressBar";
 
 /**
  * Global chrome shell. Server component itself; it hosts one small client island
@@ -40,9 +40,17 @@ export function Header() {
                   at every width. min-w-0 lets it shrink (its label truncates)
                   instead of shoving ⌘K off a 360px bar: Astryx's TopNav
                   endContent slot is flex-shrink:0, so the cap has to come from
-                  the widget itself. */}
+                  the widget itself.
+
+                  DeliveryAddressBar WRAPS that single instance rather than
+                  adding a second: signed out, or signed in with nothing saved,
+                  it renders exactly the ServiceabilityBar that used to sit
+                  here. Signed in with an address, it swaps in the ambient
+                  "Delivering to: …" switcher instead. Either way the count of
+                  mounted ServiceabilityBars stays 0-or-1, which is what the
+                  invariant above actually requires. */}
               <div className="min-w-0">
-                <ServiceabilityBar placement="menu" />
+                <DeliveryAddressBar />
               </div>
               <CommandMenu />
               <ThemeToggle />
