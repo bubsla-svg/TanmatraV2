@@ -1,5 +1,5 @@
 "use client"; // Justification: client-side Leaflet interactive map rendering and coordinate drag events.
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -28,12 +28,22 @@ function MapEvents({
     map.setView([coords.lat, coords.lng], Math.max(map.getZoom(), 16));
   }, [recenterSeq, coords.lat, coords.lng, map]);
 
-  useMapEvents({
-    dragend() {
-      const center = map.getCenter();
-      onDragEnd(center.lat, center.lng);
-    },
-  });
+  // react-leaflet's useMapEvents re-subscribes (map.off + map.on) whenever the
+  // handlers OBJECT identity changes. An inline `{ dragend() {...} } }` literal
+  // is a new object every render, so typing in the search box above (which
+  // re-renders this whole tree on every keystroke, see LocationPickerFlow) was
+  // tearing down and re-attaching the drag listener on every keystroke. Memoing
+  // the object on the one thing it actually depends on stops that churn.
+  const handlers = useMemo(
+    () => ({
+      dragend() {
+        const center = map.getCenter();
+        onDragEnd(center.lat, center.lng);
+      },
+    }),
+    [map, onDragEnd],
+  );
+  useMapEvents(handlers);
 
   return null;
 }
@@ -41,8 +51,14 @@ function MapEvents({
 /**
  * Interactive canvas-free map picker using OSM Leaflet tiles.
  * Displays a fixed central pin with instruction tooltip while the map scrolls beneath.
+ *
+ * `memo`'d: the host sheet (LocationPickerFlow) re-renders on every keystroke
+ * in its address search box, and re-mounting/re-rendering a Leaflet map is
+ * far from free. As long as `coords`/`recenterSeq`/`onDragEnd` are stable
+ * (the parent memoizes `onDragEnd` with `useCallback`), typing in the search
+ * field no longer touches the map subtree at all.
  */
-export default function LocationPickerMap({
+function LocationPickerMap({
   coords,
   recenterSeq,
   onDragEnd,
@@ -83,3 +99,5 @@ export default function LocationPickerMap({
     </div>
   );
 }
+
+export default memo(LocationPickerMap);

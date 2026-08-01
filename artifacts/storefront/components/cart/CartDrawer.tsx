@@ -11,6 +11,7 @@ import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { CartUpsellRail } from "./CartUpsellRail";
 import type { MarketplaceItem } from "@/lib/marketplaceApi";
 
@@ -29,6 +30,10 @@ export function CartDrawer({
   onOpenChange: (open: boolean) => void;
 }) {
   const { cart, setCart } = useCart();
+
+  // Back gesture closes the drawer, not the page (Vaul owns the slide;
+  // history ownership lives here).
+  useOverlayHistory(open, () => onOpenChange(false));
 
   let footer: ReactNode;
   if (LIVE_CHECKOUT_ENABLED) {

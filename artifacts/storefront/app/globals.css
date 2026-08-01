@@ -130,6 +130,36 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+
+  /* Overlay/disclosure motion — COMPOSITOR PROPERTIES ONLY (transform +
+     opacity). Never animate height/width/top/left here: those run on the main
+     thread and drop frames on mid-range phones. Every keyframe animates
+     `transform`, which COMPOSES with Tailwind v4's translate/scale utilities
+     (they emit the individual `translate`/`scale` properties, not
+     `transform`), so a `-translate-x-1/2`-centred dialog keeps its centring
+     while the entrance plays. `both` fill keeps frame 0 applied before the
+     animation starts (no flash of the settled state). */
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-sheet-in: sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-dialog-in: dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-disclosure-in: disclosure-in 180ms ease-out both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes sheet-in {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes disclosure-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
 html {
@@ -137,6 +167,9 @@ html {
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-text-size-adjust: 100%;
+  /* Anchor jumps (#plans, skip-link) glide instead of teleporting. The
+     reduced-motion block below forces this back to `auto`. */
+  scroll-behavior: smooth;
 }
 
 /* data-stitch lives on <html> itself now (app/layout.tsx's STITCH_ROUTE_SCRIPT),
@@ -240,6 +273,16 @@ html, body {
    the clipping hazard. */
 .grid-contain > * {
   contain: layout style;
+}
+
+/* Off-screen carousel items: the browser skips layout+paint entirely until the
+   card scrolls near the viewport. The intrinsic-size fallback reserves an
+   approximate box for skipped items so the rail's scroll range doesn't jump as
+   cards materialise — `auto` remembers the real size once rendered. Apply to
+   the ITEMS of a heavy horizontal rail, never the scroll container itself. */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px auto 320px;
 }
 
 /* 16px Minimum Input Rule to prevent iOS Safari auto-zoom */

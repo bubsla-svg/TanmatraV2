@@ -28,11 +28,11 @@ export function DishGallery({ images, alt }: { images: string[]; alt: string }) 
       </div>
 
       {images.length > 1 && (
-        <ul className="mt-3 flex gap-2 overflow-x-auto" aria-label={`${alt} photos`}>
+        <ul className="mt-3 flex snap-x snap-mandatory gap-2 overflow-x-auto" aria-label={`${alt} photos`}>
           {images.map((image, i) => {
             const isActive = i === active;
             return (
-              <li key={image} className="shrink-0">
+              <li key={image} className="shrink-0 snap-start">
                 <button
                   type="button"
                   aria-label={`View photo ${i + 1} of ${images.length}`}

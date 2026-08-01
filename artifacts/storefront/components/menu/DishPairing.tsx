@@ -61,9 +61,9 @@ export function DishPairing({
       {related.length > 0 && (
         <section>
           <h2 className="text-sm font-semibold text-ink">More like this</h2>
-          <ul className="mt-3 flex snap-x gap-3 overflow-x-auto pb-2">
+          <ul className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
             {related.map((dish) => (
-              <li key={dish.slug} className="w-40 shrink-0 snap-start">
+              <li key={dish.slug} className="w-40 shrink-0 snap-start cv-auto">
                 <MiniCard dish={dish} />
               </li>
             ))}

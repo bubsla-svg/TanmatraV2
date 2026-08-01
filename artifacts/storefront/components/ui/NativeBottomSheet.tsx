@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useOverlayHistory } from "./useOverlayHistory";
 
 export function NativeBottomSheet({
   open,
@@ -13,26 +13,11 @@ export function NativeBottomSheet({
   title?: string;
   children: React.ReactNode;
 }) {
-  // Android Back-Button Trap: Push state to History API when opened
-  useEffect(() => {
-    if (!open) return;
-
-    const stateKey = `sheet_${Date.now()}`;
-    window.history.pushState({ sheetOpen: true, key: stateKey }, "");
-
-    const handlePopState = () => {
-      onClose();
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      if (window.history.state?.sheetOpen) {
-        window.history.back();
-      }
-    };
-  }, [open, onClose]);
+  // Android/iOS back gesture closes the sheet, not the page. The shared hook
+  // also fixes what the old inline effect got wrong: it depended on `onClose`
+  // identity, so any parent re-render tore the trap down and popped history —
+  // closing the sheet from an unrelated state change.
+  useOverlayHistory(open, onClose);
 
   if (!open) return null;
 
@@ -41,8 +26,9 @@ export function NativeBottomSheet({
       {/* Backdrop Tap */}
       <div className="absolute inset-0" onClick={onClose} aria-hidden />
 
-      {/* Spring Physics Bottom Sheet Container */}
-      <div className="relative z-10 w-full max-w-lg rounded-t-3xl border-t border-line bg-surface p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] shadow-2xl transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+      {/* Bottom sheet: entrance is transform-only (animate-sheet-in) so the
+          slide stays on the compositor. */}
+      <div className="relative z-10 w-full max-w-lg animate-sheet-in rounded-t-3xl border-t border-line bg-surface p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] shadow-2xl max-h-[90vh] overflow-y-auto overscroll-contain">
         {/* Native Grabber Bar */}
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-line-strong" />
 

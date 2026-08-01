@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { reverseGeocode, searchLocation, DEFAULT_MAP_CENTER, type GeoPlace } from "@/lib/geoClient";
 import { gradeGpsAccuracy, type GpsConfidence } from "@/lib/geolocation";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { LocationSummaryCard } from "./LocationSummaryCard";
 
 const PickerMap = dynamic(() => import("./LocationPickerMap"), {
@@ -33,6 +34,10 @@ export function LocationPickerFlow({
   const [gpsConfidence, setGpsConfidence] = useState<GpsConfidence | null>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Mounted only while "open" (every caller conditionally renders this flow)
+  // — the back gesture closes the picker instead of leaving the host page.
+  useOverlayHistory(true, onClose);
 
   const fetchPlace = useCallback(async (lat: number, lng: number) => {
     setLoading(true);
@@ -80,6 +85,21 @@ export function LocationPickerFlow({
     setSuggestions([]);
   }
 
+  // Stable identity so `memo(LocationPickerMap)` — and the Leaflet listener
+  // it owns — don't churn every time `query` changes (i.e. every keystroke
+  // in the search box below).
+  const handleMapDragEnd = useCallback(
+    (lat: number, lng: number) => {
+      setCoords({ lat, lng });
+      // Dragging IS the corrective action the warning asks for, so the
+      // warning retires the moment it is taken. Leaving it up would
+      // nag a user who has already done the thing.
+      setGpsConfidence(null);
+      void fetchPlace(lat, lng);
+    },
+    [fetchPlace],
+  );
+
   // PORTALLED TO document.body ON PURPOSE. Every caller renders this sheet in
   // place, and one of them (ServiceabilityBar) sits inside the Header, which is
   // `sticky top-0 z-10 backdrop-blur` — both the z-index and the filter open a
@@ -95,7 +115,7 @@ export function LocationPickerFlow({
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[var(--z-modal)] flex flex-col bg-bg sm:mx-auto sm:my-8 sm:max-w-xl sm:rounded-3xl sm:border sm:border-line sm:shadow-2xl sm:overflow-hidden">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex animate-sheet-in flex-col bg-bg sm:mx-auto sm:my-8 sm:max-w-xl sm:animate-dialog-in sm:rounded-3xl sm:border sm:border-line sm:shadow-2xl sm:overflow-hidden">
       <div className="flex items-center gap-3 border-b border-line bg-surface px-4 py-3.5">
         <button type="button" onClick={onClose} aria-label="Go back" className="rounded-xl p-1 text-ink hover:bg-bg">
           <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -118,18 +138,7 @@ export function LocationPickerFlow({
       </div>
 
       <div className="relative flex-1 min-h-[260px] w-full">
-        <PickerMap
-          coords={coords}
-          recenterSeq={recenterSeq}
-          onDragEnd={(lat, lng) => {
-            setCoords({ lat, lng });
-            // Dragging IS the corrective action the warning asks for, so the
-            // warning retires the moment it is taken. Leaving it up would
-            // nag a user who has already done the thing.
-            setGpsConfidence(null);
-            void fetchPlace(lat, lng);
-          }}
-        />
+        <PickerMap coords={coords} recenterSeq={recenterSeq} onDragEnd={handleMapDragEnd} />
         {gpsConfidence !== null && gpsConfidence !== "precise" && (
           <div className="pointer-events-none absolute inset-x-0 top-3 z-[600] flex justify-center px-4">
             <p

@@ -10,6 +10,7 @@ import { Dialog } from "radix-ui";
 import { useQuery } from "@tanstack/react-query";
 import { formatPaise } from "@/lib/format";
 import { getSwapSuggestions, type MealPlanSlot } from "@/lib/mealPlanApi";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 
 const SLOT_LABEL: Record<MealPlanSlot, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 
@@ -25,15 +26,19 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
   });
   const items = suggestionsQuery.data?.suggestions ?? null;
 
+  // Mounted only while "open" (see MealPlanner.tsx) — the back gesture closes
+  // this dialog instead of leaving /meal-planner.
+  useOverlayHistory(true, onClose);
+
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 overflow-hidden rounded-3xl border border-line bg-surface shadow-lg"
+          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 animate-dialog-in overflow-hidden rounded-3xl border border-line bg-surface shadow-lg"
         >
           <Dialog.Title className="border-b border-line px-4 py-3 text-sm font-semibold text-ink">
             Swap {SLOT_LABEL[target.slot]}

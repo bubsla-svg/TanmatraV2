@@ -5,7 +5,7 @@
 // and POST /orders re-prices them against the server's own copy of the dish's
 // customisation groups. This file must never invent its own add-on system or
 // its own price arithmetic that lands in the cart.
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import type { DishData, DishCustomGroup } from "@workspace/menu-catalog";
 import { addLine } from "@/lib/cartStore";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,66 @@ function toSelections(state: SelectionState): CustomizationSelection[] {
   return Object.entries(state).map(([groupName, optionNames]) => ({ groupName, optionNames }));
 }
 
+/**
+ * One row in the dish picker. `memo`'d so that customising the SELECTED
+ * dish — which rewrites `selection` on every tap inside the groups below —
+ * doesn't re-render all 8 rows in this list on every tap; only `active`
+ * (whichever row is/was selected) actually needs to change.
+ */
+const DishPickRow = memo(function DishPickRow({
+  dish,
+  active,
+  onSelect,
+}: {
+  dish: DishData;
+  active: boolean;
+  onSelect: (slug: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(dish.slug)}
+      aria-pressed={active}
+      className={`flex items-center gap-4 rounded-2xl border p-3 text-left transition-all active:scale-[0.99] ${
+        active ? "border-gold bg-gold/5 shadow-[var(--shadow-card)]" : "border-line bg-surface hover:border-line-strong"
+      }`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- fixed thumbnail box, zero CLS */}
+      <img
+        src={dish.image}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="h-16 w-16 shrink-0 rounded-xl border border-line object-cover"
+      />
+      <div className="flex flex-1 flex-col gap-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className={`text-sm font-semibold ${active ? "text-gold-text" : "text-ink"}`}>
+            {dish.name}
+          </span>
+          <span className="tabular text-xs font-bold text-ink">{formatPaise(dish.price)}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+            {dish.macros.calories} kcal
+          </span>
+          <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+            {dish.macros.protein}g protein
+          </span>
+          <span className="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+            {dish.kitchen.toUpperCase()} kitchen
+          </span>
+        </div>
+      </div>
+      {active && (
+        <span aria-hidden="true" className="shrink-0 text-lg font-bold text-gold-text">
+          ✓
+        </span>
+      )}
+    </button>
+  );
+});
+
 export function CustomBuildHub({ dishes }: { dishes: DishData[] }) {
   const { cart, setCart } = useCart();
   const [selectedSlug, setSelectedSlug] = useState(dishes[0]?.slug ?? "");
@@ -48,6 +108,10 @@ export function CustomBuildHub({ dishes }: { dishes: DishData[] }) {
     setSelection(defaultsFor(selectedDish.customizations));
     setAdded(false);
   }, [selectedDish.slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Stable identity — see DishPickRow's doc comment: this is what lets the
+  // memo boundary hold while `selection` below changes on every tap.
+  const selectDish = useCallback((slug: string) => setSelectedSlug(slug), []);
 
   const selectSingle = (groupName: string, optionName: string) =>
     setSelection((prev) => ({ ...prev, [groupName]: [optionName] }));
@@ -89,53 +153,9 @@ export function CustomBuildHub({ dishes }: { dishes: DishData[] }) {
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold tracking-tight text-ink">Select a Dish</h2>
           <div className="flex max-h-[440px] flex-col gap-3 overflow-y-auto pr-1">
-            {dishes.slice(0, 8).map((d) => {
-              const active = d.slug === selectedDish.slug;
-              return (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setSelectedSlug(d.slug)}
-                  aria-pressed={active}
-                  className={`flex items-center gap-4 rounded-2xl border p-3 text-left transition-all active:scale-[0.99] ${
-                    active ? "border-gold bg-gold/5 shadow-[var(--shadow-card)]" : "border-line bg-surface hover:border-line-strong"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- fixed thumbnail box, zero CLS */}
-                  <img
-                    src={d.image}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="h-16 w-16 shrink-0 rounded-xl border border-line object-cover"
-                  />
-                  <div className="flex flex-1 flex-col gap-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`text-sm font-semibold ${active ? "text-gold-text" : "text-ink"}`}>
-                        {d.name}
-                      </span>
-                      <span className="tabular text-xs font-bold text-ink">{formatPaise(d.price)}</span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
-                        {d.macros.calories} kcal
-                      </span>
-                      <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
-                        {d.macros.protein}g protein
-                      </span>
-                      <span className="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
-                        {d.kitchen.toUpperCase()} kitchen
-                      </span>
-                    </div>
-                  </div>
-                  {active && (
-                    <span aria-hidden="true" className="shrink-0 text-lg font-bold text-gold-text">
-                      ✓
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+            {dishes.slice(0, 8).map((d) => (
+              <DishPickRow key={d.id} dish={d} active={d.slug === selectedDish.slug} onSelect={selectDish} />
+            ))}
           </div>
         </div>
 

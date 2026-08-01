@@ -31,9 +31,12 @@ export function AssessmentControls({
           <span>{progressPct}% Completed</span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full border border-line bg-surface-raised">
+          {/* Full-width bar scaled via `transform` (never `width`) so the fill
+              animates on the compositor — `scaleX` + `transform-origin: left`
+              is the hardware-accelerated equivalent of animating width. */}
           <div
-            className="h-full bg-gold transition-all duration-300"
-            style={{ width: `${progressPct}%` }}
+            className="h-full w-full origin-left rounded-full bg-gold transition-transform duration-300"
+            style={{ transform: `scaleX(${progressPct / 100})` }}
             role="progressbar"
             aria-valuenow={progressPct}
             aria-valuemin={0}

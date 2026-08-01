@@ -193,11 +193,16 @@ export default function RootLayout({
         // of its own — color-scheme is inherited, and STITCH_ROUTE_SCRIPT set
         // it on <html> above before this element was even parsed.
         //
-        // The bottom padding clears the mobile bottom nav, which is 64px PLUS
+        // The bottom padding clears the mobile bottom nav (64px) PLUS
         // env(safe-area-inset-bottom). A flat pb-16 (64px) left the last card
         // on /menu and /plans cut off on a notched phone with nothing left to
-        // scroll — the mini-cart bar sits above the nav and adds ~69px more.
-        className="bg-[var(--bg)] text-ink pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0"
+        // scroll, because MiniCartBar/DishBuyBar sit fixed ABOVE the nav and
+        // add ~69px more whenever the cart is non-empty — and MiniCartBar is
+        // mounted globally (this very file, below), so every route can gain
+        // that extra bar with no per-page change. pb-32 (128px) + the safe
+        // area clears nav+bar together with room to spare, generously, rather
+        // than re-deriving the exact pixel sum per route.
+        className="bg-[var(--bg)] text-ink pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-0"
       >
         <Script id="stitch-route-scope" strategy="beforeInteractive">
           {STITCH_ROUTE_SCRIPT}
