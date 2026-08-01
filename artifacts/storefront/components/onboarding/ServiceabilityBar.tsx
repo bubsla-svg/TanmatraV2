@@ -128,7 +128,14 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
     return (
       <div className={`${placement === 'menu' ? '' : 'mb-6'} rounded-2xl border border-[var(--danger)]/30 bg-[var(--surface)] p-5 text-left shadow-sm max-w-lg`}>
         <p className="text-sm font-semibold text-[var(--ink)]">
-          We&rsquo;re not in {pincode} yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
+          {/* `{" "}` is load-bearing, not formatting noise. Written as
+              `{pincode} yet`, the space between the expression and the
+              following text is dropped by the JSX transform, and the shipped
+              DOM reads "not in 400001yet" — verified against a production
+              build's innerHTML, not guessed. Every out-of-zone visitor saw it.
+              An explicit space node cannot be collapsed. */}
+          We&rsquo;re not in {pincode}{" "}
+          yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
         </p>
         <NotifyMeForm pincode={pincode} onReset={handleReset} />
       </div>
