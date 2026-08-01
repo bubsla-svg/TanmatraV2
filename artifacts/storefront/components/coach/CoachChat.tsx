@@ -76,7 +76,7 @@ export function CoachChat() {
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to chat with your nutrition coach.</p>
         {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-        <PhoneAuth onVerified={() => void userQuery.refetch()} />
+        <PhoneAuth startExpanded onVerified={() => void userQuery.refetch()} />
       </div>
     );
   }

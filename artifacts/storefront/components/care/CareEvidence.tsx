@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CareConfig } from "@/content/landing/care";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /** Slim projection of a catalog dish for the evidence rail. */
 export interface CareDish {
@@ -45,8 +46,7 @@ export function CareEvidence({ dishes, sort }: { dishes: CareDish[]; sort: CareC
             className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition-colors hover:border-line-strong"
           >
             <div className="relative h-36 bg-surface-raised">
-              {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-              <img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <SafeImage src={d.image} className="h-full w-full" />
               <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)]/70 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-white backdrop-blur-md">
                 GI {d.gi}
               </span>

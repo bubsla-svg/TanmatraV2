@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Recipe } from "@/lib/recipesApi";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /** A recipe list card. Presentational; rendered inside the client browser.
  *  Image-led treatment (Stitch route-49, "Recipe Directory"): photo leads on
@@ -17,11 +18,10 @@ export function RecipeCard({ recipe: r }: { recipe: Recipe }) {
     >
       <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-surface-raised md:aspect-auto md:w-2/5">
         {r.image ? (
-          // eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config
-          <img
+          <SafeImage
             src={r.image}
-            alt=""
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            className="h-full w-full"
+            imgClassName="transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-wide text-ink-faint">

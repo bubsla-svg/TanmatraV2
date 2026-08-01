@@ -4,12 +4,24 @@ import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeliveryAddressBar } from "@/components/onboarding/DeliveryAddressBar";
+import { FocusChromeGate } from "@/components/FocusLayout";
 
 /**
  * Global chrome shell. Server component itself; it hosts one small client island
  * (CommandMenu, the ⌘K search). The primary links come from the central nav
  * config (lib/nav.ts) so route-parity waves extend the IA by editing data, not
  * this file. Primary links are desktop-only — on mobile the BottomNav carries them.
+ *
+ * FOCUS SHELL: on focus routes (lib/focusRoutes.ts — auth, checkout,
+ * onboarding, dish PDP) the entire interactive endContent cluster is
+ * suppressed and only the brand link survives. The location picker is the
+ * canonical reason: /checkout carries its OWN address flow
+ * (CheckoutAddress → LocationPickerFlow), and a second location state in the
+ * chrome directly above it is a double-state collision — two widgets both
+ * claiming to know the delivery address, each hydrated from a different
+ * store. Same class of bug for ⌘K over any page with its own search input.
+ * The brand link stays: a focus shell still needs one calm exit, and a plain
+ * link home cannot collide with any page state.
  */
 export function Header() {
   return (
@@ -27,6 +39,7 @@ export function Header() {
             </Link>
           }
           endContent={
+            <FocusChromeGate>
             <nav aria-label="Primary" className="flex items-center gap-2">
               {/* EXACTLY ONE ServiceabilityBar may exist per page, and this is
                   it. Its verdict/pincode state is per-instance — the component
@@ -66,6 +79,7 @@ export function Header() {
                 ))}
               </div>
             </nav>
+            </FocusChromeGate>
           }
         />
       </div>

@@ -71,7 +71,7 @@ export function BridgeView() {
           <Lock className="size-5 shrink-0 text-gold-text" aria-hidden="true" />
           <p className="text-sm font-medium text-ink">Sign in to see your trial credit status.</p>
         </div>
-        <PhoneAuth onVerified={() => load()} />
+        <PhoneAuth startExpanded onVerified={() => load()} />
       </div>
     );
   }

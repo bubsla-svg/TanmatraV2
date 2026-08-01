@@ -26,7 +26,7 @@ export function CompanyLanding({ slug }: { slug: string }) {
   if (needsAuth) return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-ink-muted">Sign in to view your company workspace.</p>
-      <PhoneAuth onVerified={() => void companyQuery.refetch()} />
+      <PhoneAuth startExpanded onVerified={() => void companyQuery.refetch()} />
     </div>
   );
   if (companyQuery.isPending) return <p className="text-sm text-ink-muted">Loading…</p>;

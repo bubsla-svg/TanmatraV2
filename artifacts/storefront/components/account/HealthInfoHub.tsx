@@ -100,7 +100,7 @@ export function HealthInfoHub() {
         <p className="text-sm text-ink-muted">
           Sign in to view and manage your health information.
         </p>
-        <PhoneAuth onVerified={(u) => queryClient.setQueryData(["account", "auth-user"], u)} />
+        <PhoneAuth startExpanded onVerified={(u) => queryClient.setQueryData(["account", "auth-user"], u)} />
       </div>
     );
   }
@@ -115,6 +115,7 @@ export function HealthInfoHub() {
         <div className="flex flex-col gap-4">
           <p className="text-sm text-ink-muted">Your session expired. Sign in again to view your health information.</p>
           <PhoneAuth
+            startExpanded
             onVerified={(u) => {
               queryClient.setQueryData(["account", "auth-user"], u);
               void consentQuery.refetch();

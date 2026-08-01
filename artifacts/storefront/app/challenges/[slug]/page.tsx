@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getChallengeOrReason, challengeStatus, type Challenge } from "@/lib/challengesApi";
 import { ChallengeRoom } from "@/components/challenges/ChallengeRoom";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 type Params = { params: Promise<{ slug: string }> };
 export const revalidate = 3600;
@@ -61,8 +62,7 @@ export default async function ChallengePage({ params }: Params) {
       </Link>
       {c.image && (
         <div className="mt-6 aspect-video w-full overflow-hidden rounded-2xl bg-surface-raised">
-          {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-          <img src={c.image} alt="" className="h-full w-full object-cover" />
+          <SafeImage src={c.image} className="h-full w-full" />
         </div>
       )}
       <div className="mt-6 flex flex-wrap items-center gap-2">

@@ -75,7 +75,7 @@ export function LoginCard({ next }: { next: string }) {
       ) : firebaseConfigured() ? (
         <>
           <p className="text-sm text-ink-muted">A code by SMS, no passwords.</p>
-          <PhoneAuth onVerified={() => router.replace(next)} />
+          <PhoneAuth startExpanded onVerified={() => router.replace(next)} />
         </>
       ) : (
         <>

@@ -24,7 +24,7 @@ export function PlanIdentityGate({
       {firebaseConfigured() ? (
         <>
           <p className="text-sm text-ink-muted">Sign in to set up delivery — a code by SMS, no passwords.</p>
-          <PhoneAuth onVerified={onVerified} />
+          <PhoneAuth startExpanded onVerified={onVerified} />
         </>
       ) : (
         <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-5">

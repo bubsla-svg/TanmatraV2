@@ -49,7 +49,7 @@ export function PreferencesHub() {
       return (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-ink-muted">Sign in to set your food preferences.</p>
-          <PhoneAuth onVerified={() => void authQuery.refetch()} />
+          <PhoneAuth startExpanded onVerified={() => void authQuery.refetch()} />
         </div>
       );
     }
@@ -73,7 +73,7 @@ export function PreferencesHub() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to set your food preferences.</p>
-        <PhoneAuth onVerified={() => void authQuery.refetch()} />
+        <PhoneAuth startExpanded onVerified={() => void authQuery.refetch()} />
       </div>
     );
   }
@@ -88,6 +88,7 @@ export function PreferencesHub() {
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to set your food preferences.</p>
         <PhoneAuth
+          startExpanded
           onVerified={() => {
             void authQuery.refetch();
             void prefsQuery.refetch();

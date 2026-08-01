@@ -13,6 +13,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { SaveToVaultButton } from "@/components/menu/SaveToVaultButton";
 import { previewCustomizations, defaultOptionName, type CustomizationSelection } from "@/lib/dishCustomizations";
 import { formatPaise } from "@/lib/format";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /** Selection state keyed by groupName → the option name(s) currently active,
  *  mirroring the wire shape sent to checkout. */
@@ -59,14 +60,7 @@ const DishPickRow = memo(function DishPickRow({
         active ? "border-gold bg-gold/5 shadow-[var(--shadow-card)]" : "border-line bg-surface hover:border-line-strong"
       }`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- fixed thumbnail box, zero CLS */}
-      <img
-        src={dish.image}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        className="h-16 w-16 shrink-0 rounded-xl border border-line object-cover"
-      />
+      <SafeImage src={dish.image} className="h-16 w-16 shrink-0 rounded-xl border border-line" />
       <div className="flex flex-1 flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <span className={`text-sm font-semibold ${active ? "text-gold-text" : "text-ink"}`}>

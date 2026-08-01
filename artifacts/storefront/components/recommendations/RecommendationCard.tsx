@@ -16,6 +16,7 @@ import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { formatPaise } from "@/lib/format";
 import type { SmartRecommendation } from "@/lib/recommendations";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 const macroChip = "tabular rounded-full border border-line bg-bg px-2.5 py-1 text-[10px] text-ink-muted";
 
@@ -30,8 +31,7 @@ export function RecommendationCard({
   return (
     <article className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition-colors hover:border-line-strong">
       <Link href={`/dish/${dish.slug}`} className="relative block h-40 bg-surface-raised">
-        {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-        <img src={dish.image} alt="" loading="lazy" className="h-full w-full object-cover" />
+        <SafeImage src={dish.image} className="h-full w-full" />
         <span className="absolute left-3 top-3 rounded-full bg-sage-soft px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-sage-text backdrop-blur-md">
           {badge}
         </span>

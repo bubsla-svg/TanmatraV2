@@ -162,14 +162,33 @@
   }
 }
 
+/* ROOT CANVAS GUARANTEE. The document background is defined at the absolute
+ * root, with a color-scheme-driven fallback: `Canvas` is the UA's own page
+ * colour and follows the element's used color-scheme (light on the default
+ * root, dark under [data-theme="dark"] / the Stitch scope's
+ * `color-scheme: dark !important`). So even if --bg ever fails to resolve —
+ * a third-party overlay (payment gateway) injecting its own resets, a
+ * stylesheet load race, a portal escaping a token scope — a dark document can
+ * never expose a white void behind or around the overlay. Never move the
+ * background down onto a wrapper div: body/html are what show through a
+ * gateway's transparent backdrop. */
 html {
-  background: var(--bg);
+  background-color: var(--bg, Canvas);
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-text-size-adjust: 100%;
   /* Anchor jumps (#plans, skip-link) glide instead of teleporting. The
      reduced-motion block below forces this back to `auto`. */
   scroll-behavior: smooth;
+}
+
+/* Explicit dark restatement at the root. Redundant while tokens.css and the
+ * bridge are loaded (both define --bg's dark arm) — load-bearing the moment
+ * either is not: these two selectors are the dark-mode contract for the
+ * document canvas itself. */
+html[data-theme="dark"],
+html[data-stitch="dark"] {
+  background-color: var(--bg, Canvas);
 }
 
 /* data-stitch lives on <html> itself now (app/layout.tsx's STITCH_ROUTE_SCRIPT),

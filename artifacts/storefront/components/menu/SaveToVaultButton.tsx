@@ -35,7 +35,7 @@ export function SaveToVaultButton({ dishSlug, dishName, defaultSaved = false }: 
     return (
       <div className="flex flex-col gap-2">
         <p className="text-xs text-ink-muted">Sign in to save to your Vault.</p>
-        <PhoneAuth onVerified={() => saveMutation.mutate()} />
+        <PhoneAuth startExpanded onVerified={() => saveMutation.mutate()} />
       </div>
     );
   }

@@ -3,16 +3,14 @@ import type { DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import { AddToCart } from "@/components/cart/AddToCart";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /** Compact dish tile used by both the pairing card and the related rail. */
 function MiniCard({ dish }: { dish: DishData }) {
   return (
     <div className="group block overflow-hidden rounded-2xl border border-line bg-surface transition-transform active:scale-[0.98]">
       <Link href={`/dish/${dish.slug}`} className="block">
-        <div className="aspect-[16/9] w-full overflow-hidden rounded-t-2xl">
-          {/* eslint-disable-next-line @next/next/no-img-element -- fixed aspect box; see DishCard */}
-          <img src={dish.image} alt="" className="h-full w-full rounded-t-2xl object-cover" />
-        </div>
+        <SafeImage src={dish.image} className="aspect-[16/9] w-full rounded-t-2xl" />
         <div className="p-3">
           <span className="block truncate text-sm font-medium text-ink group-hover:underline">
             {dish.name}

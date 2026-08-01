@@ -6,6 +6,7 @@ import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { PLAN_PRICE_TABLE } from "@workspace/subscription-rules";
 import { SpecSheetCard, type ClinicalDishSpec } from "./SpecSheetCard";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export interface FlipCardProps {
   spec?: ClinicalDishSpec;
@@ -67,13 +68,11 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
       >
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-raised">
           {spec.image && (
-            /* eslint-disable-next-line @next/next/no-img-element -- aspect box for zero CLS */
-            <img
+            <SafeImage
               src={spec.image}
               alt={spec.name}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              className="h-full w-full"
+              imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
             />
           )}
           <span

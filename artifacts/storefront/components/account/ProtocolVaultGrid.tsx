@@ -14,6 +14,7 @@ import { ApiError } from "@/lib/apiClient";
 import { getMySavedMeals, removeMealFromVault, type SavedMeal } from "@/lib/savedMealsApi";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
   const queryClient = useQueryClient();
@@ -52,7 +53,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
       return (
         <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-8 text-center">
           <p className="text-sm text-ink-muted">Sign in to access your personal Protocol Vault.</p>
-          <PhoneAuth onVerified={() => void vaultQuery.refetch()} />
+          <PhoneAuth startExpanded onVerified={() => void vaultQuery.refetch()} />
         </div>
       );
     }
@@ -125,14 +126,10 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
             {dish?.image && (
               <div className="px-4">
                 <div className="relative aspect-video overflow-hidden rounded-xl border border-line bg-surface-raised">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- plain
-                      img in a fixed-ratio box for zero CLS, matching DishCard. */}
-                  <img
+                  <SafeImage
                     src={dish.image}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="h-full w-full"
+                    imgClassName="transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>
               </div>

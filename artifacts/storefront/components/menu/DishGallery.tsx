@@ -3,6 +3,7 @@
 // click — local UI state (the active index) that only exists in the browser.
 // The surrounding PDP stays an RSC; only this frame is a client island.
 import { useState } from "react";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * PDP image gallery: one hero frame plus a thumbnail strip when a dish has
@@ -20,11 +21,7 @@ export function DishGallery({ images, alt }: { images: string[]; alt: string }) 
   return (
     <div>
       <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised">
-        <div className="aspect-[16/9] w-full">
-          {/* eslint-disable-next-line @next/next/no-img-element -- fixed aspect
-              box, zero CLS; see DishCard */}
-          <img src={src} alt={alt} className="h-full w-full object-cover" />
-        </div>
+        <SafeImage src={src} alt={alt} className="aspect-[16/9] w-full" />
       </div>
 
       {images.length > 1 && (
@@ -42,11 +39,7 @@ export function DishGallery({ images, alt }: { images: string[]; alt: string }) 
                     isActive ? "border-gold" : "border-line opacity-70"
                   }`}
                 >
-                  <span className="block h-14 w-20">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- fixed
-                        thumbnail box; see DishCard */}
-                    <img src={image} alt="" className="h-full w-full object-cover" />
-                  </span>
+                  <SafeImage src={image} className="h-14 w-20" />
                 </button>
               </li>
             );

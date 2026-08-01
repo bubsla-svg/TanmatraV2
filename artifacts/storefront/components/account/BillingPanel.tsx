@@ -46,7 +46,7 @@ export function BillingPanel() {
       return (
         <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-6 text-center">
           <p className="text-sm text-ink-muted">Sign in to see your billing &amp; credits.</p>
-          <PhoneAuth onVerified={() => void refetch()} />
+          <PhoneAuth startExpanded onVerified={() => void refetch()} />
         </div>
       );
     }

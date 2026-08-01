@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
 import { formatPaise } from "@/lib/format";
 import { MEAL_SLOTS, type MealPlanDay, type MealPlanSlot, type MealPlanSlotEntry, formatPlanDay } from "@/lib/mealPlanApi";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 const SLOT_LABEL: Record<MealPlanSlot, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 
@@ -38,7 +39,7 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
           return (
             <li key={slot} className="flex items-center gap-4">
               {entry ? (
-                <img src={entry.image} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+                <SafeImage src={entry.image} className="h-16 w-16 shrink-0 rounded-2xl" />
               ) : (
                 <div aria-hidden className="h-16 w-16 shrink-0 rounded-2xl border border-dashed border-line bg-surface-raised" />
               )}

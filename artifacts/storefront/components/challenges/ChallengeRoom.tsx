@@ -103,7 +103,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
     return (
       <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6">
         <p className="text-sm text-ink-muted">Sign in to join this challenge and post in the cohort.</p>
-        <PhoneAuth onVerified={() => void loadUser()} />
+        <PhoneAuth startExpanded onVerified={() => void loadUser()} />
       </div>
     );
   }

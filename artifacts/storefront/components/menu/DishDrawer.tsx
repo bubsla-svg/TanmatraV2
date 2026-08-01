@@ -16,6 +16,7 @@ import {
 import { DishRationale } from "./DishRationale";
 import { DishSpec } from "./DishSpec";
 import { DishAllergens } from "./DishAllergens";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * Dish detail as a bottom sheet over the menu (§4.2): users triage dishes in
@@ -43,11 +44,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
       <DrawerContent aria-describedby={undefined}>
         <div className="overflow-y-auto overscroll-contain px-4 pb-6 pt-3">
           <div className="overflow-hidden rounded-xl border border-line bg-surface-raised">
-            <div className="aspect-[16/9] w-full">
-              {/* eslint-disable-next-line @next/next/no-img-element -- fixed
-                  aspect box, zero CLS; see DishCard */}
-              <img src={dish.image} alt="" className="h-full w-full object-cover" />
-            </div>
+            <SafeImage src={dish.image} className="aspect-[16/9] w-full" />
           </div>
 
           <div className="mt-4 flex items-start justify-between gap-4">

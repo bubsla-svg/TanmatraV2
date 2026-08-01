@@ -29,7 +29,7 @@ export function MealPlanner() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to plan and edit your week.</p>
-        <PhoneAuth onVerified={() => void mp.reload()} />
+        <PhoneAuth startExpanded onVerified={() => void mp.reload()} />
       </div>
     );
   }

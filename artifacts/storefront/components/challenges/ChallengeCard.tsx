@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { challengeStatus, type Challenge } from "@/lib/challengesApi";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 const STATUS_LABEL: Record<string, string> = {
   live: "Live now",
@@ -33,8 +34,11 @@ export function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
     >
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-surface-raised">
         {c.image && (
-          // eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config
-          <img src={c.image} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <SafeImage
+            src={c.image}
+            className="h-full w-full"
+            imgClassName="transition-transform duration-300 group-hover:scale-105"
+          />
         )}
         <span
           className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${STATUS_PILL_CLASS[status]}`}

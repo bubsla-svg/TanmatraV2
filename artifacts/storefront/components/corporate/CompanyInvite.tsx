@@ -43,7 +43,7 @@ export function CompanyInvite({ token }: { token: string }) {
           <Building2 className="h-7 w-7 text-gold-text" strokeWidth={1.75} />
         </div>
         <p className="text-sm text-ink-muted">Sign in to accept this invite.</p>
-        <PhoneAuth onVerified={() => void accept()} />
+        <PhoneAuth startExpanded onVerified={() => void accept()} />
       </div>
     );
   }
