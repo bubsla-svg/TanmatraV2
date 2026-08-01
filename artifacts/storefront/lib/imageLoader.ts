@@ -10,12 +10,19 @@ import type { ImageLoaderProps } from "next/image";
  * deliberately not used; this loader emits the URL the browser should request
  * and lets the upstream decide what to do with `w`/`q`.
  *
- * Today the static upstream ignores both params and returns the same bytes for
- * every candidate — which is exactly the current behaviour, no regression —
- * while `next/image` still contributes the parts that need no resizer:
- * responsive `srcset`/`sizes`, lazy-by-default, and dimensions the component
- * cannot omit. The params go live the day the upstream is an image CDN,
- * without touching a single call site.
+ * The upstream ignores `w`/`q` for the base path and returns identical bytes
+ * for every candidate, BUT it already publishes pre-generated derivatives
+ * alongside every dish photo — `<slug>-200.jpg`, `-400.jpg`, `-800.jpg` — at
+ * roughly 9x-84x smaller than the ~600KB base JPEG, and (unlike the sibling
+ * .avif/.webp derivatives, which the upstream serves with a broken
+ * `application/octet-stream` content-type) these carry the correct
+ * `image/jpeg` type, so browsers actually decode them. A full sweep of every
+ * dish slug on the live `/menu` page confirmed no dish has a working base
+ * image with a broken derivative, so redirecting a requested width to its
+ * nearest derivative can only shrink the payload, never break an image that
+ * currently renders. Only `/images/dishes/*.jpg` is rewritten — every other
+ * image path (team, recipes, challenges, marketing) has no confirmed
+ * derivative and keeps the original passthrough behaviour.
  *
  * Same-origin is load-bearing: no remote host is registered here or in
  * `images.remotePatterns`, so a future `img-src 'self'` CSP stays clean.
@@ -28,8 +35,24 @@ import type { ImageLoaderProps } from "next/image";
  *  undefined whenever a call site omits the prop. */
 const DEFAULT_QUALITY = 75;
 
+const DISH_JPEG_PATTERN = /^(\/images\/dishes\/[^/?#]+)\.jpg$/;
+
+/** Ascending — the loop below picks the first bucket that covers `width`. */
+const DISH_DERIVATIVE_WIDTHS = [200, 400, 800] as const;
+
+function dishDerivativePath(basePath: string, width: number): string {
+  const bucket = DISH_DERIVATIVE_WIDTHS.find((w) => width <= w) ?? DISH_DERIVATIVE_WIDTHS[DISH_DERIVATIVE_WIDTHS.length - 1];
+  return `${basePath}-${bucket}.jpg`;
+}
+
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
   // A data: URI carries its payload in the path — a query string corrupts it.
   if (src.startsWith("data:")) return src;
+
+  const dishMatch = DISH_JPEG_PATTERN.exec(src);
+  if (dishMatch) {
+    return dishDerivativePath(dishMatch[1]!, width);
+  }
+
   return `${src}${src.includes("?") ? "&" : "?"}w=${width}&q=${quality ?? DEFAULT_QUALITY}`;
 }

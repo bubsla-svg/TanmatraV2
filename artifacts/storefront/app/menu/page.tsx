@@ -1,10 +1,37 @@
 import type { Metadata } from "next";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
+import type { DishForMatch } from "@workspace/preferences-match";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { DishCard } from "@/components/DishCard";
 import type { MenuGridRow } from "@/components/MenuGrid";
 import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
+
+/**
+ * The only fields PersonalizedMenu's client-side ranking/diet-filter actually
+ * reads (see DishForMatch) — everything else on a dish (description,
+ * longDescription, the 4 photo variants, customizations, price, …) is
+ * rendering data that DishCard already turned into markup server-side via
+ * `rows` below, so sending the full DishData a second time as the `dishes`
+ * prop would just double it into the client bundle for no reason.
+ */
+function forMatch(dish: DishForMatch): DishForMatch {
+  return {
+    id: dish.id,
+    name: dish.name,
+    allergens: dish.allergens,
+    ingredients: dish.ingredients,
+    isVeg: dish.isVeg,
+    kitchen: dish.kitchen,
+    macros: dish.macros,
+    contraindications: dish.contraindications,
+    glycaemicIndex: dish.glycaemicIndex,
+    sugarPerServing: dish.sugarPerServing,
+    rdReviewState: dish.rdReviewState,
+    allergensReviewed: dish.allergensReviewed,
+    macrosProvisional: dish.macrosProvisional,
+  };
+}
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -55,7 +82,7 @@ export default async function MenuPage({
         </p>
       </div>
       <h2 className="sr-only">Dishes</h2>
-      <PersonalizedMenu dishes={orderable} rows={rows} />
+      <PersonalizedMenu dishes={orderable.map(forMatch)} rows={rows} />
       {openDish && <DishDrawer dish={openDish} />}
     </section>
     </div>

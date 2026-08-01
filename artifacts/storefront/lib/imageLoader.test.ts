@@ -8,24 +8,52 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import imageLoader from "./imageLoader";
 
-test("appends w + default q to a bare /images path", () => {
+test("maps a bare dish jpeg to its nearest pre-generated derivative", () => {
   assert.equal(
     imageLoader({ src: "/images/dishes/paneer-tikka.jpg", width: 256 }),
-    "/images/dishes/paneer-tikka.jpg?w=256&q=75",
+    "/images/dishes/paneer-tikka-400.jpg",
   );
 });
 
-test("honours an explicit quality", () => {
+test("maps a dish jpeg below the smallest bucket to -200", () => {
+  assert.equal(
+    imageLoader({ src: "/images/dishes/paneer-tikka.jpg", width: 96 }),
+    "/images/dishes/paneer-tikka-200.jpg",
+  );
+});
+
+test("maps a dish jpeg above the largest bucket to -800, never the full-size original", () => {
+  assert.equal(
+    imageLoader({ src: "/images/dishes/paneer-tikka.jpg", width: 1920 }),
+    "/images/dishes/paneer-tikka-800.jpg",
+  );
+});
+
+test("quality is irrelevant to dish derivative selection — the upstream ignores it either way", () => {
+  assert.equal(
+    imageLoader({ src: "/images/dishes/paneer-tikka.jpg", width: 400, quality: 90 }),
+    "/images/dishes/paneer-tikka-400.jpg",
+  );
+});
+
+test("non-dish paths keep the original passthrough — no confirmed derivative exists for them", () => {
   assert.equal(
     imageLoader({ src: "/images/landing/hero.png", width: 640, quality: 90 }),
     "/images/landing/hero.png?w=640&q=90",
   );
 });
 
-test("keeps an existing query string and joins with &", () => {
+test("a dish path that already carries a query string is not re-matched as a bare jpeg", () => {
   assert.equal(
     imageLoader({ src: "/images/dishes/a.jpg?v=3", width: 128 }),
     "/images/dishes/a.jpg?v=3&w=128&q=75",
+  );
+});
+
+test("a dish path with a non-jpg extension keeps the passthrough — no derivative for it", () => {
+  assert.equal(
+    imageLoader({ src: "/images/dishes/a.png", width: 128 }),
+    "/images/dishes/a.png?w=128&q=75",
   );
 });
 

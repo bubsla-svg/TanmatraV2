@@ -485,6 +485,7 @@ jobs:
         run: >
           node --test --test-force-exit --import tsx
           ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
+          ./src/middlewares/rateLimitMiddleware.trustProxy.test.ts
           ./src/lib/b2b/accountHealth.test.ts
           ./src/lib/ai/aiHardening.test.ts
       # Not money-path — the anomaly-scan baseline golden test from the

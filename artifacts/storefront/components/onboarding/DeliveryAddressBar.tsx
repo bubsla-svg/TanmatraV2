@@ -110,7 +110,12 @@ export function DeliveryAddressBar() {
         onClick={() => setSwitcherOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={switcherOpen}
-        className="flex min-w-0 max-w-[13rem] items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-left text-sm text-ink shadow-sm transition-colors hover:border-line-strong sm:max-w-xs"
+        // Same 9rem cap as ServiceabilityBar's MENU_FIT, and the same reason:
+        // Astryx's TopNav endContent is flex-shrink:0, so this button's cap is
+        // the ONLY thing keeping it from claiming its full ~13rem width and
+        // squeezing the wordmark into overflow — see that file's comment for
+        // the measured 360px budget this has to fit inside alongside it.
+        className="flex min-w-0 max-w-[9rem] items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-left text-sm text-ink shadow-sm transition-colors hover:border-line-strong sm:max-w-xs"
       >
         <svg className="h-4 w-4 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />

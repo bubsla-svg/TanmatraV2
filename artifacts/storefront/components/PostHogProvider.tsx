@@ -1,28 +1,34 @@
 "use client";
 
-import posthog from "posthog-js";
-import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useEffect } from "react";
 
-if (
-  typeof window !== "undefined" &&
-  process.env.NEXT_PUBLIC_POSTHOG_KEY &&
-  process.env.NEXT_PUBLIC_POSTHOG_HOST
-) {
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-    person_profiles: "identified_only",
-    capture_pageview: false, // handled manually in Next.js
-  });
-}
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
+/**
+ * Analytics init only — no posthog-js/react context Provider, because nothing
+ * in this app calls usePostHog(). The posthog-js import is dynamic and gated
+ * on the env vars so the SDK is never fetched by a browser that will never
+ * send an event — today's production build has neither var set, and the
+ * previous unconditional top-level import shipped the full SDK anyway.
+ */
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Manually capture initial pageview
-    if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+    if (!POSTHOG_KEY || !POSTHOG_HOST) return;
+    let cancelled = false;
+    import("posthog-js").then(({ default: posthog }) => {
+      if (cancelled) return;
+      posthog.init(POSTHOG_KEY, {
+        api_host: POSTHOG_HOST,
+        person_profiles: "identified_only",
+        capture_pageview: false, // manual capture below, right after init
+      });
       posthog.capture("$pageview");
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  return <PHProvider client={posthog}>{children}</PHProvider>;
+  return <>{children}</>;
 }

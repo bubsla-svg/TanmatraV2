@@ -1,9 +1,9 @@
-import type { DishData } from "@workspace/menu-catalog";
+import type { DishForMatch } from "@workspace/preferences-match";
 import type { DishFit } from "./menuFit";
 import { filterDishesByDiet, type DietFilterChip } from "./dietFilter";
 
 export interface RankedDish {
-  dish: DishData;
+  dish: DishForMatch;
   fit: DishFit;
 }
 
@@ -26,7 +26,7 @@ export interface MenuGridState {
  * from a hidden dish never shows up as a layout gap.
  */
 export function computeMenuGridState(
-  dishes: DishData[],
+  dishes: DishForMatch[],
   ranked: RankedDish[] | null,
   chip: DietFilterChip,
 ): MenuGridState {

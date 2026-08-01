@@ -6,7 +6,6 @@
 // only the failing segment's content is replaced. See app/global-error.tsx
 // for the layout-itself-threw case, which this file cannot catch.
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
 
 export default function Error({
   error,
@@ -16,7 +15,8 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+    import("@sentry/nextjs").then((Sentry) => Sentry.captureException(error));
   }, [error]);
 
   return (

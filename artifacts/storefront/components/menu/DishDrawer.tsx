@@ -42,7 +42,14 @@ export function DishDrawer({ dish }: { dish: DishData }) {
       }}
     >
       <DrawerContent aria-describedby={undefined}>
-        <div className="overflow-y-auto overscroll-contain px-4 pb-6 pt-3">
+        {/* flex-1 is load-bearing: DrawerContent is itself flex-col, so this
+            scroll area filling the REMAINING space (instead of sizing to its
+            own content) is what leaves room for the footer below to sit as a
+            sibling that never scrolls out of view — the same "buy bar stays,
+            content scrolls under it" contract DishBuyBar keeps on the full
+            PDP route. Previously the Add-to-cart button was the last thing
+            IN this scrolling div, ~200px below the fold on a typical phone. */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
           <div className="overflow-hidden rounded-xl border border-line bg-surface-raised">
             <SafeImage src={dish.image} className="aspect-[16/9] w-full" />
           </div>
@@ -77,18 +84,22 @@ export function DishDrawer({ dish }: { dish: DishData }) {
               reviewed / auto-detected / under-review states — an unknown list
               is never rendered as "no allergens". */}
           <DishAllergens dish={dish} />
+        </div>
 
-          <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
-            <Link
-              href={`/dish/${dish.slug}`}
-              className="text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
-            >
-              Open full page
-            </Link>
-            {/* §4.2 footer Add — server price beside the sole action colour;
-                only for à-la-carte-orderable dishes (no dead buttons). */}
-            {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
-          </div>
+        {/* Sibling of the scroll area, not its last child — see the flex-1
+            comment above. shrink-0 keeps it from being squeezed as content
+            grows; the safe-area pad matches DishBuyBar's fixed bar since this
+            sheet already runs to the physical bottom edge on most phones. */}
+        <div className="shrink-0 flex items-center justify-between border-t border-line bg-surface px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4">
+          <Link
+            href={`/dish/${dish.slug}`}
+            className="text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+          >
+            Open full page
+          </Link>
+          {/* §4.2 footer Add — server price beside the sole action colour;
+              only for à-la-carte-orderable dishes (no dead buttons). */}
+          {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
         </div>
       </DrawerContent>
     </Drawer>

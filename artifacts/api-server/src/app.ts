@@ -22,7 +22,20 @@ import { idempotencyMiddleware } from "./middlewares/idempotency";
 
 const app: Express = express();
 
-app.set("trust proxy", 1);
+// Two trusted hops, not one: the browser reaches this service via
+// GCLB (the storefront's public-facing edge) THEN the storefront's own
+// `/api/:path*` rewrite, which issues a second, separate request into this
+// service's own Cloud Run ingress — a distinct hop with its own
+// X-Forwarded-For entry, not a transparent pass-through. With `trust proxy: 1`,
+// Express only skips ONE hop from the right and reads the SECOND-CLOSEST
+// entry as `req.ip` — for a 2-hop chain that resolves to the storefront's own
+// (shared, low-cardinality) address, not the end user's. Every real visitor
+// collapsed onto that handful of shared addresses, so the per-IP rate
+// limiter effectively rate-limited "the storefront" as one bucket instead of
+// each visitor individually — a burst from a few customers could 429 every
+// other customer sharing that address. `2` walks back both trusted hops to
+// the address the customer's own browser actually connected from.
+app.set("trust proxy", 2);
 
 app.use(
   pinoHttp({

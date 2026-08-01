@@ -13,8 +13,7 @@
 // the rendering is server-side now.
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import type { DishData } from "@workspace/menu-catalog";
-import type { PreferencesForMatch } from "@workspace/preferences-match";
+import type { DishForMatch, PreferencesForMatch } from "@workspace/preferences-match";
 import { apiGet } from "@/lib/apiClient";
 import { MenuGrid, type MenuGridRow } from "@/components/MenuGrid";
 import { DishFitProvider } from "@/components/menu/DishFitContext";
@@ -53,7 +52,7 @@ export function PersonalizedMenu({
   dishes,
   rows,
 }: {
-  dishes: DishData[];
+  dishes: DishForMatch[];
   rows: MenuGridRow[];
 }) {
   const [prefs, setPrefs] = useState<PreferencesForMatch | null>(null);

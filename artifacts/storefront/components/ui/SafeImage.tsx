@@ -1,3 +1,5 @@
+import { ImgWithFallback } from "./ImgWithFallback";
+
 /**
  * SafeImage — the ONE way to render a photo in this app.
  *
@@ -6,16 +8,20 @@
  *     locked aspect ratio or explicit box via `className`
  *     (`aspect-square w-full`, `h-16 w-16`, …) and the frame clips overflow;
  *   - the image ALWAYS fills that frame with `object-cover` — a stretched or
- *     squashed photo is unrepresentable, whatever the source dimensions are.
+ *     squashed photo is unrepresentable, whatever the source dimensions are;
+ *   - a photo that fails to load (a handful of dishes have permanently
+ *     missing upstream files) degrades to a placeholder inside the SAME
+ *     frame, never a broken-image icon or empty box.
  *
  * This replaces the scattered raw `<img>` tags that each hand-rolled the same
  * "fixed aspect box, zero CLS" pattern and each carried its own
- * eslint-disable. The single disable lives here, with the rationale: images
- * are served unoptimized through the image proxy (see next.config), so
- * next/image's optimizer adds nothing on these routes, while the CLS and
- * cover guarantees are exactly this component's contract.
+ * eslint-disable. Images are served unoptimized through the image proxy (see
+ * next.config), so next/image's optimizer adds nothing on these routes, while
+ * the CLS and cover guarantees are exactly this component's contract.
  *
- * Server component — no state, no handlers; safe to render from any RSC.
+ * Still a Server Component itself — no state, no handlers, safe to render
+ * from any RSC — because the onError fallback lives one level down in
+ * ImgWithFallback, the one "use client" leaf this contract actually needs.
  * `priority` marks the ONE above-the-fold hero per route (eager +
  * fetchpriority=high); everything else stays lazy.
  */
@@ -38,15 +44,10 @@ export function SafeImage({
 }) {
   return (
     <span className={`relative block overflow-hidden ${className ?? ""}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- centralised:
-          unoptimized <img> by design (see next.config); geometry is this
-          component's guarantee. */}
-      <img
+      <ImgWithFallback
         src={src}
         alt={alt}
-        loading={priority ? "eager" : "lazy"}
-        decoding={priority ? "sync" : "async"}
-        fetchPriority={priority ? "high" : undefined}
+        priority={priority}
         className={`h-full w-full object-cover ${imgClassName ?? ""}`}
       />
     </span>

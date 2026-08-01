@@ -29,6 +29,32 @@ export interface PreferencesForMatch {
   pcosHistory?: boolean | null;
 }
 
+/**
+ * Minimal dish shape the evaluator actually reads. Mirrors PreferencesForMatch
+ * above: both the full `DishData` (server routes, `lib/menuFit.ts`'s ranking
+ * pass) and a trimmed client-side projection (the storefront's
+ * PersonalizedMenu, which sends this over the wire to the browser) satisfy
+ * it. Keeping the accepted type this narrow is what lets a caller omit the
+ * fields the evaluator never touches — description/longDescription, the
+ * photo variants, customizations, price, … — without lying about the shape.
+ */
+export type DishForMatch = Pick<
+  DishData,
+  | "id"
+  | "name"
+  | "allergens"
+  | "ingredients"
+  | "isVeg"
+  | "kitchen"
+  | "macros"
+  | "contraindications"
+  | "glycaemicIndex"
+  | "sugarPerServing"
+  | "rdReviewState"
+  | "allergensReviewed"
+  | "macrosProvisional"
+>;
+
 export interface DishMatchResult {
   blocked: boolean;
   /** Why this dish was blocked. Empty when `blocked === false`. */
@@ -99,11 +125,11 @@ export function matchIngredientTerm(text: string, term: string): boolean {
   return pattern.test(text);
 }
 
-function dishAllergens(d: DishData): string[] {
+function dishAllergens(d: DishForMatch): string[] {
   return d.allergens.map(norm);
 }
 
-function dishIngredientText(d: DishData): string {
+function dishIngredientText(d: DishForMatch): string {
   return d.ingredients.map(norm).join(" | ");
 }
 
@@ -163,7 +189,7 @@ const FISH_OK_HINTS = ["fish", "salmon", "tuna", "shrimp", "prawn"];
 const KETO_CARB_CAP_G = 30;
 
 export function evaluateDishForPreferences(
-  dish: DishData,
+  dish: DishForMatch,
   prefs: PreferencesForMatch | null,
   opts: EvaluateOptions = {},
 ): DishMatchResult {

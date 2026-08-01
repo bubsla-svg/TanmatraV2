@@ -20,13 +20,25 @@ export interface ServiceabilityBarProps {
 
 /**
  * Width clamp for the header-hosted (`menu`) instance. Astryx's TopNav renders
- * endContent at flex-shrink:0, so nothing upstream will squeeze this widget —
- * anything wider than the room left beside the wordmark just pushes the ⌘K
- * button off the bar. min-w-0 lets the inner label truncate instead; the cap
- * keeps it inside the ~208px a 360px viewport leaves after the wordmark and the
- * search button, and relaxes from sm up. The `hero` arm keeps its own max-w-md.
+ * endContent at flex-shrink:0 — and, critically, that means TopNav's flex
+ * algorithm never asks endContent's children to shrink at all: endContent
+ * always gets its full natural width, and 100% of the squeeze lands on
+ * `leftSection` (the wordmark) instead, however small that leaves it. A
+ * `min-w-0`/`max-w` on THIS widget only bounds its own upper size — it does
+ * nothing to make endContent shrink, since nothing here ever pressures it to.
+ * So the cap must be small enough, on its own, that heading + this + ⌘K +
+ * ThemeToggle already fit inside a 360px bar with room to spare — there is no
+ * flex-driven fallback if it's too generous.
+ *
+ * Measured via Playwright at w=360 (menu route, signed-out state): the
+ * wordmark renders at ~92px, ⌘K's icon-only trigger at ~36px, ThemeToggle at
+ * 44px, three 8px gaps, and ~16px of TopNav's own edge padding — leaving
+ * ~144px for this widget before the wordmark starts overflowing its box.
+ * 9rem keeps a margin under that, and relaxes to the original max-w-xs from
+ * sm up, where the endContent cluster is no longer competing with a
+ * flex-shrink:0 wordmark for the same 360px.
  */
-const MENU_FIT = "min-w-0 max-w-[13rem] sm:max-w-xs";
+const MENU_FIT = "min-w-0 max-w-[9rem] sm:max-w-xs";
 
 /**
  * ServiceabilityBar (OB-2 & OB-3 / II.1 & II.3). Non-blocking front-door delivery gate.
@@ -200,7 +212,14 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           type="button"
           onClick={() => { setErr(null); setPickingLocation(true); }}
           disabled={busy}
-          className="flex flex-1 items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm hover:border-[var(--line-strong)] transition-colors text-left disabled:opacity-60"
+          // min-w-0 alongside flex-1 is load-bearing, not decorative: a flex
+          // item's automatic minimum width defaults to its content size, so
+          // without this the button ignored MENU_FIT's cap entirely and
+          // rendered at its full ~266px natural width (icon + untruncated
+          // label + "MAP"), overflowing right through the ⌘K button — the
+          // label's own `truncate` never got a chance to apply because the
+          // button around it never actually shrank. Measured via Playwright.
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm hover:border-[var(--line-strong)] transition-colors text-left disabled:opacity-60"
         >
           <svg className="h-5 w-5 text-gold shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />

@@ -32,7 +32,16 @@ export function Header() {
           heading={
             <Link
               href="/"
-              className="text-lg font-semibold tracking-tight text-ink"
+              // Astryx's TopNav wraps `heading` in a flexShrink:0 box — same
+              // constraint the ServiceabilityBar comment below describes for
+              // endContent, but heading had no cap at all, so at narrow
+              // widths (w=360) this text overflowed its own shrunk container
+              // and visually painted over the endContent cluster instead of
+              // shrinking. inline-block + a max-width gives it a bounded
+              // content size the flex algorithm can actually respect; the cap
+              // is well above "Tanmatra"'s natural width so nothing visibly
+              // truncates today, it only clips in a future longer-brand case.
+              className="inline-block max-w-[7.5rem] overflow-hidden text-ellipsis whitespace-nowrap align-middle text-lg font-semibold tracking-tight text-ink sm:max-w-none"
               aria-label="Tanmatra home"
             >
               Tanmatra

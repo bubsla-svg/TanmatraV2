@@ -10,6 +10,23 @@ export const metadata: Metadata = {
 };
 
 /**
+ * Forces this route to render per-request instead of being fully static-
+ * generated at build time. With no dynamic segments or searchParams, Next
+ * would otherwise prerender it ONCE during `next build` and never revisit —
+ * if the API isn't reachable from that build environment (a real risk: the
+ * build step and the running api-server are separate infrastructure),
+ * `fetchMarketplaceItemsServer`'s catch-and-return-[] falls back to an empty
+ * catalog that gets baked into the static output as if it were correct data,
+ * not a failure. Each Cloud Run instance also starts from that same build
+ * snapshot with its own ephemeral cache, so ISR's background-revalidate
+ * promise doesn't reliably repair it under autoscaling/recycling. The fetch
+ * itself keeps its `next: {revalidate: 3600}` window (see lib/marketplaceApi)
+ * for the actual caching benefit — this only removes the risky build-time
+ * snapshot, it does not mean every request re-hits the API.
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * Marketplace (route-parity Wave F). Server-fetches the catalog (revalidate
  * hourly, same pattern as /menu) so first paint has real cards; the grid +
  * item pages are still client islands for the category filter and cart, and

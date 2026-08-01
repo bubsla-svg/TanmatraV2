@@ -43,6 +43,7 @@ import {
   STITCH_EXACT_ROUTES,
   STITCH_PREFIX_ROUTES,
 } from "@/lib/stitchRoutes";
+import { FOCUS_ROUTES } from "@/lib/focusRoutes";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
 // next/font self-hosts the files and exposes each as a CSS variable that
@@ -152,6 +153,29 @@ const STITCH_ROUTE_SCRIPT = `(function () {
 })();`;
 
 /**
+ * Same zero-flash technique as STITCH_ROUTE_SCRIPT above, serialising
+ * lib/focusRoutes.ts's own FOCUS_ROUTES (so this cannot drift from the
+ * matcher every other focus-shell check already uses) instead of hand-coding
+ * the boundary-aware match twice. Stamps `data-focus-route="true"` on <body>
+ * before paint so globals.css's override rule can cancel the global chrome's
+ * ~8rem bottom padding on routes where that chrome never renders — see that
+ * rule for why this can't just read the path via `headers()` here instead.
+ */
+const FOCUS_ROUTE_SCRIPT = `(function () {
+  try {
+    var ROUTES = ${JSON.stringify(FOCUS_ROUTES)};
+    var path = String(location.pathname).split(/[?#]/)[0] || "";
+    if (path.length > 1 && path.charAt(path.length - 1) === "/") path = path.slice(0, -1);
+    var focus = false;
+    for (var i = 0; i < ROUTES.length; i++) {
+      var r = ROUTES[i];
+      if (path === r || path.indexOf(r + "/") === 0) { focus = true; break; }
+    }
+    if (focus) document.body.setAttribute("data-focus-route", "true");
+  } catch (e) {}
+})();`;
+
+/**
  * Root layout. `data-theme="light"` is the server-rendered fallback — correct
  * for a visitor with no stored preference and no dark OS signal, so the first
  * byte of HTML is right without waiting on the client. A visitor whose OS
@@ -201,10 +225,19 @@ export default function RootLayout({
         // that extra bar with no per-page change. pb-32 (128px) + the safe
         // area clears nav+bar together with room to spare, generously, rather
         // than re-deriving the exact pixel sum per route.
+        //
+        // None of that global chrome renders on a focus route (nav/cart bars
+        // are all gated off — see lib/focusRoutes.ts), so this padding would
+        // just be 128px of dead scrollable space there instead. globals.css's
+        // `body[data-focus-route="true"]` rule cancels it back to just the
+        // safe-area inset, driven by FOCUS_ROUTE_SCRIPT below.
         className="bg-[var(--bg)] text-ink pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-0"
       >
         <Script id="stitch-route-scope" strategy="beforeInteractive">
           {STITCH_ROUTE_SCRIPT}
+        </Script>
+        <Script id="focus-route-scope" strategy="beforeInteractive">
+          {FOCUS_ROUTE_SCRIPT}
         </Script>
         <SiteStructuredData />
         <PostHogProvider>

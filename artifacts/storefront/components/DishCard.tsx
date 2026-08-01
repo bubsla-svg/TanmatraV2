@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Text } from "@astryxdesign/core/Text";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { DishFitBadge } from "@/components/menu/DishFitContext";
+import { DishThumbnail } from "@/components/menu/DishThumbnail";
 
 /**
  * Dish row — Stitch Route Brief 02 v3, "Mirrored Clinical Menu List"
@@ -92,11 +92,8 @@ export function DishCard({ dish }: { dish: DishData }) {
             a 1x/2x srcset, which is the right pair here. A `sizes` value would
             replace that with the full width-descriptor ladder for no gain. */}
         <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-raised">
-          <Image
+          <DishThumbnail
             src={dish.image}
-            alt=""
-            width={104}
-            height={104}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </div>
