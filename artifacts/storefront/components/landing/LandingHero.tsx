@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { LandingIcon } from "./LandingIcon";
 import type { LandingHero as HeroData } from "@/content/landing/partners";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * Marketing-lander hero (route-parity Wave B; Stitch brief 14 restyle). Server
@@ -32,8 +33,8 @@ export function LandingHero({
     <header className="border-b border-line py-[var(--space-section)]">
       {image && (
         <div className="mb-8 ml-auto h-56 w-[90%] overflow-hidden rounded-3xl border border-line sm:h-72">
-          {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-          <img src={image.src} alt={image.alt} className="h-full w-full object-cover" />
+          {/* The one above-the-fold hero on a lander — eager + high priority. */}
+          <SafeImage src={image.src} alt={image.alt} priority className="h-full w-full" />
         </div>
       )}
       <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{hero.eyebrow}</p>

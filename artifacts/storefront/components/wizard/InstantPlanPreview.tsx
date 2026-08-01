@@ -7,6 +7,7 @@ import { AddToCart } from "@/components/cart/AddToCart";
 import { recommendMenu, type SmartRecommendation } from "@/lib/recommendations";
 import { formatPaise } from "@/lib/format";
 import type { DishData } from "@workspace/menu-catalog";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 interface InstantPlanPreviewProps {
   dishes: DishData[];
@@ -59,8 +60,7 @@ export function InstantPlanPreview({
             className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition-colors hover:border-line-strong"
           >
             <div className="relative h-40 w-full bg-surface-raised">
-              {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-              <img src={dish.image} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <SafeImage src={dish.image} className="h-full w-full" />
               <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
               <span className="absolute left-3 top-3 rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-sage-text backdrop-blur-md">
                 {badge}

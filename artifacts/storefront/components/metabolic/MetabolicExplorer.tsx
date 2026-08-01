@@ -8,6 +8,7 @@ import Link from "next/link";
 import { LandingIcon } from "@/components/landing/LandingIcon";
 import { planDisplay } from "@/lib/plans";
 import { GOALS, type GoalId, type MetabolicGoal } from "@/content/landing/metabolic";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /** Slim projection of a catalog dish — only what the preview needs. */
 export interface MetabolicDish {
@@ -96,8 +97,7 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
               className="w-64 shrink-0 snap-center overflow-hidden rounded-3xl border border-line bg-surface transition-colors hover:border-line-strong"
             >
               <div className="relative h-40 bg-surface-raised">
-                {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-                <img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <SafeImage src={d.image} className="h-full w-full" />
                 <span
                   className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md ${
                     d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-[var(--danger)]"

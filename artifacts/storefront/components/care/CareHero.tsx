@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LandingIcon } from "@/components/landing/LandingIcon";
 import { CONSULT_HREF, type CareConfig } from "@/content/landing/care";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * Consult-first hero for /care/:condition (Stitch brief 20 restyle). The
@@ -18,8 +19,7 @@ export function CareHero({ cfg, image }: { cfg: CareConfig; image?: { src: strin
     <header className="py-[var(--space-section)]">
       {image && (
         <div className="mb-8 ml-auto h-52 w-[90%] overflow-hidden rounded-3xl border border-line sm:h-64">
-          {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-          <img src={image.src} alt={image.alt} className="h-full w-full object-cover" />
+          <SafeImage src={image.src} alt={image.alt} priority className="h-full w-full" />
         </div>
       )}
       <p className="text-xs font-semibold uppercase tracking-widest text-gold-text">

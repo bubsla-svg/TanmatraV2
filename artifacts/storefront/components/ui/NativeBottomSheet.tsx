@@ -22,7 +22,7 @@ export function NativeBottomSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-fade-in select-none-ui">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--scrim)] backdrop-blur-sm animate-fade-in select-none-ui">
       {/* Backdrop Tap */}
       <div className="absolute inset-0" onClick={onClose} aria-hidden />
 

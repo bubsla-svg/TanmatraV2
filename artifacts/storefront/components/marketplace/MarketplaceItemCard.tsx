@@ -3,6 +3,7 @@ import { memo } from "react";
 import Link from "next/link";
 import { formatPaise } from "@/lib/format";
 import type { MarketplaceItem } from "@/lib/marketplaceApi";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * One product tile in the marketplace grid.
@@ -26,12 +27,10 @@ export const MarketplaceItemCard = memo(function MarketplaceItemCard({
       <Link href={`/marketplace/${item.slug}`} className="group flex flex-1 flex-col">
         <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
           {item.image && (
-            // eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config
-            <img
+            <SafeImage
               src={item.image}
-              alt=""
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              className="h-full w-full"
+              imgClassName="transition-transform duration-500 ease-out group-hover:scale-105"
             />
           )}
           {item.rdVerified && (

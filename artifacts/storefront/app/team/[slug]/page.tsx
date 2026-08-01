@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getTeamProfile } from "@/lib/teamApi";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 type Params = { params: Promise<{ slug: string }> };
 export const revalidate = 3600;
@@ -121,8 +122,7 @@ export default async function TeamMemberPage({ params }: Params) {
                 className="group overflow-hidden rounded-2xl border border-line bg-surface transition-transform duration-200 hover:-translate-y-0.5"
               >
                 <div className="aspect-square w-full overflow-hidden bg-surface-raised">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-                  <img src={d.image} alt="" className="h-full w-full object-cover transition-opacity group-hover:opacity-90" />
+                  <SafeImage src={d.image} className="h-full w-full" imgClassName="transition-opacity group-hover:opacity-90" />
                 </div>
                 <div className="p-3">
                   <p className="truncate text-sm font-medium text-ink">{d.name}</p>

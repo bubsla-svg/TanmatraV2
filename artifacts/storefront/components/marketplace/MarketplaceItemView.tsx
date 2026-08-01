@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { BundlePicker } from "./BundlePicker";
 import { useCart } from "@/components/cart/CartProvider";
 import { addOrUpdateQty } from "@/lib/cartStore";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export function MarketplaceItemView({ slug }: { slug: string }) {
   const { cart, setCart } = useCart();
@@ -83,10 +84,7 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="aspect-square overflow-hidden rounded-2xl border border-line bg-surface-raised">
-        {item.image && (
-          // eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config
-          <img src={item.image} alt="" className="h-full w-full object-cover" />
-        )}
+        {item.image && <SafeImage src={item.image} className="h-full w-full" />}
       </div>
 
       {item.badges.length > 0 && (

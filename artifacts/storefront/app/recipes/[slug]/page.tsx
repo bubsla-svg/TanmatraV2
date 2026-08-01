@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getRecipeOrReason, type Recipe } from "@/lib/recipesApi";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 type Params = { params: Promise<{ slug: string }> };
 export const revalidate = 3600;
@@ -82,8 +83,7 @@ export default async function RecipePage({ params }: Params) {
 
       {r.image && (
         <div className="mt-6 aspect-[16/9] overflow-hidden rounded-2xl border border-line bg-surface-raised">
-          {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-          <img src={r.image} alt="" className="h-full w-full object-cover" />
+          <SafeImage src={r.image} className="h-full w-full" />
         </div>
       )}
 

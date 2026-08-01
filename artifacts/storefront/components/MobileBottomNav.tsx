@@ -147,7 +147,7 @@ export function MobileBottomNav() {
       {/* Account Info Sheet */}
       {accountSheetOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden animate-fade-in"
+          className="fixed inset-0 z-50 bg-[var(--scrim)] backdrop-blur-sm md:hidden animate-fade-in"
           onClick={() => setAccountSheetOpen(false)}
         >
           {/* Same reasoning as the bar: the sheet is a sibling of the <nav>, not
@@ -156,19 +156,19 @@ export function MobileBottomNav() {
               route. */}
           <div
             data-stitch="dark"
-            className="fixed bottom-0 inset-x-0 animate-sheet-in bg-neutral-950 border-t border-neutral-800 rounded-t-3xl p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-neutral-100 max-h-[85vh] overflow-y-auto overscroll-contain"
+            className="fixed bottom-0 inset-x-0 animate-sheet-in bg-surface border-t border-line rounded-t-3xl p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-ink max-h-[85vh] overflow-y-auto overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mx-auto w-12 h-1.5 rounded-full bg-neutral-700 mb-6" />
+            <div className="mx-auto w-12 h-1.5 rounded-full bg-line-strong mb-6" />
 
             <h3 className="text-lg font-bold">Account &amp; Information</h3>
-            <p className="text-xs text-neutral-400 mt-1">Manage profile, preferences, and policies</p>
+            <p className="text-xs text-ink-muted mt-1">Manage profile, preferences, and policies</p>
 
             <div className="mt-6 flex flex-col gap-3">
               <Link
                 href="/account"
                 onClick={() => setAccountSheetOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-sm font-semibold"
+                className="flex items-center justify-between p-3 rounded-xl bg-surface-raised border border-line text-sm font-semibold"
               >
                 <span>Account Dashboard</span>
                 <span>&rarr;</span>
@@ -176,22 +176,22 @@ export function MobileBottomNav() {
               <Link
                 href="/account/orders"
                 onClick={() => setAccountSheetOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-sm font-semibold"
+                className="flex items-center justify-between p-3 rounded-xl bg-surface-raised border border-line text-sm font-semibold"
               >
                 <span>My Orders &amp; Subscriptions</span>
                 <span>&rarr;</span>
               </Link>
             </div>
 
-            <div className="mt-6 border-t border-neutral-800 pt-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Company &amp; Legal</p>
+            <div className="mt-6 border-t border-line pt-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-muted mb-2">Company &amp; Legal</p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {COMPANY_LINKS.concat(LEGAL_LINKS).map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setAccountSheetOpen(false)}
-                    className="p-2 text-neutral-300 hover:text-white"
+                    className="p-2 text-ink-muted hover:text-ink"
                   >
                     {item.label}
                   </Link>
