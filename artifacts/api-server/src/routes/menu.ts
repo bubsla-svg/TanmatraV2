@@ -22,6 +22,7 @@ import {
   type CopyField,
 } from "../lib/menuCopy";
 import { recordOpsAction } from "../lib/opsAudit";
+import { recordAdminAction } from "../lib/adminAudit";
 import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
@@ -323,6 +324,16 @@ router.post(
       status: "success",
       reasoning: "price set via REST",
     });
+    if (req.user?.id) {
+      await recordAdminAction({
+        operatorId: req.user.id,
+        action: "menu_price_update",
+        resourceType: "menu_item",
+        resourceId: sp.data.slug,
+        beforeState: { pricePaise: before.pricePaise },
+        afterState: { pricePaise: item?.pricePaise ?? null },
+      });
+    }
     res.json({ item });
   },
 );

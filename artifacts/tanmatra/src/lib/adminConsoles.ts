@@ -72,6 +72,13 @@ export const ADMIN_CONSOLES: AdminConsoleGroup[] = [
         icon: ClipboardList,
       },
       {
+        path: "/admin/audit",
+        title: "System Audit Trail",
+        navLabel: "Audit Trail",
+        description: "Immutable log of administrative and clinical actions.",
+        icon: FileText,
+      },
+      {
         path: "/admin/forecasting",
         title: "Demand Forecasting",
         navLabel: "Forecasting",
