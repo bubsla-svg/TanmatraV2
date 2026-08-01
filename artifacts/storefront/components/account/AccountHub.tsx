@@ -37,7 +37,7 @@ function SignInOffer({ onVerified }: { onVerified: (user: AuthUser) => void }) {
   return (
     <div className="mt-4 flex flex-col gap-4">
       <p className="text-sm text-ink-muted">Sign in to see your orders, plans and addresses.</p>
-      <PhoneAuth onVerified={onVerified} />
+      <PhoneAuth startExpanded onVerified={onVerified} />
     </div>
   );
 }

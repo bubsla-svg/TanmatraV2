@@ -117,7 +117,7 @@ export function AddressManager() {
       return (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-ink-muted">Sign in to view and manage your saved addresses.</p>
-          <PhoneAuth onVerified={() => void refetch()} />
+          <PhoneAuth startExpanded onVerified={() => void refetch()} />
         </div>
       );
     }

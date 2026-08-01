@@ -82,7 +82,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
       <div className="rounded-2xl border border-line bg-surface p-6">
         <p className="text-sm font-semibold text-ink">Sign in to book your consult</p>
         <p className="mb-4 mt-1.5 text-sm text-ink-muted">We hold your slot the moment you&rsquo;re verified.</p>
-        <PhoneAuth onVerified={() => { setNeedsAuth(false); void run(); }} />
+        <PhoneAuth startExpanded onVerified={() => { setNeedsAuth(false); void run(); }} />
       </div>
     );
   }

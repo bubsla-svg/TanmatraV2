@@ -52,7 +52,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
       return (
         <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-8 text-center">
           <p className="text-sm text-ink-muted">Sign in to access your personal Protocol Vault.</p>
-          <PhoneAuth onVerified={() => void vaultQuery.refetch()} />
+          <PhoneAuth startExpanded onVerified={() => void vaultQuery.refetch()} />
         </div>
       );
     }

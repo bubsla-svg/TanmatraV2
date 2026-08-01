@@ -132,7 +132,7 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
           {saveState === "needsAuth" && (
             <div className="flex flex-col gap-2 border-t border-line pt-3">
               <p className="text-xs text-ink-muted">Sign in to save these preferences to your account.</p>
-              <PhoneAuth onVerified={() => void attemptSave()} />
+              <PhoneAuth startExpanded onVerified={() => void attemptSave()} />
             </div>
           )}
           {saveState === "error" && (

@@ -68,7 +68,7 @@ export function VoucherRedeem() {
     return (
       <div className="rounded-2xl border border-line bg-surface p-6">
         <p className="text-sm font-semibold text-ink">Sign in to see your wallet & redeem vouchers</p>
-        <div className="mt-4"><PhoneAuth onVerified={() => { setNeedsAuth(false); void refetch(); }} /></div>
+        <div className="mt-4"><PhoneAuth startExpanded onVerified={() => { setNeedsAuth(false); void refetch(); }} /></div>
       </div>
     );
   }

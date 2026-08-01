@@ -65,7 +65,7 @@ export function LunchPlanner({ slug }: { slug: string }) {
   const forbidden = plannerQuery.error instanceof ApiError && plannerQuery.error.status === 403;
   const notFound = plannerQuery.error instanceof ApiError && plannerQuery.error.status === 404;
 
-  if (needsAuth) return (<div className="flex flex-col gap-4"><p className="text-sm text-ink-muted">Sign in to manage your team&rsquo;s lunches.</p><PhoneAuth onVerified={() => void plannerQuery.refetch()} /></div>);
+  if (needsAuth) return (<div className="flex flex-col gap-4"><p className="text-sm text-ink-muted">Sign in to manage your team&rsquo;s lunches.</p><PhoneAuth startExpanded onVerified={() => void plannerQuery.refetch()} /></div>);
   if (plannerQuery.isPending) return <p className="text-sm text-ink-muted">Loading…</p>;
   if (forbidden) return <p className="text-sm text-ink-muted">The lunch planner is available to company admins only.</p>;
   if (notFound) return <p className="text-sm text-ink-muted">This company workspace isn&rsquo;t available to you.</p>;

@@ -119,7 +119,7 @@ export function CommunityQaForum() {
                 {submitError}
               </p>
             )}
-            <PhoneAuth onVerified={() => void userQuery.refetch()} />
+            <PhoneAuth startExpanded onVerified={() => void userQuery.refetch()} />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6 shadow-sm">

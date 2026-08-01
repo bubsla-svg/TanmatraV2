@@ -48,7 +48,7 @@ export function WellnessTracker() {
   if (isAuthError(todayQuery.error)) return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-ink-muted">Sign in to track your daily nutrition, water and streaks.</p>
-      <PhoneAuth onVerified={() => void todayQuery.refetch()} />
+      <PhoneAuth startExpanded onVerified={() => void todayQuery.refetch()} />
     </div>
   );
 

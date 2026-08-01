@@ -50,7 +50,7 @@ export function ChallengeTrackerView() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to see your challenge streaks and cohort check-ins.</p>
-        <PhoneAuth onVerified={() => void loadUser()} />
+        <PhoneAuth startExpanded onVerified={() => void loadUser()} />
       </div>
     );
   }

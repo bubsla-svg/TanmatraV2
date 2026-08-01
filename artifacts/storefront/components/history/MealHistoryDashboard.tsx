@@ -16,7 +16,7 @@ export function MealHistoryDashboard() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to inspect your verified macro adherence logs.</p>
-        <PhoneAuth onVerified={() => void historyQuery.refetch()} />
+        <PhoneAuth startExpanded onVerified={() => void historyQuery.refetch()} />
       </div>
     );
   }

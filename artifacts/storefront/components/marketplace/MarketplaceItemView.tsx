@@ -159,7 +159,7 @@ export function MarketplaceItemView({ slug }: { slug: string }) {
       {needsAuth ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-ink-muted">Sign in to place your order.</p>
-          <PhoneAuth onVerified={() => {
+          <PhoneAuth startExpanded onVerified={() => {
             setNeedsAuth(false);
             if (!(mode === "bundle" && bundleId === null)) {
               void buy();

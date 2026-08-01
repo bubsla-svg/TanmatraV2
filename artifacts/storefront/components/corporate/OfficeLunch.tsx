@@ -34,7 +34,7 @@ export function OfficeLunch({ id }: { id: number }) {
   const needsAuth = orderQuery.error instanceof ApiError && orderQuery.error.status === 401;
   const unavailable = orderQuery.error instanceof ApiError && (orderQuery.error.status === 404 || orderQuery.error.status === 403);
 
-  if (needsAuth) return (<div className="flex flex-col gap-4"><p className="text-sm text-ink-muted">Sign in to pick your meal.</p><PhoneAuth onVerified={() => void orderQuery.refetch()} /></div>);
+  if (needsAuth) return (<div className="flex flex-col gap-4"><p className="text-sm text-ink-muted">Sign in to pick your meal.</p><PhoneAuth startExpanded onVerified={() => void orderQuery.refetch()} /></div>);
   if (orderQuery.isPending) return <p className="text-sm text-ink-muted">Loading…</p>;
   if (unavailable) return <p className="text-sm text-ink-muted">This office lunch isn&rsquo;t available to you.</p>;
   if (orderQuery.isError) {

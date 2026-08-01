@@ -103,7 +103,7 @@ export function SubscriptionManager() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to view and manage your plans.</p>
-        <PhoneAuth onVerified={() => retry()} />
+        <PhoneAuth startExpanded onVerified={() => retry()} />
       </div>
     );
   }

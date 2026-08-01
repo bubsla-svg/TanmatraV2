@@ -46,7 +46,7 @@ export function PremiumMembership() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to join Tanmatra Premium.</p>
-        <PhoneAuth onVerified={() => void premiumQuery.refetch()} />
+        <PhoneAuth startExpanded onVerified={() => void premiumQuery.refetch()} />
       </div>
     );
   }
