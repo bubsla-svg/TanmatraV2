@@ -13,33 +13,6 @@ export interface ApiChangelogEntry {
 
 export const API_CHANGELOG: ApiChangelogEntry[] = [
   {
-    version: "v1.2.0",
-    releasedAt: "2026-07-15",
-    status: "active",
-    changes: [
-      "Mounted OpenAPI 3.0 contract schema spec at /api/v1/openapi.json",
-      "Added explicit Zod contract validation across all /api/v1/ endpoints",
-      "Introduced Deprecation header middleware and versioned /api/v1/ and /api/v2/ routes",
-    ],
-  },
-  {
-    version: "v1.0.0",
-    releasedAt: "2026-01-10",
-    status: "active",
-    changes: ["Initial v1 release of Tanmatra Therapeutic Meal Delivery API"],
-  },
-];
-
-export const OPENAPI_SPEC_V1 = {
-  openapi: "3.0.3",
-  info: {
-    title: "Tanmatra Therapeutic Meal Delivery API",
-    version: "1.2.0",
-    description: "Strict OpenAPI/Zod contract specs, explicit v1/v2 versioning, and deprecation governance.",
-  },
-  servers: [{ url: "/api/v1", description: "Production v1 API Server" }],
-  paths: {
-    "/catalog/skus": {
       get: {
         summary: "Get menu catalog SKUs and committed plans",
         responses: {
@@ -56,11 +29,51 @@ export const OPENAPI_SPEC_V1 = {
         },
       },
     },
+    ...OPS_PATHS,
+    ...ADMIN_PATHS,
   },
 };
 
 /**
- * Step 1: GET /api/v1/openapi.json
+ * Normalizes express path syntax (`/ops/:id/ack`) to OpenAPI syntax (`/ops/{id}/ack`).
+ */
+export function normalizeExpressPath(path: string): string {
+  return path.replace(/:([a-zA-Z0-9_]+)/g, "{$1}");
+}
+
+/**
+ * Validates that an Express router's registered paths are present in the OpenAPI specification.
+ * Throws or returns missing paths when a router registers an uncontracted route.
+ */
+export function validateRouterContract(
+  routerInstance: any,
+  mountPrefix = "",
+  spec: typeof OPENAPI_SPEC_V1 = OPENAPI_SPEC_V1,
+): { valid: boolean; missing: string[]; totalChecked: number } {
+  const missing: string[] = [];
+  let totalChecked = 0;
+
+  const stack = routerInstance?.stack ?? [];
+  for (const layer of stack) {
+    if (layer.route?.path) {
+      const rawPath = `${mountPrefix}${layer.route.path}`.replace(/\/+/g, "/");
+      const openApiPath = normalizeExpressPath(rawPath);
+      totalChecked++;
+      if (!spec.paths[openApiPath as keyof typeof spec.paths]) {
+        missing.push(openApiPath);
+      }
+    }
+  }
+
+  return {
+    valid: missing.length === 0,
+    missing,
+    totalChecked,
+  };
+}
+
+/**
+ * GET /v1/openapi.json
  * Exposes OpenAPI 3.0 JSON spec contract.
  */
 router.get("/v1/openapi.json", (_req: Request, res: Response) => {
@@ -68,19 +81,18 @@ router.get("/v1/openapi.json", (_req: Request, res: Response) => {
 });
 
 /**
- * Step 3: GET /api/v1/changelog
+ * GET /v1/changelog
  * Exposes version changelog, deprecation notices, and migration timelines.
  */
 router.get("/v1/changelog", (_req: Request, res: Response) => {
   res.json({
-    currentVersion: "v1.2.0",
+    currentVersion: "v1.3.0",
     changelog: API_CHANGELOG,
   });
 });
 
 /**
- * Step 2 & 3: Deprecation Guard Middleware
- * Injects Deprecation and Sunset headers for sunsetting API versions.
+ * Deprecation Guard Middleware
  */
 export function apiDeprecationHeaderGuard(deprecationDate?: string, sunsetDate?: string) {
   return (_req: Request, res: Response, next: () => void): void => {
