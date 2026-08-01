@@ -26,6 +26,7 @@ import {
 import { recordOpsAction } from "../lib/opsAudit";
 import { recordAdminAction } from "../lib/adminAudit";
 import { requireRole, isRoleRequest } from "../lib/adminGate";
+import { PriceValidationError } from "../lib/priceBands";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
 
@@ -340,25 +341,31 @@ router.post(
       res.status(404).json({ error: "not found" });
       return;
     }
-
     let item;
-    if (operatorId) {
-      item = await db.transaction(async (tx) => {
-        const updated = await updatePrice(sp.data.slug, bp.data.pricePaise, tx);
-        await recordAdminAction({
-          operatorId,
-          action: "menu_price_update",
-          resourceType: "menu_item",
-          resourceId: sp.data.slug,
-          beforeState: { pricePaise: before.pricePaise },
-          afterState: { pricePaise: updated?.pricePaise ?? null },
-        }, tx);
-        return updated;
-      });
-    } else {
-      item = await updatePrice(sp.data.slug, bp.data.pricePaise);
+    try {
+      if (operatorId) {
+        item = await db.transaction(async (tx) => {
+          const updated = await updatePrice(sp.data.slug, bp.data.pricePaise, tx);
+          await recordAdminAction({
+            operatorId,
+            action: "menu_price_update",
+            resourceType: "menu_item",
+            resourceId: sp.data.slug,
+            beforeState: { pricePaise: before.pricePaise },
+            afterState: { pricePaise: updated?.pricePaise ?? null },
+          }, tx);
+          return updated;
+        });
+      } else {
+        item = await updatePrice(sp.data.slug, bp.data.pricePaise);
+      }
+    } catch (err) {
+      if (err instanceof PriceValidationError) {
+        res.status(422).json({ error: err.message });
+        return;
+      }
+      throw err;
     }
-
     await recordOpsAction({
       operatorId: operatorId ?? null,
       agent: "cms-rest",

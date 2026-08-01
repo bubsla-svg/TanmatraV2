@@ -5,11 +5,13 @@ import {
   type MenuItem,
 } from "@workspace/db";
 import { invalidateMenuCatalogCache } from "./menuCatalogCache";
+import { validatePricePaise } from "./priceBands";
 
 /** Minimal executor shape — accepts either the global `db` or a `tx`
  *  handle from `db.transaction`. Use this on read paths that need to
  *  observe writes made earlier in the same transaction. */
 export type DbReadExecutor = Pick<typeof db, "select">;
+export type DbWriteExecutor = Pick<typeof db, "select" | "update">;
 
 type InsertMenuItem = typeof menuItemsTable.$inferInsert;
 
@@ -119,8 +121,16 @@ export async function createMenuItem(input: CreateInput): Promise<MenuItem> {
 export async function updatePrice(
   slug: string,
   pricePaise: number,
-  tx: any = db,
+  tx: DbWriteExecutor = db,
 ): Promise<MenuItem | null> {
+  const [existing] = await tx
+    .select({ category: menuItemsTable.category })
+    .from(menuItemsTable)
+    .where(eq(menuItemsTable.slug, slug))
+    .limit(1);
+  if (!existing) return null;
+  validatePricePaise(existing.category, pricePaise);
+
   const [row] = await tx
     .update(menuItemsTable)
     .set({ pricePaise })

@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
 import { invalidateMenuCatalogCache } from "../lib/menuCatalogCache";
+import { recordAdminAction } from "../lib/adminAudit";
 import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, classifyPosStatusTransition } from "../lib/petpooja";
 import { petpoojaAuthOk, getStoreStatus, setStoreStatus } from "../lib/petpoojaClient";
 import {
@@ -25,10 +26,24 @@ function unauthorized(res: Response) {
   res.status(401).json({ success: "0", message: "unauthorized: invalid Petpooja credentials" });
 }
 
-// STRICT, and it must stay strict. This handler bulk-upserts `menu_items`,
-// `price_paise` included — it is the single most dangerous inbound route in the
-// service. It used to run "lenient", which at the time meant a request with no
-// credentials at all was waved through. Do not relax it.
+// STRICT, and it must stay strict. This handler bulk-upserts `menu_items` —
+// it is the single most dangerous inbound route in the service. It used to
+// run "lenient", which at the time meant a request with no credentials at
+// all was waved through. Do not relax it.
+//
+// TNM-ADM-01 ADM-28: it also used to write `price_paise` on every upsert,
+// which made the catalog's operator-set price only as durable as the next
+// PetPooja sync — a replayed or stale push would silently revert a manual
+// price change with no record of it happening. The catalog (menu_items via
+// lib/menu.ts::updatePrice) is now the sole price authority: an existing
+// row's price is never touched here, and an inbound push that tries to
+// change it is logged to the audit trail rather than applied. A brand-new
+// item (no existing row) still gets its initial price from the payload —
+// there is no operator price to protect yet, and PetPooja is the only
+// source for a new item's starting price. lib/priceBands.ts's category-band
+// guard deliberately does not run on this insert path; it exists to catch
+// fat-fingered or malicious operator edits via updatePrice, not to validate
+// a first-time POS import.
 router.post("/integrations/petpooja/push-menu", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
   const parsed = petpoojaPushMenuSchema.safeParse(req.body);
@@ -53,6 +68,26 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
           attributes ?? []
         );
 
+        const [existing] = await tx
+          .select({ pricePaise: menuItemsTable.pricePaise })
+          .from(menuItemsTable)
+          .where(eq(menuItemsTable.slug, mapped.slug))
+          .limit(1);
+
+        if (existing && existing.pricePaise !== mapped.pricePaise) {
+          await recordAdminAction(
+            {
+              operatorId: "petpooja-sync",
+              action: "menu.price_write_rejected",
+              entityType: "menu_item",
+              entityId: mapped.slug,
+              before: { pricePaise: existing.pricePaise },
+              after: { attemptedPricePaise: mapped.pricePaise },
+            },
+            tx,
+          );
+        }
+
         await tx
           .insert(menuItemsTable)
           .values({
@@ -64,7 +99,8 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
             set: {
               name: mapped.name,
               description: mapped.description,
-              pricePaise: mapped.pricePaise,
+              // pricePaise intentionally excluded — see the handler's doc
+              // comment above. The catalog owns price, not PetPooja.
               category: mapped.category,
               isVeg: mapped.isVeg,
               isAvailable: mapped.isAvailable,

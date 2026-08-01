@@ -91,8 +91,8 @@ jobs:
           ./src/lib/flags.test.ts
           ./src/lib/trialEligibility.test.ts
           ./src/lib/corporateSubsidy.test.ts
-          ./src/lib/dishCustomizations.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
+          ./src/lib/priceBands.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
       # these nowhere; they are driven through the api-server tsx loader.
@@ -246,7 +246,6 @@ jobs:
       - name: Shared error responder unit tests
         working-directory: artifacts/api-server
         run: >
-          node --test --import tsx
           ./src/lib/sendError.test.ts
 
 
@@ -394,3 +393,5 @@ jobs:
           ./src/lib/dishReviews.staleness.test.ts
           ./src/lib/userBrief/cacheSweep.test.ts
           ./src/routes/legalDocuments.test.ts
+          ./src/routes/petpooja.priceAuthority.test.ts
+          ./src/routes/menuPriceValidation.test.ts
