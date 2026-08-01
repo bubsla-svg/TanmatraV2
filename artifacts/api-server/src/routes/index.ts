@@ -62,6 +62,7 @@ import ecosystemRouter from "./ecosystem";
 import savedMealsRouter from "./savedMeals";
 import serviceabilityRouter from "./serviceability";
 import serviceabilityInterestRouter from "./serviceabilityInterest";
+import legalDocumentsRouter from "./legalDocuments";
 
 const router: IRouter = Router();
 
@@ -133,5 +134,6 @@ if (petpoojaWebhooksMounted()) {
 router.use(wearableRouter);
 router.use(ecosystemRouter);
 router.use(savedMealsRouter);
+router.use(legalDocumentsRouter);
 
 export default router;

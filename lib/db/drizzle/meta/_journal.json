@@ -176,6 +176,13 @@
       "when": 1785655958639,
       "tag": "0024_lazy_grey_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1785585596659,
+      "tag": "0025_thankful_talkback",
+      "breakpoints": true
     }
   ]
 }

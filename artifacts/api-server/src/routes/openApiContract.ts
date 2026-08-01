@@ -13,6 +13,14 @@ export interface ApiChangelogEntry {
 
 export const API_CHANGELOG: ApiChangelogEntry[] = [
   {
+    version: "v1.4.0",
+    releasedAt: "2026-08-01",
+    status: "active",
+    changes: [
+      "Added the Policy, Legal & Disclaimer CMS: public /legal-documents (+ :slug) and /admin/legal-documents CRUD + publish, gated to role compliance (ADM-20)",
+    ],
+  },
+  {
     version: "v1.3.0",
     releasedAt: "2026-08-01",
     status: "active",
@@ -79,13 +87,39 @@ const ADMIN_PATHS = {
   "/admin/roles/{userId}/{role}": {
     delete: { summary: "Revoke role" },
   },
+  "/admin/legal-documents": {
+    get: { summary: "List legal-document drafts (compliance)", responses: { "200": { description: "Draft rows + published-version pointer" } } },
+    post: { summary: "Create a new legal-document slug (compliance)", responses: { "201": { description: "Draft created" }, "409": { description: "Slug already exists" } } },
+  },
+  "/admin/legal-documents/{slug}": {
+    put: { summary: "Edit a legal-document draft (compliance)", responses: { "200": { description: "Draft updated" }, "404": { description: "Unknown slug" } } },
+  },
+  "/admin/legal-documents/{slug}/publish": {
+    post: { summary: "Publish a legal-document draft as a new immutable version (compliance)", responses: { "200": { description: "New version published" }, "404": { description: "Unknown slug" }, "409": { description: "Publish conflict — retry" } } },
+  },
+};
+
+/**
+ * Public, unauthenticated Legal/Policy CMS reads (ADM-20). Kept as their own
+ * const rather than folded into OPS_PATHS/ADMIN_PATHS since neither router
+ * they describe (routes/legalDocuments.ts's public half) is ops- or
+ * admin-gated — see ADMIN_PATHS above for the /admin/legal-documents* half
+ * of the same router.
+ */
+const LEGAL_PATHS: Record<string, any> = {
+  "/legal-documents": {
+    get: { summary: "List published legal documents + the company/entity singleton", responses: { "200": { description: "Published documents and company profile" } } },
+  },
+  "/legal-documents/{slug}": {
+    get: { summary: "Get one published legal document by slug", responses: { "200": { description: "Document body and company profile" }, "404": { description: "Unpublished or unknown slug" } } },
+  },
 };
 
 export const OPENAPI_SPEC_V1 = {
   openapi: "3.0.3",
   info: {
     title: "Tanmatra Therapeutic Meal Delivery API",
-    version: "1.3.0",
+    version: "1.4.0",
     description: "Strict OpenAPI/Zod contract specs, explicit v1/v2 versioning, and deprecation governance.",
   },
   servers: [{ url: "/api/v1", description: "Production v1 API Server" }],
@@ -109,6 +143,7 @@ export const OPENAPI_SPEC_V1 = {
     },
     ...OPS_PATHS,
     ...ADMIN_PATHS,
+    ...LEGAL_PATHS,
   },
 };
 

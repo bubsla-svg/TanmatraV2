@@ -7,6 +7,7 @@
     "hello": "tsx ./src/hello.ts",
     "seed-ops-data": "tsx ./src/seed-ops-data.ts",
     "seed-menu-items": "tsx ./src/seed-menu-items.ts",
+    "seed-legal-documents": "tsx ./src/seedLegalDocuments.ts",
     "backfill-order-coords": "tsx ./src/backfill-order-coords.ts",
     "backfill-macros": "tsx ./src/backfill-macros.ts",
     "backfill-encrypt-subscription-members": "tsx ./src/backfill-encrypt-subscription-members.ts",
