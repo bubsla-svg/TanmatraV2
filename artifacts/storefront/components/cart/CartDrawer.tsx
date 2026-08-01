@@ -11,7 +11,8 @@ import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
-import { CartUpsellRail, type UpsellCandidate } from "./CartUpsellRail";
+import { CartUpsellRail } from "./CartUpsellRail";
+import type { MarketplaceItem } from "@/lib/marketplaceApi";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
@@ -79,16 +80,19 @@ export function CartDrawer({
               <li className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
             )}
           </ul>
+          {/* Real catalog items, same line shape as MarketplaceGrid's add —
+              ids/slugs/prices all resolve server-side (the rail used to add
+              invented items checkout could only dead-end on). */}
           <CartUpsellRail
             cartLines={cart.lines}
-            onAdd={(item: UpsellCandidate) => {
+            onAdd={(item: MarketplaceItem) => {
               setCart(
                 addLine(cart, {
-                  dishId: item.dishId,
+                  dishId: item.id,
+                  kind: "marketplace",
                   slug: item.slug,
                   name: item.name,
                   pricePaise: item.pricePaise,
-                  kind: item.kind,
                 })
               );
             }}
