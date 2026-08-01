@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
+import { isFocusRoute } from "@/lib/focusRoutes";
 
 export type CoreTab = "home" | "menu" | "plan" | "account";
 
@@ -73,6 +74,12 @@ export function MobileBottomNav() {
 
   // Back gesture closes the account sheet, not the page.
   useOverlayHistory(accountSheetOpen, () => setAccountSheetOpen(false));
+
+  // FOCUS SHELL LAW (components/FocusLayout.tsx): the global tab bar never
+  // renders inside a high-intent flow — auth, checkout, onboarding, PDP own
+  // their bottom edge (their money bars anchor at bottom-0 there). Checked
+  // AFTER the hooks so the hook order stays unconditional.
+  if (isFocusRoute(pathname)) return null;
 
   return (
     <>

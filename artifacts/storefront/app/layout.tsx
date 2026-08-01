@@ -33,7 +33,6 @@ import { MiniCartBar } from "@/components/cart/MiniCartBar";
 import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
-import { ChromeGate } from "@/components/ChromeGate";
 import { NetworkStatusToast } from "@/components/NetworkStatusToast";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { QueryProvider } from "@/components/QueryProvider";

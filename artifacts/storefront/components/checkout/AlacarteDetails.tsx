@@ -153,10 +153,12 @@ export function AlacarteDetails({
         UPI · FSSAI licensed · RD-reviewed kitchen · you won&rsquo;t be charged until you confirm in the payment step.
       </p>
 
-      {/* Sticky pay bar — sits above the 4rem bottom-nav band on mobile. The
-          amount shown is the same DISPLAY subtotal as the summary card; the
-          CTA itself stays amount-free (server prices the order). */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+      {/* Sticky pay bar. The amount shown is the same DISPLAY subtotal as the
+          summary card; the CTA itself stays amount-free (server prices the
+          order). Anchored bottom-0, not the bottom-16 tab-bar band: /checkout
+          is a focus route (lib/focusRoutes.ts) — the global tab bar never
+          renders here. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 flex-col">
             <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted">Est. total</span>

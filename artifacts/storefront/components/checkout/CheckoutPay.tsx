@@ -48,9 +48,11 @@ export function CheckoutPay({
         <p className="tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(totalPaise)}</p>
       </div>
 
-      {/* Sticky pay bar — the screen's single gold pill, above the 4rem
-          bottom-nav band on mobile. Amount is the server-quoted total verbatim. */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+      {/* Sticky pay bar — the screen's single gold pill; amount is the
+          server-quoted total verbatim. Anchored bottom-0, not the bottom-16
+          tab-bar band: /checkout is a focus route (lib/focusRoutes.ts) — the
+          global tab bar never renders here. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto max-w-md px-4 py-3">
           <Button
             type="button"

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { useCart } from "@/components/cart/CartProvider";
+import { isFocusRoute } from "@/lib/focusRoutes";
 
 // CartDrawer pulls in the Drawer primitive (Vaul — drag-physics + portal +
 // focus management, see components/ui/drawer.tsx) plus CartUpsellRail. A
@@ -46,9 +47,15 @@ export function MiniCartBar() {
 
   if (!hydrated || count === 0 || pathname.startsWith("/checkout")) return null;
 
+  // Band anchor: `bottom-16` clears the global tab bar — but on a focus route
+  // (lib/focusRoutes.ts, e.g. the dish PDP) that bar never renders, so this
+  // bar takes the bottom edge itself; bottom-16 there would float it over a
+  // 64px void.
+  const bandClass = isFocusRoute(pathname) ? "bottom-0" : "bottom-16 md:bottom-0";
+
   return (
     <>
-      <div data-stitch="dark" className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur md:bottom-0">
+      <div data-stitch="dark" className={`fixed inset-x-0 ${bandClass} z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur`}>
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <p className="tabular text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}
