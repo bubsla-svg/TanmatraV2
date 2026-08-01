@@ -107,8 +107,13 @@ export function PartnerWizard() {
           Thanks, {submitted.fullName}. Our clinical governance team reviews credentials and will contact
           you at {submitted.email}.
         </p>
+        {/* Contextual reference, not the raw DB row id: "#7" read as a bare
+            sequential integer both looks broken and leaks application volume.
+            The padded RD- form is the same lookup key support needs, presented
+            as a reference. (A server-issued opaque ref would be better still —
+            that's an API change, out of this surface's reach.) */}
         <p className="tabular mt-4 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
-          Reference #{submitted.id}
+          Application reference RD-{String(submitted.id).padStart(5, "0")}
         </p>
       </div>
     );
