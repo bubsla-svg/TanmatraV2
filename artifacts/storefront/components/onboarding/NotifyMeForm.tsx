@@ -4,6 +4,37 @@ import { submitServiceabilityInterest } from "@/lib/serviceabilityApi";
 import { ApiError } from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 
+/**
+ * The onward path out of an unserviceable verdict.
+ *
+ * "We don't deliver to your pincode" with nothing to do next is a dead end,
+ * and it is the LAST thing a first-time visitor sees before they leave. The
+ * marketplace ships shelf-stable items nationwide, so it is a real offer
+ * rather than a consolation link — the delivery radius gates hot meals, not
+ * the whole catalogue.
+ *
+ * Deliberately rendered in ALL THREE out-of-zone branches (form, submitted,
+ * and the 404-degraded `hidden` state). The degraded branch is the one most
+ * likely to be missed: when the notify endpoint is unmounted mid-deploy the
+ * form vanishes entirely, and before this it left the visitor with a single
+ * "check a different pincode" link and no way forward at all.
+ *
+ * Secondary styling, not gold: gold is the sole ACTION colour and the primary
+ * action on this surface is still the notify capture. This is the alternative
+ * route, and it should read as one.
+ */
+function MarketplaceFallbackCta() {
+  return (
+    <a
+      href="/marketplace"
+      className="mt-1 inline-flex items-center gap-1.5 rounded-xl border border-line px-3.5 py-2 text-xs font-semibold text-ink transition-colors hover:border-line-strong hover:bg-surface-raised"
+    >
+      Shop the marketplace
+      <span aria-hidden="true">&rarr;</span>
+    </a>
+  );
+}
+
 export interface NotifyMeFormProps {
   pincode: string;
   onReset: () => void;
@@ -30,6 +61,9 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         >
           Check a different pincode &rarr;
         </button>
+        <div className="mt-2">
+          <MarketplaceFallbackCta />
+        </div>
       </div>
     );
   }
@@ -70,6 +104,9 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         >
           Check another pincode
         </button>
+        <div>
+          <MarketplaceFallbackCta />
+        </div>
       </div>
     );
   }
@@ -107,6 +144,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
       <p className="text-[11px] leading-snug text-[var(--ink-muted)]">
         We&rsquo;ll use this number only to tell you when Tanmatra delivers in {pincode}.
       </p>
+      <MarketplaceFallbackCta />
     </form>
   );
 }

@@ -2,7 +2,7 @@ import { Link, type MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [
   { title: "Page Not Found | Tanmatra" },
-  { name: "description", content: "The page you were looking for doesn't exist or has moved. Browse the Tanmatra menu or head back home." },
+  { name: "description", content: "The page you were looking for doesn't exist or has moved. Head back to the Tanmatra admin console." },
   { name: "robots", content: "noindex, follow" },
 ];
 
@@ -31,13 +31,21 @@ export default function NotFound() {
           We couldn&apos;t find the page you were looking for. It may have moved, or the
           link is out of date.
         </p>
+        {/* This app is the internal Admin ERP; its consumer routes were
+            removed in July. The old "Browse the menu" button pointed at
+            /menu — which this router now resolves to THIS page, so the 404's
+            own primary action was a loop back to the 404. */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
-          <Link to="/menu" className="btn btn-p btn-blk btn-lg" style={{ textDecoration: "none" }}>
-            <i className="ph-bold ph-cooking-pot" /> Browse the menu
+          <Link to="/admin" className="btn btn-p btn-blk btn-lg" style={{ textDecoration: "none" }}>
+            <i className="ph-bold ph-squares-four" /> Back to the admin console
           </Link>
-          <Link to="/" className="btn btn-g btn-blk" style={{ textDecoration: "none" }}>
-            <i className="ph-bold ph-house" /> Back home
-          </Link>
+          <a
+            href="https://tanmatra.food"
+            className="btn btn-g btn-blk"
+            style={{ textDecoration: "none" }}
+          >
+            <i className="ph-bold ph-house" /> Tanmatra storefront
+          </a>
         </div>
       </div>
     </div>

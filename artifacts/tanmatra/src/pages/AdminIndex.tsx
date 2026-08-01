@@ -1,134 +1,11 @@
 import { Link, type MetaFunction } from "react-router";
-import {
-  Activity,
-  BarChart3,
-  Bot,
-  Brain,
-  ClipboardList,
-  FileText,
-  LineChart,
-  LifeBuoy,
-  MessageSquare,
-  ShieldAlert,
-  Sparkles,
-  Store,
-  Users,
-  UtensilsCrossed,
-} from "lucide-react";
-
-type AdminLink = {
-  path: string;
-  title: string;
-  description: string;
-  icon: typeof Activity;
-};
-
-const ADMIN_LINKS: Array<{ section: string; items: AdminLink[] }> = [
-  {
-    section: "Operations",
-    items: [
-      {
-        path: "/admin/ops",
-        title: "Ops Dashboard",
-        description: "Live order flow, dispatch, ETA accuracy, anomalies.",
-        icon: Activity,
-      },
-      {
-        path: "/admin/compliance",
-        title: "Compliance & Audits",
-        description: "Daily ISO 22000 hygiene statements, cold storage, and supplier origins.",
-        icon: ClipboardList,
-      },
-      {
-        path: "/admin/forecasting",
-        title: "Demand Forecasting",
-        description: "Predicted volumes per dish, kitchen, and slot.",
-        icon: LineChart,
-      },
-      {
-        path: "/admin/menu-engineering",
-        title: "Menu Engineering",
-        description: "Margin × velocity matrix to prune and promote dishes.",
-        icon: UtensilsCrossed,
-      },
-    ],
-  },
-  {
-    section: "Analytics & AI",
-    items: [
-      {
-        path: "/admin/analytics",
-        title: "Analytics",
-        description: "Revenue, retention, cohort and protocol metrics.",
-        icon: BarChart3,
-      },
-      {
-        path: "/admin/ai-runs",
-        title: "AI Runs",
-        description: "Telemetry of every agent invocation, latency and cost.",
-        icon: Brain,
-      },
-      {
-        path: "/admin/ops-agent",
-        title: "Ops Agent",
-        description: "Conversational console for the ops support agent.",
-        icon: Bot,
-      },
-      {
-        path: "/admin/cms-agent",
-        title: "CMS Agent",
-        description: "Generate and edit menu copy, photos, and protocols.",
-        icon: Sparkles,
-      },
-    ],
-  },
-  {
-    section: "Trust & Safety",
-    items: [
-      {
-        path: "/admin/moderation",
-        title: "Review Moderation",
-        description: "Queue of flagged dish reviews awaiting decision.",
-        icon: ShieldAlert,
-      },
-      {
-        path: "/admin/community-moderation",
-        title: "Community Moderation",
-        description: "Cohort posts, comments, and member reports.",
-        icon: MessageSquare,
-      },
-      {
-        path: "/admin/support-tickets",
-        title: "Support Tickets",
-        description: "Customer support queue with agent suggestions.",
-        icon: LifeBuoy,
-      },
-    ],
-  },
-  {
-    section: "Partners & B2B",
-    items: [
-      {
-        path: "/admin/rd-applications",
-        title: "RD Applications",
-        description: "Registered Dietitian onboarding applications.",
-        icon: FileText,
-      },
-      {
-        path: "/admin/sales-console",
-        title: "B2B Sales Console",
-        description: "Corporate accounts pipeline and per-company drilldown.",
-        icon: Store,
-      },
-      {
-        path: "/rd-console",
-        title: "RD Console",
-        description: "Dietitian workspace (RD or admin only).",
-        icon: ClipboardList,
-      },
-    ],
-  },
-];
+import { Users } from "lucide-react";
+// The catalogue moved to lib/ so this grid and the persistent nav in
+// AdminShell render the SAME list — see lib/adminConsoles.ts. While it was a
+// private const here it had already drifted from routes.ts: /admin/kds and
+// /admin/supplier were routed and shipped but listed nowhere, so neither was
+// reachable without typing the URL. adminConsoles.test.ts now fails CI on that.
+import { ADMIN_CONSOLES } from "@/lib/adminConsoles";
 
 export const meta: MetaFunction = () => [
   { title: "Admin | Tanmatra" },
@@ -161,7 +38,7 @@ export default function AdminIndex() {
         </div>
       </header>
 
-      {ADMIN_LINKS.map((group) => (
+      {ADMIN_CONSOLES.map((group) => (
         <section key={group.section} className="space-y-3">
           <h2 className="text-[11px] uppercase tracking-[0.18em] text-nn-on-surface-variant font-semibold">
             {group.section}

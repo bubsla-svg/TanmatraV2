@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { collectErrors, ORDERABLE_DISH } from "../fixtures";
+import { MenuPage } from "../support/pages/MenuPage";
+import { CartDrawer } from "../support/pages/CartDrawer";
 
 /**
  * CUJ-01 (browse → PDP → cart), the shipped half of the à-la-carte money
@@ -9,28 +11,23 @@ import { collectErrors, ORDERABLE_DISH } from "../fixtures";
 
 test("menu renders the à-la-carte grid with live-or-fallback data", async ({ page }) => {
   const errors = collectErrors(page);
-  await page.goto("/menu");
-  await expect(page.getByRole("heading", { name: "The menu" })).toBeVisible();
+  const menu = new MenuPage(page);
+  await menu.goto();
   // The menu is à-la-carte ONLY (owner decision): the grid shows just the
   // orderable hero set — 42 in the api-less fallback build (static tier),
   // 71 against the live catalog. Assert a healthy floor, not an exact count,
   // so a curated add/remove doesn't break the spec.
-  const cards = page.locator('a[href^="/menu?dish="]');
-  expect(await cards.count()).toBeGreaterThan(35);
+  expect(await menu.dishCardLinks.count()).toBeGreaterThan(35);
   expect(errors).toEqual([]);
 });
 
 test("dish card opens the PDP bottom sheet; deep-link + back behave", async ({ page }) => {
+  const menu = new MenuPage(page);
   await page.goto("/menu");
-  await page
-    .locator('a[href="/menu?dish=' + ORDERABLE_DISH.slug + '"]')
-    .first()
-    .click();
+  await menu.cardLink().click();
   // Vaul drawer with a real DrawerTitle (§6 a11y).
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(
-    page.getByRole("dialog").getByText(ORDERABLE_DISH.name),
-  ).toBeVisible();
+  await expect(page.getByRole("dialog").getByText(ORDERABLE_DISH.name)).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`dish=${ORDERABLE_DISH.slug}`));
   // Escape closes the sheet and rewrites the URL back to /menu.
   await page.keyboard.press("Escape");
@@ -40,50 +37,45 @@ test("dish card opens the PDP bottom sheet; deep-link + back behave", async ({ p
 
 test("one-tap add → stepper in place → mini-bar; cart survives reload", async ({ page }) => {
   const errors = collectErrors(page);
+  const menu = new MenuPage(page);
   await page.goto("/menu");
 
-  const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
-  await card.getByRole("button", { name: "Add" }).click();
+  await menu.addToCart();
 
   // §4.1: quantity stepper replaces Add in place.
-  await expect(
-    card.getByRole("group", { name: `${ORDERABLE_DISH.name} quantity` }),
-  ).toBeVisible();
+  await expect(menu.quantityStepper()).toBeVisible();
 
   // Mini-bar appears with count + display subtotal.
-  await expect(page.getByText("1 item")).toBeVisible();
-  await card.getByRole("button", { name: "Increase quantity" }).click();
-  await expect(page.getByText("2 items")).toBeVisible();
+  await expect(menu.itemCount(1)).toBeVisible();
+  await menu.increaseQuantity();
+  await expect(menu.itemCount(2)).toBeVisible();
 
   // Guarded persistence: reload keeps the cart.
   await page.reload();
-  await expect(page.getByText("2 items")).toBeVisible();
+  await expect(menu.itemCount(2)).toBeVisible();
   expect(errors).toEqual([]);
 });
 
 test("cart drawer shows lines + subtotal; dark checkout fails LOUD, never dead", async ({ page }) => {
+  const menu = new MenuPage(page);
+  const cart = new CartDrawer(page);
   await page.goto("/menu");
-  const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
-  await card.getByRole("button", { name: "Add" }).click();
-  await page.getByRole("button", { name: "View cart" }).click();
+  await menu.addToCart();
+  await menu.openCart();
 
-  const drawer = page.getByRole("dialog");
-  // "Your cart" as plain text is ambiguous — the fail-loud status also says
-  // "…your cart is saved" (getByText is substring + case-insensitive). Use
-  // the heading role for the title.
-  await expect(drawer.getByRole("heading", { name: "Your cart" })).toBeVisible();
-  await expect(drawer.getByText(ORDERABLE_DISH.name)).toBeVisible();
-  await expect(drawer.getByText(/Subtotal \(before delivery & GST\)/)).toBeVisible();
+  await expect(cart.title).toBeVisible();
+  await expect(cart.line(ORDERABLE_DISH.name)).toBeVisible();
+  await expect(cart.subtotal).toBeVisible();
 
   // Flag-dark contract (§0.3): a VISIBLE status explains checkout is gated —
   // and no "Checkout" CTA exists to click into a void. When SF-05 lands and
   // NEXT_PUBLIC_LIVE_CHECKOUT=1 is built in, this branch flips to asserting
   // the live checkout leg instead.
   if (process.env["E2E_LIVE_CHECKOUT"] === "1") {
-    await expect(drawer.getByRole("link", { name: "Checkout" })).toBeVisible();
+    await expect(cart.checkoutLink).toBeVisible();
   } else {
-    await expect(drawer.getByRole("status")).toContainText(/checkout goes live/i);
-    await expect(drawer.getByRole("link", { name: "Checkout" })).toHaveCount(0);
+    await expect(cart.gatedStatus).toContainText(/checkout goes live/i);
+    await expect(cart.checkoutLink).toHaveCount(0);
   }
 });
 
@@ -94,13 +86,12 @@ test("cart drawer shows lines + subtotal; dark checkout fails LOUD, never dead",
 const liveCheckout = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
 
 liveCheckout("cart → live à-la-carte checkout renders the guest details form", async ({ page }) => {
+  const menu = new MenuPage(page);
+  const cart = new CartDrawer(page);
   await page.goto("/menu");
-  const card = page.locator("article", { hasText: ORDERABLE_DISH.name }).first();
-  await card.getByRole("button", { name: "Add" }).click();
-  await page.getByRole("button", { name: "View cart" }).click();
-
-  const drawer = page.getByRole("dialog");
-  await drawer.getByRole("link", { name: "Checkout" }).click();
+  await menu.addToCart();
+  await menu.openCart();
+  await cart.checkoutLink.click();
 
   await expect(page).toHaveURL(/\/checkout\?mode=alacarte/);
   await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible();
@@ -114,13 +105,12 @@ liveCheckout("cart → live à-la-carte checkout renders the guest details form"
 });
 
 test("every menu card is orderable — Add CTA on all cards, zero dead ends", async ({ page }) => {
+  const menu = new MenuPage(page);
   await page.goto("/menu");
-  const addButtons = page.getByRole("button", { name: "Add", exact: true });
-  const cards = page.locator('a[href^="/menu?dish="]');
   // À-la-carte-only grid: a card without an Add CTA is a browse-only dead
   // end, which the menu no longer ships. Count parity is the invariant.
-  const adds = await addButtons.count();
-  const total = await cards.count();
+  const adds = await menu.addButtons.count();
+  const total = await menu.dishCardLinks.count();
   expect(total).toBeGreaterThan(35);
   expect(adds).toBe(total);
 });

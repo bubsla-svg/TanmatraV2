@@ -54,6 +54,31 @@ test.describe("Ops-ERP shell", () => {
     await expect(page.locator("h1").first()).toBeVisible({ timeout: 15_000 });
   });
 
+  test("no consumer chrome frames an internal route", async ({ page }) => {
+    // The regression: root.tsx mounted the consumer Header, Footer, BottomNav
+    // and sticky checkout bar around every /admin page. The Header is
+    // `fixed top-3` over a <main> with no top padding, so it painted through
+    // each page's <h1>; and its links (/menu, /meal-planner, /orders,
+    // /challenges, /account) plus the Footer's fourteen all point at consumer
+    // routes this app deleted — every one of them a 404. Asserted on the
+    // unauthenticated shell because the chrome came from root.tsx, ABOVE the
+    // auth gate, so it rendered whether or not a session existed.
+    await page.goto("/admin/ops");
+    await page.waitForLoadState("networkidle");
+    for (const href of ["/menu", "/meal-planner", "/orders", "/challenges"]) {
+      await expect(
+        page.locator(`a[href="${href}"]`),
+        `${href} is not a route of this app — a link to it is a link to the 404`,
+      ).toHaveCount(0);
+    }
+    // Nothing may be `position: fixed` at the top of an admin route: that is
+    // the specific shape that overlapped the headings.
+    const fixedHeaders = await page.locator("header").evaluateAll((nodes) =>
+      nodes.filter((n) => getComputedStyle(n).position === "fixed").length,
+    );
+    expect(fixedHeaders).toBe(0);
+  });
+
   test("an unknown route 404s instead of serving a ghost page", async ({ page }) => {
     await page.goto("/checkout");
     await page.waitForLoadState("networkidle");

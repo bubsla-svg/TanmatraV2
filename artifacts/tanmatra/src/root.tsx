@@ -23,6 +23,7 @@ import StickyCheckoutBar from "@/components/cart/StickyCheckoutBar";
 import CartDrawer from "@/components/cart/CartDrawer";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { installErrorTelemetry } from "@/lib/errorTelemetry";
+import { isInternalSurface } from "@/lib/internalSurfaces";
 import "./index.css";
 import "./tanmatra-v2/theme.css";
 // The design tokens reference Instrument Serif (--font-serif) and JetBrains Mono
@@ -260,10 +261,30 @@ const DISCOVERY_SURFACES = [
 
 function AppShellInner() {
   const matches = useMatches();
-  const hideChrome = matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false);
   const currentPath = useLocation().pathname;
+  // Two independent reasons to drop the consumer chrome, OR'd together:
+  //
+  //   handle.chrome === false — a page opting out for itself (the v2 native
+  //     screens and the 404 do this).
+  //   isInternalSurface(path) — the route is Admin ERP / RD console. This one
+  //     is not opt-in, because opt-in is precisely what failed: nineteen
+  //     routed admin pages existed and not one of them set the handle, so the
+  //     consumer Header (fixed, overlapping every <h1>), the Footer, BottomNav
+  //     and the cart bar rendered over the whole ops console — with every link
+  //     in them pointing at a consumer route this app deleted in July, i.e.
+  //     straight at the 404. See lib/internalSurfaces.ts.
+  const internal = isInternalSurface(currentPath);
+  const hideChrome =
+    matches.some((m) => (m.handle as { chrome?: boolean } | null)?.chrome === false) ||
+    internal;
   const { items } = useCart();
-  const onDiscoverySurface = DISCOVERY_SURFACES.some((re) => re.test(currentPath));
+  // DISCOVERY_SURFACES still lists `/^\/$/` from when "/" was the consumer
+  // home; "/" is the Admin console index now, so without the `!internal` guard
+  // the first-touch onboarding quiz and the SoftGate signup prompt both
+  // mounted OVER the ops console. Consumer acquisition prompts have no meaning
+  // to a signed-in operator.
+  const onDiscoverySurface =
+    !internal && DISCOVERY_SURFACES.some((re) => re.test(currentPath));
 
   const showCheckoutBar = items.length > 0 && !STICKY_CHECKOUT_HIDE.some((re) => re.test(currentPath));
 
@@ -291,7 +312,11 @@ function AppShellInner() {
       {!hideChrome && <Footer />}
       {!hideChrome && <BottomNav />}
       {!hideChrome && <StickyCheckoutBar />}
-      <CartDrawer />
+      {/* The drawer is portal-mounted and opens from consumer cart affordances
+          only, but it still subscribes to cart state and renders a checkout
+          CTA. An ops console has no cart, so keep it off internal routes
+          entirely rather than relying on nothing being able to open it. */}
+      {!internal && <CartDrawer />}
     </div>
   );
 }

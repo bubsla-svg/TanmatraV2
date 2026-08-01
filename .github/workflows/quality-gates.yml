@@ -47,6 +47,14 @@ jobs:
       - name: Lint — hardcoded price literals
         run: pnpm --filter "@workspace/tanmatra" run lint:prices
 
+      # No secret may be interpolated into a `run:` script. GitHub substitutes
+      # it as literal text and bash then expands it, so a `$` in the value is
+      # eaten and shell syntax in the value is executed. This is not
+      # theoretical: it silently corrupted ADMIN_PASSWORD_HASH on every deploy
+      # and locked the admin console's own operator out.
+      - name: Lint — workflow secrets are env-bound, not shell-interpolated
+        run: pnpm run lint:workflow-secrets
+
       # Dish-data integrity: no contradictory allergen / diet / serving signals
       # on the clinical surface (e.g. an "Eggless" dish declaring an egg allergen,
       # or a cold smoothie carrying "reheat" copy). Source-scanning, no build.
