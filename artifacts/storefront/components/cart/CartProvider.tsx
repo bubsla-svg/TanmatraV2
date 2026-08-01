@@ -5,6 +5,7 @@
 // persistence effect.
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -37,10 +38,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setHydrated(true);
   }, []);
 
-  const setCart = (next: CartState) => {
+  // Stable identity (`useCallback`, empty deps — it only ever touches the
+  // setter and the persistence side effect, neither of which needs to be a
+  // dependency). Every screen that reads the cart also gets a fresh `setCart`
+  // reference on every cart mutation if this isn't memoized, which cascades:
+  // any child that puts `setCart` in a `useCallback`/`useMemo` dependency
+  // array (menu add-buttons, the marketplace grid, cart drawer upsells) loses
+  // its own memoization the moment ANY line item changes, anywhere.
+  const setCart = useCallback((next: CartState) => {
     setCartState(next);
     saveCart(next);
-  };
+  }, []);
 
   return (
     <CartContext.Provider value={{ cart, setCart, hydrated }}>

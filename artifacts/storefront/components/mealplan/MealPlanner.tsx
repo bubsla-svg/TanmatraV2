@@ -2,7 +2,7 @@
 // Weekly meal-planner island. Session-gated (401 → inline PhoneAuth). Generate a
 // week, swap dishes on the draft, then accept (schedules onto an active weekly
 // subscription — no new charge) or discard. Lifecycle lives in useMealPlan.
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useMealPlan } from "./useMealPlan";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
@@ -18,6 +18,12 @@ export function MealPlanner() {
   const mp = useMealPlan();
   const [swap, setSwap] = useState<{ dayIndex: number; slot: MealPlanSlot } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Defined ONCE (not per-item inside the .map() below) so DayCard — memo'd —
+  // actually gets to skip re-rendering the 6 days that didn't change whenever
+  // MealPlanner re-renders for an unrelated reason (mp.busy toggling, etc.).
+  const handleSwapRequest = useCallback((dayIndex: number, slot: MealPlanSlot) => setSwap({ dayIndex, slot }), []);
+  const handleRegenDay = useCallback((dayIndex: number) => void mp.regenDay(dayIndex), [mp.regenDay]);
 
   if (mp.phase === "needsAuth") {
     return (
@@ -71,7 +77,7 @@ export function MealPlanner() {
           <PlanSummary plan={plan} accepted={mp.accepted} />
           <div className="flex flex-col gap-4">
             {plan.days.map((day, i) => (
-              <DayCard key={day.date + i} day={day} editable={editable} onSwap={(slot) => setSwap({ dayIndex: i, slot })} onRegen={() => void mp.regenDay(i)} />
+              <DayCard key={day.date + i} day={day} dayIndex={i} editable={editable} onSwap={handleSwapRequest} onRegen={handleRegenDay} />
             ))}
           </div>
           {plan.status !== "draft" && (

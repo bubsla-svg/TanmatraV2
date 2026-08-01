@@ -10,8 +10,13 @@ import { Dialog } from "radix-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { getSettings, updateSettings, type MealPlanSettings } from "@/lib/mealPlanApi";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 
 export function SettingsDialog({ onClose }: { onClose: () => void }) {
+  // Mounted only while "open" (see MealPlanner.tsx) — the back gesture closes
+  // this dialog instead of leaving /meal-planner.
+  useOverlayHistory(true, onClose);
+
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({ queryKey: ["mealplan", "settings"], queryFn: () => getSettings() });
 
@@ -56,8 +61,8 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
-        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-[var(--z-modal)] w-[92vw] max-w-sm -translate-x-1/2 rounded-3xl border border-line bg-surface p-5 shadow-lg">
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-[var(--z-modal)] w-[92vw] max-w-sm -translate-x-1/2 animate-dialog-in rounded-3xl border border-line bg-surface p-5 shadow-lg">
           <Dialog.Title className="text-sm font-semibold text-ink">Meal planner settings</Dialog.Title>
           {settingsQuery.isError && (
             <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3 py-2">

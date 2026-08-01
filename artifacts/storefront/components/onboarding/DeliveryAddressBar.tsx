@@ -15,6 +15,7 @@ import {
   mirroredVerdict,
 } from "@/lib/addressServiceability";
 import { checkServiceability, saveServiceabilityState } from "@/lib/serviceabilityApi";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { ServiceabilityBar } from "./ServiceabilityBar";
 import { MarketplaceFallbackCta } from "./MarketplaceFallbackCta";
 
@@ -36,6 +37,9 @@ export function DeliveryAddressBar() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Back gesture closes the address switcher instead of leaving the page.
+  useOverlayHistory(switcherOpen, () => setSwitcherOpen(false));
 
   useEffect(() => {
     setMounted(true);
@@ -187,13 +191,13 @@ function AddressSwitcherSheet({
         type="button"
         aria-label="Close address switcher"
         onClick={onClose}
-        className="absolute inset-0 bg-[var(--ink)]/40"
+        className="absolute inset-0 animate-fade-in bg-[var(--ink)]/40"
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Choose a delivery address"
-        className="relative w-full rounded-t-3xl border border-line bg-surface p-5 shadow-2xl sm:max-w-md sm:rounded-3xl"
+        className="relative w-full animate-sheet-in rounded-t-3xl border border-line bg-surface p-5 shadow-2xl sm:max-w-md sm:animate-dialog-in sm:rounded-3xl"
       >
         <h2 className="text-base font-bold text-ink">Deliver to</h2>
 

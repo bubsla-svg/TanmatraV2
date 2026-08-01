@@ -65,12 +65,12 @@ export function ProtocolDishRail({
           No qualifying dishes are live right now — check back soon.
         </p>
       ) : (
-        <div className="mt-8 flex gap-4 overflow-x-auto pb-2">
+        <div className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
           {picks.map((d) => (
             <Link
               key={d.slug}
               href={`/dish/${d.slug}`}
-              className="group w-44 shrink-0 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-shadow hover:shadow-md sm:w-52"
+              className="group w-44 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-shadow hover:shadow-md cv-auto sm:w-52"
             >
               <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
                 {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}

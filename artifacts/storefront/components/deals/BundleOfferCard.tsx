@@ -23,12 +23,16 @@ import { formatPaise } from "@/lib/format";
 import { addLine } from "@/lib/cartStore";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import type { BundleView } from "@/lib/mealBundles";
 
 export function BundleOfferCard({ bundle }: { bundle: BundleView }) {
   const { cart, setCart } = useCart();
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
+
+  // Back gesture closes the combo dialog instead of leaving /meal-deals.
+  useOverlayHistory(open, () => setOpen(false));
 
   function addCombo() {
     let next = cart;
@@ -76,10 +80,10 @@ export function BundleOfferCard({ bundle }: { bundle: BundleView }) {
         <Dialog.Portal>
           {/* Scrim: --scrim, never data-stitch — see the invariant on
               components/ui/drawer.tsx's DrawerOverlay. */}
-          <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
+          <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
           <Dialog.Content
             aria-describedby={undefined}
-            className="fixed left-1/2 top-16 z-[var(--z-modal)] flex max-h-[80vh] w-[92vw] max-w-md -translate-x-1/2 flex-col overflow-hidden rounded-3xl border border-line bg-surface"
+            className="fixed left-1/2 top-16 z-[var(--z-modal)] flex max-h-[80vh] w-[92vw] max-w-md -translate-x-1/2 animate-dialog-in flex-col overflow-hidden rounded-3xl border border-line bg-surface"
           >
             <div className="border-b border-line px-5 py-4">
               <Dialog.Title className="text-base font-semibold text-ink">{bundle.title}</Dialog.Title>

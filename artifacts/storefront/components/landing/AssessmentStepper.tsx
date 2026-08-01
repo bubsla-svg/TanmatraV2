@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { emitLpEvent } from "@/lib/lpEvents";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import {
   ASSESSMENT_STEPS,
   INITIAL_ASSESSMENT_STATE,
@@ -31,6 +32,10 @@ export function AssessmentStepper({
   const [stepIdx, setStepIdx] = useState(0);
   const [state, setState] = useState<AssessmentState>(INITIAL_ASSESSMENT_STATE);
   const [showResult, setShowResult] = useState(false);
+
+  // Back gesture closes the full-screen assessment instead of leaving the
+  // landing page. `handleSkip` is the canonical close path (✕ button too).
+  useOverlayHistory(open, handleSkip);
 
   useEffect(() => {
     if (defaultOpen) {
@@ -131,7 +136,7 @@ export function AssessmentStepper({
       role="dialog"
       aria-modal="true"
       aria-label="Clinical health assessment stepper"
-      className="fixed inset-0 z-50 flex flex-col bg-surface overflow-y-auto p-4 sm:p-6 md:p-8"
+      className="fixed inset-0 z-50 flex animate-dialog-in flex-col overscroll-contain bg-surface overflow-y-auto p-4 sm:p-6 md:p-8"
     >
       <div className="mx-auto flex h-full w-full max-w-2xl flex-col justify-between gap-6">
         <div className="flex items-center justify-between border-b border-line pb-3">

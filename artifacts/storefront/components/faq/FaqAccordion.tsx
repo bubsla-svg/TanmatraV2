@@ -60,7 +60,11 @@ export function FaqAccordion({
               </svg>
             </button>
             {isOpen && (
-              <p className="pb-5 pr-7 text-sm leading-relaxed text-ink-muted">{item.a}</p>
+              // Mount/unmount, never a height transition: the row's own
+              // border-radius/background swap already covers the "opening"
+              // read; the answer itself just eases in on transform+opacity
+              // (never animates height, so it never drops frames).
+              <p className="animate-disclosure-in pb-5 pr-7 text-sm leading-relaxed text-ink-muted">{item.a}</p>
             )}
           </div>
         );

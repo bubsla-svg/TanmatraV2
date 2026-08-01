@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "radix-ui";
 import { NAV_GROUPS, COMPANY_LINKS, LEGAL_LINKS } from "@/lib/nav";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 
 interface Entry {
   label: string;
@@ -29,6 +30,9 @@ export function CommandMenu() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const router = useRouter();
+
+  // Back gesture (or the platform swipe) closes ⌘K instead of leaving the page.
+  useOverlayHistory(open, () => setOpen(false));
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -74,10 +78,10 @@ export function CommandMenu() {
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
+          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-lg -translate-x-1/2 animate-dialog-in overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
           <Dialog.Title className="sr-only">Search pages</Dialog.Title>
           <input

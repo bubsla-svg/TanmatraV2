@@ -8,6 +8,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 
 export type CoreTab = "home" | "menu" | "plan" | "account";
 
@@ -69,6 +70,9 @@ const TABS: TabConfig[] = [
 export function MobileBottomNav() {
   const pathname = usePathname();
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+
+  // Back gesture closes the account sheet, not the page.
+  useOverlayHistory(accountSheetOpen, () => setAccountSheetOpen(false));
 
   return (
     <>
@@ -145,7 +149,7 @@ export function MobileBottomNav() {
               route. */}
           <div
             data-stitch="dark"
-            className="fixed bottom-0 inset-x-0 bg-neutral-950 border-t border-neutral-800 rounded-t-3xl p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-neutral-100 max-h-[85vh] overflow-y-auto"
+            className="fixed bottom-0 inset-x-0 animate-sheet-in bg-neutral-950 border-t border-neutral-800 rounded-t-3xl p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-neutral-100 max-h-[85vh] overflow-y-auto overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto w-12 h-1.5 rounded-full bg-neutral-700 mb-6" />

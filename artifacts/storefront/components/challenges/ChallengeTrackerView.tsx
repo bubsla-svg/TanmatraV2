@@ -109,7 +109,11 @@ export function ChallengeTrackerView() {
                       <span className="tabular text-ink">{pct}%</span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-surface-raised">
-                      <div className="h-full rounded-full bg-gold transition-all duration-700 ease-out" style={{ width: `${pct}%` }} />
+                      {/* `transform: scaleX` instead of animating `width` — compositor-only. */}
+                      <div
+                        className="h-full w-full origin-left rounded-full bg-gold transition-transform duration-700 ease-out"
+                        style={{ transform: `scaleX(${pct / 100})` }}
+                      />
                     </div>
                   </div>
                 </Link>
