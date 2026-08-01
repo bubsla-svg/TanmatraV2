@@ -24,11 +24,14 @@ export function PlanDetails({
   onTrackChange,
   quoteTotalPaise,
   quoteLoading,
+  quoteError,
+  onRetryQuote,
   addOnLine,
   creditAppliedPaise,
   initialAddress,
   finePrint,
   busy,
+  verifying,
   error,
   onSubmit,
 }: {
@@ -37,6 +40,11 @@ export function PlanDetails({
   onTrackChange: (t: DietTrack) => void;
   quoteTotalPaise: number | null;
   quoteLoading: boolean;
+  /** True when the last quote fetch failed. A silently-swallowed quote error
+   *  left this screen showing an ellipsis and a permanently disabled button —
+   *  a dead end with no explanation on the purchase path. */
+  quoteError?: boolean;
+  onRetryQuote?: () => void;
   /** The quote's billed add-on line ("Your dietitian · +₹499/mo") — the
    *  SERVER's priced items, shown so the total is never a surprise. */
   addOnLine?: string | null;
@@ -48,6 +56,10 @@ export function PlanDetails({
    *  no-auto-renew). Never a price of its own. */
   finePrint?: string[];
   busy: boolean;
+  /** True once Razorpay has captured the money and verify is retrying — the
+   *  CTA copy must say so; "Opening payment…" after the modal already closed
+   *  reads as a stuck/failed button on money the customer already paid. */
+  verifying?: boolean;
   error: string | null;
   onSubmit: (value: PlanDetailsValue) => void;
 }) {
@@ -164,6 +176,18 @@ export function PlanDetails({
             {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
           </span>
         </div>
+        {quoteError && (
+          <p role="alert" className="flex items-center justify-between gap-3 text-xs font-medium text-[var(--danger)]">
+            <span>Couldn&rsquo;t fetch the price.</span>
+            <button
+              type="button"
+              onClick={onRetryQuote}
+              className="shrink-0 rounded-lg border border-[var(--danger)]/40 px-2.5 py-1 font-semibold underline-offset-2 hover:underline"
+            >
+              Retry
+            </button>
+          </p>
+        )}
       </div>
 
       {finePrint && finePrint.length > 0 && (
@@ -193,7 +217,10 @@ export function PlanDetails({
             onClick={() => onSubmit({ member: draftToMember(member), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
             shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40"
           >
-            {busy ? "Opening payment…" : "Continue to payment"}
+            {/* Once the modal resolves, money is already captured — "Opening
+                payment…" would read as a hung or failed button on a charge
+                that already went through. */}
+            {verifying ? "Confirming your payment…" : busy ? "Opening payment…" : "Continue to payment"}
           </Button>
         </div>
       </div>

@@ -42,6 +42,10 @@ export function AlacarteCheckout() {
   const [phone, setPhone] = useState("");
   const [phoneLocked, setPhoneLocked] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Money captured, verify in flight (with in-place retry — see moneyPath's
+  // verifyWithRetry). Distinct from `busy` so the CTA can say what is
+  // actually happening to money that has already left the customer's account.
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // SF-04 in-flow: once signed in, a saved default address prefills the form.
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
@@ -75,7 +79,9 @@ export function AlacarteCheckout() {
       let result;
       if (createdOrder.current) {
         // A prior attempt already created this order — pay it, don't re-create.
-        result = await finishAlacartePayment(createdOrder.current, createRazorpayAdapter({ contact }));
+        result = await finishAlacartePayment(createdOrder.current, createRazorpayAdapter({ contact }), undefined, {
+          onVerifying: () => setVerifying(true),
+        });
       } else {
         if (!idempotencyKey.current) idempotencyKey.current = `alc-${crypto.randomUUID()}`;
         const order: AlacarteOrderInput = {
@@ -98,6 +104,7 @@ export function AlacarteCheckout() {
           onCreated: (o) => {
             createdOrder.current = o;
           },
+          onVerifying: () => setVerifying(true),
         });
       }
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
@@ -108,6 +115,7 @@ export function AlacarteCheckout() {
         setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
       }
       setBusy(false);
+      setVerifying(false);
     }
   }
 
@@ -158,6 +166,7 @@ export function AlacarteCheckout() {
         phoneLocked={phoneLocked}
         initialAddress={savedAddress}
         busy={busy}
+        verifying={verifying}
         error={error}
         onSubmit={handlePay}
       />

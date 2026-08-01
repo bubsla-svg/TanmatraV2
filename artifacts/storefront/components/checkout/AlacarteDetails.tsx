@@ -31,6 +31,7 @@ export function AlacarteDetails({
   phoneLocked,
   initialAddress,
   busy,
+  verifying,
   error,
   onSubmit,
 }: {
@@ -42,6 +43,10 @@ export function AlacarteDetails({
    *  component via `key` when it arrives, so plain useState seeds are correct). */
   initialAddress?: { line1: string; city: string; pincode: string } | null;
   busy: boolean;
+  /** True once Razorpay has captured the money and verify is retrying — the
+   *  CTA copy must say so; "Opening payment…" after the modal already closed
+   *  reads as a stuck/failed button on money the customer already paid. */
+  verifying?: boolean;
   error: string | null;
   onSubmit: (address: AlacarteAddress) => void;
 }) {
@@ -155,7 +160,10 @@ export function AlacarteDetails({
             onClick={() => onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") })}
             shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40"
           >
-            {busy ? "Opening payment…" : "Continue to payment"}
+            {/* Once the modal resolves, money is already captured — "Opening
+                payment…" would read as a hung or failed button on a charge
+                that already went through. */}
+            {verifying ? "Confirming your payment…" : busy ? "Opening payment…" : "Continue to payment"}
           </Button>
         </div>
       </div>

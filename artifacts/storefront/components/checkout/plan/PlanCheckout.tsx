@@ -54,9 +54,20 @@ export function PlanCheckout({
   // any redeemable credit once signed in; gates the CTA. `cadence` must match
   // what `buildSubscriptionInput` below sends to create, or the displayed quote
   // and the actual charge disagree.
-  const { quote, quoteLoading } = usePlanQuote(planId, track, addOns, user !== null, billedCadence);
+  const { quote, quoteLoading, quoteError, retryQuote } = usePlanQuote(
+    planId,
+    track,
+    addOns,
+    user !== null,
+    billedCadence,
+  );
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
   const [busy, setBusy] = useState(false);
+  // "Opening payment…" vs "Confirming your payment…" — see handlePay's
+  // onVerifying. Money is captured the instant the modal resolves; a slow
+  // verify retry (moneyPath's verifyWithRetry) must never look like the
+  // button silently died.
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // The created subscription, so a retry after a dismissed modal resumes payment
   // on it instead of creating a second subscription.
@@ -83,7 +94,9 @@ export function PlanCheckout({
       if (createdRef.current) {
         // A prior attempt already created this subscription — pay it, don't
         // create a second one.
-        result = await finishPlanPayment(createdRef.current, adapter);
+        result = await finishPlanPayment(createdRef.current, adapter, undefined, {
+          onVerifying: () => setVerifying(true),
+        });
       } else {
         const subscription = buildSubscriptionInput({
           planId,
@@ -102,6 +115,7 @@ export function PlanCheckout({
           onCreated: (ref) => {
             createdRef.current = ref;
           },
+          onVerifying: () => setVerifying(true),
         });
       }
       // Hand the money event's facts to the confirmation screen — the autopay
@@ -122,6 +136,7 @@ export function PlanCheckout({
         setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
       }
       setBusy(false);
+      setVerifying(false);
     }
   }
 
@@ -138,11 +153,14 @@ export function PlanCheckout({
         onTrackChange={setTrack}
         quoteTotalPaise={quote?.payableTotalPaise ?? null}
         quoteLoading={quoteLoading}
+        quoteError={quoteError}
+        onRetryQuote={retryQuote}
         addOnLine={quote?.addOnLine ?? null}
         creditAppliedPaise={quote?.creditAppliedPaise ?? 0}
         initialAddress={savedAddress}
         finePrint={finePrint}
         busy={busy}
+        verifying={verifying}
         error={error}
         onSubmit={handlePay}
       />
