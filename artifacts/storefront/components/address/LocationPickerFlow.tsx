@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { reverseGeocode, searchLocation, DEFAULT_MAP_CENTER, type GeoPlace } from "@/lib/geoClient";
+import { gradeGpsAccuracy, type GpsConfidence } from "@/lib/geolocation";
 import { LocationSummaryCard } from "./LocationSummaryCard";
 
 const PickerMap = dynamic(() => import("./LocationPickerMap"), {
@@ -27,6 +28,9 @@ export function LocationPickerFlow({
   const [suggestions, setSuggestions] = useState<GeoPlace[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
+  // null until a GPS fix has actually been taken — an un-attempted fix is not
+  // the same as a precise one, and must not render a reassuring absence.
+  const [gpsConfidence, setGpsConfidence] = useState<GpsConfidence | null>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -57,6 +61,12 @@ export function LocationPickerFlow({
         const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setCoords(next);
         setRecenterSeq((s) => s + 1);
+        // `accuracy` is the 68th-percentile radius in metres. Above ~150m the
+        // fix is cell-tower triangulation, not GPS, and cannot identify a
+        // building — which is exactly what a 6 AM doorstep drop needs. Grading
+        // it (rather than ignoring it, as this handler used to) is what turns a
+        // silently-wrong pin into a prompt the user can act on.
+        setGpsConfidence(gradeGpsAccuracy(pos.coords.accuracy));
         void fetchPlace(next.lat, next.lng);
       },
       () => setLoading(false),
@@ -108,7 +118,30 @@ export function LocationPickerFlow({
       </div>
 
       <div className="relative flex-1 min-h-[260px] w-full">
-        <PickerMap coords={coords} recenterSeq={recenterSeq} onDragEnd={(lat, lng) => { setCoords({ lat, lng }); void fetchPlace(lat, lng); }} />
+        <PickerMap
+          coords={coords}
+          recenterSeq={recenterSeq}
+          onDragEnd={(lat, lng) => {
+            setCoords({ lat, lng });
+            // Dragging IS the corrective action the warning asks for, so the
+            // warning retires the moment it is taken. Leaving it up would
+            // nag a user who has already done the thing.
+            setGpsConfidence(null);
+            void fetchPlace(lat, lng);
+          }}
+        />
+        {gpsConfidence !== null && gpsConfidence !== "precise" && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 z-[600] flex justify-center px-4">
+            <p
+              role="status"
+              className="max-w-sm rounded-2xl border border-[var(--warning)]/40 bg-[var(--surface)] px-4 py-2.5 text-center text-xs font-semibold text-[var(--ink)] shadow-xl"
+            >
+              {gpsConfidence === "weak"
+                ? "Weak GPS signal. Drag the pin to your exact building so the morning drop reaches the right door."
+                : "Couldn't read your GPS accuracy. Drag the pin to your exact building before confirming."}
+            </p>
+          </div>
+        )}
         <div className="absolute bottom-4 left-0 right-0 z-[600] flex justify-center px-4">
           <button type="button" onClick={handleUseCurrentLocation} className="flex items-center gap-2.5 rounded-2xl border border-line bg-surface px-5 py-3 font-bold text-ink shadow-xl transition hover:opacity-90">
             <svg className="h-5 w-5 text-[var(--gold)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3" /></svg>
