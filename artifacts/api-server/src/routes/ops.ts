@@ -27,7 +27,7 @@ import {
   snoozeAlert,
 } from "../lib/anomalies";
 import { sendDailyDigest } from "../lib/anomalyDigestSender";
-import { requireRole } from "../lib/adminGate";
+import { requireOps as gateRequireOps } from "../lib/adminGate";
 import { sendDeliveryDelaySms } from "../lib/sms";
 import { audit } from "../lib/audit";
 import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
@@ -53,7 +53,15 @@ const router: IRouter = Router();
  * request must NOT call next().
  */
 router.use(async (req: Request, res: Response, next: NextFunction) => {
-  const gateResult = await requireRole(req, res, "kitchen");
+  // requireOps, not requireRole(…, "kitchen"): both resolve to the SAME
+  // authorization decision (requireOps → isOpsRequest → isRoleRequest(req,
+  // "kitchen")), but requireOps keeps the 403 body as `ops scope required`.
+  // That string is the /ops surface's published contract — ops.kds.test.ts
+  // asserts it, and the storefront KDS client is written against it. ADM-02
+  // keeps isOpsRequest/requireOps precisely for this backward compatibility,
+  // so calling requireRole here would change a public error message for no
+  // authorization gain.
+  const gateResult = await gateRequireOps(req, res);
   if (gateResult === null) return; // 403 already written
   res.locals.operatorId = gateResult.operatorId;
   next();
