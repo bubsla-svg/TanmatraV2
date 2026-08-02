@@ -119,8 +119,9 @@ export async function createMenuItem(input: CreateInput): Promise<MenuItem> {
 export async function updatePrice(
   slug: string,
   pricePaise: number,
+  tx: any = db,
 ): Promise<MenuItem | null> {
-  const [row] = await db
+  const [row] = await tx
     .update(menuItemsTable)
     .set({ pricePaise })
     .where(eq(menuItemsTable.slug, slug))

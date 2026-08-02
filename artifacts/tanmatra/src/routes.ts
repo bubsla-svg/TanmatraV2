@@ -20,6 +20,7 @@ export default [
       route("admin/kds", "pages/AdminKds.tsx"),
       route("admin/supplier", "pages/AdminSupplier.tsx"),
       route("admin/compliance", "pages/AdminCompliance.tsx"),
+      route("admin/audit", "pages/AdminAudit.tsx"),
     ]),
     layout("routes/RdAuthLayout.tsx", [
       route("rd-console", "pages/RdConsole.tsx")
