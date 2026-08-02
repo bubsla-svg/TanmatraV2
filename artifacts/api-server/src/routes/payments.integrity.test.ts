@@ -42,6 +42,7 @@ import {
   companiesTable,
   companyMembersTable,
   companyBudgetUsageTable,
+  adminRolesTable,
 } from "@workspace/db";
 
 import paymentsRouter from "./payments";
@@ -73,6 +74,7 @@ let baseUrl = "";
  * reset it afterwards) or the route answers 401 before the amount logic runs.
  */
 let authedUserId: string | null = null;
+let financeUserId: string;
 const CREATED_ORDER_IDS: number[] = [];
 const CREATED_EVENT_IDS: string[] = [];
 const CREATED_USER_IDS: string[] = [];
@@ -116,10 +118,23 @@ function makeApp(): Express {
   return app;
 }
 
-before(() => {
+before(async () => {
   process.env["RAZORPAY_KEY_ID"] = KEY_ID;
   process.env["RAZORPAY_KEY_SECRET"] = KEY_SECRET;
   process.env["RAZORPAY_WEBHOOK_SECRET"] = WEBHOOK_SECRET;
+
+  // Seed finance user
+  financeUserId = randomUUID();
+  await db.insert(usersTable).values({
+    id: financeUserId,
+    email: `finance-${RUN}@example.test`,
+  });
+  await db.insert(adminRolesTable).values({
+    userId: financeUserId,
+    role: "finance",
+    assignedBy: null,
+  });
+  CREATED_USER_IDS.push(financeUserId);
 });
 
 await new Promise<void>((resolve) => {
@@ -156,6 +171,7 @@ after(async () => {
     // its own orders-table ledger row that was never tracked in
     // CREATED_ORDER_IDS; delete any leftover orders by userId first since
     // orders.user_id has no cascade.
+    await db.delete(adminRolesTable).where(inArray(adminRolesTable.userId, CREATED_USER_IDS));
     await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
@@ -803,9 +819,10 @@ test("charge-mandate bills the subscription's pricePerDeliveryPaise, ignoring a 
 
   let res: { status: number; json: any };
   try {
+    authedUserId = financeUserId;
     const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-admin-token": ADMIN_TOKEN },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         subscriptionId,
         amountPaise: tamperedClientAmount,
@@ -814,6 +831,7 @@ test("charge-mandate bills the subscription's pricePerDeliveryPaise, ignoring a 
     });
     res = { status: r.status, json: await r.json() };
   } finally {
+    authedUserId = null;
     globalThis.fetch = realFetch;
   }
 

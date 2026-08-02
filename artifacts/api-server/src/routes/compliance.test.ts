@@ -9,24 +9,62 @@
  * shared `sendError` and `seedComplianceLogsIfEmpty` helpers; this suite
  * pins both.
  */
-import test from "node:test";
+import { test, after } from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import express from "express";
+import { inArray } from "drizzle-orm";
 import type { AddressInfo } from "node:net";
 
 process.env["DATABASE_URL"] ||=
   "postgres://postgres:postgres@localhost:5432/tanmatra_test";
 
-const { db, complianceLogsTable } = await import("@workspace/db");
+const { db, complianceLogsTable, usersTable, adminRolesTable } = await import("@workspace/db");
 const { default: complianceRouter } = await import("./compliance");
 
 const ADMIN_TOKEN = "test-compliance-token";
+
+const CREATED_USER_IDS: string[] = [];
+
+async function makeUser(label: string): Promise<{ id: string }> {
+  const id = randomUUID();
+  await db.insert(usersTable).values({
+    id,
+    email: `compliance-${label}-${id}@example.test`,
+    firstName: label,
+  });
+  CREATED_USER_IDS.push(id);
+  return { id };
+}
+
+async function assignRole(userId: string, role: string) {
+  await db.insert(adminRolesTable).values({
+    userId,
+    role,
+    assignedBy: null,
+  });
+}
+
+// Seed global compliance user
+const complianceUser = await makeUser("compliance-admin");
+await assignRole(complianceUser.id, "compliance");
+
+after(async () => {
+  if (CREATED_USER_IDS.length > 0) {
+    await db.delete(adminRolesTable).where(inArray(adminRolesTable.userId, CREATED_USER_IDS));
+    await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
+  }
+});
 
 async function withApp(fn: (base: string) => Promise<void>) {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    req.isAuthenticated = (() => false) as typeof req.isAuthenticated;
+    const headerId = req.header("x-test-user-id");
+    if (headerId) {
+      (req as any).user = { id: headerId };
+    }
+    req.isAuthenticated = (() => (req as any).user != null) as typeof req.isAuthenticated;
     next();
   });
   app.use(complianceRouter);
@@ -52,10 +90,19 @@ test("unauthenticated GET /compliance/logs is refused (403)", async () => {
   });
 });
 
-test("a granted caller on an empty table gets seeded rows, not an empty list", async () => {
+test("x-admin-token alone is refused (403) for compliance logs", async () => {
   await withApp(async (base) => {
     const res = await fetch(`${base}/compliance/logs`, {
       headers: { "x-admin-token": ADMIN_TOKEN },
+    });
+    assert.equal(res.status, 403);
+  });
+});
+
+test("a granted caller on an empty table gets seeded rows, not an empty list", async () => {
+  await withApp(async (base) => {
+    const res = await fetch(`${base}/compliance/logs`, {
+      headers: { "x-test-user-id": complianceUser.id },
     });
     assert.equal(res.status, 200);
     const body = (await res.json()) as { ok: boolean; logs: unknown[] };
@@ -66,8 +113,8 @@ test("a granted caller on an empty table gets seeded rows, not an empty list", a
 
 test("seeding is idempotent — a second call does not duplicate rows", async () => {
   await withApp(async (base) => {
-    await fetch(`${base}/compliance/logs`, { headers: { "x-admin-token": ADMIN_TOKEN } });
-    const res = await fetch(`${base}/compliance/logs`, { headers: { "x-admin-token": ADMIN_TOKEN } });
+    await fetch(`${base}/compliance/logs`, { headers: { "x-test-user-id": complianceUser.id } });
+    const res = await fetch(`${base}/compliance/logs`, { headers: { "x-test-user-id": complianceUser.id } });
     const body = (await res.json()) as { logs: unknown[] };
     assert.equal(body.logs.length, 30);
   });

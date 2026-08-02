@@ -47,6 +47,7 @@ import {
   refundRequestsTable,
   deliveryEventsTable,
   usersTable,
+  adminRolesTable,
 } from "@workspace/db";
 
 import refundsRouter from "./refunds";
@@ -259,6 +260,14 @@ async function seedRefund(fields: {
   return row!.id;
 }
 
+async function assignRole(userId: string, role: string) {
+  await db.insert(adminRolesTable).values({
+    userId,
+    role,
+    assignedBy: null,
+  });
+}
+
 async function makeUser(label: string): Promise<{ id: string }> {
   const id = randomUUID();
   await db.insert(usersTable).values({
@@ -271,6 +280,10 @@ async function makeUser(label: string): Promise<{ id: string }> {
   USER_REGISTRY.set(id, user);
   return user;
 }
+
+// Seed global finance user for admin requests
+const financeUser = await makeUser("finance-admin");
+await assignRole(financeUser.id, "finance");
 
 async function refundRow(id: number) {
   const [row] = await db
@@ -299,16 +312,22 @@ async function readJson(res: Awaited<ReturnType<typeof fetch>>) {
   }
 }
 
-/** Admin (ops) request carrying the x-admin-token header. */
+/** Admin (ops) request carrying per-operator auth or x-admin-token. */
 async function admin(
   method: string,
   path: string,
   body?: unknown,
-  opts: { token?: string | null } = {},
+  opts: { token?: string | null; userId?: string | null } = {},
 ): Promise<{ status: number; json: any }> {
   const headers: Record<string, string> = { "content-type": "application/json" };
+  
+  // Default to financeUser if no userId specified
+  const userId = "userId" in opts ? opts.userId : financeUser.id;
+  if (userId) headers["x-test-user-id"] = userId;
+
   const token = "token" in opts ? opts.token : ADMIN_TOKEN;
   if (token) headers["x-admin-token"] = token;
+
   const noBody = method === "GET" || method === "HEAD";
   const res = await fetch(`${baseUrl}${path}`, {
     method,
@@ -491,10 +510,12 @@ test("reject declines the request with no gateway call and leaves the order unto
 // ---------------------------------------------------------------------------
 // 6. auth: no admin token → 403
 // ---------------------------------------------------------------------------
-test("ops gate: without the x-admin-token header, list and approve return 403", async () => {
+test("ops gate: without finance role, list and approve return 403", async () => {
   resetRzp("success");
-  const list = await admin("GET", "/admin/refunds", undefined, { token: null });
-  assert.equal(list.status, 403, JSON.stringify(list.json));
+  
+  // 1. x-admin-token alone (PROD-02 acceptance)
+  const tokenOnly = await admin("GET", "/admin/refunds", undefined, { token: ADMIN_TOKEN, userId: null });
+  assert.equal(tokenOnly.status, 403, "x-admin-token alone -> 403 for sensitive route");
 
   const orderId = await seedOrder({
     externalOrderId: ext("auth"),
@@ -509,10 +530,18 @@ test("ops gate: without the x-admin-token header, list and approve return 403", 
     razorpayPaymentId: "pay_AUTH",
   });
 
-  const approve = await admin("POST", `/admin/refunds/${refundId}/approve`, {}, { token: null });
-  assert.equal(approve.status, 403, JSON.stringify(approve.json));
+  const approveTokenOnly = await admin("POST", `/admin/refunds/${refundId}/approve`, {}, { token: ADMIN_TOKEN, userId: null });
+  assert.equal(approveTokenOnly.status, 403, "x-admin-token alone -> 403 for sensitive approve");
   assert.equal(rzpCalls.length, 0, "an unauthorized approve must never reach the gateway");
   assert.equal((await refundRow(refundId)).status, "pending", "row must remain untouched");
+
+  // 2. Non-finance user
+  const nonFinanceUser = await makeUser("non-finance");
+  const listNonFinance = await admin("GET", "/admin/refunds", undefined, { userId: nonFinanceUser.id });
+  assert.equal(listNonFinance.status, 403, "non-finance user -> 403 for list");
+
+  const approveNonFinance = await admin("POST", `/admin/refunds/${refundId}/approve`, {}, { userId: nonFinanceUser.id });
+  assert.equal(approveNonFinance.status, 403, "non-finance user -> 403 for approve");
 });
 
 // ---------------------------------------------------------------------------

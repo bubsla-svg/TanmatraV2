@@ -132,24 +132,11 @@ test("Acceptance (b): POST /admin/roles from a catalog-only operator returns 403
   assert.ok(grant);
 });
 
-test("POST /admin/roles tolerates synthetic operator (x-admin-token)", async () => {
+test("POST /admin/roles blocks synthetic operator (x-admin-token)", async () => {
   const targetUser = await makeUser("target-synthetic");
   const ADMIN_TOKEN = "test-token-synthetic";
   process.env["RD_ADMIN_TOKEN"] = ADMIN_TOKEN;
 
-  // We need to simulate how requireRole/isRoleRequest handles x-admin-token.
-  // The test harness app doesn't call isRoleRequest directly, it just stubs req.user.
-  // But our new logic in adminRoles.ts checks operator.operatorId.
-  // In the test harness, operator.operatorId comes from whatever requireRole returns.
-  // requireRole calls isRoleRequest.
-  // If we want to test the REAL logic, we should ensure the test harness simulates
-  // the return value of isRoleRequest correctly.
-  
-  // Let's modify the test app to support x-admin-token simulation.
-  // Wait, the test app just uses `requireRole` which is imported from lib/adminGate.
-  // So it runs the REAL requireRole!
-  // That means if we set the header and env, it should work.
-  
   const res = await fetch(`${baseUrl}/admin/roles`, {
     method: "POST",
     body: JSON.stringify({ userId: targetUser.id, role: "kitchen" }),
@@ -159,18 +146,8 @@ test("POST /admin/roles tolerates synthetic operator (x-admin-token)", async () 
     },
   });
 
-  // It should fail with 403 because x-admin-token is NOT an owner yet (in PROD-02 it will be limited).
-  // BUT currently on main (a47cea66), x-admin-token satisfies ALL gates unconditionally!
-  // Let's verify what happens on current main + this branch.
-  // In this branch, we haven't changed adminGate.ts yet (that's PROD-02).
-  // So x-admin-token should satisfy `owner` role and return 200.
-  
-  assert.equal(res.status, 200);
-
-  // Verify grant exists and assignedBy is null (because it was synthetic)
-  const [grant] = await db.select().from(adminRolesTable).where(and(eq(adminRolesTable.userId, targetUser.id), eq(adminRolesTable.role, "kitchen")));
-  assert.ok(grant);
-  assert.equal(grant.assignedBy, null);
+  // It should fail with 403 because x-admin-token is NOT an owner (sensitive role).
+  assert.equal(res.status, 403);
 });
 
 test("Acceptance (c): a single grant writes exactly one audit_log row", async () => {

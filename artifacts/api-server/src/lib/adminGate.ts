@@ -36,14 +36,19 @@ export interface GateResult {
   operatorId: string | null;
 }
 
+const OPERATIONAL_ROLES = ["kitchen", "catalog", "support", "growth"];
+
 export async function isRoleRequest(req: Request, role: string | string[]): Promise<GateResult> {
   const targetRoles = Array.isArray(role) ? role : [role];
+  
+  const hasOperationalAlternative = targetRoles.some(r => OPERATIONAL_ROLES.includes(r));
 
-  if (hasAdminToken(req)) {
+  if (hasAdminToken(req) && hasOperationalAlternative) {
     return { allowed: true, operatorId: req.user?.id ?? "admin-token" };
   }
+  
   const adminSession = hasAdminSession(req);
-  if (adminSession) {
+  if (adminSession && hasOperationalAlternative) {
     return { allowed: true, operatorId: `admin:${adminSession.username}` };
   }
 
