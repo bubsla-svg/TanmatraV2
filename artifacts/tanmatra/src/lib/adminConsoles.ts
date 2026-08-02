@@ -14,6 +14,7 @@ import {
   Store,
   Truck,
   UtensilsCrossed,
+  Image as ImageIcon,
 } from "lucide-react";
 
 /**
@@ -62,6 +63,13 @@ export const ADMIN_CONSOLES: AdminConsoleGroup[] = [
         description:
           "Live order tickets for the kitchen pass, with portion-weight checks.",
         icon: ChefHat,
+      },
+      {
+        path: "/admin/menu-imagery",
+        title: "Menu Imagery",
+        navLabel: "Imagery",
+        description: "Manage dish assets, AI generation, and primary images.",
+        icon: ImageIcon,
       },
       {
         path: "/admin/compliance",

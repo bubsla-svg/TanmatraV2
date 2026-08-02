@@ -10,6 +10,7 @@ export default [
       route("admin/cms-agent", "pages/AdminCmsAgent.tsx"),
       route("admin/forecasting", "pages/AdminForecasting.tsx"),
       route("admin/menu-engineering", "pages/AdminMenuEngineering.tsx"),
+      route("admin/menu-imagery", "pages/AdminMenuImagery.tsx"),
       route("admin/analytics", "pages/AdminAnalytics.tsx"),
       route("admin/support-tickets", "pages/AdminSupportTickets.tsx"),
       route("admin/rd-applications", "pages/AdminRdApplications.tsx"),
