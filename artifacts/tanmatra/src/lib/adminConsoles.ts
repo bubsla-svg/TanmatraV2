@@ -14,6 +14,7 @@ import {
   Store,
   Truck,
   UtensilsCrossed,
+  Image as ImageIcon,
 } from "lucide-react";
 
 /**
@@ -64,11 +65,18 @@ export const ADMIN_CONSOLES: AdminConsoleGroup[] = [
         icon: ChefHat,
       },
       {
-        path: "/admin/catalog",
+path: "/admin/catalog",
         title: "Menu Catalog",
         navLabel: "Catalog",
         description: "Manage SKUs, categories, and availability.",
         icon: FileText,
+      },
+      {
+        path: "/admin/menu-imagery",
+        title: "Menu Imagery",
+        navLabel: "Imagery",
+        description: "Manage dish assets, AI generation, and primary images.",
+        icon: ImageIcon,
       },
       {
         path: "/admin/compliance",
