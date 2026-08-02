@@ -24,14 +24,14 @@ import {
 } from "../lib/menuCopy";
 import { recordOpsAction } from "../lib/opsAudit";
 import { recordAdminAction } from "../lib/adminAudit";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
 
-function requireCatalog(req: Request, res: Response): boolean {
-  return gateRequireCatalog(req, res) !== null;
+async function requireCatalog(req: Request, res: Response): Promise<boolean> {
+  return (await requireRole(req, res, "catalog")) !== null;
 }
 
 // Public, unauthenticated catalog: merges editable DB fields (price, name,
@@ -137,7 +137,7 @@ router.get("/menu/ranked", async (req: Request, res: Response) => {
 });
 
 router.get("/menu/items", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const items = await listMenuItems({
     category:
       typeof req.query.category === "string" ? req.query.category : undefined,
@@ -174,7 +174,7 @@ const createSchema = z.object({
 });
 
 router.post("/menu/items", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -217,7 +217,7 @@ router.post("/menu/items", async (req: Request, res: Response) => {
 const slugParam = z.object({ slug: z.string().min(1).max(128) });
 
 router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const sp = slugParam.safeParse(req.params);
   const customizationSchema = z.object({
     groupName: z.string().min(1).max(120),
@@ -300,7 +300,7 @@ router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
 router.post(
   "/menu/items/:slug/price",
   async (req: Request, res: Response) => {
-    const auth = gateRequireCatalog(req, res);
+    const auth = await requireRole(req, res, "catalog");
     if (!auth) return;
     const operatorId = auth.operatorId;
 
@@ -354,7 +354,7 @@ router.post(
 router.post(
   "/menu/items/bulk/availability",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const bp = z
       .object({
         filter: z.object({
@@ -401,7 +401,7 @@ router.post(
 router.post(
   "/menu/items/:slug/availability",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = slugParam.safeParse(req.params);
     const bp = z
       .object({
@@ -459,8 +459,8 @@ const uploadImageMw = multer({
   },
 }).single("file");
 
-router.post("/menu/uploads", (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+router.post("/menu/uploads", async (req: Request, res: Response) => {
+  if (!(await requireCatalog(req, res))) return;
   uploadImageMw(req, res, async (err: unknown) => {
     if (err) {
       const msg = err instanceof Error ? err.message : "upload failed";
@@ -501,7 +501,7 @@ router.post("/menu/uploads", (req: Request, res: Response) => {
 });
 
 router.post("/menu/items/:slug/image", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const sp = slugParam.safeParse(req.params);
   const bp = z.object({ imageUrl: z.string().url() }).safeParse(req.body);
   if (!sp.success || !bp.success) {
@@ -542,7 +542,7 @@ const copyFieldEnum = z.enum([
 router.post(
   "/menu/items/:slug/generate-copy",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = slugParam.safeParse(req.params);
     const bp = z
       .object({ fields: z.array(copyFieldEnum).min(1).optional() })
@@ -607,7 +607,7 @@ const acceptCopySchema = z.object({
 });
 
 router.post("/menu/items/:slug/copy", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const sp = slugParam.safeParse(req.params);
   const bp = acceptCopySchema.safeParse(req.body);
   if (!sp.success || !bp.success) {
@@ -643,7 +643,7 @@ router.post("/menu/items/:slug/copy", async (req: Request, res: Response) => {
 });
 
 router.get("/menu/copy/missing", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const category =
     typeof req.query.category === "string" && req.query.category
       ? req.query.category

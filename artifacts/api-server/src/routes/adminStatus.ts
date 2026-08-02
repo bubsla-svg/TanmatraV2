@@ -129,7 +129,7 @@ async function agentRollups(): Promise<AgentRollup[]> {
 }
 
 router.get("/admin/_status", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireOps(req, res);
   if (!gate) return;
 
   const env = envChecks();

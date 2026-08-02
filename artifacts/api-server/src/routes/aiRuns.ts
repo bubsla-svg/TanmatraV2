@@ -2,14 +2,14 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, aiRunsTable } from "@workspace/db";
 import { desc, eq, and, lt, type SQL } from "drizzle-orm";
 import { listAgents } from "../lib/ai";
-import { isOpsRequest } from "../lib/adminGate";
+import { isRoleRequest } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
-router.get("/ai/agents", (req: Request, res: Response) => {
+router.get("/ai/agents", async (req: Request, res: Response) => {
   // Internal telemetry endpoint: exposes agent + tool metadata. Gated to
   // authenticated users or admin to reduce reconnaissance surface.
-  if (!isOpsRequest(req).allowed && !req.isAuthenticated()) {
+  if (!(await isRoleRequest(req, "owner")).allowed && !req.isAuthenticated()) {
     res.status(401).json({ error: "unauthorized" });
     return;
   }
@@ -29,7 +29,7 @@ router.get("/ai/agents", (req: Request, res: Response) => {
 });
 
 router.get("/ai/runs", async (req: Request, res: Response) => {
-  const admin = isOpsRequest(req).allowed;
+  const admin = (await isRoleRequest(req, "owner")).allowed;
   if (!admin && !req.isAuthenticated()) {
     res.status(401).json({ error: "unauthorized" });
     return;

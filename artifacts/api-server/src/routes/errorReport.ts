@@ -70,8 +70,8 @@ router.post(
  * interaction traces from ALL users — never public. (Ingestion above stays
  * open: error beacons cannot authenticate.)
  */
-router.get("/v1/error-reports/audit", (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.get("/v1/error-reports/audit", async (req: Request, res: Response) => {
+  if (!(await requireOps(req, res))) return;
   res.json({
     totalReports: storedErrorReports.length,
     reports: storedErrorReports,

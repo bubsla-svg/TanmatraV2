@@ -12,12 +12,12 @@ import {
   sendReply,
   triageTicket,
 } from "../lib/supportTriage";
-import { requireOps as gateRequireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
-function requireOps(req: Request, res: Response): boolean {
-  return gateRequireOps(req, res) !== null;
+async function requireOps(req: Request, res: Response): Promise<boolean> {
+  return (await requireRole(req, res, "support")) !== null;
 }
 
 function userId(req: Request): string | null {
@@ -99,7 +99,7 @@ router.post("/support-tickets", async (req: Request, res: Response) => {
 
 // Ops inbox: list tickets, with optional filters.
 router.get("/support-tickets", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const status =
     typeof req.query.status === "string" ? req.query.status : undefined;
   const team = typeof req.query.team === "string" ? req.query.team : undefined;
@@ -120,7 +120,7 @@ router.get("/support-tickets", async (req: Request, res: Response) => {
 });
 
 router.get("/support-tickets/metrics", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const days = Math.max(1, Math.min(90, Number(req.query.days ?? 7)));
   try {
     res.json(await getMetrics(days));
@@ -130,7 +130,7 @@ router.get("/support-tickets/metrics", async (req: Request, res: Response) => {
 });
 
 router.get("/support-tickets/rejected", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const limit = Math.max(1, Math.min(200, Number(req.query.limit ?? 50)));
   try {
     res.json({ rows: await listRejectedForEval(limit) });
@@ -140,7 +140,7 @@ router.get("/support-tickets/rejected", async (req: Request, res: Response) => {
 });
 
 router.get("/support-tickets/:id", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const sp = idParam.safeParse(req.params);
   if (!sp.success) {
     res.status(400).json({ error: "invalid id" });
@@ -165,7 +165,7 @@ router.get("/support-tickets/:id", async (req: Request, res: Response) => {
 router.post(
   "/support-tickets/:id/triage",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -187,7 +187,7 @@ router.post(
 router.post(
   "/support-tickets/:id/draft",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -227,7 +227,7 @@ const sendBody = z.object({
 router.post(
   "/support-tickets/:id/send",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -260,7 +260,7 @@ const rejectBody = z.object({ reason: z.string().min(1).max(1000) });
 router.post(
   "/support-tickets/:id/reject",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });

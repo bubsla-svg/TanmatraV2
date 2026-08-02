@@ -25,7 +25,7 @@ import {
   REFUND_EVENT_NAMES,
 } from "../lib/paymentIntegrity";
 import { chargeMandateCore } from "../lib/chargeMandate";
-import { requireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
 import {
   razorpayCredentials,
@@ -1276,7 +1276,7 @@ const chargeMandateSchema = z.object({
  * Missing/invalid credentials → 403 "ops scope required".
  */
 router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireRole(req, res, "finance"))) return;
   const parsed = chargeMandateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -1318,7 +1318,7 @@ router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
  * the per-IP payments rate limit entirely.
  */
 router.post("/jobs/pre-debit-notifications", paymentRateLimit, async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireRole(req, res, "finance"))) return;
   try {
     const result = await runPreDebitNotificationsSweep();
     res.json({ success: true, ...result });

@@ -19,7 +19,7 @@ function writeEvent(res: Response, event: object): void {
 }
 
 router.post("/cms-agent/chat", async (req: Request, res: Response) => {
-  const gate = requireCatalog(req, res);
+  const gate = await requireCatalog(req, res);
   if (!gate) return;
   const operatorId = gate.operatorId;
   const parsed = ChatBodySchema.safeParse(req.body);
@@ -121,7 +121,7 @@ router.post("/cms-agent/chat", async (req: Request, res: Response) => {
 });
 
 router.get("/cms-agent/audit", async (req: Request, res: Response) => {
-  if (!isCatalogRequest(req).allowed) {
+  if (!(await isCatalogRequest(req)).allowed) {
     res.status(403).json({ error: "catalog scope required" });
     return;
   }

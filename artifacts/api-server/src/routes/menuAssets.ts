@@ -16,12 +16,12 @@ import {
   softDeleteAsset,
 } from "../lib/menuAssets";
 import { serveStoredAsset } from "../lib/imageStorage";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
-function requireCatalog(req: Request, res: Response): boolean {
-  return gateRequireCatalog(req, res) !== null;
+async function requireCatalog(req: Request, res: Response): Promise<boolean> {
+  return (await requireRole(req, res, "catalog")) !== null;
 }
 
 function userId(req: Request): string | null {
@@ -87,7 +87,7 @@ router.get(
 router.get(
   "/menu/items/:slug/assets",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = slugParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid slug" });
@@ -108,7 +108,7 @@ const uploadBody = z.object({
 router.post(
   "/menu/items/:slug/assets/upload",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = slugParam.safeParse(req.params);
     const bp = uploadBody.safeParse(req.body);
     if (!sp.success || !bp.success) {
@@ -162,7 +162,7 @@ router.post(
 router.post(
   "/menu/assets/:id/enhance",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -197,7 +197,7 @@ const heroBody = z
 router.post(
   "/menu/items/:slug/assets/hero",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = slugParam.safeParse(req.params);
     const bp = heroBody.safeParse(req.body ?? {});
     if (!sp.success || !bp.success) {
@@ -238,7 +238,7 @@ router.post(
 router.post(
   "/menu/assets/:id/remove-bg",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -269,7 +269,7 @@ router.post(
 router.post(
   "/menu/assets/:id/set-primary",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -297,7 +297,7 @@ router.post(
 router.delete(
   "/menu/assets/:id",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -334,7 +334,7 @@ router.delete(
 router.get(
   "/menu/items/missing-images",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const filter = z
       .object({
         category: z.string().min(1).max(64).optional(),
@@ -373,7 +373,7 @@ const bulkHeroBody = z.object({
 router.post(
   "/menu/items/assets/bulk-hero",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const bp = bulkHeroBody.safeParse(req.body);
     if (!bp.success) {
       res.status(400).json({ error: "invalid payload; need slugs + confirm:true" });

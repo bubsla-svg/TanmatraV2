@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 import crypto from "crypto";
 import { hasAdminSession } from "./adminAuth";
+import { db, adminRolesTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 
 /**
  * Constant-time comparison for shared-secret tokens. Both inputs must be
@@ -34,8 +36,9 @@ export interface GateResult {
   operatorId: string | null;
 }
 
-/** Ops scope: x-admin-token OR signed admin cookie OR user in OPS_USER_IDS. */
-export function isOpsRequest(req: Request): GateResult {
+export async function isRoleRequest(req: Request, role: string | string[]): Promise<GateResult> {
+  const targetRoles = Array.isArray(role) ? role : [role];
+
   if (hasAdminToken(req)) {
     return { allowed: true, operatorId: req.user?.id ?? "admin-token" };
   }
@@ -43,35 +46,85 @@ export function isOpsRequest(req: Request): GateResult {
   if (adminSession) {
     return { allowed: true, operatorId: `admin:${adminSession.username}` };
   }
-  const allowlist = envList("OPS_USER_IDS");
-  if (req.isAuthenticated() && allowlist.includes(req.user.id)) {
-    return { allowed: true, operatorId: req.user.id };
+
+  if (req.isAuthenticated()) {
+    // 1. Check database for ANY roles this user has.
+    //
+    // A failure here must DENY, never throw. Letting the rejection escape
+    // turns an authorization decision into a 500 — and worse, on a route
+    // whose handler already responded it surfaces as an unhandled
+    // ERR_HTTP_HEADERS_SENT. Treat an unreachable/absent admin_roles table as
+    // "this user holds no roles" and fall through to the legacy allowlist,
+    // which is DB-free. A DB outage can therefore only ever withhold access,
+    // never grant it.
+    let roles: string[] = [];
+    try {
+      const dbRows = await db
+        .select()
+        .from(adminRolesTable)
+        .where(eq(adminRolesTable.userId, req.user.id));
+      roles = dbRows.map((r) => r.role);
+    } catch (err) {
+      req.log?.error({ err }, "adminGate: admin_roles lookup failed; denying role grant");
+    }
+
+    if (
+      roles.includes("owner") ||
+      targetRoles.some(r => roles.includes(r)) ||
+      (req.method === "GET" && roles.includes("readonly"))
+    ) {
+      return { allowed: true, operatorId: req.user.id };
+    }
+
+    // 2. Legacy fallback
+    if (targetRoles.includes("kitchen")) {
+      const allowlist = envList("OPS_USER_IDS");
+      if (allowlist.includes(req.user.id)) {
+        return { allowed: true, operatorId: req.user.id };
+      }
+    }
+    if (targetRoles.includes("catalog")) {
+      const allow = [...envList("CATALOG_USER_IDS"), ...envList("OPS_USER_IDS")];
+      if (allow.includes(req.user.id)) {
+        return { allowed: true, operatorId: req.user.id };
+      }
+    }
   }
+
   return { allowed: false, operatorId: null };
+}
+
+/** Ops scope: x-admin-token OR signed admin cookie OR user in OPS_USER_IDS. */
+export async function isOpsRequest(req: Request): Promise<GateResult> {
+  return isRoleRequest(req, "kitchen");
 }
 
 /** Catalog scope: x-admin-token OR signed admin cookie OR user in CATALOG_USER_IDS/OPS_USER_IDS. */
-export function isCatalogRequest(req: Request): GateResult {
-  if (hasAdminToken(req)) {
-    return { allowed: true, operatorId: req.user?.id ?? "admin-token" };
+export async function isCatalogRequest(req: Request): Promise<GateResult> {
+  return isRoleRequest(req, "catalog");
+}
+
+/** Helper: gate a handler with a generic role. Returns operatorId or null (after sending 403). */
+export async function requireRole(
+  req: Request,
+  res: Response,
+  role: string | string[]
+): Promise<{ operatorId: string | null } | null> {
+  const r = await isRoleRequest(req, role);
+  if (!r.allowed) {
+    const roleStr = Array.isArray(role) ? role.join(" or ") : role;
+    res.status(403).json({ error: `${roleStr} scope required` });
+    return null;
   }
-  const adminSession = hasAdminSession(req);
-  if (adminSession) {
-    return { allowed: true, operatorId: `admin:${adminSession.username}` };
-  }
-  const allow = [...envList("CATALOG_USER_IDS"), ...envList("OPS_USER_IDS")];
-  if (req.isAuthenticated() && allow.includes(req.user.id)) {
-    return { allowed: true, operatorId: req.user.id };
-  }
-  return { allowed: false, operatorId: null };
+  return { operatorId: r.operatorId };
 }
 
 /** Helper: gate a handler with ops scope. Returns operatorId or null (after sending 403). */
-export function requireOps(
+export async function requireOps(
   req: Request,
   res: Response,
-): { operatorId: string | null } | null {
-  const r = isOpsRequest(req);
+): Promise<{ operatorId: string | null } | null> {
+  const r = await isOpsRequest(req);
   if (!r.allowed) {
     res.status(403).json({ error: "ops scope required" });
     return null;
@@ -80,11 +133,11 @@ export function requireOps(
 }
 
 /** Helper: gate a handler with catalog scope. */
-export function requireCatalog(
+export async function requireCatalog(
   req: Request,
   res: Response,
-): { operatorId: string | null } | null {
-  const r = isCatalogRequest(req);
+): Promise<{ operatorId: string | null } | null> {
+  const r = await isCatalogRequest(req);
   if (!r.allowed) {
     res.status(403).json({ error: "catalog scope required" });
     return null;

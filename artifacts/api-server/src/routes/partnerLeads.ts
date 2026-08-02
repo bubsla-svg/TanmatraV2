@@ -9,7 +9,7 @@ import {
   type CorporateLeadStatus,
 } from "@workspace/db";
 import { rateLimitMiddleware } from "../middlewares/rateLimitMiddleware";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 /**
  * Partnership lead capture (gyms, dietitians/RDs, trainers).
@@ -18,8 +18,8 @@ import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
  */
 const router: IRouter = Router();
 
-function requireCatalog(req: Request, res: Response): boolean {
-  return gateRequireCatalog(req, res) !== null;
+async function requireCatalog(req: Request, res: Response): Promise<boolean> {
+  return (await requireRole(req, res, "growth")) !== null;
 }
 
 const partnerLeadRateLimit = rateLimitMiddleware(
@@ -130,7 +130,7 @@ router.post(
 // ---------- admin: partner lead pipeline ----------
 
 router.get("/partners/leads", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const rawStatus = req.query["status"];
   let status: CorporateLeadStatus | undefined;
   if (rawStatus !== undefined && rawStatus !== "") {

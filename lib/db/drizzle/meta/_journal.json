@@ -169,6 +169,13 @@
       "when": 1785501066600,
       "tag": "0023_perf_indexes_delivery_events_subscriptions_menu_items_riders",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785655958639,
+      "tag": "0024_lazy_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }

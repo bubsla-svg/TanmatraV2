@@ -154,7 +154,7 @@ test("EVERY non-public delivery route refuses an authenticated non-ops customer 
         `${method} ${path} must require ops scope, got ${res.status}`,
       );
       const body = (await res.json()) as { error?: string };
-      assert.equal(body.error, "ops scope required");
+      assert.equal(body.error, "kitchen scope required");
     }
   });
 });
@@ -178,7 +178,7 @@ for (const path of [
       });
       assert.equal(res.status, 403);
       const body = (await res.json()) as { error?: string };
-      assert.equal(body.error, "ops scope required");
+      assert.equal(body.error, "kitchen scope required");
     });
   });
 }

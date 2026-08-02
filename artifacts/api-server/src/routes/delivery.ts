@@ -18,7 +18,7 @@ import {
   recentDispatchDecisions,
   setOrderPriority,
 } from "../lib/dispatch";
-import { isOpsRequest } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { recordRiderPosition, startSimulation, stopSimulation } from "../lib/riderSim";
 
 const router: IRouter = Router();
@@ -47,10 +47,7 @@ const eventBody = z.object({
 });
 
 router.post("/delivery/events", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const parsed = eventBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -74,10 +71,7 @@ const riderPositionBody = z.object({
 });
 
 router.post("/delivery/rider-position", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const parsed = riderPositionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -95,10 +89,7 @@ const advanceBody = z.object({
 });
 
 router.post("/delivery/schedule-advance", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const parsed = advanceBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -140,10 +131,7 @@ router.post("/delivery/schedule-advance", async (req: Request, res: Response) =>
 const autoAssignBody = z.object({ orderId: z.number().int().positive() });
 
 router.post("/delivery/auto-assign", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const parsed = autoAssignBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -248,10 +236,7 @@ const recordActualBody = z.object({
 });
 
 router.post("/delivery/eta/record-actual", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const parsed = recordActualBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -277,10 +262,7 @@ const dispatchBody = z.object({
 });
 
 router.post("/delivery/dispatch", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const parsed = dispatchBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -313,10 +295,7 @@ router.post(
     // caller with no ops scope could distinguish a valid payload shape from an
     // invalid one — and it made the gate contract non-uniform across the
     // router, which is what delivery.opsGate.test.ts sweeps for.
-    if (!isOpsRequest(req).allowed) {
-      res.status(403).json({ error: "ops scope required" });
-      return;
-    }
+    if (!(await requireRole(req, res, "kitchen"))) return;
     const parsed = riderAvailabilityBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "invalid payload" });
@@ -355,10 +334,7 @@ router.post(
 );
 
 router.post("/delivery/dispatch/run", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const out = await dispatchReadyOrders({
     operatorId: req.user?.id ?? null,
   });
@@ -376,10 +352,7 @@ router.post("/delivery/dispatch/run", async (req: Request, res: Response) => {
 router.get(
   "/delivery/dispatch/decisions",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
-      res.status(403).json({ error: "ops scope required" });
-      return;
-    }
+    if (!(await requireRole(req, res, "kitchen"))) return;
     const limit = parseInt(String(req.query.limit ?? "20"), 10) || 20;
     const rows = await recentDispatchDecisions(limit);
     res.json({ rows });
@@ -389,10 +362,7 @@ router.get(
 router.get(
   "/delivery/dispatch/comparison",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
-      res.status(403).json({ error: "ops scope required" });
-      return;
-    }
+    if (!(await requireRole(req, res, "kitchen"))) return;
     const sinceDays = parseInt(String(req.query.sinceDays ?? "14"), 10) || 14;
     const rows = await dispatchComparison({ sinceDays });
     res.json({ rows, sinceDays });
@@ -410,10 +380,7 @@ const priorityBody = z.object({
 router.post(
   "/delivery/orders/:orderId/priority",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
-      res.status(403).json({ error: "ops scope required" });
-      return;
-    }
+    if (!(await requireRole(req, res, "kitchen"))) return;
     const orderId = Number(req.params.orderId);
     if (!Number.isFinite(orderId)) {
       res.status(400).json({ error: "invalid orderId" });
@@ -439,10 +406,7 @@ router.post(
 );
 
 router.get("/delivery/eta/accuracy/by-zone", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "ops scope required" });
-    return;
-  }
+  if (!(await requireRole(req, res, "kitchen"))) return;
   const sinceDays = parseInt(String(req.query.sinceDays ?? "14"), 10) || 14;
   const zone = typeof req.query.zone === "string" ? req.query.zone : undefined;
   const rows = await etaAccuracyByZone({ sinceDays, zone });
