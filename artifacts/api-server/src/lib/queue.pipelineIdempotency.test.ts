@@ -22,22 +22,17 @@ import { db, deliveryEventsTable, ordersTable } from "@workspace/db";
 
 import { _orderPipelineProcessorForTests as runStep } from "./queue";
 
-import { before } from "node:test";
-import { ridersTable } from "@workspace/db";
-
-before(async () => {
-  // Ensure no online riders exist so auto-dispatch fails predictably and leaves
-  // the order status at "ready" instead of advancing it to "rider_assigned",
-  // which would fail the assertions below.
-  await db.update(ridersTable).set({ status: "offline" });
-});
-
 async function seedOrder(status: string): Promise<number> {
   const [row] = await db
     .insert(ordersTable)
     .values({
       externalOrderId: `test-pipeline-${randomUUID()}`,
       status,
+      // By using a non-own_app channel, we ensure auto-dispatch immediately
+      // bails out when the pipeline attempts to advance it, leaving it at
+      // "ready" as the assertions below expect, without having to take
+      // the shared rider pool offline.
+      orderChannel: "pos",
       totalPaise: 30000,
       items: [],
     })

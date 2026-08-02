@@ -30,7 +30,7 @@ import assert from "node:assert/strict";
 import { test, after } from "node:test";
 import { randomUUID } from "node:crypto";
 
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, like } from "drizzle-orm";
 import {
   db,
   deliveryEventsTable,
@@ -51,7 +51,10 @@ import { before } from "node:test";
 before(async () => {
   // Ensure a clean slate for the online rider pool so stale riders from
   // crashed runs don't absorb the load and defeat the contention test.
-  await db.update(ridersTable).set({ status: "offline", activeOrderCount: 0 });
+  await db
+    .update(ridersTable)
+    .set({ status: "offline", activeOrderCount: 0 })
+    .where(like(ridersTable.name, "conc_rider_%"));
 });
 
 after(async () => {
