@@ -79,10 +79,10 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
             {
               operatorId: "petpooja-sync",
               action: "menu.price_write_rejected",
-              entityType: "menu_item",
-              entityId: mapped.slug,
-              before: { pricePaise: existing.pricePaise },
-              after: { attemptedPricePaise: mapped.pricePaise },
+              resourceType: "menu_item",
+              resourceId: mapped.slug,
+              beforeState: { pricePaise: existing.pricePaise },
+              afterState: { attemptedPricePaise: mapped.pricePaise },
             },
             tx,
           );
