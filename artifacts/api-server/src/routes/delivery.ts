@@ -18,7 +18,7 @@ import {
   recentDispatchDecisions,
   setOrderPriority,
 } from "../lib/dispatch";
-import { requireRole } from "../lib/adminGate";
+import { requireRole, isRoleRequest } from "../lib/adminGate";
 import { recordRiderPosition, startSimulation, stopSimulation } from "../lib/riderSim";
 
 const router: IRouter = Router();
@@ -26,9 +26,28 @@ const router: IRouter = Router();
 
 
 router.get("/delivery/:orderId/timeline", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
   const orderId = Number(req.params.orderId);
   if (!Number.isFinite(orderId)) {
     res.status(400).json({ error: "invalid orderId" });
+    return;
+  }
+  const [order] = await db
+    .select({ userId: ordersTable.userId })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId))
+    .limit(1);
+  if (!order) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  const isOwner = order.userId === req.user.id;
+  const isOps = (await isRoleRequest(req, ["kitchen", "support"])).allowed;
+  if (!isOwner && !isOps) {
+    res.status(403).json({ error: "forbidden" });
     return;
   }
   const events = await db
@@ -217,9 +236,28 @@ router.post("/delivery/eta/estimate", async (req: Request, res: Response) => {
 });
 
 router.get("/delivery/eta/:orderId", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
   const orderId = Number(req.params.orderId);
   if (!Number.isFinite(orderId)) {
     res.status(400).json({ error: "invalid orderId" });
+    return;
+  }
+  const [order] = await db
+    .select({ userId: ordersTable.userId })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId))
+    .limit(1);
+  if (!order) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  const isOwner = order.userId === req.user.id;
+  const isOps = (await isRoleRequest(req, ["kitchen", "support"])).allowed;
+  if (!isOwner && !isOps) {
+    res.status(403).json({ error: "forbidden" });
     return;
   }
   const out = await getDeliveryEta(orderId);
