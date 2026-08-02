@@ -312,14 +312,16 @@ jobs:
       # fallback ever breaks, marketplace orders bill zero), commission
       # splitting for third-party items, and the ownership check that stops
       # one user billing another user's order.
+      - name: Serialized dispatch integration tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --test-concurrency=1 --import tsx
+          ./src/lib/dispatch.concurrency.test.ts
+          ./src/lib/dispatch.channel.test.ts
+          ./src/lib/dispatch.batchPartnerQueries.test.ts
+
       - name: Money-path integration tests
         working-directory: artifacts/api-server
-        # --test-force-exit: these suites hold real Postgres connections; on
-        # completion the pool's open handles keep the event loop alive, so the
-        # runner never exits on its own and the job is killed at the 20-min
-        # timeout (a hang, not a failure). Force exit once all tests finish —
-        # the process still exits non-zero if any test failed. Node 22 (matching
-        # money-unit/typecheck) also drains cleaner than the prior Node 20 pin.
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/payments.integrity.test.ts
@@ -359,127 +361,17 @@ jobs:
           ./src/lib/guardrailEngines.test.ts
           ./src/lib/logisticsEngine.test.ts
           ./src/lib/wmsFefoEngine.test.ts
-          ./src/routes/corporate.teams.test.ts
-      # Kept as its own step so a failure reads as "the kitchen board broke"
-      # rather than being buried in an eighteen-file money run. Not a money path,
-      # but it needs the same Postgres service and pushed schema, so it lives
-      # in this job. Two things are pinned: the board shows own_app + meal only
-      # (an aggregator ticket here gets cooked twice — Petpooja's own screen is
-      # already driving it), and POST ready advances only tickets the board can
-      # actually show (without the status predicate it would drag a delivered
-      # order back to ready, or resurrect a cancelled one onto the board).
-      - name: Kitchen-board route contract (KDS)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/ops.kds.test.ts
-      # POST /orders customisation pricing (Batch-4 grounding finding 1): a
-      # dish's real customisation groups (bread type, sauce, portion...) are
-      # now priced server-side and the row inserted into Postgres, so this
-      # needs the same DB service as the rest of this job rather than
-      # money-unit. Own step so a failure reads as "customisation billing
-      # broke" rather than being buried in the eighteen-file money run above.
-      - name: Dish customisation pricing (checkout)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/checkout.customizations.test.ts
-      - name: Front-door serviceability & checkout gate authority (OB-1)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/serviceability.test.ts
-      - name: Notify-me serviceability interest capture (OB-3)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/serviceabilityInterest.test.ts
-      - name: Geocoding precision and dual-key resilience
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/geo.test.ts
-      # The order-channel split's own test corpus. Every one of these files was
-      # written to guard the split and every one of them ran nowhere — this
-      # workflow enumerates test files by name, and none of these were named,
-      # in any workflow. They are green today; the point is that nothing would
-      # have told us when they stopped being. What they cover:
-      #
-      #   orderChannel.schema  — the DB check constraints agree with the TS
-      #                          tuples, order_channel is NOT NULL defaulting
-      #                          to own_app, and no channel value collides
-      #                          with an order-kind value.
-      #   dispatch.channel     — an aggregator's order never consumes one of
-      #                          our riders, through all three doors
-      #                          (dispatchOrder, overrideAssignment,
-      #                          findBatchPartner).
-      #   wellnessAutoLog      — marketplace orders do not write nutrition
-      #                          logs; you cannot eat a saucepan.
-      #   petpooja             — the status vocabulary the mappers emit is the
-      #                          vocabulary the readers recognise.
-      - name: Order-channel split integrity
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/orderChannel.schema.test.ts
-          ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
-      # OA-DEEP-1.4/1.5: rider selection used to score a pre-transaction
-      # snapshot and commit to the top pick without ever locking it, so
-      # concurrent dispatchOrder calls (BullMQ worker, manual API, ops
-      # agent) could all read the same stale activeOrderCount and all
-      # stack onto the same rider. The fix claims the chosen rider under
-      # FOR UPDATE SKIP LOCKED inside the same transaction that locks the
-      # order, falling back to the next-best candidate on contention. Own
-      # step so a regression here reads as "dispatch load balancing broke"
-      # rather than being buried in an unrelated corpus.
-      - name: Dispatch concurrent rider-claim load balancing
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
-          ./src/lib/dispatch.concurrency.test.ts
-      # OA-DEEP-1.6: the CMS agent's bulk_regenerate_copy and
-      # bulk_generate_missing_heroes tools ran their per-item Gemini calls
-      # fully serially inside a single agent chat turn bounded by one 30s
-      # wall-clock timeout — a guaranteed timeout on any non-trivial run.
-      # Both now route through the shared batchProcess utility (bounded
-      # concurrency + automatic retry on rate limits). These are pure unit
-      # tests of that wiring (fake generators/appliers, no Gemini calls) —
-      # DB-free in behavior, but menuAssets.ts/cms.ts import `db` at module
-      # load, so they need DATABASE_URL just to import, hence this job
-      # rather than money-unit.
-      - name: CMS bulk-tool concurrency wiring
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/menuAssets.bulkHeroes.test.ts
           ./src/lib/ai/agents/cms.bulkCopy.test.ts
-
-      # OA-MED-1.1/1.2. Both suites count queries against a counting proxy on
-      # the pg pool rather than asserting latency — the audit's own
-      # recommended shape for N+1 findings, and the only one that isn't flaky.
-      # Own step (not appended to the dispatch step above) because
-      # dispatch.concurrency is known to fail when it shares a process with
-      # another dispatch suite — pre-existing cross-file state pollution.
-      - name: N+1 query-count guards (batch partner, loyalty sweep)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
-          ./src/lib/dispatch.batchPartnerQueries.test.ts
           ./src/lib/loyaltyEngine.sweep.test.ts
-      # The reporting half of the money path. These are not about billing a
-      # customer correctly; they are about the numbers the business reads back
-      # afterwards being what they claim to be — the WBR's revenue line
-      # partitioning into channels that add up, and the curated analytics views
-      # actually having the columns the LLM prompt says they have. Both need a
-      # real server: the safe-view contract rests on a Postgres rule
-      # (CREATE OR REPLACE VIEW appends only) that can only be proved against
-      # one, and the WBR aggregates read through the views themselves.
-      - name: Analytics-integrity integration tests
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/safeSql.schema.test.ts
           ./src/lib/wbr.channel.test.ts
           ./src/lib/orderStatus.schema.test.ts
@@ -487,81 +379,17 @@ jobs:
           ./src/lib/petpooja.transition.test.ts
           ./src/routes/petpooja.saveorder.test.ts
           ./src/routes/petpooja.statusMonotonic.test.ts
-      # Lead capture pipeline contracts (B2B corporate & partner acquisition).
-      - name: Lead capture route contracts (B2B and partners)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/corporateLeads.test.ts
           ./src/routes/partnerLeads.test.ts
-      # Not money-path — general backend reliability tests from the
-      # optimization audit (TODO_optimization-auditor.md) — but they need real
-      # Postgres (rateLimitMiddleware's webhookExemption test exercises the
-      # Postgres-backed sliding-window limiter; accountHealth's test seeds
-      # companies + snapshots), so they live in this job rather than money-unit.
-      - name: Backend reliability (rate limiting, B2B account health)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
           ./src/middlewares/rateLimitMiddleware.trustProxy.test.ts
           ./src/lib/b2b/accountHealth.test.ts
           ./src/lib/ai/aiHardening.test.ts
-      # Not money-path — the anomaly-scan baseline golden test from the
-      # optimization audit (TODO_optimization-auditor.md OA-DEEP-1.2). Needs
-      # real Postgres to seed orders/delivery_events and compare the batched
-      # buildBaseline against a frozen copy of the pre-optimization
-      # algorithm, so it lives in this job rather than money-unit.
-      - name: Anomaly-baseline golden test (batched vs pre-optimization)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/anomalies.golden.test.ts
-      # Menu-catalog cache wiring (OA-DEEP-1.3): proves getMergedCatalog()
-      # actually serves from cache against real Postgres (not just
-      # "consistent"), and that the real write paths (updatePrice,
-      # setAvailability, updateItem) genuinely invalidate it. Pure cache
-      # logic is covered DB-free in money-unit's step above.
-      - name: Menu-catalog cache DB integration
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/menuResolver.cache.test.ts
           ./src/routes/petpooja.cacheInvalidation.test.ts
-      # OA-DEEP-1.7: buildDishSuggestions used to independently re-fetch and
-      # re-scan the entire orders window for every dish in a pricing run —
-      # O(dishes × orders × items). buildSliceCountsBySlug fetches the
-      # window once and buckets every dish's slice counts from that single
-      # pass. Golden test: compares the new one-pass grouping against a
-      # frozen copy of the exact old per-dish scan on identical seeded data.
-      - name: Menu-engineering pricing-loop golden test
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/menuEngineering.sliceCounts.golden.test.ts
-      # OA-MED-1.16: loadDynamicRecipeCosts re-filtered the whole ingredient
-      # list per recipe and re-scanned the whole inventory per ingredient.
-      # Both are now pre-grouped/memoised. The ingredient->inventory match is
-      # a two-way fuzzy substring test where Array.find's first-match-wins
-      # order is load-bearing — a different winner is a different food cost,
-      # which feeds the margin axis and can move a real price. Golden test:
-      # compares against a frozen copy of the old algorithm on seeded data.
-      - name: Menu-engineering recipe-cost golden test
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/menuEngineering.recipeCosts.golden.test.ts
-
-      # OA-MED-1.3/1.4/1.8. The pipeline-idempotency suite is the load-bearing
-      # one: it asserts the prelude properties (no duplicate delivery_events
-      # row, no backwards status walk) that make the processor's rethrows safe
-      # to retry. The other two are pure predicates, but their import chains
-      # reach @workspace/db, which needs DATABASE_URL at module load — hence
-      # this job rather than money-unit.
-      - name: Queue idempotency, summarizer freshness, userBrief cache sweep
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/queue.pipelineIdempotency.test.ts
           ./src/lib/dishReviews.staleness.test.ts
           ./src/lib/userBrief/cacheSweep.test.ts
