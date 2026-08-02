@@ -44,6 +44,8 @@ import {
   STITCH_PREFIX_ROUTES,
 } from "@/lib/stitchRoutes";
 import { FOCUS_ROUTES } from "@/lib/focusRoutes";
+import { InternalSurfaceGate } from "@/components/InternalSurfaceGate";
+import { INTERNAL_ROUTES } from "@/lib/internalSurfaces";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
 // next/font self-hosts the files and exposes each as a CSS variable that
@@ -164,11 +166,16 @@ const STITCH_ROUTE_SCRIPT = `(function () {
 const FOCUS_ROUTE_SCRIPT = `(function () {
   try {
     var ROUTES = ${JSON.stringify(FOCUS_ROUTES)};
+    var INTERNAL = ${JSON.stringify(INTERNAL_ROUTES)};
     var path = String(location.pathname).split(/[?#]/)[0] || "";
     if (path.length > 1 && path.charAt(path.length - 1) === "/") path = path.slice(0, -1);
     var focus = false;
     for (var i = 0; i < ROUTES.length; i++) {
       var r = ROUTES[i];
+      if (path === r || path.indexOf(r + "/") === 0) { focus = true; break; }
+    }
+    for (var i = 0; i < INTERNAL.length; i++) {
+      var r = INTERNAL[i];
       if (path === r || path.indexOf(r + "/") === 0) { focus = true; break; }
     }
     if (focus) document.body.setAttribute("data-focus-route", "true");
@@ -250,12 +257,16 @@ export default function RootLayout({
                 Skip to main content
               </a>
               <CartProvider>
-                <Header />
+                <InternalSurfaceGate>
+                  <Header />
+                </InternalSurfaceGate>
                 <main id="main">{children}</main>
-                {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
-                <MiniCartBar />
-                <Footer />
-                <MobileBottomNav />
+                <InternalSurfaceGate>
+                  {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
+                  <MiniCartBar />
+                  <Footer />
+                  <MobileBottomNav />
+                </InternalSurfaceGate>
                 {/* Honest offline state — the service worker never serves a
                   cached /checkout, /account or /api response, so a dropped
                   connection has to be visible rather than silent. */}
