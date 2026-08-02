@@ -17,7 +17,7 @@ import {
 import { extractWeeklyVoc, listVocThemes } from "../lib/voc";
 import { publishWbr } from "../lib/wbrPublisher";
 import { SAFE_SCHEMA, UnsafeSqlError } from "../lib/safeSql";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { and, gte, inArray, sql } from "drizzle-orm";
 import { db, funnelDailyTable } from "@workspace/db";
 import {
@@ -29,7 +29,7 @@ import {
 const router: IRouter = Router();
 
 async function requireCatalog(req: Request, res: Response): Promise<boolean> {
-  return (await gateRequireCatalog(req, res)) !== null;
+  return (await requireRole(req, res, ["growth", "owner"])) !== null;
 }
 
 function userId(req: Request): string | null {

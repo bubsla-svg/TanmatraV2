@@ -8,7 +8,7 @@ import {
   type CorporateLeadStatus,
 } from "@workspace/db";
 import { rateLimitMiddleware } from "../middlewares/rateLimitMiddleware";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 /**
  * Corporate / partnership lead capture (playbook Part 3.3 — "the fix" for
@@ -20,7 +20,7 @@ import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
 const router: IRouter = Router();
 
 async function requireCatalog(req: Request, res: Response): Promise<boolean> {
-  return (await gateRequireCatalog(req, res)) !== null;
+  return (await requireRole(req, res, "growth")) !== null;
 }
 
 // Conservative public-form limit: a real HR/gym owner submits once (maybe

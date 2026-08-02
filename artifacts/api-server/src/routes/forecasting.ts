@@ -19,7 +19,7 @@ import {
 import { recommendReorder, exportPurchaseOrderCsv } from "../lib/reorder";
 import { runAgent, type GatewayEvent } from "../lib/ai";
 import { z } from "zod/v4";
-import { requireOps as gate } from "../lib/adminGate";
+import { requireRole as gate } from "../lib/adminGate";
 import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
@@ -32,7 +32,7 @@ const ForecastChatBody = z.object({
 });
 
 router.get("/forecasting/forecast", async (req: Request, res: Response) => {
-  if (!gate(req, res)) return;
+  if (!(await gate(req, res, ["kitchen", "finance"]))) return;
   const zone = typeof req.query.zone === "string" ? req.query.zone : undefined;
   const lookback = parseInt(String(req.query.lookbackDays ?? "28"), 10) || 28;
   const granularity: Granularity =
@@ -46,7 +46,7 @@ router.get("/forecasting/forecast", async (req: Request, res: Response) => {
 });
 
 router.post("/forecasting/snapshots/run", async (req: Request, res: Response) => {
-  if (!gate(req, res)) return;
+  if (!(await gate(req, res, ["kitchen", "finance"]))) return;
   const parsed = SnapshotsRunBody.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: "invalid body" });
@@ -59,7 +59,7 @@ router.post("/forecasting/snapshots/run", async (req: Request, res: Response) =>
 router.post(
   "/forecasting/snapshots/backfill-actuals",
   async (req: Request, res: Response) => {
-    if (!gate(req, res)) return;
+    if (!(await gate(req, res, ["kitchen", "finance"]))) return;
     const parsed = BackfillBody.safeParse(req.body ?? {});
     if (!parsed.success) {
       res.status(400).json({ error: "invalid body" });
@@ -71,7 +71,7 @@ router.post(
 );
 
 router.get("/forecasting/recommend-reorder", async (req: Request, res: Response) => {
-  if (!gate(req, res)) return;
+  if (!(await gate(req, res, ["kitchen", "finance"]))) return;
   const zone = typeof req.query.zone === "string" ? req.query.zone : undefined;
   const horizon = req.query.horizonDays
     ? parseInt(String(req.query.horizonDays), 10)
@@ -81,7 +81,7 @@ router.get("/forecasting/recommend-reorder", async (req: Request, res: Response)
 });
 
 router.get("/forecasting/snapshots", async (req: Request, res: Response) => {
-  if (!gate(req, res)) return;
+  if (!(await gate(req, res, ["kitchen", "finance"]))) return;
   const sinceDays = parseInt(String(req.query.sinceDays ?? "14"), 10) || 14;
   const since = new Date(Date.now() - sinceDays * 24 * 3600 * 1000)
     .toISOString()
@@ -95,7 +95,7 @@ router.get("/forecasting/snapshots", async (req: Request, res: Response) => {
 });
 
 router.get("/forecasting/accuracy", async (req: Request, res: Response) => {
-  if (!gate(req, res)) return;
+  if (!(await gate(req, res, ["kitchen", "finance"]))) return;
   const sinceDays =
     parseInt(String(req.query.sinceDays ?? "30"), 10) || 30;
   const rows = await forecastMape({ sinceDays });
@@ -103,7 +103,7 @@ router.get("/forecasting/accuracy", async (req: Request, res: Response) => {
 });
 
 router.get("/forecasting/stock", async (req: Request, res: Response) => {
-  if (!gate(req, res)) return;
+  if (!(await gate(req, res, ["kitchen", "finance"]))) return;
   const lowOnly = req.query.lowOnly === "true";
   const conds: SQL[] = [];
   if (lowOnly) {
@@ -134,7 +134,7 @@ router.get("/forecasting/stock", async (req: Request, res: Response) => {
 });
 
 router.get("/forecasting/purchase-orders", async (req: Request, res: Response) => {
-  if (!gate(req, res)) return;
+  if (!(await gate(req, res, ["kitchen", "finance"]))) return;
   const status =
     typeof req.query.status === "string" ? req.query.status : undefined;
   const baseQuery = db.select().from(purchaseOrdersTable);
@@ -149,7 +149,7 @@ router.get("/forecasting/purchase-orders", async (req: Request, res: Response) =
 router.get(
   "/forecasting/purchase-orders/:id/export.csv",
   async (req: Request, res: Response) => {
-    if (!gate(req, res)) return;
+    if (!(await gate(req, res, ["kitchen", "finance"]))) return;
     const id = parseInt(String(req.params["id"]), 10);
     if (!Number.isFinite(id)) {
       res.status(400).json({ error: "invalid id" });
@@ -179,7 +179,7 @@ router.get(
 router.get(
   "/forecasting/purchase-orders/:id",
   async (req: Request, res: Response) => {
-    if (!gate(req, res)) return;
+    if (!(await gate(req, res, ["kitchen", "finance"]))) return;
     const id = parseInt(String(req.params["id"]), 10);
     if (!Number.isFinite(id)) {
       res.status(400).json({ error: "invalid id" });
@@ -219,7 +219,7 @@ function writeEvent(res: Response, event: object): void {
 }
 
 router.post("/forecasting/agent/chat", async (req: Request, res: Response) => {
-  const auth = await gate(req, res);
+  const auth = await gate(req, res, ["kitchen", "finance"]);
   if (!auth) return;
   const parsed = ForecastChatBody.safeParse(req.body);
   if (!parsed.success) {

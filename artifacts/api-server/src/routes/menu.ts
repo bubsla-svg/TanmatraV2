@@ -24,14 +24,14 @@ import {
 } from "../lib/menuCopy";
 import { recordOpsAction } from "../lib/opsAudit";
 import { recordAdminAction } from "../lib/adminAudit";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
 
 async function requireCatalog(req: Request, res: Response): Promise<boolean> {
-  return (await gateRequireCatalog(req, res)) !== null;
+  return (await requireRole(req, res, "catalog")) !== null;
 }
 
 // Public, unauthenticated catalog: merges editable DB fields (price, name,
@@ -300,7 +300,7 @@ router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
 router.post(
   "/menu/items/:slug/price",
   async (req: Request, res: Response) => {
-    const auth = await gateRequireCatalog(req, res);
+    const auth = await requireRole(req, res, "catalog");
     if (!auth) return;
     const operatorId = auth.operatorId;
 

@@ -25,12 +25,12 @@ import {
   summarizeReviewsForSlug,
   userHasOrderedSlug,
 } from "../lib/dishReviews";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
 async function requireCatalog(req: Request, res: Response): Promise<boolean> {
-  return (await gateRequireCatalog(req, res)) !== null;
+  return (await requireRole(req, res, ["catalog", "finance"])) !== null;
 }
 
 function userId(req: Request): string | null {

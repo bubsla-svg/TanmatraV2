@@ -15,7 +15,7 @@ import {
 } from "../lib/challenges";
 import { audit } from "../lib/audit";
 import { adminModerationRateLimit } from "../middlewares/rateLimitMiddleware";
-import { requireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
@@ -135,7 +135,7 @@ function adminActorId(req: Request): string {
 }
 
 router.get("/challenge-posts-mod", adminModerationRateLimit, async (req: Request, res: Response) => {
-  if ((await requireOps(req, res)) === null) return;
+  if (!(await requireRole(req, res, ["support", "compliance"]))) return;
   const posts = await listPostsForModeration(200);
   void audit(req, { actorId: adminActorId(req), actorRole: "admin", action: "admin.posts_mod_list", resourceType: "challenge_post" });
   res.json({ posts });
@@ -145,7 +145,7 @@ router.post(
   "/challenge-posts/:id/hide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if ((await requireOps(req, res)) === null) return;
+    if (!(await requireRole(req, res, ["support", "compliance"]))) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });
@@ -165,7 +165,7 @@ router.post(
   "/challenge-posts/:id/unhide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if ((await requireOps(req, res)) === null) return;
+    if (!(await requireRole(req, res, ["support", "compliance"]))) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });

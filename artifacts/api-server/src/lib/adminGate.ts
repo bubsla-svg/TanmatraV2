@@ -36,7 +36,9 @@ export interface GateResult {
   operatorId: string | null;
 }
 
-export async function isRoleRequest(req: Request, role: string): Promise<GateResult> {
+export async function isRoleRequest(req: Request, role: string | string[]): Promise<GateResult> {
+  const targetRoles = Array.isArray(role) ? role : [role];
+
   if (hasAdminToken(req)) {
     return { allowed: true, operatorId: req.user?.id ?? "admin-token" };
   }
@@ -55,19 +57,20 @@ export async function isRoleRequest(req: Request, role: string): Promise<GateRes
     const roles = dbRows.map(r => r.role);
     if (
       roles.includes("owner") || 
-      roles.includes(role) || 
+      targetRoles.some(r => roles.includes(r)) || 
       (req.method === "GET" && roles.includes("readonly"))
     ) {
       return { allowed: true, operatorId: req.user.id };
     }
 
     // 2. Legacy fallback
-    if (role === "kitchen") {
+    if (targetRoles.includes("kitchen")) {
       const allowlist = envList("OPS_USER_IDS");
       if (allowlist.includes(req.user.id)) {
         return { allowed: true, operatorId: req.user.id };
       }
-    } else if (role === "catalog") {
+    }
+    if (targetRoles.includes("catalog")) {
       const allow = [...envList("CATALOG_USER_IDS"), ...envList("OPS_USER_IDS")];
       if (allow.includes(req.user.id)) {
         return { allowed: true, operatorId: req.user.id };
@@ -92,11 +95,12 @@ export async function isCatalogRequest(req: Request): Promise<GateResult> {
 export async function requireRole(
   req: Request,
   res: Response,
-  role: string
+  role: string | string[]
 ): Promise<{ operatorId: string | null } | null> {
   const r = await isRoleRequest(req, role);
   if (!r.allowed) {
-    res.status(403).json({ error: `${role} scope required` });
+    const roleStr = Array.isArray(role) ? role.join(" or ") : role;
+    res.status(403).json({ error: `${roleStr} scope required` });
     return null;
   }
   return { operatorId: r.operatorId };

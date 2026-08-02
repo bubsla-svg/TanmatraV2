@@ -9,7 +9,7 @@ import {
   type CorporateLeadStatus,
 } from "@workspace/db";
 import { rateLimitMiddleware } from "../middlewares/rateLimitMiddleware";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 /**
  * Partnership lead capture (gyms, dietitians/RDs, trainers).
@@ -19,7 +19,7 @@ import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
 const router: IRouter = Router();
 
 async function requireCatalog(req: Request, res: Response): Promise<boolean> {
-  return (await gateRequireCatalog(req, res)) !== null;
+  return (await requireRole(req, res, "growth")) !== null;
 }
 
 const partnerLeadRateLimit = rateLimitMiddleware(

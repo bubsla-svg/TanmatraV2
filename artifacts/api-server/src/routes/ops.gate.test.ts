@@ -114,7 +114,7 @@ for (const path of ["/inventory", "/packaging", "/recipes", "/recipes/probe-slug
       const res = await fetch(`${base}/ops${path}`);
       assert.equal(res.status, 403);
       const body = (await res.json()) as { error?: string };
-      assert.equal(body.error, "ops scope required");
+      assert.equal(body.error, "kitchen scope required");
     });
   });
 }

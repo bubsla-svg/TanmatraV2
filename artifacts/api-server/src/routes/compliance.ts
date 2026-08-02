@@ -1,13 +1,13 @@
 import { Router, type Request, type Response } from "express";
 import { db, complianceLogsTable } from "@workspace/db";
 import { desc } from "drizzle-orm";
-import { requireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 const router = Router();
 
 // 1. Fetch compliance logs (restricted to operational/admin staff)
 router.get("/compliance/logs", async (req: Request, res: Response) => {
-  if (!(await requireOps(req, res))) return;
+  if (!(await requireRole(req, res, "compliance"))) return;
   try {
     const logs = await db
       .select()

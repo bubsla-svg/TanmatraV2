@@ -27,7 +27,7 @@ import {
   snoozeAlert,
 } from "../lib/anomalies";
 import { sendDailyDigest } from "../lib/anomalyDigestSender";
-import { requireOps as gateRequireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { sendDeliveryDelaySms } from "../lib/sms";
 import { audit } from "../lib/audit";
 import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
@@ -53,7 +53,7 @@ const router: IRouter = Router();
  * request must NOT call next().
  */
 router.use(async (req: Request, res: Response, next: NextFunction) => {
-  const gateResult = await gateRequireOps(req, res);
+  const gateResult = await requireRole(req, res, "kitchen");
   if (gateResult === null) return; // 403 already written
   res.locals.operatorId = gateResult.operatorId;
   next();

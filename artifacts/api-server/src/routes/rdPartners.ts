@@ -16,12 +16,12 @@ import {
 } from "../lib/whatsapp";
 import { notifyOpsOfApplication } from "../lib/rdPartnersNotify";
 import { sendRdWelcomePacket } from "../lib/rdPartnersWelcome";
-import { requireOps as gateRequireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
 async function requireOps(req: Request, res: Response): Promise<boolean> {
-  return (await gateRequireOps(req, res)) !== null;
+  return (await requireRole(req, res, "owner")) !== null;
 }
 
 function clientIp(req: Request): string {

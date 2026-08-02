@@ -30,7 +30,7 @@ import {
   nextMonday,
 } from "../lib/community";
 import { logger } from "../lib/logger";
-import { requireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
@@ -98,7 +98,7 @@ router.get("/community/me", async (req: Request, res: Response) => {
 // ---- ADMIN COHORTS ---------------------------------------------------------
 
 router.get("/community/cohorts", async (req: Request, res: Response) => {
-  if ((await requireOps(req, res)) === null) return;
+  if (!(await requireRole(req, res, ["support", "compliance"]))) return;
   const cohorts = await listAllCohorts();
   const counts = await db
     .select({
@@ -133,7 +133,7 @@ const generateBody = z.object({
 router.post(
   "/community/cohorts/:slug/generate-challenge",
   async (req: Request, res: Response) => {
-    if ((await requireOps(req, res)) === null) return;
+    if (!(await requireRole(req, res, ["support", "compliance"]))) return;
     const slug = String(req.params["slug"] ?? "");
     // Make sure default cohorts exist on cold-start clusters before we look up.
     await ensureCohortSeeds();
@@ -163,7 +163,7 @@ router.post(
 );
 
 router.get("/community/challenges", async (req: Request, res: Response) => {
-  if ((await requireOps(req, res)) === null) return;
+  if (!(await requireRole(req, res, ["support", "compliance"]))) return;
   const rows = await db
     .select()
     .from(cohortChallengesTable)
@@ -177,7 +177,7 @@ router.get("/community/challenges", async (req: Request, res: Response) => {
 router.get(
   "/community/moderation/queue",
   async (req: Request, res: Response) => {
-    if ((await requireOps(req, res)) === null) return;
+    if (!(await requireRole(req, res, ["support", "compliance"]))) return;
     const rows = await db
       .select()
       .from(moderationDecisionsTable)
@@ -191,7 +191,7 @@ router.get(
 router.get(
   "/community/moderation/appeals",
   async (req: Request, res: Response) => {
-    if ((await requireOps(req, res)) === null) return;
+    if (!(await requireRole(req, res, ["support", "compliance"]))) return;
     const rows = await db
       .select({
         appeal: moderationAppealsTable,
@@ -268,7 +268,7 @@ const resolveBody = z.object({
 router.post(
   "/community/moderation/appeals/:id/resolve",
   async (req: Request, res: Response) => {
-    if ((await requireOps(req, res)) === null) return;
+    if (!(await requireRole(req, res, ["support", "compliance"]))) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id)) {
       res.status(400).json({ error: "bad id" });
