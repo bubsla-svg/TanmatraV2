@@ -7,7 +7,7 @@ import { requireOps } from "../lib/adminGate";
 const router = Router();
 
 router.get("/admin/audit", async (req, res) => {
-  const ops = requireOps(req, res);
+  const ops = await requireOps(req, res);
   if (!ops) return;
 
   const querySchema = z.object({

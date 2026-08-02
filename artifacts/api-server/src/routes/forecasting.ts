@@ -219,7 +219,7 @@ function writeEvent(res: Response, event: object): void {
 }
 
 router.post("/forecasting/agent/chat", async (req: Request, res: Response) => {
-  const auth = gate(req, res);
+  const auth = await gate(req, res);
   if (!auth) return;
   const parsed = ForecastChatBody.safeParse(req.body);
   if (!parsed.success) {

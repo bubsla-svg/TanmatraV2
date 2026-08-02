@@ -80,7 +80,7 @@ async function resolveCompanyAccess(
     res.status(404).json({ error: "not found" });
     return null;
   }
-  if (isOpsRequest(req).allowed) {
+  if ((await isOpsRequest(req)).allowed) {
     return { company, isInternalAdmin: true };
   }
   const userId = requireAuthUser(req, res);
@@ -249,7 +249,7 @@ router.post(
     }
     // Auth: company admin OR internal admin.
     let actorId = "system";
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       const userId = requireAuthUser(req, res);
       if (!userId) return;
       const auth = { id: userId };
@@ -335,7 +335,7 @@ router.post(
 // ---------- Sales console (internal admin) ----------
 
 router.get("/sales/accounts", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "admin only" });
     return;
   }
@@ -346,7 +346,7 @@ router.get("/sales/accounts", async (req: Request, res: Response) => {
 router.get(
   "/sales/accounts/:slug",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "admin only" });
       return;
     }
@@ -367,7 +367,7 @@ router.get(
 router.post(
   "/sales/accounts/:slug/health/recompute",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "admin only" });
       return;
     }
@@ -384,7 +384,7 @@ router.post(
 router.post(
   "/sales/accounts/:slug/qbr/generate",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "admin only" });
       return;
     }
@@ -406,7 +406,7 @@ const qbrEditSchema = z.object({
 });
 
 router.put("/sales/qbr/:id", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "admin only" });
     return;
   }
@@ -431,7 +431,7 @@ router.put("/sales/qbr/:id", async (req: Request, res: Response) => {
 });
 
 router.get("/sales/qbr/:id/export", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "admin only" });
     return;
   }

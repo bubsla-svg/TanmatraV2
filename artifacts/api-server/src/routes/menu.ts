@@ -300,7 +300,7 @@ router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
 router.post(
   "/menu/items/:slug/price",
   async (req: Request, res: Response) => {
-    const auth = gateRequireCatalog(req, res);
+    const auth = await gateRequireCatalog(req, res);
     if (!auth) return;
     const operatorId = auth.operatorId;
 
@@ -459,7 +459,7 @@ const uploadImageMw = multer({
   },
 }).single("file");
 
-router.post("/menu/uploads", (req: Request, res: Response) => {
+router.post("/menu/uploads", async (req: Request, res: Response) => {
   if (!requireCatalog(req, res)) return;
   uploadImageMw(req, res, async (err: unknown) => {
     if (err) {

@@ -20,7 +20,7 @@ function writeEvent(res: Response, event: object): void {
 }
 
 router.post("/ops-agent/chat", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireOps(req, res);
   if (!gate) return;
   const operatorId = gate.operatorId;
   const parsed = ChatBodySchema.safeParse(req.body);
@@ -115,7 +115,7 @@ router.post("/ops-agent/chat", async (req: Request, res: Response) => {
 });
 
 router.get("/ops-agent/live-queue", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -124,7 +124,7 @@ router.get("/ops-agent/live-queue", async (req: Request, res: Response) => {
 });
 
 router.get("/ops-agent/audit", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }

@@ -33,7 +33,7 @@ const decideBody = z.object({
 // GET /admin/refunds?status=pending
 // ---------------------------------------------------------------------------
 router.get("/admin/refunds", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireOps(req, res);
   if (!gate) return;
 
   const parsed = listQuery.safeParse(req.query);
@@ -57,7 +57,7 @@ router.get("/admin/refunds", async (req: Request, res: Response) => {
 // POST /admin/refunds/:id/approve — approve + issue the gateway refund
 // ---------------------------------------------------------------------------
 router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireOps(req, res);
   if (!gate) return;
   const operatorId = gate.operatorId ?? "operator";
 
@@ -306,7 +306,7 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
 // POST /admin/refunds/:id/reject — decline the refund (no money moves)
 // ---------------------------------------------------------------------------
 router.post("/admin/refunds/:id/reject", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireOps(req, res);
   if (!gate) return;
   const operatorId = gate.operatorId ?? "operator";
 

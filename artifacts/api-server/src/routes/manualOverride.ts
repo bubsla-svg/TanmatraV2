@@ -38,7 +38,7 @@ const overrideBody = z.object({
 overrideRouter.post(
   "/api/delivery/dispatch/override",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "ops scope required" });
       return;
     }

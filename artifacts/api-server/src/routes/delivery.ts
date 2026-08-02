@@ -47,7 +47,7 @@ const eventBody = z.object({
 });
 
 router.post("/delivery/events", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -74,7 +74,7 @@ const riderPositionBody = z.object({
 });
 
 router.post("/delivery/rider-position", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -95,7 +95,7 @@ const advanceBody = z.object({
 });
 
 router.post("/delivery/schedule-advance", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -140,7 +140,7 @@ router.post("/delivery/schedule-advance", async (req: Request, res: Response) =>
 const autoAssignBody = z.object({ orderId: z.number().int().positive() });
 
 router.post("/delivery/auto-assign", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -248,7 +248,7 @@ const recordActualBody = z.object({
 });
 
 router.post("/delivery/eta/record-actual", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -277,7 +277,7 @@ const dispatchBody = z.object({
 });
 
 router.post("/delivery/dispatch", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -313,7 +313,7 @@ router.post(
     // caller with no ops scope could distinguish a valid payload shape from an
     // invalid one — and it made the gate contract non-uniform across the
     // router, which is what delivery.opsGate.test.ts sweeps for.
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "ops scope required" });
       return;
     }
@@ -355,7 +355,7 @@ router.post(
 );
 
 router.post("/delivery/dispatch/run", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -376,7 +376,7 @@ router.post("/delivery/dispatch/run", async (req: Request, res: Response) => {
 router.get(
   "/delivery/dispatch/decisions",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "ops scope required" });
       return;
     }
@@ -389,7 +389,7 @@ router.get(
 router.get(
   "/delivery/dispatch/comparison",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "ops scope required" });
       return;
     }
@@ -410,7 +410,7 @@ const priorityBody = z.object({
 router.post(
   "/delivery/orders/:orderId/priority",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isOpsRequest(req)).allowed) {
       res.status(403).json({ error: "ops scope required" });
       return;
     }
@@ -439,7 +439,7 @@ router.post(
 );
 
 router.get("/delivery/eta/accuracy/by-zone", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }

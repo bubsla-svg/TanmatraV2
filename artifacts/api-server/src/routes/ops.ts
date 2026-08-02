@@ -52,8 +52,8 @@ const router: IRouter = Router();
  * gateRequireOps sends its own 403 and returns null on failure, so a rejected
  * request must NOT call next().
  */
-router.use((req: Request, res: Response, next: NextFunction) => {
-  const gateResult = gateRequireOps(req, res);
+router.use(async (req: Request, res: Response, next: NextFunction) => {
+  const gateResult = await gateRequireOps(req, res);
   if (gateResult === null) return; // 403 already written
   res.locals.operatorId = gateResult.operatorId;
   next();

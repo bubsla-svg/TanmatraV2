@@ -70,8 +70,8 @@ router.post(
  * script samples — reconnaissance material, never public. (Ingestion above
  * stays open: browsers' report-uri POSTs cannot authenticate.)
  */
-router.get("/v1/csp-report/audit", (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+router.get("/v1/csp-report/audit", async (req: Request, res: Response) => {
+  if (!(await requireOps(req, res))) return;
   res.json({
     totalViolations: cspViolationLogs.length,
     violations: cspViolationLogs,
