@@ -160,15 +160,18 @@ router.post("/admin/legal-documents", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const document = await createDraft({ ...bp.data, updatedBy: operatorId });
-    await recordAdminAction({
-      operatorId,
-      action: "legal_documents.create",
-      resourceType: "legal_document",
-      resourceId: document.slug,
-      beforeState: null,
-      afterState: document,
-      ipAddress: req.ip ?? req.socket?.remoteAddress,
+    const document = await db.transaction(async (tx) => {
+      const doc = await createDraft({ ...bp.data, updatedBy: operatorId }, tx);
+      await recordAdminAction({
+        operatorId,
+        action: "legal_documents.create",
+        resourceType: "legal_document",
+        resourceId: doc.slug,
+        beforeState: null,
+        afterState: doc,
+        ipAddress: req.ip ?? req.socket?.remoteAddress,
+      }, tx);
+      return doc;
     });
     res.status(201).json({ document });
   } catch (err) {
@@ -195,20 +198,24 @@ router.put("/admin/legal-documents/:slug", async (req: Request, res: Response) =
     res.status(404).json({ error: "not found" });
     return;
   }
-  const document = await updateDraft(sp.data.slug, bp.data, operatorId);
+  const document = await db.transaction(async (tx) => {
+    const doc = await updateDraft(sp.data.slug, bp.data, operatorId, tx);
+    if (!doc) return null;
+    await recordAdminAction({
+      operatorId,
+      action: "legal_documents.update_draft",
+      resourceType: "legal_document",
+      resourceId: sp.data.slug,
+      beforeState: { title: before.title, summary: before.summary, body: before.body },
+      afterState: { title: doc.title, summary: doc.summary, body: doc.body },
+      ipAddress: req.ip ?? req.socket?.remoteAddress,
+    }, tx);
+    return doc;
+  });
   if (!document) {
     res.status(404).json({ error: "not found" });
     return;
   }
-  await recordAdminAction({
-    operatorId,
-    action: "legal_documents.update_draft",
-    resourceType: "legal_document",
-    resourceId: sp.data.slug,
-    beforeState: { title: before.title, summary: before.summary, body: before.body },
-    afterState: { title: document.title, summary: document.summary, body: document.body },
-    ipAddress: req.ip ?? req.socket?.remoteAddress,
-  });
   res.json({ document });
 });
 
