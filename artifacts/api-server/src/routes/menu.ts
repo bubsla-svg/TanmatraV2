@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { z } from "zod/v4";
+import { eq } from "drizzle-orm";
 import {
   bulkSetAvailability,
   createMenuItem,
@@ -11,7 +12,7 @@ import {
   updatePrice,
   updateItem,
 } from "../lib/menu";
-import { db } from "@workspace/db";
+import { db, rdUsersTable } from "@workspace/db";
 import { saveAssetBytes } from "../lib/imageStorage";
 import { getMergedCatalog } from "../lib/menuResolver";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
@@ -24,7 +25,7 @@ import {
 } from "../lib/menuCopy";
 import { recordOpsAction } from "../lib/opsAudit";
 import { recordAdminAction } from "../lib/adminAudit";
-import { requireRole } from "../lib/adminGate";
+import { requireRole, isRoleRequest } from "../lib/adminGate";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
 
@@ -65,11 +66,33 @@ router.get("/menu/alacarte", async (_req: Request, res: Response) => {
   res.json({ dishes: safe });
 });
 
+async function isClinician(userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: rdUsersTable.id })
+    .from(rdUsersTable)
+    .where(eq(rdUsersTable.userId, userId))
+    .limit(1);
+  return rows.length > 0;
+}
+
 router.get("/menu/ranked", async (req: Request, res: Response) => {
   const profileId = typeof req.query.profile_id === "string" ? req.query.profile_id.trim() : "";
   let prefsRow: any = null;
 
   if (profileId) {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+    const isOwner = req.user.id === profileId;
+    const callerIsClinician = isOwner ? false : await isClinician(req.user.id);
+    const callerIsOps = isOwner || callerIsClinician ? false : (await isRoleRequest(req, ["support", "catalog"])).allowed;
+
+    if (!isOwner && !callerIsClinician && !callerIsOps) {
+      res.status(403).json({ error: "forbidden" });
+      return;
+    }
+
     // Decrypt-on-read: clinical arrays are envelope-encrypted at rest, and
     // evaluateDishForPreferences must see plaintext to match allergens.
     prefsRow = await getDecryptedPreferences(profileId);
