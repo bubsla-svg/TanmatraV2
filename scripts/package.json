@@ -19,6 +19,7 @@
     "verify-dish-integrity": "tsx ./src/verify-dish-integrity.ts",
     "verify-honest-claims": "tsx ./src/verify-honest-claims.ts",
     "apply-menu-engineering": "tsx ./src/apply-menu-engineering.ts",
+    "assign-admin-role": "tsx ./src/assign-admin-role.ts",
     "test:menu-engineering": "node --test --import tsx ./src/lib/menuEngineeringPlan.test.ts",
     "test": "tsx ./src/verify-dish-integrity.ts",
     "stress-test-ledger": "tsx ./src/stress-test-ledger.ts",

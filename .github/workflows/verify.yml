@@ -318,6 +318,7 @@ jobs:
           ./src/routes/orders.mine.test.ts
           ./src/routes/menu.audit.test.ts
           ./src/routes/ops.audit.test.ts
+          ./src/routes/adminRoles.test.ts
           ./src/routes/delivery.opsGate.test.ts
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts

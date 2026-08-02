@@ -72,6 +72,13 @@ const ADMIN_PATHS = {
   "/admin/sessions/{sid}/revoke": { post: { summary: "Revoke admin session" } },
   "/admin/_status": { get: { summary: "Get admin status" } },
   "/admin/audit": { get: { summary: "Get admin audit log" } },
+  "/admin/roles": {
+    get: { summary: "List user roles" },
+    post: { summary: "Grant role" },
+  },
+  "/admin/roles/{userId}/{role}": {
+    delete: { summary: "Revoke role" },
+  },
 };
 
 export const OPENAPI_SPEC_V1 = {
