@@ -13,6 +13,7 @@ import {
   triageTicket,
 } from "../lib/supportTriage";
 import { requireRole } from "../lib/adminGate";
+import { sendError } from "../lib/sendError";
 
 const router: IRouter = Router();
 
@@ -22,11 +23,6 @@ async function requireOps(req: Request, res: Response): Promise<boolean> {
 
 function userId(req: Request): string | null {
   return req.isAuthenticated() ? (req.user.id ?? null) : null;
-}
-
-function sendError(res: Response, err: unknown, log?: (e: unknown) => void): void {
-  log?.(err);
-  res.status(500).json({ error: "internal error" });
 }
 
 const idParam = z.object({ id: z.coerce.number().int().positive() });
@@ -93,7 +89,7 @@ router.post("/support-tickets", async (req: Request, res: Response) => {
     });
     res.json({ ticket: row });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -115,7 +111,7 @@ router.get("/support-tickets", async (req: Request, res: Response) => {
     });
     res.json({ tickets });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -125,7 +121,7 @@ router.get("/support-tickets/metrics", async (req: Request, res: Response) => {
   try {
     res.json(await getMetrics(days));
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -135,7 +131,7 @@ router.get("/support-tickets/rejected", async (req: Request, res: Response) => {
   try {
     res.json({ rows: await listRejectedForEval(limit) });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -158,7 +154,7 @@ router.get("/support-tickets/:id", async (req: Request, res: Response) => {
     }
     res.json({ ticket: row });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -179,7 +175,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -201,7 +197,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -250,7 +246,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -283,7 +279,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );

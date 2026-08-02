@@ -237,6 +237,17 @@ jobs:
         run: >
           node --test --import tsx
           ./src/lib/menuCatalogCache.test.ts
+      # Shared error responder (lib/sendError.ts): withholds err.message from
+      # the client on 5xx (Postgres column names, SQL fragments, etc. must
+      # never reach a caller) while still logging full detail via req.log for
+      # operator triage. Salvaged from three near-duplicate per-route
+      # implementations, one of which never logged at all. DB-free — pure
+      # function over a faked Request/Response pair.
+      - name: Shared error responder unit tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/sendError.test.ts
 
 
   money-integration:
@@ -319,6 +330,7 @@ jobs:
           ./src/routes/menu.audit.test.ts
           ./src/routes/ops.audit.test.ts
           ./src/routes/delivery.opsGate.test.ts
+          ./src/routes/compliance.test.ts
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts

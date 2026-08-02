@@ -18,6 +18,7 @@ import { extractWeeklyVoc, listVocThemes } from "../lib/voc";
 import { publishWbr } from "../lib/wbrPublisher";
 import { SAFE_SCHEMA, UnsafeSqlError } from "../lib/safeSql";
 import { requireRole } from "../lib/adminGate";
+import { sendError as sendJsonError } from "../lib/sendError";
 import { and, gte, inArray, sql } from "drizzle-orm";
 import { db, funnelDailyTable } from "@workspace/db";
 import {
@@ -36,11 +37,11 @@ function userId(req: Request): string | null {
   return req.isAuthenticated() ? req.user.id ?? null : null;
 }
 
-function sendError(res: Response, err: unknown): void {
+function sendError(req: Request, res: Response, err: unknown): void {
   const msg = err instanceof Error ? err.message : String(err);
   if (err instanceof UnsafeSqlError) {
     // UnsafeSqlError messages are caller-friendly validation explanations.
-    res.status(400).json({ error: msg });
+    sendJsonError(req, res, err, { status: 400, expose: msg, event: "analytics.unsafe_sql" });
     return;
   }
   const lower = msg.toLowerCase();
@@ -50,8 +51,8 @@ function sendError(res: Response, err: unknown): void {
   else if (lower.includes("statement timeout")) code = 504;
   // Only echo the message for caller-fixable 4xx / known 504 cases. 500s
   // get a generic message so we don't leak driver / SQL details.
-  const exposed = code === 500 ? "internal error" : msg;
-  res.status(code).json({ error: exposed });
+  const exposed = code === 500 ? undefined : msg;
+  sendJsonError(req, res, err, { status: code, expose: exposed, event: "analytics.request_failed" });
 }
 
 // ---- Schema introspection (safe) --------------------------------------------
@@ -76,7 +77,7 @@ router.post("/analytics/ask", async (req: Request, res: Response) => {
     const out = await askDataQuestion(parsed.data.question, userId(req));
     res.json(out);
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -102,7 +103,7 @@ router.post("/analytics/sql", async (req: Request, res: Response) => {
     );
     res.json(out);
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -112,7 +113,7 @@ router.get("/analytics/queries", async (req: Request, res: Response) => {
     const rows = await listRecentQueries(50);
     res.json({ queries: rows });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -132,7 +133,7 @@ router.post("/analytics/queries/:id/save", async (req: Request, res: Response) =
     }
     res.json({ query: row });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -144,7 +145,7 @@ router.get("/analytics/wbr", async (req: Request, res: Response) => {
     const reports = await listWbrReports(12);
     res.json({ reports });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -154,7 +155,7 @@ router.get("/analytics/wbr/latest", async (req: Request, res: Response) => {
     const [latest] = await listWbrReports(1);
     res.json({ report: latest ?? null });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -173,7 +174,7 @@ router.get("/analytics/wbr/:id", async (req: Request, res: Response) => {
     }
     res.json({ report });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -199,7 +200,7 @@ router.post("/analytics/wbr/generate", async (req: Request, res: Response) => {
     const report = await generateWbr(week);
     res.json({ report });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -219,7 +220,7 @@ router.post("/analytics/wbr/:id/publish", async (req: Request, res: Response) =>
     const result = await publishWbr(report);
     res.json({ result });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -242,7 +243,7 @@ router.post("/analytics/wbr/simulate", async (req: Request, res: Response) => {
       unmatchedItemNames: sim.unmatchedItemNames,
     });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -297,7 +298,7 @@ router.get("/analytics/funnels", async (req: Request, res: Response) => {
     );
     res.json({ days, since, funnels: computeAllFunnels(totalsByEvent) });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -309,7 +310,7 @@ router.get("/analytics/voc/themes", async (req: Request, res: Response) => {
     const themes = await listVocThemes(4);
     res.json({ themes });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -319,7 +320,7 @@ router.post("/analytics/voc/extract", async (req: Request, res: Response) => {
     const themes = await extractWeeklyVoc();
     res.json({ themes });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 

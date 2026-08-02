@@ -2,6 +2,8 @@ import { Router, type Request, type Response } from "express";
 import { db, complianceLogsTable } from "@workspace/db";
 import { desc } from "drizzle-orm";
 import { requireRole } from "../lib/adminGate";
+import { seedComplianceLogsIfEmpty } from "../lib/complianceSeeder";
+import { sendError } from "../lib/sendError";
 
 const router = Router();
 
@@ -9,6 +11,9 @@ const router = Router();
 router.get("/compliance/logs", async (req: Request, res: Response) => {
   if (!(await requireRole(req, res, "compliance"))) return;
   try {
+    // Same idempotent lazy-seed idiom as contentRecipes.ts::ensureRecipeSeeds():
+    // a no-op once the table has rows, so this never overwrites operator data.
+    await seedComplianceLogsIfEmpty();
     const logs = await db
       .select()
       .from(complianceLogsTable)
@@ -16,7 +21,7 @@ router.get("/compliance/logs", async (req: Request, res: Response) => {
       .limit(30);
     res.json({ ok: true, logs });
   } catch (err) {
-    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    sendError(req, res, err, { event: "compliance.logs_fetch_failed" });
   }
 });
 
