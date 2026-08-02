@@ -19,6 +19,7 @@ export default [
       route("admin/sales-console/:slug", "pages/AdminSalesAccount.tsx"),
       route("admin/kds", "pages/AdminKds.tsx"),
       route("admin/supplier", "pages/AdminSupplier.tsx"),
+      route("admin/delivery", "pages/AdminDelivery.tsx"),
       route("admin/compliance", "pages/AdminCompliance.tsx"),
     ]),
     layout("routes/RdAuthLayout.tsx", [

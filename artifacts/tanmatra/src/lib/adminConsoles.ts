@@ -93,6 +93,13 @@ export const ADMIN_CONSOLES: AdminConsoleGroup[] = [
           "Crate barcodes, farm-origin and batch traceability, inbound stock.",
         icon: Truck,
       },
+      {
+        path: "/admin/delivery",
+        title: "Delivery & Dispatch",
+        navLabel: "Delivery",
+        description: "Manage dispatch, rider availability, and ETA models.",
+        icon: Truck,
+      },
     ],
   },
   {
