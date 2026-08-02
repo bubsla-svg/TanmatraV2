@@ -11,6 +11,7 @@ const { default: openApiContractRouter, apiDeprecationHeaderGuard, validateRoute
 const { default: opsRouter } = await import("./ops");
 const { default: adminAuthRouter } = await import("./adminAuth");
 const { default: adminStatusRouter } = await import("./adminStatus");
+const { default: adminAuditRouter } = await import("./adminAudit");
 
 
 describe("OpenAPI Contract Specification & Admin/Ops Coverage (ADM-04)", () => {
@@ -74,6 +75,15 @@ describe("OpenAPI Contract Specification & Admin/Ops Coverage (ADM-04)", () => {
     assert.strictEqual(
       checkStatus.valid,
       true,
+    );
+  });
+
+  it("Acceptance: every route in adminAudit is contracted", () => {
+    const checkAudit = validateRouterContract(adminAuditRouter, "", OPENAPI_SPEC_V1);
+    assert.strictEqual(
+      checkAudit.valid,
+      true,
+      `Uncontracted adminAudit endpoints found: ${checkAudit.missing.join(", ")}`,
     );
   });
   it("Acceptance: contract validation fails when a router registers an uncontracted path", () => {

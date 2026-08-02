@@ -71,6 +71,7 @@ const ADMIN_PATHS = {
   "/admin/_hash": { post: { summary: "Generate hash" } },
   "/admin/sessions/{sid}/revoke": { post: { summary: "Revoke admin session" } },
   "/admin/_status": { get: { summary: "Get admin status" } },
+  "/admin/audit": { get: { summary: "Get admin audit log" } },
 };
 
 export const OPENAPI_SPEC_V1 = {
