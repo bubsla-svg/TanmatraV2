@@ -9,13 +9,13 @@ export async function recordAdminAction(params: {
   beforeState?: any;
   afterState?: any;
   reason?: string;
-}) {
+}, tx: any = db) {
   const metaObj: any = {};
   if (params.reason) metaObj.reason = params.reason;
   if (params.beforeState) metaObj.before = params.beforeState;
   if (params.afterState) metaObj.after = params.afterState;
 
-  await db.insert(auditLogTable).values({
+  await tx.insert(auditLogTable).values({
     actorId: params.operatorId,
     actorRole: "admin",
     action: params.action,

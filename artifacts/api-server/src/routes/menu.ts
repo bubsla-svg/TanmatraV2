@@ -11,6 +11,7 @@ import {
   updatePrice,
   updateItem,
 } from "../lib/menu";
+import { db } from "@workspace/db";
 import { saveAssetBytes } from "../lib/imageStorage";
 import { getMergedCatalog } from "../lib/menuResolver";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
@@ -299,7 +300,10 @@ router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
 router.post(
   "/menu/items/:slug/price",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    const auth = gateRequireCatalog(req, res);
+    if (!auth) return;
+    const operatorId = auth.operatorId;
+
     const sp = slugParam.safeParse(req.params);
     const bp = z
       .object({ pricePaise: z.number().int().min(0).max(10_000_000) })
@@ -313,9 +317,27 @@ router.post(
       res.status(404).json({ error: "not found" });
       return;
     }
-    const item = await updatePrice(sp.data.slug, bp.data.pricePaise);
+
+    let item;
+    if (operatorId) {
+      item = await db.transaction(async (tx) => {
+        const updated = await updatePrice(sp.data.slug, bp.data.pricePaise, tx);
+        await recordAdminAction({
+          operatorId,
+          action: "menu_price_update",
+          resourceType: "menu_item",
+          resourceId: sp.data.slug,
+          beforeState: { pricePaise: before.pricePaise },
+          afterState: { pricePaise: updated?.pricePaise ?? null },
+        }, tx);
+        return updated;
+      });
+    } else {
+      item = await updatePrice(sp.data.slug, bp.data.pricePaise);
+    }
+
     await recordOpsAction({
-      operatorId: req.user?.id ?? null,
+      operatorId: operatorId ?? null,
       agent: "cms-rest",
       action: "cms_update_price",
       params: { slug: sp.data.slug, pricePaise: bp.data.pricePaise },
@@ -324,16 +346,7 @@ router.post(
       status: "success",
       reasoning: "price set via REST",
     });
-    if (req.user?.id) {
-      await recordAdminAction({
-        operatorId: req.user.id,
-        action: "menu_price_update",
-        resourceType: "menu_item",
-        resourceId: sp.data.slug,
-        beforeState: { pricePaise: before.pricePaise },
-        afterState: { pricePaise: item?.pricePaise ?? null },
-      });
-    }
+
     res.json({ item });
   },
 );

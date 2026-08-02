@@ -16,6 +16,9 @@ router.get("/admin/audit", async (req, res) => {
     resourceType: z.string().optional(),
     resourceId: z.string().optional(),
     actorId: z.string().optional(),
+    action: z.string().optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
   });
 
   const parsed = querySchema.safeParse(req.query);
@@ -24,14 +27,22 @@ router.get("/admin/audit", async (req, res) => {
     return;
   }
 
-  const { limit, offset, resourceType, resourceId, actorId } = parsed.data;
+  const { limit, offset, resourceType, resourceId, actorId, action, startDate, endDate } = parsed.data;
 
   const filters = [];
   if (resourceType) filters.push(eq(auditLogTable.resourceType, resourceType));
   if (resourceId) filters.push(eq(auditLogTable.resourceId, resourceId));
   if (actorId) filters.push(eq(auditLogTable.actorId, actorId));
+  if (action) filters.push(eq(auditLogTable.action, action));
+  if (startDate) filters.push(sql`${auditLogTable.createdAt} >= ${new Date(startDate).toISOString()}`);
+  if (endDate) filters.push(sql`${auditLogTable.createdAt} <= ${new Date(endDate).toISOString()}`);
 
   const whereClause = filters.length > 0 ? and(...filters) : undefined;
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(auditLogTable)
+    .where(whereClause);
 
   const logs = await db
     .select()
@@ -41,7 +52,7 @@ router.get("/admin/audit", async (req, res) => {
     .limit(limit)
     .offset(offset);
 
-  res.json({ logs });
+  res.json({ logs, total: Number(count) });
 });
 
 export default router;
