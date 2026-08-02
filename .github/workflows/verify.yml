@@ -177,6 +177,15 @@ jobs:
           ./src/routes/ops.gate.test.ts
           ./src/routes/ops.test.ts
           ./src/routes/openApiContract.test.ts
+          ./src/routes/analytics.gate.test.ts
+          ./src/routes/corporateLeads.gate.test.ts
+          ./src/routes/menuEngineering.gate.test.ts
+          ./src/routes/menu.gate.test.ts
+          ./src/routes/menuAssets.gate.test.ts
+          ./src/routes/partnerLeads.gate.test.ts
+          ./src/routes/payments.gate.test.ts
+          ./src/routes/rdPartners.gate.test.ts
+          ./src/routes/supportTickets.gate.test.ts
       # Same access-control question for /delivery, where five mutating
       # endpoints were gated on `req.isAuthenticated()` — "somebody is signed
       # in" — so any customer with a session could write delivery events, move a

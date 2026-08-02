@@ -28,8 +28,8 @@ import {
 
 const router: IRouter = Router();
 
-function requireCatalog(req: Request, res: Response): boolean {
-  return gateRequireCatalog(req, res) !== null;
+async function requireCatalog(req: Request, res: Response): Promise<boolean> {
+  return (await gateRequireCatalog(req, res)) !== null;
 }
 
 function userId(req: Request): string | null {
@@ -56,8 +56,8 @@ function sendError(res: Response, err: unknown): void {
 
 // ---- Schema introspection (safe) --------------------------------------------
 
-router.get("/analytics/schema", (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+router.get("/analytics/schema", async (req: Request, res: Response) => {
+  if (!(await requireCatalog(req, res))) return;
   res.json({ tables: SAFE_SCHEMA });
 });
 
@@ -66,7 +66,7 @@ router.get("/analytics/schema", (req: Request, res: Response) => {
 const askSchema = z.object({ question: z.string().min(2).max(2000) });
 
 router.post("/analytics/ask", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const parsed = askSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -87,7 +87,7 @@ const sqlSchema = z.object({
 });
 
 router.post("/analytics/sql", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const parsed = sqlSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -107,7 +107,7 @@ router.post("/analytics/sql", async (req: Request, res: Response) => {
 });
 
 router.get("/analytics/queries", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   try {
     const rows = await listRecentQueries(50);
     res.json({ queries: rows });
@@ -117,7 +117,7 @@ router.get("/analytics/queries", async (req: Request, res: Response) => {
 });
 
 router.post("/analytics/queries/:id/save", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const id = Number(req.params["id"]);
   const saved = req.body?.saved !== false;
   if (!Number.isFinite(id)) {
@@ -139,7 +139,7 @@ router.post("/analytics/queries/:id/save", async (req: Request, res: Response) =
 // ---- WBR --------------------------------------------------------------------
 
 router.get("/analytics/wbr", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   try {
     const reports = await listWbrReports(12);
     res.json({ reports });
@@ -149,7 +149,7 @@ router.get("/analytics/wbr", async (req: Request, res: Response) => {
 });
 
 router.get("/analytics/wbr/latest", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   try {
     const [latest] = await listWbrReports(1);
     res.json({ report: latest ?? null });
@@ -159,7 +159,7 @@ router.get("/analytics/wbr/latest", async (req: Request, res: Response) => {
 });
 
 router.get("/analytics/wbr/:id", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const id = Number(req.params["id"]);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "invalid id" });
@@ -178,7 +178,7 @@ router.get("/analytics/wbr/:id", async (req: Request, res: Response) => {
 });
 
 router.post("/analytics/wbr/generate", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   try {
     let week;
     if (req.body?.weekStart) {
@@ -204,7 +204,7 @@ router.post("/analytics/wbr/generate", async (req: Request, res: Response) => {
 });
 
 router.post("/analytics/wbr/:id/publish", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const id = Number(req.params["id"]);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "invalid id" });
@@ -224,7 +224,7 @@ router.post("/analytics/wbr/:id/publish", async (req: Request, res: Response) =>
 });
 
 router.post("/analytics/wbr/simulate", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const fuelIncreasePct = Number(req.body?.fuelIncreasePct ?? 0);
   const fuelFactor = 1.0 + (fuelIncreasePct / 100);
   try {
@@ -257,7 +257,7 @@ const MAX_FUNNEL_WINDOW_DAYS = 90;
  * freshness is bounded by the nightly funnelRollupScheduler tick.
  */
 router.get("/analytics/funnels", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const rawDays = Number(req.query["days"] ?? 7);
   if (!Number.isFinite(rawDays)) {
     res.status(400).json({ error: "invalid days" });
@@ -304,7 +304,7 @@ router.get("/analytics/funnels", async (req: Request, res: Response) => {
 // ---- VoC --------------------------------------------------------------------
 
 router.get("/analytics/voc/themes", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   try {
     const themes = await listVocThemes(4);
     res.json({ themes });
@@ -314,7 +314,7 @@ router.get("/analytics/voc/themes", async (req: Request, res: Response) => {
 });
 
 router.post("/analytics/voc/extract", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   try {
     const themes = await extractWeeklyVoc();
     res.json({ themes });

@@ -46,17 +46,18 @@ export async function isRoleRequest(req: Request, role: string): Promise<GateRes
   }
 
   if (req.isAuthenticated()) {
-    // 1. Check database
-    const [dbRow] = await db
+    // 1. Check database for ANY roles this user has
+    const dbRows = await db
       .select()
       .from(adminRolesTable)
-      .where(
-        and(
-          eq(adminRolesTable.userId, req.user.id),
-          eq(adminRolesTable.role, role)
-        )
-      );
-    if (dbRow) {
+      .where(eq(adminRolesTable.userId, req.user.id));
+      
+    const roles = dbRows.map(r => r.role);
+    if (
+      roles.includes("owner") || 
+      roles.includes(role) || 
+      (req.method === "GET" && roles.includes("readonly"))
+    ) {
       return { allowed: true, operatorId: req.user.id };
     }
 

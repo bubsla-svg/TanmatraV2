@@ -29,8 +29,8 @@ import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
-function requireCatalog(req: Request, res: Response): boolean {
-  return gateRequireCatalog(req, res) !== null;
+async function requireCatalog(req: Request, res: Response): Promise<boolean> {
+  return (await gateRequireCatalog(req, res)) !== null;
 }
 
 function userId(req: Request): string | null {
@@ -54,7 +54,7 @@ function sendError(res: Response, err: unknown): void {
 router.get(
   "/menu-engineering/matrix",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     try {
       const run = await getLatestRun();
       if (!run) {
@@ -81,7 +81,7 @@ const runBody = z
   .default({});
 
 router.post("/menu-engineering/run", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const parsed = runBody.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -101,7 +101,7 @@ router.post("/menu-engineering/run", async (req: Request, res: Response) => {
 router.get(
   "/menu-engineering/dish/:slug",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const slug = String(req.params["slug"] ?? "");
     if (!slug) {
       res.status(400).json({ error: "missing slug" });
@@ -135,7 +135,7 @@ router.get(
 router.get(
   "/menu-engineering/pricing-suggestions",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const runIdRaw = req.query["runId"];
     const runIdNum = runIdRaw ? Number(runIdRaw) : NaN;
     try {
@@ -154,7 +154,7 @@ const buildBody = z.object({ runId: z.number().int().positive().optional() });
 router.post(
   "/menu-engineering/pricing-suggestions/run",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const parsed = buildBody.safeParse(req.body ?? {});
     if (!parsed.success) {
       res.status(400).json({ error: "invalid payload" });
@@ -185,7 +185,7 @@ const idParam = z.object({ id: z.coerce.number().int().positive() });
 router.post(
   "/menu-engineering/pricing-suggestions/:id/approve",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -203,7 +203,7 @@ router.post(
 router.post(
   "/menu-engineering/pricing-suggestions/:id/dismiss",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -290,7 +290,7 @@ router.get("/dish-reviews/:slug", async (req: Request, res: Response) => {
 router.post(
   "/dish-reviews/:slug/summarize",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const slug = String(req.params["slug"] ?? "");
     if (!slug) {
       res.status(400).json({ error: "missing slug" });
@@ -308,7 +308,7 @@ router.post(
 // ---- Review moderation (catalog scope) --------------------------------------
 
 router.get("/dish-reviews-mod", adminModerationRateLimit, async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const reviews = await listReviewsForModeration(200);
   void audit(req, { actorId: userId(req) ?? "admin", actorRole: "admin", action: "admin.reviews_mod_list", resourceType: "dish_review" });
   res.json({ reviews });
@@ -318,7 +318,7 @@ router.post(
   "/dish-reviews/:id/hide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });
@@ -339,7 +339,7 @@ router.post(
   "/dish-reviews/:id/unhide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });
@@ -359,7 +359,7 @@ router.post(
 router.post(
   "/dish-reviews/summarize-all",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     try {
       const out = await summarizeAllReviews();
       res.json(out);

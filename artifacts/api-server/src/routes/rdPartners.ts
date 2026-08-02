@@ -20,8 +20,8 @@ import { requireOps as gateRequireOps } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
-function requireOps(req: Request, res: Response): boolean {
-  return gateRequireOps(req, res) !== null;
+async function requireOps(req: Request, res: Response): Promise<boolean> {
+  return (await gateRequireOps(req, res)) !== null;
 }
 
 function clientIp(req: Request): string {
@@ -494,7 +494,7 @@ async function provisionRdSlug(
 router.get(
   "/admin/rd-applications",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const status = String(req.query["status"] ?? "all");
     const limit = Math.min(
       Math.max(parseInt(String(req.query["limit"] ?? "50"), 10) || 50, 1),
@@ -540,7 +540,7 @@ const adminPatchBody = z.object({
 router.patch(
   "/admin/rd-applications/:id",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const id = Number(req.params["id"]);
     if (!Number.isInteger(id) || id < 1) {
       res.status(400).json({ error: "invalid id" });
