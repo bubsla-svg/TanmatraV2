@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { LEGAL_DOCS, COMPANY } from "@/content/legal";
+import { getLegalDocuments } from "@/lib/legalApi";
 import { LegalMasthead } from "@/components/legal/LegalMasthead";
 
 export const metadata: Metadata = {
@@ -10,17 +10,25 @@ export const metadata: Metadata = {
     "Tanmatra's terms, privacy, refund & cancellation, delivery, disclaimer, and grievance policies.",
 };
 
-/** Index of all legal documents. */
-export default function LegalIndexPage() {
+// ISR, not static: the list (and the FSSAI/entity line below) reflects
+// whatever is currently published, no deploy required (ADM-20 acceptance).
+export const revalidate = 300;
+
+/** Index of every published legal document, from the Policy/Legal CMS (ADM-20). */
+const FALLBACK_DEK =
+  "Tanmatra's terms, privacy, refund & cancellation, delivery, disclaimer, and grievance policies.";
+
+export default async function LegalIndexPage() {
+  const { documents, company } = await getLegalDocuments();
+  const dek = company
+    ? `${company.brand} is operated by ${company.legalName}. Food is prepared under FSSAI Licence No. ${company.fssaiLicenseNo}.`
+    : FALLBACK_DEK;
+
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <LegalMasthead
-        eyebrow="Legal"
-        title="Legal & policies"
-        dek={`${COMPANY.brand} is operated by ${COMPANY.legalName}. Food is prepared under FSSAI Licence No. ${COMPANY.fssaiLicenseNo}.`}
-      />
+      <LegalMasthead eyebrow="Legal" title="Legal & policies" dek={dek} />
       <ul className="mt-8 flex flex-col gap-3">
-        {LEGAL_DOCS.map((d) => (
+        {documents.map((d) => (
           <li key={d.slug}>
             <Link
               href={`/legal/${d.slug}`}

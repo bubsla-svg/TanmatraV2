@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { LayoutFooter } from "@astryxdesign/core/Layout";
 import { navGroup, COMPANY_LINKS, LEGAL_LINKS, SITE, type NavLink } from "@/lib/nav";
+import { getCompanyProfile } from "@/lib/legalApi";
 
 /**
  * Global footer — the public-facing site IA + legal links + the FSSAI/entity
@@ -15,7 +16,19 @@ const COLUMNS: { label: string; links: NavLink[] }[] = [
   { label: "Legal", links: LEGAL_LINKS },
 ];
 
-export function Footer() {
+/**
+ * The FSSAI line renders from the `legal_company_profile` singleton (ADM-20)
+ * so it changes on the next ISR revalidation, not on the next deploy — the
+ * async fetch is ISR-cached (`legalApi`'s `REVALIDATE`), so this does not
+ * force every page behind the footer into fully dynamic rendering. `SITE`
+ * (lib/nav.ts) is kept as the fallback for a cold/unreachable api-server or
+ * a not-yet-migrated environment, so the footer never blanks the licence
+ * line — same "never blank" posture as `useMenuCatalog`'s STATIC_DISHES.
+ */
+export async function Footer() {
+  const company = await getCompanyProfile();
+  const brand = company?.brand ?? SITE.brand;
+  const fssai = company?.fssaiLicenseNo ?? SITE.fssai;
   return (
     // pt-16, not mt-16: the gap above the footer has to be INSIDE the footer's
     // own background. A top margin here does not collapse — its previous
@@ -59,10 +72,10 @@ export function Footer() {
               specificity — so bare <p>s rendered 14px near-black and out-shouted
               the nav columns above. A class on the tag itself is what wins. */}
           <div className="mt-10 flex flex-col gap-1 border-t border-line pt-6 text-xs text-ink-faint">
-            <p className="text-sm font-semibold text-ink">{SITE.brand}</p>
+            <p className="text-sm font-semibold text-ink">{brand}</p>
             <p className="text-xs text-ink-faint">{SITE.tagline}</p>
-            <p className="mt-1 text-xs text-ink-faint">FSSAI Licence No. {SITE.fssai} · RD-reviewed kitchen · Made in India</p>
-            <p className="text-xs text-ink-faint">&copy; {SITE.brand}. All rights reserved.</p>
+            <p className="mt-1 text-xs text-ink-faint">FSSAI Licence No. {fssai} · RD-reviewed kitchen · Made in India</p>
+            <p className="text-xs text-ink-faint">&copy; {brand}. All rights reserved.</p>
           </div>
         </div>
       </LayoutFooter>

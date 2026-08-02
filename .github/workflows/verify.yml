@@ -393,3 +393,4 @@ jobs:
           ./src/lib/queue.pipelineIdempotency.test.ts
           ./src/lib/dishReviews.staleness.test.ts
           ./src/lib/userBrief/cacheSweep.test.ts
+          ./src/routes/legalDocuments.test.ts

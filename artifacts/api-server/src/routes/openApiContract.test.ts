@@ -13,7 +13,7 @@ const { default: adminAuthRouter } = await import("./adminAuth");
 const { default: adminStatusRouter } = await import("./adminStatus");
 const { default: adminAuditRouter } = await import("./adminAudit");
 const { default: adminRolesRouter } = await import("./adminRoles");
-
+const { default: legalDocumentsRouter } = await import("./legalDocuments");
 
 describe("OpenAPI Contract Specification & Admin/Ops Coverage (ADM-04)", () => {
   let server: Server;
@@ -52,6 +52,8 @@ describe("OpenAPI Contract Specification & Admin/Ops Coverage (ADM-04)", () => {
     assert.ok(spec.paths["/catalog/skus"]);
 
     assert.ok(spec.paths["/ops/kds/orders"]);
+    assert.ok(spec.paths["/legal-documents"]);
+    assert.ok(spec.paths["/admin/legal-documents/{slug}/publish"]);
   });
 
   it("Acceptance: every route in opsRouter (/ops/*) is contracted in the OpenAPI specification", () => {
@@ -95,6 +97,16 @@ describe("OpenAPI Contract Specification & Admin/Ops Coverage (ADM-04)", () => {
       true,
       `Uncontracted adminRoles endpoints found: ${checkRoles.missing.join(", ")}`,
     );
+  });
+
+  it("Acceptance (ADM-20): every route in legalDocumentsRouter (public + /admin/legal-documents*) is contracted", () => {
+    const check = validateRouterContract(legalDocumentsRouter, "", OPENAPI_SPEC_V1);
+    assert.strictEqual(
+      check.valid,
+      true,
+      `Uncontracted legalDocuments endpoints found: ${check.missing.join(", ")}`,
+    );
+    assert.ok(check.totalChecked >= 6, "Expected at least 6 legal-document routes to be checked");
   });
   it("Acceptance: contract validation fails when a router registers an uncontracted path", () => {
     const rogueRouter = Router();
