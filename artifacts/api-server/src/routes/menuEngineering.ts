@@ -26,6 +26,7 @@ import {
   userHasOrderedSlug,
 } from "../lib/dishReviews";
 import { requireRole } from "../lib/adminGate";
+import { sendError as sendJsonError } from "../lib/sendError";
 
 const router: IRouter = Router();
 
@@ -37,7 +38,7 @@ function userId(req: Request): string | null {
   return req.isAuthenticated() ? (req.user.id ?? null) : null;
 }
 
-function sendError(res: Response, err: unknown): void {
+function sendError(req: Request, res: Response, err: unknown): void {
   const msg = err instanceof Error ? err.message : String(err);
   const lower = msg.toLowerCase();
   let code = 500;
@@ -45,8 +46,8 @@ function sendError(res: Response, err: unknown): void {
   else if (lower.includes("already decided") || lower.includes("invalid"))
     code = 400;
   // Don't echo raw error text for unmapped 500s.
-  const exposed = code === 500 ? "internal error" : msg;
-  res.status(code).json({ error: exposed });
+  const exposed = code === 500 ? undefined : msg;
+  sendJsonError(req, res, err, { status: code, expose: exposed, event: "menu_engineering.request_failed" });
 }
 
 // ---- Menu engineering --------------------------------------------------------
@@ -71,7 +72,7 @@ router.get(
         summaries: [...summaryMap.values()],
       });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -94,7 +95,7 @@ router.post("/menu-engineering/run", async (req: Request, res: Response) => {
     });
     res.json(result);
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -125,7 +126,7 @@ router.get(
         summary,
       });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -144,7 +145,7 @@ router.get(
       );
       res.json({ rows });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -175,7 +176,7 @@ router.post(
       const rows = await buildPricingSuggestionsForRun(runId, userId(req));
       res.json({ rows });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -195,7 +196,7 @@ router.post(
       const out = await approvePricingSuggestion(sp.data.id, userId(req));
       res.json(out);
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -213,7 +214,7 @@ router.post(
       const out = await dismissPricingSuggestion(sp.data.id, userId(req));
       res.json(out);
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -258,7 +259,7 @@ router.post("/dish-reviews", async (req: Request, res: Response) => {
     });
     res.json({ review });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -283,7 +284,7 @@ router.get("/dish-reviews/:slug", async (req: Request, res: Response) => {
     // orders table so the client doesn't need to consult localStorage.
     res.json({ reviews, summary, eligibleToReview });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -300,7 +301,7 @@ router.post(
       const summary = await summarizeReviewsForSlug(slug);
       res.json({ summary });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -364,7 +365,7 @@ router.post(
       const out = await summarizeAllReviews();
       res.json(out);
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
