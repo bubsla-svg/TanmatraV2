@@ -29,6 +29,7 @@ import {
 import { sendDailyDigest } from "../lib/anomalyDigestSender";
 import { requireOps as gateRequireOps } from "../lib/adminGate";
 import { sendDeliveryDelaySms } from "../lib/sms";
+import { audit } from "../lib/audit";
 import { executeBomExplosion as executeBom, generateMorningPrepBrief } from "../lib/bomEngine";
 import { scanAndExecuteRiderFallbacks } from "../lib/logisticsEngine";
 import { evaluateWholesalePriceSpike } from "../lib/marginGuardrailEngine";
@@ -52,9 +53,15 @@ const router: IRouter = Router();
  * request must NOT call next().
  */
 router.use((req: Request, res: Response, next: NextFunction) => {
-  if (gateRequireOps(req, res) === null) return; // 403 already written
+  const gateResult = gateRequireOps(req, res);
+  if (gateResult === null) return; // 403 already written
+  res.locals.operatorId = gateResult.operatorId;
   next();
 });
+
+function operatorId(res: Response): string {
+  return typeof res.locals.operatorId === "string" ? res.locals.operatorId : "unknown";
+}
 
 router.get("/anomalies", async (req: Request, res: Response) => {
   const status = (typeof req.query.status === "string" ? req.query.status : "active") as
@@ -68,8 +75,9 @@ router.get("/anomalies", async (req: Request, res: Response) => {
   res.json({ rows });
 });
 
-router.post("/anomalies/scan", async (_req: Request, res: Response) => {
+router.post("/anomalies/scan", async (req: Request, res: Response) => {
   const results = await runAnomalyScan();
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.anomalies_scan", resourceType: "anomaly" });
   res.json({ results });
 });
 
@@ -89,6 +97,7 @@ router.post("/anomalies/:id/ack", async (req: Request, res: Response) => {
     res.status(404).json({ error: "alert not found" });
     return;
   }
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.anomaly_ack", resourceType: "anomaly", resourceId: String(parsed.data.id) });
   res.json({ alert: row });
 });
 
@@ -108,6 +117,7 @@ router.post("/anomalies/:id/snooze", async (req: Request, res: Response) => {
     res.status(404).json({ error: "alert not found" });
     return;
   }
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.anomaly_snooze", resourceType: "anomaly", resourceId: String(idP.data.id) });
   res.json({ alert: row });
 });
 
@@ -122,6 +132,7 @@ router.post("/anomalies/:id/close", async (req: Request, res: Response) => {
     res.status(404).json({ error: "alert not found" });
     return;
   }
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.anomaly_close", resourceType: "anomaly", resourceId: String(parsed.data.id) });
   res.json({ alert: row });
 });
 
@@ -130,8 +141,9 @@ router.get("/anomalies/digest", async (_req: Request, res: Response) => {
   res.json(digest);
 });
 
-router.post("/anomalies/digest/send", async (_req: Request, res: Response) => {
+router.post("/anomalies/digest/send", async (req: Request, res: Response) => {
   const out = await sendDailyDigest();
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.anomalies_digest_send", resourceType: "anomaly" });
   res.json(out);
 });
 
@@ -316,6 +328,7 @@ router.post("/kds/orders/:id/ready", async (req: Request, res: Response) => {
     res.status(404).json({ ok: false, error: "no such order on this board", code: "order_not_on_board" });
     return;
   }
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.order_ready", resourceType: "order", resourceId: String(orderId) });
   res.json({ ok: true });
 });
 
@@ -351,6 +364,8 @@ router.post("/supplier/deliver", async (req: Request, res: Response) => {
       status: "delivered",
     })
     .returning();
+
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.supplier_deliver", resourceType: "supplier_batch", resourceId: String(batch.id) });
 
   res.json({
     ok: true,
@@ -447,6 +462,8 @@ router.post("/supplier/intake", async (req: Request, res: Response) => {
     .where(eq(supplierBatchesTable.id, batch.id))
     .returning();
 
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.supplier_intake", resourceType: "supplier_batch", resourceId: String(received.id) });
+
   res.json({
     ok: true,
     product,
@@ -485,6 +502,7 @@ router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response
       { orderId, reason: smsResult.reason },
       "ops.simulate_delay.delay_sms_not_sent",
     );
+    void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.simulate_delay", resourceType: "order", resourceId: String(orderId) });
     res.json({
       ok: true,
       smsSent: false,
@@ -494,6 +512,7 @@ router.post("/kds/orders/:id/simulate-delay", async (req: Request, res: Response
     return;
   }
 
+  void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.simulate_delay", resourceType: "order", resourceId: String(orderId) });
   res.json({ ok: true, smsSent: true, newCreatedAt: delayedTime });
 });
 
@@ -528,6 +547,7 @@ router.post("/kds/orders/:id/explode-bom", async (req: Request, res: Response) =
 
   try {
     const results = await executeBom(parsed.data.items);
+    void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.bom_explode", resourceType: "order", resourceId: String(req.params.id) });
     res.json({ ok: true, deductions: results });
   } catch (err) {
     logger.error({ err, orderId: req.params.id }, "ops.kds.bom_explosion_failed");
@@ -536,9 +556,10 @@ router.post("/kds/orders/:id/explode-bom", async (req: Request, res: Response) =
 });
 
 // Phase 2: Autonomous Logistics Fallback & Rider Geotracking DLQ trigger
-router.all("/logistics/scan-fallbacks", async (_req: Request, res: Response) => {
+router.all("/logistics/scan-fallbacks", async (req: Request, res: Response) => {
   try {
     const interventions = await scanAndExecuteRiderFallbacks(24);
+    void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.scan_fallbacks", resourceType: "logistics" });
     res.json({ ok: true, interventions });
   } catch (err) {
     logger.error({ err }, "ops.logistics.fallback_scan_failed");
@@ -564,6 +585,7 @@ router.post("/logistics/evaluate-wholesale-spike", async (req: Request, res: Res
       res.status(404).json({ error: "Inventory item not located" });
       return;
     }
+    void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.evaluate_wholesale_spike", resourceType: "inventory_item", resourceId: String(parsed.data.inventoryItemId) });
     res.json({ ok: true, evaluation: result });
   } catch (err) {
     logger.error({ err }, "ops.guardrail.wholesale_spike_error");
@@ -598,6 +620,7 @@ router.post("/wms/route-fulfillment", async (req: Request, res: Response) => {
       parsed.data.externalOrderId,
       parsed.data.items,
     );
+    void audit(req, { actorId: operatorId(res), actorRole: "ops", action: "ops.route_fulfillment", resourceType: "order", resourceId: String(parsed.data.orderId) });
     res.json({ ok: true, ticket });
   } catch (err) {
     logger.error({ err }, "ops.wms.routing_failed");
