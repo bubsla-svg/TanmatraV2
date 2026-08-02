@@ -148,6 +148,7 @@ router.get("/admin/legal-documents", async (req: Request, res: Response) => {
 router.post("/admin/legal-documents", async (req: Request, res: Response) => {
   const gate = await requireRole(req, res, ["compliance"]);
   if (!gate) return;
+  const operatorId = gate.operatorId!;
   const bp = createBodySchema.safeParse(req.body);
   if (!bp.success) {
     res.status(400).json({ error: bp.error.message });
@@ -159,14 +160,14 @@ router.post("/admin/legal-documents", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const document = await createDraft({ ...bp.data, updatedBy: gate.operatorId });
+    const document = await createDraft({ ...bp.data, updatedBy: operatorId });
     await recordAdminAction({
-      operatorId: gate.operatorId,
+      operatorId,
       action: "legal_documents.create",
-      entityType: "legal_document",
-      entityId: document.slug,
-      before: null,
-      after: document,
+      resourceType: "legal_document",
+      resourceId: document.slug,
+      beforeState: null,
+      afterState: document,
       ipAddress: req.ip ?? req.socket?.remoteAddress,
     });
     res.status(201).json({ document });
@@ -182,6 +183,7 @@ router.post("/admin/legal-documents", async (req: Request, res: Response) => {
 router.put("/admin/legal-documents/:slug", async (req: Request, res: Response) => {
   const gate = await requireRole(req, res, ["compliance"]);
   if (!gate) return;
+  const operatorId = gate.operatorId!;
   const sp = slugParam.safeParse(req.params);
   const bp = updateBodySchema.safeParse(req.body);
   if (!sp.success || !bp.success) {
@@ -193,18 +195,18 @@ router.put("/admin/legal-documents/:slug", async (req: Request, res: Response) =
     res.status(404).json({ error: "not found" });
     return;
   }
-  const document = await updateDraft(sp.data.slug, bp.data, gate.operatorId);
+  const document = await updateDraft(sp.data.slug, bp.data, operatorId);
   if (!document) {
     res.status(404).json({ error: "not found" });
     return;
   }
   await recordAdminAction({
-    operatorId: gate.operatorId,
+    operatorId,
     action: "legal_documents.update_draft",
-    entityType: "legal_document",
-    entityId: sp.data.slug,
-    before: { title: before.title, summary: before.summary, body: before.body },
-    after: { title: document.title, summary: document.summary, body: document.body },
+    resourceType: "legal_document",
+    resourceId: sp.data.slug,
+    beforeState: { title: before.title, summary: before.summary, body: before.body },
+    afterState: { title: document.title, summary: document.summary, body: document.body },
     ipAddress: req.ip ?? req.socket?.remoteAddress,
   });
   res.json({ document });
@@ -215,6 +217,7 @@ router.post(
   async (req: Request, res: Response) => {
     const gate = await requireRole(req, res, ["compliance"]);
     if (!gate) return;
+    const operatorId = gate.operatorId!;
     const sp = slugParam.safeParse(req.params);
     const bp = publishBodySchema.safeParse(req.body ?? {});
     if (!sp.success || !bp.success) {
@@ -231,16 +234,16 @@ router.post(
       // as routes/menu.ts's price-update handler.
       const result = await db.transaction(async (tx) => {
         const before = await getDraft(sp.data.slug, tx);
-        const published = await publishDraft(sp.data.slug, gate.operatorId, effectiveFrom, tx);
+        const published = await publishDraft(sp.data.slug, operatorId, effectiveFrom, tx);
         if (!published) return null;
         await recordAdminAction(
           {
-            operatorId: gate.operatorId,
+            operatorId,
             action: "legal_documents.publish",
-            entityType: "legal_document",
-            entityId: sp.data.slug,
-            before: { publishedVersionId: before?.publishedVersionId ?? null },
-            after: {
+            resourceType: "legal_document",
+            resourceId: sp.data.slug,
+            beforeState: { publishedVersionId: before?.publishedVersionId ?? null },
+            afterState: {
               publishedVersionId: published.document.publishedVersionId,
               version: published.version.version,
             },

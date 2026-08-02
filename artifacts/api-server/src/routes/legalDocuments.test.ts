@@ -46,6 +46,7 @@ const slug = (name: string) => `test-${name}-${RUN}`;
 const USER_REGISTRY = new Map<string, { id: string }>();
 const CREATED_ROLE_OPERATOR_IDS: string[] = [];
 const CREATED_SLUGS: string[] = [];
+let complianceUserId: string;
 // legal_company_profile is a genuine singleton (unique singletonKey) with no
 // admin write route — the test below seeds it directly ONLY if no row exists
 // yet, reusing one it finds (e.g. a real migration already run against a
@@ -82,6 +83,10 @@ before(async () => {
       resolve();
     });
   });
+
+  complianceUserId = `compliance-user-${RUN}`;
+  USER_REGISTRY.set(complianceUserId, { id: complianceUserId });
+  await assignRole(complianceUserId, "compliance");
 });
 
 after(async () => {
@@ -111,13 +116,13 @@ async function assignRole(operatorId: string, role: "compliance" | "support"): P
 }
 
 function complianceHeaders() {
-  return { "x-admin-token": ADMIN_TOKEN, "content-type": "application/json" };
+  return { "x-test-user-id": complianceUserId, "content-type": "application/json" };
 }
 
 describe("Policy/Legal/Disclaimer CMS (ADM-20)", () => {
-  test("requireRole gate: unauthenticated GET /admin/legal-documents is 401, not 403", async () => {
+  test("requireRole gate: unauthenticated GET /admin/legal-documents is 403, not 401", async () => {
     const res = await fetch(`${baseUrl}/admin/legal-documents`);
-    assert.equal(res.status, 401);
+    assert.equal(res.status, 403);
   });
 
   test("requireRole gate: an operator without `compliance` gets 403 on POST /admin/legal-documents", async () => {
@@ -320,6 +325,7 @@ describe("Policy/Legal/Disclaimer CMS (ADM-20)", () => {
     }
 
     const listRes = await fetch(`${baseUrl}/legal-documents`);
+    assert.equal(listRes.status, 200);
     const listBody = (await listRes.json()) as { company: Record<string, unknown> | null };
     assert.ok(listBody.company, "company profile must be present once seeded");
     assert.ok("fssaiLicenseNo" in listBody.company!);
@@ -328,6 +334,7 @@ describe("Policy/Legal/Disclaimer CMS (ADM-20)", () => {
     assert.ok(!("updatedBy" in listBody.company!), "operator identity must not be exposed publicly");
 
     const detailRes = await fetch(`${baseUrl}/legal-documents/${docSlug}`);
+    assert.equal(detailRes.status, 200);
     const detailBody = (await detailRes.json()) as { company: Record<string, unknown> | null };
     assert.ok(detailBody.company);
     assert.equal(detailBody.company!["fssaiLicenseNo"], listBody.company!["fssaiLicenseNo"]);
