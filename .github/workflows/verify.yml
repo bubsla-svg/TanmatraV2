@@ -175,6 +175,7 @@ jobs:
         run: >
           node --test --import tsx
           ./src/routes/ops.gate.test.ts
+          ./src/routes/openApiContract.test.ts
       # Same access-control question for /delivery, where five mutating
       # endpoints were gated on `req.isAuthenticated()` — "somebody is signed
       # in" — so any customer with a session could write delivery events, move a
