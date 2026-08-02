@@ -203,7 +203,16 @@ export default function AdminCatalog() {
                   <TableCell>
                     <div className="flex gap-2">
                       {item.isVeg && <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Veg</Badge>}
-                      {item.rdVerified && <Badge variant="secondary" className="bg-sky-100 text-sky-800">RD Verified</Badge>}
+                      {/*
+                        No "RD Verified" badge here. No dish carries a reviewer
+                        id + review date, so rendering the claim would assert a
+                        clinical review that never happened — banned by the
+                        honest-claims gate (scripts/src/verify-honest-claims.ts).
+                        `rdVerified` stays available for data/sort/filter logic;
+                        only the rendered CLAIM is forbidden. If a real per-dish
+                        review record is added, gate a badge on THAT, not on
+                        this blanket boolean.
+                      */}
                       {item.glycaemicIndex && (
                         <Badge variant="outline">
                           GI: {item.glycaemicIndex}

@@ -186,21 +186,13 @@ jobs:
           ./src/routes/payments.gate.test.ts
           ./src/routes/rdPartners.gate.test.ts
           ./src/routes/supportTickets.gate.test.ts
-      # Same access-control question for /delivery, where five mutating
-      # endpoints were gated on `req.isAuthenticated()` — "somebody is signed
-      # in" — so any customer with a session could write delivery events, move a
-      # rider's position, advance a schedule, or auto-assign riders.
-      #
-      # Sits beside the /ops gate contract rather than in money-integration
-      # because it is DB-free by construction: gated routes reject before their
-      # handler runs, and the three deliberately-public routes all validate
-      # input before querying, so every assertion resolves without Postgres.
-      # Its own step so a failure reads as "the delivery gate broke".
-      - name: Delivery router access-control contract
-        working-directory: artifacts/api-server
-        run: >
-          node --test --import tsx
-          ./src/routes/delivery.opsGate.test.ts
+      # The /delivery access-control contract used to sit here, DB-free. ADM-02
+      # moved it: the gate now resolves named roles from the `admin_roles`
+      # table, so an AUTHENTICATED non-ops caller — which is exactly what that
+      # suite asserts against — issues a real query. It runs in
+      # money-integration now, against Postgres. The unauthenticated cases above
+      # stay DB-free and stay here, because the gate still denies those before
+      # any query is issued.
       # Food-cost resolution for the weekly business review. Not a billed
       # amount, but it decides a number people act on: the WBR's margin per
       # dish and the 35%-margin threshold alert. The lookup it replaces asked a
@@ -325,6 +317,8 @@ jobs:
           ./src/routes/refunds.test.ts
           ./src/routes/orders.mine.test.ts
           ./src/routes/menu.audit.test.ts
+          ./src/routes/ops.audit.test.ts
+          ./src/routes/delivery.opsGate.test.ts
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts

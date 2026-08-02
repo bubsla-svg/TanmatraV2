@@ -48,16 +48,29 @@ export async function isRoleRequest(req: Request, role: string | string[]): Prom
   }
 
   if (req.isAuthenticated()) {
-    // 1. Check database for ANY roles this user has
-    const dbRows = await db
-      .select()
-      .from(adminRolesTable)
-      .where(eq(adminRolesTable.userId, req.user.id));
-      
-    const roles = dbRows.map(r => r.role);
+    // 1. Check database for ANY roles this user has.
+    //
+    // A failure here must DENY, never throw. Letting the rejection escape
+    // turns an authorization decision into a 500 — and worse, on a route
+    // whose handler already responded it surfaces as an unhandled
+    // ERR_HTTP_HEADERS_SENT. Treat an unreachable/absent admin_roles table as
+    // "this user holds no roles" and fall through to the legacy allowlist,
+    // which is DB-free. A DB outage can therefore only ever withhold access,
+    // never grant it.
+    let roles: string[] = [];
+    try {
+      const dbRows = await db
+        .select()
+        .from(adminRolesTable)
+        .where(eq(adminRolesTable.userId, req.user.id));
+      roles = dbRows.map((r) => r.role);
+    } catch (err) {
+      req.log?.error({ err }, "adminGate: admin_roles lookup failed; denying role grant");
+    }
+
     if (
-      roles.includes("owner") || 
-      targetRoles.some(r => roles.includes(r)) || 
+      roles.includes("owner") ||
+      targetRoles.some(r => roles.includes(r)) ||
       (req.method === "GET" && roles.includes("readonly"))
     ) {
       return { allowed: true, operatorId: req.user.id };

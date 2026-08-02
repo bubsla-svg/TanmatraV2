@@ -2,7 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 import type { AddressInfo } from "node:net";
-import router from "./analytics";
+
+// Route modules reach @workspace/db, which throws at import time unless a
+// DATABASE_URL exists. Set it before a DYNAMIC import: static `import` is
+// hoisted and would run before this assignment. These cases stay DB-free —
+// the gate denies an unauthenticated caller before any query is issued.
+process.env["DATABASE_URL"] ||= "postgresql://dummy:dummy@localhost:5432/dummy";
+const { default: router } = await import("./analytics");
+
 
 test("analytics.ts gated endpoints return 403 when unauthenticated", async () => {
   const app = express();
