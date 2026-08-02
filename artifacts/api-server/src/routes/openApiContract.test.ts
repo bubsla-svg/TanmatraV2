@@ -1,10 +1,20 @@
 import { describe, it, before, after } from "node:test";
-import assert from "node:assert";
-import express from "express";
+import assert from "node:assert/strict";
+import express, { Router } from "express";
 import { createServer, type Server } from "node:http";
-import openApiContractRouter, { apiDeprecationHeaderGuard } from "./openApiContract";
 
-describe("OpenAPI Contract Specification, Explicit Versioning & API Changelog Engine", () => {
+process.env["DATABASE_URL"] ||=
+  "postgres://postgres:postgres@127.0.0.1:5432/tanmatra_test";
+
+const { default: openApiContractRouter, apiDeprecationHeaderGuard, validateRouterContract, OPENAPI_SPEC_V1 } =
+  await import("./openApiContract");
+const { default: opsRouter } = await import("./ops");
+const { default: adminAuthRouter } = await import("./adminAuth");
+const { default: adminStatusRouter } = await import("./adminStatus");
+const { default: adminAuditRouter } = await import("./adminAudit");
+
+
+describe("OpenAPI Contract Specification & Admin/Ops Coverage (ADM-04)", () => {
   let server: Server;
   let baseUrl: string;
 
@@ -39,6 +49,53 @@ describe("OpenAPI Contract Specification, Explicit Versioning & API Changelog En
     assert.strictEqual(spec.openapi, "3.0.3");
     assert.ok(spec.info.title.includes("Tanmatra"));
     assert.ok(spec.paths["/catalog/skus"]);
+
+    assert.ok(spec.paths["/ops/kds/orders"]);
+  });
+
+  it("Acceptance: every route in opsRouter (/ops/*) is contracted in the OpenAPI specification", () => {
+    const check = validateRouterContract(opsRouter, "/ops", OPENAPI_SPEC_V1);
+    assert.strictEqual(
+      check.valid,
+      true,
+      `Uncontracted /ops/* endpoints found: ${check.missing.join(", ")}`,
+    );
+    assert.ok(check.totalChecked >= 15, "Expected at least 15 ops routes to be checked");
+  });
+
+  it("Acceptance: every route in adminAuth and adminStatus is contracted", () => {
+    const checkAuth = validateRouterContract(adminAuthRouter, "", OPENAPI_SPEC_V1);
+    assert.strictEqual(
+      checkAuth.valid,
+      true,
+      `Uncontracted adminAuth endpoints found: ${checkAuth.missing.join(", ")}`,
+    );
+
+    const checkStatus = validateRouterContract(adminStatusRouter, "", OPENAPI_SPEC_V1);
+    assert.strictEqual(
+      checkStatus.valid,
+      true,
+    );
+  });
+
+  it("Acceptance: every route in adminAudit is contracted", () => {
+    const checkAudit = validateRouterContract(adminAuditRouter, "", OPENAPI_SPEC_V1);
+    assert.strictEqual(
+      checkAudit.valid,
+      true,
+      `Uncontracted adminAudit endpoints found: ${checkAudit.missing.join(", ")}`,
+    );
+  });
+  it("Acceptance: contract validation fails when a router registers an uncontracted path", () => {
+    const rogueRouter = Router();
+    rogueRouter.get("/uncontracted-test-route", (_req, res) => res.send("ok"));
+
+    const check = validateRouterContract(rogueRouter, "/ops", OPENAPI_SPEC_V1);
+    assert.strictEqual(check.valid, false, "Validation must fail for uncontracted route");
+    assert.ok(
+      check.missing.includes("/ops/uncontracted-test-route"),
+      "Must identify the exact uncontracted route",
+    );
   });
 
   it("Step 2 (Explicit Versioning & Deprecation Guard): sets Deprecation and Sunset headers on legacy routes", async () => {
@@ -55,7 +112,7 @@ describe("OpenAPI Contract Specification, Explicit Versioning & API Changelog En
     assert.strictEqual(res.status, 200);
 
     const body = (await res.json()) as any;
-    assert.strictEqual(body.currentVersion, "v1.2.0");
+    assert.strictEqual(body.currentVersion, "v1.3.0");
     assert.ok(Array.isArray(body.changelog));
     assert.ok(body.changelog.length >= 2);
     assert.ok(body.changelog[0].changes.length > 0);
