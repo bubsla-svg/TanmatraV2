@@ -5,6 +5,7 @@ export default [
       index("pages/AdminIndex.tsx", { id: "ops-erp-root" }),
       route("admin", "pages/AdminIndex.tsx", { id: "ops-erp-admin" }),
       route("admin/ops", "pages/AdminOpsDashboard.tsx"),
+      route("admin/catalog", "pages/AdminCatalog.tsx"),
       route("admin/ai-runs", "pages/AdminAiRuns.tsx"),
       route("admin/ops-agent", "pages/AdminOpsAgent.tsx"),
       route("admin/cms-agent", "pages/AdminCmsAgent.tsx"),
