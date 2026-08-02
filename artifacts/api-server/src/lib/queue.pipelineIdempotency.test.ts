@@ -22,6 +22,16 @@ import { db, deliveryEventsTable, ordersTable } from "@workspace/db";
 
 import { _orderPipelineProcessorForTests as runStep } from "./queue";
 
+import { before } from "node:test";
+import { ridersTable } from "@workspace/db";
+
+before(async () => {
+  // Ensure no online riders exist so auto-dispatch fails predictably and leaves
+  // the order status at "ready" instead of advancing it to "rider_assigned",
+  // which would fail the assertions below.
+  await db.update(ridersTable).set({ status: "offline" });
+});
+
 async function seedOrder(status: string): Promise<number> {
   const [row] = await db
     .insert(ordersTable)

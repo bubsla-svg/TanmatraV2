@@ -46,6 +46,14 @@ const CREATED_USER_IDS: string[] = [];
 const CREATED_ORDER_IDS: number[] = [];
 const CREATED_RIDER_IDS: number[] = [];
 
+import { before } from "node:test";
+
+before(async () => {
+  // Ensure a clean slate for the online rider pool so stale riders from
+  // crashed runs don't absorb the load and defeat the contention test.
+  await db.update(ridersTable).set({ status: "offline", activeOrderCount: 0 });
+});
+
 after(async () => {
   if (CREATED_ORDER_IDS.length > 0) {
     await db
