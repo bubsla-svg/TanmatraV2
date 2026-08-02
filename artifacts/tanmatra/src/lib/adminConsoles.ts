@@ -64,6 +64,13 @@ export const ADMIN_CONSOLES: AdminConsoleGroup[] = [
         icon: ChefHat,
       },
       {
+        path: "/admin/catalog",
+        title: "Menu Catalog",
+        navLabel: "Catalog",
+        description: "Manage SKUs, categories, and availability.",
+        icon: FileText,
+      },
+      {
         path: "/admin/compliance",
         title: "Compliance & Audits",
         navLabel: "Compliance",
