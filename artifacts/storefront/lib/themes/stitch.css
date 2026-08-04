@@ -1,0 +1,55 @@
+/*
+ * ─── Stitch dark scope (total-redesign programme, route-scoped) ────────────
+ *
+ * The Stitch design system (docs/stitch/DESIGN.md; Stitch project
+ * 12062470764535558612, design-system asset 1294a81f…) is adopted route by
+ * route. A redesigned route opts in by carrying `data-stitch="dark"` on
+ * <html> — stamped there before paint by STITCH_ROUTE_SCRIPT in
+ * app/layout.tsx, per lib/stitchRoutes.ts — and everything else keeps the
+ * light arm untouched.
+ *
+ * THIS FILE NO LONGER CARRIES A PALETTE. It used to re-declare ~20 tokens with
+ * Stitch's namedColors, which meant the app shipped two dark palettes — these
+ * pins, and the dark arm of every light-dark() tuple in tanmatraBridge.css —
+ * with nothing keeping them in step. Stitch's values ARE that dark arm now (see
+ * tanmatraTheme.ts), so every pin here resolved to a value the bridge already
+ * produced, and every one has been deleted.
+ *
+ * WHAT IS LEFT IS THE ENTIRE MECHANISM. A custom property carries its
+ * light-dark() tuple UNRESOLVED as it inherits, and resolves it against the
+ * used color-scheme of the element that finally consumes it. So the single
+ * declaration below rethemes this whole subtree — every bg-surface / text-ink /
+ * border-line utility, every bg-[var(--glass)] bar — with zero component edits
+ * and zero pinned values. Delete it and all ~20 redesigned routes silently go
+ * light; astryxBridge.test.ts asserts it is still here.
+ *
+ * ADDING A COLOUR? Add it to tanmatraBridge.css as a light-dark() tuple, not
+ * here. A pin here is a second palette by definition, and it only themes the
+ * routes that happen to import this file — which is exactly how --glass ended
+ * up dark-only, painting a transparent sticky bar on all 53 light routes. The
+ * test that guards this file rejects any token the bridge already supplies.
+ *
+ * Lives in lib/themes/ with the other colour-bearing files: lint:tokens scans
+ * only {components,app}, and components consume these via var()/utilities.
+ */
+/*
+ * !important is load-bearing, not decorative. next-themes (theme-provider.tsx)
+ * injects its own beforeInteractive script that writes an inline
+ * `style.colorScheme` onto <html> from `data-theme` — now either "light" or
+ * "dark" depending on the visitor's OS preference or Header's ThemeToggle, not
+ * a fixed value. An inline declaration outranks any normal stylesheet rule
+ * regardless of selector, so without !important a Stitch route would paint
+ * correctly for one tick and then flip to whatever data-theme resolved to the
+ * instant next-themes' script runs — including flipping to LIGHT if the
+ * visitor's system/choice is light, which is the exact regression this rule
+ * exists to prevent. !important promotes this declaration to a higher cascade
+ * origin than any normal-weight inline style, inline or not, so it wins no
+ * matter which value next-themes writes or when. Stitch is a route scope, not
+ * a next-themes theme, so the two are not otherwise in competition — this is
+ * the one point they touch, and it is why every light-dark() tuple in
+ * tanmatraBridge.css resolves to its dark arm on a Stitch route regardless of
+ * the visitor's actual theme choice.
+ */
+[data-stitch="dark"] {
+  color-scheme: dark !important;
+}

@@ -1,85 +1,145 @@
+"use client";
+// Combo card for `/meal-deals` (Stitch brief 18 + repo law).
+//
+// REPO LAW: a combo is ONE clickable card that opens a Dialog listing its
+// constituent dishes, each linking to /dish/:slug, with an "Add Combo" CTA. It
+// is never flattened into separately-tappable dish tiles — the previous version
+// was a flat card linking to /plan/<slug> for three slugs that are not real
+// PlanIds, so every CTA was a dead route.
+//
+// MONEY: the total is the sum of the constituents' server catalog prices,
+// computed in lib/mealBundles and passed in. Nothing is priced here, no discount
+// is claimed, and the cart lines carry the server price snapshot exactly as
+// AddToCart does — the server still re-prices at order.
+//
+// Rendered from /meal-deals, a light-canvas route (not in lib/stitchRoutes.ts).
+// Radix portals the combo Dialog to document.body, but that is a DOM
+// descendant of <html> either way, so it correctly inherits whichever
+// color-scheme the host route set — no scope override belongs here.
+import { useState } from "react";
 import Link from "next/link";
+import { Dialog } from "radix-ui";
 import { formatPaise } from "@/lib/format";
+import { addLine } from "@/lib/cartStore";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/components/cart/CartProvider";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
+import type { BundleView } from "@/lib/mealBundles";
 
-export interface ChefBundle {
-  id: string;
-  title: string;
-  badge: string;
-  desc: string;
-  mealCount: number;
-  estTotalPaise: number;
-  savingsLabel: string;
-  planSlug: string;
-}
+export function BundleOfferCard({ bundle }: { bundle: BundleView }) {
+  const { cart, setCart } = useCart();
+  const [open, setOpen] = useState(false);
+  const [added, setAdded] = useState(false);
 
-const BUNDLES: ChefBundle[] = [
-  {
-    id: "metabolic-reset-5d",
-    title: "5-Day Metabolic Reset Bundle",
-    badge: "Most Popular Value",
-    desc: "Five consecutive weekday therapeutic lunches designed for blood sugar stability and sustained midday focus.",
-    mealCount: 5,
-    estTotalPaise: 165000, // ₹1,650
-    savingsLabel: "Save up to ₹200 vs standard à-la-carte delivery billing",
-    planSlug: "weight-loss-jumpstart",
-  },
-  {
-    id: "hypertrophy-protein-10d",
-    title: "10-Meal Fortnightly Muscle Pack",
-    badge: "Maximum Protein per Rupee",
-    desc: "Ten high-protein meal deliveries (>30g per bowl) paired with complimentary post-workout probiotic coolers.",
-    mealCount: 10,
-    estTotalPaise: 320000, // ₹3,200
-    savingsLabel: "Includes free RD intro consultation & waived delivery charges",
-    planSlug: "lean-muscle-builder",
-  },
-  {
-    id: "pcos-balance-bundle",
-    title: "Clinical Hormone Balance Pack",
-    badge: "Low-GI Certified",
-    desc: "Strict low-glycemic Mediterranean and Indian clinical lunches engineered for insulin resilience and satiety.",
-    mealCount: 5,
-    estTotalPaise: 175000, // ₹1,750
-    savingsLabel: "Automatically applies ₹399 trial creditback on signup",
-    planSlug: "pcos-balance",
-  },
-];
+  // Back gesture closes the combo dialog instead of leaving /meal-deals.
+  useOverlayHistory(open, () => setOpen(false));
 
-export function BundleOfferCard({ bundle }: { bundle?: ChefBundle }) {
-  const items = bundle ? [bundle] : BUNDLES;
+  function addCombo() {
+    let next = cart;
+    for (const d of bundle.dishes) {
+      next = addLine(next, {
+        dishId: d.id,
+        kind: "dish",
+        slug: d.slug,
+        name: d.name,
+        pricePaise: d.pricePaise,
+      });
+    }
+    setCart(next);
+    setAdded(true);
+  }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-      {items.map((b) => (
-        <div
-          key={b.id}
-          className="rounded-2xl border border-line bg-surface p-5 shadow-sm flex flex-col justify-between gap-5 transition-all duration-200 hover:border-gold/40"
-        >
-          <div className="flex flex-col gap-3">
-            <span className="inline-block rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-semibold text-sage-800 tracking-wide w-fit">
-              {b.badge}
-            </span>
-            <h3 className="text-lg font-semibold text-ink leading-snug">{b.title}</h3>
-            <p className="text-xs text-ink-muted leading-relaxed">{b.desc}</p>
-            <div className="rounded-xl bg-gold/5 border border-gold/20 p-2.5 text-[11px] font-semibold text-gold-text">
-              &starf; {b.savingsLabel}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 border-t border-line pt-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-medium text-ink-muted">Server Authoritative Quote:</span>
-              <span className="text-base font-bold text-ink">{formatPaise(b.estTotalPaise)} / cycle</span>
-            </div>
-            <Link
-              href={`/plan/${b.planSlug}`}
-              className="flex w-full items-center justify-center rounded-xl bg-gold py-3 text-xs font-semibold text-white shadow-sm hover:bg-gold/90 transition-colors"
-            >
-              Select &mdash; Configure Deliveries &rarr;
-            </Link>
-          </div>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        className="flex h-full flex-col justify-between gap-5 rounded-3xl border border-line bg-surface p-6 text-left transition-colors hover:border-line-strong"
+      >
+        <div className="flex flex-col gap-3">
+          <span className="w-fit rounded-full bg-sage-soft px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-sage-text">
+            {bundle.badge}
+          </span>
+          <h3 className="text-lg font-semibold leading-snug text-ink">{bundle.title}</h3>
+          <p className="text-sm leading-relaxed text-ink-muted">{bundle.desc}</p>
         </div>
-      ))}
-    </div>
+
+        <div className="flex items-end justify-between gap-3 border-t border-line pt-4">
+          <span className="flex flex-col">
+            <span className="tabular text-lg font-semibold text-ink">{formatPaise(bundle.totalPaise)}</span>
+            <span className="tabular text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+              {bundle.dishes.length} meals
+            </span>
+          </span>
+          <span className="shrink-0 text-sm font-semibold text-gold-text">View combo &rarr;</span>
+        </div>
+      </button>
+
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Portal>
+          {/* Scrim: --scrim, never data-stitch — see the invariant on
+              components/ui/drawer.tsx's DrawerOverlay. */}
+          <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
+          <Dialog.Content
+            aria-describedby={undefined}
+            className="fixed left-1/2 top-16 z-[var(--z-modal)] flex max-h-[80vh] w-[92vw] max-w-md -translate-x-1/2 animate-dialog-in flex-col overflow-hidden rounded-3xl border border-line bg-surface"
+          >
+            <div className="border-b border-line px-5 py-4">
+              <Dialog.Title className="text-base font-semibold text-ink">{bundle.title}</Dialog.Title>
+              <p className="mt-1 text-xs leading-relaxed text-ink-muted">{bundle.desc}</p>
+            </div>
+
+            <ul className="flex-1 overflow-y-auto p-2">
+              {bundle.dishes.map((d) => (
+                <li key={d.id}>
+                  <Link
+                    href={`/dish/${d.slug}`}
+                    className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-surface-subtle"
+                  >
+                    <span className="min-w-0 truncate text-sm text-ink">{d.name}</span>
+                    <span className="tabular shrink-0 text-sm text-ink-muted">
+                      {formatPaise(d.pricePaise)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-col gap-3 border-t border-line p-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+                  Combo total
+                </span>
+                <span className="tabular text-lg font-semibold text-ink">
+                  {formatPaise(bundle.totalPaise)}
+                </span>
+              </div>
+              {added ? (
+                <Link
+                  href="/cart"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-line-strong px-6 py-3.5 text-sm font-semibold text-ink"
+                >
+                  Added &mdash; view cart &rarr;
+                </Link>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={addCombo}
+                  shape="pill"
+                  size="fluid"
+                  className="inline-flex w-full items-center justify-center px-6 py-3.5 font-semibold"
+                >
+                  Add combo
+                </Button>
+              )}
+              <Dialog.Close className="text-xs text-ink-muted transition-colors hover:text-ink">
+                Close
+              </Dialog.Close>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
   );
 }

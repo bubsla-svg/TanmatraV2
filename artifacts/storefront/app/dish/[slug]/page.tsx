@@ -4,7 +4,7 @@ import Link from "next/link";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
-import { AddToCart } from "@/components/cart/AddToCart";
+import { PdpAddToCart } from "@/components/menu/PdpAddToCart";
 import { DishSpec } from "@/components/menu/DishSpec";
 import { DishGallery } from "@/components/menu/DishGallery";
 import { DishAllergens } from "@/components/menu/DishAllergens";
@@ -13,6 +13,7 @@ import { DishReviews } from "@/components/menu/DishReviews";
 import { galleryImages } from "@/lib/gallery";
 import { dishCrossSell } from "@/lib/related";
 import { DishStructuredData } from "@/components/StructuredData";
+import { DishBuyBar } from "@/components/menu/DishBuyBar";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -44,6 +45,7 @@ export default async function DishPage({ params }: Params) {
   ];
 
   return (
+    <div className="min-h-dvh">
     <article className="mx-auto max-w-3xl px-4 py-8">
       <DishStructuredData dish={dish} />
       <Link href="/menu" className="text-sm text-ink-muted hover:text-ink">
@@ -68,12 +70,14 @@ export default async function DishPage({ params }: Params) {
         {/* Price + the sole action: the canonical page is deep-linkable and
             SEO-indexed, so a shared /dish link must be orderable, not a dead
             end — same server-priced AddToCart as the card/drawer, only for
-            à-la-carte dishes (no dead CTA on plan-only dishes). */}
+            à-la-carte dishes (no dead CTA on plan-only dishes). PdpAddToCart
+            renders only while DishBuyBar doesn't (cart non-empty), so this
+            screen carries exactly ONE primary buy action at any moment. */}
         <div className="flex shrink-0 flex-col items-end gap-2">
           <span className="tabular text-xl font-semibold text-ink">
             {formatPaise(dish.price)}
           </span>
-          {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
+          {isAlaCarteEnabled(dish) && <PdpAddToCart dish={dish} />}
         </div>
       </div>
 
@@ -97,5 +101,7 @@ export default async function DishPage({ params }: Params) {
           renders dish A's held reviews/rating/eligibility before the refetch. */}
       <DishReviews key={dish.slug} slug={dish.slug} />
     </article>
+    <DishBuyBar dish={dish} />
+    </div>
   );
 }

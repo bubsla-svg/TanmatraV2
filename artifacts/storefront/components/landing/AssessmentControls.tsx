@@ -1,5 +1,6 @@
 "use client"; // Interactive stepper navigation buttons and progress bar
 // Thumb-zone navigation controls and progress indicator for mobile-first stepper
+import { Button } from "@/components/ui/button";
 
 export interface AssessmentControlsProps {
   currentStep: number;
@@ -30,9 +31,12 @@ export function AssessmentControls({
           <span>{progressPct}% Completed</span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full border border-line bg-surface-raised">
+          {/* Full-width bar scaled via `transform` (never `width`) so the fill
+              animates on the compositor — `scaleX` + `transform-origin: left`
+              is the hardware-accelerated equivalent of animating width. */}
           <div
-            className="h-full bg-gold transition-all duration-300"
-            style={{ width: `${progressPct}%` }}
+            className="h-full w-full origin-left rounded-full bg-gold transition-transform duration-300"
+            style={{ transform: `scaleX(${progressPct / 100})` }}
             role="progressbar"
             aria-valuenow={progressPct}
             aria-valuemin={0}
@@ -52,13 +56,13 @@ export function AssessmentControls({
           >
             ← Back
           </button>
-          <button
+          <Button
             type="button"
             onClick={onNext}
-            className="flex-[2] rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90"
+            shape="xl" size="fluid" className="flex-[2] px-6 py-3 font-semibold"
           >
             {isLastStep ? "Complete & View Recommendation ➔" : "Next Step ➔"}
-          </button>
+          </Button>
         </div>
 
         <div className="flex items-center justify-center pt-1">

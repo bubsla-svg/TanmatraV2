@@ -273,7 +273,7 @@ router.post(
       res.status(400).json({ error: "orderId or packagingReturnId required" });
       return;
     }
-    const isOps = isOpsRequest(req).allowed;
+    const isOps = (await isOpsRequest(req)).allowed;
     const userId = req.isAuthenticated() ? req.user.id : null;
     if (!isOps && !userId) {
       res.status(401).json({ error: "unauthorized" });

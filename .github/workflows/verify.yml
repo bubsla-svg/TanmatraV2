@@ -95,6 +95,7 @@ jobs:
           ./src/lib/bloodReportOcr.test.ts
           ./src/lib/pantryVisionScanner.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
+          ./src/lib/priceBands.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
       # these nowhere; they are driven through the api-server tsx loader.
@@ -177,21 +178,24 @@ jobs:
         run: >
           node --test --import tsx
           ./src/routes/ops.gate.test.ts
-      # Same access-control question for /delivery, where five mutating
-      # endpoints were gated on `req.isAuthenticated()` — "somebody is signed
-      # in" — so any customer with a session could write delivery events, move a
-      # rider's position, advance a schedule, or auto-assign riders.
-      #
-      # Sits beside the /ops gate contract rather than in money-integration
-      # because it is DB-free by construction: gated routes reject before their
-      # handler runs, and the three deliberately-public routes all validate
-      # input before querying, so every assertion resolves without Postgres.
-      # Its own step so a failure reads as "the delivery gate broke".
-      - name: Delivery router access-control contract
-        working-directory: artifacts/api-server
-        run: >
-          node --test --import tsx
-          ./src/routes/delivery.opsGate.test.ts
+          ./src/routes/ops.test.ts
+          ./src/routes/openApiContract.test.ts
+          ./src/routes/analytics.gate.test.ts
+          ./src/routes/corporateLeads.gate.test.ts
+          ./src/routes/menuEngineering.gate.test.ts
+          ./src/routes/menu.gate.test.ts
+          ./src/routes/menuAssets.gate.test.ts
+          ./src/routes/partnerLeads.gate.test.ts
+          ./src/routes/payments.gate.test.ts
+          ./src/routes/rdPartners.gate.test.ts
+          ./src/routes/supportTickets.gate.test.ts
+      # The /delivery access-control contract used to sit here, DB-free. ADM-02
+      # moved it: the gate now resolves named roles from the `admin_roles`
+      # table, so an AUTHENTICATED non-ops caller — which is exactly what that
+      # suite asserts against — issues a real query. It runs in
+      # money-integration now, against Postgres. The unauthenticated cases above
+      # stay DB-free and stay here, because the gate still denies those before
+      # any query is issued.
       # Food-cost resolution for the weekly business review. Not a billed
       # amount, but it decides a number people act on: the WBR's margin per
       # dish and the 35%-margin threshold alert. The lookup it replaces asked a
@@ -226,6 +230,26 @@ jobs:
         run: >
           node --test --import tsx
           ./src/lib/menuEngineering.cost.test.ts
+      # Menu-catalog process cache (OA-DEEP-1.3, TODO_optimization-auditor.md).
+      # Not money-path, but pure cache logic (TTL, single-flight, the
+      # invalidation-during-in-flight-fetch race) against a fake fetcher —
+      # no DB needed. Its own step so a failure reads as "the catalog cache
+      # broke" rather than being buried in an unrelated run.
+      - name: Menu-catalog cache unit tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/lib/menuCatalogCache.test.ts
+      # Shared error responder (lib/sendError.ts): withholds err.message from
+      # the client on 5xx (Postgres column names, SQL fragments, etc. must
+      # never reach a caller) while still logging full detail via req.log for
+      # operator triage. Salvaged from three near-duplicate per-route
+      # implementations, one of which never logged at all. DB-free — pure
+      # function over a faked Request/Response pair.
+      - name: Shared error responder unit tests
+        working-directory: artifacts/api-server
+        run: >
+          ./src/lib/sendError.test.ts
 
 
   money-integration:
@@ -290,14 +314,16 @@ jobs:
       # fallback ever breaks, marketplace orders bill zero), commission
       # splitting for third-party items, and the ownership check that stops
       # one user billing another user's order.
+      - name: Serialized dispatch integration tests
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-force-exit --test-concurrency=1 --import tsx
+          ./src/lib/dispatch.concurrency.test.ts
+          ./src/lib/dispatch.channel.test.ts
+          ./src/lib/dispatch.batchPartnerQueries.test.ts
+
       - name: Money-path integration tests
         working-directory: artifacts/api-server
-        # --test-force-exit: these suites hold real Postgres connections; on
-        # completion the pool's open handles keep the event loop alive, so the
-        # runner never exits on its own and the job is killed at the 20-min
-        # timeout (a hang, not a failure). Force exit once all tests finish —
-        # the process still exits non-zero if any test failed. Node 22 (matching
-        # money-unit/typecheck) also drains cleaner than the prior Node 20 pin.
         run: >
           node --test --test-force-exit --import tsx
           ./src/routes/payments.integrity.test.ts
@@ -305,10 +331,16 @@ jobs:
           ./src/routes/payments.subscriptionOrder.test.ts
           ./src/routes/refunds.test.ts
           ./src/routes/orders.mine.test.ts
+          ./src/routes/menu.audit.test.ts
+          ./src/routes/ops.audit.test.ts
+          ./src/routes/adminRoles.test.ts
+          ./src/routes/delivery.opsGate.test.ts
+          ./src/routes/compliance.test.ts
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
           ./src/routes/subscriptions.creditLedger.test.ts
+          ./src/lib/loyaltyEngine.creditDerivation.test.ts
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
           ./src/routes/subscriptions.catalogQuote.test.ts
           ./src/routes/loyalty.referral.test.ts
@@ -321,6 +353,7 @@ jobs:
           ./src/lib/ai/agents/ops.refundCap.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
+          ./src/routes/marketplace.items.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
           ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
@@ -331,73 +364,17 @@ jobs:
           ./src/lib/guardrailEngines.test.ts
           ./src/lib/logisticsEngine.test.ts
           ./src/lib/wmsFefoEngine.test.ts
-          ./src/routes/corporate.teams.test.ts
-      # Kept as its own step so a failure reads as "the kitchen board broke"
-      # rather than being buried in an eighteen-file money run. Not a money path,
-      # but it needs the same Postgres service and pushed schema, so it lives
-      # in this job. Two things are pinned: the board shows own_app + meal only
-      # (an aggregator ticket here gets cooked twice — Petpooja's own screen is
-      # already driving it), and POST ready advances only tickets the board can
-      # actually show (without the status predicate it would drag a delivered
-      # order back to ready, or resurrect a cancelled one onto the board).
-      - name: Kitchen-board route contract (KDS)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/ops.kds.test.ts
-      - name: Front-door serviceability & checkout gate authority (OB-1)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
+          ./src/routes/checkout.customizations.test.ts
           ./src/routes/serviceability.test.ts
-      - name: Notify-me serviceability interest capture (OB-3)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/serviceabilityInterest.test.ts
-      - name: Geocoding precision and dual-key resilience
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/geo.test.ts
-      # The order-channel split's own test corpus. Every one of these files was
-      # written to guard the split and every one of them ran nowhere — this
-      # workflow enumerates test files by name, and none of these were named,
-      # in any workflow. They are green today; the point is that nothing would
-      # have told us when they stopped being. What they cover:
-      #
-      #   orderChannel.schema  — the DB check constraints agree with the TS
-      #                          tuples, order_channel is NOT NULL defaulting
-      #                          to own_app, and no channel value collides
-      #                          with an order-kind value.
-      #   dispatch.channel     — an aggregator's order never consumes one of
-      #                          our riders, through all three doors
-      #                          (dispatchOrder, overrideAssignment,
-      #                          findBatchPartner).
-      #   wellnessAutoLog      — marketplace orders do not write nutrition
-      #                          logs; you cannot eat a saucepan.
-      #   petpooja             — the status vocabulary the mappers emit is the
-      #                          vocabulary the readers recognise.
-      - name: Order-channel split integrity
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/lib/orderChannel.schema.test.ts
-          ./src/lib/dispatch.channel.test.ts
           ./src/lib/wellnessAutoLog.orderKind.test.ts
           ./src/lib/petpooja.test.ts
-      # The reporting half of the money path. These are not about billing a
-      # customer correctly; they are about the numbers the business reads back
-      # afterwards being what they claim to be — the WBR's revenue line
-      # partitioning into channels that add up, and the curated analytics views
-      # actually having the columns the LLM prompt says they have. Both need a
-      # real server: the safe-view contract rests on a Postgres rule
-      # (CREATE OR REPLACE VIEW appends only) that can only be proved against
-      # one, and the WBR aggregates read through the views themselves.
-      - name: Analytics-integrity integration tests
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
+          ./src/lib/menuAssets.bulkHeroes.test.ts
+          ./src/lib/ai/agents/cms.bulkCopy.test.ts
+          ./src/lib/loyaltyEngine.sweep.test.ts
           ./src/lib/safeSql.schema.test.ts
           ./src/lib/wbr.channel.test.ts
           ./src/lib/orderStatus.schema.test.ts
@@ -405,10 +382,20 @@ jobs:
           ./src/lib/petpooja.transition.test.ts
           ./src/routes/petpooja.saveorder.test.ts
           ./src/routes/petpooja.statusMonotonic.test.ts
-      # Lead capture pipeline contracts (B2B corporate & partner acquisition).
-      - name: Lead capture route contracts (B2B and partners)
-        working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
           ./src/routes/corporateLeads.test.ts
           ./src/routes/partnerLeads.test.ts
+          ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
+          ./src/middlewares/rateLimitMiddleware.trustProxy.test.ts
+          ./src/lib/b2b/accountHealth.test.ts
+          ./src/lib/ai/aiHardening.test.ts
+          ./src/lib/anomalies.golden.test.ts
+          ./src/lib/menuResolver.cache.test.ts
+          ./src/routes/petpooja.cacheInvalidation.test.ts
+          ./src/lib/menuEngineering.sliceCounts.golden.test.ts
+          ./src/lib/menuEngineering.recipeCosts.golden.test.ts
+          ./src/lib/queue.pipelineIdempotency.test.ts
+          ./src/lib/dishReviews.staleness.test.ts
+          ./src/lib/userBrief/cacheSweep.test.ts
+          ./src/routes/legalDocuments.test.ts
+          ./src/routes/petpooja.priceAuthority.test.ts
+          ./src/routes/menuPriceValidation.test.ts

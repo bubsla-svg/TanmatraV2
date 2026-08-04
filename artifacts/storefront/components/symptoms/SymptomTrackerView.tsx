@@ -1,48 +1,57 @@
 "use client";
 // Client: interactive physiological symptom logger correlating post-meal reactions against macro intake.
-import { useState, useEffect } from "react";
-import { getMySymptomLogs, recordSymptomLog, type SymptomLogEntry } from "@/lib/ecosystemApi";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/lib/apiClient";
+import { getMySymptomLogs, recordSymptomLog } from "@/lib/ecosystemApi";
+import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
+
+const isAuthError = (e: unknown) => e instanceof ApiError && e.status === 401;
 
 export function SymptomTrackerView() {
-  const [logs, setLogs] = useState<SymptomLogEntry[]>([]);
+  const queryClient = useQueryClient();
+  const logsQuery = useQuery({ queryKey: ["wellness", "symptoms"], queryFn: () => getMySymptomLogs() });
+
   const [symptom, setSymptom] = useState("bloating");
   const [severity, setSeverity] = useState(2);
   const [notes, setNotes] = useState("");
   const [dishSlug, setDishSlug] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    getMySymptomLogs().then((res) => setLogs(res)).catch(() => {});
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setMsg(null);
-    try {
-      const entry = await recordSymptomLog({
-        loggedDate: new Date().toISOString().slice(0, 10),
-        symptomType: symptom,
-        severity,
-        notes,
-        relatedDishSlug: dishSlug.trim() || "general-dietary-cycle",
-      });
-      setLogs((p) => [entry, ...p]);
+  const recordMutation = useMutation({
+    mutationFn: (input: Parameters<typeof recordSymptomLog>[0]) => recordSymptomLog(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["wellness", "symptoms"] });
       setNotes("");
       setDishSlug("");
-      setMsg("Physiological response logged successfully to clinical record.");
-    } catch {
-      setMsg("Please sign in to save verified symptom telemetry to your permanent vault.");
-    } finally {
-      setBusy(false);
-    }
+    },
+    onError: (e) => { if (isAuthError(e)) void logsQuery.refetch(); },
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (recordMutation.isPending) return;
+    recordMutation.mutate({
+      loggedDate: new Date().toISOString().slice(0, 10),
+      symptomType: symptom,
+      severity,
+      notes,
+      ...(dishSlug.trim() ? { relatedDishSlug: dishSlug.trim() } : {}),
+    });
+  }
+
+  if (isAuthError(logsQuery.error)) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-ink-muted">Sign in to log and view your symptom history.</p>
+        <PhoneAuth startExpanded onVerified={() => void logsQuery.refetch()} />
+      </div>
+    );
   }
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-      <form onSubmit={handleSubmit} className="lg:col-span-5 flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 shadow-sm h-fit">
+      <form onSubmit={handleSubmit} className="lg:col-span-5 flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 h-fit">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">Physiological Telemetry</span>
           <h3 className="text-lg font-semibold text-ink mt-1">Log Post-Meal Symptom</h3>
@@ -51,10 +60,19 @@ export function SymptomTrackerView() {
           </p>
         </div>
 
-        {msg && <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs font-semibold text-gold-text">{msg}</div>}
+        {recordMutation.isSuccess && (
+          <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs font-semibold text-gold-text">
+            Physiological response logged successfully to clinical record.
+          </div>
+        )}
+        {recordMutation.isError && (
+          <div role="alert" className="rounded-xl border border-line bg-surface p-3 text-xs font-semibold text-[var(--danger)]">
+            Couldn&rsquo;t save this entry. Please try again.
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="font-semibold text-ink">Symptom Classification</label>
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
           <select
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
@@ -68,9 +86,9 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <div className="flex justify-between font-semibold text-ink">
-            <span>Reaction Severity</span>
-            <span>{severity} / 5</span>
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Reaction Severity</span>
+            <span className="tabular text-sm font-semibold text-ink">{severity} / 5</span>
           </div>
           <input
             type="range"
@@ -80,10 +98,14 @@ export function SymptomTrackerView() {
             onChange={(e) => setSeverity(Number(e.target.value))}
             className="w-full accent-gold cursor-pointer"
           />
+          <div className="flex justify-between px-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink-faint">
+            <span>Mild</span>
+            <span>Severe</span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="font-semibold text-ink">Related Dish or Meal (Optional)</label>
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Related Dish or Meal (Optional)</label>
           <input
             type="text"
             value={dishSlug}
@@ -94,7 +116,7 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="font-semibold text-ink">Clinical Annotations</label>
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Clinical Annotations</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -104,39 +126,66 @@ export function SymptomTrackerView() {
           />
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={busy}
-          className="rounded-xl bg-gold py-3 text-xs font-semibold text-white shadow-sm hover:bg-gold/90 transition-colors mt-2"
+          disabled={recordMutation.isPending}
+          shape="pill"
+          size="fluid"
+          className="py-3 text-xs font-semibold mt-2"
         >
-          {busy ? "Recording Telemetry…" : "+ Record Symptom Log &rarr;"}
-        </button>
+          {recordMutation.isPending ? "Recording Telemetry…" : "Record Symptom Log →"}
+        </Button>
       </form>
 
       <div className="lg:col-span-7 flex flex-col gap-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-gold-text">Recorded Symptom History</h2>
-        {logs.length === 0 ? (
+        {logsQuery.isPending ? (
+          <SymptomHistorySkeleton />
+        ) : logsQuery.isError ? (
+          <div className="rounded-2xl border border-line bg-surface p-8 text-center flex flex-col gap-3">
+            <p className="text-xs font-semibold text-[var(--danger)]">Couldn&rsquo;t load your symptom history</p>
+            <button type="button" onClick={() => void logsQuery.refetch()} className="mx-auto rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+          </div>
+        ) : logsQuery.data.length === 0 ? (
           <div className="rounded-2xl border border-line bg-surface p-8 text-center text-xs text-ink-muted">
             No physiological symptom observations recorded in this billing cycle yet.
           </div>
         ) : (
           <div className="flex flex-col gap-3.5">
-            {logs.map((l) => (
-              <div key={l.id} className="rounded-2xl border border-line bg-surface p-4 shadow-sm flex flex-col gap-2.5">
+            {logsQuery.data.map((l) => (
+              <div key={l.id} className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-bold text-sage-800 uppercase">
+                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-sage-text">
                     {l.symptomType.replace("_", " ")}
                   </span>
-                  <span className="text-xs font-semibold text-ink-muted">{l.loggedDate}</span>
+                  <span className="text-xs font-medium text-ink-muted">{l.loggedDate}</span>
                 </div>
-                <div className="text-xs font-semibold text-ink">
-                  Severity: <strong className="text-gold-text font-bold">{l.severity} / 5</strong> &bull; Correlated with: <span className="underline">{l.relatedDishSlug}</span>
+                <div className="text-xs font-medium text-ink-muted">
+                  Severity: <strong className="tabular text-sm font-bold text-gold-text">{l.severity} / 5</strong>
+                  {l.relatedDishSlug && (
+                    <>
+                      {" "}&bull; Correlated with: <span className="font-mono text-ink">{l.relatedDishSlug}</span>
+                    </>
+                  )}
                 </div>
-                {l.notes && <p className="text-xs text-ink-muted italic border-t border-line pt-2 mt-1">&ldquo;{l.notes}&rdquo;</p>}
+                {l.notes && <p className="text-xs text-ink-muted italic border-t border-line pt-2.5 mt-0.5">&ldquo;{l.notes}&rdquo;</p>}
               </div>
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function SymptomHistorySkeleton() {
+  return (
+    <div className="flex flex-col gap-3.5">
+      <p className="sr-only">Loading your symptom history…</p>
+      <div aria-hidden className="flex flex-col gap-3.5">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface-raised" />
+        ))}
       </div>
     </div>
   );

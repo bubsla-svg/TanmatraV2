@@ -6,6 +6,7 @@
 import { useState, type FormEvent } from "react";
 import { submitDishReview } from "@/lib/dishReviewsApi";
 import { ApiError } from "@/lib/apiClient";
+import { Button } from "@/components/ui/button";
 
 const RATING_VALUES = [1, 2, 3, 4, 5];
 const MAX_BODY = 2000;
@@ -29,7 +30,7 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
     return (
       <p
         role="status"
-        className="mt-4 rounded-lg border border-line bg-surface p-3 text-sm text-ink-muted"
+        className="mt-4 rounded-2xl border border-line bg-surface p-4 text-sm text-ink-muted"
       >
         Thanks — your review is in.
       </p>
@@ -53,7 +54,7 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 rounded-lg border border-line bg-surface p-4">
+    <form onSubmit={handleSubmit} className="mt-4 rounded-2xl border border-line bg-surface p-4">
       <p className="text-sm font-semibold text-ink">Leave a review</p>
 
       {/* A labelled group of toggle buttons (aria-pressed), not an ARIA
@@ -69,7 +70,7 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
             aria-label={`Rate ${n} out of 5`}
             onClick={() => setRating(n)}
             className={`text-xl leading-none transition-transform active:scale-90 ${
-              n <= rating ? "text-gold" : "text-ink-faint"
+              n <= rating ? "text-gold-text" : "text-ink-faint"
             }`}
           >
             ★
@@ -87,7 +88,7 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
         maxLength={MAX_BODY}
         rows={3}
         placeholder="What did you think? (optional)"
-        className="mt-3 w-full rounded-lg border border-line bg-surface-raised p-2.5 text-sm text-ink placeholder:text-ink-faint"
+        className="mt-3 w-full rounded-2xl border border-line bg-surface-raised p-3 text-sm text-ink placeholder:text-ink-faint"
       />
 
       {error && (
@@ -96,13 +97,15 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={rating === 0 || submitting}
-        className="mt-3 min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-50"
+        shape="pill"
+        size="fluid"
+        className="mt-3 min-h-11 px-5 py-2 font-semibold disabled:opacity-50"
       >
         {submitting ? "Submitting…" : "Submit review"}
-      </button>
+      </Button>
     </form>
   );
 }

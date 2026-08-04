@@ -14,14 +14,16 @@ export const metadata: Metadata = {
  */
 export default function MealPlannerPage() {
   return (
-    <section className="mx-auto max-w-lg px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">AI-personalised</p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Weekly meal planner</h1>
-      <p className="mt-2 mb-6 text-sm text-ink-muted">
-        A 7-day plan tuned to your goals, diet, allergens and budget. Swap dishes, then accept to
-        schedule the week on your subscription.
-      </p>
-      <MealPlanner />
-    </section>
+    <div className="min-h-dvh">
+      <section className="mx-auto max-w-lg px-4 py-10">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-muted">AI-personalised</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">Weekly meal planner</h1>
+        <p className="mt-2 mb-8 text-sm leading-relaxed text-ink-muted">
+          A 7-day plan tuned to your goals, diet, allergens and budget. Swap dishes, then accept to
+          schedule the week on your subscription.
+        </p>
+        <MealPlanner />
+      </section>
+    </div>
   );
 }

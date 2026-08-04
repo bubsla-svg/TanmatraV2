@@ -63,3 +63,5 @@ export * from "./messageDispatches";
 export * from "./savedMeals";
 export * from "./ecosystem";
 export * from "./serviceabilityInterest";
+export * from "./adminRoles";
+export * from "./legalDocuments";

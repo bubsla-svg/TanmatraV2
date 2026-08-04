@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { StepDots } from "./StepDots";
 import { formatPaise } from "@/lib/format";
 import { MEALCARD_RAIL_ENABLED } from "@/lib/flags";
@@ -37,7 +38,7 @@ export function CheckoutPay({
       </div>
       <h1 className="text-lg font-semibold text-ink">Review &amp; pay</h1>
 
-      <div className="rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]">
+      <div className="rounded-3xl border border-line bg-surface p-5">
         <p className="text-sm text-ink-muted">{planSummary}</p>
         {creditPaise > 0 && (
           <p className="mt-1 text-sm font-medium text-sage-text">
@@ -47,13 +48,21 @@ export function CheckoutPay({
         <p className="tabular mt-1 text-2xl font-semibold text-ink">{formatPaise(totalPaise)}</p>
       </div>
 
-      <button
-        type="button"
-        onClick={onPay}
-        className="rounded-xl bg-gold px-5 py-4 text-center text-base font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
-      >
-        Pay {formatPaise(totalPaise)} with UPI
-      </button>
+      {/* Sticky pay bar — the screen's single gold pill; amount is the
+          server-quoted total verbatim. Anchored bottom-0, not the bottom-16
+          tab-bar band: /checkout is a focus route (lib/focusRoutes.ts) — the
+          global tab bar never renders here. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+        <div className="mx-auto max-w-md px-4 py-3">
+          <Button
+            type="button"
+            onClick={onPay}
+            shape="pill" size="fluid" className="w-full px-8 py-4 text-center text-base font-semibold"
+          >
+            Pay {formatPaise(totalPaise)} with UPI
+          </Button>
+        </div>
+      </div>
 
       <button
         type="button"

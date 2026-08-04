@@ -68,6 +68,45 @@ export function invalidateUserBrief(userId: string): void {
   }
 }
 
+/**
+ * OA-MED-1.8 (TODO_optimization-auditor.md): PROCESS_CACHE had no active
+ * sweep. `getProcessCached` only evicts on a re-read of the SAME key, and
+ * `invalidateUserBrief` only fires on a write for that same user — so a
+ * one-shot user (brief assembled, TTL lapses, they never return) left a
+ * whole UserBrief resident for the life of the process. Entries carry
+ * identity, preferences, profile, subscription, loyalty, premium,
+ * recentOrders and wellness, so this is not a small-object leak.
+ *
+ * The second-order cost matters as much as the memory: `invalidateUserBrief`
+ * above scans every key, and it runs on ~8 write paths (preferences,
+ * subscriptions, loyalty, meal plans, consents, support/coach agents). An
+ * unbounded map therefore made every one of those writes progressively
+ * slower, not just fatter.
+ *
+ * Registered on index.ts's existing hourly hygiene timer, alongside the
+ * rate-limit / session / idempotency sweeps. Hourly is a deliberately loose
+ * bound against a 30 s TTL — the goal is "this map cannot grow forever",
+ * not "dead entries vanish promptly". A read of an expired key still evicts
+ * it immediately, so the sweeper only ever collects keys nobody came back
+ * for, which is exactly the leaked set.
+ */
+export function sweepExpiredUserBriefs(): number {
+  const now = Date.now();
+  let purged = 0;
+  for (const [key, entry] of PROCESS_CACHE) {
+    if (entry.expiresAt < now) {
+      PROCESS_CACHE.delete(key);
+      purged += 1;
+    }
+  }
+  return purged;
+}
+
+/** Test-only — current entry count, for asserting the sweep actually evicts. */
+export function _userBriefCacheSizeForTests(): number {
+  return PROCESS_CACHE.size;
+}
+
 /** Test-only — wipe the entire process cache. */
 export function _resetUserBriefCacheForTests(): void {
   PROCESS_CACHE.clear();

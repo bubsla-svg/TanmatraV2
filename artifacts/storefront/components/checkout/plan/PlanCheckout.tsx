@@ -7,7 +7,7 @@ import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter"
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
-import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack } from "@/lib/api";
+import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 
@@ -25,6 +25,7 @@ export function PlanCheckout({
   planName,
   servedTracks,
   initialTrack,
+  cadence,
   addOns,
   finePrint,
   successPerks,
@@ -34,6 +35,9 @@ export function PlanCheckout({
   servedTracks: DietTrack[];
   /** Entry-surface track preselect (?track=…), host-validated against servedTracks. */
   initialTrack?: DietTrack;
+  /** Billing cadence the builder confirmed (?cycle=…), host-validated. Defaults
+   *  to "monthly" — the builder's own default — never invented client-side. */
+  cadence?: PlanCadence;
   /** Plan-review add-ons to bill (host-validated against the allow-list) —
    *  threaded through quote AND create so display always equals charge. */
   addOns?: AddOnId[];
@@ -45,11 +49,25 @@ export function PlanCheckout({
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [track, setTrack] = useState<DietTrack>(initialTrack ?? servedTracks[0] ?? "veg");
-  // Server quote per (plan, track, add-ons) — the billed total, net of any
-  // redeemable credit once signed in; gates the CTA.
-  const { quote, quoteLoading } = usePlanQuote(planId, track, addOns, user !== null);
+  const billedCadence = cadence ?? "monthly";
+  // Server quote per (plan, track, cadence, add-ons) — the billed total, net of
+  // any redeemable credit once signed in; gates the CTA. `cadence` must match
+  // what `buildSubscriptionInput` below sends to create, or the displayed quote
+  // and the actual charge disagree.
+  const { quote, quoteLoading, quoteError, retryQuote } = usePlanQuote(
+    planId,
+    track,
+    addOns,
+    user !== null,
+    billedCadence,
+  );
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
   const [busy, setBusy] = useState(false);
+  // "Opening payment…" vs "Confirming your payment…" — see handlePay's
+  // onVerifying. Money is captured the instant the modal resolves; a slow
+  // verify retry (moneyPath's verifyWithRetry) must never look like the
+  // button silently died.
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // The created subscription, so a retry after a dismissed modal resumes payment
   // on it instead of creating a second subscription.
@@ -76,12 +94,14 @@ export function PlanCheckout({
       if (createdRef.current) {
         // A prior attempt already created this subscription — pay it, don't
         // create a second one.
-        result = await finishPlanPayment(createdRef.current, adapter);
+        result = await finishPlanPayment(createdRef.current, adapter, undefined, {
+          onVerifying: () => setVerifying(true),
+        });
       } else {
         const subscription = buildSubscriptionInput({
           planId,
           track,
-          cadence: "monthly",
+          cadence: billedCadence,
           mealsPerDelivery: quote.mealsPerDelivery,
           addOns,
           startDate: nextWeekdayISO(new Date()),
@@ -95,6 +115,7 @@ export function PlanCheckout({
           onCreated: (ref) => {
             createdRef.current = ref;
           },
+          onVerifying: () => setVerifying(true),
         });
       }
       // Hand the money event's facts to the confirmation screen — the autopay
@@ -115,6 +136,7 @@ export function PlanCheckout({
         setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
       }
       setBusy(false);
+      setVerifying(false);
     }
   }
 
@@ -124,18 +146,21 @@ export function PlanCheckout({
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-lg font-semibold text-ink">{planName}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
       <PlanDetails
         servedTracks={servedTracks}
         track={track}
         onTrackChange={setTrack}
         quoteTotalPaise={quote?.payableTotalPaise ?? null}
         quoteLoading={quoteLoading}
+        quoteError={quoteError}
+        onRetryQuote={retryQuote}
         addOnLine={quote?.addOnLine ?? null}
         creditAppliedPaise={quote?.creditAppliedPaise ?? 0}
         initialAddress={savedAddress}
         finePrint={finePrint}
         busy={busy}
+        verifying={verifying}
         error={error}
         onSubmit={handlePay}
       />

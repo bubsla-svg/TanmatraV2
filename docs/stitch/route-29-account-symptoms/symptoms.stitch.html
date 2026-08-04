@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account - Symptoms</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#151d21",
+                      "outline-variant": "#c5c6ca",
+                      "primary-fixed": "#e2e2e5",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#151d21",
+                      "surface-bright": "#fcf8f8",
+                      "secondary": "#585f63",
+                      "background": "#fcf8f8",
+                      "surface-tint": "#5d5e61",
+                      "inverse-surface": "#313030",
+                      "inverse-on-surface": "#f4f0ef",
+                      "on-secondary-fixed-variant": "#41484c",
+                      "on-surface-variant": "#44474a",
+                      "tertiary-fixed": "#dce4e9",
+                      "tertiary-fixed-dim": "#c0c8cd",
+                      "surface-container-highest": "#e5e2e1",
+                      "outline": "#75777a",
+                      "primary-fixed-dim": "#c6c6c9",
+                      "error-container": "#ffdad6",
+                      "on-secondary": "#ffffff",
+                      "on-primary-container": "#838486",
+                      "surface-dim": "#ddd9d9",
+                      "surface-container-high": "#ebe7e7",
+                      "on-primary-fixed": "#1a1c1e",
+                      "on-surface": "#1c1b1b",
+                      "secondary-container": "#dae1e5",
+                      "inverse-primary": "#c6c6c9",
+                      "secondary-fixed": "#dde3e8",
+                      "primary": "#000101",
+                      "surface-container": "#f1eded",
+                      "on-background": "#1c1b1b",
+                      "surface-variant": "#e5e2e1",
+                      "secondary-fixed-dim": "#c1c7cc",
+                      "on-tertiary-fixed-variant": "#40484c",
+                      "on-error": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#5d6468",
+                      "on-primary-fixed-variant": "#454749",
+                      "surface": "#fcf8f8",
+                      "tertiary": "#000101",
+                      "on-tertiary-container": "#7d858a",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f6f3f2",
+                      "primary-container": "#1a1c1e",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#161d20",
+                      "clinical-gold": "#D4AF37",
+                      "clinical-sage": "#7D9E7E",
+                      "clinical-bone": "#FBFAF7",
+                      "clinical-ink": "#1A1C1E",
+                      "clinical-border": "#E7E3DA"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "20px",
+                      "xl": "40px",
+                      "lg": "24px",
+                      "md": "16px",
+                      "sm": "12px",
+                      "xs": "8px",
+                      "container-max": "1200px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Satoshi"
+                      ],
+                      "headline-md": [
+                              "Satoshi"
+                      ],
+                      "body-lg": [
+                              "Satoshi"
+                      ],
+                      "display-lg": [
+                              "Satoshi"
+                      ],
+                      "body-sm": [
+                              "Satoshi"
+                      ],
+                      "headline-lg-mobile": [
+                              "Satoshi"
+                      ],
+                      "label-caps": [
+                              "Satoshi"
+                      ]
+              },
+              "fontSize": {
+                      "data-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "data-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #FBFAF7;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased text-clinical-ink bg-clinical-bone min-h-screen">
+<!-- Top Horizontal Tab Strip -->
+<div class="w-full border-b border-clinical-border bg-clinical-bone sticky top-0 z-10">
+<div class="max-w-[1200px] mx-auto px-md lg:px-xl">
+<div class="flex overflow-x-auto hide-scrollbar items-center space-x-lg h-16">
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Plans</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Orders</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Consults</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Billing</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Addresses</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Preferences</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Health</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">Rewards</a>
+<a class="font-body-sm text-body-sm text-clinical-ink whitespace-nowrap border-b-[2px] border-[#D4AF37] h-full flex items-center" href="#">Symptoms</a>
+<a class="font-body-sm text-body-sm text-secondary whitespace-nowrap hover:text-clinical-ink transition-colors" href="#">History</a>
+</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="max-w-[1200px] mx-auto px-md lg:px-xl py-lg lg:py-xl">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg lg:gap-xl">
+<!-- LEFT COLUMN (Form) -->
+<div class="lg:col-span-5 flex flex-col gap-lg">
+<div class="bg-white rounded-xl border border-clinical-border p-lg">
+<h2 class="font-headline-md text-headline-md mb-lg">Symptom Classification</h2>
+<form class="flex flex-col gap-md">
+<!-- Select Field -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">Classification</label>
+<div class="relative">
+<select class="w-full bg-clinical-bone border border-clinical-border rounded-DEFAULT px-md py-sm font-body-sm text-body-sm text-clinical-ink appearance-none focus:outline-none focus:border-clinical-gold transition-colors">
+<option>Post-Meal Bloating &amp; Gas</option>
+<option>Acid Reflux</option>
+<option>Lethargy</option>
+<option>Nausea</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 text-secondary pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Severity Slider -->
+<div class="flex flex-col gap-xs mt-sm">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">Reaction Severity</label>
+<span class="font-data-md text-data-md text-clinical-ink tabular-nums">3 / 5</span>
+</div>
+<input class="w-full h-1 bg-clinical-border rounded-full appearance-none cursor-pointer accent-[#D4AF37]" max="5" min="1" type="range" value="3"/>
+<div class="flex justify-between w-full px-1">
+<span class="font-label-caps text-[9px] text-secondary">MILD</span>
+<span class="font-label-caps text-[9px] text-secondary">SEVERE</span>
+</div>
+</div>
+<!-- Related Dish -->
+<div class="flex flex-col gap-xs mt-sm">
+<label class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">Related Dish or Meal (Optional)</label>
+<input class="w-full bg-clinical-bone border border-clinical-border rounded-DEFAULT px-md py-sm font-data-md text-data-md text-clinical-ink placeholder:text-outline focus:outline-none focus:border-clinical-gold transition-colors tabular-nums" placeholder="e.g. hp-paneer-bowl" type="text"/>
+</div>
+<!-- Clinical Annotations -->
+<div class="flex flex-col gap-xs mt-sm">
+<label class="font-label-caps text-label-caps text-secondary uppercase tracking-wider">Clinical Annotations</label>
+<textarea class="w-full bg-clinical-bone border border-clinical-border rounded-DEFAULT px-md py-sm font-body-sm text-body-sm text-clinical-ink placeholder:text-outline focus:outline-none focus:border-clinical-gold transition-colors resize-none" placeholder="Add specific observation details..." rows="4"></textarea>
+</div>
+<!-- Submit Button -->
+<button class="w-full bg-[#D4AF37] hover:bg-[#C5A333] text-[#1A1C1E] font-body-sm text-body-sm font-semibold rounded-full py-sm px-lg mt-md transition-colors flex items-center justify-center gap-xs" type="button">
+                            Record Symptom Log
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</form>
+</div>
+</div>
+<!-- RIGHT COLUMN (History) -->
+<div class="lg:col-span-7 flex flex-col gap-lg">
+<h2 class="font-headline-md text-headline-md mb-xs lg:mb-0">Recorded Symptom History</h2>
+<div class="flex flex-col gap-md">
+<!-- Card 1 -->
+<div class="bg-white rounded-xl border border-clinical-border p-lg flex flex-col gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-xs">
+<span class="inline-flex items-center px-sm py-1 rounded-full bg-clinical-sage/12 text-clinical-sage font-label-caps text-label-caps uppercase w-max">BLOATING</span>
+<span class="font-body-sm text-body-sm text-secondary">Oct 24, 2023</span>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="font-label-caps text-[10px] text-secondary uppercase tracking-wider">Severity</span>
+<div class="font-data-md text-data-md tabular-nums text-secondary">
+<span class="text-[#D4AF37] font-bold">3</span> / 5
+                                </div>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-clinical-ink">
+                            • Correlated with: <span class="font-data-md text-data-md text-clinical-ink tabular-nums">hp-paneer-bowl</span>
+</div>
+<div class="h-px w-full bg-clinical-border my-xs"></div>
+<div class="font-body-sm text-body-sm text-secondary italic">
+                            "Observed 45m post-consumption."
+                        </div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-xl border border-clinical-border p-lg flex flex-col gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-xs">
+<span class="inline-flex items-center px-sm py-1 rounded-full bg-clinical-sage/12 text-clinical-sage font-label-caps text-label-caps uppercase w-max">ACID REFLUX</span>
+<span class="font-body-sm text-body-sm text-secondary">Oct 22, 2023</span>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="font-label-caps text-[10px] text-secondary uppercase tracking-wider">Severity</span>
+<div class="font-data-md text-data-md tabular-nums text-secondary">
+<span class="text-[#D4AF37] font-bold">4</span> / 5
+                                </div>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-clinical-ink">
+                            • Correlated with: <span class="font-data-md text-data-md text-clinical-ink tabular-nums">hp-paneer-bowl</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-xl border border-clinical-border p-lg flex flex-col gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-xs">
+<span class="inline-flex items-center px-sm py-1 rounded-full bg-clinical-sage/12 text-clinical-sage font-label-caps text-label-caps uppercase w-max">LETHARGY</span>
+<span class="font-body-sm text-body-sm text-secondary">Oct 21, 2023</span>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="font-label-caps text-[10px] text-secondary uppercase tracking-wider">Severity</span>
+<div class="font-data-md text-data-md tabular-nums text-secondary">
+<span class="text-[#D4AF37] font-bold">2</span> / 5
+                                </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple vanilla JS to update the severity value text
+        const severitySlider = document.querySelector('input[type="range"]');
+        const severityReadout = document.querySelector('.font-data-md.tabular-nums');
+
+        if(severitySlider && severityReadout) {
+            severitySlider.addEventListener('input', (e) => {
+                severityReadout.textContent = `${e.target.value} / 5`;
+            });
+        }
+    </script>
+</body></html>

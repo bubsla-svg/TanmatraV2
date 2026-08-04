@@ -1,9 +1,9 @@
 "use client";
 // Client: loads the signed-in user's RD consultation schedule against live API.
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ApiError } from "@/lib/apiClient";
-import { getMyAppointments, type Appointment } from "@/lib/rdBookingApi";
+import { getMyAppointments } from "@/lib/rdBookingApi";
 import { formatPaise } from "@/lib/format";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
@@ -18,37 +18,38 @@ function formatApptTime(iso: string): string {
 }
 
 export function AppointmentsList() {
-  const [appts, setAppts] = useState<Appointment[] | null>(null);
-  const [needsAuth, setNeedsAuth] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: appts, isPending, isError, error, refetch } = useQuery({
+    queryKey: ["account", "appointments"],
+    queryFn: () => getMyAppointments(),
+  });
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      const rows = await getMyAppointments();
-      setAppts(rows);
-      setNeedsAuth(false);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
-      else setError(e instanceof ApiError ? e.message : "Couldn't load consultations.");
+  if (isError) {
+    if (error instanceof ApiError && error.status === 401) {
+      return (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-ink-muted">Sign in to view your consultation appointments.</p>
+          <PhoneAuth startExpanded onVerified={() => void refetch()} />
+        </div>
+      );
     }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  if (needsAuth) {
     return (
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-ink-muted">Sign in to view your consultation appointments.</p>
-        <PhoneAuth onVerified={() => void load()} />
+      <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)]">
+        <p className="text-sm font-semibold text-[var(--danger)]">
+          {error instanceof ApiError ? error.message : "Couldn't load consultations."}
+        </p>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong"
+        >
+          Try again
+        </button>
       </div>
     );
   }
 
-  if (appts === null) {
-    return <p className="text-sm text-ink-muted">{error ?? "Loading your consultation schedule…"}</p>;
+  if (isPending) {
+    return <p className="text-sm text-ink-muted">Loading your consultation schedule…</p>;
   }
 
   if (appts.length === 0) {
@@ -64,25 +65,31 @@ export function AppointmentsList() {
   }
 
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col gap-2.5">
       {appts.map((a) => (
-        <li key={a.id} className="rounded-xl border border-line bg-surface p-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-ink capitalize">
+        <li key={a.id} className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
               {a.kind.replace(/_/g, " ")}
             </span>
-            <span className="rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-medium text-sage-800">
+            <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text">
               {a.status}
             </span>
           </div>
-          <p className="text-sm text-ink-muted">
+          <p className="tabular text-sm font-medium text-ink">
             {formatApptTime(a.startAt)} &mdash; {new Date(a.endAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}
           </p>
-          <div className="flex items-center justify-between border-t border-line pt-2 mt-1 text-xs text-ink-muted">
-            <span>Dietitian Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}</span>
-            <span className="font-medium text-ink">
-              {a.pricePaise === 0 ? "Free Intro" : formatPaise(a.pricePaise)}
+          <div className="mt-1 flex items-center justify-between border-t border-line pt-2.5">
+            <span className="text-xs text-ink-muted">
+              Dietitian Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}
             </span>
+            {a.pricePaise === 0 ? (
+              <span className="inline-flex items-center rounded-full bg-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--gold-ink)]">
+                Free Intro
+              </span>
+            ) : (
+              <span className="tabular text-sm font-semibold text-ink">{formatPaise(a.pricePaise)}</span>
+            )}
           </div>
         </li>
       ))}

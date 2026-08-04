@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra | Corporate Wellness</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#d0c5af",
+                        "inverse-on-surface": "#313030",
+                        "on-secondary-container": "#a4b1f7",
+                        "on-surface": "#e5e2e1",
+                        "primary-fixed-dim": "#e9c349",
+                        "graphite-surface": "#171717",
+                        "on-primary-fixed-variant": "#574500",
+                        "on-primary-container": "#554300",
+                        "clay-danger": "#B0655A",
+                        "off-white-ink": "#F5F5F4",
+                        "on-primary": "#3c2f00",
+                        "inverse-primary": "#735c00",
+                        "outline": "#99907c",
+                        "secondary": "#b8c3ff",
+                        "primary-fixed": "#ffe088",
+                        "surface-variant": "#353534",
+                        "surface-container-low": "#1c1b1b",
+                        "tertiary": "#bfcdff",
+                        "on-secondary-fixed": "#021453",
+                        "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                        "ink-on-gold": "#111318",
+                        "muted-steel": "#A3A3A3",
+                        "on-error-container": "#ffdad6",
+                        "background": "#131313",
+                        "sage-signal": "#7D9E7E",
+                        "surface-container-high": "#2a2a2a",
+                        "outline-variant": "#4d4635",
+                        "on-tertiary-fixed": "#00174b",
+                        "on-background": "#e5e2e1",
+                        "secondary-container": "#344280",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-container-highest": "#353534",
+                        "on-tertiary": "#082b72",
+                        "surface-dim": "#131313",
+                        "surface-bright": "#3a3939",
+                        "surface-tint": "#e9c349",
+                        "on-primary-fixed": "#241a00",
+                        "surface-container": "#201f1f",
+                        "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#344280",
+                        "primary": "#f2ca50",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "tertiary-container": "#97b0ff",
+                        "ember-warning": "#B6892F",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#dde1ff",
+                        "primary-container": "#d4af37",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "surface": "#131313",
+                        "on-tertiary-container": "#254188",
+                        "tertiary-fixed": "#dbe1ff",
+                        "on-secondary": "#1c2b68",
+                        "inverse-surface": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px",
+                        "2xl": "1.5rem",
+                        "3xl": "2rem"
+                    },
+                    "spacing": {
+                        "mobile-margin": "1.25rem",
+                        "max-width": "1280px",
+                        "section-gap": "clamp(3rem, 8vw, 6rem)",
+                        "gutter": "1rem",
+                        "card-padding": "1.5rem",
+                        "desktop-margin": "2rem",
+                        "safe": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Satoshi", "sans-serif"],
+                        "label-small-caps": ["Satoshi", "sans-serif"],
+                        "clinical-data": ["JetBrains Mono", "monospace"],
+                        "body-base": ["Satoshi", "sans-serif"],
+                        "display-lg": ["Satoshi", "sans-serif"],
+                        "body-muted": ["Satoshi", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["2rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-small-caps": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600", "textTransform": "uppercase" }],
+                        "clinical-data": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "body-base": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display-lg": ["clamp(2.5rem, 5vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-muted": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for horizontal rails */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: theme('colors.primary-container');
+            cursor: pointer;
+            margin-top: -8px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: theme('colors.whisper-hairline');
+            border-radius: 2px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="pb-[120px]">
+<!-- HERO SECTION -->
+<section class="relative pt-12 pb-section-gap px-mobile-margin flex flex-col gap-6">
+<div class="rounded-3xl border border-whisper-hairline overflow-hidden w-[90%] h-72 self-end shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+<img class="w-full h-full object-cover" data-alt="A top-down, high-fidelity photograph of a clinical-grade metabolic meal. The meal features perfectly seared salmon, dark leafy greens, and vivid orange roasted root vegetables arranged meticulously on a matte black ceramic plate. Lighting is dramatic, with deep shadows and specular highlights emphasizing the textures of the food. The background is a dark, abstract surface, maintaining a premium, minimalist, and scientific aesthetic suitable for a high-end nutrition brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0fvLJHwhSz1ZOzTMGowpzTlETInUcUCuhNwu256GNl53A0FSMt9Rh9Ktgyt5trZ4UfHemXvtpctygqvbtA286OWGMcp7HfHGbu2i7ZjLGWdtqFVNCM7myvmO6b3kqcMvK358wb2u192ZTHn3mVHgV4gSnNZNs5uRdmKbLYfu7mQsO2N20ZQrB_dMDjCvPUW2DJSyY4Whz2BsQBbciWD4ByOCGqI9AKYz5vMkFI8J26Q6CbMfAr_u54OyLuMfonkrY8tE2C6Cjg3k"/>
+</div>
+<div class="pr-8 pt-4">
+<h1 class="font-display-lg text-display-lg text-off-white-ink mb-4">
+                Clinical-Grade Nutrition for High-Performance Teams.
+            </h1>
+<p class="font-body-base text-body-base text-muted-steel mb-8 max-w-sm">
+                Personalized metabolic fuel delivered to your workspace. Eliminate the midday slump with precision-engineered meals.
+            </p>
+<a class="inline-flex items-center justify-center bg-primary-container text-ink-on-gold px-8 py-4 rounded-full font-label-small-caps scale-[0.98] transition-transform duration-200 hover:opacity-90 active:scale-95" href="#pilot-form">
+                Request Pilot Call
+            </a>
+</div>
+</section>
+<!-- PAIN TILES -->
+<section class="px-mobile-margin pb-section-gap">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-8">The Status Quo</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-graphite-surface rounded-2xl p-card-padding border border-whisper-hairline flex flex-col gap-3">
+<span class="material-symbols-outlined text-clay-danger text-3xl">battery_0_bar</span>
+<p class="font-body-muted text-body-muted text-on-surface-variant">Post-lunch slump &amp; fatigue</p>
+</div>
+<div class="bg-graphite-surface rounded-2xl p-card-padding border border-whisper-hairline flex flex-col gap-3">
+<span class="material-symbols-outlined text-clay-danger text-3xl">fastfood</span>
+<p class="font-body-muted text-body-muted text-on-surface-variant">Generic carb-heavy catering</p>
+</div>
+<div class="bg-graphite-surface rounded-2xl p-card-padding border border-whisper-hairline flex flex-col gap-3">
+<span class="material-symbols-outlined text-clay-danger text-3xl">group_off</span>
+<p class="font-body-muted text-body-muted text-on-surface-variant">Unmet dietary constraints</p>
+</div>
+<div class="bg-graphite-surface rounded-2xl p-card-padding border border-whisper-hairline flex flex-col gap-3">
+<span class="material-symbols-outlined text-clay-danger text-3xl">payments</span>
+<p class="font-body-muted text-body-muted text-on-surface-variant">Wasted perks budget</p>
+</div>
+</div>
+</section>
+<!-- HOW IT WORKS -->
+<section class="px-mobile-margin pb-section-gap" id="how-it-works">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-8">The Protocol</h2>
+<div class="flex flex-col gap-6">
+<div class="flex gap-4 items-start">
+<div class="w-10 h-10 shrink-0 rounded-full bg-graphite-surface border border-whisper-hairline flex items-center justify-center font-clinical-data text-clinical-data text-primary-container">
+                    01
+                </div>
+<div class="bg-graphite-surface rounded-2xl p-card-padding border border-whisper-hairline flex-1">
+<h3 class="font-body-base text-body-base text-off-white-ink mb-2">Onboarding &amp; Assessment</h3>
+<p class="font-body-muted text-body-muted text-muted-steel">Employees complete a brief metabolic profile to identify constraints and goals.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-10 h-10 shrink-0 rounded-full bg-graphite-surface border border-whisper-hairline flex items-center justify-center font-clinical-data text-clinical-data text-primary-container">
+                    02
+                </div>
+<div class="bg-graphite-surface rounded-2xl p-card-padding border border-whisper-hairline flex-1">
+<h3 class="font-body-base text-body-base text-off-white-ink mb-2">Prescriptive Curation</h3>
+<p class="font-body-muted text-body-muted text-muted-steel">Our OS generates daily optimal meal choices tailored to each individual profile.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-10 h-10 shrink-0 rounded-full bg-graphite-surface border border-whisper-hairline flex items-center justify-center font-clinical-data text-clinical-data text-primary-container">
+                    03
+                </div>
+<div class="bg-graphite-surface rounded-2xl p-card-padding border border-whisper-hairline flex-1">
+<h3 class="font-body-base text-body-base text-off-white-ink mb-2">Precision Delivery</h3>
+<p class="font-body-muted text-body-muted text-muted-steel">Meals arrive batch-delivered to your office, labeled and ready for consumption.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- SUBSIDY ESTIMATOR -->
+<section class="px-mobile-margin pb-section-gap">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-8">Subsidy Calculator</h2>
+<div class="bg-graphite-surface rounded-3xl p-card-padding border border-whisper-hairline flex flex-col gap-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+<div>
+<p class="font-label-small-caps text-label-small-caps text-on-surface-variant mb-4">Funding Model</p>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="shrink-0 px-4 py-2 rounded-full border border-primary-container text-primary-container font-body-muted text-body-muted bg-primary-container/10">Full Subsidy (100%)</button>
+<button class="shrink-0 px-4 py-2 rounded-full border border-whisper-hairline text-muted-steel font-body-muted text-body-muted">Co-Pay (50%)</button>
+<button class="shrink-0 px-4 py-2 rounded-full border border-whisper-hairline text-muted-steel font-body-muted text-body-muted">Employee Funded</button>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-4">
+<p class="font-label-small-caps text-label-small-caps text-on-surface-variant">Team Size</p>
+<span class="font-clinical-data text-clinical-data text-off-white-ink" id="team-size-val">40</span>
+</div>
+<input class="w-full appearance-none bg-transparent" id="team-slider" max="200" min="10" type="range" value="40"/>
+</div>
+<div class="pt-6 border-t border-whisper-hairline flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<p class="font-body-muted text-body-muted text-muted-steel">Per Employee / Meal</p>
+<span class="font-clinical-data text-clinical-data text-on-surface">₹450</span>
+</div>
+<div class="flex justify-between items-end">
+<p class="font-body-base text-body-base text-off-white-ink">Monthly Total<br/><span class="font-label-small-caps text-[0.65rem] text-muted-steel">Estimate, GST included</span></p>
+<span class="font-clinical-data text-2xl text-primary-container tabular-nums tracking-tight">₹360,000</span>
+</div>
+</div>
+</div>
+</section>
+<!-- STICKY BOTTOM BAR -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-smoked-glass backdrop-blur-md border-t border-whisper-hairline px-mobile-margin pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex justify-center">
+<a class="w-full max-w-sm flex items-center justify-center bg-primary-container text-ink-on-gold px-8 py-4 rounded-full font-label-small-caps scale-[0.98] transition-transform duration-200 hover:opacity-90 active:scale-95 shadow-[0_4px_16px_rgba(212,175,55,0.2)]" href="#pilot-form">
+            Book Pilot Call
+        </a>
+</div>
+<script>
+        document.getElementById('team-slider').addEventListener('input', function(e) {
+            document.getElementById('team-size-val').textContent = e.target.value;
+            // Basic dummy calc logic could go here
+        });
+    </script>
+</body></html>

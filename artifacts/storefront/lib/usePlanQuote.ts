@@ -2,8 +2,8 @@
 // gates the pay CTA, net of any redeemable credit once signed in. Extracted
 // from PlanCheckout to keep the component under the file cap as add-ons (and
 // now credit) joined the quote.
-import { useEffect, useState } from "react";
-import { quotePlan, type AddOnId, type DietTrack } from "./api";
+import { useCallback, useEffect, useState } from "react";
+import { quotePlan, type AddOnId, type DietTrack, type PlanCadence } from "./api";
 import { addOnLineFromQuote } from "./addons";
 
 export interface PlanQuoteState {
@@ -45,22 +45,41 @@ export function usePlanQuote(
   track: DietTrack,
   addOns?: AddOnId[],
   signedIn?: boolean,
-): { quote: PlanQuoteState | null; quoteLoading: boolean } {
+  cadence?: PlanCadence,
+): {
+  quote: PlanQuoteState | null;
+  quoteLoading: boolean;
+  /** True when the LAST quote attempt failed. The CTA stays gated either way
+   *  (quote === null), but the caller must tell the customer WHY and offer
+   *  `retryQuote` — a swallowed failure here left the plan page with an
+   *  ellipsis for a price and a permanently disabled button: a dead end on
+   *  the purchase path with no message and no way out. */
+  quoteError: boolean;
+  /** Re-runs the quote with unchanged inputs (a failed fetch is not an input
+   *  change, so nothing else re-triggers the effect). */
+  retryQuote: () => void;
+} {
   const [quote, setQuote] = useState<PlanQuoteState | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(false);
+  // Bumped by retryQuote to re-fire the effect without an input change.
+  const [attempt, setAttempt] = useState(0);
   // Keyed by value, not array identity — a parent re-render with an equal
   // array must not re-quote.
   const addOnsKey = (addOns ?? []).join(",");
+
+  const retryQuote = useCallback(() => setAttempt((n) => n + 1), []);
 
   useEffect(() => {
     let live = true;
     setQuote(null);
     setQuoteLoading(true);
+    setQuoteError(false);
     const requested = addOnsKey ? (addOnsKey.split(",") as AddOnId[]) : [];
     // `signedIn` is a dep, not sent in the body: a re-quote after login carries
     // the session cookie (credentials:"include"), so the server folds in this
     // account's real credit; the pre-login quote shows the gross total.
-    quotePlan({ planId, track, cadence: "monthly", addOns: requested })
+    quotePlan({ planId, track, cadence: cadence ?? "monthly", addOns: requested })
       .then((q) => {
         if (!live) return;
         const payableTotalPaise = q.payableTotalPaise ?? q.totalPaise;
@@ -74,7 +93,10 @@ export function usePlanQuote(
         });
       })
       .catch(() => {
-        if (live) setQuote(null);
+        if (live) {
+          setQuote(null);
+          setQuoteError(true);
+        }
       })
       .finally(() => {
         if (live) setQuoteLoading(false);
@@ -82,7 +104,7 @@ export function usePlanQuote(
     return () => {
       live = false;
     };
-  }, [planId, track, addOnsKey, signedIn]);
+  }, [planId, track, addOnsKey, signedIn, cadence, attempt]);
 
-  return { quote, quoteLoading };
+  return { quote, quoteLoading, quoteError, retryQuote };
 }

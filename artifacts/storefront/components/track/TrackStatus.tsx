@@ -1,47 +1,72 @@
 "use client";
 // "use client" justification: live tracker — polls the guest status endpoint
 // and announces changes via a live region. The page shell stays RSC.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fetchOrderStatus,
   statusLabel,
+  statusTone,
+  TRACKABLE_STATUSES,
   type OrderStatusResult,
 } from "@/lib/orderStatus";
 
 const POLL_MS = 20_000;
+
+/** Tone → status-line colour — same mapping as route-12's OrderRow and the
+ *  order-confirmed page, so this screen doesn't paint delivered/cancelled/
+ *  refunded orders with the same neutral treatment as an in-flight one. */
+const TONE_TEXT = {
+  live: "text-sage-text",
+  settled: "text-ink-muted",
+  failed: "text-[var(--danger)]",
+} as const;
 
 /**
  * Polls GET /api/orders/:id/status (same-origin proxy) every 20s. All three
  * outcomes render honest UI: live status + ETA countdown, "not found", or
  * "can't reach the kitchen right now" — never a crash as the only content
  * (§6), never an invented status.
+ *
+ * Polling stops once a fetched status leaves TRACKABLE_STATUSES (delivered,
+ * cancelled, refunded, failed, or anything unrecognised) — there is nothing
+ * left to change, and polling a settled order forever wastes the customer's
+ * connection and the server's attention for no one's benefit.
  */
 export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
   const [result, setResult] = useState<OrderStatusResult | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const poll = async () => {
       const r = await fetchOrderStatus(externalOrderId, "");
-      if (!cancelled) setResult(r);
+      if (cancelled) return;
+      setResult(r);
+      if (r.kind === "ok" && !TRACKABLE_STATUSES.has(r.status.status) && intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
     void poll();
-    const id = setInterval(() => void poll(), POLL_MS);
+    intervalRef.current = setInterval(() => void poll(), POLL_MS);
     return () => {
       cancelled = true;
-      clearInterval(id);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [externalOrderId]);
 
   if (result === null) {
     return (
-      <div aria-hidden className="h-24 animate-pulse rounded-xl bg-surface-raised" />
+      <div
+        aria-hidden
+        className="h-56 w-full animate-pulse rounded-3xl border border-line bg-surface-raised"
+      />
     );
   }
 
   if (result.kind === "not_found") {
     return (
-      <div role="status" className="rounded-xl border border-line bg-surface p-5">
+      <div role="status" className="rounded-3xl border border-line bg-surface p-6 text-center">
         <p className="text-sm font-semibold text-ink">We can&rsquo;t find that order.</p>
         <p className="mt-1 text-sm text-ink-muted">
           Check the link from your confirmation — order IDs are case-sensitive.
@@ -52,7 +77,7 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
 
   if (result.kind === "unavailable") {
     return (
-      <div role="status" className="rounded-xl border border-line bg-surface p-5">
+      <div role="status" className="rounded-3xl border border-line bg-surface p-6 text-center">
         <p className="text-sm font-semibold text-ink">
           Live tracking is unreachable right now.
         </p>
@@ -64,14 +89,51 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
   }
 
   const { status, etaMinutes } = result.status;
+  const tone = statusTone(status);
+  const trackable = TRACKABLE_STATUSES.has(status);
   return (
-    <div aria-live="polite" className="rounded-xl border border-line bg-surface p-5">
-      <p className="text-lg font-semibold text-ink">{statusLabel(status)}</p>
-      {status !== "delivered" && status !== "cancelled" && (
-        <p className="mt-1 text-sm text-ink-muted">
-          Estimated arrival in{" "}
-          <span className="tabular font-semibold text-ink">{etaMinutes} min</span>
+    <div
+      aria-live="polite"
+      className={`relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)] ${
+        tone === "failed" ? "opacity-70" : ""
+      }`}
+    >
+      {/* Ambient card glow — decorative only, live tone alone. */}
+      {tone === "live" && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-sage-soft blur-3xl"
+        />
+      )}
+      <p
+        className={`relative z-10 inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised px-4 py-2 text-xs font-semibold uppercase tracking-widest ${TONE_TEXT[tone]}`}
+      >
+        {tone === "live" && (
+          <span aria-hidden className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sage opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sage" />
+          </span>
+        )}
+        {statusLabel(status)}
+      </p>
+      {trackable && (
+        <div className="relative z-10 flex flex-col items-center gap-1">
+          <span className="text-sm text-ink-muted">Estimated arrival in</span>
+          <span className="tabular flex items-baseline gap-1.5 text-5xl font-semibold leading-none text-ink">
+            {etaMinutes}
+            <span className="text-xs font-semibold uppercase tracking-widest text-ink-muted">
+              min
+            </span>
+          </span>
+        </div>
+      )}
+      {tone === "failed" && (
+        <p className="relative z-10 text-sm font-semibold text-[var(--danger)]">
+          This order did not complete — you have not been charged for it.
         </p>
+      )}
+      {status === "delivered" && (
+        <p className="relative z-10 text-sm text-ink-muted">This order has been delivered.</p>
       )}
     </div>
   );

@@ -1,7 +1,9 @@
 "use client";
 // Client: owns the subscription list + lifecycle transitions against the api.
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { Gift } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
 import {
   getSubscriptions,
@@ -34,51 +36,60 @@ const ACTION_FN: Record<SubAction, (id: number) => Promise<unknown>> = {
  * server's responses. Cancel is confirmed — it's a money-committed action.
  */
 export function SubscriptionManager() {
-  const [subs, setSubs] = useState<Subscription[] | null>(null);
-  const [needsAuth, setNeedsAuth] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // The server's unconsumed/unexpired balance; null = unknown (chip hidden).
-  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+  // Distinct from the list-load error below — shown inline above an already
+  // loaded list rather than replacing it.
+  const [actionError, setActionError] = useState<string | null>(null);
+  // An action (not the initial load) can 401 mid-session; tracked separately
+  // since it isn't captured by subsQuery's own error state.
+  const [actionAuthExpired, setActionAuthExpired] = useState(false);
   // Per-id, not a single scalar: acting on row B must not re-enable row A while
   // A's transition is still in flight (which would allow a double-submit).
   const [busyIds, setBusyIds] = useState<ReadonlySet<number>>(new Set());
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      const { subscriptions } = await getSubscriptions();
-      setSubs(subscriptions);
-      setNeedsAuth(false);
-      // Best-effort: the credits chip is informational — its failure must
-      // never block the list (skips re-fetch it via load()).
-      void getMealCredits()
-        .then(({ balance }) => setCreditBalance(balance))
-        .catch(() => setCreditBalance(null));
-    } catch (e) {
-      if (isAuthExpired(e)) setNeedsAuth(true);
-      else setError(e instanceof ApiError ? e.message : "Couldn't load your plans.");
-    }
-  }, []);
+  const subsQuery = useQuery({
+    queryKey: ["account", "subscription"],
+    queryFn: () => getSubscriptions().then((r) => r.subscriptions),
+  });
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  // Best-effort: the credits chip is informational — its failure must never
+  // block the list. Nested under the subscription key so an invalidate of
+  // ["account", "subscription"] (after any action) refreshes both together,
+  // same as the old load() reloading subs + credits in one pass.
+  const creditsQuery = useQuery({
+    queryKey: ["account", "subscription", "credits"],
+    queryFn: () => getMealCredits().then((r) => r.balance),
+    enabled: subsQuery.isSuccess,
+    retry: false,
+  });
+  const creditBalance = creditsQuery.data ?? null;
+
+  const actionMutation = useMutation({
+    mutationFn: ({ sub, action }: { sub: Subscription; action: SubAction }) => ACTION_FN[action](sub.id),
+  });
+
+  const needsAuth = actionAuthExpired || (subsQuery.isError && isAuthExpired(subsQuery.error));
+
+  function retry() {
+    setActionAuthExpired(false);
+    void queryClient.invalidateQueries({ queryKey: ["account", "subscription"] });
+  }
 
   async function act(sub: Subscription, action: SubAction) {
     if (action === "cancel" && !window.confirm("Cancel this plan? Upcoming deliveries stop and billing ends.")) {
       return;
     }
     setBusyIds((prev) => new Set(prev).add(sub.id));
-    setError(null);
+    setActionError(null);
     try {
-      await ACTION_FN[action](sub.id);
-      await load();
+      await actionMutation.mutateAsync({ sub, action });
+      await queryClient.invalidateQueries({ queryKey: ["account", "subscription"] });
     } catch (e) {
       if (isAuthExpired(e)) {
-        setNeedsAuth(true);
-        return;
+        setActionAuthExpired(true);
+      } else {
+        setActionError(e instanceof ApiError ? e.message : "Couldn't update the plan.");
       }
-      setError(e instanceof ApiError ? e.message : "Couldn't update the plan.");
     } finally {
       setBusyIds((prev) => {
         const next = new Set(prev);
@@ -92,37 +103,59 @@ export function SubscriptionManager() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to view and manage your plans.</p>
-        <PhoneAuth onVerified={() => void load()} />
+        <PhoneAuth startExpanded onVerified={() => retry()} />
       </div>
     );
   }
 
-  if (subs === null) {
-    return <p className="text-sm text-ink-muted">{error ?? "Loading your plans…"}</p>;
+  if (subsQuery.isPending) {
+    return <p className="text-sm text-ink-muted">Loading your plans…</p>;
   }
+
+  // Finding #14-pattern: a non-auth load failure gets its own error+retry
+  // state instead of collapsing into the signed-out UI or a dead-end message.
+  if (subsQuery.isError) {
+    return (
+      <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)]">
+        <p className="text-sm font-semibold text-[var(--danger)]">
+          {subsQuery.error instanceof ApiError ? subsQuery.error.message : "Couldn't load your plans."}
+        </p>
+        <button
+          type="button"
+          onClick={() => void subsQuery.refetch()}
+          className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const subs = subsQuery.data;
 
   return (
     <div className="flex flex-col gap-4">
       {creditBalance !== null && creditBalance > 0 && (
-        <p className="tabular self-start rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage-text">
+        <p className="tabular inline-flex items-center gap-1.5 self-start rounded-full bg-sage-soft px-3.5 py-1.5 text-xs font-medium text-sage-text">
+          <Gift aria-hidden className="h-3.5 w-3.5 shrink-0" />
           {creditBalance} meal credit{creditBalance === 1 ? "" : "s"} — skipped deliveries come back as credits
         </p>
       )}
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {actionError && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{actionError}</p>}
       {subs.length === 0 ? (
         <p className="text-sm text-ink-muted">
           You don&rsquo;t have any plans yet.{" "}
           <Link href="/plans" className="font-medium text-gold-text hover:underline">Browse plans</Link>.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {subs.map((s) => (
             <SubscriptionCard
               key={s.id}
               sub={s}
               busy={busyIds.has(s.id)}
               onAction={(a) => void act(s, a)}
-              onChanged={() => void load()}
+              onChanged={() => void queryClient.invalidateQueries({ queryKey: ["account", "subscription"] })}
             />
           ))}
         </ul>

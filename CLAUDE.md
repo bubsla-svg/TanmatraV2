@@ -35,10 +35,10 @@ node --test --import tsx ./src/lib/mealPlanner.test.ts
 node --test --import tsx ./src/routes/groupOrders.test.ts
 ```
 
-The storefront runs its own suite — 49 files, 257 tests, all in `artifacts/storefront/lib/`
+The storefront runs its own suite — 66 files, 372 tests, all under `artifacts/storefront/lib/`
 and all DB- and network-free (every API client takes an injectable `fetchImpl`):
 ```bash
-pnpm --filter @workspace/storefront run test     # all 257, ~18s
+pnpm --filter @workspace/storefront run test     # all 372, ~8s
 cd artifacts/storefront
 node --test --import tsx ./lib/catalog.test.ts   # one file
 ```
@@ -51,7 +51,7 @@ The legacy SPA (`artifacts/tanmatra`) also has a `test` script, and `verify.yml`
 
 ```
 node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 79 tests
-node --test --import tsx "../storefront/lib/**/*.test.ts"   # 257 tests
+node --test --import tsx "../storefront/lib/**/*.test.ts"   # 372 tests
 ```
 
 The quotes are load-bearing — Actions runs `run:` under bash with globstar OFF, where `**`
@@ -84,7 +84,7 @@ This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and 
 |------|------|
 | `artifacts/api-server` | Express 5 backend |
 | `artifacts/storefront` | **Customer web app — Next.js 16 App Router.** The rebuild; all new customer work goes here |
-| `artifacts/tanmatra` | Legacy customer SPA — React 19 + React Router v7 + Vite. Still the app mapped to `tanmatra.food` |
+| `artifacts/tanmatra` | Legacy customer SPA — React 19 + React Router v7 + Vite. Customer routes were removed 2026-07-26; it is now an internal-only Admin ERP + RD console (`src/routes.ts`, `e2e/specs/erp_shell.spec.ts`). No longer mapped to `tanmatra.food` — see `docs/DOMAIN-CUTOVER.md` |
 | `artifacts/tanmatra-mobile` | Expo React Native app |
 | `artifacts/agents` | "Agency Agents Browser" — Vite + wouter app that browses the `lib/agency-agents` catalogue |
 | `artifacts/clinical-governance-engine` | `@tanmatra/clinical-governance-engine` — zero-dependency contraindication engine, packing-station interlock, AE webhooks, WORM audit logger |
@@ -135,16 +135,13 @@ by hand, and that client's wire test is what catches the drift.
 
 ### Storefront internals (`artifacts/storefront`) — the customer app under active development
 
-Next.js 16 App Router, server-first. It ships alongside the legacy SPA as its own Cloud Run
-service (`deploy.yml`'s `storefront-cloud-run` job) with **no domain mapped** — a dark preview.
-`tanmatra.food` still resolves to the `tanmatra` service, so both apps are live and only one
-is public. Cutover is a manual Cloud Run domain remap, done outside CI.
-
-> **`docs/DOMAIN-CUTOVER.md` does not exist.** `deploy.yml` (3×) and
-> `artifacts/storefront/Dockerfile` all cite it as the cutover runbook, and
-> `git ls-tree HEAD docs/` shows no such file — the closest is `docs/LIVE-CUTOVER.md`, which
-> covers the *money path*, not the domain. Don't follow those pointers expecting a procedure;
-> writing that runbook is open work.
+Next.js 16 App Router, server-first. It ships as its own Cloud Run service (`deploy.yml`'s
+`storefront-cloud-run` job) and, since the 2026-07-25 domain cutover, **is the app `tanmatra.food`
+and `www.tanmatra.food` serve** — verified by matching `/api/build` sha + `builtAt` between the
+domain and the storefront service. The legacy `tanmatra` service is still deployed but is no
+longer customer-facing (see the `artifacts/tanmatra` row above); it stays in the deploy graph only
+because the storefront's `IMAGE_UPSTREAM` proxies `/images/*` through it. See
+`docs/DOMAIN-CUTOVER.md` for the full record and the rollback procedure.
 
 - **Routing**: directories under `app/` (`app/menu/page.tsx`, `app/dish/[slug]/`, …). No
   `routes.ts` — the filesystem *is* the route table.

@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { apiPath } from "@/lib/apiBase";
+import { AdminShell } from "@/components/layout/AdminShell";
 
 type RdAuthState = "checking" | "authed" | "anon" | "error";
 
@@ -38,7 +39,17 @@ export default function RdAuthLayout() {
       </div>
     );
   }
-  if (state === "authed") return <Outlet />;
+  // Same shell as the Admin ERP — the RD console is reached FROM the admin
+  // console index and is gated by the same /admin/me session, so an operator
+  // who lands there needs the same way back out. Before this it was the one
+  // internal route with no navigation at all.
+  if (state === "authed") {
+    return (
+      <AdminShell>
+        <Outlet />
+      </AdminShell>
+    );
+  }
   return (
     <Navigate
       to={`/login?next=${encodeURIComponent(location.pathname)}`}

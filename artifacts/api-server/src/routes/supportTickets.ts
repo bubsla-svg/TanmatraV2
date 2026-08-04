@@ -12,21 +12,17 @@ import {
   sendReply,
   triageTicket,
 } from "../lib/supportTriage";
-import { requireOps as gateRequireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
+import { sendError } from "../lib/sendError";
 
 const router: IRouter = Router();
 
-function requireOps(req: Request, res: Response): boolean {
-  return gateRequireOps(req, res) !== null;
+async function requireOps(req: Request, res: Response): Promise<boolean> {
+  return (await requireRole(req, res, "support")) !== null;
 }
 
 function userId(req: Request): string | null {
   return req.isAuthenticated() ? (req.user.id ?? null) : null;
-}
-
-function sendError(res: Response, err: unknown, log?: (e: unknown) => void): void {
-  log?.(err);
-  res.status(500).json({ error: "internal error" });
 }
 
 const idParam = z.object({ id: z.coerce.number().int().positive() });
@@ -93,13 +89,13 @@ router.post("/support-tickets", async (req: Request, res: Response) => {
     });
     res.json({ ticket: row });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
 // Ops inbox: list tickets, with optional filters.
 router.get("/support-tickets", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const status =
     typeof req.query.status === "string" ? req.query.status : undefined;
   const team = typeof req.query.team === "string" ? req.query.team : undefined;
@@ -115,32 +111,32 @@ router.get("/support-tickets", async (req: Request, res: Response) => {
     });
     res.json({ tickets });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
 router.get("/support-tickets/metrics", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const days = Math.max(1, Math.min(90, Number(req.query.days ?? 7)));
   try {
     res.json(await getMetrics(days));
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
 router.get("/support-tickets/rejected", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const limit = Math.max(1, Math.min(200, Number(req.query.limit ?? 50)));
   try {
     res.json({ rows: await listRejectedForEval(limit) });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
 router.get("/support-tickets/:id", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireOps(req, res))) return;
   const sp = idParam.safeParse(req.params);
   if (!sp.success) {
     res.status(400).json({ error: "invalid id" });
@@ -158,14 +154,14 @@ router.get("/support-tickets/:id", async (req: Request, res: Response) => {
     }
     res.json({ ticket: row });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
 router.post(
   "/support-tickets/:id/triage",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -179,7 +175,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -187,7 +183,7 @@ router.post(
 router.post(
   "/support-tickets/:id/draft",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -201,7 +197,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -227,7 +223,7 @@ const sendBody = z.object({
 router.post(
   "/support-tickets/:id/send",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -250,7 +246,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -260,7 +256,7 @@ const rejectBody = z.object({ reason: z.string().min(1).max(1000) });
 router.post(
   "/support-tickets/:id/reject",
   async (req: Request, res: Response) => {
-    if (!requireOps(req, res)) return;
+    if (!(await requireOps(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -283,7 +279,7 @@ router.post(
       }
       res.json({ ticket });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );

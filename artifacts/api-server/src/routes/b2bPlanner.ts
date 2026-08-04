@@ -35,7 +35,7 @@ import {
   updateQbrSections,
   upsertDietProfile,
 } from "../lib/b2b";
-import { isOpsRequest } from "../lib/adminGate";
+import { isRoleRequest, requireRole } from "../lib/adminGate";
 import { requireAuthUser } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -80,7 +80,7 @@ async function resolveCompanyAccess(
     res.status(404).json({ error: "not found" });
     return null;
   }
-  if (isOpsRequest(req).allowed) {
+  if ((await isRoleRequest(req, "growth")).allowed) {
     return { company, isInternalAdmin: true };
   }
   const userId = requireAuthUser(req, res);
@@ -249,7 +249,7 @@ router.post(
     }
     // Auth: company admin OR internal admin.
     let actorId = "system";
-    if (!isOpsRequest(req).allowed) {
+    if (!(await isRoleRequest(req, "growth")).allowed) {
       const userId = requireAuthUser(req, res);
       if (!userId) return;
       const auth = { id: userId };
@@ -335,10 +335,7 @@ router.post(
 // ---------- Sales console (internal admin) ----------
 
 router.get("/sales/accounts", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "admin only" });
-    return;
-  }
+  if (!(await requireRole(req, res, "growth"))) return;
   const accounts = await listAllAccountsWithHealth();
   res.json({ accounts });
 });
@@ -346,10 +343,7 @@ router.get("/sales/accounts", async (req: Request, res: Response) => {
 router.get(
   "/sales/accounts/:slug",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
-      res.status(403).json({ error: "admin only" });
-      return;
-    }
+    if (!(await requireRole(req, res, "growth"))) return;
     const company = await loadCompanyBySlug(String(req.params.slug ?? ""));
     if (!company) {
       res.status(404).json({ error: "not found" });
@@ -367,10 +361,7 @@ router.get(
 router.post(
   "/sales/accounts/:slug/health/recompute",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
-      res.status(403).json({ error: "admin only" });
-      return;
-    }
+    if (!(await requireRole(req, res, "growth"))) return;
     const company = await loadCompanyBySlug(String(req.params.slug ?? ""));
     if (!company) {
       res.status(404).json({ error: "not found" });
@@ -384,10 +375,7 @@ router.post(
 router.post(
   "/sales/accounts/:slug/qbr/generate",
   async (req: Request, res: Response) => {
-    if (!isOpsRequest(req).allowed) {
-      res.status(403).json({ error: "admin only" });
-      return;
-    }
+    if (!(await requireRole(req, res, "growth"))) return;
     const company = await loadCompanyBySlug(String(req.params.slug ?? ""));
     if (!company) {
       res.status(404).json({ error: "not found" });
@@ -406,10 +394,7 @@ const qbrEditSchema = z.object({
 });
 
 router.put("/sales/qbr/:id", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "admin only" });
-    return;
-  }
+  if (!(await requireRole(req, res, "growth"))) return;
   const id = Number.parseInt(String(req.params.id ?? ""), 10);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "invalid id" });
@@ -431,10 +416,7 @@ router.put("/sales/qbr/:id", async (req: Request, res: Response) => {
 });
 
 router.get("/sales/qbr/:id/export", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
-    res.status(403).json({ error: "admin only" });
-    return;
-  }
+  if (!(await requireRole(req, res, "growth"))) return;
   const id = Number.parseInt(String(req.params.id ?? ""), 10);
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "invalid id" });

@@ -5,16 +5,13 @@ import { db, opsActionsTable } from "@workspace/db";
 import { and, desc, eq, ilike, or, type SQL } from "drizzle-orm";
 import { runAgent, type GatewayEvent } from "../lib/ai";
 import { isCatalogRequest, requireCatalog } from "../lib/adminGate";
+import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
 
-const ChatTurnSchema = z.object({
-  role: z.enum(["user", "agent"]),
-  text: z.string(),
-});
 const ChatBodySchema = z.object({
   message: z.string().min(1).max(8000),
-  history: z.array(ChatTurnSchema).max(50).optional(),
+  history: ChatHistorySchema,
 });
 
 function writeEvent(res: Response, event: object): void {
@@ -22,7 +19,7 @@ function writeEvent(res: Response, event: object): void {
 }
 
 router.post("/cms-agent/chat", async (req: Request, res: Response) => {
-  const gate = requireCatalog(req, res);
+  const gate = await requireCatalog(req, res);
   if (!gate) return;
   const operatorId = gate.operatorId;
   const parsed = ChatBodySchema.safeParse(req.body);
@@ -98,6 +95,13 @@ router.post("/cms-agent/chat", async (req: Request, res: Response) => {
       messages,
       stream: true,
       onEvent,
+      // The gateway default (30s) covers a single tool call but not this
+      // agent's bulk tools (bulk_regenerate_copy, bulk_generate_missing_heroes),
+      // which — even after being routed through bounded concurrency — can take
+      // several rounds of per-item Gemini calls to clear a full ~25-item batch.
+      // The timeout bounds the whole turn, tool execution included, so it has
+      // to cover that, not just the model round-trip.
+      timeoutMs: 120_000,
     });
     res.end();
   } catch (err) {
@@ -117,7 +121,7 @@ router.post("/cms-agent/chat", async (req: Request, res: Response) => {
 });
 
 router.get("/cms-agent/audit", async (req: Request, res: Response) => {
-  if (!isCatalogRequest(req).allowed) {
+  if (!(await isCatalogRequest(req)).allowed) {
     res.status(403).json({ error: "catalog scope required" });
     return;
   }

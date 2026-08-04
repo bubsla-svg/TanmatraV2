@@ -3,6 +3,7 @@ import { definePrompt } from "../prompts";
 import { defineTool } from "../tools";
 import { registerAgent } from "../agentRegistry";
 import { recordOpsAction } from "../../opsAudit";
+import { batchProcess, isRateLimitError } from "@workspace/integrations-gemini-ai/batch";
 import {
   bulkSetAvailability,
   createMenuItem,
@@ -737,6 +738,56 @@ const generateCopy = defineTool({
   },
 });
 
+// The agent chat turn this tool runs inside (routes/cmsAgent.ts) has a
+// wall-clock timeout covering the whole multi-step turn, tool execution
+// included — up to 25 fully serial Gemini calls (each with its own 12s
+// timeout, see menuCopy.ts) cannot fit inside it. Bounded concurrency (+
+// automatic retry on rate limits, via the shared batchProcess utility)
+// fixes the guaranteed-timeout shape without changing the tool's contract:
+// a permanently-failing item still surfaces as its own `ok: false` result
+// rather than aborting the rest of the batch.
+const BULK_COPY_CONCURRENCY = 4;
+
+interface CopyRegenResult {
+  slug: string;
+  ok: boolean;
+  applied?: string[];
+  warnings?: string[];
+  error?: string;
+}
+
+// Exported separately from the tool handler so tests can exercise the
+// concurrency + partial-failure-isolation + rate-limit-retry wiring with a
+// fake `applyOne` and a minimal fake target — the real `applyOne` calls
+// Gemini, which a unit test has no business doing. Generic over the target
+// shape (only `item.slug` is needed here) so the tool handler can pass its
+// real `{ item: MenuItem, fields: CopyField[] }` targets unnarrowed.
+export async function regenerateCopyForTargets<T extends { item: { slug: string } }>(
+  targets: T[],
+  applyOne: (t: T) => Promise<CopyRegenResult>,
+  concurrency: number = BULK_COPY_CONCURRENCY,
+  // Retry-backoff timing, overridable so tests can exercise the retry path
+  // without waiting through real p-retry backoff delays. Production call
+  // sites never pass this, so they keep batchProcess's defaults.
+  retryTiming?: { retries?: number; minTimeout?: number; maxTimeout?: number },
+): Promise<CopyRegenResult[]> {
+  return batchProcess(
+    targets,
+    async (t): Promise<CopyRegenResult> => {
+      try {
+        return await applyOne(t);
+      } catch (err) {
+        // Rate limits are worth batchProcess's own retry/backoff; any
+        // other failure is this item's own result, not a reason to
+        // abort the rest of the batch.
+        if (isRateLimitError(err)) throw err;
+        return { slug: t.item.slug, ok: false, error: (err as Error).message };
+      }
+    },
+    { concurrency, ...retryTiming },
+  );
+}
+
 const bulkRegenerateCopy = defineTool({
   name: "bulk_regenerate_copy",
   description:
@@ -801,45 +852,29 @@ const bulkRegenerateCopy = defineTool({
       };
     }
 
-    const results: Array<{
-      slug: string;
-      ok: boolean;
-      applied?: string[];
-      warnings?: string[];
-      error?: string;
-    }> = [];
-    for (const t of targets) {
-      try {
-        const draft = await generateCopyForItem(t.item, t.fields);
-        // Auto-apply only the validated fields the model returned.
-        const accepted: Record<string, unknown> = {};
-        for (const f of t.fields) {
-          const v = (draft.proposed as Record<string, unknown>)[f];
-          if (v !== undefined && v !== null) accepted[f] = v;
-        }
-        if (Object.keys(accepted).length === 0) {
-          results.push({ slug: t.item.slug, ok: false, error: "empty draft" });
-          continue;
-        }
-        const { warnings: applyWarnings } = await applyCopyToItem(
-          t.item.slug,
-          accepted,
-          ctx.userId,
-        );
-        results.push({
-          slug: t.item.slug,
-          ok: true,
-          applied: Object.keys(accepted),
-          ...(applyWarnings.length > 0 ? { warnings: applyWarnings } : {}),
-        });
-      } catch (err) {
-        results.push({
-          slug: t.item.slug,
-          ok: false,
-          error: (err as Error).message,
-        });
+    const results = await regenerateCopyForTargets(targets, async (t) => {
+      const draft = await generateCopyForItem(t.item, t.fields);
+      // Auto-apply only the validated fields the model returned.
+      const accepted: Record<string, unknown> = {};
+      for (const f of t.fields) {
+        const v = (draft.proposed as Record<string, unknown>)[f];
+        if (v !== undefined && v !== null) accepted[f] = v;
       }
-    }
+      if (Object.keys(accepted).length === 0) {
+        return { slug: t.item.slug, ok: false, error: "empty draft" };
+      }
+      const { warnings: applyWarnings } = await applyCopyToItem(
+        t.item.slug,
+        accepted,
+        ctx.userId,
+      );
+      return {
+        slug: t.item.slug,
+        ok: true,
+        applied: Object.keys(accepted),
+        ...(applyWarnings.length > 0 ? { warnings: applyWarnings } : {}),
+      };
+    });
     await recordOpsAction({
       operatorId: ctx.userId,
       agent: ctx.agent,

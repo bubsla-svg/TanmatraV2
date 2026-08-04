@@ -3,6 +3,7 @@
 // out). Server encrypts the conditions array at rest; we re-seed from its
 // decrypted response. Inputs are disabled until health-data consent is granted.
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { saveClinical, MEDICAL_CONDITION_OPTIONS, MEDICAL_CONDITION_LABEL, type UserPreferences } from "@/lib/preferencesApi";
 
@@ -63,9 +64,9 @@ export function ClinicalForm({ prefs, disabled, onSaved }: {
       </div>
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       {saved && <p className="text-xs font-medium text-sage-text">Saved.</p>}
-      <button type="button" onClick={save} disabled={busy} className="self-start rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-60">
+      <Button type="button" onClick={save} disabled={busy} shape="xl" size="fluid" className="self-start px-5 py-2.5 font-semibold disabled:opacity-60">
         {busy ? "Saving…" : "Save health details"}
-      </button>
+      </Button>
     </fieldset>
   );
 }

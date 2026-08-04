@@ -26,7 +26,7 @@ import {
 const TIER: Record<Urgency, { word: string; frame: string; stamp: string }> = {
   fresh: { word: "New", frame: "border-line", stamp: "text-ink-muted" },
   due: { word: "Due now", frame: "border-gold", stamp: "text-gold-text" },
-  late: { word: "LATE", frame: "border-destructive", stamp: "text-destructive" },
+  late: { word: "LATE", frame: "border-[var(--danger)]", stamp: "text-[var(--danger)]" },
 };
 
 export function TicketCard({
@@ -61,25 +61,32 @@ export function TicketCard({
       </div>
 
       {unreadable ? (
-        <p className="mt-3 text-sm font-semibold text-destructive">
+        <p className="mt-3 text-sm font-semibold text-[var(--danger)]">
           This ticket&rsquo;s items could not be read. Check the order in ops
           before cooking it.
         </p>
       ) : (
         <ul className="mt-3 space-y-1">
           {lines.map((line, i) => (
-            <li key={`${i}-${line.name}`} className="flex items-baseline gap-2">
-              <span className="tabular w-10 shrink-0 text-base font-semibold text-ink">
-                ×{line.qty}
-              </span>
-              <span
-                className={`text-base ${line.suspect ? "text-destructive" : "text-ink"}`}
-              >
-                {line.name}
-              </span>
-              {line.suspect && (
-                <span className="text-xs font-semibold uppercase text-destructive">
-                  check
+            <li key={`${i}-${line.name}`} className="flex flex-col gap-0.5">
+              <div className="flex items-baseline gap-2">
+                <span className="tabular w-10 shrink-0 text-base font-semibold text-ink">
+                  ×{line.qty}
+                </span>
+                <span
+                  className={`text-base ${line.suspect ? "text-[var(--danger)]" : "text-ink"}`}
+                >
+                  {line.name}
+                </span>
+                {line.suspect && (
+                  <span className="text-xs font-semibold uppercase text-[var(--danger)]">
+                    check
+                  </span>
+                )}
+              </div>
+              {line.customizations.length > 0 && (
+                <span className="ml-10 text-sm font-semibold text-gold-text">
+                  {line.customizations.join(", ")}
                 </span>
               )}
             </li>

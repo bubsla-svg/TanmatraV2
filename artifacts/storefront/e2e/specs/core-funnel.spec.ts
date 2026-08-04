@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { collectErrors, ORDERABLE_DISH } from "../fixtures";
+import { collectErrors } from "../fixtures";
+import { MenuPage } from "../support/pages/MenuPage";
+import { CartDrawer } from "../support/pages/CartDrawer";
 
 /**
  * Core Revenue Funnel (Phase 2 Proactive QA)
@@ -16,7 +18,13 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   // 1. Land on homepage, verify sticky address/serviceability bar is present
   await page.goto("/");
   await expect(page.getByRole("banner")).toBeVisible();
-  await expect(page.locator("main").getByText("Select your location", { exact: false })).toBeVisible();
+  // Page-scoped, not <main>-scoped. The serviceability entry point is rendered
+  // twice on purpose: the Header carries it at every width, and app/page.tsx
+  // adds an in-<main> copy only from `sm` up ("hidden sm:block" — mobile hides
+  // it to avoid header redundancy). Scoping to <main> therefore asserted a
+  // control the mobile layout deliberately hides, and failed every [mobile] run.
+  // What the funnel actually needs is that a location picker is reachable.
+  await expect(page.getByText("Select your location", { exact: false }).first()).toBeVisible();
 
   // 2. Marketplace is visible on the homepage
   await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i }).first()).toBeVisible();
@@ -26,10 +34,11 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   await expect(page.getByRole("heading", { name: /The Tanmatra Marketplace|Marketplace/i })).toBeVisible();
 
   // Add an item to cart from marketplace (using the standard add button if available, or just go to menu)
-  await page.goto("/menu");
-  await page.waitForLoadState("networkidle");
+  const menu = new MenuPage(page);
+  const cart = new CartDrawer(page);
+  await menu.goto();
   await expect(async () => {
-    const card = page.locator("article").filter({ hasText: ORDERABLE_DISH.name }).first();
+    const card = menu.card();
     await card.scrollIntoViewIfNeeded();
     const addBtn = card.getByRole("button", { name: "Add" });
     if (await addBtn.isVisible()) {
@@ -39,15 +48,12 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   }).toPass({ timeout: 10_000 });
 
   // View cart
-  const viewCartBtn = page.getByRole("button", { name: "View cart" });
-  await expect(viewCartBtn).toBeVisible();
-  await viewCartBtn.click();
-  const drawer = page.getByRole("dialog");
-  await expect(drawer.getByRole("heading", { name: "Your cart" })).toBeVisible();
+  await menu.openCart();
+  await expect(cart.title).toBeVisible();
 
   // If live checkout is enabled, test the checkout flow redirection to login
   if (process.env["E2E_LIVE_CHECKOUT"] === "1") {
-    await drawer.getByRole("link", { name: "Checkout" }).click();
+    await cart.checkoutLink.click();
     await expect(page).toHaveURL(/\/checkout/);
     
     // On checkout, if unauthenticated, it should prompt for login or show guest details

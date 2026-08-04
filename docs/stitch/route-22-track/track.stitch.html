@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Metabolic OS - Order Tracking</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Satoshi (Simulated via sans-serif for demo, ideally hosted) & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Fallback for Satoshi if not locally available, typically imported via font-face */
+        @import url('https://fonts.cdnfonts.com/css/satoshi');
+    </style>
+<!-- Tailwind Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "graphite-surface": "#171717",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "ink-on-gold": "#111318",
+                        "surface-tint": "#e9c349",
+                        "error": "#ffb4ab",
+                        "clay-danger": "#B0655A",
+                        "ember-warning": "#B6892F",
+                        "on-primary-fixed-variant": "#574500",
+                        "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                        "primary": "#f2ca50",
+                        "inverse-on-surface": "#313030",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-fixed": "#241a00",
+                        "on-primary-container": "#554300",
+                        "on-secondary": "#1c2b68",
+                        "off-white-ink": "#F5F5F4",
+                        "inverse-primary": "#735c00",
+                        "tertiary": "#bfcdff",
+                        "tertiary-container": "#97b0ff",
+                        "on-secondary-container": "#a4b1f7",
+                        "surface": "#131313",
+                        "primary-fixed": "#ffe088",
+                        "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                        "surface-variant": "#353534",
+                        "on-tertiary-container": "#254188",
+                        "outline": "#99907c",
+                        "primary-container": "#d4af37",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-bright": "#3a3939",
+                        "primary-fixed-dim": "#e9c349",
+                        "outline-variant": "#4d4635",
+                        "surface-container-highest": "#353534",
+                        "sage-signal": "#7D9E7E",
+                        "inverse-surface": "#e5e2e1",
+                        "muted-steel": "#A3A3A3",
+                        "on-secondary-fixed": "#021453",
+                        "on-background": "#e5e2e1",
+                        "secondary-container": "#344280",
+                        "secondary-fixed": "#dde1ff",
+                        "on-tertiary-fixed": "#00174b",
+                        "error-container": "#93000a",
+                        "on-error-container": "#ffdad6",
+                        "on-primary": "#3c2f00",
+                        "on-secondary-fixed-variant": "#344280",
+                        "background": "#131313",
+                        "surface-container": "#201f1f",
+                        "on-error": "#690005",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "on-tertiary": "#082b72",
+                        "on-surface-variant": "#d0c5af",
+                        "surface-dim": "#131313",
+                        "secondary": "#b8c3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "mobile-margin": "1.25rem",
+                        "desktop-margin": "2rem",
+                        "max-width": "1280px",
+                        "gutter": "1rem",
+                        "card-padding": "2.5rem",
+                        "section-gap": "clamp(3rem, 8vw, 6rem)"
+                    },
+                    "fontFamily": {
+                        "label-small-caps": ["Satoshi", "sans-serif"],
+                        "body-base": ["Satoshi", "sans-serif"],
+                        "headline-md": ["Satoshi", "sans-serif"],
+                        "display-lg": ["Satoshi", "sans-serif"],
+                        "clinical-data": ["JetBrains Mono", "monospace"],
+                        "body-muted": ["Satoshi", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-small-caps": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-base": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-md": ["2rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg": ["clamp(2.5rem, 5vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "clinical-data": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "body-muted": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col items-center justify-center p-mobile-margin md:p-desktop-margin antialiased overflow-hidden selection:bg-primary selection:text-ink-on-gold">
+<!-- Main Container - Strictly Page Content -->
+<main class="w-full max-w-lg mx-auto flex flex-col items-center">
+<!-- Step Indicators -->
+<div aria-label="Tracking progress" class="flex items-center gap-4 mb-16">
+<!-- Step 1: Complete (Order) -->
+<div class="w-1.5 h-1.5 rounded-full bg-primary opacity-60"></div>
+<div class="w-8 h-px bg-whisper-hairline"></div>
+<!-- Step 2: Complete (Preparation) -->
+<div class="w-1.5 h-1.5 rounded-full bg-primary opacity-60"></div>
+<div class="w-8 h-px bg-whisper-hairline"></div>
+<!-- Step 3: Current (Tracking) -->
+<div class="relative flex items-center justify-center w-3 h-3">
+<div class="absolute inset-0 rounded-full bg-primary shadow-[0_0_12px_rgba(242,202,80,0.6)]"></div>
+<!-- Subtle inner pulse -->
+<div class="absolute w-full h-full rounded-full bg-primary animate-ping opacity-30"></div>
+</div>
+<div class="w-8 h-px bg-whisper-hairline"></div>
+<!-- Step 4: Future (Delivered) -->
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+<!-- Header Section -->
+<div class="text-center flex flex-col items-center gap-5 w-full mb-12">
+<h1 class="font-headline-md text-headline-md text-on-surface">Tracking your order</h1>
+<!-- Clinical Monospace Order ID -->
+<div class="font-clinical-data text-clinical-data text-muted-steel tracking-wider py-1 px-3 border border-whisper-hairline rounded-md bg-surface-container-low/50">
+                #ORD-8F2C1A
+            </div>
+<!-- Hygiene Note -->
+<div class="mt-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-muted-steel" style="font-size: 14px; font-variation-settings: 'FILL' 1;">medical_services</span>
+<span class="font-label-small-caps text-label-small-caps text-muted-steel uppercase tracking-[0.1em]">PREPARED IN A CLINICALLY STERILE KITCHEN</span>
+</div>
+</div>
+<!-- Live Status Card -->
+<div class="w-full bg-graphite-surface border border-whisper-hairline rounded-xl backdrop-blur-md p-card-padding shadow-2xl shadow-black/80 flex flex-col items-center justify-center text-center gap-8 relative overflow-hidden group">
+<!-- Ambient Card Glow -->
+<div class="absolute -top-24 -left-24 w-48 h-48 bg-sage-signal/5 rounded-full blur-[60px] pointer-events-none transition-opacity duration-1000"></div>
+<!-- Status Line -->
+<div class="flex items-center gap-3 z-10 bg-surface-container-low/80 py-2 px-5 rounded-full border border-whisper-hairline">
+<div class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-signal opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-sage-signal"></span>
+</div>
+<span class="font-label-small-caps text-label-small-caps text-sage-signal tracking-widest uppercase mt-0.5">Out for delivery</span>
+</div>
+<!-- ETA Line -->
+<div class="flex flex-col items-center gap-2 z-10 w-full">
+<span class="font-body-muted text-body-muted text-muted-steel">Estimated arrival in</span>
+<div class="flex items-baseline gap-3 mt-1">
+<!-- Prominent Monospace Number -->
+<span class="font-clinical-data text-display-lg text-on-surface tabular-nums tracking-tighter" style="font-weight: 300;">09</span>
+<span class="font-label-small-caps text-label-small-caps text-muted-steel uppercase tracking-widest">min</span>
+</div>
+</div>
+</div>
+</main>
+</body></html>

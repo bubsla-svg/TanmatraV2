@@ -10,6 +10,7 @@ export const PUBLIC_PRERENDER_PATHS: string[] = [
 
 export const NOINDEX_SHELL_PATHS: string[] = [
   "/rd-console",
+  "/admin/audit",
 ];
 
 export const ALL_PRERENDER_PATHS: string[] = [

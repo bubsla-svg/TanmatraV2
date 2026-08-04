@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Metabolic Optimization</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#0e0e0e",
+                      "surface-container": "#201f1f",
+                      "ink-on-gold": "#111318",
+                      "primary-container": "#d4af37",
+                      "on-tertiary-fixed": "#00174b",
+                      "on-error-container": "#ffdad6",
+                      "inverse-surface": "#e5e2e1",
+                      "surface-variant": "#353534",
+                      "on-primary-fixed-variant": "#574500",
+                      "background": "#131313",
+                      "secondary-fixed": "#dde1ff",
+                      "on-tertiary-container": "#254188",
+                      "surface-dim": "#131313",
+                      "tertiary": "#bfcdff",
+                      "secondary-fixed-dim": "#b8c3ff",
+                      "surface-container-low": "#1c1b1b",
+                      "on-secondary-fixed-variant": "#344280",
+                      "on-error": "#690005",
+                      "primary-fixed-dim": "#e9c349",
+                      "tertiary-container": "#97b0ff",
+                      "on-secondary-fixed": "#021453",
+                      "on-surface-variant": "#d0c5af",
+                      "clay-danger": "#B0655A",
+                      "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                      "graphite-surface": "#171717",
+                      "on-secondary-container": "#a4b1f7",
+                      "inverse-on-surface": "#313030",
+                      "on-tertiary": "#082b72",
+                      "outline": "#99907c",
+                      "on-tertiary-fixed-variant": "#27438a",
+                      "on-primary": "#3c2f00",
+                      "on-secondary": "#1c2b68",
+                      "ember-warning": "#B6892F",
+                      "surface-tint": "#e9c349",
+                      "on-surface": "#e5e2e1",
+                      "error-container": "#93000a",
+                      "surface": "#131313",
+                      "tertiary-fixed": "#dbe1ff",
+                      "inverse-primary": "#735c00",
+                      "primary": "#f2ca50",
+                      "tertiary-fixed-dim": "#b4c5ff",
+                      "muted-steel": "#A3A3A3",
+                      "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                      "surface-container-high": "#2a2a2a",
+                      "on-background": "#e5e2e1",
+                      "primary-fixed": "#ffe088",
+                      "off-white-ink": "#F5F5F4",
+                      "on-primary-container": "#554300",
+                      "surface-container-highest": "#353534",
+                      "secondary": "#b8c3ff",
+                      "sage-signal": "#7D9E7E",
+                      "error": "#ffb4ab",
+                      "outline-variant": "#4d4635",
+                      "on-primary-fixed": "#241a00",
+                      "surface-bright": "#3a3939",
+                      "secondary-container": "#344280"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "card-padding": "1.5rem",
+                      "desktop-margin": "2rem",
+                      "mobile-margin": "1.25rem",
+                      "max-width": "1280px",
+                      "section-gap": "clamp(3rem, 8vw, 6rem)",
+                      "gutter": "1rem"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "clinical-data": [
+                              "JetBrains Mono", "monospace"
+                      ],
+                      "display-lg": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "body-muted": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "body-base": [
+                              "Satoshi", "sans-serif"
+                      ],
+                      "label-small-caps": [
+                              "Satoshi", "sans-serif"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "2rem",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "clinical-data": [
+                              "0.8125rem",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "clamp(2.5rem, 5vw, 4rem)",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-muted": [
+                              "0.875rem",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-base": [
+                              "1rem",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-small-caps": [
+                              "0.75rem",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://fonts.cdnfonts.com/s/72212/Satoshi-Regular.woff') format('woff');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://fonts.cdnfonts.com/s/72212/Satoshi-Medium.woff') format('woff');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://fonts.cdnfonts.com/s/72212/Satoshi-Bold.woff') format('woff');
+            font-weight: 700;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .snap-x-mandatory {
+            scroll-snap-type: x mandatory;
+        }
+        .snap-center {
+            scroll-snap-align: center;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body-base antialiased min-h-screen selection:bg-primary-container selection:text-ink-on-gold">
+<main class="w-full max-w-[max-width] mx-auto overflow-x-hidden pt-20 pb-safe">
+<!-- Hero Section -->
+<section class="px-mobile-margin md:px-desktop-margin mt-12 mb-section-gap flex flex-col lg:flex-row gap-12 items-center">
+<!-- Hero Content -->
+<div class="w-full lg:w-1/2 flex flex-col items-start text-left z-10">
+<span class="font-label-small-caps text-label-small-caps text-primary-container uppercase tracking-widest mb-4">Metabolic Optimization</span>
+<h1 class="font-display-lg text-display-lg text-off-white-ink mb-6 max-w-2xl">
+                    Precision-Engineered <span class="text-primary-container">Fuel</span>
+</h1>
+<p class="font-body-base text-body-base text-muted-steel mb-10 max-w-xl">
+                    Clinically designed macronutrient protocols delivered as high-performance culinary art. Reverse metabolic rigidity without sacrificing taste.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+<button class="bg-primary-container text-ink-on-gold font-body-base text-body-base font-medium rounded-full px-8 py-4 scale-[0.98] transition-transform duration-200 hover:opacity-90 active:scale-95 shadow-[0_0_20px_rgba(212,175,55,0.15)] flex items-center justify-center gap-2">
+                        Find your plan
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<button class="bg-transparent border border-whisper-hairline text-off-white-ink font-body-base text-body-base rounded-full px-8 py-4 scale-[0.98] transition-transform duration-200 hover:bg-surface-container-low active:scale-95 flex items-center justify-center">
+                        Start a 3-day trial
+                    </button>
+</div>
+</div>
+<!-- Metabolic Explorer (Hero Visual) -->
+<div class="w-full lg:w-1/2 flex flex-col gap-6">
+<!-- Controls -->
+<div class="bg-graphite-surface/50 backdrop-blur-md border border-whisper-hairline rounded-[2rem] p-4 flex flex-col gap-4">
+<div class="flex bg-surface-container-low rounded-full p-1 relative w-max">
+<!-- Active Indicator (requires JS to move) -->
+<div class="absolute inset-y-1 left-1 w-[calc(50%-4px)] bg-surface-container-highest rounded-full shadow-sm z-0 pointer-events-none transition-all duration-300"></div>
+<button class="relative z-10 px-6 py-2 rounded-full font-clinical-data text-clinical-data text-off-white-ink">Fat Loss</button>
+<button class="relative z-10 px-6 py-2 rounded-full font-clinical-data text-clinical-data text-muted-steel hover:text-off-white-ink transition-colors">Muscle Gain</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="bg-primary-container/10 border border-primary-container/30 text-primary-container rounded-full px-4 py-1.5 font-clinical-data text-clinical-data flex items-center gap-2 transition-colors hover:bg-primary-container/20">
+<span class="material-symbols-outlined text-[16px]">check</span> Low GI
+                        </button>
+<button class="bg-transparent border border-whisper-hairline text-muted-steel rounded-full px-4 py-1.5 font-clinical-data text-clinical-data transition-colors hover:border-muted-steel">
+                            High Protein
+                        </button>
+<button class="bg-transparent border border-whisper-hairline text-muted-steel rounded-full px-4 py-1.5 font-clinical-data text-clinical-data transition-colors hover:border-muted-steel">
+                            High Fibre
+                        </button>
+</div>
+</div>
+<!-- Snap Rail -->
+<div class="flex overflow-x-auto snap-x-mandatory no-scrollbar gap-4 pb-4 -mx-mobile-margin px-mobile-margin md:mx-0 md:px-0">
+<!-- Card 1 -->
+<div class="snap-center shrink-0 w-[280px] bg-graphite-surface border border-whisper-hairline rounded-[2rem] overflow-hidden flex flex-col shadow-lg">
+<div class="h-40 w-full relative">
+<img class="w-full h-full object-cover" data-alt="A close-up, highly detailed shot of a vibrant wild salmon fillet resting on a bed of dark quinoa and braised kale. The scene is illuminated by dramatic, moody studio lighting, highlighting the moist texture of the fish and the rich, saturated colors of the vegetables against a stark, deep charcoal slate plate. High-end culinary photography aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLcogIQg_CrbDKtpvSqYaC_QmviRi4hAuXKez6TwtUrKrYnh7RRFMhKbxEpa-xhhTVHG-2Ink99l-rM0fJFhWc1QXYqvtEBCqIhkIZ-Lp-KnGy4-FAKmDVNppBS1WpT36YXgocgXhZy6-TfuT8Zazwx83SjKo1CAWYCpMOrJcc-3vaONnIIlqbfyWjHoXpIjT18MbbGjaLnA6sQf0y0Ccs2q3MbsHmKDw2NCLsI7mKhOzX1Vf0jM_Oj9ViuwV_snWVOUswYsjdvSI"/>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/80 backdrop-blur-md p-1.5 rounded-full border border-whisper-hairline">
+<span class="material-symbols-outlined text-clay-danger text-sm" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3">
+<h3 class="font-headline-md text-[1.25rem] text-off-white-ink leading-tight">Wild Salmon Bowl</h3>
+<div class="flex flex-wrap gap-2 mt-auto">
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">42P</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">18F</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">12C</span>
+<span class="bg-primary-container/10 border border-primary-container/20 text-primary-container rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">GI 38</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">450 kcal</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="snap-center shrink-0 w-[280px] bg-graphite-surface border border-whisper-hairline rounded-[2rem] overflow-hidden flex flex-col shadow-lg">
+<div class="h-40 w-full relative">
+<img class="w-full h-full object-cover" data-alt="A top-down view of a beautifully plated roasted vegetable and chickpea salad in a dark ceramic bowl. Vibrant roasted cherry tomatoes, charred asparagus, and crisp greens pop against the dark background. The lighting is soft but directional, creating deep shadows that emphasize texture. Professional food photography style, clinical yet appetizing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSv_b3PFJesOe3S40S_no7Q3FAgyzNE_eGe51-qdQ4Kcx3YzLBmsLQdJ7_ZT4YCxtrhJoplov-6NKRqDGD9gZDaEpfKO6J3HHEoWHnOZ6UKpHUbiI-mvmJG5Ls-frzvVuu6OL_QwEvzR4EY9i9_rgf6e3_9YCMnS5L_k4W6g-_GLAk24G8OQ2CT8Q1Br8cy16h9AkM5Iq4XX63FJuhqCNlj9LtW62JFp8VqaxagCf-rgrAiAsNQy5rCcPec6JsDCx6FwiDZE3cG5Y"/>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/80 backdrop-blur-md p-1.5 rounded-full border border-whisper-hairline">
+<span class="material-symbols-outlined text-sage-signal text-sm" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3">
+<h3 class="font-headline-md text-[1.25rem] text-off-white-ink leading-tight">Roasted Root Medley</h3>
+<div class="flex flex-wrap gap-2 mt-auto">
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">22P</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">14F</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">45C</span>
+<span class="bg-primary-container/10 border border-primary-container/20 text-primary-container rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">GI 42</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">380 kcal</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="snap-center shrink-0 w-[280px] bg-graphite-surface border border-whisper-hairline rounded-[2rem] overflow-hidden flex flex-col shadow-lg">
+<div class="h-40 w-full relative">
+<img class="w-full h-full object-cover" data-alt="A side profile shot of a thick, juicy grass-fed beef steak resting on a dark slate board, accompanied by grilled asparagus spears and a small dollop of chimichurri. The meat is perfectly cooked medium-rare. Lighting is dramatic and high-contrast, emphasizing the grill marks and moisture. High-end, moody culinary photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiOOZdNdyDdhZ6za3WIgfxB8Zum369cw9kEiAPYHjuHzG33PFN53Q7kMXg2yWWrnvQwONvM3dArIdL3qjhfSLDH11l5VAfV_x1H7Sknc2mpP6j_nV0BmR3nm6mak4Xx484og0_rv9FyTJancYnVQXPcYC17sq2YngBXgQj7EqrQ2QGx6qjm9oTFBQ_8Wk-RvKkl_B_rlu3cSbTgR7I7FIea-9XN5YtK-fjrdsW5MNSAFTL36dDCzsnlEi1xtovF84FHv9Ay5yrMgo"/>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/80 backdrop-blur-md p-1.5 rounded-full border border-whisper-hairline">
+<span class="material-symbols-outlined text-clay-danger text-sm" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3">
+<h3 class="font-headline-md text-[1.25rem] text-off-white-ink leading-tight">Grass-Fed Bavette</h3>
+<div class="flex flex-wrap gap-2 mt-auto">
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">54P</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">22F</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">5C</span>
+<span class="bg-primary-container/10 border border-primary-container/20 text-primary-container rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">GI 0</span>
+<span class="bg-surface-container-low border border-whisper-hairline text-muted-steel rounded-full px-2.5 py-1 font-clinical-data text-[10px] tabular-nums">580 kcal</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- The 1 PM Problem -->
+<section class="px-mobile-margin md:px-desktop-margin mb-section-gap">
+<div class="max-w-4xl mx-auto">
+<div class="text-center mb-12">
+<h2 class="font-headline-md text-headline-md text-off-white-ink mb-4">The 1 PM Problem</h2>
+<p class="font-body-base text-body-base text-muted-steel">Standard diets fail to regulate insulin response, leading to the mid-day crash.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Tile 1 -->
+<div class="bg-graphite-surface border border-whisper-hairline rounded-2xl p-6 flex items-center gap-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest border border-whisper-hairline flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container">show_chart</span>
+</div>
+<p class="font-body-base text-body-base text-off-white-ink m-0">Blood sugar spikes and rapid crashes</p>
+</div>
+<!-- Tile 2 -->
+<div class="bg-graphite-surface border border-whisper-hairline rounded-2xl p-6 flex items-center gap-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest border border-whisper-hairline flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container">psychology</span>
+</div>
+<p class="font-body-base text-body-base text-off-white-ink m-0">Cognitive fog post-consumption</p>
+</div>
+<!-- Tile 3 -->
+<div class="bg-graphite-surface border border-whisper-hairline rounded-2xl p-6 flex items-center gap-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest border border-whisper-hairline flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container">fitness_center</span>
+</div>
+<p class="font-body-base text-body-base text-off-white-ink m-0">Metabolic rigidity hindering fat oxidation</p>
+</div>
+<!-- Tile 4 -->
+<div class="bg-graphite-surface border border-whisper-hairline rounded-2xl p-6 flex items-center gap-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest border border-whisper-hairline flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container">battery_alert</span>
+</div>
+<p class="font-body-base text-body-base text-off-white-ink m-0">Chronic cellular energy depletion</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Programs -->
+<section class="px-mobile-margin md:px-desktop-margin mb-section-gap">
+<div class="mb-12">
+<h2 class="font-headline-md text-headline-md text-off-white-ink mb-4">RD-Reviewed Programs</h2>
+<p class="font-body-base text-body-base text-muted-steel">Clinical protocols engineered for specific physiological outcomes.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Program 1 -->
+<div class="bg-graphite-surface border border-whisper-hairline rounded-[2rem] p-8 flex flex-col h-full shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+<div class="inline-flex bg-[#3E4C8A]/20 border border-[#3E4C8A]/30 text-[#bfcdff] rounded-full px-3 py-1 font-clinical-data text-[10px] mb-6 w-max">PROTOCOL 01</div>
+<h3 class="font-headline-md text-[1.5rem] text-off-white-ink mb-2">Metabolic Reset</h3>
+<p class="font-body-base text-body-base text-muted-steel mb-8">Optimize insulin sensitivity and re-establish basal metabolic function.</p>
+<div class="mt-auto pt-6 border-t border-whisper-hairline flex items-end justify-between">
+<div class="font-clinical-data text-clinical-data text-off-white-ink tabular-nums text-lg">₹12,500 <span class="text-xs text-muted-steel">/mo</span></div>
+<button class="bg-primary-container text-ink-on-gold font-body-base text-sm font-medium rounded-full px-6 py-2.5 scale-[0.98] transition-transform duration-200 hover:opacity-90 active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.1)]">Select</button>
+</div>
+</div>
+<!-- Program 2 -->
+<div class="bg-surface-container-high border border-primary-container/30 rounded-[2rem] p-8 flex flex-col h-full shadow-[0_4px_24px_rgba(212,175,55,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-container to-transparent opacity-50"></div>
+<div class="inline-flex bg-[#3E4C8A]/20 border border-[#3E4C8A]/30 text-[#bfcdff] rounded-full px-3 py-1 font-clinical-data text-[10px] mb-6 w-max">PROTOCOL 02</div>
+<h3 class="font-headline-md text-[1.5rem] text-primary-container mb-2">Performance Fuel</h3>
+<p class="font-body-base text-body-base text-muted-steel mb-8">Maximize ATP production and accelerate muscular hypertrophy recovery.</p>
+<div class="mt-auto pt-6 border-t border-whisper-hairline flex items-end justify-between">
+<div class="font-clinical-data text-clinical-data text-off-white-ink tabular-nums text-lg">₹15,000 <span class="text-xs text-muted-steel">/mo</span></div>
+<button class="bg-primary-container text-ink-on-gold font-body-base text-sm font-medium rounded-full px-6 py-2.5 scale-[0.98] transition-transform duration-200 hover:opacity-90 active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.1)]">Select</button>
+</div>
+</div>
+<!-- Program 3 -->
+<div class="bg-graphite-surface border border-whisper-hairline rounded-[2rem] p-8 flex flex-col h-full shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+<div class="inline-flex bg-[#3E4C8A]/20 border border-[#3E4C8A]/30 text-[#bfcdff] rounded-full px-3 py-1 font-clinical-data text-[10px] mb-6 w-max">PROTOCOL 03</div>
+<h3 class="font-headline-md text-[1.5rem] text-off-white-ink mb-2">Longevity Protocol</h3>
+<p class="font-body-base text-body-base text-muted-steel mb-8">Trigger autophagy, reduce systemic inflammation, and extend healthspan.</p>
+<div class="mt-auto pt-6 border-t border-whisper-hairline flex items-end justify-between">
+<div class="font-clinical-data text-clinical-data text-off-white-ink tabular-nums text-lg">₹18,500 <span class="text-xs text-muted-steel">/mo</span></div>
+<button class="bg-primary-container text-ink-on-gold font-body-base text-sm font-medium rounded-full px-6 py-2.5 scale-[0.98] transition-transform duration-200 hover:opacity-90 active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.1)]">Select</button>
+</div>
+</div>
+</div>
+</section>
+<!-- FAQ -->
+<section class="px-mobile-margin md:px-desktop-margin mb-section-gap max-w-3xl mx-auto">
+<h2 class="font-headline-md text-headline-md text-off-white-ink mb-8">Clinical Guidelines (FAQ)</h2>
+<div class="flex flex-col gap-0 border-t border-whisper-hairline">
+<!-- Item 1 -->
+<details class="group py-6 border-b border-whisper-hairline cursor-pointer">
+<summary class="flex items-center justify-between font-headline-md text-[1.125rem] text-off-white-ink list-none marker:hidden">
+                        How is this different from standard meal delivery?
+                        <span class="material-symbols-outlined text-muted-steel transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</summary>
+<div class="mt-4 font-body-base text-body-base text-muted-steel pr-12">
+                        Our protocols are precision-engineered by registered dietitians to modulate specific hormonal responses, rather than simply counting calories. We focus on nutrient density and glycemic load.
+                    </div>
+</details>
+<!-- Item 2 -->
+<details class="group py-6 border-b border-whisper-hairline cursor-pointer">
+<summary class="flex items-center justify-between font-headline-md text-[1.125rem] text-off-white-ink list-none marker:hidden">
+                        Are macros customized to my specific biometrics?
+                        <span class="material-symbols-outlined text-muted-steel transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</summary>
+<div class="mt-4 font-body-base text-body-base text-muted-steel pr-12">
+                        Yes. After onboarding, our clinical engine adjusts the macronutrient ratios of your selected protocol based on your DEXA scan results or provided biometrics to ensure precise dosing.
+                    </div>
+</details>
+<!-- Item 3 -->
+<details class="group py-6 border-b border-whisper-hairline cursor-pointer">
+<summary class="flex items-center justify-between font-headline-md text-[1.125rem] text-off-white-ink list-none marker:hidden">
+                        Can I switch protocols mid-cycle?
+                        <span class="material-symbols-outlined text-muted-steel transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</summary>
+<div class="mt-4 font-body-base text-body-base text-muted-steel pr-12">
+                        Protocol shifts require a 48-hour recalculation phase to ensure the transition aligns with your physiological adaptation state without causing metabolic stress.
+                    </div>
+</details>
+</div>
+</section>
+</main>
+<script>
+        // Simple toggle animation script for Hero filters
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.bg-surface-container-low.rounded-full button');
+            const indicator = document.querySelector('.bg-surface-container-highest.rounded-full.absolute');
+            
+            if(buttons.length > 0 && indicator) {
+                buttons.forEach((btn, index) => {
+                    btn.addEventListener('click', () => {
+                        // Reset all
+                        buttons.forEach(b => {
+                            b.classList.remove('text-off-white-ink');
+                            b.classList.add('text-muted-steel');
+                        });
+                        // Set active
+                        btn.classList.add('text-off-white-ink');
+                        btn.classList.remove('text-muted-steel');
+                        
+                        // Move indicator
+                        if(index === 0) {
+                            indicator.style.transform = 'translateX(0)';
+                        } else {
+                            indicator.style.transform = `translateX(100%)`;
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</body></html>

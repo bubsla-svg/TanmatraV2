@@ -1,5 +1,6 @@
 "use client"; // Justification: client-side interaction handlers for address confirmation and location adjustment.
 import type { GeoPlace } from "@/lib/geoClient";
+import { Button } from "@/components/ui/button";
 
 export function LocationSummaryCard({
   place,
@@ -43,15 +44,17 @@ export function LocationSummaryCard({
         </button>
       </div>
 
-      <button
+      <Button
         type="button"
         disabled={loading || !place}
         onClick={onConfirm}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3.5 text-base font-bold text-[var(--gold-ink)] shadow-md transition-all hover:opacity-95 disabled:opacity-40"
+        shape="xl"
+        size="fluid"
+        className="flex w-full items-center justify-center gap-2 px-5 py-3.5 text-base font-bold shadow-md hover:opacity-95 disabled:opacity-40"
       >
         <span>Add more address details</span>
         <span>▸</span>
-      </button>
+      </Button>
 
       <button
         type="button"

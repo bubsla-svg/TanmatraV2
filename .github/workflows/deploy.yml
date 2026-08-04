@@ -79,8 +79,17 @@ jobs:
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
             storefront:
+              # OA-MED-1.25 (TODO_optimization-auditor.md): this used to be a
+              # blanket 'lib/**', so e.g. a lib/db-only change triggered a
+              # full E2_HIGHCPU_8 rebuild + redeploy of a storefront that
+              # doesn't import it. storefront.yml already encodes precisely
+              # which lib/ packages the storefront depends on — mirror that
+              # list instead of over-triggering.
               - 'artifacts/storefront/**'
-              - 'lib/**'
+              - 'lib/tokens/**'
+              - 'lib/menu-catalog/**'
+              - 'lib/preferences-match/**'
+              - 'lib/subscription-rules/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
@@ -92,8 +101,23 @@ jobs:
   # and the inbound-auth/access-control contracts. Not verify.yml's entire
   # matrix — the KDS/geo/analytics feature steps stay PR-only — so "checked"
   # here means the money path, auth surfaces, types and lint gates.
+  #
+  # OA-DEEP-1.9 (TODO_optimization-auditor.md): this job had no path filter
+  # at all, so it ran its full ~25min Postgres-backed suite on EVERY push to
+  # main — including docs-only commits and pushes that touched neither
+  # artifacts/ nor lib/. Gated on `changes` (the same paths-filter output
+  # verify.yml's own trigger and the deploy jobs below already key off) so
+  # it skips entirely when nothing it would actually check changed. This
+  # does not remove the overlap between this job and verify.yml on a push
+  # that DOES touch a relevant path — that's a structural workflow_run-based
+  # fix the audit doc flags as a separate, TOCTOU-sensitive follow-up, not
+  # this one. This is the low-risk half: stop paying for gate on pushes it
+  # has nothing to gate.
   gate:
-    if: github.event_name == 'push'
+    needs: changes
+    if: |
+      github.event_name == 'push' &&
+      (needs.changes.outputs.api == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.storefront == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -126,11 +150,17 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Root typecheck
         run: pnpm run typecheck
-      - name: Lint gates (filecap, tokens, test-reach)
+      - name: Lint gates (filecap, tokens, component-drift, test-reach, workflow-secrets)
         run: |
           node --experimental-strip-types scripts/lint-filecap.ts artifacts/storefront
           node --experimental-strip-types scripts/lint-tokens.ts artifacts/storefront
+          node --experimental-strip-types scripts/lint-component-drift.ts artifacts/storefront
           pnpm run lint:test-reach
+          # Runs on the MERGE COMMIT, i.e. against the very workflow file that
+          # is about to deploy. A secret interpolated into a `run:` script is
+          # how the admin password hash reached Cloud Run as "scrypt6384" and
+          # locked every operator out with `invalid_credentials`.
+          pnpm run lint:workflow-secrets
       - name: Money-path unit suites (both web packages, by glob)
         working-directory: artifacts/api-server
         run: |
@@ -147,6 +177,7 @@ jobs:
           ./src/lib/flags.test.ts
           ./src/lib/trialEligibility.test.ts
           ./src/lib/corporateSubsidy.test.ts
+          ./src/lib/dishCustomizations.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
       - name: Inbound-auth + access-control contracts
         working-directory: artifacts/api-server
@@ -172,6 +203,7 @@ jobs:
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
           ./src/routes/subscriptions.creditLedger.test.ts
+          ./src/lib/loyaltyEngine.creditDerivation.test.ts
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
           ./src/routes/subscriptions.catalogQuote.test.ts
           ./src/routes/loyalty.referral.test.ts
@@ -184,6 +216,7 @@ jobs:
           ./src/lib/ai/agents/ops.refundCap.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
+          ./src/routes/marketplace.items.test.ts
           ./src/routes/corporate.subsidyLedger.test.ts
           ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
@@ -352,13 +385,53 @@ jobs:
 
       - name: Build image with Cloud Build
         run: |
+          IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          CACHE_IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:buildcache
+          # OA-MED-1.24 (TODO_optimization-auditor.md): Cloud Build provisions
+          # a cache-empty VM every run, so pnpm install + the full build
+          # re-ran from scratch on every deploy despite the Dockerfile's
+          # layers being correctly ordered for caching. Pull the previous
+          # image (best-effort — `|| true`, since the very first build or a
+          # pruned registry has no cache tag yet) and build with
+          # --cache-from so unchanged layers reuse it; push both the sha tag
+          # and an updated cache tag for the next run to pull.
           # Submit async to avoid VPC-SC log-streaming errors from the
           # GitHub runner. Poll build status directly instead.
+          # BuildKit (not the classic builder) so --cache-from + the inline
+          # cache metadata cover EVERY stage of the multi-stage Dockerfile,
+          # not just the final image's own layers.
+          cat > /tmp/api-cloudbuild.yaml <<EOF
+          steps:
+            - name: gcr.io/cloud-builders/docker
+              entrypoint: bash
+              args:
+                - -c
+                - docker pull ${CACHE_IMAGE} || true
+            - name: gcr.io/cloud-builders/docker
+              env:
+                - DOCKER_BUILDKIT=1
+              args:
+                - build
+                - --cache-from
+                - ${CACHE_IMAGE}
+                - --build-arg
+                - BUILDKIT_INLINE_CACHE=1
+                - -t
+                - ${IMAGE}
+                - -t
+                - ${CACHE_IMAGE}
+                - .
+          images:
+            - ${IMAGE}
+            - ${CACHE_IMAGE}
+          options:
+            logging: CLOUD_LOGGING_ONLY
+          EOF
           BUILD_ID=$(gcloud builds submit \
-            --tag asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
+            --config /tmp/api-cloudbuild.yaml \
             --project ${GCP_PROJECT} \
             --async \
-            --format='value(id)')
+            --format='value(id)' .)
           echo "Cloud Build ID: $BUILD_ID"
           for i in $(seq 1 40); do
             STATUS=$(gcloud builds describe "$BUILD_ID" \
@@ -384,13 +457,39 @@ jobs:
           echo "rev=$STABLE_REV" >> "$GITHUB_OUTPUT"
 
       - name: Deploy to Cloud Run
+        # Secrets are bound HERE, not interpolated into the command below.
+        #
+        # `${{ secrets.X }}` inside a `run:` script is substituted as literal
+        # TEXT and then parsed by bash, so any `$` in the value is expanded
+        # away. ADMIN_PASSWORD_HASH is `scrypt$N$r$p$salt$hash`, so the deploy
+        # was writing "scrypt6384" to Cloud Run: present, so the server's
+        # "admin auth not configured" guard never fired, but corrupt, so
+        # verifyPassword() (which splits on `$` and wants 6 parts) returned
+        # false for every password. The admin console rejected its own
+        # operator with `invalid_credentials` and nothing anywhere went red.
+        #
+        # An `env:` value is not a shell context, so it reaches the process
+        # verbatim; and bash does not re-scan the RESULT of a parameter
+        # expansion, so `${ADMIN_PASSWORD_HASH}` below yields the literal hash.
+        # scripts/lint-workflow-secrets.ts fails CI on a relapse.
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_VERIFY_SERVICE_SID: ${{ secrets.TWILIO_VERIFY_SERVICE_SID }}
+          PRIVATE_OBJECT_DIR: ${{ secrets.PRIVATE_OBJECT_DIR }}
         run: |
           gcloud run deploy ${SERVICE} \
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "^;^ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }};ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }};RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }};BULLMQ_PREFIX=prod;GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }};RAZORPAY_WEBHOOK_SECRET=${{ secrets.RAZORPAY_WEBHOOK_SECRET }};TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }};TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }};TWILIO_VERIFY_SERVICE_SID=${{ secrets.TWILIO_VERIFY_SERVICE_SID }};PRIVATE_OBJECT_DIR=${{ secrets.PRIVATE_OBJECT_DIR }}" \
-            --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest,CLINICAL_KMS_MASTER_KEY=brand-tanmatra-clinical-kms-key:latest,PETPOOJA_APP_KEY=brand-tanmatra-petpooja-app-key:latest,PETPOOJA_APP_SECRET=brand-tanmatra-petpooja-app-secret:latest,PETPOOJA_ACCESS_TOKEN=brand-tanmatra-petpooja-access-token:latest" \
+            --update-env-vars "^;^ADMIN_USERNAME=${ADMIN_USERNAME};ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID};RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${REDIS_PASSWORD};BULLMQ_PREFIX=prod;RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET};TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID};TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN};TWILIO_VERIFY_SERVICE_SID=${TWILIO_VERIFY_SERVICE_SID};PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR}" \
+            --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest,CLINICAL_KMS_MASTER_KEY=brand-tanmatra-clinical-kms-key:latest,PETPOOJA_APP_KEY=brand-tanmatra-petpooja-app-key:latest,PETPOOJA_APP_SECRET=brand-tanmatra-petpooja-app-secret:latest,PETPOOJA_ACCESS_TOKEN=brand-tanmatra-petpooja-access-token:latest,GOOGLE_API_KEY=brand-tanmatra-google-api-key:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --memory=1Gi \
             --cpu=1 \
@@ -484,16 +583,48 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Build image with Cloud Build
+        # Same secret-binding rule as the api-server deploy step: the heredoc
+        # below is unquoted (`<<EOF`) so ${IMAGE}/${CACHE_IMAGE} expand, which
+        # makes it a shell context for the build args as well. Bound here, they
+        # reach the build verbatim; interpolated inline, a `$` in any of them
+        # would be silently eaten. Enforced by scripts/lint-workflow-secrets.ts.
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
         run: |
           IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          CACHE_IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:buildcache
           # Custom Dockerfile + build-arg (VITE_API_BASE is baked into the
           # bundle), so we submit an inline build config rather than --tag.
           # Async + CLOUD_LOGGING_ONLY avoids VPC-SC log-streaming errors.
+          # OA-MED-1.24: pull the previous image (best-effort — the very
+          # first build or a pruned registry has no cache tag yet) and build
+          # with --cache-from so unchanged layers reuse it; push both the
+          # sha tag and an updated cache tag for the next run to pull.
           cat > /tmp/frontend-cloudbuild.yaml <<EOF
           steps:
             - name: gcr.io/cloud-builders/docker
+              entrypoint: bash
+              args:
+                - -c
+                - docker pull ${CACHE_IMAGE} || true
+            - name: gcr.io/cloud-builders/docker
+              # BuildKit so --cache-from covers every stage of the
+              # multi-stage Dockerfile, not just the final image's layers.
+              env:
+                - DOCKER_BUILDKIT=1
               args:
                 - build
+                - --cache-from
+                - ${CACHE_IMAGE}
+                - --build-arg
+                - BUILDKIT_INLINE_CACHE=1
                 - --build-arg
                 - VITE_API_BASE=/api
                 - --build-arg
@@ -501,28 +632,31 @@ jobs:
                 - --build-arg
                 - BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
                 - --build-arg
-                - VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+                - VITE_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
                 - --build-arg
-                - VITE_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+                - VITE_FIREBASE_API_KEY=${FIREBASE_API_KEY}
                 - --build-arg
-                - VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+                - VITE_FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}
                 - --build-arg
-                - VITE_FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+                - VITE_FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
                 - --build-arg
-                - VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+                - VITE_FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
                 - --build-arg
-                - VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+                - VITE_FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}
                 - --build-arg
-                - VITE_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
+                - VITE_FIREBASE_APP_ID=${FIREBASE_APP_ID}
                 - --build-arg
-                - VITE_RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}
+                - VITE_RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
                 - -t
                 - ${IMAGE}
+                - -t
+                - ${CACHE_IMAGE}
                 - -f
                 - artifacts/tanmatra/Dockerfile
                 - .
           images:
             - ${IMAGE}
+            - ${CACHE_IMAGE}
           options:
             logging: CLOUD_LOGGING_ONLY
             machineType: E2_HIGHCPU_8
@@ -713,8 +847,21 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Build image with Cloud Build
+        # Same secret-binding rule as the api-server deploy step: the heredoc
+        # below is unquoted (`<<EOF`) so ${IMAGE}/${CACHE_IMAGE} expand, which
+        # makes it a shell context for the build args as well. Bound here, they
+        # reach the build verbatim; interpolated inline, a `$` in any of them
+        # would be silently eaten. Enforced by scripts/lint-workflow-secrets.ts.
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
         run: |
           IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
+          CACHE_IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:buildcache
           # Custom Dockerfile. NEXT_PUBLIC_API_BASE is left empty so the browser
           # uses the same-origin /api proxy. Live checkout (SF-05) is ON: the
           # à-la-carte guest money path needs only Razorpay creds on the
@@ -723,11 +870,27 @@ jobs:
           # NEXT_PUBLIC_FIREBASE_* values (SF-03 sign-in) are PUBLIC web config —
           # the same secrets the tanmatra SPA build consumes. Async +
           # CLOUD_LOGGING_ONLY avoids VPC-SC log-streaming errors.
+          # OA-MED-1.24: pull the previous image (best-effort — the very
+          # first build or a pruned registry has no cache tag yet) and build
+          # with BuildKit + --cache-from so unchanged layers reuse it across
+          # every stage of the multi-stage Dockerfile; push both the sha tag
+          # and an updated cache tag for the next run to pull.
           cat > /tmp/storefront-cloudbuild.yaml <<EOF
           steps:
             - name: gcr.io/cloud-builders/docker
+              entrypoint: bash
+              args:
+                - -c
+                - docker pull ${CACHE_IMAGE} || true
+            - name: gcr.io/cloud-builders/docker
+              env:
+                - DOCKER_BUILDKIT=1
               args:
                 - build
+                - --cache-from
+                - ${CACHE_IMAGE}
+                - --build-arg
+                - BUILDKIT_INLINE_CACHE=1
                 - --build-arg
                 - NEXT_PUBLIC_API_BASE=
                 - --build-arg
@@ -737,17 +900,17 @@ jobs:
                 - --build-arg
                 - NEXT_PUBLIC_SITE_URL=https://tanmatra.food
                 - --build-arg
-                - NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+                - NEXT_PUBLIC_FIREBASE_API_KEY=${FIREBASE_API_KEY}
                 - --build-arg
-                - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+                - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}
                 - --build-arg
-                - NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+                - NEXT_PUBLIC_FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
                 - --build-arg
-                - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+                - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
                 - --build-arg
-                - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+                - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}
                 - --build-arg
-                - NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
+                - NEXT_PUBLIC_FIREBASE_APP_ID=${FIREBASE_APP_ID}
                 # Rewrites are baked at build time (routes-manifest), so the
                 # /api and /images proxy upstreams must be build args — the
                 # runtime env alone cannot enable them.
@@ -757,11 +920,14 @@ jobs:
                 - IMAGE_UPSTREAM=${IMAGE_URL}
                 - -t
                 - ${IMAGE}
+                - -t
+                - ${CACHE_IMAGE}
                 - -f
                 - artifacts/storefront/Dockerfile
                 - .
           images:
             - ${IMAGE}
+            - ${CACHE_IMAGE}
           options:
             logging: CLOUD_LOGGING_ONLY
             machineType: E2_HIGHCPU_8

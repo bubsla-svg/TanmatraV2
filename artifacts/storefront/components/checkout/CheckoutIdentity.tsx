@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { StepDots } from "./StepDots";
 import { CERTAINTY } from "@/lib/checkout";
 
@@ -28,7 +29,7 @@ export function CheckoutIdentity({
       <StepDots current={step} total={total} />
       <h1 className="text-lg font-semibold text-ink">Your details</h1>
       <p className="text-sm text-ink-muted">{planSummary}</p>
-      <div>
+      <div className="rounded-3xl border border-line bg-surface p-6">
         <label htmlFor="co-phone" className="mb-1.5 block text-sm font-medium text-ink">
           Your mobile number
         </label>
@@ -41,19 +42,19 @@ export function CheckoutIdentity({
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="98765 43210"
-          className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong"
+          className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong"
         />
         <p className="mt-1.5 text-xs text-ink-faint">We use this to reach you about your order — no passwords, ever.</p>
       </div>
       <p className="text-xs font-medium text-sage-text">{CERTAINTY.identity}</p>
-      <button
+      <Button
         type="button"
         disabled={!valid}
         onClick={() => onSubmitPhone(phone)}
-        className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98] disabled:opacity-40"
+        shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
       >
         Continue
-      </button>
+      </Button>
     </div>
   );
 }

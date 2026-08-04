@@ -13,15 +13,29 @@ import {
   publicMenuRateLimit,
   orderRateLimit,
   aiRateLimit,
+  aiStaffRateLimit,
   rationaleRateLimit,
-  paymentRateLimit,
+  paymentRouteRateLimit,
   addressRateLimit,
 } from "./middlewares/rateLimitMiddleware";
 import { idempotencyMiddleware } from "./middlewares/idempotency";
 
 const app: Express = express();
 
-app.set("trust proxy", 1);
+// Two trusted hops, not one: the browser reaches this service via
+// GCLB (the storefront's public-facing edge) THEN the storefront's own
+// `/api/:path*` rewrite, which issues a second, separate request into this
+// service's own Cloud Run ingress — a distinct hop with its own
+// X-Forwarded-For entry, not a transparent pass-through. With `trust proxy: 1`,
+// Express only skips ONE hop from the right and reads the SECOND-CLOSEST
+// entry as `req.ip` — for a 2-hop chain that resolves to the storefront's own
+// (shared, low-cardinality) address, not the end user's. Every real visitor
+// collapsed onto that handful of shared addresses, so the per-IP rate
+// limiter effectively rate-limited "the storefront" as one bucket instead of
+// each visitor individually — a burst from a few customers could 429 every
+// other customer sharing that address. `2` walks back both trusted hops to
+// the address the customer's own browser actually connected from.
+app.set("trust proxy", 2);
 
 app.use(
   pinoHttp({
@@ -172,12 +186,15 @@ app.use("/api/menu", publicMenuRateLimit);
 app.use("/api/dish", publicMenuRateLimit);
 app.use("/api/orders", orderRateLimit);
 app.use("/api/checkout", orderRateLimit);
-app.use("/api/cms-agent", aiRateLimit);
+// Staff (cms/ops) and customer (coach/support) agents get separate buckets —
+// office/VPN egress IPs would otherwise exhaust the shared customer quota.
+// See aiStaffRateLimit's comment (OA-MED-1.9).
+app.use("/api/cms-agent", aiStaffRateLimit);
+app.use("/api/ops-agent", aiStaffRateLimit);
 app.use("/api/coach-agent", aiRateLimit);
-app.use("/api/ops-agent", aiRateLimit);
 app.use("/api/support-agent", aiRateLimit);
 app.use("/api/dish-rationales", rationaleRateLimit);
-app.use("/api/payments", paymentRateLimit);
+app.use("/api/payments", paymentRouteRateLimit);
 app.use("/api/addresses", addressRateLimit);
 
 // Surface body-parser failures as a clean 413 / 400 instead of a 500.

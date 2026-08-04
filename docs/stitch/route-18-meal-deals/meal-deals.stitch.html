@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Metabolic OS - Meal Deals</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                      "on-secondary-fixed": "#021453",
+                      "muted-steel": "#A3A3A3",
+                      "tertiary-container": "#97b0ff",
+                      "error-container": "#93000a",
+                      "surface-variant": "#353534",
+                      "on-error-container": "#ffdad6",
+                      "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                      "on-surface-variant": "#d0c5af",
+                      "on-secondary-container": "#a4b1f7",
+                      "surface-container-lowest": "#0e0e0e",
+                      "tertiary-fixed": "#dbe1ff",
+                      "surface-container-low": "#1c1b1b",
+                      "clay-danger": "#B0655A",
+                      "secondary-fixed": "#dde1ff",
+                      "inverse-surface": "#e5e2e1",
+                      "error": "#ffb4ab",
+                      "on-primary": "#3c2f00",
+                      "graphite-surface": "#171717",
+                      "surface-tint": "#e9c349",
+                      "on-background": "#e5e2e1",
+                      "secondary": "#b8c3ff",
+                      "on-tertiary-fixed-variant": "#27438a",
+                      "tertiary": "#bfcdff",
+                      "surface-container": "#201f1f",
+                      "on-secondary-fixed-variant": "#344280",
+                      "on-tertiary-container": "#254188",
+                      "background": "#131313",
+                      "on-primary-container": "#554300",
+                      "off-white-ink": "#F5F5F4",
+                      "on-primary-fixed": "#241a00",
+                      "sage-signal": "#7D9E7E",
+                      "primary-fixed": "#ffe088",
+                      "surface": "#131313",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#b8c3ff",
+                      "on-surface": "#e5e2e1",
+                      "surface-container-high": "#2a2a2a",
+                      "on-tertiary-fixed": "#00174b",
+                      "ember-warning": "#B6892F",
+                      "inverse-on-surface": "#313030",
+                      "inverse-primary": "#735c00",
+                      "outline-variant": "#4d4635",
+                      "tertiary-fixed-dim": "#b4c5ff",
+                      "on-primary-fixed-variant": "#574500",
+                      "surface-dim": "#131313",
+                      "on-secondary": "#1c2b68",
+                      "primary-container": "#d4af37",
+                      "outline": "#99907c",
+                      "on-tertiary": "#082b72",
+                      "primary": "#f2ca50",
+                      "ink-on-gold": "#111318",
+                      "surface-container-highest": "#353534",
+                      "secondary-container": "#344280",
+                      "primary-fixed-dim": "#e9c349",
+                      "surface-bright": "#3a3939"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "max-width": "1280px",
+                      "desktop-margin": "2rem",
+                      "card-padding": "1.5rem",
+                      "section-gap": "clamp(3rem, 8vw, 6rem)",
+                      "mobile-margin": "1.25rem",
+                      "gutter": "1rem"
+              },
+              "fontFamily": {
+                      "body-base": [
+                              "Satoshi"
+                      ],
+                      "display-lg": [
+                              "Satoshi"
+                      ],
+                      "body-muted": [
+                              "Satoshi"
+                      ],
+                      "label-small-caps": [
+                              "Satoshi"
+                      ],
+                      "headline-md": [
+                              "Satoshi"
+                      ],
+                      "clinical-data": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "body-base": [
+                              "1rem",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "clamp(2.5rem, 5vw, 4rem)",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-muted": [
+                              "0.875rem",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-small-caps": [
+                              "0.75rem",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "2rem",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "clinical-data": [
+                              "0.8125rem",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-[#0A0A0A] text-on-surface antialiased selection:bg-primary/30 selection:text-primary">
+<main class="py-8 px-4 md:px-desktop-margin max-w-max-width mx-auto flex flex-col gap-section-gap">
+<!-- Section 1: Featured Bundles -->
+<section class="flex flex-col gap-6">
+<div class="flex items-baseline justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface">Precision Bundles</h2>
+<span class="font-label-small-caps text-label-small-caps text-muted-steel uppercase tracking-widest">Optimized Macros</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter relative">
+<!-- Bundle Card 1 -->
+<div class="group relative rounded-3xl overflow-hidden bg-graphite-surface border border-whisper-hairline cursor-pointer active:scale-[0.98] transition-transform duration-200 ease-out">
+<div class="aspect-[4/3] w-full relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A cinematic, moody overhead shot of a premium health food spread. A dark ceramic plate features a perfectly seared salmon fillet alongside vibrant green asparagus and blistered cherry tomatoes. A side of quinoa salad is visible. A glass of sparkling water with lime and high-end noise-canceling headphones sit nearby on a dark oak table, suggesting a focused, clinical yet luxurious lifestyle. Shot with dramatic, high-contrast lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4AX7t9sZMWvOQsbmlkGEKcLhQ5FwdoFc85dnmPgY8X5iZZQdJUmtS8-6AIhbDAYwU7guQSv3IMpd2oAw9crqp3FjEWc-VasViYNDgH2KT7PmUgMMRL5e2V1lkeNQUDeD8IV_ciVfHueWJcBYRsY8UA913lx4sA2YKY0u2mxRNl2eZFMHw0uIDGhG7Ee93bl7hTPIUCX1FNccv4w3d7_RW0OHBZc-XFccu2FnpjzKyG938aOPw4rWtR_AfBGJS4UpArTk0xs-s23I"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute top-4 left-4 bg-primary-container text-on-primary-container font-label-small-caps text-label-small-caps px-3 py-1 rounded-full uppercase">
+                            3 DISHES
+                        </div>
+<div class="absolute top-4 right-4 bg-graphite-surface/90 backdrop-blur-sm border border-whisper-hairline text-off-white-ink font-label-small-caps text-label-small-caps px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">local_fire_department</span>
+                            SAVE $15
+                        </div>
+</div>
+<div class="p-card-padding flex flex-col gap-3">
+<h3 class="font-body-base text-body-base font-semibold text-off-white-ink">Ketogenic Kickstart Protocol</h3>
+<div class="flex items-center gap-3">
+<span class="font-clinical-data text-clinical-data tabular-nums text-primary text-lg">$45.00</span>
+<span class="font-clinical-data text-clinical-data tabular-nums text-muted-steel line-through text-sm">$60.00</span>
+</div>
+</div>
+</div>
+<!-- Bundle Card 2 -->
+<div class="group relative rounded-3xl overflow-hidden bg-graphite-surface border border-whisper-hairline cursor-pointer active:scale-[0.98] transition-transform duration-200 ease-out">
+<div class="aspect-[4/3] w-full relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Close up food photography of a high protein meal prep bowl. Sliced grilled chicken breast, edamame, shredded carrots, and a soft boiled egg on a bed of dark leafy greens. Served in a matte black bowl on a dark slate surface. Low key lighting, highlighting textures and colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQSHVwcfjq7WIrRJA4pxLoEBOzCzJNnFobmccyyzY_oVZc-fshMJnggVjDOMoRWr37Kq5LxzTu5Mqn6Hm71L-epHsMCi1JV-E1DaCf74FQcSprqB_GQepgeNHX4FTZ5BbiLOBO5y58RbdQeR9hnHRQUPetfEOGHMe4QwgNV5vqepq24M3ayXijk1lS0W8w5J2toBmG1jBA_Ko6V4NlWetxLYYFDDjSInNHCzT3ZHfh656TkjMddkarRVrwzoxKxYJhnDTeOyJHikc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute top-4 left-4 bg-surface-variant text-on-surface-variant font-label-small-caps text-label-small-caps px-3 py-1 rounded-full uppercase border border-whisper-hairline">
+                            4 DISHES
+                        </div>
+<div class="absolute top-4 right-4 bg-graphite-surface/90 backdrop-blur-sm border border-whisper-hairline text-off-white-ink font-label-small-caps text-label-small-caps px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+                            SAVE $22
+                        </div>
+</div>
+<div class="p-card-padding flex flex-col gap-3">
+<h3 class="font-body-base text-body-base font-semibold text-off-white-ink">Lean Hypertrophy Stack</h3>
+<div class="flex items-center gap-3">
+<span class="font-clinical-data text-clinical-data tabular-nums text-primary text-lg">$58.00</span>
+<span class="font-clinical-data text-clinical-data tabular-nums text-muted-steel line-through text-sm">$80.00</span>
+</div>
+</div>
+</div>
+<!-- Bundle Detail Dialog Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-md pointer-events-auto">
+<div class="w-full max-w-md rounded-3xl bg-smoked-glass backdrop-blur-md border border-whisper-hairline shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+<!-- Header -->
+<div class="p-6 pb-4 border-b border-whisper-hairline flex justify-between items-start">
+<div>
+<div class="font-label-small-caps text-label-small-caps text-primary uppercase mb-2">Metabolic Reset</div>
+<h3 class="font-headline-md text-xl md:text-2xl text-off-white-ink">Plant-Based Vitality</h3>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-muted-steel hover:text-off-white-ink transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Content List -->
+<div class="flex-1 overflow-y-auto p-2">
+<div class="flex flex-col gap-1">
+<!-- Dish Item -->
+<div class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 rounded-xl transition-colors cursor-pointer active:scale-[0.98]">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-whisper-hairline flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Macro photography of a vibrant green smoothie bowl topped with geometric arrangements of chia seeds, sliced kiwi, and coconut flakes. Dark, clinical background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD70AO74sCqEf2WQWd6wh3x0G_UNsJqoBzc62wV10OxCP4MI8gjkUvmqgEADwFPd8LtU39X7YBLThrgHOQzBaP01S32Gugc8kx5L-jDJ4t3Jb4uX9koFAKHKmmoVaRITnnyFSBOCm7rEDFC2-bkX8c11m-trvwAnpAuLSbZKOi8V42yIMrfrxUYNT9P4KyVUgM9Y8m-Kr6UPKuYXI5kRokao77zvB9nO4XWKfG47829hmi1BdJRaKGYZRsgUp3UVwO4r8TkXirlO-0"/>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<span class="font-body-base text-sm text-off-white-ink">Spirulina Recovery Bowl</span>
+<span class="font-clinical-data text-xs text-muted-steel tabular-nums">24P · 12F · 45C</span>
+</div>
+</div>
+<!-- Dish Item -->
+<div class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 rounded-xl transition-colors cursor-pointer active:scale-[0.98]">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-whisper-hairline flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A dark ceramic plate holding a roasted portobello mushroom stuffed with quinoa and herbs, drizzled with a balsamic reduction. Clinical, high-contrast lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC53iA3Rl0K1fYW1NreiTHBSFxx-9ExV2FJkDnF9RPE4jE1Yz8U61qkukNJxYs8pY3tKUG48qiFLWm4eU7v4H4b11Ggg3O9mRT4GAv7S89JhfDsemFvX5B2-8OsoVZebOv7ZzDARroM3uIhpoH0gpKOfEXmq20klwL0vpwOprgowGUfuGNoF3SILYotaegvAlUfkrLj9BCO26KO-yCAk8UprMAwq7x5ha7yAqmckpqhHDVPOYtl3Sb-_s9YB_QjLagAsNvm9Qqdu6E"/>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<span class="font-body-base text-sm text-off-white-ink">Stuffed Portobello Caps</span>
+<span class="font-clinical-data text-xs text-muted-steel tabular-nums">18P · 22F · 30C</span>
+</div>
+</div>
+<!-- Dish Item -->
+<div class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 rounded-xl transition-colors cursor-pointer active:scale-[0.98]">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-whisper-hairline flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A clear glass of amber-colored cold brew tea with ice and a sprig of rosemary. Condensation on the glass. Dark, moody aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZHPLZ4vrJgYUmfeiwvOlGjtBU4jTpBO_9aa3FSYdhkp0R9AHoXRNvnr5tuHRK5lzC0c7lRcwC4wEh9N24yqcsw0cRlxA9ztDFcOXOLMK01zq_6l4SFmfUah1gXS8V8qzFJd6bRqQOyOeZtVzmVn1npPBDKpM8zMcRtbI83AFoRDGyDOjXNMm9775YVzSeclToFo280XqY-7CBoqlFmmkoQrsaGfzJJAuCAlvdGNXbTw8rwSb10-Vvyum0tv8rnscAEamh1MdkjV4"/>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<span class="font-body-base text-sm text-off-white-ink">Adaptogenic Cold Brew</span>
+<span class="font-clinical-data text-xs text-muted-steel tabular-nums">0P · 0F · 2C</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-6 border-t border-whisper-hairline bg-graphite-surface/90 backdrop-blur-md">
+<div class="flex justify-between items-center mb-4">
+<span class="font-body-base text-sm text-muted-steel">Total Value</span>
+<div class="flex items-center gap-2">
+<span class="font-clinical-data text-sm text-muted-steel line-through">$42.00</span>
+<span class="font-clinical-data text-xl text-off-white-ink tabular-nums">$35.00</span>
+</div>
+</div>
+<button class="w-full bg-primary-container text-ink-on-gold font-label-small-caps text-label-small-caps py-4 rounded-full active:scale-[0.98] transition-transform duration-200 ease-out flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">add_shopping_cart</span>
+                                ADD COMBO
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Live Menu Deals -->
+<section class="flex flex-col gap-6">
+<div class="flex items-baseline justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface">Live Optimization Deals</h2>
+</div>
+<!-- Filter Rail -->
+<div class="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+<button class="snap-start flex-shrink-0 bg-primary-container text-ink-on-gold font-label-small-caps text-label-small-caps px-5 py-2.5 rounded-full border border-primary-container active:scale-95 transition-transform">
+                    All Deals
+                </button>
+<button class="snap-start flex-shrink-0 bg-transparent text-off-white-ink font-label-small-caps text-label-small-caps px-5 py-2.5 rounded-full border border-whisper-hairline hover:bg-surface-variant transition-colors active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">bar_chart</span>
+                    High Value (<span class="font-clinical-data lowercase">&gt;4.0/$</span>)
+                </button>
+<button class="snap-start flex-shrink-0 bg-transparent text-off-white-ink font-label-small-caps text-label-small-caps px-5 py-2.5 rounded-full border border-whisper-hairline hover:bg-surface-variant transition-colors active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">fitness_center</span>
+                    High Protein
+                </button>
+<button class="snap-start flex-shrink-0 bg-transparent text-off-white-ink font-label-small-caps text-label-small-caps px-5 py-2.5 rounded-full border border-whisper-hairline hover:bg-surface-variant transition-colors active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">eco</span>
+                    Plant Based
+                </button>
+</div>
+<!-- Deals Grid (Asymmetric Bento style) -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Deal Item 1 (Spans 2 cols on desktop) -->
+<div class="col-span-2 md:col-span-2 group relative rounded-2xl overflow-hidden bg-graphite-surface border border-whisper-hairline cursor-pointer active:scale-[0.98] transition-transform duration-200">
+<div class="h-48 md:h-64 w-full relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Overhead view of a sizzling wagyu beef steak sliced on a dark stone board, accompanied by charred broccolini. Steam rising slightly. Dark, luxurious culinary photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChApH3d_OyZgTSvZHXemX8oK1WZpPlDwzPZLSW5UGZ-7hmsDt4zWNWlmMHeiKjdBzOstfzNROxwZ2due3w1e7fJfAWQIhqYpDTZK7yY6BEYE6Vay7mag9DFOsgbBnOnl7aQ3C9egKSj1e0yC3_Sxqr_mXqslNrZWvFDSq7vHPLAfHUhh99TepZwAyfeMyE09FPTZK___VfBmRVXE3n-ilIoGMtZo-UwC4-YornHM6haXovQMrSa4O3CzT0aUo9ZgdZYKeosM4xkig"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+<div class="flex flex-col gap-1">
+<span class="bg-surface-variant/80 backdrop-blur-sm text-off-white-ink font-clinical-data text-[10px] px-2 py-0.5 rounded w-fit mb-1 border border-whisper-hairline">VD: 4.8/$10</span>
+<h4 class="font-body-base text-base font-semibold text-off-white-ink leading-tight">Wagyu Steak &amp; Greens</h4>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-clinical-data text-muted-steel line-through text-xs">$32</span>
+<span class="font-clinical-data text-primary text-lg">$24</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Deal Item 2 -->
+<div class="col-span-1 group relative rounded-2xl overflow-hidden bg-graphite-surface border border-whisper-hairline cursor-pointer active:scale-[0.98] transition-transform duration-200">
+<div class="h-48 md:h-64 w-full relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A glass bowl of greek yogurt parfait with dark berries and seeds on a dark metal table. Clean, stark lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQTBhGTziEJlWmYHf7A0FKxmXdLifnSh-M6rkFAbluAtUa2wk3x0Syh-G-woN8LK5Ceao3jvGCQjZwVbiK07JXg-TEA3ITkKDwEh6iJytOVmZeW7BHpI-4z_whSlgSa-ggZCFRtvKJ3PuwNMQFEf7tnk4d-UrOzNQ2is6P8s8SQNsmyg59ACNuwbW3xQrFrYYBM0H71-y0-K_et_j1svofCi614k3ds3-kz8xuh1PCxbj61ZhHN30ioi6hBZtPhDPTd-QgYbYdonY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
+<div class="flex justify-between items-center w-full">
+<span class="bg-surface-variant/80 backdrop-blur-sm text-off-white-ink font-clinical-data text-[10px] px-2 py-0.5 rounded border border-whisper-hairline">VD: 5.2/$10</span>
+<span class="font-clinical-data text-primary text-base">$8</span>
+</div>
+<h4 class="font-body-base text-sm font-semibold text-off-white-ink leading-tight">Antioxidant Parfait</h4>
+</div>
+</div>
+</div>
+<!-- Deal Item 3 -->
+<div class="col-span-1 group relative rounded-2xl overflow-hidden bg-graphite-surface border border-whisper-hairline cursor-pointer active:scale-[0.98] transition-transform duration-200">
+<div class="h-48 md:h-64 w-full relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A dark bowl containing a colorful poke bowl with raw tuna, edamame, and black sesame seeds. High contrast dark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyqQUTm_9AqtWkZSbQh8TXmSca-gt-TGq3b9AsGmuzED9MfkgaIpGcVQreMAUZqOY-Jbhgw7ewHXybDW1OOllKaY-mZFaKYqANN87sIOBbIEW2y8T0zx0FfhpXxg5ijhtxFSPMCogc7w9zbz-m1JnYcrv3gOTnXI8kqaNEySlpOyD9kgnlhjLQ0Ra9EqwmKq07_sylB_6Yb83vzsW2XW_0IiuLV730aHI2A-taKVgNnN7XuZ-yv-10JokjzY7QbNPd2ZLYhkyu1SU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
+<div class="flex justify-between items-center w-full">
+<span class="bg-surface-variant/80 backdrop-blur-sm text-off-white-ink font-clinical-data text-[10px] px-2 py-0.5 rounded border border-whisper-hairline">VD: 3.9/$10</span>
+<span class="font-clinical-data text-primary text-base">$14</span>
+</div>
+<h4 class="font-body-base text-sm font-semibold text-off-white-ink leading-tight">Ahi Tuna Poke</h4>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<style>
+        /* Hide scrollbar for horizontal rails but keep functionality */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

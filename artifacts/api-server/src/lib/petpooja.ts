@@ -3,21 +3,24 @@ import { type InsertMenuItem, type MenuItem, type InsertOrder, type OrderStatus,
 
 export interface PetpoojaItem {
   itemid: string;
-  itemallowvariation: string;
-  itemrank: string;
+  // These are never read by mapPetpoojaItem below — real push-menu payloads
+  // omit them, so they're optional rather than merely present-in-name.
+  itemallowvariation?: string;
+  itemrank?: string;
   item_categoryid: string;
-  item_ordertype: string;
+  item_ordertype?: string;
   item_tags?: string[];
   item_packingcharges?: string;
-  itemallowaddon: string;
-  itemaddonbasedon: string;
-  item_favorite: string;
-  ignore_taxes: string;
-  ignore_discounts: string;
+  itemallowaddon?: string;
+  itemaddonbasedon?: string;
+  item_favorite?: string;
+  ignore_taxes?: string;
+  ignore_discounts?: string;
   in_stock: string;
   itemname: string;
   item_attributeid: string;
-  itemdescription: string;
+  // Read as `item.itemdescription || ""` — tolerated missing.
+  itemdescription?: string;
   minimumpreparationtime?: string;
   price: string;
   active: string;
@@ -229,7 +232,10 @@ export function mapPetpoojaItem(
     item.active === "1" &&
     (item.in_stock === "1" || item.in_stock === "2" || item.in_stock === "true");
 
-  const pricePaise = Math.round(parseFloat(item.price || "0") * 100);
+  // Petpooja's `price` is a free-text string field; a malformed value must not
+  // propagate NaN into an integer DB column (menuItems.pricePaise).
+  const parsedPrice = parseFloat(item.price || "0");
+  const pricePaise = Math.round((Number.isFinite(parsedPrice) ? parsedPrice : 0) * 100);
 
   const allergens =
     item.nutrition?.allergens?.map((a) => a.allergen) ?? [];

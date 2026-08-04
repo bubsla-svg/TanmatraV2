@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Community Question Board - Metabolic Health</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#ffe088",
+                        "surface-variant": "#e2e2e5",
+                        "primary-fixed-dim": "#e9c349",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e8e8ea",
+                        "secondary-fixed": "#c8ecc8",
+                        "surface-tint": "#735c00",
+                        "on-surface": "#1a1c1e",
+                        "outline-variant": "#d0c5af",
+                        "secondary-fixed-dim": "#adcfad",
+                        "tertiary-container": "#97b0ff",
+                        "error": "#ba1a1a",
+                        "primary": "#735c00",
+                        "inverse-surface": "#2f3133",
+                        "on-secondary-fixed": "#03210b",
+                        "on-secondary-fixed-variant": "#304e33",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eeeef0",
+                        "tertiary-fixed": "#dbe1ff",
+                        "on-background": "#1a1c1e",
+                        "secondary": "#476649",
+                        "primary-container": "#d4af37",
+                        "surface-container-highest": "#e2e2e5",
+                        "surface-container-low": "#f3f3f6",
+                        "outline": "#7f7663",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#00174b",
+                        "surface-bright": "#f9f9fc",
+                        "tertiary": "#415ba4",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "secondary-container": "#c8ecc8",
+                        "on-surface-variant": "#4d4635",
+                        "inverse-on-surface": "#f0f0f3",
+                        "on-primary-fixed": "#241a00",
+                        "background": "#FBFAF7",
+                        "inverse-primary": "#e9c349",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#254188",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#4d6c4f",
+                        "surface-dim": "#dadadc",
+                        "surface": "#f9f9fc",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#574500",
+                        "on-primary-container": "#554300",
+                        "bone": "#FBFAF7",
+                        "white": "#FFFFFF",
+                        "hairline": "#E7E3DA",
+                        "ink-primary": "#1A1C1E",
+                        "clinical-gold": "#D4AF37",
+                        "sage": "#7D9E7E"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "clinical-data": ["JetBrains Mono"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "clinical-data": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #FBFAF7; color: #1A1C1E; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .bg-bone { background-color: #FBFAF7; }
+        .border-hairline { border-color: #E7E3DA; }
+        .text-clinical-gold { color: #D4AF37; }
+        .bg-clinical-gold { background-color: #D4AF37; }
+        .text-ink-primary { color: #1A1C1E; }
+        .bg-sage-tint { background-color: rgba(125, 158, 126, 0.12); }
+        .text-sage { color: #7D9E7E; }
+        .bg-gold-tint { background-color: rgba(212, 175, 55, 0.08); }
+        .border-gold-hairline { border-color: rgba(212, 175, 55, 0.4); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-bone min-h-screen pt-lg pb-xl">
+<div class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter items-start">
+<!-- Left Column (Threads) -->
+<div class="md:col-span-8 flex flex-col gap-md">
+<div class="font-label-caps text-label-caps text-clinical-gold uppercase tracking-widest mb-sm">
+                QUESTIONS ANSWERED BY OUR DIETITIANS
+            </div>
+<!-- Card 1 (Answered) -->
+<div class="bg-white border border-hairline rounded-2xl p-md shadow-sm">
+<div class="flex items-center justify-between mb-sm">
+<span class="bg-sage-tint text-sage font-clinical-data text-clinical-data px-3 py-1 rounded-full">PCOS &amp; hormones</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Ananya K.</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs">Managing glucose spikes with PCOS</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">I notice my levels are much higher in the morning even with a low-carb dinner. Why?</p>
+<!-- Answer Panel -->
+<div class="bg-gold-tint border border-gold-hairline rounded-xl p-sm">
+<div class="font-label-caps text-label-caps text-clinical-gold mb-xs flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                        ANSWERED BY RD MEERA SHARMA
+                    </div>
+<p class="font-body-md text-body-md">This is known as the Dawn Phenomenon. Even with a low-carb dinner, your liver naturally releases stored glucose in the early hours to prepare your body for the day. For those with PCOS, insulin resistance can amplify this effect. A short morning walk or a high-protein breakfast can help stabilize these levels.</p>
+</div>
+</div>
+<!-- Card 2 (Answered) -->
+<div class="bg-white border border-hairline rounded-2xl p-md shadow-sm">
+<div class="flex items-center justify-between mb-sm">
+<span class="bg-sage-tint text-sage font-clinical-data text-clinical-data px-3 py-1 rounded-full">Metabolic Health</span>
+<span class="font-body-md text-body-md text-on-surface-variant">James L.</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs">Walking after meals</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">How soon after eating should I start walking to see the best impact on my post-meal glucose?</p>
+<!-- Answer Panel -->
+<div class="bg-gold-tint border border-gold-hairline rounded-xl p-sm">
+<div class="font-label-caps text-label-caps text-clinical-gold mb-xs flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                        ANSWERED BY RD MEERA SHARMA
+                    </div>
+<p class="font-body-md text-body-md">Aim to start your walk within 30-45 minutes of finishing your meal. This is typically when glucose levels begin to peak. Even a gentle 10-15 minute walk can significantly blunt the glucose response by engaging your muscles to uptake circulating glucose independently of insulin.</p>
+</div>
+</div>
+<!-- Card 3 (Unanswered) -->
+<div class="bg-white border border-hairline rounded-2xl p-md shadow-sm">
+<div class="flex items-center justify-between mb-sm">
+<span class="bg-sage-tint text-sage font-clinical-data text-clinical-data px-3 py-1 rounded-full">Gut Health</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Sarah B.</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs">Bloating and fiber</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">I started the fiber reset but feeling quite bloated. Should I slow down?</p>
+<!-- Neutral Footer -->
+<div class="border-t border-hairline pt-sm mt-sm flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-body-md text-body-md text-sm italic">Awaiting a dietitian's response.</span>
+</div>
+</div>
+</div>
+<!-- Right Column (Sticky Ask-Form) -->
+<div class="md:col-span-4 sticky top-md">
+<div class="bg-white border border-hairline rounded-2xl p-md shadow-sm">
+<div class="font-label-caps text-label-caps text-clinical-gold mb-xs">ASK THE BOARD</div>
+<h3 class="font-headline-md text-headline-md mb-xs">Submit a nutrition question</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Our registered dietitians review and answer community questions weekly.</p>
+<form class="flex flex-col gap-sm">
+<div>
+<label class="sr-only">Category</label>
+<select class="w-full rounded-full border border-hairline py-2 px-4 font-clinical-data text-clinical-data focus:border-clinical-gold focus:ring-1 focus:ring-clinical-gold outline-none appearance-none bg-white">
+<option value="">Select Category</option>
+<option value="metabolic">Metabolic Health</option>
+<option value="hormones">PCOS &amp; Hormones</option>
+<option value="gut">Gut Health</option>
+<option value="general">General Nutrition</option>
+</select>
+</div>
+<div>
+<label class="sr-only">Your question</label>
+<input class="w-full rounded-full border border-hairline py-2 px-4 font-body-md text-body-md focus:border-clinical-gold focus:ring-1 focus:ring-clinical-gold outline-none" placeholder="Your question" type="text"/>
+</div>
+<div>
+<label class="sr-only">Additional context</label>
+<textarea class="w-full rounded-2xl border border-hairline py-3 px-4 font-body-md text-body-md focus:border-clinical-gold focus:ring-1 focus:ring-clinical-gold outline-none resize-none" placeholder="Additional context (optional)" rows="4"></textarea>
+</div>
+<button class="w-full bg-clinical-gold text-ink-primary font-clinical-data text-clinical-data py-3 rounded-full flex items-center justify-center gap-2 hover:opacity-90 transition-opacity mt-sm" type="button">
+                        Send to our RDs <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</form>
+</div>
+</div>
+</div>
+</div>
+</body></html>

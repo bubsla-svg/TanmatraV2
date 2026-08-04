@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { z } from "zod/v4";
+import { eq } from "drizzle-orm";
 import {
   bulkSetAvailability,
   createMenuItem,
@@ -11,6 +12,7 @@ import {
   updatePrice,
   updateItem,
 } from "../lib/menu";
+import { db, rdUsersTable } from "@workspace/db";
 import { saveAssetBytes } from "../lib/imageStorage";
 import { getMergedCatalog } from "../lib/menuResolver";
 import { isAlaCarteEnabled } from "@workspace/menu-catalog";
@@ -22,14 +24,16 @@ import {
   type CopyField,
 } from "../lib/menuCopy";
 import { recordOpsAction } from "../lib/opsAudit";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { recordAdminAction } from "../lib/adminAudit";
+import { requireRole, isRoleRequest } from "../lib/adminGate";
+import { PriceValidationError } from "../lib/priceBands";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
 
-function requireCatalog(req: Request, res: Response): boolean {
-  return gateRequireCatalog(req, res) !== null;
+async function requireCatalog(req: Request, res: Response): Promise<boolean> {
+  return (await requireRole(req, res, "catalog")) !== null;
 }
 
 // Public, unauthenticated catalog: merges editable DB fields (price, name,
@@ -63,11 +67,33 @@ router.get("/menu/alacarte", async (_req: Request, res: Response) => {
   res.json({ dishes: safe });
 });
 
+async function isClinician(userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: rdUsersTable.id })
+    .from(rdUsersTable)
+    .where(eq(rdUsersTable.userId, userId))
+    .limit(1);
+  return rows.length > 0;
+}
+
 router.get("/menu/ranked", async (req: Request, res: Response) => {
   const profileId = typeof req.query.profile_id === "string" ? req.query.profile_id.trim() : "";
   let prefsRow: any = null;
 
   if (profileId) {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+    const isOwner = req.user.id === profileId;
+    const callerIsClinician = isOwner ? false : await isClinician(req.user.id);
+    const callerIsOps = isOwner || callerIsClinician ? false : (await isRoleRequest(req, ["support", "catalog"])).allowed;
+
+    if (!isOwner && !callerIsClinician && !callerIsOps) {
+      res.status(403).json({ error: "forbidden" });
+      return;
+    }
+
     // Decrypt-on-read: clinical arrays are envelope-encrypted at rest, and
     // evaluateDishForPreferences must see plaintext to match allergens.
     prefsRow = await getDecryptedPreferences(profileId);
@@ -135,7 +161,7 @@ router.get("/menu/ranked", async (req: Request, res: Response) => {
 });
 
 router.get("/menu/items", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const items = await listMenuItems({
     category:
       typeof req.query.category === "string" ? req.query.category : undefined,
@@ -172,7 +198,7 @@ const createSchema = z.object({
 });
 
 router.post("/menu/items", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -215,7 +241,7 @@ router.post("/menu/items", async (req: Request, res: Response) => {
 const slugParam = z.object({ slug: z.string().min(1).max(128) });
 
 router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const sp = slugParam.safeParse(req.params);
   const customizationSchema = z.object({
     groupName: z.string().min(1).max(120),
@@ -298,7 +324,10 @@ router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
 router.post(
   "/menu/items/:slug/price",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    const auth = await requireRole(req, res, "catalog");
+    if (!auth) return;
+    const operatorId = auth.operatorId;
+
     const sp = slugParam.safeParse(req.params);
     const bp = z
       .object({ pricePaise: z.number().int().min(0).max(10_000_000) })
@@ -312,9 +341,33 @@ router.post(
       res.status(404).json({ error: "not found" });
       return;
     }
-    const item = await updatePrice(sp.data.slug, bp.data.pricePaise);
+    let item;
+    try {
+      if (operatorId) {
+        item = await db.transaction(async (tx) => {
+          const updated = await updatePrice(sp.data.slug, bp.data.pricePaise, tx);
+          await recordAdminAction({
+            operatorId,
+            action: "menu_price_update",
+            resourceType: "menu_item",
+            resourceId: sp.data.slug,
+            beforeState: { pricePaise: before.pricePaise },
+            afterState: { pricePaise: updated?.pricePaise ?? null },
+          }, tx);
+          return updated;
+        });
+      } else {
+        item = await updatePrice(sp.data.slug, bp.data.pricePaise);
+      }
+    } catch (err) {
+      if (err instanceof PriceValidationError) {
+        res.status(422).json({ error: err.message });
+        return;
+      }
+      throw err;
+    }
     await recordOpsAction({
-      operatorId: req.user?.id ?? null,
+      operatorId: operatorId ?? null,
       agent: "cms-rest",
       action: "cms_update_price",
       params: { slug: sp.data.slug, pricePaise: bp.data.pricePaise },
@@ -323,6 +376,7 @@ router.post(
       status: "success",
       reasoning: "price set via REST",
     });
+
     res.json({ item });
   },
 );
@@ -330,7 +384,7 @@ router.post(
 router.post(
   "/menu/items/bulk/availability",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const bp = z
       .object({
         filter: z.object({
@@ -377,7 +431,7 @@ router.post(
 router.post(
   "/menu/items/:slug/availability",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = slugParam.safeParse(req.params);
     const bp = z
       .object({
@@ -435,8 +489,8 @@ const uploadImageMw = multer({
   },
 }).single("file");
 
-router.post("/menu/uploads", (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+router.post("/menu/uploads", async (req: Request, res: Response) => {
+  if (!(await requireCatalog(req, res))) return;
   uploadImageMw(req, res, async (err: unknown) => {
     if (err) {
       const msg = err instanceof Error ? err.message : "upload failed";
@@ -477,7 +531,7 @@ router.post("/menu/uploads", (req: Request, res: Response) => {
 });
 
 router.post("/menu/items/:slug/image", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const sp = slugParam.safeParse(req.params);
   const bp = z.object({ imageUrl: z.string().url() }).safeParse(req.body);
   if (!sp.success || !bp.success) {
@@ -518,7 +572,7 @@ const copyFieldEnum = z.enum([
 router.post(
   "/menu/items/:slug/generate-copy",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = slugParam.safeParse(req.params);
     const bp = z
       .object({ fields: z.array(copyFieldEnum).min(1).optional() })
@@ -583,7 +637,7 @@ const acceptCopySchema = z.object({
 });
 
 router.post("/menu/items/:slug/copy", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const sp = slugParam.safeParse(req.params);
   const bp = acceptCopySchema.safeParse(req.body);
   if (!sp.success || !bp.success) {
@@ -619,7 +673,7 @@ router.post("/menu/items/:slug/copy", async (req: Request, res: Response) => {
 });
 
 router.get("/menu/copy/missing", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const category =
     typeof req.query.category === "string" && req.query.category
       ? req.query.category

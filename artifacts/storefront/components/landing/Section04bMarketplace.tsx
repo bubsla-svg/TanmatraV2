@@ -1,6 +1,8 @@
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
+import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
 
-export function Section04bMarketplace() {
+export async function Section04bMarketplace() {
+  const items = await fetchMarketplaceItemsServer();
   return (
     <section className="mx-auto w-full max-w-5xl px-4">
       <div className="mb-8 max-w-2xl">
@@ -11,7 +13,7 @@ export function Section04bMarketplace() {
           Healthy snacks, zero-sugar sauces, and pantry staples approved by our experts. Add them to your next meal delivery or order separately.
         </p>
       </div>
-      <MarketplaceGrid />
+      <MarketplaceGrid initialItems={items} />
     </section>
   );
 }

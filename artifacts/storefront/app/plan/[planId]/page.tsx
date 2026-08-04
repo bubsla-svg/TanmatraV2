@@ -38,16 +38,18 @@ export default async function PlanPage({ params, searchParams }: Props) {
   const builderData = getPlanBuilderData(id);
 
   return (
-    <section className="mx-auto max-w-xl px-4 py-10">
-      {blocked ? (
-        <Waitlist
-          planId={id}
-          planName={planDisplay(id).name}
-          reason={bookingBlock(id, defaultTrack) ?? "it isn't open for self-serve booking yet"}
-        />
-      ) : (
-        <PlanBuilder planId={id} defaultTrack={defaultTrack} builderData={builderData} />
-      )}
-    </section>
+    <div className="min-h-dvh">
+      <section className="mx-auto max-w-xl px-4 pt-10 pb-32">
+        {blocked ? (
+          <Waitlist
+            planId={id}
+            planName={planDisplay(id).name}
+            reason={bookingBlock(id, defaultTrack) ?? "it isn't open for self-serve booking yet"}
+          />
+        ) : (
+          <PlanBuilder planId={id} defaultTrack={defaultTrack} builderData={builderData} />
+        )}
+      </section>
+    </div>
   );
 }

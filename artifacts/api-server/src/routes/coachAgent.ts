@@ -5,20 +5,17 @@ import { runAgent, type GatewayEvent } from "../lib/ai";
 import { getUserBriefForRequest } from "../lib/userBrief";
 import { requireAuth } from "../middlewares/requireAuth";
 import { rateLimit } from "../lib/rateLimit";
+import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
 
-const ChatTurnSchema = z.object({
-  role: z.enum(["user", "agent"]),
-  text: z.string(),
-});
 // `dishSlug` is interpolated into the model prompt below. Constrain it
 // to a strict slug regex so it can't smuggle quotes / instructions
 // through the `[Context: ...]` envelope (prompt-injection mitigation).
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,118}[a-z0-9])?$/;
 const ChatBodySchema = z.object({
   message: z.string().min(1).max(8000),
-  history: z.array(ChatTurnSchema).max(50).optional(),
+  history: ChatHistorySchema,
   dishSlug: z.string().max(120).regex(SLUG_PATTERN).optional(),
 });
 

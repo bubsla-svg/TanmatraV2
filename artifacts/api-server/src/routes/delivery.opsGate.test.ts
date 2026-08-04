@@ -92,8 +92,13 @@ async function withApp(fn: (base: string) => Promise<void>): Promise<void> {
   // so the caller in this sweep is an authenticated ordinary customer — the
   // exact principal that used to get through.
   app.use((req, _res, next) => {
-    req.isAuthenticated = (() => true) as typeof req.isAuthenticated;
-    (req as unknown as { user: { id: string } }).user = { id: "regular-customer" };
+    if (req.headers["x-test-unauthenticated"] === "true") {
+      req.isAuthenticated = (() => false) as typeof req.isAuthenticated;
+      req.user = undefined;
+    } else {
+      req.isAuthenticated = (() => true) as typeof req.isAuthenticated;
+      (req as unknown as { user: { id: string } }).user = { id: "regular-customer" };
+    }
     next();
   });
   app.use(deliveryRouter);
@@ -154,7 +159,7 @@ test("EVERY non-public delivery route refuses an authenticated non-ops customer 
         `${method} ${path} must require ops scope, got ${res.status}`,
       );
       const body = (await res.json()) as { error?: string };
-      assert.equal(body.error, "ops scope required");
+      assert.equal(body.error, "kitchen scope required");
     }
   });
 });
@@ -178,7 +183,7 @@ for (const path of [
       });
       assert.equal(res.status, 403);
       const body = (await res.json()) as { error?: string };
-      assert.equal(body.error, "ops scope required");
+      assert.equal(body.error, "kitchen scope required");
     });
   });
 }
@@ -225,5 +230,25 @@ test("an ops caller gets past the gate on a previously-open route", async () => 
       400,
       `an ops caller must clear the gate and reach validation, got ${res.status}`,
     );
+  });
+});
+
+test("GET /delivery/:orderId/timeline and GET /delivery/eta/:orderId return 401 when unauthenticated", async () => {
+  asPlainCustomer();
+  await withApp(async (base) => {
+    for (const path of ["/delivery/probe/timeline", "/delivery/eta/probe"]) {
+      const res = await fetch(`${base}${path}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-test-unauthenticated": "true",
+        },
+      });
+      assert.equal(
+        res.status,
+        401,
+        `GET ${path} must return 401 when unauthenticated, got ${res.status}`,
+      );
+    }
   });
 });

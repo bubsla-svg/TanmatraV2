@@ -25,7 +25,7 @@ import {
   REFUND_EVENT_NAMES,
 } from "../lib/paymentIntegrity";
 import { chargeMandateCore } from "../lib/chargeMandate";
-import { requireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
 import {
   razorpayCredentials,
@@ -345,6 +345,7 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(rpOrderPayload),
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!rpRes.ok) {
@@ -486,7 +487,9 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
       .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
       .returning({ id: ordersTable.id });
     if (updated[0]) {
-      void sendOrderConfirmation(updated[0].id);
+      void sendOrderConfirmation(updated[0].id).catch((err: unknown) =>
+        req.log.error({ err, orderId: updated[0]!.id }, "sendOrderConfirmation failed"),
+      );
       // Part 8 A4 — server-truth payment_succeeded, emitted only on the
       // fresh placed→preparing transition (the webhook path emits its own
       // copy when it wins the race instead). Fire-and-forget, never throws.
@@ -622,6 +625,7 @@ router.post("/payments/upi/intent", async (req: Request, res: Response) => {
       options: { checkout: { method: { upi: 1 } } },
       expire_by: Math.floor(Date.now() / 1000) + 1800,
     }),
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!rpRes.ok) {
@@ -871,7 +875,9 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             );
           }
           if (updated[0]) {
-            void sendOrderConfirmation(updated[0].id);
+            void sendOrderConfirmation(updated[0].id).catch((err: unknown) =>
+              req.log.error({ err, orderId: updated[0]!.id }, "sendOrderConfirmation failed"),
+            );
             // Part 8 A4 — server-truth payment_succeeded (webhook won the
             // verify/webhook race for the placed→preparing transition).
             void emitServerEvent(
@@ -963,7 +969,9 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             );
           }
           if (updated[0]) {
-            void sendOrderConfirmation(updated[0].id);
+            void sendOrderConfirmation(updated[0].id).catch((err: unknown) =>
+              req.log.error({ err, orderId: updated[0]!.id }, "sendOrderConfirmation failed"),
+            );
             // Part 8 A4 — server-truth payment_succeeded (UPI payment-link
             // capture path; same fresh-transition guard as above).
             void emitServerEvent(
@@ -1223,7 +1231,12 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
       .update(webhookInboxTable)
       .set({ status: "failed", error: processError.message, attempts: attemptsCount })
       .where(and(eq(webhookInboxTable.source, "razorpay"), eq(webhookInboxTable.eventId, eventId)))
-      .catch(() => {});
+      .catch((markFailedErr: unknown) =>
+        req.log.warn(
+          { err: markFailedErr, eventId, eventType },
+          "webhook: failed to mark inbox row as failed after a business-logic error",
+        ),
+      );
   }
 
   if (processError) {
@@ -1263,7 +1276,7 @@ const chargeMandateSchema = z.object({
  * Missing/invalid credentials → 403 "ops scope required".
  */
 router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireRole(req, res, "finance"))) return;
   const parsed = chargeMandateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -1305,7 +1318,7 @@ router.post("/payments/charge-mandate", async (req: Request, res: Response) => {
  * the per-IP payments rate limit entirely.
  */
 router.post("/jobs/pre-debit-notifications", paymentRateLimit, async (req: Request, res: Response) => {
-  if (!requireOps(req, res)) return;
+  if (!(await requireRole(req, res, "finance"))) return;
   try {
     const result = await runPreDebitNotificationsSweep();
     res.json({ success: true, ...result });

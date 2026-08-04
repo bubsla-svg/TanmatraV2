@@ -22,7 +22,7 @@ export function DishSpec({ dish }: { dish: DishData }) {
           shape + label carry it too), so the veg/non-veg mark stays legible
           without colour. */}
       <div className="flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
           <span
             aria-hidden
             className={`inline-block h-2.5 w-2.5 ${dish.isVeg ? "rounded-full" : "rounded-[2px]"}`}
@@ -30,23 +30,23 @@ export function DishSpec({ dish }: { dish: DishData }) {
           />
           {dish.isVeg ? "Veg" : "Non-veg"}
         </span>
-        <span className="inline-flex items-center rounded-md border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+        <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
           GI {GI_LABEL[dish.glycaemicIndex]}
         </span>
       </div>
 
       {/* nutrition facts beyond the headline kcal/P/C/F grid */}
       <dl className="grid grid-cols-2 gap-2">
-        <div className="rounded-lg border border-line bg-surface p-3">
-          <dt className="text-[11px] uppercase tracking-wide text-ink-faint">Fibre</dt>
-          <dd className="tabular mt-1 text-sm font-semibold text-ink">
+        <div className="rounded-3xl border border-line bg-surface p-4">
+          <dt className="text-[11px] uppercase tracking-wide text-ink-muted">Fibre</dt>
+          <dd className="mt-1 font-mono text-sm tabular-nums text-ink">
             {est}
             {dish.macros.fiber} g
           </dd>
         </div>
-        <div className="rounded-lg border border-line bg-surface p-3">
-          <dt className="text-[11px] uppercase tracking-wide text-ink-faint">Sugar</dt>
-          <dd className="tabular mt-1 text-sm font-semibold text-ink">
+        <div className="rounded-3xl border border-line bg-surface p-4">
+          <dt className="text-[11px] uppercase tracking-wide text-ink-muted">Sugar</dt>
+          <dd className="mt-1 font-mono text-sm tabular-nums text-ink">
             {dish.sugarPerServing || "—"}
           </dd>
         </div>
@@ -56,14 +56,14 @@ export function DishSpec({ dish }: { dish: DishData }) {
           clamped or summarised. */}
       {dish.ingredients.length > 0 && (
         <div>
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
             Ingredients
           </h2>
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {dish.ingredients.map((ingredient, i) => (
               <li
                 key={i}
-                className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs text-ink-muted"
+                className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink-muted"
               >
                 {ingredient}
               </li>

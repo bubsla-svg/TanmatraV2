@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Group Order - Participant View</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#9c4325",
+                        "on-secondary-fixed": "#03210b",
+                        "on-secondary-fixed-variant": "#304e33",
+                        "surface-tint": "#735c00",
+                        "secondary-fixed": "#c8ecc8",
+                        "inverse-surface": "#2f312f",
+                        "on-secondary-container": "#4d6c4f",
+                        "tertiary-container": "#ff9876",
+                        "surface-container": "#efeeeb",
+                        "surface-bright": "#faf9f6",
+                        "on-surface": "#1a1c1a",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#d0c5af",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#e9c349",
+                        "surface": "#faf9f6",
+                        "on-tertiary-fixed": "#390b00",
+                        "secondary-container": "#c8ecc8",
+                        "background": "#FBFAF7",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#7b2b0e",
+                        "on-surface-variant": "#4d4635",
+                        "on-background": "#1a1c1a",
+                        "tertiary-fixed": "#ffdbd0",
+                        "on-primary-fixed": "#241a00",
+                        "secondary": "#476649",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dbdad7",
+                        "surface-variant": "#e3e2e0",
+                        "inverse-on-surface": "#f1f1ee",
+                        "surface-container-highest": "#e3e2e0",
+                        "primary-fixed": "#ffe088",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "on-tertiary-fixed-variant": "#7d2d10",
+                        "surface-container-high": "#e9e8e5",
+                        "surface-container-low": "#f4f3f1",
+                        "on-primary-container": "#554300",
+                        "secondary-fixed-dim": "#adcfad",
+                        "outline": "#7f7663",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#e9c349",
+                        "primary": "#735c00",
+                        "primary-container": "#d4af37",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#574500",
+                        "ink": "#1A1C1E",
+                        "border-light": "#E7E3DA",
+                        "sage-bg": "#F0F4F0",
+                        "sage-text": "#7D9E7E",
+                        "text-secondary": "#5C6367",
+                        "text-tertiary": "#6B7378",
+                        "danger": "#C2603F"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "2xl": "48px",
+                        "margin-mobile": "16px",
+                        "base": "4px",
+                        "gutter": "20px",
+                        "sm": "12px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "xs": "8px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "data-md": ["JetBrains Mono"],
+                        "headline-md": ["Satoshi"],
+                        "body-md": ["Satoshi"],
+                        "headline-lg-mobile": ["Satoshi"],
+                        "label-caps": ["Satoshi"],
+                        "data-lg": ["JetBrains Mono"],
+                        "body-lg": ["Satoshi"],
+                        "headline-lg": ["Satoshi"],
+                        "headline-xl": ["Satoshi"]
+                    },
+                    "fontSize": {
+                        "data-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "data-lg": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 24px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen text-on-surface font-body-md antialiased md:flex md:justify-center">
+<!-- Mobile-first Container -->
+<main class="w-full max-w-[480px] bg-background min-h-screen relative flex flex-col pt-xl pb-32 px-margin-mobile">
+<!-- Header Section -->
+<section class="mb-xl text-center">
+<div class="flex items-center justify-center gap-xs mb-xs">
+<h1 class="font-data-lg text-data-lg tracking-widest text-ink">B7K2M9</h1>
+<span class="inline-flex items-center justify-center px-sm py-1 rounded-full bg-sage-bg text-sage-text font-label-caps text-label-caps uppercase">Open</span>
+</div>
+<p class="font-body-md text-body-md text-text-secondary mb-xs">Hosted by Riya · 4 participants</p>
+<p class="font-body-md text-body-md text-text-tertiary text-sm">Share this code with your team to join the order</p>
+</section>
+<!-- Item List -->
+<section class="flex flex-col gap-sm mb-xl flex-1">
+<!-- Row 1 -->
+<article class="bg-white border border-border-light rounded-xl p-lg flex justify-between items-start">
+<div class="flex flex-col gap-base">
+<h3 class="font-body-md text-body-md font-semibold text-ink">Wild Salmon Reset</h3>
+<p class="font-body-md text-body-md text-sm text-text-secondary">Added by Riya · Qty 1</p>
+</div>
+<span class="font-data-md text-data-md tabular-nums text-ink">₹149</span>
+</article>
+<!-- Row 2 -->
+<article class="bg-white border border-border-light rounded-xl p-lg flex justify-between items-start">
+<div class="flex flex-col gap-base">
+<h3 class="font-body-md text-body-md font-semibold text-ink">Matcha Matrix</h3>
+<p class="font-body-md text-body-md text-sm text-text-secondary mb-base">Added by You · Qty 2</p>
+<button class="text-danger text-sm font-semibold text-left self-start hover:opacity-80 transition-opacity">Remove</button>
+</div>
+<span class="font-data-md text-data-md tabular-nums text-ink">₹299</span>
+</article>
+<!-- Row 3 -->
+<article class="bg-white border border-border-light rounded-xl p-lg flex justify-between items-start">
+<div class="flex flex-col gap-base">
+<h3 class="font-body-md text-body-md font-semibold text-ink">Protein Quinoa Bowl</h3>
+<p class="font-body-md text-body-md text-sm text-text-secondary">Added by Sam · Qty 1</p>
+</div>
+<span class="font-data-md text-data-md tabular-nums text-ink">₹250</span>
+</article>
+</section>
+<!-- Summary -->
+<section class="mb-xl pt-lg border-t border-border-light flex justify-end">
+<h2 class="font-headline-md text-headline-md text-ink">
+                Subtotal <span class="font-data-lg text-data-lg tabular-nums font-bold ml-xs">₹840</span>
+</h2>
+</section>
+<!-- Footer CTA -->
+<div class="fixed bottom-0 left-0 right-0 w-full md:max-w-[480px] md:mx-auto bg-background/90 backdrop-blur-md px-margin-mobile pt-md pb-safe border-t border-border-light z-50">
+<button class="w-full bg-primary-container text-ink font-body-md text-body-md font-semibold h-14 rounded-full flex items-center justify-center hover:opacity-90 active:scale-[0.98] transition-all">
+                Add your items
+            </button>
+</div>
+</main>
+</body></html>

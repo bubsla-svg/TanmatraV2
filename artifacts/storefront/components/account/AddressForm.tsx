@@ -1,6 +1,7 @@
 "use client";
 // Client: controlled add/edit form for a saved address.
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import type { Address, AddressInput, AddressType } from "@/lib/api";
 
 const inputCls =
@@ -71,10 +72,10 @@ export function AddressForm({
       </div>
       <input aria-label="Phone" type="tel" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls} />
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
-      <div className="flex items-center gap-3">
-        <button type="button" disabled={!valid || busy} onClick={submit} className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40">
+      <div className="mt-1 flex items-center gap-3 border-t border-line pt-3">
+        <Button type="button" disabled={!valid || busy} onClick={submit} shape="xl" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
           {busy ? "Saving…" : submitLabel}
-        </button>
+        </Button>
         {onCancel && (
           <button type="button" onClick={onCancel} className="-m-2 p-2 text-sm font-medium text-ink-muted hover:underline">
             Cancel

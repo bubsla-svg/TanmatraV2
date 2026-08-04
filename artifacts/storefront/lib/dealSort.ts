@@ -19,7 +19,11 @@ export interface DishValueScore {
  * Price in catalog is in paise (dish.price), so ₹1 = dish.price / 100.
  */
 export function evaluateDishValue(dish: DishData, metric: ValueMetric): DishValueScore {
-  const rupees = (dish.price ?? 35000) / 100;
+  // DishData.price is non-nullable, so there is nothing to fall back to. The
+  // old `?? 35000` was a fabricated amount: had the field ever gone soft it
+  // would have silently published a value-density figure against an invented
+  // ₹350 price. A zero price yields a zero score below instead of a fake one.
+  const rupees = dish.price / 100;
   const protein = dish.macros?.protein ?? 0;
   const fiber = dish.macros?.fiber ?? 0;
   const calories = dish.macros?.calories ?? 0;

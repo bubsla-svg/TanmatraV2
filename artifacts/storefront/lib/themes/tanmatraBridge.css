@@ -19,6 +19,13 @@
  * the source; astryxBridge.test.ts parses both files and fails if any tuple
  * here drifts from the theme definition there.
  *
+ * THE TUPLES ARE ALSO THE WHOLE DARK PALETTE. The light arm is Stone, the dark
+ * arm is Stitch. lib/themes/stitch.css used to pin ~20 of these tokens a second
+ * time with Stitch's values on every redesigned route; those pins are gone and
+ * that file is now one `color-scheme: dark` declaration, because light-dark()
+ * resolves against the color-scheme of the element that CONSUMES the token, not
+ * the :root that declares it. Add a token here, as a tuple — never there.
+ *
  * light-dark() is driven by color-scheme, which tanmatra.css keys off the
  * html[data-theme] attribute next-themes already toggles — same switch, both
  * systems, no second source of mode truth.
@@ -27,32 +34,60 @@
  * lint:tokens scans {components,app} and would rightly flag raw values there.
  */
 :root[data-astryx-theme="tanmatra"] {
-  /* Surfaces (Stone Theme) */
-  --bg: light-dark(#f3f3f5, #111015);
-  --surface: light-dark(#ffffff, #1b1b1f);
-  --surface-raised: light-dark(#ffffff, #25252a);
+  /* Surfaces — Stone light / Stitch dark (canvas, surface, container) */
+  --bg: light-dark(#f3f3f5, #0a0a0a);
+  --surface: light-dark(#ffffff, #171717);
+  --surface-raised: light-dark(#ffffff, #201f1f);
 
-  /* Ink (Stone Theme) */
-  --ink: light-dark(#28282a, #f3f3f5);
-  --ink-muted: light-dark(#5e5e5e, #ababb0);
-  --ink-faint: light-dark(#84848b, #84848b);
+  /* Ink — Stone light / Stitch dark */
+  --ink: light-dark(#28282a, #f5f5f4);
+  --ink-muted: light-dark(#5e5e5e, #a3a3a3);
+  --ink-faint: light-dark(#6a6a6f, #838388);
 
-  /* Borders (Stone Theme) */
-  --line: light-dark(#d8d8db, #343438);
-  --line-strong: light-dark(#84848b, #5e5e5e);
+  /* Borders. Stitch's dark rule is "zero flat borders" — hairlines are white at
+     6% / 16% so an edge reads as the surface underneath catching light, not as
+     a drawn line. Translucency is the point, hence rgba() not hex. */
+  --line: light-dark(#d8d8db, rgba(255, 255, 255, 0.06));
+  --line-strong: light-dark(#84848b, rgba(255, 255, 255, 0.16));
 
-  /* Gold / Accent (Stone Theme) */
-  --gold: light-dark(#28282a, #f3f3f5);
-  --gold-text: light-dark(#28282a, #f3f3f5);
-  --gold-ink: light-dark(#ffffff, #171719);
+  /* Gold / Accent — deliberately NOT Stone's neutral accent. Gold is the only
+     action colour (DS-0's surviving caveat), and these are the values
+     tanmatra.css already serves to Astryx's own components, so all three files
+     now agree. AA as both fill and text in both modes (dark: 9.42:1 as text on
+     the canvas, 8.84:1 label-on-fill). Stitch specified the same pair. */
+  --gold: light-dark(#7F6921, #D4AF37);
+  --gold-text: light-dark(#7F6921, #D4AF37);
+  --gold-ink: light-dark(#ffffff, #111318);
 
-  /* Sage (Stone Theme Teal/Green) */
-  --sage: light-dark(#4e6357, #9bb19a);
-  --sage-text: light-dark(#4e6357, #9bb19a);
+  /* Signals — never interactive. Dark arms are Stitch's. */
+  --sage: light-dark(#4e6357, #7d9e7e);
+  --sage-text: light-dark(#4e6357, #7d9e7e);
   --sage-ink: light-dark(#ffffff, #171719);
+  /* Sage at chip/badge strength. @workspace/tokens derives this with
+     color-mix() off --sage, but it derives it ON :root — so before this tuple
+     existed the Stitch scope had to re-pin it to get its 16%. The light arm
+     below is exactly what that color-mix composites to today (#4e6357 at 12%),
+     so the light routes do not move; the dark arm is Stitch's 16%. */
+  --sage-soft: light-dark(rgba(78, 99, 87, 0.12), rgba(125, 158, 126, 0.16));
 
   --blue: light-dark(#506072, #99adc6);
-  --success: light-dark(#4e6357, #9bb19a);
-  --warning: light-dark(#79693f, #b6aa90);
-  --danger: light-dark(#775751, #c7a39d);
+  --success: light-dark(#4e6357, #7d9e7e);
+  --warning: light-dark(#79693f, #b6892f);
+  --danger: light-dark(#775751, #b0655a);
+
+  /* Translucent chrome for the sticky bars that float over content — the buy
+     bars, the mini-cart, the planner footer (all `bg-[var(--glass)]` +
+     backdrop-blur). It is --surface at 72%, per arm. This was DARK-ONLY until
+     now, declared solely inside [data-stitch="dark"], so those same shared
+     components painted a fully TRANSPARENT bar on every light route: blurred
+     content showing through a bar with no fill, text floating on the page. */
+  --glass: light-dark(rgba(255, 255, 255, 0.72), rgba(23, 23, 23, 0.72));
+
+  /* Scrim for modal/drawer overlays — the sheet of dark between the page and a
+     dialog. Dark in BOTH arms on purpose: a scrim is not a surface, it is an
+     absence of one, and it must stay dark whichever scope the overlay lands in.
+     That matters because Radix portals mount on document.body and so escape
+     every [data-stitch] wrapper; a token that flipped with scope would give a
+     dialog opened from a dark route a white veil. */
+  --scrim: light-dark(rgba(20, 20, 22, 0.55), rgba(0, 0, 0, 0.6));
 }

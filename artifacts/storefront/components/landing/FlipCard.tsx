@@ -1,10 +1,12 @@
 "use client"; // Interactive card flip and state management
 // Tap-to-flip clinical dish photo card revealing specification sheet
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { PLAN_PRICE_TABLE } from "@workspace/subscription-rules";
 import { SpecSheetCard, type ClinicalDishSpec } from "./SpecSheetCard";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export interface FlipCardProps {
   spec?: ClinicalDishSpec;
@@ -66,13 +68,11 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
       >
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-raised">
           {spec.image && (
-            /* eslint-disable-next-line @next/next/no-img-element -- aspect box for zero CLS */
-            <img
+            <SafeImage
               src={spec.image}
               alt={spec.name}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              className="h-full w-full"
+              imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
             />
           )}
           <span
@@ -110,13 +110,13 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
             {spec.macros.protein}g P
           </span>
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => toggleFlip(true)}
-          className="rounded-xl bg-gold px-3 py-1.5 text-xs font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90"
+          shape="xl" size="fluid" className="px-3 py-1.5 text-xs font-semibold"
         >
           View Specs
-        </button>
+        </Button>
       </div>
     </article>
   );

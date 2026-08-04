@@ -6,16 +6,13 @@ import { desc, eq, and, type SQL } from "drizzle-orm";
 import { runAgent, type GatewayEvent } from "../lib/ai";
 import { fetchLiveQueue } from "../lib/ai/agents/ops";
 import { isOpsRequest, requireOps } from "../lib/adminGate";
+import { ChatHistorySchema } from "../lib/ai/chatSchema";
 
 const router: IRouter = Router();
 
-const ChatTurnSchema = z.object({
-  role: z.enum(["user", "agent"]),
-  text: z.string(),
-});
 const ChatBodySchema = z.object({
   message: z.string().min(1).max(8000),
-  history: z.array(ChatTurnSchema).max(50).optional(),
+  history: ChatHistorySchema,
 });
 
 function writeEvent(res: Response, event: object): void {
@@ -23,7 +20,7 @@ function writeEvent(res: Response, event: object): void {
 }
 
 router.post("/ops-agent/chat", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireOps(req, res);
   if (!gate) return;
   const operatorId = gate.operatorId;
   const parsed = ChatBodySchema.safeParse(req.body);
@@ -118,7 +115,7 @@ router.post("/ops-agent/chat", async (req: Request, res: Response) => {
 });
 
 router.get("/ops-agent/live-queue", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }
@@ -127,7 +124,7 @@ router.get("/ops-agent/live-queue", async (req: Request, res: Response) => {
 });
 
 router.get("/ops-agent/audit", async (req: Request, res: Response) => {
-  if (!isOpsRequest(req).allowed) {
+  if (!(await isOpsRequest(req)).allowed) {
     res.status(403).json({ error: "ops scope required" });
     return;
   }

@@ -52,14 +52,14 @@ export function EveningAddOffer({
 
   if (state === "added") {
     return (
-      <div className="rounded-xl border border-sage/40 bg-[color-mix(in_srgb,var(--sage)_12%,transparent)] px-4 py-3 text-sm font-medium text-ink">
+      <div className="rounded-2xl border border-sage/40 bg-[color-mix(in_srgb,var(--sage)_12%,transparent)] px-4 py-3 text-sm font-medium text-ink">
         Evening meals added — we&rsquo;ll set it up before your first dinner.
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-ink">Add dinner to your plan?</h3>
         <span className="tabular text-sm font-semibold text-ink">{formatPaise(pricePaise)}/wk</span>
@@ -70,7 +70,7 @@ export function EveningAddOffer({
         type="button"
         disabled={state === "busy"}
         onClick={() => void add()}
-        className="mt-1 self-start rounded-xl border border-sage/50 px-4 py-2 text-sm font-semibold text-sage-text transition-colors hover:bg-[color-mix(in_srgb,var(--sage)_10%,transparent)] disabled:opacity-40"
+        className="mt-1 self-start rounded-full border border-sage/50 px-4 py-2 text-sm font-semibold text-sage-text transition-colors hover:bg-[color-mix(in_srgb,var(--sage)_10%,transparent)] active:scale-[0.98] disabled:opacity-40"
       >
         {state === "busy" ? "Adding…" : "Add evening meals"}
       </button>

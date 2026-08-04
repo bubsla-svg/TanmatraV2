@@ -15,6 +15,16 @@ type Dish = Pick<DishData, "id" | "slug" | "name" | "price">;
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 export function AddToCart({ dish }: { dish: Dish }) {
+  return (
+    <Suspense fallback={<CartAdd dish={dish} />}>
+      <AddToCartResolved dish={dish} />
+    </Suspense>
+  );
+}
+
+function AddToCartResolved({ dish }: { dish: Dish }) {
+  const group = useSearchParams().get("group");
+  if (group && GROUP_CODE.test(group)) return <GroupAdd code={group} dish={dish} />;
   return <CartAdd dish={dish} />;
 }
 
@@ -81,11 +91,15 @@ function CartAdd({ dish }: { dish: Dish }) {
 
   return (
     <div className="flex items-center rounded-lg border border-line-strong bg-surface" role="group" aria-label={`${dish.name} quantity`}>
-      <button type="button" aria-label="Decrease quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty - 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink">
+      {/* Same pressed feedback as the Add button above and the CartDrawer /
+          checkout steppers — this stepper is the qty>0 face of every card in
+          the browse-to-cart flow, and it was the one control giving zero
+          tactile response. */}
+      <button type="button" aria-label="Decrease quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty - 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink transition-transform active:scale-[0.98]">
         −
       </button>
       <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{qty}</span>
-      <button type="button" aria-label="Increase quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty + 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink">
+      <button type="button" aria-label="Increase quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty + 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink transition-transform active:scale-[0.98]">
         +
       </button>
     </div>

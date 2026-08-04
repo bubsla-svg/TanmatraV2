@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
 
 /**
@@ -15,8 +16,14 @@ export function Section03B2BEnterprise() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <div className="rounded-3xl border-2 border-gold/30 bg-surface-raised p-8 shadow-sm lg:p-12">
+        {/* min-w-0 on both grid items: a CSS grid item's default min-width is
+            `auto` (its content's min-content size), not 0 — so on narrow
+            viewports the track refused to shrink below the graphic card's
+            intrinsic width and pushed this whole section past the viewport
+            edge (measured: 469px content in a 360px viewport). min-w-0 lets
+            the track — and the text inside it — actually wrap down to fit. */}
         <div className="grid items-center gap-8 lg:grid-cols-2">
-          <div>
+          <div className="min-w-0">
             <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
               Corporate Wellness &amp; Team Lunches
             </span>
@@ -43,18 +50,20 @@ export function Section03B2BEnterprise() {
             </ul>
 
             <div className="mt-8">
-              <Link
-                href="/corporate-wellness#pilot-form"
-                onClick={handleClick}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-[var(--gold-ink)] shadow-md transition-opacity hover:opacity-90 active:scale-95"
-              >
-                Calculate Your Team's ROI &amp; Request a Pilot &rarr;
-              </Link>
+              {/* whitespace-normal overrides the Button primitive's default
+                  nowrap: this label is long enough that nowrap made the
+                  button itself the widest thing on the page, dragging the
+                  whole section wider than the viewport on mobile. */}
+              <Button asChild shape="xl" size="fluid" className="whitespace-normal px-6 py-3.5 font-bold shadow-md">
+                <Link href="/corporate-wellness#pilot-form" onClick={handleClick}>
+                  Calculate Your Team's ROI &amp; Request a Pilot &rarr;
+                </Link>
+              </Button>
             </div>
           </div>
 
           {/* Graphic: Corporate ID badge syncing & bulk thermal delivery */}
-          <div className="rounded-2xl border border-line bg-surface p-6 shadow-xs">
+          <div className="min-w-0 rounded-2xl border border-line bg-surface p-6 shadow-xs">
             <div className="flex items-center justify-between border-b border-line pb-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-raised text-lg font-bold">

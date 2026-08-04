@@ -73,6 +73,17 @@ test("POST /integrations/petpooja/push-menu processes valid payload and returns 
   // 1. Mock db.transaction to run the callback synchronously
   t.mock.method(db, "transaction", async (cb: any) => {
     const mockTx = {
+      // ADM-28: the handler selects the existing row's price before every
+      // upsert, to decide whether an inbound price change must be logged
+      // instead of applied. This item is new, so "no existing row" (empty
+      // array) is the correct stub — no audit call should follow from it.
+      select: () => ({
+        from: () => ({
+          where: () => ({
+            limit: () => Promise.resolve([]),
+          }),
+        }),
+      }),
       insert: () => {
         const mockInsertBuilder = {
           values: () => {

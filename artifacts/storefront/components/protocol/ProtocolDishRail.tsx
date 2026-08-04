@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ProtocolKey } from "@/content/landing/protocol";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /** Slim projection of a catalog dish for the protocol rail. */
 export interface ProtocolDish {
@@ -50,31 +51,48 @@ export function ProtocolDishRail({
 }) {
   const picks = selected(dishes, filter);
   return (
-    <section className="py-12">
+    <section className="py-[var(--space-section)]">
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{label}</p>
-          <p className="mt-1 max-w-xl text-sm text-ink-muted">{sub}</p>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">{sub}</p>
         </div>
         <Link href="/menu" className="shrink-0 text-sm font-semibold text-gold-text hover:underline">
           Full menu &rarr;
         </Link>
       </div>
       {picks.length === 0 ? (
-        <p className="mt-6 text-sm text-ink-muted">No qualifying dishes are live right now — check back soon.</p>
+        <p className="mt-8 rounded-2xl border border-dashed border-line bg-surface p-8 text-center text-sm text-ink-muted">
+          No qualifying dishes are live right now — check back soon.
+        </p>
       ) : (
-        <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
+        <div className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
           {picks.map((d) => (
-            <Link key={d.slug} href={`/dish/${d.slug}`} className="w-44 shrink-0 overflow-hidden rounded-2xl border border-line bg-surface">
-              <div className="h-28 bg-surface-raised">
-                {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized <img>, see next.config */}
-                <img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover" />
+            <Link
+              key={d.slug}
+              href={`/dish/${d.slug}`}
+              className="group w-44 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-shadow hover:shadow-md cv-auto sm:w-52"
+            >
+              <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
+                <SafeImage
+                  src={d.image}
+                  className="h-full w-full"
+                  imgClassName="transition-transform duration-300 ease-out group-hover:scale-105"
+                />
+                <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
+                  <span className="tabular rounded-full border border-line bg-surface/90 px-2.5 py-1 text-[10px] font-semibold text-ink backdrop-blur-sm">
+                    {badge(d, filter)}
+                  </span>
+                  {d.rdVerified && (
+                    <span className="rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-semibold text-sage-text backdrop-blur-sm">
+                      RD-verified
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="p-2.5">
+              <div className="p-3">
                 <p className="truncate text-xs font-semibold text-ink">{d.name}</p>
-                <p className="tabular mt-0.5 text-[10px] text-ink-muted">
-                  {Math.round(d.calories)} kcal · {badge(d, filter)}
-                </p>
+                <p className="tabular mt-1 text-[10px] text-ink-muted">{Math.round(d.calories)} kcal</p>
               </div>
             </Link>
           ))}

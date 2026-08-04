@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, ordersTable, refundRequestsTable, deliveryEventsTable } from "@workspace/db";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
-import { requireOps } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
 import { REFUND_EVENT_NAMES, remainingRefundablePaise } from "../lib/paymentIntegrity";
 
 const router: IRouter = Router();
@@ -33,7 +33,7 @@ const decideBody = z.object({
 // GET /admin/refunds?status=pending
 // ---------------------------------------------------------------------------
 router.get("/admin/refunds", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireRole(req, res, "finance");
   if (!gate) return;
 
   const parsed = listQuery.safeParse(req.query);
@@ -57,7 +57,7 @@ router.get("/admin/refunds", async (req: Request, res: Response) => {
 // POST /admin/refunds/:id/approve — approve + issue the gateway refund
 // ---------------------------------------------------------------------------
 router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireRole(req, res, "finance");
   if (!gate) return;
   const operatorId = gate.operatorId ?? "operator";
 
@@ -306,7 +306,7 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
 // POST /admin/refunds/:id/reject — decline the refund (no money moves)
 // ---------------------------------------------------------------------------
 router.post("/admin/refunds/:id/reject", async (req: Request, res: Response) => {
-  const gate = requireOps(req, res);
+  const gate = await requireRole(req, res, "finance");
   if (!gate) return;
   const operatorId = gate.operatorId ?? "operator";
 

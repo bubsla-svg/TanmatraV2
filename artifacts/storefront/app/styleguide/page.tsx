@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { StepDots } from "@/components/checkout/StepDots";
 import { formatPaise } from "@/lib/format";
 import { ComponentProofs } from "@/components/styleguide/ComponentProofs";
+import { SystemProofs } from "@/components/styleguide/SystemProofs";
 
 // The live token + component reference (IMP §17.10). Named `/styleguide`, not
 // `/__styleguide`: the App Router treats `_`-prefixed folders as private
-// (non-routable). Noindexed. Renders in the viewer's active theme — toggle
-// data-theme on <html> to compare light/dark.
+// (non-routable). Noindexed. Renders in the viewer's active theme — use the
+// Header's theme toggle to compare light/dark live.
 export const metadata: Metadata = { title: "Styleguide", robots: { index: false } };
 
 type Token = { name: string; var: string; onDark?: boolean };
@@ -14,6 +15,7 @@ const SURFACES: Token[] = [
   { name: "bg", var: "--bg" },
   { name: "surface", var: "--surface" },
   { name: "surface-raised", var: "--surface-raised" },
+  { name: "surface-subtle", var: "--surface-subtle" },
 ];
 const INK: Token[] = [
   { name: "ink", var: "--ink" },
@@ -28,6 +30,7 @@ const ACCENTS: Token[] = [
   { name: "gold", var: "--gold", onDark: true },
   { name: "blue", var: "--blue", onDark: true },
   { name: "sage", var: "--sage", onDark: true },
+  { name: "sage-soft", var: "--sage-soft" },
 ];
 const STATUS: Token[] = [
   { name: "success", var: "--success", onDark: true },
@@ -144,6 +147,7 @@ export default function StyleguidePage() {
         </div>
       </div>
       <ComponentProofs />
+      <SystemProofs />
     </section>
   );
 }

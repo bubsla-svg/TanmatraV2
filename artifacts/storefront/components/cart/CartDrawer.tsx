@@ -1,12 +1,19 @@
 "use client";
 // "use client" justification: interactive cart surface (steppers, drawer).
+// Stitch dark scope (component-scoped — the sheet floats over light and dark
+// routes alike, so data-stitch sits on the sheet root, not a page wrapper) —
+// see lib/themes/stitch.css.
+import "@/lib/themes/stitch.css";
 import type { ReactNode } from "react";
 import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { useCart } from "@/components/cart/CartProvider";
+import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
-import { CartUpsellRail, type UpsellCandidate } from "./CartUpsellRail";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
+import { CartUpsellRail } from "./CartUpsellRail";
+import type { MarketplaceItem } from "@/lib/marketplaceApi";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
@@ -24,19 +31,20 @@ export function CartDrawer({
 }) {
   const { cart, setCart } = useCart();
 
+  // Back gesture closes the drawer, not the page (Vaul owns the slide;
+  // history ownership lives here).
+  useOverlayHistory(open, () => onOpenChange(false));
+
   let footer: ReactNode;
   if (LIVE_CHECKOUT_ENABLED) {
     footer = (
-      <a
-        href="/checkout?mode=alacarte"
-        className="block min-h-11 rounded-xl bg-primary px-5 py-3 text-center text-sm font-semibold text-primary-foreground"
-      >
-        Checkout
-      </a>
+      <Button asChild shape="pill" size="fluid" className="block min-h-11 px-5 py-3 text-center font-semibold">
+        <a href="/checkout?mode=alacarte">Checkout</a>
+      </Button>
     );
   } else {
     footer = (
-      <p role="status" className="rounded-lg border border-line bg-muted px-4 py-3 text-center text-xs text-muted-foreground">
+      <p role="status" className="rounded-2xl border border-line bg-surface-raised px-4 py-3 text-center text-xs text-ink-muted">
         Checkout goes live with the payment slice — your cart is saved.
       </p>
     );
@@ -44,21 +52,28 @@ export function CartDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent aria-describedby={undefined}>
+      {/* data-stitch on the sheet root itself: the drawer floats over light and
+          dark routes, so its token subtree goes dark everywhere. The sheet's
+          own bg/border live in the shared ui/drawer primitive (bg-surface +
+          hairline border-line — opaque, not the mock's /95+blur). */}
+      <DrawerContent aria-describedby={undefined} data-stitch="dark">
         <div className="flex min-h-0 flex-col px-4 pb-6 pt-3">
           <DrawerTitle className="text-lg font-semibold text-ink">Your cart</DrawerTitle>
           <ul className="mt-3 flex-1 divide-y divide-line overflow-y-auto overscroll-contain">
             {cart.lines.map((l) => (
-              <li key={`${l.kind}-${l.dishId}`} className="flex items-center justify-between gap-3 py-3">
+              <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">{l.name}</p>
+                  {l.customizations && l.customizations.length > 0 && (
+                    <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
+                  )}
                   <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center rounded-lg border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
-                    <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) - 1))} className="min-h-10 min-w-10 text-ink">−</button>
+                  <div className="flex items-center rounded-full border border-line bg-surface-raised" role="group" aria-label={`${l.name} quantity`}>
+                    <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="min-h-10 min-w-10 rounded-full text-ink transition-transform active:scale-[0.98]">−</button>
                     <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
-                    <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind) + 1))} className="min-h-10 min-w-10 text-ink">+</button>
+                    <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="min-h-10 min-w-10 rounded-full text-ink transition-transform active:scale-[0.98]">+</button>
                   </div>
                   <span className="tabular w-16 text-right text-sm font-semibold text-ink">
                     {formatPaise(l.pricePaise * l.qty)}
@@ -70,24 +85,27 @@ export function CartDrawer({
               <li className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
             )}
           </ul>
+          {/* Real catalog items, same line shape as MarketplaceGrid's add —
+              ids/slugs/prices all resolve server-side (the rail used to add
+              invented items checkout could only dead-end on). */}
           <CartUpsellRail
             cartLines={cart.lines}
-            onAdd={(item: UpsellCandidate) => {
+            onAdd={(item: MarketplaceItem) => {
               setCart(
                 addLine(cart, {
-                  dishId: item.dishId,
+                  dishId: item.id,
+                  kind: "marketplace",
                   slug: item.slug,
                   name: item.name,
                   pricePaise: item.pricePaise,
-                  kind: item.kind,
                 })
               );
             }}
           />
           <div className="mt-3 border-t border-line pt-3">
-            <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="text-ink-muted">Subtotal (before delivery &amp; GST)</span>
-              <span className="tabular font-semibold text-ink">{formatPaise(subtotalPaise(cart))}</span>
+            <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+              <span className="text-xs uppercase tracking-wider text-ink-muted">Subtotal (before delivery &amp; GST)</span>
+              <span className="tabular text-base font-semibold text-ink">{formatPaise(subtotalPaise(cart))}</span>
             </div>
             {footer}
           </div>

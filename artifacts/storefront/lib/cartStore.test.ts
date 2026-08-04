@@ -65,3 +65,70 @@ test("parseStoredCart survives garbage, wrong shapes, and hostile values", () =>
   assert.equal(s.lines.length, 1);
   assert.equal(s.lines[0]?.dishId, 7);
 });
+
+// ── Customised lines: identity must not collide with a plain line ──────────
+
+const customBread = {
+  dishId: 121,
+  kind: "dish" as const,
+  slug: "grilled-veggie-sandwich-ranch-yoghurt",
+  name: "Grilled Veggie Sandwich",
+  pricePaise: 27500,
+  customizations: ["Multigrain Bread"],
+};
+
+test("a customised add does not merge into a plain line for the same dish", () => {
+  let s = addLine(EMPTY_CART, { dishId: 121, kind: "dish", slug: customBread.slug, name: "Grilled Veggie Sandwich", pricePaise: 26000 });
+  s = addLine(s, customBread);
+  assert.equal(s.lines.length, 2, "plain and customised are separate lines");
+  assert.equal(qtyOf(s, 121, "dish"), 1, "the PLAIN line's qty is untouched");
+  assert.equal(qtyOf(s, 121, "dish", customBread.customizations), 1);
+});
+
+test("two different customisations of the same dish stay as separate lines", () => {
+  const other = { ...customBread, customizations: ["Extra Chipotle Sauce"] };
+  let s = addLine(EMPTY_CART, customBread);
+  s = addLine(s, other);
+  assert.equal(s.lines.length, 2);
+  assert.equal(qtyOf(s, 121, "dish", customBread.customizations), 1);
+  assert.equal(qtyOf(s, 121, "dish", other.customizations), 1);
+});
+
+test("re-adding the SAME customisation increments that line, not a new one", () => {
+  let s = addLine(EMPTY_CART, customBread);
+  s = addLine(s, customBread);
+  assert.equal(s.lines.length, 1);
+  assert.equal(qtyOf(s, 121, "dish", customBread.customizations), 2);
+});
+
+test("customisation label order does not create a duplicate line (signature is order-independent)", () => {
+  const a = { ...customBread, customizations: ["Multigrain Bread", "Extra Sauce"] };
+  const b = { ...customBread, customizations: ["Extra Sauce", "Multigrain Bread"] };
+  let s = addLine(EMPTY_CART, a);
+  s = addLine(s, b);
+  assert.equal(s.lines.length, 1);
+  assert.equal(qtyOf(s, 121, "dish", a.customizations), 2);
+});
+
+test("setQty on a customised line's signature only clears that line, leaving the plain one intact", () => {
+  let s = addLine(EMPTY_CART, { dishId: 121, kind: "dish", slug: customBread.slug, name: "Grilled Veggie Sandwich", pricePaise: 26000 });
+  s = addLine(s, customBread);
+  s = setQty(s, 121, "dish", 0, customBread.customizations);
+  assert.equal(s.lines.length, 1);
+  assert.equal(qtyOf(s, 121, "dish"), 1, "plain line survives");
+  assert.equal(qtyOf(s, 121, "dish", customBread.customizations), 0);
+});
+
+test("existing 3-arg setQty/qtyOf call sites keep targeting the plain line only (back-compat)", () => {
+  let s = addLine(EMPTY_CART, customBread);
+  // No caller anywhere in the app can accidentally touch a customised line by
+  // omitting the 4th argument — every pre-existing 3-arg call site must keep
+  // behaving exactly as it did before this field existed. setQty only ever
+  // updates an EXISTING matching line, so with no plain line present this is
+  // a no-op — it must not touch the customised line, and must not fabricate
+  // a plain line either.
+  assert.equal(qtyOf(s, 121, "dish"), 0);
+  s = setQty(s, 121, "dish", 5);
+  assert.equal(s.lines.length, 1, "no plain line existed to update — nothing created");
+  assert.equal(qtyOf(s, 121, "dish", customBread.customizations), 1, "customised line untouched");
+});

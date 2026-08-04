@@ -53,6 +53,20 @@
   /* Brand-semantic extension (§3.2): sage is a SIGNAL, never action. */
   --sage-foreground: var(--sage-ink);
 
+  /* Stacking order, named. Authored z-indexes drifted into collision — a modal
+     shipped below the bottom nav because both were hand-picked numbers with
+     nothing relating them. Use `z-[var(--z-modal)]` etc. and the relationship
+     is declared, not remembered. The gaps are deliberate: a one-off can sit
+     between two tiers without renumbering anything.
+       chrome  sticky header / in-page sticky sections
+       bar     mini-cart, buy bars, sticky footers (over content, under nav)
+       nav     mobile bottom nav — the last thing a page may cover
+       modal   dialogs, drawers, their scrims — always above all chrome */
+  --z-chrome: 10;
+  --z-bar: 30;
+  --z-nav: 50;
+  --z-modal: 100;
+
   /* Typeface (TNM-UIF-01 §10.2 decision): IBM Plex Sans for UI, JetBrains Mono
      for macro/numeric data. The families are loaded via next/font in the root
      layout (exposed as the two vars below); this override wins over the system
@@ -74,6 +88,7 @@
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-subtle: var(--surface-subtle);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-ink-faint: var(--ink-faint);
@@ -84,6 +99,7 @@
   --color-blue: var(--blue);
   --color-sage: var(--sage);
   --color-sage-text: var(--sage-text);
+  --color-sage-soft: var(--sage-soft);
   --color-sage-foreground: var(--sage-foreground);
 
   /* shadcn semantic utilities: bg-primary, text-muted-foreground, ring-ring… */
@@ -114,17 +130,90 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+
+  /* Overlay/disclosure motion — COMPOSITOR PROPERTIES ONLY (transform +
+     opacity). Never animate height/width/top/left here: those run on the main
+     thread and drop frames on mid-range phones. Every keyframe animates
+     `transform`, which COMPOSES with Tailwind v4's translate/scale utilities
+     (they emit the individual `translate`/`scale` properties, not
+     `transform`), so a `-translate-x-1/2`-centred dialog keeps its centring
+     while the entrance plays. `both` fill keeps frame 0 applied before the
+     animation starts (no flash of the settled state). */
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-sheet-in: sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-dialog-in: dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-disclosure-in: disclosure-in 180ms ease-out both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes sheet-in {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes disclosure-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
+/* ROOT CANVAS GUARANTEE. The document background is defined at the absolute
+ * root, with a color-scheme-driven fallback: `Canvas` is the UA's own page
+ * colour and follows the element's used color-scheme (light on the default
+ * root, dark under [data-theme="dark"] / the Stitch scope's
+ * `color-scheme: dark !important`). So even if --bg ever fails to resolve —
+ * a third-party overlay (payment gateway) injecting its own resets, a
+ * stylesheet load race, a portal escaping a token scope — a dark document can
+ * never expose a white void behind or around the overlay. Never move the
+ * background down onto a wrapper div: body/html are what show through a
+ * gateway's transparent backdrop. */
 html {
-  background: var(--bg);
+  background-color: var(--bg, Canvas);
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-text-size-adjust: 100%;
+  /* Anchor jumps (#plans, skip-link) glide instead of teleporting. The
+     reduced-motion block below forces this back to `auto`. */
+  scroll-behavior: smooth;
 }
+
+/* Explicit dark restatement at the root. Redundant while tokens.css and the
+ * bridge are loaded (both define --bg's dark arm) — load-bearing the moment
+ * either is not: these two selectors are the dark-mode contract for the
+ * document canvas itself. */
+html[data-theme="dark"],
+html[data-stitch="dark"] {
+  background-color: var(--bg, Canvas);
+}
+
+/* data-stitch lives on <html> itself now (app/layout.tsx's STITCH_ROUTE_SCRIPT),
+ * so the color-scheme flip needs no :has() reach-up from <body> any more — the
+ * rule is colocated with the attribute selector in lib/themes/stitch.css. */
 
 body {
   margin: 0;
+}
+
+/* FOCUS ROUTE PADDING OVERRIDE. app/layout.tsx's <body> unconditionally
+ * reserves ~8rem of bottom padding to clear the global MobileBottomNav +
+ * MiniCartBar/DishBuyBar stack — but those never render on a focus route
+ * (lib/focusRoutes.ts: /login, /checkout, /quick-setup, /dish), which owns
+ * its own bottom edge and pads for its own sticky bar instead. Left
+ * unconditional, that was 128px of dead scrollable canvas below every focus
+ * route's real content. `data-focus-route` is stamped on <body> by
+ * FOCUS_ROUTE_SCRIPT (app/layout.tsx) before first paint — same mechanism as
+ * `data-stitch` above, and for the same reason: reading the path via
+ * `headers()` in the root layout would force the whole app out of static
+ * rendering (measured 50 routes -> 2 for the identical data-stitch case).
+ * Safe-area inset is kept, not zeroed — a focus route's own sticky bar still
+ * needs to clear the home-indicator/notch. */
+body[data-focus-route="true"] {
+  padding-bottom: env(safe-area-inset-bottom) !important;
 }
 
 /* Clinical data (prices, macros) always reads in tabular figures. */
@@ -201,6 +290,35 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Money-path controls (Pay, quantity steppers) get the stricter 48px target:
+   a mis-tap here costs an order, not a scroll position. */
+.touch-target-critical {
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card-grid isolation: keeps a re-render inside one card from forcing layout
+   recalculation across the whole grid. Deliberately NOT `contain: content` —
+   that implies paint containment, which clips anything a card intentionally
+   overflows (badges, focus rings, popovers). Layout+style is the win without
+   the clipping hazard. */
+.grid-contain > * {
+  contain: layout style;
+}
+
+/* Off-screen carousel items: the browser skips layout+paint entirely until the
+   card scrolls near the viewport. The intrinsic-size fallback reserves an
+   approximate box for skipped items so the rail's scroll range doesn't jump as
+   cards materialise — `auto` remembers the real size once rendered. Apply to
+   the ITEMS of a heavy horizontal rail, never the scroll container itself. */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px auto 320px;
 }
 
 /* 16px Minimum Input Rule to prevent iOS Safari auto-zoom */

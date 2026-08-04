@@ -3,6 +3,8 @@ import healthRouter from "./health";
 import authRouter from "./auth";
 import adminAuthRouter from "./adminAuth";
 import adminStatusRouter from "./adminStatus";
+import adminAuditRouter from "./adminAudit";
+import adminRolesRouter from "./adminRoles";
 import errorReportRouter from "./errorReport";
 import deliveryRouter from "./delivery";
 import fulfillmentRouter from "./fulfillment";
@@ -60,6 +62,7 @@ import ecosystemRouter from "./ecosystem";
 import savedMealsRouter from "./savedMeals";
 import serviceabilityRouter from "./serviceability";
 import serviceabilityInterestRouter from "./serviceabilityInterest";
+import legalDocumentsRouter from "./legalDocuments";
 
 const router: IRouter = Router();
 
@@ -73,6 +76,8 @@ router.use(serviceabilityInterestRouter);
 router.use(authRouter);
 router.use(adminAuthRouter);
 router.use(adminStatusRouter);
+router.use(adminAuditRouter);
+router.use(adminRolesRouter);
 router.use(errorReportRouter);
 router.use(deliveryRouter);
 router.use(fulfillmentRouter);
@@ -129,5 +134,6 @@ if (petpoojaWebhooksMounted()) {
 router.use(wearableRouter);
 router.use(ecosystemRouter);
 router.use(savedMealsRouter);
+router.use(legalDocumentsRouter);
 
 export default router;

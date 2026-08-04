@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 
 export default function CommunityQaPage() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 flex flex-col gap-10">
+    <section className="mx-auto max-w-7xl px-4 py-10 flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+        <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">
           Collective Wisdom &amp; Advisory Care
         </span>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">

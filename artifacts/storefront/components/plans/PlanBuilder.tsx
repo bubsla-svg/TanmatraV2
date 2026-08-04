@@ -8,6 +8,7 @@ import { formatPaise } from "@/lib/format";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { emitFunnel } from "@/lib/funnel";
+import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
@@ -35,11 +36,19 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   
   const [track, setTrack] = useState<DietTrack>(defaultTrack);
   const trackConfig = builderData.servedTracks.find(t => t.track === track) ?? builderData.servedTracks[0]!;
-  
+
   const hasMonthly = trackConfig.quotes.some(q => q.cycle === "monthly");
-  const [cycle, setCycle] = useState<PlanCycle>(hasMonthly ? "monthly" : trackConfig.quotes[0]!.cycle);
-  
-  const currentQuote = trackConfig.quotes.find(q => q.cycle === cycle) ?? trackConfig.quotes[0]!;
+  // trackConfig.quotes can legitimately be empty — PLAN_PRICE_TABLE keys some
+  // plans (glp1_companion, teams) by "intro"/"regular"/"default" rather than by
+  // diet track. The host page only renders this component for a launchable
+  // plan today, so the array is never empty in practice, but a non-null
+  // assertion here would crash if that host check ever changed — fall back to
+  // "monthly" rather than dereferencing a quote that doesn't exist.
+  const [cycle, setCycle] = useState<PlanCycle>(
+    hasMonthly || trackConfig.quotes.length === 0 ? "monthly" : trackConfig.quotes[0]!.cycle,
+  );
+
+  const currentQuote = trackConfig.quotes.find(q => q.cycle === cycle) ?? trackConfig.quotes[0];
 
   const [bump, setBump] = useState(false);
 
@@ -48,12 +57,27 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   // honest generic offer — no fabricated name/face.
   const canBump = planAllowsAddOn(planId, "rd_bump");
   const rdBump = addOnView("rd_bump");
-  const total = currentQuote.cycleTotalPaise + (bump ? rdBump.pricePaise : 0);
+  const total = (currentQuote?.cycleTotalPaise ?? 0) + (bump ? rdBump.pricePaise : 0);
 
   function confirm() {
     emitFunnel("cuj_builder_confirm", { planId, track, cycle, bump });
     emitFunnel("cuj_checkout_start", { planId, track, cycle, bump });
     router.push(`/checkout?plan=${planId}&track=${track}&cycle=${cycle}${bump ? "&bump=1" : ""}`);
+  }
+
+  // Same "never a dead end" contract PlanCard applies to a blocked plan: a
+  // launchable plan whose price table has no entry for this track (the
+  // glp1_companion/teams shape) still needs somewhere honest to land, not a
+  // crash on an assumed quote.
+  if (!currentQuote) {
+    return (
+      <section className="flex flex-col gap-3" aria-label={`Build ${d.name}`}>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{d.name}</h1>
+        <p className="text-sm text-ink-muted">
+          Pricing for this plan isn&rsquo;t set up for the {TRACK_LABEL[track]} preference yet.
+        </p>
+      </section>
+    );
   }
 
   return (
@@ -126,8 +150,15 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         )}
       </div>
 
+      {/* The on-plan-vs-à-la-carte chip. Its fill was `bg-surface-muted`, and no
+          --surface-muted token exists anywhere — so the chip painted nothing and
+          its rounded, padded geometry was invisible. Nor is --surface-subtle the
+          answer: that aliases --bg, and this whole section sits directly on --bg
+          (app/plan/[planId]/page.tsx wraps it in bg-[var(--bg)]), so it would be
+          a second invisible fill. --surface is the one step up from the canvas,
+          the same fill the cycle-total row below uses. */}
       {currentQuote.pricePerMealPaise != null && trackConfig.poolMedianPaise != null && (
-        <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-4 py-2 text-sm font-medium text-ink-muted">
+        <div className="flex items-center gap-2 rounded-lg bg-surface px-4 py-2 text-sm font-medium text-ink-muted">
           <span className="text-ink">₹{Math.round(currentQuote.pricePerMealPaise / 100)}/meal</span> on plan
           <span>·</span>
           <span>₹{Math.round(trackConfig.poolMedianPaise / 100)} avg à la carte</span>
@@ -150,14 +181,17 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         />
       )}
 
-      <div className="flex flex-col gap-2">
-        <button
+      {/* Sticky bottom CTA bar — Stitch plan-config design (route-05). Classes only. */}
+      <div className="sticky bottom-16 z-40 flex flex-col gap-2 rounded-xl border border-line bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-3 backdrop-blur-xl md:bottom-4">
+        <Button
           type="button"
           onClick={confirm}
-          className="rounded-xl bg-gold px-5 py-3 text-center text-sm font-semibold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+          shape="xl"
+          size="fluid"
+          className="px-5 py-3 text-center font-semibold"
         >
           Continue to checkout
-        </button>
+        </Button>
         <p className="text-center text-[10px] uppercase tracking-wide text-ink-faint">
           No platform fee. No surge. Prices include all taxes.
         </p>

@@ -7,6 +7,7 @@ import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuthUser, verifyOtp } from "@/lib/api";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { Button } from "@/components/ui/button";
 
 /**
  * The /login card (SF account surfaces / CUJ-02). An already-signed-in visitor
@@ -61,27 +62,29 @@ export function LoginCard({ next }: { next: string }) {
     };
   }, [next, router]);
 
+  // Same card language as the plan flow's identity gate
+  // (checkout/plan/PlanIdentityGate.tsx) — one bordered surface, heading
+  // always present (an e2e spec asserts the "Sign in" heading regardless of
+  // which of the three states below is showing), state-specific content
+  // beneath it.
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold text-ink">Sign in</h1>
+    <div className="flex flex-col gap-6 rounded-3xl border border-line bg-surface p-6 md:p-8">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">Sign in</h1>
       {checking ? (
         <p className="text-sm text-ink-muted">Checking your session…</p>
       ) : firebaseConfigured() ? (
         <>
           <p className="text-sm text-ink-muted">A code by SMS, no passwords.</p>
-          <PhoneAuth onVerified={() => router.replace(next)} />
+          <PhoneAuth startExpanded onVerified={() => router.replace(next)} />
         </>
       ) : (
         <>
           <p role="alert" className="text-sm font-medium text-[var(--danger)]">
             Sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>
-          <Link
-            href="/menu"
-            className="self-start rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
-          >
-            Browse the menu
-          </Link>
+          <Button asChild shape="pill" size="fluid" className="self-start px-5 py-3 font-semibold">
+            <Link href="/menu">Browse the menu</Link>
+          </Button>
         </>
       )}
     </div>

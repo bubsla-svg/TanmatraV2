@@ -90,10 +90,13 @@ const nextConfig: NextConfig = {
       { source: "/checkout-appointment", destination: "/account/appointments", permanent: true },
     ];
   },
-  // Explicit dimensions on the <img> keep CLS at zero without pulling in the
-  // next/image loader for the skeleton. Revisit with next/image +
-  // remotePatterns in a later phase.
-  images: { unoptimized: true },
+  // next/image through a custom loader (lib/imageLoader.ts — the WHY is
+  // documented there). No `remotePatterns`: every photo is same-origin via the
+  // /images/* rewrite above, and keeping it that way is what lets a future
+  // `img-src 'self'` CSP stay clean. deviceSizes/imageSizes stay at Next's
+  // defaults — the loader only annotates the URL, so the candidate list costs
+  // markup, not bytes, until the upstream can actually resize.
+  images: { loader: "custom", loaderFile: "./lib/imageLoader.ts" },
   // The workspace's shared TS libs use NodeNext ".js" import specifiers that
   // resolve to ".ts" sources (e.g. subscription-rules' `from "./pricing.js"`).
   // Vite/tsx map those automatically; webpack needs an explicit extension alias.

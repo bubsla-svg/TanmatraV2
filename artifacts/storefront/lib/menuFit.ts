@@ -9,9 +9,9 @@
 import {
   evaluateDishForPreferences,
   type BlockReason,
+  type DishForMatch,
   type PreferencesForMatch,
 } from "@workspace/preferences-match";
-import type { DishData } from "@workspace/menu-catalog";
 
 export type FitBand = "conflict" | "high" | "moderate" | "neutral";
 
@@ -44,7 +44,7 @@ function titleCase(s: string): string {
   return s.length > 0 ? s[0]!.toUpperCase() + s.slice(1) : s;
 }
 
-export function computeDishFit(dish: DishData, prefs: PreferencesForMatch): DishFit {
+export function computeDishFit(dish: DishForMatch, prefs: PreferencesForMatch): DishFit {
   const m = evaluateDishForPreferences(dish, prefs);
   if (m.blocked) {
     // Allergen match is the safety headline — name the specific allergen(s).
@@ -79,9 +79,9 @@ const BAND_ORDER: Record<FitBand, number> = { high: 0, moderate: 1, neutral: 2, 
  * within a band (the server's curated order is preserved there).
  */
 export function rankDishes(
-  dishes: DishData[],
+  dishes: DishForMatch[],
   prefs: PreferencesForMatch,
-): Array<{ dish: DishData; fit: DishFit }> {
+): Array<{ dish: DishForMatch; fit: DishFit }> {
   return dishes
     .map((dish, i) => ({ dish, fit: computeDishFit(dish, prefs), i }))
     .sort((a, b) => BAND_ORDER[a.fit.band] - BAND_ORDER[b.fit.band] || a.i - b.i)

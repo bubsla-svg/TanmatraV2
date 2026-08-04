@@ -1,9 +1,18 @@
 "use client";
-// Recipes browser — client-side filtering over the server-rendered list (SSR
-// paints the full grid → SEO-safe; filtering is in-memory, no re-fetch, since
-// the API caps the list at a browsable size).
+// Recipes browser — client-side filtering over the recipe list. The list
+// itself is fetched here via useQuery (key ["recipes","list"], no filter
+// state in the key: filtering stays in-memory over the one fetched list, it
+// doesn't refetch). `recipes` (server-fetched by the page, SSR-painted for
+// SEO) seeds `initialData` so there's no loading flash on the happy path, but
+// `staleTime: 0` overrides the QueryProvider default (30s) so a background
+// refetch fires immediately on mount instead of trusting stale/possibly
+// outage-masked SSR data for up to 30s — `isError` (not an empty array)
+// drives the "briefly unavailable" copy, so a transient API outage no longer
+// renders as "No recipes match those filters."
 import { useMemo, useState } from "react";
-import type { Recipe } from "@/lib/recipesApi";
+import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
+import { fetchRecipesList, type Recipe } from "@/lib/recipesApi";
 import { RecipeCard } from "./RecipeCard";
 
 const GOALS: [string, string][] = [
@@ -20,7 +29,11 @@ function Chips<T extends string | number>(props: {
   options: [T, string][]; value: T; onChange: (v: T) => void; label: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label={props.label}>
+    <div
+      className="scrollbar-hide flex gap-1.5 overflow-x-auto pb-0.5"
+      role="group"
+      aria-label={props.label}
+    >
       {props.options.map(([v, l]) => {
         const on = v === props.value;
         return (
@@ -29,7 +42,7 @@ function Chips<T extends string | number>(props: {
             type="button"
             onClick={() => props.onChange(v)}
             aria-pressed={on}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${on ? "border-[var(--gold)] bg-gold text-[var(--gold-ink)]" : "border-line text-ink-muted hover:text-ink"}`}
+            className={`shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${on ? "border-[var(--gold)] bg-gold text-[var(--gold-ink)]" : "border-line text-ink-muted hover:text-ink"}`}
           >
             {l}
           </button>
@@ -39,11 +52,18 @@ function Chips<T extends string | number>(props: {
   );
 }
 
-export function RecipesBrowser({ recipes }: { recipes: Recipe[] }) {
+export function RecipesBrowser({ recipes: initialRecipes }: { recipes: Recipe[] }) {
   const [goal, setGoal] = useState("all");
   const [diet, setDiet] = useState("all");
   const [maxTime, setMaxTime] = useState(0);
   const [q, setQ] = useState("");
+
+  const { data: recipes, isError } = useQuery({
+    queryKey: ["recipes", "list"],
+    queryFn: () => fetchRecipesList(),
+    initialData: initialRecipes,
+    staleTime: 0,
+  });
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -58,25 +78,34 @@ export function RecipesBrowser({ recipes }: { recipes: Recipe[] }) {
 
   return (
     <div>
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search recipes…"
-        aria-label="Search recipes"
-        className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-sm text-ink outline-none focus:border-line-strong"
-      />
-      <div className="mt-4 flex flex-col gap-2">
+      <div className="relative">
+        <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search recipes…"
+          aria-label="Search recipes"
+          className="w-full rounded-full border border-line bg-surface py-3 pl-11 pr-4 text-sm text-ink shadow-sm outline-none transition-colors focus:border-[var(--gold)]"
+        />
+      </div>
+      <div className="mt-4 flex flex-col gap-2.5">
         <Chips options={GOALS} value={goal} onChange={setGoal} label="Filter by goal" />
         <Chips options={DIETS} value={diet} onChange={setDiet} label="Filter by diet" />
         <Chips options={TIMES} value={maxTime} onChange={setMaxTime} label="Filter by time" />
       </div>
-      <p className="mt-5 text-xs text-ink-faint">
+      <p className="tabular mt-6 text-xs font-medium text-ink-muted">
         {filtered.length} {filtered.length === 1 ? "recipe" : "recipes"}
       </p>
-      {filtered.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-ink-muted">No recipes match those filters.</p>
+      {isError ? (
+        <p className="mt-4 rounded-2xl border border-dashed border-line bg-surface px-4 py-10 text-center text-sm text-ink-muted">
+          Recipes are briefly unavailable — please check back shortly.
+        </p>
+      ) : filtered.length === 0 ? (
+        <p className="mt-4 rounded-2xl border border-dashed border-line bg-surface px-4 py-10 text-center text-sm text-ink-muted">
+          No recipes match those filters.
+        </p>
       ) : (
-        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-3 flex flex-col gap-4">
           {filtered.map((r) => (
             <RecipeCard key={r.slug} recipe={r} />
           ))}

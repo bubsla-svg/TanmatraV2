@@ -2,8 +2,22 @@ import { Router, type Request, type Response } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { menuItemsTable, ordersTable, ridersTable } from "@workspace/db/schema";
-import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, classifyPosStatusTransition, type PetpoojaPushMenuPayload, type PetpoojaSaveOrderPayload, type PetpoojaCallbackPayload, type PetpoojaUpdateOrderStatusPayload, type PetpoojaRiderInfoPayload } from "../lib/petpooja";
+import { invalidateMenuCatalogCache } from "../lib/menuCatalogCache";
+import { recordAdminAction } from "../lib/adminAudit";
+import { mapPetpoojaItem, serializeMenuToPetpooja, mapPetpoojaOrderToDb, mapPetpoojaStatus, mapPetpoojaRiderStatus, classifyPosStatusTransition } from "../lib/petpooja";
 import { petpoojaAuthOk, getStoreStatus, setStoreStatus } from "../lib/petpoojaClient";
+import {
+  petpoojaFetchMenuSchema,
+  petpoojaPushMenuSchema,
+  petpoojaSaveOrderSchema,
+  petpoojaCallbackSchema,
+  petpoojaUpdateOrderStatusSchema,
+  petpoojaRiderInfoSchema,
+  petpoojaItemStockSchema,
+  petpoojaItemStockOffSchema,
+  petpoojaGetStoreStatusSchema,
+  petpoojaUpdateStoreStatusSchema,
+} from "../lib/petpoojaSchemas";
 
 const router = Router();
 
@@ -12,18 +26,32 @@ function unauthorized(res: Response) {
   res.status(401).json({ success: "0", message: "unauthorized: invalid Petpooja credentials" });
 }
 
-// STRICT, and it must stay strict. This handler bulk-upserts `menu_items`,
-// `price_paise` included — it is the single most dangerous inbound route in the
-// service. It used to run "lenient", which at the time meant a request with no
-// credentials at all was waved through. Do not relax it.
+// STRICT, and it must stay strict. This handler bulk-upserts `menu_items` —
+// it is the single most dangerous inbound route in the service. It used to
+// run "lenient", which at the time meant a request with no credentials at
+// all was waved through. Do not relax it.
+//
+// TNM-ADM-01 ADM-28: it also used to write `price_paise` on every upsert,
+// which made the catalog's operator-set price only as durable as the next
+// PetPooja sync — a replayed or stale push would silently revert a manual
+// price change with no record of it happening. The catalog (menu_items via
+// lib/menu.ts::updatePrice) is now the sole price authority: an existing
+// row's price is never touched here, and an inbound push that tries to
+// change it is logged to the audit trail rather than applied. A brand-new
+// item (no existing row) still gets its initial price from the payload —
+// there is no operator price to protect yet, and PetPooja is the only
+// source for a new item's starting price. lib/priceBands.ts's category-band
+// guard deliberately does not run on this insert path; it exists to catch
+// fat-fingered or malicious operator edits via updatePrice, not to validate
+// a first-time POS import.
 router.post("/integrations/petpooja/push-menu", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
-  const payload = req.body as PetpoojaPushMenuPayload;
-
-  if (!payload || !payload.items || !Array.isArray(payload.items)) {
+  const parsed = petpoojaPushMenuSchema.safeParse(req.body);
+  if (!parsed.success) {
     res.status(400).json({ success: "0", message: "invalid payload structure" });
     return;
   }
+  const payload = parsed.data;
 
   const { items, categories, addongroups, attributes } = payload;
 
@@ -40,6 +68,26 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
           attributes ?? []
         );
 
+        const [existing] = await tx
+          .select({ pricePaise: menuItemsTable.pricePaise })
+          .from(menuItemsTable)
+          .where(eq(menuItemsTable.slug, mapped.slug))
+          .limit(1);
+
+        if (existing && existing.pricePaise !== mapped.pricePaise) {
+          await recordAdminAction(
+            {
+              operatorId: "petpooja-sync",
+              action: "menu.price_write_rejected",
+              resourceType: "menu_item",
+              resourceId: mapped.slug,
+              beforeState: { pricePaise: existing.pricePaise },
+              afterState: { attemptedPricePaise: mapped.pricePaise },
+            },
+            tx,
+          );
+        }
+
         await tx
           .insert(menuItemsTable)
           .values({
@@ -51,7 +99,8 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
             set: {
               name: mapped.name,
               description: mapped.description,
-              pricePaise: mapped.pricePaise,
+              // pricePaise intentionally excluded — see the handler's doc
+              // comment above. The catalog owns price, not PetPooja.
               category: mapped.category,
               isVeg: mapped.isVeg,
               isAvailable: mapped.isAvailable,
@@ -67,6 +116,7 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
       }
     });
 
+    invalidateMenuCatalogCache();
     req.log?.info("petpooja push-menu sync completed successfully");
     res.status(200).json({ success: "1", message: "Menu synchronized successfully" });
   } catch (err: any) {
@@ -80,7 +130,12 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
 // catalogue. Lenient, because Petpooja's menu-pull sender may omit app_key.
 router.post("/integrations/petpooja/fetchmenu", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
-  const { restID } = req.body;
+  const parsed = petpoojaFetchMenuSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ success: "0", message: "restID is required" });
+    return;
+  }
+  const { restID } = parsed.data;
 
   if (!restID) {
     res.status(400).json({ success: "0", message: "restID is required" });
@@ -127,12 +182,12 @@ router.post("/integrations/petpooja/fetchmenu", async (req: Request, res: Respon
  */
 router.post("/integrations/petpooja/saveorder", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
-  const payload = req.body as PetpoojaSaveOrderPayload;
-
-  if (!payload || !payload.orderinfo || !payload.orderinfo.OrderInfo) {
+  const parsed = petpoojaSaveOrderSchema.safeParse(req.body);
+  if (!parsed.success) {
     res.status(400).json({ success: "0", message: "invalid order payload structure" });
     return;
   }
+  const payload = parsed.data;
 
   try {
     const { Restaurant, Order } = payload.orderinfo.OrderInfo;
@@ -264,9 +319,14 @@ router.post("/integrations/petpooja/saveorder", async (req: Request, res: Respon
  */
 router.post("/integrations/petpooja/callback", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
-  const payload = req.body as PetpoojaCallbackPayload;
+  const parsed = petpoojaCallbackSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ success: "0", message: "invalid status callback payload" });
+    return;
+  }
+  const payload = parsed.data;
 
-  if (!payload || !payload.orderID || !payload.status) {
+  if (!payload.orderID || !payload.status) {
     res.status(400).json({ success: "0", message: "invalid status callback payload" });
     return;
   }
@@ -389,9 +449,14 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
 
 router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
-  const payload = req.body as PetpoojaUpdateOrderStatusPayload;
+  const parsed = petpoojaUpdateOrderStatusSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ success: "0", message: "clientorderID and status are required" });
+    return;
+  }
+  const payload = parsed.data;
 
-  if (!payload || !payload.clientorderID || !payload.status) {
+  if (!payload.clientorderID || !payload.status) {
     res.status(400).json({ success: "0", message: "clientorderID and status are required" });
     return;
   }
@@ -516,9 +581,14 @@ router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Resp
 
 router.post("/integrations/petpooja/rider-info", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
-  const payload = req.body as PetpoojaRiderInfoPayload;
+  const parsed = petpoojaRiderInfoSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ success: "fail", message: "order_id and status are required" });
+    return;
+  }
+  const payload = parsed.data;
 
-  if (!payload || !payload.order_id || !payload.status) {
+  if (!payload.order_id || !payload.status) {
     res.status(400).json({ success: "fail", message: "order_id and status are required" });
     return;
   }
@@ -649,7 +719,12 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
 
 router.post("/integrations/petpooja/item_stock", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
-  const { type, inStock, itemID, restID } = req.body;
+  const parsed = petpoojaItemStockSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ code: 400, status: "fail", message: "type, inStock, and itemID array are required" });
+    return;
+  }
+  const { type, inStock, itemID, restID } = parsed.data;
 
   if (type === undefined || inStock === undefined || !itemID || !Array.isArray(itemID)) {
     res.status(400).json({ code: 400, status: "fail", message: "type, inStock, and itemID array are required" });
@@ -671,6 +746,7 @@ router.post("/integrations/petpooja/item_stock", async (req: Request, res: Respo
             sql`${menuItemsTable.tags} @> ${JSON.stringify([`petpooja:${id}`])}::jsonb`
           );
       }
+      invalidateMenuCatalogCache();
       req.log?.info({ itemID, inStock }, "successfully updated item stock status");
     } else {
       req.log?.warn(
@@ -692,7 +768,12 @@ router.post("/integrations/petpooja/item_stock", async (req: Request, res: Respo
 
 router.post("/integrations/petpooja/item_stock_off", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
-  const { type, inStock, itemID, restID, autoTurnOnTime, customTurnOnTime } = req.body;
+  const parsed = petpoojaItemStockOffSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ code: 400, status: "fail", message: "type, inStock, and itemID array are required" });
+    return;
+  }
+  const { type, inStock, itemID, restID, autoTurnOnTime, customTurnOnTime } = parsed.data;
 
   if (type === undefined || inStock === undefined || !itemID || !Array.isArray(itemID)) {
     res.status(400).json({ code: 400, status: "fail", message: "type, inStock, and itemID array are required" });
@@ -714,6 +795,7 @@ router.post("/integrations/petpooja/item_stock_off", async (req: Request, res: R
             sql`${menuItemsTable.tags} @> ${JSON.stringify([`petpooja:${id}`])}::jsonb`
           );
       }
+      invalidateMenuCatalogCache();
       req.log?.info(
         { itemID, inStock, autoTurnOnTime, customTurnOnTime },
         "successfully marked items as out-of-stock"
@@ -738,7 +820,12 @@ router.post("/integrations/petpooja/item_stock_off", async (req: Request, res: R
 
 router.post("/integrations/petpooja/get_store_status", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
-  const { restID } = req.body;
+  const parsed = petpoojaGetStoreStatusSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ http_code: 400, status: "fail", message: "restID is required" });
+    return;
+  }
+  const { restID } = parsed.data;
 
   if (!restID) {
     res.status(400).json({ http_code: 400, status: "fail", message: "restID is required" });
@@ -758,7 +845,12 @@ router.post("/integrations/petpooja/get_store_status", async (req: Request, res:
 
 router.post("/integrations/petpooja/update_store_status", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "lenient")) return unauthorized(res);
-  const { restID, store_status, turn_on_time, reason } = req.body;
+  const parsed = petpoojaUpdateStoreStatusSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ http_code: 400, status: "fail", message: "restID, store_status, and turn_on_time are required" });
+    return;
+  }
+  const { restID, store_status, turn_on_time, reason } = parsed.data;
 
   if (!restID || store_status === undefined || !turn_on_time) {
     res.status(400).json({ http_code: 400, status: "fail", message: "restID, store_status, and turn_on_time are required" });

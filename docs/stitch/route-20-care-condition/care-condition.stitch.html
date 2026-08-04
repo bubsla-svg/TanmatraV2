@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanmatra - Type 2 Diabetes Care</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error": "#690005",
+                      "on-error-container": "#ffdad6",
+                      "tertiary": "#bfcdff",
+                      "primary-fixed-dim": "#e9c349",
+                      "on-primary-container": "#554300",
+                      "on-tertiary": "#082b72",
+                      "surface-container-lowest": "#0e0e0e",
+                      "secondary-fixed": "#dde1ff",
+                      "on-background": "#e5e2e1",
+                      "inverse-primary": "#735c00",
+                      "secondary-fixed-dim": "#b8c3ff",
+                      "error-container": "#93000a",
+                      "surface-tint": "#e9c349",
+                      "surface": "#131313",
+                      "on-secondary-container": "#a4b1f7",
+                      "inverse-surface": "#e5e2e1",
+                      "ember-warning": "#B6892F",
+                      "on-secondary-fixed": "#021453",
+                      "on-tertiary-fixed": "#00174b",
+                      "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                      "on-secondary-fixed-variant": "#344280",
+                      "surface-container-high": "#2a2a2a",
+                      "tertiary-container": "#97b0ff",
+                      "on-primary-fixed-variant": "#574500",
+                      "clay-danger": "#B0655A",
+                      "inverse-on-surface": "#313030",
+                      "tertiary-fixed": "#dbe1ff",
+                      "on-surface-variant": "#d0c5af",
+                      "on-tertiary-container": "#254188",
+                      "on-secondary": "#1c2b68",
+                      "secondary-container": "#344280",
+                      "primary-container": "#d4af37",
+                      "on-primary": "#3c2f00",
+                      "on-tertiary-fixed-variant": "#27438a",
+                      "surface-container": "#201f1f",
+                      "primary": "#f2ca50",
+                      "surface-container-highest": "#353534",
+                      "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                      "on-surface": "#e5e2e1",
+                      "primary-fixed": "#ffe088",
+                      "outline-variant": "#4d4635",
+                      "off-white-ink": "#F5F5F4",
+                      "tertiary-fixed-dim": "#b4c5ff",
+                      "sage-signal": "#7D9E7E",
+                      "surface-variant": "#353534",
+                      "outline": "#99907c",
+                      "muted-steel": "#A3A3A3",
+                      "surface-bright": "#3a3939",
+                      "surface-dim": "#131313",
+                      "graphite-surface": "#171717",
+                      "surface-container-low": "#1c1b1b",
+                      "background": "#131313",
+                      "on-primary-fixed": "#241a00",
+                      "secondary": "#b8c3ff",
+                      "ink-on-gold": "#111318",
+                      "error": "#ffb4ab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "card-padding": "1.5rem",
+                      "max-width": "1280px",
+                      "gutter": "1rem",
+                      "mobile-margin": "1.25rem",
+                      "desktop-margin": "2rem",
+                      "section-gap": "clamp(3rem, 8vw, 6rem)"
+              },
+              "fontFamily": {
+                      "body-muted": ["Satoshi"],
+                      "clinical-data": ["JetBrains Mono"],
+                      "label-small-caps": ["Satoshi"],
+                      "headline-md": ["Satoshi"],
+                      "body-base": ["Satoshi"],
+                      "display-lg": ["Satoshi"]
+              },
+              "fontSize": {
+                      "body-muted": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                      "clinical-data": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "500" }],
+                      "label-small-caps": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                      "headline-md": ["2rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                      "body-base": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                      "display-lg": ["clamp(2.5rem, 5vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Satoshi', sans-serif; background-color: #0e0e0e; color: #e5e2e1; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary/30 selection:text-primary">
+<!-- Top Navigation Placeholder (Hidden based on rules, assumed rendered outside) -->
+<main class="w-full mx-auto max-w-max-width pt-24 pb-safe flex flex-col gap-section-gap px-mobile-margin md:px-desktop-margin">
+<!-- 1. CareHero -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center min-h-[70vh]">
+<div class="md:col-span-5 flex flex-col items-start justify-center gap-6 z-10">
+<div class="flex flex-col gap-2">
+<span class="font-label-small-caps text-label-small-caps text-muted-steel uppercase tracking-widest">Clinical care pathway</span>
+<h1 class="font-display-lg text-display-lg text-off-white-ink">Type 2 Diabetes</h1>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant max-w-md">
+                    Reversing insulin resistance through precision culinary interventions and metabolic tracking, guided by clinical expertise.
+                </p>
+<button class="mt-4 px-8 py-4 bg-primary text-ink-on-gold rounded-full font-label-small-caps text-label-small-caps hover:bg-primary-fixed-dim transition-colors active:scale-[0.98] duration-200 ease-out flex items-center gap-2">
+                    Start Protocol <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">arrow_right_alt</span>
+</button>
+</div>
+<div class="md:col-span-7 h-full w-full rounded-xl overflow-hidden border border-whisper-hairline shadow-sm shadow-black/40 relative min-h-[400px]">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="A beautifully plated dish of seared salmon alongside vibrant green asparagus spears and perfectly cooked quinoa, resting on a dark, textured ceramic plate. The setting is a sophisticated, moody culinary studio with soft, directional lighting highlighting the textures of the food. In the softly blurred background, sleek black pepper mills hint at a refined dining experience. The overall mood is high-end, appetizing, and clinically precise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhRDV2sMu0lu5xAU_93Q1Hl3DDqYuZgtPp1HsZBBqmWqoKr-DQ6-0wLtIjf__FuLZnhAZK-i2oFmz3q0JNB7KLOqqz8SEv92C82dDsr-tLi3h5_AoC9t3axOQM6lSL3b_hNoSP__WYId66eI4HdULNNsgpKTSiunKycpILGOOwIHUDMNzRG7aHy17RT9sUfInR400-0FqkOqPZSbV5pECTdeFPA1yycHWnYxD_9IvkfAiebCudrZtduKtlFq-ZN8iIi7ItCDokHAI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent md:hidden"></div>
+</div>
+</section>
+<!-- 2. CareEvidence -->
+<section class="flex flex-col gap-8">
+<div class="flex flex-col gap-2">
+<h2 class="font-headline-md text-headline-md text-off-white-ink">Clinical Evidence</h2>
+<p class="font-body-muted text-body-muted text-on-surface-variant max-w-lg">Protocols anchored in peer-reviewed metabolic science.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<div class="bg-graphite-surface rounded-lg p-6 border border-whisper-hairline flex flex-col gap-4 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-on-tertiary-container group-hover:bg-tertiary-container transition-colors"></div>
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 0;">glucose</span>
+<p class="font-body-base text-body-base text-on-surface">Low-GI meal sequencing reduces postprandial glucose spikes.</p>
+<div class="mt-auto pt-4 border-t border-whisper-hairline">
+<span class="font-clinical-data text-clinical-data text-muted-steel uppercase">J. Nutr, 2023</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-graphite-surface rounded-lg p-6 border border-whisper-hairline flex flex-col gap-4 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-on-tertiary-container group-hover:bg-tertiary-container transition-colors"></div>
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 0;">monitor_weight</span>
+<p class="font-body-base text-body-base text-on-surface">Sustained remission linked to targeted macronutrient distribution.</p>
+<div class="mt-auto pt-4 border-t border-whisper-hairline">
+<span class="font-clinical-data text-clinical-data text-muted-steel uppercase">Lancet Diabetes, 2021</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-graphite-surface rounded-lg p-6 border border-whisper-hairline flex flex-col gap-4 relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-on-tertiary-container group-hover:bg-tertiary-container transition-colors"></div>
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 0;">vital_signs</span>
+<p class="font-body-base text-body-base text-on-surface">Continuous monitoring improves HbA1c trajectory tracking.</p>
+<div class="mt-auto pt-4 border-t border-whisper-hairline">
+<span class="font-clinical-data text-clinical-data text-muted-steel uppercase">Diabetes Care, 2022</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. CareRdRoster -->
+<section class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<h2 class="font-headline-md text-headline-md text-off-white-ink">Clinical Dietitians</h2>
+<p class="font-body-muted text-body-muted text-on-surface-variant max-w-lg">Expert guidance tailored to your metabolic profile.</p>
+</div>
+<div class="flex overflow-x-auto no-scrollbar gap-6 pb-4 -mx-mobile-margin px-mobile-margin md:mx-0 md:px-0 snap-x snap-mandatory">
+<!-- RD Card 1 -->
+<a class="min-w-[280px] md:min-w-[320px] bg-graphite-surface border border-whisper-hairline rounded-lg overflow-hidden flex flex-col snap-start group active:scale-[0.98] transition-transform duration-200 ease-out hover:border-outline-variant" href="#">
+<div class="h-64 w-full bg-surface-container-highest relative">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="A professional headshot of a smiling female dietitian, Sarah Chen, in her mid-30s. She has warm, approachable features, shoulder-length brown hair, and is wearing a dark, minimal knit sweater. The lighting is soft and flattering, set against a dark, moody grey-blue studio backdrop, conveying trust and clinical expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQ2V48HRKo-FEf8S65ryQYmmK21zk7O3DWA5B0r7V_6q6vs3NVlWC6pQYbtGoQzZzZL5ti4pmmbFiriuqy8W-_mIfrhGEoiH8hbOtOItDYss_G7Mg5Ee-VmVT9antryl4r2h1Axu5pP01zuW2S-dV3U5GxVt4wtctyqk9IocErBdj7qd7AoLuLF2XN-8QldAbHDmy_5KiEZ-qg2rYKES9_wAI0yeE8QJJLoPaFH9OrumJYkHzb-MwRy00xNxK4F9hgpd4QOix8tno"/>
+</div>
+<div class="p-6 flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<h3 class="font-body-base text-body-base text-off-white-ink font-semibold">Sarah Chen</h3>
+<span class="font-label-small-caps text-label-small-caps text-primary bg-primary/10 px-2 py-1 rounded-full">RD, CDE</span>
+</div>
+<p class="font-body-muted text-body-muted text-on-surface-variant truncate">Specializes in insulin resistance</p>
+</div>
+</a>
+<!-- RD Card 2 (Placeholder Image) -->
+<a class="min-w-[280px] md:min-w-[320px] bg-graphite-surface border border-whisper-hairline rounded-lg overflow-hidden flex flex-col snap-start group active:scale-[0.98] transition-transform duration-200 ease-out hover:border-outline-variant" href="#">
+<div class="h-64 w-full bg-surface-container-highest relative">
+<img class="absolute inset-0 w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 transition-all duration-500" data-alt="A professional headshot of a male clinical nutritionist in his 40s. He looks attentive and knowledgeable, wearing a dark collared shirt. Soft, directional studio lighting creates a sophisticated mood against a deep charcoal background, emphasizing a high-end medical care aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaDy4KMb7z-ozq6D5tyCLqziF11aGgWfMxWW365Qmkvbl_sqzh6dseL7r85mcAQK6vpdo6MbO1dGXRoGx8CvMZkFkgwzq9xKVii8WbKhP8T5Adxvtp-eebSHZX8N6IQttPrT7kTe5bgIaxGPQuHQ9-vPogVrNoW4hvObcCn7P4bJNgAXP7d1SqluNm5gezCYyHKKoCS6E0EYpWdBgl4djkFufZsLebTWaFKT49rN85C15SSGYgFf7x7EnBlNIV8fqUorMDVw2__Fc"/>
+</div>
+<div class="p-6 flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<h3 class="font-body-base text-body-base text-off-white-ink font-semibold">David Reynolds</h3>
+<span class="font-label-small-caps text-label-small-caps text-primary bg-primary/10 px-2 py-1 rounded-full">MS, RD</span>
+</div>
+<p class="font-body-muted text-body-muted text-on-surface-variant truncate">Endocrinology &amp; Culinary Medicine</p>
+</div>
+</a>
+</div>
+</section>
+<!-- 4. BenefitGrid -->
+<section class="flex flex-col gap-8 py-8">
+<div class="flex flex-col gap-2 items-center text-center max-w-2xl mx-auto mb-4">
+<h2 class="font-headline-md text-headline-md text-off-white-ink">Protocol Benefits</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-x-12 md:gap-y-8">
+<!-- Benefit 1 -->
+<div class="flex items-center gap-4 p-4 rounded-lg bg-graphite-surface border border-whisper-hairline md:translate-y-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center border border-whisper-hairline shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 0;">restaurant_menu</span>
+</div>
+<span class="font-body-base text-body-base text-on-surface">Curated, low-glycemic culinary plans</span>
+</div>
+<!-- Benefit 2 -->
+<div class="flex items-center gap-4 p-4 rounded-lg bg-graphite-surface border border-whisper-hairline">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center border border-whisper-hairline shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 0;">timeline</span>
+</div>
+<span class="font-body-base text-body-base text-on-surface">Continuous glucose trend analysis</span>
+</div>
+<!-- Benefit 3 -->
+<div class="flex items-center gap-4 p-4 rounded-lg bg-graphite-surface border border-whisper-hairline md:translate-y-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center border border-whisper-hairline shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 0;">psychology</span>
+</div>
+<span class="font-body-base text-body-base text-on-surface">Behavioral coaching for sustainable habits</span>
+</div>
+<!-- Benefit 4 -->
+<div class="flex items-center gap-4 p-4 rounded-lg bg-graphite-surface border border-whisper-hairline">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center border border-whisper-hairline shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 0;">science</span>
+</div>
+<span class="font-body-base text-body-base text-on-surface">Biomarker-driven protocol adjustments</span>
+</div>
+</div>
+</section>
+<!-- 5. Plan Cards -->
+<section class="flex flex-col gap-8 pb-12">
+<div class="w-full max-w-3xl mx-auto">
+<div class="bg-graphite-surface rounded-xl p-8 border border-whisper-hairline shadow-sm shadow-black/50 relative overflow-hidden flex flex-col md:flex-row gap-8 items-center">
+<!-- Decorative blur -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+<div class="flex-1 flex flex-col gap-4 z-10 w-full">
+<h3 class="font-headline-md text-headline-md text-off-white-ink">Metabolic Diabetes Protocol</h3>
+<ul class="flex flex-col gap-3 mt-2">
+<li class="flex items-center gap-3 text-on-surface-variant font-body-muted text-body-muted">
+<span class="material-symbols-outlined text-primary text-sm">check</span>
+                                1:1 Clinical Dietitian Consultations
+                            </li>
+<li class="flex items-center gap-3 text-on-surface-variant font-body-muted text-body-muted">
+<span class="material-symbols-outlined text-primary text-sm">check</span>
+                                Custom Meal Sequencing Plans
+                            </li>
+<li class="flex items-center gap-3 text-on-surface-variant font-body-muted text-body-muted">
+<span class="material-symbols-outlined text-primary text-sm">check</span>
+                                Biometric Integration &amp; Analysis
+                            </li>
+</ul>
+</div>
+<div class="flex flex-col items-start md:items-end gap-6 z-10 w-full md:w-auto p-6 md:p-0 bg-surface-container-low/50 md:bg-transparent rounded-lg md:border-none border border-whisper-hairline">
+<div class="flex flex-col md:items-end">
+<span class="font-label-small-caps text-label-small-caps text-muted-steel uppercase mb-1">Monthly Investment</span>
+<div class="flex items-baseline gap-1">
+<span class="font-clinical-data text-clinical-data text-off-white-ink text-2xl tracking-tight font-bold">₹15,000</span>
+<span class="font-clinical-data text-clinical-data text-muted-steel">/mo</span>
+</div>
+</div>
+<button class="w-full md:w-auto px-8 py-3 bg-primary text-ink-on-gold rounded-full font-label-small-caps text-label-small-caps hover:bg-primary-fixed-dim transition-colors active:scale-[0.98] duration-200 ease-out text-center">
+                            Select Protocol
+                        </button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Placeholder (Hidden based on rules) -->
+</body></html>

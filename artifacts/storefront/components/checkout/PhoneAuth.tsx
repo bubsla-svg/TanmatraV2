@@ -1,72 +1,171 @@
 "use client";
 // Client: Firebase phone-auth is browser-only (reCAPTCHA + SMS confirmation).
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { firebaseConfigured, friendlyFirebaseError } from "@/lib/firebase";
 import { sendPhoneOtp, toE164, type PhoneVerification } from "@/lib/phoneAuth";
-import { verifyOtp, ApiError, type AuthUser } from "@/lib/api";
-
-type Stage = "collapsed" | "phone" | "code";
+import { getAuthUser, verifyOtp, ApiError, type AuthUser } from "@/lib/api";
+import {
+  canResend,
+  isCodeValid,
+  isPhoneValid,
+  resendSecondsLeft,
+  OTP_MESSAGES,
+  type OtpStage,
+} from "@/lib/otpFlow";
 
 const inputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
 
 /**
  * Optional sign-in (SF-03). Firebase sends the SMS, its idToken is exchanged for
  * a `sid` session at verify-otp, and the verified user is handed up so checkout
  * can attribute the order and prefill the phone. Renders NOTHING when the build
  * shipped no Firebase config — the guest money path never hard-depends on it.
+ *
+ * NO AUTH WALL FOR AN AUTHENTICATED USER. This component probes the session on
+ * mount and renders nothing once one exists, reporting the user upward instead.
+ * It used to render "Have an account? Sign in for faster checkout"
+ * unconditionally — so a signed-in customer arriving at /checkout was invited
+ * to sign in again, a top-of-funnel wall in the middle of the money path. The
+ * probe is the same `getAuthUser()` every other auth-gated island already uses,
+ * so the answer comes from the session cookie, not from client state that can
+ * disagree with it.
+ *
+ * NO SILENT DEAD-ENDS. Every early return in `send`/`verify` now sets a visible
+ * message (lib/otpFlow.ts owns the copy). Two of them used to be bare
+ * `return`s — a tapped "Send code"/"Verify" that produced no SMS, no error and
+ * no state change. The rules themselves (validity, resend cooldown) live in
+ * lib/otpFlow.ts so they are unit-tested without a browser.
  */
-export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void }) {
-  const [stage, setStage] = useState<Stage>("collapsed");
+export function PhoneAuth({
+  onVerified,
+  startExpanded = false,
+}: {
+  onVerified: (user: AuthUser) => void;
+  /**
+   * Open straight at the phone input. Pass this from any surface that already
+   * announces "Sign in to …" in its own copy (/login, the plan identity gate,
+   * the post-401 islands): the collapsed "Have an account? Sign in for faster
+   * checkout" teaser is checkout copy, and on those surfaces it was a second,
+   * contradictory prompt plus one dead-feeling extra tap. Checkout keeps the
+   * default: there, sign-in is genuinely optional and the teaser is correct.
+   */
+  startExpanded?: boolean;
+}) {
+  const [stage, setStage] = useState<OtpStage>(startExpanded ? "phone" : "collapsed");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  /** null until a session probe has answered; `false` = confirmed signed out. */
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [lastSentAt, setLastSentAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const verification = useRef<PhoneVerification | null>(null);
   const recaptcha = useRef<HTMLDivElement | null>(null);
+
+  // `onVerified` through a ref: the session probe below must not re-run just
+  // because a parent re-rendered and handed down a fresh closure.
+  const onVerifiedRef = useRef(onVerified);
+  onVerifiedRef.current = onVerified;
+
+  // Session probe. A 401 (or any failure) means "signed out" — the sign-in
+  // affordance is the correct fallback, never a blocked screen.
+  useEffect(() => {
+    let live = true;
+    getAuthUser()
+      .then(({ user }) => {
+        if (!live) return;
+        setSignedIn(Boolean(user));
+        if (user) onVerifiedRef.current(user);
+      })
+      .catch(() => {
+        if (live) setSignedIn(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   // Tear down the reCAPTCHA widget on unmount so it doesn't leak across mounts.
   useEffect(() => () => verification.current?.clear(), []);
 
-  if (!firebaseConfigured()) return null;
+  // Drive the resend countdown. Only ticks while a cooldown is actually
+  // running, so an idle form schedules no timers at all.
+  const secondsLeft = resendSecondsLeft(lastSentAt, now);
+  useEffect(() => {
+    if (lastSentAt === null || secondsLeft === 0) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [lastSentAt, secondsLeft]);
 
-  const phoneValid = phone.replace(/\D/g, "").length >= 10;
-  const codeValid = code.replace(/\D/g, "").length >= 6;
-
-  async function send() {
+  /** Send (or re-send) the SMS. Always ends in a rendered state: a new stage,
+   *  or a message saying why not. */
+  const send = useCallback(async () => {
+    if (!isPhoneValid(phone)) {
+      setError(OTP_MESSAGES.invalidPhone);
+      return;
+    }
     const el = recaptcha.current;
-    if (!el) return;
+    if (!el) {
+      // Previously a bare `return` — the button looked dead.
+      setError(OTP_MESSAGES.captchaUnavailable);
+      return;
+    }
     // Clear any prior widget first — a re-send into the same element otherwise
     // throws "reCAPTCHA has already been rendered in this element".
     verification.current?.clear();
     verification.current = null;
     setError(null);
+    setNotice(null);
     setBusy(true);
     try {
       verification.current = await sendPhoneOtp(toE164("91", phone), el);
+      const sentAt = Date.now();
+      setLastSentAt(sentAt);
+      setNow(sentAt);
+      setCode("");
       setStage("code");
+      setNotice(`Code sent to +91 ${phone.trim()}.`);
     } catch (e) {
       setError(friendlyFirebaseError(e));
     } finally {
       setBusy(false);
     }
-  }
+  }, [phone]);
 
   async function verify() {
-    if (!verification.current) return;
+    if (!isCodeValid(code)) {
+      setError(OTP_MESSAGES.invalidCode);
+      return;
+    }
+    if (!verification.current) {
+      // Previously a bare `return` — "Verify" did nothing at all whenever the
+      // confirmation handle had been cleared (re-mount, or a failed re-send).
+      setError(OTP_MESSAGES.sessionExpired);
+      return;
+    }
     setError(null);
+    setNotice(null);
     setBusy(true);
     try {
       const idToken = await verification.current.confirm(code);
       const res = await verifyOtp({ idToken });
-      onVerified(res.user);
+      onVerifiedRef.current(res.user);
       setStage("collapsed");
+      setSignedIn(true);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : friendlyFirebaseError(e));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!firebaseConfigured()) return null;
+  // Already authenticated (or still probing): never show a sign-in wall.
+  if (signedIn !== false) return null;
 
   if (stage === "collapsed") {
     return (
@@ -80,8 +179,10 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
     );
   }
 
+  const resendReady = canResend(lastSentAt, now);
+
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-6">
       {stage === "phone" ? (
         <>
           <label htmlFor="pa-phone" className="text-sm font-medium text-ink">Mobile number</label>
@@ -89,12 +190,12 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
             id="pa-phone" type="tel" inputMode="numeric" autoComplete="tel" value={phone}
             onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls}
           />
-          <button
-            type="button" disabled={!phoneValid || busy} onClick={send}
-            className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
+          <Button
+            type="button" disabled={busy} onClick={() => void send()}
+            shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
           >
             {busy ? "Sending…" : "Send code"}
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -104,18 +205,36 @@ export function PhoneAuth({ onVerified }: { onVerified: (user: AuthUser) => void
             onChange={(e) => setCode(e.target.value)} placeholder="123456" className={inputCls}
           />
           <div className="flex items-center gap-3">
-            <button
-              type="button" disabled={!codeValid || busy} onClick={verify}
-              className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)] disabled:opacity-40"
+            <Button
+              type="button" disabled={busy} onClick={() => void verify()}
+              shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
             >
               {busy ? "Verifying…" : "Verify"}
+            </Button>
+            {/* A real resend: it re-requests the SMS rather than walking the
+                stage back to the phone input (which never sent anything). The
+                cooldown is shown, not merely enforced — a disabled control
+                with no visible reason is the signpost-less dead end Law 10
+                exists to prevent. */}
+            <button
+              type="button"
+              onClick={() => void send()}
+              disabled={busy || !resendReady}
+              className="-m-2 p-2 text-xs font-medium text-ink-muted hover:underline disabled:no-underline disabled:opacity-60"
+            >
+              {resendReady ? "Resend code" : `Resend in ${secondsLeft}s`}
             </button>
-            <button type="button" onClick={() => setStage("phone")} className="-m-2 p-2 text-xs font-medium text-ink-muted hover:underline">
-              Resend
+            <button
+              type="button"
+              onClick={() => { setStage("phone"); setError(null); setNotice(null); }}
+              className="-m-2 p-2 text-xs font-medium text-ink-muted hover:underline"
+            >
+              Change number
             </button>
           </div>
         </>
       )}
+      {notice && <p role="status" className="text-xs text-ink-muted">{notice}</p>}
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       <div ref={recaptcha} />
     </div>

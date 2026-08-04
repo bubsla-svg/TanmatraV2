@@ -17,8 +17,13 @@ export default async function LoginPage({
   const { next } = await searchParams;
   const safeNext = next && /^\/(?!\/)/.test(next) ? next : "/account";
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <LoginCard next={safeNext} />
-    </section>
+    <div className="min-h-dvh">
+      {/* The plainest, most utilitarian screen in the batch (Brief 26): one
+          centered card, generous whitespace, nothing competing with the OTP
+          flow that lives inside it. */}
+      <section className="mx-auto max-w-md px-4 py-16 md:py-24">
+        <LoginCard next={safeNext} />
+      </section>
+    </div>
   );
 }

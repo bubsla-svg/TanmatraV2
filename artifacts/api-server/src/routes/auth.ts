@@ -90,7 +90,9 @@ function setSessionCookie(res: Response, sid: string) {
 import { rateLimit } from "../lib/rateLimit";
 
 function clientIp(req: Request): string {
-  // Relies on `app.set("trust proxy", 1)` so req.ip parses XFF correctly.
+  // Relies on `app.set("trust proxy", 2)` (app.ts) so req.ip resolves past
+  // BOTH trusted hops (GCLB, then the storefront's own /api rewrite) to the
+  // actual visitor's address instead of the storefront's shared one.
   return req.ip ?? req.socket.remoteAddress ?? "unknown";
 }
 

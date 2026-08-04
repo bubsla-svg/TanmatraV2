@@ -9,22 +9,27 @@ export const metadata: Metadata = {
 
 export default function SubscriptionBridgePage() {
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 px-4 py-10">
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-          Next Step in Wellness
-        </span>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Upgrade to Full Care
-        </h1>
-        <p className="text-sm leading-relaxed text-ink-muted">
-          Your intro trial has set the foundation. Secure your recurring meal schedule with zero financial gap.
-        </p>
-      </div>
+    <div className="min-h-dvh">
+      {/* pb-48 clears BridgeView's sticky footer CTA (ready state) so the
+          unlock card is never hidden behind it while scrolling — same
+          reasoning as /trial's section padding. */}
+      <section className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-10 pb-48">
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+            Next Step in Wellness
+          </span>
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+            Upgrade to Full Care
+          </h1>
+          <p className="text-sm leading-relaxed text-ink-muted">
+            Your intro trial has set the foundation. Secure your recurring meal schedule with zero financial gap.
+          </p>
+        </div>
 
-      <Suspense fallback={<p className="text-sm text-ink-muted">Loading your credit status…</p>}>
-        <BridgeView />
-      </Suspense>
-    </section>
+        <Suspense fallback={<p className="text-sm text-ink-muted">Loading your credit status…</p>}>
+          <BridgeView />
+        </Suspense>
+      </section>
+    </div>
   );
 }

@@ -5,11 +5,13 @@ export default [
       index("pages/AdminIndex.tsx", { id: "ops-erp-root" }),
       route("admin", "pages/AdminIndex.tsx", { id: "ops-erp-admin" }),
       route("admin/ops", "pages/AdminOpsDashboard.tsx"),
+      route("admin/catalog", "pages/AdminCatalog.tsx"),
       route("admin/ai-runs", "pages/AdminAiRuns.tsx"),
       route("admin/ops-agent", "pages/AdminOpsAgent.tsx"),
       route("admin/cms-agent", "pages/AdminCmsAgent.tsx"),
       route("admin/forecasting", "pages/AdminForecasting.tsx"),
       route("admin/menu-engineering", "pages/AdminMenuEngineering.tsx"),
+      route("admin/menu-imagery", "pages/AdminMenuImagery.tsx"),
       route("admin/analytics", "pages/AdminAnalytics.tsx"),
       route("admin/support-tickets", "pages/AdminSupportTickets.tsx"),
       route("admin/rd-applications", "pages/AdminRdApplications.tsx"),
@@ -19,7 +21,9 @@ export default [
       route("admin/sales-console/:slug", "pages/AdminSalesAccount.tsx"),
       route("admin/kds", "pages/AdminKds.tsx"),
       route("admin/supplier", "pages/AdminSupplier.tsx"),
+      route("admin/delivery", "pages/AdminDelivery.tsx"),
       route("admin/compliance", "pages/AdminCompliance.tsx"),
+      route("admin/audit", "pages/AdminAudit.tsx"),
     ]),
     layout("routes/RdAuthLayout.tsx", [
       route("rd-console", "pages/RdConsole.tsx")

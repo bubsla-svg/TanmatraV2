@@ -12,15 +12,19 @@ export const metadata: Metadata = {
  *  automatically at checkout. Redeem-only — no charge path here. */
 export default function VouchersPage() {
   return (
-    <section className="mx-auto max-w-xl px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Your account</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Wallet &amp; vouchers</h1>
-      <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-        Redeem a voucher code to top up your wallet. Credit is applied automatically at your next checkout.
-      </p>
-      <div className="mt-6">
-        <VoucherRedeem />
-      </div>
-    </section>
+    <div className="min-h-dvh">
+      {/* pb-44 clears the sticky footer VoucherRedeem renders (single Redeem
+          button) — same reasoning as /checkout's pb-44. */}
+      <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Your account</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Wallet &amp; vouchers</h1>
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+          Redeem a voucher code to top up your wallet. Credit is applied automatically at your next checkout.
+        </p>
+        <div className="mt-6">
+          <VoucherRedeem />
+        </div>
+      </section>
+    </div>
   );
 }

@@ -12,7 +12,7 @@ export function WeekCalendarStrip({ calendar, onCycle }: {
 }) {
   return (
     <div>
-      <div className="flex gap-1.5">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {DAYS.map((d, i) => {
           const kind = calendar[i] ?? "normal";
           const on = kind !== "normal";
@@ -21,17 +21,21 @@ export function WeekCalendarStrip({ calendar, onCycle }: {
               key={d}
               type="button"
               onClick={() => onCycle(i)}
-              className={`flex-1 rounded-lg border px-1 py-1.5 text-center text-[11px] font-medium ${
-                on ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-gold-text" : "border-line text-ink-muted hover:text-ink"
+              className={`flex h-20 w-12 shrink-0 flex-col items-center justify-center gap-1.5 rounded-full active:scale-[0.98] ${
+                on
+                  ? "bg-gold text-[var(--gold-ink)]"
+                  : "border border-line text-ink-muted hover:border-line-strong hover:text-ink"
               }`}
             >
-              <span className="block">{d}</span>
-              <span className="block text-[9px] text-ink-faint">{LABEL[kind]}</span>
+              <span className="block font-mono text-[13px] font-semibold tracking-wide">{d}</span>
+              <span className={`block font-mono text-[9px] uppercase tracking-widest ${on ? "" : "text-ink-faint"}`}>
+                {LABEL[kind]}
+              </span>
             </button>
           );
         })}
       </div>
-      <p className="mt-1.5 text-[11px] text-ink-faint">Tap a day to mark gym / travel / WFH — applied next time you regenerate.</p>
+      <p className="mt-2 text-[11px] text-ink-faint">Tap a day to mark gym / travel / WFH — applied next time you regenerate.</p>
     </div>
   );
 }

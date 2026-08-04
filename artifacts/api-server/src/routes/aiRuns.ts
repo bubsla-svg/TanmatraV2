@@ -2,14 +2,14 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, aiRunsTable } from "@workspace/db";
 import { desc, eq, and, lt, type SQL } from "drizzle-orm";
 import { listAgents } from "../lib/ai";
-import { isOpsRequest } from "../lib/adminGate";
+import { isRoleRequest } from "../lib/adminGate";
 
 const router: IRouter = Router();
 
-router.get("/ai/agents", (req: Request, res: Response) => {
+router.get("/ai/agents", async (req: Request, res: Response) => {
   // Internal telemetry endpoint: exposes agent + tool metadata. Gated to
   // authenticated users or admin to reduce reconnaissance surface.
-  if (!isOpsRequest(req).allowed && !req.isAuthenticated()) {
+  if (!(await isRoleRequest(req, "owner")).allowed && !req.isAuthenticated()) {
     res.status(401).json({ error: "unauthorized" });
     return;
   }
@@ -29,7 +29,7 @@ router.get("/ai/agents", (req: Request, res: Response) => {
 });
 
 router.get("/ai/runs", async (req: Request, res: Response) => {
-  const admin = isOpsRequest(req).allowed;
+  const admin = (await isRoleRequest(req, "owner")).allowed;
   if (!admin && !req.isAuthenticated()) {
     res.status(401).json({ error: "unauthorized" });
     return;
@@ -82,6 +82,14 @@ router.get("/ai/runs", async (req: Request, res: Response) => {
       createdAt: aiRunsTable.createdAt,
       output: aiRunsTable.output,
       toolCalls: aiRunsTable.toolCalls,
+      // The gateway writes the upstream failure message here on every failed
+      // run (lib/ai/gateway.ts → persistRun), and this projection used to drop
+      // it. The consequence was that /admin/ai-runs could show a wall of red
+      // "error" badges — 0 tokens, ~600 ms, every agent — while telling an
+      // operator NOTHING about the cause, even though the cause was sitting in
+      // the row being read. Diagnosing "all agents are dead" then required
+      // shell access to the database. Admin-scoped only, see below.
+      error: aiRunsTable.error,
     })
     .from(aiRunsTable);
 
@@ -95,7 +103,15 @@ router.get("/ai/runs", async (req: Request, res: Response) => {
   const nextCursor =
     rows.length === limit ? rows[rows.length - 1]!.id : null;
 
-  res.json({ scope: admin ? "admin" : "self", runs: rows, nextCursor });
+  // `error` is a raw upstream/provider string — it can carry request ids,
+  // internal endpoints and quota detail. Useful to an operator, disclosure to
+  // anyone else, and this endpoint also serves scope:"self" to any signed-in
+  // customer looking at their own runs. Strip it for them.
+  const payload = admin
+    ? rows
+    : rows.map(({ error: _error, ...rest }) => rest);
+
+  res.json({ scope: admin ? "admin" : "self", runs: payload, nextCursor });
 });
 
 export default router;

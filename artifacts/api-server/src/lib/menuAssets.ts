@@ -11,6 +11,7 @@ import {
   generateImage,
   editImage,
 } from "@workspace/integrations-gemini-ai/image";
+import { batchProcess, isRateLimitError } from "@workspace/integrations-gemini-ai/batch";
 import {
   enhanceImage,
   normaliseGenerated,
@@ -285,17 +286,15 @@ export type BulkHeroEvent =
   | { type: "started"; slug: string; name: string; index: number; total: number }
   | { type: "item"; result: BulkHeroResult; index: number; total: number };
 
-// Streaming variant: yields per-item events so callers can surface live
-// progress and persist partial results if the run is interrupted.
-export async function* bulkGenerateMissingHeroesIter(input: {
-  slugs: string[];
-  createdBy: string | null;
-}): AsyncGenerator<BulkHeroEvent, void, void> {
-  const capped = input.slugs.slice(0, BULK_HERO_CAP);
-  if (capped.length === 0) {
-    yield { type: "plan", total: 0, slugs: [] };
-    return;
-  }
+interface MissingHeroPlan {
+  items: MenuItem[];
+  skipped: BulkHeroResult[];
+  total: number;
+}
+
+async function planMissingHeroes(slugs: string[]): Promise<MissingHeroPlan> {
+  const capped = slugs.slice(0, BULK_HERO_CAP);
+  if (capped.length === 0) return { items: [], skipped: [], total: 0 };
   const items = await db
     .select()
     .from(menuItemsTable)
@@ -311,7 +310,40 @@ export async function* bulkGenerateMissingHeroesIter(input: {
       skipped.push({ slug, ok: false, error: "already has primary image" });
     }
   }
-  const total = items.length + skipped.length;
+  return { items, skipped, total: items.length + skipped.length };
+}
+
+async function generateOneHero(
+  item: MenuItem,
+  createdBy: string | null,
+): Promise<BulkHeroResult> {
+  const asset = await generateHeroAsset({ item, createdBy });
+  const r = await setAssetAsPrimary({
+    assetId: asset.id,
+    expectedSlug: item.slug,
+  });
+  return {
+    slug: item.slug,
+    ok: true,
+    assetId: asset.id,
+    imageUrl: r.item?.imageUrl ?? asset.publicUrl,
+  };
+}
+
+// Streaming variant: yields per-item events so callers can surface live
+// progress and persist partial results if the run is interrupted. Serial by
+// design — the SSE endpoint (routes/menuAssets.ts) needs items to land in
+// order so its progress events read as a coherent sequence to the operator
+// watching them.
+export async function* bulkGenerateMissingHeroesIter(input: {
+  slugs: string[];
+  createdBy: string | null;
+}): AsyncGenerator<BulkHeroEvent, void, void> {
+  const { items, skipped, total } = await planMissingHeroes(input.slugs);
+  if (total === 0) {
+    yield { type: "plan", total: 0, slugs: [] };
+    return;
+  }
   yield {
     type: "plan",
     total,
@@ -323,20 +355,7 @@ export async function* bulkGenerateMissingHeroesIter(input: {
     yield { type: "started", slug: it.slug, name: it.name, index, total };
     let result: BulkHeroResult;
     try {
-      const asset = await generateHeroAsset({
-        item: it,
-        createdBy: input.createdBy,
-      });
-      const r = await setAssetAsPrimary({
-        assetId: asset.id,
-        expectedSlug: it.slug,
-      });
-      result = {
-        slug: it.slug,
-        ok: true,
-        assetId: asset.id,
-        imageUrl: r.item?.imageUrl ?? asset.publicUrl,
-      };
+      result = await generateOneHero(it, input.createdBy);
     } catch (err) {
       result = {
         slug: it.slug,
@@ -352,18 +371,61 @@ export async function* bulkGenerateMissingHeroesIter(input: {
   }
 }
 
-// Buffered wrapper around the iterator. Used by the AI agent which expects
-// a single aggregate result; the streaming HTTP endpoint consumes the
-// iterator directly.
+// Bounded-concurrency variant used by the CMS AI agent tool
+// (lib/ai/agents/cms.ts's bulk_generate_missing_heroes). That tool runs
+// inside a single agent chat turn with a wall-clock timeout
+// (routes/cmsAgent.ts) covering the *entire* multi-step turn, tool
+// execution included — up to BULK_HERO_CAP fully serial image generations,
+// the shape the streaming iterator above correctly uses for its live
+// per-item SSE progress, would starve most of that budget on a full-size
+// run. The agent tool only needs the aggregate result, not live per-item
+// progress, so trading ordering for wall-clock headroom via the shared
+// batchProcess utility (bounded concurrency + automatic retry on rate
+// limits) is free here. A permanently-failing item still surfaces as
+// `ok: false` in its own result rather than aborting the rest of the
+// batch — only a retryable rate-limit error is rethrown so batchProcess's
+// retry loop sees it.
+const BULK_HERO_CONCURRENCY = 3;
+
+// Exported separately from bulkGenerateMissingHeroes so tests can exercise
+// the concurrency + partial-failure-isolation + rate-limit-retry wiring
+// with a fake `generateOne` and a minimal fake item — the real `generateOne`
+// calls Gemini, which a unit test has no business doing. Generic over the
+// item shape (only `.slug` is needed here) so the real call site can pass
+// full `MenuItem` rows unnarrowed.
+export async function generateHeroesForItems<T extends { slug: string }>(
+  items: T[],
+  generateOne: (item: T) => Promise<BulkHeroResult>,
+  concurrency: number = BULK_HERO_CONCURRENCY,
+  // Retry-backoff timing, overridable so tests can exercise the retry path
+  // without waiting through real p-retry backoff delays. Production call
+  // sites never pass this, so they keep batchProcess's defaults.
+  retryTiming?: { retries?: number; minTimeout?: number; maxTimeout?: number },
+): Promise<BulkHeroResult[]> {
+  return batchProcess(
+    items,
+    async (it): Promise<BulkHeroResult> => {
+      try {
+        return await generateOne(it);
+      } catch (err) {
+        if (isRateLimitError(err)) throw err;
+        return { slug: it.slug, ok: false, error: (err as Error).message };
+      }
+    },
+    { concurrency, ...retryTiming },
+  );
+}
+
 export async function bulkGenerateMissingHeroes(input: {
   slugs: string[];
   createdBy: string | null;
 }): Promise<BulkHeroResult[]> {
-  const out: BulkHeroResult[] = [];
-  for await (const ev of bulkGenerateMissingHeroesIter(input)) {
-    if (ev.type === "item") out.push(ev.result);
-  }
-  return out;
+  const { items, skipped } = await planMissingHeroes(input.slugs);
+  if (items.length === 0) return skipped;
+  const generated = await generateHeroesForItems(items, (it) =>
+    generateOneHero(it, input.createdBy),
+  );
+  return [...generated, ...skipped];
 }
 
 // === Background removal ===================================================

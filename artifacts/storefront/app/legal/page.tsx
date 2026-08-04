@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LEGAL_DOCS, COMPANY } from "@/content/legal";
+import { ChevronRight } from "lucide-react";
+import { getLegalDocuments } from "@/lib/legalApi";
+import { LegalMasthead } from "@/components/legal/LegalMasthead";
 
 export const metadata: Metadata = {
   title: "Legal & policies",
@@ -8,21 +10,35 @@ export const metadata: Metadata = {
     "Tanmatra's terms, privacy, refund & cancellation, delivery, disclaimer, and grievance policies.",
 };
 
-/** Index of all legal documents. */
-export default function LegalIndexPage() {
+// ISR, not static: the list (and the FSSAI/entity line below) reflects
+// whatever is currently published, no deploy required (ADM-20 acceptance).
+export const revalidate = 300;
+
+/** Index of every published legal document, from the Policy/Legal CMS (ADM-20). */
+const FALLBACK_DEK =
+  "Tanmatra's terms, privacy, refund & cancellation, delivery, disclaimer, and grievance policies.";
+
+export default async function LegalIndexPage() {
+  const { documents, company } = await getLegalDocuments();
+  const dek = company
+    ? `${company.brand} is operated by ${company.legalName}. Food is prepared under FSSAI Licence No. ${company.fssaiLicenseNo}.`
+    : FALLBACK_DEK;
+
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">Legal &amp; policies</h1>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-        {COMPANY.brand} is operated by {COMPANY.legalName}. Food is prepared under FSSAI Licence
-        No. {COMPANY.fssaiLicenseNo}.
-      </p>
-      <ul className="mt-8 border-t border-line">
-        {LEGAL_DOCS.map((d) => (
-          <li key={d.slug} className="border-b border-line">
-            <Link href={`/legal/${d.slug}`} className="flex flex-col gap-1 px-1 py-4 hover:bg-surface">
-              <span className="text-base font-semibold text-ink">{d.title}</span>
-              <span className="max-w-prose text-sm text-ink-muted">{d.summary}</span>
+      <LegalMasthead eyebrow="Legal" title="Legal & policies" dek={dek} />
+      <ul className="mt-8 flex flex-col gap-3">
+        {documents.map((d) => (
+          <li key={d.slug}>
+            <Link
+              href={`/legal/${d.slug}`}
+              className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-5 hover:bg-surface-raised"
+            >
+              <div className="min-w-0 flex-1">
+                <span className="block text-base font-semibold text-ink">{d.title}</span>
+                <span className="mt-1 block max-w-prose text-sm text-ink-muted">{d.summary}</span>
+              </div>
+              <ChevronRight aria-hidden className="h-5 w-5 shrink-0 text-ink-faint" />
             </Link>
           </li>
         ))}

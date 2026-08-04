@@ -57,6 +57,32 @@ export const TRACKABLE_STATUSES: ReadonlySet<string> = new Set([
   "out_for_delivery",
 ]);
 
+/**
+ * Terminal statuses where the money did NOT settle. Kept separate from
+ * "delivered" because the Stitch brief (route-12) gives them a distinct
+ * treatment — danger tone, dimmed card, no reorder CTA.
+ */
+const UNSETTLED_STATUSES: ReadonlySet<string> = new Set(["cancelled", "refunded", "failed"]);
+
+/**
+ * Visual tone for an order row. Three buckets, matching the route-12 brief:
+ *   live    — in flight, sage signal + pulse
+ *   failed  — money didn't settle, danger tone + dimmed
+ *   settled — delivered or anything unrecognised
+ *
+ * Unknown statuses fall to "settled" deliberately: the same fail-safe reasoning
+ * as TRACKABLE_STATUSES, in the other direction. A status we don't recognise
+ * must not fabricate liveness (a dead pulse dot) or fabricate alarm (a red
+ * "payment failed" on a healthy order) — neutral is the only honest default.
+ */
+export type OrderTone = "live" | "settled" | "failed";
+
+export function statusTone(status: string): OrderTone {
+  if (TRACKABLE_STATUSES.has(status)) return "live";
+  if (UNSETTLED_STATUSES.has(status)) return "failed";
+  return "settled";
+}
+
 export async function fetchOrderStatus(
   externalOrderId: string,
   base: string,

@@ -25,19 +25,20 @@ import {
   summarizeReviewsForSlug,
   userHasOrderedSlug,
 } from "../lib/dishReviews";
-import { requireCatalog as gateRequireCatalog } from "../lib/adminGate";
+import { requireRole } from "../lib/adminGate";
+import { sendError as sendJsonError } from "../lib/sendError";
 
 const router: IRouter = Router();
 
-function requireCatalog(req: Request, res: Response): boolean {
-  return gateRequireCatalog(req, res) !== null;
+async function requireCatalog(req: Request, res: Response): Promise<boolean> {
+  return (await requireRole(req, res, ["catalog", "finance"])) !== null;
 }
 
 function userId(req: Request): string | null {
   return req.isAuthenticated() ? (req.user.id ?? null) : null;
 }
 
-function sendError(res: Response, err: unknown): void {
+function sendError(req: Request, res: Response, err: unknown): void {
   const msg = err instanceof Error ? err.message : String(err);
   const lower = msg.toLowerCase();
   let code = 500;
@@ -45,8 +46,8 @@ function sendError(res: Response, err: unknown): void {
   else if (lower.includes("already decided") || lower.includes("invalid"))
     code = 400;
   // Don't echo raw error text for unmapped 500s.
-  const exposed = code === 500 ? "internal error" : msg;
-  res.status(code).json({ error: exposed });
+  const exposed = code === 500 ? undefined : msg;
+  sendJsonError(req, res, err, { status: code, expose: exposed, event: "menu_engineering.request_failed" });
 }
 
 // ---- Menu engineering --------------------------------------------------------
@@ -54,7 +55,7 @@ function sendError(res: Response, err: unknown): void {
 router.get(
   "/menu-engineering/matrix",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     try {
       const run = await getLatestRun();
       if (!run) {
@@ -71,7 +72,7 @@ router.get(
         summaries: [...summaryMap.values()],
       });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -81,7 +82,7 @@ const runBody = z
   .default({});
 
 router.post("/menu-engineering/run", async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const parsed = runBody.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: "invalid payload" });
@@ -94,14 +95,14 @@ router.post("/menu-engineering/run", async (req: Request, res: Response) => {
     });
     res.json(result);
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
 router.get(
   "/menu-engineering/dish/:slug",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const slug = String(req.params["slug"] ?? "");
     if (!slug) {
       res.status(400).json({ error: "missing slug" });
@@ -125,7 +126,7 @@ router.get(
         summary,
       });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -135,7 +136,7 @@ router.get(
 router.get(
   "/menu-engineering/pricing-suggestions",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const runIdRaw = req.query["runId"];
     const runIdNum = runIdRaw ? Number(runIdRaw) : NaN;
     try {
@@ -144,7 +145,7 @@ router.get(
       );
       res.json({ rows });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -154,7 +155,7 @@ const buildBody = z.object({ runId: z.number().int().positive().optional() });
 router.post(
   "/menu-engineering/pricing-suggestions/run",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const parsed = buildBody.safeParse(req.body ?? {});
     if (!parsed.success) {
       res.status(400).json({ error: "invalid payload" });
@@ -175,7 +176,7 @@ router.post(
       const rows = await buildPricingSuggestionsForRun(runId, userId(req));
       res.json({ rows });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -185,7 +186,7 @@ const idParam = z.object({ id: z.coerce.number().int().positive() });
 router.post(
   "/menu-engineering/pricing-suggestions/:id/approve",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -195,7 +196,7 @@ router.post(
       const out = await approvePricingSuggestion(sp.data.id, userId(req));
       res.json(out);
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -203,7 +204,7 @@ router.post(
 router.post(
   "/menu-engineering/pricing-suggestions/:id/dismiss",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const sp = idParam.safeParse(req.params);
     if (!sp.success) {
       res.status(400).json({ error: "invalid id" });
@@ -213,7 +214,7 @@ router.post(
       const out = await dismissPricingSuggestion(sp.data.id, userId(req));
       res.json(out);
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -258,7 +259,7 @@ router.post("/dish-reviews", async (req: Request, res: Response) => {
     });
     res.json({ review });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
@@ -283,14 +284,14 @@ router.get("/dish-reviews/:slug", async (req: Request, res: Response) => {
     // orders table so the client doesn't need to consult localStorage.
     res.json({ reviews, summary, eligibleToReview });
   } catch (err) {
-    sendError(res, err);
+    sendError(req, res, err);
   }
 });
 
 router.post(
   "/dish-reviews/:slug/summarize",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const slug = String(req.params["slug"] ?? "");
     if (!slug) {
       res.status(400).json({ error: "missing slug" });
@@ -300,7 +301,7 @@ router.post(
       const summary = await summarizeReviewsForSlug(slug);
       res.json({ summary });
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );
@@ -308,7 +309,7 @@ router.post(
 // ---- Review moderation (catalog scope) --------------------------------------
 
 router.get("/dish-reviews-mod", adminModerationRateLimit, async (req: Request, res: Response) => {
-  if (!requireCatalog(req, res)) return;
+  if (!(await requireCatalog(req, res))) return;
   const reviews = await listReviewsForModeration(200);
   void audit(req, { actorId: userId(req) ?? "admin", actorRole: "admin", action: "admin.reviews_mod_list", resourceType: "dish_review" });
   res.json({ reviews });
@@ -318,7 +319,7 @@ router.post(
   "/dish-reviews/:id/hide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });
@@ -339,7 +340,7 @@ router.post(
   "/dish-reviews/:id/unhide",
   adminModerationRateLimit,
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     const id = Number(req.params["id"]);
     if (!Number.isFinite(id) || id <= 0) {
       res.status(400).json({ error: "invalid id" });
@@ -359,12 +360,12 @@ router.post(
 router.post(
   "/dish-reviews/summarize-all",
   async (req: Request, res: Response) => {
-    if (!requireCatalog(req, res)) return;
+    if (!(await requireCatalog(req, res))) return;
     try {
       const out = await summarizeAllReviews();
       res.json(out);
     } catch (err) {
-      sendError(res, err);
+      sendError(req, res, err);
     }
   },
 );

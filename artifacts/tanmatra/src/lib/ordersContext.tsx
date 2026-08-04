@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CartItem } from "./cartContext";
 import { API_BASE } from "./apiBase";
 import { getSocket } from "./socket";
@@ -84,11 +84,11 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, [orders]);
 
-  const addOrder: OrdersContextValue["addOrder"] = (order) => {
+  const addOrder: OrdersContextValue["addOrder"] = useCallback((order) => {
     setOrders((prev) => [order, ...prev]);
-  };
+  }, []);
 
-  const updateStatus: OrdersContextValue["updateStatus"] = (orderId, status) => {
+  const updateStatus: OrdersContextValue["updateStatus"] = useCallback((orderId, status) => {
     setOrders((prev) =>
       prev.map((o) => {
         if (o.orderId !== orderId) return o;
@@ -107,7 +107,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         return next;
       }),
     );
-  };
+  }, []);
 
   const cancelOrder: OrdersContextValue["cancelOrder"] = useCallback(
     async ({ orderId, reason, priority = "routine" }) => {
@@ -317,14 +317,25 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const getOrder = (orderId: string) => orders.find((o) => o.orderId === orderId);
-  const latest = () => orders[0];
-
-  return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateStatus, cancelOrder, getOrder, latest }}>
-      {children}
-    </OrdersContext.Provider>
+  const getOrder = useCallback(
+    (orderId: string) => orders.find((o) => o.orderId === orderId),
+    [orders],
   );
+  const latest = useCallback(() => orders[0], [orders]);
+
+  // Every consumer calling useOrders() re-renders whenever THIS object's
+  // identity changes. Without useMemo, that was every render of this
+  // provider — including ones triggered by an ancestor re-rendering for a
+  // reason that has nothing to do with orders. Memoizing means identity
+  // only changes when something in the value actually changed (`orders`
+  // itself, or one of the actions above, which are all useCallback'd with
+  // stable — or orders-derived — deps).
+  const value = useMemo<OrdersContextValue>(
+    () => ({ orders, addOrder, updateStatus, cancelOrder, getOrder, latest }),
+    [orders, addOrder, updateStatus, cancelOrder, getOrder, latest],
+  );
+
+  return <OrdersContext.Provider value={value}>{children}</OrdersContext.Provider>;
 }
 
 export function useOrders() {

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { emitLpEvent } from "@/lib/lpEvents";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import {
   ASSESSMENT_STEPS,
   INITIAL_ASSESSMENT_STATE,
@@ -30,6 +32,10 @@ export function AssessmentStepper({
   const [stepIdx, setStepIdx] = useState(0);
   const [state, setState] = useState<AssessmentState>(INITIAL_ASSESSMENT_STATE);
   const [showResult, setShowResult] = useState(false);
+
+  // Back gesture closes the full-screen assessment instead of leaving the
+  // landing page. `handleSkip` is the canonical close path (✕ button too).
+  useOverlayHistory(open, handleSkip);
 
   useEffect(() => {
     if (defaultOpen) {
@@ -98,13 +104,13 @@ export function AssessmentStepper({
           <h3 className="text-xl font-semibold text-ink">{title}</h3>
           <p className="text-sm text-ink-muted">{subtitle}</p>
         </div>
-        <button
+        <Button
           type="button"
           onClick={handleStart}
-          className="shrink-0 rounded-xl bg-gold px-6 py-3.5 text-sm font-semibold text-[var(--gold-ink)] transition-opacity hover:opacity-90"
+          shape="xl" size="fluid" className="shrink-0 px-6 py-3.5 font-semibold"
         >
           {buttonLabel}
-        </button>
+        </Button>
       </section>
     );
   }
@@ -130,7 +136,7 @@ export function AssessmentStepper({
       role="dialog"
       aria-modal="true"
       aria-label="Clinical health assessment stepper"
-      className="fixed inset-0 z-50 flex flex-col bg-surface overflow-y-auto p-4 sm:p-6 md:p-8"
+      className="fixed inset-0 z-50 flex animate-dialog-in flex-col overscroll-contain bg-surface overflow-y-auto p-4 sm:p-6 md:p-8"
     >
       <div className="mx-auto flex h-full w-full max-w-2xl flex-col justify-between gap-6">
         <div className="flex items-center justify-between border-b border-line pb-3">
@@ -164,18 +170,12 @@ export function AssessmentStepper({
                   Test your protocol for 3 days before committing to full monthly billing cycles. 100% creditback towards monthly subscriptions.
                 </p>
                 <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <a
-                    href="/trial"
-                    className="inline-flex flex-1 items-center justify-center rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-[var(--gold-ink)] shadow-sm hover:opacity-90"
-                  >
-                    Start 3-Day Trial Pack — {formatPaise(TRIAL_PRICE_PAISE)} →
-                  </a>
-                  <a
-                    href={`/plans?goal=${state.primaryGoal}`}
-                    className="inline-flex items-center justify-center rounded-xl border border-line px-5 py-3.5 text-xs font-semibold text-ink hover:border-line-strong"
-                  >
-                    View Monthly Protocol
-                  </a>
+                  <Button asChild shape="xl" size="fluid" className="flex-1 px-6 py-3.5 font-bold shadow-sm">
+                    <a href="/trial">Start 3-Day Trial Pack — {formatPaise(TRIAL_PRICE_PAISE)} →</a>
+                  </Button>
+                  <Button asChild variant="outline" shape="xl" size="fluid" className="px-5 py-3.5 text-xs font-semibold hover:border-line-strong">
+                    <a href={`/plans?goal=${state.primaryGoal}`}>View Monthly Protocol</a>
+                  </Button>
                 </div>
               </div>
             </div>

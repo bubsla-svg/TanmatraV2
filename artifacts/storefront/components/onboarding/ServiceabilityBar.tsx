@@ -1,5 +1,6 @@
 "use client"; // Justification: client-side pincode entry, API serviceability verdict, and localStorage persistence.
 import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
 import {
   checkServiceability,
   loadServiceabilityState,
@@ -8,6 +9,7 @@ import {
   type ServiceabilityVerdict,
 } from "@/lib/serviceabilityApi";
 import { ApiError } from "@/lib/apiClient";
+import { Button } from "@/components/ui/button";
 import { NotifyMeForm } from "./NotifyMeForm";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
@@ -17,15 +19,46 @@ export interface ServiceabilityBarProps {
 }
 
 /**
+ * Width clamp for the header-hosted (`menu`) instance. Astryx's TopNav renders
+ * endContent at flex-shrink:0 — and, critically, that means TopNav's flex
+ * algorithm never asks endContent's children to shrink at all: endContent
+ * always gets its full natural width, and 100% of the squeeze lands on
+ * `leftSection` (the wordmark) instead, however small that leaves it. A
+ * `min-w-0`/`max-w` on THIS widget only bounds its own upper size — it does
+ * nothing to make endContent shrink, since nothing here ever pressures it to.
+ * So the cap must be small enough, on its own, that heading + this + ⌘K +
+ * ThemeToggle already fit inside a 360px bar with room to spare — there is no
+ * flex-driven fallback if it's too generous.
+ *
+ * Measured via Playwright at w=360 (menu route, signed-out state): the
+ * wordmark renders at ~92px, ⌘K's icon-only trigger at ~36px, ThemeToggle at
+ * 44px, three 8px gaps, and ~16px of TopNav's own edge padding — leaving
+ * ~144px for this widget before the wordmark starts overflowing its box.
+ * 9rem keeps a margin under that, and relaxes to the original max-w-xs from
+ * sm up, where the endContent cluster is no longer competing with a
+ * flex-shrink:0 wordmark for the same 360px.
+ */
+const MENU_FIT = "min-w-0 max-w-[9rem] sm:max-w-xs";
+
+/**
  * ServiceabilityBar (OB-2 & OB-3 / II.1 & II.3). Non-blocking front-door delivery gate.
  * Evaluates pincodes via public API without gating catalog visibility or requiring auth.
  * Displays notify-me form on unserviceable verdict with graceful 404 degradation.
+ *
+ * EXACTLY ONE INSTANCE MAY BE MOUNTED PER PAGE, and it is the one in
+ * components/Header.tsx (placement="menu"). Verdict and pincode are per-instance
+ * state seeded from localStorage once at mount (the effect below) with no
+ * `storage` listener, so two copies never learn each other's answer: check a
+ * pincode in one and the other keeps saying "Select your location" for the rest
+ * of the session. app/page.tsx used to mount a second copy (placement="hero")
+ * and that is exactly what happened from sm up. If a surface ever genuinely
+ * needs the widget in two places, lift the state into a provider — do not mount
+ * a second bar.
  */
 export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps) {
   const [verdict, setVerdict] = useState<ServiceabilityVerdict>("unknown");
   const [pincode, setPincode] = useState("");
   const [inputVal, setInputVal] = useState("");
-  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const [pickingLocation, setPickingLocation] = useState(false);
@@ -39,7 +72,21 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
     }
   }, []);
 
-  const handleLocationSelect = async (place: any) => {
+  // A user-triggered check (button tap / location confirm), not data read for
+  // render — a mutation, even though the verb underneath is GET.
+  const checkMutation = useMutation({
+    mutationFn: (code: string) => checkServiceability(code),
+    onSuccess: (res) => {
+      saveServiceabilityState(res);
+      setVerdict(res.verdict);
+      setPincode(res.pincode);
+      setInputVal("");
+      setManualMode(false);
+    },
+  });
+  const busy = checkMutation.isPending;
+
+  const handleLocationSelect = (place: any) => {
     setPickingLocation(false);
     const code = place.pincode;
     if (!code) {
@@ -47,43 +94,27 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
       setManualMode(true);
       return;
     }
-    setBusy(true);
     setErr(null);
-    try {
-      const res = await checkServiceability(code);
-      saveServiceabilityState(res);
-      setVerdict(res.verdict);
-      setPincode(res.pincode);
-      setInputVal("");
-      setManualMode(false);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Unable to check serviceability right now.");
-      setManualMode(true);
-    } finally {
-      setBusy(false);
-    }
+    checkMutation.mutate(code, {
+      onError: (e) => {
+        setErr(e instanceof ApiError ? e.message : "Unable to check serviceability right now.");
+        setManualMode(true);
+      },
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^\d{6}$/.test(inputVal.trim())) {
       setErr("Please enter a valid 6-digit pincode");
       return;
     }
-    setBusy(true);
     setErr(null);
-    try {
-      const res = await checkServiceability(inputVal);
-      saveServiceabilityState(res);
-      setVerdict(res.verdict);
-      setPincode(res.pincode);
-      setInputVal("");
-      setManualMode(false);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Unable to check pincode right now.");
-    } finally {
-      setBusy(false);
-    }
+    checkMutation.mutate(inputVal, {
+      onError: (e) => {
+        setErr(e instanceof ApiError ? e.message : "Unable to check pincode right now.");
+      },
+    });
   };
 
   const handleReset = () => {
@@ -109,7 +140,14 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
     return (
       <div className={`${placement === 'menu' ? '' : 'mb-6'} rounded-2xl border border-[var(--danger)]/30 bg-[var(--surface)] p-5 text-left shadow-sm max-w-lg`}>
         <p className="text-sm font-semibold text-[var(--ink)]">
-          We&rsquo;re not in {pincode} yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
+          {/* `{" "}` is load-bearing, not formatting noise. Written as
+              `{pincode} yet`, the space between the expression and the
+              following text is dropped by the JSX transform, and the shipped
+              DOM reads "not in 400001yet" — verified against a production
+              build's innerHTML, not guessed. Every out-of-zone visitor saw it.
+              An explicit space node cannot be collapsed. */}
+          We&rsquo;re not in {pincode}{" "}
+          yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
         </p>
         <NotifyMeForm pincode={pincode} onReset={handleReset} />
       </div>
@@ -118,7 +156,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
 
   if (manualMode) {
     return (
-      <form onSubmit={handleSubmit} className={`${placement === 'menu' ? '' : 'mb-6'} flex flex-wrap items-center gap-2 max-w-md`}>
+      <form onSubmit={handleSubmit} className={`${placement === 'menu' ? MENU_FIT : 'mb-6 max-w-md'} flex flex-wrap items-center gap-2`}>
         {placement !== 'menu' && (
           <label htmlFor={`pin-input-${placement}`} className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
             Where should we deliver? Enter your pincode
@@ -135,15 +173,20 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             disabled={busy}
-            className="w-44 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
+            className="w-44 min-w-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
           />
-          <button
+          <Button
             type="submit"
             disabled={busy || inputVal.trim().length !== 6}
-            className="rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-[var(--gold-ink)] shadow-sm disabled:opacity-40 transition-transform active:scale-95"
+            shape="xl"
+            size="fluid"
+            className="px-5 py-2.5 font-semibold shadow-sm disabled:opacity-40"
           >
-            {busy ? "Checking&hellip;" : "Check"}
-          </button>
+            {/* A real ellipsis character — an entity inside a JS string is
+                LITERAL text, not markup; entities only resolve in JSX text
+                nodes. The busy state read "Checking&amp;hellip;" verbatim. */}
+            {busy ? "Checking…" : "Check"}
+          </Button>
           <button
             type="button"
             onClick={() => setManualMode(false)}
@@ -158,7 +201,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
   }
 
   return (
-    <div className={`${placement === 'menu' ? '' : 'mb-6'} flex flex-col items-start gap-2 max-w-md`}>
+    <div className={`${placement === 'menu' ? MENU_FIT : 'mb-6 max-w-md'} flex flex-col items-start gap-2`}>
       {placement !== 'menu' && (
         <label className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
           Where should we deliver?
@@ -169,7 +212,14 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           type="button"
           onClick={() => { setErr(null); setPickingLocation(true); }}
           disabled={busy}
-          className="flex flex-1 items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm hover:border-[var(--line-strong)] transition-colors text-left disabled:opacity-60"
+          // min-w-0 alongside flex-1 is load-bearing, not decorative: a flex
+          // item's automatic minimum width defaults to its content size, so
+          // without this the button ignored MENU_FIT's cap entirely and
+          // rendered at its full ~266px natural width (icon + untruncated
+          // label + "MAP"), overflowing right through the ⌘K button — the
+          // label's own `truncate` never got a chance to apply because the
+          // button around it never actually shrank. Measured via Playwright.
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm hover:border-[var(--line-strong)] transition-colors text-left disabled:opacity-60"
         >
           <svg className="h-5 w-5 text-gold shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />

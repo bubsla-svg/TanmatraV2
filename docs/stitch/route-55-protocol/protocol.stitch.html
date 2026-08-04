@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Performance Nutrition Protocol</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#1c2b68",
+                        "tertiary": "#bfcdff",
+                        "on-secondary-container": "#a4b1f7",
+                        "ink-on-gold": "#111318",
+                        "surface": "#131313",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container": "#201f1f",
+                        "surface-container-high": "#2a2a2a",
+                        "sage-signal": "#7D9E7E",
+                        "surface-variant": "#353534",
+                        "on-primary-fixed": "#241a00",
+                        "tertiary-fixed": "#dbe1ff",
+                        "surface-bright": "#3a3939",
+                        "surface-container-lowest": "#0e0e0e",
+                        "outline-variant": "#4d4635",
+                        "on-secondary-fixed": "#021453",
+                        "secondary": "#b8c3ff",
+                        "off-white-ink": "#F5F5F4",
+                        "smoked-glass": "rgba(23, 23, 23, 0.72)",
+                        "primary": "#f2ca50",
+                        "on-tertiary-fixed": "#00174b",
+                        "surface-container-highest": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "surface-tint": "#e9c349",
+                        "on-primary-container": "#554300",
+                        "error-container": "#93000a",
+                        "outline": "#99907c",
+                        "on-secondary-fixed-variant": "#344280",
+                        "on-surface-variant": "#d0c5af",
+                        "surface-dim": "#131313",
+                        "primary-fixed": "#ffe088",
+                        "inverse-on-surface": "#313030",
+                        "on-tertiary": "#082b72",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#dde1ff",
+                        "inverse-primary": "#735c00",
+                        "background": "#131313",
+                        "tertiary-container": "#97b0ff",
+                        "muted-steel": "#A3A3A3",
+                        "whisper-hairline": "rgba(255, 255, 255, 0.06)",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "on-primary": "#3c2f00",
+                        "primary-container": "#d4af37",
+                        "on-background": "#e5e2e1",
+                        "ember-warning": "#B6892F",
+                        "secondary-container": "#344280",
+                        "on-surface": "#e5e2e1",
+                        "inverse-surface": "#e5e2e1",
+                        "on-primary-fixed-variant": "#574500",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-container": "#254188",
+                        "primary-fixed-dim": "#e9c349",
+                        "graphite-surface": "#171717",
+                        "clay-danger": "#B0655A",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "max-width": "1280px",
+                        "gutter": "1rem",
+                        "desktop-margin": "2rem",
+                        "mobile-margin": "1.25rem",
+                        "card-padding": "1.5rem",
+                        "section-gap": "clamp(3rem, 8vw, 6rem)"
+                    },
+                    "fontFamily": {
+                        "label-small-caps": ["Satoshi"],
+                        "body-muted": ["Satoshi"],
+                        "display-lg": ["Satoshi"],
+                        "headline-md": ["Satoshi"],
+                        "body-base": ["Satoshi"],
+                        "clinical-data": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-small-caps": ["0.75rem", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-muted": ["0.875rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display-lg": ["clamp(2.5rem, 5vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["2rem", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-base": ["1rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "clinical-data": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .light-mode-override {
+            background-color: #FBFAF7;
+            color: #1A1C1E;
+        }
+        .light-card-override {
+            background-color: #FFFFFF;
+            border-color: #E7E3DA;
+        }
+        .clinical-gold {
+            color: #D4AF37;
+        }
+        .clinical-gold-bg {
+            background-color: #D4AF37;
+        }
+        .ink-primary {
+            color: #1A1C1E;
+        }
+        .snap-x-mandatory {
+            scroll-snap-type: x mandatory;
+        }
+        .snap-center {
+            scroll-snap-align: center;
+        }
+        /* Hide scrollbar for clean look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="light-mode-override antialiased font-body-base selection:bg-primary selection:text-ink-on-gold pb-32">
+<!-- HERO SECTION -->
+<section class="relative w-full min-h-[751px] flex items-center justify-center overflow-hidden rounded-b-xl">
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A pristine, light-mode minimalist high-end gym setting with sunlight streaming across a sleek graphite dining table. A perfectly plated seared salmon with vibrant green asparagus sits in the foreground, exuding performance and luxury." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCkt-HUyTeg8Fr7R-fNfeWHlTez-GGvl6CyJiyp6Oqg3CXBUtzyWIz39CnW-ClPa-cPfgMrQxrX8j4BAW32fWxRdsFqNTZCK7Es4dZAJiD_SHSj-mgekrrIux_t9Rws2gRHfIAfXurckRzxsb6bjMLzqD6dJ8SGyLEN4WzNcCLGCVCz0y5ZJZuiHRw3BihTP5ZZDRyq1t0j4eVFVb1ptLtIVddQ7SUdJhBozk7jyG_m4NmaDCU_2PmXy4J2jGauVa7zd5Ru0OsI9Kc')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-[#FBFAF7] via-white/50 to-transparent"></div>
+</div>
+<div class="relative z-10 w-full max-w-max-width mx-auto px-mobile-margin md:px-desktop-margin text-center pt-24 pb-12 flex flex-col items-center">
+<span class="font-label-small-caps text-label-small-caps text-[#D4AF37] mb-6 uppercase tracking-widest inline-block bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border border-[#E7E3DA]">PERFORMANCE PROTOCOL</span>
+<h1 class="font-display-lg text-display-lg ink-primary mb-6 max-w-4xl mx-auto">
+                Precision Nutrition for <br/>Peak <span class="clinical-gold">Performance</span>.
+            </h1>
+<p class="font-body-base text-body-base text-gray-600 mb-10 max-w-2xl mx-auto">
+                Engineered metabolic fueling strategies designed to optimize recovery, endurance, and power output. Clinically calibrated, culinary executed.
+            </p>
+<div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
+<button class="clinical-gold-bg text-ink-on-gold font-label-small-caps text-label-small-caps px-8 py-4 rounded-full active:scale-[0.98] transition-transform duration-200 w-full sm:w-auto shadow-sm">
+                    See the protocol
+                </button>
+<button class="bg-transparent border border-[#E7E3DA] text-ink-primary font-label-small-caps text-label-small-caps px-8 py-4 rounded-full hover:bg-black/5 active:scale-[0.98] transition-all duration-200 w-full sm:w-auto">
+                    Talk to an RD
+                </button>
+</div>
+<div class="font-clinical-data text-clinical-data text-gray-500 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-[#E7E3DA] inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-[#D4AF37]">star</span>
+                1,200+ athletes · 4.8 avg rating
+            </div>
+</div>
+</section>
+<!-- BENEFITS GRID -->
+<section class="w-full max-w-max-width mx-auto px-mobile-margin md:px-desktop-margin mt-section-gap">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="flex flex-col items-start p-card-padding light-card-override border rounded-xl shadow-sm hover:shadow-md transition-shadow">
+<div class="w-12 h-12 rounded-full bg-[#FBFAF7] border border-[#E7E3DA] flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-ink-primary">bolt</span>
+</div>
+<h3 class="font-label-small-caps text-label-small-caps text-ink-primary mb-2">Metabolic Efficiency</h3>
+<p class="font-body-muted text-body-muted text-gray-600">Calibrated macronutrient ratios to train your body to utilize energy sources optimally during high-output sessions.</p>
+</div>
+<div class="flex flex-col items-start p-card-padding light-card-override border rounded-xl shadow-sm hover:shadow-md transition-shadow">
+<div class="w-12 h-12 rounded-full bg-[#FBFAF7] border border-[#E7E3DA] flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-ink-primary">favorite</span>
+</div>
+<h3 class="font-label-small-caps text-label-small-caps text-ink-primary mb-2">Accelerated Recovery</h3>
+<p class="font-body-muted text-body-muted text-gray-600">Strategic protein and micronutrient timing designed to repair tissue and replenish glycogen stores faster.</p>
+</div>
+<div class="flex flex-col items-start p-card-padding light-card-override border rounded-xl shadow-sm hover:shadow-md transition-shadow">
+<div class="w-12 h-12 rounded-full bg-[#FBFAF7] border border-[#E7E3DA] flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-ink-primary">monitoring</span>
+</div>
+<h3 class="font-label-small-caps text-label-small-caps text-ink-primary mb-2">Data-Driven Adaptation</h3>
+<p class="font-body-muted text-body-muted text-gray-600">Continual protocol adjustments based on your biometric feedback and performance metrics.</p>
+</div>
+</div>
+</section>
+<!-- DISH RAIL -->
+<section class="w-full mt-section-gap overflow-hidden">
+<div class="max-w-max-width mx-auto px-mobile-margin md:px-desktop-margin mb-8">
+<h2 class="font-headline-md text-headline-md ink-primary">Dishes that fit this protocol</h2>
+</div>
+<div class="flex overflow-x-auto snap-x-mandatory no-scrollbar gap-6 pb-8 px-mobile-margin md:px-desktop-margin max-w-max-width mx-auto">
+<!-- Dish Card 1 -->
+<div class="snap-center shrink-0 w-72 md:w-80 flex flex-col group">
+<div class="relative w-full aspect-square rounded-2xl overflow-hidden mb-4 border border-[#E7E3DA]">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A top-down view of a modern, light-mode culinary presentation on a pristine white ceramic plate. Grilled salmon sits on a bed of quinoa with vibrant edamame and a perfectly fanned avocado. Bright, natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBew1aGina9KG7AOlpRRb3ZFl2ggbYyHTHqGsGcEHah5haNHMvN4A0pZ786k-uBHz-2sQ5FIhmNhDLl0N_gzdchvakDvimBijTzfUcrVjS0OD0jl_sAXkvjKHs3xkfkK4jFFjICFKBM9pqetSNJEU6L5is9iwRraLiEys48NLMOn1dyIcOVqdh6v36ZWdOr8QHJXrH7Czai_tGAN3qnmq90ywbPSf_RjKDvR0zQPt12Jjwet9R_PooK0T8hbjvlIFky8iVUsuXk-HM"/>
+<div class="absolute top-4 left-4 flex flex-col gap-2">
+<span class="font-clinical-data text-clinical-data bg-white/90 text-ink-primary px-3 py-1 rounded-full backdrop-blur-md shadow-sm border border-[#E7E3DA]">45g pro</span>
+<span class="font-clinical-data text-clinical-data bg-[#7D9E7E]/20 text-[#2C4A2D] px-3 py-1 rounded-full backdrop-blur-md border border-[#7D9E7E]/30 shadow-sm">Low GI</span>
+</div>
+</div>
+<h4 class="font-label-small-caps text-label-small-caps text-ink-primary">Seared Salmon &amp; Quinoa Bowl</h4>
+<p class="font-clinical-data text-clinical-data text-gray-500 mt-1">620 kcal</p>
+</div>
+<!-- Dish Card 2 -->
+<div class="snap-center shrink-0 w-72 md:w-80 flex flex-col group">
+<div class="relative w-full aspect-square rounded-2xl overflow-hidden mb-4 border border-[#E7E3DA]">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A clean, minimalist shot of sliced flank steak cooked medium-rare, served alongside grilled asparagus and a small portion of wild rice on a light matte plate. Bright studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWvtuKIKewLC4qcrRRUUyVCdrn8OpU_rEhnSrTPCzsDoosAtoEwo9SlhoiV6QvDu_8VWBFnAe1nAptiqS68zKED8lyTdkT655Goa73fIIhzeZ0xd7dzbsCgx7kkkV7pHwmmfGPsCmT8eC4L9h3QyXi7engQWomzrmhvaoDsLPYtVko2R8oXqxkxoEm4bYOjP0hSRtA53m_w5NsvuJX6f-Di1qKb6AqlRu5LB4dCZYfr1gBduv9H2XsOxtrPvsRPXxXaauzKJQ4etA"/>
+<div class="absolute top-4 left-4 flex flex-col gap-2">
+<span class="font-clinical-data text-clinical-data bg-white/90 text-ink-primary px-3 py-1 rounded-full backdrop-blur-md shadow-sm border border-[#E7E3DA]">52g pro</span>
+<span class="font-clinical-data text-clinical-data bg-white/90 text-ink-primary px-3 py-1 rounded-full backdrop-blur-md shadow-sm border border-[#E7E3DA]">12g fibre</span>
+</div>
+</div>
+<h4 class="font-label-small-caps text-label-small-caps text-ink-primary">Lean Steak &amp; Asparagus</h4>
+<p class="font-clinical-data text-clinical-data text-gray-500 mt-1">540 kcal</p>
+</div>
+<!-- Dish Card 3 -->
+<div class="snap-center shrink-0 w-72 md:w-80 flex flex-col group">
+<div class="relative w-full aspect-square rounded-2xl overflow-hidden mb-4 border border-[#E7E3DA]">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A vibrant plant-based meal in a shallow white bowl. Grilled tofu steaks with crosshatch marks sit atop a bed of lentils, roasted root vegetables, and mixed greens, drizzled with a light tahini dressing. High-key lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9mT2-hmEqhlZxPGWAaBhCqW71A7J4g7rpnFLbm3ebawrUCh1X9DTPMc5xI5qHaF4M5vEVKvaHInqDn_0XSvHRRgiTreJukL7ubqPlCF5KuF2ZYrrlwjjxhh7n0n7pBYfsf_-FvSn-klZyJbeFXI6kDhmOThoYwbxzC2TCDV5QmiTn5j1snyNbyxxNrx0UAMHtX_qdwsGF0L8-kFOylyIWfXDWoUzi5GMdCOAo0-0tZLsce2dmaSYGq66nfgpFe59xi5ahnCIi0-4"/>
+<div class="absolute top-4 left-4 flex flex-col gap-2">
+<span class="font-clinical-data text-clinical-data bg-white/90 text-ink-primary px-3 py-1 rounded-full backdrop-blur-md shadow-sm border border-[#E7E3DA]">28g pro</span>
+<span class="font-clinical-data text-clinical-data bg-[#7D9E7E]/20 text-[#2C4A2D] px-3 py-1 rounded-full backdrop-blur-md border border-[#7D9E7E]/30 shadow-sm">Plant+</span>
+</div>
+</div>
+<h4 class="font-label-small-caps text-label-small-caps text-ink-primary">Grilled Tofu &amp; Lentil Base</h4>
+<p class="font-clinical-data text-clinical-data text-gray-500 mt-1">480 kcal</p>
+</div>
+</div>
+</section>
+<!-- PRICING -->
+<section class="w-full max-w-max-width mx-auto px-mobile-margin md:px-desktop-margin mt-section-gap">
+<h2 class="font-headline-md text-headline-md ink-primary text-center mb-12">Protocol Plans</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+<!-- Plan 1 -->
+<div class="light-card-override border rounded-2xl p-8 flex flex-col shadow-sm">
+<h3 class="font-label-small-caps text-label-small-caps text-gray-500 mb-4">BASE PROTOCOL</h3>
+<div class="flex items-baseline gap-2 mb-8 border-b border-[#E7E3DA] pb-8">
+<span class="font-clinical-data text-4xl text-ink-primary font-bold">$18</span>
+<span class="font-clinical-data text-clinical-data text-gray-500">/meal</span>
+</div>
+<ul class="flex flex-col gap-4 mb-8 flex-grow">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D4AF37] text-xl">check</span>
+<span class="font-body-muted text-body-muted text-gray-700">Customized macro targeting</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D4AF37] text-xl">check</span>
+<span class="font-body-muted text-body-muted text-gray-700">14 meals per week</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D4AF37] text-xl">check</span>
+<span class="font-body-muted text-body-muted text-gray-700">Monthly biomarker review</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-full border border-[#D4AF37] text-[#D4AF37] font-label-small-caps text-label-small-caps hover:bg-[#D4AF37]/10 active:scale-[0.98] transition-all">
+                    Select Base
+                </button>
+</div>
+<!-- Plan 2 (Highlighted) -->
+<div class="light-card-override border-2 border-[#D4AF37] rounded-2xl p-8 flex flex-col shadow-md relative">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#D4AF37] text-ink-on-gold font-clinical-data text-xs px-3 py-1 rounded-full uppercase tracking-wider font-bold">Recommended</div>
+<h3 class="font-label-small-caps text-label-small-caps text-gray-500 mb-4">ELITE PROTOCOL</h3>
+<div class="flex items-baseline gap-2 mb-8 border-b border-[#E7E3DA] pb-8">
+<span class="font-clinical-data text-4xl text-ink-primary font-bold">$24</span>
+<span class="font-clinical-data text-clinical-data text-gray-500">/meal</span>
+</div>
+<ul class="flex flex-col gap-4 mb-8 flex-grow">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D4AF37] text-xl">check</span>
+<span class="font-body-muted text-body-muted text-gray-700">Dynamic daily macro adjustments</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D4AF37] text-xl">check</span>
+<span class="font-body-muted text-body-muted text-gray-700">21 meals + recovery snacks</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D4AF37] text-xl">check</span>
+<span class="font-body-muted text-body-muted text-gray-700">Weekly RD consultations</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D4AF37] text-xl">check</span>
+<span class="font-body-muted text-body-muted text-gray-700">CGM integration support</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-full clinical-gold-bg text-ink-on-gold font-label-small-caps text-label-small-caps hover:opacity-90 active:scale-[0.98] transition-all shadow-sm">
+                    Choose Elite Plan
+                </button>
+</div>
+</div>
+</section>
+<!-- DIETITIANS RAIL -->
+<section class="w-full mt-section-gap mb-24 overflow-hidden">
+<div class="max-w-max-width mx-auto px-mobile-margin md:px-desktop-margin mb-8 flex justify-between items-end">
+<h2 class="font-headline-md text-headline-md ink-primary">Clinical Team</h2>
+<a class="font-label-small-caps text-label-small-caps text-[#D4AF37] hover:underline" href="#">View All</a>
+</div>
+<div class="flex overflow-x-auto snap-x-mandatory no-scrollbar gap-6 pb-8 px-mobile-margin md:px-desktop-margin max-w-max-width mx-auto">
+<!-- RD Card 1 -->
+<div class="snap-center shrink-0 w-64 p-6 light-card-override border rounded-2xl flex flex-col items-center text-center shadow-sm">
+<div class="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-[#FBFAF7] shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a female clinical dietitian in her 30s. She is smiling subtly, wearing a crisp light blazer over a minimalist top. The background is a soft, out-of-focus light clinical environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuArSu4I4c9s98okFqDXJwOY9Ck11-Qjj6Glmpxqyg2ypcXGl62-gjjTLq_TTk35ybi8U2TNW9_AF2WnWJJ8Ul-YkzZF0PRv1pB4tRqrW7Nw-LFcF0GswVP25AG8Y8qURPRb0bzVVNPaRvJtQLvsnuN9C9h-iVlm485nzI2srMY15_OFcJg6LnuH7H3bYjwS2YgTcBtrQ-dW20Lt0AHBukgxE84Z7Y3DrRMTqNDaAFTR3EWS0dBPIcbkcFozP7SB6vMceyM9iwJir2I"/>
+</div>
+<h4 class="font-label-small-caps text-label-small-caps text-ink-primary text-base mb-1">Dr. Sarah Jenkins</h4>
+<span class="font-clinical-data text-clinical-data text-gray-500 bg-[#FBFAF7] px-2 py-1 rounded border border-[#E7E3DA] mb-4 text-xs">Endurance Sports</span>
+<a class="font-body-muted text-body-muted text-[#D4AF37] hover:underline mt-auto" href="#">Book a consult →</a>
+</div>
+<!-- RD Card 2 -->
+<div class="snap-center shrink-0 w-64 p-6 light-card-override border rounded-2xl flex flex-col items-center text-center shadow-sm">
+<div class="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-[#FBFAF7] shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a male sports nutritionist in his 40s. He looks attentive and analytical, wearing a casual but smart dark crew neck shirt. Light, clean studio background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9Y-tLDEpw2diEy8PH1vO4_mw1PB3yM_oHIIGzwinC_pRFjtQUYaQzNRzVtoA9Fly-tb9DkP6Vvju_gF3zgGaDSQ_d41euOt7MWtdp9TlDDbiWx5MAeFNteRxQb4uSALP02y_pxzpIyv96qR6AxrJG5KgUkv_o7UPbndACSp_orxYAscUO9Uk1gLVHMWY3XhYVTK4VXzqsSGXaxWKYdTxpIHea4AKFL3ORNJEIzDYqyp8rKpZqQqfnws3JHeyG7k3myRbKRXX6xOw"/>
+</div>
+<h4 class="font-label-small-caps text-label-small-caps text-ink-primary text-base mb-1">Marcus Thorne, RD</h4>
+<span class="font-clinical-data text-clinical-data text-gray-500 bg-[#FBFAF7] px-2 py-1 rounded border border-[#E7E3DA] mb-4 text-xs">Strength &amp; Power</span>
+<a class="font-body-muted text-body-muted text-[#D4AF37] hover:underline mt-auto" href="#">Book a consult →</a>
+</div>
+<!-- RD Card 3 -->
+<div class="snap-center shrink-0 w-64 p-6 light-card-override border rounded-2xl flex flex-col items-center text-center shadow-sm">
+<div class="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-[#FBFAF7] shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a female metabolic specialist in her 30s. Friendly expression, wearing glasses and a minimalist white blouse. Bright, modern, light-mode background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzRaAwfw4GLjs-WHrdWNrv7nmT_twHjxuxpDcBShmmTAX0NSzvzwvBSyhsOtzkjj_d5esSyjnRopvHgRT2adtebQlgTsSb0APW2nkTnv5qHd1nPcUNbCX97OiCaMPTe3_raEVtAwCvrCLZX7Jpbu3mrWur0jmGO3Z9z-rcPHs-I7mTymylgBaVzNENVULZKWKpNsFMf6IoLqxmM5F58n2N226My10hEgDom3rnkyhyX8sGvWNCYkLeGa5FWAfqj4QVkIEi7XRzgME"/>
+</div>
+<h4 class="font-label-small-caps text-label-small-caps text-ink-primary text-base mb-1">Elena Rostova, PhD</h4>
+<span class="font-clinical-data text-clinical-data text-gray-500 bg-[#FBFAF7] px-2 py-1 rounded border border-[#E7E3DA] mb-4 text-xs">Metabolic Health</span>
+<a class="font-body-muted text-body-muted text-[#D4AF37] hover:underline mt-auto" href="#">Book a consult →</a>
+</div>
+</div>
+</section>
+</body></html>

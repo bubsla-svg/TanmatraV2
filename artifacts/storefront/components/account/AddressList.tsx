@@ -29,19 +29,19 @@ export function AddressList({
       {addresses.map((a) => {
         const busy = busyId === a.id;
         return (
-          <li key={a.id} className="rounded-xl border border-line bg-surface p-4">
-            <div className="flex items-center gap-2">
+          <li key={a.id} className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold text-ink">{a.label}</span>
-              <span className="rounded-full border border-line px-2 py-0.5 text-[11px] text-ink-muted">{a.type}</span>
+              <span className="rounded-full border border-line px-2.5 py-0.5 text-xs text-ink-muted">{a.type}</span>
               {a.isDefault && (
-                <span className="rounded-full bg-sage-soft px-2 py-0.5 text-[11px] font-medium text-sage-text">Default</span>
+                <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text">Default</span>
               )}
             </div>
-            <p className="mt-1 text-sm text-ink-muted">
+            <p className="text-sm text-ink-muted">
               {[a.line1, a.line2].filter(Boolean).join(", ")}, {a.city} {a.pincode}
             </p>
             <p className="tabular text-xs text-ink-faint">{a.phone}</p>
-            <div className="mt-3 flex items-center gap-4 text-sm font-medium">
+            <div className="mt-1 flex items-center gap-4 border-t border-line pt-2.5 text-sm font-medium">
               <button type="button" disabled={busy} onClick={() => onEdit(a)} className="-m-1 p-1 text-gold-text hover:underline disabled:opacity-40">Edit</button>
               {!a.isDefault && (
                 <button type="button" disabled={busy} onClick={() => onSetDefault(a.id)} className="-m-1 p-1 text-ink-muted hover:underline disabled:opacity-40">Set default</button>

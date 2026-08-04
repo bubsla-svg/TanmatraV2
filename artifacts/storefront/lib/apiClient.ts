@@ -41,7 +41,21 @@ async function apiRequest<T>(
       : {}),
   });
   const text = await res.text();
-  const json: unknown = text ? JSON.parse(text) : {};
+  let json: unknown;
+  try {
+    json = text ? JSON.parse(text) : {};
+  } catch {
+    // Non-JSON body: a Cloud Run 502/504 HTML page, a captive-portal
+    // interstitial, a CDN error page. Unguarded, this threw a raw SyntaxError
+    // BEFORE the res.ok branch — so every caller that branches on
+    // `instanceof ApiError` (401 → inline sign-in, session-expired copy)
+    // misclassified an infrastructure blip as an unknown crash. Surface it as
+    // an ApiError: the real status when the server already said non-2xx, and
+    // a 502 when a "successful" response carried an unparseable body.
+    throw res.ok
+      ? new ApiError(502, "bad_response", "Received an invalid response")
+      : new ApiError(res.status, "non_json", res.statusText || "Request failed");
+  }
   if (!res.ok) {
     const e = json as { error?: string; code?: string };
     throw new ApiError(res.status, e.code ?? "error", e.error ?? res.statusText);

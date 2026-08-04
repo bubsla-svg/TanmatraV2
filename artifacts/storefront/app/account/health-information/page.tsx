@@ -16,8 +16,8 @@ export default function HealthInformationPage() {
   return (
     <section className="mx-auto max-w-md px-4 py-10">
       <AccountNav active="health" />
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">DPDP compliance &amp; privacy</p>
-      <h1 className="mt-1 mb-5 text-lg font-semibold text-ink">Health &amp; clinical information</h1>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold-text">DPDP compliance &amp; privacy</p>
+      <h1 className="mt-2 mb-6 text-3xl font-semibold tracking-tight text-ink">Health information</h1>
       <HealthInfoHub />
     </section>
   );

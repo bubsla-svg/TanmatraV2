@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Nutrition Coach</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-container": "#4d6c4f",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-container": "#c8ecc8",
+                      "surface-container-highest": "#e2e2e5",
+                      "error": "#ba1a1a",
+                      "outline": "#7f7663",
+                      "on-primary-fixed-variant": "#574500",
+                      "on-background": "#1a1c1e",
+                      "tertiary-container": "#ff9876",
+                      "on-tertiary-fixed": "#390b00",
+                      "background": "#f9f9fc",
+                      "on-surface": "#1a1c1e",
+                      "surface-bright": "#f9f9fc",
+                      "on-error": "#ffffff",
+                      "inverse-primary": "#e9c349",
+                      "surface-dim": "#dadadc",
+                      "on-tertiary-container": "#7b2b0e",
+                      "on-surface-variant": "#4d4635",
+                      "surface-variant": "#e2e2e5",
+                      "on-secondary-fixed-variant": "#304e33",
+                      "primary": "#735c00",
+                      "on-tertiary-fixed-variant": "#7d2d10",
+                      "tertiary": "#9c4325",
+                      "on-primary-container": "#554300",
+                      "primary-fixed": "#ffe088",
+                      "surface-tint": "#735c00",
+                      "on-error-container": "#93000a",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#e9c349",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#2f3133",
+                      "secondary-fixed-dim": "#adcfad",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed": "#241a00",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#e8e8ea",
+                      "inverse-on-surface": "#f0f0f3",
+                      "surface": "#f9f9fc",
+                      "surface-container": "#eeeef0",
+                      "tertiary-fixed": "#ffdbd0",
+                      "on-secondary-fixed": "#03210b",
+                      "primary-container": "#d4af37",
+                      "secondary-fixed": "#c8ecc8",
+                      "tertiary-fixed-dim": "#ffb59d",
+                      "surface-container-low": "#f3f3f6",
+                      "outline-variant": "#d0c5af",
+                      "secondary": "#476649",
+                      // Custom colors based on prompt
+                      "bone": "#FBFAF7",
+                      "hairline": "#E7E3DA",
+                      "light-grey-bubble": "#F2F0EB",
+                      "muted-text": "#6B7378"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "lg": "24px",
+                      "md": "16px",
+                      "gutter": "16px",
+                      "sm": "8px",
+                      "xl": "32px",
+                      "unit": "4px",
+                      "container-margin": "24px",
+                      "chat-indent": "5%"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Satoshi"],
+                      "body-lg": ["Satoshi"],
+                      "data-tabular": ["'JetBrains Mono'", "monospace"],
+                      "headline-md": ["Satoshi"],
+                      "display-lg": ["Satoshi"],
+                      "label-caps": ["Satoshi"],
+                      "body-md": ["Satoshi"],
+                      "headline-lg-mobile": ["Satoshi"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "data-tabular": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://fonts.cdnfonts.com/s/79034/Satoshi-Regular.woff2') format('woff2');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://fonts.cdnfonts.com/s/79034/Satoshi-Medium.woff2') format('woff2');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('https://fonts.cdnfonts.com/s/79034/Satoshi-Bold.woff2') format('woff2');
+            font-weight: 700;
+        }
+        body {
+            font-family: 'Satoshi', sans-serif;
+            background-color: #FBFAF7;
+        }
+        .tabular-nums-custom {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-bone text-on-surface h-screen flex flex-col font-body-md overflow-hidden antialiased">
+<!-- 1. Slim Header -->
+<header class="w-full bg-bone py-3 px-chat-indent border-b border-hairline sticky top-0 z-10 flex flex-col justify-center shrink-0">
+<h1 class="text-xl font-bold text-on-background">Nutrition Coach</h1>
+<p class="text-xs text-muted-text mt-1">Not medical advice — for clinical concerns, book a dietitian.</p>
+</header>
+<!-- 2. Message Thread -->
+<main class="flex-1 overflow-y-auto px-chat-indent py-lg flex flex-col space-y-lg pb-32 w-full max-w-4xl mx-auto">
+<!-- Empty-state hint -->
+<div class="flex justify-start w-full">
+<div class="bg-surface-container-lowest text-muted-text italic rounded-2xl rounded-tl-sm px-md py-sm max-w-[85%] border border-hairline text-sm">
+                Ask me to explain a dish's macros, find a higher-protein option, or suggest a swap for your goal.
+            </div>
+</div>
+<!-- User message -->
+<div class="flex justify-end w-full">
+<div class="bg-primary-container text-on-background rounded-2xl rounded-br-sm px-md py-sm max-w-[85%] text-base">
+                What's a good high-protein breakfast under 400 calories?
+            </div>
+</div>
+<!-- Agent reply -->
+<div class="flex justify-start w-full">
+<div class="bg-light-grey-bubble text-on-background rounded-2xl rounded-bl-sm px-md py-sm max-w-[85%] text-base">
+                I'd recommend focusing on eggs or Greek yogurt based dishes. They offer excellent satiety while keeping carbohydrates low.
+            </div>
+</div>
+<!-- Dietitian Action Card -->
+<div class="flex justify-start w-full pl-md">
+<div class="bg-surface-container-lowest border border-hairline rounded-xl p-md w-full max-w-[85%] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md">
+<div class="flex-1">
+<h3 class="font-bold text-on-background text-base">Talk to a Registered Dietitian</h3>
+<p class="text-sm text-muted-text mt-1">They can review your situation properly. You have 2 free consults.</p>
+</div>
+<button class="bg-primary-container text-on-background rounded-full px-lg py-3 font-semibold text-sm whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity flex items-center gap-2">
+                    Book a dietitian <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- User follow-up -->
+<div class="flex justify-end w-full">
+<div class="bg-primary-container text-on-background rounded-2xl rounded-br-sm px-md py-sm max-w-[85%] text-base">
+                Sounds good. What about a lunch option?
+            </div>
+</div>
+<!-- Agent reply -->
+<div class="flex justify-start w-full">
+<div class="bg-light-grey-bubble text-on-background rounded-2xl rounded-bl-sm px-md py-sm max-w-[85%] text-base">
+                The Grilled Paneer Power Bowl is a clinical favorite—high protein with complex fiber.
+            </div>
+</div>
+<!-- Add to Cart Card -->
+<div class="flex justify-start w-full pl-md">
+<div class="bg-surface-container-lowest border border-hairline rounded-xl p-md w-full max-w-[85%] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md">
+<div class="flex-1">
+<h3 class="font-bold text-on-background text-base">Grilled Paneer Power Bowl</h3>
+<p class="font-data-tabular text-data-tabular tabular-nums-custom text-on-surface mt-1">₹189 <span class="text-muted-text font-body-md text-sm">· for your next delivery</span></p>
+<p class="text-xs text-muted-text mt-1">High protein with complex fiber</p>
+</div>
+<button class="bg-primary-container text-on-background rounded-full px-lg py-3 font-semibold text-sm whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity flex items-center gap-2">
+                    View &amp; add <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- 3. Sticky Bottom Composer -->
+<footer class="fixed bottom-0 w-full bg-surface-container-lowest border-t border-hairline px-chat-indent py-3 z-20">
+<div class="max-w-4xl mx-auto flex items-center gap-3 w-full">
+<div class="relative flex-1">
+<input class="w-full bg-surface-container-lowest border border-hairline rounded-full py-3 px-lg text-base focus:outline-none focus:border-primary-container transition-colors placeholder:text-muted-text" placeholder="Ask your coach…" type="text"/>
+</div>
+<button class="bg-primary-container text-on-background rounded-full px-lg py-3 font-semibold text-sm shrink-0 hover:opacity-90 transition-opacity h-12 flex items-center justify-center min-w-[80px]">
+                Send
+            </button>
+</div>
+</footer>
+</body></html>

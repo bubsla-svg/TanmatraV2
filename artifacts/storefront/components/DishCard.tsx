@@ -1,101 +1,112 @@
 import Link from "next/link";
-import { Card } from "@astryxdesign/core/Card";
-import { AspectRatio } from "@astryxdesign/core/AspectRatio";
-import { VStack, HStack } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
-import type { DishFit } from "@/lib/menuFit";
+import { DishFitBadge } from "@/components/menu/DishFitContext";
+import { DishThumbnail } from "@/components/menu/DishThumbnail";
 
 /**
- * Dish card, composed from Astryx primitives following the product-gallery
- * template (Card > AspectRatio > image, then a VStack of name/description/price).
+ * Dish row — Stitch Route Brief 02 v3, "Mirrored Clinical Menu List"
+ * (docs/stitch/route-02-menu/, screen d97dc79c, owner-confirmed): single
+ * column, TEXT column first (title → excerpt → stars → macros), square photo
+ * flush at the row's right edge, monospace price with gold emphasis.
  *
- * STILL A SERVER COMPONENT. Astryx's Card/Text/AspectRatio/Stack each carry
- * "use client", but a server component may RENDER client components without
- * becoming one — so the catalog data, the à-la-carte gate and the price all
- * stay server-side, and only the primitives ship. That is why there is no
- * "use client" here and no file-cap justification comment.
- *
- * Preserved from the pre-Astryx card, deliberately:
- *   - The Link wraps browse content only. The footer (price · macros · Add) is
- *     a SIBLING, because a <button> inside an <a> is invalid HTML and an a11y
- *     failure. The template has no interactive footer, so this is ours.
- *   - The image sits in a fixed-ratio box so a slow image never shifts layout.
- *     Ratio stays 4/3 (the template uses 1) to match the existing asset crop.
- *   - Price is rendered from dish.price exactly as the server sent it. Nothing
- *     here computes, discounts or re-derives an amount.
+ * A REAL Server Component: catalog data, the à-la-carte gate and the price
+ * are evaluated server-side and none of this file's own code ships to the
+ * client. (It used to claim this while being reached only through
+ * PersonalizedMenu's "use client" import chain — under RSC rules that
+ * silently compiled this whole file, MenuGrid, and everything below it into
+ * client JS regardless of the comment. Fixed by inverting the composition:
+ * app/menu/page.tsx renders DishCard directly and hands the resulting nodes
+ * to PersonalizedMenu/MenuGrid as data, not as an import.) The one piece of
+ * markup that genuinely depends on client-fetched state — the personalised
+ * fit badge — is isolated to the small client island in DishFitContext.tsx,
+ * rendered below at the position the inline fit check used to occupy.
+ * Preserved deliberately from the previous card:
+ *   - The Link wraps browse content only; the footer (price · Add) is a
+ *     SIBLING — a <button> inside an <a> is invalid HTML and an a11y failure.
+ *   - Price renders dish.price exactly as the server sent it; stars render
+ *     dish.averageRating/reviewCount exactly as shipped in the menu payload.
+ *     Nothing here computes, discounts or re-derives an amount or a rating.
+ *   - The fixed-size photo box means a slow image never shifts the row.
  */
-export function DishCard({ dish, fit }: { dish: DishData; fit?: DishFit }) {
+
+/** Display-only star row (gold = signal here, not an action — the whole row is
+ *  the action). Renders nothing when a dish has no reviews yet. */
+function RatingStars({ average, count }: { average?: number | null; count?: number }) {
+  if (!average || !count) return null;
+  const filled = Math.round(average);
+  return (
+    <span className="flex items-center gap-1.5" aria-label={`Rated ${average} out of 5 from ${count} reviews`}>
+      <span aria-hidden className="text-xs leading-none tracking-tight text-gold-text">
+        {"★".repeat(Math.min(filled, 5))}
+        <span className="opacity-30">{"★".repeat(Math.max(0, 5 - filled))}</span>
+      </span>
+      <span aria-hidden className="font-mono text-[11px] text-ink-muted">
+        {average.toFixed(1)} ({count})
+      </span>
+    </span>
+  );
+}
+
+export function DishCard({ dish }: { dish: DishData }) {
   const est = dish.macrosEstimated ? "~" : "";
   return (
-    // Astryx Card renders a <div> with no `as` prop, so the semantic <article>
-    // wraps it with display:contents — zero layout impact, and each dish stays
-    // a self-contained article for screen readers (and for the e2e locators,
-    // which rightly target the semantic element, not a class).
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-transform hover:-translate-y-0.5">
-      <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex flex-col">
-        <div className="relative overflow-hidden bg-surface-raised">
-          <AspectRatio ratio={4 / 3}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- plain img
-                with an explicit ratio box for zero CLS; Astryx has no Image
-                primitive, and next/image + remotePatterns lands in a later phase. */}
-            <img
-              src={dish.image}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+    <article className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
+      <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex gap-4">
+        {/* Text column FIRST (v3 mirrored order) */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex items-center gap-2">
+            <span
+              role="img"
+              aria-label={dish.isVeg ? "Vegetarian" : "Non-vegetarian"}
+              className={`inline-block h-2.5 w-2.5 shrink-0 ring-1 ring-line-strong ${
+                dish.isVeg ? "rounded-full" : "rounded-[2px]"
+              }`}
+              style={{ backgroundColor: dish.isVeg ? "var(--sage)" : "var(--danger)" }}
             />
-          </AspectRatio>
-          <span
-            role="img"
-            aria-label={dish.isVeg ? "Vegetarian" : "Non-vegetarian"}
-            className={`absolute left-2 top-2 inline-block h-3 w-3 ring-2 ring-white ${
-              dish.isVeg ? "rounded-full" : "rounded-[2px]"
-            }`}
-            style={{ backgroundColor: dish.isVeg ? "var(--sage)" : "var(--danger)" }}
-          />
+            {/* `font-bold` duplicates `weight="bold"` on purpose, and only
+                here. Astryx's weight atom is emitted in @layer astryx-base;
+                while that layer is declared BEFORE Tailwind's, Preflight's
+                `h1..h6 { font-weight: inherit }` outranks it and every dish
+                name on the menu renders at 400 — but only on this one `as="h3"`
+                (the `span` default is untouched, which is why the price below
+                is correctly bold). The Tailwind utility sits in @layer
+                utilities and wins either way: today over Preflight, and
+                harmlessly under the atom once the layer order is repaired. */}
+            <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
+          </span>
+          <DishFitBadge dishId={dish.id} />
+          <Text type="supporting" color="secondary" maxLines={2}>
+            {dish.tasteDescription || dish.description}
+          </Text>
+          <RatingStars average={dish.averageRating} count={dish.reviewCount} />
+          <span className="font-mono text-[11px] text-ink-muted">
+            {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
+          </span>
         </div>
 
-        <div className="p-3 pb-0">
-          <VStack gap={1}>
-            <Text type="body" weight="bold" as="h3">{dish.name}</Text>
-            {fit?.band === "conflict" && fit.conflictLabel && (
-              <Text type="supporting" weight="bold" className="text-[var(--danger)]">
-                {fit.conflictLabel}
-              </Text>
-            )}
-            {fit?.band === "high" && (
-              <Text type="supporting" weight="bold" className="text-sage-text">
-                Good match for you
-              </Text>
-            )}
-            <Text type="supporting" color="secondary" maxLines={2}>
-              {dish.tasteDescription || dish.description}
-            </Text>
-          </VStack>
+        {/* Photo LAST — square, flush right, fixed box (zero CLS). No `sizes`
+            on purpose: the box is 104px at every viewport, so next/image emits
+            a 1x/2x srcset, which is the right pair here. A `sizes` value would
+            replace that with the full width-descriptor ladder for no gain. */}
+        <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-raised">
+          <DishThumbnail
+            src={dish.image}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          />
         </div>
       </Link>
 
       {/* Sibling of the Link — see the a11y note above. */}
-      <div className="relative z-10 mt-auto p-3 pt-2">
-        <HStack gap={2} vAlign="center" className="justify-between">
-          <VStack gap={0}>
-            {/* hasTabularNumbers is the Astryx equivalent of .text-clinical-data:
-                prices and macros must not jitter between cards. */}
-            <Text type="body" weight="bold" hasTabularNumbers>
-              {formatPaise(dish.price)}
-            </Text>
-            <Text type="supporting" color="secondary" hasTabularNumbers>
-              {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
-            </Text>
-          </VStack>
-          {/* §4.1 one-tap add — only for à-la-carte-orderable dishes, so a
-              plan-only dish never shows a dead CTA. */}
-          {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
-        </HStack>
+      <div className="relative z-10 mt-2 flex items-center justify-between border-t border-line pt-2">
+        <Text type="body" weight="bold" hasTabularNumbers className="text-gold-text">
+          {formatPaise(dish.price)}
+        </Text>
+        {/* §4.1 one-tap add — only for à-la-carte-orderable dishes, so a
+            plan-only dish never shows a dead CTA. */}
+        {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
       </div>
     </article>
   );

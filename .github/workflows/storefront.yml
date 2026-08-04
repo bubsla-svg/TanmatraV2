@@ -22,6 +22,9 @@ on:
       - "lib/subscription-rules/**"
       - "scripts/lint-filecap.ts"
       - "scripts/lint-tokens.ts"
+      - "scripts/lint-component-drift.ts"
+      - "scripts/component-drift-baseline.txt"
+      - "scripts/src/lighthouse-audit.mjs"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - ".github/workflows/storefront.yml"
@@ -34,12 +37,23 @@ on:
       - "lib/preferences-match/**"
       - "lib/subscription-rules/**"
       - ".github/workflows/storefront.yml"
+  # Nightly window for the cross-browser job below ONLY — see that job's
+  # comment. The per-PR `storefront` job explicitly opts out of this trigger so
+  # a schedule does not silently re-run the whole merge gate every night.
+  schedule:
+    - cron: "37 2 * * *"
   workflow_dispatch: {}
 
 jobs:
   storefront:
+    # Everything except the nightly trigger. `workflow_dispatch` still runs
+    # this job (and the nightly one), so a manual run exercises both.
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 20 -> 30: the non-blocking Lighthouse baseline step below adds roughly
+    # 3-5 min (5 routes, one throttled mobile run each, plus a second
+    # `next start`). Raised deliberately rather than dropping routes.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -53,6 +67,8 @@ jobs:
         run: pnpm --filter @workspace/storefront run lint:filecap
       - name: Token gate — no raw colours / palette classes (TNM-UIF-01 §3.4)
         run: pnpm --filter @workspace/storefront run lint:tokens
+      - name: Component-drift gate — no duplicate-spelling class debt
+        run: pnpm --filter @workspace/storefront run lint:component-drift
       - name: Typecheck
         run: pnpm --filter @workspace/storefront run typecheck
       # Quoted so **node** expands the glob, not the shell. Actions runs `run:`
@@ -86,5 +102,122 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: storefront-e2e-report
+          path: playwright-report/
+          retention-days: 7
+
+      # ---------------------------------------------------------------------
+      # PERFORMANCE BASELINE — DELIBERATELY NON-BLOCKING. DO NOT FLIP YET.
+      # ---------------------------------------------------------------------
+      # WEB-APP-ENHANCEMENT-PLAN Tier 2 #14. `scripts/src/lighthouse-audit.mjs`
+      # audits five storefront routes — / · /menu · /dish/quinoa-khichdi ·
+      # /checkout · /account — for accessibility, best-practices, and gzipped
+      # JS/CSS transfer size against the plan's starting budgets:
+      #   landing (/)              < 150 KB JS · 30 KB CSS
+      #   app (/menu /dish /checkout /account)
+      #                            < 300 KB JS · 50 KB CSS
+      #
+      # It cannot fail this job. TWO independent reasons, both intentional:
+      #   1. `continue-on-error: true` on this step — a non-zero exit is
+      #      recorded and the job still goes green.
+      #   2. The script defaults to baseline mode (`LH_ENFORCE` unset) and
+      #      exits 0 even when a budget is breached; it prints the violations.
+      #
+      # WHAT MUST BE TRUE BEFORE THIS BECOMES BLOCKING — all four, in order:
+      #   a. 2-3 WEEKS of real baseline data collected from main. The plan
+      #      requires this explicitly; today nobody knows what these routes
+      #      actually weigh, so the 150/300 KB numbers are a guess, not a
+      #      measurement. Read them off the uploaded
+      #      `storefront-lighthouse-baseline` artifacts.
+      #   b. The budgets in the script's BUDGETS map re-derived from that data
+      #      (either the routes fit and the numbers stay, or they don't and the
+      #      numbers change with a written justification — not silently).
+      #   c. The run demonstrably NOT flaky: no route error and no budget
+      #      flip-flop across consecutive main runs on unchanged code.
+      #   d. The `/dish` profile classification settled — it is provisionally
+      #      `app`, and the plan does not assign it a profile.
+      # Then, and only then: set `LH_ENFORCE: "1"` below and delete
+      # `continue-on-error`. Both, or the gate is still a no-op.
+      #
+      # Runs on its own `next start` (port 3100) rather than reusing the e2e
+      # server, so this step is self-contained and can be reordered or lifted
+      # into its own job without a hidden dependency. Chrome comes from the
+      # runner image (`google-chrome-stable` on PATH); the script probes for it
+      # and honours CHROME_PATH.
+      - name: Performance baseline — Lighthouse (NON-BLOCKING, see comment)
+        continue-on-error: true
+        env:
+          LH_BASE: http://127.0.0.1:3100
+        run: |
+          PORT=3100 pnpm --filter @workspace/storefront run start \
+            > /tmp/storefront-lighthouse.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3100/ >/dev/null && break
+            sleep 1
+          done
+          node scripts/src/lighthouse-audit.mjs
+      - name: Upload Lighthouse baseline reports
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-lighthouse-baseline
+          path: .local/lighthouse-reports/
+          # Longer than the e2e report's 7 days on purpose: the whole point is
+          # to accumulate 2-3 weeks of history before (a) above can be answered.
+          retention-days: 30
+          if-no-files-found: warn
+
+  # -------------------------------------------------------------------------
+  # CROSS-BROWSER — NIGHTLY ONLY, PRIMARY FUNNEL SPEC ONLY.
+  # -------------------------------------------------------------------------
+  # WEB-APP-ENHANCEMENT-PLAN Tier 2 #15. Two coverage bounds, stated here
+  # rather than left to be discovered (AGENT_WORKING_AGREEMENT §6 — silent
+  # truncation reads as "done" when it isn't):
+  #
+  #   BOUND 1 — nightly, not per-PR. Gecko and WebKit run on the 02:37 UTC
+  #             schedule and on manual dispatch. A PR is NOT checked against
+  #             them. A Firefox/Safari-only regression is therefore caught up
+  #             to ~24 h after it merges, not at review time. That is the
+  #             deliberate trade for per-PR wall-clock.
+  #   BOUND 2 — `core-funnel.spec.ts` only, not the 14-spec CUJ suite, and not
+  #             the VRT spec. Enforced in `playwright.config.ts` via each
+  #             project's `testMatch`, so it holds even if someone runs the
+  #             config without a filter.
+  #
+  # Not covered at all by this job: real iOS/Android Safari and Chrome (WebKit
+  # and Chromium builds are engine proxies, not the shipping browsers), and
+  # every non-funnel CUJ on non-Chromium engines.
+  cross-browser-nightly:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Build (server-first, no money path)
+        run: pnpm --filter @workspace/storefront run build
+      - name: Install Playwright browsers (firefox + webkit)
+        run: pnpm exec playwright install --with-deps firefox webkit
+      - name: Primary funnel on Gecko + WebKit
+        run: |
+          PORT=3000 pnpm --filter @workspace/storefront run start &
+          for i in $(seq 1 20); do
+            curl -sf http://127.0.0.1:3000/ >/dev/null && break
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:3000 pnpm exec playwright test \
+            --config artifacts/storefront/e2e/playwright.config.ts \
+            --project=firefox --project=webkit
+      - name: Upload cross-browser report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-cross-browser-report
           path: playwright-report/
           retention-days: 7
