@@ -164,3 +164,21 @@ export const streaksTable = pgTable(
 );
 
 export type Streak = typeof streaksTable.$inferSelect;
+
+export const fastingLogsTable = pgTable(
+  "fasting_logs",
+  {
+    id: serial("id").primaryKey(),
+    userId: varchar("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+    endTime: timestamp("end_time", { withTimezone: true }),
+    targetHours: integer("target_hours").notNull().default(16),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }
+);
+
+export type FastingLog = typeof fastingLogsTable.$inferSelect;

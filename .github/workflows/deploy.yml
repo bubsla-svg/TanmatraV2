@@ -168,17 +168,22 @@ jobs:
           node --test --import tsx "../tanmatra/src/**/*.test.ts"
       - name: Money-path unit tests (api-server + plan spine)
         working-directory: artifacts/api-server
-        run: >
-          node --test --import tsx
-          ./src/lib/cartMath.test.ts
-          ./src/lib/bundlePricing.test.ts
-          ./src/lib/paymentIntegrity.test.ts
-          ./src/lib/subscriptionPricing.test.ts
-          ./src/lib/flags.test.ts
-          ./src/lib/trialEligibility.test.ts
-          ./src/lib/corporateSubsidy.test.ts
-          ./src/lib/dishCustomizations.test.ts
-          ../../lib/subscription-rules/src/planCatalog.test.ts
+        run: |
+          node --test --import tsx \
+            ./src/lib/cartMath.test.ts \
+            ./src/lib/bundlePricing.test.ts \
+            ./src/lib/paymentIntegrity.test.ts \
+            ./src/lib/subscriptionPricing.test.ts \
+            ./src/lib/flags.test.ts \
+            ./src/lib/trialEligibility.test.ts \
+            ./src/lib/corporateSubsidy.test.ts \
+            ./src/lib/dishCustomizations.test.ts \
+            ./src/lib/icmrPrecisionPlanner.test.ts \
+            ./src/lib/bloodReportOcr.test.ts \
+            ./src/lib/pantryVisionScanner.test.ts \
+            ./src/lib/priceBands.test.ts \
+            ./src/lib/sendError.test.ts \
+            ../../lib/subscription-rules/src/planCatalog.test.ts
       - name: Inbound-auth + access-control contracts
         working-directory: artifacts/api-server
         run: |
@@ -192,40 +197,40 @@ jobs:
         run: pnpm --filter @workspace/db run push-force
       - name: Money-path integration tests (verify.yml's full list)
         working-directory: artifacts/api-server
-        run: >
-          node --test --test-force-exit --import tsx
-          ./src/routes/payments.integrity.test.ts
-          ./src/routes/payments.webhook.test.ts
-          ./src/routes/payments.subscriptionOrder.test.ts
-          ./src/routes/refunds.test.ts
-          ./src/routes/orders.mine.test.ts
-          ./src/lib/trialRedemption.test.ts
-          ./src/routes/payments.trialCreditback.test.ts
-          ./src/routes/subscriptions.planV2Trial.test.ts
-          ./src/routes/subscriptions.creditLedger.test.ts
-          ./src/lib/loyaltyEngine.creditDerivation.test.ts
-          ./src/routes/subscriptions.quoteCreditPreview.test.ts
-          ./src/routes/subscriptions.catalogQuote.test.ts
-          ./src/routes/loyalty.referral.test.ts
-          ./src/routes/dishRationales.test.ts
-          ./src/routes/coachAgent.test.ts
-          ./src/routes/rdAdvisory.appointmentOrder.test.ts
-          ./src/routes/vouchers.test.ts
-          ./src/routes/premium.paymentOrder.test.ts
-          ./src/routes/addons.test.ts
-          ./src/lib/ai/agents/ops.refundCap.test.ts
-          ./src/routes/marketplace.checkout.test.ts
-          ./src/routes/marketplace.paymentsIntegration.test.ts
-          ./src/routes/marketplace.items.test.ts
-          ./src/routes/corporate.subsidyLedger.test.ts
-          ./src/routes/corporate.teams.test.ts
-          ./src/lib/reconciliationScheduler.test.ts
-          ./src/routes/savedMeals.test.ts
-          ./src/routes/ecosystem.test.ts
-          ./src/lib/bomEngine.test.ts
-          ./src/lib/guardrailEngines.test.ts
-          ./src/lib/logisticsEngine.test.ts
-          ./src/lib/wmsFefoEngine.test.ts
+        run: |
+          node --test --test-force-exit --import tsx \
+            ./src/routes/payments.integrity.test.ts \
+            ./src/routes/payments.webhook.test.ts \
+            ./src/routes/payments.subscriptionOrder.test.ts \
+            ./src/routes/refunds.test.ts \
+            ./src/routes/orders.mine.test.ts \
+            ./src/lib/trialRedemption.test.ts \
+            ./src/routes/payments.trialCreditback.test.ts \
+            ./src/routes/subscriptions.planV2Trial.test.ts \
+            ./src/routes/subscriptions.creditLedger.test.ts \
+            ./src/lib/loyaltyEngine.creditDerivation.test.ts \
+            ./src/routes/subscriptions.quoteCreditPreview.test.ts \
+            ./src/routes/subscriptions.catalogQuote.test.ts \
+            ./src/routes/loyalty.referral.test.ts \
+            ./src/routes/dishRationales.test.ts \
+            ./src/routes/coachAgent.test.ts \
+            ./src/routes/rdAdvisory.appointmentOrder.test.ts \
+            ./src/routes/vouchers.test.ts \
+            ./src/routes/premium.paymentOrder.test.ts \
+            ./src/routes/addons.test.ts \
+            ./src/lib/ai/agents/ops.refundCap.test.ts \
+            ./src/routes/marketplace.checkout.test.ts \
+            ./src/routes/marketplace.paymentsIntegration.test.ts \
+            ./src/routes/marketplace.items.test.ts \
+            ./src/routes/corporate.subsidyLedger.test.ts \
+            ./src/routes/corporate.teams.test.ts \
+            ./src/lib/reconciliationScheduler.test.ts \
+            ./src/routes/savedMeals.test.ts \
+            ./src/routes/ecosystem.test.ts \
+            ./src/lib/bomEngine.test.ts \
+            ./src/lib/guardrailEngines.test.ts \
+            ./src/lib/logisticsEngine.test.ts \
+            ./src/lib/wmsFefoEngine.test.ts
 
   # Replay committed drizzle migrations against production BEFORE the
   # api-server rolls. This is the step whose absence kept the backend deploy

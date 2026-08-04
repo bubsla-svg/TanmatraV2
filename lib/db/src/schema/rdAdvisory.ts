@@ -6,6 +6,7 @@ import {
   timestamp,
   text,
   numeric,
+  jsonb,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -164,9 +165,50 @@ export const rdLabUploadsTable = pgTable(
   (t) => [index("idx_rd_lab_user").on(t.userId, t.createdAt)],
 );
 
+export const patientBiomarkersTable = pgTable(
+  "patient_biomarkers",
+  {
+    id: serial("id").primaryKey(),
+    userId: varchar("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    appointmentId: integer("appointment_id").references(
+      () => rdAppointmentsTable.id,
+      { onDelete: "set null" }
+    ),
+    labUploadId: integer("lab_upload_id").references(
+      () => rdLabUploadsTable.id,
+      { onDelete: "set null" }
+    ),
+    reportName: text("report_name").notNull(),
+    reportDate: timestamp("report_date", { withTimezone: true }),
+    biomarkers: jsonb("biomarkers").$type<
+      Array<{
+        name: string;
+        value: number | string;
+        unit: string;
+        referenceRange?: string;
+        isAbnormal: boolean;
+        category?: string;
+      }>
+    >().notNull(),
+    summary: text("summary"),
+    flaggedCount: integer("flagged_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [index("idx_patient_biomarkers_user").on(t.userId, t.createdAt)]
+);
+
 export type RdAppointment = typeof rdAppointmentsTable.$inferSelect;
 export type RdMessage = typeof rdMessagesTable.$inferSelect;
 export type RdProgressLog = typeof rdProgressLogsTable.$inferSelect;
 export type RdLabUpload = typeof rdLabUploadsTable.$inferSelect;
 export type RdUser = typeof rdUsersTable.$inferSelect;
 export type RdAvailability = typeof rdAvailabilityTable.$inferSelect;
+export type PatientBiomarker = typeof patientBiomarkersTable.$inferSelect;

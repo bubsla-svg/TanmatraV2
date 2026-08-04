@@ -105,3 +105,39 @@ export async function getMyAppointments(fetchImpl?: FetchImpl): Promise<Appointm
   return data.appointments ?? [];
 }
 
+export interface ExtractedBiomarker {
+  name: string;
+  value: number | string;
+  unit: string;
+  referenceRange?: string;
+  isAbnormal: boolean;
+  category?: string;
+}
+
+export interface PatientBiomarkerRecord {
+  id: number;
+  reportName: string;
+  biomarkers: ExtractedBiomarker[];
+  summary: string;
+  flaggedCount: number;
+  createdAt: string;
+}
+
+export async function uploadBloodReportOcr(
+  fileName: string,
+  rawContent: string = "",
+  appointmentId?: number,
+  fetchImpl?: FetchImpl
+): Promise<{ biomarkerRecord: PatientBiomarkerRecord }> {
+  return apiPost("/rd/labs/ocr", { fileName, rawContent, appointmentId }, fetchImpl);
+}
+
+export async function getPatientBiomarkers(fetchImpl?: FetchImpl): Promise<PatientBiomarkerRecord[]> {
+  try {
+    const data = await apiGet<{ biomarkers?: PatientBiomarkerRecord[] }>("/rd/labs/biomarkers", fetchImpl);
+    return data.biomarkers ?? [];
+  } catch {
+    return [];
+  }
+}
+

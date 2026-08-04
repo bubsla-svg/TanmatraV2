@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Text } from "@astryxdesign/core/Text";
-import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
+import { type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { DishFitBadge } from "@/components/menu/DishFitContext";
@@ -104,9 +104,8 @@ export function DishCard({ dish }: { dish: DishData }) {
         <Text type="body" weight="bold" hasTabularNumbers className="text-gold-text">
           {formatPaise(dish.price)}
         </Text>
-        {/* §4.1 one-tap add — only for à-la-carte-orderable dishes, so a
-            plan-only dish never shows a dead CTA. */}
-        {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
+        {/* §4.1 one-tap add — every menu card on à-la-carte is orderable (zero dead ends) */}
+        <AddToCart dish={dish} />
       </div>
     </article>
   );
