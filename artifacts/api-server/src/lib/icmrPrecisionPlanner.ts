@@ -1,5 +1,10 @@
 import { DISHES, type DishData } from "@workspace/menu-catalog";
-import { isAllergenSafe, matchesDiet, liveDishes } from "./mealPlanner";
+
+function isDishAllergenSafe(dish: DishData, allergens: string[]): boolean {
+  if (!allergens || allergens.length === 0) return true;
+  const dishAllergens = (dish.allergens || []).map((a) => a.toLowerCase());
+  return !allergens.some((alg) => dishAllergens.includes(alg.toLowerCase()));
+}
 
 export interface PrecisionPlannerInput {
   age: number;
@@ -128,15 +133,21 @@ export async function generatePrecisionPlanLogic(
     input.dietPreference
   );
 
-  let dishes = await liveDishes().catch(() => DISHES);
-  if (!dishes || dishes.length === 0) {
-    dishes = DISHES;
+  let dishes: DishData[] = DISHES;
+  if (process.env.DATABASE_URL) {
+    try {
+      const { liveDishes } = await import("./mealPlanner");
+      const live = await liveDishes();
+      if (live && live.length > 0) dishes = live;
+    } catch {
+      dishes = DISHES;
+    }
   }
 
   const allergens = input.allergens ?? [];
   const safeDishes = dishes.filter((d) => {
     if (!d.isAvailable) return false;
-    if (!isAllergenSafe(d, allergens)) return false;
+    if (!isDishAllergenSafe(d, allergens)) return false;
     if (input.dietPreference === "vegan" || input.dietPreference === "veg") {
       if (!d.isVeg) return false;
     }

@@ -1,5 +1,4 @@
 import { DISHES, type DishData } from "@workspace/menu-catalog";
-import { liveDishes } from "./mealPlanner";
 
 export interface DetectedIngredient {
   name: string;
@@ -49,9 +48,15 @@ export async function scanPantryVisionLogic(
     { name: "Ripe Tomatoes", category: "Produce", confidenceScore: 0.95 },
   ];
 
-  let dishes = await liveDishes().catch(() => DISHES);
-  if (!dishes || dishes.length === 0) {
-    dishes = DISHES;
+  let dishes: DishData[] = DISHES;
+  if (process.env.DATABASE_URL) {
+    try {
+      const { liveDishes } = await import("./mealPlanner");
+      const live = await liveDishes();
+      if (live && live.length > 0) dishes = live;
+    } catch {
+      dishes = DISHES;
+    }
   }
 
   const addOnDishes = dishes.slice(0, 4);
