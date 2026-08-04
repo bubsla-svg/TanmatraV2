@@ -82,21 +82,21 @@ jobs:
       # Postgres, so they run without a service and stay deterministic.
       - name: Money-path unit tests (api-server + plan spine)
         working-directory: artifacts/api-server
-        run: >
-          node --test --import tsx
-          ./src/lib/cartMath.test.ts
-          ./src/lib/bundlePricing.test.ts
-          ./src/lib/paymentIntegrity.test.ts
-          ./src/lib/subscriptionPricing.test.ts
-          ./src/lib/flags.test.ts
-          ./src/lib/trialEligibility.test.ts
-          ./src/lib/corporateSubsidy.test.ts
-          ./src/lib/icmrPrecisionPlanner.test.ts
-          ./src/lib/bloodReportOcr.test.ts
-          ./src/lib/pantryVisionScanner.test.ts
-          ../../lib/subscription-rules/src/planCatalog.test.ts
-          ./src/lib/priceBands.test.ts
-          ./src/lib/sendError.test.ts
+        run: |
+          node --test --import tsx \
+            ./src/lib/cartMath.test.ts \
+            ./src/lib/bundlePricing.test.ts \
+            ./src/lib/paymentIntegrity.test.ts \
+            ./src/lib/subscriptionPricing.test.ts \
+            ./src/lib/flags.test.ts \
+            ./src/lib/trialEligibility.test.ts \
+            ./src/lib/corporateSubsidy.test.ts \
+            ./src/lib/icmrPrecisionPlanner.test.ts \
+            ./src/lib/bloodReportOcr.test.ts \
+            ./src/lib/pantryVisionScanner.test.ts \
+            ../../lib/subscription-rules/src/planCatalog.test.ts \
+            ./src/lib/priceBands.test.ts \
+            ./src/lib/sendError.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
       # these nowhere; they are driven through the api-server tsx loader.
@@ -159,11 +159,11 @@ jobs:
       # Petpooja auth broke" rather than being buried in a money run.
       - name: Petpooja inbound auth contract
         working-directory: artifacts/api-server
-        run: >
-          node --test --import tsx
-          ./src/lib/petpoojaClient.test.ts
-          ./src/routes/petpooja.auth.test.ts
-          ./src/routes/petpooja.test.ts
+        run: |
+          node --test --import tsx \
+            ./src/lib/petpoojaClient.test.ts \
+            ./src/routes/petpooja.auth.test.ts \
+            ./src/routes/petpooja.test.ts
       # Access-control contract for the /ops router. Its own step, and named for
       # what it is, so a failure reads as "the ops gate broke" rather than being
       # buried in a money run — same reasoning as the KDS step below.
@@ -176,20 +176,20 @@ jobs:
       # because a per-handler check is a thing an author can forget.
       - name: Ops router access-control contract
         working-directory: artifacts/api-server
-        run: >
-          node --test --import tsx
-          ./src/routes/ops.gate.test.ts
-          ./src/routes/ops.test.ts
-          ./src/routes/openApiContract.test.ts
-          ./src/routes/analytics.gate.test.ts
-          ./src/routes/corporateLeads.gate.test.ts
-          ./src/routes/menuEngineering.gate.test.ts
-          ./src/routes/menu.gate.test.ts
-          ./src/routes/menuAssets.gate.test.ts
-          ./src/routes/partnerLeads.gate.test.ts
-          ./src/routes/payments.gate.test.ts
-          ./src/routes/rdPartners.gate.test.ts
-          ./src/routes/supportTickets.gate.test.ts
+        run: |
+          node --test --import tsx \
+            ./src/routes/ops.gate.test.ts \
+            ./src/routes/ops.test.ts \
+            ./src/routes/openApiContract.test.ts \
+            ./src/routes/analytics.gate.test.ts \
+            ./src/routes/corporateLeads.gate.test.ts \
+            ./src/routes/menuEngineering.gate.test.ts \
+            ./src/routes/menu.gate.test.ts \
+            ./src/routes/menuAssets.gate.test.ts \
+            ./src/routes/partnerLeads.gate.test.ts \
+            ./src/routes/payments.gate.test.ts \
+            ./src/routes/rdPartners.gate.test.ts \
+            ./src/routes/supportTickets.gate.test.ts
       # The /delivery access-control contract used to sit here, DB-free. ADM-02
       # moved it: the gate now resolves named roles from the `admin_roles`
       # table, so an AUTHENTICATED non-ops caller — which is exactly what that
