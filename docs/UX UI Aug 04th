@@ -1,0 +1,1735 @@
+
+Tanmatra End-to-End Platform Architecture
+Clean-Slate Engineering Execution Specification — P0 to Phase 13
+Document status: Approved for engineering execution
+Primary audience: Engineering agent, frontend lead, backend/API lead, QA agent, design-system owner, product owner
+Execution model: Sequential phased delivery with mandatory phase gates
+Product model: Sole-operator clinical food platform; not a multi-vendor aggregator
+
+
+1. Clean-Slate Execution Directive
+The engineering agent must not extend, reskin, or incrementally refactor the current product interface.
+Before implementing any Tanmatra feature, the engineering agent must:
+
+1. Archive the current repository state.
+2. Audit all existing routes, components, styles, assets, dependencies, data models, state stores, and application services.
+3. Classify every existing artifact as:
+
+KEEP
+REFACTOR
+QUARANTINE
+REMOVE
+
+
+
+1. Remove inherited product content, legacy navigation, duplicate design systems, provider-comparison interfaces, unapproved routes, raw image usage, hard-coded commercial data, and dead interactions from the active application.
+2. Move unresolved legacy code into a quarantine directory that cannot be imported by the active application.
+3. Establish neutral placeholders for every approved route.
+4. Complete the semantic light and dark design systems.
+5. Produce a P0 completion report.
+6. Begin feature implementation only after P0 and Phase 1 pass their acceptance gates.
+The clean state—not the current interface—is the starting point.
+
+
+2. Problem Statement
+The existing platform risks fragmented user state, duplicated planning and checkout engines across organic and partner channels, inconsistent plan configuration, unvalidated pricing reaching payment, loss of user progress during authentication, and disconnected post-purchase subscription management.
+Potential acquisition sources include:
+
+Organic consumer traffic
+Corporate employee invitations
+Corporate wellness programs
+Gym partnerships
+Fitness-club partnerships
+Dietitian referrals
+Challenges
+Referral campaigns
+Voucher campaigns
+
+
+These sources must not create independent versions of:
+
+Plan generation
+Meal configuration
+Pricing
+Checkout
+Subscription activation
+Meal planning
+Subscription management
+
+
+
+
+3. Solution
+Build a unified, sole-operator therapeutic food platform around one shared lifecycle:
+
+Acquire
+→ Understand
+→ Recommend
+→ Configure
+→ Validate
+→ Price
+→ Schedule
+→ Purchase
+→ Fulfil
+→ Adapt
+→ Measure
+→ Renew
+
+
+The platform must use:
+Persistent Domain Objects
+
+AcquisitionContext
+PlanDraft
+QuoteSnapshot
+PaymentAttempt
+Order
+ActiveSubscription
+HealthConnection
+
+
+Core Layout Boundaries
+
+GlobalLayout
+FocusLayout
+B2BLayout
+
+
+Core Domain Services
+
+PlanGenerationService
+ConstraintEvaluationService
+PricingService
+QuoteService
+EntitlementService
+VoucherService
+CheckoutService
+OrderService
+SubscriptionService
+InventoryService
+DeliveryCapacityService
+PartnerVerificationService
+WearableConnectionService
+
+
+All acquisition sources must converge into the same planning, pricing, scheduling, checkout, and subscription lifecycle.
+
+
+4. Product Model and Vocabulary
+Tanmatra is a sole operator.
+The platform must not use aggregator terminology.
+Prohibited Vocabulary
+
+Pick a restaurant
+Compare providers
+All restaurants
+Restaurant rating
+Available providers
+Choose a seller
+
+
+Approved Vocabulary
+
+Choose your meal plan
+Recommended for your goal
+Meals in this plan
+Build my plan
+Other plans that may fit
+RD-reviewed
+Tanmatra recommendation
+
+
+Users choose between Tanmatra plan formats, goals, meal preferences, and durations—not between vendors.
+
+
+5. Immutable UX and Engineering Laws
+5.1 Image Contract
+All images must render through:
+
+<SafeImage />
+
+
+Required behavior:
+
+object-fit: cover
+object-position: center
+locked aspect ratio
+loading skeleton
+error placeholder
+no layout shift
+
+
+Raw image rendering in product components is prohibited.
+
+
+5.2 CTA Contract
+Primary CTA
+
+Background: Brand Gold
+Text: Near-black
+Maximum: One visible primary CTA per viewport
+
+
+Secondary CTA
+
+Background: Theme-aware Frosted Glass
+Border: Semantic medium-transparency border
+Text: Theme-aware high-emphasis text
+
+
+Prohibited:
+
+Ghost buttons
+Multiple gold CTAs in one viewport
+Unstyled conversion links
+Route-specific CTA colors
+Partner colors replacing Brand Gold
+
+
+
+
+5.3 Action Contract
+Every interactive element must specify exactly one action category:
+
+Route push
+Route replacement
+Overlay open
+Overlay close
+State mutation
+Form submission
+Native permission request
+Retry
+External navigation
+
+
+No button, card, chip, icon, tab, label, or link may lead to an undefined state.
+
+
+5.4 FocusLayout Contract
+High-intent routes must use:
+
+<FocusLayout />
+
+
+FocusLayout removes:
+
+GlobalHeader
+BottomTabBar
+Global location header
+Promotional banners
+Unrelated recommendations
+Corporate navigation
+Floating marketing elements
+
+
+FocusLayout may include:
+
+Back control
+Route title
+Step progress
+Contextual trust signal
+Single sticky ledger
+Single primary CTA
+
+
+
+
+5.5 Responsive Ergonomics
+
+Minimum touch target: 44 × 44px
+Sticky UI: Must not obstruct significant route content
+Global header: Hide on downward scroll, reveal on upward scroll
+Bottom tabs: Hide on downward scroll, reveal on upward scroll
+Bottom tabs: Hide when the keyboard, drawer, or bottom sheet is open
+
+
+
+
+5.6 Progressive Clinical Disclosure
+Clinical information must follow this hierarchy:
+
+1. Human-readable outcome
+2. Food or plan relevance
+3. Clinical explanation
+
+
+Detailed clinical information must live in:
+
+Accordions
+Bottom sheets
+Tap-to-expand cards
+Contextual explainers
+
+
+Do not expose dense clinical content in the first viewport.
+
+
+6. Approved Route Map
+6.1 Commerce
+
+/
+ /menu
+ /dish/[slug]
+ /marketplace
+ /marketplace/[slug]
+ /meal-deals
+ /meal-recommendations
+ /meal-guides/[dishSlug]
+ /recipes
+
+
+6.2 Plans and Clinical Care
+
+/plans
+/plan/[planId]
+/trial
+/custom-build
+/quick-setup
+/meal-planner
+/metabolic
+/performance
+/clinical
+/care/[condition]
+
+
+6.3 Account and Telemetry
+
+/account
+/account/orders
+/account/subscriptions
+/account/appointments
+/account/billing
+/account/addresses
+/account/preferences
+/account/favorites
+/account/history
+/account/symptoms
+/account/wellness
+/account/loyalty
+/account/connections
+/vouchers
+/premium
+
+
+6.4 AI and Dietitian Care
+
+/coach
+/rd
+/qa
+
+
+6.5 Checkout and Orders
+
+/checkout
+/order/confirmed/[orderId]
+/group/[code]
+/office-lunch/[id]
+
+
+6.6 Corporate and Partnerships
+
+/corporate
+/corporate/[slug]
+/corporate/[slug]/lunch-planner
+/corporate/invite/[token]
+/corporate-wellness
+/rd-partners
+/partners/dietitians
+/partners/gyms
+/partners/fitness-clubs
+
+
+6.7 Community
+
+/challenges
+/challenges/[slug]
+/challenges/tracker
+/team
+
+
+
+
+7. Layout Assignment
+7.1 GlobalLayout
+Used for consumer discovery, browsing, account, telemetry, and retention.
+
+<GlobalLayout>
+  <GlobalHeader />
+  <main>{routeContent}</main>
+  <BottomTabBar />
+</GlobalLayout>
+
+
+The mobile BottomTabBar must contain exactly:
+
+Home    → /
+Menu    → /menu
+Plan    → /plans
+Account → /account
+
+
+No fifth tab may be introduced.
+
+
+7.2 FocusLayout
+Required for:
+
+/dish/[slug]
+/marketplace/[slug]
+/plan/[planId]
+/trial
+/custom-build
+/quick-setup
+/checkout
+/order/confirmed/[orderId]
+/group/[code]
+/office-lunch/[id]
+/corporate/invite/[token]
+
+
+High-intent account sub-flows may also enter FocusLayout.
+
+
+7.3 B2BLayout
+Required for:
+
+/corporate
+/corporate/[slug]
+/corporate/[slug]/lunch-planner
+/corporate-wellness
+/rd-partners
+/partners/dietitians
+/partners/gyms
+/partners/fitness-clubs
+
+
+Mobile B2B routes must not render the consumer BottomTabBar.
+
+
+8. Theme and Design-System Contract
+8.1 Supported Modes
+
+Light
+Dark
+System
+
+
+Preference precedence:
+
+1. Saved authenticated-account preference
+2. Saved local-device preference
+3. Operating-system preference
+4. Dark fallback
+
+
+Theme hydration must not display the incorrect theme before applying the saved preference.
+
+
+8.2 Theme Architecture
+Use:
+
+One component system
+One semantic token contract
+Two theme value sets
+
+
+Do not create:
+
+LightButton
+DarkButton
+LightCard
+DarkCard
+Theme-specific page forks
+
+
+Theme switching must not reset route, form, cart, or plan state.
+
+
+8.3 Semantic Token Rule
+Product components must not consume raw palette values.
+Required pattern:
+
+background: var(--color-bg-canvas);
+color: var(--color-text-primary);
+border-color: var(--color-border-subtle);
+
+
+Raw hex and palette values may exist only inside the theme-definition layer.
+
+
+8.4 Required Token Families
+
+Color
+Typography
+Spacing
+Radius
+Elevation
+Motion
+Focus
+Status
+Safe-area
+Breakpoint
+
+
+
+
+8.5 Status Colors
+Centrally define:
+
+Success
+Warning
+Error
+Information
+
+
+Status cannot rely on color alone. Each status requires:
+
+Icon
+Label
+Foreground
+Background
+Border
+Accessible contrast
+
+
+Green must not be used as a general interactive color.
+
+
+9. Primary User Stories
+
+1. As a guest on /menu, the user can browse dishes through horizontal category rails and add meals quickly without navigating a vertical mega-grid.
+2. As a user customizing a dish, the user can open a DishQuickViewSheet, review collapsed nutrition information, select valid accompaniments, and add the configured dish to the cart.
+3. As a user reviewing the CartDrawer, the user sees a mandatory CompleteYourMealRail before the single Checkout CTA.
+4. As an unauthenticated user accessing a protected account route, the user is redirected to authentication and returned to the exact original route afterward.
+5. As a user configuring /plan/[planId], the user sees the exact day-by-day meal lineup before checkout.
+6. As a user using Shuffle, meals marked Keep remain unchanged while unlocked meals regenerate.
+7. As a user manually replacing a dish, the user’s choice clears the plan-level Undo state.
+8. As a user changing duration, mealtime, goal, dietary pattern, or location, the user receives a warning when the change would erase manual meal customization.
+9. As a user on /custom-build, the user follows a six-step questionnaire and receives a generated meal lineup without selecting every meal manually.
+10. As a user reviewing a custom plan, the user sees meal count, total price, original price where applicable, savings, and effective price per meal.
+11. As a user on /checkout, the user always sees the exact amount payable today and future renewal amount.
+12. As a user submitting payment, repeated submission or network retry cannot create duplicate payment, order, or subscription records.
+13. As an active subscriber on /meal-planner, the user can view delivery dates, cutoff times, and available meal-management actions.
+14. As a subscriber, the user can skip, pause, swap, change slot, or change address where operationally permitted, with unavailable actions explaining why.
+15. As a user leaving meal feedback, the user can choose Loved it, It was okay, or Not for me, with optional structured reason tags.
+16. As a wearable-connected user, health context may influence explainable recommendations but may never change a meal automatically.
+17. As a corporate employee, an invite and entitlement are validated server-side and reflected consistently throughout plan configuration and checkout.
+18. As a dietitian-referred user, the user sees verified RD recommendations clearly distinguished from personal preferences.
+19. As a user booking an RD consultation, the user can browse profiles, select a valid slot, review the appointment, and complete booking.
+20. As a user encountering an expired quote or network failure, the user can safely refresh the quote without losing the configured plan.
+
+
+10. Persistent Domain Objects
+10.1 AcquisitionContext
+
+type AcquisitionContext = {
+  sourceType:
+    | "organic"
+    | "corporate"
+    | "gym"
+    | "fitness-club"
+    | "dietitian"
+    | "challenge"
+    | "referral"
+    | "campaign";
+
+  sourceId?: string;
+  campaignId?: string;
+  referralCode?: string;
+
+  intendedGoal?: string;
+  recommendedPlanId?: string;
+
+  verificationStatus:
+    | "not-required"
+    | "pending"
+    | "verified"
+    | "failed"
+    | "expired";
+
+  eligibleBenefitIds: string[];
+  expiresAt?: string;
+  returnRoute: string;
+};
+
+
+Signed invite and referral tokens must not be persisted in general client state after server exchange.
+
+
+10.2 PlanDraft
+
+type PlanDraft = {
+  id: string;
+  version: number;
+
+  type:
+    | "recommended"
+    | "custom"
+    | "trial"
+    | "corporate-sponsored"
+    | "partner-discounted"
+    | "rd-referred"
+    | "challenge-support";
+
+  currentStage: string;
+  source?: AcquisitionContext;
+
+  primaryGoal?: string;
+  secondaryGoal?: string;
+
+  deliveryAddressId?: string;
+  serviceabilityStatus:
+    | "unchecked"
+    | "checking"
+    | "serviceable"
+    | "unserviceable";
+
+  mealSlots: Array<"breakfast" | "lunch" | "dinner">;
+  deliveryDaysPerWeek?: number;
+  servingCount: number;
+
+  dietaryPattern?: string;
+  allergenExclusions: string[];
+  hardIngredientExclusions: string[];
+  dislikedIngredients: string[];
+  spicePreference?: string;
+  varietyPreference?: string;
+
+  portionProfile?: string;
+  proteinPreference?: string;
+  carbohydratePreference?: string;
+  therapeuticBoosts: string[];
+
+  duration?: number;
+  totalMeals?: number;
+  renewalPreference?: "auto-renew" | "fixed-term" | "decide-later";
+
+  generatedMeals: PlannedMeal[];
+  lockedMealIds: string[];
+  manuallyReplacedMealIds: string[];
+  previousShuffleSnapshot?: PlannedMeal[];
+
+  startDate?: string;
+  deliveryDates: string[];
+  deliverySlotId?: string;
+  deliveryMethod?: string;
+
+  entitlementIds: string[];
+
+  wearableInfluenceEnabled: boolean;
+  validationErrors: ValidationError[];
+  unsavedChanges: boolean;
+};
+
+
+PlanDraft must not determine authoritative price, eligibility, capacity, or inventory.
+
+
+10.3 QuoteSnapshot
+
+type QuoteSnapshot = {
+  quoteId: string;
+  planDraftId: string;
+  planDraftVersion: number;
+  version: number;
+
+  mealSnapshot: QuotedMeal[];
+  scheduleSnapshot: QuotedSchedule;
+  entitlementSnapshot: QuotedEntitlement[];
+  priceBreakdown: PriceBreakdown;
+
+  currency: "INR";
+
+  status:
+    | "active"
+    | "expired"
+    | "superseded"
+    | "consumed";
+
+  createdAt: string;
+  expiresAt: string;
+  validationHash: string;
+};
+
+
+A quote is immutable.
+Any plan change affecting meals, schedule, price, benefit, or renewal must supersede the current quote.
+
+
+10.4 PaymentAttempt
+
+type PaymentAttempt = {
+  paymentAttemptId: string;
+  quoteId: string;
+  idempotencyKey: string;
+
+  status:
+    | "created"
+    | "requires-action"
+    | "processing"
+    | "succeeded"
+    | "failed"
+    | "cancelled";
+
+  providerReference?: string;
+
+  createdAt: string;
+  updatedAt: string;
+};
+
+
+
+
+10.5 Order
+
+type Order = {
+  orderId: string;
+  quoteId: string;
+  paymentAttemptId?: string;
+
+  type:
+    | "a-la-carte"
+    | "subscription"
+    | "trial"
+    | "sponsored-activation"
+    | "group"
+    | "office-lunch";
+
+  status:
+    | "creating"
+    | "confirmed"
+    | "preparing"
+    | "out-for-delivery"
+    | "delivered"
+    | "partially-fulfilled"
+    | "cancelled"
+    | "failed";
+
+  createdAt: string;
+};
+
+
+
+
+10.6 ActiveSubscription
+
+type ActiveSubscription = {
+  id: string;
+  planDraftId: string;
+  orderId: string;
+
+  status:
+    | "scheduled"
+    | "active"
+    | "paused"
+    | "payment-action-required"
+    | "completed"
+    | "cancelled";
+
+  startDate: string;
+  endDate?: string;
+
+  renewalPreference:
+    | "auto-renew"
+    | "fixed-term"
+    | "decide-later";
+
+  deliveries: SubscriptionDelivery[];
+  entitlementIds: string[];
+  nextChangeCutoff?: string;
+};
+
+
+
+
+10.7 HealthConnection
+
+type HealthConnection = {
+  platform: "apple-health" | "health-connect";
+
+  status:
+    | "disconnected"
+    | "partially-connected"
+    | "connected"
+    | "no-data"
+    | "stale"
+    | "permission-revoked"
+    | "sync-error";
+
+  grantedDataTypes: string[];
+  deniedDataTypes: string[];
+
+  lastSyncAt?: string;
+  lastSuccessfulSyncAt?: string;
+};
+
+
+
+
+11. Non-Negotiable Domain Invariants
+
+1. Hard allergen exclusions can never be violated by generation, Shuffle, Undo, Change Dish, Edit, or substitution.
+2. A payable amount may originate only from an active server-generated quote.
+3. An expired or superseded quote cannot create a new payment attempt.
+4. One logical payment attempt cannot create multiple charges, orders, or subscriptions.
+5. A benefit cannot be consumed before successful order creation or sponsored activation.
+6. A manual meal replacement clears the plan-level Undo state.
+7. Locked meals are not modified by Shuffle.
+8. Checkout cannot change plan configuration.
+9. Wearable information cannot change a meal without explicit user confirmation.
+10. An ActiveSubscription may be created only from a confirmed subscription order or verified sponsored activation.
+11. Authentication redirects must preserve the intended return route.
+12. Destructive subscription actions must show delivery, financial, benefit, and renewal effects before confirmation.
+13. Client state cannot author pricing, inventory, eligibility, delivery capacity, or fulfilment truth.
+14. Sensitive health, employee, referral, payment, and wearable data cannot be sent to general analytics.
+15. Any change affecting an active quote must invalidate or supersede the quote.
+16. No silent meal substitution is permitted.
+17. All unavailable actions must state why they are unavailable.
+18. Checkout cannot ask plan-configuration questions that should have been resolved before quote creation.
+19. A single-use entitlement must be consumed exactly once.
+20. A previous meal lineup may be restored only after server-side compatibility and inventory validation.
+
+
+12. Testing Seams
+12.1 System Lifecycle Seam
+Cross-feature tests validate:
+
+Acquire
+→ Understand
+→ Recommend
+→ Configure
+→ Validate
+→ Price
+→ Schedule
+→ Purchase
+→ Fulfil
+→ Adapt
+→ Measure
+→ Renew
+
+
+12.2 Bounded Seams
+Seam 1 — Acquisition and Eligibility
+
+AcquisitionContext
+PartnerVerificationService
+EntitlementService
+Authentication return routing
+
+
+Seam 2 — Plan Configuration and Generation
+
+PlanDraft
+PlanGenerationService
+ConstraintEvaluationService
+InventoryService
+
+
+Seam 3 — Quote, Pricing and Entitlements
+
+QuoteSnapshot
+PricingService
+QuoteService
+EntitlementService
+VoucherService
+
+
+Seam 4 — Payment and Order Creation
+
+PaymentAttempt
+CheckoutService
+OrderService
+IdempotencyService
+
+
+Seam 5 — Subscription and Fulfilment
+
+ActiveSubscription
+SubscriptionService
+DeliveryCapacityService
+ChangeCutoffPolicy
+
+
+Seam 6 — Wearable Personalization
+
+HealthConnection
+WearableSummary
+RecommendationContext
+
+
+Unit and integration tests must target one bounded seam at a time. E2E tests validate cross-seam lifecycle behavior.
+Tests must avoid dependence on:
+
+Private component state
+Unexported implementation helpers
+Internal hook ordering
+CSS class names
+Arbitrary timing delays
+Live production third-party services
+
+
+
+
+13. Persistence and Draft Recovery
+The application may persist only an allowlisted client-safe draft projection in browser storage.
+Do Not Persist in Plain Local Storage
+
+Full address
+Phone number
+Employee ID
+Invite token
+Signed referral token
+Clinical notes
+Raw wearable data
+Payment information
+Quote validation hashes
+Server entitlement details
+Authentication tokens
+
+
+Authentication Recovery Sequence
+
+Read local projection
+→ Authenticate user
+→ Retrieve server draft
+→ Compare versions
+→ Resolve conflict
+→ Merge permitted user-editable fields
+→ Revalidate eligibility
+→ Revalidate constraints
+→ Revalidate inventory
+→ Regenerate quote if required
+
+
+No local draft may silently overwrite a newer server draft.
+
+
+14. Authentication Policy
+Protected Routes
+
+/account/*
+/account/connections
+/meal-planner
+/account/subscriptions
+
+
+Authentication is required.
+Subscription Checkout
+Authentication is required before payment-attempt creation.
+À-La-Carte Checkout
+The route may open with guest cart state. Contact verification is required before payment-attempt creation.
+Return Route
+Authentication must preserve:
+
+/auth?returnTo=<encodedOriginalRoute>
+
+
+The return route must be validated as a permitted internal route before navigation.
+
+
+15. Pricing and Quote Contract
+Authoritative Sequence
+
+Client configuration
+→ Server configuration validation
+→ Server inventory validation
+→ Server entitlement resolution
+→ Server pricing calculation
+→ Server QuoteSnapshot
+→ Client displays quote
+→ Server quote revalidation
+→ PaymentAttempt creation
+
+
+The client may display an explicitly labeled estimate during configuration.
+The client must not author:
+
+Final payable amount
+Tax
+Delivery charge
+Discount amount
+Benefit combination
+Future renewal amount
+Quote expiry
+
+
+Price Breakdown
+
+Meal subtotal
+Portion upgrades
+Accompaniment upgrades
+Delivery fee
+Packaging fee
+Taxes
+Plan discount
+Entitlement discount
+Voucher discount
+Wallet credit
+Amount payable today
+Future renewal amount
+Effective price per meal
+
+
+No new fee may first appear after the user initiates payment.
+
+
+16. Payment Idempotency Contract
+One logical payment attempt has one stable server-enforced idempotency key.
+Rules:
+
+1. Create the key when the payment attempt is created.
+2. Reuse the key for network retries of the same attempt.
+3. Generate a new key only after the prior attempt reaches a final state and the user explicitly initiates a new attempt.
+4. Disable repeated submission while an attempt is unresolved.
+5. An idempotent retry must return the existing attempt or order.
+6. Entitlements are consumed only after successful activation or order creation.
+7. Payment success followed by client timeout must resolve to the existing successful attempt and order.
+
+
+17. Shuffle, Keep, Undo and Replacement Contract
+Keep
+
+[State Mutation: Locks the selected meal slot]
+
+
+Locked meals are never changed by Shuffle.
+Shuffle
+
+[State Mutation: Regenerates unlocked meals only]
+
+
+Shuffle must respect:
+
+Hard allergens
+Hard exclusions
+Dietary pattern
+Goal
+Plan constraints
+Meal slots
+Inventory
+Delivery date
+Duplicate-frequency rules
+Locked meals
+
+
+Undo
+
+[State Mutation: Restores one previous-lineup snapshot]
+
+
+Only one snapshot is retained.
+A second Shuffle replaces the previous snapshot.
+Undo is cleared by:
+
+Manual dish replacement
+Compatibility-affecting accompaniment change
+Duration change
+Mealtime change
+Dietary-pattern change
+Goal or plan change
+Location change affecting inventory
+Quote creation
+
+
+Undo must validate prior meals against current inventory before restoration.
+Change Dish
+
+[Action: Opens a compatible replacement sheet]
+
+
+Only valid, available replacements may be selectable.
+Edit
+
+[Action: Opens accompaniment and permitted-modification sheet]
+
+
+Change Dish and Edit are separate actions.
+
+
+18. Phase Plan
+Phase P0 — Repository Reset and Clean-State Verification
+Objective
+Establish a neutral application without inherited product assumptions.
+Required Work
+
+Archive current repository
+Audit routes, components, styles, assets and state
+Classify all existing artifacts
+Remove unapproved active product UI
+Quarantine unresolved legacy code
+Establish route placeholders
+Establish layout placeholders
+Create domain package
+Create service-interface package
+Configure CI
+
+
+Gate
+
+No legacy product content active
+No active imports from quarantine
+Every approved route resolves
+No aggregator/provider comparison active
+No fabricated commercial or clinical data
+Build, typecheck, lint, test and accessibility checks pass
+
+
+
+
+Phase 1 — Dual-Theme Design System
+Objective
+Create production-ready light, dark, and system theme support.
+Required Components
+
+SafeImage
+PrimaryCTA
+SecondaryCTA
+CompactAction
+IconButton
+TextInput
+SearchInput
+FilterChip
+ClinicalBadge
+SquircleOptionCard
+Card
+Accordion
+BottomSheet
+Drawer
+Modal
+HorizontalSnapRail
+StickyLedger
+GlobalHeader
+FocusHeader
+BottomTabBar
+Skeleton
+InlineError
+EmptyState
+PriceDisplay
+
+
+Gate
+
+Light passes
+Dark passes
+System passes
+Persistence passes
+Flash-free hydration passes
+Contrast passes
+Focus passes
+Overlay accessibility passes
+Visual regression baselines pass
+Semantic-token enforcement passes
+
+
+
+
+Phase 2 — App Shell, Routing and Shared Session State
+Required Work
+
+GlobalLayout
+FocusLayout
+B2BLayout
+Global navigation
+Account drawer
+LocationBottomSheet
+Authentication boundary
+Return-route guard
+DraftRestorationBoundary
+Shared address context
+Error boundaries
+Feature flags
+
+
+No route may implement a duplicate local location selector.
+
+
+Phase 3 — Core Food Commerce
+Routes
+
+/
+ /menu
+ /dish/[slug]
+ /marketplace
+ /marketplace/[slug]
+ /meal-deals
+ /meal-recommendations
+ /meal-guides/[dishSlug]
+ /recipes
+
+
+Required Behavior
+
+- /menu uses horizontal category and meal rails on mobile.
+- Dish quick view supports nutrition disclosure and valid customization.
+- CartDrawer includes CompleteYourMealRail.
+- Cart Drawer has one primary CTA: Checkout.
+- PDP routes use FocusLayout.
+- Nutrition details are collapsed by default.
+- All images use SafeImage.
+- All prices derive from server or mock service adapters, never component constants.
+
+
+Phase 4 — Subscription Discovery
+Route
+
+/plans
+
+
+CUJ
+
+Confirm delivery context
+→ Select mealtime
+→ Select goal
+→ Review Tanmatra recommendation
+→ Review sample meals
+→ Build plan
+
+
+One recommendation must be visually dominant. Alternative formats appear afterward.
+
+
+Phase 5 — Recommended Subscription Configuration
+Route
+
+/plan/[planId]
+
+
+Sequence
+
+Plan identity
+→ Duration
+→ Mealtime
+→ Dietary pattern
+→ Generated meal lineup
+→ Keep / Shuffle / Undo / Change / Edit
+→ Savings
+→ Delivery schedule
+→ Readiness validation
+→ Quote
+→ Checkout
+
+
+Every duration option displays:
+
+Duration
+Total meals
+Total price
+Original price when applicable
+Savings percentage
+Effective price per meal
+
+
+The exact day-by-day meal lineup must appear before checkout.
+
+
+Phase 6 — Build Your Own Plan
+Route
+
+/custom-build
+
+
+Six Questionnaire Steps
+
+1. Goal
+2. Routine
+3. Food Preferences
+4. Plan Intensity
+5. Duration and Renewal
+6. Review and Generate
+
+
+Four Review States
+
+1. Configuration Summary
+2. Generated Meal Lineup
+3. Delivery Schedule and Policies
+4. Final Price and Checkout Readiness
+
+
+Required Behavior
+
+- The user defines rules; Tanmatra generates the meal lineup.
+- The user does not manually assemble every meal.
+- Hard constraints and soft preferences remain separate.
+- Every previous section has an Edit action.
+- Refresh restores the latest valid stage.
+- Invalid late-stage access resolves to the latest valid prerequisite.
+- Draft state survives authentication.
+
+
+Phase 7 — Checkout and Order Creation
+Routes
+
+/checkout
+/order/confirmed/[orderId]
+
+
+Checkout consumes an active QuoteSnapshot.
+Checkout may request only:
+
+Contact verification
+Address confirmation
+Billing selection
+Payment method
+Required consent
+Order placement
+
+
+Checkout must not request plan configuration.
+Before payment, the server revalidates:
+
+Quote status
+Inventory
+Delivery capacity
+Entitlements
+Exact payable amount
+
+
+
+
+Phase 8 — Meal Planner and Subscription Management
+Routes
+
+/meal-planner
+/account/subscriptions
+
+
+Required:
+
+Week selection
+Actual delivery dates
+Meal-slot cards
+Change cutoff
+Meal swap
+Manage Delivery sheet
+Pause
+Resume
+Skip
+Address change
+Slot change
+Plan Health
+Renewal control
+Cancellation flow
+
+
+Unavailable actions must explain the reason and next eligible time where applicable.
+
+
+Phase 9 — Account, Telemetry and Feedback
+Routes
+
+/account
+/account/orders
+/account/appointments
+/account/billing
+/account/addresses
+/account/preferences
+/account/favorites
+/account/history
+/account/symptoms
+/account/wellness
+/account/loyalty
+/vouchers
+/premium
+
+
+The Account Hub prioritizes:
+
+Required actions
+Active subscription
+Next delivery
+Order tracking
+Billing issue
+Wallet or benefit balance
+Appointments
+Wellness summary
+
+
+Meal feedback:
+
+Loved it
+It was okay
+Not for me
+
+
+Structured reasons may include:
+
+Taste
+Portion
+Spice
+Texture
+Too heavy
+Too light
+Ingredient
+Packaging
+
+
+A single negative response must not automatically become a permanent exclusion.
+
+
+Phase 10 — Wearable Connection
+Feature Flag
+
+wearables
+
+
+Routes and Placements
+
+/account/connections
+/account/wellness
+/custom-build
+/meal-planner
+/performance
+/order/confirmed/[orderId]
+
+
+Initial Sources
+
+Apple Health
+Health Connect
+
+
+Initial Data Scope
+
+Steps
+Workouts
+Active energy
+Sleep duration
+Optional weight trend
+
+
+Rules
+
+- Connection is optional.
+- Permission denial does not block plan generation.
+- Wearable data does not automatically modify meals.
+- Recommendations must explain which signal was used.
+- Users may disable plan influence without disconnecting the source.
+- Checkout must not display a wearable acquisition prompt.
+
+
+Phase 11 — Acquisition, Partners and Entitlements
+Entry Routes
+
+/corporate/invite/[token]
+/corporate-wellness
+/partners/gyms
+/partners/fitness-clubs
+/partners/dietitians
+/rd-partners
+/challenges/[slug]
+
+
+Shared Flow
+
+Landing
+→ Eligibility
+→ Authentication
+→ Goal
+→ Plan handoff
+→ Benefit resolution
+→ Plan configuration
+→ Quote
+→ Checkout or sponsored activation
+
+
+Every acquisition source must use the shared plan, pricing, checkout, and subscription systems.
+
+
+Phase 12 — Clinical Care, Coach and Dietitian Workflows
+Routes
+
+/clinical
+/care/[condition]
+/rd
+/coach
+/qa
+
+
+Requirements:
+
+- Outcome before clinical detail.
+- Clinical rationales progressively disclosed.
+- RD recommendations distinguished from user preferences.
+- Coach recommendations require explicit user confirmation.
+- Coach cannot directly modify an active plan.
+- Sensitive health and referral data must not enter general analytics.
+
+
+Phase 13 — Hardening and Production Readiness
+Required validation includes:
+
+Unit tests
+API contract tests
+Component tests
+Integration tests
+Critical E2E tests
+Accessibility tests
+Visual regression
+Performance budgets
+Security review
+Privacy review
+Clinical-copy review
+Payment reconciliation
+Entitlement reconciliation
+
+
+
+
+19. Testing Strategy
+Unit Tests
+Target:
+
+Domain transitions
+Constraint precedence
+Quote transitions
+Entitlement combinability
+Cutoff calculations
+Wizard prerequisites
+Price-input mapping
+
+
+Contract Tests
+Target:
+
+API request contracts
+API response contracts
+Error contracts
+Authentication requirements
+Idempotency behavior
+Version compatibility
+
+
+Component Tests
+Target:
+
+User-visible states
+Actions
+Theme behavior
+Accessibility
+Overlay focus
+Disabled behavior
+Error recovery
+
+
+Integration Tests
+Target:
+
+Feature controller
+Domain service
+Mock API adapter
+Draft recovery
+Route restoration
+Quote refresh
+Inventory resolution
+
+
+E2E Tests
+Target critical cross-feature lifecycle journeys only.
+
+
+20. Critical E2E Journeys
+
+1. Guest à-la-carte order.
+2. Recommended three-day subscription.
+3. Recommended 15-day subscription with Keep and Shuffle.
+4. Custom plan with a hard allergen exclusion.
+5. Custom plan with meal replacement and paid upgrade.
+6. Corporate fully sponsored activation.
+7. Corporate co-pay activation.
+8. Gym-member benefit and Custom Build handoff.
+9. Verified RD-referred plan activation.
+10. Wearable-connected performance plan.
+11. Active subscriber meal swap within cutoff.
+12. Pause and resume lifecycle.
+13. Expired quote recovery.
+14. Payment failure and safe retry.
+15. Unavailable dish replacement.
+16. Authentication interruption and draft recovery.
+17. Benefit expiry during configuration.
+18. Payment success with client timeout and idempotent recovery.
+19. Quote refresh with price difference.
+20. Hard restriction preserved across Generate, Shuffle, Keep, Change Dish, and Undo.
+21. Local and server draft version conflict.
+22. Fully sponsored subscription activation without a payment attempt.
+
+
+21. CI Reachability and Test Gate
+No skipped, focused, quarantined, conditionally excluded, unregistered, or tag-excluded critical tests are permitted in production gates.
+CI must detect:
+
+.skip
+.only
+fit
+fdescribe
+xit
+xdescribe
+Missing critical-test registration
+Excluded critical-test tags
+
+
+A non-critical quarantined test must include:
+
+Issue ID
+Owner
+Reason
+Expiry date
+Explicit non-blocking classification
+
+
+
+
+22. Out of Scope
+Do not build without separate authorization:
+
+Real-time biometric streaming
+Automatic meal replacement from wearable data
+Blood-glucose-driven automated meal selection
+Medical diagnosis
+Open multi-vendor restaurant marketplace
+Ingredient-by-ingredient custom meal construction
+Multiple independent dietary profiles in one family account
+Device-specific wearable cloud integrations
+Clinical-record ingestion
+Proprietary readiness scores
+Automatic calorie compensation
+
+
+
+
+23. Production Exit Gate
+Production release requires:
+
+P0 clean-state gate passed
+Phase 1 dual-theme gate passed
+All critical E2E journeys passed
+All domain-invariant tests passed
+All API contract tests passed
+Payment and order reconciliation passed
+Quote expiration and refresh passed
+Entitlement-consumption idempotency passed
+No unresolved P0 or P1 accessibility defects
+No unresolved P0 or P1 product defects
+No silent meal substitution
+No hard-restriction violation
+No sensitive raw-data leakage into general analytics
+Approved clinical copy
+Approved allergen and kitchen-handling language
+Approved renewal, pause, cancellation, refund and cutoff policies
+
+
+
+
+24. Required Execution Order
+The engineering agent must deliver phases in this sequence:
+
+P0
+→ Phase 1
+→ Phase 2
+→ Phase 3
+→ Phase 4
+→ Phase 5
+→ Phase 6
+→ Phase 7
+→ Phase 8
+→ Phase 9
+→ Phase 10
+→ Phase 11
+→ Phase 12
+→ Phase 13
+
+
+The agent must not:
+
+- Start partner variants before the shared plan and entitlement systems exist.
+- Start wearable recommendations before ordinary plan generation and Meal Planner behavior are stable.
+- Start checkout before QuoteSnapshot and idempotency contracts are implemented.
+- Start polished screens before the dual-theme design system passes.
+- Start Phase 2 before P0 and Phase 1 pass.
+
+
+25. Per-Phase Completion Report
+At the end of every phase, the engineering agent must report:
+
+PHASE:
+STATUS: PASS / BLOCKED
+
+Delivered:
+- Item
+- Item
+
+Routes affected:
+- Route
+- Route
+
+Domain changes:
+- Object or service
+
+Tests:
+- Unit: PASS / FAIL
+- Contract: PASS / FAIL
+- Component: PASS / FAIL
+- Integration: PASS / FAIL
+- E2E: PASS / FAIL where applicable
+- Accessibility: PASS / FAIL
+- Visual regression: PASS / FAIL
+
+Known limitations:
+- Limitation
+
+Open blockers:
+- Blocker
+
+Deferred work:
+- Item and target phase
+
+
+The next phase must not begin when the current phase is BLOCKED.
+
+
+26. Final Engineering Directive
+Build Tanmatra as one platform lifecycle—not as separate organic, custom-plan, corporate, gym, challenge, dietitian, or wearable products.
+Each acquisition source may:
+
+Prefill known information
+Verify eligibility
+Apply an entitlement
+Recommend a goal
+Constrain a plan
+Change payment responsibility
+
+
+Every source must ultimately use the same:
+
+Plan generation
+Meal validation
+Meal review
+Meal replacement
+Delivery scheduling
+Quote creation
+Checkout
+Order creation
+Subscription activation
+Meal Planner
+Subscription management
+
+
+The engineering agent must reject any implementation proposal that duplicates these systems for a specific acquisition channel.
+The architectural backbone is:
+
+AcquisitionContext
+→ PlanDraft
+→ QuoteSnapshot
+→ PaymentAttempt
+→ Order
+→ ActiveSubscription
+
+
+Optional wearable context is represented independently through:
+
+HealthConnection
+→ RecommendationContext
+→ Explicit user decision
+
+
+No feature may bypass validation, server-authoritative pricing, quote generation, explicit user confirmation, or the approved domain invariants.
