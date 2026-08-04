@@ -22,8 +22,16 @@
  * exercises the matcher without a DOM.
  */
 export const FOCUS_ROUTES = [
+  "/auth",
   "/login",
+  "/quiz",
+  "/trial",
+  "/plan",
+  "/custom-build",
   "/checkout",
+  "/menu",
+  "/marketplace",
+  "/corporate/invite",
   "/quick-setup",
   "/dish",
 ] as const;
