@@ -14,6 +14,7 @@ import {
   rdLabUploadsTable,
   rdUsersTable,
   rdAvailabilityTable,
+  patientBiomarkersTable,
 } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -1111,6 +1112,50 @@ router.delete("/rd/labs/:id", async (req: Request, res: Response) => {
     return;
   }
   res.json({ lab: row });
+});
+
+const ocrInputSchema = z.object({
+  fileName: z.string().min(1).max(256),
+  rawContent: z.string().default(""),
+  appointmentId: z.number().int().optional(),
+});
+
+router.post("/rd/labs/ocr", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const parsed = ocrInputSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+
+  const { parseBloodReportOcr } = await import("../lib/bloodReportOcr");
+  const result = await parseBloodReportOcr(parsed.data.fileName, parsed.data.rawContent);
+
+  const [row] = await db
+    .insert(patientBiomarkersTable)
+    .values({
+      userId,
+      appointmentId: parsed.data.appointmentId ?? null,
+      reportName: result.reportName,
+      biomarkers: result.extractedBiomarkers,
+      summary: result.clinicalSummary,
+      flaggedCount: result.flaggedCount,
+    })
+    .returning();
+
+  res.status(201).json({ biomarkerRecord: row, ocrResult: result });
+});
+
+router.get("/rd/labs/biomarkers", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const rows = await db
+    .select()
+    .from(patientBiomarkersTable)
+    .where(eq(patientBiomarkersTable.userId, userId))
+    .orderBy(desc(patientBiomarkersTable.createdAt));
+  res.json({ biomarkers: rows });
 });
 
 export default router;

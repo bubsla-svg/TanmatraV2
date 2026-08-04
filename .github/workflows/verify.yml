@@ -91,6 +91,9 @@ jobs:
           ./src/lib/flags.test.ts
           ./src/lib/trialEligibility.test.ts
           ./src/lib/corporateSubsidy.test.ts
+          ./src/lib/icmrPrecisionPlanner.test.ts
+          ./src/lib/bloodReportOcr.test.ts
+          ./src/lib/pantryVisionScanner.test.ts
           ../../lib/subscription-rules/src/planCatalog.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
@@ -322,6 +325,7 @@ jobs:
           ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
           ./src/routes/savedMeals.test.ts
+          ./src/routes/wellness.test.ts
           ./src/routes/ecosystem.test.ts
           ./src/lib/bomEngine.test.ts
           ./src/lib/guardrailEngines.test.ts

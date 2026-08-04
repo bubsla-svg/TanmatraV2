@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
-import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql, isNull, desc } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -9,6 +9,7 @@ import {
   wearableLinksTable,
   streaksTable,
   userPreferencesTable,
+  fastingLogsTable,
   type NutritionLog,
   type DailyTargets,
   type WearableLink,
@@ -417,6 +418,55 @@ router.put("/wellness/targets", async (req: Request, res: Response) => {
   res.json({ targets: row });
 });
 
+const fastingStartSchema = z.object({
+  targetHours: z.number().int().min(1).max(72).default(16),
+});
+
+router.post("/wellness/fasting/start", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const parsed = fastingStartSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+  const [row] = await db.insert(fastingLogsTable).values({
+    userId,
+    targetHours: parsed.data.targetHours,
+    startTime: new Date(),
+  }).returning();
+  res.status(201).json({ log: row });
+});
+
+router.post("/wellness/fasting/end", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  // find the active fast
+  const [active] = await db.select().from(fastingLogsTable)
+    .where(and(eq(fastingLogsTable.userId, userId), isNull(fastingLogsTable.endTime)))
+    .orderBy(desc(fastingLogsTable.startTime))
+    .limit(1);
+  if (!active) {
+    res.status(404).json({ error: "no active fast found" });
+    return;
+  }
+  const [row] = await db.update(fastingLogsTable)
+    .set({ endTime: new Date() })
+    .where(eq(fastingLogsTable.id, active.id))
+    .returning();
+  res.json({ log: row });
+});
+
+router.get("/wellness/fasting/active", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const [active] = await db.select().from(fastingLogsTable)
+    .where(and(eq(fastingLogsTable.userId, userId), isNull(fastingLogsTable.endTime)))
+    .orderBy(desc(fastingLogsTable.startTime))
+    .limit(1);
+  res.json({ log: active || null });
+});
+
 router.post(
   "/wellness/wearable/connect",
   async (req: Request, res: Response) => {
@@ -524,6 +574,89 @@ router.get("/wellness/streaks", async (req: Request, res: Response) => {
   if (!userId) return;
   const streaks = await loadStreaks(userId);
   res.json({ streaks });
+});
+
+router.get("/wellness/family", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+
+  const { usersTable } = await import("@workspace/db");
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  if (!user || !user.familyGroupId) {
+    res.json({ members: [{
+      id: userId,
+      name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : "You",
+      relation: "You (Self)",
+      avatar: user?.profileImageUrl || "🧑",
+      healthScore: 9.0,
+      streakDays: 0,
+      hydrationPercent: 0,
+      proteinPercent: 0,
+      points: 100,
+      badge: "New Member",
+      rank: 1
+    }] });
+    return;
+  }
+
+  const familyUsers = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.familyGroupId, user.familyGroupId));
+
+  const members = familyUsers.map((m, idx) => ({
+    id: m.id,
+    name: m.firstName ? `${m.firstName} ${m.lastName || ''}`.trim() : "Member",
+    relation: m.id === userId ? "You (Self)" : "Family Member",
+    avatar: m.profileImageUrl || "🧑",
+    healthScore: 9.0,
+    streakDays: 0,
+    hydrationPercent: 0,
+    proteinPercent: 0,
+    points: 100 * (familyUsers.length - idx), // Mocked scoring logic for Phase 1
+    badge: "Member",
+    rank: idx + 1
+  }));
+
+  members.sort((a, b) => b.points - a.points);
+  members.forEach((m, idx) => m.rank = idx + 1);
+
+  res.json({ members });
+});
+
+const precisionPlannerInputSchema = z.object({
+  age: z.number().int().min(12).max(120).default(30),
+  gender: z.enum(["male", "female", "other"]).default("male"),
+  heightCm: z.number().int().min(100).max(250).default(170),
+  weightKg: z.number().int().min(30).max(300).default(70),
+  activityLevel: z.enum(["sedentary", "light", "moderate", "active", "very_active"]).default("moderate"),
+  goal: z.enum(["fat_loss", "muscle_gain", "maintenance", "diabetic_friendly"]).default("fat_loss"),
+  dietPreference: z.enum(["any", "veg", "vegan", "keto"]).default("any"),
+  allergens: z.array(z.string()).optional(),
+});
+
+router.post("/wellness/precision-planner/generate", async (req: Request, res: Response) => {
+  const parsed = precisionPlannerInputSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+  const { generatePrecisionPlanLogic } = await import("../lib/icmrPrecisionPlanner");
+  const plan = await generatePrecisionPlanLogic(parsed.data);
+  res.json({ plan });
+});
+
+router.post("/wellness/pantry-scan", async (req: Request, res: Response) => {
+  const rawImageContent = (req.body?.imageContent as string) ?? "";
+  const { scanPantryVisionLogic } = await import("../lib/pantryVisionScanner");
+  const scanResult = await scanPantryVisionLogic(rawImageContent);
+  res.json({ scanResult });
 });
 
 export default router;

@@ -113,3 +113,131 @@ export function pctOf(value: number, target: number): number {
   if (target <= 0) return 0;
   return Math.min(100, Math.round((value / target) * 100));
 }
+
+export interface FastingLog {
+  id: number;
+  userId: string;
+  targetHours: number;
+  startTime: string;
+  endTime: string | null;
+  createdAt: string;
+}
+
+export function startFasting(targetHours: number, fetchImpl?: FetchImpl): Promise<{ log: FastingLog }> {
+  return apiPost("/wellness/fasting/start", { targetHours }, fetchImpl);
+}
+
+export function endFasting(fetchImpl?: FetchImpl): Promise<{ log: FastingLog }> {
+  return apiPost("/wellness/fasting/end", {}, fetchImpl);
+}
+
+export function getActiveFasting(fetchImpl?: FetchImpl): Promise<{ log: FastingLog | null }> {
+  return apiGet("/wellness/fasting/active", fetchImpl);
+}
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  relation: string;
+  avatar: string;
+  healthScore: number;
+  streakDays: number;
+  hydrationPercent: number;
+  proteinPercent: number;
+  points: number;
+  badge: string;
+  rank: number;
+}
+
+export function getFamilyLeaderboard(fetchImpl?: FetchImpl): Promise<{ members: FamilyMember[] }> {
+  return apiGet("/wellness/family", fetchImpl);
+}
+
+export interface PrecisionPlannerInput {
+  age: number;
+  gender: "male" | "female" | "other";
+  heightCm: number;
+  weightKg: number;
+  activityLevel: "sedentary" | "light" | "moderate" | "active" | "very_active";
+  goal: "fat_loss" | "muscle_gain" | "maintenance" | "diabetic_friendly";
+  dietPreference: "any" | "veg" | "vegan" | "keto";
+  allergens?: string[];
+}
+
+export interface ThaliMeal {
+  id: number;
+  slug: string;
+  name: string;
+  category: string;
+  calories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+  pricePaise: number;
+  image?: string;
+}
+
+export interface DailyThali {
+  dayNumber: number;
+  dayName: string;
+  meals: ThaliMeal[];
+  totals: {
+    calories: number;
+    proteinGrams: number;
+    carbsGrams: number;
+    fatGrams: number;
+    pricePaise: number;
+  };
+}
+
+export interface PrecisionPlanResult {
+  bmr: number;
+  tdee: number;
+  targetCalories: number;
+  targetProteinG: number;
+  targetCarbsG: number;
+  targetFatG: number;
+  dailyThalis: DailyThali[];
+  totalPlanPricePaise: number;
+}
+
+export function generatePrecisionPlan(
+  input: PrecisionPlannerInput,
+  fetchImpl?: FetchImpl
+): Promise<{ plan: PrecisionPlanResult }> {
+  return apiPost("/wellness/precision-planner/generate", input, fetchImpl);
+}
+
+export interface DetectedIngredient {
+  name: string;
+  category: string;
+  confidenceScore: number;
+}
+
+export interface SuggestedAddOnProduct {
+  id: number;
+  slug: string;
+  name: string;
+  category: string;
+  pricePaise: number;
+  image?: string;
+  rationale: string;
+}
+
+export interface PantryScanResult {
+  detectedIngredients: DetectedIngredient[];
+  suggestedRecipes: Array<{
+    title: string;
+    description: string;
+    usesIngredients: string[];
+    prepTimeMins: number;
+  }>;
+  suggestedTanmatraAddOns: SuggestedAddOnProduct[];
+}
+
+export function scanPantryVision(
+  imageContent: string = "",
+  fetchImpl?: FetchImpl
+): Promise<{ scanResult: PantryScanResult }> {
+  return apiPost("/wellness/pantry-scan", { imageContent }, fetchImpl);
+}
