@@ -14,7 +14,7 @@ const validatePayload = async (request: Request) => {
 };
 
 export const handlers = [
-  http.post('https://api.petpooja.com/purchase/save', async ({ request }) => {
+  http.post('https://api.petpooja.com/purchase/save', async ({ request }: { request: Request }) => {
     if (!(await validatePayload(request))) {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Malformed payload' } }, { status: 400 });
     }
@@ -31,7 +31,7 @@ export const handlers = [
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
   
-  http.post('https://api.petpooja.com/purchase/return/save', async ({ request }) => {
+  http.post('https://api.petpooja.com/purchase/return/save', async ({ request }: { request: Request }) => {
     if (!(await validatePayload(request))) {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Malformed payload' } }, { status: 400 });
     }
@@ -40,7 +40,7 @@ export const handlers = [
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
 
-  http.post('https://api.petpooja.com/sale/save', async ({ request }) => {
+  http.post('https://api.petpooja.com/sale/save', async ({ request }: { request: Request }) => {
     if (!(await validatePayload(request))) {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Malformed payload' } }, { status: 400 });
     }
@@ -54,7 +54,7 @@ export const handlers = [
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
   
-  http.post('https://api.petpooja.com/transfer/save', async ({ request }) => {
+  http.post('https://api.petpooja.com/transfer/save', async ({ request }: { request: Request }) => {
     if (!(await validatePayload(request))) {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Malformed payload' } }, { status: 400 });
     }
@@ -63,7 +63,7 @@ export const handlers = [
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
 
-  http.get('https://api.petpooja.com/stock', async ({ request }) => {
+  http.get('https://api.petpooja.com/stock', async ({ request }: { request: Request }) => {
     const dialect = request.headers.get('x-simulate-failure');
     if (dialect === 'true') {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Simulated failure dialect' } }, { status: 400 });
@@ -71,7 +71,7 @@ export const handlers = [
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
 
-  http.post('https://api.petpooja.com/raw_material/save', async ({ request }) => {
+  http.post('https://api.petpooja.com/raw_material/save', async ({ request }: { request: Request }) => {
     if (!(await validatePayload(request))) {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Malformed payload' } }, { status: 400 });
     }
@@ -80,7 +80,7 @@ export const handlers = [
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
 
-  http.post('https://api.petpooja.com/sale/return/save', async ({ request }) => {
+  http.post('https://api.petpooja.com/sale/return/save', async ({ request }: { request: Request }) => {
     if (!(await validatePayload(request))) {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Malformed payload' } }, { status: 400 });
     }
@@ -89,25 +89,25 @@ export const handlers = [
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
 
-  http.get('https://api.petpooja.com/purchase/list', async ({ request }) => {
+  http.get('https://api.petpooja.com/purchase/list', async ({ request }: { request: Request }) => {
     const dialect = request.headers.get('x-simulate-failure');
     if (dialect === 'true') return HttpResponse.json({ response: { code: '400', success: '0', message: 'Simulated failure dialect' } }, { status: 400 });
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
 
-  http.get('https://api.petpooja.com/sale/list', async ({ request }) => {
+  http.get('https://api.petpooja.com/sale/list', async ({ request }: { request: Request }) => {
     const dialect = request.headers.get('x-simulate-failure');
     if (dialect === 'true') return HttpResponse.json({ response: { code: '400', success: '0', message: 'Simulated failure dialect' } }, { status: 400 });
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
 
-  http.get('https://api.petpooja.com/order/list', async ({ request }) => {
+  http.get('https://api.petpooja.com/order/list', async ({ request }: { request: Request }) => {
     const dialect = request.headers.get('x-simulate-failure');
     if (dialect === 'true') return HttpResponse.json({ response: { code: '400', success: '0', message: 'Simulated failure dialect' } }, { status: 400 });
     return HttpResponse.json({ response: { code: '200', success: '1', message: 'Success' } }, { status: 200 });
   }),
   
-  http.post('https://api.razorpay.com/v1/orders', async ({ request }) => {
+  http.post('https://api.razorpay.com/v1/orders', async ({ request }: { request: Request }) => {
     if (!(await validatePayload(request))) {
       return HttpResponse.json({ response: { code: '400', success: '0', message: 'Malformed payload' } }, { status: 400 });
     }
