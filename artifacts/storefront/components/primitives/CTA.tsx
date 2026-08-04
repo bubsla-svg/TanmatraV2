@@ -27,7 +27,7 @@ export const PrimaryCTA: React.FC<CTAProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={`px-8 py-4 rounded-xl font-bold tracking-tight text-slate-900 
-        bg-[#D4AF37] hover:bg-[#C59F27]
+        bg-gold hover:bg-gold-text
         active:scale-[0.98] transition-all duration-200 shadow-lg shadow-amber-500/10
         min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-2
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
