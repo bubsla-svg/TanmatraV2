@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isStitchRoute, STITCH_EXACT_ROUTES, STITCH_PREFIX_ROUTES } from "./stitchRoutes";
+import {
+  isStitchRoute,
+  STITCH_EXACT_ROUTES,
+  STITCH_PREFIX_ROUTES,
+  STITCH_SCREEN_REGISTRY,
+  getStitchScreenForRoute,
+} from "./stitchRoutes";
 
 test("exact routes render on the dark canvas", () => {
   for (const route of STITCH_EXACT_ROUTES) {
@@ -38,3 +44,30 @@ test("STITCH_PREFIX_ROUTES entries all end with a slash", () => {
     assert.equal(prefix.endsWith("/"), true, `${prefix} must end with "/" or it could swallow a sibling route`);
   }
 });
+
+test("STITCH_SCREEN_REGISTRY defines valid screen specifications for Tanmatra routes", () => {
+  assert.equal(STITCH_SCREEN_REGISTRY.length > 10, true, "should register at least 10 core screens");
+  for (const spec of STITCH_SCREEN_REGISTRY) {
+    assert.equal(typeof spec.projectId, "string");
+    assert.equal(typeof spec.screenId, "string");
+    assert.equal(typeof spec.title, "string");
+    assert.equal(typeof spec.route, "string");
+  }
+});
+
+test("getStitchScreenForRoute resolves exact routes and dynamic segments", () => {
+  const home = getStitchScreenForRoute("/");
+  assert.equal(home?.title, "Tanmatra Home: Clinical Feed");
+  assert.equal(home?.screenId, "966d396f55ed43ada3e69ff56950d3ef");
+
+  const pdp = getStitchScreenForRoute("/dish/keto-salmon");
+  assert.equal(pdp?.title, "Dish Detail: Charcoal Smoothie");
+  assert.equal(pdp?.screenId, "ef20a9487d414d8aaa48ab69e4b1f22d");
+
+  const planConfig = getStitchScreenForRoute("/plan/metabolic-reset");
+  assert.equal(planConfig?.title, "Plan Configuration: 5-Day Metabolic Reset");
+
+  const care = getStitchScreenForRoute("/care/diabetes");
+  assert.equal(care?.title, "Clinical Care: Metabolic Protocols");
+});
+
