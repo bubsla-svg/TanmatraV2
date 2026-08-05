@@ -174,7 +174,7 @@ export const STITCH_SCREEN_REGISTRY: readonly StitchScreenSpec[] = [
     projectId: STITCH_PROJECT_ID,
     screenId: "44267f5a1c8c43f0873fb5ed30fef65d",
     title: "Cart Drawer: Clinical Summary",
-    route: "/checkout#cart-drawer",
+    route: "/menu",
     category: "component",
   },
   {
@@ -236,8 +236,8 @@ export const STITCH_SCREEN_REGISTRY: readonly StitchScreenSpec[] = [
   {
     projectId: STITCH_PROJECT_ID,
     screenId: "2b29b0174cfb46b1826594928710885e",
-    title: "Biometric & CGM Telemetry: Live Sync",
-    route: "/account/wearables",
+    title: "Health Connections & CGM: Live Sync",
+    route: "/account/connections",
     category: "route",
   },
   {
@@ -266,6 +266,9 @@ export function getStitchScreenForRoute(pathname: string): StitchScreenSpec | un
   }
   if (path.startsWith("/care/") || path.startsWith("/clinical")) {
     return STITCH_SCREEN_REGISTRY.find((s) => s.route === "/care");
+  }
+  if (path === "/account/wearables") {
+    return STITCH_SCREEN_REGISTRY.find((s) => s.route === "/account/connections");
   }
   return undefined;
 }

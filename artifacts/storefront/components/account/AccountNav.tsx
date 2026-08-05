@@ -7,7 +7,7 @@ type Tab =
   | "addresses"
   | "preferences"
   | "health"
-  | "wearables"
+  | "connections"
   | "loyalty"
   | "appointments"
   | "symptoms"
@@ -38,7 +38,7 @@ export function AccountNav({ active }: { active: Tab }) {
       {link("/account/addresses", "addresses", "Addresses")}
       {link("/account/preferences", "preferences", "Preferences")}
       {link("/account/health-information", "health", "Health")}
-      {link("/account/wearables", "wearables", "Wearables")}
+      {link("/account/connections", "connections", "Connections")}
       {link("/account/loyalty", "loyalty", "Rewards")}
       {link("/account/symptoms", "symptoms", "Symptoms")}
       {link("/account/history", "history", "History")}
