@@ -20,6 +20,7 @@ ARG PNPM_VERSION=9.15.5
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
         python3 \
+        build-essential \
         make \
         g++ \
     && rm -rf /var/lib/apt/lists/*
