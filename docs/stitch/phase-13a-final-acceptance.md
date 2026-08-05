@@ -29,16 +29,17 @@ PRODUCTION MERGE: NO-GO (PENDING HUMAN VISUAL & MANUAL ACCESSIBILITY GATES)
 | :--- | :---: | :---: | :---: |
 | **Manifest Entries** | 74 | 74 / 74 | ✅ **PASS** |
 | **Reachable Route States** | 74 | 74 / 74 | ✅ **PASS** |
-| **Storefront Automated Tests** | All passing | 530 / 530 passed (0 failed, 0 skipped) | ✅ **PASS** |
-| **Test Reachability Gate** | 213 baseline | 213 reachable tests, 0 new unreached | ✅ **PASS** |
+| **Test Files Discovered** | 214 baseline | 214 reachable test files | ✅ **PASS** |
+| **Test Cases Executed** | All passing | 530 test cases executed | ✅ **PASS** |
+| **Test Cases Passed** | 530 | 530 passed (0 failed, 0 skipped) | ✅ **PASS** |
 | **Domain Invariant Suite** | 20 / 20 | 20 / 20 automated & enforced | ✅ **PASS** |
 | **Typecheck (19 Workspace Projects)** | 0 errors | 0 errors (`tsc --build`) | ✅ **PASS** |
 | **File-Cap Compliance** | <=300 lines | 454 files compliant (components <=400 lines) | ✅ **PASS** |
 | **Token Compliance** | 0 raw color literals | 0 raw color literals in components/app | ✅ **PASS** |
-| **Human Visual Review (Priority 1)** | 20 approved | 0 / 20 signed (Pending human sign-off) | ⏳ **PENDING** |
-| **Human Visual Review (Full Pack)** | 74 approved | 0 / 74 signed (Pending human sign-off) | ⏳ **PENDING** |
-| **Manual Accessibility Audit** | 12 critical flows | Pending manual screen reader / zoom audit | ⏳ **PENDING** |
-| **Light Critical Routes Review** | 12 routes | Pending human visual review | ⏳ **PENDING** |
+| **Priority Dark Visual Reviews** | 20 approved | 0 / 20 signed (Pending human sign-off) | ⏳ **PENDING** |
+| **Critical Light Visual Reviews** | 15 approved | 0 / 15 signed (Pending human sign-off) | ⏳ **PENDING** |
+| **Overlay Accessibility Audits** | 9 overlay flows | 0 / 9 audited (Pending manual verification) | ⏳ **PENDING** |
+| **End-to-End Accessibility Flows** | 5 flows | 0 / 5 audited (Pending manual verification) | ⏳ **PENDING** |
 | **Critical Open Defects** | 0 P0 / P1 | 0 P0 / 0 P1 | ✅ **PASS** |
 
 ---
