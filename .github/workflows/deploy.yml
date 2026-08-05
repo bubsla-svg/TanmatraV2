@@ -445,7 +445,9 @@ jobs:
             echo "[$i/40] Build status: $STATUS"
             if [ "$STATUS" = "SUCCESS" ]; then exit 0; fi
             if [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "TIMEOUT" ]; then
-              echo "Build failed with status: $STATUS"
+              echo "::error::Cloud Build $BUILD_ID ended with status: $STATUS"
+              gcloud builds log "$BUILD_ID" --project ${GCP_PROJECT} || true
+              gcloud builds describe "$BUILD_ID" --project ${GCP_PROJECT} --format='yaml' || true
               exit 1
             fi
             sleep 15
@@ -678,7 +680,10 @@ jobs:
             echo "[$i/50] Build status: $STATUS"
             if [ "$STATUS" = "SUCCESS" ]; then exit 0; fi
             if [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "TIMEOUT" ]; then
-              echo "Build failed with status: $STATUS"; exit 1
+              echo "::error::Cloud Build $BUILD_ID ended with status: $STATUS"
+              gcloud builds log "$BUILD_ID" --project ${GCP_PROJECT} || true
+              gcloud builds describe "$BUILD_ID" --project ${GCP_PROJECT} --format='yaml' || true
+              exit 1
             fi
             sleep 15
           done
@@ -949,7 +954,10 @@ jobs:
             echo "[$i/50] Build status: $STATUS"
             if [ "$STATUS" = "SUCCESS" ]; then exit 0; fi
             if [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "TIMEOUT" ]; then
-              echo "Build failed with status: $STATUS"; exit 1
+              echo "::error::Cloud Build $BUILD_ID ended with status: $STATUS"
+              gcloud builds log "$BUILD_ID" --project ${GCP_PROJECT} || true
+              gcloud builds describe "$BUILD_ID" --project ${GCP_PROJECT} --format='yaml' || true
+              exit 1
             fi
             sleep 15
           done
