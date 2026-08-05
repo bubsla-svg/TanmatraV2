@@ -23,6 +23,11 @@ export function GET(): NextResponse {
       sha: process.env.BUILD_SHA ?? process.env.VERCEL_GIT_COMMIT_SHA ?? "unknown",
       builtAt: bootedAt,
       app: "tanmatra-web",
+      application: "tanmatra-storefront",
+      uiGeneration: "stitch-74",
+      totalScreens: 74,
+      canonicalRoutes: 42,
+      stitchCanvas: "dark",
     },
     { headers: { "cache-control": "no-store" } },
   );
