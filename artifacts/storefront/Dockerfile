@@ -5,17 +5,32 @@
 # `standalone` output — no pnpm/workspace install in the runtime image.
 
 # ── builder ──────────────────────────────────────────────────────────────────
-FROM node:24-slim AS builder
+FROM node:22-slim AS builder
+
+WORKDIR /app
 
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="${PNPM_HOME}:${PATH}"
+ENV CI="true"
+ENV PYTHON="/usr/bin/python3"
+
 ARG PNPM_VERSION=9.15.5
+
+# Native build requirements for better-sqlite3 and other node-gyp packages.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        python3 \
+        make \
+        g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install current Corepack, then activate the repository-pinned pnpm.
 RUN npm install --global corepack@latest \
     && corepack enable \
     && corepack prepare "pnpm@${PNPM_VERSION}" --activate \
-    && pnpm --version
-
-WORKDIR /app
+    && echo "Node: $(node --version)" \
+    && echo "Python: $(python3 --version)" \
+    && echo "pnpm: $(pnpm --version)"
 
 # Workspace manifests first so pnpm install is cached unless the lockfile
 # changes.
@@ -28,7 +43,7 @@ COPY tsconfig.base.json tsconfig.json ./
 COPY artifacts/storefront/package.json artifacts/storefront/
 COPY lib lib
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile --reporter=append-only
 
 # Full storefront source.
 COPY artifacts/storefront artifacts/storefront
@@ -77,7 +92,7 @@ RUN NEXT_PUBLIC_API_BASE="${NEXT_PUBLIC_API_BASE}" \
     pnpm --filter @workspace/storefront run build
 
 # ── runner ────────────────────────────────────────────────────────────────────
-FROM node:24-slim AS runner
+FROM node:22-slim AS runner
 
 ENV NODE_ENV=production
 ENV PORT=8080

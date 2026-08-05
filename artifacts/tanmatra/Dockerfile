@@ -1,17 +1,32 @@
 # syntax=docker/dockerfile:1.7
 
 # ── builder ──────────────────────────────────────────────────────────────────
-FROM node:24-slim AS builder
+FROM node:22-slim AS builder
+
+WORKDIR /app
 
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="${PNPM_HOME}:${PATH}"
+ENV CI="true"
+ENV PYTHON="/usr/bin/python3"
+
 ARG PNPM_VERSION=9.15.5
+
+# Native build requirements for better-sqlite3 and other node-gyp packages.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        python3 \
+        make \
+        g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install current Corepack, then activate the repository-pinned pnpm.
 RUN npm install --global corepack@latest \
     && corepack enable \
     && corepack prepare "pnpm@${PNPM_VERSION}" --activate \
-    && pnpm --version
-
-WORKDIR /app
+    && echo "Node: $(node --version)" \
+    && echo "Python: $(python3 --version)" \
+    && echo "pnpm: $(pnpm --version)"
 
 # Workspace manifests first so pnpm install is cached unless lockfile changes.
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
@@ -28,7 +43,7 @@ COPY lib/preferences-match/package.json lib/preferences-match/
 COPY lib/integrations-gemini-ai/package.json lib/integrations-gemini-ai/
 COPY lib/agency-agents/package.json     lib/agency-agents/
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile --reporter=append-only
 
 # Full source for lib packages (compiled in-place by tsc or bundled by vite).
 COPY lib lib
@@ -61,7 +76,7 @@ RUN VITE_API_BASE="${VITE_API_BASE}" \
 
 # ── runner ────────────────────────────────────────────────────────────────────
 # Serve the static SPA with a minimal Node http server; no SSR bundle needed.
-FROM node:24-slim AS runner
+FROM node:22-slim AS runner
 
 ENV NODE_ENV=production
 ENV PORT=8080
