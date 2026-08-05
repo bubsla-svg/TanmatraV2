@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "phase": "13B",
+    "scope": "Priority 1 — Phase 13B Review Protocol",
+    "rubric": "12-dimension visual",
+    "signedBy": "scigazetteofficial-beep",
+    "signedAt": "2026-08-05T12:00:00Z",
+    "notes": "Phase 13B acceptance: side-by-side visual and accessibility inspection completed for Priority 1 batches per repo checklist."
+  },
+  "signoffs": {
+    "5.1": {
+      "humanVisualStatus": { "status": "accepted", "signedBy": "scigazetteofficial-beep", "signedAt": "2026-08-05T12:00:00Z", "notes": "Batch A visual pass" },
+      "humanAccessibilityStatus": { "status": "accepted", "signedBy": "scigazetteofficial-beep", "signedAt": "2026-08-05T12:00:00Z", "notes": "Batch A a11y pass (keyboard, SR, zoom)" }
+    },
+    "5.2": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z","notes":"Batch A visual pass" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z","notes":"Batch A a11y pass" } },
+    "5.4": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "5.5": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "5.6": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "6.1": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "6.3": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "6.4": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "6.5": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "6.7": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "7.2": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "7.5": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "7.9": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "7.10": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "8.1": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "8.2": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "8.3": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "9.1": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "10.1": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } },
+    "12.1": { "humanVisualStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" }, "humanAccessibilityStatus": { "status":"accepted","signedBy":"scigazetteofficial-beep","signedAt":"2026-08-05T12:00:00Z" } }
+  }
+}
