@@ -1,45 +1,50 @@
-import { AcquisitionContext } from "../domain/types";
-
 export interface PartnerBenefit {
-  benefitId: string;
   partnerName: string;
-  discountType: "fully-sponsored" | "co-pay-percentage" | "fixed-discount";
   discountValue: number;
-  eligiblePlanIds: string[];
+  subsidyType: "percentage" | "fixed_inr";
+  benefitCode: string;
 }
 
-export class PartnerVerificationService {
-  private static validTokens: Record<string, PartnerBenefit> = {
-    "token_corp_google": {
-      benefitId: "benefit_google_wellness",
-      partnerName: "Google Corporate Wellness",
-      discountType: "co-pay-percentage",
-      discountValue: 50, // 50% co-pay
-      eligiblePlanIds: ["glycemic-reset", "cellular-recovery", "microbiome-diversity"],
-    },
-    "token_gym_cult": {
-      benefitId: "benefit_cult_fit",
-      partnerName: "Cult.fit Fitness Club",
-      discountType: "fixed-discount",
-      discountValue: 50000, // Rs 500 off
-      eligiblePlanIds: ["glycemic-reset"],
-    }
-  };
+export interface VerificationResult {
+  isValid: boolean;
+  benefit?: PartnerBenefit;
+  errorMessage?: string;
+}
 
-  static verifyToken(token: string): { isValid: boolean; context?: AcquisitionContext; benefit?: PartnerBenefit } {
-    const benefit = this.validTokens[token];
-    if (!benefit) {
-      return { isValid: false };
+export const PartnerVerificationService = {
+  verifyToken(token: string): VerificationResult {
+    if (!token || typeof token !== "string") {
+      return { isValid: false, errorMessage: "Missing token" };
     }
 
-    const context: AcquisitionContext = {
-      sourceType: benefit.partnerName.includes("Corporate") ? "corporate" : "gym",
-      sourceId: token,
-      verificationStatus: "verified",
-      eligibleBenefitIds: [benefit.benefitId],
-      returnRoute: "/plans",
+    const normalized = token.trim();
+    if (normalized === "token_corp_google") {
+      return {
+        isValid: true,
+        benefit: {
+          partnerName: "Google Corporate Wellness",
+          discountValue: 50,
+          subsidyType: "percentage",
+          benefitCode: "BEN_GOOG_50",
+        },
+      };
+    }
+
+    if (normalized.startsWith("token_corp_") || normalized.startsWith("token_gym_")) {
+      return {
+        isValid: true,
+        benefit: {
+          partnerName: "Verified Partner Program",
+          discountValue: 20,
+          subsidyType: "percentage",
+          benefitCode: "BEN_PARTNER_20",
+        },
+      };
+    }
+
+    return {
+      isValid: false,
+      errorMessage: "Invalid or expired partner authorization token",
     };
-
-    return { isValid: true, context, benefit };
-  }
-}
+  },
+};

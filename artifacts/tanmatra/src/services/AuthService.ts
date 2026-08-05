@@ -1,55 +1,34 @@
-export interface UserProfile {
-  userId: string;
-  name: string;
-  email: string;
-  phone: string;
+export interface AuthUser {
+  id?: string;
+  phone?: string;
   isAuthenticated: boolean;
-  corporateBenefitId?: string;
-  savedAddresses: string[];
+  token?: string;
 }
 
-export class AuthService {
-  private static currentUser: UserProfile = {
-    userId: "guest_anon",
-    name: "Guest User",
-    email: "",
-    phone: "",
-    isAuthenticated: false,
-    savedAddresses: [],
-  };
+let currentUser: AuthUser = { isAuthenticated: false };
 
-  static getCurrentUser(): UserProfile {
-    return this.currentUser;
-  }
+export const AuthService = {
+  buildAuthRedirectUrl(returnTo: string): string {
+    const encoded = encodeURIComponent(returnTo);
+    return `/auth?returnTo=${encoded}`;
+  },
 
-  static login(phone: string): UserProfile {
-    this.currentUser = {
-      userId: `usr_${Date.now()}`,
-      name: "Tanmatra Member",
-      email: "member@tanmatra.food",
+  login(phone: string): AuthUser {
+    currentUser = {
+      id: "usr_tanmatra_active",
       phone,
       isAuthenticated: true,
-      savedAddresses: ["560034, Koramangala"],
+      token: "jwt_token_sample",
     };
-    return this.currentUser;
-  }
+    return currentUser;
+  },
 
-  static logout(): void {
-    this.currentUser = {
-      userId: "guest_anon",
-      name: "Guest User",
-      email: "",
-      phone: "",
-      isAuthenticated: false,
-      savedAddresses: [],
-    };
-  }
+  logout(): AuthUser {
+    currentUser = { isAuthenticated: false };
+    return currentUser;
+  },
 
-  /**
-   * Builds valid return route URL preserving destination after authentication
-   */
-  static buildAuthRedirectUrl(targetRoute: string): string {
-    const encoded = encodeURIComponent(targetRoute);
-    return `/auth?returnTo=${encoded}`;
-  }
-}
+  getCurrentUser(): AuthUser {
+    return currentUser;
+  },
+};

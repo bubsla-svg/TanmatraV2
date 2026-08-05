@@ -1,80 +1,75 @@
 import { PlannedMeal } from "../domain/types";
 
 export interface CartItem {
-  cartItemId: string;
+  id: string;
   meal: PlannedMeal;
+  accompaniment?: string;
   quantity: number;
-  selectedAccompaniment?: string;
-  portionOption?: "standard" | "protein-plus";
 }
 
-export class CartService {
-  private static items: CartItem[] = [];
-
-  static getItems(): CartItem[] {
-    return [...this.items];
-  }
-
-  static addItem(meal: PlannedMeal, accompaniment?: string): CartItem[] {
-    const existingIndex = this.items.findIndex(i => i.meal.mealId === meal.mealId);
-    if (existingIndex >= 0) {
-      this.items[existingIndex].quantity += 1;
-    } else {
-      this.items.push({
-        cartItemId: `cart_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
-        meal,
-        quantity: 1,
-        selectedAccompaniment: accompaniment,
-        portionOption: "standard",
-      });
-    }
-    return this.getItems();
-  }
-
-  static removeItem(cartItemId: string): CartItem[] {
-    this.items = this.items.filter(i => i.cartItemId !== cartItemId);
-    return this.getItems();
-  }
-
-  static clear(): void {
-    this.items = [];
-  }
-
-  static getSubtotalPaise(): number {
-    return this.items.reduce((sum, item) => sum + item.meal.pricePaise * item.quantity, 0);
-  }
-
-  /**
-   * CompleteYourMealRail recommendations (beverages / side digestive soups)
-   */
-  static getRecommendedAddons(): PlannedMeal[] {
-    return [
-      {
-        mealId: "addon_1",
-        name: "Therapeutic Digestive Kombucha",
-        slug: "digestive-kombucha",
-        imageUrl: "https://picsum.photos/seed/kombucha/400/300",
-        calories: 60,
-        proteinGrams: 1,
-        carbsGrams: 12,
-        fatGrams: 0,
-        clinicalTags: ["probiotic", "gut-health"],
-        isLocked: false,
-        pricePaise: 12900,
-      },
-      {
-        mealId: "addon_2",
-        name: "Anti-Inflammatory Ginger Elixir",
-        slug: "ginger-elixir",
-        imageUrl: "https://picsum.photos/seed/elixir/400/300",
-        calories: 45,
-        proteinGrams: 0,
-        carbsGrams: 9,
-        fatGrams: 0,
-        clinicalTags: ["immunity", "anti-inflammatory"],
-        isLocked: false,
-        pricePaise: 9900,
-      }
-    ];
-  }
+export interface AddonItem {
+  slug: string;
+  name: string;
+  category: string;
+  pricePaise: number;
+  calories: number;
 }
+
+let items: CartItem[] = [];
+
+const DEFAULT_ADDONS: AddonItem[] = [
+  {
+    slug: "digestive-kombucha",
+    name: "Digestive Botanical Kombucha",
+    category: "beverage",
+    pricePaise: 12000,
+    calories: 35,
+  },
+  {
+    slug: "roasted-makhana",
+    name: "Herbed Superfood Makhana",
+    category: "snack",
+    pricePaise: 8000,
+    calories: 110,
+  },
+  {
+    slug: "cold-pressed-amla",
+    name: "Cold-Pressed Amla Immunity Shot",
+    category: "beverage",
+    pricePaise: 6000,
+    calories: 20,
+  },
+];
+
+export const CartService = {
+  clear(): void {
+    items = [];
+  },
+
+  getItems(): CartItem[] {
+    return [...items];
+  },
+
+  addItem(meal: PlannedMeal, accompaniment?: string): CartItem {
+    const item: CartItem = {
+      id: `cart_${Date.now()}_${items.length}`,
+      meal,
+      accompaniment,
+      quantity: 1,
+    };
+    items.push(item);
+    return item;
+  },
+
+  removeItem(id: string): void {
+    items = items.filter((i) => i.id !== id);
+  },
+
+  getSubtotalPaise(): number {
+    return items.reduce((sum, item) => sum + item.meal.pricePaise * item.quantity, 0);
+  },
+
+  getRecommendedAddons(): AddonItem[] {
+    return DEFAULT_ADDONS;
+  },
+};

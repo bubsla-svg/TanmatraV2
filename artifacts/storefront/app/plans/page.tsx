@@ -28,7 +28,7 @@ export default function PlansPage() {
 
         <div className="flex flex-col gap-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-            Or compare the plans
+            Other plans that may fit
           </h2>
           <div className="flex flex-col gap-5">
             {plans.map((p) => (

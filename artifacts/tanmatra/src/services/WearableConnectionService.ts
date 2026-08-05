@@ -1,70 +1,65 @@
-import { HealthConnection } from "../domain/types";
+export interface WearableConnectionStatus {
+  status: "disconnected" | "connected" | "partially-connected";
+  platform?: "apple-health" | "health-connect";
+  lastSyncAt?: string;
+}
 
-export interface WearableTelemetrySummary {
+export interface TelemetrySummary {
   dailySteps: number;
   activeEnergyKcal: number;
   sleepHours: number;
-  workoutMinutes: number;
-  lastSyncedAt: string;
+  workoutsThisWeek: number;
 }
 
-export class WearableConnectionService {
-  private static connectionState: HealthConnection = {
-    platform: "apple-health",
-    status: "disconnected",
-    grantedDataTypes: [],
-    deniedDataTypes: [],
-  };
+export interface ExplainableRecommendation {
+  recommendationId: string;
+  rationale: string;
+  suggestedTags: string[];
+  requiresUserConfirmation: boolean;
+}
 
-  private static telemetry: WearableTelemetrySummary = {
-    dailySteps: 9420,
-    activeEnergyKcal: 480,
-    sleepHours: 7.4,
-    workoutMinutes: 45,
-    lastSyncedAt: new Date().toISOString(),
-  };
+let currentStatus: WearableConnectionStatus = { status: "disconnected" };
 
-  static getConnectionStatus(): HealthConnection {
-    return { ...this.connectionState };
-  }
+export const WearableConnectionService = {
+  getConnectionStatus(): WearableConnectionStatus {
+    return currentStatus;
+  },
 
-  static connect(platform: "apple-health" | "health-connect"): HealthConnection {
-    this.connectionState = {
-      platform,
+  connect(platform: "apple-health" | "health-connect"): WearableConnectionStatus {
+    currentStatus = {
       status: "connected",
-      grantedDataTypes: ["steps", "active-energy", "sleep", "workouts"],
-      deniedDataTypes: [],
+      platform,
       lastSyncAt: new Date().toISOString(),
-      lastSuccessfulSyncAt: new Date().toISOString(),
     };
-    return this.getConnectionStatus();
-  }
+    return currentStatus;
+  },
 
-  static disconnect(): HealthConnection {
-    this.connectionState = {
-      platform: "apple-health",
-      status: "disconnected",
-      grantedDataTypes: [],
-      deniedDataTypes: [],
-    };
-    return this.getConnectionStatus();
-  }
+  disconnect(): WearableConnectionStatus {
+    currentStatus = { status: "disconnected" };
+    return currentStatus;
+  },
 
-  static getTelemetrySummary(): WearableTelemetrySummary | null {
-    if (this.connectionState.status !== "connected") return null;
-    return { ...this.telemetry };
-  }
-
-  /**
-   * Phase 10 Rule: Wearable data provides explainable recommendations 
-   * BUT MUST NEVER automatically modify a user's active meals without explicit confirmation.
-   */
-  static getExplainableRecommendation(): { signal: string; recommendation: string; requiresUserConfirmation: boolean } | null {
-    if (this.connectionState.status !== "connected") return null;
+  getTelemetrySummary(): TelemetrySummary | null {
+    if (currentStatus.status !== "connected") {
+      return null;
+    }
     return {
-      signal: "High active energy expenditure detected (480 kcal active workout)",
-      recommendation: "Increase post-workout protein portion by +15g in evening slot",
-      requiresUserConfirmation: true, // Strict Phase 10 rule
+      dailySteps: 9420,
+      activeEnergyKcal: 480,
+      sleepHours: 7.4,
+      workoutsThisWeek: 4,
     };
-  }
-}
+  },
+
+  getExplainableRecommendation(): ExplainableRecommendation | null {
+    if (currentStatus.status !== "connected") {
+      return null;
+    }
+    return {
+      recommendationId: "rec_post_workout_recovery",
+      rationale: "Higher activity recorded today (480 kcal active energy). Recommending higher protein density.",
+      suggestedTags: ["high-protein", "recovery"],
+      requiresUserConfirmation: true, // Non-automated safeguard rule
+    };
+  },
+};

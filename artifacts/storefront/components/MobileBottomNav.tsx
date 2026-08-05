@@ -11,7 +11,7 @@ import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { isFocusRoute } from "@/lib/focusRoutes";
 
-export type CoreTab = "home" | "menu" | "plan" | "account";
+export type CoreTab = "home" | "menu" | "care" | "account";
 
 interface TabConfig {
   key: CoreTab;
@@ -42,16 +42,12 @@ const TABS: TabConfig[] = [
     ),
   },
   {
-    key: "plan",
-    label: "My Plan",
-    href: "/plans",
+    key: "care",
+    label: "Care",
+    href: "/care",
     icon: (
       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
       </svg>
     ),
   },

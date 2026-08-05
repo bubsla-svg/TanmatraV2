@@ -93,10 +93,10 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
             </Button>
             <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-6 py-3.5 font-semibold hover:bg-surface">
               <Link
-                href="/plans"
-                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "See Plans" })}
+                href="/care"
+                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Find a Therapeutic Plan" })}
               >
-                See plans
+                Find a therapeutic plan
               </Link>
             </Button>
             <button

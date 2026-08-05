@@ -1,48 +1,48 @@
-export interface DeliveryLocation {
-  pincode: string;
-  city: string;
-  addressLine?: string;
+export interface ServiceabilityResult {
   isServiceable: boolean;
-  estimatedDeliveryTimeMinutes?: number;
+  pincode: string;
+  city?: string;
+  clusterId?: string;
+  nextSlot?: string;
 }
 
-const SERVICEABLE_PINCODES: Record<string, { city: string; etaMins: number }> = {
-  "560001": { city: "Bengaluru Central", etaMins: 35 },
-  "560034": { city: "Koramangala", etaMins: 25 },
-  "560038": { city: "Indiranagar", etaMins: 30 },
-  "560102": { city: "HSR Layout", etaMins: 20 },
-  "110001": { city: "New Delhi", etaMins: 45 },
-  "400001": { city: "Mumbai South", etaMins: 40 },
+const SERVICEABLE_PINCODES: Record<string, string> = {
+  "560034": "Koramangala",
+  "560038": "Indiranagar",
+  "560001": "Central Bengaluru",
+  "560102": "HSR Layout",
+  "560068": "BTM Layout",
+  "560076": "Bannerghatta Road",
+  "560066": "Whitefield",
+  "560100": "Electronic City",
 };
 
-export class LocationService {
-  private static currentLocation: DeliveryLocation = {
-    pincode: "560034",
-    city: "Koramangala",
-    isServiceable: true,
-    estimatedDeliveryTimeMinutes: 25,
-  };
-
-  static getCurrentLocation(): DeliveryLocation {
-    return this.currentLocation;
-  }
-
-  static checkServiceability(pincode: string): DeliveryLocation {
-    const data = SERVICEABLE_PINCODES[pincode.trim()];
-    if (data) {
-      this.currentLocation = {
-        pincode: pincode.trim(),
-        city: data.city,
+export const LocationService = {
+  checkServiceability(pincode: string): ServiceabilityResult {
+    const cleaned = (pincode || "").trim();
+    if (SERVICEABLE_PINCODES[cleaned]) {
+      return {
         isServiceable: true,
-        estimatedDeliveryTimeMinutes: data.etaMins,
-      };
-    } else {
-      this.currentLocation = {
-        pincode: pincode.trim(),
-        city: "Unknown Area",
-        isServiceable: false,
+        pincode: cleaned,
+        city: SERVICEABLE_PINCODES[cleaned],
+        clusterId: "BLR_SOUTH_1",
+        nextSlot: "Tomorrow 07:30 AM",
       };
     }
-    return this.currentLocation;
-  }
-}
+
+    if (/^560\d{3}$/.test(cleaned)) {
+      return {
+        isServiceable: true,
+        pincode: cleaned,
+        city: "Bengaluru Metro",
+        clusterId: "BLR_CENTRAL_1",
+        nextSlot: "Tomorrow 07:30 AM",
+      };
+    }
+
+    return {
+      isServiceable: false,
+      pincode: cleaned,
+    };
+  },
+};
