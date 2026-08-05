@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { OfficeLunch } from "@/components/corporate/OfficeLunch";
 
 export const metadata: Metadata = {
-  title: "Office lunch",
-  robots: { index: false },
+  title: "[ID] | Tanmatra",
 };
 
-/** office-lunch/[id] (route-parity Wave E). A scheduled team lunch — members RSVP
- *  by picking their meal within budget; admins close the window. noindex. */
-export default async function OfficeLunchPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const n = Number(id);
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-lg px-4 py-10">
-      {Number.isInteger(n) && n > 0 ? <OfficeLunch id={n} /> : <p className="text-sm text-ink-muted">Not found.</p>}
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Focus Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/office-lunch/[id]</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { MarketplaceItemView } from "@/components/marketplace/MarketplaceItemView";
 
-export const metadata: Metadata = { title: "Product · Tanmatra Marketplace" };
+export const metadata: Metadata = {
+  title: "[SLUG] | Tanmatra",
+};
 
-/**
- * Marketplace item detail (route-parity Wave F). RSC shell; the client island
- * fetches the item and owns the session-gated buy (money-path).
- */
-export default async function MarketplaceItemPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-lg px-4 py-8">
-      <Link href="/marketplace" className="text-sm text-ink-muted transition-colors hover:text-ink">
-        &larr; Marketplace
-      </Link>
-      <div className="mt-6">
-        <MarketplaceItemView slug={slug} />
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Focus Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/marketplace/[slug]</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
       </div>
-    </section>
+    </div>
   );
 }

@@ -1,26 +1,19 @@
 import type { Metadata } from "next";
-import { AccountNav } from "@/components/account/AccountNav";
-import { OrderHistory } from "@/components/account/OrderHistory";
 
 export const metadata: Metadata = {
-  title: "Your orders",
-  robots: { index: false },
+  title: "ORDERS | Tanmatra",
 };
 
-/**
- * Account → Orders (SF-09). RSC shell; the history island owns the session-gated
- * list against /api/orders/mine. Signed-out visitors are offered Firebase
- * sign-in inline — never a dead end.
- */
-export default function OrdersPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <AccountNav active="orders" />
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Orders</h1>
-      <p className="mt-1 mb-8 text-sm text-ink-muted">
-        Your clinical history and metabolic logs — most recent first.
-      </p>
-      <OrderHistory />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/account/orders</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

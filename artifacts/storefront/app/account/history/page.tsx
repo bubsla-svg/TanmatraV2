@@ -1,29 +1,19 @@
 import type { Metadata } from "next";
-import { AccountNav } from "@/components/account/AccountNav";
-import { MealHistoryDashboard } from "@/components/history/MealHistoryDashboard";
 
 export const metadata: Metadata = {
-  title: "Meal History & Macro Dashboard | Tanmatra",
-  description: "Inspect verified clinical nutritional logs and evaluate cumulative daily macronutrient target compliance over time.",
+  title: "HISTORY | Tanmatra",
 };
 
-export default function MealHistoryPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12 flex flex-col gap-8">
-      <AccountNav active="history" />
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-          Nutritional Telemetry
-        </span>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Meal History Dashboard
-        </h1>
-        <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Track cumulative macronutrient assimilation across automated recurring deliveries and evaluate adherence against registered dietitian daily prescription ceilings.
-        </p>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/account/history</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
       </div>
-
-      <MealHistoryDashboard />
-    </section>
+    </div>
   );
 }

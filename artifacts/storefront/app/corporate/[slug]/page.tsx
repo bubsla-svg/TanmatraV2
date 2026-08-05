@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { CompanyLanding } from "@/components/corporate/CompanyLanding";
 
 export const metadata: Metadata = {
-  title: "Company workspace",
-  robots: { index: false },
+  title: "[SLUG] | Tanmatra",
 };
 
-/** corporate/[slug] (route-parity Wave E). The member workspace — accept-invite
- *  redirect target + lunch-planner back-link. Personal/company, so noindex. */
-export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-lg px-4 py-10">
-      <CompanyLanding slug={slug} />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          B2B Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/corporate/[slug]</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

@@ -1,30 +1,19 @@
 import type { Metadata } from "next";
-import { VoucherRedeem } from "@/components/vouchers/VoucherRedeem";
 
 export const metadata: Metadata = {
-  title: "Wallet & vouchers",
-  description: "Redeem a Tanmatra voucher into your wallet and see your credit balance.",
-  robots: { index: false },
+  title: "VOUCHERS | Tanmatra",
 };
 
-/** `/vouchers` — wallet + voucher redemption (route-parity Wave G). Personal +
- *  auth-gated (noindex). Redeeming credits the wallet ledger; the credit applies
- *  automatically at checkout. Redeem-only — no charge path here. */
-export default function VouchersPage() {
+export default function PlaceholderPage() {
   return (
-    <div className="min-h-dvh">
-      {/* pb-44 clears the sticky footer VoucherRedeem renders (single Redeem
-          button) — same reasoning as /checkout's pb-44. */}
-      <section className="mx-auto max-w-md px-4 pt-10 pb-44">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Your account</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Wallet &amp; vouchers</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-          Redeem a voucher code to top up your wallet. Credit is applied automatically at your next checkout.
-        </p>
-        <div className="mt-6">
-          <VoucherRedeem />
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
         </div>
-      </section>
+        <h1 className="font-headline-md text-2xl mb-2">/vouchers</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
     </div>
   );
 }

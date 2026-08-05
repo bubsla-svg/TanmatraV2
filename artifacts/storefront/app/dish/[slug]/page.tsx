@@ -1,12 +1,19 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
-type Params = { params: Promise<{ slug: string }> };
+export const metadata: Metadata = {
+  title: "[SLUG] | Tanmatra",
+};
 
-/**
- * Section 3.2 Canonical compatibility redirect:
- * /dish/[slug] -> /menu/[productSlug]
- */
-export default async function DishRedirect({ params }: Params) {
-  const { slug } = await params;
-  redirect(`/menu/${slug}`);
+export default function PlaceholderPage() {
+  return (
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Focus Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/dish/[slug]</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
+  );
 }

@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
-import { WellnessHub } from "@/components/wellness/WellnessHub";
 
 export const metadata: Metadata = {
-  title: "Nutrition & Wellness Studio",
-  robots: { index: false },
+  title: "WELLNESS | Tanmatra",
 };
 
-/**
- * Nutrition & Wellness Studio. The authed food/water/fasting tracker and family leaderboard;
- * the public /wellness lander stays as-is for acquisition. Personal PHI, so noindex.
- */
-export default function WellnessTrackerPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Tanmatra Studio</p>
-      <h1 className="mt-1 mb-6 text-2xl font-bold tracking-tight text-ink">Nutrition & Health Studio</h1>
-      <WellnessHub />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/account/wellness</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

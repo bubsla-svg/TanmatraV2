@@ -1,58 +1,19 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { fetchMenu, findDish } from "@/lib/catalog";
-import { ThermalInstructions } from "@/components/guides/ThermalInstructions";
-import { SourcingTransparency } from "@/components/guides/SourcingTransparency";
 
-type Params = { params: Promise<{ dishSlug: string }> };
+export const metadata: Metadata = {
+  title: "[DISHSLUG] | Tanmatra",
+};
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const { dishSlug } = await params;
-  const { dishes } = await fetchMenu();
-  const dish = findDish(dishSlug, dishes);
-  if (!dish) return { title: "Meal Guide Not Found | Tanmatra" };
-  return {
-    title: `${dish.name} - Prep & Reheating Guide | Tanmatra`,
-    description: `Storage instructions, reheating sequence, and ingredient sourcing origin for ${dish.name}.`,
-  };
-}
-
-export default async function MealGuidePage({ params }: Params) {
-  const { dishSlug } = await params;
-  const { dishes } = await fetchMenu();
-  const dish = findDish(dishSlug, dishes);
-  if (!dish) notFound();
-
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12 flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <Link
-          href={`/dish/${dish.slug}`}
-          className="inline-flex w-fit items-center gap-2 text-sm text-ink-muted hover:text-ink transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Back to {dish.name} Details
-        </Link>
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">
-          {dish.name} &mdash; Culinary Guide
-        </h1>
-        <p className="text-sm leading-relaxed text-ink-muted">
-          Follow our exact registered dietitian and chef instructions to maximize warm thermal flavor while preserving bioavailable enzymes.
-        </p>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/meal-guides/[dishSlug]</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
       </div>
-
-      <ThermalInstructions dish={dish} />
-      <SourcingTransparency dish={dish} />
-
-      <div className="rounded-2xl border border-line bg-surface p-6 text-center flex flex-col gap-2 shadow-sm">
-        <h3 className="text-sm font-semibold text-ink">Have questions regarding ingredient preparation?</h3>
-        <p className="text-xs text-ink-muted leading-relaxed">
-          Our on-call Registered Dietitians answer clinical nutrition inquiries Monday through Friday.
-        </p>
-        <Link href="/rd" className="mt-2 inline-block text-xs font-semibold text-gold-text uppercase tracking-wider hover:underline">
-          Consult Advisory Team &rarr;
-        </Link>
-      </div>
-    </section>
+    </div>
   );
 }

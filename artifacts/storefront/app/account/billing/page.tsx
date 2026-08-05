@@ -1,24 +1,19 @@
 import type { Metadata } from "next";
-import { AccountNav } from "@/components/account/AccountNav";
-import { BillingPanel } from "@/components/account/BillingPanel";
 
 export const metadata: Metadata = {
-  title: "Billing & credits",
-  robots: { index: false },
+  title: "BILLING | Tanmatra",
 };
 
-/**
- * Account → Billing (route-parity Wave G). RSC shell; the panel is the session-
- * gated, READ-ONLY credit-ledger statement (wallet balance + credit activity).
- * Order receipts live at /account/orders, recurring billing at /account/subscriptions.
- */
-export default function BillingPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <AccountNav active="billing" />
-      <h1 className="text-lg font-semibold text-ink">Billing &amp; credits</h1>
-      <p className="mt-1 mb-5 text-sm text-ink-muted">Your wallet balance and credit activity.</p>
-      <BillingPanel />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/account/billing</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

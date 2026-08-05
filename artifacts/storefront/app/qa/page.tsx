@@ -1,27 +1,19 @@
 import type { Metadata } from "next";
-import { CommunityQaForum } from "@/components/qa/CommunityQaForum";
 
 export const metadata: Metadata = {
-  title: "Community Clinical Q&A & Social Forum | Tanmatra",
-  description: "Browse peer dietary inquiries and inspect official therapeutic answers authored by certified Registered Dietitians.",
+  title: "QA | Tanmatra",
 };
 
-export default function CommunityQaPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">
-          Collective Wisdom &amp; Advisory Care
-        </span>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Community Nutrition Q&amp;A Forum
-        </h1>
-        <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Explore evidence-grounded responses from our clinical advisory team and submit personalized dietary questions directly to our registered dietitians.
-        </p>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/qa</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
       </div>
-
-      <CommunityQaForum />
-    </section>
+    </div>
   );
 }

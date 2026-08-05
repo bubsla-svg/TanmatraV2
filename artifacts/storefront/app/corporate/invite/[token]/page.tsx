@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { CompanyInvite } from "@/components/corporate/CompanyInvite";
 
 export const metadata: Metadata = {
-  title: "Company invite",
-  robots: { index: false },
+  title: "[TOKEN] | Tanmatra",
 };
 
-/** corporate/invite/[token] (route-parity Wave E). Shared invite link → accept
- *  to join a company meal program. Token-linked, so noindex. */
-export default async function CompanyInvitePage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-md px-4 py-12">
-      <CompanyInvite token={token} />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Focus Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/corporate/invite/[token]</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

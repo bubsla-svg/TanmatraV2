@@ -1,26 +1,19 @@
 import type { Metadata } from "next";
-import { AccountNav } from "@/components/account/AccountNav";
-import { PreferencesHub } from "@/components/account/PreferencesHub";
 
 export const metadata: Metadata = {
-  title: "Food preferences",
-  robots: { index: false },
+  title: "PREFERENCES | Tanmatra",
 };
 
-/**
- * Account → Preferences (Wave-3). RSC shell; PreferencesHub owns the
- * session-gated read/save against /api/preferences.
- */
-export default function PreferencesPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <AccountNav active="preferences" />
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">Preferences</h1>
-      <p className="mt-2 mb-10 text-sm text-ink-muted">
-        Tailor your metabolic protocols and culinary ranking — we use this to rank the menu and
-        flag dishes that don&rsquo;t fit.
-      </p>
-      <PreferencesHub />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/account/preferences</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

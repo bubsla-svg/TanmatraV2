@@ -1,30 +1,19 @@
 import type { Metadata } from "next";
-import { getRecipes } from "@/lib/recipesApi";
-import { RecipesBrowser } from "@/components/recipes/RecipesBrowser";
 
 export const metadata: Metadata = {
-  title: "Recipes",
-  description:
-    "Dietitian-designed recipes with verified macros — filter by goal, diet, and time. Real food you can cook at home.",
+  title: "RECIPES | Tanmatra",
 };
 
-export const revalidate = 3600;
-
-/** Recipes list (Community). Server-fetches the full list; a client island
- *  filters it in-memory so the grid is in the SSR HTML (SEO-safe). */
-export default async function RecipesPage() {
-  const recipes = await getRecipes();
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Community</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Recipes</h1>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-        Dietitian-designed recipes with verified macros. Filter by your goal, your diet, and the
-        time you have.
-      </p>
-      <div className="mt-8">
-        <RecipesBrowser recipes={recipes} />
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/recipes</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
       </div>
-    </section>
+    </div>
   );
 }

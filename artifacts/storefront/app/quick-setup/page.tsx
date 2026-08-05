@@ -1,36 +1,19 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { fetchMenu } from "@/lib/catalog";
-import { QuickSetupWizard } from "@/components/wizard/QuickSetupWizard";
 
 export const metadata: Metadata = {
-  title: "Quick Dietary Setup | Tanmatra",
-  description: "Answer 3 quick questions about your goal, allergens and dietary style — see matching dishes instantly, and save your allergen exclusions to your account.",
+  title: "QUICK-SETUP | Tanmatra",
 };
 
-export default async function QuickSetupPage() {
-  const { dishes } = await fetchMenu();
-
+export default function PlaceholderPage() {
   return (
-    <div className="min-h-dvh">
-      <section className="mx-auto flex max-w-lg flex-col gap-8 px-4 py-12">
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-            Precision Personalization
-          </span>
-          <h1 className="text-3xl font-semibold tracking-tight text-ink">
-            3-Step Dietary Setup
-          </h1>
-          <p className="text-sm leading-relaxed text-ink-muted">
-            Tell us your goal, allergens and dietary style — we&rsquo;ll match you to dishes on the menu
-            right away, and save your allergens to your account so the kitchen knows to omit them.
-          </p>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Focus Layout
         </div>
-
-        <Suspense fallback={<p className="text-sm text-ink-muted">Loading clinical menu capabilities…</p>}>
-          <QuickSetupWizard dishes={dishes} />
-        </Suspense>
-      </section>
+        <h1 className="font-headline-md text-2xl mb-2">/quick-setup</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
     </div>
   );
 }

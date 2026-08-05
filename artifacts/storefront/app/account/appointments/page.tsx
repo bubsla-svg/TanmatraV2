@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
-import { AccountNav } from "@/components/account/AccountNav";
-import { AppointmentsList } from "@/components/account/AppointmentsList";
 
 export const metadata: Metadata = {
-  title: "Your consultations",
-  robots: { index: false },
+  title: "APPOINTMENTS | Tanmatra",
 };
 
-/**
- * Account → Consultations (Route Parity healing for legacy /appointments and /checkout-appointment).
- * RSC shell hosting the session-gated consultation list against /api/rd/appointments.
- */
-export default function AppointmentsPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <AccountNav active="appointments" />
-      <h1 className="text-lg font-semibold text-ink">Your consultations</h1>
-      <p className="mt-1 mb-5 text-sm text-ink-muted">
-        Your scheduled advisory video sessions and chat consultations with Registered Dietitians.
-      </p>
-      <AppointmentsList />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/account/appointments</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

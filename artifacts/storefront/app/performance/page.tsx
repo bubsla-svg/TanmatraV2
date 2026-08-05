@@ -1,32 +1,19 @@
 import type { Metadata } from "next";
-import { ProtocolView } from "@/components/protocol/ProtocolView";
-import { PROTOCOL_CONFIG } from "@/content/landing/protocol";
-import { SITE_URL } from "@/lib/siteUrl";
-
-const cfg = PROTOCOL_CONFIG.performance;
 
 export const metadata: Metadata = {
-  title: cfg.metaTitle,
-  description: cfg.metaDescription,
-  alternates: { canonical: "/performance" },
+  title: "PERFORMANCE | Tanmatra",
 };
 
-export const revalidate = 3600;
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  name: cfg.metaTitle,
-  description: cfg.metaDescription,
-  url: `${SITE_URL}/performance`,
-};
-
-/** `/performance` — Performance Protocol lander (route-parity Wave B). */
-export default function PerformancePage() {
+export default function PlaceholderPage() {
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <ProtocolView which="performance" />
-    </>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/performance</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

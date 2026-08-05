@@ -1,26 +1,19 @@
 import type { Metadata } from "next";
-import { AccountNav } from "@/components/account/AccountNav";
-import { AddressManager } from "@/components/account/AddressManager";
 
 export const metadata: Metadata = {
-  title: "Your addresses",
-  robots: { index: false },
+  title: "ADDRESSES | Tanmatra",
 };
 
-/**
- * Account → Addresses (SF-04). RSC shell; the manager island owns the
- * session-gated CRUD against /api/addresses. Signed-out visitors are offered
- * Firebase sign-in inline, so the page is never a dead end.
- */
-export default function AddressesPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
-      <AccountNav active="addresses" />
-      <h1 className="text-lg font-semibold text-ink">Your addresses</h1>
-      <p className="mt-1 mb-5 text-sm text-ink-muted">
-        Saved addresses speed up checkout — the default is pre-selected on your next order.
-      </p>
-      <AddressManager />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/account/addresses</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

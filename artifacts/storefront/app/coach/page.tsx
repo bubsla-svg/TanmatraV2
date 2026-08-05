@@ -1,28 +1,19 @@
 import type { Metadata } from "next";
-import { CoachChat } from "@/components/coach/CoachChat";
 
 export const metadata: Metadata = {
-  title: "Nutrition coach",
-  robots: { index: false },
+  title: "COACH | Tanmatra",
 };
 
-/**
- * Nutrition coach (/coach). Session-gated chat over POST /coach-agent/chat.
- * The standing disclaimer sits in the header; the coach also appends a
- * per-reply disclaimer and routes clinical questions to /rd server-side.
- */
-export default function CoachPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto flex min-h-[70vh] max-w-md flex-col px-4 py-8">
-      <div className="border-b border-line pb-4">
-        <h1 className="text-xl font-bold text-ink">Nutrition coach</h1>
-        <p className="mt-1 text-xs text-ink-muted">
-          General nutrition guidance, not medical advice. Clinical questions go to a Registered Dietitian.
-        </p>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Global Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/coach</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
       </div>
-      <div className="mt-5 flex-1">
-        <CoachChat />
-      </div>
-    </section>
+    </div>
   );
 }

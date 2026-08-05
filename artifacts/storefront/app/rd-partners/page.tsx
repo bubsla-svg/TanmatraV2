@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
-import { PartnerHero } from "@/components/rd-partners/PartnerHero";
 
 export const metadata: Metadata = {
-  title: "Partner with Tanmatra | Clinical Nutritionists & Dietitians",
-  description: "Join India's premiere therapeutic food network. Prescribe macro-calibrated meals to your patients with automated contraindication safety gates.",
+  title: "RD-PARTNERS | Tanmatra",
 };
 
-export default function RdPartnersPage() {
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12">
-      <PartnerHero />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          B2B Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/rd-partners</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }

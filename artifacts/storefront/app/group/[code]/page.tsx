@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
-import { GroupOrderView } from "@/components/group/GroupOrderView";
 
 export const metadata: Metadata = {
-  title: "Group order",
-  robots: { index: false },
+  title: "[CODE] | Tanmatra",
 };
 
-/**
- * Group order (route-parity Wave E). Shared via a code, so noindex. RSC shell;
- * the island owns the public read + host close-&-checkout (which merges the
- * group's picks into the cart and reuses the existing checkout money-path).
- */
-export default async function GroupOrderPage({ params }: { params: Promise<{ code: string }> }) {
-  const { code } = await params;
+export default function PlaceholderPage() {
   return (
-    <section className="mx-auto max-w-lg px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Group order</p>
-      <h1 className="mt-1 mb-6 text-2xl font-semibold tracking-tight text-ink">Order together, pay once</h1>
-      <GroupOrderView code={code.toUpperCase()} />
-    </section>
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+      <div className="text-center">
+        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
+          Focus Layout
+        </div>
+        <h1 className="font-headline-md text-2xl mb-2">/group/[code]</h1>
+        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+      </div>
+    </div>
   );
 }
