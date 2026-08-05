@@ -54,9 +54,9 @@ export function deriveHeroContent(refCookie?: string): HeroContent {
   }
 
   return {
-    eyebrow: "Now serving Noida",
-    headline: "Healthy meals, cooked fresh — at your desk in 40–45 minutes.",
-    blurb: `Dietitian-designed lunches with clear nutrition info. Real food, delivered fresh. Starting from ${basePrice} per meal.`,
+    eyebrow: "Metabolic Precision",
+    headline: "Personalized Nutrition — for Peak Metabolism",
+    blurb: `Engineered around your biological footprint. 100% RD-backed metabolic food plans formulated for glycemic stability, gut resilience, and peak physical recovery. Starting from ${basePrice} per meal.`,
     badge: null,
   };
 }

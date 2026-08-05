@@ -50,31 +50,30 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
   };
 
   return (
-    <section className="mx-auto w-full max-w-screen-xl px-4 pt-8 pb-10 sm:px-6 sm:pt-12 sm:pb-14">
+    <section 
+      data-ui-generation="stitch-74" 
+      data-screen-id="MOB-10-Home-Dark"
+      className="mx-auto w-full max-w-screen-xl px-4 pt-8 pb-10 sm:px-6 sm:pt-12 sm:pb-14"
+    >
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
-        {/* Copy column — 7/12, left-weighted (no centered hero) */}
+        {/* Copy column — 7/12, left-weighted */}
         <div className="lg:col-span-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold tracking-wider uppercase mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             {hero.eyebrow}
-          </p>
+          </div>
 
-          <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          <h1 className="mt-2 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
             {headStart}{" "}
-            {/* Eager, not lazy: it sits inside the h1, above the fold at every
-                viewport (React 19 preloads any eager image, so this and the
-                hero photo below both preload — they are the only two).
-                width/height are the rendered box at the largest type step
-                (1.6em × 1.05em of text-6xl); the em classes still drive layout,
-                and both are overridden, so the ratio never fights the CSS. */}
-            <Image
-              src="/images/landing/stitch-plate-inline.png"
-              alt=""
-              aria-hidden
-              width={96}
-              height={63}
-              loading="eager"
-              className="inline-block h-[1.05em] w-[1.6em] rounded-2xl border border-line object-cover align-[-0.12em]"
-            />{" "}
+            <span className="inline-block align-middle mx-1.5 w-12 h-10 sm:w-16 sm:h-12 rounded-2xl overflow-hidden border border-line translate-y-[-2px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"
+                alt=""
+                aria-hidden
+                className="w-full h-full object-cover"
+              />
+            </span>{" "}
             {headEnd}
           </h1>
 
@@ -83,32 +82,32 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3.5 sm:mt-9">
-            <Button asChild shape="pill" size="fluid" className="px-7 py-3.5 font-bold">
+            <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/10">
               <Link
                 href="/menu"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Explore Today's Menu" })}
               >
-                Explore today&rsquo;s menu
+                Explore menu
               </Link>
             </Button>
-            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-6 py-3.5 font-semibold hover:bg-surface">
+            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-7 py-3.5 font-semibold hover:bg-surface">
               <Link
-                href="/care"
+                href="/plans"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Find a Therapeutic Plan" })}
               >
-                Find a therapeutic plan
+                View plans
               </Link>
             </Button>
             <button
               type="button"
               onClick={handleAssessmentClick}
-              className="-mx-1 px-1 py-2 text-sm font-medium text-ink-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+              className="-mx-1 px-2 py-2 text-sm font-medium text-ink-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
             >
               60-second assessment
             </button>
           </div>
 
-          {/* Clinical authority trust bar — real accreditations, quiet set */}
+          {/* Clinical authority trust bar */}
           <div className="mt-9 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
             <span>ISO 22000 Certified</span>
             <span aria-hidden className="text-line-strong">·</span>
@@ -125,40 +124,23 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
               {hero.badge}
             </span>
           )}
-          <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised">
-            <div className="relative aspect-[4/5] w-full sm:aspect-[3/4]">
-              {/* The LCP candidate on desktop — `priority` (eager + a preload
-                  carrying the srcset). `fill` inside the aspect box keeps CLS
-                  at zero. sizes: the frame is lg:col-span-5 of a 12-col grid
-                  with gap-12 inside max-w-screen-xl px-6, i.e.
-                  5·(1232−528)/12 + 4·48 ≈ 486px once the container caps, ≈38vw
-                  between lg and that cap, and the full content width (100vw
-                  less the px-6/px-4 gutters) while the grid is single-column. */}
-              <Image
-                src="/images/landing/stitch-hero-tall.png"
+          <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised shadow-2xl shadow-black/40">
+            <div className="relative aspect-[4/5] w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkXUatAbp7GpnFbDf0BTpJCPRd2FRuRIoRlbyoRY_B4NGgShl6G32eTYQQ1uxUSny6sOye9Rpm3Xe7cKS4wizt7QZgR72SoEfWc7C02yvSId2aujwgQ8RFWMZVmOfN4ckkE81T7Rkli2yA5Z-tVzDrRcgOmFT5r8klXpPd2k8EuassiZLq5821La5aJB_rvWSK_UQUdLuk5qZwIYRIVhJ85beF2yu9DY9gqtx9XAGuHIN_-stMpiWveI18_bU9E1qUpqZ9a_hlIrE"
                 alt="Chef-plated clinical meal, photographed from above"
-                fill
-                priority
-                sizes="(min-width: 1280px) 486px, (min-width: 1024px) 38vw, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
-                className="object-cover"
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
               />
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] px-4 py-3 backdrop-blur-md">
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl">
                 <div>
-                  <p className="text-sm font-bold text-ink">Wild Salmon &amp; Tahini Power Bowl</p>
-                  <p className="mt-0.5 font-mono text-[11px] tracking-tight text-ink-muted">
-                    480 kcal · 38P · Anti-Inflammatory
-                  </p>
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-primary mb-0.5">MACRO PROFILE</div>
+                  <p className="font-mono text-sm font-bold text-ink tracking-tight">32P · 41C · 12F</p>
+                  <div className="mt-2 h-1 w-28 bg-surface-raised rounded-full overflow-hidden">
+                    <div className="h-full bg-primary w-[70%]" />
+                  </div>
                 </div>
-                {/* Ghost pill, NOT a second gold one. This and the headline CTA
-                    above are both default-variant pills to the same href, the
-                    same shape and the same colour, ~500px apart and both in view
-                    on desktop — and DESIGN.md §01 specifies exactly ONE primary
-                    pill per screen, everything else a hairline ghost. Demoted
-                    rather than deep-linked to the pictured bowl: this card is
-                    decorative art (stitch-hero-tall.png) with no catalogue dish
-                    behind it, so a /menu?dish=… href would be a guess that 404s
-                    the day the slug moves. */}
-                <Button asChild variant="outline" shape="pill" size="fluid" className="shrink-0 border-line-strong bg-transparent px-3.5 py-1.5 text-xs font-bold">
+                <Button asChild variant="outline" shape="pill" size="fluid" className="shrink-0 border-line-strong bg-transparent px-3.5 py-1.5 text-xs font-bold hover:bg-surface">
                   <Link href="/menu">Order</Link>
                 </Button>
               </div>

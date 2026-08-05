@@ -44,7 +44,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // pricing at POST /orders. Reached from the cart drawer's Checkout CTA.
   if (mode === "alacarte") {
     return (
-      <div className="min-h-dvh">
+      <div 
+        data-ui-generation="stitch-74" 
+        data-screen-id="MOB-32-Checkout-Dark"
+        className="min-h-dvh"
+      >
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">
           <AlacarteCheckout />
         </section>
@@ -123,7 +127,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
     : "Next billing next month · pause or cancel anytime.";
 
   return (
-    <div className="min-h-dvh">
+    <div 
+      data-ui-generation="stitch-74" 
+      data-screen-id="MOB-32-Checkout-Dark"
+      className="min-h-dvh"
+    >
       <section className="mx-auto max-w-md px-4 pt-10 pb-44">
         <CheckoutFlow
           planId={id}
