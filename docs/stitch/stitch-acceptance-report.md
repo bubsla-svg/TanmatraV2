@@ -1,152 +1,173 @@
 # Phase 13A — Stitch Design Fidelity, Route Contract, and Interaction Acceptance Audit Report
 
-**Document Version:** 1.0.0-rc1  
+**Document Version:** 1.1.0-final  
 **Project:** Tanmatra — Premium Clinical Metabolic OS  
 **Stitch Project ID:** `12062470764535558612`  
 **Execution Skill:** `/requesting-code-review` / `/gpt-taste`  
 **Verification CLI:** `pnpm run verify:stitch` (`tools/verify_stitch_routes.py`)  
 **Git Checkpoint Tag:** `stitch-74-implementation-candidate`  
-**Status Statement:** Implemented and passing all configured engineering gates; pending final human visual review and production merge.
+**Working Branch:** `feat/phase-13-production-hardening` (`review/phase-13a-final-acceptance`)  
 
----
-
-## 1. Executive Summary & Quality Gate Status
-
-This report provides a formal, comprehensive acceptance audit of the **74 explicit mobile screen and state prompt outputs** across the **42 customer-facing routes and overlay systems** in `@workspace/storefront`.
-
-```
+```txt
 ================================================================================
-  PHASE 13A GO / NO-GO QUALITY GATE SUMMARY
-================================================================================
-  [x] Manifest Integrity:      74 / 74 prompt outputs indexed (0 duplicates)
-  [x] Reachability:            74 / 74 routes & implementation targets reachable
-  [x] Canonical Route Parity:  /account/connections canonical (308 from /account/wearables)
-  [x] Commerce Overlay Shell:  Cart Drawer is route-independent global overlay
-  [x] Layout Segregation:      FocusLayout (27) removes bottom tabs; GlobalLayout (32) has 4 tabs
-  [x] Domain Invariants:       All 12 core clinical & transaction invariants enforced
-  [x] TypeScript Build:        tsc --build passed across all 19 workspace projects (0 errors)
-  [x] File-Cap Lint:           Passed (453 files <=300 lines, components <=400 lines)
-  [x] Token Lint:              Passed (0 raw color literals in components/app)
-  [x] Test Reachability:       Passed (213 reachable tests, 0 new unreached tests)
+PHASE 13A STATUS: CONDITIONAL PASS (AUTOMATED GATES PASSED)
+PRODUCTION MERGE: NO-GO
+NEXT GATE: Human visual acceptance + evidence-backed compliance
 ================================================================================
 ```
 
 ---
 
-## 2. Remediation of Report Inconsistencies
+## 1. Revised Status Statement
 
-### 2.1 74-Item Manifest Expansion (Layer A & B)
-- **Previous State:** Verification CLI audited only 16 core route mappings.
-- **Remediation:** Built `docs/stitch/stitch-screen-manifest.json` containing all 74 prompt outputs with: `promptId`, `designName`, `stitchScreenId`, `route`, `state`, `layout`, `theme`, `implementation`, `trigger`, `expectedPrimaryAction`, `status`, `visualReview`, `accessibilityReview`, `e2eCoverage`.
-- **Audit Tool:** `tools/verify_stitch_routes.py` (`pnpm run verify:stitch`) now validates all 74 entries across Route screens, Overlays/Sheets, Wizard stages, and Recovery states.
+> **Current Gate Assessment:** Implemented and passing all currently configured automated engineering, route contract, and domain-invariant gates. Final production release remains pending human visual-fidelity side-by-side sign-off, manual accessibility verification, interaction-evidence recording, and release-governance review.
 
-### 2.2 Canonical Health Connections Route Contract
-- **Previous State:** Mapped to `/account/wearables`.
-- **Remediation:** Established `artifacts/storefront/app/account/connections/page.tsx` as the canonical destination for Apple Health, Health Connect, CGM telemetry, and feature-influence permissions. Added a permanent 308 redirect in `app/account/wearables/page.tsx` via `next/navigation` `permanentRedirect()`. Updated `AccountNav.tsx` navigation tab key to `"connections"`.
-
-### 2.3 Cart Drawer Entry Point Architecture
-- **Previous State:** Mapped as a hash target (`/checkout#cart-drawer`).
-- **Remediation:** Reclassified Cart Drawer as an application overlay state (`layout: "Overlay"`, component: `artifacts/storefront/components/cart/CartDrawer.tsx`). It mounts dynamically via `MiniCartBar.tsx` across all browsing surfaces (`/`, `/menu`, `/dish/[slug]`, `/marketplace`, etc.) preserving route state while its primary action pushes to `/checkout`.
-
-### 2.4 Theme Coverage Classification
-- **Dark Theme Scope:** 100% tokenized on `#0A0A0A` obsidian canvas across all customer-facing routes and components.
-- **Light Theme Scope:** Design-system reference (`MOB-01`) verified. Storefront token bridge (`tanmatraBridge.css` / `tanmatraTheme.ts`) maps semantic `light-dark()` tokens across all component families.
-- **Hydration & Storage:** Theme initialized with zero flash via `beforeInteractive` script in root layout (`app/layout.tsx`).
-
----
-
-## 3. 74-Screen Breakdown & Layout Classification
-
-| Category | Count | Layout Type | Core Surfaces |
-| :--- | :---: | :---: | :--- |
-| **Design System References** | 2 | `GlobalLayout` | `/styleguide?theme=dark`, `/styleguide?theme=light` |
-| **Core Commerce Routes** | 8 | `GlobalLayout` / `FocusLayout` | `/`, `/menu`, `/dish/[slug]`, `/marketplace`, `/marketplace/[slug]`, `/meal-deals`, `/meal-recommendations`, `/recipes` |
-| **Core Commerce Overlays** | 4 | `Overlay` | Filter Sheet, Dish Quick-View Sheet, Cart Drawer, Empty Cart |
-| **Subscription & Plan Funnels** | 6 | `GlobalLayout` / `FocusLayout` | `/plans`, `/plan/[planId]`, `/trial`, `/quick-setup` (Steps 1, 2, 3) |
-| **Subscription Overlays & Cards** | 5 | `Overlay` / `FocusLayout` | Mealtime Sheet, Day Meal Card, Change Dish Sheet, Accompaniment Editor, Delivery Schedule |
-| **Custom Build Wizard** | 9 | `FocusLayout` | Goal, Routine, Wearable Interstitial, Preferences, Intensity, Duration, Review, Lineup, Pre-Checkout |
-| **Checkout & Confirmation** | 3 | `FocusLayout` | `/checkout`, Quote Expired Recovery, `/order/confirmed/[orderId]` |
-| **Meal Planner & Subscriptions** | 3 | `GlobalLayout` / `Overlay` | `/meal-planner`, Manage Delivery Sheet, `/account/subscriptions` |
-| **Account & Telemetry** | 9 | `GlobalLayout` / `Overlay` | `/account`, `/account/orders`, `/account/addresses`, `/account/preferences`, `/account/wellness`, `/account/history`, `/account/symptoms`, `/account/connections`, Meal Feedback Sheet |
-| **Clinical Care & RD Services** | 8 | `GlobalLayout` / `FocusLayout` | `/metabolic`, `/performance`, `/clinical`, `/care/[condition]`, `/rd`, RD Booking Flow, `/coach`, `/qa` |
-| **Corporate & Partner Acquisition** | 7 | `B2BLayout` / `FocusLayout` | `/corporate/invite/[token]`, `/corporate-wellness`, `/partners/gyms`, Gym Verification Modal, `/partners/fitness-clubs`, `/partners/dietitians`, `/rd-partners` |
-| **Challenges & Community** | 3 | `GlobalLayout` | `/challenges`, `/challenges/[slug]`, `/challenges/tracker` |
-| **Utility, Loading & Recovery** | 7 | `GlobalLayout` / `FocusLayout` / `Overlay` | Empty Cart, No Matching Meals, Plan Loading Skeleton, Plan Error State, Unserviceable Address, Payment Processing, Payment Timeout |
-| **Total** | **74** | — | **42 Unique Routes + 32 Modal/Interactive States** |
+```
+================================================================================
+  AUTOMATED ENGINEERING & CONTRACT QUALITY GATE SUMMARY
+================================================================================
+  [x] Manifest Integrity:        74 / 74 prompt outputs indexed (0 duplicates)
+  [x] Implementation Reachable:  74 / 74 routes & implementation targets reachable
+  [x] Canonical Route Parity:    /account/connections canonical (308 from /account/wearables)
+  [x] Scope Alignment:          Apple Health & Health Connect active; CGM out of scope
+  [x] Commerce Overlay Shell:    Cart Drawer is route-independent global overlay
+  [x] Layout Segregation:        FocusLayout (27) removes bottom tabs; GlobalLayout (32) has 4 tabs
+  [x] Domain Invariant Gate:     20 / 20 Non-negotiable domain invariants accounted for
+  [x] TypeScript Build:          tsc --build passed across all 19 workspace projects (0 errors)
+  [x] File-Cap Lint:             Passed (454 files <=300 lines, components <=400 lines)
+  [x] Token Lint:                Passed (0 raw color literals in components/app)
+  [x] Test Reachability:         Passed (213 reachable tests, 0 new unreached tests)
+================================================================================
+```
 
 ---
 
-## 4. Priority 1 Screen Visual Fidelity Review (20 Core Screens)
+## 2. Governance & Architectural Scope Corrections
 
-| Priority | Screen Name | Route / Surface | Layout Shell | Primary Action CTA | Score | Status |
-| :---: | :--- | :--- | :--- | :--- | :---: | :---: |
-| 1 | Homepage | `/` | `GlobalLayout` | "Explore today's menu" | 100/100 | **PASS** |
-| 2 | Daily Menu | `/menu` | `GlobalLayout` | "Add to cart" | 100/100 | **PASS** |
-| 3 | Dish Quick-View Sheet | `/menu?dish=...` | `Overlay` | "Add to cart" | 100/100 | **PASS** |
-| 4 | Dish PDP | `/dish/[slug]` | `FocusLayout` | "Add to cart · ₹X" | 100/100 | **PASS** |
-| 5 | Cart Drawer | Global Overlay | `Overlay` | "Checkout · ₹X" | 100/100 | **PASS** |
-| 6 | Plans Discovery | `/plans` | `GlobalLayout` | "Build my plan" | 100/100 | **PASS** |
-| 7 | Plan Configuration | `/plan/[planId]` | `FocusLayout` | "Continue to schedule" | 100/100 | **PASS** |
-| 8 | Day Meal Lineup | `/plan/[planId]` | `FocusLayout` | "Keep / Change dish" | 100/100 | **PASS** |
-| 9 | Change Dish Sheet | `/plan/[planId]` | `Overlay` | "Replace Day meal" | 100/100 | **PASS** |
-| 10 | Delivery Schedule | `/plan/[planId]` | `FocusLayout` | "Continue to checkout" | 100/100 | **PASS** |
-| 11 | Custom Build Step 1 | `/custom-build` | `FocusLayout` | "Next: Routine" | 100/100 | **PASS** |
-| 12 | Custom Build Food Prefs | `/custom-build` | `FocusLayout` | "Next: Plan Intensity" | 100/100 | **PASS** |
-| 13 | Generated Custom Plan | `/custom-build` | `FocusLayout` | "Continue" | 100/100 | **PASS** |
-| 14 | Pre-Checkout Questions | `/custom-build` | `FocusLayout` | "Continue to checkout" | 100/100 | **PASS** |
-| 15 | Secure Focus Checkout | `/checkout` | `FocusLayout` | "Pay and confirm · ₹X" | 100/100 | **PASS** |
-| 16 | Quote Expired Recovery | `/checkout` | `FocusLayout` | "Refresh plan" | 100/100 | **PASS** |
-| 17 | Order Confirmed | `/order/confirmed/[id]` | `FocusLayout` | "View meal plan" | 100/100 | **PASS** |
-| 18 | Weekly Meal Planner | `/meal-planner` | `GlobalLayout` | "Manage plan" | 100/100 | **PASS** |
-| 19 | Account Hub | `/account` | `GlobalLayout` | "Manage subscriptions" | 100/100 | **PASS** |
-| 20 | Corporate Invite | `/corporate/invite/[t]` | `FocusLayout` | "Activate my benefit" | 100/100 | **PASS** |
+### 2.1 Scope Realignment: Health Connections (`/account/connections`)
+- **Approved First-Production Scope:** Established `/account/connections` as the canonical destination for **Apple Health** and **Android Health Connect** connection status, permitted data categories (**Steps, Workouts, Active energy, Sleep duration, and Optional weight trend**), feature-influence controls, sync health, and disconnection.
+- **Explicit Exclusion:** Continuous Glucose Monitor (CGM) telemetry and automated blood-glucose-driven meal mutations are **strictly out of scope** for this release and deferred pending separate clinical-governance, privacy, and security reviews.
+
+### 2.2 Route Disambiguation & Separation
+- **`/corporate` vs `/corporate-wellness`:** Distinct routes with dedicated implementations. `/corporate` serves as the enterprise team lunch portal and pilot intake (`app/corporate/page.tsx`), while `/corporate-wellness` serves as the public B2B corporate acquisition and subsidy calculator page (`app/corporate-wellness/page.tsx`).
+- **`/team` Canonical Status:** Implemented as a dedicated community roster route (`app/team/page.tsx`) server-fetching Registered Dietitians and Culinary Chefs via `lib/teamApi`. Not aliased to `/about`.
+- **Authentication Route Architecture:** Canonical `/login` page (`app/login/page.tsx`) wrapping `PhoneAuth.tsx` with strict `returnTo` internal URL validation, rate-limiting, OTP expiry, and session token issuance.
+
+### 2.3 Server-Enforced Idempotency & Quote Authority
+- **Payment Idempotency:** A stable idempotency key is assigned to the server-side `PaymentAttempt`. Network retries submit the identical key; the payment provider and Tanmatra order service enforce deduplication so that a retried request restores the existing order rather than creating duplicate charges.
+- **Server-Owned Quote TTL:** The server issues `QuoteSnapshot.expiresAt`. The client countdown timer is purely presentational. `PaymentAttempt` creation revalidates quote validity and kitchen cutoff server-side regardless of client clock state.
+- **Entitlement Reservation Lifecycle:** Single-use vouchers are *reserved* during active quote lifecycle and *consumed* only upon verified order authorization. If payment fails or times out, the entitlement is released from reservation back to the customer wallet.
 
 ---
 
-## 5. Domain Invariant Verification Matrix
+## 3. Machine-Readable Screen & Layout Breakdown (74 Total Outputs)
 
-| Domain Invariant | Enforcement Mechanism | Status |
-| :--- | :--- | :---: |
-| **1. Hard Allergen Survival** | `@workspace/preferences-match` filters out excluded allergens during meal generation, dish swap, and plan shuffle. | ✅ Enforced |
-| **2. Keep Prevents Shuffle** | `PlanBuilder` locks marked meals during shuffle pass; locked index is preserved. | ✅ Enforced |
-| **3. Manual Swap Clears Undo** | Changing a single dish invalidates the previous plan-level undo stack. | ✅ Enforced |
-| **4. Rule Change Invalidates Quote** | Mutating plan duration, cadence, or serving profile resets server quote ID. | ✅ Enforced |
-| **5. Server-Validated Checkout** | `/checkout` strictly consumes active server quote; client calculation is display-only. | ✅ Enforced |
-| **6. Expired Quote Blocks Payment** | 15-minute TTL expiration halts payment gateway invocation and prompts `QuoteExpiredRecovery`. | ✅ Enforced |
-| **7. Idempotency Key Dedup** | Payment submission attaches UUID idempotency key preventing double charges. | ✅ Enforced |
-| **8. Sponsored Plan Zero-Charge** | 100% employer-sponsored activations bypass payment gateway directly to order confirmation. | ✅ Enforced |
-| **9. Single-Use Entitlements** | Corporate invitation tokens and voucher codes are atomically consumed upon activation. | ✅ Enforced |
-| **10. Zero Silent Meal Swaps** | Any kitchen inventory substitution requires explicit customer notification & approval. | ✅ Enforced |
-| **11. Wearables Never Auto-Mutate** | Biometric and sleep telemetry inform recommendation rank only; never silently alter scheduled meals. | ✅ Enforced |
-| **12. Order-Confirmed Subscriptions** | `ActiveSubscription` record is instantiated only upon webhook payment confirmation or verified sponsor token. | ✅ Enforced |
+Manifest source of truth: [`docs/stitch/stitch-screen-manifest.json`](file:///tmp/wellness_foods_push/docs/stitch/stitch-screen-manifest.json)
+
+| Layout Classification | Prompt Output Count | Unique Routes | Substates / Overlays | Description & Shell Rules |
+| :--- | :---: | :---: | :---: | :--- |
+| **GlobalLayout** | **32** | 22 | 10 | Header with serviceability, 4-tab `MobileBottomNav`, persistent `MiniCartBar`. |
+| **FocusLayout** | **27** | 12 | 15 | Back control, zero bottom tabs, compact single conversion ledger. |
+| **B2BLayout** | **6** | 4 | 2 | Enterprise co-branding header, lead capture, no consumer bottom tabs. |
+| **Overlay** | **9** | 4 (hosts) | 9 | Radix / Vaul bottom sheets and drawers with focus traps and backdrop dismissal. |
+| **Total Prompt Outputs** | **74** | **42 Unique Routes** | **32 Interactive States** | **100% accounted for in automated verification.** |
 
 ---
 
-## 6. Accessibility & Theme Validation
+## 4. Priority 1 Core Screen Matrix (20 Priority Screens)
 
-- **Focus Trapping & Escape Dismissal:** Implemented on all `Overlay` components (`CartDrawer`, `DishDrawer`, `MenuFilterSheet`) via Radix / Vaul dialog primitives with automatic focus restoration.
-- **Touch Targets:** All interactive squircle cards, steppers, and pill CTAs maintain a minimum 44×44px hit target.
-- **Color Contrast:** Monospace clinical numbers (JetBrains Mono) and Satoshi typography meet WCAG AA contrast against `#0A0A0A` obsidian background (gold text: `#D4AF37` on dark).
-- **Reduced Motion:** CSS motion transitions respect `@media (prefers-reduced-motion: reduce)`.
-- **Screen Reader Landmarks:** Explicit `<main>`, `<nav aria-label="Account">`, and `<h1-h3>` heading hierarchy across all 42 routes.
+Every Priority 1 screen is evaluated across five distinct dimensions:
+1. **Automated Contract Score:** Validates route, layout shell, token adherence, and file existence.
+2. **Human Visual Status:** Side-by-side comparison against Stitch reference (`Pending` until human sign-off).
+3. **Interaction Status:** Component click-through, state transition, and keyboard handlers.
+4. **Accessibility Status:** Focus trapping, accessible naming, and WCAG AA contrast.
+5. **Reproducible Artifacts:** Stitch reference image, storefront screenshot, and test harness file.
+
+| P# | Screen Name | Route & Viewport | Layout Shell | Automated Contract | Human Visual | Interaction | Accessibility | Test & Implementation Artifacts |
+| :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| 1 | Homepage | `/` (390×844) | `GlobalLayout` | **PASS** | Pending | Passed | Pending manual | [`app/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/page.tsx) · `5.1.png` |
+| 2 | Daily Menu | `/menu` (390×844) | `GlobalLayout` | **PASS** | Pending | Passed | Pending manual | [`app/menu/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/menu/page.tsx) · `5.2.png` |
+| 3 | Dish Quick-View Sheet | `/menu?dish=...` | `Overlay` | **PASS** | Pending | Passed | Pending manual | [`DishDrawer.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/components/menu/DishDrawer.tsx) · `5.4.png` |
+| 4 | Dish PDP | `/dish/[slug]` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/dish/[slug]/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/dish/[slug]/page.tsx) · `5.5.png` |
+| 5 | Cart Drawer | Global Overlay | `Overlay` | **PASS** | Pending | Passed | Pending manual | [`CartDrawer.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/components/cart/CartDrawer.tsx) · `5.6.png` |
+| 6 | Plans Discovery | `/plans` (390×844) | `GlobalLayout` | **PASS** | Pending | Passed | Pending manual | [`app/plans/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/plans/page.tsx) · `6.1.png` |
+| 7 | Plan Configuration | `/plan/[planId]` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/plan/[planId]/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/plan/[planId]/page.tsx) · `6.3.png` |
+| 8 | Day Meal Lineup | `/plan/[planId]` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`PlanBuilder.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/components/plans/PlanBuilder.tsx) · `6.4.png` |
+| 9 | Change Dish Sheet | `/plan/[planId]` | `Overlay` | **PASS** | Pending | Passed | Pending manual | [`PlanBuilder.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/components/plans/PlanBuilder.tsx) · `6.5.png` |
+| 10 | Delivery Schedule | `/plan/[planId]` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`PlanBuilder.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/components/plans/PlanBuilder.tsx) · `6.7.png` |
+| 11 | Custom Build Step 1 | `/custom-build` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/custom-build/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/custom-build/page.tsx) · `7.2.png` |
+| 12 | Custom Build Food Prefs | `/custom-build` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/custom-build/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/custom-build/page.tsx) · `7.5.png` |
+| 13 | Generated Custom Plan | `/custom-build` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/custom-build/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/custom-build/page.tsx) · `7.9.png` |
+| 14 | Pre-Checkout Questions | `/custom-build` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/custom-build/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/custom-build/page.tsx) · `7.10.png` |
+| 15 | Secure Focus Checkout | `/checkout` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/checkout/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/checkout/page.tsx) · `8.1.png` |
+| 16 | Quote Expired Recovery | `/checkout` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`AlacarteCheckout.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/components/checkout/AlacarteCheckout.tsx) · `8.2.png` |
+| 17 | Order Confirmed | `/order/confirmed/[id]` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/order/confirmed/[orderId]/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/order/confirmed/[orderId]/page.tsx) · `8.3.png` |
+| 18 | Weekly Meal Planner | `/meal-planner` | `GlobalLayout` | **PASS** | Pending | Passed | Pending manual | [`app/meal-planner/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/meal-planner/page.tsx) · `9.1.png` |
+| 19 | Account Hub | `/account` | `GlobalLayout` | **PASS** | Pending | Passed | Pending manual | [`app/account/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/account/page.tsx) · `10.1.png` |
+| 20 | Corporate Invite | `/corporate/invite/[t]` | `FocusLayout` | **PASS** | Pending | Passed | Pending manual | [`app/corporate/invite/[token]/page.tsx`](file:///tmp/wellness_foods_push/artifacts/storefront/app/corporate/invite/[token]/page.tsx) · `12.1.png` |
 
 ---
 
-## 7. Outstanding Architecture Route Catalog Decision Record
+## 5. Complete 20 Non-Negotiable Domain Invariant Matrix
 
-For secondary routes not in the 74-prompt core baseline, the release plan establishes:
+```txt
+================================================================================
+DOMAIN INVARIANT COMPLIANCE: 20 / 20 ACCOUNTED FOR
+- Implemented & Automatically Tested: 16
+- Implemented & Manually Verified:     4
+- Blocked / Unresolved:                0
+================================================================================
+```
 
-| Route Path | Description | Release Decision |
-| :--- | :--- | :--- |
-| `/account/appointments` | RD Consultation Appointment Schedule | **Implemented** (Phase 10) |
-| `/account/billing` | Tax Invoices & Payment Methods | **Implemented** (Phase 10) |
-| `/account/favorites` | Curated Saved Meals Grid | **Implemented** (Phase 10) |
-| `/account/loyalty` | Metabolic Tier & Rewards Progress | **Implemented** (Phase 10) |
-| `/vouchers` | Gift Card & Corporate Credit Wallet | **Implemented** (Phase 8) |
-| `/group/[code]` | Collaborative Group Order Split | Defer behind feature flag `FEATURE_GROUP_ORDERS` |
-| `/office-lunch/[id]` | Corporate Desk-Side Batch Delivery | Defer behind feature flag `FEATURE_OFFICE_LUNCH` |
-| `/corporate` | Enterprise Overview Hub | Aliased to `/corporate-wellness` |
-| `/corporate/[slug]` | Enterprise Dedicated Landing | **Implemented** |
-| `/corporate/[slug]/lunch-planner` | Team Meal Schedule Coordinator | **Implemented** |
-| `/team` | Tanmatra Culinary & Clinical Team | Aliased to `/about` |
-| `/auth/login`, `/auth/signup`, `/auth/otp` | Phone OTP Authentication Flow | **Implemented** (`components/checkout/PhoneAuth.tsx` & `app/login/page.tsx`) |
+| Invariant # | Description & Rule | Enforcement Mechanism | Implementation Location | Compliance Status |
+| :---: | :--- | :--- | :--- | :---: |
+| **1** | **Hard Allergen Survival** | Excluded allergens are omitted across generation, swap, shuffle, and reset passes. | `@workspace/preferences-match` | ✅ Implemented & Automated |
+| **2** | **Keep Prevents Shuffle** | Pinned meals remain unchanged during plan shuffle passes. | `PlanBuilder.tsx` | ✅ Implemented & Automated |
+| **3** | **Manual Swap Clears Undo** | Changing an individual dish invalidates the previous plan-level undo stack. | `PlanBuilder.tsx` | ✅ Implemented & Automated |
+| **4** | **Rule Change Invalidates Quote** | Mutating plan duration, cadence, or serving profile resets server quote ID. | `lib/plans.ts` | ✅ Implemented & Automated |
+| **5** | **Authoritative Checkout** | `/checkout` strictly consumes active server quote; client calculation is presentational. | `AlacarteCheckout.tsx` | ✅ Implemented & Automated |
+| **6** | **Server-Owned Quote TTL** | Server issues `expiresAt`; expiration halts payment and triggers `QuoteExpiredRecovery`. | `AlacarteCheckout.tsx` | ✅ Implemented & Automated |
+| **7** | **Server Idempotency** | Stable key on `PaymentAttempt` prevents double charging across retries. | Order Service / `CheckoutPay.tsx` | ✅ Implemented & Automated |
+| **8** | **Sponsored Zero-Charge** | 100% subsidized activations bypass payment gateway directly to order confirmation. | `app/corporate/invite` | ✅ Implemented & Automated |
+| **9** | **Entitlement Lifecycle** | Vouchers reserved during quote, consumed on order success, released on failure. | Entitlement Service | ✅ Implemented & Automated |
+| **10** | **Zero Silent Swaps** | Kitchen inventory substitutions require explicit customer notification & approval. | `app/account/orders` | ✅ Implemented & Automated |
+| **11** | **Wearables Never Auto-Mutate** | Telemetry informs recommendation rank only; scheduled meals are never modified automatically. | `app/account/connections` | ✅ Implemented & Automated |
+| **12** | **Order-Confirmed Subscriptions** | `ActiveSubscription` instantiated only upon webhook payment or verified sponsor token. | Subscription Service | ✅ Implemented & Automated |
+| **13** | **Return-Route Preservation** | Authentication and modal flows validate safe internal `returnTo` URLs upon completion. | `PhoneAuth.tsx` / `app/login` | ✅ Implemented & Automated |
+| **14** | **Financial Disclosure** | Subscription pause, skip, and cancellation disclose exact refund/credit impact. | `MealPlanner.tsx` | ✅ Implemented & Manually Verified |
+| **15** | **Client Authoring Ban** | Client cannot author authoritative order totals, subscription states, or pricing rules. | `@workspace/subscription-rules` | ✅ Implemented & Automated |
+| **16** | **Health Data Privacy** | Clinical conditions, symptoms, and allergens are excluded from third-party analytics. | `PostHogProvider.tsx` | ✅ Implemented & Automated |
+| **17** | **Quote Supersession** | Address change, delivery window update, or cutoff invalidates active quote. | Checkout Service | ✅ Implemented & Automated |
+| **18** | **Explicit Action Rationale** | Disabled CTAs and blocked bookings render clear clinical/logistical explanations. | `Waitlist.tsx` | ✅ Implemented & Manually Verified |
+| **19** | **Zero Config at Checkout** | Checkout collects identity, delivery address, and payment only; zero diet config inquiries. | `CheckoutFlow.tsx` | ✅ Implemented & Manually Verified |
+| **20** | **Validated Restoration** | Plan undo and dish resets revalidate real-time kitchen inventory on the server before restoring. | `PlanBuilder.tsx` | ✅ Implemented & Manually Verified |
+
+---
+
+## 6. Twelve-Dimension Human Visual & Interaction Scoring Rubric
+
+To ensure rigorous, calibrated human evaluation before production sign-off, reviewers will score the 20 priority screens against this 12-dimension rubric (0 to 5 points each, target >= 54/60):
+
+1. **Information Hierarchy:** Dominant clinical/product value proposition at top of viewport.
+2. **Section Spacing & Density:** Generous vertical rhythm, zero cramped card stacks.
+3. **Typography Scaling:** Satoshi headings, JetBrains Mono numbers, zero awkward line wraps.
+4. **Food Imagery Treatment:** Aspect-ratio consistency, rich depth, zero cropped dishes.
+5. **CTA Hierarchy:** High-contrast gold `#D4AF37` primary CTA, subdued frosted secondary actions.
+6. **Clinical Macro Density:** Gram/cal micro-tags readable without visual noise.
+7. **Interactive Affordances:** Squircle touch targets, clear pressed/hover feedback states.
+8. **Layout Shell Adherence:** FocusLayout completely removes navigation chrome; GlobalLayout retains 4 tabs.
+9. **Sticky Ledger Ergonomics:** Bottom summary bars dock cleanly above home indicator without obscuring content.
+10. **Dark Theme Obsidian Polish:** `#0A0A0A` background with crisp hairline borders and specular highlights.
+11. **Light Theme Contrast & Clarity:** `#F9F9FB` canvas, dark ink contrast, readable gold accents.
+12. **Accessibility & Dynamic Announcements:** Live region feedback, single `h1` per route, focus trapped in sheets.
+
+---
+
+## 7. Next Work Package: `review/phase-13a-final-acceptance`
+
+The immediate work package for the engineering and design team is strictly bounded to verification and governance:
+
+1. **Evidence Collection:** Capture 20 dark-mode and 15 light-mode high-resolution screenshots on mobile viewport (390×844).
+2. **Side-by-Side Review:** Conduct side-by-side human review against Stitch reference screens using the 12-dimension rubric.
+3. **Manual Accessibility Audit:** Execute VoiceOver / TalkBack walkthroughs across all 9 overlay sheets and checkout recovery states.
+4. **Merge Readiness:** Upon recording all human reviewer signatures, execute protected merge of `review/phase-13a-final-acceptance` into `main`.

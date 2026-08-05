@@ -71,9 +71,9 @@ test("getStitchScreenForRoute resolves exact routes and dynamic segments", () =>
   assert.equal(care?.title, "Clinical Care: Metabolic Protocols");
 
   const connections = getStitchScreenForRoute("/account/connections");
-  assert.equal(connections?.title, "Health Connections & CGM: Live Sync");
+  assert.equal(connections?.title, "Health Connections: Apple Health & Android Sync");
 
   const wearablesLegacy = getStitchScreenForRoute("/account/wearables");
-  assert.equal(wearablesLegacy?.title, "Health Connections & CGM: Live Sync");
+  assert.equal(wearablesLegacy?.title, "Health Connections: Apple Health & Android Sync");
 });
 

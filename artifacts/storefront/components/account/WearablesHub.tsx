@@ -18,24 +18,17 @@ export function WearablesHub() {
     {
       id: "apple_health",
       name: "Apple Health",
-      category: "Activity & Sleep",
+      category: "Activity, Workouts & Sleep",
       connected: true,
       lastSync: "Today, 11:30 AM",
-      metricLabel: "Active Energy & Sleep Stage Sync",
+      metricLabel: "Steps, Active Energy & Sleep Duration Sync",
     },
     {
-      id: "ultrahuman",
-      name: "Ultrahuman Ring / M1 CGM",
-      category: "Biometric & Glucose",
+      id: "health_connect",
+      name: "Android Health Connect",
+      category: "Activity & Sleep",
       connected: false,
-      metricLabel: "Continuous Glucose & Metabolic Score",
-    },
-    {
-      id: "freestyle_libre",
-      name: "Abbott FreeStyle Libre",
-      category: "CGM Glucose Sensor",
-      connected: false,
-      metricLabel: "Postprandial Spike Telemetry",
+      metricLabel: "Daily Steps, Workouts & Rest Metrics",
     },
   ]);
 
@@ -58,9 +51,9 @@ export function WearablesHub() {
       <div className="rounded-xl border border-line bg-surface p-4 text-xs leading-relaxed text-ink-muted">
         <div className="mb-1.5 flex items-center gap-1.5 font-semibold text-ink">
           <ShieldAlert size={14} className="text-gold-text" />
-          Non-Medical Telemetry Notice
+          Health Privacy & Recommendation Context
         </div>
-        Biometric and glucose scores reflect physiological responses to meals to help optimize your daily nutrition. They are not intended for medical diagnosis or treatment.
+        Activity and workout metrics help rank meal recommendations for training days. Tanmatra will never change a scheduled meal automatically. Continuous Glucose Monitors (CGM) and medical diagnostic telemetry remain out of scope.
       </div>
 
       <div className="flex flex-col gap-4">

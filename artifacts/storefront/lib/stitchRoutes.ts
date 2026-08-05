@@ -236,7 +236,7 @@ export const STITCH_SCREEN_REGISTRY: readonly StitchScreenSpec[] = [
   {
     projectId: STITCH_PROJECT_ID,
     screenId: "2b29b0174cfb46b1826594928710885e",
-    title: "Health Connections & CGM: Live Sync",
+    title: "Health Connections: Apple Health & Android Sync",
     route: "/account/connections",
     category: "route",
   },
