@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { planDisplay } from "@/lib/plans";
+import type { PlanId } from "@workspace/subscription-rules";
+import PlanConfigClient from "./PlanConfigClient";
 
 export const metadata: Metadata = {
-  title: "[PLANID] | Tanmatra",
+  title: "Subscription Setup | Tanmatra",
 };
 
-export default function PlaceholderPage() {
-  return (
-    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
-      <div className="text-center">
-        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
-          Focus Layout
-        </div>
-        <h1 className="font-headline-md text-2xl mb-2">/plan/[planId]</h1>
-        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
-      </div>
-    </div>
-  );
+export default async function PlanConfigPage({ params }: { params: Promise<{ planId: string }> }) {
+  const resolvedParams = await params;
+  
+  // Safe cast since we validate via the fallback. If invalid, plan will be undefined.
+  const plan = planDisplay(resolvedParams.planId as PlanId);
+  
+  if (!plan) {
+    return notFound();
+  }
+
+  return <PlanConfigClient plan={plan} />;
 }

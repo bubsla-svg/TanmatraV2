@@ -9,6 +9,10 @@ import { Section03B2BEnterprise } from "@/components/landing/Section03B2BEnterpr
 import { Section04TelehealthTracking } from "@/components/landing/Section04TelehealthTracking";
 import { Section05LogisticsMoat } from "@/components/landing/Section05LogisticsMoat";
 import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
+import { fetchMenu } from "@/lib/catalog";
+import { formatPaise } from "@/lib/format";
+import { SafeImage } from "@/components/primitives/SafeImage";
+import { DishCard } from "@/components/DishCard";
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
 import { Section09AssessmentSection } from "@/components/landing/Section09AssessmentSection";
@@ -23,6 +27,9 @@ export default async function HomePage() {
   const cookieStore = await cookies();
   const refCookie = cookieStore.get("tnm_ref")?.value;
   const heroData = deriveHeroContent(refCookie);
+  
+  const { dishes } = await fetchMenu();
+  const featuredDishes = dishes.slice(0, 5);
 
   return (
     <div 
@@ -38,33 +45,15 @@ export default async function HomePage() {
         {/* Pillar 1 Hero: Food-First D2C Hook with Hero Meal Photo & Dual CTAs */}
         <Section01ClinicalHero hero={heroData} />
 
-        {/* Horizontal rail: "Curated for today" */}
         <section className="px-gutter">
           <div className="flex justify-between items-end mb-6">
             <h2 className="font-headline-md text-headline-md text-ink-primary">Curated for today</h2>
             <a href="/menu" className="font-label-caps text-label-caps text-primary uppercase tracking-widest hover:opacity-80">View menu</a>
           </div>
           <div className="flex gap-4 overflow-x-auto snap-x no-scrollbar pb-4 -mx-gutter px-gutter">
-            {/* We render placeholders for 3 dish cards as per spec to signal horizontal scrolling. In a real dynamic feed, these would be fetched from getToday() or getRecipes() */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex-none w-[280px] snap-start">
-                <div className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
-                  <div className="relative h-[210px] w-full shrink-0 overflow-hidden rounded-xl border border-line bg-surface-raised mb-4">
-                    <div className="absolute top-2 left-2 flex gap-1 z-10">
-                      <span className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-sage-strong/20 font-label-caps text-[9px] text-sage-text uppercase tracking-widest">High Protein</span>
-                    </div>
-                    {/* Placeholder image that respects the 4:3 image rule from the spec */}
-                    <div className="w-full h-full bg-surface-container-high animate-pulse" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <h3 className="font-bold text-body-lg text-ink-primary truncate">Grilled Salmon Bowl {i}</h3>
-                    <span className="font-mono text-[11px] text-ink-muted">450 kcal · 32g P</span>
-                    <div className="flex justify-between items-center mt-3">
-                      <span className="font-clinical-data text-ink-primary">₹499</span>
-                      <button className="px-4 py-1.5 rounded-full border border-line bg-surface-raised font-label-caps text-[10px] text-ink-primary hover:bg-line transition-colors">ADD</button>
-                    </div>
-                  </div>
-                </div>
+            {featuredDishes.map((dish) => (
+              <div key={dish.id} className="flex-none w-[280px] snap-start">
+                <DishCard dish={dish} compact />
               </div>
             ))}
           </div>

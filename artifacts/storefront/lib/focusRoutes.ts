@@ -31,11 +31,19 @@ export const FOCUS_ROUTES = [
   "/corporate/invite",
   "/quick-setup",
   "/dish",
+  "/trial",
+  "/order/confirmed",
 ] as const;
 
 export function isFocusRoute(pathname: string): boolean {
   let path = pathname.split(/[?#]/)[0] ?? "";
   if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+  
+  // The marketplace root is a global route, but its PDPs are focus routes
+  if (path.startsWith("/marketplace/") && path.length > "/marketplace/".length) {
+    return true;
+  }
+  
   return FOCUS_ROUTES.some(
     (route) => path === route || path.startsWith(`${route}/`),
   );

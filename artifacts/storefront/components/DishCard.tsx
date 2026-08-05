@@ -3,8 +3,8 @@ import { Text } from "@astryxdesign/core/Text";
 import { type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
-import { DishFitBadge } from "@/components/menu/DishFitContext";
-import { DishThumbnail } from "@/components/menu/DishThumbnail";
+
+import { SafeImage } from "@/components/primitives/SafeImage";
 
 /**
  * Dish row — Stitch Route Brief 02 v3, "Mirrored Clinical Menu List"
@@ -50,8 +50,34 @@ function RatingStars({ average, count }: { average?: number | null; count?: numb
   );
 }
 
-export function DishCard({ dish }: { dish: DishData }) {
+export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean }) {
   const est = dish.macrosEstimated ? "~" : "";
+  
+  if (compact) {
+    return (
+      <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
+        <div className="relative mb-4 overflow-hidden rounded-xl bg-surface-raised border border-line">
+          <div className="absolute top-2 left-2 flex gap-1 z-10">
+            <span className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-sage-strong/20 font-label-caps text-[9px] text-sage-text uppercase tracking-widest">
+              {dish.isVeg ? "Veg" : "Non-Veg"}
+            </span>
+          </div>
+          <SafeImage src={dish.image} alt={dish.name} aspectRatio="4/3" className="w-full" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <h3 className="font-bold text-body-lg text-ink-primary truncate">{dish.name}</h3>
+          <span className="font-mono text-[11px] text-ink-muted">
+            {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
+          </span>
+          <div className="relative z-10 mt-3 flex justify-between items-center">
+            <span className="font-clinical-data text-ink-primary text-gold-text">{formatPaise(dish.price)}</span>
+            <AddToCart dish={dish} />
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <article className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex gap-4">
@@ -66,18 +92,9 @@ export function DishCard({ dish }: { dish: DishData }) {
               }`}
               style={{ backgroundColor: dish.isVeg ? "var(--sage)" : "var(--danger)" }}
             />
-            {/* `font-bold` duplicates `weight="bold"` on purpose, and only
-                here. Astryx's weight atom is emitted in @layer astryx-base;
-                while that layer is declared BEFORE Tailwind's, Preflight's
-                `h1..h6 { font-weight: inherit }` outranks it and every dish
-                name on the menu renders at 400 — but only on this one `as="h3"`
-                (the `span` default is untouched, which is why the price below
-                is correctly bold). The Tailwind utility sits in @layer
-                utilities and wins either way: today over Preflight, and
-                harmlessly under the atom once the layer order is repaired. */}
             <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
           </span>
-          <DishFitBadge dishId={dish.id} />
+
           <Text type="supporting" color="secondary" maxLines={2}>
             {dish.tasteDescription || dish.description}
           </Text>
@@ -92,8 +109,10 @@ export function DishCard({ dish }: { dish: DishData }) {
             a 1x/2x srcset, which is the right pair here. A `sizes` value would
             replace that with the full width-descriptor ladder for no gain. */}
         <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-raised">
-          <DishThumbnail
+          <SafeImage
             src={dish.image}
+            alt={dish.name}
+            aspectRatio="1/1"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </div>

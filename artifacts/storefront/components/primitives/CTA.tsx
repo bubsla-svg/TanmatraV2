@@ -26,9 +26,9 @@ export const PrimaryCTA: React.FC<CTAProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-8 py-4 rounded-xl font-bold tracking-tight text-slate-900 
-        bg-gold hover:bg-gold-text
-        active:scale-[0.98] transition-all duration-200 shadow-lg shadow-amber-500/10
+      className={`px-8 py-4 rounded-full font-bold tracking-tight text-[#111318] 
+        bg-[#D4AF37] hover:bg-[#D4AF37]/90
+        active:scale-[0.98] transition-all duration-150 shadow-lg shadow-[#D4AF37]/10
         min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-2
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
@@ -54,10 +54,10 @@ export const SecondaryCTA: React.FC<CTAProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-8 py-4 rounded-xl font-semibold tracking-tight 
-        text-slate-100 bg-slate-900/80 backdrop-blur-md
-        border border-slate-700/60 hover:bg-slate-800/90
-        active:scale-[0.98] transition-all duration-200
+      className={`px-8 py-4 rounded-full font-semibold tracking-tight 
+        text-[#F5F5F4] bg-transparent
+        border border-white/10 hover:bg-white/5
+        active:scale-[0.98] transition-all duration-150
         min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-2
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >

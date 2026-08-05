@@ -45,6 +45,8 @@ import {
 } from "@/lib/stitchRoutes";
 import { FOCUS_ROUTES } from "@/lib/focusRoutes";
 import { InternalSurfaceGate } from "@/components/InternalSurfaceGate";
+import { FocusChromeGate } from "@/components/FocusLayout";
+import { B2BChromeGate } from "@/components/B2BLayout";
 import { INTERNAL_ROUTES } from "@/lib/internalSurfaces";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
@@ -258,14 +260,22 @@ export default function RootLayout({
               </a>
               <CartProvider>
                 <InternalSurfaceGate>
-                  <Header />
+                  <FocusChromeGate>
+                    <B2BChromeGate>
+                      <Header />
+                    </B2BChromeGate>
+                  </FocusChromeGate>
                 </InternalSurfaceGate>
                 <main id="main">{children}</main>
                 <InternalSurfaceGate>
-                  {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
-                  <MiniCartBar />
-                  <Footer />
-                  <MobileBottomNav />
+                  <FocusChromeGate>
+                    <B2BChromeGate>
+                      {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
+                      <MiniCartBar />
+                      <Footer />
+                      <MobileBottomNav />
+                    </B2BChromeGate>
+                  </FocusChromeGate>
                 </InternalSurfaceGate>
                 {/* Honest offline state — the service worker never serves a
                   cached /checkout, /account or /api response, so a dropped

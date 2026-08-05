@@ -27,7 +27,12 @@ test("trailing slashes and query/hash fragments normalise away", () => {
 });
 
 test("browse-tier routes keep their chrome", () => {
-  for (const route of ["/", "/menu", "/plans", "/account", "/marketplace", "/meal-planner", "/trial", "/vouchers"]) {
+  for (const route of ["/", "/menu", "/plans", "/account", "/marketplace", "/meal-planner", "/vouchers"]) {
     assert.equal(isFocusRoute(route), false, route);
   }
+});
+
+test("new focus routes match", () => {
+  assert.equal(isFocusRoute("/trial"), true);
+  assert.equal(isFocusRoute("/order/confirmed/123"), true);
 });

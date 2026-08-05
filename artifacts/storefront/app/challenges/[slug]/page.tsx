@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
+import ChallengeDetailClient from "./ChallengeDetailClient";
 
-export const metadata: Metadata = {
-  title: "[SLUG] | Tanmatra",
-};
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
 
-export default function PlaceholderPage() {
-  return (
-    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
-      <div className="text-center">
-        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
-          Global Layout
-        </div>
-        <h1 className="font-headline-md text-2xl mb-2">/challenges/[slug]</h1>
-        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
-      </div>
-    </div>
-  );
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const title = slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+  return {
+    title: `${title} | Tanmatra Cohort Challenge`,
+    description: `Join the Tanmatra ${title} guided metabolic cohort with daily clinical meal kits and registered dietitian check-ins.`,
+  };
+}
+
+export default async function ChallengeDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  return <ChallengeDetailClient slug={slug} />;
 }

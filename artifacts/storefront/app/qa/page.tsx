@@ -1,19 +1,11 @@
 import type { Metadata } from "next";
+import QaClient from "./QaClient";
 
 export const metadata: Metadata = {
-  title: "QA | Tanmatra",
+  title: "Clinical Q&A & Ingredient Transparency | Tanmatra",
+  description: "Explore the scientific evidence, cooking fat standards, and clinical rationales behind Tanmatra metabolic meal protocols.",
 };
 
-export default function PlaceholderPage() {
-  return (
-    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
-      <div className="text-center">
-        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
-          Global Layout
-        </div>
-        <h1 className="font-headline-md text-2xl mb-2">/qa</h1>
-        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
-      </div>
-    </div>
-  );
+export default function QaPage() {
+  return <QaClient />;
 }

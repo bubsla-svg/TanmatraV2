@@ -1,18 +1,77 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { findDish, fetchMenu } from "@/lib/catalog";
+import { SafeImage } from "@/components/primitives/SafeImage";
+import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "[DISHSLUG] | Tanmatra",
-};
+export async function generateMetadata({ params }: { params: Promise<{ dishSlug: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  const { dishes } = await fetchMenu();
+  const dish = findDish(resolvedParams.dishSlug, dishes);
+  if (!dish) return { title: "Not Found | Tanmatra" };
+  return { title: `${dish.name} Guide | Tanmatra` };
+}
 
-export default function PlaceholderPage() {
+export default async function MealGuidePage({ params }: { params: Promise<{ dishSlug: string }> }) {
+  const resolvedParams = await params;
+  const { dishes } = await fetchMenu();
+  const dish = findDish(resolvedParams.dishSlug, dishes);
+  if (!dish) notFound();
+
   return (
-    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
-      <div className="text-center">
-        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
-          Global Layout
+    <div className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
+      <div className="sticky top-0 z-20 bg-surface-canvas/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line flex items-center justify-between">
+        <div>
+          <h1 className="font-headline-md text-headline-md text-ink-primary">Meal Guide</h1>
+          <p className="text-sm text-ink-secondary">Nutrition insights & pairing</p>
         </div>
-        <h1 className="font-headline-md text-2xl mb-2">/meal-guides/[dishSlug]</h1>
-        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+        <Link href={`/dish/${dish.slug}`} className="px-4 py-2 rounded-full bg-surface-raised border border-line text-xs font-semibold text-ink-primary hover:bg-surface-raised/80 transition-colors">
+          View Dish
+        </Link>
+      </div>
+
+      <div className="px-gutter pt-6 flex flex-col gap-8">
+        {/* Dish Summary */}
+        <div className="flex gap-4 items-center">
+          <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-surface flex-shrink-0 border border-line">
+            <SafeImage src={dish.image ?? ""} alt={dish.name} aspectRatio="1/1" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h2 className="font-bold text-lg text-ink-primary mb-1">{dish.name}</h2>
+            <div className="flex gap-2">
+              <span className="font-mono text-xs text-ink-secondary">{dish.macros?.calories ?? 0} kcal</span>
+              <span className="text-ink-muted text-xs">•</span>
+              <span className="font-mono text-xs text-ink-secondary">{dish.macros?.protein ?? 0}g P</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Clinical Breakdown */}
+        <div>
+          <h3 className="font-headline-md text-xl text-ink-primary mb-4">Clinical Breakdown</h3>
+          <div className="grid gap-3">
+            <div className="rounded-2xl border border-line bg-surface p-4">
+              <h4 className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-1">Blood Sugar Impact</h4>
+              <p className="text-sm text-ink-secondary leading-relaxed">
+                Formulated with {dish.macros?.fiber ?? 0}g of dietary fiber to blunt insulin spikes. Best consumed during peak metabolic windows (12 PM - 3 PM).
+              </p>
+            </div>
+            <div className="rounded-2xl border border-line bg-surface p-4">
+              <h4 className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-1">Satiety Index</h4>
+              <p className="text-sm text-ink-secondary leading-relaxed">
+                High protein density ({dish.macros?.protein ?? 0}g) ensures prolonged satiety without gastric distress.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Pairing Suggestions */}
+        <div>
+          <h3 className="font-headline-md text-xl text-ink-primary mb-4">Optimal Pairing</h3>
+          <p className="text-sm text-ink-secondary leading-relaxed bg-surface-raised p-4 rounded-2xl border border-line">
+            Pair with a hydration source or a light probiotic side to enhance nutrient absorption. Avoid combining with refined carbohydrates.
+          </p>
+        </div>
       </div>
     </div>
   );
