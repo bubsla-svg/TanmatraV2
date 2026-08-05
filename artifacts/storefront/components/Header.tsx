@@ -50,42 +50,26 @@ export function Header() {
           endContent={
             <FocusChromeGate>
             <nav aria-label="Primary" className="flex items-center gap-2">
-              {/* EXACTLY ONE ServiceabilityBar may exist per page, and this is
-                  it. Its verdict/pincode state is per-instance — the component
-                  reads localStorage once at mount and never subscribes to
-                  `storage` — so a second copy desyncs permanently: check a
-                  pincode in one and the other still reads "Select your
-                  location" for the rest of the session. app/page.tsx used to
-                  render a second one (placement="hero", `hidden sm:block`), so
-                  both showed from sm up; that copy is gone. Deliberately NOT
-                  breakpoint-gated — being the only instance, it has to render
-                  at every width. min-w-0 lets it shrink (its label truncates)
-                  instead of shoving ⌘K off a 360px bar: Astryx's TopNav
-                  endContent slot is flex-shrink:0, so the cap has to come from
-                  the widget itself.
-
-                  DeliveryAddressBar WRAPS that single instance rather than
-                  adding a second: signed out, or signed in with nothing saved,
-                  it renders exactly the ServiceabilityBar that used to sit
-                  here. Signed in with an address, it swaps in the ambient
-                  "Delivering to: …" switcher instead. Either way the count of
-                  mounted ServiceabilityBars stays 0-or-1, which is what the
-                  invariant above actually requires. */}
               <div className="min-w-0">
                 <DeliveryAddressBar />
               </div>
-              <CommandMenu />
-              <ThemeToggle />
-              <div className="hidden items-center gap-1 md:flex">
-                {PRIMARY_NAV.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
+              
+              <div className="hidden md:flex items-center gap-2 border-l border-line pl-3 ml-1">
+                <div className="flex items-center gap-1.5 rounded-full border border-sage-strong/20 bg-sage-soft/30 px-2 py-1 shadow-sm">
+                  <svg className="w-3.5 h-3.5 text-sage-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-sage-text">RD-Reviewed</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <CommandMenu />
+                <Link href="/account" className="flex items-center justify-center w-8 h-8 rounded-full border border-line bg-surface hover:bg-surface-raised transition-colors overflow-hidden">
+                  <svg className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </Link>
               </div>
             </nav>
             </FocusChromeGate>
