@@ -66,7 +66,7 @@ export const SubscriptionDiscoveryPage: React.FC<SubscriptionDiscoveryPageProps>
                 onClick={() => setSelectedMealtime(slot)}
                 className={`flex-1 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider border transition-all duration-200 min-h-[44px] ${
                   selectedMealtime === slot
-                    ? "bg-[#D4AF37] text-slate-950 border-[#D4AF37]"
+                    ? "bg-amber-500 border-amber-500 text-slate-950"
                     : "bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700"
                 }`}
               >
@@ -80,7 +80,7 @@ export const SubscriptionDiscoveryPage: React.FC<SubscriptionDiscoveryPageProps>
       {/* Visually Dominant Tanmatra Recommendation Card */}
       <div className="max-w-4xl mx-auto mb-16">
         <div className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30 border-2 border-amber-500/40 p-8 md:p-10 rounded-3xl shadow-2xl overflow-hidden">
-          <div className="absolute top-0 right-0 px-6 py-2 bg-[#D4AF37] text-slate-950 font-extrabold text-xs tracking-wider uppercase rounded-bl-2xl">
+          <div className="absolute top-0 right-0 px-6 py-2 bg-amber-500 text-slate-950 font-extrabold text-xs tracking-wider uppercase rounded-bl-2xl">
             Tanmatra Top Recommendation
           </div>
 
