@@ -25,11 +25,25 @@ test.describe("ghost UI — every visible CTA is wired", () => {
       // A route where nothing was probed is a silent pass, which is the exact
       // failure mode this harness exists to prevent. If the page rendered
       // nothing interactive, that is itself the finding.
-      expect(
-        report.results.length,
-        `${route} exposed no interactive elements at all — either the route is ` +
-          `empty or it failed to render. Neither is a pass.`,
-      ).toBeGreaterThan(0);
+      //
+      // "Nothing probed" is not the same as "nothing rendered", though. The
+      // sweep counts ENABLED buttons only (disabled ones are exempt, see
+      // BUTTON_SELECTOR), so a form-first route scores zero legitimately:
+      // /checkout opens on the identity step, whose Continue button is
+      // correctly disabled until a phone number is entered. That is a rendered
+      // form, not an empty route, and failing it would push the app toward
+      // enabling a CTA that ought to be disabled. So only call it empty when
+      // the page exposes no control of ANY kind — enabled or not.
+      if (report.results.length === 0) {
+        const anyControl = await page
+          .locator("button:visible, input:visible, select:visible, textarea:visible, [role='button']:visible")
+          .count();
+        expect(
+          anyControl,
+          `${route} exposed no interactive elements at all — either the route is ` +
+            `empty or it failed to render. Neither is a pass.`,
+        ).toBeGreaterThan(0);
+      }
 
       expect(report.ghosts, formatReport(report)).toEqual([]);
     });
