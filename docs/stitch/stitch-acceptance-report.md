@@ -1,5 +1,9 @@
 # Phase 13A — Stitch Design Fidelity, Route Contract, and Interaction Acceptance Audit Report
 
+> **RETRACTED — see [`PHASE-13-RETRACTION.md`](./PHASE-13-RETRACTION.md).**
+> This report's automated-gate claims (74/74 route states, 0 raw color literals)
+> are contradicted by a later independent audit and by current CI on `main`.
+
 **Document Version:** 1.1.0-final  
 **Project:** Tanmatra — Premium Clinical Metabolic OS  
 **Stitch Project ID:** `12062470764535558612`  

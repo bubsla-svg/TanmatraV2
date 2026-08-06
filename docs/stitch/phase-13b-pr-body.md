@@ -1,3 +1,8 @@
+> **RETRACTED — see [`PHASE-13-RETRACTION.md`](./PHASE-13-RETRACTION.md).**
+> The quality-gate metrics below (74/74 reachable, 0 raw color literals) do not
+> hold against current `main`. Kept for historical record of what PR #527 claimed
+> at merge time.
+
 ## Summary of Changes
 
 This Pull Request provides the complete, production-hardened implementation and verification suite for the **74 explicit Stitch screen and state prompt outputs** across **42 customer-facing routes and overlay systems** for Tanmatra (Phases 4 through 13).

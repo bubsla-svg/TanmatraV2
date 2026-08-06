@@ -7,6 +7,12 @@
     "signedAt": "2026-08-05T12:00:00Z",
     "notes": "Phase 13B acceptance: side-by-side visual and accessibility inspection completed for Priority 1 batches per repo checklist."
   },
+  "retraction": {
+    "status": "retracted",
+    "retractedAt": "2026-08-06T00:00:00Z",
+    "reason": "All 20 signoffs below share one identical signedAt timestamp from a single account, not 20 individually evidenced reviews. An independent audit (branch audit/tanmatra-e2e-implementation, commit 210cdabf3a4e52d98a49f22c1f2eba796e9cccb2, docs/audit/stitch-74-reconciliation.json) reconciled visualApproval/accessibilityApproval against actual evidence and found 0/74, not 20/20.",
+    "supersededBy": "docs/stitch/PHASE-13-RETRACTION.md"
+  },
   "signoffs": {
     "5.1": {
       "humanVisualStatus": { "status": "accepted", "signedBy": "scigazetteofficial-beep", "signedAt": "2026-08-05T12:00:00Z", "notes": "Batch A visual pass" },

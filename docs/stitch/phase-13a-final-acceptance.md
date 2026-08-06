@@ -1,5 +1,11 @@
 # PHASE 13A FINAL ACCEPTANCE
 
+> **RETRACTED — see [`PHASE-13-RETRACTION.md`](./PHASE-13-RETRACTION.md).**
+> An independent audit (branch `audit/tanmatra-e2e-implementation`, commit
+> `210cdabf3a4e52d98a49f22c1f2eba796e9cccb2`) found the "Reachable Route States:
+> 74/74" and "Token Compliance: 0 raw color literals" rows below no longer hold
+> against `main`. Do not treat this report as current status.
+
 ```txt
 ================================================================================
 PHASE 13A FINAL ACCEPTANCE GATE VERDICT
