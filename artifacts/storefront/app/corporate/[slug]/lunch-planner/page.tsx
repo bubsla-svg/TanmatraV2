@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
+import { LunchPlanner } from "@/components/corporate/LunchPlanner";
 
 export const metadata: Metadata = {
-  title: "LUNCH-PLANNER | Tanmatra",
+  title: "Lunch planner",
+  robots: { index: false },
 };
 
-export default function PlaceholderPage() {
+/** corporate/[slug]/lunch-planner (route-parity Wave E, admin). Team diet profile
+ *  → generated weekly plan → schedule. Admin-gated inside the island; noindex. */
+export default async function LunchPlannerPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   return (
-    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
-      <div className="text-center">
-        <div className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-4">
-          B2B Layout
-        </div>
-        <h1 className="font-headline-md text-2xl mb-2">/corporate/[slug]/lunch-planner</h1>
-        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
-      </div>
-    </div>
+    <section className="mx-auto max-w-xl px-4 py-10">
+      <LunchPlanner slug={slug} />
+    </section>
   );
 }
