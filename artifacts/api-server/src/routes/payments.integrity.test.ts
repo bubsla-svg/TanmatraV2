@@ -855,3 +855,44 @@ test("charge-mandate bills the subscription's pricePerDeliveryPaise, ignoring a 
     "the response must echo the server-derived amount, not the tampered client value",
   );
 });
+
+test("charge-mandate is rejected for kitchen role", async () => {
+  // Seed kitchen user
+  const kitchenUserId = randomUUID();
+  await db.insert(usersTable).values({
+    id: kitchenUserId,
+    email: `kitchen-${kitchenUserId}@example.test`,
+    firstName: "Kitchen",
+    lastName: "Tester",
+  });
+  await db.insert(adminRolesTable).values({
+    userId: kitchenUserId,
+    role: "kitchen",
+  });
+  CREATED_USER_IDS.push(kitchenUserId);
+  
+  // Create a subscription to try to charge
+  const { subscriptionId, scheduledChargeDate } = await seedChargeableSubscription(1000);
+  
+  // Try to charge as kitchen user
+  let res: { status: number; json: any };
+  try {
+    authedUserId = kitchenUserId;
+    const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        subscriptionId,
+        amountPaise: 1000,
+        scheduledChargeDate: scheduledChargeDate.toISOString(),
+      }),
+    });
+    res = { status: r.status, json: await r.json() };
+  } finally {
+    authedUserId = null;
+  }
+
+  assert.equal(res.status, 403);
+  assert.equal(res.json.error, "finance scope required");
+});
+

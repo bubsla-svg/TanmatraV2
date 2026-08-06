@@ -109,6 +109,11 @@ router.post("/payment-attempts/:id/fail", async (req: Request, res: Response) =>
   if (!attempts.length) { res.status(404).json({ error: "not found" }); return; }
 
   const attempt = attempts[0];
+  if (attempt.status === "succeeded") {
+    res.status(409).json({ error: "already succeeded", code: "ORDER_ALREADY_CONFIRMED" });
+    return;
+  }
+
   await db.update(paymentAttemptsTable).set({ status: "failed" }).where(eq(paymentAttemptsTable.id, attemptId));
   
   // Release reservation by expiring the quote

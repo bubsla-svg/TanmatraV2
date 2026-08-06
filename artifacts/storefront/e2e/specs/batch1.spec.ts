@@ -205,4 +205,124 @@ test.describe("Batch 1: Checkout Integrity", () => {
     // Should transition to payment_failed view
     await expect(page.locator("text=Payment Failed")).toBeVisible();
   });
+
+  test("14.7: Refresh in unresolved state restores unresolved state", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      window.localStorage.setItem("storefront:cart:v1", JSON.stringify({
+        lines: [
+          {
+            dishId: 1,
+            kind: "dish",
+            slug: "keto-cleanse",
+            name: "Keto-Cleanse Bowl",
+            pricePaise: 145000,
+            qty: 1
+          }
+        ]
+      }));
+    });
+
+    // Simulate initial timeout / conflict -> goes to unresolved
+    await page.route("**/api/payment-attempts", async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "PAYMENT_ATTEMPT_ALREADY_EXISTS" })
+      });
+    });
+
+    // Mock the lookup on reload to still say processing
+    await page.route("**/api/payment-attempts/by-idempotency-key/*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "pa_123",
+          status: "processing"
+        })
+      });
+    });
+
+    await page.goto("/checkout?mode=alacarte");
+    const payBtn = page.locator("button:has-text('Pay')");
+    await expect(payBtn).toBeEnabled();
+    await payBtn.click();
+
+    // Verify unresolved state
+    await expect(page.locator("text=Payment Processing Unresolved")).toBeVisible();
+
+    // Reload page
+    await page.reload();
+
+    // Verify unresolved state is restored
+    await expect(page.locator("text=Payment Processing Unresolved")).toBeVisible();
+    await expect(page.locator("text=Do not pay again.")).toBeVisible();
+  });
+
+  test("14.7: Refresh in unresolved state reuses idempotency key", async ({ page }) => {
+    const TEST_KEY = "test-idempotency-key-reuse-123";
+    
+    await page.goto("/");
+    await page.evaluate(({ key }) => {
+      window.localStorage.setItem("storefront:cart:v1", JSON.stringify({
+        lines: [
+          {
+            dishId: 1,
+            kind: "dish",
+            slug: "keto-cleanse",
+            name: "Keto-Cleanse Bowl",
+            pricePaise: 145000,
+            qty: 1
+          }
+        ]
+      }));
+      window.sessionStorage.setItem("checkout_idempotency_key", key);
+    }, { key: TEST_KEY });
+
+    // Simulate initial timeout / conflict -> goes to unresolved
+    await page.route("**/api/payment-attempts", async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "PAYMENT_ATTEMPT_ALREADY_EXISTS" })
+      });
+    });
+
+    // Track requested keys
+    const requestedKeys: string[] = [];
+    await page.route("**/api/payment-attempts/by-idempotency-key/*", async (route) => {
+      const url = route.request().url();
+      const key = url.split("/").pop();
+      if (key) requestedKeys.push(key);
+      
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "pa_123",
+          status: "processing"
+        })
+      });
+    });
+
+    await page.goto("/checkout?mode=alacarte");
+    const payBtn = page.locator("button:has-text('Pay')");
+    await expect(payBtn).toBeEnabled();
+    await payBtn.click();
+
+    // Verify unresolved state
+    await expect(page.locator("text=Payment Processing Unresolved")).toBeVisible();
+
+    // Reload page
+    await page.reload();
+
+    // Verify unresolved state is restored
+    await expect(page.locator("text=Payment Processing Unresolved")).toBeVisible();
+    
+    // Verify the key was reused
+    expect(requestedKeys).toContain(TEST_KEY);
+    // It should have been called at least once on reload, and maybe on initial click if it checks first (but it doesn't)
+    expect(requestedKeys.length).toBeGreaterThan(0);
+  });
 });

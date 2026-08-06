@@ -445,8 +445,7 @@ test("Payment Integrity and Idempotency", async (t) => {
     const testUserId = `user_fail_${crypto.randomUUID()}`;
     await db.insert(usersTable).values({
       id: testUserId,
-      email: `${testUserId}@example.com`,
-      role: "user"
+      email: `${testUserId}@example.com`
     }).onConflictDoNothing();
 
     const quoteId = crypto.randomUUID();

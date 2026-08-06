@@ -71,13 +71,64 @@ export default function CheckoutClient() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    // Generate initial quote
+    // Generate initial quote or restore state
     async function initQuote() {
       const cart = loadCart();
       if (cart.lines.length === 0) {
         // empty cart logic here
         return;
       }
+
+      // Try to restore from sessionStorage
+      if (typeof window !== "undefined") {
+        const storedQuoteStr = sessionStorage.getItem("checkout_quote");
+        const storedKey = sessionStorage.getItem("checkout_idempotency_key");
+
+        if (storedQuoteStr && storedKey) {
+          try {
+            const storedQuote: QuoteSnapshot = JSON.parse(storedQuoteStr);
+            
+            // Basic cart match check
+            const cartItems = cart.lines.map((i: CartLine) => ({ id: i.dishId, qty: i.qty }));
+            const quoteItems = storedQuote.items.map(i => ({ id: i.id, qty: i.qty }));
+            cartItems.sort((a, b) => a.id - b.id);
+            quoteItems.sort((a, b) => a.id - b.id);
+            
+            const matches = cartItems.length === quoteItems.length &&
+              cartItems.every((item, idx) => {
+                const qItem = quoteItems[idx];
+                return qItem && item.id === qItem.id && item.qty === qItem.qty;
+              });
+
+            if (matches) {
+              // Check backend status
+              const res = await fetch(`/api/payment-attempts/by-idempotency-key/${storedKey}`);
+              if (res.ok) {
+                const attempt: PaymentAttempt = await res.json();
+                if (attempt.status === "succeeded" && attempt.orderId) {
+                  setMachine({ state: "payment_succeeded", quote: storedQuote, orderId: attempt.orderId });
+                  return;
+                } else if (attempt.status === "processing") {
+                  setMachine({ state: "payment_unresolved", quote: storedQuote });
+                  return;
+                } else if (attempt.status === "failed") {
+                  setMachine({ state: "payment_failed", quote: storedQuote, error: "Payment failed" });
+                  return;
+                }
+              }
+              // If no attempt found or error, but quote is valid, use it
+              if (new Date(storedQuote.expiresAt).getTime() > Date.now()) {
+                setMachine({ state: "quote_active", quote: storedQuote });
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Failed to restore checkout state", e);
+          }
+        }
+      }
+
+      // Fallback: Create new quote
       try {
         const res = await fetch("/api/quotes", {
           method: "POST",
@@ -95,6 +146,13 @@ export default function CheckoutClient() {
     }
     initQuote();
   }, []);
+
+  // Persist quote to sessionStorage
+  useEffect(() => {
+    if (machine && "quote" in machine && machine.quote) {
+      sessionStorage.setItem("checkout_quote", JSON.stringify(machine.quote));
+    }
+  }, [machine]);
 
   useEffect(() => {
     if (machine.state !== "quote_active") {
