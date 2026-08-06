@@ -3,6 +3,7 @@ import { TopNav } from "@astryxdesign/core/TopNav";
 import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { DeliveryAddressBar } from "@/components/onboarding/DeliveryAddressBar";
 import { FocusChromeGate } from "@/components/FocusLayout";
 
 /**
@@ -50,7 +51,7 @@ export function Header() {
             <FocusChromeGate>
             <nav aria-label="Primary" className="flex items-center gap-2">
               <div className="min-w-0">
-                {/* DeliveryAddressBar placeholder */}
+                <DeliveryAddressBar />
               </div>
               <div className="hidden md:flex items-center gap-2 border-l border-line pl-3 ml-1">
                 <div className="flex items-center gap-1.5 rounded-full border border-sage-strong/20 bg-sage-soft/30 px-2 py-1 shadow-sm">

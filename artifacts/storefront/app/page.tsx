@@ -85,6 +85,38 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* No ServiceabilityBar here. The Header's is the only instance allowed
+            to exist — its verdict/pincode is per-instance state read from
+            localStorage once at mount with no `storage` listener, so a second
+            copy desynced permanently from sm up: check a pincode in one and
+            the other kept saying "Select your location" all session. */}
+        <Section02QualificationChips />
+
+        <Section04ProtocolsGrid />
+
+        <Section04bMarketplace />
+
+        {/* Pillar 9: On-page assessment stepper — main door for the hero's
+            "60-second assessment" CTA, which only dispatches
+            open_tanmatra_assessment and relies on this mounting to listen. */}
+        <Section09AssessmentSection />
+
+        {/* Recipes Bridge: DIY vs Done-for-You */}
+        <Section09bRecipesBridge />
+
+        {/* Proofs: Macros, RD Panel & Certified Kitchen */}
+        <div id="proofs" className="flex flex-col gap-10 sm:gap-16">
+          <Section05ProofMacros />
+          <Section06ProofRdPanel />
+          <Section07ProofKitchen />
+        </div>
+
+        {/* Supporting Pillars: B2B Enterprise & Telehealth */}
+        <Section03B2BEnterprise />
+        <Section04TelehealthTracking />
+        <Section05LogisticsMoat />
+        <Section03AgitationPanel />
+
         {/* Compact AI recommendation card */}
         <section className="px-gutter pb-8">
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 relative overflow-hidden">
@@ -98,6 +130,9 @@ export default async function HomePage() {
             <button className="px-6 py-2.5 rounded-full bg-primary text-ink-on-gold font-label-caps text-label-caps hover:opacity-90 active:scale-[0.98] transition-all">Add to Today</button>
           </div>
         </section>
+
+        {/* FAQ Accordion */}
+        <Section10FaqAccordion />
       </div>
     </div>
   );

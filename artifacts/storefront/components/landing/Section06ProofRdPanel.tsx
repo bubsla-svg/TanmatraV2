@@ -35,7 +35,7 @@ export function Section06ProofRdPanel() {
                 Book Free 15-min RD Consultation &rarr;
               </Link>
               <Link
-                href="/rd-partners/apply"
+                href="/rd-partners#rd-form"
                 className="inline-flex items-center text-xs font-semibold text-ink transition-colors hover:text-ink-muted"
               >
                 For Dietitians: Partner Practice Network
