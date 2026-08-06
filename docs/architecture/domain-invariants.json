@@ -1,0 +1,167 @@
+{
+  "$schema": "internal://p0/domain-invariants",
+  "generatedFrom": {
+    "sha": "3aea38dcc0cdd9263c5d839fbd959c4383f0f40e",
+    "date": "2026-08-06",
+    "method": "Each of the 20 invariants asserted in docs/stitch/phase-13a-final-acceptance.md §3 was re-checked against the tree: does an implementation exist, and does an executable test exercise it? `automated` is true ONLY when a test file runs assertions against the shipped code path.",
+    "suiteResult": "531 pass / 0 fail (pnpm --filter @workspace/storefront run test)"
+  },
+  "summary": {
+    "declared": 20,
+    "claimedAutomatedByPhase13A": 20,
+    "actuallyImplemented": 17,
+    "actuallyAutomated": 9,
+    "automatedButSelfContained": 5,
+    "notLocatable": 3
+  },
+  "gradingKey": {
+    "automated": "An executable test imports and exercises the shipped implementation.",
+    "self-contained": "A test asserts the RULE but re-declares the logic inside the test file; the shipped code path is never imported, so the test cannot fail if production drifts.",
+    "implemented-untested": "The behaviour exists in source but no test covers it.",
+    "not-locatable": "The enforcement mechanism named in Phase 13A §3 does not resolve to a file in this repository."
+  },
+  "invariants": [
+    {
+      "id": 1,
+      "name": "Hard Allergen Survival",
+      "claimedLocation": "@workspace/preferences-match",
+      "status": "automated",
+      "evidence": "lib/preferences-match/src/evaluate.allergensReviewed.test.ts, evaluate.pcos.test.ts — exercise the shipped evaluator.",
+      "note": "Covers evaluation. Survival across the full generate/swap/shuffle/reset cycle asserted in Phase 13A is not separately proven."
+    },
+    {
+      "id": 2,
+      "name": "Keep Prevents Shuffle",
+      "claimedLocation": "PlanBuilder.tsx",
+      "status": "implemented-untested",
+      "evidence": "artifacts/storefront/components/plans/PlanBuilder.tsx exists. No PlanBuilder test file exists anywhere in the repo."
+    },
+    {
+      "id": 3,
+      "name": "Manual Swap Clears Undo",
+      "claimedLocation": "PlanBuilder.tsx",
+      "status": "implemented-untested",
+      "evidence": "Same file as invariant 2; same absence of a test."
+    },
+    {
+      "id": 4,
+      "name": "Rule Change Quote Invalidation",
+      "claimedLocation": "lib/plans.ts",
+      "status": "implemented-untested",
+      "evidence": "artifacts/storefront/lib/plans.ts exists and is imported by lib/pricingInvariants.test.ts for pricing assertions only. There is no lib/plans.test.ts and no assertion about quote-ID reset."
+    },
+    {
+      "id": 5,
+      "name": "Authoritative Checkout",
+      "claimedLocation": "AlacarteCheckout.tsx",
+      "status": "automated",
+      "evidence": "lib/moneyPath.alacarte.test.ts — \"happy path: create → rzp order → modal → verify, ids threaded, server total returned\" and \"server rejection at create (e.g. 422 unserviceable) propagates before any payment step\"."
+    },
+    {
+      "id": 6,
+      "name": "Server-Owned Quote TTL",
+      "claimedLocation": "AlacarteCheckout.tsx",
+      "status": "implemented-untested",
+      "evidence": "No test asserts `expiresAt` handling or the QuoteExpiredRecovery transition. `components/checkout/AlacarteCheckout.tsx` has no test file."
+    },
+    {
+      "id": 7,
+      "name": "Server Idempotency",
+      "claimedLocation": "domainInvariants.test.ts",
+      "status": "not-locatable",
+      "evidence": "lib/domainInvariants.test.ts contains five tests (invariants 14, 18, 19, 20 and the privacy allowlist). It contains no idempotency test. The API-side key lives in lib/db/src/schema/idempotencyKeys.ts; no storefront-side assertion exists."
+    },
+    {
+      "id": 8,
+      "name": "Sponsored Zero-Charge",
+      "claimedLocation": "app/corporate/invite",
+      "status": "implemented-untested",
+      "evidence": "app/corporate/invite/[token]/page.tsx exists. lib/corporateApi.test.ts covers the API client, not the zero-charge bypass."
+    },
+    {
+      "id": 9,
+      "name": "Entitlement Lifecycle",
+      "claimedLocation": "Entitlement Service",
+      "status": "not-locatable",
+      "evidence": "\"Entitlement Service\" is not a path in this repository. lib/vouchersApi.test.ts covers the voucher client surface, not reserve/consume/release lifecycle."
+    },
+    {
+      "id": 10,
+      "name": "Zero Silent Swaps",
+      "claimedLocation": "app/account/orders",
+      "status": "implemented-untested",
+      "evidence": "app/account/orders/page.tsx exists; lib/ordersApi.test.ts and lib/orderStatus.test.ts cover fetch/format, not substitution approval."
+    },
+    {
+      "id": 11,
+      "name": "Wearables Never Auto-Mutate",
+      "claimedLocation": "app/account/connections",
+      "status": "implemented-untested",
+      "evidence": "app/account/connections/page.tsx exists. No connections test file. See also route-contract.md — the /account/wearables → /account/connections redirect this invariant's canonicalisation depends on is MISSING from next.config.ts."
+    },
+    {
+      "id": 12,
+      "name": "Order-Confirmed Subscriptions",
+      "claimedLocation": "Subscription Service",
+      "status": "not-locatable",
+      "evidence": "\"Subscription Service\" is not a path in this repository. lib/subscriptionsApi.test.ts covers the client surface only."
+    },
+    {
+      "id": 13,
+      "name": "Return-Route Preservation",
+      "claimedLocation": "PhoneAuth.tsx / app/login",
+      "status": "implemented-untested",
+      "evidence": "app/login/page.tsx:18 — `const safeNext = next && /^\\/(?!\\/)/.test(next) ? next : \"/account\";` correctly rejects protocol-relative and absolute external URLs. Neither lib/phoneAuth.test.ts nor lib/otpFlow.test.ts asserts it, so the guard is unprotected against regression."
+    },
+    {
+      "id": 14,
+      "name": "Financial Disclosure",
+      "claimedLocation": "domainInvariants.test.ts",
+      "status": "self-contained",
+      "evidence": "lib/domainInvariants.test.ts:10 declares its own `SubscriptionAction` interface and credit maths inside the test body. It imports only PLAN_CATALOG (data). No shipped pause/skip/cancel code path is exercised."
+    },
+    {
+      "id": 15,
+      "name": "Client Authoring Ban",
+      "claimedLocation": "@workspace/subscription-rules",
+      "status": "automated",
+      "evidence": "lib/planCheckout.test.ts — \"buildSubscriptionInput: members threaded, address flattened, NO price authored\". Reinforced by lib/pricingInvariants.test.ts, which scans the tree for rupee literals the pricing spine cannot produce (with a 4-entry, shrink-only DEBT register)."
+    },
+    {
+      "id": 16,
+      "name": "Health Data Privacy",
+      "claimedLocation": "domainInvariants.test.ts",
+      "status": "self-contained",
+      "evidence": "lib/domainInvariants.test.ts:184 defines ANALYTICS_KEY_ALLOWLIST and sanitizeAnalyticsEvent() inside the test. Grep for either symbol across app/, components/ and lib/ returns ONLY this test file — no production analytics sanitizer exists to enforce. See privacy-analytics-contract.md."
+    },
+    {
+      "id": 17,
+      "name": "Quote Supersession",
+      "claimedLocation": "Checkout Service",
+      "status": "not-locatable",
+      "evidence": "\"Checkout Service\" is not a path in this repository. lib/addressServiceability.test.ts and lib/serviceabilityApi.test.ts cover serviceability, not quote invalidation on address change."
+    },
+    {
+      "id": 18,
+      "name": "Explicit Action Rationale",
+      "claimedLocation": "domainInvariants.test.ts",
+      "status": "self-contained",
+      "evidence": "lib/domainInvariants.test.ts:44 — rationale objects are fixtures declared in the test; no shipped disabled-CTA component is rendered or imported."
+    },
+    {
+      "id": 19,
+      "name": "Zero Config at Checkout",
+      "claimedLocation": "domainInvariants.test.ts",
+      "status": "automated",
+      "evidence": "Independently and genuinely covered by lib/checkout.test.ts — \"new user sees exactly 3 screens: identity → address → pay\", \"coupon and COD are evicted decisions — they do not exist in checkout\", \"the forbidden-element set names the surfaces the UI must never render\" — which import the shipped checkout step model. The domainInvariants.test.ts copy (line 106) is self-contained and redundant."
+    },
+    {
+      "id": 20,
+      "name": "Validated Restoration",
+      "claimedLocation": "domainInvariants.test.ts",
+      "status": "self-contained",
+      "evidence": "lib/domainInvariants.test.ts:144 declares its own inventory fixture and restoration predicate. `isAlaCarteEnabled` is imported as a type/data helper only; no server revalidation path is exercised."
+    }
+  ],
+  "correctionToPhase13A": "docs/stitch/phase-13a-final-acceptance.md §3 marks all 20 '✅ Automated'. On this SHA, 9 are automated against shipped code, 5 are self-contained restatements inside the test file, 3 name services that do not resolve to any path in this repository, and 3 are implemented but wholly untested. The suite passes (531/531) because a self-contained test asserts its own fixtures — passing it proves the rule was written down, not that the product obeys it."
+}

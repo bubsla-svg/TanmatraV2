@@ -1,0 +1,160 @@
+{
+  "$schema": "internal://p0/baseline",
+  "verdict": "NO-GO",
+  "verdictRule": "P0 Go/No-Go: 'Layout ownership remains imperative or ambiguous' is an explicit NO-GO trigger. It is true on this SHA — see layout-contracts.md.",
+  "baseline": {
+    "sha": "3aea38dcc0cdd9263c5d839fbd959c4383f0f40e",
+    "shaShort": "3aea38dc",
+    "subject": "Merge pull request #528 from scigazetteofficial-beep/claude/repo-activity-review-fyo9eq",
+    "committedAt": "2026-08-06T20:58:53+05:30",
+    "branch": "main",
+    "capturedOn": "2026-08-06",
+    "capturedBy": "P0 §24 deliverable generation, branch claude/repo-activity-review-fyo9eq"
+  },
+  "toolchain": {
+    "node": { "pinnedInCI": "22", "observedLocally": "v22.22.2", "consistent": true },
+    "packageManager": {
+      "pinned": "pnpm@9.15.5",
+      "pinnedIn": "package.json#packageManager",
+      "npmAndYarnRejectedBy": "root preinstall script"
+    },
+    "workspaceGlobs": ["artifacts/*", "lib/*", "lib/integrations/*", "scripts"],
+    "reactPinned": "19.1.0",
+    "minimumReleaseAge": 1440
+  },
+  "gates": {
+    "note": "Every result below was produced by running the command on this SHA, not read from a prior report.",
+    "results": [
+      {
+        "gate": "typecheck",
+        "command": "pnpm run typecheck",
+        "status": "PASS",
+        "detail": "All workspace projects Done — api-server, storefront, tanmatra, tanmatra-mobile, agents, scripts, lib project refs."
+      },
+      {
+        "gate": "storefront unit tests",
+        "command": "pnpm --filter @workspace/storefront run test",
+        "status": "PASS",
+        "detail": "531 pass, 0 fail, 0 skipped, 0 todo (~9.3s), 80 test files under lib/.",
+        "caveat": "Pass count is not invariant coverage — see domain-invariants.json: 5 of the 20 invariants are asserted against fixtures declared inside the test file rather than against shipped code."
+      },
+      {
+        "gate": "lint:tokens",
+        "command": "pnpm --filter @workspace/storefront run lint:tokens",
+        "status": "PASS",
+        "detail": "0 raw colour literals in components/app.",
+        "caveat": "Scans only artifacts/storefront/{components,app}. A raw hex in lib/themes/ is out of reach by design."
+      },
+      {
+        "gate": "lint:filecap",
+        "command": "pnpm --filter @workspace/storefront run lint:filecap",
+        "status": "PASS",
+        "detail": "655 files ≤300 lines (components ≤400); 177 lib/ files free of \"@/\" imports."
+      },
+      {
+        "gate": "lint:component-drift",
+        "command": "pnpm --filter @workspace/storefront run lint:component-drift",
+        "status": "PASS",
+        "detail": "0 destructive-alias / redundant-tabular drift, 0 baselined."
+      },
+      {
+        "gate": "deploy provenance",
+        "command": "curl -s https://tanmatra.food/api/build (reverified 5x, plus /api/build-info and www.tanmatra.food)",
+        "status": "PASS",
+        "detail": "Production now serves sha 3aea38dcc0cdd9263c5d839fbd959c4383f0f40e — matches this baseline exactly. Confirmed against GitHub Actions run 31116040058 (Deploy, storefront-cloud-run job): build, deploy --no-traffic, route-traffic, smoke-test, and assert-sha steps all succeeded at 15:44:xx UTC. Drift observed EARLIER in this same session (250e5f59, 22 commits behind) was live-resolved by this deploy while the deliverables in this set were being generated. See deployment-provenance.md for both states and the full timeline."
+      },
+      {
+        "gate": "layout ownership (P0 §9)",
+        "command": "static inspection of app/layout.tsx + app/**/layout.tsx",
+        "status": "FAIL",
+        "detail": "0 route groups, 1 layout file, shell selection by location.pathname in an inline script. See layout-contracts.md."
+      },
+      {
+        "gate": "route contract (P0 §7)",
+        "command": "static inspection of next.config.ts redirects + app/login/page.tsx",
+        "status": "FAIL",
+        "detail": "/account/wearables → /account/connections redirect absent; auth uses ?next= not the canonical ?step=. See route-contract.md."
+      },
+      {
+        "gate": "single-implementation rule (P0 §11)",
+        "command": "find . -name 'SafeImage*'",
+        "status": "FAIL",
+        "detail": "Two shipped SafeImage implementations: components/ui/SafeImage.tsx and components/primitives/SafeImage.tsx."
+      },
+      {
+        "gate": "legacy quarantine isolation",
+        "command": "grep -rn quarantine app components lib; grep -n quarantine tsconfig.json",
+        "status": "PASS",
+        "detail": "234 quarantine files tracked, 0 imported from live source, excluded at tsconfig.json:44 (\"**/quarantine/**/*\")."
+      },
+      {
+        "gate": "mobile navigation contract",
+        "command": "grep -n href components/MobileBottomNav.tsx",
+        "status": "PASS",
+        "detail": "Exactly 4 tabs: / (Home), /menu, /plans, /account."
+      },
+      {
+        "gate": "viewport / zoom",
+        "command": "read app/layout.tsx viewport export",
+        "status": "PASS",
+        "detail": "width=device-width, initialScale=1, viewportFit=cover. No maximumScale and no userScalable:false — pinch-zoom is not disabled."
+      }
+    ],
+    "totals": { "pass": 8, "fail": 4 }
+  },
+  "surfaceCounts": {
+    "storefrontPageRoutes": 58,
+    "staticRoutes": 44,
+    "dynamicRoutes": 14,
+    "rootLayouts": 1,
+    "nestedLayouts": 0,
+    "routeGroups": 0,
+    "redirectRules": 16,
+    "rewriteRules": 2,
+    "apiRouteHandlers": 2,
+    "apiServerRouters": 64,
+    "storefrontLibModules": 89,
+    "storefrontLibTestFiles": 80,
+    "quarantinedFilesTracked": 234
+  },
+  "selfReportedVsActual": {
+    "note": "/api/build advertises figures that no longer match the tree. Both endpoints are the deploy-truth contract, so the drift is worth naming.",
+    "canonicalRoutes": { "advertised": 42, "actual": 58 },
+    "totalScreens": { "advertised": 74, "actualWiring": "41/74 per docs/audit/WP-P0.2-REPORT.md; the 7-missing/26-unwired remediation landed in PR #528 but is not deployed" }
+  },
+  "deliverables": {
+    "required": 13,
+    "presentBeforeThisChange": 0,
+    "files": [
+      "p0-baseline.json",
+      "application-ownership.md",
+      "route-contract.md",
+      "routes.json",
+      "layout-contracts.md",
+      "layout-assignments.json",
+      "domain-boundaries.md",
+      "domain-invariants.md",
+      "domain-invariants.json",
+      "clinical-scope.md",
+      "privacy-analytics-contract.md",
+      "deployment-provenance.md",
+      "legacy-quarantine.md"
+    ]
+  },
+  "blockingForGo": [
+    "Layout ownership is imperative (P0 §9) — no route groups; app/layout.tsx branches on usePathname()/location.pathname via three unenforced gate components.",
+    "The 10 B2B-classified routes (isB2BRoute in components/B2BLayout.tsx) render with chrome suppressed and NO replacement navigation — the gate's own comment claims a B2B shell that was never built.",
+    "isB2BRoute has no trailing-slash boundary check, so /corporate-wellness incorrectly loses its chrome by prefix collision with /corporate.",
+    "/account/wearables has no redirect to the canonical /account/connections.",
+    "Auth step contract is ?next=, not the canonical ?step=phone|otp|account-conflict.",
+    "Two SafeImage implementations violate the single-implementation rule.",
+    "No production analytics sanitizer exists — invariant 16 is enforced only inside a test file (see privacy-analytics-contract.md); dormant today only because NEXT_PUBLIC_POSTHOG_KEY/HOST are unset in deploy.yml.",
+    "clinical-governance-engine (contraindication engine, packing-station interlock, AE webhooks, WORM audit log) ships 5,143 lines with zero dependents anywhere in the monorepo — see clinical-scope.md."
+  ],
+  "notBlocking": [
+    "All five local quality gates (typecheck, tests, tokens, filecap, component-drift) are green on this SHA.",
+    "Quarantine isolation holds.",
+    "4-tab mobile nav and viewport contract hold.",
+    "Deploy provenance now matches — production serves this exact SHA, reverified 2026-08-06 15:4x UTC (see deployment-provenance.md); it was 22 commits behind when this verification pass started and self-resolved via deploy.yml mid-session."
+  ]
+}

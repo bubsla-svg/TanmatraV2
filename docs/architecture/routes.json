@@ -1,0 +1,492 @@
+{
+  "$schema": "internal://p0/routes",
+  "generatedFrom": {
+    "sha": "3aea38dcc0cdd9263c5d839fbd959c4383f0f40e",
+    "method": "find artifacts/storefront/app -name page.tsx"
+  },
+  "totals": {
+    "pageRoutes": 58,
+    "static": 44,
+    "dynamic": 14,
+    "byFamily": {
+      "account": 9,
+      "b2b": 11,
+      "clinical": 10,
+      "commerce": 16,
+      "content": 10,
+      "identity": 1,
+      "system": 1
+    },
+    "byShell": {
+      "b2b-chrome-suppressed": 10,
+      "focus": 10,
+      "global": 38
+    }
+  },
+  "routes": [
+    {
+      "route": "/",
+      "file": "app/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/account",
+      "file": "app/account/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/addresses",
+      "file": "app/account/addresses/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/appointments",
+      "file": "app/account/appointments/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/account/billing",
+      "file": "app/account/billing/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/connections",
+      "file": "app/account/connections/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/account/favorites",
+      "file": "app/account/favorites/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/history",
+      "file": "app/account/history/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/loyalty",
+      "file": "app/account/loyalty/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/orders",
+      "file": "app/account/orders/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/preferences",
+      "file": "app/account/preferences/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/subscriptions",
+      "file": "app/account/subscriptions/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "account"
+    },
+    {
+      "route": "/account/symptoms",
+      "file": "app/account/symptoms/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/account/wellness",
+      "file": "app/account/wellness/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/care/[condition]",
+      "file": "app/care/[condition]/page.tsx",
+      "dynamic": true,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/challenges",
+      "file": "app/challenges/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/challenges/[slug]",
+      "file": "app/challenges/[slug]/page.tsx",
+      "dynamic": true,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/challenges/tracker",
+      "file": "app/challenges/tracker/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/checkout",
+      "file": "app/checkout/page.tsx",
+      "dynamic": false,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/clinical",
+      "file": "app/clinical/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/coach",
+      "file": "app/coach/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/corporate",
+      "file": "app/corporate/page.tsx",
+      "dynamic": false,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/corporate-wellness",
+      "file": "app/corporate-wellness/page.tsx",
+      "dynamic": false,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/corporate/[slug]",
+      "file": "app/corporate/[slug]/page.tsx",
+      "dynamic": true,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/corporate/[slug]/lunch-planner",
+      "file": "app/corporate/[slug]/lunch-planner/page.tsx",
+      "dynamic": true,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/corporate/invite/[token]",
+      "file": "app/corporate/invite/[token]/page.tsx",
+      "dynamic": true,
+      "shell": "focus",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/custom-build",
+      "file": "app/custom-build/page.tsx",
+      "dynamic": false,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/dish/[slug]",
+      "file": "app/dish/[slug]/page.tsx",
+      "dynamic": true,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/group/[code]",
+      "file": "app/group/[code]/page.tsx",
+      "dynamic": true,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "commerce"
+    },
+    {
+      "route": "/login",
+      "file": "app/login/page.tsx",
+      "dynamic": false,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "identity"
+    },
+    {
+      "route": "/marketplace",
+      "file": "app/marketplace/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "commerce"
+    },
+    {
+      "route": "/marketplace/[slug]",
+      "file": "app/marketplace/[slug]/page.tsx",
+      "dynamic": true,
+      "shell": "focus",
+      "canvas": "light",
+      "family": "commerce"
+    },
+    {
+      "route": "/meal-deals",
+      "file": "app/meal-deals/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "commerce"
+    },
+    {
+      "route": "/meal-guides/[dishSlug]",
+      "file": "app/meal-guides/[dishSlug]/page.tsx",
+      "dynamic": true,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/meal-planner",
+      "file": "app/meal-planner/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "stitch-dark",
+      "family": "content"
+    },
+    {
+      "route": "/meal-recommendations",
+      "file": "app/meal-recommendations/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/menu",
+      "file": "app/menu/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/metabolic",
+      "file": "app/metabolic/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/office-lunch/[id]",
+      "file": "app/office-lunch/[id]/page.tsx",
+      "dynamic": true,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/order/confirmed/[orderId]",
+      "file": "app/order/confirmed/[orderId]/page.tsx",
+      "dynamic": true,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/partners/dietitians",
+      "file": "app/partners/dietitians/page.tsx",
+      "dynamic": false,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/partners/fitness-clubs",
+      "file": "app/partners/fitness-clubs/page.tsx",
+      "dynamic": false,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/partners/gyms",
+      "file": "app/partners/gyms/page.tsx",
+      "dynamic": false,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/performance",
+      "file": "app/performance/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/plan/[planId]",
+      "file": "app/plan/[planId]/page.tsx",
+      "dynamic": true,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/plans",
+      "file": "app/plans/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/premium",
+      "file": "app/premium/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "clinical"
+    },
+    {
+      "route": "/qa",
+      "file": "app/qa/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/quick-setup",
+      "file": "app/quick-setup/page.tsx",
+      "dynamic": false,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/rd",
+      "file": "app/rd/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/rd-partners",
+      "file": "app/rd-partners/page.tsx",
+      "dynamic": false,
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/rd/[slug]",
+      "file": "app/rd/[slug]/page.tsx",
+      "dynamic": true,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/recipes",
+      "file": "app/recipes/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "content"
+    },
+    {
+      "route": "/styleguide",
+      "file": "app/styleguide/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "system"
+    },
+    {
+      "route": "/team",
+      "file": "app/team/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "light",
+      "family": "b2b"
+    },
+    {
+      "route": "/track/[orderId]",
+      "file": "app/track/[orderId]/page.tsx",
+      "dynamic": true,
+      "shell": "global",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/trial",
+      "file": "app/trial/page.tsx",
+      "dynamic": false,
+      "shell": "focus",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    },
+    {
+      "route": "/vouchers",
+      "file": "app/vouchers/page.tsx",
+      "dynamic": false,
+      "shell": "global",
+      "canvas": "stitch-dark",
+      "family": "commerce"
+    }
+  ]
+}
