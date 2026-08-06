@@ -203,7 +203,7 @@ test.describe("Batch 1: Checkout Integrity", () => {
     await recheckBtn.click();
 
     // Should transition to payment_failed view
-    await expect(page.locator("text=Payment Failed")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Payment Failed" })).toBeVisible();
   });
 
   test("14.7: Refresh in unresolved state restores unresolved state", async ({ page }) => {
@@ -324,5 +324,123 @@ test.describe("Batch 1: Checkout Integrity", () => {
     expect(requestedKeys).toContain(TEST_KEY);
     // It should have been called at least once on reload, and maybe on initial click if it checks first (but it doesn't)
     expect(requestedKeys.length).toBeGreaterThan(0);
+  });
+
+  test("14.7: Still-pending recheck remains unresolved", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      window.localStorage.setItem("storefront:cart:v1", JSON.stringify({
+        lines: [
+          {
+            dishId: 1,
+            kind: "dish",
+            slug: "keto-cleanse",
+            name: "Keto-Cleanse Bowl",
+            pricePaise: 145000,
+            qty: 1
+          }
+        ]
+      }));
+    });
+
+    // Simulate initial timeout / conflict -> goes to unresolved
+    await page.route("**/api/payment-attempts", async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "PAYMENT_ATTEMPT_ALREADY_EXISTS" })
+      });
+    });
+
+    // Mock the lookup to still say processing
+    await page.route("**/api/payment-attempts/by-idempotency-key/*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "pa_123",
+          status: "processing"
+        })
+      });
+    });
+
+    await page.goto("/checkout?mode=alacarte");
+    const payBtn = page.locator("button:has-text('Pay')");
+    await expect(payBtn).toBeEnabled();
+    await payBtn.click();
+
+    // Verify unresolved state
+    await expect(page.locator("text=Payment Processing Unresolved")).toBeVisible();
+
+    const recheckBtn = page.locator("button:has-text('Recheck Status')");
+    await expect(recheckBtn).toBeVisible();
+    await recheckBtn.click();
+
+    // Verify it is STILL in unresolved state
+    await expect(page.locator("text=Payment Processing Unresolved")).toBeVisible();
+    await expect(page.locator("text=Do not pay again.")).toBeVisible();
+  });
+
+  test("14.7: Cannot navigate to confirmation page if order does not exist", async ({ page }) => {
+    const response = await page.goto("/order/confirmed/non-existent-order-id-12345");
+    expect(response?.status()).toBe(404);
+    await expect(page.locator("text=find that page")).toBeVisible();
+  });
+
+  test("14.6: Refresh in processing state restores processing state and eventually times out", async ({ page }) => {
+    const attemptCreatedAt = new Date();
+    
+    await page.route("**/api/payment-attempts", async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "pa_146",
+          status: "processing",
+          createdAt: attemptCreatedAt.toISOString()
+        })
+      });
+    });
+
+    await page.route("**/api/payment-attempts/by-idempotency-key/*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "pa_146",
+          status: "processing",
+          createdAt: attemptCreatedAt.toISOString()
+        })
+      });
+    });
+
+    await page.goto("/");
+    await page.evaluate(() => {
+      window.localStorage.setItem("storefront:cart:v1", JSON.stringify({
+        lines: [
+          {
+            dishId: 1,
+            kind: "dish",
+            slug: "keto-cleanse",
+            name: "Keto-Cleanse Bowl",
+            pricePaise: 145000,
+            qty: 1
+          }
+        ]
+      }));
+    });
+
+    await page.goto("/checkout?mode=alacarte");
+    const payBtn = page.locator("button:has-text('Pay')");
+    await expect(payBtn).toBeEnabled();
+    await payBtn.click();
+
+    await page.reload();
+
+    const processingBtn = page.locator("button:has-text('Processing')");
+    await expect(processingBtn).toBeVisible();
+    await expect(processingBtn).toBeDisabled();
+
+    await expect(page.locator("text=Payment Processing Unresolved")).toBeVisible({ timeout: 18000 });
   });
 });

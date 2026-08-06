@@ -15,7 +15,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
-import { commitSubsidyForOrder } from "../lib/corporateSubsidy";
+import { commitSubsidyForOrder, releaseSubsidyForOrder } from "../lib/corporateSubsidy";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 import {
@@ -1007,10 +1007,19 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
       // still-unpaid order so a retry-after-success can't flip a paid order.
       const razorpayOrderId = paymentEntity?.order_id ?? "";
       if (razorpayOrderId) {
-        await db
+        const updated = await db
           .update(ordersTable)
           .set({ status: "failed" })
-          .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")));
+          .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")))
+          .returning({ id: ordersTable.id });
+        
+        if (updated.length > 0) {
+          try {
+            await releaseSubsidyForOrder(updated[0].id);
+          } catch (err) {
+            req.log.error({ err, orderId: updated[0].id }, "webhook: failed to release corporate subsidy for failed payment");
+          }
+        }
       }
       req.log.warn({ razorpayOrderId }, "webhook: payment failed");
     } else if (eventType === "refund.processed" || eventType === "refund.failed") {

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 import { db, quotesTable, paymentAttemptsTable, usersTable, ordersTable, subscriptionsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and, lt, gt } from "drizzle-orm";
 import crypto from "crypto";
 import paymentAttemptsRouter from "./paymentAttempts";
 import quotesRouter from "./quotes";
@@ -10,6 +10,7 @@ import premiumRouter from "./premium";
 import corporateRouter from "./corporate";
 import { premiumMembershipsTable, vouchersTable, creditLedgerTable } from "@workspace/db";
 import { createHmac } from "node:crypto";
+import { getCreditBalancePaise } from "../lib/loyaltyEngine";
 test("Payment Integrity and Idempotency", async (t) => {
   const app = express();
   app.use(express.json());
@@ -288,8 +289,16 @@ test("Payment Integrity and Idempotency", async (t) => {
   });
 
   await t.test("Failed payment -> entitlement reservation released", async () => {
-    // If a payment fails (e.g. timeout), the quote expires and any reserved entitlements should be freed.
-    // Here we simulate the terminal failure causing the quote to expire.
+    // Clean up ledger first
+    await db.delete(creditLedgerTable).where(eq(creditLedgerTable.userId, "test_user_1"));
+    
+    // Seed credits
+    await db.insert(creditLedgerTable).values({
+      userId: "test_user_1",
+      deltaPaise: 5000,
+      reason: "manual_grant"
+    });
+
     const quoteId = crypto.randomUUID();
     await db.insert(quotesTable).values({
       id: quoteId,
@@ -301,6 +310,10 @@ test("Payment Integrity and Idempotency", async (t) => {
       expiresAt: new Date(Date.now() + 10000) // active
     });
 
+    // Check balance before
+    const balBefore = await getCreditBalancePaise("test_user_1");
+    assert.equal(balBefore, 5000);
+
     const idempotencyKey = crypto.randomUUID();
     const res = await fetch(`${baseUrl}/payment-attempts`, {
       method: "POST",
@@ -310,6 +323,21 @@ test("Payment Integrity and Idempotency", async (t) => {
     assert.equal(res.status, 201);
     const data = (await res.json()) as any;
     const attemptId = data.id;
+
+    // Verify reservation in ledger (balance should be reduced by quote total 1000)
+    const balAfterReserve = await getCreditBalancePaise("test_user_1");
+    assert.equal(balAfterReserve, 4000);
+    
+    // Check that we have a reservation entry
+    const reservations = await db.select()
+      .from(creditLedgerTable)
+      .where(and(
+        eq(creditLedgerTable.userId, "test_user_1"),
+        eq(creditLedgerTable.refId, attemptId),
+        lt(creditLedgerTable.deltaPaise, 0)
+      ));
+    assert.equal(reservations.length, 1);
+    assert.equal(reservations[0].deltaPaise, -1000);
     
     // Simulate terminal failure
     const failRes = await fetch(`${baseUrl}/payment-attempts/${attemptId}/fail`, {
@@ -328,6 +356,21 @@ test("Payment Integrity and Idempotency", async (t) => {
     const expiredQuote = await db.select().from(quotesTable).where(eq(quotesTable.id, quoteId));
     assert.equal(expiredQuote.length, 1, "Quote count must be 1");
     assert.equal(expiredQuote[0].status, "expired", "reservation status must be released/expired");
+    
+    // Verify release in ledger (balance should be restored to 5000)
+    const balAfterRelease = await getCreditBalancePaise("test_user_1");
+    assert.equal(balAfterRelease, 5000);
+
+    // Assert exactly one release entry was written
+    const releases = await db.select()
+      .from(creditLedgerTable)
+      .where(and(
+        eq(creditLedgerTable.userId, "test_user_1"),
+        eq(creditLedgerTable.refId, attemptId),
+        gt(creditLedgerTable.deltaPaise, 0)
+      ));
+    assert.equal(releases.length, 1, "Exactly one release entry must be written");
+    assert.equal(releases[0].deltaPaise, 1000);
     
     // Explicitly assert PaymentAttempt database count is exactly 1 and status is failed
     const attempts = await db.select().from(paymentAttemptsTable).where(eq(paymentAttemptsTable.id, attemptId));

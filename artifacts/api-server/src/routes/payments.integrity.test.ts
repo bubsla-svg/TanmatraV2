@@ -42,6 +42,7 @@ import {
   companiesTable,
   companyMembersTable,
   companyBudgetUsageTable,
+  companySubsidyChargesTable,
   adminRolesTable,
 } from "@workspace/db";
 
@@ -515,14 +516,51 @@ test("webhook payment.captured does not resurrect a cancelled order even at the 
 // 6. webhook payment.failed marks a placed order failed, leaves a paid one alone
 // ---------------------------------------------------------------------------
 
-test("webhook payment.failed marks a placed order failed but never flips a preparing order", async () => {
+test("webhook payment.failed marks a placed order failed, releases B2B subsidy, and never flips preparing", async () => {
+  // Create user
+  const userId = `failed-user-${randomUUID()}`;
+  await db.insert(usersTable).values({ id: userId, email: `fail-${userId}@example.test`, firstName: "Fail" });
+  CREATED_USER_IDS.push(userId);
+
+  // Create company
+  const [company] = await db
+    .insert(companiesTable)
+    .values({
+      slug: `fail-co-${RUN}`,
+      name: "Fail Co",
+      ownerUserId: userId,
+      perEmployeeMonthlyBudgetPaise: 100000,
+    })
+    .returning({ id: companiesTable.id });
+
+  // Create membership
+  await db.insert(companyMembersTable).values({
+    companyId: company!.id,
+    userId,
+    email: `fail-member-${userId}@example.test`,
+    role: "member",
+    status: "active",
+  });
+
   const placedExt = ext("failed-placed");
   const placedRzp = rzp("F");
   const placedId = await seedOrder({
     externalOrderId: placedExt,
     status: "placed",
-    chargePaise: 50000,
+    chargePaise: 30000,
+    totalPaise: 50000,
     razorpayOrderId: placedRzp,
+    userId,
+  });
+
+  // Seed subsidy charge as reserved
+  await db.insert(companySubsidyChargesTable).values({
+    companyId: company!.id,
+    userId,
+    orderId: placedId,
+    periodMonth: "2026-08",
+    paise: 20000,
+    status: "reserved",
   });
 
   const preparingExt = ext("failed-preparing");
@@ -532,6 +570,7 @@ test("webhook payment.failed marks a placed order failed but never flips a prepa
     status: "preparing",
     chargePaise: 50000,
     razorpayOrderId: preparingRzp,
+    userId,
   });
 
   const failPlaced = await postWebhook(
@@ -541,6 +580,14 @@ test("webhook payment.failed marks a placed order failed but never flips a prepa
   assert.equal(failPlaced.status, 200);
   assert.equal(failPlaced.json.processed, true);
   assert.equal(await orderStatus(placedId), "failed", "placed order must become failed");
+
+  // Verify subsidy was released
+  const [charge] = await db
+    .select()
+    .from(companySubsidyChargesTable)
+    .where(eq(companySubsidyChargesTable.orderId, placedId));
+  assert.ok(charge);
+  assert.equal(charge.status, "released", "B2B subsidy reservation must be released");
 
   const failPreparing = await postWebhook(
     failedEvent(preparingRzp, "pay_f2"),
@@ -856,43 +903,44 @@ test("charge-mandate bills the subscription's pricePerDeliveryPaise, ignoring a 
   );
 });
 
-test("charge-mandate is rejected for kitchen role", async () => {
-  // Seed kitchen user
-  const kitchenUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: kitchenUserId,
-    email: `kitchen-${kitchenUserId}@example.test`,
-    firstName: "Kitchen",
-    lastName: "Tester",
-  });
-  await db.insert(adminRolesTable).values({
-    userId: kitchenUserId,
-    role: "kitchen",
-  });
-  CREATED_USER_IDS.push(kitchenUserId);
+test("charge-mandate is rejected for non-finance roles", async () => {
+  const rolesToTest = ["kitchen", "catalog", "support", "growth", "readonly"];
   
-  // Create a subscription to try to charge
-  const { subscriptionId, scheduledChargeDate } = await seedChargeableSubscription(1000);
-  
-  // Try to charge as kitchen user
-  let res: { status: number; json: any };
-  try {
-    authedUserId = kitchenUserId;
-    const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        subscriptionId,
-        amountPaise: 1000,
-        scheduledChargeDate: scheduledChargeDate.toISOString(),
-      }),
+  for (const role of rolesToTest) {
+    const testUserId = randomUUID();
+    await db.insert(usersTable).values({
+      id: testUserId,
+      email: `${role}-${testUserId}@example.test`,
+      firstName: role,
+      lastName: "Tester",
     });
-    res = { status: r.status, json: await r.json() };
-  } finally {
-    authedUserId = null;
-  }
+    await db.insert(adminRolesTable).values({
+      userId: testUserId,
+      role: role,
+    });
+    CREATED_USER_IDS.push(testUserId);
+    
+    const { subscriptionId, scheduledChargeDate } = await seedChargeableSubscription(1000);
+    
+    let res: { status: number; json: any };
+    try {
+      authedUserId = testUserId;
+      const r = await fetch(`${baseUrl}/payments/charge-mandate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subscriptionId,
+          amountPaise: 1000,
+          scheduledChargeDate: scheduledChargeDate.toISOString(),
+        }),
+      });
+      res = { status: r.status, json: await r.json() };
+    } finally {
+      authedUserId = null;
+    }
 
-  assert.equal(res.status, 403);
-  assert.equal(res.json.error, "finance scope required");
+    assert.equal(res.status, 403, `role ${role} should be rejected with 403`);
+    assert.equal(res.json.error, "finance scope required", `role ${role} should require finance scope`);
+  }
 });
 

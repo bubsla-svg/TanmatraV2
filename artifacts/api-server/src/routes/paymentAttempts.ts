@@ -1,9 +1,10 @@
 import { Router, type Request, type Response } from "express";
-import { db, paymentAttemptsTable, quotesTable, ordersTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { db, paymentAttemptsTable, quotesTable, ordersTable, creditLedgerTable } from "@workspace/db";
+import { eq, and, lt, gt } from "drizzle-orm";
 import { z } from "zod/v4";
 import crypto from "crypto";
 import { calculateCartTotals } from "../lib/cartMath";
+import { getCreditBalancePaise, redeemCreditAtomic, issueCredit } from "../lib/loyaltyEngine";
 
 const router = Router();
 
@@ -53,16 +54,49 @@ router.post("/payment-attempts", async (req: Request, res: Response) => {
   
   try {
     const id = crypto.randomUUID();
-    await db.insert(paymentAttemptsTable).values({
-      id,
-      customerId: authUserId,
-      quoteId: quote.id,
-      idempotencyKey,
-      status: "processing"
-    });
     
-    // Simulate payment process
-    res.status(201).json({ id, status: "processing", quoteId: quote.id });
+    // Check balance and reserve
+    let appliedCredits = 0;
+    if (authUserId !== "guest") {
+      const balance = await getCreditBalancePaise(authUserId);
+      const amountToApply = Math.min(balance, quote.totalPaise);
+      if (amountToApply > 0) {
+        const redeemResult = await redeemCreditAtomic({
+          userId: authUserId,
+          paise: amountToApply,
+          refId: id,
+          note: "Reserved for payment attempt"
+        });
+        if (redeemResult.ok) {
+          appliedCredits = amountToApply;
+        }
+      }
+    }
+
+    try {
+      await db.insert(paymentAttemptsTable).values({
+        id,
+        customerId: authUserId,
+        quoteId: quote.id,
+        idempotencyKey,
+        status: "processing"
+      });
+      
+      res.status(201).json({ id, status: "processing", quoteId: quote.id });
+    } catch (insertErr) {
+      // Compensate: release credits if they were reserved
+      if (appliedCredits > 0) {
+        await issueCredit({
+          userId: authUserId,
+          deltaPaise: appliedCredits,
+          reason: "manual_grant",
+          refType: "payment_attempt_revert",
+          refId: id,
+          note: "Reverted due to creation failure"
+        });
+      }
+      throw insertErr; // rethrow to be caught by outer catch
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";
     const isDuplicate = msg.includes("uniq_payment_attempts_customer_idempotency") || msg.includes("23505") || (err as any).code === "23505" || ((err as any).cause && (err as any).cause.code === "23505");
@@ -100,7 +134,7 @@ router.get("/payment-attempts/by-idempotency-key/:key", async (req: Request, res
   if (!existing.length) { res.status(404).json({ error: "not found" }); return; }
   
   const attempt = existing[0];
-  res.json({ id: attempt.id, status: attempt.status, orderId: attempt.orderId });
+  res.json({ id: attempt.id, status: attempt.status, orderId: attempt.orderId, createdAt: attempt.createdAt.toISOString() });
 });
 
 router.post("/payment-attempts/:id/fail", async (req: Request, res: Response) => {
@@ -118,6 +152,40 @@ router.post("/payment-attempts/:id/fail", async (req: Request, res: Response) =>
   
   // Release reservation by expiring the quote
   await db.update(quotesTable).set({ status: "expired" }).where(eq(quotesTable.id, attempt.quoteId));
+
+  // Release CreditLedger reservation if exists
+  if (attempt.customerId && attempt.customerId !== "guest") {
+    const reserved = await db.select()
+      .from(creditLedgerTable)
+      .where(and(
+        eq(creditLedgerTable.userId, attempt.customerId),
+        eq(creditLedgerTable.refId, attemptId),
+        lt(creditLedgerTable.deltaPaise, 0)
+      ));
+    
+    if (reserved.length > 0) {
+      // Check if already released to be idempotent
+      const released = await db.select()
+        .from(creditLedgerTable)
+        .where(and(
+          eq(creditLedgerTable.userId, attempt.customerId),
+          eq(creditLedgerTable.refId, attemptId),
+          gt(creditLedgerTable.deltaPaise, 0)
+        ));
+      
+      if (released.length === 0) {
+        const reservedAmt = -reserved[0].deltaPaise;
+        await issueCredit({
+          userId: attempt.customerId,
+          deltaPaise: reservedAmt,
+          reason: "manual_grant",
+          refType: "payment_attempt_revert",
+          refId: attemptId,
+          note: "Reclaimed from failed payment attempt"
+        });
+      }
+    }
+  }
 
   res.json({ ok: true, status: "failed" });
 });

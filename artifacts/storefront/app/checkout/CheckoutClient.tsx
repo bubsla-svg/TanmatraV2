@@ -38,6 +38,7 @@ type PaymentAttempt = {
   id: string;
   status: "created" | "processing" | "requires_action" | "succeeded" | "failed" | "unresolved";
   orderId?: string;
+  createdAt?: string;
 };
 
 type StateMachine =
@@ -109,6 +110,31 @@ export default function CheckoutClient() {
                   setMachine({ state: "payment_succeeded", quote: storedQuote, orderId: attempt.orderId });
                   return;
                 } else if (attempt.status === "processing") {
+                  if (attempt.createdAt) {
+                    const elapsedMs = Date.now() - new Date(attempt.createdAt).getTime();
+                    if (elapsedMs < 15000) {
+                      setMachine({ state: "payment_processing", quote: storedQuote });
+                      const remainingMs = 15000 - elapsedMs;
+                      setTimeout(async () => {
+                        try {
+                          const checkRes = await fetch(`/api/payment-attempts/by-idempotency-key/${storedKey}`);
+                          if (checkRes.ok) {
+                            const latestAttempt: PaymentAttempt = await checkRes.json();
+                            if (latestAttempt.status === "processing") {
+                              setMachine({ state: "payment_unresolved", quote: storedQuote });
+                            } else if (latestAttempt.status === "succeeded" && latestAttempt.orderId) {
+                              setMachine({ state: "payment_succeeded", quote: storedQuote, orderId: latestAttempt.orderId });
+                            } else if (latestAttempt.status === "failed") {
+                              setMachine({ state: "payment_failed", quote: storedQuote, error: "Payment failed" });
+                            }
+                          }
+                        } catch {
+                          setMachine({ state: "payment_unresolved", quote: storedQuote });
+                        }
+                      }, remainingMs);
+                      return;
+                    }
+                  }
                   setMachine({ state: "payment_unresolved", quote: storedQuote });
                   return;
                 } else if (attempt.status === "failed") {
