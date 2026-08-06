@@ -85,6 +85,15 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <Section04ProtocolsGrid />
+
+        <Section04bMarketplace />
+
+        {/* Pillar 9: On-page assessment stepper — main door for the hero's
+            "60-second assessment" CTA, which only dispatches
+            open_tanmatra_assessment and relies on this mounting to listen. */}
+        <Section09AssessmentSection />
+
         {/* Compact AI recommendation card */}
         <section className="px-gutter pb-8">
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 relative overflow-hidden">
