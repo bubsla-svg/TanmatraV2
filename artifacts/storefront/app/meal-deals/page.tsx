@@ -56,7 +56,7 @@ export default async function MealDealsPage() {
               )}
             </div>
 
-            <button className="w-full mt-2 rounded-full bg-[#D4AF37] px-4 py-3 text-sm font-bold tracking-tight text-[#111318] hover:bg-[#D4AF37]/90 transition-transform active:scale-[0.98]">
+            <button className="w-full mt-2 rounded-full bg-gold px-4 py-3 text-sm font-bold tracking-tight text-[var(--gold-ink)] hover:bg-gold/90 transition-transform active:scale-[0.98]">
               Select Bundle
             </button>
           </div>

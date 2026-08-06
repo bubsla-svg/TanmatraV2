@@ -20,7 +20,7 @@ import { SquircleOptionCard } from "@/components/primitives/OptionCards";
 
 export default function StyleguidePage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F5F4] pb-24">
+    <div className="min-h-screen bg-bg text-ink pb-24">
       <GlobalHeader />
       
       <main className="max-w-screen-xl mx-auto px-4 py-8 space-y-12">
@@ -79,7 +79,7 @@ export default function StyleguidePage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">Empty State</h2>
-          <div className="bg-[#171717] rounded-3xl border border-white/5 p-4">
+          <div className="bg-surface rounded-3xl border border-white/5 p-4">
             <EmptyState 
               title="No upcoming deliveries" 
               description="You have skipped this week's protocol." 

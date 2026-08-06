@@ -23,7 +23,7 @@ export function MarketplaceAddToCart({ item }: { item: MarketplaceItem }) {
           e.stopPropagation();
           setCart(addLine(cart, line));
         }}
-        className="min-h-11 rounded-full bg-[#D4AF37] px-6 py-2 text-sm font-bold tracking-tight text-[#111318] hover:bg-[#D4AF37]/90 transition-transform active:scale-[0.98]"
+        className="min-h-11 rounded-full bg-gold px-6 py-2 text-sm font-bold tracking-tight text-[var(--gold-ink)] hover:bg-gold/90 transition-transform active:scale-[0.98]"
       >
         Add to Order
       </button>
