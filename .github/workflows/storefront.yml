@@ -63,12 +63,9 @@ jobs:
           cache: pnpm
       - name: Install workspace
         run: pnpm install --frozen-lockfile
-      - name: Anti-rot — file-cap + "use client" justification
-        run: pnpm --filter @workspace/storefront run lint:filecap
-      - name: Token gate — no raw colours / palette classes (TNM-UIF-01 §3.4)
-        run: pnpm --filter @workspace/storefront run lint:tokens
-      - name: Component-drift gate — no duplicate-spelling class debt
-        run: pnpm --filter @workspace/storefront run lint:component-drift
+      # Correctness first, style gates last (see the block after the e2e step).
+      # These four form a real dependency chain — a failed typecheck makes the
+      # build meaningless — so they keep the default fail-fast behaviour.
       - name: Typecheck
         run: pnpm --filter @workspace/storefront run typecheck
       # Quoted so **node** expands the glob, not the shell. Actions runs `run:`
@@ -104,6 +101,29 @@ jobs:
           name: storefront-e2e-report
           path: playwright-report/
           retention-days: 7
+
+      # ---------------------------------------------------------------------
+      # STYLE / ANTI-ROT GATES — last, and unconditional.
+      # ---------------------------------------------------------------------
+      # These used to run BEFORE typecheck, tests, build and e2e. `lint:tokens`
+      # started failing with c8dfe9ee and, because a failed `run:` aborts the
+      # job, every correctness step behind it silently stopped executing — for
+      # two days the only thing this job proved was that raw hex existed. The
+      # "No files were found with the provided path: playwright-report/" warning
+      # on each run was Playwright never starting, not a passing suite.
+      #
+      # They stay BLOCKING (the debt still has to be paid) but now run after the
+      # signal they were hiding, and `!cancelled()` means an e2e failure cannot
+      # mask them either — every gate reports on every run, in both directions.
+      - name: Anti-rot — file-cap + "use client" justification
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:filecap
+      - name: Token gate — no raw colours / palette classes (TNM-UIF-01 §3.4)
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:tokens
+      - name: Component-drift gate — no duplicate-spelling class debt
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:component-drift
 
       # ---------------------------------------------------------------------
       # PERFORMANCE BASELINE — DELIBERATELY NON-BLOCKING. DO NOT FLIP YET.

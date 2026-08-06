@@ -80,6 +80,14 @@ jobs:
         run: pnpm install --frozen-lockfile
       # DB-free pricing + payment-authority unit tests. These never touch
       # Postgres, so they run without a service and stay deterministic.
+      # Every suite below is independent, so one failing must not hide the rest.
+      # It did: the storefront step has failed since c8dfe9ee, and because a
+      # failed `run:` aborts the job, the six suites after it (Petpooja auth, ops
+      # access-control, food-cost, menu-engineering, catalog cache, shared error
+      # responder) stopped running entirely — the job reported one failure while
+      # silently skipping six checks. `!cancelled()` on each makes every suite
+      # report on every run. They all stay blocking; the first is left as the
+      # fail-fast anchor so a broken install still stops immediately.
       - name: Money-path unit tests (api-server + plan spine)
         working-directory: artifacts/api-server
         run: |
@@ -119,6 +127,7 @@ jobs:
       # Verified all ten are DB-free and network-free: 70 tests, 70 pass, with
       # DATABASE_URL and REDIS_URL unset.
       - name: Money-math unit tests (web — legacy SPA)
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: node --test --import tsx "../tanmatra/src/**/*.test.ts"
 
@@ -143,6 +152,7 @@ jobs:
       # a subdirectory — unquoted, bash's one-level `**` would match the nested
       # files and drop all 43 of these.
       - name: Wire + money-path unit tests (web — storefront)
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: node --test --import tsx "../storefront/lib/**/*.test.ts"
       # Inbound Petpooja authentication. These three files existed and passed
@@ -157,6 +167,7 @@ jobs:
       # so no Postgres is needed. Its own step, so a failure reads as "inbound
       # Petpooja auth broke" rather than being buried in a money run.
       - name: Petpooja inbound auth contract
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: |
           node --test --import tsx \
@@ -174,6 +185,7 @@ jobs:
       # which is the point, given four routes shipped unguarded precisely
       # because a per-handler check is a thing an author can forget.
       - name: Ops router access-control contract
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: |
           node --test --import tsx \
@@ -209,6 +221,7 @@ jobs:
       # supplies, so every case here is key normalisation and arithmetic. Its
       # own step so a failure reads as "dish cost resolution broke".
       - name: Dish food-cost resolution (WBR margin inputs)
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: >
           node --test --import tsx
@@ -226,6 +239,7 @@ jobs:
       # db import can be constructed without a server. Its own step so a
       # failure reads as "dish cost authority broke".
       - name: Menu-engineering cost authority (zero is not a measurement)
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: >
           node --test --import tsx
@@ -236,6 +250,7 @@ jobs:
       # no DB needed. Its own step so a failure reads as "the catalog cache
       # broke" rather than being buried in an unrelated run.
       - name: Menu-catalog cache unit tests
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: >
           node --test --import tsx
@@ -247,6 +262,7 @@ jobs:
       # implementations, one of which never logged at all. DB-free — pure
       # function over a faked Request/Response pair.
       - name: Shared error responder unit tests
+        if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: |
           node --test --import tsx \
