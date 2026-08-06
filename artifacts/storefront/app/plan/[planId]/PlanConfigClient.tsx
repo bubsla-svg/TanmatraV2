@@ -210,7 +210,9 @@ export default function PlanConfigClient({ plan }: PlanConfigClientProps) {
               {billingCycle === "monthly" ? "₹12,100" : "₹3,200"}
             </span>
           </div>
-          <Link href="/checkout" className="flex-1 md:flex-none md:min-w-[280px] bg-[#f2ca50] text-[#111318] font-bold text-[12px] py-4 rounded-full flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_20px_rgba(242,202,80,0.3)] group tracking-[0.05em] uppercase">
+          {/* Must carry the plan (and the cycle the customer actually picked):
+              /checkout prices from ?plan= and bounces a bare visit to /plans. */}
+          <Link href={`/checkout?plan=${plan.id}&cycle=${billingCycle}`} className="flex-1 md:flex-none md:min-w-[280px] bg-[#f2ca50] text-[#111318] font-bold text-[12px] py-4 rounded-full flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_20px_rgba(242,202,80,0.3)] group tracking-[0.05em] uppercase">
             CONTINUE TO PAYMENT
             <span className="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">arrow_forward</span>
           </Link>
