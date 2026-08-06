@@ -20,9 +20,9 @@ import { SquircleOptionCard } from "@/components/primitives/OptionCards";
 
 export default function StyleguidePage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F5F4] pb-24">
+    <div className="min-h-screen bg-neutral-950 text-stone-100 pb-24">
       <GlobalHeader />
-      
+
       <main className="max-w-screen-xl mx-auto px-4 py-8 space-y-12">
         <section className="space-y-4">
           <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">CTAs & Buttons</h2>
@@ -62,34 +62,34 @@ export default function StyleguidePage() {
         <section className="space-y-4">
           <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">Option Cards</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SquircleOptionCard 
-              title="Weight Management" 
-              description="A calibrated protocol designed to lower fasting insulin." 
-              isSelected={true} 
-              onClick={() => {}} 
+            <SquircleOptionCard
+              title="Weight Management"
+              description="A calibrated protocol designed to lower fasting insulin."
+              isSelected={true}
+              onClick={() => {}}
             />
-            <SquircleOptionCard 
-              title="Performance" 
-              description="High-protein macro profile to support endurance." 
-              isSelected={false} 
-              onClick={() => {}} 
+            <SquircleOptionCard
+              title="Performance"
+              description="High-protein macro profile to support endurance."
+              isSelected={false}
+              onClick={() => {}}
             />
           </div>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">Empty State</h2>
-          <div className="bg-[#171717] rounded-3xl border border-white/5 p-4">
-            <EmptyState 
-              title="No upcoming deliveries" 
-              description="You have skipped this week's protocol." 
-              actionLabel="Resume Plan" 
-              onAction={() => {}} 
+          <div className="bg-neutral-900 rounded-3xl border border-white/5 p-4">
+            <EmptyState
+              title="No upcoming deliveries"
+              description="You have skipped this week's protocol."
+              actionLabel="Resume Plan"
+              onAction={() => {}}
             />
           </div>
         </section>
       </main>
-      
+
       <BottomTabBar activeTab="home" onTabSelect={() => {}} />
     </div>
   );

@@ -171,24 +171,19 @@ function futureISO(daysAhead: number): string {
 
 /** Creates a weekly, active, standard (non-trial) subscription at the given meal count. */
 async function seedActiveSubscription(user: TestUser, mealsPerDelivery: number): Promise<number> {
-  const created = await api(
-    "POST",
-    "/subscriptions",
-    {
-      cadence: "weekly",
-      mealsPerDelivery,
-      deliveryWindow: "12:00-14:00",
-      startDate: futureISO(2),
-      planType: "standard",
-      members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
-      defaultItems: [],
-    },
-    user,
-  );
-  assert.equal(created.status, 201, JSON.stringify(created.json));
-  const subId = created.json.subscription.id as number;
-  await db.update(subscriptionsTable).set({ status: "active" }).where(eq(subscriptionsTable.id, subId));
-  return subId;
+  const pricePerDeliveryPaise = computeDeliveryPricePaise("weekly", mealsPerDelivery);
+  const [sub] = await db.insert(subscriptionsTable).values({
+    userId: user.id,
+    cadence: "weekly",
+    mealsPerDelivery,
+    deliveryWindow: "12:00-14:00",
+    startDate: new Date(),
+    nextDeliveryAt: new Date(),
+    status: "active",
+    pricePerDeliveryPaise,
+    notes: "seeded legacy sub",
+  }).returning({ id: subscriptionsTable.id });
+  return sub!.id;
 }
 
 async function seedActiveMandate(subId: number) {
@@ -430,6 +425,7 @@ test("guardrails: matching current plan, trial subscription, and non-active subs
       planType: "trial",
       members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
       defaultItems: [],
+      planId: "trial_3day",
     },
     user,
   );

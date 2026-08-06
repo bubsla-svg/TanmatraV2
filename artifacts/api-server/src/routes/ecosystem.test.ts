@@ -16,6 +16,8 @@ interface TestUser {
   id: string;
 }
 
+process.env["CLINICAL_KMS_MASTER_KEY"] = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
 let server: http.Server;
 let baseUrl = "";
 const CREATED_USER_IDS: string[] = [];

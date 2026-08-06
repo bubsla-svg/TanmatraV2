@@ -31,6 +31,7 @@ import { TEST_DISHES as DISHES } from "../test-fixtures/dishes.js";
 const SYNTHETIC_ID_OFFSET = 100000;
 
 import groupOrdersRouter from "./groupOrders";
+import { invalidateMenuCatalogCache } from "../lib/menuCatalogCache";
 
 interface TestUser {
   id: string;
@@ -227,6 +228,7 @@ test("POST /group-orders/:code/items rejects an unavailable dish with 409", asyn
     })
     .returning({ id: menuItemsTable.id });
   CREATED_MENU_ITEM_IDS.push(row!.id);
+  invalidateMenuCatalogCache();
   const dishId = SYNTHETIC_ID_OFFSET + row!.id;
   const r = await api(
     "POST",

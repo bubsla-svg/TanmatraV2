@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
+import { formatPaise } from "@/lib/format";
 
 /**
  * Section 3: The Corporate Wellness Integration (Revenue Stream 2 - B2B Volume).
@@ -83,7 +84,7 @@ export function Section03B2BEnterprise() {
               <div className="rounded-xl border border-line/80 bg-surface-raised p-3 text-xs">
                 <div className="flex justify-between text-ink-muted font-medium text-[11px]">
                   <span>Daily Subsidy Applied</span>
-                  <span className="font-bold text-gold-text">₹180 / meal</span>
+                  <span className="font-bold text-gold-text">{formatPaise(18000)} / meal</span>
                 </div>
                 <div className="mt-2 h-1.5 w-full rounded-full bg-line">
                   <div className="h-1.5 w-[75%] rounded-full bg-gold"></div>

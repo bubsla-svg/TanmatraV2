@@ -21,19 +21,19 @@ export function DraftRestorationBoundary({ children }: { children: React.ReactNo
   if (hasDraft) {
     return (
       <div className="relative">
-        <div className="bg-[#171717] border-b border-white/5 p-4 flex justify-between items-center text-[#F5F5F4]">
+        <div className="bg-neutral-900 border-b border-white/5 p-4 flex justify-between items-center text-neutral-100">
           <span className="text-sm font-medium">You have an unsaved plan draft.</span>
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={() => {
                 localStorage.removeItem("tnm_plan_draft");
                 setHasDraft(false);
               }}
-              className="text-sm text-[#A3A3A3] hover:text-[#F5F5F4]"
+              className="text-sm text-neutral-400 hover:text-neutral-100"
             >
               Discard
             </button>
-            <button className="text-sm text-[#111318] bg-[#D4AF37] px-3 py-1.5 rounded-full font-bold">
+            <button className="text-sm text-neutral-900 bg-yellow-500 px-3 py-1.5 rounded-full font-bold">
               Restore
             </button>
           </div>

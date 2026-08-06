@@ -47,9 +47,9 @@ export default function AccountSubscriptionsClient() {
 
         <div className="px-[20px] pt-[32px] flex flex-col gap-[16px]">
           {/* Credit Banner */}
-          <div className="inline-flex items-center gap-2 bg-[#7D9E7E]/10 px-4 py-2 rounded-full self-start">
-            <span className="material-symbols-outlined text-[18px] text-[#4F6B50]">redeem</span>
-            <span className="text-sm font-medium text-[#4F6B50]">3 meal credits — skipped deliveries come back as credits</span>
+          <div className="inline-flex items-center gap-2 bg-green-700/10 px-4 py-2 rounded-full self-start">
+            <span className="material-symbols-outlined text-[18px] text-green-800">redeem</span>
+            <span className="text-sm font-medium text-green-800">3 meal credits — skipped deliveries come back as credits</span>
           </div>
 
           {/* Subscription Cards */}
@@ -65,7 +65,7 @@ export default function AccountSubscriptionsClient() {
                 <p className="text-sm text-clinical-muted">Next delivery: <span className="font-data-sm tabular-nums text-clinical-text text-[14px] font-medium leading-[18px]">Oct 24, 2023</span></p>
                 <p className="text-sm text-clinical-text mt-1">Home - 123 Metabolic Way, Suite 400</p>
               </div>
-              <div className="bg-[#7D9E7E]/10 px-4 py-3 rounded-xl text-sm text-[#4F6B50] flex items-center gap-2">
+              <div className="bg-green-700/10 px-4 py-3 rounded-xl text-sm text-green-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-[18px]">info</span>
                 Plan change to Monthly · 6 meals takes effect next cycle.
               </div>

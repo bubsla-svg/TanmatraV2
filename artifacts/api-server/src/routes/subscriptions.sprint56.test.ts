@@ -5,7 +5,7 @@ import { type AddressInfo } from "node:net";
 import http from "node:http";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { eq, inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, subscriptionMandatesTable, ordersTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, subscriptionMandatesTable, ordersTable, adminRolesTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 import paymentsRouter from "./payments";
@@ -104,6 +104,7 @@ function baseBody(extra: Record<string, unknown>) {
     startDate: tomorrowISO(),
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
     defaultItems: [],
+    planId: extra.planType === "trial" ? "trial_3day" : "desk_fuel",
     ...extra,
   };
 }
@@ -141,7 +142,7 @@ test("update trial state endpoint transitions state", async () => {
   // Transition to active
   let r = await api("POST", `/subscriptions/${subId}/trial-state`, { event: "delivery_active" }, user);
   assert.equal(r.status, 200, JSON.stringify(r.json));
-  
+
   let [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.id, subId));
   assert.equal(sub!.trialState, "trial_active");
 
@@ -155,7 +156,7 @@ test("update trial state endpoint transitions state", async () => {
   // Transition to eligible
   r = await api("POST", `/subscriptions/${subId}/trial-state`, { event: "delivery_delivered" }, user);
   assert.equal(r.status, 200, JSON.stringify(r.json));
-  
+
   let [subUpdated] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.id, subId));
   assert.equal(subUpdated!.trialState, "trial_bridge_eligible");
 });
@@ -269,12 +270,13 @@ test("pre-debit guard blocks mandate charge if notification dispatch missing", a
   });
 
   // Attempting to charge mandate without pre-debit notification should fail
-  // (ops-credentialed request — the business-logic guard is what's under test).
+  const financeUser = await makeUser();
+  await db.insert(adminRolesTable).values({ userId: financeUser.id, role: "finance" });
   const charge = await api("POST", "/payments/charge-mandate", {
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: new Date(),
-  }, user, { "x-admin-token": ADMIN_TOKEN });
+  }, financeUser);
   assert.equal(charge.status, 400, JSON.stringify(charge.json));
   assert.match(String(charge.json.error), /pre-debit notification/i);
 });
@@ -302,10 +304,9 @@ test("charge-mandate: unauthenticated/wrongly-credentialed request is rejected (
   const noToken = await api("POST", "/payments/charge-mandate", body, user);
   assert.equal(noToken.status, 403, JSON.stringify(noToken.json));
 
-  // Wrong token — must not be treated as ops-authorized.
-  const wrongToken = await api("POST", "/payments/charge-mandate", body, user, {
-    "x-admin-token": "not-the-real-token",
-  });
+  // Wrong token/no finance role
+  const nonFinance = await makeUser();
+  const wrongToken = await api("POST", "/payments/charge-mandate", body, nonFinance);
   assert.equal(wrongToken.status, 403, JSON.stringify(wrongToken.json));
 });
 
@@ -313,14 +314,13 @@ test("jobs/pre-debit-notifications: unauthenticated request is rejected (403), c
   const noToken = await api("POST", "/jobs/pre-debit-notifications", {});
   assert.equal(noToken.status, 403, JSON.stringify(noToken.json));
 
-  const wrongToken = await api("POST", "/jobs/pre-debit-notifications", {}, undefined, {
-    "x-admin-token": "not-the-real-token",
-  });
+  const nonFinance = await makeUser();
+  const wrongToken = await api("POST", "/jobs/pre-debit-notifications", {}, nonFinance);
   assert.equal(wrongToken.status, 403, JSON.stringify(wrongToken.json));
 
-  const authed = await api("POST", "/jobs/pre-debit-notifications", {}, undefined, {
-    "x-admin-token": ADMIN_TOKEN,
-  });
+  const financeUser = await makeUser();
+  await db.insert(adminRolesTable).values({ userId: financeUser.id, role: "finance" });
+  const authed = await api("POST", "/jobs/pre-debit-notifications", {}, financeUser);
   assert.equal(authed.status, 200, JSON.stringify(authed.json));
   assert.equal(authed.json.success, true);
 });

@@ -167,6 +167,8 @@ function baseBody(extra: Record<string, unknown>) {
         unitPricePaise: 13000,
       },
     ],
+    planId: extra.planType === "trial" ? "trial_3day" : "desk_fuel",
+    track: "veg",
     ...extra,
   };
 }
@@ -297,7 +299,7 @@ test("a trial subscription's linked order is priced net of the server-computed b
   const sub = created.json.subscription;
   assert.ok(created.json.bridgeCreditPaise > 0, "bridge credit must be redeemed for a trial");
 
-  const expectedDiscount = bridgeCreditDiscountPaise(1, 6, sub.pricePerDeliveryPaise);
+  const expectedDiscount = bridgeCreditDiscountPaise(1, sub.mealsPerDelivery, sub.pricePerDeliveryPaise);
   assert.equal(created.json.bridgeCreditPaise, expectedDiscount);
 
   const [order] = await db

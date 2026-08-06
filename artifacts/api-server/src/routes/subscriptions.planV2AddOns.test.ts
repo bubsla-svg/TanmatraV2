@@ -311,13 +311,20 @@ test("post-purchase: detach soft-deactivates the add-on", async () => {
 });
 
 test("post-purchase: a non-plan-v2 subscription cannot attach add-ons (409)", async () => {
-  // Flag OFF → planId ignored → no plan_v2 tag in notes.
-  process.env["FLAG_PLAN_V2"] = "";
   const user = await makeUser();
-  const created = await api("POST", "/subscriptions", baseBody({ planId: "desk_fuel", track: "veg" }), user);
-  const subId = created.json.subscription.id as number;
+  const subRet = await db.insert(subscriptionsTable).values({
+    userId: user.id,
+    status: "active",
+    mealsPerDelivery: 5,
+    deliveryWindow: "12:00-14:00",
+    cadence: "weekly",
+    startDate: new Date(),
+    nextDeliveryAt: new Date(),
+    pricePerDeliveryPaise: 1000,
+    notes: "legacy subscription", // No plan_v2 tag
+  }).returning({ id: subscriptionsTable.id });
+  const subId = subRet[0].id;
 
-  process.env["FLAG_PLAN_V2"] = "true";
   const attach = await api("POST", `/subscriptions/${subId}/add-ons`, { addOnId: "rd_bump" }, user);
   assert.equal(attach.status, 409, JSON.stringify(attach.json));
   assert.equal(attach.json.code, "not_plan_v2");

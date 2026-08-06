@@ -9,6 +9,7 @@ describe("Content Security Policy (CSP) Report-Only & Audit Route", () => {
   let baseUrl: string;
 
   before(async () => {
+    process.env["RD_ADMIN_TOKEN"] = "test_admin_token";
     const app = express();
     app.use(express.json());
     app.use(express.text({ type: "application/csp-report" }));
@@ -58,7 +59,9 @@ describe("Content Security Policy (CSP) Report-Only & Audit Route", () => {
   });
 
   it("exposes the GET /v1/csp-report/audit inspection endpoint", async () => {
-    const res = await fetch(`${baseUrl}/v1/csp-report/audit`);
+    const res = await fetch(`${baseUrl}/v1/csp-report/audit`, {
+      headers: { "x-admin-token": "test_admin_token" },
+    });
     assert.strictEqual(res.status, 200);
 
     const body = (await res.json()) as { totalViolations: number; violations: any[] };

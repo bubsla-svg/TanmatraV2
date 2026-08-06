@@ -22,6 +22,8 @@ export * from "./rdAdvisory";
 export * from "./bundles";
 export * from "./groupOrders";
 export * from "./wellness";
+export * from "./quotes";
+export * from "./paymentAttempts";
 export * from "./wearable";
 export * from "./aiRuns";
 export * from "./ops";

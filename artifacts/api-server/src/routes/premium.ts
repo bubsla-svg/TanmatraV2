@@ -279,6 +279,24 @@ router.post("/premium/verify", async (req: Request, res: Response) => {
     )
     .returning();
   if (!row) {
+    // Check if it was already processed
+    const [alreadyActive] = await db
+      .select()
+      .from(premiumMembershipsTable)
+      .where(
+        and(
+          eq(premiumMembershipsTable.userId, req.user.id),
+          eq(premiumMembershipsTable.razorpayOrderId, razorpayOrderId),
+          eq(premiumMembershipsTable.status, "active")
+        )
+      )
+      .limit(1);
+
+    if (alreadyActive) {
+      res.json({ ok: true, status: "already_processed", membership: alreadyActive, isPremium: true });
+      return;
+    }
+
     res.status(409).json({ error: "payment could not be applied" });
     return;
   }

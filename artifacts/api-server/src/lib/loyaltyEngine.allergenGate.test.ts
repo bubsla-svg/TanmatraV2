@@ -19,6 +19,7 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import {
   db,
+  deliveryEventsTable,
   menuItemsTable,
   opsActionsTable,
   ordersTable,
@@ -27,7 +28,8 @@ import {
   usersTable,
   type DietaryStyle,
 } from "@workspace/db";
-import { resolveDishBySlug } from "./menuResolver";
+import { resolveDishBySlug, getMergedCatalog } from "./menuResolver";
+import { invalidateMenuCatalogCache } from "./menuCatalogCache";
 import { DISHES, type DishData } from "@workspace/menu-catalog";
 
 const PENDING_DISH: DishData = {
@@ -110,8 +112,9 @@ async function setPrefs(
     });
 }
 
-function pickDish(predicate: (d: DishData) => boolean): DishData {
-  const d = DISHES.find((x) => x.isAvailable && predicate(x));
+async function pickDish(predicate: (d: DishData) => boolean): Promise<DishData> {
+  const merged = await getMergedCatalog();
+  const d = merged.find((x) => x.isAvailable && predicate(x));
   if (!d) throw new Error("no dish in real catalog matched predicate");
   return d;
 }
@@ -147,6 +150,16 @@ if (!DISHES.find((d) => d.id === PENDING_DISH.id)) {
 
 after(async () => {
   if (CREATED_USER_IDS.length > 0) {
+    const userOrders = await db
+      .select({ id: ordersTable.id })
+      .from(ordersTable)
+      .where(inArray(ordersTable.userId, CREATED_USER_IDS));
+    const orderIds = userOrders.map((o) => o.id);
+    if (orderIds.length > 0) {
+      await db
+        .delete(deliveryEventsTable)
+        .where(inArray(deliveryEventsTable.orderId, orderIds));
+    }
     await db
       .delete(ordersTable)
       .where(inArray(ordersTable.userId, CREATED_USER_IDS));
@@ -168,7 +181,14 @@ test("happy path: omnivore with no allergens checks out", async () => {
   const userId = await makeUser();
   await setPrefs(userId, {});
   const pickupId = await makePickup();
-  const dish = pickDish((d) => d.allergens.length === 0 && d.price > 0);
+  const dish = await pickDish(
+    (d) =>
+      d.allergens.length === 0 &&
+      d.price > 0 &&
+      d.allergensReviewed !== false &&
+      d.rdReviewState !== "pending_review" &&
+      d.rdReviewState !== "blocked",
+  );
   const orderId = `gate-happy-${randomUUID()}`;
   const out = await finalizeOrder({
     userId,
@@ -183,7 +203,7 @@ test("happy path: omnivore with no allergens checks out", async () => {
 test("allergen_block: refuses dish containing a declared allergen", async () => {
   const userId = await makeUser();
   // Use a real catalog dish with a declared allergen — no mutation needed.
-  const dish = pickDish((d) => d.allergens.includes("Shellfish") && d.price > 0);
+  const dish = await pickDish((d) => d.allergens.includes("Shellfish") && d.price > 0);
   await setPrefs(userId, { allergens: ["Shellfish"] });
   const pickupId = await makePickup();
   const orderId = `gate-allergen-${randomUUID()}`;
@@ -221,7 +241,7 @@ test("diet_block (vegetarian): refuses non-veg dish for vegetarian user", async 
   const userId = await makeUser();
   await setPrefs(userId, { dietaryStyle: "vegetarian" });
   const pickupId = await makePickup();
-  const dish = pickDish((d) => !d.isVeg && d.price > 0);
+  const dish = await pickDish((d) => !d.isVeg && d.price > 0);
   const orderId = `gate-veg-${randomUUID()}`;
   await assert.rejects(
     finalizeOrder({
@@ -252,10 +272,10 @@ test("mixed-reason block: same order trips both allergen_block and diet_block", 
   const pickupId = await makePickup();
   // One dish that is non-veg (diet_block for vegetarian) and another
   // that has a Shellfish allergen (allergen_block).
-  const veggieOffender = pickDish(
+  const veggieOffender = await pickDish(
     (d) => !d.isVeg && !d.allergens.includes("Shellfish") && d.price > 0,
   );
-  const shellfishOffender = pickDish(
+  const shellfishOffender = await pickDish(
     (d) => d.allergens.includes("Shellfish") && d.price > 0,
   );
   assert.notEqual(veggieOffender.id, shellfishOffender.id);
@@ -287,7 +307,7 @@ test("mixed-reason block: same order trips both allergen_block and diet_block", 
 test("ingredient_block: refuses dish containing a disliked ingredient (strict server-only)", async () => {
   const userId = await makeUser();
   // Pick a dish with a recognizable ingredient, then dislike it.
-  const dish = pickDish((d) => d.ingredients.length > 0 && d.allergens.length === 0 && d.isVeg && d.macros.carbs <= 30 && d.price > 0);
+  const dish = await pickDish((d) => d.ingredients.length > 0 && d.allergens.length === 0 && d.isVeg && d.macros.carbs <= 30 && d.price > 0);
   const target = dish.ingredients[0]!;
   await setPrefs(userId, {});
   // setPrefs default leaves dislikes empty — overwrite to set them.
@@ -317,7 +337,7 @@ test("keto_block: refuses high-carb dish for keto user (strict server-only)", as
   const userId = await makeUser();
   await setPrefs(userId, { dietaryStyle: "keto" });
   const pickupId = await makePickup();
-  const dish = pickDish((d) => d.macros.carbs > 30 && d.allergens.length === 0 && d.isVeg && d.price > 0);
+  const dish = await pickDish((d) => d.macros.carbs > 30 && d.allergens.length === 0 && d.isVeg && d.price > 0);
   const orderId = `gate-keto-${randomUUID()}`;
   await assert.rejects(
     finalizeOrder({
@@ -376,6 +396,7 @@ test("DB-backed pending-review menu_items row: surfaces as rdReviewState='pendin
       // default — no explicit value needed.
     })
     .returning();
+  invalidateMenuCatalogCache();
   try {
     const merged = await resolveDishBySlug(slug);
     assert.ok(merged, "expected DB row to surface in merged catalog");
@@ -462,7 +483,7 @@ test("diet_block (pescatarian): refuses chicken/meat dish", async () => {
   await setPrefs(userId, { dietaryStyle: "pescatarian" });
   const pickupId = await makePickup();
   // Non-veg dish whose ingredient text has no fish/seafood hints.
-  const dish = pickDish((d) => {
+  const dish = await pickDish((d) => {
     if (d.isVeg) return false;
     const t = d.ingredients.join(" ").toLowerCase();
     const fishy = ["fish", "salmon", "tuna", "shrimp", "prawn"].some((h) =>

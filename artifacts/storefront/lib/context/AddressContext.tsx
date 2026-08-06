@@ -43,16 +43,16 @@ export function useAddress() {
   return context;
 }
 
-// Inline definition to satisfy dependencies for scaffolding, 
+// Inline definition to satisfy dependencies for scaffolding,
 // normally this would be in components/location/LocationBottomSheet.tsx
 function LocationBottomSheet({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#171717] w-full rounded-t-3xl border-t border-white/10 p-6">
-        <h2 className="text-xl font-bold text-[#F5F5F4] mb-4">Select Delivery Location</h2>
-        <p className="text-[#A3A3A3]">This is the single source of truth for location across the app.</p>
-        <button onClick={onClose} className="mt-6 w-full px-8 py-4 rounded-full bg-[#D4AF37] text-[#111318] font-bold">
+      <div className="relative bg-neutral-900 w-full rounded-t-3xl border-t border-white/10 p-6">
+        <h2 className="text-xl font-bold text-neutral-100 mb-4">Select Delivery Location</h2>
+        <p className="text-neutral-400">This is the single source of truth for location across the app.</p>
+        <button onClick={onClose} className="mt-6 w-full px-8 py-4 rounded-full bg-yellow-500 text-neutral-900 font-bold">
           Confirm Location
         </button>
       </div>

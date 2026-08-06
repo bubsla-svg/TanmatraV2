@@ -183,6 +183,13 @@
       "when": 1785585596659,
       "tag": "0025_thankful_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1785965503908,
+      "tag": "0026_first_omega_flight",
+      "breakpoints": true
     }
   ]
 }

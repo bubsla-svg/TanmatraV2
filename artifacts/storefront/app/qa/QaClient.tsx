@@ -51,26 +51,26 @@ export default function QaClient() {
         : items.filter(i => i.category === selectedCategory);
 
     return (
-        <div className="bg-[#FBFAF7] text-[#1A1C1E] min-h-screen pb-32">
+        <div className="bg-gray-50 text-gray-900 min-h-screen pb-32">
             {/* Header */}
-            <header className="w-full sticky top-0 bg-[#FBFAF7] z-40 border-b border-[#E7E3DA] px-4 h-16 flex items-center justify-between max-w-[1200px] mx-auto">
-                <Link href="/" className="font-headline-md text-lg font-bold text-[#D4AF37] tracking-wider">
-                    TANMATRA <span className="text-[#1A1C1E] text-xs font-normal ml-1 font-label-caps">CLINICAL Q&amp;A</span>
+            <header className="w-full sticky top-0 bg-gray-50 z-40 border-b border-gray-200 px-4 h-16 flex items-center justify-between max-w-[1200px] mx-auto">
+                <Link href="/" className="font-headline-md text-lg font-bold text-yellow-500 tracking-wider">
+                    TANMATRA <span className="text-gray-900 text-xs font-normal ml-1 font-label-caps">CLINICAL Q&amp;A</span>
                 </Link>
-                <Link href="/coach" className="text-xs font-bold text-[#5C6367] hover:text-[#1A1C1E]">
+                <Link href="/coach" className="text-xs font-bold text-gray-500 hover:text-gray-900">
                     Ask AI Coach →
                 </Link>
             </header>
 
             <main className="max-w-[800px] mx-auto px-4 py-10 space-y-8">
                 <section className="space-y-2 text-center">
-                    <span className="font-label-caps text-xs text-[#D4AF37] uppercase tracking-widest font-bold bg-white px-4 py-1.5 rounded-full border border-[#E7E3DA] shadow-sm inline-block">
+                    <span className="font-label-caps text-xs text-yellow-500 uppercase tracking-widest font-bold bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm inline-block">
                         EVIDENCE &amp; TRANSPARENCY
                     </span>
-                    <h1 className="font-headline-md text-3xl md:text-4xl font-bold text-[#1A1C1E]">
+                    <h1 className="font-headline-md text-3xl md:text-4xl font-bold text-gray-900">
                         Clinical Knowledgebase &amp; FAQs
                     </h1>
-                    <p className="font-body-md text-sm text-[#5C6367] max-w-xl mx-auto">
+                    <p className="font-body-md text-sm text-gray-500 max-w-xl mx-auto">
                         Scientific rationale behind our cooking standards, ingredient sourcing, and metabolic care guidelines.
                     </p>
                 </section>
@@ -89,8 +89,8 @@ export default function QaClient() {
                             onClick={() => setSelectedCategory(cat.id)}
                             className={`px-4 py-1.5 rounded-full font-label-caps text-xs font-bold transition-all ${
                                 selectedCategory === cat.id
-                                    ? 'bg-[#D4AF37] text-[#1A1C1E] shadow-sm'
-                                    : 'bg-white border border-[#E7E3DA] text-[#5C6367] hover:bg-[#FBFAF7]'
+                                    ? 'bg-yellow-500 text-gray-900 shadow-sm'
+                                    : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
                             }`}
                         >
                             {cat.label}
@@ -101,26 +101,26 @@ export default function QaClient() {
                 {/* Q&A Accordion */}
                 <div className="space-y-4">
                     {filtered.map(item => (
-                        <div key={item.id} className="bg-white border border-[#E7E3DA] rounded-2xl p-5 shadow-sm space-y-3">
+                        <div key={item.id} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
                             <button
                                 onClick={() => setOpenItem(openItem === item.id ? null : item.id)}
                                 className="w-full flex items-center justify-between text-left gap-4 cursor-pointer"
                             >
-                                <h3 className="font-headline-md text-base font-bold text-[#1A1C1E]">
+                                <h3 className="font-headline-md text-base font-bold text-gray-900">
                                     {item.question}
                                 </h3>
-                                <span className="material-symbols-outlined text-sm text-[#D4AF37] shrink-0">
+                                <span className="material-symbols-outlined text-sm text-yellow-500 shrink-0">
                                     {openItem === item.id ? 'expand_less' : 'expand_more'}
                                 </span>
                             </button>
 
                             {openItem === item.id && (
-                                <div className="pt-2 border-t border-[#E7E3DA] space-y-3">
-                                    <p className="font-body-sm text-xs text-[#5C6367] leading-relaxed">
+                                <div className="pt-2 border-t border-gray-200 space-y-3">
+                                    <p className="font-body-sm text-xs text-gray-500 leading-relaxed">
                                         {item.answer}
                                     </p>
-                                    <div className="font-data-md text-[11px] text-[#8B9194] bg-[#FBFAF7] p-2.5 rounded-xl border border-[#E7E3DA]">
-                                        <span className="font-bold text-[#1A1C1E]">Clinical Citation:</span> {item.clinicalReference}
+                                    <div className="font-data-md text-[11px] text-gray-400 bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                                        <span className="font-bold text-gray-900">Clinical Citation:</span> {item.clinicalReference}
                                     </div>
                                 </div>
                             )}

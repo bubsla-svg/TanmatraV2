@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { formatPaise } from '@/lib/format';
 import MealFeedback from '@/components/feedback/MealFeedback';
 
 export default function OrdersClient() {
@@ -64,7 +65,7 @@ export default function OrdersClient() {
                                 <span className="w-2 h-2 rounded-full bg-sage-signal animate-pulse"></span>
                                 Out for delivery
                             </span>
-                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">₹1,450</span>
+                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">{formatPaise(145000)}</span>
                         </div>
                         <div className="font-clinical-data text-clinical-data text-ink-secondary mb-4">
                             #TM-9921-ZA · Today · <span className="text-on-surface-variant">Home</span>
@@ -81,14 +82,14 @@ export default function OrdersClient() {
                     <div className="rounded-xl border border-hairline bg-surface p-4 shadow-black/40 transition-all duration-200 active:scale-[0.98]">
                         <div className="flex justify-between items-start mb-2">
                             <span className="font-headline-md text-body-sm font-semibold text-on-surface-variant">Delivered</span>
-                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">₹4,900</span>
+                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">{formatPaise(490000)}</span>
                         </div>
                         <div className="font-clinical-data text-clinical-data text-ink-secondary mb-4">
                             #TM-8829-QX · 21 Oct 2024
                         </div>
                         <div className="flex gap-4">
                             <button className="text-primary font-label-caps text-label-caps hover:opacity-80">Reorder</button>
-                            <button 
+                            <button
                                 onClick={() => setFeedbackMeal({ id: 'dish-keto-bowl', name: 'The Nordic Fuel Bowl' })}
                                 className="text-on-surface-variant hover:text-primary font-label-caps text-label-caps flex items-center gap-1"
                             >
@@ -111,14 +112,14 @@ export default function OrdersClient() {
                     <div className="rounded-xl border border-hairline bg-surface p-4 shadow-black/40 transition-all duration-200 active:scale-[0.98]">
                         <div className="flex justify-between items-start mb-2">
                             <span className="font-headline-md text-body-sm font-semibold text-on-surface-variant">Delivered</span>
-                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">₹2,650</span>
+                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">{formatPaise(265000)}</span>
                         </div>
                         <div className="font-clinical-data text-clinical-data text-ink-secondary mb-4">
                             #TM-7712-BT · 14 Oct 2024 · <span className="text-on-surface-variant">Office</span>
                         </div>
                         <div className="flex gap-4">
                             <button className="text-primary font-label-caps text-label-caps hover:opacity-80">Reorder</button>
-                            <button 
+                            <button
                                 onClick={() => setFeedbackMeal({ id: 'dish-chicken-quinoa', name: 'Turmeric Chicken Quinoa' })}
                                 className="text-on-surface-variant hover:text-primary font-label-caps text-label-caps flex items-center gap-1"
                             >
@@ -131,7 +132,7 @@ export default function OrdersClient() {
                     <div className="rounded-xl border border-hairline bg-surface p-4 shadow-black/40 transition-all duration-200 active:scale-[0.98] opacity-60">
                         <div className="flex justify-between items-start mb-2">
                             <span className="font-headline-md text-body-sm font-semibold text-clay-danger">Payment failed</span>
-                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">₹1,200</span>
+                            <span className="font-clinical-data text-clinical-data text-on-surface font-semibold">{formatPaise(120000)}</span>
                         </div>
                         <div className="font-clinical-data text-clinical-data text-ink-secondary">
                             #TM-6601-PL · 07 Oct 2024

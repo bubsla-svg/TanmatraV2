@@ -10,8 +10,8 @@ interface CTAProps {
 
 /**
  * Primary CTA Contract:
- * - Brand Gold (#D4AF37) background
- * - Near-black (#0F172A) text
+ * - Brand Gold (yellow-600) background
+ * - Near-black (slate-900) text
  * - Maximum 1 visible instance per viewport
  */
 export const PrimaryCTA: React.FC<CTAProps> = ({
@@ -26,8 +26,8 @@ export const PrimaryCTA: React.FC<CTAProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-8 py-4 rounded-xl font-bold tracking-tight text-slate-900 
-        bg-[#D4AF37] hover:bg-[#C59F27]
+      className={`px-8 py-4 rounded-xl font-bold tracking-tight text-slate-900
+        bg-yellow-600 hover:bg-yellow-700
         active:scale-[0.98] transition-all duration-200 shadow-lg shadow-amber-500/10
         min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-2
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
@@ -54,7 +54,7 @@ export const SecondaryCTA: React.FC<CTAProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-8 py-4 rounded-xl font-semibold tracking-tight 
+      className={`px-8 py-4 rounded-xl font-semibold tracking-tight
         text-slate-100 bg-slate-900/80 backdrop-blur-md
         border border-slate-700/60 hover:bg-slate-800/90
         active:scale-[0.98] transition-all duration-200

@@ -1,163 +1,372 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { loadCart, type CartLine } from "../../lib/cartStore";
+
+// The server's quote snapshot type
+type QuoteSnapshot = {
+  id: string;
+  status: "active" | "expired" | "superseded";
+  createdAt: string;
+  expiresAt: string;
+  currency: "INR";
+  totalPaise: number;
+  version: number;
+  items: Array<{
+    id: number;
+    name: string;
+    qty: number;
+    price: number;
+  }>;
+};
+
+type QuoteDifference = {
+  totalDeltaPaise: number;
+  itemChanges: Array<{
+    lineId: string;
+    label: string;
+    previousAmountPaise: number;
+    currentAmountPaise: number;
+    deltaPaise: number;
+    reason: "price_changed" | "configuration_changed" | "item_unavailable" | "entitlement_changed";
+  }>;
+};
+
+type PaymentAttempt = {
+  id: string;
+  status: "created" | "processing" | "requires_action" | "succeeded" | "failed" | "unresolved";
+  orderId?: string;
+};
+
+type StateMachine =
+  | { state: "loading_quote" }
+  | { state: "quote_active"; quote: QuoteSnapshot }
+  | { state: "payment_creating"; quote: QuoteSnapshot }
+  | { state: "payment_processing"; quote: QuoteSnapshot }
+  | { state: "payment_unresolved"; quote: QuoteSnapshot }
+  | { state: "payment_succeeded"; quote: QuoteSnapshot; orderId: string }
+  | { state: "payment_failed"; quote: QuoteSnapshot; error: string }
+  | { state: "quote_expired"; quote: QuoteSnapshot }
+  | { state: "quote_refreshing"; quote: QuoteSnapshot }
+  | { state: "quote_changed"; quote: QuoteSnapshot; diff: QuoteDifference }
+  | { state: "status_rechecking"; quote: QuoteSnapshot };
 
 export default function CheckoutClient() {
   const router = useRouter();
-  const [phone, setPhone] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
+  const [machine, setMachine] = useState<StateMachine>({ state: "loading_quote" });
+  const [idempotencyKey] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("checkout_idempotency_key");
+      if (stored) return stored;
+      const newKey = crypto.randomUUID();
+      sessionStorage.setItem("checkout_idempotency_key", newKey);
+      return newKey;
+    }
+    return "";
+  });
 
-  // Hardcode random order ID for the prototype simulation
-  const handlePayNow = () => {
-    router.push("/order/confirmed/ORD-8F2C1A");
+  // Countdown timer for display
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Generate initial quote
+    async function initQuote() {
+      const cart = loadCart();
+      if (cart.lines.length === 0) {
+        // empty cart logic here
+        return;
+      }
+      try {
+        const res = await fetch("/api/quotes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: cart.lines.map((i: CartLine) => ({ dishId: i.dishId, qty: i.qty }))
+          })
+        });
+        if (!res.ok) throw new Error("Failed to create quote");
+        const quote: QuoteSnapshot = await res.json();
+        setMachine({ state: "quote_active", quote });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    initQuote();
+  }, []);
+
+  useEffect(() => {
+    if (machine.state !== "quote_active") {
+      setTimeLeft(null);
+      return;
+    }
+    const updateCountdown = () => {
+      const now = Date.now();
+      const expiresAt = new Date(machine.quote.expiresAt).getTime();
+      const diff = expiresAt - now;
+      if (diff <= 0) {
+        setTimeLeft(0);
+      } else {
+        setTimeLeft(Math.floor(diff / 1000));
+      }
+    };
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, [machine]);
+
+  const handlePay = async () => {
+    if (!("quote" in machine)) return;
+    const { quote } = machine;
+    setMachine({ state: "payment_creating", quote });
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+
+    try {
+      const res = await fetch("/api/payment-attempts", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey
+        },
+        body: JSON.stringify({ quoteId: quote.id })
+      });
+      clearTimeout(timer);
+
+      if (res.status === 409) {
+        const data = await res.json();
+        if (data.code === "quote_expired" || data.code === "quote_superseded") {
+          setMachine({ state: "quote_expired", quote });
+          return;
+        }
+        if (data.code === "ORDER_ALREADY_CONFIRMED") {
+          setMachine({ state: "payment_succeeded", quote, orderId: data.orderId });
+          return;
+        }
+        if (data.code === "PAYMENT_ATTEMPT_ALREADY_EXISTS") {
+          // If we already have a processing attempt, we go to unresolved to wait or check
+          setMachine({ state: "payment_unresolved", quote });
+          return;
+        }
+      }
+
+      if (!res.ok) throw new Error("Payment failed");
+
+      // Simulating processing state
+      setMachine({ state: "payment_processing", quote });
+
+      // Automatically succeed after a bit for demo purposes
+      setTimeout(() => {
+        setMachine({ state: "payment_succeeded", quote, orderId: crypto.randomUUID() });
+      }, 2000);
+
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        setMachine({ state: "payment_unresolved", quote });
+      } else {
+        setMachine({ state: "payment_failed", quote, error: err.message });
+      }
+    }
   };
 
+  const handleRefreshQuote = async () => {
+    if (!("quote" in machine)) return;
+    const { quote } = machine;
+    setMachine({ state: "quote_refreshing", quote });
+
+    try {
+      const res = await fetch(`/api/quotes/${quote.id}/refresh`, { method: "POST" });
+      if (!res.ok) throw new Error("Refresh failed");
+      const data = await res.json();
+
+      if (data.requiresAcceptance) {
+        setMachine({ state: "quote_changed", quote: data.quote, diff: data.difference });
+      } else {
+        setMachine({ state: "quote_active", quote: data.quote });
+      }
+    } catch (err) {
+      console.error(err);
+      setMachine({ state: "quote_expired", quote }); // Fall back
+    }
+  };
+
+  const handleAcceptQuote = () => {
+    if (machine.state !== "quote_changed") return;
+    setMachine({ state: "quote_active", quote: machine.quote });
+  };
+
+  const handleRecheckStatus = async () => {
+    if (!("quote" in machine)) return;
+    const { quote } = machine;
+    setMachine({ state: "status_rechecking", quote });
+
+    try {
+      const res = await fetch(`/api/payment-attempts/by-idempotency-key/${idempotencyKey}`);
+      if (!res.ok) throw new Error("Check failed");
+      const attempt: PaymentAttempt = await res.json();
+
+      if (attempt.status === "succeeded" && attempt.orderId) {
+        setMachine({ state: "payment_succeeded", quote, orderId: attempt.orderId });
+      } else if (attempt.status === "processing") {
+        setMachine({ state: "payment_unresolved", quote });
+      } else if (attempt.status === "failed") {
+        setMachine({ state: "payment_failed", quote, error: "Payment failed" });
+      } else {
+        setMachine({ state: "payment_unresolved", quote });
+      }
+    } catch (err) {
+      setMachine({ state: "payment_unresolved", quote });
+    }
+  };
+
+  if (machine.state === "loading_quote") {
+    return (
+      <div className="bg-surface text-on-surface min-h-[max(884px,100dvh)] flex items-center justify-center">
+        <p>Loading quote...</p>
+      </div>
+    );
+  }
+
+  const { quote } = machine as { quote: QuoteSnapshot };
+
   return (
-    <div className="bg-[#0A0A0A] text-[#F5F5F4] min-h-[max(884px,100dvh)] font-body-lg text-body-lg overflow-x-hidden selection:bg-primary/30">
-      {/* TopAppBar */}
+    <div className="bg-surface text-on-surface min-h-[max(884px,100dvh)] font-body-lg text-body-lg overflow-x-hidden selection:bg-primary/30">
       <header className="fixed top-0 w-full z-50 bg-glass backdrop-blur-md border-b border-hairline">
         <div className="flex items-center px-gutter h-16 max-w-[1280px] mx-auto">
-          <button
-            onClick={() => router.back()}
-            className="mr-4 hover:opacity-80 transition-opacity scale-[0.98] active:scale-95 transition-transform duration-200"
-          >
-            <span className="material-symbols-outlined text-primary text-[28px]">arrow_back</span>
-          </button>
-          <h1 className="font-headline-md text-headline-md text-on-surface">Checkout</h1>
+          <Link href="/menu" className="flex items-center gap-2 group mr-4">
+            <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors">
+              <span className="material-symbols-outlined text-lg">arrow_back</span>
+            </div>
+            <span className="font-label-caps text-xs tracking-widest uppercase font-bold hidden sm:block">Back</span>
+          </Link>
+          <div className="flex-1 flex justify-center">
+            <h1 className="font-headline-md font-semibold tracking-tight text-xl">Checkout</h1>
+          </div>
+          <div className="w-8 mr-4 sm:mr-[52px]" />
         </div>
       </header>
 
-      <main className="pt-24 pb-48 px-gutter max-w-lg mx-auto min-h-screen">
-        {/* Step 01: Progress Dots */}
-        <section className="flex justify-center items-center gap-3 mb-10">
-          <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(242,202,80,0.4)]"></div>
-          <div className="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></div>
-          <div className="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></div>
-        </section>
+      <main className="pt-24 pb-32 px-gutter max-w-[1280px] mx-auto min-h-screen">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 max-w-5xl mx-auto">
+          {/* Order Summary */}
+          <div className="lg:col-span-7 space-y-8">
+            <section className="bg-surface-container rounded-3xl p-6 lg:p-8 border border-hairline space-y-6">
+              <h2 className="font-headline-md font-semibold text-xl tracking-tight">Order Summary</h2>
 
-        {/* Step 02: Identity Island (PhoneAuth) */}
-        <section className="mb-10">
-          <div className="bg-surface rounded-[2rem] border border-hairline p-8 shadow-black/40">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>fingerprint</span>
-              <h2 className="font-headline-md text-headline-md text-ink-primary">Identity</h2>
-            </div>
-            <p className="text-ink-secondary mb-8 font-body-sm">Enter mobile to continue</p>
-            
-            <div className="relative group">
-              <div 
-                className={`flex items-center bg-surface-container-low border rounded-xl px-4 py-3 transition-colors ${
-                  isFocused ? "border-primary shadow-[0_0_12px_rgba(212,175,55,0.1)]" : "border-hairline"
-                }`}
+              {machine.state === "quote_changed" && machine.diff && (
+                <div className="bg-surface border border-hairline p-4 rounded-xl">
+                  <h3 className="text-error font-bold mb-2">Quote Updated</h3>
+                  <p>Your total changed by ₹{machine.diff.totalDeltaPaise / 100}</p>
+                  <ul className="list-disc pl-5 mt-2">
+                    {machine.diff.itemChanges.map(change => (
+                      <li key={change.lineId}>{change.label}: ₹{change.previousAmountPaise/100} {"->"} ₹{change.currentAmountPaise/100} ({change.reason})</li>
+                    ))}
+                  </ul>
+                  <button onClick={handleAcceptQuote} className="mt-4 bg-primary text-on-primary px-4 py-2 rounded-xl">
+                    Accept Changes
+                  </button>
+                </div>
+              )}
+
+              {machine.state === "payment_failed" && (
+                <div className="bg-error/10 border border-error/20 p-4 rounded-xl">
+                  <h3 className="text-error font-bold mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined">error</span>
+                    Payment Failed
+                  </h3>
+                  <p className="text-sm">Your payment attempt was not successful. Please retry with a new payment method or key.</p>
+                </div>
+              )}
+
+              {machine.state === "quote_expired" && (
+                <div className="bg-error/10 border border-error/20 p-4 rounded-xl">
+                  <h3 className="text-error font-bold mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined">timer_off</span>
+                    Quote Expired
+                  </h3>
+                  <p className="text-sm">Your quote has expired. Please refresh to continue.</p>
+                  <button onClick={handleRefreshQuote} className="mt-4 bg-primary text-on-primary px-4 py-2 rounded-xl">
+                    Refresh Quote
+                  </button>
+                </div>
+              )}
+
+              {machine.state === "payment_unresolved" && (
+                <div className="bg-surface border border-hairline p-4 rounded-xl">
+                  <h3 className="text-primary font-bold mb-2">Payment Processing Unresolved</h3>
+                  <p className="text-sm">Your payment attempt timed out or is still processing. <strong>Do not pay again.</strong></p>
+                  <button onClick={handleRecheckStatus} className="mt-4 bg-primary text-on-primary px-4 py-2 rounded-xl">
+                    Recheck Status
+                  </button>
+                </div>
+              )}
+
+              {machine.state === "payment_succeeded" && (
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl">
+                  <h3 className="text-primary font-bold mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined">check_circle</span>
+                    Payment Succeeded
+                  </h3>
+                  <p className="text-sm">Your order {machine.orderId && `(${machine.orderId})`} is confirmed.</p>
+                  <Link href={`/order/confirmed/${machine.orderId}`} className="mt-4 inline-block bg-primary text-on-primary px-4 py-2 rounded-xl">
+                    View Order
+                  </Link>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {quote.items.map((item, idx) => (
+                  <div key={idx} className="flex gap-4 p-4 rounded-2xl bg-surface border border-hairline">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-body-lg font-medium">{item.name}</h3>
+                        <span className="font-clinical-data font-semibold">₹{item.price / 100}</span>
+                      </div>
+                      <div className="text-sm opacity-60">Qty: {item.qty}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Payment */}
+          <div className="lg:col-span-5 space-y-6">
+            <section className="bg-surface-container rounded-3xl p-6 lg:p-8 border border-hairline sticky top-24 space-y-8">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-xl font-bold">
+                  <span>Total Payable</span>
+                  <span className="font-clinical-data tracking-tight">₹{quote.totalPaise / 100}</span>
+                </div>
+
+                {machine.state === "quote_active" && timeLeft !== null && (
+                  <div className="text-sm text-center">
+                    Quote expires in: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handlePay}
+                disabled={machine.state !== "quote_active"}
+                className="w-full bg-primary text-on-primary h-14 rounded-full font-label-caps text-sm font-bold tracking-widest uppercase transition-transform active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <span className="font-clinical-data text-clinical-data text-primary mr-3">+91</span>
-                <div className="h-4 w-[1px] bg-hairline mr-4"></div>
-                <input 
-                  className="bg-transparent border-none p-0 w-full font-clinical-data text-clinical-data text-ink-primary placeholder:text-surface-container-highest focus:ring-0" 
-                  placeholder="000 000 0000" 
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                />
-              </div>
-            </div>
-
-            <div className="mt-8 flex justify-end">
-              <button className="font-label-caps text-label-caps text-primary tracking-widest uppercase hover:opacity-80 transition-opacity flex items-center gap-2">
-                Send OTP
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                {machine.state === "payment_creating" || machine.state === "payment_processing" ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                    Processing...
+                  </>
+                ) : (
+                  `Pay ₹${quote.totalPaise / 100}`
+                )}
               </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Step 03: Order Summary */}
-        <section className="mb-20">
-          <h3 className="font-label-caps text-label-caps text-ink-secondary mb-6 tracking-[0.2em] uppercase">Current Order</h3>
-          <div className="space-y-6">
-            {/* Item 1 */}
-            <div className="flex justify-between items-start">
-              <div className="flex flex-col">
-                <span className="font-body-lg text-ink-primary">Keto-Cleanse Bowl</span>
-                <span className="text-ink-secondary text-body-sm font-light mt-1">x 1</span>
-              </div>
-              <span className="font-clinical-data text-clinical-data text-on-surface">₹1450</span>
-            </div>
-            
-            <div className="h-px w-full bg-hairline"></div>
-            
-            {/* Item 2 */}
-            <div className="flex justify-between items-start">
-              <div className="flex flex-col">
-                <span className="font-body-lg text-ink-primary">Miso Glazed Tempeh</span>
-                <span className="text-ink-secondary text-body-sm font-light mt-1">x 1</span>
-              </div>
-              <span className="font-clinical-data text-clinical-data text-on-surface">₹1200</span>
-            </div>
-            
-            {/* Subtotal */}
-            <div className="pt-8 flex flex-col gap-2">
-              <div className="flex justify-between items-center">
-                <span className="font-headline-md text-headline-md text-ink-primary">Subtotal</span>
-                <span className="font-clinical-data text-[20px] font-bold text-primary">₹2650</span>
-              </div>
-              <p className="text-surface-container-highest font-body-sm italic text-right">Server bills the final total</p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Sticky Footer Container */}
-      <div className="fixed bottom-0 left-0 w-full z-50">
-        {/* Sticky Footer Action Bar */}
-        <div className="bg-glass backdrop-blur-md border-t border-hairline py-4 px-gutter">
-          <div className="max-w-[1280px] mx-auto flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="font-label-caps text-[10px] text-ink-secondary tracking-widest uppercase mb-0.5">Est. Total</span>
-              <div className="flex items-baseline gap-1">
-                <span className="font-headline-md font-bold text-ink-primary">₹</span>
-                <span className="font-clinical-data text-headline-md font-bold text-ink-primary">2650</span>
-              </div>
-            </div>
-            {/* PAY CTA */}
-            <button 
-              className={`px-10 py-4 rounded-full font-label-caps text-label-caps uppercase tracking-widest transition-all ${
-                phone.length >= 10 
-                  ? "bg-primary text-ink-on-gold shadow-[0_8px_24px_-8px_rgba(212,175,55,0.4)] hover:opacity-90"
-                  : "bg-primary text-ink-on-gold opacity-50 grayscale cursor-not-allowed shadow-[0_8px_24px_-8px_rgba(212,175,55,0.4)]"
-              }`}
-              disabled={phone.length < 10}
-              onClick={handlePayNow}
-            >
-              Pay Now
-            </button>
+            </section>
           </div>
         </div>
-
-        {/* BottomNavBar (Predicted Shared Component - Visual Only) */}
-        <nav className="h-[4rem] bg-surface border-t border-hairline flex justify-around items-center px-4 pb-safe shadow-black/40">
-          <div className="flex flex-col items-center justify-center text-ink-secondary opacity-40">
-            <span className="material-symbols-outlined mb-1">restaurant_menu</span>
-            <span className="font-label-caps text-[10px]">Plan</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-ink-secondary opacity-40">
-            <span className="material-symbols-outlined mb-1">outdoor_grill</span>
-            <span className="font-label-caps text-[10px]">Kitchen</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-ink-secondary opacity-40">
-            <span className="material-symbols-outlined mb-1">biotech</span>
-            <span className="font-label-caps text-[10px]">Labs</span>
-          </div>
-          <div className="flex flex-col items-center justify-center text-ink-secondary opacity-40">
-            <span className="material-symbols-outlined mb-1">person</span>
-            <span className="font-label-caps text-[10px]">Profile</span>
-          </div>
-        </nav>
-      </div>
+      </main>
     </div>
   );
 }

@@ -54,6 +54,8 @@ import complianceRouter from "./compliance";
 import petpoojaRouter from "./petpooja";
 import { petpoojaWebhooksMounted } from "../lib/petpoojaClient";
 import wearableRouter from "./wearable";
+import quotesRouter from "./quotes";
+import paymentAttemptsRouter from "./paymentAttempts";
 import catalogRouter from "./catalog";
 import cspReportRouter from "./cspReport";
 import openApiContractRouter from "./openApiContract";
@@ -132,6 +134,8 @@ if (petpoojaWebhooksMounted()) {
   router.use(petpoojaRouter);
 }
 router.use(wearableRouter);
+router.use(quotesRouter);
+router.use(paymentAttemptsRouter);
 router.use(ecosystemRouter);
 router.use(savedMealsRouter);
 router.use(legalDocumentsRouter);

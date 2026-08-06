@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { formatPaise } from '@/lib/format';
 
 interface Message {
     id: string;
@@ -40,7 +41,7 @@ export default function CoachClient() {
             actionCard: {
                 title: 'Wild Salmon Reset Bowl',
                 description: '42g Protein · Cold-Pressed EVOO · Steamed Asparagus',
-                price: '₹750',
+                price: formatPaise(75000),
                 actionLabel: 'Confirm & Apply to Next Week',
                 actionType: 'suggestion'
             }
@@ -87,19 +88,19 @@ export default function CoachClient() {
     };
 
     return (
-        <div className="bg-[#FBFAF7] text-[#1A1C1E] h-screen flex flex-col font-body-md overflow-hidden selection:bg-[#D4AF37] selection:text-[#1A1C1E]">
+        <div className="bg-stone-50 text-neutral-900 h-screen flex flex-col font-body-md overflow-hidden selection:bg-yellow-600 selection:text-neutral-900">
             {/* Header */}
-            <header className="w-full bg-[#FBFAF7] py-3 px-4 border-b border-[#E7E3DA] sticky top-0 z-10 flex items-center justify-between shrink-0 max-w-4xl mx-auto">
+            <header className="w-full bg-stone-50 py-3 px-4 border-b border-stone-200 sticky top-0 z-10 flex items-center justify-between shrink-0 max-w-4xl mx-auto">
                 <div>
                     <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#7D9E7E] animate-pulse"></span>
-                        <h1 className="text-lg font-bold text-[#1A1C1E]">Metabolic Coach AI</h1>
+                        <span className="w-2.5 h-2.5 rounded-full bg-green-700 animate-pulse"></span>
+                        <h1 className="text-lg font-bold text-neutral-900">Metabolic Coach AI</h1>
                     </div>
-                    <p className="text-[11px] text-[#5C6367]">
+                    <p className="text-[11px] text-neutral-500">
                         Coach suggestions require your explicit confirmation and never directly modify active orders.
                     </p>
                 </div>
-                <Link href="/rd" className="text-xs font-bold text-[#D4AF37] hover:underline shrink-0">
+                <Link href="/rd" className="text-xs font-bold text-yellow-600 hover:underline shrink-0">
                     Talk to an RD →
                 </Link>
             </header>
@@ -107,15 +108,15 @@ export default function CoachClient() {
             {/* Message Thread */}
             <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col space-y-4 pb-28 w-full max-w-4xl mx-auto">
                 {messages.map(msg => (
-                    <div 
+                    <div
                         key={msg.id}
                         className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} w-full space-y-2`}
                     >
-                        <div 
+                        <div
                             className={`rounded-2xl px-4 py-3 max-w-[85%] text-sm leading-relaxed ${
                                 msg.sender === 'user'
-                                    ? 'bg-[#D4AF37] text-[#1A1C1E] rounded-br-none font-medium shadow-sm'
-                                    : 'bg-white border border-[#E7E3DA] text-[#1A1C1E] rounded-bl-none shadow-sm'
+                                    ? 'bg-yellow-600 text-neutral-900 rounded-br-none font-medium shadow-sm'
+                                    : 'bg-white border border-stone-200 text-neutral-900 rounded-bl-none shadow-sm'
                             }`}
                         >
                             {msg.text}
@@ -123,21 +124,21 @@ export default function CoachClient() {
 
                         {/* Interactive Suggestion / Action Card */}
                         {msg.actionCard && (
-                            <div className="w-full max-w-[85%] bg-white border border-[#E7E3DA] rounded-2xl p-4 shadow-sm space-y-3">
+                            <div className="w-full max-w-[85%] bg-white border border-stone-200 rounded-2xl p-4 shadow-sm space-y-3">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-headline-md text-sm font-bold text-[#1A1C1E]">{msg.actionCard.title}</h4>
-                                        <p className="font-body-sm text-xs text-[#5C6367] mt-0.5">{msg.actionCard.description}</p>
+                                        <h4 className="font-headline-md text-sm font-bold text-neutral-900">{msg.actionCard.title}</h4>
+                                        <p className="font-body-sm text-xs text-neutral-500 mt-0.5">{msg.actionCard.description}</p>
                                     </div>
                                     {msg.actionCard.price && (
-                                        <span className="font-data-md text-sm font-bold text-[#1A1C1E]">{msg.actionCard.price}</span>
+                                        <span className="font-data-md text-sm font-bold text-neutral-900">{msg.actionCard.price}</span>
                                     )}
                                 </div>
 
                                 {msg.actionCard.actionType === 'consult' ? (
                                     <Link
                                         href="/account/appointments"
-                                        className="inline-flex items-center gap-1 bg-[#D4AF37] text-[#1A1C1E] font-label-caps text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+                                        className="inline-flex items-center gap-1 bg-yellow-600 text-neutral-900 font-label-caps text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
                                     >
                                         {msg.actionCard.actionLabel}
                                         <span className="material-symbols-outlined text-xs">arrow_forward</span>
@@ -145,14 +146,14 @@ export default function CoachClient() {
                                 ) : (
                                     <div className="flex items-center gap-2">
                                         {confirmedSuggestions.includes(msg.actionCard.title) ? (
-                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-[#4F6B50] bg-[#EBF2EB] px-3 py-1.5 rounded-xl">
+                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-green-800 bg-green-50 px-3 py-1.5 rounded-xl">
                                                 <span className="material-symbols-outlined text-xs">check_circle</span>
                                                 Confirmed for next delivery
                                             </span>
                                         ) : (
                                             <button
                                                 onClick={() => handleActionClick(msg.actionCard!.title, msg.actionCard!.actionType)}
-                                                className="bg-[#D4AF37] text-[#1A1C1E] font-label-caps text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                                                className="bg-yellow-600 text-neutral-900 font-label-caps text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 active:scale-95 transition-all cursor-pointer"
                                             >
                                                 {msg.actionCard.actionLabel}
                                             </button>
@@ -166,18 +167,18 @@ export default function CoachClient() {
             </main>
 
             {/* Bottom Composer */}
-            <footer className="fixed bottom-0 w-full bg-white border-t border-[#E7E3DA] px-4 py-3 z-20">
+            <footer className="fixed bottom-0 w-full bg-white border-t border-stone-200 px-4 py-3 z-20">
                 <form onSubmit={handleSend} className="max-w-4xl mx-auto flex items-center gap-2 w-full">
-                    <input 
+                    <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Ask your metabolic coach (e.g. suggest a high-protein dinner swap)..."
-                        className="flex-1 bg-[#FBFAF7] border border-[#E7E3DA] rounded-full py-3 px-5 text-sm text-[#1A1C1E] focus:outline-none focus:border-[#D4AF37] placeholder:text-[#8B9194]"
+                        className="flex-1 bg-stone-50 border border-stone-200 rounded-full py-3 px-5 text-sm text-neutral-900 focus:outline-none focus:border-yellow-600 placeholder:text-neutral-400"
                     />
-                    <button 
+                    <button
                         type="submit"
-                        className="bg-[#D4AF37] text-[#1A1C1E] font-label-caps text-xs font-bold px-6 h-11 rounded-full hover:opacity-90 active:scale-95 transition-all shrink-0 cursor-pointer"
+                        className="bg-yellow-600 text-neutral-900 font-label-caps text-xs font-bold px-6 h-11 rounded-full hover:opacity-90 active:scale-95 transition-all shrink-0 cursor-pointer"
                     >
                         Send
                     </button>

@@ -134,6 +134,7 @@ function baseBody(extra: Record<string, unknown>) {
     planType: "standard",
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
     defaultItems: [],
+    planId: extra.planType === "trial" ? "trial_3day" : "desk_fuel",
     ...extra,
   };
 }
@@ -254,7 +255,8 @@ test("legacy delivery with no items falls back to mealsPerDelivery", async () =>
   );
   assert.equal(created.status, 201, JSON.stringify(created.json));
   const { subscription, deliveries } = created.json;
-  assert.equal(subscription.mealsPerDelivery, 5);
+  // mealsPerDelivery is overridden by the plan's catalog value (6 for weekly desk_fuel)
+  assert.equal(subscription.mealsPerDelivery, 6);
   const target = deliveries[0];
   assert.equal((target.items ?? []).length, 0);
 
@@ -272,7 +274,7 @@ test("legacy delivery with no items falls back to mealsPerDelivery", async () =>
     (c: { deliveryId: number }) => c.deliveryId === target.id,
   );
   assert.equal(credits.length, 1);
-  assert.equal(credits[0].amount, 5);
+  assert.equal(credits[0].amount, 6);
 });
 
 after(async () => {

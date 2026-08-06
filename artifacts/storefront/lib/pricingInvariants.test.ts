@@ -56,10 +56,6 @@ const DEBT: Record<string, string> = {
     "computePlanQuote() derives a weekly cycle as round(mealsPerCycle/4) = 6 meals for a 22-weekday " +
     "month, but the ₹1,199/₹1,499 weekly tier is priced as 5 weekday lunches: per-meal x meals does " +
     "not reconcile, and 6 lunches do not fit a 5-weekday week (planCheckout.nextWeekdayISO).",
-  "Section03B2BEnterprise.tsx ₹180":
-    'components/landing/Section03B2BEnterprise.tsx renders "₹180 / meal" as an applied subsidy. No ' +
-    "spine amount formats to ₹180 — the Teams ladder is ₹189/₹199/₹209 and the same site advertises " +
-    '"from ₹189/meal". §A5: one product, several numbers.',
   'content/copy/plans.ts "Save 25%"':
     'plansCopy.cycles.prepaidQuarterly claims "Save 25%". MAX_CADENCE_DISCOUNT_PCT is 20 and the ' +
     "corpus quarterly tier is ~9% on the current weekly basis (~24% on a 5-meal one). §A7/E6 " +
@@ -266,7 +262,6 @@ test("no storefront surface states a rupee amount the spine cannot produce", () 
       const lit = m[0].replace(/\s/g, "");
       scanned++;
       if (vocabulary.has(lit) || NON_PRICE.has(lit)) continue;
-      if (rel === "components/landing/Section03B2BEnterprise.tsx" && lit === "₹180") { pinned("Section03B2BEnterprise.tsx ₹180"); continue; }
       assert.fail(`${rel} hardcodes ${lit}, which no spine amount produces — derive it (formatPaise) instead`);
     }
   }

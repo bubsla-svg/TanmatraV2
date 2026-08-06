@@ -39,10 +39,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
         {/* Hero Ambient Backdrop Wash */}
         <div className="mt-12 rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80">
-          <SafeImage 
-            src="https://picsum.photos/seed/tanmatra-hero/1200/600" 
-            alt="Tanmatra Culinary Showcase" 
-            aspectRatio="21/9" 
+          <SafeImage
+            src="https://picsum.photos/seed/tanmatra-hero/1200/600"
+            alt="Tanmatra Culinary Showcase"
+            aspectRatio="21/9"
           />
         </div>
       </section>
@@ -83,9 +83,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 Personalized by algorithms, reviewed by registered dietitians for micro-nutrient balance.
               </p>
             </div>
-            <button 
-              onClick={() => onNavigate("/plans")} 
-              className="mt-6 text-xs font-bold text-[#D4AF37] hover:underline flex items-center gap-1"
+            <button
+              onClick={() => onNavigate("/plans")}
+              className="mt-6 text-xs font-bold text-yellow-600 hover:underline flex items-center gap-1"
             >
               <span>View Recommended Plans</span>
               <span>→</span>

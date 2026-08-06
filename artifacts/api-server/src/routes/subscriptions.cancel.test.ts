@@ -26,6 +26,7 @@ import {
   subscriptionMandatesTable,
   preDebitNotificationsTable,
   ordersTable,
+  adminRolesTable,
 } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
@@ -69,6 +70,15 @@ async function makeUser(): Promise<TestUser> {
   return u;
 }
 
+async function makeFinanceUser(): Promise<TestUser> {
+  const u = await makeUser();
+  await db.insert(adminRolesTable).values({
+    userId: u.id,
+    role: "finance",
+  });
+  return u;
+}
+
 async function api(
   method: string,
   path: string,
@@ -98,19 +108,19 @@ function futureISO(daysAhead: number): string {
 
 /** Create a subscription via the real API, then force it active for billing. */
 async function seedActiveSubscription(user: TestUser): Promise<number> {
-  const created = await api("POST", "/subscriptions", {
+  const [sub] = await db.insert(subscriptionsTable).values({
+    userId: user.id,
     cadence: "weekly",
     mealsPerDelivery: 5,
     deliveryWindow: "12:00-14:00",
-    startDate: futureISO(2),
-    planType: "standard",
-    members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
-    defaultItems: [],
-  }, user);
-  assert.equal(created.status, 201, JSON.stringify(created.json));
-  const subId = created.json.subscription.id as number;
+    startDate: new Date(),
+    nextDeliveryAt: new Date(),
+    status: "active",
+    pricePerDeliveryPaise: 380000,
+    notes: "seeded legacy sub",
+  }).returning({ id: subscriptionsTable.id });
+  const subId = sub!.id;
   CREATED_SUB_IDS.push(subId);
-  await db.update(subscriptionsTable).set({ status: "active" }).where(eq(subscriptionsTable.id, subId));
   return subId;
 }
 
@@ -162,11 +172,12 @@ test("charge-mandate refuses after the mandate is revoked (404) — billing stop
   const subId = await seedActiveSubscription(user);
   await seedMandate(subId, "cancelled"); // post-cancel state
 
+  const financeUser = await makeFinanceUser();
   const res = await api("POST", "/payments/charge-mandate", {
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: futureISO(1),
-  }, undefined, { "x-admin-token": ADMIN_TOKEN });
+  }, financeUser);
   assert.equal(res.status, 404, JSON.stringify(res.json));
 });
 
@@ -179,11 +190,12 @@ test("charge-mandate refuses a cancelled subscription even if a mandate row ling
   // Simulate the race: subscription cancelled but a stale active mandate remains.
   await db.update(subscriptionsTable).set({ status: "cancelled" }).where(eq(subscriptionsTable.id, subId));
 
+  const financeUser = await makeFinanceUser();
   const res = await api("POST", "/payments/charge-mandate", {
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: futureISO(1),
-  }, undefined, { "x-admin-token": ADMIN_TOKEN });
+  }, financeUser);
   assert.equal(res.status, 409, JSON.stringify(res.json));
   assert.equal(res.json.code, "subscription_inactive");
 });
@@ -209,6 +221,12 @@ test("charge-mandate: request without the x-admin-token credential is rejected (
     "x-admin-token": "not-the-real-token",
   });
   assert.equal(wrongToken.status, 403, JSON.stringify(wrongToken.json));
+
+  // Even the correct x-admin-token should now be rejected (403) because it's not a finance user
+  const correctAdminToken = await api("POST", "/payments/charge-mandate", body, undefined, {
+    "x-admin-token": ADMIN_TOKEN,
+  });
+  assert.equal(correctAdminToken.status, 403, JSON.stringify(correctAdminToken.json));
 
   // The mandate must be untouched — no gateway charge occurred.
   const [mandate] = await db

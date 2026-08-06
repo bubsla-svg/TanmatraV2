@@ -100,15 +100,15 @@ after(async () => {
 
 test("the memoised/pre-grouped rewrite produces identical costs to the old algorithm", async () => {
   // Inventory. Order matters: `Array.find` takes the FIRST match, so the two
-  // "tomato"-ish rows are a deliberate trap for any rewrite that reorders or
+  // "pomodoro"-ish rows are a deliberate trap for any rewrite that reorders or
   // hash-indexes the lookup.
   const inv = await db
     .insert(inventoryItemsTable)
     .values([
-      // Both of these match ingredient "tomato" (product contains ingredient).
+      // Both of these match ingredient "pomodoro" (product contains ingredient).
       // The first must win — priced differently so a wrong winner is visible.
-      { itemNo: 9001, product: `Tomato Roma ${TAG}`, perKgUnitPaise: 8000 },
-      { itemNo: 9002, product: `Tomato Cherry ${TAG}`, perKgUnitPaise: 25000 },
+      { itemNo: 9001, product: `Pomodoro Roma ${TAG}`, perKgUnitPaise: 8000 },
+      { itemNo: 9002, product: `Pomodoro Cherry ${TAG}`, perKgUnitPaise: 25000 },
       // Reverse-direction match: ingredient "extra virgin olive oil" CONTAINS
       // this shorter product name.
       { itemNo: 9003, product: "olive oil", perKgUnitPaise: 60000 },
@@ -139,12 +139,12 @@ test("the memoised/pre-grouped rewrite produces identical costs to the old algor
   const [curry, paneer, fallback, unknown] = recipes;
 
   await db.insert(recipeIngredientsTable).values([
-    // "tomato" appears in BOTH recipes — exercises the memoisation path and
+    // "pomodoro" appears in BOTH recipes — exercises the memoisation path and
     // pins that both get the same (first-match) inventory row.
-    { recipeId: curry!.id, position: 1, rawText: "200 g tomato", ingredient: "tomato", quantityText: "200 g" },
+    { recipeId: curry!.id, position: 1, rawText: "200 g pomodoro", ingredient: "pomodoro", quantityText: "200 g" },
     { recipeId: curry!.id, position: 2, rawText: "30 g extra virgin olive oil", ingredient: "extra virgin olive oil", quantityText: "30 g" },
     { recipeId: curry!.id, position: 3, rawText: "5 g asafoetida-not-in-inventory", ingredient: `nomatch-${TAG}`, quantityText: "5 g" },
-    { recipeId: paneer!.id, position: 1, rawText: "150 g tomato", ingredient: "tomato", quantityText: "150 g" },
+    { recipeId: paneer!.id, position: 1, rawText: "150 g pomodoro", ingredient: "pomodoro", quantityText: "150 g" },
     { recipeId: paneer!.id, position: 2, rawText: "100 g paneer", ingredient: "paneer", quantityText: "100 g" },
     // quantityText null -> parseGrams must fall back to rawText.
     { recipeId: paneer!.id, position: 3, rawText: "20 g olive oil", ingredient: "olive oil", quantityText: null },
@@ -190,16 +190,16 @@ test("the memoised/pre-grouped rewrite produces identical costs to the old algor
   // shared by both implementations. Costs are paise/kg, so 200 g of a
   // 8000 paise/kg (₹80/kg) row is round(0.2 × 8000) = 1600 paise.
   //
-  // Golden Curry: tomato 200 g @ 8000 = 1600, taking Roma (the FIRST
+  // Golden Curry: pomodoro 200 g @ 8000 = 1600, taking Roma (the FIRST
   // matching row) not Cherry @ 25000 — Cherry would give 5000, so the
   // total below is what distinguishes them; olive oil 30 g @ 60000 =
   // 1800; the unmatched ingredient contributes 0.
   assert.equal(
     actual.get(`golden-curry-${TAG}`),
     1600 + 1800,
-    "tomato must resolve to the FIRST matching inventory row (Roma @ 8000), not Cherry @ 25000",
+    "pomodoro must resolve to the FIRST matching inventory row (Roma @ 8000), not Cherry @ 25000",
   );
-  // Paneer Bowl: tomato 150 g @ 8000 = 1200 (same memoised first match);
+  // Paneer Bowl: pomodoro 150 g @ 8000 = 1200 (same memoised first match);
   // paneer 100 g @ buyingPricePaise 40000 = 4000 (perKgUnitPaise is null,
   // so the fallback is exercised); olive oil 20 g @ 60000 = 1200, with
   // grams parsed from rawText because quantityText is null.

@@ -46,8 +46,8 @@ export default function MealFeedback({
     if (!isOpen) return null;
 
     const toggleReason = (reason: string) => {
-        setSelectedReasons(prev => 
-            prev.includes(reason) 
+        setSelectedReasons(prev =>
+            prev.includes(reason)
                 ? prev.filter(r => r !== reason)
                 : [...prev, reason]
         );
@@ -82,28 +82,28 @@ export default function MealFeedback({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-[#171717] border border-[rgba(255,255,255,0.06)] rounded-3xl p-6 max-w-md w-full text-[#e5e2e1] shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-                <button 
+            <div className="bg-neutral-900 border border-white/10 rounded-3xl p-6 max-w-md w-full text-neutral-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+                <button
                     onClick={onClose}
-                    className="absolute top-5 right-5 text-[#A3A3A3] hover:text-[#e5e2e1] transition-colors"
+                    className="absolute top-5 right-5 text-neutral-400 hover:text-neutral-200 transition-colors"
                 >
                     <span className="material-symbols-outlined text-xl">close</span>
                 </button>
 
                 {submitted ? (
                     <div className="py-8 text-center space-y-3">
-                        <div className="w-14 h-14 rounded-full bg-[#7D9E7E]/10 border border-[#7D9E7E]/30 text-[#7D9E7E] flex items-center justify-center mx-auto">
+                        <div className="w-14 h-14 rounded-full bg-green-600/10 border border-green-600/30 text-green-600 flex items-center justify-center mx-auto">
                             <span className="material-symbols-outlined text-2xl">check</span>
                         </div>
-                        <h3 className="font-headline-md text-xl font-bold text-[#e5e2e1]">Thank you for your feedback!</h3>
-                        <p className="font-body-sm text-xs text-[#A3A3A3]">Your telemetry helps calibrate your metabolic nutrition plan.</p>
+                        <h3 className="font-headline-md text-xl font-bold text-neutral-200">Thank you for your feedback!</h3>
+                        <p className="font-body-sm text-xs text-neutral-400">Your telemetry helps calibrate your metabolic nutrition plan.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <span className="font-label-caps text-xs text-[#f2ca50] uppercase tracking-widest font-bold">MEAL FEEDBACK</span>
-                            <h2 className="font-headline-md text-xl font-bold text-[#e5e2e1] mt-1">{mealName}</h2>
-                            <p className="font-body-sm text-xs text-[#A3A3A3] mt-1">How was this meal in your dietary protocol?</p>
+                            <span className="font-label-caps text-xs text-yellow-400 uppercase tracking-widest font-bold">MEAL FEEDBACK</span>
+                            <h2 className="font-headline-md text-xl font-bold text-neutral-200 mt-1">{mealName}</h2>
+                            <p className="font-body-sm text-xs text-neutral-400 mt-1">How was this meal in your dietary protocol?</p>
                         </div>
 
                         {/* Rating Options */}
@@ -111,7 +111,7 @@ export default function MealFeedback({
                             <button
                                 type="button"
                                 onClick={() => setRating('loved-it')}
-                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'loved-it' ? 'border-[#f2ca50] bg-[#f2ca50]/10 text-[#f2ca50]' : 'border-[rgba(255,255,255,0.06)] bg-[#201f1f] text-[#A3A3A3] hover:text-[#e5e2e1]'}`}
+                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'loved-it' ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400' : 'border-white/10 bg-neutral-800 text-neutral-400 hover:text-neutral-200'}`}
                             >
                                 <span className="material-symbols-outlined text-2xl mb-1" style={{ fontVariationSettings: rating === 'loved-it' ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
                                 <span className="font-body-sm text-xs font-medium">Loved it</span>
@@ -120,7 +120,7 @@ export default function MealFeedback({
                             <button
                                 type="button"
                                 onClick={() => setRating('good')}
-                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'good' ? 'border-[#f2ca50] bg-[#f2ca50]/10 text-[#f2ca50]' : 'border-[rgba(255,255,255,0.06)] bg-[#201f1f] text-[#A3A3A3] hover:text-[#e5e2e1]'}`}
+                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'good' ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400' : 'border-white/10 bg-neutral-800 text-neutral-400 hover:text-neutral-200'}`}
                             >
                                 <span className="material-symbols-outlined text-2xl mb-1">thumb_up</span>
                                 <span className="font-body-sm text-xs font-medium">It was okay</span>
@@ -129,7 +129,7 @@ export default function MealFeedback({
                             <button
                                 type="button"
                                 onClick={() => setRating('not-for-me')}
-                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'not-for-me' ? 'border-[#B0655A] bg-[#B0655A]/10 text-[#B0655A]' : 'border-[rgba(255,255,255,0.06)] bg-[#201f1f] text-[#A3A3A3] hover:text-[#e5e2e1]'}`}
+                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'not-for-me' ? 'border-red-400 bg-red-400/10 text-red-400' : 'border-white/10 bg-neutral-800 text-neutral-400 hover:text-neutral-200'}`}
                             >
                                 <span className="material-symbols-outlined text-2xl mb-1">thumb_down</span>
                                 <span className="font-body-sm text-xs font-medium">Not for me</span>
@@ -139,7 +139,7 @@ export default function MealFeedback({
                         {/* Structured Reasons (if selected) */}
                         {rating && (
                             <div className="space-y-2 animate-in fade-in duration-200">
-                                <label className="font-label-caps text-xs text-[#A3A3A3] uppercase tracking-wider block">
+                                <label className="font-label-caps text-xs text-neutral-400 uppercase tracking-wider block">
                                     {rating === 'loved-it' ? 'What stood out?' : 'What could be improved?'}
                                 </label>
                                 <div className="flex flex-wrap gap-2">
@@ -150,7 +150,7 @@ export default function MealFeedback({
                                                 key={reason}
                                                 type="button"
                                                 onClick={() => toggleReason(reason)}
-                                                className={`px-3 py-1.5 rounded-full font-body-sm text-xs transition-all border ${active ? 'border-[#f2ca50] bg-[#f2ca50] text-[#111318] font-semibold' : 'border-[rgba(255,255,255,0.06)] bg-[#201f1f] text-[#e5e2e1] hover:bg-[#2a2a2a]'}`}
+                                                className={`px-3 py-1.5 rounded-full font-body-sm text-xs transition-all border ${active ? 'border-yellow-400 bg-yellow-400 text-neutral-900 font-semibold' : 'border-white/10 bg-neutral-800 text-neutral-200 hover:bg-neutral-800'}`}
                                             >
                                                 {reason}
                                             </button>
@@ -163,7 +163,7 @@ export default function MealFeedback({
                         {/* Additional Notes */}
                         {rating && (
                             <div className="space-y-2">
-                                <label className="font-label-caps text-xs text-[#A3A3A3] uppercase tracking-wider block">
+                                <label className="font-label-caps text-xs text-neutral-400 uppercase tracking-wider block">
                                     Additional details (Optional)
                                 </label>
                                 <textarea
@@ -171,7 +171,7 @@ export default function MealFeedback({
                                     onChange={(e) => setComments(e.target.value)}
                                     placeholder="Add any specific culinary or clinical notes..."
                                     rows={2}
-                                    className="w-full bg-[#0e0e0e] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-xs text-[#e5e2e1] placeholder-[#A3A3A3] focus:outline-none focus:border-[#f2ca50] transition-colors resize-none"
+                                    className="w-full bg-neutral-950 border border-white/10 rounded-xl p-3 text-xs text-neutral-200 placeholder-neutral-400 focus:outline-none focus:border-yellow-400 transition-colors resize-none"
                                 />
                             </div>
                         )}
@@ -179,7 +179,7 @@ export default function MealFeedback({
                         <button
                             type="submit"
                             disabled={!rating}
-                            className="w-full bg-[#d4af37] text-[#111318] font-label-caps text-xs uppercase tracking-widest font-bold py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="w-full bg-yellow-500 text-neutral-900 font-label-caps text-xs uppercase tracking-widest font-bold py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Submit Feedback
                         </button>

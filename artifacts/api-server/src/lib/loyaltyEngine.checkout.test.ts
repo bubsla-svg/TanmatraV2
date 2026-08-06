@@ -24,6 +24,7 @@ import { eq, inArray } from "drizzle-orm";
 import {
   creditLedgerTable,
   db,
+  deliveryEventsTable,
   orderClaimsTable,
   ordersTable,
   pickupLocationsTable,
@@ -109,6 +110,16 @@ after(async () => {
     await db
       .delete(orderClaimsTable)
       .where(inArray(orderClaimsTable.userId, CREATED_USER_IDS));
+    const userOrders = await db
+      .select({ id: ordersTable.id })
+      .from(ordersTable)
+      .where(inArray(ordersTable.userId, CREATED_USER_IDS));
+    const orderIds = userOrders.map((o) => o.id);
+    if (orderIds.length > 0) {
+      await db
+        .delete(deliveryEventsTable)
+        .where(inArray(deliveryEventsTable.orderId, orderIds));
+    }
     await db
       .delete(ordersTable)
       .where(inArray(ordersTable.userId, CREATED_USER_IDS));

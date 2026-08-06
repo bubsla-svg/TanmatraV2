@@ -22,7 +22,7 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
   }, [pathname, router]);
 
   if (isChecking) {
-    return <div className="min-h-screen bg-[#0A0A0A]" />; // Neutral loading
+    return <div className="min-h-screen bg-neutral-950" />; // Neutral loading
   }
 
   return isAuthenticated ? <>{children}</> : null;

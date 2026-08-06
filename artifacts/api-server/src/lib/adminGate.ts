@@ -40,19 +40,19 @@ const OPERATIONAL_ROLES = ["kitchen", "catalog", "support", "growth"];
 
 export async function isRoleRequest(req: Request, role: string | string[]): Promise<GateResult> {
   const targetRoles = Array.isArray(role) ? role : [role];
-  
+
   const hasOperationalAlternative = targetRoles.some(r => OPERATIONAL_ROLES.includes(r));
 
   if (hasAdminToken(req) && hasOperationalAlternative) {
     return { allowed: true, operatorId: req.user?.id ?? "admin-token" };
   }
-  
+
   const adminSession = hasAdminSession(req);
   if (adminSession && hasOperationalAlternative) {
     return { allowed: true, operatorId: `admin:${adminSession.username}` };
   }
 
-  if (req.isAuthenticated()) {
+  if (req.isAuthenticated && req.isAuthenticated()) {
     // 1. Check database for ANY roles this user has.
     //
     // A failure here must DENY, never throw. Letting the rejection escape
