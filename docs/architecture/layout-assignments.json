@@ -1,0 +1,335 @@
+{
+  "$schema": "internal://p0/layout-assignments",
+  "generatedFrom": {
+    "sha": "3aea38dcc0cdd9263c5d839fbd959c4383f0f40e",
+    "method": "each route path (dynamic segments substituted with a literal sample) evaluated through the three real gate matchers, in the same nesting order app/layout.tsx renders them: InternalSurfaceGate (lib/internalSurfaces.ts#isInternalSurface) > FocusChromeGate (lib/focusRoutes.ts#isFocusRoute) > B2BChromeGate (components/B2BLayout.tsx#isB2BRoute, reimplemented here verbatim since it lives in a client component). First match wins; a route reaching none of the three keeps global chrome."
+  },
+  "mechanism": {
+    "routeGroups": false,
+    "nestedLayoutFiles": 1,
+    "nestedLayoutFilesList": [
+      "app/layout.tsx"
+    ],
+    "gateComponents": [
+      "components/InternalSurfaceGate.tsx",
+      "components/FocusLayout.tsx (FocusChromeGate)",
+      "components/B2BLayout.tsx (B2BChromeGate)"
+    ],
+    "note": "Shell selection is imperative, not structural. There is no app/(global|focus|b2b) route-group partition P0 §9 asks for. Instead, one root layout renders Header/Footer/MobileBottomNav/MiniCartBar wrapped in three nested client-side gates, each a usePathname() check that returns null to un-render the chrome. A separate, independent mechanism (an inline <head> script serialising STITCH_EXACT_ROUTES/STITCH_PREFIX_ROUTES and FOCUS_ROUTES/INTERNAL_ROUTES) stamps data-stitch=\"dark\" on <html> and data-focus-route=\"true\" on <body> before hydration, for zero-flash CSS purposes only — it does not un-render anything and is not a fourth shell.",
+    "b2bShellIsRealChrome": "false — B2BChromeGate un-renders the global chrome on B2B routes but nothing replaces it. The 10 B2B-classified routes render with NO header, footer, or nav of any kind. The component's own comment (\"the B2B layout will render its own specialized chrome\") does not match what ships: grep for Header/Nav usage inside app/corporate, app/group, app/office-lunch, app/rd-partners, app/partners finds none."
+  },
+  "defects": [
+    {
+      "id": "b2b-boundary-bug",
+      "severity": "medium",
+      "description": "components/B2BLayout.tsx#isB2BRoute uses raw pathname.startsWith(\"/corporate\") with no trailing-slash boundary check, unlike isFocusRoute and isInternalSurface which both check `path === route || path.startsWith(route + \"/\")`. Consequence: /corporate-wellness incorrectly matches as a B2B route and loses its global chrome (Header/Footer/MobileBottomNav) even though it is a standalone marketing page, not part of the /corporate family.",
+      "affectedRoute": "/corporate-wellness",
+      "fix": "Match the boundary-aware pattern the other two matchers already use."
+    },
+    {
+      "id": "b2b-no-replacement-chrome",
+      "severity": "high",
+      "description": "10 routes (the /corporate*, /group, /office-lunch, /rd-partners, /partners family) render with zero navigation chrome — no Header, no Footer, no MobileBottomNav, and no B2B-specific replacement despite the gate component's own comment promising one. A visitor on any of these pages has no way to navigate elsewhere in the app except the browser back button.",
+      "affectedRoutes": "see routes.json totals.byShell[\"b2b-chrome-suppressed\"]"
+    }
+  ],
+  "totals": {
+    "global": 38,
+    "focus": 10,
+    "internal": 0,
+    "b2bChromeSuppressed": 10,
+    "stitchDarkCanvas": 14
+  },
+  "assignments": [
+    {
+      "route": "/",
+      "shell": "global",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/account",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/addresses",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/appointments",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/billing",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/connections",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/favorites",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/history",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/loyalty",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/orders",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/preferences",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/subscriptions",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/symptoms",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/account/wellness",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/care/[condition]",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/challenges",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/challenges/[slug]",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/challenges/tracker",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/checkout",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/clinical",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/coach",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/corporate",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/corporate-wellness",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/corporate/[slug]",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/corporate/[slug]/lunch-planner",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/corporate/invite/[token]",
+      "shell": "focus",
+      "canvas": "light"
+    },
+    {
+      "route": "/custom-build",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/dish/[slug]",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/group/[code]",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/login",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/marketplace",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/marketplace/[slug]",
+      "shell": "focus",
+      "canvas": "light"
+    },
+    {
+      "route": "/meal-deals",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/meal-guides/[dishSlug]",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/meal-planner",
+      "shell": "global",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/meal-recommendations",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/menu",
+      "shell": "global",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/metabolic",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/office-lunch/[id]",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/order/confirmed/[orderId]",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/partners/dietitians",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/partners/fitness-clubs",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/partners/gyms",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/performance",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/plan/[planId]",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/plans",
+      "shell": "global",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/premium",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/qa",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/quick-setup",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/rd",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/rd-partners",
+      "shell": "b2b-chrome-suppressed",
+      "canvas": "light"
+    },
+    {
+      "route": "/rd/[slug]",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/recipes",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/styleguide",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/team",
+      "shell": "global",
+      "canvas": "light"
+    },
+    {
+      "route": "/track/[orderId]",
+      "shell": "global",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/trial",
+      "shell": "focus",
+      "canvas": "stitch-dark"
+    },
+    {
+      "route": "/vouchers",
+      "shell": "global",
+      "canvas": "stitch-dark"
+    }
+  ]
+}
