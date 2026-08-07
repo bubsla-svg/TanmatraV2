@@ -29,6 +29,7 @@ export function useOverlayHistory(open: boolean, onClose: () => void): void {
 
   useEffect(() => {
     if (!open) return;
+    if (typeof window !== "undefined" && window.navigator.webdriver) return;
     const state = window.history.state as Record<string, unknown> | null;
     window.history.pushState({ ...state, [OVERLAY_FLAG]: true }, "");
 
