@@ -29,7 +29,7 @@ export function DishBuyBar({ dish }: { dish: DishData }) {
   if (!hydrated || cart.lines.length > 0 || !isAlaCarteEnabled(dish)) return null;
 
   // bottom-0, not the bottom-16 tab-bar band: /dish/* is a focus route
-  // (lib/focusRoutes.ts) — the global tab bar never renders here, so this
+  // (app/(focus)/) — the global tab bar never renders here, so this
   // bar owns the bottom edge at every viewport.
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">

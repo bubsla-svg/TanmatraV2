@@ -6,13 +6,11 @@
 // see lib/themes/stitch.css.
 import "@/lib/themes/stitch.css";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { useCart } from "@/components/cart/CartProvider";
-import { isFocusRoute } from "@/lib/focusRoutes";
 
 // CartDrawer pulls in the Drawer primitive (Vaul — drag-physics + portal +
 // focus management, see components/ui/drawer.tsx) plus CartUpsellRail. A
@@ -27,9 +25,10 @@ const CartDrawer = dynamic(
 /**
  * Persistent mini-cart bar (§4.1/§4.3): once the cart is non-empty, a fixed
  * bottom bar shows count + display subtotal + "View cart" — the aggregator
- * pattern NCR users expect. Hidden on /checkout (its own money surface owns
- * the total there). Subtotal is display-only; the billed amount is always
- * the server's.
+ * pattern NCR users expect. Mounts only from app/(global)/layout.tsx, so it
+ * structurally never renders on /checkout or any other (focus)/(b2b) route —
+ * those shells own their bottom edge (their money bars anchor at bottom-0).
+ * Subtotal is display-only; the billed amount is always the server's.
  *
  * `bottom-16` is the shared bottom-bar band — the same offset DishBuyBar,
  * CheckoutPay, AlacarteDetails, PlanDetails, TrialStart, VoucherRedeem and
@@ -42,20 +41,16 @@ const CartDrawer = dynamic(
 export function MiniCartBar() {
   const { cart, hydrated } = useCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const pathname = usePathname();
   const count = itemCount(cart);
 
-  if (!hydrated || count === 0 || pathname.startsWith("/checkout")) return null;
+  if (!hydrated || count === 0) return null;
 
-  // Band anchor: `bottom-16` clears the global tab bar — but on a focus route
-  // (lib/focusRoutes.ts, e.g. the dish PDP) that bar never renders, so this
-  // bar takes the bottom edge itself; bottom-16 there would float it over a
-  // 64px void.
-  const bandClass = isFocusRoute(pathname) ? "bottom-0" : "bottom-16 md:bottom-0";
-
+  // Band anchor: `bottom-16` clears the global tab bar, which always renders
+  // in the (global) shell this bar mounts in. (Focus routes take the bottom
+  // edge themselves — this bar never exists there to need a bottom-0 arm.)
   return (
     <>
-      <div data-stitch="dark" className={`fixed inset-x-0 ${bandClass} z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur`}>
+      <div data-stitch="dark" className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <p className="tabular text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}

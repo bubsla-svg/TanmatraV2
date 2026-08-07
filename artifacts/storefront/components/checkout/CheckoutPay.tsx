@@ -50,7 +50,7 @@ export function CheckoutPay({
 
       {/* Sticky pay bar — the screen's single gold pill; amount is the
           server-quoted total verbatim. Anchored bottom-0, not the bottom-16
-          tab-bar band: /checkout is a focus route (lib/focusRoutes.ts) — the
+          tab-bar band: /checkout lives in the (focus) shell (app/(focus)/) — the
           global tab bar never renders here. */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto max-w-md px-4 py-3">

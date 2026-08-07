@@ -9,7 +9,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
-import { isFocusRoute } from "@/lib/focusRoutes";
 
 export type CoreTab = "home" | "menu" | "plans" | "account";
 
@@ -71,11 +70,11 @@ export function MobileBottomNav() {
   // Back gesture closes the account sheet, not the page.
   useOverlayHistory(accountSheetOpen, () => setAccountSheetOpen(false));
 
-  // FOCUS SHELL LAW (components/FocusLayout.tsx): the global tab bar never
-  // renders inside a high-intent flow — auth, checkout, onboarding, PDP own
-  // their bottom edge (their money bars anchor at bottom-0 there). Checked
-  // AFTER the hooks so the hook order stays unconditional.
-  if (isFocusRoute(pathname)) return null;
+  // No pathname gate here any more: this bar mounts only from
+  // app/(global)/layout.tsx and app/not-found.tsx, and both want it
+  // unconditionally — focus/b2b routes never mount it at all (their layouts
+  // render no global chrome), and a 404 always offers the tab bar so a lost
+  // visitor can navigate whatever shape the bad URL had.
 
   return (
     <>
