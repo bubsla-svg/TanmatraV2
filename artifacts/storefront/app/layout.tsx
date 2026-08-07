@@ -26,12 +26,8 @@ import "@/lib/themes/tanmatraBridge.css";
 // the sheet in.
 import "@/lib/themes/stitch.css";
 import "./globals.css";
-import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CartProvider } from "@/components/cart/CartProvider";
-import { MiniCartBar } from "@/components/cart/MiniCartBar";
-import { Footer } from "@/components/Footer";
-import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { NetworkStatusToast } from "@/components/NetworkStatusToast";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
@@ -43,11 +39,6 @@ import {
   STITCH_EXACT_ROUTES,
   STITCH_PREFIX_ROUTES,
 } from "@/lib/stitchRoutes";
-import { FOCUS_ROUTES } from "@/lib/focusRoutes";
-import { InternalSurfaceGate } from "@/components/InternalSurfaceGate";
-import { FocusChromeGate } from "@/components/FocusLayout";
-import { B2BChromeGate } from "@/components/B2BLayout";
-import { INTERNAL_ROUTES } from "@/lib/internalSurfaces";
 
 // TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
 // next/font self-hosts the files and exposes each as a CSS variable that
@@ -157,34 +148,6 @@ const STITCH_ROUTE_SCRIPT = `(function () {
 })();`;
 
 /**
- * Same zero-flash technique as STITCH_ROUTE_SCRIPT above, serialising
- * lib/focusRoutes.ts's own FOCUS_ROUTES (so this cannot drift from the
- * matcher every other focus-shell check already uses) instead of hand-coding
- * the boundary-aware match twice. Stamps `data-focus-route="true"` on <body>
- * before paint so globals.css's override rule can cancel the global chrome's
- * ~8rem bottom padding on routes where that chrome never renders — see that
- * rule for why this can't just read the path via `headers()` here instead.
- */
-const FOCUS_ROUTE_SCRIPT = `(function () {
-  try {
-    var ROUTES = ${JSON.stringify(FOCUS_ROUTES)};
-    var INTERNAL = ${JSON.stringify(INTERNAL_ROUTES)};
-    var path = String(location.pathname).split(/[?#]/)[0] || "";
-    if (path.length > 1 && path.charAt(path.length - 1) === "/") path = path.slice(0, -1);
-    var focus = false;
-    for (var i = 0; i < ROUTES.length; i++) {
-      var r = ROUTES[i];
-      if (path === r || path.indexOf(r + "/") === 0) { focus = true; break; }
-    }
-    for (var i = 0; i < INTERNAL.length; i++) {
-      var r = INTERNAL[i];
-      if (path === r || path.indexOf(r + "/") === 0) { focus = true; break; }
-    }
-    if (focus) document.body.setAttribute("data-focus-route", "true");
-  } catch (e) {}
-})();`;
-
-/**
  * Root layout. `data-theme="light"` is the server-rendered fallback — correct
  * for a visitor with no stored preference and no dark OS signal, so the first
  * byte of HTML is right without waiting on the client. A visitor whose OS
@@ -225,28 +188,16 @@ export default function RootLayout({
         // of its own — color-scheme is inherited, and STITCH_ROUTE_SCRIPT set
         // it on <html> above before this element was even parsed.
         //
-        // The bottom padding clears the mobile bottom nav (64px) PLUS
-        // env(safe-area-inset-bottom). A flat pb-16 (64px) left the last card
-        // on /menu and /plans cut off on a notched phone with nothing left to
-        // scroll, because MiniCartBar/DishBuyBar sit fixed ABOVE the nav and
-        // add ~69px more whenever the cart is non-empty — and MiniCartBar is
-        // mounted globally (this very file, below), so every route can gain
-        // that extra bar with no per-page change. pb-32 (128px) + the safe
-        // area clears nav+bar together with room to spare, generously, rather
-        // than re-deriving the exact pixel sum per route.
-        //
-        // None of that global chrome renders on a focus route (nav/cart bars
-        // are all gated off — see lib/focusRoutes.ts), so this padding would
-        // just be 128px of dead scrollable space there instead. globals.css's
-        // `body[data-focus-route="true"]` rule cancels it back to just the
-        // safe-area inset, driven by FOCUS_ROUTE_SCRIPT below.
-        className="bg-[var(--bg)] text-ink pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-0"
+        // No bottom padding here any more: the clearance a page needs is a
+        // property of its shell, not of the document, so each route group's
+        // layout pads its own <main> (see app/(global)/layout.tsx). That is
+        // what let FOCUS_ROUTE_SCRIPT and the `body[data-focus-route]`
+        // override in globals.css both be deleted — the group a file lives in
+        // already answers the question they were computing at runtime.
+        className="bg-[var(--bg)] text-ink"
       >
         <Script id="stitch-route-scope" strategy="beforeInteractive">
           {STITCH_ROUTE_SCRIPT}
-        </Script>
-        <Script id="focus-route-scope" strategy="beforeInteractive">
-          {FOCUS_ROUTE_SCRIPT}
         </Script>
         <SiteStructuredData />
         <PostHogProvider>
@@ -259,24 +210,12 @@ export default function RootLayout({
                 Skip to main content
               </a>
               <CartProvider>
-                <InternalSurfaceGate>
-                  <FocusChromeGate>
-                    <B2BChromeGate>
-                      <Header />
-                    </B2BChromeGate>
-                  </FocusChromeGate>
-                </InternalSurfaceGate>
-                <main id="main">{children}</main>
-                <InternalSurfaceGate>
-                  <FocusChromeGate>
-                    <B2BChromeGate>
-                      {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}
-                      <MiniCartBar />
-                      <Footer />
-                      <MobileBottomNav />
-                    </B2BChromeGate>
-                  </FocusChromeGate>
-                </InternalSurfaceGate>
+                {/* Chrome lives in the route-group layouts — app/(global),
+                    app/(focus), app/(b2b) — never here. The cart PROVIDER
+                    stays at the root so a cart built while browsing survives
+                    the crossing into /checkout, which is a different group
+                    and would otherwise remount the state. */}
+                {children}
                 {/* Honest offline state — the service worker never serves a
                   cached /checkout, /account or /api response, so a dropped
                   connection has to be visible rather than silent. */}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import RdPartnersClient from "@/app/rd-partners/RdPartnersClient";
+import RdPartnersClient from "@/app/(b2b)/rd-partners/RdPartnersClient";
 
 export const metadata: Metadata = {
   title: "Clinical Dietitians Partner Network | Tanmatra",

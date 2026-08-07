@@ -88,6 +88,9 @@ const nextConfig: NextConfig = {
       // Legacy clinical advisory schedules → canonical account appointments dashboard.
       { source: "/appointments", destination: "/account/appointments", permanent: true },
       { source: "/checkout-appointment", destination: "/account/appointments", permanent: true },
+      // P0 §7: health-connections canonical home is /account/connections; the
+      // legacy wearables name permanently redirects there.
+      { source: "/account/wearables", destination: "/account/connections", permanent: true },
     ];
   },
   // next/image through a custom loader (lib/imageLoader.ts — the WHY is

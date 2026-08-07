@@ -4,7 +4,7 @@ import { type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
 
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * Dish row — Stitch Route Brief 02 v3, "Mirrored Clinical Menu List"
@@ -62,7 +62,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
               {dish.isVeg ? "Veg" : "Non-Veg"}
             </span>
           </div>
-          <SafeImage src={dish.image} alt={dish.name} aspectRatio="4/3" className="w-full" />
+          <SafeImage src={dish.image} alt={dish.name} className="aspect-[4/3] w-full" />
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="font-bold text-body-lg text-ink-primary truncate">{dish.name}</h3>
@@ -112,8 +112,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
           <SafeImage
             src={dish.image}
             alt={dish.name}
-            aspectRatio="1/1"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </div>
       </Link>

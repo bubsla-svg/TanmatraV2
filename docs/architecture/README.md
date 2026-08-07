@@ -9,6 +9,38 @@ end-to-end (see [`p0-baseline.json`](./p0-baseline.json) `deliverables`).
 The blocking trigger is layout ownership — see
 [`layout-contracts.md`](./layout-contracts.md).
 
+## Remediation status (2026-08-07, not a re-audit)
+
+The evidence below is still the truthful record of `3aea38dc`. Since then,
+the layout-ownership branch landed structural fixes for four of the eight
+`blockingForGo` items; the JSON/markdown evidence files are deliberately
+left pinned to their SHA rather than edited in place. What changed:
+
+- **Layout ownership (the NO-GO trigger):** `app/` is now partitioned into
+  `(global)` / `(focus)` / `(b2b)` route groups, each with its own
+  `layout.tsx`. The three `usePathname()` chrome-subtraction gates
+  (`FocusChromeGate`, `B2BChromeGate`, `InternalSurfaceGate`) and the
+  `FOCUS_ROUTE_SCRIPT` / `body[data-focus-route]` runtime mechanism are
+  deleted — which shell a route gets is now a property of where its file
+  lives. `lib/focusRoutes.ts` remains only as the sticky-band/tab-bar
+  matcher for components that render inside `(global)`.
+- **B2B shell exists:** `app/(b2b)/layout.tsx` renders a compact
+  business header (brand exit home, corporate/partners links, storefront
+  entry) — closes layout-contracts.md §5.1 (chrome subtracted with nothing
+  replacing it). `/corporate-wellness` is assigned to the B2B shell
+  deliberately (per the UX/UI architecture plan), superseding §5.2's
+  accidental-prefix finding.
+- **Route contract:** `/account/wearables` → 308 → `/account/connections`
+  landed in `next.config.ts`.
+- **Single SafeImage:** `components/primitives/SafeImage.tsx` is deleted;
+  `components/ui/SafeImage.tsx` is the one implementation (callers
+  migrated).
+
+Still open from `blockingForGo`: the `?step=` auth-step contract (needs a
+PhoneAuth rework shared with checkout), the production analytics sanitizer,
+and the orphaned `clinical-governance-engine` integration. A fresh audit
+pass against the merge SHA is what moves the verdict.
+
 ## Reading order
 
 1. [`p0-baseline.json`](./p0-baseline.json) — start here. The verdict, every

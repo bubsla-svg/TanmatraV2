@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { MarketplaceAddToCart } from "@/components/cart/MarketplaceAddToCart";
 
@@ -23,7 +23,7 @@ export default async function MarketplaceItemPage({ params }: { params: Promise<
     <div className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
       {/* Hero Image */}
       <div className="relative w-full aspect-square md:aspect-video overflow-hidden">
-        <SafeImage src={item.image ?? ""} alt={item.name} aspectRatio="1/1" className="w-full h-full object-cover" />
+        <SafeImage src={item.image ?? ""} alt={item.name} className="h-full w-full" />
       </div>
 
       <div className="px-gutter pt-6 flex-1 flex flex-col">

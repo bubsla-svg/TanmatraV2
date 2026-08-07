@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import type { DishData } from "@workspace/menu-catalog";
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { PrimaryCTA } from "@/components/primitives/CTA";
 import { PriceDisplay } from "@/components/primitives/PriceDisplay";
 import { useCart } from "@/components/cart/CartProvider";
@@ -50,8 +50,7 @@ export function ProductDetailView({ dish }: ProductDetailViewProps) {
         <SafeImage
           src={heroImage}
           alt={dish.name}
-          aspectRatio="16/9"
-          className="w-full rounded-2xl overflow-hidden object-cover border border-line"
+          className="aspect-video w-full rounded-2xl border border-line bg-surface"
         />
       </div>
 

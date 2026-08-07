@@ -199,23 +199,6 @@ body {
   margin: 0;
 }
 
-/* FOCUS ROUTE PADDING OVERRIDE. app/layout.tsx's <body> unconditionally
- * reserves ~8rem of bottom padding to clear the global MobileBottomNav +
- * MiniCartBar/DishBuyBar stack — but those never render on a focus route
- * (lib/focusRoutes.ts: /login, /checkout, /quick-setup, /dish), which owns
- * its own bottom edge and pads for its own sticky bar instead. Left
- * unconditional, that was 128px of dead scrollable canvas below every focus
- * route's real content. `data-focus-route` is stamped on <body> by
- * FOCUS_ROUTE_SCRIPT (app/layout.tsx) before first paint — same mechanism as
- * `data-stitch` above, and for the same reason: reading the path via
- * `headers()` in the root layout would force the whole app out of static
- * rendering (measured 50 routes -> 2 for the identical data-stitch case).
- * Safe-area inset is kept, not zeroed — a focus route's own sticky bar still
- * needs to clear the home-indicator/notch. */
-body[data-focus-route="true"] {
-  padding-bottom: env(safe-area-inset-bottom) !important;
-}
-
 /* Clinical data (prices, macros) always reads in tabular figures. */
 .tabular {
   font-variant-numeric: tabular-nums;

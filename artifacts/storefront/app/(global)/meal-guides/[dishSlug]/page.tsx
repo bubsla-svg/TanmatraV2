@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { findDish, fetchMenu } from "@/lib/catalog";
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 
 export async function generateMetadata({ params }: { params: Promise<{ dishSlug: string }> }): Promise<Metadata> {
@@ -34,7 +34,7 @@ export default async function MealGuidePage({ params }: { params: Promise<{ dish
         {/* Dish Summary */}
         <div className="flex gap-4 items-center">
           <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-surface flex-shrink-0 border border-line">
-            <SafeImage src={dish.image ?? ""} alt={dish.name} aspectRatio="1/1" className="w-full h-full object-cover" />
+            <SafeImage src={dish.image ?? ""} alt={dish.name} className="h-full w-full" />
           </div>
           <div>
             <h2 className="font-bold text-lg text-ink-primary mb-1">{dish.name}</h2>

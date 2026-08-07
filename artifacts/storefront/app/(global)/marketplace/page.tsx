@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ export default async function MarketplacePage() {
                     ))}
                   </div>
                 )}
-                <SafeImage src={item.image ?? ""} alt={item.name} aspectRatio="1/1" className="w-full" />
+                <SafeImage src={item.image ?? ""} alt={item.name} className="aspect-square w-full" />
               </div>
               <div className="flex flex-col gap-1 flex-1">
                 <span className="font-label-caps text-[10px] text-ink-muted uppercase tracking-widest">{item.supplierName}</span>
