@@ -35,11 +35,26 @@ left pinned to their SHA rather than edited in place. What changed:
 - **Single SafeImage:** `components/primitives/SafeImage.tsx` is deleted;
   `components/ui/SafeImage.tsx` is the one implementation (callers
   migrated).
+- **`?step=` auth-step contract (2026-08-08):** `/login` now accepts
+  `?step=phone|otp` as the canonical, linkable auth state
+  (`lib/loginRoute.ts`), in addition to the existing `?next=` return
+  destination. `PhoneAuth` opens directly at the requested stage and
+  `LoginCard` keeps `?step=` in sync via `router.replace` as the visitor
+  progresses, so the address bar stays a truthful record of state without
+  spamming browser history. `account-conflict` — the third value in P0's
+  step enum — is **not** implemented: `parseAuthStep` deliberately rejects
+  it, because no signal anywhere in the product (client or
+  `POST /auth/phone/verify-otp`, which is a plain upsert-by-phone) can ever
+  produce that state. Building it for real needs a product decision first
+  (what a "conflict" even means here, and what resolution UX follows) —
+  tracked as a separate follow-up, not fabricated speculatively. The
+  previously-untested `?next=` open-redirect guard (domain invariant 13,
+  "Return-Route Preservation") is now covered by `lib/loginRoute.test.ts`.
 
-Still open from `blockingForGo`: the `?step=` auth-step contract (needs a
-PhoneAuth rework shared with checkout), the production analytics sanitizer,
-and the orphaned `clinical-governance-engine` integration. A fresh audit
-pass against the merge SHA is what moves the verdict.
+Still open from `blockingForGo`: the production analytics sanitizer and the
+orphaned `clinical-governance-engine` integration, plus the `account-conflict`
+step above pending a product decision. A fresh audit pass against the merge
+SHA is what moves the verdict.
 
 ## Reading order
 

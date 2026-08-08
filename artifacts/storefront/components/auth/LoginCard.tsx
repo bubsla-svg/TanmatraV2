@@ -8,6 +8,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import { getAuthUser, verifyOtp } from "@/lib/api";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Button } from "@/components/ui/button";
+import { authStepForOtpStage, otpStageForAuthStep, type AuthStep } from "@/lib/loginRoute";
+import type { OtpStage } from "@/lib/otpFlow";
 
 /**
  * The /login card (SF account surfaces / CUJ-02). An already-signed-in visitor
@@ -15,10 +17,23 @@ import { Button } from "@/components/ui/button";
  * /login — the no-redirect-loop rule); otherwise Firebase OTP signs them in and
  * the verified session forwards the same way. No Firebase config = the same
  * fail-LOUD fallback the plan gate uses — never a silent dead end.
+ *
+ * `initialStep` opens PhoneAuth directly at the URL's step (P0 §7); as the
+ * visitor progresses, syncStepInUrl keeps `?step=` a truthful record of state
+ * via router.replace — never a push, so Back doesn't fill up with OTP substeps.
  */
-export function LoginCard({ next }: { next: string }) {
+export function LoginCard({ next, initialStep }: { next: string; initialStep?: AuthStep }) {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
+
+  function syncStepInUrl(stage: OtpStage) {
+    const step = authStepForOtpStage(stage);
+    const qs = new URLSearchParams();
+    if (step) qs.set("step", step);
+    if (next !== "/account") qs.set("next", next);
+    const query = qs.toString();
+    router.replace(query ? `/login?${query}` : "/login", { scroll: false });
+  }
 
   useEffect(() => {
     let live = true;
@@ -75,7 +90,12 @@ export function LoginCard({ next }: { next: string }) {
       ) : firebaseConfigured() ? (
         <>
           <p className="text-sm text-ink-muted">A code by SMS, no passwords.</p>
-          <PhoneAuth startExpanded onVerified={() => router.replace(next)} />
+          <PhoneAuth
+            startExpanded
+            initialStage={otpStageForAuthStep(initialStep)}
+            onStageChange={syncStepInUrl}
+            onVerified={() => router.replace(next)}
+          />
         </>
       ) : (
         <>

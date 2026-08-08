@@ -41,6 +41,8 @@ const inputCls =
 export function PhoneAuth({
   onVerified,
   startExpanded = false,
+  initialStage,
+  onStageChange,
 }: {
   onVerified: (user: AuthUser) => void;
   /**
@@ -52,8 +54,16 @@ export function PhoneAuth({
    * default: there, sign-in is genuinely optional and the teaser is correct.
    */
   startExpanded?: boolean;
+  /** Overrides the startExpanded-derived initial stage. /login uses this to
+   *  open directly at the step named in its URL (P0 §7 — see lib/loginRoute.ts). */
+  initialStage?: OtpStage;
+  /** Fired on every stage change after mount (not for the initial render) so
+   *  a host page can keep its own address bar a truthful record of state. */
+  onStageChange?: (stage: OtpStage) => void;
 }) {
-  const [stage, setStage] = useState<OtpStage>(startExpanded ? "phone" : "collapsed");
+  const [stage, setStage] = useState<OtpStage>(
+    initialStage ?? (startExpanded ? "phone" : "collapsed"),
+  );
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -70,6 +80,25 @@ export function PhoneAuth({
   // because a parent re-rendered and handed down a fresh closure.
   const onVerifiedRef = useRef(onVerified);
   onVerifiedRef.current = onVerified;
+
+  // Same ref pattern for `onStageChange`, plus a mounted flag so the host's
+  // very first render (the URL step it asked for) doesn't get echoed straight
+  // back — only real, user-driven transitions update the address bar.
+  const onStageChangeRef = useRef(onStageChange);
+  onStageChangeRef.current = onStageChange;
+  const mountedStage = useRef(false);
+  useEffect(() => {
+    if (!mountedStage.current) {
+      mountedStage.current = true;
+      return;
+    }
+    // "collapsed" is only reached from here via a just-succeeded verify()
+    // (line below), which already starts its own router.replace(next) through
+    // onVerified — syncing here too would race two replace() calls in the
+    // same tick over which URL wins. Every other caller ignores this stage.
+    if (stage === "collapsed") return;
+    onStageChangeRef.current?.(stage);
+  }, [stage]);
 
   // Session probe. A 401 (or any failure) means "signed out" — the sign-in
   // affordance is the correct fallback, never a blocked screen.
