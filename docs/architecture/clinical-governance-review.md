@@ -78,22 +78,39 @@ documented as reviewed out of the live `clinicalGuardrailEngine.ts` before
 merge, at a different, unreconciled threshold (>160 vs ≥140 mg/dL). It now
 carries a ⛔ do-not-wire header and `@deprecated` marker (this change).
 
-## Containment applied in this change
+## Disposition: package REMOVED (owner decision, 2026-08-08)
 
-1. `WearableMealScoringEngine.ts` — ⛔ header + `@deprecated`: never import
-   outside the package; the sanctioned path is the live advisory engine.
-2. `AdverseEventWebhookController.ts` — removed hardcoded fallback webhook
-   secret (`'tanmatra_webhook_secret_2026'`); signature verification now
-   fails loudly when `META_APP_SECRET` is unset instead of "verifying"
-   against a public-in-git value.
-3. `WormAuditLogger.ts` — removed hardcoded fallback HMAC key
-   (`'tanmatra_evd_65b_secret_key'`); the key must now be supplied explicitly
-   or via `WORM_AUDIT_HMAC_KEY` (verify_suite passes a labeled test fixture).
-4. This document; `README.md` remediation status updated.
+On reviewing the verdicts above, the owner's call was to cut rather than
+carry: *"when in doubt cut it out… focus on shipping core business
+operations without that extra bit of complexity."* `artifacts/
+clinical-governance-engine` is deleted in the same change that adds this
+document. Rationale, in the review's own terms:
 
-No wiring. The package still has zero dependents, by design of this review.
+- Zero dependents (verified by grep, by `docs/architecture/clinical-scope.md`,
+  and by this review) — deletion changes no runtime behavior anywhere.
+- The package's principal risk was its *names*: safety mechanisms that
+  appear to exist invite the assumption they run. Removal, not containment,
+  is the complete fix for that.
+- One file (`WearableMealScoringEngine`) actively contradicted a reviewed
+  clinical-safety decision; two files carried hardcoded fallback secrets;
+  seven were scope-inflated filler with fabricated "certification" output.
+- The genuinely valuable ideas are preserved: this document records what each
+  service did, what was real, and what building it properly would require;
+  the code itself remains in git history (last present at the parent of the
+  commit that introduced this file).
 
-## Open questions that gate any future wiring (owner decisions)
+**The live clinical-safety rails are untouched and remain the sanctioned
+paths**: `@workspace/preferences-match` + `checkoutSafety.ts` (blocking
+allergen/condition gate at order creation), `clinicalGuardrailEngine.ts`
+(advisory glycemic alerting to the RD), and PHI encryption at rest
+(`crypto.ts` + `CLINICAL_KMS_MASTER_KEY`).
+
+## If any capability is ever revived — the questions that gate it
+
+These were the escalation questions this review raised; the 2026-08-08
+decision answers them "not now" collectively. They remain the checklist for
+any future revival (start from the recorded design here plus git history,
+not from re-wiring the old package wholesale):
 
 1. **ContraindicationEngine**: will anyone build the biomarker + dish-micros
    ingestion its input shape needs? Without that there is nothing to

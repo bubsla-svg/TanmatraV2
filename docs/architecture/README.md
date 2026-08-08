@@ -70,30 +70,30 @@ left pinned to their SHA rather than edited in place. What changed:
   `NEXT_PUBLIC_POSTHOG_KEY`/`HOST` remain unset in `deploy.yml` — analytics
   is still dormant in production — but the enforcement code this document
   found missing now exists and is unit-tested (`lib/analyticsSanitizer.test.ts`).
-- **`clinical-governance-engine` reviewed — integration deliberately NOT
-  performed (2026-08-08):** the full per-service review is
+- **`clinical-governance-engine` reviewed and REMOVED (owner decision,
+  2026-08-08):** the full per-service review is
   [`clinical-governance-review.md`](./clinical-governance-review.md). Every
   source file was read end-to-end and the live integration surfaces mapped;
-  the verdict is that none of the six clinically-named services can be wired
-  today without fabricating inputs that don't exist in the live schema
+  the verdict was that none of the six clinically-named services could be
+  wired without fabricating inputs that don't exist in the live schema
   (structured biomarkers, dish micros, supplier CoA-ppm data) or silently
-  no-op-ing outputs through gateway interfaces that have zero production
-  implementations — which would recreate the very "safety mechanism in name
-  only" condition this finding is about. What DID land: containment —
-  `WearableMealScoringEngine` (which reintroduces the auto-target-adjustment
-  pattern explicitly reviewed out of the live `clinicalGuardrailEngine.ts`)
-  now carries a ⛔ do-not-wire header and `@deprecated` marker, and the two
-  hardcoded fallback secrets in `AdverseEventWebhookController.ts` /
-  `WormAuditLogger.ts` were removed (missing config now fails loudly). Six
-  owner-level questions gate any future wiring — see the review doc's final
-  section. This item moves from "integration pending" to "reviewed; wiring
-  blocked on owner decisions," which is the honest resolution of the P0
-  finding: the danger named by `clinical-scope.md` §1.2 was never that the
-  package was unwired, but that its names invited the assumption it ran.
+  no-op-ing outputs through gateway interfaces with zero production
+  implementations — recreating the very "safety mechanism in name only"
+  condition this finding is about. Presented with that verdict, the owner
+  chose removal over carrying the complexity. The package (5,143 lines,
+  zero dependents) is deleted; the review doc records what each service did,
+  what was real, and the questions that gate any future revival; the code
+  remains in git history. This fully resolves the `clinical-scope.md` §1.2
+  finding — the danger was never that the package sat unwired, but that its
+  names invited the assumption it ran, and nothing now bears those names.
+  The live clinical-safety rails (preferences-match allergen gate,
+  `clinicalGuardrailEngine.ts` advisory alerting, PHI encryption) are
+  untouched.
 
-Still open from `blockingForGo`: the `account-conflict` auth step (product
-decision) and the six clinical-governance owner questions above. A fresh
-audit pass against the merge SHA is what moves the verdict.
+Still open from `blockingForGo`: only the `account-conflict` auth step
+(parked pending a product decision — the shipped `?step=` contract works
+without it). A fresh audit pass against the merge SHA is what moves the
+verdict.
 
 ## Reading order
 
