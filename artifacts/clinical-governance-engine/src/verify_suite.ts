@@ -374,7 +374,9 @@ async function runVerificationSuite() {
         ? wormRecords[wormRecords.length - 1].chaining.event_hash
         : '0000000000000000000000000000000000000000000000000000000000000000',
   };
-  const wormLogger = new CryptographicWormLogger(wormMock);
+  // Explicit test-only key: the logger no longer ships a hardcoded fallback,
+  // so the demo must supply one (this is a fixture, not a secret).
+  const wormLogger = new CryptographicWormLogger(wormMock, 'verify-suite-test-only-key');
   await wormLogger.initializeGenesis();
   try {
     console.log(

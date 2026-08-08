@@ -141,8 +141,22 @@ export async function withRetry<T>(
 }
 
 export class AdverseEventWebhookController {
-  private readonly appSecret =
-    process.env.META_APP_SECRET || 'tanmatra_webhook_secret_2026';
+  /** Resolved lazily in verifyMetaSignature(). This used to fall back to a
+   * hardcoded secret baked into source ('tanmatra_webhook_secret_2026') when
+   * META_APP_SECRET was unset — a violation of the repo's no-hardcoded-secrets
+   * rule, and worse than no check at all: signature verification against a
+   * public-in-git secret is theater. Now absent config fails LOUDLY at the
+   * point of use instead of silently "verifying" against a known value. */
+  private get appSecret(): string {
+    const secret = process.env.META_APP_SECRET;
+    if (!secret) {
+      throw new Error(
+        'META_APP_SECRET is not configured — cannot verify webhook signatures. ' +
+          'Refusing to fall back to a hardcoded secret.',
+      );
+    }
+    return secret;
+  }
   private readonly p0Keywords = [
     'reaction',
     'allergy',

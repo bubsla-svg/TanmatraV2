@@ -76,11 +76,27 @@ export class CryptographicWormLogger {
   private lastEventHash: string =
     '0000000000000000000000000000000000000000000000000000000000000000';
 
+  /** The HMAC key. This used to fall back to a hardcoded literal
+   * ('tanmatra_evd_65b_secret_key') baked into source when the env var was
+   * unset — which defeats the entire purpose of an HMAC-chained audit log: a
+   * tamper-evidence chain keyed on a public-in-git value proves nothing. Now
+   * the key must be supplied explicitly (constructor arg, e.g. a test
+   * fixture) or via WORM_AUDIT_HMAC_KEY; a missing key fails LOUDLY at
+   * construction rather than silently degrading the chain. */
+  private readonly hmacSecretKey: string;
+
   constructor(
     private readonly wormStorageGateway: WormStorageGateway,
-    private readonly hmacSecretKey: string = process.env.WORM_AUDIT_HMAC_KEY ||
-      'tanmatra_evd_65b_secret_key',
-  ) {}
+    hmacSecretKey: string | undefined = process.env.WORM_AUDIT_HMAC_KEY,
+  ) {
+    if (!hmacSecretKey) {
+      throw new Error(
+        'WORM_AUDIT_HMAC_KEY is not configured and no key was passed — ' +
+          'refusing to hash-chain audit records with a hardcoded fallback key.',
+      );
+    }
+    this.hmacSecretKey = hmacSecretKey;
+  }
 
   public async initializeGenesis(): Promise<void> {
     try {

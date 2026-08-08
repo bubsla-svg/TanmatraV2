@@ -58,6 +58,31 @@ export interface ScoringResult {
   matchScore: number; // Normalized percentage match (0% - 100%)
 }
 
+/**
+ * ⛔ DO NOT WIRE THIS CLASS INTO THE LIVE PLATFORM — in any mode, including
+ * "advisory" or "shadow". Reviewed 2026-08-08; see
+ * docs/architecture/clinical-governance-review.md.
+ *
+ * translateTelemetry() performs an UNATTENDED CLINICAL INTERVENTION: it hard-
+ * overrides nutrition targets (carbs_target_g: 10, weight_carbs: 3.0) from a
+ * single wearable glucose reading, with no dietitian approval, no hysteresis,
+ * and no reading-provenance check. The live platform already litigated this
+ * exact design and rejected it: artifacts/api-server/src/lib/
+ * clinicalGuardrailEngine.ts documents an earlier draft doing the same thing
+ * being reviewed out before merge, and guardrailEngines.test.ts regression-
+ * pins that targets are never auto-mutated ("the engine wrote daily_targets —
+ * the autonomous clinical intervention is back"). This class reintroduces the
+ * rejected pattern with a different, unreconciled threshold besides
+ * (>160 mg/dL here vs ≥140 in the live engine) — wiring it anywhere would
+ * silently overturn a deliberate clinical-safety decision.
+ *
+ * It remains in the tree only as reference for the package's own
+ * verify_suite.ts demo script, which is not reachable from any deployed code.
+ *
+ * @deprecated Never import outside this package. Target changes are the RD's
+ * call — the live, sanctioned path is clinicalGuardrailEngine.ts's advisory
+ * alert into rdClientSummariesTable.
+ */
 export class WearableMealScoringEngine {
   // Baseline balanced per-meal targets
   private static readonly BASELINE_CARBS = 40;
