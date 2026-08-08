@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { capturePostHogEvent } from "@/lib/analyticsSanitizer";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
@@ -11,6 +12,15 @@ const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
  * on the env vars so the SDK is never fetched by a browser that will never
  * send an event — today's production build has neither var set, and the
  * previous unconditional top-level import shipped the full SDK anyway.
+ *
+ * autocapture and session recording are both explicitly OFF (P0 §24 —
+ * privacy-analytics-contract.md §3 flagged both as an undecided posture).
+ * This is a clinical app: DOM autocapture and session replay can surface a
+ * form field's text or an interacted element's attributes verbatim, and
+ * ANALYTICS_KEY_ALLOWLIST below has no visibility into either — it can only
+ * filter properties this app explicitly sends. Every event this app DOES
+ * send goes through capturePostHogEvent, never posthog.capture directly, so
+ * a clinical field can't slip through unreviewed.
  */
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -22,8 +32,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         api_host: POSTHOG_HOST,
         person_profiles: "identified_only",
         capture_pageview: false, // manual capture below, right after init
+        autocapture: false,
+        disable_session_recording: true,
       });
-      posthog.capture("$pageview");
+      capturePostHogEvent(
+        (event, properties) => posthog.capture(event, properties),
+        "$pageview",
+      );
     });
     return () => {
       cancelled = true;

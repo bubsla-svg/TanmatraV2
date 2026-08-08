@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test, describe } from "node:test";
 import { PLAN_CATALOG, type PlanId } from "@workspace/subscription-rules";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
+import { sanitizeAnalyticsEvent } from "./analyticsSanitizer";
 
 describe("Domain Invariants Automation Suite (Phase 13B)", () => {
   // ---------------------------------------------------------------------------
@@ -181,27 +182,11 @@ describe("Domain Invariants Automation Suite (Phase 13B)", () => {
   // Security & Privacy: Analytics Payload Schema Allowlist
   // ---------------------------------------------------------------------------
   test("Security & Privacy: Analytics payload strictly strips health conditions and clinical telemetry", () => {
-    const ANALYTICS_KEY_ALLOWLIST = new Set([
-      "event_name",
-      "route",
-      "timestamp",
-      "device_type",
-      "plan_id",
-      "cart_item_count",
-      "checkout_step",
-      "payment_provider",
-    ]);
-
-    function sanitizeAnalyticsEvent(rawProperties: Record<string, unknown>) {
-      const sanitized: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(rawProperties)) {
-        if (ANALYTICS_KEY_ALLOWLIST.has(k)) {
-          sanitized[k] = v;
-        }
-      }
-      return sanitized;
-    }
-
+    // Imports the SHIPPED sanitizer (./analyticsSanitizer, routed through by
+    // components/PostHogProvider.tsx) rather than re-declaring the rule here —
+    // this test now fails if the production enforcement point regresses,
+    // closing docs/architecture/privacy-analytics-contract.md's finding that
+    // invariant 16 was previously asserted only against a copy of itself.
     const dangerousClientPayload = {
       event_name: "checkout_step_viewed",
       route: "/checkout",

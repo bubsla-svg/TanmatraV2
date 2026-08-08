@@ -50,11 +50,30 @@ left pinned to their SHA rather than edited in place. What changed:
   tracked as a separate follow-up, not fabricated speculatively. The
   previously-untested `?next=` open-redirect guard (domain invariant 13,
   "Return-Route Preservation") is now covered by `lib/loginRoute.test.ts`.
+- **Production analytics sanitizer (2026-08-08):** closes
+  [`privacy-analytics-contract.md`](./privacy-analytics-contract.md) exactly
+  per its §5 remediation steps. `ANALYTICS_KEY_ALLOWLIST` and
+  `sanitizeAnalyticsEvent` moved out of `domainInvariants.test.ts` into a
+  real module, `lib/analyticsSanitizer.ts` — the test now imports and
+  exercises the shipped function instead of re-declaring it, so domain
+  invariant 16 ("Health Data Privacy") is `automated`, not `self-contained`,
+  as of this change. `components/PostHogProvider.tsx`'s one production
+  analytics call (`$pageview`) now routes through the new
+  `capturePostHogEvent` chokepoint instead of calling `posthog.capture(...)`
+  directly. `autocapture` and `disable_session_recording` are both now
+  explicitly set (`false`/`true`) in `posthog.init(...)` — the "undecided
+  posture" §3 flagged as an open question is resolved to OFF: this is a
+  clinical app, and DOM autocapture / session replay can surface a form
+  field's text or an interacted element's attributes verbatim, which
+  `ANALYTICS_KEY_ALLOWLIST` has no visibility into (it can only filter
+  properties this app explicitly sends) and therefore cannot sanitize.
+  `NEXT_PUBLIC_POSTHOG_KEY`/`HOST` remain unset in `deploy.yml` — analytics
+  is still dormant in production — but the enforcement code this document
+  found missing now exists and is unit-tested (`lib/analyticsSanitizer.test.ts`).
 
-Still open from `blockingForGo`: the production analytics sanitizer and the
-orphaned `clinical-governance-engine` integration, plus the `account-conflict`
-step above pending a product decision. A fresh audit pass against the merge
-SHA is what moves the verdict.
+Still open from `blockingForGo`: the orphaned `clinical-governance-engine`
+integration, plus the `account-conflict` auth step above pending a product
+decision. A fresh audit pass against the merge SHA is what moves the verdict.
 
 ## Reading order
 
