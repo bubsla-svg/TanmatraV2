@@ -50,8 +50,15 @@ Seven packages under `artifacts/`. CLAUDE.md's table now lists all of them.
 | `artifacts/tanmatra` | `@workspace/tanmatra` | React 19 + React Router v7 SPA on Vite — 327 files under `src/` | Legacy. No user-facing domain routes to it, but it is the storefront's `IMAGE_UPSTREAM` — `/images` (incl. all dish photos in `public/dishes`) serve from here |
 | `artifacts/tanmatra-mobile` | `@workspace/tanmatra-mobile` | Expo / expo-router | Live, thin |
 | `artifacts/agents` | `@workspace/agents` | Vite + wouter | Internal |
-| `artifacts/clinical-governance-engine` | `@tanmatra/clinical-governance-engine` | Zero-dep TS | Internal |
 | `artifacts/mockup-sandbox` | `@workspace/mockup-sandbox` | Vite preview | Internal |
+
+> `artifacts/clinical-governance-engine` was removed 2026-08-08 by owner
+> decision — it was an orphaned package with zero dependents whose
+> safety-mechanism names (contraindication engine, packing-station interlock)
+> invited the false assumption they ran in production. Full review and
+> disposition: `docs/architecture/clinical-governance-review.md`. The live
+> clinical-safety paths (preferences-match allergen gate, clinicalGuardrailEngine,
+> PHI encryption) are unaffected.
 
 **Deciding where a customer-facing change goes.** Default to `artifacts/storefront` — it is
 what a user hits. Change `artifacts/tanmatra` as well only when the task is a defect on a

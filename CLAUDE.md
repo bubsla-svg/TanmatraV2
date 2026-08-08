@@ -87,7 +87,6 @@ This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and 
 | `artifacts/tanmatra` | Legacy customer SPA — React 19 + React Router v7 + Vite. Customer routes were removed 2026-07-26; it is now an internal-only Admin ERP + RD console (`src/routes.ts`, `e2e/specs/erp_shell.spec.ts`). No longer mapped to `tanmatra.food` — see `docs/DOMAIN-CUTOVER.md` |
 | `artifacts/tanmatra-mobile` | Expo React Native app |
 | `artifacts/agents` | "Agency Agents Browser" — Vite + wouter app that browses the `lib/agency-agents` catalogue |
-| `artifacts/clinical-governance-engine` | `@tanmatra/clinical-governance-engine` — zero-dependency contraindication engine, packing-station interlock, AE webhooks, WORM audit logger |
 | `artifacts/mockup-sandbox` | Vite preview server for UI mockup work |
 | `lib/api-spec` | **OpenAPI source of truth** (`openapi.yaml`) + Orval codegen config |
 | `lib/api-client-react` | Generated React Query hooks + Zod schemas (do not edit manually) |
