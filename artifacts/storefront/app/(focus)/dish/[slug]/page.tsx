@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchMenu, findDish } from "@/lib/catalog";
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { AccordionItem } from "@/components/primitives/Accordion";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
@@ -26,7 +26,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
     <div className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
       {/* Hero Image */}
       <div className="relative w-full aspect-square md:aspect-video overflow-hidden">
-        <SafeImage src={dish.image} alt={dish.name} aspectRatio="1/1" className="w-full h-full object-cover" />
+        <SafeImage src={dish.image} alt={dish.name} className="h-full w-full" />
       </div>
 
       <div className="px-gutter pt-6 flex-1 flex flex-col">

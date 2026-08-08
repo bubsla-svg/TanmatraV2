@@ -5,9 +5,16 @@ import { test, expect } from "@playwright/test";
  * <footer>s stacked, because the homepage shipped its own nav/bottom-bar/footer
  * while the root layout also wrapped every route in the global set — it shipped
  * in #433 precisely because nothing asserted a count. The counts below are that
- * assertion, and they hold however the duplication is avoided: the homepage no
- * longer carries its own chrome, so the layout's global chrome is now the only
- * chrome on every route.
+ * assertion.
+ *
+ * Since the route-group restructure there are THREE shells, each owed a
+ * different count: app/(global)/ renders the full consumer chrome (one
+ * header, one footer, one nav cluster), app/(focus)/ renders none (the flow
+ * owns its whole canvas), and app/(b2b)/ renders exactly one compact
+ * business header and nothing else. One route per shell is asserted below so
+ * a chrome regression in any shell — duplication OR the B2B header silently
+ * vanishing again (the pre-restructure defect: B2B routes had chrome
+ * subtracted with nothing replacing it) — fails loudly.
  *
  * The app-links check is viewport-aware on purpose. The cluster is rendered
  * twice by design — the Header's link row is desktop-only (`hidden md:flex`)
@@ -40,5 +47,26 @@ test.describe("chrome is rendered exactly once per route", () => {
     await expect(page.locator("header")).toHaveCount(1);
     await expect(page.locator("footer")).toHaveCount(1);
     await expectOneVisibleAppNav(page);
+  });
+
+  test("b2b shell: exactly one business header, no consumer chrome", async ({ page }) => {
+    await page.goto("/corporate");
+    // The compact B2B header (app/(b2b)/layout.tsx) — and only it.
+    await expect(page.locator("header")).toHaveCount(1);
+    await expect(page.getByRole("navigation", { name: "Business" })).toHaveCount(1);
+    // None of the consumer chrome leaks in.
+    await expect(page.locator("footer")).toHaveCount(0);
+    await expect(
+      page.getByRole("navigation", { name: "Native Mobile Navigation" }),
+    ).toHaveCount(0);
+  });
+
+  test("focus shell: no chrome at all", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.locator("header")).toHaveCount(0);
+    await expect(page.locator("footer")).toHaveCount(0);
+    await expect(
+      page.getByRole("navigation", { name: "Native Mobile Navigation" }),
+    ).toHaveCount(0);
   });
 });

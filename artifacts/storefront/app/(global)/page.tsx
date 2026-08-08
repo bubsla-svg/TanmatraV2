@@ -11,7 +11,6 @@ import { Section05LogisticsMoat } from "@/components/landing/Section05LogisticsM
 import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
 import { fetchMenu } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
-import { SafeImage } from "@/components/primitives/SafeImage";
 import { DishCard } from "@/components/DishCard";
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";

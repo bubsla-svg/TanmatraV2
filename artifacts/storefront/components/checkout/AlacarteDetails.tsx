@@ -156,7 +156,7 @@ export function AlacarteDetails({
       {/* Sticky pay bar. The amount shown is the same DISPLAY subtotal as the
           summary card; the CTA itself stays amount-free (server prices the
           order). Anchored bottom-0, not the bottom-16 tab-bar band: /checkout
-          is a focus route (lib/focusRoutes.ts) — the global tab bar never
+          lives in the (focus) shell (app/(focus)/) — the global tab bar never
           renders here. */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">

@@ -4,7 +4,6 @@ import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeliveryAddressBar } from "@/components/onboarding/DeliveryAddressBar";
-import { FocusChromeGate } from "@/components/FocusLayout";
 
 /**
  * Global chrome shell. Server component itself; it hosts one small client island
@@ -12,16 +11,13 @@ import { FocusChromeGate } from "@/components/FocusLayout";
  * config (lib/nav.ts) so route-parity waves extend the IA by editing data, not
  * this file. Primary links are desktop-only — on mobile the BottomNav carries them.
  *
- * FOCUS SHELL: on focus routes (lib/focusRoutes.ts — auth, checkout,
- * onboarding, dish PDP) the entire interactive endContent cluster is
- * suppressed and only the brand link survives. The location picker is the
- * canonical reason: /checkout carries its OWN address flow
- * (CheckoutAddress → LocationPickerFlow), and a second location state in the
- * chrome directly above it is a double-state collision — two widgets both
- * claiming to know the delivery address, each hydrated from a different
- * store. Same class of bug for ⌘K over any page with its own search input.
- * The brand link stays: a focus shell still needs one calm exit, and a plain
- * link home cannot collide with any page state.
+ * Renders only from app/(global)/layout.tsx. Focus routes (app/(focus)/ —
+ * auth, checkout, onboarding, dish PDP) never mount this header at all, so
+ * the old FocusChromeGate that stripped the interactive cluster down to the
+ * brand link on those routes is gone: the double-state collisions it guarded
+ * against (chrome location picker over /checkout's own address flow, ⌘K over
+ * a page's own search) are now impossible by construction — those pages live
+ * in a group whose layout renders no header.
  */
 export function Header() {
   return (
@@ -48,7 +44,6 @@ export function Header() {
             </Link>
           }
           endContent={
-            <FocusChromeGate>
             <nav aria-label="Primary" className="flex items-center gap-2">
               <div className="min-w-0">
                 <DeliveryAddressBar />
@@ -71,7 +66,6 @@ export function Header() {
                 </Link>
               </div>
             </nav>
-            </FocusChromeGate>
           }
         />
       </div>

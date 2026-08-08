@@ -3,7 +3,6 @@
 import React from "react";
 import { PrimaryCTA, SecondaryCTA } from "@/components/primitives/CTA";
 import { IconButton, CompactAction } from "@/components/primitives/ActionButtons";
-import { SafeImage } from "@/components/primitives/SafeImage";
 import { ClinicalBadge, FilterChip } from "@/components/primitives/Badges";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 

@@ -204,7 +204,7 @@ export function PlanDetails({
           bar). The amount is the SERVER's quote rendered verbatim; the CTA
           keeps its existing disabled-until-quote gating (`valid` above).
           Anchored bottom-0, not the bottom-16 tab-bar band: /checkout is a
-          focus route (lib/focusRoutes.ts) — the global tab bar never renders
+          (focus)-shell route (app/(focus)/) — the global tab bar never renders
           here. */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">

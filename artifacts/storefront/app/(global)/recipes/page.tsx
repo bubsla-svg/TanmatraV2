@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getRecipes } from "@/lib/recipesApi";
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export const metadata: Metadata = {
   title: "Recipes | Tanmatra",
@@ -21,7 +21,7 @@ export default async function RecipesPage() {
           {recipes.map((recipe) => (
             <a key={recipe.id} href={`/recipes/${recipe.slug}`} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
               <div className="relative mb-3 overflow-hidden rounded-xl bg-surface-raised border border-line">
-                <SafeImage src={recipe.image || ""} alt={recipe.title} aspectRatio="16/9" className="w-full" />
+                <SafeImage src={recipe.image || ""} alt={recipe.title} className="aspect-video w-full" />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-lg text-ink-primary">{recipe.title}</h3>

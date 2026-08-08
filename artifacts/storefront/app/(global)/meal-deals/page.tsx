@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { fetchMenu } from "@/lib/catalog";
 import { buildBundles } from "@/lib/mealBundles";
-import { SafeImage } from "@/components/primitives/SafeImage";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -44,7 +44,7 @@ export default async function MealDealsPage() {
               {bundle.dishes.slice(0, 4).map((dish) => (
                 <div key={dish.id} className="flex items-center gap-2 rounded-xl bg-surface-raised p-2 border border-line">
                   <div className="relative w-10 h-10 rounded-md overflow-hidden bg-surface flex-shrink-0">
-                    <SafeImage src={dish.image ?? ""} alt={dish.name} aspectRatio="1/1" className="w-full h-full object-cover" />
+                    <SafeImage src={dish.image ?? ""} alt={dish.name} className="h-full w-full" />
                   </div>
                   <span className="text-xs font-semibold text-ink-primary line-clamp-2">{dish.name}</span>
                 </div>
