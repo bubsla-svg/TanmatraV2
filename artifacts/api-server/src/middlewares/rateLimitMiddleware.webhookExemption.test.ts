@@ -46,13 +46,20 @@ after(async () => {
 
 // Each test uses its own fake source IP (via X-Forwarded-For, honored
 // because the test app sets "trust proxy") so the shared Postgres-backed
-// limiter's per-IP counter can never collide across tests or test runs.
-function randomFakeIp(): string {
-  return `198.51.100.${1 + Math.floor(Math.random() * 254)}`;
+// limiter's per-IP counter can never collide across tests. The counter makes
+// IPs unique WITHIN a run — random draws from one /24 collide ~0.4% of the
+// time, which is how aiHardening.test.ts went red in CI (`19 !== 20`). The
+// random per-process base keeps rapid re-runs against a persistent dev DB from
+// reusing last run's still-in-window counters. CGNAT space (100.64/10), so it
+// parses as an IP but can never be a real client.
+const fakeIpBase = `100.${64 + Math.floor(Math.random() * 64)}.${Math.floor(Math.random() * 256)}`;
+let nextFakeIpHost = 1;
+function uniqueFakeIp(): string {
+  return `${fakeIpBase}.${nextFakeIpHost++}`;
 }
 
 test("razorpay webhook path bypasses paymentRateLimit even past 10 requests/min", async () => {
-  const fakeIp = randomFakeIp();
+  const fakeIp = uniqueFakeIp();
   const statuses: number[] = [];
   for (let i = 0; i < 15; i++) {
     statuses.push(await hit("/api/payments/razorpay/webhook", fakeIp));
@@ -65,7 +72,7 @@ test("razorpay webhook path bypasses paymentRateLimit even past 10 requests/min"
 });
 
 test("a non-webhook /api/payments route is still rate-limited at 10/min", async () => {
-  const fakeIp = randomFakeIp();
+  const fakeIp = uniqueFakeIp();
   const statuses: number[] = [];
   for (let i = 0; i < 12; i++) {
     statuses.push(await hit("/api/payments/initiate", fakeIp));

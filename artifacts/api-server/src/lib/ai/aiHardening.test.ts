@@ -103,9 +103,16 @@ async function hit(path: string, fakeIp: string): Promise<number> {
 }
 
 // Own fake source IP per test so the shared Postgres-backed counter can never
-// collide across tests or runs.
-function randomFakeIp(): string {
-  return `198.51.100.${1 + Math.floor(Math.random() * 254)}`;
+// collide across tests. The counter makes IPs unique WITHIN a run — two random
+// draws from one /24 collide in ~0.4% of runs, and a collision leaks the
+// earlier test's hits into the later test's bucket (seen in CI as `19 !== 20`).
+// The random per-process base keeps rapid re-runs against a persistent dev DB
+// from reusing last run's still-in-window counters. CGNAT space (100.64/10),
+// so it parses as an IP but can never be a real client.
+const fakeIpBase = `100.${64 + Math.floor(Math.random() * 64)}.${Math.floor(Math.random() * 256)}`;
+let nextFakeIpHost = 1;
+function uniqueFakeIp(): string {
+  return `${fakeIpBase}.${nextFakeIpHost++}`;
 }
 
 before(async () => {
@@ -122,7 +129,7 @@ test("exhausting the staff bucket does NOT lock the same IP out of the customer 
   // This is the whole finding: staff arrive from a handful of office/VPN
   // egress IPs, so before the split, a few operators could burn the shared
   // 20/min for every customer behind that same apparent IP.
-  const fakeIp = randomFakeIp();
+  const fakeIp = uniqueFakeIp();
 
   const staffStatuses: number[] = [];
   for (let i = 0; i < 22; i++) staffStatuses.push(await hit("/api/ops-agent/chat", fakeIp));
@@ -142,7 +149,7 @@ test("exhausting the staff bucket does NOT lock the same IP out of the customer 
 });
 
 test("each bucket still enforces its own 20/min limit", async () => {
-  const fakeIp = randomFakeIp();
+  const fakeIp = uniqueFakeIp();
   const statuses: number[] = [];
   for (let i = 0; i < 22; i++) statuses.push(await hit("/api/coach-agent/chat", fakeIp));
   assert.equal(statuses.filter((s) => s === 200).length, 20);
