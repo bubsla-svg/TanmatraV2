@@ -753,3 +753,101 @@ retry-idempotency property it was written to pin).
   covered by the engine/processor-level tests above (same underlying
   predicates, no additional branching at the route layer) and was not
   duplicated here to keep this change proportionate.
+
+## 12. PR #16 Production Deployment (recorded 2026-08-09)
+
+CI proves the merged code passed the repository's tests; it does not by
+itself prove the production API is serving that code. This section is that
+separate proof, for PR #16 specifically — the §11 audit fixes (premature
+notification, `overrideAssignment` paid-gate, `update_order_status`
+paid-gate, `finalizeOrder` order-hijack fix, pipeline-processor paid-gate).
+
+**GitHub merged PR #16 with a real merge commit, not a fast-forward.** The
+PR branch's head (`2d0404f`) is not what deployed — the merge commit
+`96bd810` is, and that is the SHA the deploy evidence below is keyed to.
+
+| | PR #16 (paid-fulfilment audit fixes) |
+|---|---|
+| PR branch head | `2d0404f83aeb698e80fd5e87edfb5f6ecc41aeb0` (CI-verified here, but not itself deployed) |
+| **Merge SHA (deployed)** | `96bd810ec9220e3e432b96bcc2a8468d6b5e6848` |
+| Deploy run | [31312543381](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31312543381) — success |
+| Deploy's own `gate` job (re-verifies on the merge commit) | job [93242477000](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31312543381/job/93242477000) — success, including "Money-path integration tests (verify.yml's full list)" against real Postgres, run a second time on the actual merge commit (not just the PR head) |
+| Cloud Build ID | `0222599a-f090-4b8d-8449-31a07ef4bdc7` (SUCCESS) |
+| Artifact Registry image | `asia-south2-docker.pkg.dev/brand-tanmatra-tmg/wellness/wellness-foods:96bd810ec9220e3e432b96bcc2a8468d6b5e6848` |
+| Immutable image digest | not independently queryable from this session (no direct Artifact Registry API access outside the GitHub Actions runner's credentials) — the SHA-tagged reference above is the identity actually used: Cloud Build mints exactly one image per unique commit SHA and the deploy step references that tag by name, so it is immutable-by-construction even without the raw `sha256:` manifest digest in hand |
+| Cloud Run service / region | `wellness-foods` / `asia-south2`, project `brand-tanmatra-tmg` (confirmed from the deploy job's own `gcloud run deploy` invocation) |
+| Cloud Run revision | `wellness-foods-00207-69p` |
+| Previous stable (rollback target) | `wellness-foods-00206-j7l` — PR #15's revision, confirming an unbroken chain |
+| Traffic allocation | 100% LATEST at 12:17:18Z (`currently wellness-foods-00207-69p`) |
+| Deployment completion time | 12:17:24Z (`storefront-cloud-run`/`frontend-cloud-run` correctly SKIPPED — this PR touched only `artifacts/api-server`, `.github`, `docs`) |
+| `/api/livez` smoke (deploy job's own check) | OK 12:17:20Z |
+| `PLAN_CHECKOUT_DISABLED` in deploy env | `=1` present (unchanged) |
+| `ORDER_FINALIZE_DISABLED` in deploy env | `=1` present (unchanged, now on its second revision) |
+
+Rollback: `gcloud run services update-traffic wellness-foods --region asia-south2
+--to-revisions wellness-foods-00206-j7l=100`.
+
+### Post-deploy production probes (2026-08-09, read-only, no order created)
+
+```
+GET  https://tanmatra.food/api/livez                        → HTTP 200 {"status":"ok"}
+GET  https://tanmatra.food/api/healthz                      → HTTP 200 {"status":"ok"}
+POST https://tanmatra.food/api/subscriptions        {}      → HTTP 503 PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE
+POST https://tanmatra.food/api/orders               {}      → HTTP 400 idempotency_key_required
+POST https://tanmatra.food/api/orders/finalize      {}      → HTTP 503 CHECKOUT_TEMPORARILY_UNAVAILABLE
+```
+
+All five match the expected shape exactly: health is green, both containment
+gates (`PLAN_CHECKOUT_DISABLED`, `ORDER_FINALIZE_DISABLED`) are enforced by
+the live revision, and the storefront's real guest-checkout route
+(`POST /api/orders`) answers with its normal idempotency-key requirement —
+unaffected by either gate, exactly as designed. No order, payment attempt,
+subscription, or entitlement was created by any of these probes.
+
+### Paid-liveness invariant checklist — production-confirmed
+
+Every item below is backed by a specific fix + test, and the deploy above is
+the evidence that the fix is the code actually running:
+
+```
+[x] Client-controlled externalOrderId cannot prove settlement (§10 — real join, not string content)
+[x] Identifier prefixes cannot promote order status (§10 — sub- prefix defect closed)
+[x] Subscription settlement requires a server-owned cycle record (§10 — subscription_deliveries join scoped by userId)
+[x] Credit settlement requires an atomic ledger record (orderClaims + credit ledger, userId-scoped since §10)
+[x] Zero total without settlement evidence remains blocked (§10 — discount-minted ₹0 refused)
+[x] Cross-customer settlement references are rejected (§10 — subscription and credit-claim branches both tested)
+[x] Settlement references cannot be replayed across orders (unique constraints + §10's isNull(orderId) CAS)
+[x] Partial settlement cannot release fulfilment (§10 test: non-zero remaining charge stays placed)
+[x] Unpaid order cannot generate confirmation notification (§11 P0 — routes/checkout.ts)
+[x] Unpaid order cannot deduct inventory (pre-existing WMS/BOM gates, §5; §11 follow-up closes the pipeline-processor side door)
+[x] Unpaid order cannot reach POS preparation (placed excluded from the delivery ladder, §5)
+[x] Unpaid order cannot receive a rider (dispatchOrder gate, §5; §11 P1 closes overrideAssignment's gap)
+[x] Repeated callback releases fulfilment exactly once (payments.webhook.test.ts CAS, §6 row 8)
+```
+
+Two invariants this checklist does not cover, because they are enforced
+structurally rather than by a paid-liveness check, and PR #16 did not touch
+them: `update_order_status` cannot walk a terminal order backward (§11 P2 —
+covered above under "identifier/status" fixes generally, not restated as a
+separate row) and `finalizeOrder`'s order-hijack fix (§11 P3, `order_id_conflict`)
+— both fixed, tested, and shipped in the revision above; listed in full in §11
+rather than duplicated here.
+
+### PR #16 vs. deployment vs. guest money-path — kept distinct
+
+- **PR #16 CI**: PASS (verify run on branch head `2d0404f`, and independently
+  re-verified by deploy.yml's own `gate` job on merge commit `96bd810`).
+- **PR #16 production deployment**: PASS — revision `wellness-foods-00207-69p`
+  confirmed serving 100% of traffic, health green, both containment gates
+  live, per this section's evidence.
+- **Guest money-path verification**: PENDING — the code path and its
+  deployment are now both verified; the controlled guest order itself
+  (§2, owner action) has not yet been executed. This session has no payment
+  credentials and no way to complete Razorpay's OTP/2FA step, so it cannot
+  place the order itself. See §2 for the procedure and §3 for the
+  reconciliation checklist to run once it is placed.
+
+**Guest à-la-carte checkout: GO on the code path, PENDING on execution.**
+**Plan checkout: NO-GO — gated pending its own separate controlled
+verification (§7).**
+**Wave 2: HOLD pending the controlled guest order's reconciliation (§8).**
