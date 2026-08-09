@@ -12,10 +12,9 @@
  * server-only `API_BASE_URL` in lib/catalog.ts). See docs/LIVE-CUTOVER.md.
  */
 
-// Transport core lives in ./apiClient (keeps this file under the cap); re-export
-// so `@/lib/api` stays the single import surface for callers.
-export { API_BASE, ApiError, apiPost, apiGet, apiPatch, apiDelete } from "./apiClient";
-import { apiPost, apiGet, apiPatch, apiDelete, type FetchImpl } from "./apiClient";
+// Transport core lives in ./apiClient; re-exported so `@/lib/api` stays the single import surface.
+export { API_BASE, ApiError, apiPost, apiPostIdempotent, apiGet, apiPatch, apiDelete } from "./apiClient";
+import { apiPost, apiPostIdempotent, apiGet, apiPatch, apiDelete, type FetchImpl } from "./apiClient";
 
 export type DietTrack = "veg" | "egg" | "nonveg";
 export type AddOnId = "rd_bump" | "evening_add";
@@ -128,18 +127,25 @@ export interface CreateSubscriptionResponse {
   creditAppliedPaise?: number;
 }
 
+/** POST /subscriptions. `idempotencyKey` is optional only until the server
+ *  mounts idempotencyMiddleware here — client ships first because api-server
+ *  deploys before storefront. Unenforced, a retry creates a SECOND
+ *  subscription + order + credit debit. */
 export function createSubscription(
   body: CreateSubscriptionInput,
   fetchImpl?: FetchImpl,
+  idempotencyKey?: string,
 ): Promise<CreateSubscriptionResponse> {
-  return apiPost("/subscriptions", body, fetchImpl);
+  return idempotencyKey
+    ? apiPostIdempotent("/subscriptions", body, idempotencyKey, fetchImpl)
+    : apiPost("/subscriptions", body, fetchImpl);
 }
 
 // ── À-la-carte order (guest checkout — no session required) ──────────────────
-// Grounded contract (checkout.ts POST /orders): DPDP consent object REQUIRED
-// (400 consent_required), serviceable pincode enforced (422), allergen safety
-// gate, idempotency via externalOrderId, and the whole route is dark until
-// the api-server env sets ALC_CHECKOUT_ENABLED (403 alc_checkout_disabled).
+// Grounded contract (checkout.ts POST /orders): DPDP consent REQUIRED (400
+// consent_required), serviceable pincode enforced (422), allergen safety gate,
+// idempotency via externalOrderId, and the route is dark until the api-server
+// env sets ALC_CHECKOUT_ENABLED (403 alc_checkout_disabled).
 export interface AlacarteOrderInput {
   /** Client-generated idempotency key; also the id used to poll status. */
   externalOrderId: string;
@@ -168,11 +174,15 @@ export interface AlacarteOrderResponse {
   totalPaise: number;
 }
 
+/** POST /orders. The header is MANDATORY (app.ts:231 mounts
+ *  idempotencyMiddleware; 400 without it), so omitting it — as this client
+ *  did — means guest checkout can never place an order. The key IS
+ *  `externalOrderId`, already stable per session, so a retry replays the 201. */
 export function createAlacarteOrder(
   body: AlacarteOrderInput,
   fetchImpl?: FetchImpl,
 ): Promise<AlacarteOrderResponse> {
-  return apiPost("/orders", body, fetchImpl);
+  return apiPostIdempotent("/orders", body, body.externalOrderId, fetchImpl);
 }
 
 // ── Pay (Razorpay order → browser modal → verify) ────────────────────────────

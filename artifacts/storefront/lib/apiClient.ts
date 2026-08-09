@@ -23,6 +23,23 @@ export class ApiError extends Error {
 
 export type FetchImpl = typeof fetch;
 
+/**
+ * An idempotency key for a write the server must not apply twice.
+ *
+ * The api-server's `idempotencyMiddleware` REQUIRES an `Idempotency-Key`
+ * header on the routes it guards (`app.ts:231-234`, plus inline mounts) and
+ * 400s `idempotency_key_required` without one — so this is not optional
+ * decoration, it is the difference between a working and a dead route.
+ *
+ * Pass a key that is STABLE for the logical operation, not per attempt: the
+ * middleware replays the original response verbatim for a repeat of the same
+ * key, which is exactly what a network-retry of a create wants. A fresh key
+ * per attempt would let a retry create a second row.
+ *
+ * Must match the server's `/^[A-Za-z0-9._\-:]{8,128}$/`.
+ */
+export type IdempotencyKey = string;
+
 /** Cookie-authed JSON request to `/api<path>`, bare-JSON in and out. `fetchImpl`
  *  is injectable so callers are testable without a network. A body (and the
  *  content-type header) is sent only when provided — GET/DELETE omit it. */
@@ -31,13 +48,20 @@ async function apiRequest<T>(
   path: string,
   body?: unknown,
   fetchImpl: FetchImpl = fetch,
+  idempotencyKey?: IdempotencyKey,
 ): Promise<T> {
   const res = await fetchImpl(`${API_BASE}/api${path}`, {
     method,
     credentials: "include",
     cache: "no-store",
     ...(body !== undefined
-      ? { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }
+      ? {
+          headers: {
+            "content-type": "application/json",
+            ...(idempotencyKey ? { "idempotency-key": idempotencyKey } : {}),
+          },
+          body: JSON.stringify(body),
+        }
       : {}),
   });
   const text = await res.text();
@@ -66,6 +90,17 @@ async function apiRequest<T>(
 /** POST JSON to `/api<path>`. */
 export function apiPost<T>(path: string, body: unknown, fetchImpl?: FetchImpl): Promise<T> {
   return apiRequest<T>("POST", path, body, fetchImpl);
+}
+
+/** POST JSON to `/api<path>` with an `Idempotency-Key`. Required by every route
+ *  behind the server's `idempotencyMiddleware` — see {@link IdempotencyKey}. */
+export function apiPostIdempotent<T>(
+  path: string,
+  body: unknown,
+  idempotencyKey: IdempotencyKey,
+  fetchImpl?: FetchImpl,
+): Promise<T> {
+  return apiRequest<T>("POST", path, body, fetchImpl, idempotencyKey);
 }
 
 /** GET `/api<path>` (no body). */

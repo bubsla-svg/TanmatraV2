@@ -3,7 +3,16 @@
 //   cd artifacts/api-server && node --test --import tsx ../storefront/lib/api.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { API_BASE, ApiError, apiPost, quotePlan, createRazorpayOrder, getCreditBalance } from "./api";
+import {
+  API_BASE,
+  ApiError,
+  apiPost,
+  quotePlan,
+  createRazorpayOrder,
+  createAlacarteOrder,
+  createSubscription,
+  getCreditBalance,
+} from "./api";
 import {
   runCheckout,
   finishPlanPayment,
@@ -68,6 +77,69 @@ test("createRazorpayOrder posts only the order ref — never a client amount", a
   const body = JSON.parse(String(calls[0]?.init.body));
   assert.deepEqual(body, { orderId: "sub-42", subscriptionId: 42 });
   assert.equal("amountPaise" in body, false);
+});
+
+test("createAlacarteOrder sends the Idempotency-Key the server REQUIRES, equal to externalOrderId", async () => {
+  // POST /api/orders is mounted behind idempotencyMiddleware (app.ts:231), so
+  // a missing header is a hard 400 idempotency_key_required — guest checkout
+  // simply cannot place an order. Reusing externalOrderId as the key is
+  // deliberate: it is already stable per checkout session, so a retried create
+  // replays the original 201 instead of hitting the duplicate-order 409.
+  const { impl, calls } = fakeFetch(201, { orderId: "alc-1", serverOrderId: 1, status: "placed", etaMinutes: 25, totalPaise: 41800 });
+  await createAlacarteOrder(
+    {
+      externalOrderId: "alc-abc123def456",
+      items: [{ dishId: 7, qty: 1 }],
+      phone: "+919999999999",
+      address: { line1: "Tower 4", city: "Noida", pincode: "201301" },
+      consent: { accepted: true, policyVersion: "v1" },
+    },
+    impl,
+  );
+  const headers = calls[0]?.init.headers as Record<string, string>;
+  assert.equal(headers["idempotency-key"], "alc-abc123def456");
+  // The server's own guard: /^[A-Za-z0-9._\-:]{8,128}$/
+  assert.match(headers["idempotency-key"]!, /^[A-Za-z0-9._\-:]{8,128}$/);
+});
+
+test("createSubscription sends an Idempotency-Key when given one, and omits the header when not", async () => {
+  const withKey = fakeFetch(201, { subscription: { id: 7 }, deliveries: [], bridgeCreditPaise: 0 });
+  await createSubscription({ planId: "desk_fuel" } as never, withKey.impl, "sub-abc123def456");
+  assert.equal(
+    (withKey.calls[0]?.init.headers as Record<string, string>)["idempotency-key"],
+    "sub-abc123def456",
+  );
+
+  // Omitted until the server mounts idempotencyMiddleware on this route — the
+  // api-server deploys BEFORE the storefront (deploy.yml storefront-cloud-run
+  // needs cloud-run), so the header ships first and enforcement follows.
+  const noKey = fakeFetch(201, { subscription: { id: 7 }, deliveries: [], bridgeCreditPaise: 0 });
+  await createSubscription({ planId: "desk_fuel" } as never, noKey.impl);
+  assert.equal(
+    "idempotency-key" in (noKey.calls[0]?.init.headers as Record<string, string>),
+    false,
+  );
+});
+
+test("runCheckout threads its idempotencyKey into the create call", async () => {
+  let seenKey: string | undefined;
+  const deps: MoneyPathDeps = {
+    createSubscription: async (_body, _fetchImpl, key) => {
+      seenKey = key;
+      return { subscription: { id: 7, externalOrderId: "sub-7" }, deliveries: [], bridgeCreditPaise: 0 };
+    },
+    createRazorpayOrder: async () => ({ razorpayOrderId: "order_9", amount: 100, currency: "INR", keyId: "k" }),
+    verifyPayment: async (input) => ({ ok: true, orderId: input.orderId, status: "preparing" }),
+  };
+  await runCheckout(
+    {
+      subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] },
+      razorpay: { open: async (o) => ({ razorpayPaymentId: "p", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "s" }) },
+      idempotencyKey: "sub-stable-key-1",
+    },
+    deps,
+  );
+  assert.equal(seenKey, "sub-stable-key-1");
 });
 
 test("getCreditBalance reads GET /credit-ledger with cookies, no body", async () => {
