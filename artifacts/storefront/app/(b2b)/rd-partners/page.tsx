@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import RdPartnersClient from "./RdPartnersClient";
+import { RdPartnersLanding } from "@/components/rd-partners/RdPartnersLanding";
 
 export const metadata: Metadata = {
   title: "Dietitian & Clinical Partnerships | Tanmatra",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function RdPartnersPage() {
-  return <RdPartnersClient />;
+  return <RdPartnersLanding />;
 }
