@@ -86,7 +86,12 @@ async function makeUser(): Promise<TestUser> {
 async function api(method: string, path: string, body: unknown, user?: TestUser) {
   const res = await fetch(`${baseUrl}${path}`, {
     method,
-    headers: { "Content-Type": "application/json", ...(user ? { "x-test-user-id": user.id } : {}) },
+    headers: {
+      "Content-Type": "application/json",
+      // Fresh key per call — see idempotencyMiddleware on POST /subscriptions.
+      "idempotency-key": randomUUID(),
+      ...(user ? { "x-test-user-id": user.id } : {}),
+    },
     body: body == null ? undefined : JSON.stringify(body),
   });
   const text = await res.text();

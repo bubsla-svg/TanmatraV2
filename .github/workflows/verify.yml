@@ -346,6 +346,7 @@ jobs:
           ./src/routes/payments.integrity.test.ts
           ./src/routes/payments.webhook.test.ts
           ./src/routes/payments.subscriptionOrder.test.ts
+          ./src/routes/subscriptions.idempotency.test.ts
           ./src/routes/refunds.test.ts
           ./src/routes/orders.mine.test.ts
           ./src/routes/menu.audit.test.ts
