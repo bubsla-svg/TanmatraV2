@@ -10,8 +10,7 @@ import { collectErrors, ORDERABLE_DISH } from "../fixtures";
  * MiniCartBar and its route into checkout comes for free. `/dish/[slug]` is a
  * different page in a different shell — `app/(focus)/`, which renders no
  * Header, no MobileBottomNav and no MiniCartBar on the rule that each focus
- * flow owns its own bottom edge. Nothing exercised it, so nothing caught that
- * adding a dish there left the visitor with a stepper and no way to the cart.
+ * flow owns its own bottom edge.
  *
  * `support/routes.ts` excludes parameterised routes from the generic sweep,
  * which is why this needs its own spec rather than a list entry.
@@ -19,11 +18,13 @@ import { collectErrors, ORDERABLE_DISH } from "../fixtures";
  * Runs against the live-or-fallback catalog like the rest of the suite;
  * ORDERABLE_DISH is an à-la-carte hero, so it is present in both tiers.
  *
- * Dual-target, same convention as CUJ-01's drawer leg: the PR-gate build is
- * flag-dark (NEXT_PUBLIC_LIVE_CHECKOUT unset), where PdpCartLink renders the
- * LOUD "checkout goes live" status instead of a link; the deployed service is
- * flag-live, where the link is real. E2E_LIVE_CHECKOUT=1 selects which side
- * each assertion runs.
+ * PdpBuyLedger (the sweep's "Cart Drawer wired on the PDP" fix) makes Add
+ * open the Cart Drawer immediately — the architecture doc's canonical route
+ * PDP → Cart Drawer → /checkout, not a link past the drawer to a dead end.
+ * The drawer's own Checkout CTA is dual-target the same way CUJ-01's is: the
+ * PR-gate build is flag-dark (NEXT_PUBLIC_LIVE_CHECKOUT unset) and renders the
+ * LOUD "checkout goes live" status; the deployed service is flag-live and
+ * renders the real link. E2E_LIVE_CHECKOUT=1 selects which side runs.
  */
 
 const PDP = `/dish/${ORDERABLE_DISH.slug}`;
@@ -39,43 +40,49 @@ test("standalone PDP exposes a guest add-to-cart action", async ({ page }) => {
 
   // No session is established anywhere in this spec — guest checkout is
   // supported, so the purchase action must not be gated behind sign-in.
-  const add = page.getByRole("button", { name: /^add$/i });
+  const add = page.getByRole("button", { name: /^add to cart$/i });
   await expect(add).toBeVisible();
   await expect(add).toBeEnabled();
   expect(errors).toEqual([]);
 });
 
-test("adding from the standalone PDP reveals a route to the cart", async ({ page }) => {
+test("adding from the standalone PDP opens the cart drawer and reveals a way onward", async ({ page }) => {
   await page.goto(PDP);
 
-  // Pre-add: no cart affordance yet (the cart is empty, nothing to view).
-  await expect(page.getByRole("link", { name: /view cart/i })).toBeHidden();
+  // Pre-add: the drawer's own title is not on screen (nothing to view yet).
+  await expect(page.getByText(/^your cart$/i)).toBeHidden();
 
-  await page.getByRole("button", { name: /^add$/i }).click();
+  await page.getByRole("button", { name: /^add to cart$/i }).click();
 
-  // §4.1: the stepper replaces Add in place — this is the qty>0 face of the
-  // same control, NOT a separate quantity widget, and its presence means the
-  // line is already in the cart.
+  // The regression this spec exists for: once the cart is non-empty the page
+  // must offer a way ONWARD. PdpBuyLedger's fix is to open the Cart Drawer
+  // the same tap that adds — not merely reveal a link past it.
+  await expect(page.getByText(/^your cart$/i)).toBeVisible();
+  await expect(page.getByText(ORDERABLE_DISH.name).first()).toBeVisible();
+
+  // §4.1: the PDP's own sticky bar also flips to the stepper + "View cart"
+  // face in place of "Add to cart" — this is the qty>0 face of the same
+  // control, and it survives after the drawer is dismissed.
+  await page.keyboard.press("Escape");
+  await expect(page.getByText(/^your cart$/i)).toBeHidden();
   await expect(
     page.getByRole("group", { name: new RegExp(`${ORDERABLE_DISH.name} quantity`, "i") }),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: /view cart/i })).toBeVisible();
 
-  // The regression this spec exists for: once the cart is non-empty the page
-  // must offer a way ONWARD. Before PdpCartLink there was NOTHING here — no
-  // cart link, no gated notice, no tab bar, no header — and browser Back was
-  // the only exit. Flag-dark contract (§0.3, mirroring CUJ-01's drawer leg):
-  // in the PR-gate build the affordance is the LOUD "checkout goes live"
-  // status, never a link into a void; on the deployed flag-live service it
-  // is the real link.
+  // Flag-dark contract (mirrors CUJ-01's drawer leg): reopening the drawer via
+  // "View cart" must show the loud not-yet-live status in the PR-gate build,
+  // never a link into a void.
+  await page.getByRole("button", { name: /view cart/i }).click();
   if (process.env["E2E_LIVE_CHECKOUT"] === "1") {
-    const viewCart = page.getByRole("link", { name: /view cart/i });
-    await expect(viewCart).toBeVisible();
-    await expect(viewCart).toBeEnabled();
+    const checkout = page.getByRole("link", { name: /^checkout$/i });
+    await expect(checkout).toBeVisible();
+    await expect(checkout).toBeEnabled();
   } else {
     await expect(
       page.getByRole("status").filter({ hasText: /checkout goes live/i }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /view cart/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /^checkout$/i })).toHaveCount(0);
   }
 });
 
@@ -84,9 +91,9 @@ test("adding from the standalone PDP reveals a route to the cart", async ({ page
 // flag-dark PR-gate build, same as CUJ-01's live leg.
 liveCheckout("guest can reach checkout from the standalone PDP", async ({ page }) => {
   await page.goto(PDP);
-  await page.getByRole("button", { name: /^add$/i }).click();
+  await page.getByRole("button", { name: /^add to cart$/i }).click();
 
-  await page.getByRole("link", { name: /view cart/i }).click();
+  await page.getByRole("link", { name: /^checkout$/i }).click();
 
   await expect(page).toHaveURL(/\/checkout/);
 });
@@ -104,15 +111,12 @@ test("the standalone PDP offers a way back out", async ({ page }) => {
 });
 
 test("the focus shell renders no global chrome on the PDP", async ({ page }) => {
-  // The flip side of the bug: this page must NOT grow a tab bar or mini-cart
-  // bar to solve the dead end — that would break the layout contract and
-  // double up bottom bars. The fix belongs in the page's own sticky bar.
+  // The flip side of the bug: this page must NOT grow a tab bar to solve the
+  // dead end — that would break the layout contract. The fix belongs in the
+  // page's own sticky bar + drawer, not the global shell.
   await page.goto(PDP);
-  await page.getByRole("button", { name: /^add$/i }).click();
+  await page.getByRole("button", { name: /^add to cart$/i }).click();
+  await page.keyboard.press("Escape");
 
-  // MiniCartBar's "View cart" is a BUTTON (it opens the drawer); the PDP's
-  // affordance is a LINK straight to checkout. Asserting on role keeps the
-  // two distinguishable — if MiniCartBar ever mounts here, this fails.
-  await expect(page.getByRole("button", { name: /view cart/i })).toBeHidden();
   await expect(page.getByRole("navigation", { name: /primary/i })).toBeHidden();
 });

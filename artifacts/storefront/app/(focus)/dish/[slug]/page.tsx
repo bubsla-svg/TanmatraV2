@@ -5,8 +5,7 @@ import { fetchMenu, findDish } from "@/lib/catalog";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { AccordionItem } from "@/components/primitives/Accordion";
 import { formatPaise } from "@/lib/format";
-import { AddToCart } from "@/components/cart/AddToCart";
-import { PdpCartLink } from "@/components/menu/PdpCartLink";
+import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -109,17 +108,19 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
           </AccordionItem>
         </div>
 
-        {/* Bottom CTA. This shell (app/(focus)/) renders no MiniCartBar, so the
-            route onward to checkout has to live here — see PdpCartLink. */}
+        {/* Bottom CTA — the StickyAddToCartLedger (UX/UI Architecture Phase 2
+            §6). This shell (app/(focus)/) renders no MiniCartBar, so the
+            route onward to checkout has to live here: PdpBuyLedger adds AND
+            opens the Cart Drawer in one action (the doc's canonical
+            PDP → Cart Drawer → /checkout path), not just a link past it. */}
         <div className="sticky bottom-4 w-full bg-surface-canvas/95 backdrop-blur-md p-4 rounded-3xl border border-line shadow-2xl">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col">
               <span className="font-label-caps text-[10px] text-ink-muted uppercase tracking-widest">Price</span>
               <span className="font-clinical-data text-xl text-gold-text">{formatPaise(dish.price)}</span>
             </div>
-            <AddToCart dish={dish} />
+            <PdpBuyLedger dish={dish} />
           </div>
-          <PdpCartLink />
         </div>
       </div>
     </div>
