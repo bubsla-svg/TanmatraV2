@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { AccordionItem } from "@/components/primitives/Accordion";
 import { formatPaise } from "@/lib/format";
 import { AddToCart } from "@/components/cart/AddToCart";
+import { PdpCartLink } from "@/components/menu/PdpCartLink";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -27,6 +29,17 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
       {/* Hero Image */}
       <div className="relative w-full aspect-square md:aspect-video overflow-hidden">
         <SafeImage src={dish.image} alt={dish.name} className="h-full w-full" />
+        {/* The focus shell renders no Header, and FocusLayout's contract is
+            that each flow supplies its own back affordance. This page had
+            none — arriving here from a protocol rail, a saved favourite or a
+            search result left browser Back as the only way out. */}
+        <Link
+          href="/menu"
+          aria-label="Back to menu"
+          className="absolute left-4 top-4 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface-canvas/80 text-lg text-ink-primary backdrop-blur-md transition-transform active:scale-[0.98]"
+        >
+          <span aria-hidden>←</span>
+        </Link>
       </div>
 
       <div className="px-gutter pt-6 flex-1 flex flex-col">
@@ -96,13 +109,17 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
           </AccordionItem>
         </div>
 
-        {/* Bottom CTA (Sticky in FocusLayout context typically handles itself, but we ensure it's here) */}
-        <div className="sticky bottom-4 w-full bg-surface-canvas/95 backdrop-blur-md p-4 rounded-3xl border border-line flex items-center justify-between shadow-2xl">
-          <div className="flex flex-col">
-            <span className="font-label-caps text-[10px] text-ink-muted uppercase tracking-widest">Price</span>
-            <span className="font-clinical-data text-xl text-gold-text">{formatPaise(dish.price)}</span>
+        {/* Bottom CTA. This shell (app/(focus)/) renders no MiniCartBar, so the
+            route onward to checkout has to live here — see PdpCartLink. */}
+        <div className="sticky bottom-4 w-full bg-surface-canvas/95 backdrop-blur-md p-4 rounded-3xl border border-line shadow-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-caps text-[10px] text-ink-muted uppercase tracking-widest">Price</span>
+              <span className="font-clinical-data text-xl text-gold-text">{formatPaise(dish.price)}</span>
+            </div>
+            <AddToCart dish={dish} />
           </div>
-          <AddToCart dish={dish} />
+          <PdpCartLink />
         </div>
       </div>
     </div>
