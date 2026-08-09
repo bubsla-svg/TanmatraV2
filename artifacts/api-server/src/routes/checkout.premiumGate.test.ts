@@ -39,20 +39,28 @@ import express, {
 } from "express";
 import { inArray, like } from "drizzle-orm";
 import { db, ordersTable, premiumMembershipsTable, usersTable } from "@workspace/db";
-import { TEST_DISHES as DISHES } from "../test-fixtures/dishes.js";
+import { DISHES as FULL_CATALOG } from "@workspace/menu-catalog";
+import { TEST_DISHES } from "../test-fixtures/dishes.js";
 
 import checkoutRouter from "./checkout";
 
 const RUN = randomUUID().slice(0, 8);
 const EXT_PREFIX = `prem-gate-${RUN}-`;
 
-// A premium dish (must match routes/premium.ts's SEED_PREMIUM_SLUGS — the
-// gate's slug set is seeded from there) and the canonical formerly-non-hero
-// control dish the full-catalog decision made orderable.
-const PREMIUM_DISH = DISHES.find((d) => d.slug === "alfredo-pasta-prawns");
-const OPENED_DISH = DISHES.find((d) => d.slug === "activated-charcoal-smoothie");
-assert.ok(PREMIUM_DISH, "premium fixture dish missing from catalog");
-assert.ok(OPENED_DISH, "formerly-non-hero fixture dish missing from catalog");
+// Two different sources, deliberately:
+// - The premium dish comes from TEST_DISHES — the synthetic fixture whose
+//   premium entries exist precisely so premium tests resolve stable ids
+//   (and whose import side-effect registers them into the resolver's
+//   catalog; its prices match the seeded menu_items rows).
+// - The formerly-non-hero dish comes from the REAL catalog: the whole
+//   point of that case is that a genuine, previously browse-only
+//   production dish is now orderable, so a synthetic stand-in would prove
+//   nothing. It is not in TEST_DISHES — aliasing the fixture as the
+//   catalog is exactly the mistake that broke this file's first CI run.
+const PREMIUM_DISH = TEST_DISHES.find((d) => d.slug === "alfredo-pasta-prawns");
+const OPENED_DISH = FULL_CATALOG.find((d) => d.slug === "activated-charcoal-smoothie");
+assert.ok(PREMIUM_DISH, "premium fixture dish missing from TEST_DISHES");
+assert.ok(OPENED_DISH, "formerly-non-hero dish missing from the real catalog");
 
 interface TestUser {
   id: string;
