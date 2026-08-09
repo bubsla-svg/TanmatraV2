@@ -11,6 +11,7 @@ import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { planTotalAfterCredit, TRIAL_COPY, TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
 import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { AlacarteCheckout } from "@/components/checkout/AlacarteCheckout";
+import { FocusHeader } from "@/components/FocusHeader";
 import { PlanCheckout } from "@/components/checkout/plan/PlanCheckout";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { asBuilderCycle } from "@/lib/checkoutCycle";
@@ -44,12 +45,13 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // pricing at POST /orders. Reached from the cart drawer's Checkout CTA.
   if (mode === "alacarte") {
     return (
-      <div 
-        data-ui-generation="stitch-74" 
+      <div
+        data-ui-generation="stitch-74"
         data-screen-id="MOB-32-Checkout-Dark"
         className="min-h-dvh"
       >
-        <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+        <section className="mx-auto max-w-md px-4 pt-6 pb-44">
+          <FocusHeader title="Checkout" backLabel="Back to cart" trustSignal="Secure UPI checkout" />
           <AlacarteCheckout />
         </section>
       </div>
