@@ -245,11 +245,12 @@ test("a payment reporting no amount at all still promotes (unknown defers, per i
 async function seedZeroChargeOrder(opts: {
   externalOrderId: string;
   createdAt: Date;
+  ownerId?: string;
 }): Promise<number> {
   const [order] = await db
     .insert(ordersTable)
     .values({
-      userId,
+      userId: opts.ownerId ?? userId,
       status: "placed",
       totalPaise: 25000,
       chargePaise: 0, // fully covered — by credits, subsidy, or nothing at all
@@ -367,9 +368,16 @@ test("cross-customer reference attack: forging another customer's real subscript
   const bOrderId = await seedZeroChargeOrder({
     externalOrderId: `sub-${bSubId}`,
     createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+    ownerId: otherUserId,
   });
   await linkDeliveryToOrder(bSubId, bOrderId);
 
+  // A's own order, owned by the suite's default user — NOT otherUserId.
+  // orders.externalOrderId is unique only per (userId, externalOrderId), so
+  // two different owners choosing the identical string is exactly the
+  // scenario this test exists to prove is safe; a bare re-use under the SAME
+  // owner would instead trip Postgres's own uniqueness constraint before the
+  // promoter logic is ever reached.
   const aOrderId = await seedZeroChargeOrder({
     externalOrderId: `sub-${bSubId}`, // forged: names B's real subscription
     createdAt: new Date(now.getTime() - 5 * 60 * 1000),
@@ -426,11 +434,8 @@ test("cross-customer claim reference: reusing another customer's externalOrderId
   const bOrderId = await seedZeroChargeOrder({
     externalOrderId: sharedExt,
     createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+    ownerId: otherUserId,
   });
-  // Re-parent to the other customer directly — seedZeroChargeOrder always
-  // seeds under the suite's shared `userId`, and this is the one case that
-  // needs a different owner.
-  await db.update(ordersTable).set({ userId: otherUserId }).where(eq(ordersTable.id, bOrderId));
   const [bClaim] = await db
     .insert(orderClaimsTable)
     .values({ userId: otherUserId, orderId: sharedExt, grossPaise: 25000, redeemedPaise: 25000, finalPaise: 0 })
