@@ -7,57 +7,19 @@ import {
   type AlacarteOrderResponse,
   type CreateSubscriptionInput,
 } from "./api";
-import { ApiError } from "./apiClient";
+import { verifyWithRetry, type PaidFacts } from "./verifyRetry";
 
-// ── Verify retry ─────────────────────────────────────────────────────────────
-//
-// The verify step is the ONE place a transient failure costs more than an
-// error message: it runs in the seconds AFTER Razorpay has captured the
-// money. A network drop there used to reject all the way up as generic
-// "Something went wrong. Please try again." — and the component retry
-// (finishPlanPayment / finishAlacartePayment) re-runs createRazorpayOrder and
-// REOPENS THE PAY MODAL at a customer who has already paid.
-//
-// Retrying verify in place is safe because the server made it idempotent by
-// design: an already-confirmed order returns `{ok:true}` (webhook-race
-// handling in payments.ts), the signature check is deterministic, and the
-// request carries only ids — no amount. So: retry transport failures and 5xx,
-// NEVER 4xx — an invalid signature does not become valid by asking again.
-
-/** Total attempts for the verify step (1 original + 2 retries). */
-export const VERIFY_ATTEMPTS = 3;
-/** Backoff before attempts 2 and 3 — short, because the customer is watching. */
-const VERIFY_BACKOFF_MS = [400, 1200] as const;
-
-type Sleep = (ms: number) => Promise<void>;
-const realSleep: Sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-/** A verify failure worth retrying: the network died before a response (fetch
- *  rejects with a non-ApiError) or the server blipped (5xx). A 4xx is a real
- *  VERDICT and must surface immediately. */
-export function isRetryableVerifyError(e: unknown): boolean {
-  return e instanceof ApiError ? e.status >= 500 : true;
-}
-
-/** Run the verify call with bounded in-place retry. Exported for tests;
- *  `sleep` is injectable so backoff is testable without real waits. */
-export async function verifyWithRetry(
-  verify: typeof verifyPayment,
-  input: Parameters<typeof verifyPayment>[0],
-  sleep: Sleep = realSleep,
-): ReturnType<typeof verifyPayment> {
-  let lastErr: unknown;
-  for (let attempt = 1; attempt <= VERIFY_ATTEMPTS; attempt++) {
-    try {
-      return await verify(input);
-    } catch (e) {
-      lastErr = e;
-      if (!isRetryableVerifyError(e) || attempt === VERIFY_ATTEMPTS) throw e;
-      await sleep(VERIFY_BACKOFF_MS[attempt - 1] ?? VERIFY_BACKOFF_MS[1]);
-    }
-  }
-  throw lastErr; // Unreachable — the loop always returns or throws.
-}
+// The post-capture verify concern (bounded retry + the standalone
+// retryVerifyPayment recovery call) lives in ./verifyRetry — re-exported here
+// so `@/lib/moneyPath` stays the single import surface for the money path.
+export {
+  VERIFY_ATTEMPTS,
+  isRetryableVerifyError,
+  verifyWithRetry,
+  retryVerifyPayment,
+  type PaidFacts,
+  type VerifiedPayment,
+} from "./verifyRetry";
 
 /**
  * The browser Razorpay adapter — opens the UPI/checkout modal and resolves with
@@ -127,6 +89,9 @@ export async function runCheckout(
     onCreated?: (ref: PlanOrderRef) => void;
     /** Fired when the modal resolves paid and verify begins (see finishPlanPayment). */
     onVerifying?: () => void;
+    /** Fired at the same instant as onVerifying, with the verify input — see
+     *  finishPlanPayment's onCaptured for the full rationale. */
+    onCaptured?: (facts: PaidFacts) => void;
   },
   deps: MoneyPathDeps = DEFAULT_DEPS,
 ): Promise<CheckoutResult> {
@@ -137,7 +102,10 @@ export async function runCheckout(
     creditAppliedPaise: created.creditAppliedPaise ?? 0,
   };
   params.onCreated?.(ref);
-  return finishPlanPayment(ref, params.razorpay, deps, { onVerifying: params.onVerifying });
+  return finishPlanPayment(ref, params.razorpay, deps, {
+    onVerifying: params.onVerifying,
+    onCaptured: params.onCaptured,
+  });
 }
 
 /**
@@ -155,6 +123,12 @@ export async function finishPlanPayment(
      *  starting. Lets the caller swap its busy copy to a confirming state so
      *  a slow verify never looks like a failed payment. */
     onVerifying?: () => void;
+    /** Fired at the SAME instant as onVerifying, with the verify input. Keep
+     *  this around (e.g. in a ref): if verifyWithRetry's bounded retries are
+     *  exhausted and this promise still rejects, the caller has already-paid
+     *  facts to retry verify alone via {@link retryVerifyPayment} — never
+     *  re-run createRazorpayOrder/razorpay.open for a captured payment. */
+    onCaptured?: (facts: PaidFacts) => void;
   },
 ): Promise<CheckoutResult> {
   const order = await deps.createRazorpayOrder({
@@ -163,14 +137,16 @@ export async function finishPlanPayment(
   });
 
   const paid = await razorpay.open(order);
-  opts?.onVerifying?.();
-
-  const verified = await verifyWithRetry(deps.verifyPayment, {
+  const facts: PaidFacts = {
     orderId: ref.orderId,
     razorpayPaymentId: paid.razorpayPaymentId,
     razorpayOrderId: paid.razorpayOrderId,
     razorpaySignature: paid.razorpaySignature,
-  });
+  };
+  opts?.onVerifying?.();
+  opts?.onCaptured?.(facts);
+
+  const verified = await verifyWithRetry(deps.verifyPayment, facts);
 
   return {
     orderId: verified.orderId,
@@ -219,12 +195,18 @@ export async function runAlacarteCheckout(
     onCreated?: (order: AlacarteOrderResponse) => void;
     /** Fired when the modal resolves paid and verify begins (see finishAlacartePayment). */
     onVerifying?: () => void;
+    /** Fired at the same instant as onVerifying, with the verify input — see
+     *  finishPlanPayment's onCaptured for the full rationale. */
+    onCaptured?: (facts: PaidFacts) => void;
   },
   deps: AlacartePathDeps = ALC_DEFAULT_DEPS,
 ): Promise<AlacarteCheckoutResult> {
   const created = await deps.createAlacarteOrder(params.order);
   params.onCreated?.(created);
-  return finishAlacartePayment(created, params.razorpay, deps, { onVerifying: params.onVerifying });
+  return finishAlacartePayment(created, params.razorpay, deps, {
+    onVerifying: params.onVerifying,
+    onCaptured: params.onCaptured,
+  });
 }
 
 /**
@@ -242,19 +224,24 @@ export async function finishAlacartePayment(
     /** Fired the instant the modal resolves — money is CAPTURED, verify is
      *  starting (see finishPlanPayment for the full rationale). */
     onVerifying?: () => void;
+    /** Fired at the same instant as onVerifying, with the verify input — see
+     *  finishPlanPayment's onCaptured for the full rationale. */
+    onCaptured?: (facts: PaidFacts) => void;
   },
 ): Promise<AlacarteCheckoutResult> {
   const rzpOrder = await deps.createRazorpayOrder({ orderId: order.orderId });
 
   const paid = await razorpay.open(rzpOrder);
-  opts?.onVerifying?.();
-
-  const verified = await verifyWithRetry(deps.verifyPayment, {
+  const facts: PaidFacts = {
     orderId: order.orderId,
     razorpayPaymentId: paid.razorpayPaymentId,
     razorpayOrderId: paid.razorpayOrderId,
     razorpaySignature: paid.razorpaySignature,
-  });
+  };
+  opts?.onVerifying?.();
+  opts?.onCaptured?.(facts);
+
+  const verified = await verifyWithRetry(deps.verifyPayment, facts);
 
   return {
     orderId: verified.orderId,

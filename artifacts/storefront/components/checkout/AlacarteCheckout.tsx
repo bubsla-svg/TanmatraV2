@@ -6,7 +6,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
 import { itemCount, type CartState } from "@/lib/cartStore";
-import { runAlacarteCheckout, finishAlacartePayment } from "@/lib/moneyPath";
+import {
+  runAlacarteCheckout,
+  finishAlacartePayment,
+  retryVerifyPayment,
+  type PaidFacts,
+} from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import {
   ApiError,
@@ -19,6 +24,7 @@ import {
 import { DPDP_POLICY_VERSION } from "@/lib/consent";
 import { PhoneAuth } from "./PhoneAuth";
 import { AlacarteDetails, type AlacarteAddress } from "./AlacarteDetails";
+import { UnresolvedPaymentPanel } from "./UnresolvedPaymentPanel";
 
 /**
  * À-la-carte guest checkout (SF-05 / CUJ-01 tail). Cart → details → Razorpay
@@ -54,6 +60,12 @@ export function AlacarteCheckout() {
   // duplicate (the server 409s a reused externalOrderId).
   const idempotencyKey = useRef<string | null>(null);
   const createdOrder = useRef<AlacarteOrderResponse | null>(null);
+  // Set the instant Razorpay captures money; see PlanCheckout.tsx's identical
+  // field for the full rationale — once set, a failure must never re-enable a
+  // CTA that would call createRazorpayOrder (and reopen the modal) again.
+  const paidFactsRef = useRef<PaidFacts | null>(null);
+  const [unresolved, setUnresolved] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   function onVerified(user: AuthUser) {
     if (user.phoneE164) {
@@ -81,6 +93,9 @@ export function AlacarteCheckout() {
         // A prior attempt already created this order — pay it, don't re-create.
         result = await finishAlacartePayment(createdOrder.current, createRazorpayAdapter({ contact }), undefined, {
           onVerifying: () => setVerifying(true),
+          onCaptured: (facts) => {
+            paidFactsRef.current = facts;
+          },
         });
       } else {
         if (!idempotencyKey.current) idempotencyKey.current = `alc-${crypto.randomUUID()}`;
@@ -105,10 +120,22 @@ export function AlacarteCheckout() {
             createdOrder.current = o;
           },
           onVerifying: () => setVerifying(true),
+          onCaptured: (facts) => {
+            paidFactsRef.current = facts;
+          },
         });
       }
       router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
     } catch (e) {
+      if (paidFactsRef.current) {
+        // Money is captured and verify still failed after moneyPath's bounded
+        // in-flow retries — see PlanCheckout.tsx's identical branch. Never
+        // re-enable a CTA that would call createRazorpayOrder again here.
+        setUnresolved(true);
+        setBusy(false);
+        setVerifying(false);
+        return;
+      }
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");
       } else {
@@ -117,6 +144,23 @@ export function AlacarteCheckout() {
       setBusy(false);
       setVerifying(false);
     }
+  }
+
+  async function handleCheckStatus() {
+    if (!paidFactsRef.current) return; // defense-in-depth; the panel only renders when set
+    setCheckingStatus(true);
+    try {
+      const result = await retryVerifyPayment(paidFactsRef.current);
+      router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
+    } catch {
+      // Still unresolved — verify is safe to ask again, so stay on the panel
+      // rather than surfacing a dead-end error.
+      setCheckingStatus(false);
+    }
+  }
+
+  if (unresolved) {
+    return <UnresolvedPaymentPanel checking={checkingStatus} onCheckStatus={() => void handleCheckStatus()} />;
   }
 
   if (hydrated && itemCount(cart) === 0) {
