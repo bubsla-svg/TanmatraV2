@@ -2,7 +2,13 @@
 // Client: drives the live plan-subscription money path end to end.
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { runCheckout, finishPlanPayment, type PlanOrderRef } from "@/lib/moneyPath";
+import {
+  runCheckout,
+  finishPlanPayment,
+  retryVerifyPayment,
+  type PlanOrderRef,
+  type PaidFacts,
+} from "@/lib/moneyPath";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
@@ -10,6 +16,7 @@ import { usePlanQuote } from "@/lib/usePlanQuote";
 import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
+import { UnresolvedPaymentPanel } from "../UnresolvedPaymentPanel";
 
 /**
  * Live plan checkout (SF-07/09/11 · CUJ-02/04). Identity (Firebase → session) →
@@ -72,6 +79,17 @@ export function PlanCheckout({
   // The created subscription, so a retry after a dismissed modal resumes payment
   // on it instead of creating a second subscription.
   const createdRef = useRef<PlanOrderRef | null>(null);
+  // Set the instant Razorpay captures money (moneyPath's onCaptured), cleared
+  // only on a successful outcome. Its presence means "money may already be
+  // charged" — once set, a failure must never re-enable a CTA that would call
+  // createRazorpayOrder again; see handleCheckStatus.
+  const paidFactsRef = useRef<PaidFacts | null>(null);
+  // True once verifyWithRetry's bounded in-flow retries are exhausted for a
+  // captured payment. Distinct from `error`: an unresolved payment replaces
+  // the whole form with UnresolvedPaymentPanel, it doesn't just show a message
+  // next to a CTA that's still safe to press.
+  const [unresolved, setUnresolved] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   function onVerified(u: AuthUser) {
     setUser(u);
@@ -81,6 +99,22 @@ export function PlanCheckout({
         if (pick) setSavedAddress(pick);
       })
       .catch(() => {});
+  }
+
+  // Hand the money event's facts to the confirmation screen — the autopay
+  // disclaimer verbatim from verify, the plan/subscription for post-purchase
+  // attach, plus any host-declared perks (trial creditback) — then navigate.
+  // Shared by the normal pay flow and handleCheckStatus's success path so
+  // both land on the identical confirmation contract.
+  function goToConfirmation(result: { orderId: string; autopayDisclaimer?: string }) {
+    stashCheckoutPerks(result.orderId, {
+      autopayDisclaimer: result.autopayDisclaimer,
+      planId,
+      subscriptionId: createdRef.current?.subscriptionId,
+      creditAppliedPaise: createdRef.current?.creditAppliedPaise,
+      ...successPerks,
+    });
+    router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
   }
 
   async function handlePay(v: PlanDetailsValue) {
@@ -96,6 +130,9 @@ export function PlanCheckout({
         // create a second one.
         result = await finishPlanPayment(createdRef.current, adapter, undefined, {
           onVerifying: () => setVerifying(true),
+          onCaptured: (facts) => {
+            paidFactsRef.current = facts;
+          },
         });
       } else {
         const subscription = buildSubscriptionInput({
@@ -116,20 +153,24 @@ export function PlanCheckout({
             createdRef.current = ref;
           },
           onVerifying: () => setVerifying(true),
+          onCaptured: (facts) => {
+            paidFactsRef.current = facts;
+          },
         });
       }
-      // Hand the money event's facts to the confirmation screen — the autopay
-      // disclaimer verbatim from verify, the plan/subscription for post-purchase
-      // attach, plus any host-declared perks (trial creditback).
-      stashCheckoutPerks(result.orderId, {
-        autopayDisclaimer: result.autopayDisclaimer,
-        planId,
-        subscriptionId: createdRef.current?.subscriptionId,
-        creditAppliedPaise: createdRef.current?.creditAppliedPaise,
-        ...successPerks,
-      });
-      router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
+      goToConfirmation(result);
     } catch (e) {
+      if (paidFactsRef.current) {
+        // Money is captured (onCaptured already fired) and verify still
+        // failed even after moneyPath's bounded in-flow retries. Re-enabling
+        // the normal CTA here would call createRazorpayOrder again and risk
+        // a second charge — show the dedicated recovery panel instead, which
+        // only ever re-asks the idempotent verify endpoint.
+        setUnresolved(true);
+        setBusy(false);
+        setVerifying(false);
+        return;
+      }
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");
       } else {
@@ -140,8 +181,26 @@ export function PlanCheckout({
     }
   }
 
+  async function handleCheckStatus() {
+    if (!paidFactsRef.current) return; // defense-in-depth; the panel only renders when set
+    setCheckingStatus(true);
+    try {
+      const result = await retryVerifyPayment(paidFactsRef.current);
+      goToConfirmation(result);
+    } catch {
+      // Still unresolved — verify is safe to ask again, so stay on the panel
+      // rather than surfacing a dead-end error. Never touch paidFactsRef or
+      // fall back to the normal form: that would risk reopening the modal.
+      setCheckingStatus(false);
+    }
+  }
+
   if (!user) {
     return <PlanIdentityGate planName={planName} onVerified={onVerified} />;
+  }
+
+  if (unresolved) {
+    return <UnresolvedPaymentPanel checking={checkingStatus} onCheckStatus={() => void handleCheckStatus()} />;
   }
 
   return (

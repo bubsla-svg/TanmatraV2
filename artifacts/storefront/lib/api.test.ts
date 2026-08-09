@@ -4,7 +4,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { API_BASE, ApiError, apiPost, quotePlan, createRazorpayOrder, getCreditBalance } from "./api";
-import { runCheckout, finishPlanPayment, type RazorpayAdapter, type MoneyPathDeps } from "./moneyPath";
+import {
+  runCheckout,
+  finishPlanPayment,
+  retryVerifyPayment,
+  type RazorpayAdapter,
+  type MoneyPathDeps,
+  type PaidFacts,
+} from "./moneyPath";
 
 function fakeFetch(status: number, payload: unknown) {
   const calls: { url: string; init: RequestInit }[] = [];
@@ -184,6 +191,61 @@ test("finishPlanPayment resumes an already-created subscription — pays it WITH
   };
   const result = await finishPlanPayment({ orderId: "sub-7", subscriptionId: 7 }, razorpay, deps);
   assert.deepEqual(seen, ["order", "modal", "verify"]); // no "create"
+  assert.equal(result.orderId, "sub-7");
+  assert.equal(result.status, "preparing");
+});
+
+test("onCaptured fires with the verify facts at the same moment as onVerifying — the unresolved-payment recovery seam", async () => {
+  // The whole point: these are the exact ids the component needs to retry
+  // verify ALONE (via retryVerifyPayment) if verifyWithRetry's bounded
+  // in-flow attempts are exhausted, without ever re-running createRazorpayOrder
+  // or reopening the modal on a customer who may already be charged.
+  const seen: string[] = [];
+  let captured: PaidFacts | null = null;
+  const deps: MoneyPathDeps = {
+    createSubscription: async () => ({ subscription: { id: 7, externalOrderId: "sub-7" }, deliveries: [], bridgeCreditPaise: 0 }),
+    createRazorpayOrder: async () => ({ razorpayOrderId: "order_9", amount: 437800, currency: "INR", keyId: "rzp_test" }),
+    verifyPayment: async (input) => { seen.push("verify"); return { ok: true, orderId: input.orderId, status: "preparing" }; },
+  };
+  const razorpay: RazorpayAdapter = {
+    open: async (order) => ({ razorpayPaymentId: "pay_1", razorpayOrderId: order.razorpayOrderId, razorpaySignature: "sig_1" }),
+  };
+  await runCheckout(
+    {
+      subscription: { planId: "desk_fuel", track: "veg", cadence: "monthly", mealsPerDelivery: 22, deliveryWindow: "12:30-13:30", startDate: "2026-08-01", members: [{ name: "Asha" }] },
+      razorpay,
+      onVerifying: () => seen.push("verifying"),
+      onCaptured: (facts) => { captured = facts; seen.push("captured"); },
+    },
+    deps,
+  );
+  assert.deepEqual(captured, {
+    orderId: "sub-7",
+    razorpayPaymentId: "pay_1",
+    razorpayOrderId: "order_9",
+    razorpaySignature: "sig_1",
+  });
+  // Fired before verify begins — the caller must have the facts in hand
+  // before there's any chance verify fails.
+  assert.deepEqual(seen, ["verifying", "captured", "verify"]);
+});
+
+test("retryVerifyPayment re-asks verify alone with captured facts — never touches createRazorpayOrder", async () => {
+  let verifyCalls = 0;
+  const facts: PaidFacts = {
+    orderId: "sub-7",
+    razorpayPaymentId: "pay_1",
+    razorpayOrderId: "order_9",
+    razorpaySignature: "sig_1",
+  };
+  const result = await retryVerifyPayment(facts, {
+    verifyPayment: async (input) => {
+      verifyCalls++;
+      assert.deepEqual(input, facts);
+      return { ok: true, orderId: input.orderId, status: "preparing" };
+    },
+  });
+  assert.equal(verifyCalls, 1);
   assert.equal(result.orderId, "sub-7");
   assert.equal(result.status, "preparing");
 });
