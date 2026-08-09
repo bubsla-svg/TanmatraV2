@@ -173,11 +173,12 @@ fulfilment."* See §10.
 [x] Successful payment releases fulfilment exactly once
 [x] Repeated callback: one order, one release, one ticket, one notification
 [ ] Sponsored zero-charge: one confirmed order, one release, one ticket (evidence
-    rewritten to a real join, §10 — CI green on PR #15 branch commit 9a5a2dd, run
-    31306524106; pending merge + production deploy revision evidence)
+    rewritten to a real join, §10 — CI green on PR #15 branch commit 5e72c6c, run
+    31307405210; pending merge + production deploy revision evidence)
 [ ] Firebase sign-in smoke test (no OTP capture; returnTo + cart + quote intact)
 [ ] Browser-controlled identifiers cannot prove financial settlement (fix + tests
-    written and CI-verified on PR #15, §10; pending merge + production deploy)
+    CI-verified on PR #15 commit 5e72c6c, run 31307405210, §10; pending merge +
+    production deploy)
 ```
 
 PR #15's CI history, for the record: Verify run [31306304884](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31306304884)
@@ -185,12 +186,17 @@ on commit `e8912a8` (the original fix) FAILED — a real Postgres unique-constra
 violation in a test fixture, not the production code (see §10's "test-fixture bug"
 note). Fixed in commit `9a5a2dd`; run [31306524106](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31306524106)
 passed, including the money-integration job's real-Postgres execution of every
-forged-prefix / cross-customer / partial-settlement test. This is exactly the
-"run it against real Postgres" bar the acceptance criterion requires — not
-merely proposed, actually cleared, on that commit. A further commit on the same
-PR adds an additional fix an adversarial audit surfaced afterward (§10); the
-final commit's own CI run is the one whose evidence belongs in the checklist
-above once it passes.
+forged-prefix / cross-customer / partial-settlement test — the "run it against
+real Postgres" bar the acceptance criterion requires, actually cleared, not
+merely proposed. Commit `9a5a2dd`'s green run did not yet include the
+`finalizeOrder` ownership/re-link fix (§10) an adversarial audit surfaced
+afterward; that landed in commit `5e72c6c`, and run
+[31307405210](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31307405210)
+— the PR's current HEAD at time of writing — passed too, including the two new
+`loyaltyEngine.checkout.test.ts` regression tests for that fix. Both boxes above
+stay unchecked until PR #15 is merged and its Cloud Run revision evidence is
+recorded here (mirroring PR #13's own §9 addendum) — CI-green on a branch is
+verification, not deployment.
 
 Automated coverage now pinning rows 2–8 (each box flips to `[x]` when the
 fulfilment-isolation PR is merged, CI-green, and its deploy revision evidence
