@@ -131,10 +131,16 @@ function tomorrowISO(): string {
   return d.toISOString();
 }
 
+/** Plan-v2 shape, copied from subscriptions.creditLedger.test.ts — a file the
+ *  money-integration job actually runs. `planId` is REQUIRED there: the CI
+ *  environment has legacy pricing disabled, so a planId-less body 400s
+ *  `legacy_pricing_disabled` before ever reaching the code under test. */
 function baseBody(extra: Record<string, unknown>) {
   return {
-    cadence: "weekly",
-    mealsPerDelivery: 5,
+    planId: "desk_fuel",
+    track: "veg",
+    cadence: "monthly",
+    mealsPerDelivery: 22,
     deliveryWindow: "12:00-14:00",
     startDate: tomorrowISO(),
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
