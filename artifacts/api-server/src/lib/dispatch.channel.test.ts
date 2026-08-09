@@ -221,6 +221,69 @@ test("overrideAssignment refuses a non-own_app order even for a deliberate opera
   assert.equal(ok.ok, true, `override refused an own_app order: ${ok.reason}`);
 });
 
+test("overrideAssignment refuses an unpaid ('placed') own_app order", async () => {
+  // lib/paidGate.ts: overrideAssignment is a status-free escape hatch for
+  // ASSIGNMENT, never for PAYMENT. Before this gate, an operator (or the ops
+  // AI agent's assign_rider-adjacent tooling) could hand a real rider to an
+  // order nobody has paid for yet, purely by naming it directly.
+  const lat = island(5);
+  const userId = await makeUser();
+  const riderId = await makeRider(lat);
+  const orderId = await makeOrder({ userId, lat, channel: "own_app", status: "placed" });
+
+  const out = await overrideAssignment({
+    orderId,
+    riderId,
+    operatorId: "test_ops",
+    notes: "manual",
+  });
+  assert.equal(out.ok, false);
+  assert.equal(out.reason, "order not in a paid-live status");
+
+  const [row] = await db
+    .select({ riderId: ordersTable.riderId, status: ordersTable.status })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId))
+    .limit(1);
+  assert.equal(row!.riderId, null, "unpaid order was given a rider");
+  assert.equal(row!.status, "placed", "unpaid order's status was moved");
+});
+
+test("overrideAssignment still allows reassigning an already-dispatched, paid-live order", async () => {
+  // Paid-live (lib/paidGate.ts) deliberately includes rider_assigned /
+  // out_for_delivery, broader than isFulfilmentAssignable's preparing/ready —
+  // a legitimate reassignment happens AFTER first assignment. Collapsing the
+  // two predicates into the assignable-only one was a previously reviewed-out
+  // bug (paidGate.ts's own doc comment calls it out); this pins that the
+  // paid-liveness gate did not resurrect it.
+  const lat = island(6);
+  const userId = await makeUser();
+  const originalRiderId = await makeRider(lat);
+  const newRiderId = await makeRider(lat);
+  const orderId = await makeOrder({
+    userId,
+    lat,
+    channel: "own_app",
+    status: "rider_assigned",
+    riderId: originalRiderId,
+  });
+
+  const out = await overrideAssignment({
+    orderId,
+    riderId: newRiderId,
+    operatorId: "test_ops",
+    notes: "reassign",
+  });
+  assert.equal(out.ok, true, `reassignment refused: ${JSON.stringify(out)}`);
+
+  const [row] = await db
+    .select({ riderId: ordersTable.riderId })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId))
+    .limit(1);
+  assert.equal(row!.riderId, newRiderId);
+});
+
 /**
  * 3a and 3b differ in exactly one column. Read them together or neither means
  * much.

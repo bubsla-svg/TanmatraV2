@@ -347,6 +347,7 @@ jobs:
           ./src/routes/payments.integrity.test.ts
           ./src/routes/payments.webhook.test.ts
           ./src/routes/payments.subscriptionOrder.test.ts
+          ./src/routes/subscriptions.order.test.ts
           ./src/routes/subscriptions.idempotency.test.ts
           ./src/routes/refunds.test.ts
           ./src/routes/orders.mine.test.ts
@@ -371,6 +372,7 @@ jobs:
           ./src/routes/premium.paymentOrder.test.ts
           ./src/routes/addons.test.ts
           ./src/lib/ai/agents/ops.refundCap.test.ts
+          ./src/lib/ai/agents/ops.updateOrderStatus.test.ts
           ./src/routes/marketplace.checkout.test.ts
           ./src/routes/marketplace.paymentsIntegration.test.ts
           ./src/routes/marketplace.items.test.ts

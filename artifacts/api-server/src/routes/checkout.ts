@@ -13,7 +13,6 @@ import {
   normalizeGuestPrefs,
 } from "../lib/checkoutSafety";
 import { isServiceablePincode, SERVICEABLE_PINCODES } from "@workspace/api-zod";
-import { sendOrderConfirmation } from "../lib/orderNotification";
 import { getDecryptedPreferences } from "../lib/userPreferences";
 
 const router: IRouter = Router();
@@ -292,9 +291,14 @@ router.post("/orders", async (req: Request, res: Response) => {
     "dpdp consent recorded at checkout",
   );
 
-  void sendOrderConfirmation(row.id).catch((err: unknown) =>
-    req.log.error({ err, orderId: row.id }, "sendOrderConfirmation failed"),
-  );
+  // No sendOrderConfirmation here, deliberately (paid-fulfilment invariant,
+  // lib/paidGate.ts): this row was just inserted "placed" — unpaid — and the
+  // WhatsApp/email template says "is confirmed... we are preparing your meal
+  // now," which is false until payment settles. The capture writers
+  // (routes/payments.ts verify/webhooks, lib/reconciliationScheduler.ts, the
+  // verified zero-charge finalize) already send it on the placed→preparing
+  // edge; sending it here as well means every abandoned or failed checkout
+  // leaves the customer holding a confirmation for food nobody is cooking.
 
   res.status(201).json({
     orderId: externalOrderId,

@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, deliveryEventsTable, ordersTable, ridersTable } from "@workspace/db";
 import { eq, asc, sql } from "drizzle-orm";
-import { isFulfilmentAssignable } from "../lib/paidGate";
+import { isFulfilmentAssignable, isPaidLive } from "../lib/paidGate";
 import { z } from "zod/v4";
 import { emitDeliveryEvent } from "../lib/realtime";
 import { scheduleOrderAdvance } from "../lib/queue";
@@ -117,7 +117,7 @@ router.post("/delivery/schedule-advance", async (req: Request, res: Response) =>
   }
   const { orderId, step, delayMs } = parsed.data;
   const [order] = await db
-    .select({ orderKind: ordersTable.orderKind })
+    .select({ orderKind: ordersTable.orderKind, status: ordersTable.status })
     .from(ordersTable)
     .where(eq(ordersTable.id, orderId))
     .limit(1);
@@ -132,6 +132,17 @@ router.post("/delivery/schedule-advance", async (req: Request, res: Response) =>
   // assume every such row is a real meal being prepared.
   if (order.orderKind !== "meal") {
     res.status(409).json({ error: "not a meal order" });
+    return;
+  }
+  // Paid-liveness gate (lib/paidGate.ts), mirrored from /delivery/auto-assign
+  // just below: without it, this endpoint is a side door around the
+  // placed→preparing payment-capture edge — it can fake a delivery_events
+  // history, auto-dispatch a real rider (the "ready" step), or write a
+  // clinical nutrition log (the "delivered" step, both via the queued
+  // processor and the no-Redis fallback right below) for an order nobody
+  // has paid for yet.
+  if (!isPaidLive(order.status)) {
+    res.status(409).json({ error: "order not in a paid-live status" });
     return;
   }
   const queued = await scheduleOrderAdvance(orderId, step, delayMs);

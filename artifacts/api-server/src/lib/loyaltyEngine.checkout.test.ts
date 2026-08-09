@@ -463,3 +463,60 @@ test("finalizeOrder never re-links a delivery that already belongs to another or
     "an already-linked delivery was stolen by a second order",
   );
 });
+
+test("finalizeOrder refuses to adopt and reprice a pre-existing order it did not create", async () => {
+  // The order INSERT is idempotent on (userId, externalOrderId); on conflict
+  // the old code fell through to an unconditional charge_paise UPDATE with no
+  // check on the pre-existing row's provenance. createOrderForNewSubscription
+  // (routes/subscriptions.ts) and chargeMandate.ts mint real orders under
+  // exactly this externalOrderId shape — nothing stopped a caller from naming
+  // one of their own subscription-cycle order ids here and having it silently
+  // repriced to whatever THIS cart's contents total, potentially down to a
+  // credit/subsidy-covered zero (the exact settlement-trust-boundary shape
+  // docs/MONEY-PATH-VERIFICATION.md §10 is about).
+  const owner = await makeUser();
+  const externalOrderId = `sub-preexisting-${randomUUID()}`;
+  const originalChargePaise = 123456;
+  const [preexisting] = await db
+    .insert(ordersTable)
+    .values({
+      userId: owner,
+      externalOrderId,
+      status: "placed",
+      totalPaise: originalChargePaise,
+      chargePaise: originalChargePaise,
+      items: [{ id: 1, name: "Subscription Meal", qty: 1, price: originalChargePaise }],
+      fulfillmentType: "delivery",
+    })
+    .returning({ id: ordersTable.id });
+
+  const pickupLocationId = await makePickupLocation(0);
+  const [dish] = pickAvailableDishes(1);
+  await assert.rejects(
+    finalizeOrder({
+      userId: owner,
+      orderId: externalOrderId, // same owner, same externalOrderId — no matching claim exists
+      fulfillmentType: "pickup",
+      pickupLocationId,
+      items: [{ id: dish!.id, name: dish!.name, qty: 1, price: dish!.price }],
+    }),
+    (err: unknown) => {
+      // A RegExp matcher here would test String(err) ("Error: <message>"),
+      // not err.message — an anchored /^.../ against that always misses the
+      // "Error: " prefix. Match the message field directly instead.
+      const e = err as Error;
+      assert.match(e.message, /^order_id_conflict:/);
+      return true;
+    },
+  );
+
+  const [after] = await db
+    .select({ chargePaise: ordersTable.chargePaise })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, preexisting!.id));
+  assert.equal(
+    after?.chargePaise,
+    originalChargePaise,
+    "a foreign order's real charge_paise was overwritten by an adopted checkout",
+  );
+});
