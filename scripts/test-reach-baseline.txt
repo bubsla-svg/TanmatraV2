@@ -59,7 +59,6 @@ artifacts/api-server/src/routes/subscriptions.changePlan.test.ts
 artifacts/api-server/src/routes/subscriptions.dayplan.test.ts
 artifacts/api-server/src/routes/subscriptions.fullLifecycle.test.ts
 artifacts/api-server/src/routes/subscriptions.macroCap.test.ts
-artifacts/api-server/src/routes/subscriptions.order.test.ts
 artifacts/api-server/src/routes/subscriptions.pauseResume.test.ts
 artifacts/api-server/src/routes/subscriptions.planV2AddOns.test.ts
 artifacts/api-server/src/routes/subscriptions.reactivateBilling.test.ts

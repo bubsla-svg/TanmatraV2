@@ -270,25 +270,37 @@ const updateOrderStatus = defineTool({
       .where(eq(ordersTable.id, orderId))
       .limit(1);
     if (!order) return { success: false as const, error: "Order not found" };
-    // The placed→anything edge (except cancel) is reserved: "placed" means
-    // unpaid, and placed→preparing specifically IS the payment-capture
-    // signal (routes/payments.ts; lib/paidGate.ts). Ops may still cancel
-    // unpaid junk. Known residual: a payment-link-paid order whose webhook
-    // was permanently lost has no ops override any more — the recovery is
-    // Razorpay dashboard webhook redelivery (documented in
+    // Paid-liveness gate (lib/paidGate.ts): "placed" means unpaid, and
+    // placed→preparing specifically IS the payment-capture signal
+    // (routes/payments.ts) — ops may not manufacture it. Ops may still
+    // cancel unpaid junk (placed→cancelled). Every other transition,
+    // including one starting from a terminal "delivered"/"cancelled" row,
+    // requires the order to already be paid-live; a positive isPaidLive()
+    // check (not a `!== "placed"` negative one) is what actually excludes
+    // those terminal statuses. Known residual: a payment-link-paid order
+    // whose webhook was permanently lost has no ops override any more —
+    // the recovery is Razorpay dashboard webhook redelivery (documented in
     // docs/MONEY-PATH-VERIFICATION.md).
-    if (order.status === "placed" && status !== "cancelled") {
+    const isPlacedToCancel = order.status === "placed" && status === "cancelled";
+    if (!isPlacedToCancel && !isPaidLive(order.status)) {
       return {
         success: false as const,
-        error: `Order #${orderId} is unpaid ('placed'); only payment capture may advance it. It can be cancelled.`,
+        error: `Order #${orderId} is not in a paid-live status ('${order.status}'); only a placed→cancelled transition is allowed otherwise.`,
       };
     }
     const before = { status: order.status };
-    await db.transaction(async (tx) => {
-      await tx
+    const updated = await db.transaction(async (tx) => {
+      // CAS on the row's status: the select above is unlocked, so a
+      // concurrent status change (webhook, another ops call) can land
+      // between the check and this write.
+      const [row] = await tx
         .update(ordersTable)
         .set({ status })
-        .where(eq(ordersTable.id, orderId));
+        .where(
+          and(eq(ordersTable.id, orderId), eq(ordersTable.status, order.status)),
+        )
+        .returning({ id: ordersTable.id });
+      if (!row) return false;
       await tx.insert(deliveryEventsTable).values({
         orderId,
         event: `status_${status}`,
@@ -307,7 +319,14 @@ const updateOrderStatus = defineTool({
         },
         tx,
       );
+      return true;
     });
+    if (!updated) {
+      return {
+        success: false as const,
+        error: `Order #${orderId}'s status changed concurrently; re-check its current status before retrying.`,
+      };
+    }
     emitDeliveryEvent(orderId, { event: `status_${status}` });
     return { success: true as const, orderId, status, previous: before.status };
   },

@@ -172,13 +172,16 @@ fulfilment."* See §10.
 [x] Unresolved-payment test passes (blocked; status recheck restores attempt)
 [x] Successful payment releases fulfilment exactly once
 [x] Repeated callback: one order, one release, one ticket, one notification
-[ ] Sponsored zero-charge: one confirmed order, one release, one ticket (evidence
-    rewritten to a real join, §10 — CI green on PR #15 branch commit 5e72c6c, run
-    31307405210; pending merge + production deploy revision evidence)
+[x] Sponsored zero-charge: one confirmed order, one release, one ticket (evidence
+    rewritten to a real join, §10 — CI green on commit 5e72c6c, run 31307405210;
+    merged as df9c2a8, deployed as revision wellness-foods-00206-j7l, deploy run
+    31307909903 — §9 PR #15 addendum)
 [ ] Firebase sign-in smoke test (no OTP capture; returnTo + cart + quote intact)
-[ ] Browser-controlled identifiers cannot prove financial settlement (fix + tests
-    CI-verified on PR #15 commit 5e72c6c, run 31307405210, §10; pending merge +
-    production deploy)
+[x] Browser-controlled identifiers cannot prove financial settlement (fix + tests
+    CI-verified on commit 5e72c6c, run 31307405210, §10; merged as df9c2a8,
+    deployed as revision wellness-foods-00206-j7l, deploy run 31307909903, and
+    confirmed live by a production probe of ORDER_FINALIZE_DISABLED — §9 PR #15
+    addendum)
 ```
 
 PR #15's CI history, for the record: Verify run [31306304884](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31306304884)
@@ -192,11 +195,12 @@ merely proposed. Commit `9a5a2dd`'s green run did not yet include the
 `finalizeOrder` ownership/re-link fix (§10) an adversarial audit surfaced
 afterward; that landed in commit `5e72c6c`, and run
 [31307405210](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31307405210)
-— the PR's current HEAD at time of writing — passed too, including the two new
-`loyaltyEngine.checkout.test.ts` regression tests for that fix. Both boxes above
-stay unchecked until PR #15 is merged and its Cloud Run revision evidence is
-recorded here (mirroring PR #13's own §9 addendum) — CI-green on a branch is
-verification, not deployment.
+— the PR's HEAD at merge — passed too, including the two new
+`loyaltyEngine.checkout.test.ts` regression tests for that fix. PR #15 merged as
+`df9c2a8` and deployed as Cloud Run revision `wellness-foods-00206-j7l` (deploy
+run 31307909903, §9 addendum) — CI-green on a branch is verification, not
+deployment, so both boxes above stayed unchecked until that deploy evidence,
+plus a live probe of the `ORDER_FINALIZE_DISABLED` gate, was recorded.
 
 Automated coverage now pinning rows 2–8 (each box flips to `[x]` when the
 fulfilment-isolation PR is merged, CI-green, and its deploy revision evidence
@@ -307,6 +311,47 @@ commit now serving 100% of production traffic — not merely on a feature
 branch. Row 8 (sponsored zero-charge) and the new browser-controlled-identifier
 row are pinned by tests rewritten in the §10 fix, not yet included in any
 green CI run — see §10's own status note.
+
+### PR #15 (settlement trust boundary) deploy revision evidence (recorded 2026-08-09)
+
+PR #15 merged (commit `df9c2a8`) and deployed automatically via `deploy.yml`'s
+push-to-main trigger, closing out the "pending merge + production deploy
+revision evidence" note the two §6 rows below carried while the PR was open.
+
+| | PR #15 (settlement trust boundary) |
+|---|---|
+| Merge SHA | `df9c2a850901afcf1986069b877e5d5a49be1853` |
+| Deploy run | [31307909903](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31307909903) — success (gate, migrate-db, cloud-run, frontend-cloud-run, storefront-cloud-run all green) |
+| Deploy's own `gate` job (re-verifies on the merge commit) | job [93231091007](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31307909903/job/93231091007) — success, including "Money-path integration tests (verify.yml's full list)" against real Postgres — this is what actually ran the §10 forged-prefix / cross-customer / partial-settlement suite and the `finalizeOrder` ownership tests against real Postgres for the first time on the commit that ships them |
+| Cloud Build ID | `d6418a82-802e-4bdc-b91e-16e43af11cb7` (SUCCESS) |
+| Image tag | `…/wellness-foods:df9c2a85…` |
+| Cloud Run revision | `wellness-foods-00206-j7l` |
+| Previous stable (rollback target) | `wellness-foods-00205-mv8` (PR #13's revision — confirms an unbroken chain) |
+| Traffic | 100% LATEST at 10:26:28Z |
+| `/api/livez` smoke | OK 10:26:30Z |
+| `PLAN_CHECKOUT_DISABLED` in deploy env | `=1` present (unchanged) |
+| `ORDER_FINALIZE_DISABLED` in deploy env | `=1` present — first revision to carry it |
+
+**Post-deploy production probe (2026-08-09, read-only, no order created):**
+
+```
+POST https://wellness-foods-yftxztp3xq-em.a.run.app/api/orders/finalize  {}
+→ HTTP 503
+{"code":"CHECKOUT_TEMPORARILY_UNAVAILABLE",
+ "message":"Checkout is temporarily unavailable. Please try again shortly.",
+ "error":"Checkout is temporarily unavailable. Please try again shortly."}
+```
+
+This is the `orderFinalizeGate` middleware answering, mounted before
+`idempotencyMiddleware` exactly as designed — confirms `ORDER_FINALIZE_DISABLED`
+is not just present in the deploy command but actually enforced by the running
+revision. Both §6 rows below (Sponsored zero-charge; Browser-controlled
+identifiers cannot prove financial settlement) now have every piece the
+checklist asked for: real-Postgres CI evidence (run 31307405210, commit
+`5e72c6c`), a production deploy of that commit (run 31307909903, revision
+`wellness-foods-00206-j7l`), and a live probe confirming the containment gate
+that makes the fix's *reachable* surface a non-issue either way. Flipped to
+`[x]` in §6.
 
 ## 10. Settlement Trust Boundary (2026-08-09, owner review)
 
@@ -528,3 +573,183 @@ Untrusted fields (never sufficient as proof of settlement, on any route):
 `externalOrderId`, the `Idempotency-Key` header, client-declared cart/item
 totals (pricing is always server-resolved from the catalog), client-declared
 discount amounts, client-declared channel labels.
+
+## 11. Paid-fulfilment invariant — five more findings, fixed (2026-08-09)
+
+An adversarial audit of the entire paid-fulfilment invariant as shipped in
+PR #13 — broader than §10's settlement-evidence defect, launched before PR #15
+merged and completing after it — returned five independently-verified
+findings. Three are gaps in code this project's own PR #13 shipped (a
+premature customer notification, a documented-but-never-implemented
+paid-liveness gate, and an insufficiently-strict status check); the other two
+are a critical-but-currently-contained order-hijacking bug and a
+lower-priority chokepoint gap in the delivery pipeline. All five are fixed
+here, in the branch restarted from `origin/main` at PR #15's merge commit
+(`df9c2a8`) per this repo's rule that a merged PR cannot be reused.
+
+### P0 — premature order-confirmation notification before payment (`routes/checkout.ts`)
+
+The guest/legacy `POST /orders` handler called `sendOrderConfirmation(row.id)`
+immediately after inserting the order row — while its status is still
+`"placed"` (unpaid). The WhatsApp/email template it sends says "is
+confirmed... we are preparing your meal now," which is false at that point:
+the payment-capture writers (`routes/payments.ts` verify/webhooks,
+`lib/reconciliationScheduler.ts`, the verified zero-charge finalize) already
+call the same function on the placed→preparing edge, so every legitimately
+paid order gets exactly one accurate confirmation from there. Calling it a
+second time, earlier and unconditionally, meant every abandoned or failed
+checkout still left the customer holding a "confirmed, being prepared"
+message for food nobody was cooking.
+
+Fixed by removing the call site; the payment-capture writers remain the sole
+senders. No dedicated regression test: this call shape has no DB- or
+mock-observable side effect to assert on (no `dedupe` option was passed to
+`sendWhatsappMessage`, so no `message_dispatches` row; `sendMail` no-ops
+without `SMTP_URL`, unset in CI) — the audit itself notes zero pre-existing
+test coverage for `orderNotification`, and inventing an unverifiable mock
+carried more risk of a silently-broken CI job than the gap it would close.
+Verified by direct code review and a clean `pnpm --filter @workspace/api-server
+run typecheck`.
+
+### P1 — `overrideAssignment` had no paid-liveness gate (`lib/dispatch.ts`)
+
+`lib/paidGate.ts`'s own doc comment already claimed "dispatch's
+`overrideAssignment` is the status-free human escape hatch... gated on
+paid-liveness, never on assignability" — but the function never actually
+checked `isPaidLive`. An operator (or the ops AI agent's tooling acting on a
+misread instruction) could hand a real rider to an order via the manual
+override path regardless of whether it had ever been paid for, bypassing
+every gate `dispatchOrder`'s chokepoint enforces for the automated path.
+
+Fixed with two checks, mirroring the existing channel check's shape: an
+unlocked pre-flight `isPaidLive(order.status)` refusal in `overrideAssignment`
+itself, and an authoritative re-check under the row's `FOR UPDATE` lock inside
+`runOverrideTx` (the pre-flight read is unlocked, so a concurrent
+cancel/payment-failed webhook can land between peek and claim). `runOverrideTx`
+now returns a typed `{ok: true, decisionId} | {ok: false, reason}` union
+instead of `number | null`, matching this codebase's house idiom for normal
+business refusals (`dispatchOrderInner`'s existing shape). Deliberately
+**not** collapsed into `isFulfilmentAssignable`: paid-live also covers
+`rider_assigned`/`out_for_delivery`, because a legitimate reassignment of an
+in-flight rider happens after first assignment — `paidGate.ts`'s own comment
+calls out that collapsing the two predicates was a previously reviewed-out
+bug, and a regression test now pins that this fix didn't resurrect it.
+
+Tests (`lib/dispatch.channel.test.ts`): "overrideAssignment refuses an unpaid
+('placed') own_app order" and "overrideAssignment still allows reassigning an
+already-dispatched, paid-live order" (the positive control for the
+paragraph above).
+
+### P2 — `update_order_status` blocked only the literal string `"placed"` (`lib/ai/agents/ops.ts`)
+
+The ops AI agent's `update_order_status` tool refused only when
+`order.status === "placed" && status !== "cancelled"` — a negative check
+that excludes exactly one string. Every other current status, including the
+**terminal** `"delivered"` and `"cancelled"`, fell through to an unconditional
+status `UPDATE`. An operator (or the LLM driving this tool from a misread
+chat message) could walk an already-delivered or already-cancelled order back
+into `"preparing"`, re-entering the kitchen/dispatch pipeline for an order
+payment considers closed.
+
+Fixed by replacing it with a positive `isPaidLive(order.status)` check, plus
+the one deliberate carve-out (`placed→cancelled`, so ops can still kill unpaid
+junk). Also added defense in depth: the status `UPDATE` is now a
+compare-and-swap keyed on the status this handler actually read
+(`WHERE id = orderId AND status = <status read above>`), using `.returning()`
+to detect and refuse a concurrent change instead of silently overwriting it —
+the same class of race P1's under-lock re-check closes for `overrideAssignment`.
+
+This also **retires the false claim in §5** above ("Ops surfaces gated: ...
+ops-agent assign_rider / update_order_status ... — 409 on non-paid-live") —
+that line was written when only `assign_rider` actually enforced it;
+`update_order_status` now does too, so the claim is accurate as of this fix
+and needs no further correction.
+
+Tests (new file `lib/ai/agents/ops.updateOrderStatus.test.ts`, resolving the
+tool via `getAgent("ops")` the same way `ops.refundCap.test.ts` does): refuses
+to advance a `"placed"` order; still allows `placed→cancelled`; refuses to
+revive a `"delivered"` order; refuses to revive a `"cancelled"` order; and a
+positive control that a genuinely paid-live order still advances.
+
+### P3 — `finalizeOrder` could adopt and reprice a pre-existing order it did not create (`lib/loyaltyEngine.ts`)
+
+The order `INSERT` in `finalizeOrder` is idempotent on `(userId,
+externalOrderId)` via `onConflictDoNothing`. On conflict, the pre-§10-fix code
+looked up the existing row and continued unconditionally — with no check on
+that row's provenance. `createOrderForNewSubscription`
+(`routes/subscriptions.ts`) and `chargeMandate.ts` both mint real orders under
+exactly this `externalOrderId` shape (`sub-<id>`, `sub-<id>-mandate-<id>-<date>`).
+Nothing stopped a caller from naming one of their own subscription-cycle order
+ids as `orderId` in a `/orders/finalize` call: the flow would adopt that
+order, run its own pricing against the caller's cart, and reach an
+**unconditional `chargePaise` UPDATE**, silently overwriting the pre-existing
+order's real settled price — potentially down to a credit/subsidy-covered
+zero, which is exactly the shape of "trusted financial status" §10 and the
+owner's restated invariant are about.
+
+Fixed by requiring, on conflict, that a claim this flow itself would have
+written (`orderClaimsTable` row keyed on `(userId, orderId)`) already exists
+before treating the conflict as a legitimate idempotent retry — that insert
+happens nowhere else, so its presence is proof this exact flow created the
+row. Absent that claim, `finalizeOrder` now throws `order_id_conflict: ...`
+instead of continuing; `routes/loyalty.ts` maps it to `409 {code:
+"order_id_conflict"}`, alongside the pre-existing `delivery slot full` 409.
+Considered and rejected as the fix: a denylist on `orderId` matching
+`/^sub-/i` — it would miss `chargeMandate.ts`'s different prefix shape and
+could false-positive on an unrelated client's naming choice; the claim check
+closes the hole at the root regardless of naming convention.
+
+Test (`lib/loyaltyEngine.checkout.test.ts`): "finalizeOrder refuses to adopt
+and reprice a pre-existing order it did not create" — seeds an order directly
+(simulating `createOrderForNewSubscription`'s output) with a real
+`chargePaise`, calls `finalizeOrder` with the same owner and externalOrderId,
+asserts the call rejects with `order_id_conflict:` and the pre-existing row's
+`chargePaise` is untouched. The pre-existing legitimate-retry tests (e.g.
+"first-order offer:... retry-safe") are unaffected: their first call creates
+both the order and its own claim, so the retry's ownClaim lookup finds it and
+proceeds exactly as before.
+
+### Follow-up — pipeline side effects ran before the paid check (`lib/queue.ts`, `routes/delivery.ts`)
+
+`orderPipelineProcessor`'s status `UPDATE` already refused to advance a
+`"placed"` row (its `WHERE` excludes it), but every *other* side effect ran
+unconditionally: the `delivery_events` insert-if-absent would fake a
+progression history, the `"ready"` step's auto-dispatch call would hand a real
+rider to the order (it keys only on `riderId == null`, never on status), and
+the `"delivered"` step would write a clinical nutrition log — all reachable
+for an order nobody has paid for yet via a delayed `scheduleOrderAdvance` job
+queued before a payment-failed webhook lands, or a cancellation that arrives
+mid-flight.
+
+Fixed with an `isPaidLive` read at the very top of the processor, before any
+side effect, refusing (logged, no-op) when the order is not paid-live. The
+route that queues these jobs, `POST /delivery/schedule-advance`, got the same
+gate mirrored from its sibling `/delivery/auto-assign` — necessary because
+that route's no-Redis fallback calls `autoLogDeliveredOrder` directly,
+bypassing the queue (and therefore the processor's own gate) entirely when
+`REDIS_URL` is unset.
+
+Tests: `lib/queue.pipelineIdempotency.test.ts` gained "an unpaid ('placed')
+order's pipeline step is a full no-op (paid-liveness gate)" (zero
+`delivery_events` rows, no rider assigned, status untouched); its pre-existing
+"re-running the same pipeline step does not duplicate its delivery_events row"
+test was re-pointed from a `"placed"` seed to `"preparing"` (the old seed now
+legitimately no-ops under the new gate, so it stopped exercising the
+retry-idempotency property it was written to pin).
+
+### What is still open
+
+- `isTrialSubscription()`'s client-controlled substring check (§10, "Two more
+  issues surfaced by the same audit") — unchanged, still tracked under §7's
+  `PLAN_CHECKOUT_DISABLED` reopening criteria.
+- `docs/test-plan.md`'s stale `/orders/finalize` reference (§10) — unchanged,
+  cosmetic.
+- `lib/dispatch.ts`'s `setOrderPriority` has no status gate of its own, but
+  stays defanged because both the SLA scan and the sweep scans it feeds are
+  already restricted to `FULFILMENT_ASSIGNABLE_STATUSES`. Not fixed here;
+  low-priority defense-in-depth if touched again.
+- Route-level regression coverage for the P3 409 mapping and the
+  `/delivery/schedule-advance` paid-liveness check was judged adequately
+  covered by the engine/processor-level tests above (same underlying
+  predicates, no additional branching at the route layer) and was not
+  duplicated here to keep this change proportionate.

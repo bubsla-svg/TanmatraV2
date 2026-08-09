@@ -59,17 +59,22 @@ async function eventCount(orderId: number, event: string): Promise<number> {
 }
 
 test("re-running the same pipeline step does not duplicate its delivery_events row", async () => {
-  const orderId = await seedOrder("placed");
+  // Seeded paid-live ("preparing"), not "placed": the processor now gates on
+  // isPaidLive (lib/paidGate.ts) before it does anything, and placed→preparing
+  // is exclusively the payment-capture writers' edge — a "placed" seed would
+  // make this step a no-op rather than exercise the retry-idempotency this
+  // test is actually about.
+  const orderId = await seedOrder("preparing");
 
-  await runStep({ orderId, step: "preparing" });
-  assert.equal(await eventCount(orderId, "order_preparing"), 1);
+  await runStep({ orderId, step: "ready" });
+  assert.equal(await eventCount(orderId, "rider_at_kitchen"), 1);
 
   // A rethrown side effect makes BullMQ re-run the whole processor. Before
   // the insert-if-absent guard this produced a second timeline row — the
   // exact harm scheduleOrderAdvance's jobId key exists to prevent.
-  await runStep({ orderId, step: "preparing" });
+  await runStep({ orderId, step: "ready" });
   assert.equal(
-    await eventCount(orderId, "order_preparing"),
+    await eventCount(orderId, "rider_at_kitchen"),
     1,
     "a retry must not add a duplicate timeline row",
   );
@@ -115,4 +120,29 @@ test("a pipeline step never overwrites a terminal status", async () => {
       `a queued step must not overwrite the terminal status ${terminal}`,
     );
   }
+});
+
+test("an unpaid ('placed') order's pipeline step is a full no-op (paid-liveness gate)", async () => {
+  // Before this gate, only the status WRITE was guarded (its WHERE excludes
+  // "placed"). The delivery_events insert-if-absent and the "ready" step's
+  // auto-dispatch call ran unconditionally regardless, so a scheduled or
+  // replayed job for an order nobody has paid for yet could still fake a
+  // progression history or hand a real rider to it. The gate now refuses
+  // before any of that runs, not just the status column.
+  const orderId = await seedOrder("placed");
+
+  await runStep({ orderId, step: "ready" });
+
+  assert.equal(
+    await eventCount(orderId, "rider_at_kitchen"),
+    0,
+    "an unpaid order must not gain a fake delivery_events row",
+  );
+  assert.equal(await statusOf(orderId), "placed");
+
+  const [row] = await db
+    .select({ riderId: ordersTable.riderId })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId));
+  assert.equal(row!.riderId, null, "an unpaid order must not be auto-dispatched a rider");
 });

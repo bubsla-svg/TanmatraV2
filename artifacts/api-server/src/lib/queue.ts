@@ -3,6 +3,7 @@ import IORedis, { type Redis, type RedisOptions } from "ioredis";
 import { logger } from "./logger";
 import { db, deliveryEventsTable, ordersTable } from "@workspace/db";
 import { and, eq, inArray, sql } from "drizzle-orm";
+import { isPaidLive } from "./paidGate";
 
 export const QUEUE_NAMES = {
   orderPipeline: "order-pipeline",
@@ -184,6 +185,31 @@ function statusesBelow(step: OrderPipelineJob["step"]): string[] {
 
 const orderPipelineProcessor: Processor<OrderPipelineJob> = async (job) => {
   const { orderId, step } = job.data;
+
+  // Paid-liveness gate (lib/paidGate.ts), checked BEFORE any side effect
+  // below. The status UPDATE further down already refuses to advance a
+  // "placed" row (its WHERE clause excludes it via `below`), but that left
+  // every OTHER effect here running unconditionally: the delivery_events
+  // insert would fake a progression history, the "ready" step would
+  // auto-dispatch a real rider (it keys only on riderId == null, not
+  // status), and the "delivered" step would write a clinical nutrition log
+  // — all for an order that, as far as payment is concerned, does not
+  // exist yet. A job can reach here for an unpaid order via a delayed
+  // schedule-advance queued before a payment-failed webhook landed, so this
+  // has to be a fresh read, not trust in whatever queued the job.
+  const [orderRow] = await db
+    .select({ status: ordersTable.status })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, orderId))
+    .limit(1);
+  if (!orderRow || !isPaidLive(orderRow.status)) {
+    logger.warn(
+      { orderId, step, status: orderRow?.status ?? "not_found" },
+      "order pipeline step skipped: order not paid-live",
+    );
+    return;
+  }
+
   const eventName =
     step === "preparing"
       ? "order_preparing"

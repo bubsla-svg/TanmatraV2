@@ -9,7 +9,7 @@ import {
   type Rider,
 } from "@workspace/db";
 import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
-import { FULFILMENT_ASSIGNABLE_STATUSES, isFulfilmentAssignable } from "./paidGate";
+import { FULFILMENT_ASSIGNABLE_STATUSES, isFulfilmentAssignable, isPaidLive } from "./paidGate";
 import { logger } from "./logger";
 import { recordOpsAction, enqueueOpsAuditOutbox } from "./opsAudit";
 import { emitDeliveryEvent } from "./realtime";
@@ -1164,6 +1164,18 @@ export async function overrideAssignment(args: {
   // someone else's app, however deliberately they click.
   if (order.orderChannel !== "own_app")
     return { ok: false, reason: "not an own-app order", code: "not_found" };
+  // lib/paidGate.ts's own contract: overrideAssignment is the status-free
+  // human escape hatch for ASSIGNMENT (an operator may override which rider
+  // an already-payable order gets, bypassing the scoring algorithm), never
+  // for PAYMENT — it must still refuse an order whose payment has not
+  // resolved. Paid-LIVE, not assignable: a deliberate reassignment of an
+  // in-flight rider is a legitimate use of this path.
+  if (!isPaidLive(order.status))
+    return {
+      ok: false,
+      reason: "order not in a paid-live status",
+      code: "not_found",
+    };
   const [rider] = await overrideDb
     .select()
     .from(ridersTable)
@@ -1189,14 +1201,17 @@ export async function overrideAssignment(args: {
   while (Date.now() - startedAt < OVERRIDE_NOWAIT_TOTAL_BUDGET_MS) {
     attempt += 1;
     try {
-      const decisionId = await runOverrideTx(args, rider, chosen);
+      const txResult = await runOverrideTx(args, rider, chosen);
+      if (!txResult.ok) {
+        return { ok: false, reason: txResult.reason, code: "not_found" };
+      }
       emitDeliveryEvent(args.orderId, {
         event: "rider_assigned",
         riderId: rider.id,
         riderName: rider.name,
         override: true,
       });
-      return { ok: true, decisionId: decisionId ?? undefined };
+      return { ok: true, decisionId: txResult.decisionId ?? undefined };
     } catch (err) {
       if (!isLockNotAvailable(err)) throw err;
       lastLockErr = err;
@@ -1229,7 +1244,10 @@ async function runOverrideTx(
   },
   rider: Rider,
   chosen: ReturnType<typeof scoreRiderForOrder>,
-): Promise<number | null> {
+): Promise<
+  | { ok: true; decisionId: number | null }
+  | { ok: false; reason: string }
+> {
   return overrideDb.transaction(async (tx) => {
     const lockedRows = await tx.execute<{
       id: number;
@@ -1243,6 +1261,15 @@ async function runOverrideTx(
       | { id: number; rider_id: number | null; status: string }
       | undefined;
     if (!locked) throw new Error("order vanished mid-override");
+    // Authoritative re-check UNDER the row lock — the pre-flight check in
+    // overrideAssignment is unlocked, so a concurrent cancel or
+    // payment-failed webhook can land between peek and claim.
+    if (!isPaidLive(locked.status)) {
+      return {
+        ok: false as const,
+        reason: "order not in a paid-live status",
+      };
+    }
     const before = { riderId: locked.rider_id, status: locked.status };
     if (locked.rider_id !== rider.id) {
       if (locked.rider_id != null) {
@@ -1316,7 +1343,7 @@ async function runOverrideTx(
       tx,
       dedupeKey,
     );
-    return row?.id ?? null;
+    return { ok: true as const, decisionId: row?.id ?? null };
   });
 }
 

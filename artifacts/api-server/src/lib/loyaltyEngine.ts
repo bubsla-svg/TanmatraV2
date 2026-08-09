@@ -923,6 +923,34 @@ export async function finalizeOrder(args: {
           ),
         );
       if (!existingOrder) throw new Error("order persistence race");
+      // The insert above conflicted on (userId, externalOrderId) — but that
+      // row is not necessarily one THIS flow created.
+      // createOrderForNewSubscription mints real orders under exactly this
+      // externalOrderId shape (lib/reconciliationScheduler.ts's settlement-
+      // evidence join), and nothing stops a caller from naming one of their
+      // own subscription-cycle order ids as `orderId` here. Only treat this
+      // as a legitimate idempotent finalize retry when a claim this flow
+      // itself would have written already exists for it (the insert two
+      // lines below is the ONLY place that claim is ever created) —
+      // otherwise this is a foreign order being adopted, and the
+      // unconditional chargePaise UPDATE later in this function would
+      // silently overwrite its real settled price with whatever this
+      // caller's cart happens to price out to.
+      const [ownClaim] = await tx
+        .select({ id: orderClaimsTable.id })
+        .from(orderClaimsTable)
+        .where(
+          and(
+            eq(orderClaimsTable.userId, args.userId),
+            eq(orderClaimsTable.orderId, args.orderId),
+          ),
+        )
+        .limit(1);
+      if (!ownClaim) {
+        throw new Error(
+          `order_id_conflict: ${args.orderId} already exists and was not created by this checkout flow`,
+        );
+      }
       serverOrderId = existingOrder.id;
     }
 

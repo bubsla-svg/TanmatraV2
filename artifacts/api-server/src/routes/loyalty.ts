@@ -436,6 +436,10 @@ router.post("/orders/finalize", orderFinalizeGate, idempotencyMiddleware, async 
       res.status(409).json({ error: msg });
       return;
     }
+    if (msg.startsWith("order_id_conflict:")) {
+      res.status(409).json({ error: msg, code: "order_id_conflict" });
+      return;
+    }
     if (msg.startsWith("safety_block:")) {
       const safety = (err as Error & {
         safetyBlock?: { codes: string[]; blocked: unknown };
