@@ -32,7 +32,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate?.("/")}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#D4AF37] to-amber-200 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-clinical-gold to-amber-200 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-500/20">
             T
           </div>
           <div>
@@ -45,11 +45,11 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
-          <button onClick={() => onNavigate?.("/")} className={`hover:text-[#D4AF37] transition-colors ${currentRoute === "/" ? "text-[#D4AF37]" : ""}`}>Home</button>
-          <button onClick={() => onNavigate?.("/menu")} className={`hover:text-[#D4AF37] transition-colors ${currentRoute === "/menu" ? "text-[#D4AF37]" : ""}`}>Menu</button>
-          <button onClick={() => onNavigate?.("/plans")} className={`hover:text-[#D4AF37] transition-colors ${currentRoute === "/plans" ? "text-[#D4AF37]" : ""}`}>Plans</button>
-          <button onClick={() => onNavigate?.("/custom-build")} className={`hover:text-[#D4AF37] transition-colors ${currentRoute === "/custom-build" ? "text-[#D4AF37]" : ""}`}>Custom Build</button>
-          <button onClick={() => onNavigate?.("/account")} className={`hover:text-[#D4AF37] transition-colors ${currentRoute === "/account" ? "text-[#D4AF37]" : ""}`}>Account</button>
+          <button onClick={() => onNavigate?.("/")} className={`hover:text-clinical-gold transition-colors ${currentRoute === "/" ? "text-clinical-gold" : ""}`}>Home</button>
+          <button onClick={() => onNavigate?.("/menu")} className={`hover:text-clinical-gold transition-colors ${currentRoute === "/menu" ? "text-clinical-gold" : ""}`}>Menu</button>
+          <button onClick={() => onNavigate?.("/plans")} className={`hover:text-clinical-gold transition-colors ${currentRoute === "/plans" ? "text-clinical-gold" : ""}`}>Plans</button>
+          <button onClick={() => onNavigate?.("/custom-build")} className={`hover:text-clinical-gold transition-colors ${currentRoute === "/custom-build" ? "text-clinical-gold" : ""}`}>Custom Build</button>
+          <button onClick={() => onNavigate?.("/account")} className={`hover:text-clinical-gold transition-colors ${currentRoute === "/account" ? "text-clinical-gold" : ""}`}>Account</button>
         </nav>
       </div>
     </header>

@@ -85,7 +85,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
             <button 
               onClick={() => onNavigate("/plans")} 
-              className="mt-6 text-xs font-bold text-[#D4AF37] hover:underline flex items-center gap-1"
+              className="mt-6 text-xs font-bold text-clinical-gold hover:underline flex items-center gap-1"
             >
               <span>View Recommended Plans</span>
               <span>→</span>

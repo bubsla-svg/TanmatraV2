@@ -59,7 +59,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
               onClick={() => onTabSelect(tab.id)}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-200 min-h-[44px] min-w-[44px] justify-center ${
                 isActive
-                  ? "text-[#D4AF37] font-bold scale-105"
+                  ? "text-clinical-gold font-bold scale-105"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
