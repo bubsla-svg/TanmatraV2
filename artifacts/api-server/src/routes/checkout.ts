@@ -14,6 +14,7 @@ import {
 } from "../lib/checkoutSafety";
 import { isServiceablePincode, SERVICEABLE_PINCODES } from "@workspace/api-zod";
 import { getDecryptedPreferences } from "../lib/userPreferences";
+import { getPremiumSlugSet, userIsPremium } from "./premium";
 
 const router: IRouter = Router();
 
@@ -211,6 +212,32 @@ router.post("/orders", async (req: Request, res: Response) => {
       price: dish.price + customization.modifierPaise,
       ...(customization.labels.length > 0 && { customizations: customization.labels }),
     });
+  }
+
+  // Server-side premium-meal gate, mirroring /orders/finalize's
+  // (routes/loyalty.ts). Until the full-catalog à-la-carte opening
+  // (2026-08-09) premium dishes were structurally unreachable here — they
+  // were never in the curated hero set, so no storefront surface offered
+  // them an Add button. Now every dish renders one, which makes THIS route
+  // the enforcement point: premium dishes stay purchasable, but only by a
+  // paying premium member. Guests can never hold a membership, so a guest
+  // cart carrying a premium dish is refused outright. Fails CLOSED — a
+  // resolver/db error rejects the order rather than silently letting
+  // premium dishes through to non-members.
+  try {
+    const premiumSet = await getPremiumSlugSet();
+    const cartHasPremium = resolvedDishes.some((d) => premiumSet.has(d.slug));
+    if (cartHasPremium && (isGuest || !(await userIsPremium(authUserId!)))) {
+      res.status(403).json({
+        error: "premium membership required for one or more items",
+        code: "premium_required",
+      });
+      return;
+    }
+  } catch (err) {
+    req.log.error({ err }, "premium gate check failed");
+    res.status(503).json({ error: "premium gate unavailable, try again" });
+    return;
   }
 
   // Guest with no declared dietary info + a cart carrying allergen/contra dishes

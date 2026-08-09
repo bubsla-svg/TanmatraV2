@@ -73,8 +73,10 @@ function bySlug(a: DishData, b: DishData): number {
 }
 
 function candidates(dishes: DishData[], rule: BundleRule): DishData[] {
-  // Only à-la-carte heroes can be added to a cart, so only they can make up a
-  // bundle whose CTA actually works.
+  // Only cart-addable dishes can make up a bundle whose CTA actually works.
+  // Since the full-catalog decision (2026-08-09) that is every dish, so the
+  // live constraint is availability — but the predicate stays in the chain so
+  // any future re-curation narrows bundles automatically.
   const pool = dishes.filter((d) => isAlaCarteEnabled(d) && d.isAvailable !== false);
 
   if (rule === "high_protein") {

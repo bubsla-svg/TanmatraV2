@@ -29,8 +29,10 @@ export function collectErrors(page: Page): string[] {
   return errors;
 }
 
-/** An à-la-carte-orderable dish (curated hero set) with a stable name, used
- *  by the cart specs. Source of truth: menu-catalog AL_A_CARTE_HERO_SLUGS. */
+/** A stably-named dish for the cart specs. Every catalog dish is à-la-carte
+ *  orderable since the full-catalog decision (2026-08-09; menu-catalog
+ *  isAlaCarteEnabled) — this one is pinned only because the specs assert on
+ *  its NAME, so it must not be renamed casually. */
 export const ORDERABLE_DISH = {
   slug: "quinoa-khichdi",
   name: "Quinoa Khichdi",
