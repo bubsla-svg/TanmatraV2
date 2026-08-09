@@ -254,7 +254,45 @@ test("same key + different body is 409 idempotency_key_mismatch", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. Fresh keys still create fresh subscriptions (no over-dedupe)
+// 4. Owner containment gate: PLAN_CHECKOUT_DISABLED refuses creates with a
+//    typed 503 — and, because the gate mounts BEFORE idempotencyMiddleware,
+//    the refusal is never cached against the customer's stable key: the SAME
+//    key must succeed once the gate reopens.
+// ---------------------------------------------------------------------------
+
+test("PLAN_CHECKOUT_DISABLED: typed 503, nothing created, key not poisoned", async () => {
+  const user = await makeUser();
+  const key = `sub-${randomUUID()}`;
+  const body = baseBody({ planType: "standard" });
+
+  process.env["PLAN_CHECKOUT_DISABLED"] = "1";
+  try {
+    const gated = await api("POST", "/subscriptions", body, user, key);
+    assert.equal(gated.status, 503, JSON.stringify(gated.json));
+    assert.equal(gated.json.code, "PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE");
+    assert.equal(
+      gated.json.message,
+      "Plan checkout is temporarily unavailable. Please try again shortly.",
+    );
+
+    const subs = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.userId, user.id));
+    assert.equal(subs.length, 0, "a gated request must create nothing");
+  } finally {
+    delete process.env["PLAN_CHECKOUT_DISABLED"];
+  }
+
+  // Gate reopened: the SAME key + body must perform a real create, not replay
+  // the 503 — the property that mounting the gate first exists to guarantee.
+  const after = await api("POST", "/subscriptions", body, user, key);
+  assert.equal(after.status, 201, JSON.stringify(after.json));
+  assert.equal(after.replayed, false, "the gated 503 must not have been cached");
+});
+
+// ---------------------------------------------------------------------------
+// 5. Fresh keys still create fresh subscriptions (no over-dedupe)
 // ---------------------------------------------------------------------------
 
 test("different keys create distinct subscriptions", async () => {
