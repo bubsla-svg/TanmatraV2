@@ -48,43 +48,92 @@ idempotency key makes one retry safe — it replays, it does not double-order).
 | No duplicates | Razorpay + ops board | exactly one order, one payment |
 | Webhook | api-server logs (Cloud Run) | `payment.captured` webhook processed without error |
 
-## 4. GO / NO-GO — guest à-la-carte checkout
+## 4. Verdicts (owner ruling, 2026-08-09)
 
-**Status: PENDING the §2 test order.** Criteria:
+```
+GUEST MONEY PATH
+  PR #10:                       Deployed — missing required header corrected
+  PR #11:                       Deployment verification pending revision evidence
+                                (merge SHA 11753a2; CI green incl. 4 idempotency
+                                integration tests; record Cloud Build ID, image
+                                digest, Cloud Run revision, traffic allocation,
+                                completion time when the deploy run finishes)
+  Firebase domains:             PASS (tanmatra.food + www.tanmatra.food AUTHORIZED;
+                                derived from public config — one non-destructive
+                                sign-in smoke test still required)
+  Checkout rendering:           PASS
+  Order creation:               PASS, but occurs before payment
+  Kitchen fulfilment isolation: FAIL — unpaid "placed" order reaches the live
+                                kitchen board (no payment filter in
+                                KDS_BOARD_STATUSES) and dispatch queries also
+                                include "placed"
+  Controlled paid order:        BLOCKED pending fulfilment isolation
+  Guest checkout verdict:       NO-GO FOR PROMOTION
 
-- **GO** = order placed, paid, confirmed, tracked; reconciliation table all ✅.
-- **NO-GO** = any step fails → capture evidence, checkout stays as-is (it is
-  already live; a NO-GO means prioritized fixing, not un-launching — the
-  path was broken for every customer before today either way).
+PLAN MONEY PATH
+  Add-on billing:               Reported fixed on main (create resolves, 422-guards
+                                and bills plan_review add-ons); evidence to be
+                                attached in the plan-verification pass
+  Production availability:      Was live; GATED by owner decision (this change)
+  Decision:                     Gate new plan purchases pending independent plan
+                                verification
+  Plan checkout verdict:        NO-GO
 
-Decision recorded: ______________________ (date, by owner)
+HOLDS
+  Real production order:        HOLD until the pre-order checklist below passes
+  Wave 2:                       HOLD
+```
 
-## 5. Subscription (plan) checkout — status correction
+**The acceptance criterion** (owner, verbatim): *"No order may become
+operationally actionable until payment success or verified zero-charge
+sponsorship is authoritative on the server."* The tester being able to pay
+quickly is not a substitute for that invariant.
 
-Two findings that supersede older docs:
+## 5. Containment applied (this change)
 
-1. **It is NOT blocked in production.** `/checkout?plan=desk_fuel` renders the
-   live PlanCheckout flow ("Start your Desk Fuel plan…") because the same
-   `NEXT_PUBLIC_LIVE_CHECKOUT=1` arms it and `FLAG_PLAN_V2=true` is set on the
-   api-server. The instruction "keep subscription checkout blocked" describes
-   a state that does not exist; blocking it would be a new code change.
-2. **The add-on billing gap cited against it is already fixed.**
-   `LIVE-CUTOVER.md` §5.2 ("create accepts addOns but never bills them") is
-   stale: current `routes/subscriptions.ts` resolves add-ons at create, 422s
-   disallowed ones, and bills them (`pricePerDeliveryPaise = q.cycleTotalPaise
-   + planReviewAddOnPaise`). Display equals charge, as CLAUDE.md states.
+- **Plan checkout gated server-side**: `POST /subscriptions` refuses new
+  creates with a typed 503 — `{code: "PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE",
+  message: "Plan checkout is temporarily unavailable. Please try again
+  shortly."}` — while `PLAN_CHECKOUT_DISABLED=1` is set; that env var is added
+  to the api-server's production deploy (deploy.yml). Existing subscriptions
+  (skip/swap/cancel/change-plan) are untouched. The gate mounts BEFORE
+  `idempotencyMiddleware` so a refusal is never cached against a customer's
+  stable retry key (integration-tested: same key succeeds after reopening).
+  Staging/dev/tests default OPEN (env unset).
+- **Fulfilment isolation (unpaid orders out of actionable kitchen/dispatch
+  queues)**: scoped as its own change; seam research in progress. Design rule
+  per owner: order records may exist pre-payment for recovery, but fulfilment
+  release requires server-authoritative payment success or verified
+  zero-charge sponsorship — enforced in the ready-transition/dispatch
+  predicates, not merely board display.
 
-With PRs #9 (unresolved-payment terminal state), #10/#11 (create idempotency
-both legs) deployed, the plan leg's money-safety posture now equals the guest
-leg's. Remaining known gaps are UX/scope (no zero-payable activation — clear
-409 by owner decision; evening-add attach endpoint absent — offer is
-confirmation-screen only). **Owner decision required:** leave plan checkout
-live as-is, or gate it pending its own controlled test purchase. Engineering
-recommendation: leave it live and run a controlled plan purchase as the next
-verification, same protocol as §2.
+## 6. Pre-order checklist (all must pass BEFORE the controlled guest order)
 
-## 6. Wave 2 gate
+```
+[ ] PR #11 API revision serves 100% traffic (revision evidence recorded)
+[ ] Unpaid orders excluded from actionable kitchen fulfilment
+[ ] Abandoned-payment test passes (order stays awaiting payment, kitchen sees 0)
+[ ] Failed-payment test passes (fulfilment blocked, entitlements released)
+[ ] Unresolved-payment test passes (blocked; status recheck restores attempt)
+[ ] Successful payment releases fulfilment exactly once
+[ ] Repeated callback: one order, one release, one ticket, one notification
+[ ] Sponsored zero-charge: one confirmed order, one release, one ticket
+[ ] Firebase sign-in smoke test (no OTP capture; returnTo + cart + quote intact)
+```
 
-Per owner direction, Wave 2 (Manage-Delivery client: swap / reschedule /
-window / add-item sheets over the already-shipped server endpoints) begins
-only after §4 is filled in.
+Then run the §2 controlled order and reconcile §3 — the procedure no longer
+depends on paying quickly; correctness must hold if the customer waits,
+closes the gateway, loses connectivity, or abandons checkout.
+
+## 7. Plan checkout — reopening criteria
+
+Before the gate reopens, an independent plan verification must prove: base
+plan quote equals charge; recurring add-ons appear in initial AND renewal
+totals; one-time add-ons do not recur; exactly one order, one subscription,
+one schedule per purchase; fulfilment blocked until payment confirmation;
+repeated callback duplicates nothing.
+
+## 8. Wave 2 gate
+
+Wave 2 begins only after §4's guest verdict is revised to GO with the §6
+checklist complete and documented.

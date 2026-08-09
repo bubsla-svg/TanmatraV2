@@ -1,5 +1,6 @@
 import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
+import { isPlanCheckoutDisabled } from "../lib/flags";
 import { idempotencyMiddleware } from "../middlewares/idempotency";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import {
@@ -841,6 +842,29 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
   });
 });
 
+// Owner containment gate (docs/MONEY-PATH-VERIFICATION.md §5): while
+// PLAN_CHECKOUT_DISABLED is set, new plan purchases are refused with a typed
+// 503. Mounted BEFORE idempotencyMiddleware on purpose — the storefront sends
+// a key that is stable for the whole checkout attempt, so a gated 503 must not
+// be cached against that key or the same customer would replay the 503 for
+// 24h after the gate reopens. Only this create route is gated; skip/swap/
+// cancel/change-plan on existing subscriptions are untouched.
+function planCheckoutGate(req: Request, res: Response, next: () => void): void {
+  if (isPlanCheckoutDisabled()) {
+    // `code` + `message` are the owner-specified contract; `error` duplicates
+    // the message because the storefront's ApiError takes its display text
+    // from `error` — without it customers would see a raw "Service
+    // Unavailable" instead of this copy.
+    res.status(503).json({
+      code: "PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE",
+      message: "Plan checkout is temporarily unavailable. Please try again shortly.",
+      error: "Plan checkout is temporarily unavailable. Please try again shortly.",
+    });
+    return;
+  }
+  next();
+}
+
 // Idempotency is MANDATORY here (Idempotency-Key header; 400 without it, replay
 // on repeat). A double-POST is NOT self-deduping on this route: each attempt
 // mints a fresh subscription id, so the order's `sub-<id>` externalOrderId
@@ -851,7 +875,7 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
 // change deployed FIRST on purpose: api-server deploys before storefront
 // (deploy.yml), so enforcing in the same release would have 400'd every plan
 // purchase until the storefront caught up.
-router.post("/subscriptions", idempotencyMiddleware, async (req: Request, res: Response) => {
+router.post("/subscriptions", planCheckoutGate, idempotencyMiddleware, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   const parsed = createSubscriptionSchema.safeParse(req.body);

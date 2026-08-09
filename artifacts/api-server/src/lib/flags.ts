@@ -21,3 +21,15 @@ function envTrue(value: string | undefined): boolean {
 export function isPlanV2Enabled(): boolean {
   return envTrue(process.env.FLAG_PLAN_V2);
 }
+
+/**
+ * Owner containment gate (2026-08-09, docs/MONEY-PATH-VERIFICATION.md §5):
+ * while set, POST /subscriptions rejects NEW plan purchases with a typed 503
+ * so production plan checkout cannot accept money until the plan money path
+ * passes its own controlled verification. Default (unset) = OPEN, so tests,
+ * dev and staging are unaffected; production closes it via deploy.yml env.
+ * Existing subscriptions are untouched — only the create route is gated.
+ */
+export function isPlanCheckoutDisabled(): boolean {
+  return envTrue(process.env.PLAN_CHECKOUT_DISABLED);
+}
