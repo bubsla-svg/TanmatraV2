@@ -338,6 +338,7 @@ jobs:
           ./src/lib/dispatch.concurrency.test.ts
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/dispatch.batchPartnerQueries.test.ts
+          ./src/lib/dispatch.paidGate.test.ts
 
       - name: Money-path integration tests
         working-directory: artifacts/api-server
@@ -383,6 +384,7 @@ jobs:
           ./src/lib/logisticsEngine.test.ts
           ./src/lib/wmsFefoEngine.test.ts
           ./src/routes/ops.kds.test.ts
+          ./src/routes/ops.paidGate.test.ts
           ./src/routes/checkout.customizations.test.ts
           ./src/routes/serviceability.test.ts
           ./src/routes/serviceabilityInterest.test.ts

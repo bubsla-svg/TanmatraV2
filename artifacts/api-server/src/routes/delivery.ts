@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, deliveryEventsTable, ordersTable, ridersTable } from "@workspace/db";
 import { eq, asc, sql } from "drizzle-orm";
+import { isFulfilmentAssignable } from "../lib/paidGate";
 import { z } from "zod/v4";
 import { emitDeliveryEvent } from "../lib/realtime";
 import { scheduleOrderAdvance } from "../lib/queue";
@@ -158,7 +159,12 @@ router.post("/delivery/auto-assign", async (req: Request, res: Response) => {
   }
   const { orderId } = parsed.data;
   const existing = await db
-    .select({ riderId: ordersTable.riderId, orderKind: ordersTable.orderKind })
+    .select({
+      riderId: ordersTable.riderId,
+      orderKind: ordersTable.orderKind,
+      status: ordersTable.status,
+      orderChannel: ordersTable.orderChannel,
+    })
     .from(ordersTable)
     .where(eq(ordersTable.id, orderId))
     .limit(1);
@@ -175,8 +181,24 @@ router.post("/delivery/auto-assign", async (req: Request, res: Response) => {
     return;
   }
   if (existing[0]?.riderId) {
+    // Deliberately BEFORE the status gate: for an already-assigned paid
+    // order this endpoint's job is restarting the tracking simulation
+    // after a server restart, not assignment — gating it would break
+    // resume for in-flight deliveries.
     startSimulation(orderId, existing[0].riderId);
     res.json({ ok: true, alreadyAssigned: true, riderId: existing[0].riderId });
+    return;
+  }
+  // Fresh-assignment path only from here: mirror dispatchOrderInner's two
+  // chokepoint gates (lib/paidGate.ts) so this manual endpoint is not a
+  // side door to a rider for an unpaid ("placed"), terminal, or
+  // aggregator-channel order.
+  if (existing[0].orderChannel !== "own_app") {
+    res.status(409).json({ error: "not an own-app order" });
+    return;
+  }
+  if (!isFulfilmentAssignable(existing[0].status)) {
+    res.status(409).json({ error: "order not in a dispatchable status" });
     return;
   }
   const candidates = await db

@@ -547,7 +547,10 @@ test("both mappers only ever emit the shared order-status vocabulary", () => {
 //   artifacts/storefront/lib/orderStatus.ts:52     TRACKABLE_STATUSES
 test("every mapped in-flight status is visible to the readers that matter", () => {
   const ordersActive = ["placed", "preparing", "ready", "out_for_delivery"];
-  const kdsQueue = ["placed", "preparing"];
+  // Paid-fulfilment invariant: the KDS board starts at "preparing" — a POS
+  // "Accepted" (code 1) maps to "preparing", so accepted aggregator tickets
+  // still land on the board; unpaid own_app "placed" rows never do.
+  const kdsQueue = ["preparing"];
   const dispatchPartner = ["rider_assigned", "ready"];
   const storefrontTrackable = [
     "placed",
@@ -593,8 +596,11 @@ function passesOwnAppReader(row: {
 
 test("no Petpooja status can put a POS order on an own-app surface", () => {
   const ordersActive = ["placed", "preparing", "ready", "out_for_delivery"];
-  const kdsQueue = ["placed", "preparing"];
-  const dispatchLive = ["placed", "preparing", "ready", "rider_assigned"];
+  // Paid-fulfilment invariant: "placed" (unpaid for own_app) is no longer in
+  // any actionable allowlist — the KDS board and dispatch scans start at
+  // "preparing" (lib/paidGate.ts).
+  const kdsQueue = ["preparing"];
+  const dispatchLive = ["preparing", "ready", "rider_assigned"];
 
   // Every status code Petpooja can send us, including the ones that map to a
   // very-much-in-flight state. `order_from` is absent here, which is the

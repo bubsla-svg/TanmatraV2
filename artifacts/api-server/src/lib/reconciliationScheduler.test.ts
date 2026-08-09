@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { test, after } from "node:test";
 import { randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
-import { db, usersTable, ordersTable } from "@workspace/db";
-import { runOrderReconciliationSweep } from "./reconciliationScheduler";
+import { db, usersTable, ordersTable, orderClaimsTable } from "@workspace/db";
+import {
+  promoteSettledZeroChargeOrders,
+  runOrderReconciliationSweep,
+} from "./reconciliationScheduler";
 
 process.env["RAZORPAY_KEY_ID"] = process.env["RAZORPAY_KEY_ID"] ?? "rzp_test_rec";
 process.env["RAZORPAY_KEY_SECRET"] = process.env["RAZORPAY_KEY_SECRET"] ?? "secret_test_rec";
@@ -12,7 +15,12 @@ const RUN = randomUUID().slice(0, 8);
 const userId = `u_rec_${RUN}`;
 const orderIds: number[] = [];
 
+const claimIds: number[] = [];
+
 after(async () => {
+  if (claimIds.length > 0) {
+    await db.delete(orderClaimsTable).where(inArray(orderClaimsTable.id, claimIds));
+  }
   if (orderIds.length > 0) {
     await db.delete(ordersTable).where(inArray(ordersTable.id, orderIds));
   }
@@ -205,4 +213,119 @@ test("a payment reporting no amount at all still promotes (unknown defers, per i
     }) as any,
   });
   assert.equal(res.reconciled, 1);
+});
+
+// ── Zero-charge promoter (paid-fulfilment invariant, lib/paidGate.ts). ───────
+//
+// The owner's "sponsored zero-charge order" scenario at the sweep level: a
+// fully-settled ₹0 order must become kitchen-actionable WITHOUT any gateway
+// path (payments.ts 409s on a non-positive amount), and a ₹0 minted by
+// discounts alone must NOT — that is priced-free food nobody settled. The
+// same settlement-evidence rule as the in-transaction finalize; assertions
+// are per-row, never on the promoter's return count, because the sweep also
+// visits rows other suites left in the shared database.
+
+async function seedZeroChargeOrder(opts: {
+  externalOrderId: string;
+  createdAt: Date;
+}): Promise<number> {
+  const [order] = await db
+    .insert(ordersTable)
+    .values({
+      userId,
+      status: "placed",
+      totalPaise: 25000,
+      chargePaise: 0, // fully covered — by credits, subsidy, or nothing at all
+      externalOrderId: opts.externalOrderId,
+      createdAt: opts.createdAt,
+      items: [],
+      orderKind: "meal",
+    })
+    .returning({ id: ordersTable.id });
+  orderIds.push(order!.id);
+  return order!.id;
+}
+
+async function statusOf(id: number): Promise<string> {
+  const [row] = await db
+    .select({ status: ordersTable.status })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, id))
+    .limit(1);
+  return row!.status;
+}
+
+test("a subscription first-cycle zero-charge order (sub- prefix) is promoted", async () => {
+  // `sub-<id>` is settled by construction: its zero is bridge/ledger credit
+  // consumed inside the subscription-create transaction.
+  const now = new Date();
+  const orderId = await seedZeroChargeOrder({
+    externalOrderId: `sub-${randomUUID()}`,
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+
+  await promoteSettledZeroChargeOrders(now);
+  assert.equal(await statusOf(orderId), "preparing", "a settled sponsored order stayed invisible to the kitchen");
+});
+
+test("a zero-charge order with a credit redemption on its claim is promoted", async () => {
+  const now = new Date();
+  const ext = `zc-claim-${RUN}`;
+  const orderId = await seedZeroChargeOrder({
+    externalOrderId: ext,
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+  const [claim] = await db
+    .insert(orderClaimsTable)
+    .values({ userId, orderId: ext, grossPaise: 25000, redeemedPaise: 25000, finalPaise: 0 })
+    .returning({ id: orderClaimsTable.id });
+  claimIds.push(claim!.id);
+
+  await promoteSettledZeroChargeOrders(now);
+  assert.equal(await statusOf(orderId), "preparing", "a credit-settled order stayed unpromoted");
+});
+
+test("a discount-minted zero with NO settlement evidence is NOT promoted", async () => {
+  // The free-food hole: operator pickup/bundle discounts can price an order
+  // to ₹0 without anyone settling it. Bare chargePaise === 0 is not evidence.
+  const now = new Date();
+  const orderId = await seedZeroChargeOrder({
+    externalOrderId: `zc-disc-${RUN}`,
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+
+  await promoteSettledZeroChargeOrders(now);
+  assert.equal(await statusOf(orderId), "placed", "an unsettled ₹0 order was made cookable");
+});
+
+test("a settled zero-charge order inside the 2-minute grace window is left to the finalize", async () => {
+  // The in-transaction finalize owns the fresh case; the sweep is the healer
+  // for rows that predate the invariant or lost the post-tx race. Promoting
+  // instantly would double-drive the same edge the finalize is mid-writing.
+  const now = new Date();
+  const orderId = await seedZeroChargeOrder({
+    externalOrderId: `sub-${randomUUID()}`,
+    createdAt: new Date(now.getTime() - 30 * 1000),
+  });
+
+  await promoteSettledZeroChargeOrders(now);
+  assert.equal(await statusOf(orderId), "placed", "the sweep raced the finalize inside the grace window");
+});
+
+test("runOrderReconciliationSweep runs the zero-charge promoter before the gateway pass", async () => {
+  // Wiring, not logic: a settled sponsored row has NO razorpayOrderId, so the
+  // gateway half of the sweep can never touch it — if the entry point skipped
+  // the promoter (e.g. behind the credentials check), the row would sit
+  // "placed" forever with zero owed and zero collectable.
+  const now = new Date();
+  const orderId = await seedZeroChargeOrder({
+    externalOrderId: `sub-${randomUUID()}`,
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+
+  await runOrderReconciliationSweep({
+    now,
+    fetchFn: (async () => ({ ok: false, status: 404 })) as any,
+  });
+  assert.equal(await statusOf(orderId), "preparing", "the sweep entry point never ran the promoter");
 });

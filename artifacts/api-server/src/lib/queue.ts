@@ -224,7 +224,15 @@ const orderPipelineProcessor: Processor<OrderPipelineJob> = async (job) => {
   // A retry that finds the order already at `rider_assigned` (auto-dispatch
   // succeeded, something after it threw) now leaves it there instead of
   // rewinding it to `ready`.
-  const below = statusesBelow(step);
+  // "placed" is stripped from the OUTPUT, never from DELIVERY_LADDER — the
+  // ladder's ranking is also the monotonicity guard, and unranking placed
+  // would change the terminal-state exclusion semantics. Effect: the
+  // pipeline can advance any paid progression, but the placed→preparing
+  // edge stays exclusively payment's write (routes/payments.ts,
+  // lib/reconciliationScheduler.ts, the verified zero-charge finalize —
+  // lib/paidGate.ts). A schedule-advance on an unpaid order is a status
+  // no-op.
+  const below = statusesBelow(step).filter((s) => s !== "placed");
   if (below.length > 0) {
     await db
       .update(ordersTable)

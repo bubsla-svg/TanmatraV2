@@ -7,6 +7,7 @@ import {
   deliveryEventsTable,
   dishAvailabilityTable,
 } from "@workspace/db";
+import { isPaidLive } from "../../paidGate";
 import { definePrompt } from "../prompts";
 import { defineTool } from "../tools";
 import { registerAgent } from "../agentRegistry";
@@ -155,6 +156,22 @@ const assignRider = defineTool({
       .where(eq(ordersTable.id, orderId))
       .limit(1);
     if (!order) return { success: false as const, error: "Order not found" };
+    // Paid-liveness gate, NOT the assignable gate: this tool is explicitly a
+    // REassignment tool (it decrements the previous rider below), so
+    // rider_assigned/out_for_delivery are legitimate inputs. What it must
+    // refuse is an unpaid ("placed") or terminal order (lib/paidGate.ts).
+    if (!isPaidLive(order.status)) {
+      return {
+        success: false as const,
+        error: `Order #${orderId} is '${order.status}' — riders can only be assigned once payment has resolved and while the order is in flight.`,
+      };
+    }
+    if (order.orderChannel !== "own_app") {
+      return {
+        success: false as const,
+        error: `Order #${orderId} is a '${order.orderChannel}' order — aggregator/POS orders are delivered by their own couriers.`,
+      };
+    }
     const [rider] = await db
       .select()
       .from(ridersTable)
@@ -253,6 +270,19 @@ const updateOrderStatus = defineTool({
       .where(eq(ordersTable.id, orderId))
       .limit(1);
     if (!order) return { success: false as const, error: "Order not found" };
+    // The placed→anything edge (except cancel) is reserved: "placed" means
+    // unpaid, and placed→preparing specifically IS the payment-capture
+    // signal (routes/payments.ts; lib/paidGate.ts). Ops may still cancel
+    // unpaid junk. Known residual: a payment-link-paid order whose webhook
+    // was permanently lost has no ops override any more — the recovery is
+    // Razorpay dashboard webhook redelivery (documented in
+    // docs/MONEY-PATH-VERIFICATION.md).
+    if (order.status === "placed" && status !== "cancelled") {
+      return {
+        success: false as const,
+        error: `Order #${orderId} is unpaid ('placed'); only payment capture may advance it. It can be cancelled.`,
+      };
+    }
     const before = { status: order.status };
     await db.transaction(async (tx) => {
       await tx

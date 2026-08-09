@@ -101,11 +101,35 @@ quickly is not a substitute for that invariant.
   stable retry key (integration-tested: same key succeeds after reopening).
   Staging/dev/tests default OPEN (env unset).
 - **Fulfilment isolation (unpaid orders out of actionable kitchen/dispatch
-  queues)**: scoped as its own change; seam research in progress. Design rule
-  per owner: order records may exist pre-payment for recovery, but fulfilment
-  release requires server-authoritative payment success or verified
-  zero-charge sponsorship — enforced in the ready-transition/dispatch
-  predicates, not merely board display.
+  queues)**: IMPLEMENTED as its own change (the fulfilment-isolation PR).
+  Design rule per owner: order records may exist pre-payment for recovery, but
+  fulfilment release requires server-authoritative payment success or verified
+  zero-charge sponsorship — enforced in write predicates, not board display.
+  What shipped, all keyed off `lib/paidGate.ts` (two predicates: ASSIGNABLE =
+  preparing/ready for first rider assignment; PAID-LIVE = + rider_assigned/
+  out_for_delivery for packing/reassignment):
+  - KDS board + ready mutation share one status constant (`preparing` only) —
+    the ready UPDATE's WHERE clause is the DB-level invariant, so an unpaid
+    `placed` ticket can be neither displayed nor advanced.
+  - `dispatchOrder` chokepoint refuses non-assignable statuses twice: at
+    pre-flight and again under the FOR UPDATE row lock (race-proof); the
+    dispatch sweep no longer scans `placed`, and an unpaid STAT order can no
+    longer stamp a permanent `sla_breach`.
+  - The BullMQ pipeline ladder strips `placed` from its advance-from set —
+    the placed→preparing edge stays exclusively payment's write
+    (payments.ts verify/webhooks, the reconciliation sweep, the verified
+    zero-charge finalize).
+  - Petpooja's three status webhooks acknowledge-without-applying any advance
+    on an unpaid own_app order (they resolve by id, so a replayed or
+    misdirected event could otherwise promote an abandoned checkout).
+  - Ops surfaces gated: delivery auto-assign, ops-agent assign_rider /
+    update_order_status, WMS route-fulfillment and BOM explosion (both deduct
+    real inventory) — 409 on non-paid-live.
+  - Verified zero-charge settlement promotes in-transaction at finalize
+    (credits/subsidy settled in the same tx), and a reconciliation-sweep
+    promoter heals pre-invariant rows — settlement EVIDENCE required
+    (redemption, subsidy row, or `sub-` first-cycle); a discount-minted ₹0 is
+    never promoted (that is priced-free food nobody settled).
 
 ## 6. Pre-order checklist (all must pass BEFORE the controlled guest order)
 
@@ -120,6 +144,20 @@ quickly is not a substitute for that invariant.
 [ ] Sponsored zero-charge: one confirmed order, one release, one ticket
 [ ] Firebase sign-in smoke test (no OTP capture; returnTo + cart + quote intact)
 ```
+
+Automated coverage now pinning rows 2–8 (each box flips to `[x]` when the
+fulfilment-isolation PR is merged, CI-green, and its deploy revision evidence
+is recorded here):
+
+| Scenario | Test |
+|---|---|
+| Unpaid excluded from kitchen | `ops.kds.test.ts` (board absence + ready-refusal on `placed`) |
+| Abandoned / failed / unresolved payment | `dispatch.paidGate.test.ts` (dispatch refusal, sweep exclusion, no SLA stamp); `reconciliationScheduler.test.ts` (authorized-only and wrong-amount stay `placed`) |
+| Success releases exactly once | `payments.webhook.test.ts` + `reconciliationScheduler.test.ts` (guarded CAS — one of webhook/sweep wins) |
+| Repeated callback duplicates nothing | `payments.webhook.test.ts` (event dedup + CAS) |
+| Sponsored zero-charge | `reconciliationScheduler.test.ts` promoter suite (settled promotes; discount-minted ₹0 refused) |
+| POS cannot promote unpaid | `petpooja.statusMonotonic.test.ts` paid-fulfilment section |
+| Inventory deduction gated | `ops.paidGate.test.ts` (WMS route-fulfillment + BOM explosion 409 on non-paid-live) |
 
 Then run the §2 controlled order and reconcile §3 — the procedure no longer
 depends on paying quickly; correctness must hold if the customer waits,

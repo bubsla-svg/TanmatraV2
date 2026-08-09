@@ -141,7 +141,10 @@ async function seedOrder(opts: SeedOpts): Promise<number> {
       ...(opts.kind ? { orderKind: opts.kind } : {}),
       ...(opts.createdAt ? { createdAt: opts.createdAt } : {}),
       ...(opts.externalOrderId ? { externalOrderId: opts.externalOrderId } : {}),
-      status: opts.status ?? "placed",
+      // Default is "preparing" — the PAID arrival state. "placed" is unpaid
+      // (paid-fulfilment invariant, lib/paidGate.ts) and must be seeded
+      // explicitly by the tests that prove its exclusion.
+      status: opts.status ?? "preparing",
       totalPaise: 42000,
       items: [{ id: 31, name: "Moong Khichdi", qty: 2, price: 21000 }],
       fulfillmentType: "delivery",
@@ -220,13 +223,13 @@ test("POST /kds/orders/:id/ready without ops credentials is refused (403) and ad
   assert.equal(res.status, 403);
   assert.equal(res.body["error"], "ops scope required");
   // The gate must refuse before the UPDATE, not after it.
-  assert.equal(await statusOf(orderId), "placed");
+  assert.equal(await statusOf(orderId), "preparing");
 });
 
 test("the board carries own-app meal tickets and excludes every other channel", async () => {
   const userId = await makeUser();
 
-  const placed = await seedOrder({ userId, status: "placed" });
+  const placedUnpaid = await seedOrder({ userId, status: "placed" });
   const preparing = await seedOrder({ userId, status: "preparing" });
 
   const excluded: Array<{ label: string; id: number }> = [];
@@ -241,9 +244,15 @@ test("the board carries own-app meal tickets and excludes every other channel", 
   assert.equal(res.status, 200);
   const ids = new Set(res.rows.map((r) => r.id));
 
-  // Matched pair, presence half: two own_app meal tickets in cookable states.
-  assert.ok(ids.has(placed), "a placed own_app meal ticket is missing from the board");
+  // Presence half: the paid own_app ticket.
   assert.ok(ids.has(preparing), "a preparing own_app meal ticket is missing from the board");
+  // Absence half #1 — the paid-fulfilment invariant: an own_app "placed" row
+  // is UNPAID (the customer may have abandoned the Razorpay modal) and must
+  // never appear as a preparation ticket.
+  assert.ok(
+    !ids.has(placedUnpaid),
+    "an UNPAID (placed) own_app order reached the kitchen board — the paid-fulfilment invariant is broken",
+  );
 
   // Absence half: identical rows, one column different.
   for (const row of excluded) {
@@ -272,6 +281,7 @@ test("the board excludes marketplace-kind orders even on our own channel", async
 test("the board carries only cookable statuses", async () => {
   const userId = await makeUser();
   const cookable = await seedOrder({ userId, status: "preparing" });
+  const unpaid = await seedOrder({ userId, status: "placed" });
   const done = await seedOrder({ userId, status: "ready" });
   const gone = await seedOrder({ userId, status: "delivered" });
   const dead = await seedOrder({ userId, status: "cancelled" });
@@ -281,6 +291,7 @@ test("the board carries only cookable statuses", async () => {
 
   assert.ok(ids.has(cookable), "a preparing ticket is missing from the board");
   for (const [label, id] of [
+    ["placed (unpaid)", unpaid],
     ["ready", done],
     ["delivered", gone],
     ["cancelled", dead],
@@ -306,7 +317,7 @@ test("a board row exposes exactly the five kitchen fields and no customer PII", 
     ["createdAt", "externalOrderId", "id", "items", "status"],
   );
   assert.equal(row.externalOrderId, external);
-  assert.equal(row.status, "placed");
+  assert.equal(row.status, "preparing");
   assert.ok(Array.isArray(row.items), "items did not round-trip as an array");
   assert.ok(Number.isFinite(Date.parse(row.createdAt)), "createdAt is not parseable");
 });
@@ -421,6 +432,22 @@ test("ready cannot drag an order backwards out of a terminal status", async () =
       `a ${status} order had its status rewritten to ready`,
     );
   }
+});
+
+test("ready refuses an UNPAID (placed) own_app ticket — 404, status untouched", async () => {
+  // The paid-fulfilment invariant at the write chokepoint: the placed→ready
+  // edge would let an abandoned checkout be cooked, and verify's PAID_STATES
+  // short-circuit would later answer success for it without ever persisting
+  // a payment id. The board constant excludes "placed", and because the
+  // ready mutation's atomic UPDATE shares that constant, this is enforced in
+  // the WHERE clause, not display filtering.
+  const userId = await makeUser();
+  const unpaid = await seedOrder({ userId, status: "placed" });
+
+  const res = await postReady(unpaid, { auth: true });
+  assert.equal(res.status, 404, "an unpaid order was advanced by the board");
+  assert.equal(res.body["code"], "order_not_on_board");
+  assert.equal(await statusOf(unpaid), "placed", "the unpaid order's status was rewritten");
 });
 
 test("ready answers 404, not 500, for a non-numeric order id", async () => {

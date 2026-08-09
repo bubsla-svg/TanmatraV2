@@ -360,6 +360,35 @@ router.post("/integrations/petpooja/callback", async (req: Request, res: Respons
     const mappedStatus = mapPetpoojaStatus(payload.status);
     const transition = classifyPosStatusTransition(order.status, mappedStatus);
 
+    // PAID-FULFILMENT INVARIANT (lib/paidGate.ts): for an own_app order,
+    // "placed" means UNPAID — the placed→live edge is reserved for the
+    // payment writers (routes/payments.ts, reconciliationScheduler, the
+    // verified zero-charge finalize). The POS is the source of truth for
+    // aggregator/pos channels, whose "placed" rows are already settled on
+    // the aggregator's side — but it must never be the promoter of an
+    // unpaid own_app order (the status webhook resolves by id, so a replayed or misdirected
+    // event could otherwise name one). Acknowledge without applying, same
+    // posture as the regress branch.
+    if (
+      order.orderChannel === "own_app" &&
+      order.status === "placed" &&
+      transition === "advance"
+    ) {
+      req.log?.warn(
+        {
+          orderID: order.id,
+          currentStatus: order.status,
+          rejectedStatus: mappedStatus,
+        },
+        "petpooja callback rejected — would promote an unpaid own_app order"
+      );
+      res.status(200).json({
+        success: "1",
+        message: `Order status acknowledged; not applied (order awaits payment).`,
+      });
+      return;
+    }
+
     if (transition === "regress") {
       // Nothing is written, including the rider block below: the only evidence
       // of ordering we have is the ladder, and a webhook that contradicts it
@@ -500,6 +529,36 @@ router.post("/integrations/petpooja/orderstatus", async (req: Request, res: Resp
     const mappedStatus = mapPetpoojaStatus(payload.status);
     const transition = classifyPosStatusTransition(order.status, mappedStatus);
 
+    // PAID-FULFILMENT INVARIANT (lib/paidGate.ts): for an own_app order,
+    // "placed" means UNPAID — the placed→live edge is reserved for the
+    // payment writers (routes/payments.ts, reconciliationScheduler, the
+    // verified zero-charge finalize). The POS is the source of truth for
+    // aggregator/pos channels, whose "placed" rows are already settled on
+    // the aggregator's side — but it must never be the promoter of an
+    // unpaid own_app order (orderstatus resolves by id, so a replayed or misdirected
+    // event could otherwise name one). Acknowledge without applying, same
+    // posture as the regress branch.
+    if (
+      order.orderChannel === "own_app" &&
+      order.status === "placed" &&
+      transition === "advance"
+    ) {
+      req.log?.warn(
+        {
+          orderID: order.id,
+          currentStatus: order.status,
+          rejectedStatus: mappedStatus,
+        },
+        "petpooja orderstatus rejected — would promote an unpaid own_app order"
+      );
+      res.status(200).json({
+        success: "1",
+        status: payload.status,
+        message: `Order status acknowledged; not applied (order awaits payment).`,
+      });
+      return;
+    }
+
     if (transition === "regress") {
       req.log?.warn(
         {
@@ -630,6 +689,36 @@ router.post("/integrations/petpooja/rider-info", async (req: Request, res: Respo
 
     const mappedStatus = mapPetpoojaRiderStatus(payload.status);
     const transition = classifyPosStatusTransition(order.status, mappedStatus);
+
+    // PAID-FULFILMENT INVARIANT (lib/paidGate.ts): for an own_app order,
+    // "placed" means UNPAID — the placed→live edge is reserved for the
+    // payment writers (routes/payments.ts, reconciliationScheduler, the
+    // verified zero-charge finalize). The POS is the source of truth for
+    // aggregator/pos channels, whose "placed" rows are already settled on
+    // the aggregator's side — but it must never be the promoter of an
+    // unpaid own_app order (rider webhook resolves by id, so a replayed or misdirected
+    // event could otherwise name one). Acknowledge without applying, same
+    // posture as the regress branch.
+    if (
+      order.orderChannel === "own_app" &&
+      order.status === "placed" &&
+      transition === "advance"
+    ) {
+      req.log?.warn(
+        {
+          orderID: order.id,
+          currentStatus: order.status,
+          rejectedStatus: mappedStatus,
+        },
+        "petpooja rider webhook rejected — would promote an unpaid own_app order"
+      );
+      res.status(200).json({
+        code: "200",
+        message: `Rider status acknowledged; not applied (order awaits payment).`,
+        success: "success",
+      });
+      return;
+    }
 
     if (transition === "regress") {
       req.log?.warn(

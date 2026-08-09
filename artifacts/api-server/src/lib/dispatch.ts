@@ -9,6 +9,7 @@ import {
   type Rider,
 } from "@workspace/db";
 import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
+import { FULFILMENT_ASSIGNABLE_STATUSES, isFulfilmentAssignable } from "./paidGate";
 import { logger } from "./logger";
 import { recordOpsAction, enqueueOpsAuditOutbox } from "./opsAudit";
 import { emitDeliveryEvent } from "./realtime";
@@ -525,6 +526,28 @@ async function dispatchOrderInner(
       reason: "not an own-app order",
     };
   }
+  // Second chokepoint invariant, same contract as the channel gate above: an
+  // order that is not fulfilment-assignable never consumes a rider on a
+  // FIRST assignment — "placed" is unpaid, "failed"/"cancelled" are resolved-
+  // dead, "billed" is a settlement ledger row, and unknown statuses fail
+  // closed (lib/paidGate.ts). Covers every door at once: the sweep, the
+  // BullMQ auto-dispatch on ready, the ops AI agent's smart_dispatch_order,
+  // and POST /api/delivery/dispatch. Reassignment of an in-flight order is
+  // NOT this path (overrideAssignment is the deliberate, human escape
+  // hatch). A non-"no riders available" reason counts as progress in the
+  // sweep, so this refusal cannot spin the loop.
+  if (!isFulfilmentAssignable(orderPeek.status)) {
+    return {
+      ok: false,
+      orderId,
+      riderId: null,
+      batched: false,
+      batchKey: "",
+      strategy: "smart",
+      decisionId: null,
+      reason: "order not in a dispatchable status (unpaid or terminal)",
+    };
+  }
   const drop = orderDropLatLng(orderPeek);
 
   // Fetch the online-rider pool ONCE, before both consumers. It was already
@@ -637,6 +660,17 @@ async function dispatchOrderInner(
         ok: false as const,
         reason: "order already has a rider; use override to reassign",
         existingRiderId: locked.rider_id,
+      };
+    }
+    // Authoritative status check UNDER the row lock — the pre-flight peek
+    // is unlocked, so a concurrent cancel or payment-failed webhook can land
+    // between peek and claim. FOR UPDATE means this read cannot go stale
+    // before our claim commits, making the refusal a true DB-level
+    // invariant (lib/paidGate.ts).
+    if (!isFulfilmentAssignable(locked.status)) {
+      return {
+        ok: false as const,
+        reason: "order not in a dispatchable status (unpaid or terminal)",
       };
     }
 
@@ -816,7 +850,10 @@ export async function dispatchReadyOrders(opts: {
   results: DispatchResult[];
 }> {
   const slaBreaches = await scanAndEmitStatSlaBreaches();
-  const liveStatuses = ["placed", "preparing", "ready"];
+  // Unpaid ("placed") rows excluded — lib/paidGate.ts. Load-bearing for the
+  // sweep loop too: the chokepoint below refuses non-assignable rows, and a
+  // refused row the scan kept SELECTing would be re-paged every sweep.
+  const liveStatuses = [...FULFILMENT_ASSIGNABLE_STATUSES];
   const results: DispatchResult[] = [];
   let statAttempted = 0;
   let otherAttempted = 0;
@@ -971,7 +1008,9 @@ async function scanAndEmitStatSlaBreaches(now: Date = new Date()): Promise<numbe
           eq(ordersTable.priority, "stat"),
           isNull(ordersTable.riderId),
           isNull(ordersTable.slaBreachAt),
-          inArray(ordersTable.status, ["placed", "preparing", "ready"]),
+          // No "placed": an abandoned unpaid STAT order must not stamp a
+          // permanent SLA breach five minutes after checkout.
+          inArray(ordersTable.status, [...FULFILMENT_ASSIGNABLE_STATUSES]),
           lte(ordersTable.createdAt, cutoff),
         ),
       )
