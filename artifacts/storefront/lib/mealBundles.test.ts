@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import { DISHES, isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { buildBundle, buildBundles, BUNDLE_SPECS } from "./mealBundles";
 
-// isAlaCarteEnabled keys off a fixed hero-slug set, so fixtures must reuse REAL
-// hero slugs — a synthetic slug silently drops out of every bundle.
+// Since the full-catalog decision (2026-08-09) every dish is à-la-carte
+// purchasable, so this filter is the identity — kept as a filter (not a bare
+// alias) so these fixtures keep tracking the REAL predicate: if purchase
+// gating ever returns, the fixture pool narrows with it automatically.
 const HEROES = DISHES.filter((d) => isAlaCarteEnabled(d));
 
 /** The nth à-la-carte hero, with non-slug fields overridden for the case at hand. */
@@ -25,7 +27,14 @@ test("the catalog has enough à-la-carte heroes to fixture against", () => {
 });
 
 test("a bundle's total is the sum of its constituents' catalog prices", () => {
-  const dishes = [hero(0, { price: 30000 }), hero(1, { price: 40000 })];
+  // glycaemicIndex pinned: `spec`'s low_gi_high_fibre rule drops high-GI
+  // dishes, and with the whole catalog in HEROES the first entries are
+  // whatever the catalog starts with — the fixture must qualify by
+  // construction, not by curation order.
+  const dishes = [
+    hero(0, { price: 30000, glycaemicIndex: "low" }),
+    hero(1, { price: 40000, glycaemicIndex: "low" }),
+  ];
   const bundle = buildBundle({ ...spec, mealCount: 2 }, dishes);
   assert.equal(bundle.dishes.length, 2);
   assert.equal(bundle.totalPaise, 70000);
@@ -55,16 +64,27 @@ test("bundles only ever contain à-la-carte heroes, so Add Combo can work", () =
   }
 });
 
-test("a non-hero dish never enters a bundle even if it scores best", () => {
-  const nonHero = DISHES.find((d) => !isAlaCarteEnabled(d));
-  assert.ok(nonHero, "catalog must contain a non-hero dish");
-  const stacked = withMacros({ ...nonHero, price: 100 }, { protein: 999 });
+test("a formerly browse-only dish can now top a bundle (full-catalog decision)", () => {
+  // Inverse of the retired "a non-hero dish never enters a bundle" test:
+  // before 2026-08-09 only curated heroes were bundle-eligible and this
+  // dish was the canonical browse-only dead end. With the whole catalog
+  // purchasable, stacked protein wins it the top slot like any other dish —
+  // if slug-set gating ever quietly returns, this is the test that names it.
+  const formerNonHero = DISHES.find((d) => d.slug === "activated-charcoal-smoothie");
+  assert.ok(formerNonHero, "expected the formerly-non-hero fixture dish in the catalog");
+  const stacked = withMacros({ ...formerNonHero, price: 100 }, { protein: 999 });
   const bundle = buildBundle({ ...spec, rule: "high_protein", mealCount: 1 }, [stacked, hero(0)]);
-  assert.notEqual(bundle.dishes[0]?.slug, nonHero.slug);
+  assert.equal(bundle.dishes[0]?.slug, formerNonHero.slug);
 });
 
-test("unavailable dishes are excluded even when they are heroes", () => {
-  const dishes = [hero(0, { price: 30000, isAvailable: false }), hero(1, { price: 40000 })];
+test("unavailable dishes are excluded even when they are purchasable", () => {
+  // Same GI pin as the totals test above — the case under test is
+  // availability, so the rule's GI filter must not be the thing that drops
+  // a fixture.
+  const dishes = [
+    hero(0, { price: 30000, isAvailable: false, glycaemicIndex: "low" }),
+    hero(1, { price: 40000, glycaemicIndex: "low" }),
+  ];
   const bundle = buildBundle({ ...spec, mealCount: 2 }, dishes);
   assert.equal(bundle.complete, false);
   assert.equal(bundle.dishes.length, 1);

@@ -4713,9 +4713,26 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
     ...LIVE_ALA_CARTE_HERO_SLUGS,
   ]);
 
-  /** True when a dish is offered for scheduled à la carte ordering (a hero). */
-  export function isAlaCarteEnabled(dish: Pick<DishData, "slug">): boolean {
-    return AL_A_CARTE_HERO_SLUGS.has(dish.slug);
+  /**
+   * True when a dish is offered for à la carte ordering.
+   *
+   * Owner decision 2026-08-09: the ENTIRE catalog is à-la-carte purchasable —
+   * this supersedes the curated-hero model (previously only
+   * AL_A_CARTE_HERO_SLUGS members were orderable; everything else was
+   * browse-only). The hero sets above are retained as the historical curation
+   * record and their tier-hygiene tests still run, but they no longer gate
+   * purchase.
+   *
+   * Kept as a function (not deleted) deliberately: every Add-button surface,
+   * the /api/menu filter and the bundle builder all key off this one
+   * predicate, so any future re-curation is a one-line change here rather
+   * than an archaeology project. Availability (`isAvailable`), RD-review
+   * state and the premium-membership gate are separate, still-enforced
+   * concerns — this predicate only answers "is à la carte the right channel
+   * for this dish", and the answer is now always yes.
+   */
+  export function isAlaCarteEnabled(_dish: Pick<DishData, "slug">): boolean {
+    return true;
   }
 
   export function getDishBySlug(slug: string): DishData | undefined {

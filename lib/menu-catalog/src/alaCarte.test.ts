@@ -8,11 +8,15 @@ import {
   isAlaCarteEnabled,
 } from "./index";
 
-// À la carte is the curated hero subset — widened to ≥50 offerings (menu goes
-// à-la-carte-only), split into two validated tiers: STATIC heroes resolve
-// against this package's DISHES snapshot; LIVE heroes exist only in the
-// DB-merged catalog (deployed-menu verification covers them, so a slug here
-// must NOT shadow a static dish — that would belong in the static tier).
+// À la carte covers the ENTIRE catalog (owner decision 2026-08-09) — the
+// curated-hero model is superseded, and isAlaCarteEnabled is now
+// unconditionally true. The hero sets survive as the historical curation
+// record, so their tier-hygiene tests still run: a rotted slug in either
+// tier would mean the record no longer describes real dishes, which is
+// exactly the kind of silent drift these exist to catch. STATIC heroes
+// resolve against this package's DISHES snapshot; LIVE heroes exist only in
+// the DB-merged catalog (a slug there must NOT shadow a static dish — that
+// would belong in the static tier).
 
 test("every static-tier hero slug resolves to a real catalog dish", () => {
   const bySlug = new Set(DISHES.map((d) => d.slug));
@@ -31,11 +35,7 @@ test("live-tier heroes are DB-only — none shadows a static catalog dish", () =
   }
 });
 
-test("the combined set meets the ≥50-offering commitment with no tier overlap", () => {
-  assert.ok(
-    AL_A_CARTE_HERO_SLUGS.size >= 50,
-    `à la carte must offer at least 50 dishes (got ${AL_A_CARTE_HERO_SLUGS.size})`,
-  );
+test("the historical hero tiers do not overlap or repeat slugs", () => {
   assert.equal(
     AL_A_CARTE_HERO_SLUGS.size,
     STATIC_ALA_CARTE_HERO_SLUGS.length + LIVE_ALA_CARTE_HERO_SLUGS.length,
@@ -43,10 +43,19 @@ test("the combined set meets the ≥50-offering commitment with no tier overlap"
   );
 });
 
-test("isAlaCarteEnabled is true only for heroes", () => {
-  const hero = DISHES.find((d) => AL_A_CARTE_HERO_SLUGS.has(d.slug));
-  const nonHero = DISHES.find((d) => !AL_A_CARTE_HERO_SLUGS.has(d.slug));
-  assert.ok(hero && nonHero, "catalog must contain both hero and non-hero dishes");
-  assert.equal(isAlaCarteEnabled(hero!), true);
-  assert.equal(isAlaCarteEnabled(nonHero!), false);
+test("every catalog dish is à-la-carte purchasable (owner decision 2026-08-09)", () => {
+  // The ≥50-offering commitment is now trivially exceeded: the whole catalog
+  // qualifies. Assert per-dish rather than on set size so a regression back
+  // to slug-set gating names the exact dish it re-excluded.
+  assert.ok(DISHES.length >= 50, `catalog shrank below the offering floor (${DISHES.length})`);
+  for (const dish of DISHES) {
+    assert.equal(
+      isAlaCarteEnabled(dish),
+      true,
+      `"${dish.slug}" is not à-la-carte purchasable — the full-catalog decision regressed`,
+    );
+  }
+  // DB-only dishes (the old LIVE tier and anything ops adds later) must ride
+  // the same rule — the predicate may not quietly regrow a slug allowlist.
+  assert.equal(isAlaCarteEnabled({ slug: "db-only-dish-not-in-static-catalog" }), true);
 });
