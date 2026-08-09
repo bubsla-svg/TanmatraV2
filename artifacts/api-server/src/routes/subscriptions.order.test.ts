@@ -39,6 +39,19 @@
  * globalThis.fetch — no real network / credentials involved. This mirrors
  * payments.integrity.test.ts's harness for the rest of the payment flow.
  *
+ * Fixture note (2026-08-09): POST /subscriptions has since retired legacy
+ * per-item pricing entirely — `planId` is now required (400
+ * legacy_pricing_disabled without it) and a client-declared `planType:
+ * "trial"` must carry `planId: "trial_3day"` or it 410s
+ * (legacy_trial_retired). This file predates that change and was sitting
+ * unreached in scripts/test-reach-baseline.txt, so the drift was invisible
+ * until it was wired into CI. Fixtures below now go through the plan
+ * catalog (`planId: "desk_fuel"` / `"trial_3day"`, mirroring
+ * payments.subscriptionOrder.test.ts and subscriptions.planV2Trial.test.ts)
+ * — this file's own subject (the order-linkage/pricing fix in
+ * createOrderForNewSubscription) is unaffected by that migration, so only
+ * the request bodies changed, not the assertions.
+ *
  * Run with:
  *   node --test --import tsx ./src/routes/subscriptions.order.test.ts
  */
@@ -74,6 +87,14 @@ const KEY_ID = "rzp_test_sub_order";
 const KEY_SECRET = "secret_test_sub_order";
 process.env["RAZORPAY_KEY_ID"] = KEY_ID;
 process.env["RAZORPAY_KEY_SECRET"] = KEY_SECRET;
+process.env["FLAG_PLAN_V2"] = "true";
+
+let phoneSeq = 0;
+/** trial_3day's redemption check is per-phone; each trial test needs its own. */
+function freshPhone(): string {
+  phoneSeq += 1;
+  return `9966${String(100000 + phoneSeq).slice(-6)}`;
+}
 
 interface TestUser {
   id: string;
@@ -162,15 +183,7 @@ function baseBody(extra: Record<string, unknown>) {
     deliveryWindow: "12:00-14:00",
     startDate: tomorrowISO(),
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
-    defaultItems: [
-      {
-        slug: "aglio-olio-veg",
-        name: "Aglio Olio - Veg",
-        image: "/images/dishes/aglio-olio-veg.jpg",
-        quantity: 5,
-        unitPricePaise: 13000,
-      },
-    ],
+    defaultItems: [],
     ...extra,
   };
 }
@@ -257,7 +270,12 @@ after(async () => {
 
 test("POST /subscriptions creates a linked ordersTable row priced from pricePerDeliveryPaise", async () => {
   const user = await makeUser();
-  const created = await api("POST", "/subscriptions", baseBody({ planType: "standard" }), user);
+  const created = await api(
+    "POST",
+    "/subscriptions",
+    baseBody({ planType: "standard", planId: "desk_fuel", track: "veg" }),
+    user,
+  );
   assert.equal(created.status, 201, JSON.stringify(created.json));
   const sub = created.json.subscription;
 
@@ -296,12 +314,21 @@ test("a trial subscription's linked order is priced net of the server-computed b
     reason: "alacarte_bridge",
   });
 
-  const created = await api("POST", "/subscriptions", baseBody({ planType: "trial", mealsPerDelivery: 6 }), user);
+  const created = await api(
+    "POST",
+    "/subscriptions",
+    baseBody({ planType: "trial", planId: "trial_3day", track: "veg", phone: freshPhone() }),
+    user,
+  );
   assert.equal(created.status, 201, JSON.stringify(created.json));
   const sub = created.json.subscription;
   assert.ok(created.json.bridgeCreditPaise > 0, "bridge credit must be redeemed for a trial");
 
-  const expectedDiscount = bridgeCreditDiscountPaise(1, 6, sub.pricePerDeliveryPaise);
+  // mealsPerDelivery is server-computed from the plan spine (trial_3day's
+  // fixed 3-meal trio), not the client's request — assert against the
+  // response rather than hardcoding it, so this doesn't drift if the trial
+  // trio size ever changes in lib/subscription-rules.
+  const expectedDiscount = bridgeCreditDiscountPaise(1, sub.mealsPerDelivery, sub.pricePerDeliveryPaise);
   assert.equal(created.json.bridgeCreditPaise, expectedDiscount);
 
   const [order] = await db
@@ -324,7 +351,13 @@ test("a trial subscription's linked order is priced net of the server-computed b
 
 test("POST /payments/razorpay/order succeeds for a new subscription and ignores a tampered client amount", async () => {
   const user = await makeUser();
-  const created = await api("POST", "/subscriptions", baseBody({ planType: "standard" }), user);
+  const created = await api(
+    "POST",
+    "/subscriptions",
+    baseBody({ planType: "standard", planId: "desk_fuel", track: "veg" }),
+    user,
+  );
+  assert.equal(created.status, 201, JSON.stringify(created.json));
   const sub = created.json.subscription;
   const externalOrderId = `sub-${sub.id}`;
 
@@ -354,29 +387,32 @@ test("POST /payments/razorpay/order succeeds for a new subscription and ignores 
 
 // ---------------------------------------------------------------------------
 // 4. POST /payments/razorpay/verify — payment capture succeeds via the
-//    delivery → order link, but autopay mandate registration does NOT fire.
+//    delivery → order link, but autopay mandate registration does NOT fire
+//    when the caller omits subscriptionId from the order-create call.
 //
-//    NOTE — this documents the current gap: see follow-up fix wiring
-//    subscriptionId through the subscribe flow. Nothing on the subscribe
-//    path (Subscribe.tsx → payWithRazorpay in razorpayClient.ts →
-//    POST /payments/razorpay/order) sends `subscriptionId` today, so
-//    payments.ts's `isRecurring` branch (~line 275-320) never fires, the
-//    gateway order is created WITHOUT a token request, and a real Razorpay
-//    payment for it carries no customer_id/token_id. registerAutopayMandate
-//    then has nothing to register. Once the subscriptionId-wiring follow-up
-//    lands, this test must be updated to assert the mandate DOES register
-//    (restore the assertions from the version of this test in the parent
-//    commit, gated on the order-create call now passing subscriptionId).
+//    NOTE (updated 2026-08-09): the subscriptionId-wiring follow-up this
+//    comment originally awaited has since landed — see
+//    payments.subscriptionOrder.test.ts, which proves the real subscribe
+//    flow now sends subscriptionId and DOES get a mandate registered. This
+//    test is no longer "the current gap" for the production flow; it pins a
+//    narrower, still-real property: opting OUT of subscriptionId (an older
+//    client, or any caller that omits it) must never mint a token/mandate
+//    by accident. payments.ts's `isRecurring` branch only fires when
+//    subscriptionId is present in the request, so the gateway order here is
+//    created WITHOUT a token request, and a real Razorpay payment for it
+//    carries no customer_id/token_id — registerAutopayMandate then has
+//    nothing to register.
 // ---------------------------------------------------------------------------
 
-test("POST /payments/razorpay/verify captures payment but does NOT register an autopay mandate when the order was created without subscriptionId (current gap)", async () => {
+test("POST /payments/razorpay/verify captures payment but does NOT register an autopay mandate when the order-create call omits subscriptionId", async () => {
   const user = await makeUser();
   const created = await api(
     "POST",
     "/subscriptions",
-    baseBody({ planType: "standard", cadence: "weekly" }),
+    baseBody({ planType: "standard", cadence: "weekly", planId: "desk_fuel", track: "veg" }),
     user,
   );
+  assert.equal(created.status, 201, JSON.stringify(created.json));
   const sub = created.json.subscription;
   const externalOrderId = `sub-${sub.id}`;
   const statusBeforeVerify = sub.status;
