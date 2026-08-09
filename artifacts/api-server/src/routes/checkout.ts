@@ -29,30 +29,34 @@ function alcCheckoutEnabled(): boolean {
   return (process.env["ALC_CHECKOUT_ENABLED"] ?? "true").toLowerCase() !== "false";
 }
 
+// Shared between POST /orders and POST /orders/quote so a quoted cart and a
+// billed cart can never accept different shapes.
+const orderItemsSchema = z
+  .array(
+    z.object({
+      dishId: z.number().int().positive(),
+      qty: z.number().int().min(1).max(20),
+      // Customisation SELECTIONS, never a price — pricing is resolved
+      // server-side against the dish's own `customizations` groups
+      // (dishCustomizations.ts). A client can name a group and options; it
+      // can never assert what those options cost.
+      customizations: z
+        .array(
+          z.object({
+            groupName: z.string().min(1).max(120),
+            optionNames: z.array(z.string().min(1).max(120)).max(20),
+          }),
+        )
+        .max(20)
+        .optional(),
+    }),
+  )
+  .min(1)
+  .max(50);
+
 const placeOrderSchema = z.object({
   externalOrderId: z.string().min(1).max(64),
-  items: z
-    .array(
-      z.object({
-        dishId: z.number().int().positive(),
-        qty: z.number().int().min(1).max(20),
-        // Customisation SELECTIONS, never a price — pricing is resolved
-        // server-side against the dish's own `customizations` groups
-        // (dishCustomizations.ts). A client can name a group and options; it
-        // can never assert what those options cost.
-        customizations: z
-          .array(
-            z.object({
-              groupName: z.string().min(1).max(120),
-              optionNames: z.array(z.string().min(1).max(120)).max(20),
-            }),
-          )
-          .max(20)
-          .optional(),
-      }),
-    )
-    .min(1)
-    .max(50),
+  items: orderItemsSchema,
   phone: z.string().min(7).max(20),
   address: z.object({
     label: z.string().max(64).optional(),
@@ -85,6 +89,189 @@ const placeOrderSchema = z.object({
   // Set true to acknowledge allergen risk when a guest declares no dietary info
   // but the cart contains allergen/contraindication-flagged dishes.
   allergenAck: z.boolean().optional(),
+});
+
+/** The stable delivery ETA the order path has always promised (the status
+ *  route counts its SLA window down from this). The quote shows the same
+ *  figure so pre-payment timing equals post-payment timing. */
+const ORDER_ETA_MINUTES = 25;
+
+/** Advisory freshness window for a quote snapshot. The quote is stateless —
+ *  POST /orders re-prices authoritatively regardless — so expiry here only
+ *  tells the client when to stop trusting the DISPLAY and refresh. */
+const QUOTE_TTL_MS = 15 * 60 * 1000;
+
+type ValidatedCartItem = {
+  id: number;
+  name: string;
+  qty: number;
+  price: number;
+  customizations?: string[];
+};
+
+/**
+ * Item validation shared by POST /orders and POST /orders/quote — ONE source
+ * of truth so a quoted cart and a billed cart can never diverge (the quote's
+ * whole promise is display-equals-billed). Failure returns the exact
+ * status/body the create path has always sent.
+ */
+function validateCartItems(
+  items: z.infer<typeof orderItemsSchema>,
+  resolver: Awaited<ReturnType<typeof makeBatchDishResolver>>,
+  effectivePrefs: PreferencesForMatch | null,
+):
+  | { ok: true; validatedItems: ValidatedCartItem[]; resolvedDishes: DishData[] }
+  | { ok: false; status: number; body: Record<string, unknown> } {
+  const validatedItems: ValidatedCartItem[] = [];
+  const resolvedDishes: DishData[] = [];
+  for (const item of items) {
+    const dish = resolver.byId(item.dishId);
+    if (!dish) {
+      return { ok: false, status: 422, body: { error: `unknown dish: ${item.dishId}` } };
+    }
+    if (!dish.isAvailable) {
+      return {
+        ok: false,
+        status: 422,
+        body: { error: `dish unavailable: ${dish.name}`, code: "dish_unavailable", dishId: dish.id, dishName: dish.name },
+      };
+    }
+    const blockReasons = findDishSafetyBlock(dish, effectivePrefs);
+    if (blockReasons) {
+      return {
+        ok: false,
+        status: 422,
+        body: { error: "Safety block", code: "safety_block", blocked: true, reasons: blockReasons },
+      };
+    }
+
+    const customization = resolveCustomizations(
+      dish.customizations,
+      item.customizations as CustomizationSelection[] | undefined,
+    );
+    if (!customization.ok) {
+      return {
+        ok: false,
+        status: 422,
+        body: { error: `invalid customisation for ${dish.name}: ${customization.error}`, code: "invalid_customization" },
+      };
+    }
+
+    resolvedDishes.push(dish);
+    validatedItems.push({
+      id: dish.id,
+      name: dish.name,
+      qty: item.qty,
+      price: dish.price + customization.modifierPaise,
+      ...(customization.labels.length > 0 && { customizations: customization.labels }),
+    });
+  }
+  return { ok: true, validatedItems, resolvedDishes };
+}
+
+const quoteSchema = z.object({
+  items: orderItemsSchema,
+  pincode: z.string().min(4).max(16).optional(),
+});
+
+/**
+ * POST /orders/quote
+ *
+ * Read-only pricing snapshot for the à-la-carte checkout (UX/UI Architecture
+ * Phase 7: "Checkout must consume an immutable server-owned QuoteSnapshot").
+ * Prices through the SAME validation helper and calculateCartTotals the
+ * create path bills from, so the breakdown a customer reads equals the amount
+ * they are charged. No auth, no DB writes, no idempotency — this creates
+ * nothing. POST /orders remains the sole pricing authority at create time;
+ * this endpoint only makes that same arithmetic visible before payment.
+ */
+router.post("/orders/quote", async (req: Request, res: Response) => {
+  if (!alcCheckoutEnabled()) {
+    res.status(403).json({
+      error: "à-la-carte checkout is currently unavailable — please choose a plan",
+      code: "alc_checkout_disabled",
+    });
+    return;
+  }
+
+  const parsed = quoteSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload" });
+    return;
+  }
+  const { items, pincode } = parsed.data;
+
+  let resolver: Awaited<ReturnType<typeof makeBatchDishResolver>>;
+  try {
+    resolver = await makeBatchDishResolver();
+  } catch (err) {
+    req.log.error({ err }, "menuResolver unavailable at quote");
+    res.status(503).json({ error: "menu unavailable, try again" });
+    return;
+  }
+
+  // Guest-tolerant auth detection, same shape as the create path. The quote
+  // screens with null prefs (a guest's declared prefs arrive only at create),
+  // which still enforces the RD-review gate inside findDishSafetyBlock.
+  const authUserId = req.isAuthenticated?.() ? req.user.id : null;
+  const isGuest = authUserId === null;
+
+  const validation = validateCartItems(items, resolver, null);
+  if (!validation.ok) {
+    res.status(validation.status).json(validation.body);
+    return;
+  }
+  const { validatedItems, resolvedDishes } = validation;
+
+  // Same premium gate as create, so a non-member learns at quote time — with
+  // an editable cart in front of them — rather than at the payment step.
+  try {
+    const premiumSet = await getPremiumSlugSet();
+    const cartHasPremium = resolvedDishes.some((d) => premiumSet.has(d.slug));
+    if (cartHasPremium && (isGuest || !(await userIsPremium(authUserId!)))) {
+      res.status(403).json({
+        error: "premium membership required for one or more items",
+        code: "premium_required",
+      });
+      return;
+    }
+  } catch (err) {
+    req.log.error({ err }, "premium gate check failed at quote");
+    res.status(503).json({ error: "premium gate unavailable, try again" });
+    return;
+  }
+
+  const totals = calculateCartTotals(
+    validatedItems.map((i) => ({ unitPrice: i.price, quantity: i.qty })),
+  );
+
+  res.json({
+    status: "active",
+    version: 1,
+    expiresAt: new Date(Date.now() + QUOTE_TTL_MS).toISOString(),
+    items: validatedItems.map((i) => ({
+      id: i.id,
+      name: i.name,
+      qty: i.qty,
+      unitPaise: i.price,
+      linePaise: i.price * i.qty,
+      ...(i.customizations && { customizations: i.customizations }),
+    })),
+    subtotalPaise: totals.subtotal,
+    deliveryFeePaise: totals.deliveryFee,
+    // Declared zeros, not omissions: packaging is bundled into dish prices and
+    // no discount mechanism exists on this path. If either becomes real it
+    // must come from here, never from client arithmetic.
+    packagingPaise: 0,
+    discountPaise: 0,
+    taxPaise: totals.tax,
+    payableNowPaise: totals.total,
+    amountToFreeDeliveryPaise: totals.amountToFreeDelivery,
+    etaMinutes: ORDER_ETA_MINUTES,
+    serviceability: pincode
+      ? { pincode: pincode.trim(), serviceable: isServiceablePincode(pincode) }
+      : null,
+  });
 });
 
 /**
@@ -162,57 +349,14 @@ router.post("/orders", async (req: Request, res: Response) => {
   // longer bypass allergen/condition screening simply by not logging in.
   const effectivePrefs = authPrefs ?? normalizeGuestPrefs(guestPrefs);
 
-  // Validate every item and build the server-authoritative cart.
-  const validatedItems: Array<{
-    id: number;
-    name: string;
-    qty: number;
-    price: number;
-    customizations?: string[];
-  }> = [];
-  const resolvedDishes: DishData[] = [];
-  for (const item of items) {
-    const dish = resolver.byId(item.dishId);
-    if (!dish) {
-      res.status(422).json({ error: `unknown dish: ${item.dishId}` });
-      return;
-    }
-    if (!dish.isAvailable) {
-      res.status(422).json({ error: `dish unavailable: ${dish.name}`, code: "dish_unavailable" });
-      return;
-    }
-    const blockReasons = findDishSafetyBlock(dish, effectivePrefs);
-    if (blockReasons) {
-      res.status(422).json({
-        error: "Safety block",
-        code: "safety_block",
-        blocked: true,
-        reasons: blockReasons,
-      });
-      return;
-    }
-
-    const customization = resolveCustomizations(
-      dish.customizations,
-      item.customizations as CustomizationSelection[] | undefined,
-    );
-    if (!customization.ok) {
-      res.status(422).json({
-        error: `invalid customisation for ${dish.name}: ${customization.error}`,
-        code: "invalid_customization",
-      });
-      return;
-    }
-
-    resolvedDishes.push(dish);
-    validatedItems.push({
-      id: dish.id,
-      name: dish.name,
-      qty: item.qty,
-      price: dish.price + customization.modifierPaise,
-      ...(customization.labels.length > 0 && { customizations: customization.labels }),
-    });
+  // Validate every item and build the server-authoritative cart — via the
+  // same helper the quote endpoint prices through (display-equals-billed).
+  const validation = validateCartItems(items, resolver, effectivePrefs);
+  if (!validation.ok) {
+    res.status(validation.status).json(validation.body);
+    return;
   }
+  const { validatedItems, resolvedDishes } = validation;
 
   // Server-side premium-meal gate, mirroring /orders/finalize's
   // (routes/loyalty.ts). Until the full-catalog à-la-carte opening
@@ -331,7 +475,7 @@ router.post("/orders", async (req: Request, res: Response) => {
     orderId: externalOrderId,
     serverOrderId: row.id,
     status: "placed",
-    etaMinutes: 25,
+    etaMinutes: ORDER_ETA_MINUTES,
     totalPaise,
   });
 });
