@@ -65,12 +65,25 @@ export function reactivateSubscriptionBilling(id: number, fetchImpl?: FetchImpl)
 
 // ── Detail + per-delivery skip/unskip + meal credits (SF-10 tail) ────────────
 
+export interface SubscriptionDeliveryItem {
+  slug: string;
+  name: string;
+  image: string;
+  quantity: number;
+  /** Paise. Informational (kitchen ticket) only — swapping items never
+   *  touches billing; the subscription's own pricePerDeliveryPaise is what
+   *  gets charged, computed server-side and untouched by this field. */
+  unitPricePaise: number;
+  memberId?: number | null;
+}
+
 export interface SubscriptionDelivery {
   id: number;
   subscriptionId: number;
   scheduledFor: string;
   status: string;
   deliveryWindow?: string | null;
+  items?: SubscriptionDeliveryItem[];
   [k: string]: unknown;
 }
 
@@ -104,6 +117,30 @@ export function unskipDelivery(
   fetchImpl?: FetchImpl,
 ): Promise<{ delivery: SubscriptionDelivery }> {
   return apiPost(`/subscription-deliveries/${deliveryId}/unskip`, {}, fetchImpl);
+}
+
+/** Move a delivery to a new date (and optionally a new window). Same 24h
+ *  cutoff as skip/swap (409 `past_cutoff`, surfaced verbatim) — the server
+ *  checks it against the delivery's CURRENT scheduledFor, not the requested
+ *  one, so a delivery already inside its window can't be rescheduled at all. */
+export function rescheduleDelivery(
+  deliveryId: number,
+  input: { scheduledFor: string; deliveryWindow?: string },
+  fetchImpl?: FetchImpl,
+): Promise<{ delivery: SubscriptionDelivery }> {
+  return apiPost(`/subscription-deliveries/${deliveryId}/reschedule`, input, fetchImpl);
+}
+
+/** Replace a delivery's items outright. The server re-validates every dish
+ *  against safety (422 `safety_block`) and the subscription's macro cap (422
+ *  `macro_cap_exceeded`) before applying — both come back with a `reasons`
+ *  array on the thrown ApiError. Same 24h cutoff as skip/reschedule. */
+export function swapDelivery(
+  deliveryId: number,
+  items: SubscriptionDeliveryItem[],
+  fetchImpl?: FetchImpl,
+): Promise<{ delivery: SubscriptionDelivery }> {
+  return apiPost(`/subscription-deliveries/${deliveryId}/swap`, { items }, fetchImpl);
 }
 
 export interface MealCreditsResponse {
