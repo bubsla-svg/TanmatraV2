@@ -773,8 +773,8 @@ PR branch's head (`2d0404f`) is not what deployed — the merge commit
 | Deploy run | [31312543381](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31312543381) — success |
 | Deploy's own `gate` job (re-verifies on the merge commit) | job [93242477000](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31312543381/job/93242477000) — success, including "Money-path integration tests (verify.yml's full list)" against real Postgres, run a second time on the actual merge commit (not just the PR head) |
 | Cloud Build ID | `0222599a-f090-4b8d-8449-31a07ef4bdc7` (SUCCESS) |
-| Artifact Registry image | `asia-south2-docker.pkg.dev/brand-tanmatra-tmg/wellness/wellness-foods:96bd810ec9220e3e432b96bcc2a8468d6b5e6848` |
-| Immutable image digest | not independently queryable from this session (no direct Artifact Registry API access outside the GitHub Actions runner's credentials) — the SHA-tagged reference above is the identity actually used: Cloud Build mints exactly one image per unique commit SHA and the deploy step references that tag by name, so it is immutable-by-construction even without the raw `sha256:` manifest digest in hand |
+| Image tag | `wellness-foods:96bd810ec9220e3e432b96bcc2a8468d6b5e6848` |
+| Image digest | **BLOCKED** — Artifact Registry access unavailable from this session (no direct registry API credentials outside the GitHub Actions runner's own). Correction from an earlier draft of this section: a git-SHA tag is traceable to the commit that produced it, but is not *inherently* immutable — that depends on an Artifact Registry immutable-tags policy this session cannot confirm either way. The Cloud Run revision (`wellness-foods-00207-69p`, below) is what actually proves which build is serving traffic; the tag is corroborating, not load-bearing. An authorized operator should pull the resolved `sha256:` digest from Artifact Registry and attach it here when convenient — not a blocker for the deploy verdict below, since the revision-serving-traffic evidence stands on its own. |
 | Cloud Run service / region | `wellness-foods` / `asia-south2`, project `brand-tanmatra-tmg` (confirmed from the deploy job's own `gcloud run deploy` invocation) |
 | Cloud Run revision | `wellness-foods-00207-69p` |
 | Previous stable (rollback target) | `wellness-foods-00206-j7l` — PR #15's revision, confirming an unbroken chain |
@@ -803,6 +803,47 @@ the live revision, and the storefront's real guest-checkout route
 (`POST /api/orders`) answers with its normal idempotency-key requirement —
 unaffected by either gate, exactly as designed. No order, payment attempt,
 subscription, or entitlement was created by any of these probes.
+
+### Does guest checkout depend on the gated `/orders/finalize` endpoint?
+
+An apparent contradiction needed resolving before this section's GO could
+stand: `POST /api/orders` (the storefront's real checkout) is open, but
+`POST /api/orders/finalize` is gated 503. If the guest flow's payment leg
+routes through `finalize`, gating it would silently break real checkout —
+availability of one endpoint says nothing about whether the *other* one is
+load-bearing for the same flow. This has to be a source trace, not an
+inference from which endpoints answer.
+
+**Trace**: `artifacts/storefront/lib/moneyPath.ts`'s `runAlacarteCheckout` /
+`finishAlacartePayment` — the only money-path entry point the storefront's
+menu → cart → guest checkout UI calls — orchestrates exactly four calls,
+each backed by `artifacts/storefront/lib/api.ts`:
+
+| Step | Client function | Wire call |
+|---|---|---|
+| Checkout form submit | `createAlacarteOrder` | `POST /orders` (`apiPostIdempotent`) |
+| Payment-attempt / Razorpay order creation | `createRazorpayOrder` | `POST /payments/razorpay/order` |
+| Payment verification | `verifyPayment` | `POST /payments/razorpay/verify` |
+| Status-recovery (dismissed-modal retry) | `verifyWithRetry` / `retryVerifyPayment` (`lib/verifyRetry.ts`) | retries `POST /payments/razorpay/verify` — never `/orders/finalize` |
+| Client finalize endpoint | — | **none** — `/orders/finalize` does not appear anywhere in `moneyPath.ts`, `api.ts`, or any file `runAlacarteCheckout`/`finishAlacartePayment` touches |
+| Webhook (server-side safety net, not client-called) | — | `routes/payments.ts`'s Razorpay webhook handler — independent capture path, backs up step 3 |
+| Confirmation transition | — | written by `POST /payments/razorpay/verify` (`placed`→`preparing`), backed up by the webhook |
+
+Corroborating grep evidence: `grep -rn "orders/finalize|finalizeOrder" artifacts/storefront`
+matches exactly one file, `lib/referralApi.ts` — a doc-comment describing
+server-side referral-award timing, not a client API call. And on the server
+side, `grep -rn "isOrderFinalizeDisabled|orderFinalizeGate|ORDER_FINALIZE_DISABLED"
+artifacts/api-server/src` matches only `routes/loyalty.ts` (and its test) —
+the gate is mounted nowhere near `routes/checkout.ts`'s `POST /orders`,
+confirmed by this section's own probe returning a plain `400
+idempotency_key_required` validation error, not a 503.
+
+**Conclusion: A.** Guest checkout does not call `/api/orders/finalize` — the
+route is a structurally separate, non-guest-checkout surface (§10's own
+"one reachable route" framing from the original settlement-trust-boundary
+fix). The `ORDER_FINALIZE_DISABLED` 503 gate does not affect, and never did
+affect, the storefront's real guest checkout. Guest finalize dependency:
+**RESOLVED — no dependency exists.**
 
 ### Paid-liveness invariant checklist — production-confirmed
 
@@ -840,6 +881,8 @@ rather than duplicated here.
 - **PR #16 production deployment**: PASS — revision `wellness-foods-00207-69p`
   confirmed serving 100% of traffic, health green, both containment gates
   live, per this section's evidence.
+- **Guest finalize dependency**: RESOLVED — source-traced, Conclusion A (no
+  dependency); see the trace above.
 - **Guest money-path verification**: PENDING — the code path and its
   deployment are now both verified; the controlled guest order itself
   (§2, owner action) has not yet been executed. This session has no payment
@@ -851,3 +894,28 @@ rather than duplicated here.
 **Plan checkout: NO-GO — gated pending its own separate controlled
 verification (§7).**
 **Wave 2: HOLD pending the controlled guest order's reconciliation (§8).**
+
+### Controlled-order authorization gate — status
+
+Engineering-side prerequisites, all now satisfiable from evidence in this
+document. The remaining unchecked items are human/operational, not code —
+this session cannot satisfy them and must not attempt to.
+
+```
+[x] Guest checkout does not depend on the gated finalize endpoint (source trace above, Conclusion A)
+[x] PR #16 revision remains at 100% traffic (wellness-foods-00207-69p, verified above)
+[x] Plan checkout remains gated (probe above: 503 PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE)
+[ ] Kitchen or operations team is informed                      — owner action
+[ ] Lowest-value valid item is selected                         — owner action, at checkout
+[ ] Serviceable address is available                            — owner action
+[ ] Authorized payment method is available                      — owner action (this session holds no payment credential, by design)
+[ ] Cancellation/refund procedure is known                      — owner action
+[ ] Payment and operations dashboards available for reconciliation — owner action
+```
+
+The pre-payment isolation checks (order non-actionable until payment
+settles) and the post-payment exactly-once reconciliation are specified in
+§3; the invariants they verify are the ones §10/§11 fixed and this section
+proved deployed. An engineering monitor can watch logs and DB state during
+the run, but the payment credential and OTP must stay with the authorized
+human throughout.
