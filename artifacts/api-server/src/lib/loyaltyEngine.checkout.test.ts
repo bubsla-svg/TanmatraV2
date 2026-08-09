@@ -500,7 +500,14 @@ test("finalizeOrder refuses to adopt and reprice a pre-existing order it did not
       pickupLocationId,
       items: [{ id: dish!.id, name: dish!.name, qty: 1, price: dish!.price }],
     }),
-    /^order_id_conflict:/,
+    (err: unknown) => {
+      // A RegExp matcher here would test String(err) ("Error: <message>"),
+      // not err.message — an anchored /^.../ against that always misses the
+      // "Error: " prefix. Match the message field directly instead.
+      const e = err as Error;
+      assert.match(e.message, /^order_id_conflict:/);
+      return true;
+    },
   );
 
   const [after] = await db
