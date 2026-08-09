@@ -53,7 +53,6 @@ artifacts/api-server/src/routes/catalog.test.ts
 artifacts/api-server/src/routes/checkout.consent.test.ts
 artifacts/api-server/src/routes/cspReport.test.ts
 artifacts/api-server/src/routes/groupOrders.test.ts
-artifacts/api-server/src/routes/loyalty.checkout.test.ts
 artifacts/api-server/src/routes/menu.test.ts
 artifacts/api-server/src/routes/preferences.sprint78.test.ts
 artifacts/api-server/src/routes/subscriptions.cancel.test.ts

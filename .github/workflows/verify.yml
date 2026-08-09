@@ -363,6 +363,7 @@ jobs:
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
           ./src/routes/subscriptions.catalogQuote.test.ts
           ./src/routes/loyalty.referral.test.ts
+          ./src/routes/loyalty.checkout.test.ts
           ./src/routes/dishRationales.test.ts
           ./src/routes/coachAgent.test.ts
           ./src/routes/rdAdvisory.appointmentOrder.test.ts

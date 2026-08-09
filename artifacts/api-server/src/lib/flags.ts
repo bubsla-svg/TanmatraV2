@@ -33,3 +33,19 @@ export function isPlanV2Enabled(): boolean {
 export function isPlanCheckoutDisabled(): boolean {
   return envTrue(process.env.PLAN_CHECKOUT_DISABLED);
 }
+
+/**
+ * Containment gate (2026-08-09, docs/MONEY-PATH-VERIFICATION.md "Settlement
+ * Trust Boundary"): POST /orders/finalize let a caller-supplied
+ * `externalOrderId` stand in as settlement evidence in the reconciliation
+ * sweep (fixed in lib/reconciliationScheduler.ts — real evidence is now a
+ * join against a server-owned row, never the identifier's string content).
+ * This route has no live first-party caller (the legacy SPA's customer
+ * checkout was removed 2026-07-26) but remains a callable HTTP surface, so it
+ * stays closed in production pending an owner decision on whether to keep or
+ * retire it. Same shape as isPlanCheckoutDisabled: default OPEN so tests, dev
+ * and staging are unaffected; production closes it via deploy.yml env.
+ */
+export function isOrderFinalizeDisabled(): boolean {
+  return envTrue(process.env.ORDER_FINALIZE_DISABLED);
+}

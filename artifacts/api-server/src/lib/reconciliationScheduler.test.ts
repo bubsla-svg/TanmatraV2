@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import { test, after } from "node:test";
 import { randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
-import { db, usersTable, ordersTable, orderClaimsTable } from "@workspace/db";
+import {
+  db,
+  usersTable,
+  ordersTable,
+  orderClaimsTable,
+  subscriptionsTable,
+  subscriptionDeliveriesTable,
+} from "@workspace/db";
 import {
   promoteSettledZeroChargeOrders,
   runOrderReconciliationSweep,
@@ -16,6 +23,8 @@ const userId = `u_rec_${RUN}`;
 const orderIds: number[] = [];
 
 const claimIds: number[] = [];
+const subscriptionIds: number[] = [];
+const otherUserIds: string[] = [];
 
 after(async () => {
   if (claimIds.length > 0) {
@@ -24,7 +33,15 @@ after(async () => {
   if (orderIds.length > 0) {
     await db.delete(ordersTable).where(inArray(ordersTable.id, orderIds));
   }
+  // subscriptionDeliveriesTable rows cascade with their subscription (FK
+  // onDelete: cascade), so deleting subscriptionsTable is sufficient.
+  if (subscriptionIds.length > 0) {
+    await db.delete(subscriptionsTable).where(inArray(subscriptionsTable.id, subscriptionIds));
+  }
   await db.delete(usersTable).where(eq(usersTable.id, userId));
+  if (otherUserIds.length > 0) {
+    await db.delete(usersTable).where(inArray(usersTable.id, otherUserIds));
+  }
 });
 
 test("setup user for reconciliation tests", async () => {
@@ -255,9 +272,65 @@ async function statusOf(id: number): Promise<string> {
   return row!.status;
 }
 
-test("a subscription first-cycle zero-charge order (sub- prefix) is promoted", async () => {
-  // `sub-<id>` is settled by construction: its zero is bridge/ledger credit
-  // consumed inside the subscription-create transaction.
+// ── Settlement Trust Boundary (docs/MONEY-PATH-VERIFICATION.md). ────────────
+//
+// externalOrderId is client-supplied (routes/checkout.ts and routes/loyalty.ts's
+// finalizeOrderSchema both accept it verbatim, 1-64 chars, zero format
+// constraint) and MUST NEVER be trusted as settlement proof on its own. The
+// subscription-cycle evidence branch is a join against subscription_deliveries
+// + subscriptions scoped by THIS order's own serial id and userId — neither of
+// which a client can set. These tests seed a real subscription/delivery row
+// (or deliberately withhold one) to prove the join, not a string, decides.
+
+async function makeSubscriptionFor(ownerId: string): Promise<number> {
+  const [sub] = await db
+    .insert(subscriptionsTable)
+    .values({
+      userId: ownerId,
+      cadence: "weekly",
+      mealsPerDelivery: 1,
+      deliveryWindow: "12:00-14:00",
+      startDate: new Date(),
+      nextDeliveryAt: new Date(Date.now() + 2 * 24 * 3600 * 1000),
+    })
+    .returning({ id: subscriptionsTable.id });
+  subscriptionIds.push(sub!.id);
+  return sub!.id;
+}
+
+/** Links a subscription's first cycle to `orderId`, exactly as
+ *  routes/subscriptions.ts's createOrderForNewSubscription does inside the
+ *  create transaction — the only writer of this column in production. */
+async function linkDeliveryToOrder(subscriptionId: number, orderId: number): Promise<void> {
+  await db.insert(subscriptionDeliveriesTable).values({
+    subscriptionId,
+    scheduledFor: new Date(Date.now() + 2 * 24 * 3600 * 1000),
+    deliveryWindow: "12:00-14:00",
+    status: "upcoming",
+    items: [],
+    orderId,
+  });
+}
+
+test("a genuine subscription first-cycle order (real subscription_deliveries linkage) is promoted", async () => {
+  const now = new Date();
+  const subId = await makeSubscriptionFor(userId);
+  const orderId = await seedZeroChargeOrder({
+    externalOrderId: `sub-${subId}`,
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+  await linkDeliveryToOrder(subId, orderId);
+
+  await promoteSettledZeroChargeOrders(now);
+  assert.equal(await statusOf(orderId), "preparing", "a genuinely settled sponsored order stayed invisible to the kitchen");
+});
+
+test("P0 regression: a FORGED sub- prefix with NO real subscription_deliveries row is NOT promoted", async () => {
+  // The exact defect: a client can set externalOrderId to any string it
+  // likes, including one shaped like a genuine first-cycle order id, without
+  // ever creating a subscription. Nothing but the string ever claimed to be
+  // "sub-": no subscriptionsTable row, no subscriptionDeliveriesTable row —
+  // proving the promoter no longer trusts the prefix on its own.
   const now = new Date();
   const orderId = await seedZeroChargeOrder({
     externalOrderId: `sub-${randomUUID()}`,
@@ -265,7 +338,53 @@ test("a subscription first-cycle zero-charge order (sub- prefix) is promoted", a
   });
 
   await promoteSettledZeroChargeOrders(now);
-  assert.equal(await statusOf(orderId), "preparing", "a settled sponsored order stayed invisible to the kitchen");
+  assert.equal(
+    await statusOf(orderId),
+    "placed",
+    "a forged sub- prefix with no real subscription promoted an unpaid order — the trust boundary is broken",
+  );
+});
+
+test("cross-customer reference attack: forging another customer's real subscription id does not promote", async () => {
+  // Customer B has a REAL, genuinely-linked subscription (own order, own
+  // delivery row). Customer A's own zero-charge order names B's subscription
+  // id in its externalOrderId. The join is scoped to THIS order's own serial
+  // id — never to any id parsed out of the string — so it cannot connect to
+  // B's delivery row no matter what A writes there. No information about B's
+  // subscription is leaked (A's order simply stays "placed", the same
+  // outcome as any other unsettled zero).
+  const now = new Date();
+  const otherUserId = `u_rec_other_${randomUUID().slice(0, 8)}`;
+  await db.insert(usersTable).values({
+    id: otherUserId,
+    phoneE164: "+910000000001",
+    firstName: "Other",
+    lastName: "Customer",
+  });
+  otherUserIds.push(otherUserId);
+
+  const bSubId = await makeSubscriptionFor(otherUserId);
+  const bOrderId = await seedZeroChargeOrder({
+    externalOrderId: `sub-${bSubId}`,
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+  await linkDeliveryToOrder(bSubId, bOrderId);
+
+  const aOrderId = await seedZeroChargeOrder({
+    externalOrderId: `sub-${bSubId}`, // forged: names B's real subscription
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+
+  await promoteSettledZeroChargeOrders(now);
+
+  assert.equal(
+    await statusOf(aOrderId),
+    "placed",
+    "customer A was promoted using customer B's real subscription reference",
+  );
+  // Control: B's own genuinely-linked order still promotes normally — proves
+  // the refusal above is the ownership check, not a broken join.
+  assert.equal(await statusOf(bOrderId), "preparing", "the genuine owner's order was not promoted");
 });
 
 test("a zero-charge order with a credit redemption on its claim is promoted", async () => {
@@ -283,6 +402,84 @@ test("a zero-charge order with a credit redemption on its claim is promoted", as
 
   await promoteSettledZeroChargeOrders(now);
   assert.equal(await statusOf(orderId), "preparing", "a credit-settled order stayed unpromoted");
+});
+
+test("cross-customer claim reference: reusing another customer's externalOrderId string does not inherit their claim", async () => {
+  // orders.externalOrderId is unique only PER USER (routes/checkout.ts and
+  // routes/loyalty.ts both scope their unique constraint to (userId,
+  // externalOrderId)), so two different customers can legitimately pick the
+  // identical string. Customer B genuinely redeemed credits on an order
+  // named "shared-id"; customer A creates their OWN unsettled zero-charge
+  // order under the SAME string. The claim lookup must be scoped by userId,
+  // not just the string, or A inherits B's settlement.
+  const now = new Date();
+  const otherUserId = `u_rec_claimother_${randomUUID().slice(0, 8)}`;
+  await db.insert(usersTable).values({
+    id: otherUserId,
+    phoneE164: "+910000000002",
+    firstName: "Other",
+    lastName: "Claimant",
+  });
+  otherUserIds.push(otherUserId);
+
+  const sharedExt = `shared-id-${RUN}`;
+  const bOrderId = await seedZeroChargeOrder({
+    externalOrderId: sharedExt,
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+  // Re-parent to the other customer directly — seedZeroChargeOrder always
+  // seeds under the suite's shared `userId`, and this is the one case that
+  // needs a different owner.
+  await db.update(ordersTable).set({ userId: otherUserId }).where(eq(ordersTable.id, bOrderId));
+  const [bClaim] = await db
+    .insert(orderClaimsTable)
+    .values({ userId: otherUserId, orderId: sharedExt, grossPaise: 25000, redeemedPaise: 25000, finalPaise: 0 })
+    .returning({ id: orderClaimsTable.id });
+  claimIds.push(bClaim!.id);
+
+  const aOrderId = await seedZeroChargeOrder({
+    externalOrderId: sharedExt, // same string, DIFFERENT owner (the suite's `userId`)
+    createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+  });
+
+  await promoteSettledZeroChargeOrders(now);
+
+  assert.equal(
+    await statusOf(aOrderId),
+    "placed",
+    "customer A inherited customer B's credit-claim settlement via a shared externalOrderId string",
+  );
+  assert.equal(await statusOf(bOrderId), "preparing", "the genuine claimant's own order was not promoted");
+});
+
+test("partial settlement never reaches the promoter: a non-zero remaining charge stays placed", async () => {
+  // Owner's scenario: amount due ₹500, verified settlement ₹300 → no release.
+  // The promoter's candidate query filters chargePaise = 0 — a partially
+  // redeemed order (chargePaise still positive) is excluded before evidence
+  // is ever evaluated, so it cannot be promoted through this path at all.
+  const now = new Date();
+  const [order] = await db
+    .insert(ordersTable)
+    .values({
+      userId,
+      status: "placed",
+      totalPaise: 50000, // ₹500 due
+      chargePaise: 20000, // ₹300 settled, ₹200 still owed — NOT zero
+      externalOrderId: `zc-partial-${RUN}`,
+      createdAt: new Date(now.getTime() - 5 * 60 * 1000),
+      items: [],
+      orderKind: "meal",
+    })
+    .returning({ id: ordersTable.id });
+  orderIds.push(order!.id);
+  const [claim] = await db
+    .insert(orderClaimsTable)
+    .values({ userId, orderId: `zc-partial-${RUN}`, grossPaise: 50000, redeemedPaise: 30000, finalPaise: 20000 })
+    .returning({ id: orderClaimsTable.id });
+  claimIds.push(claim!.id);
+
+  await promoteSettledZeroChargeOrders(now);
+  assert.equal(await statusOf(order!.id), "placed", "a partially-settled order was released for fulfilment");
 });
 
 test("a discount-minted zero with NO settlement evidence is NOT promoted", async () => {
@@ -318,10 +515,12 @@ test("runOrderReconciliationSweep runs the zero-charge promoter before the gatew
   // the promoter (e.g. behind the credentials check), the row would sit
   // "placed" forever with zero owed and zero collectable.
   const now = new Date();
+  const subId = await makeSubscriptionFor(userId);
   const orderId = await seedZeroChargeOrder({
-    externalOrderId: `sub-${randomUUID()}`,
+    externalOrderId: `sub-${subId}`,
     createdAt: new Date(now.getTime() - 5 * 60 * 1000),
   });
+  await linkDeliveryToOrder(subId, orderId);
 
   await runOrderReconciliationSweep({
     now,
