@@ -522,7 +522,12 @@ async function createOrderForNewSubscription(
       userId: sub.userId,
       orderChannel: "own_app",
       externalOrderId: `sub-${sub.id}`,
-      status: "placed",
+      // A first cycle the bridge/ledger credits fully covered is settled at
+      // creation (the credits are consumed in this same transaction) — born
+      // "preparing", exactly like a captured payment would leave it
+      // (lib/paidGate.ts). A payable order stays "placed" until payments.ts
+      // promotes it on capture.
+      status: chargePaise === 0 ? "preparing" : "placed",
       totalPaise: chargePaise,
       chargePaise,
       items: orderItems,

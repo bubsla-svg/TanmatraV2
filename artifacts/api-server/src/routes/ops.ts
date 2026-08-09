@@ -17,6 +17,7 @@ import {
   supplierBatchesTable,
 } from "@workspace/db";
 import { and, asc, eq, ilike, or, inArray } from "drizzle-orm";
+import { isPaidLive } from "../lib/paidGate";
 import { z } from "zod/v4";
 import {
   ackAlert,
@@ -249,7 +250,14 @@ router.get("/recipes/:slug", async (req: Request, res: Response) => {
  * written out separately they silently drifted apart. Change them together
  * or not at all. Pinned by routes/ops.kds.test.ts.
  */
-const KDS_BOARD_STATUSES = ["placed", "preparing"];
+// "placed" removed deliberately (lib/paidGate.ts): for own_app rows it is the
+// PRE-PAYMENT state — an unpaid order is not food the kitchen owes anyone.
+// Every paid ticket arrives here as "preparing" via payments.ts verify/webhook,
+// the reconciliation sweep, or the verified zero-charge finalize. Because the
+// board query and the ready mutation share this constant, the ready
+// transition's atomic UPDATE ... WHERE status IN (...) is the DB-level
+// enforcement, not just display filtering.
+const KDS_BOARD_STATUSES = ["preparing"];
 
 /**
  * The kitchen display board — and the place the "two boards" decision lives.
@@ -552,6 +560,28 @@ router.post("/kds/orders/:id/explode-bom", async (req: Request, res: Response) =
     res.status(400).json({ error: "malformed order items for BOM explosion" });
     return;
   }
+  // BOM explosion deducts real inventory — it must not run for an unpaid,
+  // terminal, or nonexistent order id. Paid-LIVE predicate, not assignable:
+  // cooking legitimately continues after a rider is attached
+  // (lib/paidGate.ts).
+  const bomOrderId = parseInt(String(req.params.id ?? ""), 10);
+  if (!Number.isInteger(bomOrderId)) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  const [bomOrder] = await db
+    .select({ status: ordersTable.status })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, bomOrderId))
+    .limit(1);
+  if (!bomOrder) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  if (!isPaidLive(bomOrder.status)) {
+    res.status(409).json({ error: "order not in a fulfillable status" });
+    return;
+  }
 
   try {
     const results = await executeBom(parsed.data.items);
@@ -620,6 +650,25 @@ router.post("/wms/route-fulfillment", async (req: Request, res: Response) => {
   const parsed = wmsRouteSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "malformed WMS routing payload" });
+    return;
+  }
+  // This endpoint deducts FEFO inventory and can fast-track to "ready" from
+  // a body-supplied orderId — it must not pack an unpaid, terminal, or
+  // nonexistent order. Paid-LIVE predicate (lib/paidGate.ts): packing after
+  // a rider is assigned is normal sequencing, so rider_assigned/
+  // out_for_delivery stay allowed; "placed"/terminal/unknown are refused.
+  // (The queue gate backstops the status advance but not the deduction.)
+  const [wmsOrder] = await db
+    .select({ status: ordersTable.status })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, parsed.data.orderId))
+    .limit(1);
+  if (!wmsOrder) {
+    res.status(404).json({ error: "order not found" });
+    return;
+  }
+  if (!isPaidLive(wmsOrder.status)) {
+    res.status(409).json({ error: "order not in a fulfillable status" });
     return;
   }
   try {

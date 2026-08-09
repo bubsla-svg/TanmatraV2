@@ -24,7 +24,8 @@ import {
 import { inArray } from "drizzle-orm";
 import { makeBatchDishResolver } from "./menuResolver";
 import { computeBundleDiscountPaise } from "./bundlePricing";
-import { reserveSubsidyForOrder } from "./corporateSubsidy";
+import { commitSubsidyForOrder, reserveSubsidyForOrder } from "./corporateSubsidy";
+import { logger } from "./logger";
 import {
   evaluateDishForPreferences,
   type PreferencesForMatch,
@@ -1122,6 +1123,34 @@ export async function finalizeOrder(args: {
       .set({ chargePaise, ...(redeemed > 0 ? { totalPaise: finalPaise } : {}) })
       .where(eq(ordersTable.id, serverOrderId));
 
+    // Zero payable AND verifiably settled: credit was debited or subsidy
+    // reserved in THIS transaction, so the order is paid-equivalent the
+    // moment it commits. No gateway path can ever promote it (payments.ts
+    // 409s on authoritativePaise <= 0), so promote here — the same
+    // status='placed' CAS shape as the capture paths (lib/paidGate.ts).
+    //
+    // The settlement evidence (redeemed > 0 || subsidyPaise > 0) is
+    // deliberate, not redundant: a zero can also be minted by operator-
+    // configured pickup/bundle discounts alone, and promoting THAT would
+    // send food nobody paid for — customer, credit ledger, or company —
+    // into the kitchen ("verified zero-charge sponsorship" is the owner's
+    // criterion; a discount-only zero is not sponsorship). Such orders stay
+    // "placed" (non-actionable, same dead-end they are today) and are
+    // logged loudly for pricing-config review.
+    if (chargePaise === 0) {
+      if (redeemed > 0 || subsidyPaise > 0) {
+        await tx
+          .update(ordersTable)
+          .set({ status: "preparing" })
+          .where(and(eq(ordersTable.id, serverOrderId), eq(ordersTable.status, "placed")));
+      } else {
+        logger.warn(
+          { orderId: serverOrderId, grossChargePaise },
+          "checkout.zero_charge_without_settlement — discount config zeroed a charge; order left non-actionable",
+        );
+      }
+    }
+
     // 5. Award referral — server-recorded first order satisfies the
     //    "both earn credits on first order" requirement. We additionally
     //    require this be the user's first qualifying order.
@@ -1200,6 +1229,15 @@ export async function finalizeOrder(args: {
       });
     }
     throw err;
+  }
+  // Commit the company-subsidy reservation for a zero-charge order now the
+  // transaction is durable — the mirror of payments.ts's post-capture commit.
+  // Idempotent (reserved→committed CAS in corporateSubsidy.ts). A crash
+  // between the tx commit and this call leaves a 'reserved' row on a
+  // 'preparing' order; the reconciliation sweep's zero-charge promoter
+  // re-commits it (lib/reconciliationScheduler.ts).
+  if (result.chargePaise === 0 && !result.duplicate) {
+    await commitSubsidyForOrder(result.serverOrderId);
   }
   // Dispatch any email notifications now that the transaction has committed.
   // Doing this after commit avoids a race where the dispatcher's row update

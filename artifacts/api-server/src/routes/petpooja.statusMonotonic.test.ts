@@ -120,13 +120,14 @@ async function seedOrder(opts: {
   status: string;
   riderId?: number;
   deliveryInstructions?: string;
+  channel?: "zomato" | "own_app";
 }): Promise<number> {
   CREATED_EXTERNAL_IDS.push(opts.externalOrderId);
   const [row] = await db
     .insert(ordersTable)
     .values({
       userId: null,
-      orderChannel: "zomato",
+      orderChannel: opts.channel ?? "zomato",
       orderKind: "meal",
       externalOrderId: opts.externalOrderId,
       status: opts.status,
@@ -484,4 +485,95 @@ test("/orderstatus — the forward control still applies", async () => {
 
   assert.equal(res.status, 200);
   assert.equal((await orderRow(orderId)).status, "delivered", "a legitimate advance was refused");
+});
+
+// ---------------------------------------------------------------------------
+// Paid-fulfilment invariant (lib/paidGate.ts)
+// ---------------------------------------------------------------------------
+//
+// For an own_app order, "placed" means UNPAID — that edge belongs to the
+// payment writers (routes/payments.ts, the reconciliation sweep, the verified
+// zero-charge finalize), and the POS must never be the one to walk it. All
+// three handlers resolve orders by id/externalOrderId, so a replayed or
+// misdirected webhook can name an own_app row; before this guard, that event
+// promoted an abandoned checkout into a cooking ticket. Same response posture
+// as the regress branch: 200, acknowledged, nothing written.
+//
+// Each refusal is read against two controls that already exist or sit below:
+// the zomato forward control above (aggregator "placed" is settled on the
+// aggregator's side and must keep advancing) and the own_app preparing
+// control (the guard is about the unpaid EDGE, not the channel).
+
+test("/callback — cannot promote an unpaid own_app order", async () => {
+  const id = ext("cb-unpaid");
+  const orderId = await seedOrder({ externalOrderId: id, status: "placed", channel: "own_app" });
+
+  const res = await post("callback", callback({ orderID: id, status: "1" }));
+
+  // 200 with success:"1", same as the regress branch — a 4xx would earn a
+  // retry storm for a webhook we are deliberately not applying.
+  assert.equal(res.status, 200);
+  assert.equal(res.json.success, "1");
+  assert.match(String(res.json.message), /not applied/i);
+  assert.equal(
+    (await orderRow(orderId)).status,
+    "placed",
+    "the POS promoted an unpaid own_app order onto the kitchen board"
+  );
+});
+
+test("/orderstatus — cannot promote an unpaid own_app order", async () => {
+  const id = ext("os-unpaid");
+  const orderId = await seedOrder({ externalOrderId: id, status: "placed", channel: "own_app" });
+
+  const res = await post("orderstatus", orderstatus({ clientorderID: id, status: "6" }));
+
+  assert.equal(res.status, 200);
+  assert.equal(res.json.success, "1");
+  assert.match(String(res.json.message), /not applied/i);
+  assert.equal(
+    (await orderRow(orderId)).status,
+    "placed",
+    "the POS advanced an unpaid own_app order to delivered"
+  );
+});
+
+test("/rider-info — cannot attach fulfilment to an unpaid own_app order", async () => {
+  const rider = await seedRider("unpaid");
+  const id = ext("ri-unpaid");
+  const orderId = await seedOrder({ externalOrderId: id, status: "placed", channel: "own_app" });
+
+  const res = await post(
+    "rider-info",
+    riderInfo({
+      order_id: id,
+      status: "rider-assigned",
+      rider_name: "Rider unpaid",
+      rider_phone_number: rider.phone,
+    })
+  );
+
+  assert.equal(res.status, 200);
+  assert.match(String(res.json.message), /not applied/i);
+  const row = await orderRow(orderId);
+  assert.equal(row.status, "placed", "an unpaid own_app order was moved to rider_assigned");
+  assert.equal(row.riderId, null, "a refused rider webhook still attached its rider");
+});
+
+test("an own_app order that HAS paid still advances — the guard is the edge, not the channel", async () => {
+  // Matched pair for all three refusals above: identical channel, one status
+  // rung later ("preparing" is what the payment writers set), and the same
+  // webhooks must go back to being applied. Without this, a handler that had
+  // stopped writing own_app rows entirely would pass every unpaid test.
+  const id = ext("cb-paid-adv");
+  const orderId = await seedOrder({ externalOrderId: id, status: "preparing", channel: "own_app" });
+
+  const res = await post("orderstatus", orderstatus({ clientorderID: id, status: "6" }));
+
+  assert.equal(res.status, 200);
+  assert.equal(
+    (await orderRow(orderId)).status,
+    "delivered",
+    "a paid own_app order was refused a legitimate advance"
+  );
 });
