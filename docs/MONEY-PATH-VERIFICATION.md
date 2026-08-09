@@ -53,11 +53,10 @@ idempotency key makes one retry safe — it replays, it does not double-order).
 ```
 GUEST MONEY PATH
   PR #10:                       Deployed — missing required header corrected
-  PR #11:                       Deployment verification pending revision evidence
-                                (merge SHA 11753a2; CI green incl. 4 idempotency
-                                integration tests; record Cloud Build ID, image
-                                digest, Cloud Run revision, traffic allocation,
-                                completion time when the deploy run finishes)
+  PR #11:                       DEPLOYED AND VERIFIED — revision evidence recorded
+                                in §9 (rev wellness-foods-00203-nxt, 100% traffic,
+                                2026-08-09 07:45:28Z); CI green incl. 4 idempotency
+                                integration tests
   Firebase domains:             PASS (tanmatra.food + www.tanmatra.food AUTHORIZED;
                                 derived from public config — one non-destructive
                                 sign-in smoke test still required)
@@ -74,7 +73,9 @@ PLAN MONEY PATH
   Add-on billing:               Reported fixed on main (create resolves, 422-guards
                                 and bills plan_review add-ons); evidence to be
                                 attached in the plan-verification pass
-  Production availability:      Was live; GATED by owner decision (this change)
+  Production availability:      Was live; GATED by owner decision (PR #12) —
+                                GATE CONFIRMED LIVE IN PRODUCTION 2026-08-09
+                                (probe evidence in §9)
   Decision:                     Gate new plan purchases pending independent plan
                                 verification
   Plan checkout verdict:        NO-GO
@@ -134,7 +135,7 @@ quickly is not a substitute for that invariant.
 ## 6. Pre-order checklist (all must pass BEFORE the controlled guest order)
 
 ```
-[ ] PR #11 API revision serves 100% traffic (revision evidence recorded)
+[x] PR #11 API revision serves 100% traffic (revision evidence recorded — §9)
 [ ] Unpaid orders excluded from actionable kitchen fulfilment
 [ ] Abandoned-payment test passes (order stays awaiting payment, kitchen sees 0)
 [ ] Failed-payment test passes (fulfilment blocked, entitlements released)
@@ -175,3 +176,49 @@ repeated callback duplicates nothing.
 
 Wave 2 begins only after §4's guest verdict is revised to GO with the §6
 checklist complete and documented.
+
+## 9. Deploy revision evidence (recorded 2026-08-09)
+
+Service `wellness-foods`, project `brand-tanmatra-tmg`, region `asia-south2`.
+Image identity is the sha-tagged Artifact Registry ref the deploy pinned —
+`asia-south2-docker.pkg.dev/brand-tanmatra-tmg/wellness/wellness-foods:<merge SHA>`
+— which is one-to-one with the commit and is what the revision actually runs.
+
+| | PR #11 (idempotency enforcement) | PR #12 (plan-checkout gate) |
+|---|---|---|
+| Merge SHA | `11753a2ce3689e83b1a068ee9ca7076975a69575` | `0fd06a46cd30baad13522145cca2580e86684f1b` |
+| Deploy run | [31301495025](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31301495025) — success | [31302584683](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31302584683) — success |
+| Cloud Build ID | `9de2d4c6-c6d8-40d4-839b-6b1c9f6b4d40` (SUCCESS) | `cff57b46-6670-4a7a-bf65-0ecb72a2060a` (SUCCESS) |
+| Image tag | `…/wellness-foods:11753a2c…` | `…/wellness-foods:0fd06a46…` |
+| Cloud Run revision | `wellness-foods-00203-nxt` | `wellness-foods-00204-952` |
+| Previous stable (rollback target) | `wellness-foods-00202-wzw` | `wellness-foods-00203-nxt` |
+| Traffic | 100% LATEST at 07:45:22Z | 100% LATEST at 08:13:34Z |
+| `/api/livez` smoke | OK 07:45:26Z | OK 08:13:36Z |
+| Deploy completed | 07:45:28Z | 08:16:57Z (incl. frontend + storefront jobs) |
+| `PLAN_CHECKOUT_DISABLED` in deploy env | absent (expected — added by #12) | `=1` present |
+
+Rollback for either is `gcloud run services update-traffic wellness-foods
+--region asia-south2 --to-revisions <previous stable>=100`.
+
+### Production gate probe (2026-08-09, read-only)
+
+`POST /api/subscriptions` with `{}` and no credentials — the gate mounts before
+auth and before `idempotencyMiddleware`, so an ungated build would answer 401 or
+400 instead:
+
+```
+https://tanmatra.food/api/subscriptions                    → HTTP 503
+https://wellness-foods-yftxztp3xq-em.a.run.app/api/subscriptions → HTTP 503
+{"code":"PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE",
+ "message":"Plan checkout is temporarily unavailable. Please try again shortly.",
+ "error":"Plan checkout is temporarily unavailable. Please try again shortly."}
+```
+
+Same body from the domain and from the Cloud Run service URL, so the gate is
+the API's own and not an edge artefact. Controls proving the 503 is the gate
+rather than a sick service: `/api/livez` and `/api/healthz` 200; `/api/build`
+reports sha `0fd06a46…` (the #12 merge commit); `POST /api/orders {}` answers
+`400 idempotency_key_required` — i.e. non-plan POSTs still reach their normal
+middleware, and PR #11's header enforcement is live in production.
+
+No order was created and no checkout form was submitted by this probe.
