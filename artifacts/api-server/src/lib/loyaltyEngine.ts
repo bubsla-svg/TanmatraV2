@@ -927,23 +927,52 @@ export async function finalizeOrder(args: {
     }
 
     if (args.subscriptionId) {
-      const [firstDelivery] = await tx
-        .select()
-        .from(subscriptionDeliveriesTable)
+      // Ownership + not-already-linked, both load-bearing: subscriptionId is a
+      // bare client-supplied number (routes/loyalty.ts's finalizeOrderSchema),
+      // and without the userId check here a caller could name ANY customer's
+      // subscription and have this UPDATE steal/overwrite that stranger's
+      // already-scheduled delivery to point at an order that has nothing to do
+      // with them. The isNull(orderId) guard (repeated on the UPDATE itself,
+      // as a CAS) closes the sibling hole even for a caller naming their OWN
+      // subscription: without it, one real delivery could be re-linked across
+      // many separate finalize calls, minting a fresh subscription-cycle
+      // evidence link (lib/reconciliationScheduler.ts) for each one.
+      const [ownedSubscription] = await tx
+        .select({ id: subscriptionsTable.id })
+        .from(subscriptionsTable)
         .where(
           and(
-            eq(subscriptionDeliveriesTable.subscriptionId, args.subscriptionId),
-            eq(subscriptionDeliveriesTable.status, "upcoming")
-          )
+            eq(subscriptionsTable.id, args.subscriptionId),
+            eq(subscriptionsTable.userId, args.userId),
+          ),
         )
-        .orderBy(asc(subscriptionDeliveriesTable.scheduledFor))
         .limit(1);
 
-      if (firstDelivery) {
-        await tx
-          .update(subscriptionDeliveriesTable)
-          .set({ orderId: serverOrderId })
-          .where(eq(subscriptionDeliveriesTable.id, firstDelivery.id));
+      if (ownedSubscription) {
+        const [firstDelivery] = await tx
+          .select()
+          .from(subscriptionDeliveriesTable)
+          .where(
+            and(
+              eq(subscriptionDeliveriesTable.subscriptionId, args.subscriptionId),
+              eq(subscriptionDeliveriesTable.status, "upcoming"),
+              isNull(subscriptionDeliveriesTable.orderId),
+            )
+          )
+          .orderBy(asc(subscriptionDeliveriesTable.scheduledFor))
+          .limit(1);
+
+        if (firstDelivery) {
+          await tx
+            .update(subscriptionDeliveriesTable)
+            .set({ orderId: serverOrderId })
+            .where(
+              and(
+                eq(subscriptionDeliveriesTable.id, firstDelivery.id),
+                isNull(subscriptionDeliveriesTable.orderId),
+              ),
+            );
+        }
       }
     }
 

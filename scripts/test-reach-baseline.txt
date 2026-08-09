@@ -26,7 +26,6 @@ artifacts/api-server/src/lib/dispatch.priority.test.ts
 artifacts/api-server/src/lib/funnelDefs.test.ts
 artifacts/api-server/src/lib/loyaltyEngine.allergenGate.test.ts
 artifacts/api-server/src/lib/loyaltyEngine.bundles.test.ts
-artifacts/api-server/src/lib/loyaltyEngine.checkout.test.ts
 artifacts/api-server/src/lib/mealPlanner.test.ts
 artifacts/api-server/src/lib/petpoojaInventory.test.ts
 artifacts/api-server/src/lib/preDebitScheduler.test.ts
