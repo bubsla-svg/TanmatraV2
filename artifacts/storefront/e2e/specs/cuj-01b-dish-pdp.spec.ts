@@ -18,9 +18,16 @@ import { collectErrors, ORDERABLE_DISH } from "../fixtures";
  *
  * Runs against the live-or-fallback catalog like the rest of the suite;
  * ORDERABLE_DISH is an à-la-carte hero, so it is present in both tiers.
+ *
+ * Dual-target, same convention as CUJ-01's drawer leg: the PR-gate build is
+ * flag-dark (NEXT_PUBLIC_LIVE_CHECKOUT unset), where PdpCartLink renders the
+ * LOUD "checkout goes live" status instead of a link; the deployed service is
+ * flag-live, where the link is real. E2E_LIVE_CHECKOUT=1 selects which side
+ * each assertion runs.
  */
 
 const PDP = `/dish/${ORDERABLE_DISH.slug}`;
+const liveCheckout = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
 
 test("standalone PDP exposes a guest add-to-cart action", async ({ page }) => {
   const errors = collectErrors(page);
@@ -54,14 +61,28 @@ test("adding from the standalone PDP reveals a route to the cart", async ({ page
   ).toBeVisible();
 
   // The regression this spec exists for: once the cart is non-empty the page
-  // must offer a way INTO it. Before PdpCartLink there was none here — no
-  // cart link, no tab bar, no header — and browser Back was the only exit.
-  const viewCart = page.getByRole("link", { name: /view cart/i });
-  await expect(viewCart).toBeVisible();
-  await expect(viewCart).toBeEnabled();
+  // must offer a way ONWARD. Before PdpCartLink there was NOTHING here — no
+  // cart link, no gated notice, no tab bar, no header — and browser Back was
+  // the only exit. Flag-dark contract (§0.3, mirroring CUJ-01's drawer leg):
+  // in the PR-gate build the affordance is the LOUD "checkout goes live"
+  // status, never a link into a void; on the deployed flag-live service it
+  // is the real link.
+  if (process.env["E2E_LIVE_CHECKOUT"] === "1") {
+    const viewCart = page.getByRole("link", { name: /view cart/i });
+    await expect(viewCart).toBeVisible();
+    await expect(viewCart).toBeEnabled();
+  } else {
+    await expect(
+      page.getByRole("status").filter({ hasText: /checkout goes live/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: /view cart/i })).toHaveCount(0);
+  }
 });
 
-test("guest can reach checkout from the standalone PDP", async ({ page }) => {
+// The checkout leg only exists where the live flag is built in — the deployed
+// service, run with E2E_LIVE_CHECKOUT=1. Skipped (not vacuously passed) in the
+// flag-dark PR-gate build, same as CUJ-01's live leg.
+liveCheckout("guest can reach checkout from the standalone PDP", async ({ page }) => {
   await page.goto(PDP);
   await page.getByRole("button", { name: /^add$/i }).click();
 
