@@ -4,6 +4,7 @@ import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId, type DietTrack 
 import { planDisplay, planQuoteView, bookingBlock, getPlanBuilderData } from "@/lib/plans";
 import { PlanBuilder } from "@/components/plans/PlanBuilder";
 import { Waitlist } from "@/components/plans/Waitlist";
+import { FocusHeader } from "@/components/FocusHeader";
 
 type Props = {
   params: Promise<{ planId: string }>;
@@ -36,10 +37,16 @@ export default async function PlanPage({ params, searchParams }: Props) {
   const blocked = !planIsSelfServiceLaunchable(id) || waitlist === "1";
 
   const builderData = getPlanBuilderData(id);
+  const planName = planDisplay(id).name;
 
   return (
     <div className="min-h-dvh">
-      <section className="mx-auto max-w-xl px-4 pt-10 pb-32">
+      <section className="mx-auto max-w-xl px-4 pt-6 pb-32">
+        <FocusHeader
+          title={planName}
+          backLabel="Back to plans"
+          trustSignal={blocked ? undefined : "Configure your plan"}
+        />
         {blocked ? (
           <Waitlist
             planId={id}

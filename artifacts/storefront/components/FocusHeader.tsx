@@ -20,8 +20,11 @@ export function FocusHeader({
   trustSignal,
 }: {
   /** Route title (the doc's FocusTitle — e.g. "Checkout"). Rendered as the
-   *  page h1; pages using this must not render a second one. */
-  title: string;
+   *  page h1; pages using this must not render a second one. Omit ONLY when
+   *  the page already renders its own h1 immediately below (e.g. a marketing
+   *  hero) — the back button and trust signal still render either way, since
+   *  those are the part of this contract that actually prevents a dead end. */
+  title?: string;
   /** Accessible + visible label for the back affordance (e.g. "Back to cart"). */
   backLabel?: string;
   /** Optional right-aligned trust microcopy (e.g. "Secure UPI checkout"). */
@@ -55,7 +58,7 @@ export function FocusHeader({
           </span>
         )}
       </div>
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+      {title && <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>}
     </header>
   );
 }

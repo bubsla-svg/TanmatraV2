@@ -72,7 +72,6 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   if (!currentQuote) {
     return (
       <section className="flex flex-col gap-3" aria-label={`Build ${d.name}`}>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{d.name}</h1>
         <p className="text-sm text-ink-muted">
           Pricing for this plan isn&rsquo;t set up for the {TRACK_LABEL[track]} preference yet.
         </p>
@@ -83,7 +82,8 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   return (
     <section className="flex flex-col gap-5" aria-label={`Build ${d.name}`}>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{d.name}</h1>
+        {/* Plan name is now the page's FocusHeader h1 (app/(focus)/plan/[planId]/page.tsx) —
+            this used to duplicate it as a second h1. */}
         <p className="mt-1 text-sm text-ink-muted">
           {currentQuote.mealsPerCycle} lunches a {cycle === "weekly" ? "week" : cycle === "quarterly" ? "quarter" : "month"} · delivered 12:30&ndash;1:30 · pause or skip anytime
         </p>

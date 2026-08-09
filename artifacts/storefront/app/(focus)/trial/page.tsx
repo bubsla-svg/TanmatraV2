@@ -5,6 +5,7 @@ import { fetchMenu, findDish } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_TRIO, TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
 import { TrialStart, type TrioDish } from "@/components/trial/TrialStart";
+import { FocusHeader } from "@/components/FocusHeader";
 
 export const metadata: Metadata = {
   title: "3-Day Taste Test",
@@ -45,7 +46,12 @@ export default async function TrialPage() {
       {/* pb-48 clears the sticky footer TrialStart renders (button + the
           no-auto-convert line) so the creditback card is never hidden behind
           it while scrolling — same reasoning as /checkout's pb-44. */}
-      <section className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-10 pb-48">
+      <section className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-6 pb-48">
+        {/* No title prop — the hero below already carries a real h1, and a
+            second generic "Trial" heading above it would only compete with
+            it. The back button is the part of the FocusLayout contract that
+            actually matters here (this page had none at all). */}
+        <FocusHeader backLabel="Back to plans" />
         <div className="flex flex-col items-center gap-2 text-center">
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-text">
             Not ready for a month?
