@@ -363,6 +363,7 @@ jobs:
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
           ./src/routes/subscriptions.catalogQuote.test.ts
           ./src/routes/loyalty.referral.test.ts
+          ./src/routes/loyalty.checkout.test.ts
           ./src/routes/dishRationales.test.ts
           ./src/routes/coachAgent.test.ts
           ./src/routes/rdAdvisory.appointmentOrder.test.ts
@@ -376,6 +377,7 @@ jobs:
           ./src/routes/corporate.subsidyLedger.test.ts
           ./src/routes/corporate.teams.test.ts
           ./src/lib/reconciliationScheduler.test.ts
+          ./src/lib/loyaltyEngine.checkout.test.ts
           ./src/routes/savedMeals.test.ts
           ./src/routes/wellness.test.ts
           ./src/routes/ecosystem.test.ts

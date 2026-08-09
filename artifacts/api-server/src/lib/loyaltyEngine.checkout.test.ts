@@ -8,6 +8,10 @@
  *   2. The pickup discount is sourced from `pickup_locations.discount_paise`
  *      — never the request — and is capped so the order total can never go
  *      negative even when the location's discount exceeds the subtotal.
+ *   3. The optional `subscriptionId` linkage (settlement-trust-boundary audit,
+ *      docs/MONEY-PATH-VERIFICATION.md §10): a client-supplied subscription id
+ *      must belong to the caller, and a delivery already linked to an order
+ *      can never be re-linked to a second one.
  *
  * Run with:
  *   node --test --import tsx ./src/lib/loyaltyEngine.checkout.test.ts
@@ -27,6 +31,8 @@ import {
   orderClaimsTable,
   ordersTable,
   pickupLocationsTable,
+  subscriptionDeliveriesTable,
+  subscriptionsTable,
   usersTable,
 } from "@workspace/db";
 import { TEST_DISHES as DISHES } from "../test-fixtures/dishes.js";
@@ -54,6 +60,7 @@ function pickAvailableDishes(n: number) {
 
 const CREATED_USER_IDS: string[] = [];
 const CREATED_PICKUP_IDS: number[] = [];
+const CREATED_SUBSCRIPTION_IDS: number[] = [];
 
 async function makeUser(): Promise<string> {
   const id = randomUUID();
@@ -104,6 +111,35 @@ before(async () => {
   // discount tailored to the assertion (zero, or larger-than-subtotal).
 });
 
+async function makeSubscriptionWithDelivery(ownerId: string): Promise<{
+  subscriptionId: number;
+  deliveryId: number;
+}> {
+  const [sub] = await db
+    .insert(subscriptionsTable)
+    .values({
+      userId: ownerId,
+      cadence: "weekly",
+      mealsPerDelivery: 1,
+      deliveryWindow: "12:00-14:00",
+      startDate: new Date(),
+      nextDeliveryAt: new Date(Date.now() + 2 * 24 * 3600 * 1000),
+    })
+    .returning({ id: subscriptionsTable.id });
+  CREATED_SUBSCRIPTION_IDS.push(sub!.id);
+  const [delivery] = await db
+    .insert(subscriptionDeliveriesTable)
+    .values({
+      subscriptionId: sub!.id,
+      scheduledFor: new Date(Date.now() + 2 * 24 * 3600 * 1000),
+      deliveryWindow: "12:00-14:00",
+      status: "upcoming",
+      items: [],
+    })
+    .returning({ id: subscriptionDeliveriesTable.id });
+  return { subscriptionId: sub!.id, deliveryId: delivery!.id };
+}
+
 after(async () => {
   if (CREATED_USER_IDS.length > 0) {
     await db
@@ -121,6 +157,12 @@ after(async () => {
   }
   for (const id of CREATED_PICKUP_IDS) {
     await db.delete(pickupLocationsTable).where(eq(pickupLocationsTable.id, id));
+  }
+  if (CREATED_SUBSCRIPTION_IDS.length > 0) {
+    // subscriptionDeliveriesTable cascades with its subscription.
+    await db
+      .delete(subscriptionsTable)
+      .where(inArray(subscriptionsTable.id, CREATED_SUBSCRIPTION_IDS));
   }
 });
 
@@ -340,4 +382,84 @@ test("first-order offer: 25% off capped at Rs.80, first order only, retry-safe",
     assert.equal(out.firstOrderDiscountPaise, 8_000, "discount must clamp at 8000 paise");
     assert.equal(out.finalPaise, subtotal - 8_000);
   });
+});
+
+// ---------------------------------------------------------------------------
+// subscriptionId linkage (settlement-trust-boundary audit,
+// docs/MONEY-PATH-VERIFICATION.md §10). finalizeOrder's `subscriptionId` is a
+// bare client-supplied number (routes/loyalty.ts's finalizeOrderSchema) that
+// links a subscription's earliest upcoming delivery to the new order —
+// exactly the linkage the reconciliation sweep's zero-charge promoter later
+// trusts as settlement evidence. Naming a subscription the caller does not
+// own, or one whose delivery is already spoken for, must both be refused.
+// ---------------------------------------------------------------------------
+
+test("finalizeOrder refuses to link a delivery from a subscription the caller does not own", async () => {
+  const owner = await makeUser();
+  const attacker = await makeUser();
+  const { subscriptionId, deliveryId } = await makeSubscriptionWithDelivery(owner);
+  const pickupLocationId = await makePickupLocation(0);
+  const [dish] = pickAvailableDishes(1);
+
+  await finalizeOrder({
+    userId: attacker,
+    orderId: `ord-${randomUUID()}`,
+    fulfillmentType: "pickup",
+    pickupLocationId,
+    subscriptionId, // forged: names a subscription belonging to `owner`
+    items: [{ id: dish!.id, name: dish!.name, qty: 1, price: dish!.price }],
+  });
+
+  const [delivery] = await db
+    .select({ orderId: subscriptionDeliveriesTable.orderId })
+    .from(subscriptionDeliveriesTable)
+    .where(eq(subscriptionDeliveriesTable.id, deliveryId));
+  assert.equal(
+    delivery?.orderId,
+    null,
+    "an attacker's order was linked to a stranger's real subscription delivery",
+  );
+});
+
+test("finalizeOrder never re-links a delivery that already belongs to another order", async () => {
+  const owner = await makeUser();
+  const { subscriptionId, deliveryId } = await makeSubscriptionWithDelivery(owner);
+  const pickupLocationId = await makePickupLocation(0);
+  const [dish] = pickAvailableDishes(1);
+
+  const first = await finalizeOrder({
+    userId: owner,
+    orderId: `ord-${randomUUID()}`,
+    fulfillmentType: "pickup",
+    pickupLocationId,
+    subscriptionId,
+    items: [{ id: dish!.id, name: dish!.name, qty: 1, price: dish!.price }],
+  });
+  const [afterFirst] = await db
+    .select({ orderId: subscriptionDeliveriesTable.orderId })
+    .from(subscriptionDeliveriesTable)
+    .where(eq(subscriptionDeliveriesTable.id, deliveryId));
+  assert.equal(afterFirst?.orderId, first.serverOrderId, "the first, legitimate link must succeed");
+
+  // Same real owner, same real subscription, a SECOND unrelated order. Without
+  // the isNull(orderId) guard this delivery — and the settlement evidence it
+  // carries — could be minted again for every subsequent order.
+  await finalizeOrder({
+    userId: owner,
+    orderId: `ord-${randomUUID()}`,
+    fulfillmentType: "pickup",
+    pickupLocationId,
+    subscriptionId,
+    items: [{ id: dish!.id, name: dish!.name, qty: 1, price: dish!.price }],
+  });
+
+  const [afterSecond] = await db
+    .select({ orderId: subscriptionDeliveriesTable.orderId })
+    .from(subscriptionDeliveriesTable)
+    .where(eq(subscriptionDeliveriesTable.id, deliveryId));
+  assert.equal(
+    afterSecond?.orderId,
+    first.serverOrderId,
+    "an already-linked delivery was stolen by a second order",
+  );
 });

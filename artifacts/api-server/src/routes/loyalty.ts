@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import { idempotencyMiddleware } from "../middlewares/idempotency";
+import { isOrderFinalizeDisabled } from "../lib/flags";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
@@ -320,7 +321,25 @@ router.get("/orders/first-order-offer", async (req: Request, res: Response) => {
   });
 });
 
-router.post("/orders/finalize", idempotencyMiddleware, async (req: Request, res: Response) => {
+// Owner containment gate (docs/MONEY-PATH-VERIFICATION.md "Settlement Trust
+// Boundary"): while ORDER_FINALIZE_DISABLED is set, this route refuses with a
+// typed 503. Mounted BEFORE idempotencyMiddleware, same reasoning as
+// subscriptions.ts's planCheckoutGate: the client's idempotency key is stable
+// for the whole checkout attempt, so a gated 503 must not be cached against
+// it — the same key must perform a real create once the gate reopens.
+function orderFinalizeGate(req: Request, res: Response, next: () => void): void {
+  if (isOrderFinalizeDisabled()) {
+    res.status(503).json({
+      code: "CHECKOUT_TEMPORARILY_UNAVAILABLE",
+      message: "Checkout is temporarily unavailable. Please try again shortly.",
+      error: "Checkout is temporarily unavailable. Please try again shortly.",
+    });
+    return;
+  }
+  next();
+}
+
+router.post("/orders/finalize", orderFinalizeGate, idempotencyMiddleware, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   const parsed = finalizeOrderSchema.safeParse(req.body);

@@ -26,7 +26,6 @@ artifacts/api-server/src/lib/dispatch.priority.test.ts
 artifacts/api-server/src/lib/funnelDefs.test.ts
 artifacts/api-server/src/lib/loyaltyEngine.allergenGate.test.ts
 artifacts/api-server/src/lib/loyaltyEngine.bundles.test.ts
-artifacts/api-server/src/lib/loyaltyEngine.checkout.test.ts
 artifacts/api-server/src/lib/mealPlanner.test.ts
 artifacts/api-server/src/lib/petpoojaInventory.test.ts
 artifacts/api-server/src/lib/preDebitScheduler.test.ts
@@ -53,7 +52,6 @@ artifacts/api-server/src/routes/catalog.test.ts
 artifacts/api-server/src/routes/checkout.consent.test.ts
 artifacts/api-server/src/routes/cspReport.test.ts
 artifacts/api-server/src/routes/groupOrders.test.ts
-artifacts/api-server/src/routes/loyalty.checkout.test.ts
 artifacts/api-server/src/routes/menu.test.ts
 artifacts/api-server/src/routes/preferences.sprint78.test.ts
 artifacts/api-server/src/routes/subscriptions.cancel.test.ts

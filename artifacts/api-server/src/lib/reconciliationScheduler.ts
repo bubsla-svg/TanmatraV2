@@ -14,6 +14,8 @@ import {
   usersTable,
   companySubsidyChargesTable,
   orderClaimsTable,
+  subscriptionDeliveriesTable,
+  subscriptionsTable,
 } from "@workspace/db";
 import { logger } from "./logger";
 import { razorpayCredentials, razorpayBasicAuth } from "./razorpayRecurring";
@@ -39,11 +41,34 @@ export interface ReconciliationSweepResult {
  * touch them, payments.ts 409s on a non-positive amount), and the crash
  * window between a finalize tx committing and its post-tx subsidy commit.
  *
- * Settlement evidence is REQUIRED, mirroring the finalize's own rule: a
- * company-subsidy row for the order, a credit redemption on its claim, or a
- * subscription first-cycle order (`sub-<id>` — its zero is bridge/ledger
- * credit consumed inside the create transaction, by construction). A zero
- * minted by discounts alone is NOT promoted — that is priced-free food
+ * Settlement evidence is REQUIRED and MUST be a join against a server-owned
+ * row this order cannot have written itself — never a property of
+ * `externalOrderId`'s string content. That field is client-supplied
+ * (routes/checkout.ts, routes/loyalty.ts's finalizeOrderSchema both accept it
+ * verbatim, 1-64 chars, no format constraint) and is trusted nowhere else as
+ * proof of anything; treating a `"sub-"` prefix as settlement evidence was a
+ * confused-deputy bug — a caller could name ANY string, so the check proved
+ * nothing about whether a real subscription cycle, let alone this order's own
+ * cycle, ever existed. The three evidence branches below:
+ *
+ *   - subscription first cycle: an INNER JOIN from subscription_deliveries to
+ *     subscriptions, filtered to `subscription_deliveries.order_id = <this
+ *     order's own serial id>` AND `subscriptions.user_id = <this order's own
+ *     userId>`. `subscription_deliveries.order_id` is written exactly once,
+ *     inside the same transaction that creates the subscription and the
+ *     order (routes/subscriptions.ts createOrderForNewSubscription) — no
+ *     route ever lets a client set it, so satisfying this join proves a real
+ *     subscription cycle was created FOR THIS SPECIFIC ORDER AND ITS OWNER.
+ *     The userId equality is defense in depth against a cross-customer
+ *     reference even though orderId alone already scopes it correctly (the
+ *     same idiom as routes/payments.ts's registerAutopayMandate lookup).
+ *   - company subsidy: a company_subsidy_charges row keyed by the order's own
+ *     serial id (server-written only by the subsidy reservation flow).
+ *   - credit redemption: a loyalty_order_claims row for this exact
+ *     (userId, externalOrderId) with redeemedPaise > 0 — written only by
+ *     finalizeOrder's own atomic credit debit, never by a client.
+ *
+ * A zero minted by discounts alone is NOT promoted — that is priced-free food
  * nobody settled, left non-actionable and logged by the finalize.
  */
 export async function promoteSettledZeroChargeOrders(now: Date): Promise<number> {
@@ -63,30 +88,53 @@ export async function promoteSettledZeroChargeOrders(now: Date): Promise<number>
   let promoted = 0;
   for (const order of candidates) {
     try {
-      const isSubscriptionFirstCycle = (order.externalOrderId ?? "").startsWith("sub-");
-      let settled = isSubscriptionFirstCycle;
-      if (!settled) {
+      let evidence: "subscription-cycle" | "subsidy" | "credit-claim" | null = null;
+      if (order.userId) {
+        const [subDelivery] = await db
+          .select({ id: subscriptionDeliveriesTable.id })
+          .from(subscriptionDeliveriesTable)
+          .innerJoin(
+            subscriptionsTable,
+            eq(subscriptionDeliveriesTable.subscriptionId, subscriptionsTable.id),
+          )
+          .where(
+            and(
+              eq(subscriptionDeliveriesTable.orderId, order.id),
+              eq(subscriptionsTable.userId, order.userId),
+            ),
+          )
+          .limit(1);
+        if (subDelivery) evidence = "subscription-cycle";
+      }
+      if (!evidence) {
         const [subsidy] = await db
           .select({ id: companySubsidyChargesTable.id })
           .from(companySubsidyChargesTable)
           .where(eq(companySubsidyChargesTable.orderId, order.id))
           .limit(1);
-        settled = Boolean(subsidy);
+        if (subsidy) evidence = "subsidy";
       }
-      if (!settled && order.externalOrderId) {
+      if (!evidence && order.externalOrderId && order.userId) {
+        // userId is part of the WHERE, not just the row shape: orders.externalOrderId
+        // is unique only PER USER (routes/checkout.ts, routes/loyalty.ts both scope
+        // their unique constraint to (userId, externalOrderId)), so two different
+        // customers can legitimately choose the identical string. Matching on
+        // orderId alone would let a forged order claim a DIFFERENT customer's real
+        // credit redemption merely by reusing their externalOrderId.
         const [claim] = await db
           .select({ id: orderClaimsTable.id })
           .from(orderClaimsTable)
           .where(
             and(
+              eq(orderClaimsTable.userId, order.userId),
               eq(orderClaimsTable.orderId, order.externalOrderId),
               gt(orderClaimsTable.redeemedPaise, 0),
             ),
           )
           .limit(1);
-        settled = Boolean(claim);
+        if (claim) evidence = "credit-claim";
       }
-      if (!settled) continue; // discount-minted zero: stays non-actionable
+      if (!evidence) continue; // unsettled zero (forged or discount-minted): stays non-actionable
 
       const updated = await db
         .update(ordersTable)
@@ -96,7 +144,7 @@ export async function promoteSettledZeroChargeOrders(now: Date): Promise<number>
       if (updated.length === 0) continue;
       promoted++;
       logger.info(
-        { orderId: order.id, evidence: isSubscriptionFirstCycle ? "subscription-credit" : "subsidy-or-claim" },
+        { orderId: order.id, evidence },
         "reconciliation: promoted settled zero-charge order",
       );
 
