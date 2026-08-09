@@ -84,6 +84,11 @@ export function PlanCheckout({
   // charged" — once set, a failure must never re-enable a CTA that would call
   // createRazorpayOrder again; see handleCheckStatus.
   const paidFactsRef = useRef<PaidFacts | null>(null);
+  // One key for the whole checkout attempt (NOT per press): the server replays
+  // the original create for a repeat of the same key, so a network retry
+  // resumes one subscription instead of minting a second one with its own
+  // order, deliveries and credit debit.
+  const createKeyRef = useRef<string | null>(null);
   // True once verifyWithRetry's bounded in-flow retries are exhausted for a
   // captured payment. Distinct from `error`: an unresolved payment replaces
   // the whole form with UnresolvedPaymentPanel, it doesn't just show a message
@@ -146,9 +151,11 @@ export function PlanCheckout({
           address: v.address,
           phone,
         });
+        if (!createKeyRef.current) createKeyRef.current = `sub-${crypto.randomUUID()}`;
         result = await runCheckout({
           subscription,
           razorpay: adapter,
+          idempotencyKey: createKeyRef.current,
           onCreated: (ref) => {
             createdRef.current = ref;
           },

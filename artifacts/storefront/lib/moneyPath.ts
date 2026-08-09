@@ -92,10 +92,18 @@ export async function runCheckout(
     /** Fired at the same instant as onVerifying, with the verify input — see
      *  finishPlanPayment's onCaptured for the full rationale. */
     onCaptured?: (facts: PaidFacts) => void;
+    /** Idempotency key for the CREATE step, stable across retries of this
+     *  checkout attempt so a network retry replays the original subscription
+     *  instead of creating a second one. See api.ts createSubscription. */
+    idempotencyKey?: string;
   },
   deps: MoneyPathDeps = DEFAULT_DEPS,
 ): Promise<CheckoutResult> {
-  const created = await deps.createSubscription(params.subscription);
+  const created = await deps.createSubscription(
+    params.subscription,
+    undefined,
+    params.idempotencyKey,
+  );
   const ref: PlanOrderRef = {
     orderId: created.subscription.externalOrderId ?? `sub-${created.subscription.id}`,
     subscriptionId: created.subscription.id,
