@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import CorporateInviteClient from "./CorporateInviteClient";
+import { CompanyInvite } from "@/components/corporate/CompanyInvite";
 
 interface PageProps {
   params: Promise<{ token: string }>;
@@ -13,7 +13,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+/** Shared invite link → accept to join a company meal program. Real
+ *  server-backed accept (GET /companies/invites/:token, POST .../accept) —
+ *  the company name, role and discount all come from that response, never
+ *  fabricated from the token string. See CompanyInvite for the 401/403/404
+ *  handling. */
 export default async function CorporateInvitePage({ params }: PageProps) {
   const { token } = await params;
-  return <CorporateInviteClient token={token} />;
+  return (
+    <section className="mx-auto max-w-md px-4 py-12">
+      <CompanyInvite token={token} />
+    </section>
+  );
 }
