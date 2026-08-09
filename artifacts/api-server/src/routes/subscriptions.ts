@@ -1,5 +1,6 @@
 import * as crypto from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
+import { idempotencyMiddleware } from "../middlewares/idempotency";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import {
   db,
@@ -840,7 +841,17 @@ router.post("/subscriptions/quote", async (req: Request, res: Response) => {
   });
 });
 
-router.post("/subscriptions", async (req: Request, res: Response) => {
+// Idempotency is MANDATORY here (Idempotency-Key header; 400 without it, replay
+// on repeat). A double-POST is NOT self-deduping on this route: each attempt
+// mints a fresh subscription id, so the order's `sub-<id>` externalOrderId
+// differs and onConflictDoNothing never matches — an unguarded retry created a
+// second subscription, order, delivery schedule AND credit debit. Inline mount
+// (same pattern as loyalty.ts /orders/finalize) so the route's own tests
+// exercise it. The storefront has sent the header since PR #10 — that client
+// change deployed FIRST on purpose: api-server deploys before storefront
+// (deploy.yml), so enforcing in the same release would have 400'd every plan
+// purchase until the storefront caught up.
+router.post("/subscriptions", idempotencyMiddleware, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;
   const parsed = createSubscriptionSchema.safeParse(req.body);

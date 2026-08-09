@@ -116,6 +116,10 @@ async function api(
     method,
     headers: {
       "Content-Type": "application/json",
+      // Fresh key per call: several tests POST /subscriptions twice and expect
+      // the handler to RUN both times (e.g. 409 trial_already_redeemed) — a
+      // constant key would replay the first response instead.
+      "idempotency-key": randomUUID(),
       ...(user ? { "x-test-user-id": user.id } : {}),
     },
     body: body == null ? undefined : JSON.stringify(body),
