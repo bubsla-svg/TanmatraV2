@@ -56,7 +56,29 @@ frontend work.
 | DEFECT-PLAN-ORIGIN-001 | Open | Open (A2.4) — still the load-bearing gap. |
 | DEFECT-CUSTOM-ROUTE-001 | Open | Open. Frontend routing; plan prepared in the A2.1 status doc §4, not executed. |
 | DEFECT-MIGRATION-DEBT-001 | Found | Still open on `main`. Hit again: 0027 was hand-authored for the same reason 0026 was. |
-| DEFECT-MIGRATION-DEBT-002 | Found | Still open. Not re-triggered — 0027 was verified on a genuinely fresh database, which is the branch that runs the chain rather than baselining it. |
+| DEFECT-MIGRATION-DEBT-002 | Found | Still open. Not re-triggered — 0027/0028 were verified on a genuinely fresh database, which is the branch that runs the chain rather than baselining it. |
+
+### Defects opened and closed by A2.2H
+
+| Defect ID | Description | Status |
+|---|---|---|
+| DEFECT-PLAN-GEN-LEASE-001 | Generation claim lacks attempt ownership and stale-lease recovery | **Closed** by A2.2H (§3.10). |
+| DEFECT-PLAN-CLAIM-RACE-001 | Ownership claim CAS lacks deterministic race regression coverage | **Closed** by A2.2H — seam + test, verified to fail pre-fix. |
+| DEFECT-PLAN-RATE-001 | Plan-draft endpoints require cost-aware rate-limit policies | **Closed** by A2.2H — five policies, typed 429 + Retry-After. |
+| DEFECT-PLAN-DRAFT-RETENTION-001 | Anonymous PlanDraft retention and garbage collection undefined | **Closed** by A2.2H — per-customer stock cap + a sweep that spares quoted/converted/leased/audit rows. |
+
+### A2.2 acceptance
+
+| Item | State |
+|---|---|
+| Concurrent-edit stranding | FIXED and regression-tested (A2.2a) |
+| Generation claim ownership | FIXED (A2.2H) |
+| Crash / stale-lease recovery | FIXED (A2.2H) |
+| Claim CAS source fix | MERGED (A2.2a) |
+| Claim CAS deterministic regression | FIXED (A2.2H) |
+| Rate-limit presence | MERGED (A2.2a) |
+| Rate-limit policy separation | FIXED (A2.2H) |
+| **A2.2** | **PASS** |
 
 ## 3. Judgment calls, recorded
 
@@ -219,8 +241,117 @@ convention gap, all fixed in the follow-up PR:
    call, and A2.2 added `generate`/`shuffle` (catalog fetch + full lineup
    rewrite) to that unthrottled surface. Now `planDraftRateLimit`, 60/min.
 
+## 3.10 A2.2H — generation lease and deterministic concurrency verification
+
+The owner granted A2.2 a **CONDITIONAL PASS** pending this hardening package,
+which closes the two gaps A2.2/A2.2a acknowledged but did not fix, plus two
+policy gaps found alongside them. With A2.2H merged, **A2.2 is PASS**.
+
+### Generation is now an attempt-owned, time-bounded lease
+
+`status = 'generating'` said a generation was in flight but not *whose*. A2.2a
+made the claim releasable by guarding on that status, which fixed stranding but
+left the claim anonymous: any holder of the status could release or finalize it.
+
+Three columns (migration `0028`) make the claim owned and bounded —
+`generation_attempt_id`, `generation_started_at`, `generation_lease_expires_at`
+— and every terminal write is guarded on *"…and this is still my attempt"*:
+
+| Operation | Guard |
+|---|---|
+| acquire | version CAS (a fresh claim) |
+| reclaim | `status = 'generating' AND lease_expires_at <= now()` — atomic, so exactly one of N racing reclaimers wins |
+| finalize | `status = 'generating' AND attempt_id = mine` |
+| release | `status = 'generating' AND attempt_id = mine` |
+
+The invariant this enforces: **attempt A can complete or release only attempt
+A's claim, and can never touch attempt B's newer one.** A stalled worker that
+wakes after being superseded is refused on both finalize and release, and its
+lineup — built from answers that may since have changed — is discarded.
+
+**`generationFailureCode` is deliberately not a fourth column.** The code
+already lives in `generation_error.code`, typed as `PlanDraftGenerationCode` and
+persisted with its message and details. A second copy would be a drift hazard
+with no reader that needs it.
+
+### Crash recovery
+
+`planDraftMaintenanceScheduler` ages out leases whose owning attempt stopped
+reporting. **Selected transition: `generating → generation_failed` with
+`code: generation_lease_expired`, retryable** — chosen over
+`generating → ready_to_generate` because silently rewinding to "ready" hides
+that anything went wrong, leaving the customer to wonder why their plan never
+appeared. The state machine already permitted this edge.
+
+A reclaimed or swept draft never keeps lineup output generated under stale
+answers: the superseded attempt's finalize is refused, so that output is never
+written in the first place.
+
+### Deterministic claim-race coverage
+
+A2.2a's claim CAS fix shipped **unproven** — the tests pinned only sequential
+properties, and I said so at the time. That is now closed with an explicit test
+seam (`lib/planDraftTestHooks.ts`): a hook awaited at the exact point between
+claim's read and its guarded UPDATE, settable only by code that can `import` the
+module, and which throws if installed with `NODE_ENV=production`. There is no
+endpoint, parameter, header or env var that can reach it.
+
+The test reproduces: A reads at version N → B's PATCH lands → A's claim runs →
+A is refused with a typed 409, the version does not rewind below N+1, B's data
+survives, and ownership does not transfer. **Verified to fail against the
+pre-fix claim implementation** (version predicate and DB-side increment removed)
+and pass with it.
+
+### Cost-aware rate limits
+
+One flat 60/min bucket over the whole family was wrong in both directions. Now
+five policies, each env-overridable **at runtime** (re-read per request, not
+frozen at import): create 10, mutate 120, generate 10, shuffle 20, read 120 —
+per minute. Keyed per caller (authenticated user → guest draft cookie → IP) and
+folded with the draft id for draft-specific operations, so one corporate NAT no
+longer shares a bucket across unrelated customers.
+
+Every 429 carries a typed code (`PLAN_DRAFT_CREATION_RATE_LIMITED`,
+`PLAN_GENERATION_RATE_LIMITED`, `PLAN_SHUFFLE_RATE_LIMITED`, …) and
+`Retry-After`. Because the limiter runs before the handler, a refused request
+provably takes no generation claim and writes no lineup — both pinned by test.
+
+### Anonymous-draft retention
+
+`POST /plan-drafts` needs no auth and writes a row per call. Two controls: a
+per-authenticated-customer ceiling on *live* drafts (`10`, refused with
+`PLAN_DRAFT_LIMIT_REACHED`), and a collection sweep. Guests are deliberately not
+stock-capped — a guest has no stable server-side identity to count against, so
+the rate limit plus the sweep are the controls there.
+
+The sweep **never** deletes a draft that is `quoted` or `converted` (A2.3/A2.4
+will reference those), holds a live generation lease, or was superseded inside
+the 30-day audit window. Only genuinely abandoned pre-quote drafts are removed.
+The status filter is what keeps this correct once the referencing rows exist,
+rather than something to remember to revisit.
+
+### Lineup writes are refused during generation
+
+`replace` / `lock` / `accompaniments` / `shuffle` / `undo` now 409
+`generation_in_progress` while a draft is `generating`. Reads stay available.
+`PATCH` stays available too — that is the concurrent-edit path, and it must keep
+working for the invalidation rule in §3.5 to hold.
+
 ## 4. Verification
 
+**A2.2H (all six PlanDraft suites together — 81/81):**
+- `./src/lib/planDraftLease.test.ts` — 15/15 (lease acquire/reclaim/expiry,
+  racing reclaimers, old-worker-cannot-finalize, old-worker-cannot-release,
+  new-worker-completes, sweeper, and the four retention guarantees)
+- `./src/routes/planDraftRateLimit.test.ts` — 4/4 (typed 429 + Retry-After;
+  a throttled generate takes no claim; a throttled shuffle writes no lineup;
+  budgets are genuinely separate)
+- `./src/routes/planDrafts.test.ts` — 12/12, including the deterministic
+  claim-race test, **verified to fail against the pre-fix claim**
+- Migration `0028` applied through `scripts/src/apply-migrations.ts` on a fresh
+  database (full 29-migration chain, clean) and matched via `psql \d plan_drafts`
+
+**A2.2 / A2.2a:**
 - `node --test --import tsx ./src/lib/planDraftGenerator.test.ts` — 23/23
 - `node --test --import tsx ./src/routes/planDraftLineup.test.ts` — 18/18
 - `node --test --import tsx ./src/routes/planDrafts.test.ts ./src/lib/planDraftStateMachine.test.ts` —

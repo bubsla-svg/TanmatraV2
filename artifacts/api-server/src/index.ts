@@ -23,6 +23,10 @@ import {
   stopSubscriptionAbandonmentScheduler,
 } from "./lib/subscriptionAbandonmentScheduler";
 import { startReconciliationScheduler, stopReconciliationScheduler } from "./lib/reconciliationScheduler";
+import {
+  startPlanDraftMaintenanceScheduler,
+  stopPlanDraftMaintenanceScheduler,
+} from "./lib/planDraftMaintenanceScheduler";
 import { ensureSafeViews } from "./lib/safeSql";
 import { resumeActiveSimulations } from "./lib/riderSim";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
@@ -79,6 +83,9 @@ if (!schedulersDisabled) {
   startTrialLifecycleScheduler();
   startChargeMandateScheduler();
   startSubscriptionAbandonmentScheduler();
+  // Ages out generation leases whose worker died mid-build (the one stranding
+  // case in-process release cannot cover) and collects abandoned guest drafts.
+  startPlanDraftMaintenanceScheduler();
   // Nightly funnel_events → funnel_daily aggregation (Part 8 A1). The table
   // is ensured by ensureRectificationSchema() before the port binds, and the
   // scheduler's first tick is delayed past that. FUNNEL_ROLLUP_DISABLED=1
@@ -257,6 +264,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
  stopTrialLifecycleScheduler();
  stopChargeMandateScheduler();
  stopSubscriptionAbandonmentScheduler();
+ stopPlanDraftMaintenanceScheduler();
  stopReconciliationScheduler();
  clearInterval(purgeTimer);
  clearInterval(slotReclaimTimer);

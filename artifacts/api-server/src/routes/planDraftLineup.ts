@@ -9,9 +9,17 @@ import {
 import { PLAN_CATALOG, type PlanId } from "@workspace/subscription-rules";
 import { resolvePlanDraftAccess } from "../lib/planDraftAuth";
 import {
+  planDraftMutateRateLimit,
+  planDraftReadRateLimit,
+  planGenerationRateLimit,
+  planShuffleRateLimit,
+} from "../middlewares/rateLimitMiddleware";
+import {
+  acquireGenerationLease,
   casUpdateDraft,
+  finalizeGenerationAttempt,
   loadLiveDraft,
-  releaseGeneratingClaim,
+  releaseGenerationAttempt,
 } from "../lib/planDraftStore";
 import { isPlanDraftStatusTerminal } from "../lib/planDraftStateMachine";
 import { liveDishes } from "../lib/mealPlanner";
@@ -145,6 +153,26 @@ function planForbidsEdits(draft: PlanDraft): boolean {
   return plan ? !plan.customizable : false;
 }
 
+/**
+ * Refuse a lineup WRITE while a generation attempt owns the draft. The lineup
+ * such a write would edit is about to be replaced wholesale, so applying it
+ * would either be lost or race the finalize. Reads (candidates, accompaniment
+ * options) stay available — showing the customer the current plan while a
+ * regeneration runs is harmless.
+ *
+ * Applies whether or not the lease is still live: an expired lease means the
+ * draft is awaiting reclaim by the next generate call or the sweeper, and
+ * editing a lineup in that limbo is not something to encourage.
+ */
+function refuseIfGenerating(draft: PlanDraft, res: Response): boolean {
+  if (draft.status !== "generating") return false;
+  res.status(409).json({
+    error: "this plan is being rebuilt right now",
+    code: "generation_in_progress",
+  });
+  return true;
+}
+
 function refuseIfNotCustomizable(draft: PlanDraft, res: Response): boolean {
   if (!planForbidsEdits(draft)) return false;
   res.status(409).json({
@@ -164,6 +192,7 @@ function defaultStartDate(): Date {
 
 router.post(
   "/plan-drafts/:id/generate",
+  planGenerationRateLimit,
   async (req: Request, res: Response) => {
     const parsed = versionOnlySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -173,7 +202,10 @@ router.post(
     const draft = await requireEditableDraft(req, res);
     if (!draft) return;
 
-    if (draft.status !== "ready_to_generate") {
+    // `generating` is allowed through here: it is how a caller polls a live
+    // attempt, and how a lapsed lease gets reclaimed. Everything else must be
+    // ready_to_generate.
+    if (draft.status !== "ready_to_generate" && draft.status !== "generating") {
       res.status(409).json({
         error: "this plan is not ready to generate",
         code: "not_ready_to_generate",
@@ -182,25 +214,33 @@ router.post(
       return;
     }
 
-    // Claim the generating state under the caller's version FIRST. A second
-    // concurrent generate loses the CAS and 409s instead of both running and
-    // one silently overwriting the other's lineup.
-    const claimed = await casUpdateDraft(draft.id, parsed.data.version, {
-      status: "generating",
-      generationError: null,
-    });
-    if (!claimed) {
+    // Take an attempt-owned, time-bounded lease. A second concurrent generate
+    // either loses the version CAS or sees a live lease; either way exactly one
+    // attempt owns the draft, and every write below re-checks that ownership.
+    const lease = await acquireGenerationLease(draft.id, draft, parsed.data.version);
+    if (lease.kind === "stale_version") {
       staleVersion(res);
       return;
     }
+    if (lease.kind === "in_progress") {
+      // Not an error — another attempt is genuinely building this plan.
+      res.status(202).json({
+        status: "generating",
+        code: "generation_in_progress",
+        draft: lease.draft,
+      });
+      return;
+    }
+
+    const { attemptId } = lease;
 
     try {
       const { lineup, notes } = generateLineup(
-        claimed,
+        lease.draft,
         await liveDishes(),
         defaultStartDate(),
       );
-      const updated = await casUpdateDraft(claimed.id, claimed.version, {
+      const updated = await finalizeGenerationAttempt(draft.id, attemptId, {
         status: "lineup_ready",
         lineup,
         // A fresh lineup invalidates any Undo snapshot and every Keep from the
@@ -211,30 +251,18 @@ router.post(
         generationError: null,
       });
       if (!updated) {
-        // Someone edited the draft while we were building. Two things are true:
-        // the lineup we just built came from answers that are no longer current
-        // (persisting it could contradict a safety field the other writer just
-        // changed), and the row is still sitting in `generating`, which no
-        // client transition can leave. Discard the lineup and release the claim
-        // so the customer can retry against their new answers.
-        const released = await releaseGeneratingClaim(claimed.id, {
-          code: "concurrent_edit",
-          message:
-            "Your plan changed while we were building it. Please generate again.",
-          details: {},
-        });
+        // We no longer own the lease: it lapsed and another attempt took over
+        // while we were building. Our lineup came from answers that may since
+        // have changed, and the draft belongs to the newer attempt — so we
+        // discard our result and touch nothing.
         res.status(409).json({
-          error: "draft was modified elsewhere",
-          code: "stale_version",
-          draft: released ?? undefined,
+          error: "this generation attempt was superseded",
+          code: "generation_attempt_superseded",
         });
         return;
       }
       res.json({ draft: updated, notes });
     } catch (err: unknown) {
-      // EVERY failure path must leave `generating`. No client transition can
-      // exit that status, so a draft left there would be permanently stuck
-      // with no way for the customer to retry.
       const expected = err instanceof PlanDraftGenerationError;
       const failure: PlanDraftGenerationFailure = expected
         ? {
@@ -249,10 +277,12 @@ router.post(
             message: "Something went wrong building your plan. Please try again.",
             details: {},
           };
-      // Guarded on the STATUS, not the version: a concurrent write may have
-      // moved the version on while we were generating, and a version CAS would
-      // then fail and strand the row in `generating` for good.
-      const failed = await releaseGeneratingClaim(claimed.id, failure);
+      // Guarded on the attempt, not the version: a concurrent write may have
+      // moved the version while we were generating (that IS the concurrent-edit
+      // case), so a version CAS would fail and re-strand the row. Releasing by
+      // attempt id frees exactly our own claim and refuses if a newer attempt
+      // has taken over.
+      const failed = await releaseGenerationAttempt(draft.id, attemptId, failure);
       if (!expected) throw err;
       // 422, not 500: the configuration is the problem and the customer can
       // fix it. The state machine allows generation_failed -> ready_to_generate
@@ -269,6 +299,7 @@ router.post(
 
 router.get(
   "/plan-drafts/:id/candidates",
+  planDraftReadRateLimit,
   async (req: Request, res: Response) => {
     const parsed = candidatesQuerySchema.safeParse(req.query);
     if (!parsed.success) {
@@ -336,6 +367,7 @@ router.get(
 
 router.post(
   "/plan-drafts/:id/lineup/replace",
+  planDraftMutateRateLimit,
   async (req: Request, res: Response) => {
     const parsed = replaceSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -344,6 +376,7 @@ router.post(
     }
     const draft = await requireEditableDraft(req, res);
     if (!draft) return;
+    if (refuseIfGenerating(draft, res)) return;
     const lineup = requireLineup(draft, res);
     if (!lineup) return;
     if (refuseIfNotCustomizable(draft, res)) return;
@@ -405,6 +438,7 @@ router.post(
 
 router.post(
   "/plan-drafts/:id/lineup/lock",
+  planDraftMutateRateLimit,
   async (req: Request, res: Response) => {
     const parsed = lockSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -413,6 +447,7 @@ router.post(
     }
     const draft = await requireEditableDraft(req, res);
     if (!draft) return;
+    if (refuseIfGenerating(draft, res)) return;
     const lineup = requireLineup(draft, res);
     if (!lineup) return;
 
@@ -443,6 +478,7 @@ router.post(
 
 router.post(
   "/plan-drafts/:id/lineup/accompaniments",
+  planDraftMutateRateLimit,
   async (req: Request, res: Response) => {
     const parsed = accompanimentsSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -451,6 +487,7 @@ router.post(
     }
     const draft = await requireEditableDraft(req, res);
     if (!draft) return;
+    if (refuseIfGenerating(draft, res)) return;
     const lineup = requireLineup(draft, res);
     if (!lineup) return;
     if (refuseIfNotCustomizable(draft, res)) return;
@@ -499,6 +536,7 @@ router.post(
 
 router.get(
   "/plan-drafts/:id/accompaniment-options",
+  planDraftReadRateLimit,
   async (req: Request, res: Response) => {
     const parsed = z
       .object({ deliveryDate: isoDate, mealPeriod: mealPeriodEnum })
@@ -535,6 +573,7 @@ router.get(
 
 router.post(
   "/plan-drafts/:id/lineup/shuffle",
+  planShuffleRateLimit,
   async (req: Request, res: Response) => {
     const parsed = versionOnlySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -543,6 +582,7 @@ router.post(
     }
     const draft = await requireEditableDraft(req, res);
     if (!draft) return;
+    if (refuseIfGenerating(draft, res)) return;
     const lineup = requireLineup(draft, res);
     if (!lineup) return;
     if (refuseIfNotCustomizable(draft, res)) return;
@@ -581,6 +621,7 @@ router.post(
 
 router.post(
   "/plan-drafts/:id/lineup/undo",
+  planDraftMutateRateLimit,
   async (req: Request, res: Response) => {
     const parsed = versionOnlySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -589,6 +630,7 @@ router.post(
     }
     const draft = await requireEditableDraft(req, res);
     if (!draft) return;
+    if (refuseIfGenerating(draft, res)) return;
 
     const previous = draft.previousLineup;
     if (!previous || previous.length === 0) {
