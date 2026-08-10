@@ -6,6 +6,12 @@ import { useState } from "react";
 import { emitFunnel } from "@/lib/funnel";
 import { Button } from "@/components/ui/button";
 
+/** D-11: Steady's waitlist body, verbatim (owner-supplied) — replaces the raw
+ *  internal blocker string ("veg GI-low pool = 0; needs millets pasta import
+ *  + millet khichdi SKU") that was leaking engineering jargon to customers. */
+const STEADY_WAITLIST_BODY =
+  "Steady isn’t open yet — we’re still sourcing the right ingredients for its vegetarian menu. Leave a number and you’ll be first to know the moment it launches.";
+
 /**
  * Waitlist capture. When a plan or track isn't bookable (empty RD-signed pool,
  * pending SKUs), the router lands here instead of a broken builder. It states
@@ -44,7 +50,11 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
           this used to duplicate it as a second h1. */}
       <p className="text-lg font-semibold text-ink">{planName} isn&rsquo;t open yet</p>
       <p className="mt-2 text-sm text-ink-muted">
-        Honestly: {reason}. Leave a number and you&rsquo;ll be first to know when it launches.
+        {planId === "steady" ? (
+          STEADY_WAITLIST_BODY
+        ) : (
+          <>Honestly: {reason}. Leave a number and you&rsquo;ll be first to know when it launches.</>
+        )}
       </p>
       <div className="mt-4 flex gap-2">
         <label htmlFor="waitlist-contact" className="sr-only">
