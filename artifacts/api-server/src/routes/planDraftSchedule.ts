@@ -201,6 +201,9 @@ router.put(
         deliveryFeePaise: 0,
       },
       status: "schedule_required",
+      // The customer has just re-picked against the windows the server is
+      // offering NOW, which is exactly what reconfirmation asks for.
+      scheduleReconfirmReason: null,
     });
     if (!updated) {
       res.status(409).json({
@@ -221,6 +224,7 @@ router.put(
 export type ReadinessBlocker =
   | "no_lineup"
   | "schedule_incomplete"
+  | "schedule_requires_reconfirmation"
   | "address_unserviceable"
   | "capacity_unavailable"
   | "pricing_unavailable"
@@ -252,6 +256,19 @@ async function assessReadiness(
       code: "schedule_incomplete",
       message: "Choose a delivery date and time for every day of your plan.",
       detail: { scheduled: scheduled.length, required: lineup.length },
+    });
+  }
+
+  // A schedule chosen under rules that have since changed is not a schedule we
+  // may act on. Blocking here rather than reinterpreting it is the whole point:
+  // the customer picked a label that meant one time and now means another, and
+  // guessing on their behalf is how someone gets a delivery they never agreed
+  // to. Cleared when they re-pick, in the schedule PUT.
+  if (draft.scheduleReconfirmReason) {
+    issues.push({
+      code: "schedule_requires_reconfirmation",
+      message: "Delivery windows were updated. Please choose your delivery times again.",
+      detail: { reason: draft.scheduleReconfirmReason },
     });
   }
 

@@ -34,6 +34,7 @@ import { eq, inArray } from "drizzle-orm";
 import {
   db,
   deliverySlotsTable,
+  deriveOperationalDate,
   planDraftQuotesTable,
   planDraftsTable,
   slotReservationsTable,
@@ -167,7 +168,7 @@ async function makeSlot(
   const [row] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: start.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(start),
       startsAt: start,
       endsAt: end,
       zone,
@@ -636,6 +637,92 @@ test("a freshly issued quote does not report itself stale", async () => {
   assert.equal(readiness.json.activeQuote.stale, false);
 });
 
+// ── Schedule reconfirmation (DEFECT-PLAN-SLOT-DATE-001) ──────────────────────
+
+test("a schedule chosen under the old timezone rules blocks readiness until re-picked", async () => {
+  // The migration marks every already-scheduled draft, because a window label
+  // rendered in UTC no longer denotes the same time of day. The invalidation is
+  // ANNOUNCED rather than guessed at: silently reinterpreting the stored
+  // selection is how someone gets a delivery at a time they never agreed to.
+  const slotId = await makeSlot(26, 5, 9);
+  const s = await quotableDraft(slotId);
+
+  await db
+    .update(planDraftsTable)
+    .set({ scheduleReconfirmReason: "delivery_window_timezone_updated" })
+    .where(eq(planDraftsTable.id, s.id));
+
+  const blocked = await call(`/plan-drafts/${s.id}/quote-readiness`, {
+    cookie: s.cookie,
+    user: s.user,
+  });
+  assert.equal(blocked.status, 200);
+  assert.equal(blocked.json.ready, false);
+  const issue = blocked.json.issues.find(
+    (i: any) => i.code === "schedule_requires_reconfirmation",
+  );
+  assert.ok(issue, `expected a reconfirmation blocker: ${JSON.stringify(blocked.json.issues)}`);
+  assert.equal(issue.detail.reason, "delivery_window_timezone_updated");
+  assert.match(issue.message, /choose your delivery times again/i);
+
+  // And it really blocks — a quote cannot be issued against an unconfirmed
+  // schedule.
+  const refused = await call(`/plan-drafts/${s.id}/quote`, {
+    method: "POST",
+    cookie: s.cookie,
+    user: s.user,
+    body: { version: s.version },
+  });
+  assert.equal(refused.status, 422, JSON.stringify(refused.json));
+  assert.equal(refused.json.code, "not_ready_for_quote");
+  assert.equal(
+    (await slotState(slotId)).reserved,
+    0,
+    "a draft awaiting reconfirmation holds no capacity",
+  );
+});
+
+test("re-picking a delivery time clears the reconfirmation requirement", async () => {
+  const slotId = await makeSlot(27, 5, 10);
+  const s = await quotableDraft(slotId);
+  await db
+    .update(planDraftsTable)
+    .set({ scheduleReconfirmReason: "delivery_window_timezone_updated" })
+    .where(eq(planDraftsTable.id, s.id));
+
+  // The customer picks again against the windows the server offers NOW.
+  const opts = await call(
+    `/plan-drafts/${s.id}/delivery-options?addressId=${s.addressId}`,
+    { cookie: s.cookie, user: s.user },
+  );
+  const w = opts.json.dates
+    .flatMap((d: any) => d.windows.map((x: any) => ({ ...x, date: d.deliveryDate })))
+    .find((x: any) => x.slotId === slotId);
+  assert.ok(w);
+
+  const saved = await call(`/plan-drafts/${s.id}/delivery-schedule`, {
+    method: "PUT",
+    cookie: s.cookie,
+    user: s.user,
+    body: {
+      version: s.version,
+      addressId: s.addressId,
+      assignments: [{ deliveryDate: w.date, deliveryWindow: w.deliveryWindow, slotId }],
+    },
+  });
+  assert.equal(saved.status, 200, JSON.stringify(saved.json));
+  assert.equal(saved.json.draft.scheduleReconfirmReason, null);
+
+  const readiness = await call(`/plan-drafts/${s.id}/quote-readiness`, {
+    cookie: s.cookie,
+    user: s.user,
+  });
+  assert.ok(
+    !readiness.json.issues.some((i: any) => i.code === "schedule_requires_reconfirmation"),
+    "reconfirming must clear the blocker",
+  );
+});
+
 // ── Review check 3: expiry has a real execution path ─────────────────────────
 
 test("an expired quote cannot be consumed even before the sweeper runs", async () => {
@@ -733,7 +820,7 @@ test("the 24h cutoff is inclusive at the boundary and exact to the second", asyn
     const [row] = await db
       .insert(deliverySlotsTable)
       .values({
-        slotDate: startsAt.toISOString().slice(0, 10),
+        slotDate: deriveOperationalDate(startsAt),
         startsAt,
         endsAt: new Date(startsAt.getTime() + 3600_000),
         zone,
@@ -767,7 +854,7 @@ test("eligibility is decided by absolute instants, not by the process timezone",
   const [row] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: startsAt.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(startsAt),
       startsAt,
       endsAt: new Date(startsAt.getTime() + 3600_000),
       zone,

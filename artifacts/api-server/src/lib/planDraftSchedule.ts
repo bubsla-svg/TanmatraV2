@@ -6,6 +6,7 @@ import {
   planDraftQuotesTable,
   slotReservationsTable,
   userAddressesTable,
+  DELIVERY_OPERATIONAL_TZ,
   type DeliverySlot,
   type PlanDraft,
   type PlanDraftDay,
@@ -35,8 +36,8 @@ import { isServiceablePincode } from "@workspace/api-zod";
 export const DELIVERY_CUTOFF_MS = 24 * 60 * 60 * 1000;
 
 /**
- * THE ONE OPERATIONAL TIMEZONE. Every human-facing delivery time is expressed
- * in it, and nothing anywhere reads a client's timezone to decide anything.
+ * THE ONE OPERATIONAL TIMEZONE, re-exported from `@workspace/db` so the label
+ * rendered here and the `slot_date` written there cannot drift apart.
  *
  * Eligibility itself is timezone-free: `startsAt`/`expiresAt` are `timestamptz`
  * and the cutoff is arithmetic on absolute instants, so a server in UTC and a
@@ -44,14 +45,15 @@ export const DELIVERY_CUTOFF_MS = 24 * 60 * 60 * 1000;
  * instant is RENDERED into a window label — but that label is also what the
  * customer picks and what save-time validation matches against, so it has to be
  * pinned to one zone rather than to whatever `TZ` the container happens to run
- * with. Asia/Kolkata observes no DST, so the offset is a constant +05:30 and
- * there is no ambiguous or skipped local hour to resolve.
+ * with.
  *
- * `delivery_slots.slot_date` is the operational date and must be written in
- * THIS zone by whoever publishes slots; the eligibility query groups by it
- * verbatim rather than re-deriving a date from the instant.
+ * `delivery_slots.slot_date` is the operational date in this same zone, now
+ * enforced by a database trigger (DEFECT-PLAN-SLOT-DATE-001) rather than by
+ * every writer remembering to use `deriveOperationalDate`. The eligibility
+ * query below groups by that column verbatim, which is only sound BECAUSE the
+ * trigger guarantees it agrees with `starts_at`.
  */
-export const DELIVERY_OPERATIONAL_TZ = "Asia/Kolkata";
+export { DELIVERY_OPERATIONAL_TZ };
 
 /** h23 explicitly: `hour12:false` alone renders midnight as "24:00" in some
  *  locales, which would make a midnight window's label unstable. */

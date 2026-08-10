@@ -33,6 +33,7 @@ import {
   creditLedgerTable,
   db,
   deliverySlotsTable,
+  deriveOperationalDate,
   orderClaimsTable,
   ordersTable,
   pickupLocationsTable,
@@ -146,7 +147,7 @@ async function makeSlot(capacity: number): Promise<number> {
   const [row] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: start.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(start),
       startsAt: start,
       endsAt: end,
       zone: `test-${randomUUID().slice(0, 8)}`,
