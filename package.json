@@ -9,7 +9,9 @@
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "lint:test-reach": "node --experimental-strip-types scripts/lint-test-reach.ts",
     "lint:workflow-secrets": "node --experimental-strip-types scripts/lint-workflow-secrets.ts",
-    "verify:stitch": "python3 tools/verify_stitch_routes.py",
+    "verify:stitch": "node tools/verify-stitch-manifest.mjs && node tools/verify-stitch-wiring.mjs",
+    "verify:stitch-manifest": "node tools/verify-stitch-manifest.mjs",
+    "verify:stitch-wiring": "node tools/verify-stitch-wiring.mjs",
     "test": "pnpm -r --if-present run test",
     "evals": "pnpm --filter @workspace/api-server run evals"
   },

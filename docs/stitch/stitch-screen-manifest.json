@@ -1,1482 +1,4160 @@
 [
   {
+    "schemaVersion": 2,
     "promptId": "4.1",
-    "designName": "Dark Design-System Screen",
     "stitchScreenId": "839f4a92436a4444bda6fabfa07d7a06",
-    "route": "/styleguide?theme=dark",
-    "state": "default",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Dark Design-System Screen",
+    "artifactType": "design-system-reference",
+    "canonicalRoute": "/styleguide",
+    "state": "dark",
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/styleguide/page.tsx",
-    "trigger": "Direct navigation / styleguide inspection",
-    "expectedPrimaryAction": "Inspect tokens",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/styleguide/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Styleguide",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Inspect design tokens",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/4.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/4.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/4.1.png",
+      "light": null
+    },
     "testId": "styleguide-dark-tokens",
-    "testFile": "artifacts/storefront/app/styleguide/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/design-system.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "4.2",
-    "designName": "Light Design-System Screen",
     "stitchScreenId": "f814ddb11cbb4b17832dba069604e371",
-    "route": "/styleguide?theme=light",
-    "state": "default",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Light Design-System Screen",
+    "artifactType": "design-system-reference",
+    "canonicalRoute": "/styleguide",
+    "state": "light",
     "layout": "GlobalLayout",
-    "theme": "light",
-    "implementation": "artifacts/storefront/app/styleguide/page.tsx",
-    "trigger": "Toggle light theme / styleguide",
-    "expectedPrimaryAction": "Inspect light tokens",
+    "themes": [
+      "light"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/styleguide/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Styleguide (light)",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Inspect design tokens",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/4.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/4.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/4.2.png",
+      "light": null
+    },
     "testId": "styleguide-light-tokens",
-    "testFile": "artifacts/storefront/app/styleguide/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/design-system.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.1",
-    "designName": "Tanmatra Home: Clinical Feed",
     "stitchScreenId": "966d396f55ed43ada3e69ff56950d3ef",
-    "route": "/",
+    "designName": "Tanmatra Home: Clinical Feed",
+    "artifactType": "route",
+    "canonicalRoute": "/",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/page.tsx",
-    "trigger": "App launch / Home tab",
-    "expectedPrimaryAction": "Explore today's menu",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/landing/Section01ClinicalHero.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Home tab",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Order today",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.1.png",
+      "light": null
+    },
     "testId": "home-feed-render",
-    "testFile": "artifacts/storefront/app/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.2",
-    "designName": "Daily Menu: Clinical Selection",
     "stitchScreenId": "72d14e82a0064eb398552c2bee5d4682",
-    "route": "/menu",
+    "designName": "Daily Menu: Clinical Selection",
+    "artifactType": "route",
+    "canonicalRoute": "/menu",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/menu/page.tsx",
-    "trigger": "Click Explore menu / Menu tab",
-    "expectedPrimaryAction": "Add to cart",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/menu/PersonalizedMenu.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/menu/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Menu tab",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Add a dish to cart",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.2.png",
+      "light": null
+    },
     "testId": "menu-grid-catalog",
-    "testFile": "artifacts/storefront/app/menu/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.3",
-    "designName": "Menu Filter Bottom Sheet",
     "stitchScreenId": "72d14e82a0064eb398552c2bee5d4682-filter",
-    "route": "/menu",
+    "designName": "Menu Filter Bottom Sheet",
+    "artifactType": "overlay",
+    "canonicalRoute": "/menu",
     "state": "filter-sheet-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/menu/page.tsx",
-    "trigger": "Click Filter icon on /menu",
-    "expectedPrimaryAction": "Show meals",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/menu/PersonalizedMenu.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/menu/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Filter",
+      "sourceState": "menu-default"
+    },
+    "transition": {
+      "from": "menu-default",
+      "action": "OPEN_FILTERS",
+      "to": "filter-sheet-open"
+    },
+    "expectedPrimaryAction": "Apply filters",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/5.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.3.png",
+      "light": null
+    },
     "testId": "menu-filter-sheet",
-    "testFile": "artifacts/storefront/app/menu/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "partial",
+      "renderChain": "partial",
+      "triggerDefinition": "partial",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-5.3-FILTERSHEET-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.4",
-    "designName": "Dish Quick-View Bottom Sheet",
     "stitchScreenId": "72d14e82a0064eb398552c2bee5d4682-quickview",
-    "route": "/menu",
-    "state": "quick-view-sheet-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/menu/page.tsx",
-    "trigger": "Tap dish card on /menu",
+    "designName": "Dish Quick-View Bottom Sheet",
+    "artifactType": "overlay",
+    "canonicalRoute": "/menu",
+    "state": "dish-quick-view-open",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/menu/DishDrawer.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/menu/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Dish card (dish name)",
+      "sourceState": "menu-default"
+    },
+    "transition": {
+      "from": "menu-default",
+      "action": "OPEN_DISH_QUICK_VIEW",
+      "to": "dish-quick-view-open"
+    },
     "expectedPrimaryAction": "Add to cart",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/5.4.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.4.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.4.png",
+      "light": null
+    },
     "testId": "dish-quick-view-drawer",
-    "testFile": "artifacts/storefront/app/menu/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.5",
-    "designName": "Dish PDP: Full Clinical Detail",
     "stitchScreenId": "ef20a9487d414d8aaa48ab69e4b1f22d",
-    "route": "/dish/[slug]",
+    "designName": "Dish PDP: Full Clinical Detail",
+    "artifactType": "route",
+    "canonicalRoute": "/dish/[slug]",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/dish/[slug]/page.tsx",
-    "trigger": "Click dish title / full PDP link",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/dish/[slug]/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/menu/PdpBuyLedger.tsx",
+    "trigger": {
+      "type": "link",
+      "accessibleName": "Dish card",
+      "sourceState": "menu-default"
+    },
+    "transition": "not-applicable",
     "expectedPrimaryAction": "Add to cart",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.5.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.5.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.5.png",
+      "light": null
+    },
     "testId": "dish-pdp-full",
-    "testFile": "artifacts/storefront/app/dish/[slug]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.6",
-    "designName": "Cart Drawer: Commerce Overlay",
     "stitchScreenId": "44267f5a1c8c43f0873fb5ed30fef65d",
-    "route": "/menu",
+    "designName": "Cart Drawer: Commerce Overlay",
+    "artifactType": "drawer",
+    "canonicalRoute": "global",
     "state": "cart-drawer-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/components/cart/CartDrawer.tsx",
-    "trigger": "Click View cart on MiniCartBar",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/cart/CartDrawer.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/layout.tsx",
+    "controllerComponent": "artifacts/storefront/components/cart/MiniCartBar.tsx",
+    "trigger": {
+      "type": "button",
+      "accessibleName": "View cart",
+      "sourceState": "any-commerce-surface"
+    },
+    "transition": {
+      "from": "any-commerce-surface",
+      "action": "OPEN_CART_DRAWER",
+      "to": "cart-drawer-open"
+    },
     "expectedPrimaryAction": "Checkout",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/5.6.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.6.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.6.png",
+      "light": null
+    },
     "testId": "cart-drawer-commerce",
-    "testFile": "artifacts/storefront/components/cart/CartDrawer.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.7",
-    "designName": "Tanmatra Marketplace: Pantry & Hydration",
     "stitchScreenId": "866fc4167d9c47709ff6c3465ab63b84",
-    "route": "/marketplace",
+    "designName": "Tanmatra Marketplace: Pantry & Hydration",
+    "artifactType": "route",
+    "canonicalRoute": "/marketplace",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/marketplace/page.tsx",
-    "trigger": "Navigate to /marketplace",
-    "expectedPrimaryAction": "Add item",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/marketplace/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Marketplace",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Add a product to cart",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.7.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.7.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.7.png",
+      "light": null
+    },
     "testId": "marketplace-grid",
-    "testFile": "artifacts/storefront/app/marketplace/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.8",
-    "designName": "Marketplace Product PDP",
     "stitchScreenId": "866fc4167d9c47709ff6c3465ab63b84-pdp",
-    "route": "/marketplace/[slug]",
+    "designName": "Marketplace Product PDP",
+    "artifactType": "route",
+    "canonicalRoute": "/marketplace/[slug]",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/marketplace/[slug]/page.tsx",
-    "trigger": "Click marketplace product card",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/marketplace/[slug]/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/cart/MarketplaceAddToCart.tsx",
+    "trigger": {
+      "type": "link",
+      "accessibleName": "Product card",
+      "sourceState": "marketplace-default"
+    },
+    "transition": "not-applicable",
     "expectedPrimaryAction": "Add to cart",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.8.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.8.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.8.png",
+      "light": null
+    },
     "testId": "marketplace-pdp",
-    "testFile": "artifacts/storefront/app/marketplace/[slug]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.9",
-    "designName": "Meal Deals: Bundles & Combos",
     "stitchScreenId": "866fc4167d9c47709ff6c3465ab63b84-deals",
-    "route": "/meal-deals",
+    "designName": "Meal Deals: Bundles & Combos",
+    "artifactType": "route",
+    "canonicalRoute": "/meal-deals",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/meal-deals/page.tsx",
-    "trigger": "Click Meal Deals rail on Home",
-    "expectedPrimaryAction": "Add bundle",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/meal-deals/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Meal deals",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Add combo to cart",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.9.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.9.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.9.png",
+      "light": null
+    },
     "testId": "meal-deals-catalog",
-    "testFile": "artifacts/storefront/app/meal-deals/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.10",
-    "designName": "AI-Assisted Meal Recommendations",
     "stitchScreenId": "866fc4167d9c47709ff6c3465ab63b84-recs",
-    "route": "/meal-recommendations",
+    "designName": "AI-Assisted Meal Recommendations",
+    "artifactType": "route",
+    "canonicalRoute": "/meal-recommendations",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/meal-recommendations/page.tsx",
-    "trigger": "Click What fits your body today on Home",
-    "expectedPrimaryAction": "Add recommended set",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/DishCard.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/meal-recommendations/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Meal recommendations",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Add recommended dish",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.10.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.10.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.10.png",
+      "light": null
+    },
     "testId": "meal-recommendations-feed",
-    "testFile": "artifacts/storefront/app/meal-recommendations/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.11",
-    "designName": "Meal Reheating & Macro Guide",
     "stitchScreenId": "ef20a9487d414d8aaa48ab69e4b1f22d-guide",
-    "route": "/meal-guides/[dishSlug]",
+    "designName": "Meal Reheating & Macro Guide",
+    "artifactType": "route",
+    "canonicalRoute": "/meal-guides/[dishSlug]",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/meal-guides/[dishSlug]/page.tsx",
-    "trigger": "Click Reheating guide from order history",
-    "expectedPrimaryAction": "Reorder meal",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/meal-guides/[dishSlug]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "link",
+      "accessibleName": "Meal guide link",
+      "sourceState": "order-history"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Reorder dish",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.11.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.11.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.11.png",
+      "light": null
+    },
     "testId": "meal-reheating-guide",
-    "testFile": "artifacts/storefront/app/meal-guides/[dishSlug]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "5.12",
-    "designName": "RD Recipe Library & Rationale",
     "stitchScreenId": "ef20a9487d414d8aaa48ab69e4b1f22d-recipes",
-    "route": "/recipes",
+    "designName": "RD Recipe Library & Rationale",
+    "artifactType": "route",
+    "canonicalRoute": "/recipes",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/recipes/page.tsx",
-    "trigger": "Navigate to /recipes",
-    "expectedPrimaryAction": "View recipe details",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/recipes/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Recipes",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Open recipe",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/5.12.png",
-    "implementationArtifact": "artifacts/stitch/storefront/5.12.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/5.12.png",
+      "light": null
+    },
     "testId": "rd-recipes-library",
-    "testFile": "artifacts/storefront/app/recipes/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.1",
-    "designName": "Subscription Plans Discovery",
     "stitchScreenId": "8d3c8980a3cc4937b00e062e5d5e554c",
-    "route": "/plans",
+    "designName": "Subscription Plans Discovery",
+    "artifactType": "route",
+    "canonicalRoute": "/plans",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plans/page.tsx",
-    "trigger": "Click Plans tab in bottom nav",
-    "expectedPrimaryAction": "Build my plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/plans/GoalRouter.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/plans/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Plan tab",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Pick your goal",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.1.png",
+      "light": null
+    },
     "testId": "plans-discovery-grid",
-    "testFile": "artifacts/storefront/app/plans/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.2",
-    "designName": "Plans Mealtime Preference Sheet",
     "stitchScreenId": "8d3c8980a3cc4937b00e062e5d5e554c-mealtime",
-    "route": "/plans",
+    "designName": "Plans Mealtime Preference Sheet",
+    "artifactType": "overlay",
+    "canonicalRoute": "/plans",
     "state": "mealtime-sheet-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plans/page.tsx",
-    "trigger": "Click Select mealtime on /plans",
-    "expectedPrimaryAction": "Continue",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/plans/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Select mealtime",
+      "sourceState": "plans-default"
+    },
+    "transition": {
+      "from": "plans-default",
+      "action": "OPEN_MEALTIME",
+      "to": "mealtime-sheet-open"
+    },
+    "expectedPrimaryAction": "Confirm mealtime",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/6.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.2.png",
+      "light": null
+    },
     "testId": "plans-mealtime-sheet",
-    "testFile": "artifacts/storefront/app/plans/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-6.2-MEALTIME-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.3",
-    "designName": "Plan Configuration: Initial Setup",
     "stitchScreenId": "e4be16728fa3442d88c96a63529b1b92",
-    "route": "/plan/[planId]",
-    "state": "initial-config",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Plan Configuration: Initial Setup",
+    "artifactType": "component-state",
+    "canonicalRoute": "/plan/[planId]",
+    "state": "initial-configuration",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plan/[planId]/page.tsx",
-    "trigger": "Click Build my plan on /plans",
-    "expectedPrimaryAction": "Continue to schedule",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/plan/[planId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Plan card",
+      "sourceState": "any"
+    },
+    "transition": {
+      "from": "entry",
+      "action": "BEGIN_CONFIGURATION",
+      "to": "initial-configuration"
+    },
+    "expectedPrimaryAction": "Generate my week",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.3.png",
+      "light": null
+    },
     "testId": "plan-config-initial",
-    "testFile": "artifacts/storefront/app/plan/[planId]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J2-PLANCONFIG-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/plans/PlanBuilder.tsx",
+      "reason": "PlanBuilder's configure-by-exception summary removes core approved tasks: server generation visibility, day-by-day lineup, Keep/Shuffle/Undo, Change Dish, accompaniment editing and schedule control. Not contract-equivalent. Rebuild track: Journey 2 UI over the merged A2 plan-draft contracts (PRs #29–#34).",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.4",
-    "designName": "Plan Day-by-Day Meal Lineup",
     "stitchScreenId": "e4be16728fa3442d88c96a63529b1b92-lineup",
-    "route": "/plan/[planId]",
+    "designName": "Plan Day-by-Day Meal Lineup",
+    "artifactType": "component-state",
+    "canonicalRoute": "/plan/[planId]",
     "state": "lineup-active",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "trigger": "Review generated days in plan builder",
-    "expectedPrimaryAction": "Keep / Change dish",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/plan/[planId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "server-response",
+      "accessibleName": "lineup_ready",
+      "sourceState": "generating"
+    },
+    "transition": {
+      "from": "generating",
+      "action": "LINEUP_READY",
+      "to": "lineup-active"
+    },
+    "expectedPrimaryAction": "Continue to schedule",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.4.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.4.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.4.png",
+      "light": null
+    },
     "testId": "plan-meal-lineup",
-    "testFile": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J2-PLANCONFIG-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/plans/PlanBuilder.tsx",
+      "reason": "PlanBuilder's configure-by-exception summary removes core approved tasks: server generation visibility, day-by-day lineup, Keep/Shuffle/Undo, Change Dish, accompaniment editing and schedule control. Not contract-equivalent. Rebuild track: Journey 2 UI over the merged A2 plan-draft contracts (PRs #29–#34).",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.5",
-    "designName": "Plan Change Dish Bottom Sheet",
     "stitchScreenId": "e4be16728fa3442d88c96a63529b1b92-swap",
-    "route": "/plan/[planId]",
-    "state": "change-dish-sheet-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "trigger": "Click Change dish on Day card",
-    "expectedPrimaryAction": "Replace Day meal",
+    "designName": "Plan Change Dish Bottom Sheet",
+    "artifactType": "overlay",
+    "canonicalRoute": "/plan/[planId]",
+    "state": "change-dish-open",
+    "layout": "FocusLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/plan/[planId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Change dish",
+      "sourceState": "lineup-active",
+      "requiredConditions": [
+        "meal slot is editable",
+        "change cutoff has not passed"
+      ],
+      "blockedBehavior": {
+        "code": "meal_change_unavailable",
+        "message": "This meal can no longer be changed.",
+        "recoveryAction": "Return to plan"
+      }
+    },
+    "transition": {
+      "from": "lineup-active",
+      "action": "OPEN_CHANGE_DISH",
+      "to": "change-dish-open"
+    },
+    "expectedPrimaryAction": "Replace meal",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/6.5.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.5.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.5.png",
+      "light": null
+    },
     "testId": "plan-change-dish-sheet",
-    "testFile": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-6.5-CHANGEDISH-001",
+      "DEF-J2-PLANCONFIG-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.6",
-    "designName": "Plan Accompaniment Editor Sheet",
     "stitchScreenId": "e4be16728fa3442d88c96a63529b1b92-sides",
-    "route": "/plan/[planId]",
+    "designName": "Plan Accompaniment Editor Sheet",
+    "artifactType": "overlay",
+    "canonicalRoute": "/plan/[planId]",
     "state": "accompaniment-editor-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "trigger": "Click Edit accompaniment on Day card",
-    "expectedPrimaryAction": "Save changes",
+    "layout": "FocusLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/plan/[planId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Edit accompaniment",
+      "sourceState": "lineup-active"
+    },
+    "transition": {
+      "from": "lineup-active",
+      "action": "OPEN_ACCOMPANIMENT_EDITOR",
+      "to": "accompaniment-editor-open"
+    },
+    "expectedPrimaryAction": "Save accompaniments",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/6.6.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.6.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.6.png",
+      "light": null
+    },
     "testId": "plan-accompaniment-editor",
-    "testFile": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-6.6-ACCOMP-001",
+      "DEF-J2-PLANCONFIG-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.7",
-    "designName": "Plan Delivery Schedule Configuration",
     "stitchScreenId": "e4be16728fa3442d88c96a63529b1b92-schedule",
-    "route": "/plan/[planId]",
-    "state": "delivery-schedule-open",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Plan Delivery Schedule Configuration",
+    "artifactType": "component-state",
+    "canonicalRoute": "/plan/[planId]",
+    "state": "delivery-schedule",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "trigger": "Click Delivery schedule step",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/plan/[planId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Continue to schedule",
+      "sourceState": "lineup-active"
+    },
+    "transition": {
+      "from": "lineup-active",
+      "action": "CONTINUE_TO_SCHEDULE",
+      "to": "delivery-schedule"
+    },
     "expectedPrimaryAction": "Continue to checkout",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.7.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.7.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.7.png",
+      "light": null
+    },
     "testId": "plan-delivery-schedule",
-    "testFile": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J2-PLANCONFIG-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/plans/PlanBuilder.tsx",
+      "reason": "PlanBuilder's configure-by-exception summary removes core approved tasks: server generation visibility, day-by-day lineup, Keep/Shuffle/Undo, Change Dish, accompaniment editing and schedule control. Not contract-equivalent. Rebuild track: Journey 2 UI over the merged A2 plan-draft contracts (PRs #29–#34).",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.8",
-    "designName": "3-Day Clinical Taste Trial",
     "stitchScreenId": "59aa3123733a4aac84001db8d6032283",
-    "route": "/trial",
+    "designName": "3-Day Clinical Taste Trial",
+    "artifactType": "route",
+    "canonicalRoute": "/trial",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/trial/page.tsx",
-    "trigger": "Click Start 3-day trial from plans or home",
-    "expectedPrimaryAction": "Start 3-day trial",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/trial/TrialStart.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/trial/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Try 3 days first",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Start my 3-day trial",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.8.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.8.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.8.png",
+      "light": null
+    },
     "testId": "trial-checkout-funnel",
-    "testFile": "artifacts/storefront/app/trial/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.9.1",
-    "designName": "Quick Setup Step 1: Goal",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-qs1",
-    "route": "/quick-setup",
+    "designName": "Quick Setup Step 1: Goal",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/quick-setup",
     "state": "step-1-goal",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/quick-setup/page.tsx",
-    "trigger": "Start Quick Setup flow",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/wizard/QuickSetupWizard.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/quick-setup/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Quick setup",
+      "sourceState": "any"
+    },
+    "transition": {
+      "from": "entry",
+      "action": "BEGIN",
+      "to": "step-1-goal"
+    },
     "expectedPrimaryAction": "Continue",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.9.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.9.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.9.1.png",
+      "light": null
+    },
     "testId": "quick-setup-goal",
-    "testFile": "artifacts/storefront/app/quick-setup/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/quick-setup.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.9.2",
-    "designName": "Quick Setup Step 2: Food Pattern",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-qs2",
-    "route": "/quick-setup",
-    "state": "step-2-diet",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Quick Setup Step 2: Food Pattern",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/quick-setup",
+    "state": "step-2-food-pattern",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/quick-setup/page.tsx",
-    "trigger": "Complete Quick Setup Step 1",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/wizard/QuickSetupWizard.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/quick-setup/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Continue",
+      "sourceState": "step-1-goal"
+    },
+    "transition": {
+      "from": "step-1-goal",
+      "action": "CONTINUE",
+      "to": "step-2-food-pattern"
+    },
     "expectedPrimaryAction": "Continue",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.9.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.9.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.9.2.png",
+      "light": null
+    },
     "testId": "quick-setup-food-pattern",
-    "testFile": "artifacts/storefront/app/quick-setup/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/quick-setup.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "6.9.3",
-    "designName": "Quick Setup Step 3: Cadence",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-qs3",
-    "route": "/quick-setup",
+    "designName": "Quick Setup Step 3: Cadence",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/quick-setup",
     "state": "step-3-cadence",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/quick-setup/page.tsx",
-    "trigger": "Complete Quick Setup Step 2",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/wizard/QuickSetupWizard.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/quick-setup/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Continue",
+      "sourceState": "step-2-food-pattern"
+    },
+    "transition": {
+      "from": "step-2-food-pattern",
+      "action": "CONTINUE",
+      "to": "step-3-cadence"
+    },
     "expectedPrimaryAction": "See my plan",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/6.9.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/6.9.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/6.9.3.png",
+      "light": null
+    },
     "testId": "quick-setup-cadence",
-    "testFile": "artifacts/storefront/app/quick-setup/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/quick-setup.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-6.9.3-CADENCE-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.2",
-    "designName": "Custom Build Step 1: Goal",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3",
-    "route": "/custom-build",
-    "state": "step-1-goal",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Custom Build Step 1: Goal",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/custom-build",
+    "state": "goal",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Click Build Your Own Plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Custom build",
+      "sourceState": "any"
+    },
+    "transition": {
+      "from": "entry",
+      "action": "BEGIN",
+      "to": "goal"
+    },
     "expectedPrimaryAction": "Next: Routine",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.2.png",
+      "light": null
+    },
     "testId": "custom-build-goal",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.3",
-    "designName": "Custom Build Step 2: Routine",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb2",
-    "route": "/custom-build",
-    "state": "step-2-routine",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Custom Build Step 2: Routine",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/custom-build",
+    "state": "routine",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Complete Goal selection",
-    "expectedPrimaryAction": "Next: Food Preferences",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Next: Routine",
+      "sourceState": "goal"
+    },
+    "transition": {
+      "from": "goal",
+      "action": "NEXT",
+      "to": "routine"
+    },
+    "expectedPrimaryAction": "Next: Preferences",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.3.png",
+      "light": null
+    },
     "testId": "custom-build-routine",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.4",
-    "designName": "Custom Build Wearable Interstitial",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb-wearable",
-    "route": "/custom-build",
+    "designName": "Custom Build Wearable Interstitial",
+    "artifactType": "component-state",
+    "canonicalRoute": "/custom-build",
     "state": "wearable-interstitial",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Transition between Routine and Preferences",
-    "expectedPrimaryAction": "Connect / Skip",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Connect wearable",
+      "sourceState": "routine"
+    },
+    "transition": {
+      "from": "routine",
+      "action": "OFFER_WEARABLE",
+      "to": "wearable-interstitial"
+    },
+    "expectedPrimaryAction": "Connect or skip",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.4.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.4.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.4.png",
+      "light": null
+    },
     "testId": "custom-build-wearables",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.5",
-    "designName": "Custom Build Step 3: Food Preferences",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb3",
-    "route": "/custom-build",
-    "state": "step-3-preferences",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Custom Build Step 3: Food Preferences",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/custom-build",
+    "state": "preferences",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Advance to Food Preferences",
-    "expectedPrimaryAction": "Next: Plan Intensity",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Continue",
+      "sourceState": "wearable-interstitial"
+    },
+    "transition": {
+      "from": "wearable-interstitial",
+      "action": "NEXT",
+      "to": "preferences"
+    },
+    "expectedPrimaryAction": "Next: Intensity",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.5.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.5.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.5.png",
+      "light": null
+    },
     "testId": "custom-build-preferences",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.6",
-    "designName": "Custom Build Step 4: Plan Intensity",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb4",
-    "route": "/custom-build",
-    "state": "step-4-intensity",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Custom Build Step 4: Plan Intensity",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/custom-build",
+    "state": "intensity",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Advance to Plan Intensity",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Next: Intensity",
+      "sourceState": "preferences"
+    },
+    "transition": {
+      "from": "preferences",
+      "action": "NEXT",
+      "to": "intensity"
+    },
     "expectedPrimaryAction": "Next: Duration",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.6.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.6.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.6.png",
+      "light": null
+    },
     "testId": "custom-build-intensity",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.7",
-    "designName": "Custom Build Step 5: Duration & Renewal",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb5",
-    "route": "/custom-build",
-    "state": "step-5-duration",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Custom Build Step 5: Duration & Renewal",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/custom-build",
+    "state": "duration-renewal",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Advance to Duration & Renewal",
-    "expectedPrimaryAction": "Next: Review Rules",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Next: Duration",
+      "sourceState": "intensity"
+    },
+    "transition": {
+      "from": "intensity",
+      "action": "NEXT",
+      "to": "duration-renewal"
+    },
+    "expectedPrimaryAction": "Review my build",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.7.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.7.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.7.png",
+      "light": null
+    },
     "testId": "custom-build-duration",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.8",
-    "designName": "Custom Build Step 6: Configuration Review",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb6",
-    "route": "/custom-build",
-    "state": "step-6-review",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Custom Build Step 6: Configuration Review",
+    "artifactType": "wizard-stage",
+    "canonicalRoute": "/custom-build",
+    "state": "review",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Advance to Configuration Review",
-    "expectedPrimaryAction": "Build my meal plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Review my build",
+      "sourceState": "duration-renewal"
+    },
+    "transition": {
+      "from": "duration-renewal",
+      "action": "NEXT",
+      "to": "review"
+    },
+    "expectedPrimaryAction": "Generate my plan",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.8.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.8.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.8.png",
+      "light": null
+    },
     "testId": "custom-build-review",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "7.9",
-    "designName": "Custom Build Generated Plan Review",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb-plan",
-    "route": "/custom-build",
-    "state": "generated-plan-review",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Custom Build Generated Plan Review",
+    "artifactType": "component-state",
+    "canonicalRoute": "/custom-build",
+    "state": "generated-plan",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Generate plan from review rules",
-    "expectedPrimaryAction": "Continue to checkout review",
-    "referenceArtifact": "artifacts/stitch/reference/7.9.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.9.png",
-    "testId": "custom-build-generated-plan",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
-  },
-  {
-    "promptId": "7.10",
-    "designName": "Custom Build Pre-Checkout Questions",
-    "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb-questions",
-    "route": "/custom-build",
-    "state": "pre-checkout-questions",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/custom-build/page.tsx",
-    "trigger": "Click Continue on generated plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "server-response",
+      "accessibleName": "generation_complete",
+      "sourceState": "generating"
+    },
+    "transition": {
+      "from": "generating",
+      "action": "GENERATED",
+      "to": "generated-plan"
+    },
     "expectedPrimaryAction": "Continue to checkout",
+    "expectedCloseBehavior": null,
+    "referenceArtifact": "artifacts/stitch/reference/7.9.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.9.png",
+      "light": null
+    },
+    "testId": "custom-build-generated-plan",
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
+  },
+  {
+    "schemaVersion": 2,
+    "promptId": "7.10",
+    "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-cb-questions",
+    "designName": "Custom Build Pre-Checkout Questions",
+    "artifactType": "component-state",
+    "canonicalRoute": "/custom-build",
+    "state": "pre-checkout",
+    "layout": "FocusLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/custom-build/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Continue to checkout",
+      "sourceState": "generated-plan"
+    },
+    "transition": {
+      "from": "generated-plan",
+      "action": "CONTINUE",
+      "to": "pre-checkout"
+    },
+    "expectedPrimaryAction": "Proceed to payment",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/7.10.png",
-    "implementationArtifact": "artifacts/stitch/storefront/7.10.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/7.10.png",
+      "light": null
+    },
     "testId": "custom-build-questions",
-    "testFile": "artifacts/storefront/app/custom-build/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-J4-CUSTOMBUILD-001"
+    ],
+    "designDisposition": "rebuild-required",
+    "replacementDecision": {
+      "status": "rebuild",
+      "interimImplementation": "artifacts/storefront/components/custom/CustomBuildHub.tsx",
+      "reason": "CustomBuildHub (dish customisation) removes the approved 6-stage guided build (goal → routine → wearable → preferences → intensity → duration+renewal → review), the renewal disclosure and the generated-plan review. Not contract-equivalent. Rebuild track: Journey 4 against A2 contracts.",
+      "decidedBy": "chandan (standing product decision)",
+      "decidedAt": "2026-08-10T16:34:38.717Z"
+    }
   },
   {
+    "schemaVersion": 2,
     "promptId": "8.1",
-    "designName": "Secure Focus Checkout: Tanmatra OS",
     "stitchScreenId": "b4f7b93cf4854f5eac4e1afb72efff6f",
-    "route": "/checkout",
-    "state": "default",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Secure Focus Checkout: Tanmatra OS",
+    "artifactType": "route",
+    "canonicalRoute": "/checkout",
+    "state": "quote-active",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/checkout/page.tsx",
-    "trigger": "Click Checkout from cart or plan",
-    "expectedPrimaryAction": "Pay and confirm",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/checkout/plan/PlanCheckout.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/checkout/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/checkout/CheckoutFlow.tsx",
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Checkout",
+      "sourceState": "cart-drawer-open"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Pay",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/8.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/8.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/8.1.png",
+      "light": null
+    },
     "testId": "checkout-focus-flow",
-    "testFile": "artifacts/storefront/app/checkout/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/checkout.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "8.2",
-    "designName": "Checkout Quote Expired Recovery",
     "stitchScreenId": "b4f7b93cf4854f5eac4e1afb72efff6f-expired",
-    "route": "/checkout",
+    "designName": "Checkout Quote Expired Recovery",
+    "artifactType": "recovery-state",
+    "canonicalRoute": "/checkout",
     "state": "quote-expired",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/checkout/CheckoutClient.tsx",
-    "trigger": "Server quote expires after 15m TTL",
-    "expectedPrimaryAction": "Refresh plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/checkout/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "server-response",
+      "accessibleName": "QUOTE_EXPIRED",
+      "sourceState": "quote-active"
+    },
+    "transition": {
+      "from": "quote-active",
+      "action": "QUOTE_EXPIRED",
+      "to": "quote-expired"
+    },
+    "expectedPrimaryAction": "Refresh quote",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/8.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/8.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/8.2.png",
+      "light": null
+    },
     "testId": "checkout-quote-expired",
-    "testFile": "artifacts/storefront/app/checkout/CheckoutClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/checkout.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-8.2-QUOTEEXPIRY-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "8.3",
-    "designName": "Order Confirmed & Telemetry Opt-in",
     "stitchScreenId": "b4f7b93cf4854f5eac4e1afb72efff6f-confirmed",
-    "route": "/order/confirmed/[orderId]",
+    "designName": "Order Confirmed & Telemetry Opt-in",
+    "artifactType": "route",
+    "canonicalRoute": "/order/confirmed/[orderId]",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/order/confirmed/[orderId]/page.tsx",
-    "trigger": "Payment authorization success",
-    "expectedPrimaryAction": "View meal plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/order/confirmed/[orderId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "server-response",
+      "accessibleName": "payment_succeeded",
+      "sourceState": "payment-processing"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Track order",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/8.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/8.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/8.3.png",
+      "light": null
+    },
     "testId": "order-confirmed-success",
-    "testFile": "artifacts/storefront/app/order/confirmed/[orderId]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/checkout.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "9.1",
-    "designName": "Meal Planner: Active Protocol Schedule",
     "stitchScreenId": "75cf7ca6e32c4596b20c9ef59e0d9f16",
-    "route": "/meal-planner",
+    "designName": "Meal Planner: Active Protocol Schedule",
+    "artifactType": "route",
+    "canonicalRoute": "/meal-planner",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/meal-planner/page.tsx",
-    "trigger": "Navigate to Planner tab /meal-planner",
-    "expectedPrimaryAction": "Manage plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/mealplan/MealPlanner.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/meal-planner/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Meal planner",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Swap a meal",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/9.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/9.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/9.1.png",
+      "light": null
+    },
     "testId": "meal-planner-schedule",
-    "testFile": "artifacts/storefront/app/meal-planner/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "9.2",
-    "designName": "Manage Delivery Bottom Sheet",
     "stitchScreenId": "75cf7ca6e32c4596b20c9ef59e0d9f16-delivery",
-    "route": "/meal-planner",
+    "designName": "Manage Delivery Bottom Sheet",
+    "artifactType": "overlay",
+    "canonicalRoute": "/meal-planner",
     "state": "manage-delivery-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/meal-planner/MealPlannerClient.tsx",
-    "trigger": "Click Manage delivery on upcoming slot",
-    "expectedPrimaryAction": "Confirm changes",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/ManageDeliverySheet.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/subscriptions/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/account/DeliveryList.tsx",
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Manage",
+      "sourceState": "delivery-list"
+    },
+    "transition": {
+      "from": "delivery-list",
+      "action": "OPEN_MANAGE_DELIVERY",
+      "to": "manage-delivery-open"
+    },
+    "expectedPrimaryAction": "Save delivery change",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/9.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/9.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/9.2.png",
+      "light": null
+    },
     "testId": "meal-planner-delivery-sheet",
-    "testFile": "artifacts/storefront/app/meal-planner/MealPlannerClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "partial",
+      "renderChain": "partial",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-9.2-DELIVERY-ROUTE-001",
+      "DEF-9.2-ACTIONS-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "9.3",
-    "designName": "Account Active Subscriptions Management",
     "stitchScreenId": "75cf7ca6e32c4596b20c9ef59e0d9f16-subs",
-    "route": "/account/subscriptions",
+    "designName": "Account Active Subscriptions Management",
+    "artifactType": "route",
+    "canonicalRoute": "/account/subscriptions",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/subscriptions/page.tsx",
-    "trigger": "Click Plans tab under Account",
-    "expectedPrimaryAction": "View Meal Planner",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/SubscriptionManager.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/subscriptions/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Subscriptions",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Pause plan",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/9.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/9.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/9.3.png",
+      "light": null
+    },
     "testId": "account-subscriptions-manager",
-    "testFile": "artifacts/storefront/app/account/subscriptions/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.1",
-    "designName": "Account Hub: Clinical Profile & Summary",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059",
-    "route": "/account",
+    "designName": "Account Hub: Clinical Profile & Summary",
+    "artifactType": "route",
+    "canonicalRoute": "/account",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/page.tsx",
-    "trigger": "Click Account tab in bottom nav",
-    "expectedPrimaryAction": "Manage subscriptions",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/AccountHub.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Account tab",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Open orders",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.1.png",
+      "light": null
+    },
     "testId": "account-hub-profile",
-    "testFile": "artifacts/storefront/app/account/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.2",
-    "designName": "Account Order History & Invoices",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-orders",
-    "route": "/account/orders",
+    "designName": "Account Order History & Invoices",
+    "artifactType": "route",
+    "canonicalRoute": "/account/orders",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/orders/page.tsx",
-    "trigger": "Click Orders tab under Account",
-    "expectedPrimaryAction": "Track order / Reorder",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/OrderHistory.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/orders/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Orders",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "View order",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.2.png",
+      "light": null
+    },
     "testId": "account-order-history",
-    "testFile": "artifacts/storefront/app/account/orders/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.3",
-    "designName": "Account Saved Delivery Addresses",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-addresses",
-    "route": "/account/addresses",
+    "designName": "Account Saved Delivery Addresses",
+    "artifactType": "route",
+    "canonicalRoute": "/account/addresses",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/addresses/page.tsx",
-    "trigger": "Click Addresses tab under Account",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/AddressManager.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/addresses/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Addresses",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
     "expectedPrimaryAction": "Add address",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.3.png",
+      "light": null
+    },
     "testId": "account-addresses-list",
-    "testFile": "artifacts/storefront/app/account/addresses/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.4",
-    "designName": "Account Preferences: Diet & Theme",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-preferences",
-    "route": "/account/preferences",
+    "designName": "Account Preferences: Diet & Theme",
+    "artifactType": "route",
+    "canonicalRoute": "/account/preferences",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/preferences/page.tsx",
-    "trigger": "Click Preferences tab under Account",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/PreferencesHub.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/preferences/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Preferences",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
     "expectedPrimaryAction": "Save preferences",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.4.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.4.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.4.png",
+      "light": null
+    },
     "testId": "account-preferences-form",
-    "testFile": "artifacts/storefront/app/account/preferences/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.5",
-    "designName": "Account Wellness & Biomarker Trends",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-wellness",
-    "route": "/account/wellness",
+    "designName": "Account Wellness & Biomarker Trends",
+    "artifactType": "route",
+    "canonicalRoute": "/account/wellness",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/wellness/page.tsx",
-    "trigger": "Click Wellness section under Account",
-    "expectedPrimaryAction": "Review biometrics",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/wellness/WellnessHub.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/wellness/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Wellness",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Log a meal",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.5.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.5.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.5.png",
+      "light": null
+    },
     "testId": "account-wellness-trends",
-    "testFile": "artifacts/storefront/app/account/wellness/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.6",
-    "designName": "Account Consumption History & Macro Trends",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-history",
-    "route": "/account/history",
+    "designName": "Account Consumption History & Macro Trends",
+    "artifactType": "route",
+    "canonicalRoute": "/account/history",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/history/page.tsx",
-    "trigger": "Click History section under Account",
-    "expectedPrimaryAction": "View weekly trends",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/history/MealHistoryDashboard.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/history/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "History",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Review week",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.6.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.6.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.6.png",
+      "light": null
+    },
     "testId": "account-consumption-history",
-    "testFile": "artifacts/storefront/app/account/history/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.7",
-    "designName": "Account Symptoms & Food Reaction Log",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-symptoms",
-    "route": "/account/symptoms",
+    "designName": "Account Symptoms & Food Reaction Log",
+    "artifactType": "route",
+    "canonicalRoute": "/account/symptoms",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/symptoms/page.tsx",
-    "trigger": "Click Symptoms tab under Account",
-    "expectedPrimaryAction": "Log reaction",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/symptoms/SymptomTrackerView.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/symptoms/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Symptoms",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Log symptom",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.7.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.7.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.7.png",
+      "light": null
+    },
     "testId": "account-symptoms-logger",
-    "testFile": "artifacts/storefront/app/account/symptoms/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.8",
-    "designName": "Health Connections: Apple Health & Android Sync",
     "stitchScreenId": "2b29b0174cfb46b1826594928710885e",
-    "route": "/account/connections",
+    "designName": "Health Connections: Apple Health & Android Sync",
+    "artifactType": "route",
+    "canonicalRoute": "/account/connections",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/connections/page.tsx",
-    "trigger": "Click Connections tab under Account",
-    "expectedPrimaryAction": "Manage health permissions",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/WearablesHub.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/connections/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Health connections",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Connect Apple Health",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/10.8.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.8.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.8.png",
+      "light": null
+    },
     "testId": "account-health-connections",
-    "testFile": "artifacts/storefront/app/account/connections/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "10.9",
-    "designName": "Post-Meal Feedback Bottom Sheet",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-feedback",
-    "route": "/account",
-    "state": "meal-feedback-open",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/components/feedback/MealFeedback.tsx",
-    "trigger": "Click Rate meal on recent delivery",
+    "designName": "Post-Meal Feedback Bottom Sheet",
+    "artifactType": "overlay",
+    "canonicalRoute": "/account",
+    "state": "rate-meal-open",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/feedback/MealFeedback.tsx",
+    "routeEntryPoint": null,
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Rate meal",
+      "sourceState": "order-history"
+    },
+    "transition": {
+      "from": "order-history",
+      "action": "OPEN_FEEDBACK",
+      "to": "rate-meal-open"
+    },
     "expectedPrimaryAction": "Submit feedback",
+    "expectedCloseBehavior": [
+      "close-button",
+      "escape",
+      "safe-backdrop",
+      "focus-restored"
+    ],
     "referenceArtifact": "artifacts/stitch/reference/10.9.png",
-    "implementationArtifact": "artifacts/stitch/storefront/10.9.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/10.9.png",
+      "light": null
+    },
     "testId": "post-meal-feedback-sheet",
-    "testFile": "artifacts/storefront/components/feedback/MealFeedback.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-10.9-FEEDBACK-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.1",
-    "designName": "Metabolic Health Program Landing",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-meta",
-    "route": "/metabolic",
+    "designName": "Metabolic Health Program Landing",
+    "artifactType": "route",
+    "canonicalRoute": "/metabolic",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/metabolic/page.tsx",
-    "trigger": "Navigate to /metabolic",
-    "expectedPrimaryAction": "Start setup",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/metabolic/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Metabolic",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "See matching plan",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.1.png",
+      "light": null
+    },
     "testId": "metabolic-program-landing",
-    "testFile": "artifacts/storefront/app/metabolic/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "partial",
+      "renderChain": "partial",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-11.1-PLACEHOLDER-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.2",
-    "designName": "Performance Nutrition Landing",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-perf",
-    "route": "/performance",
+    "designName": "Performance Nutrition Landing",
+    "artifactType": "route",
+    "canonicalRoute": "/performance",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/performance/page.tsx",
-    "trigger": "Navigate to /performance",
-    "expectedPrimaryAction": "Build performance plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/protocol/ProtocolView.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/performance/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Performance",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "See matching plan",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.2.png",
+      "light": null
+    },
     "testId": "performance-nutrition-landing",
-    "testFile": "artifacts/storefront/app/performance/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.3",
-    "designName": "Clinical Care Protocols Hub",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-clin",
-    "route": "/clinical",
+    "designName": "Clinical Care Protocols Hub",
+    "artifactType": "route",
+    "canonicalRoute": "/clinical",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/clinical/page.tsx",
-    "trigger": "Navigate to /clinical",
-    "expectedPrimaryAction": "Start clinical setup",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/protocol/ProtocolView.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/clinical/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Clinical",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "See matching plan",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.3.png",
+      "light": null
+    },
     "testId": "clinical-protocols-hub",
-    "testFile": "artifacts/storefront/app/clinical/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.4",
-    "designName": "Condition-Specific Clinical Care",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0",
-    "route": "/care/[condition]",
+    "designName": "Condition-Specific Clinical Care",
+    "artifactType": "route",
+    "canonicalRoute": "/care/[condition]",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/care/[condition]/page.tsx",
-    "trigger": "Click condition card (e.g. PCOS, Diabetes)",
-    "expectedPrimaryAction": "Find my plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/care/[condition]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Condition care",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "See matching plan",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.4.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.4.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.4.png",
+      "light": null
+    },
     "testId": "care-condition-page",
-    "testFile": "artifacts/storefront/app/care/[condition]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.5",
-    "designName": "Registered Dietitian Directory",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-rd",
-    "route": "/rd",
+    "designName": "Registered Dietitian Directory",
+    "artifactType": "route",
+    "canonicalRoute": "/rd",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/rd/page.tsx",
-    "trigger": "Click Consult an RD from Clinical Care",
-    "expectedPrimaryAction": "Book consultation",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/rd/RdCard.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/rd/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Dietitians",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "View dietitian",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.5.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.5.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.5.png",
+      "light": null
+    },
     "testId": "rd-roster-directory",
-    "testFile": "artifacts/storefront/app/rd/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.6",
-    "designName": "RD Consultation Booking Focus Flow",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-booking",
-    "route": "/rd",
-    "state": "booking-flow-active",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/rd/page.tsx",
-    "trigger": "Click Book slot on RD Profile",
-    "expectedPrimaryAction": "Book consultation",
+    "designName": "RD Consultation Booking Focus Flow",
+    "artifactType": "component-state",
+    "canonicalRoute": "/rd/[slug]",
+    "state": "booking-active",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/rd/RdBooking.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/rd/[slug]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Book",
+      "sourceState": "rd-profile"
+    },
+    "transition": {
+      "from": "rd-profile",
+      "action": "BEGIN_BOOKING",
+      "to": "booking-active"
+    },
+    "expectedPrimaryAction": "Confirm booking",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.6.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.6.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.6.png",
+      "light": null
+    },
     "testId": "rd-booking-flow",
-    "testFile": "artifacts/storefront/app/rd/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "pending",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.7",
-    "designName": "Tanmatra AI Nutrition Coach Conversation",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-coach",
-    "route": "/coach",
+    "designName": "Tanmatra AI Nutrition Coach Conversation",
+    "artifactType": "route",
+    "canonicalRoute": "/coach",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/coach/page.tsx",
-    "trigger": "Click Ask Coach from home or menu",
-    "expectedPrimaryAction": "Send query",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/coach/CoachChat.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/coach/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Coach",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Ask the coach",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.7.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.7.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.7.png",
+      "light": null
+    },
     "testId": "ai-coach-chat",
-    "testFile": "artifacts/storefront/app/coach/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "11.8",
-    "designName": "Dietitian Verified Community Q&A",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-qa",
-    "route": "/qa",
+    "designName": "Dietitian Verified Community Q&A",
+    "artifactType": "route",
+    "canonicalRoute": "/qa",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/qa/page.tsx",
-    "trigger": "Navigate to /qa",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/qa/CommunityQaForum.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/qa/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Q&A",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
     "expectedPrimaryAction": "Ask a question",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/11.8.png",
-    "implementationArtifact": "artifacts/stitch/storefront/11.8.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/11.8.png",
+      "light": null
+    },
     "testId": "community-qa-forum",
-    "testFile": "artifacts/storefront/app/qa/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "12.1",
-    "designName": "Corporate Employee Benefit Invite Activation",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-corp-invite",
-    "route": "/corporate/invite/[token]",
+    "designName": "Corporate Employee Benefit Invite Activation",
+    "artifactType": "route",
+    "canonicalRoute": "/corporate/invite/[token]",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/corporate/invite/[token]/page.tsx",
-    "trigger": "Click employee invite magic link",
-    "expectedPrimaryAction": "Activate my benefit",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/corporate/CompanyInvite.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/corporate/invite/[token]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "link",
+      "accessibleName": "Corporate invite link",
+      "sourceState": "external"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Activate benefit",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/12.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/12.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/12.1.png",
+      "light": null
+    },
     "testId": "corporate-invite-activation",
-    "testFile": "artifacts/storefront/app/corporate/invite/[token]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "12.2",
-    "designName": "B2B Corporate Wellness Acquisition",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-corp-well",
-    "route": "/corporate-wellness",
+    "designName": "B2B Corporate Wellness Acquisition",
+    "artifactType": "route",
+    "canonicalRoute": "/corporate-wellness",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "B2BLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/corporate-wellness/page.tsx",
-    "trigger": "Navigate to /corporate-wellness",
-    "expectedPrimaryAction": "Build a corporate program",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(b2b)/corporate-wellness/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/corporate/CorporateLeadForm.tsx",
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Corporate wellness",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Request a proposal",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/12.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/12.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/12.2.png",
+      "light": null
+    },
     "testId": "corporate-wellness-acquisition",
-    "testFile": "artifacts/storefront/app/corporate-wellness/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "12.3",
-    "designName": "Gym & Athletic Facility Partner Landing",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-gym",
-    "route": "/partners/gyms",
+    "designName": "Gym & Athletic Facility Partner Landing",
+    "artifactType": "route",
+    "canonicalRoute": "/partners/gyms",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "B2BLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/partners/gyms/page.tsx",
-    "trigger": "Navigate to /partners/gyms",
-    "expectedPrimaryAction": "Check my member benefit",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(b2b)/partners/gyms/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/partners/PartnerLeadForm.tsx",
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Gym partners",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Partner with us",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/12.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/12.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/12.3.png",
+      "light": null
+    },
     "testId": "partners-gyms-landing",
-    "testFile": "artifacts/storefront/app/partners/gyms/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "12.4",
-    "designName": "Gym Membership Verification State",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-gym-verify",
-    "route": "/partners/gyms",
-    "state": "verification-active",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Gym Membership Verification State",
+    "artifactType": "component-state",
+    "canonicalRoute": "/partners/gyms",
+    "state": "member-verification",
     "layout": "B2BLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/partners/gyms/page.tsx",
-    "trigger": "Click Check my member benefit",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(b2b)/partners/gyms/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "button",
+      "accessibleName": "Check my member benefit",
+      "sourceState": "gyms-default"
+    },
+    "transition": {
+      "from": "gyms-default",
+      "action": "BEGIN_VERIFICATION",
+      "to": "member-verification"
+    },
     "expectedPrimaryAction": "Verify membership",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/12.4.png",
-    "implementationArtifact": "artifacts/stitch/storefront/12.4.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/12.4.png",
+      "light": null
+    },
     "testId": "gym-membership-verification",
-    "testFile": "artifacts/storefront/app/partners/gyms/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-12.4-GYMVERIFY-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "12.5",
-    "designName": "Fitness Club & Endurance Community Portal",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-fitness",
-    "route": "/partners/fitness-clubs",
+    "designName": "Fitness Club & Endurance Community Portal",
+    "artifactType": "route",
+    "canonicalRoute": "/partners/fitness-clubs",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "B2BLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/partners/fitness-clubs/page.tsx",
-    "trigger": "Navigate to /partners/fitness-clubs",
-    "expectedPrimaryAction": "Build my fueling plan",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(b2b)/partners/fitness-clubs/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/partners/PartnerLeadForm.tsx",
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Fitness clubs",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Partner with us",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/12.5.png",
-    "implementationArtifact": "artifacts/stitch/storefront/12.5.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/12.5.png",
+      "light": null
+    },
     "testId": "partners-fitness-clubs",
-    "testFile": "artifacts/storefront/app/partners/fitness-clubs/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "12.6",
-    "designName": "Dietitian Referral Patient Activation",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-rd-ref",
-    "route": "/partners/dietitians",
+    "designName": "Dietitian Referral Patient Activation",
+    "artifactType": "route",
+    "canonicalRoute": "/partners/dietitians",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "B2BLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/partners/dietitians/page.tsx",
-    "trigger": "Click dietitian referral link",
-    "expectedPrimaryAction": "Use recommended setup",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/rd-partners/RdPartnersLanding.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(b2b)/partners/dietitians/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Dietitian partners",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Refer a client",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/12.6.png",
-    "implementationArtifact": "artifacts/stitch/storefront/12.6.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/12.6.png",
+      "light": null
+    },
     "testId": "partners-dietitians-referral",
-    "testFile": "artifacts/storefront/app/partners/dietitians/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "12.7",
-    "designName": "Dietitian Partner Network Onboarding",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-rd-partner",
-    "route": "/rd-partners",
+    "designName": "Dietitian Partner Network Onboarding",
+    "artifactType": "route",
+    "canonicalRoute": "/rd-partners",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "B2BLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/rd-partners/page.tsx",
-    "trigger": "Navigate to /rd-partners",
-    "expectedPrimaryAction": "Apply as a partner",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/rd-partners/RdPartnersLanding.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(b2b)/rd-partners/page.tsx",
+    "controllerComponent": "artifacts/storefront/components/rd-partners/PartnerWizard.tsx",
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "RD partner network",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Apply to the network",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/12.7.png",
-    "implementationArtifact": "artifacts/stitch/storefront/12.7.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/12.7.png",
+      "light": null
+    },
     "testId": "rd-partners-network",
-    "testFile": "artifacts/storefront/app/rd-partners/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "13.1",
-    "designName": "Metabolic Challenges Discovery",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-challenges",
-    "route": "/challenges",
+    "designName": "Metabolic Challenges Discovery",
+    "artifactType": "route",
+    "canonicalRoute": "/challenges",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/challenges/page.tsx",
-    "trigger": "Navigate to /challenges",
-    "expectedPrimaryAction": "Join challenge",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/challenges/ChallengeCard.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/challenges/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Challenges",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "View challenge",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/13.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/13.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/13.1.png",
+      "light": null
+    },
     "testId": "challenges-discovery-feed",
-    "testFile": "artifacts/storefront/app/challenges/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/challenges.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "13.2",
-    "designName": "Challenge Registration & Clinical Detail",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-challenge-detail",
-    "route": "/challenges/[slug]",
+    "designName": "Challenge Registration & Clinical Detail",
+    "artifactType": "route",
+    "canonicalRoute": "/challenges/[slug]",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/challenges/[slug]/page.tsx",
-    "trigger": "Click challenge card on /challenges",
-    "expectedPrimaryAction": "Join challenge",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/challenges/ChallengeRoom.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/challenges/[slug]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "link",
+      "accessibleName": "Challenge card",
+      "sourceState": "challenges-default"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Register",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/13.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/13.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/13.2.png",
+      "light": null
+    },
     "testId": "challenge-pdp-detail",
-    "testFile": "artifacts/storefront/app/challenges/[slug]/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/challenges.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "13.3",
-    "designName": "Active Metabolic Challenge Tracker",
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-challenge-track",
-    "route": "/challenges/tracker",
+    "designName": "Active Metabolic Challenge Tracker",
+    "artifactType": "route",
+    "canonicalRoute": "/challenges/tracker",
     "state": "default",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/challenges/tracker/page.tsx",
-    "trigger": "Click View active challenge from home",
-    "expectedPrimaryAction": "Log daily progress",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/challenges/ChallengeTrackerView.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/challenges/tracker/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "route-navigation",
+      "accessibleName": "Challenge tracker",
+      "sourceState": "any"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Log activity",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/13.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/13.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/13.3.png",
+      "light": null
+    },
     "testId": "challenge-active-tracker",
-    "testFile": "artifacts/storefront/app/challenges/tracker/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/challenges.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "not-applicable",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "14.1",
-    "designName": "Empty Cart Drawer State",
     "stitchScreenId": "44267f5a1c8c43f0873fb5ed30fef65d-empty",
-    "route": "/menu",
-    "state": "empty-cart-drawer",
-    "viewport": { "width": 390, "height": 844 },
-    "layout": "Overlay",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/components/cart/CartDrawer.tsx",
-    "trigger": "Open cart drawer when item count is 0",
-    "expectedPrimaryAction": "Browse menu",
+    "designName": "Empty Cart Drawer State",
+    "artifactType": "empty-state",
+    "canonicalRoute": "global",
+    "state": "cart-empty",
+    "layout": "GlobalLayout",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/cart/CartDrawer.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/layout.tsx",
+    "controllerComponent": "artifacts/storefront/components/cart/MiniCartBar.tsx",
+    "trigger": {
+      "type": "empty-data condition",
+      "accessibleName": "Cart has zero items",
+      "sourceState": "cart-drawer-open"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Browse the menu",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/14.1.png",
-    "implementationArtifact": "artifacts/stitch/storefront/14.1.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/14.1.png",
+      "light": null
+    },
     "testId": "cart-empty-state",
-    "testFile": "artifacts/storefront/components/cart/CartDrawer.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "14.2",
-    "designName": "Menu No Matching Meals Result",
     "stitchScreenId": "72d14e82a0064eb398552c2bee5d4682-no-match",
-    "route": "/menu",
+    "designName": "Menu No Matching Meals Result",
+    "artifactType": "empty-state",
+    "canonicalRoute": "/menu",
     "state": "no-matching-meals",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/menu/page.tsx",
-    "trigger": "Apply strict filters yielding 0 items",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(global)/menu/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "empty-data condition",
+      "accessibleName": "Filters match zero dishes",
+      "sourceState": "filter-applied"
+    },
+    "transition": "not-applicable",
     "expectedPrimaryAction": "Clear filters",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/14.2.png",
-    "implementationArtifact": "artifacts/stitch/storefront/14.2.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/14.2.png",
+      "light": null
+    },
     "testId": "menu-no-match-empty",
-    "testFile": "artifacts/storefront/app/menu/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-14.2-MENUEMPTY-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "14.3",
-    "designName": "Plan Generation Loading State",
     "stitchScreenId": "e4be16728fa3442d88c96a63529b1b92-loading",
-    "route": "/plan/[planId]",
-    "state": "plan-generating-loading",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Plan Generation Loading State",
+    "artifactType": "loading-state",
+    "canonicalRoute": "/plan/[planId]",
+    "state": "plan-generating",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "trigger": "Trigger AI meal lineup generation",
-    "expectedPrimaryAction": "Disabled loading indicator",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/plan/[planId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "server-response",
+      "accessibleName": "generating",
+      "sourceState": "initial-configuration"
+    },
+    "transition": {
+      "from": "initial-configuration",
+      "action": "GENERATE",
+      "to": "plan-generating"
+    },
+    "expectedPrimaryAction": "Wait or cancel",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/14.3.png",
-    "implementationArtifact": "artifacts/stitch/storefront/14.3.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/14.3.png",
+      "light": null
+    },
     "testId": "plan-generating-skeleton",
-    "testFile": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-14.3-GENLOADING-001",
+      "DEF-J2-PLANCONFIG-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "14.4",
-    "designName": "Plan Generation Error Recovery",
     "stitchScreenId": "e4be16728fa3442d88c96a63529b1b92-error",
-    "route": "/plan/[planId]",
-    "state": "plan-generating-error",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Plan Generation Error Recovery",
+    "artifactType": "recovery-state",
+    "canonicalRoute": "/plan/[planId]",
+    "state": "generation-failed",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/plans/page.tsx",
-    "trigger": "Plan generation network or rule failure",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": null,
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/plan/[planId]/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "server-response",
+      "accessibleName": "generation_failed",
+      "sourceState": "plan-generating"
+    },
+    "transition": {
+      "from": "plan-generating",
+      "action": "GENERATION_FAILED",
+      "to": "generation-failed"
+    },
     "expectedPrimaryAction": "Try again",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/14.4.png",
-    "implementationArtifact": "artifacts/stitch/storefront/14.4.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/14.4.png",
+      "light": null
+    },
     "testId": "plan-error-recovery",
-    "testFile": "artifacts/storefront/app/plans/page.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "missing",
+      "renderChain": "missing",
+      "triggerDefinition": "missing",
+      "transitionDefinition": "missing",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-14.4-GENERROR-001",
+      "DEF-J2-PLANCONFIG-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "14.5",
-    "designName": "Unserviceable Address Notice",
     "stitchScreenId": "f49ace3e5e27464aacca6184b0432059-unserviceable",
-    "route": "/account/addresses",
+    "designName": "Unserviceable Address Notice",
+    "artifactType": "component-state",
+    "canonicalRoute": "/account/addresses",
     "state": "unserviceable-address",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "GlobalLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/account/addresses/AddressesClient.tsx",
-    "trigger": "Enter pincode outside Noida/NCR kitchen radius",
-    "expectedPrimaryAction": "Check another address",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/account/AddressManager.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(global)/account/addresses/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "serviceability result",
+      "accessibleName": "Pincode outside delivery area",
+      "sourceState": "address-form"
+    },
+    "transition": "not-applicable",
+    "expectedPrimaryAction": "Change address",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/14.5.png",
-    "implementationArtifact": "artifacts/stitch/storefront/14.5.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/14.5.png",
+      "light": null
+    },
     "testId": "account-unserviceable-address",
-    "testFile": "artifacts/storefront/app/account/addresses/AddressesClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "14.6",
-    "designName": "Checkout Payment Processing State",
     "stitchScreenId": "b4f7b93cf4854f5eac4e1afb72efff6f-processing",
-    "route": "/checkout",
+    "designName": "Checkout Payment Processing State",
+    "artifactType": "component-state",
+    "canonicalRoute": "/checkout",
     "state": "payment-processing",
-    "viewport": { "width": 390, "height": 844 },
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/checkout/CheckoutClient.tsx",
-    "trigger": "Submit payment authorization",
-    "expectedPrimaryAction": "Processing telemetry (non-clickable)",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/checkout/plan/PlanCheckout.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/checkout/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "server-response",
+      "accessibleName": "payment_verifying",
+      "sourceState": "quote-active"
+    },
+    "transition": {
+      "from": "quote-active",
+      "action": "PAY",
+      "to": "payment-processing"
+    },
+    "expectedPrimaryAction": "Wait for verification",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/14.6.png",
-    "implementationArtifact": "artifacts/stitch/storefront/14.6.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/14.6.png",
+      "light": null
+    },
     "testId": "checkout-payment-processing",
-    "testFile": "artifacts/storefront/app/checkout/CheckoutClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "partial",
+      "renderChain": "partial",
+      "triggerDefinition": "partial",
+      "transitionDefinition": "pending",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [
+      "DEF-14.6-PAYPROCESSING-001"
+    ],
+    "designDisposition": "original"
   },
   {
+    "schemaVersion": 2,
     "promptId": "14.7",
-    "designName": "Payment Timeout Recovery State",
     "stitchScreenId": "b4f7b93cf4854f5eac4e1afb72efff6f-timeout",
-    "route": "/checkout",
-    "state": "payment-timeout",
-    "viewport": { "width": 390, "height": 844 },
+    "designName": "Payment Timeout Recovery State",
+    "artifactType": "recovery-state",
+    "canonicalRoute": "/checkout",
+    "state": "payment-unresolved",
     "layout": "FocusLayout",
-    "theme": "dark",
-    "implementation": "artifacts/storefront/app/checkout/CheckoutClient.tsx",
-    "trigger": "Gateway callback delay exceeding 30s",
+    "themes": [
+      "dark"
+    ],
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "implementationComponent": "artifacts/storefront/components/checkout/UnresolvedPaymentPanel.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/checkout/page.tsx",
+    "controllerComponent": null,
+    "trigger": {
+      "type": "timeout",
+      "accessibleName": "Payment verification timed out",
+      "sourceState": "payment-processing"
+    },
+    "transition": {
+      "from": "payment-processing",
+      "action": "PAYMENT_TIMEOUT",
+      "to": "payment-unresolved"
+    },
     "expectedPrimaryAction": "Check payment status",
+    "expectedCloseBehavior": null,
     "referenceArtifact": "artifacts/stitch/reference/14.7.png",
-    "implementationArtifact": "artifacts/stitch/storefront/14.7.png",
+    "implementationArtifacts": {
+      "dark": "artifacts/stitch/storefront/14.7.png",
+      "light": null
+    },
     "testId": "checkout-payment-timeout",
-    "testFile": "artifacts/storefront/app/checkout/CheckoutClient.tsx",
-    "automatedContractStatus": "passed",
-    "humanVisualStatus": "pending",
-    "humanAccessibilityStatus": "pending"
+    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "proof": {
+      "declared": "verified",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "pending",
+      "containerRuntime": "pending",
+      "stagingRuntime": "pending",
+      "productionRuntime": "pending",
+      "visualApproval": "pending",
+      "accessibilityApproval": "pending"
+    },
+    "evidence": [],
+    "evidenceSha": null,
+    "defectIds": [],
+    "designDisposition": "original"
   }
 ]
