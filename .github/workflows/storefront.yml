@@ -25,6 +25,9 @@ on:
       - "scripts/lint-component-drift.ts"
       - "scripts/component-drift-baseline.txt"
       - "scripts/src/lighthouse-audit.mjs"
+      - "docs/stitch/stitch-screen-manifest.json"
+      - "tools/verify-stitch-manifest.mjs"
+      - "tools/verify-stitch-wiring.mjs"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - ".github/workflows/storefront.yml"
@@ -36,6 +39,9 @@ on:
       - "lib/menu-catalog/**"
       - "lib/preferences-match/**"
       - "lib/subscription-rules/**"
+      - "docs/stitch/stitch-screen-manifest.json"
+      - "tools/verify-stitch-manifest.mjs"
+      - "tools/verify-stitch-wiring.mjs"
       - ".github/workflows/storefront.yml"
   # Nightly window for the cross-browser job below ONLY — see that job's
   # comment. The per-PR `storefront` job explicitly opts out of this trigger so
@@ -134,6 +140,17 @@ jobs:
       - name: Component-drift gate — no duplicate-spelling class debt
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:component-drift
+      # Stitch traceability gates. The manifest verifier proves the 74-entry
+      # manifest is schema-valid; the wiring verifier proves its filesystem
+      # claims match the repo. Honest missing/partial/blocked entries PASS —
+      # only contradictions (stale paths, verified-without-evidence, duplicate
+      # IDs) fail. Runtime reachability is test:stitch-runtime's job, not these.
+      - name: Stitch manifest — schema validity
+        if: ${{ !cancelled() }}
+        run: node tools/verify-stitch-manifest.mjs
+      - name: Stitch wiring — manifest claims match the repository
+        if: ${{ !cancelled() }}
+        run: node tools/verify-stitch-wiring.mjs
 
       # ---------------------------------------------------------------------
       # PERFORMANCE BASELINE — DELIBERATELY NON-BLOCKING. DO NOT FLIP YET.
