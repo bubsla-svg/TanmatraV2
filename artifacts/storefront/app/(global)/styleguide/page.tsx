@@ -17,9 +17,19 @@ import { InlineError, EmptyState } from "@/components/primitives/Feedback";
 import { BottomSheet, Modal } from "@/components/primitives/Overlays";
 import { SquircleOptionCard } from "@/components/primitives/OptionCards";
 
-export default function StyleguidePage() {
+export default function StyleguidePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ theme?: string }>;
+}) {
+  const theme = React.use(searchParams).theme === "light" ? "light" : "dark";
   return (
-    <div className="min-h-screen bg-bg text-ink pb-24">
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id={theme === "light" ? "4.2" : "4.1"}
+      data-screen-state={theme}
+      className="min-h-screen bg-bg text-ink pb-24"
+    >
       <GlobalHeader />
       
       <main className="max-w-screen-xl mx-auto px-4 py-8 space-y-12">

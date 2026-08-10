@@ -20,7 +20,7 @@ export function UnresolvedPaymentPanel({
   onCheckStatus: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-6">
+    <div data-ui-generation="stitch-74" data-screen-id="14.7" data-screen-state="payment-unresolved" className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-6">
       <h1 className="text-xl font-semibold text-ink">Confirming your payment</h1>
       <p className="text-sm text-ink-muted">
         Your payment may have already gone through, so please don&rsquo;t try to pay

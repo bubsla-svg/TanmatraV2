@@ -31,7 +31,12 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
     : { label: "Find your plan", href: "/plans" };
 
   return (
-    <div className="mx-auto max-w-5xl px-4">
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id={which === "clinical" ? "11.3" : "11.2"}
+      data-screen-state="default"
+      className="mx-auto max-w-5xl px-4"
+    >
       <header className="flex flex-col items-center gap-5 py-14 text-center sm:py-20">
         <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{cfg.eyebrow}</p>
         <h1 className="max-w-3xl text-3xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-4xl lg:text-5xl">

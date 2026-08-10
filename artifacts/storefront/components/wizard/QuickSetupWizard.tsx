@@ -183,7 +183,7 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
       </div>
 
       {step === 1 && (
-        <div className="flex flex-col gap-3">
+        <div data-ui-generation="stitch-74" data-screen-id="6.9.1" data-screen-state="step-1-goal" className="flex flex-col gap-3">
           {GOALS.map((g) => (
             <button
               key={g.id}
@@ -200,7 +200,7 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
       )}
 
       {step === 2 && (
-        <div className="flex flex-col gap-4">
+        <div data-ui-generation="stitch-74" data-screen-id="6.9.2" data-screen-state="step-2-food-pattern" className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold leading-snug text-ink">
             Select dietary allergens our kitchen must strictly omit
           </h2>
@@ -229,7 +229,7 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
       )}
 
       {step === 3 && (
-        <div className="flex flex-col gap-5">
+        <div data-ui-generation="stitch-74" data-screen-id="6.9.3" data-screen-state="step-3-cadence" className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Kitchen dietary style</p>
             {STYLES.filter((c) => c.type === "style").map((c) => {

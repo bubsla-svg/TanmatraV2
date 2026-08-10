@@ -97,7 +97,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
   }
 
   return (
-    <div className="rounded-2xl border border-line bg-surface p-6">
+    <div data-ui-generation="stitch-74" data-screen-id="11.6" data-screen-state="booking-active" className="rounded-2xl border border-line bg-surface p-6">
       <p className="text-sm font-semibold text-ink">Book a consult</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {KINDS.map((k) => {

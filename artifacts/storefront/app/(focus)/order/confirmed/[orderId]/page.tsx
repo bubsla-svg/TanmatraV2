@@ -62,7 +62,7 @@ export default async function ConfirmedPage({
   // delivered or cancelled order gets no dead Track CTA.
   const trackable = TRACKABLE_STATUSES.has(status);
   return (
-    <div className="min-h-dvh">
+    <div data-ui-generation="stitch-74" data-screen-id="8.3" data-screen-state="default" className="min-h-dvh">
       <section className="mx-auto max-w-md px-4 py-10">
         {/* Status card — the single largest, most prominent element on the
             screen. This is a confirmation, not a celebration: no confetti,

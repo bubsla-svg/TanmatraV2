@@ -51,7 +51,12 @@ export default async function CorporateWellnessPage() {
 
   return (
     // pb-28 reserves room for the fixed StickyCtaBar so the FAQ stays reachable.
-    <div className="mx-auto max-w-5xl px-4 pb-28">
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id="12.2"
+      data-screen-state="default"
+      className="mx-auto max-w-5xl px-4 pb-28"
+    >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <LandingHero
         hero={CORPORATE_HERO}

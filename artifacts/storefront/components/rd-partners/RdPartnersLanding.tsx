@@ -11,9 +11,14 @@ import Link from "next/link";
  * wizard removes that possibility structurally: nothing here can claim a
  * submission happened.
  */
-export function RdPartnersLanding() {
+export function RdPartnersLanding({ screenId }: { screenId: "12.6" | "12.7" }) {
   return (
-    <div className="pb-32">
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id={screenId}
+      data-screen-state="default"
+      className="pb-32"
+    >
       <section className="mx-auto max-w-3xl px-4 py-16 text-center">
         <span className="inline-block rounded-full border border-line bg-surface px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-gold-text">
           Registered dietitian network

@@ -13,7 +13,12 @@ export const metadata: Metadata = {
  */
 export default function CoachPage() {
   return (
-    <section className="mx-auto flex min-h-[70vh] max-w-md flex-col px-4 py-8">
+    <section
+      data-ui-generation="stitch-74"
+      data-screen-id="11.7"
+      data-screen-state="default"
+      className="mx-auto flex min-h-[70vh] max-w-md flex-col px-4 py-8"
+    >
       <div className="border-b border-line pb-4">
         <h1 className="text-xl font-bold text-ink">Nutrition coach</h1>
         <p className="mt-1 text-xs text-ink-muted">

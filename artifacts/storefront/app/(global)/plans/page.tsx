@@ -22,7 +22,8 @@ export default function PlansPage() {
   return (
     <div 
       data-ui-generation="stitch-74" 
-      data-screen-id="MOB-20-Plans-Dark"
+      data-screen-id="6.1"
+      data-screen-state="default"
       className="min-h-dvh"
     >
       <section className="mx-auto flex max-w-md flex-col gap-10 px-4 py-10">

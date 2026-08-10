@@ -15,7 +15,12 @@ export const revalidate = 3600;
 export default async function RdDirectoryPage() {
   const rds = await getRds();
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10">
+    <section
+      data-ui-generation="stitch-74"
+      data-screen-id="11.5"
+      data-screen-state="default"
+      className="mx-auto max-w-5xl px-4 py-10"
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Registered dietitians</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Our dietitians</h1>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">

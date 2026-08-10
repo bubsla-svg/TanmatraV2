@@ -56,7 +56,7 @@ export function CartDrawer({
           dark routes, so its token subtree goes dark everywhere. The sheet's
           own bg/border live in the shared ui/drawer primitive (bg-surface +
           hairline border-line — opaque, not the mock's /95+blur). */}
-      <DrawerContent aria-describedby={undefined} data-stitch="dark">
+      <DrawerContent aria-describedby={undefined} data-stitch="dark" data-ui-generation="stitch-74" data-screen-id="5.6" data-screen-state="cart-drawer-open">
         <div className="flex min-h-0 flex-col px-4 pb-6 pt-3">
           <DrawerTitle className="text-lg font-semibold text-ink">Your cart</DrawerTitle>
           <ul className="mt-3 flex-1 divide-y divide-line overflow-y-auto overscroll-contain">
@@ -82,7 +82,7 @@ export function CartDrawer({
               </li>
             ))}
             {cart.lines.length === 0 && (
-              <li className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
+              <li data-ui-generation="stitch-74" data-screen-id="14.1" data-screen-state="cart-empty" className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
             )}
           </ul>
           {/* Real catalog items, same line shape as MarketplaceGrid's add —

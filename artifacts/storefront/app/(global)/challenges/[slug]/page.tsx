@@ -55,7 +55,12 @@ export default async function ChallengePage({ params }: Params) {
   const status = challengeStatus(c.startsAt, c.endsAt);
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
+    <article
+      data-ui-generation="stitch-74"
+      data-screen-id="13.2"
+      data-screen-state="default"
+      className="mx-auto max-w-3xl px-4 py-10 sm:py-16"
+    >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd(c)) }} />
       <Link href="/challenges" className="text-sm font-medium text-ink-muted transition-colors hover:text-ink">
         &larr; Challenges

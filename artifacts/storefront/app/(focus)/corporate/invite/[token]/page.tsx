@@ -21,7 +21,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CorporateInvitePage({ params }: PageProps) {
   const { token } = await params;
   return (
-    <section className="mx-auto max-w-md px-4 py-12">
+    <section
+      data-ui-generation="stitch-74"
+      data-screen-id="12.1"
+      data-screen-state="default"
+      className="mx-auto max-w-md px-4 py-12"
+    >
       <CompanyInvite token={token} />
     </section>
   );

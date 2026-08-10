@@ -69,7 +69,7 @@ export function AddressForm({
 
   if (unserviceablePincode) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div data-ui-generation="stitch-74" data-screen-id="14.5" data-screen-state="unserviceable-address" className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
         <div>
           <p className="text-sm font-semibold text-ink">
             We don&rsquo;t deliver to {unserviceablePincode} yet

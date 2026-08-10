@@ -41,7 +41,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
         if (!open) router.replace("/menu", { scroll: false });
       }}
     >
-      <DrawerContent aria-describedby={undefined}>
+      <DrawerContent aria-describedby={undefined} data-ui-generation="stitch-74" data-screen-id="5.4" data-screen-state="dish-quick-view-open">
         {/* flex-1 is load-bearing: DrawerContent is itself flex-col, so this
             scroll area filling the REMAINING space (instead of sizing to its
             own content) is what leaves room for the footer below to sit as a

@@ -4007,7 +4007,7 @@
       "width": 390,
       "height": 844
     },
-    "implementationComponent": "artifacts/storefront/components/account/AddressManager.tsx",
+    "implementationComponent": "artifacts/storefront/components/account/AddressForm.tsx",
     "routeEntryPoint": "artifacts/storefront/app/(global)/account/addresses/page.tsx",
     "controllerComponent": null,
     "trigger": {

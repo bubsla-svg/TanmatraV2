@@ -68,7 +68,7 @@ export default async function MenuPage({
   }));
 
   return (
-    <div className="min-h-dvh">
+    <div data-ui-generation="stitch-74" data-screen-id="5.2" data-screen-state="default" className="min-h-dvh">
     <section className="mx-auto max-w-screen-xl px-4 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">The menu</h1>
