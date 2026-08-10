@@ -98,7 +98,32 @@ non-zero. A caller asserting it owes nothing proves nothing.
 | **Renewal amount = subscription renewal amount** | ❌ **deferred** — renewal pricing is not modelled on a QuoteSnapshot yet |
 | **Recurring vs one-time add-ons** | ❌ **deferred** — add-ons are not carried on a quote yet |
 | **Razorpay order creation bound to a quote** | ❌ **deferred** — see §6 |
-| **Mid-transaction failure rollback** | ⚠️ **partial** — atomicity is structural (one transaction; the concurrency test proves the losing writer leaves nothing), but no fault-injection test forces a failure between steps |
+| Mid-transaction failure rollback, at every step | ✅ — see §5.1 |
+
+### 5.1 Fault injection, with a negative control
+
+Atomicity is now *proven*, not merely structural. A `BEFORE INSERT` trigger
+scoped to one test user forces a real failure at each step of the transaction —
+`subscriptions`, then `subscription_deliveries`, then `orders` — so the database
+is what fails, where the database can see it. Stubbing the TypeScript would have
+proved the route calls a function, not that a half-written conversion cannot
+survive.
+
+After each injected failure the suite asserts the full absence set: no
+subscription, no order (**and therefore no kitchen or dispatch action**), no
+conversion record, the draft not `converted`, the quote still `active` and
+spendable, and the capacity **still held by the quote** — neither consumed (no
+order owns it) nor released (the customer has not given it up). A further test
+proves the rolled-back state is *usable*: the same quote converts successfully
+on retry, ending with exactly one subscription, one order, and capacity consumed
+once overall. A rollback that left the customer unable to try again would just
+be "your money is gone and your plan isn't set up".
+
+**These tests were verified to have teeth.** Deliberately moving the quote claim
+outside the transaction — the exact bug they exist to catch — makes all four
+fail, and only those four. A rollback test that cannot fail proves nothing,
+which is the same lesson as the A2.3 overbooking test that passed one run in
+three.
 
 ## 6. What A2.4 does NOT do, explicitly
 

@@ -28,7 +28,7 @@ import express, {
   type NextFunction,
 } from "express";
 import cookieParser from "cookie-parser";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import {
   db,
   deliverySlotsTable,
@@ -193,7 +193,19 @@ async function call(
     ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
   });
   const text = await res.text();
-  return { status: res.status, json: text ? JSON.parse(text) : null };
+  // Express's default error handler renders HTML, which is exactly what an
+  // unhandled failure inside the conversion transaction produces. Parsing
+  // defensively so a fault-injection test asserts on the STATUS rather than
+  // dying in the harness.
+  let json: any = null;
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = { nonJsonBody: text.slice(0, 200) };
+    }
+  }
+  return { status: res.status, json };
 }
 
 interface Quoted {
@@ -614,6 +626,187 @@ test("another customer's quote is not disclosed, let alone converted", async () 
     .from(subscriptionsTable)
     .where(eq(subscriptionsTable.userId, q.user.id));
   assert.equal(owner.length, 0, "and the owner's quote is untouched");
+});
+
+// ── Fault injection: a failure at ANY step must leave nothing behind ─────────
+
+/**
+ * Force a real failure inside the conversion transaction.
+ *
+ * A BEFORE INSERT trigger scoped to one test user, rather than a stubbed
+ * module: the claim under test is that POSTGRES rolls the whole thing back, so
+ * the failure has to happen where the database can see it. Mocking the
+ * TypeScript would prove the route calls a function, not that a half-written
+ * conversion cannot survive.
+ *
+ * Each `table` is a different point in the transaction, in order:
+ *   subscriptions          — after the quote is claimed, before anything exists
+ *   subscription_deliveries— after the subscription row
+ *   orders                 — after the subscription AND its deliveries
+ */
+async function withInjectedFailure<T>(
+  table: "subscriptions" | "subscription_deliveries" | "orders",
+  userId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  // The id is a generated UUID; assert the shape before interpolating it into
+  // DDL so this helper can never become an injection vector if reused.
+  assert.match(userId, /^[0-9a-f-]{36}$/, "test user id must be a plain UUID");
+  const fname = `inject_fail_${table}_${userId.replace(/-/g, "")}`;
+  const predicate =
+    table === "subscription_deliveries"
+      ? `EXISTS (SELECT 1 FROM subscriptions s WHERE s.id = NEW.subscription_id AND s.user_id = '${userId}')`
+      : `NEW.user_id = '${userId}'`;
+
+  await db.execute(
+    sql.raw(`
+      CREATE OR REPLACE FUNCTION ${fname}() RETURNS trigger AS $inj$
+      BEGIN
+        IF ${predicate} THEN
+          RAISE EXCEPTION 'injected failure writing ${table}';
+        END IF;
+        RETURN NEW;
+      END;
+      $inj$ LANGUAGE plpgsql;
+      CREATE TRIGGER ${fname} BEFORE INSERT ON ${table}
+      FOR EACH ROW EXECUTE FUNCTION ${fname}();
+    `),
+  );
+  try {
+    return await fn();
+  } finally {
+    await db.execute(
+      sql.raw(`
+        DROP TRIGGER IF EXISTS ${fname} ON ${table};
+        DROP FUNCTION IF EXISTS ${fname}();
+      `),
+    );
+  }
+}
+
+/** Everything the conversion would have written, asserted absent. */
+async function assertConversionLeftNoTrace(
+  q: Quoted,
+  label: string,
+): Promise<void> {
+  const subs = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.userId, q.user.id));
+  assert.equal(subs.length, 0, `${label}: no partial subscription`);
+
+  const orders = await db
+    .select()
+    .from(ordersTable)
+    .where(eq(ordersTable.userId, q.user.id));
+  assert.equal(
+    orders.length,
+    0,
+    `${label}: no committed order — and therefore no kitchen or dispatch action`,
+  );
+
+  const conversions = await db
+    .select()
+    .from(planDraftConversionsTable)
+    .where(eq(planDraftConversionsTable.planDraftId, q.draftId));
+  assert.equal(conversions.length, 0, `${label}: no conversion record`);
+
+  // The quote is NOT spent: the customer can retry, which is the whole point of
+  // rolling back rather than half-committing.
+  const [quote] = await db
+    .select()
+    .from(planDraftQuotesTable)
+    .where(eq(planDraftQuotesTable.id, q.quoteId));
+  assert.equal(quote!.status, "active", `${label}: the quote is still spendable`);
+
+  // Capacity stays HELD by the quote — neither consumed (no order owns it) nor
+  // released (the customer has not given it up).
+  assert.equal(await slotReserved(q.slotId), 1, `${label}: capacity still held`);
+  const reservations = await db
+    .select()
+    .from(slotReservationsTable)
+    .where(eq(slotReservationsTable.planDraftQuoteId, q.quoteId));
+  assert.equal(reservations.length, 1);
+  assert.equal(
+    reservations[0]!.status,
+    "active",
+    `${label}: the reservation is still the quote's, not an order's`,
+  );
+
+  const [draft] = await db
+    .select()
+    .from(planDraftsTable)
+    .where(eq(planDraftsTable.id, q.draftId));
+  assert.notEqual(draft!.status, "converted", `${label}: the draft did not convert`);
+}
+
+for (const table of [
+  "subscriptions",
+  "subscription_deliveries",
+  "orders",
+] as const) {
+  test(`a failure writing ${table} rolls the whole conversion back`, async () => {
+    const slotId = await makeSlot(22 + ["subscriptions", "subscription_deliveries", "orders"].indexOf(table), 5, 12);
+    const q = await quotedDraft(slotId);
+    await makeQuoteFree(q.quoteId);
+
+    const res = await withInjectedFailure(table, q.user.id, () =>
+      call(`/plan-drafts/${q.draftId}/convert`, {
+        method: "POST",
+        user: q.user,
+        cookie: q.cookie,
+        idempotencyKey: `inject-${randomUUID()}`,
+        body: { quoteId: q.quoteId, settlement: { kind: "zero_charge" } },
+      }),
+    );
+
+    assert.equal(res.status, 500, `the failure must surface, got ${JSON.stringify(res.json)}`);
+    await assertConversionLeftNoTrace(q, `failure at ${table}`);
+  });
+}
+
+test("a conversion that rolled back can still be retried successfully", async () => {
+  // The rollback is only correct if it leaves a USABLE state. A customer whose
+  // settlement hit a transient database failure must be able to try again —
+  // otherwise "we rolled back" just means "your money is gone and your plan
+  // isn't set up".
+  const slotId = await makeSlot(25, 5, 16);
+  const q = await quotedDraft(slotId);
+  await makeQuoteFree(q.quoteId);
+
+  const failed = await withInjectedFailure("orders", q.user.id, () =>
+    call(`/plan-drafts/${q.draftId}/convert`, {
+      method: "POST",
+      user: q.user,
+      cookie: q.cookie,
+      idempotencyKey: `retry-fail-${randomUUID()}`,
+      body: { quoteId: q.quoteId, settlement: { kind: "zero_charge" } },
+    }),
+  );
+  assert.equal(failed.status, 500);
+  await assertConversionLeftNoTrace(q, "before retry");
+
+  // Same quote, fresh attempt, no injected failure.
+  const ok = await call(`/plan-drafts/${q.draftId}/convert`, {
+    method: "POST",
+    user: q.user,
+    cookie: q.cookie,
+    idempotencyKey: `retry-ok-${randomUUID()}`,
+    body: { quoteId: q.quoteId, settlement: { kind: "zero_charge" } },
+  });
+  assert.equal(ok.status, 201, JSON.stringify(ok.json));
+
+  const subs = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.userId, q.user.id));
+  assert.equal(subs.length, 1, "exactly one subscription after the retry");
+  const orders = await db
+    .select()
+    .from(ordersTable)
+    .where(eq(ordersTable.userId, q.user.id));
+  assert.equal(orders.length, 1, "and exactly one order");
+  assert.equal(await slotReserved(slotId), 1, "capacity consumed once overall");
 });
 
 // ── Settlement rules ─────────────────────────────────────────────────────────
