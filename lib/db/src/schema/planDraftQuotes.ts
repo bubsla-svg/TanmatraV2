@@ -5,7 +5,9 @@ import {
   jsonb,
   timestamp,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { planDraftsTable } from "./planDrafts";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,6 +89,13 @@ export const planDraftQuotesTable = pgTable(
       .notNull()
       .default([]),
 
+    /** Caller-supplied retry token (A2.3a). A retried issue request carrying
+     *  the same key returns the quote already issued instead of superseding it
+     *  and reserving capacity a second time — a network timeout on a
+     *  successful call must not cost the customer their slots. Null means the
+     *  caller opted out of retry protection. */
+    idempotencyKey: varchar("idempotency_key", { length: 128 }),
+
     /** Capacity held for this quote is released when it lapses — a browsing
      *  customer must not hold kitchen capacity indefinitely. */
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
@@ -102,6 +111,20 @@ export const planDraftQuotesTable = pgTable(
     index("idx_plan_draft_quotes_draft").on(table.planDraftId),
     index("idx_plan_draft_quotes_status").on(table.status),
     index("idx_plan_draft_quotes_expires").on(table.expiresAt),
+    // AT MOST ONE ACTIVE QUOTE PER DRAFT — the invariant this file's header has
+    // asserted since A2.3, now actually enforced. Application code alone could
+    // not hold it: two concurrent issue requests both read "no active quote",
+    // both insert, and the draft ends up holding capacity through two quotes at
+    // once. With this index the loser's INSERT fails and is answered as a
+    // conflict instead of double-reserving the kitchen.
+    uniqueIndex("uniq_plan_draft_quote_active")
+      .on(table.planDraftId)
+      .where(sql`${table.status} = 'active'`),
+    // One quote per (draft, idempotency key): the retry path resolves to the
+    // row already issued rather than racing a second insert.
+    uniqueIndex("uniq_plan_draft_quote_idempotency")
+      .on(table.planDraftId, table.idempotencyKey)
+      .where(sql`${table.idempotencyKey} is not null`),
   ],
 );
 

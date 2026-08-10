@@ -1,5 +1,20 @@
 # PR A2.3 status — delivery eligibility, capacity, scheduling, quote readiness
 
+> **SUPERSEDED IN PART by the A2.3 review (2026-08-10).** Two claims in §2 and
+> §4 below did not survive it, and one of them was false:
+>
+> - **DEFECT-PLAN-CONVERT-001 is NOT closed.** It is *partially* resolved — a
+>   quote exists, but nothing converts it into an order/subscription. A2.4 owns
+>   closure. §2's "Closed for `PLAN_CATALOG` plans" overstated it.
+> - **"Concurrent capacity claims cannot overbook ✅" was not true.** The test
+>   that claimed to pin it passed only intermittently (measured: 2 failures in 3
+>   runs). A quote could be issued holding *no capacity at all* —
+>   DEFECT-PLAN-CAPACITY-002.
+>
+> Everything else here stands. The corrections, the five review follow-up
+> checks, and the current ledger live in **`docs/journey-2-4-a2-3a-status.md`**;
+> read that alongside this file rather than this file alone.
+
 **Filed against:** the owner's A2.3 authorization (2026-08-10), granted on A2.2H
 merging. Continues the ledger in `docs/journey-2-4-a2-1-status.md` and
 `docs/journey-2-4-a2-2-status.md`.
