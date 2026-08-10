@@ -253,3 +253,30 @@ test("attempting to purchase or quote a legacy ₹1,499 trial returns 410 Gone w
   assert.equal(createRes.json.code, "legacy_trial_retired");
   assert.equal(createRes.json.redirect, "/plans/trial");
 });
+
+// Ported from subscriptions.trial.test.ts, which was deleted: every other test
+// in that file asserted legacy pricing that the server now deliberately refuses
+// (410 `legacy_trial_retired` / 400 `legacy_pricing_disabled`), so the suite
+// tested nothing that still existed. This one did not go stale — the guard it
+// covers is live and applies to the plan-v2 trial specifically.
+//
+// `isTrialSubscription()` matches PLAN_V2_TRIAL_TAG as well as the two legacy
+// note strings, precisely so a trial_3day subscription is caught here. Without
+// this test that branch is uncovered, and a trial could be silently extended
+// into a recurring plan the customer never bought.
+test("a trial_3day subscription cannot be extended via generate-next", async () => {
+  const phone = freshPhone();
+  const user = await makeUser();
+  const created = await api(
+    "POST",
+    "/subscriptions",
+    baseBody({ planId: "trial_3day", track: "veg", phone }),
+    user,
+  );
+  assert.equal(created.status, 201, JSON.stringify(created.json));
+  const subId = created.json.subscription.id as number;
+
+  const gen = await api("POST", `/subscriptions/${subId}/generate-next`, {}, user);
+  assert.equal(gen.status, 400, JSON.stringify(gen.json));
+  assert.match(String(gen.json.error), /trial/i);
+});

@@ -54,17 +54,11 @@ artifacts/api-server/src/routes/cspReport.test.ts
 artifacts/api-server/src/routes/groupOrders.test.ts
 artifacts/api-server/src/routes/menu.test.ts
 artifacts/api-server/src/routes/preferences.sprint78.test.ts
-artifacts/api-server/src/routes/subscriptions.cancel.test.ts
 artifacts/api-server/src/routes/subscriptions.changePlan.test.ts
-artifacts/api-server/src/routes/subscriptions.dayplan.test.ts
 artifacts/api-server/src/routes/subscriptions.fullLifecycle.test.ts
 artifacts/api-server/src/routes/subscriptions.macroCap.test.ts
 artifacts/api-server/src/routes/subscriptions.pauseResume.test.ts
-artifacts/api-server/src/routes/subscriptions.planV2AddOns.test.ts
 artifacts/api-server/src/routes/subscriptions.reactivateBilling.test.ts
-artifacts/api-server/src/routes/subscriptions.skip.test.ts
-artifacts/api-server/src/routes/subscriptions.sprint56.test.ts
-artifacts/api-server/src/routes/subscriptions.trial.test.ts
 artifacts/api-server/src/routes/subscriptions.unskip.test.ts
 artifacts/api-server/src/routes/tokenLifecycle.test.ts
 artifacts/api-server/src/routes/wearable.test.ts

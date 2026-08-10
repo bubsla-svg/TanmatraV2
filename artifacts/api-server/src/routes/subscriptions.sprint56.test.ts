@@ -5,7 +5,7 @@ import { type AddressInfo } from "node:net";
 import http from "node:http";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { eq, inArray } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, subscriptionDeliveriesTable, subscriptionMandatesTable, ordersTable } from "@workspace/db";
+import { db, usersTable, adminRolesTable, subscriptionsTable, subscriptionDeliveriesTable, subscriptionMandatesTable, ordersTable } from "@workspace/db";
 
 import subscriptionsRouter from "./subscriptions";
 import paymentsRouter from "./payments";
@@ -100,12 +100,36 @@ function tomorrowISO(): string {
   return d.toISOString();
 }
 
+/**
+ * An operator holding the `finance` role.
+ *
+ * `/payments/charge-mandate` and `/jobs/pre-debit-notifications` used to accept
+ * `x-admin-token` alone. ADM-02 changed both to `requireRole(req, res,
+ * "finance")`, which resolves a NAMED ROLE from `admin_roles`, so a bare token
+ * now returns `403 finance scope required`. The token still matters — the
+ * wrong-token cases below assert exactly that — it is just no longer enough.
+ */
+async function makeFinanceOperator(): Promise<TestUser> {
+  const operator = await makeUser();
+  await db.insert(adminRolesTable).values({
+    userId: operator.id,
+    role: "finance",
+    assignedBy: null,
+  });
+  return operator;
+}
+
 function baseBody(extra: Record<string, unknown>) {
   return {
     cadence: "weekly",
     mealsPerDelivery: 5,
     deliveryWindow: "12:00-14:00",
     startDate: tomorrowISO(),
+    // `planId` became required for new signups ("legacy pricing is disabled"),
+    // and `planType: "trial"` was retired outright (410) in favour of the
+    // catalog trial trio. Callers that want the trial pass planId:"trial_3day".
+    planId: "desk_fuel",
+    track: "veg",
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
     defaultItems: [],
     ...extra,
@@ -125,6 +149,7 @@ after(async () => {
     // vanish on user delete) — POST /subscriptions now creates a linked
     // first-cycle order, so it must be cleared before the user row.
     await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
+    await db.delete(adminRolesTable).where(inArray(adminRolesTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
   await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -132,14 +157,14 @@ after(async () => {
 
 test("trial created sets trialState = trial_purchased", async () => {
   const user = await makeUser();
-  const r = await api("POST", "/subscriptions", baseBody({ planType: "trial" }), user);
+  const r = await api("POST", "/subscriptions", baseBody({ planId: "trial_3day", track: "veg" }), user);
   assert.equal(r.status, 201, JSON.stringify(r.json));
   assert.equal(r.json.subscription.trialState, "trial_purchased");
 });
 
 test("update trial state endpoint transitions state", async () => {
   const user = await makeUser();
-  const created = await api("POST", "/subscriptions", baseBody({ planType: "trial" }), user);
+  const created = await api("POST", "/subscriptions", baseBody({ planId: "trial_3day", track: "veg" }), user);
   const subId = created.json.subscription.id;
 
   // Transition to active
@@ -166,7 +191,7 @@ test("update trial state endpoint transitions state", async () => {
 
 test("GET /subscriptions/:id/trial-recap sums delivered macros", async () => {
   const user = await makeUser();
-  const created = await api("POST", "/subscriptions", baseBody({ planType: "trial" }), user);
+  const created = await api("POST", "/subscriptions", baseBody({ planId: "trial_3day", track: "veg" }), user);
   const subId = created.json.subscription.id;
 
   // Transition to active
@@ -243,7 +268,7 @@ test("GET /subscriptions/:id/trial-recap sums delivered macros", async () => {
 
 test("converting trial fails if capacity hold has expired (Simulated PAST date)", async () => {
   const user = await makeUser();
-  const created = await api("POST", "/subscriptions", baseBody({ planType: "trial" }), user);
+  const created = await api("POST", "/subscriptions", baseBody({ planId: "trial_3day", track: "veg" }), user);
   const subId = created.json.subscription.id;
 
   // Manually update the subscription's createdAt to 10 days ago so the hold is expired
@@ -278,7 +303,7 @@ test("pre-debit guard blocks mandate charge if notification dispatch missing", a
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: new Date(),
-  }, user, { "x-admin-token": ADMIN_TOKEN });
+  }, await makeFinanceOperator(), { "x-admin-token": ADMIN_TOKEN });
   assert.equal(charge.status, 400, JSON.stringify(charge.json));
   assert.match(String(charge.json.error), /pre-debit notification/i);
 });
@@ -322,7 +347,7 @@ test("jobs/pre-debit-notifications: unauthenticated request is rejected (403), c
   });
   assert.equal(wrongToken.status, 403, JSON.stringify(wrongToken.json));
 
-  const authed = await api("POST", "/jobs/pre-debit-notifications", {}, undefined, {
+  const authed = await api("POST", "/jobs/pre-debit-notifications", {}, await makeFinanceOperator(), {
     "x-admin-token": ADMIN_TOKEN,
   });
   assert.equal(authed.status, 200, JSON.stringify(authed.json));
