@@ -1,11 +1,15 @@
 "use client";
 // Client: controlled address/consent inputs for the guest money path.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { DishData } from "@workspace/menu-catalog";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
 import { useCart } from "@/components/cart/CartProvider";
 import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
+import { apiGet } from "@/lib/apiClient";
+import { flagCartAllergens } from "@/lib/allergenAck";
 import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { ADDRESS_DRAFT_KEY } from "./AlacarteCheckout";
@@ -57,7 +61,9 @@ export function AlacarteDetails({
    *  reads as a stuck/failed button on money the customer already paid. */
   verifying?: boolean;
   error: string | null;
-  onSubmit: (address: AlacarteAddress) => void;
+  /** `allergenAck` is true only when the guest explicitly checked the ack
+   *  control below — see the allergen-flagged-cart branch under `blockedReason`. */
+  onSubmit: (address: AlacarteAddress, allergenAck?: boolean) => void;
   /** Server QuoteSnapshot + lifecycle (parent owns fetching). */
   quote: QuoteSnapshot | null;
   quoteState: QuoteUiState;
@@ -69,9 +75,29 @@ export function AlacarteDetails({
   const [city, setCity] = useState(initialAddress?.city ?? "");
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
   const [consent, setConsent] = useState(false);
+  // A2 / D-19 audit G1: an explicit pre-submit ack for allergen-flagged carts.
+  // `touched` gates the inline error — it only appears after a submit attempt
+  // finds the box unchecked, never on first render (§16.1 error-focus: show
+  // the error at the moment of the failed action, not proactively).
+  const [allergenAck, setAllergenAck] = useState(false);
+  const [allergenAckTouched, setAllergenAckTouched] = useState(false);
+  const allergenAckRef = useRef<HTMLInputElement>(null);
   const prefilled = useRef(false);
 
   const { setCart } = useCart();
+
+  // Same public menu the rest of the app reads client-side (ReorderButton,
+  // ManageDeliverySheet — shared cache key). Read-only lookup: this never
+  // gates the order, only what the ack control shows before submit.
+  const menuQuery = useQuery({
+    queryKey: ["menu", "public"],
+    queryFn: () => apiGet<{ dishes: DishData[] }>("/menu/public"),
+  });
+  const flaggedAllergens = useMemo(
+    () => flagCartAllergens(cart.lines.map((l) => l.dishId), menuQuery.data?.dishes ?? []),
+    [cart.lines, menuQuery.data],
+  );
+  const allergenAckRequired = flaggedAllergens.dishes.length > 0;
 
   // Draft restore: back/forward navigation must not eat a typed address.
   // Runs once, only into still-empty fields (a saved-address prefill or the
@@ -271,13 +297,52 @@ export function AlacarteDetails({
         </p>
       )}
 
-      <label className="flex items-start gap-3 text-sm text-ink-muted">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 shrink-0" />
-        <span>
-          {DPDP_CONSENT_COPY}
-          <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
-        </span>
-      </label>
+      {/* Consent block — DPDP first (unchanged), the allergen ack beside it
+          when the cart actually needs one. Both sit above the sticky ledger. */}
+      <div className="flex flex-col gap-3">
+        <label className="flex items-start gap-3 text-sm text-ink-muted">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 shrink-0" />
+          <span>
+            {DPDP_CONSENT_COPY}
+            <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
+          </span>
+        </label>
+
+        {/* A2 / D-19 audit G1: surfaced BEFORE submit — previously the same
+            server gate (checkoutSafety.ts assessAllergenAck) only fired as a
+            422 after Continue to payment, so every allergen-cart guest ate
+            one failed submit. Named from the same predicate the server uses
+            (allergens.length>0 || contraindications.length>0), so the dishes
+            and allergens listed here are exactly what the server will check. */}
+        {allergenAckRequired && (
+          <label className="flex items-start gap-3 rounded-2xl border border-line bg-surface-raised p-3 text-sm text-ink-muted">
+            <input
+              ref={allergenAckRef}
+              type="checkbox"
+              data-testid="allergen-ack"
+              checked={allergenAck}
+              onChange={(e) => {
+                setAllergenAck(e.target.checked);
+                if (e.target.checked) setAllergenAckTouched(false);
+              }}
+              aria-invalid={allergenAckTouched && !allergenAck}
+              aria-describedby={allergenAckTouched && !allergenAck ? "allergen-ack-error" : undefined}
+              className="mt-1 size-4 shrink-0"
+            />
+            <span>
+              <span className="font-medium text-ink">
+                This order has {flaggedAllergens.allergens.length > 0 ? flaggedAllergens.allergens.join(", ") : "declared contraindications"}
+              </span>{" "}
+              in {flaggedAllergens.dishes.map((d) => d.name).join(", ")}. I&rsquo;ve reviewed the allergen information for this order.
+              {allergenAckTouched && !allergenAck && (
+                <span id="allergen-ack-error" role="alert" className="mt-1 block text-xs font-medium text-[var(--danger)]">
+                  Please confirm you&rsquo;ve reviewed the allergen information for this order.
+                </span>
+              )}
+            </span>
+          </label>
+        )}
+      </div>
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
@@ -303,7 +368,21 @@ export function AlacarteDetails({
             </div>
             <Button
               type="button" disabled={!valid || busy}
-              onClick={() => onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pinDigits })}
+              onClick={() => {
+                // Client-side catch for the allergen ack — deliberately NOT
+                // folded into `blockedReason`/`valid` above: those disable
+                // the button outright, which would make "attempt to submit"
+                // unobservable. This stays clickable so a genuine attempt
+                // produces the inline error and moves focus to the control
+                // that needs it (§16.1 error-focus), instead of the customer
+                // discovering it only after the server's 422.
+                if (allergenAckRequired && !allergenAck) {
+                  setAllergenAckTouched(true);
+                  allergenAckRef.current?.focus();
+                  return;
+                }
+                onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pinDigits }, allergenAck);
+              }}
               shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40"
             >
               {/* Once the modal resolves, money is already captured — "Opening

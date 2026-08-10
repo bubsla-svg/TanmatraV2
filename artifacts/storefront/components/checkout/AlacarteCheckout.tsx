@@ -191,7 +191,7 @@ export function AlacarteCheckout() {
       .catch(() => {});
   }
 
-  async function handlePay(address: AlacarteAddress) {
+  async function handlePay(address: AlacarteAddress, allergenAck?: boolean) {
     if (dishLines.length === 0) return; // defense-in-depth; the button is also gated
     setError(null);
     setBusy(true);
@@ -221,6 +221,11 @@ export function AlacarteCheckout() {
           phone: contact,
           address,
           consent: { accepted: true, policyVersion: DPDP_POLICY_VERSION },
+          // Omit entirely rather than send `false`: the server only cares
+          // whether an explicit acknowledgement was made (assessAllergenAck
+          // treats a missing key and `false` identically), and omitting keeps
+          // the wire payload honest about "not asked" vs "asked, declined".
+          ...(allergenAck ? { allergenAck: true } : {}),
         };
         result = await runAlacarteCheckout({
           order,
