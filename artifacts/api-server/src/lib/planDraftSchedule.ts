@@ -664,7 +664,23 @@ export async function consumeQuote(
   quoteId: string,
   now: Date = new Date(),
 ): Promise<QuoteConsumeResult> {
-  return db.transaction(async (tx) => {
+  return db.transaction((tx) => consumeQuoteTx(tx, quoteId, now));
+}
+
+/**
+ * The same claim, inside a caller's transaction.
+ *
+ * Origination (A2.4) needs this: claiming the quote and creating the
+ * subscription/order/deliveries must commit or roll back together, or a crash
+ * between them leaves a consumed quote with nothing to show for it — the
+ * customer has paid, holds capacity, and has no subscription.
+ */
+export async function consumeQuoteTx(
+  tx: DbExecutor,
+  quoteId: string,
+  now: Date = new Date(),
+): Promise<QuoteConsumeResult> {
+  {
     const [claimed] = await tx
       .update(planDraftQuotesTable)
       .set({ status: "consumed" })
@@ -699,7 +715,7 @@ export async function consumeQuote(
       quote: existing ?? null,
       reservationsConsumed: 0,
     };
-  });
+  }
 }
 
 /** The draft's current active, non-lapsed quote, if any. */
