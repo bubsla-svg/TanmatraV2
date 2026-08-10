@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function RdPartnersPage() {
-  return <RdPartnersLanding />;
+  return <RdPartnersLanding screenId="12.7" />;
 }

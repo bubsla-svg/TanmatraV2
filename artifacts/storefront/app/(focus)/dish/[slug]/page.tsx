@@ -24,7 +24,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
   const est = dish.macrosEstimated ? "~" : "";
 
   return (
-    <div className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
+    <div data-ui-generation="stitch-74" data-screen-id="5.5" data-screen-state="default" className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
       {/* Hero Image */}
       <div className="relative w-full aspect-square md:aspect-video overflow-hidden">
         <SafeImage src={dish.image} alt={dish.name} className="h-full w-full" />

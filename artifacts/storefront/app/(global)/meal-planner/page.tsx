@@ -14,7 +14,12 @@ export const metadata: Metadata = {
  */
 export default function MealPlannerPage() {
   return (
-    <div className="min-h-dvh">
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id="9.1"
+      data-screen-state="default"
+      className="min-h-dvh"
+    >
       <section className="mx-auto max-w-lg px-4 py-10">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-muted">AI-personalised</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">Weekly meal planner</h1>

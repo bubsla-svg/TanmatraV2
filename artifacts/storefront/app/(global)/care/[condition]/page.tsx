@@ -17,7 +17,12 @@ export default async function CareConditionPage({ params }: Props) {
   const name = condition.replace(/-/g, " ");
 
   return (
-    <div className="min-h-dvh pb-24">
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id="11.4"
+      data-screen-state="default"
+      className="min-h-dvh pb-24"
+    >
       <section className="mx-auto max-w-xl px-4 py-12">
         <Link href="/care" className="text-xs font-semibold text-gold-text hover:underline">
           &larr; Back to Care Directory

@@ -13,7 +13,7 @@ export default async function MealDealsPage() {
   const bundles = buildBundles(dishes);
 
   return (
-    <div className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
+    <div data-ui-generation="stitch-74" data-screen-id="5.9" data-screen-state="default" className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
       <div className="sticky top-0 z-20 bg-surface-canvas/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
         <h1 className="font-headline-md text-headline-md text-ink-primary">Meal Bundles</h1>
         <p className="text-sm text-ink-secondary">Curated combinations for your goals</p>

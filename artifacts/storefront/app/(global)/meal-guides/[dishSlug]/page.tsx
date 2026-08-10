@@ -19,7 +19,7 @@ export default async function MealGuidePage({ params }: { params: Promise<{ dish
   if (!dish) notFound();
 
   return (
-    <div className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
+    <div data-ui-generation="stitch-74" data-screen-id="5.11" data-screen-state="default" className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
       <div className="sticky top-0 z-20 bg-surface-canvas/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line flex items-center justify-between">
         <div>
           <h1 className="font-headline-md text-headline-md text-ink-primary">Meal Guide</h1>

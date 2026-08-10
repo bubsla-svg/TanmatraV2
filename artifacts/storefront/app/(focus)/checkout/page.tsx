@@ -47,7 +47,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
     return (
       <div
         data-ui-generation="stitch-74"
-        data-screen-id="MOB-32-Checkout-Dark"
+        data-screen-id="8.1" data-screen-state="quote-active"
         className="min-h-dvh"
       >
         <section className="mx-auto max-w-md px-4 pt-6 pb-44">
@@ -91,7 +91,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
     const requestedCadence = asBuilderCycle(cycle);
     const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
     return (
-      <div className="min-h-dvh">
+      <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">
           <PlanCheckout
             planId={id}
@@ -131,7 +131,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
   return (
     <div 
       data-ui-generation="stitch-74" 
-      data-screen-id="MOB-32-Checkout-Dark"
+      data-screen-id="8.1" data-screen-state="quote-active"
       className="min-h-dvh"
     >
       <section className="mx-auto max-w-md px-4 pt-10 pb-44">

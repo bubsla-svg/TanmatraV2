@@ -74,7 +74,7 @@ export function ManageDeliverySheet({
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
-        <Dialog.Content
+        <Dialog.Content data-ui-generation="stitch-74" data-screen-id="9.2" data-screen-state="manage-delivery-open"
           aria-describedby={undefined}
           className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] max-h-[85vh] animate-dialog-in overflow-y-auto rounded-t-3xl border-t border-line bg-surface p-4 shadow-lg sm:inset-x-auto sm:left-1/2 sm:top-20 sm:bottom-auto sm:w-[92vw] sm:max-w-md sm:-translate-x-1/2 sm:rounded-3xl sm:border"
         >

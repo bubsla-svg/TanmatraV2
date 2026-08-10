@@ -9,7 +9,12 @@ export const metadata: Metadata = {
 
 export default function SymptomTrackerPage() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12 flex flex-col gap-10">
+    <section
+      data-ui-generation="stitch-74"
+      data-screen-id="10.7"
+      data-screen-state="default"
+      className="mx-auto max-w-6xl px-4 py-12 flex flex-col gap-10"
+    >
       <AccountNav active="symptoms" />
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">

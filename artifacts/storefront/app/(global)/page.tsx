@@ -33,7 +33,8 @@ export default async function HomePage() {
   return (
     <div 
       data-ui-generation="stitch-74" 
-      data-screen-id="MOB-10-Home-Dark" 
+      data-screen-id="5.1"
+      data-screen-state="default"
       className="relative min-h-dvh pb-20 sm:pb-24"
     >
       {/* A <div>, not a <main>: app/layout.tsx already opens `<main id="main">`

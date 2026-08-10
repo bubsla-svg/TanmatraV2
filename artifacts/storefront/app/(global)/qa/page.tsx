@@ -8,7 +8,12 @@ export const metadata: Metadata = {
 
 export default function CommunityQaPage() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 flex flex-col gap-8">
+    <section
+      data-ui-generation="stitch-74"
+      data-screen-id="11.8"
+      data-screen-state="default"
+      className="mx-auto max-w-7xl px-4 py-10 flex flex-col gap-8"
+    >
       <div className="flex flex-col gap-2">
         <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">
           Collective Wisdom &amp; Advisory Care

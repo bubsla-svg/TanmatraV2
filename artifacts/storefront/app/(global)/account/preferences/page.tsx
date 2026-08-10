@@ -13,7 +13,12 @@ export const metadata: Metadata = {
  */
 export default function PreferencesPage() {
   return (
-    <section className="mx-auto max-w-md px-4 py-10">
+    <section
+      data-ui-generation="stitch-74"
+      data-screen-id="10.4"
+      data-screen-state="default"
+      className="mx-auto max-w-md px-4 py-10"
+    >
       <AccountNav active="preferences" />
       <h1 className="text-3xl font-semibold tracking-tight text-ink">Preferences</h1>
       <p className="mt-2 mb-10 text-sm text-ink-muted">

@@ -42,7 +42,7 @@ export default async function TrialPage() {
   const deskFuelMonthly = computePlanQuote("desk_fuel", "veg", "monthly");
 
   return (
-    <div className="min-h-dvh">
+    <div data-ui-generation="stitch-74" data-screen-id="6.8" data-screen-state="default" className="min-h-dvh">
       {/* pb-48 clears the sticky footer TrialStart renders (button + the
           no-auto-convert line) so the creditback card is never hidden behind
           it while scrolling — same reasoning as /checkout's pb-44. */}

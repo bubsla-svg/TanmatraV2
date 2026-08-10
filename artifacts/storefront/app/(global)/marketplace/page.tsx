@@ -12,7 +12,7 @@ export default async function MarketplacePage() {
   const items = await fetchMarketplaceItemsServer();
 
   return (
-    <div className="min-h-dvh bg-surface-canvas pb-24">
+    <div data-ui-generation="stitch-74" data-screen-id="5.7" data-screen-state="default" className="min-h-dvh bg-surface-canvas pb-24">
       <div className="sticky top-0 z-20 bg-surface-canvas/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
         <h1 className="font-headline-md text-headline-md text-ink-primary">Marketplace</h1>
         <p className="text-sm text-ink-secondary">Tanmatra-approved pantry & supplements</p>

@@ -12,7 +12,7 @@ export default async function MealRecommendationsPage() {
   const recommendations = recommendMenu(dishes, { goal: "lose_weight" }, true); // mock pref
 
   return (
-    <div className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
+    <div data-ui-generation="stitch-74" data-screen-id="5.10" data-screen-state="default" className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
       <div className="sticky top-0 z-20 bg-surface-canvas/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
         <h1 className="font-headline-md text-headline-md text-ink-primary">For You</h1>
         <p className="text-sm text-ink-secondary">Dishes matching your metabolic profile</p>

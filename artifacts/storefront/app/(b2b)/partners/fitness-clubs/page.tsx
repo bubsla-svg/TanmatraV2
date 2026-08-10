@@ -26,7 +26,12 @@ const jsonLd = {
  *  Dish macros are illustrative — the live menu is /menu. */
 export default function FitnessClubsPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4">
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id="12.5"
+      data-screen-state="default"
+      className="mx-auto max-w-5xl px-4"
+    >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <LandingHero hero={L.hero} ctaLabel="Register your club" ctaHref="#lead-form" />
       <BenefitGrid heading={L.benefitsHeading} sub={L.benefitsSub} benefits={L.benefits} />
