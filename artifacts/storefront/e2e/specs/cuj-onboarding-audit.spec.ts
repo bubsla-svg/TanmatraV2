@@ -102,7 +102,11 @@ test.describe("OB-6 Onboarding Conversion Gate & Auth Audit", () => {
     expect(page.url()).not.toContain("/login");
     await expect(page.locator("input[autocomplete='one-time-code']")).toHaveCount(0);
 
-    const activeVeg = page.locator("button.bg-gold").filter({ hasText: /^Veg$/ });
-    await expect(activeVeg).toBeVisible();
+    // D-08 (PR #44): selected state is a border + tint, never a solid gold
+    // fill — bg-gold is reserved for this page's one purchase action (the
+    // mini-cart bar). vegChip keeps "Veg" as its accessible name throughout
+    // (the active-state checkmark is aria-hidden), so it's still the right
+    // element to assert against post-click.
+    await expect(vegChip).toHaveClass(/border-gold/);
   });
 });

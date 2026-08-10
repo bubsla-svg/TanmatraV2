@@ -102,12 +102,16 @@ export function PersonalizedMenu({
                 key={opt.key}
                 type="button"
                 onClick={() => setChip(opt.key)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-transform active:scale-95 ${
+                // D-08: selection state, not a rival action colour — border +
+                // tint + marker, never a solid --gold fill (the mini-cart bar
+                // is this screen's one gold action).
+                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-transform active:scale-95 ${
                   active
-                    ? "bg-gold text-[var(--gold-ink)] shadow-sm"
-                    : "border border-line bg-surface text-ink-muted hover:text-ink"
+                    ? "border-gold bg-gold/10 text-gold-text"
+                    : "border-line bg-surface text-ink-muted hover:text-ink"
                 }`}
               >
+                {active && <span aria-hidden>✓ </span>}
                 {opt.label}
               </button>
             );
