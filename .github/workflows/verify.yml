@@ -359,6 +359,15 @@ jobs:
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
+          # Both of these ran in NO workflow and had gone stale unnoticed:
+          # dayplan asserted the retired per-meal price (₹10,473 against a real
+          # ₹1,199) and planV2AddOns built its "non-plan-v2" fixture through a
+          # create path that can no longer produce one. Neither failure was
+          # visible because neither file was executed anywhere. Wiring them in
+          # is what stops that recurring — a money-path test nobody runs is
+          # indistinguishable from one that passes.
+          ./src/routes/subscriptions.dayplan.test.ts
+          ./src/routes/subscriptions.planV2AddOns.test.ts
           ./src/routes/subscriptions.creditLedger.test.ts
           ./src/lib/loyaltyEngine.creditDerivation.test.ts
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
