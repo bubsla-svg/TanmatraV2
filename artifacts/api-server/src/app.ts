@@ -17,6 +17,7 @@ import {
   rationaleRateLimit,
   paymentRouteRateLimit,
   addressRateLimit,
+  planDraftRateLimit,
 } from "./middlewares/rateLimitMiddleware";
 import { idempotencyMiddleware } from "./middlewares/idempotency";
 
@@ -196,6 +197,7 @@ app.use("/api/support-agent", aiRateLimit);
 app.use("/api/dish-rationales", rationaleRateLimit);
 app.use("/api/payments", paymentRouteRateLimit);
 app.use("/api/addresses", addressRateLimit);
+app.use("/api/plan-drafts", planDraftRateLimit);
 
 // Surface body-parser failures as a clean 413 / 400 instead of a 500.
 app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {

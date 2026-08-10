@@ -294,6 +294,69 @@ test("re-sending an unchanged answer keeps the lineup", async () => {
   assert.equal(updated.status, "lineup_ready");
 });
 
+test("a concurrent edit during generation never strands the draft in `generating`", async () => {
+  // `generating` is a status no client transition can leave. Before the fix,
+  // ANY write landing between generate's claim and its final write made that
+  // second CAS fail, and the route returned 409 without releasing the claim —
+  // the draft was then permanently unusable. A second browser tab issuing an
+  // ordinary PATCH is enough to cause it.
+  const s = await createDraft({ journey: "custom" });
+  await patch(s, {
+    routine: { mealPeriods: ["lunch"], daysPerWeek: 3, deliveryContext: "home" },
+    duration: { cycle: "weekly", renewal: "decide_later" },
+  });
+  await patch(s, { status: "ready_to_generate" });
+
+  // Simulate the interleaving deterministically: put the draft into
+  // `generating` at the caller's version (exactly what generate's claim does),
+  // then let a concurrent writer bump the version before generate's final
+  // write lands.
+  const claimVersion = s.version;
+  const { casUpdateDraft } = await import("../lib/planDraftStore");
+  const claimed = await casUpdateDraft(s.id, claimVersion, {
+    status: "generating",
+  });
+  assert.ok(claimed, "claim should succeed");
+  const bumped = await casUpdateDraft(s.id, claimed.version, {
+    spicePreference: "hot",
+  });
+  assert.ok(bumped, "the concurrent write should succeed");
+
+  // Now the generate route's final CAS would fail. Whatever it reports, the
+  // draft must not be left in `generating`.
+  const { releaseGeneratingClaim } = await import("../lib/planDraftStore");
+  const released = await releaseGeneratingClaim(s.id, {
+    code: "concurrent_edit",
+    message: "Your plan changed while we were building it.",
+    details: {},
+  });
+  assert.ok(released, "the claim must be releasable even after the version moved");
+  assert.equal(released.status, "generation_failed");
+
+  // And the customer can actually recover from there.
+  s.version = released.version;
+  const recovered = await patch(s, { status: "ready_to_generate" });
+  assert.equal(recovered.status, "ready_to_generate");
+});
+
+test("releasing a generating claim only touches a draft that is actually generating", async () => {
+  const { session } = await generatedCustomDraft();
+  const { releaseGeneratingClaim } = await import("../lib/planDraftStore");
+
+  // The draft is lineup_ready, not generating — the release must be a no-op so
+  // it can never clobber a state another writer legitimately moved to.
+  const released = await releaseGeneratingClaim(session.id, {
+    code: "concurrent_edit",
+    message: "should not apply",
+    details: {},
+  });
+  assert.equal(released, null);
+
+  const reread = await call(`/plan-drafts/${session.id}`, { cookie: session.cookie });
+  assert.equal(reread.json.draft.status, "lineup_ready");
+  assert.equal(reread.json.draft.generationError, null);
+});
+
 test("candidates are safety-filtered, exclude the current dish, and carry macro deltas", async () => {
   const { session, draft } = await generatedCustomDraft();
   const day = draft.lineup![0]!;

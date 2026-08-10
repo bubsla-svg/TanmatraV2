@@ -268,3 +268,69 @@ test("claiming a new draft supersedes the same user's prior live draft in the sa
   assert.equal(firstAfter.status, 200);
   assert.equal(firstAfter.json.draft.status, "superseded");
 });
+
+test("claim advances the version counter and invalidates the caller's old version", async () => {
+  // NOTE ON COVERAGE: this pins the sequential properties only. The defect the
+  // claim CAS fix addresses needs a write to land *between* claim's own read
+  // and its UPDATE, and there is no seam to force that interleaving through the
+  // HTTP surface — a timing-dependent Promise.all race would be flaky, not a
+  // regression test. The fix (version predicate + DB-side increment, matching
+  // the supersede statement three lines above it in the same transaction) is
+  // therefore argued from the invariant, not proven by this test.
+  const user = await makeUser("claim-version");
+  const created = await createGuestDraft("custom");
+  const draftId = created.draft.id;
+
+  const patched = await api(
+    "PATCH",
+    `/plan-drafts/${draftId}`,
+    { version: created.draft.version, goal: "lose_weight" },
+    { cookie: created.cookie },
+  );
+  assert.equal(patched.status, 200);
+  const versionBeforeClaim = patched.json.draft.version;
+
+  const claim = await api("POST", `/plan-drafts/${draftId}/claim`, undefined, {
+    user,
+    cookie: created.cookie,
+  });
+  assert.equal(claim.status, 200, JSON.stringify(claim.json));
+  assert.ok(
+    claim.json.draft.version > versionBeforeClaim,
+    `claim must move the counter forward: ${versionBeforeClaim} -> ${claim.json.draft.version}`,
+  );
+
+  // The version the caller held before the claim is now genuinely stale and
+  // must be refused, not accepted against a rolled-back counter.
+  const stale = await api(
+    "PATCH",
+    `/plan-drafts/${draftId}`,
+    { version: versionBeforeClaim, goal: "gain_muscle" },
+    { user },
+  );
+  assert.equal(stale.status, 409);
+  assert.equal(stale.json.code, "stale_version");
+
+  // And the field that stale write tried to change was not applied.
+  const reread = await api("GET", `/plan-drafts/${draftId}`, undefined, { user });
+  assert.equal(reread.json.draft.goal, "lose_weight");
+});
+
+test("claiming an already-claimed-by-me draft stays idempotent", async () => {
+  const user = await makeUser("claim-idempotent");
+  const created = await createGuestDraft("custom");
+
+  const first = await api("POST", `/plan-drafts/${created.draft.id}/claim`, undefined, {
+    user,
+    cookie: created.cookie,
+  });
+  assert.equal(first.status, 200);
+
+  const again = await api("POST", `/plan-drafts/${created.draft.id}/claim`, undefined, {
+    user,
+    cookie: created.cookie,
+  });
+  assert.equal(again.status, 200, "re-claiming your own draft must not 404 or 409");
+  assert.equal(again.json.draft.id, created.draft.id);
+  assert.equal(again.json.draft.userId, user.id);
+});

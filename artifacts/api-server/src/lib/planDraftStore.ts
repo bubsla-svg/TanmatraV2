@@ -1,5 +1,10 @@
-import { and, eq } from "drizzle-orm";
-import { db, planDraftsTable, type PlanDraft } from "@workspace/db";
+import { and, eq, sql } from "drizzle-orm";
+import {
+  db,
+  planDraftsTable,
+  type PlanDraft,
+  type PlanDraftGenerationFailure,
+} from "@workspace/db";
 import { PLAN_DRAFT_TTL_MS } from "./planDraftAuth";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,6 +54,44 @@ export async function casUpdateDraft(
       and(
         eq(planDraftsTable.id, id),
         eq(planDraftsTable.version, expectedVersion),
+      ),
+    )
+    .returning();
+  return row ?? null;
+}
+
+/**
+ * Move a draft out of `generating` and into `generation_failed`, guarded on
+ * the STATUS rather than the version.
+ *
+ * This is the one write in the PlanDraft surface that must not be a version
+ * CAS. `generating` is a status no client transition can leave, so if the
+ * generate route's final write loses its version CAS — which an ordinary
+ * concurrent PATCH from a second tab is enough to cause — the row would sit in
+ * `generating` forever with no way for the customer to retry. The version has
+ * legitimately moved on in that case, so guarding on it again would fail for
+ * the same reason; guarding on `status = 'generating'` is correct because only
+ * this route's own claim could have put it there, and it releases exactly the
+ * claim we took.
+ *
+ * The version is bumped with a DB-side increment so this never rolls a
+ * concurrent writer's counter backwards.
+ */
+export async function releaseGeneratingClaim(
+  id: string,
+  failure: PlanDraftGenerationFailure,
+): Promise<PlanDraft | null> {
+  const [row] = await db
+    .update(planDraftsTable)
+    .set({
+      status: "generation_failed",
+      generationError: failure,
+      version: sql`${planDraftsTable.version} + 1`,
+    })
+    .where(
+      and(
+        eq(planDraftsTable.id, id),
+        eq(planDraftsTable.status, "generating"),
       ),
     )
     .returning();
