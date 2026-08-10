@@ -426,4 +426,6 @@ jobs:
           ./src/routes/petpooja.priceAuthority.test.ts
           ./src/routes/menuPriceValidation.test.ts
           ./src/lib/planDraftStateMachine.test.ts
+          ./src/lib/planDraftGenerator.test.ts
           ./src/routes/planDrafts.test.ts
+          ./src/routes/planDraftLineup.test.ts

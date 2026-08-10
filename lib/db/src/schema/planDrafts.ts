@@ -132,6 +132,27 @@ export interface PlanDraftDuration {
   renewal: PlanDraftRenewalChoice;
 }
 
+/** Why a generation attempt failed. Lives here rather than in the api-server
+ *  engine so the persisted column and the engine that writes it cannot drift. */
+export type PlanDraftGenerationCode =
+  | "missing_plan"
+  | "plan_not_launchable"
+  | "plan_does_not_serve_track"
+  | "missing_routine"
+  | "no_meal_periods"
+  | "empty_safe_pool"
+  | "incomplete_lineup"
+  /** An unexpected server-side failure. Recorded so the draft never strands in
+   *  `generating` — a status no client transition can leave. */
+  | "internal_error";
+
+export interface PlanDraftGenerationFailure {
+  code: PlanDraftGenerationCode;
+  /** Customer-facing, already safe to render. Never carries internals. */
+  message: string;
+  details: Record<string, unknown>;
+}
+
 export interface PlanDraftDeliverySchedule {
   addressId: number;
   deliveryWindow: string;
@@ -190,6 +211,13 @@ export const planDraftsTable = pgTable(
 
     /** Null until the generator (A2.2) produces one. */
     lineup: jsonb("lineup").$type<PlanDraftDay[] | null>(),
+    /** Why the last generation attempt failed, or null. Persisted (rather than
+     *  only returned in the failing response) so a customer who reloads the
+     *  page after a failure still sees what went wrong and what to change —
+     *  `generation_failed` on its own is a dead end, which is the "error
+     *  recovery" half of DEFECT-PLAN-GEN-001. Cleared on every successful
+     *  generation. */
+    generationError: jsonb("generation_error").$type<PlanDraftGenerationFailure | null>(),
     /** Keep-protected slot keys, formatted "<deliveryDate>:<mealPeriod>".
      *  Survives Shuffle by construction (A2.2 filters these out of the
      *  shuffle candidate set). */
