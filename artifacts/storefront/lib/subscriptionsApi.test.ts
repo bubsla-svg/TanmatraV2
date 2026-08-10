@@ -13,6 +13,8 @@ import {
   getMealCredits,
   skipDelivery,
   unskipDelivery,
+  rescheduleDelivery,
+  swapDelivery,
   pauseSubscription,
   resumeSubscription,
   cancelSubscription,
@@ -118,6 +120,69 @@ test("skip past the cutoff surfaces the server's 409 past_cutoff verbatim", asyn
       body: { error: "This delivery is too close to its delivery time to skip.", code: "past_cutoff" },
     }))),
     (e) => e instanceof ApiError && e.status === 409 && e.code === "past_cutoff" && /too close/.test((e as Error).message),
+  );
+});
+
+test("rescheduleDelivery: POST /api/subscription-deliveries/:id/reschedule with the date (+ optional window)", async () => {
+  const calls: (Call & { body?: unknown })[] = [];
+  const impl = (async (url: unknown, init: Record<string, unknown>) => {
+    calls.push({ method: String(init.method), url: String(url), credentials: init.credentials as string, body: init.body });
+    return { ok: true, status: 200, text: async () => JSON.stringify({ delivery: { id: 31, subscriptionId: 7, scheduledFor: "2026-08-05", status: "upcoming" } }) };
+  }) as unknown as typeof fetch;
+
+  const res = await rescheduleDelivery(31, { scheduledFor: "2026-08-05", deliveryWindow: "18:00-20:00" }, impl);
+  const [c] = calls;
+  assert.ok(c);
+  assert.equal(c.method, "POST");
+  assert.match(c.url, /\/api\/subscription-deliveries\/31\/reschedule$/);
+  assert.equal(c.credentials, "include");
+  assert.deepEqual(JSON.parse(String(c.body)), { scheduledFor: "2026-08-05", deliveryWindow: "18:00-20:00" });
+  assert.equal(res.delivery.scheduledFor, "2026-08-05");
+});
+
+test("rescheduleDelivery past the cutoff surfaces the server's 409 past_cutoff verbatim", async () => {
+  await assert.rejects(
+    rescheduleDelivery(31, { scheduledFor: "2026-08-05" }, fakeFetch([], () => ({
+      status: 409,
+      body: { error: "This delivery is too close to its delivery time to reschedule.", code: "past_cutoff", cutoffHours: 24 },
+    }))),
+    (e) => e instanceof ApiError && e.status === 409 && e.code === "past_cutoff" && /too close/.test((e as Error).message),
+  );
+});
+
+test("swapDelivery: POST /api/subscription-deliveries/:id/swap sends { items } verbatim", async () => {
+  const calls: (Call & { body?: unknown })[] = [];
+  const impl = (async (url: unknown, init: Record<string, unknown>) => {
+    calls.push({ method: String(init.method), url: String(url), credentials: init.credentials as string, body: init.body });
+    return { ok: true, status: 200, text: async () => JSON.stringify({ delivery: { id: 31, subscriptionId: 7, scheduledFor: "2026-08-05", status: "upcoming" } }) };
+  }) as unknown as typeof fetch;
+
+  const items = [{ slug: "paneer-tikka-bowl", name: "Paneer Tikka Bowl", image: "/images/dishes/ptb.jpg", quantity: 1, unitPricePaise: 34900 }];
+  await swapDelivery(31, items, impl);
+  const [c] = calls;
+  assert.ok(c);
+  assert.equal(c.method, "POST");
+  assert.match(c.url, /\/api\/subscription-deliveries\/31\/swap$/);
+  assert.deepEqual(JSON.parse(String(c.body)), { items });
+});
+
+test("swapDelivery 422 safety_block surfaces its code and reasons — not just a message", async () => {
+  await assert.rejects(
+    swapDelivery(31, [{ slug: "x", name: "X", image: "", quantity: 1, unitPricePaise: 1 }], fakeFetch([], () => ({
+      status: 422,
+      body: { error: "Safety block", code: "safety_block", blocked: true, reasons: ["Contains peanuts — allergen on file"] },
+    }))),
+    (e) => e instanceof ApiError && e.status === 422 && e.code === "safety_block" && Array.isArray(e.reasons) && e.reasons[0] === "Contains peanuts — allergen on file",
+  );
+});
+
+test("swapDelivery 422 macro_cap_exceeded surfaces its code and reasons", async () => {
+  await assert.rejects(
+    swapDelivery(31, [{ slug: "x", name: "X", image: "", quantity: 1, unitPricePaise: 1 }], fakeFetch([], () => ({
+      status: 422,
+      body: { error: "Macro cap exceeded", code: "macro_cap_exceeded", blocked: true, reasons: ["Daily protein cap exceeded by 40g"] },
+    }))),
+    (e) => e instanceof ApiError && e.status === 422 && e.code === "macro_cap_exceeded" && e.reasons?.[0] === "Daily protein cap exceeded by 40g",
   );
 });
 

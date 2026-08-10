@@ -103,3 +103,18 @@ test("401 surfaces as a typed ApiError (so the UI can offer sign-in)", async () 
     (e) => e instanceof ApiError && e.status === 401 && /unauthorized/.test((e as Error).message),
   );
 });
+
+test("422 unserviceable_pincode surfaces its code, not just a message — AddressManager branches on e.code, not on parsing the string", async () => {
+  const calls: Call[] = [];
+  const input: AddressInput = { label: "Home", line1: "Sector 62", city: "Ghaziabad", pincode: "201014", phone: "+919000000000" };
+  await assert.rejects(
+    createAddress(
+      input,
+      fakeFetch(calls, () => ({
+        status: 422,
+        body: { error: "we do not deliver to this pincode yet", code: "unserviceable_pincode" },
+      })),
+    ),
+    (e) => e instanceof ApiError && e.status === 422 && e.code === "unserviceable_pincode",
+  );
+});

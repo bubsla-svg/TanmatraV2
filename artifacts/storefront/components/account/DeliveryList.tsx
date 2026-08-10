@@ -12,6 +12,7 @@ import {
   type SubscriptionDelivery,
 } from "@/lib/subscriptionsApi";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ManageDeliverySheet } from "./ManageDeliverySheet";
 
 const SHOW_AT_MOST = 4;
 
@@ -47,6 +48,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
 
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<ReadonlySet<number>>(new Set());
+  const [managing, setManaging] = useState<SubscriptionDelivery | null>(null);
 
   const act = useMutation({
     mutationFn: (d: SubscriptionDelivery) => (d.status === "skipped" ? unskipDelivery(d.id) : skipDelivery(d.id)),
@@ -116,14 +118,26 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
                 {fmtDay(d.scheduledFor)}
                 {d.deliveryWindow ? <span className="text-ink-faint"> · {d.deliveryWindow}</span> : null}
               </span>
-              <button
-                type="button"
-                disabled={busyIds.has(d.id)}
-                onClick={() => act.mutate(d)}
-                className="-m-1 p-1 text-xs font-medium text-gold-text hover:underline disabled:opacity-40"
-              >
-                {d.status === "skipped" ? "Restore" : "Skip"}
-              </button>
+              <span className="flex shrink-0 items-center gap-3">
+                {d.status === "upcoming" && (
+                  <button
+                    type="button"
+                    disabled={busyIds.has(d.id)}
+                    onClick={() => setManaging(d)}
+                    className="-m-1 p-1 text-xs font-medium text-gold-text hover:underline disabled:opacity-40"
+                  >
+                    Manage
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={busyIds.has(d.id)}
+                  onClick={() => act.mutate(d)}
+                  className="-m-1 p-1 text-xs font-medium text-gold-text hover:underline disabled:opacity-40"
+                >
+                  {d.status === "skipped" ? "Restore" : "Skip"}
+                </button>
+              </span>
             </li>
           ))}
         </ul>
@@ -131,6 +145,13 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
       <p className="mt-0.5 text-[11px] text-ink-faint">
         Skips up to 24h ahead come back as meal credits.
       </p>
+      {managing && (
+        <ManageDeliverySheet
+          delivery={managing}
+          onClose={() => setManaging(null)}
+          onSaved={() => { setManaging(null); void queryClient.invalidateQueries({ queryKey }); }}
+        />
+      )}
     </div>
   );
 }

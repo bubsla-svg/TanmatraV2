@@ -45,6 +45,12 @@ export function AddressManager() {
   const [pickingLocation, setPickingLocation] = useState(false);
   const [prefill, setPrefill] = useState<Partial<Address> | undefined>(undefined);
   const [formError, setFormError] = useState<string | null>(null);
+  // A 422 unserviceable_pincode is not "something went wrong" — it's a fact
+  // about the address, and the server never echoes the pincode back on
+  // error, so it's captured from the mutation's own submitted variables.
+  // Kept separate from formError so AddressForm can render the dedicated
+  // why/next-step notice instead of a plain red-text string (Invariant 18).
+  const [unserviceablePincode, setUnserviceablePincode] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -55,15 +61,22 @@ export function AddressManager() {
       editing && editing !== "new" ? updateAddress(editing.id, value) : createAddress(value),
     onSuccess: async () => {
       setFormError(null);
+      setUnserviceablePincode(null);
       setEditing(null);
       await invalidate();
     },
-    onError: (e) => {
+    onError: (e, variables) => {
       if (isAuthExpired(e)) {
         setEditing(null);
         void refetch();
         return;
       }
+      if (e instanceof ApiError && e.code === "unserviceable_pincode") {
+        setFormError(null);
+        setUnserviceablePincode(variables.pincode);
+        return;
+      }
+      setUnserviceablePincode(null);
       setFormError(e instanceof ApiError ? e.message : "Couldn't save the address.");
     },
   });
@@ -144,7 +157,7 @@ export function AddressManager() {
       <AddressList
         addresses={addresses}
         busyId={busyId}
-        onEdit={(a) => { setFormError(null); setEditing(a); }}
+        onEdit={(a) => { setFormError(null); setUnserviceablePincode(null); setEditing(a); }}
         onDelete={(id) => remove.mutate(id)}
         onSetDefault={(id) => setDefault.mutate(id)}
       />
@@ -161,14 +174,16 @@ export function AddressManager() {
           initial={editing === "new" ? prefill : editing}
           busy={save.isPending}
           error={formError}
+          unserviceablePincode={unserviceablePincode}
+          onDismissUnserviceable={() => setUnserviceablePincode(null)}
           submitLabel={editing === "new" ? "Save address" : "Update address"}
           onSubmit={(value) => save.mutate(value)}
-          onCancel={() => setEditing(null)}
+          onCancel={() => { setUnserviceablePincode(null); setEditing(null); }}
         />
       ) : (
         <Button
           type="button"
-          onClick={() => { setFormError(null); setPrefill(undefined); setPickingLocation(true); }}
+          onClick={() => { setFormError(null); setUnserviceablePincode(null); setPrefill(undefined); setPickingLocation(true); }}
           shape="xl" size="fluid" className="self-start px-5 py-3 font-semibold"
         >
           Add an address

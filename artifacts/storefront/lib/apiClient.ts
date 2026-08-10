@@ -9,12 +9,15 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? (typeof window === "
 
 /** A non-2xx from the api-server. The server returns bare `{error, code?}` — no
  *  envelope — so we surface the status and code for the caller to branch on
- *  (e.g. 422 `plan_not_launchable` → route to waitlist). */
+ *  (e.g. 422 `plan_not_launchable` → route to waitlist). Some 422s (dish
+ *  safety_block, macro_cap_exceeded) also carry a `reasons` array — kept
+ *  optional since most error bodies don't have one. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly reasons?: string[],
   ) {
     super(message);
     this.name = "ApiError";
@@ -81,8 +84,8 @@ async function apiRequest<T>(
       : new ApiError(res.status, "non_json", res.statusText || "Request failed");
   }
   if (!res.ok) {
-    const e = json as { error?: string; code?: string };
-    throw new ApiError(res.status, e.code ?? "error", e.error ?? res.statusText);
+    const e = json as { error?: string; code?: string; reasons?: string[] };
+    throw new ApiError(res.status, e.code ?? "error", e.error ?? res.statusText, e.reasons);
   }
   return json as T;
 }

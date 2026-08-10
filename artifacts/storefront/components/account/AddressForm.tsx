@@ -2,6 +2,7 @@
 // Client: controlled add/edit form for a saved address.
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { NotifyMeForm } from "@/components/onboarding/NotifyMeForm";
 import type { Address, AddressInput, AddressType } from "@/lib/api";
 
 const inputCls =
@@ -18,6 +19,8 @@ export function AddressForm({
   initial,
   busy,
   error,
+  unserviceablePincode,
+  onDismissUnserviceable,
   submitLabel,
   onSubmit,
   onCancel,
@@ -25,6 +28,16 @@ export function AddressForm({
   initial?: Partial<Address>;
   busy: boolean;
   error: string | null;
+  /** Set when the server just rejected this exact form's submission with
+   *  422 unserviceable_pincode. Distinct from `error` (a generic failure
+   *  string) because this is a FACT about the address, not something that
+   *  went wrong — it gets its own why/next-step panel instead of a plain
+   *  red-text line (Invariant 18: unavailable actions explain why and what
+   *  the customer can do next). */
+  unserviceablePincode?: string | null;
+  /** Return from the unserviceable panel to the editable form fields
+   *  (which stayed populated — the component never unmounted). */
+  onDismissUnserviceable?: () => void;
   submitLabel: string;
   onSubmit: (value: AddressInput) => void;
   onCancel?: () => void;
@@ -52,6 +65,23 @@ export function AddressForm({
       pincode: pincode.trim(),
       phone: phone.trim(),
     });
+  }
+
+  if (unserviceablePincode) {
+    return (
+      <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+        <div>
+          <p className="text-sm font-semibold text-ink">
+            We don&rsquo;t deliver to {unserviceablePincode} yet
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            Tanmatra currently cooks and delivers across Noida only (including Greater Noida
+            sectors) — Ghaziabad, Delhi and Gurgaon aren&rsquo;t served yet.
+          </p>
+        </div>
+        <NotifyMeForm pincode={unserviceablePincode} onReset={() => onDismissUnserviceable?.()} />
+      </div>
+    );
   }
 
   return (
