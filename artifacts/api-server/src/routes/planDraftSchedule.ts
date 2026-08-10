@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import {
   db,
   planDraftQuotesTable,
+  planDraftsTable,
   type PlanDraft,
   type PlanDraftQuoteLineItem,
 } from "@workspace/db";
@@ -13,7 +14,7 @@ import {
   computePlanQuote,
   type PlanId,
 } from "@workspace/subscription-rules";
-import { resolvePlanDraftAccess } from "../lib/planDraftAuth";
+import { PLAN_DRAFT_TTL_MS, resolvePlanDraftAccess } from "../lib/planDraftAuth";
 import {
   planDraftMutateRateLimit,
   planDraftReadRateLimit,
@@ -25,10 +26,11 @@ import {
   QUOTE_TTL_MS,
   activeQuoteFor,
   eligibleDates,
-  releaseSlotsForQuote,
   reserveSlotsForQuote,
+  resolveScheduleSlots,
   resolveServiceability,
   supersedeActiveQuotes,
+  supersedeActiveQuotesTx,
   validateSchedule,
   withScheduleApplied,
   type ScheduleAssignment,
@@ -73,7 +75,11 @@ const optionsQuerySchema = z.object({
   addressId: z.coerce.number().int().positive(),
 });
 
-const quoteSchema = z.object({ version: z.number().int().min(1) });
+const quoteSchema = z.object({
+  version: z.number().int().min(1),
+  /** Optional retry token; the `Idempotency-Key` header is honoured too. */
+  idempotencyKey: z.string().trim().min(8).max(128).optional(),
+});
 
 async function requireDraft(
   req: Request,
@@ -340,6 +346,59 @@ router.post(
     const draft = await requireDraft(req, res);
     if (!draft) return;
 
+    const now = new Date();
+    const headerKey = req.header("idempotency-key")?.trim();
+    const idempotencyKey = parsed.data.idempotencyKey ?? (headerKey || undefined);
+
+    // IDEMPOTENT REPLAY, resolved BEFORE the version check. A retried issue
+    // request must resolve to the quote the first attempt already produced;
+    // without that, a network timeout on a SUCCESSFUL call becomes a second
+    // call that supersedes the quote, releases its capacity and re-reserves —
+    // and in that gap another customer can take the slot, so the retry converts
+    // a success into a 409 and costs the customer their booking.
+    //
+    // The comparison is against the version the CALLER asked for, not the
+    // draft's current one: the key identifies a request, and answering "you
+    // already have this" is only correct if it is a reply to the same question.
+    if (idempotencyKey) {
+      const [prior] = await db
+        .select()
+        .from(planDraftQuotesTable)
+        .where(
+          and(
+            eq(planDraftQuotesTable.planDraftId, draft.id),
+            eq(planDraftQuotesTable.idempotencyKey, idempotencyKey),
+          ),
+        );
+      if (prior) {
+        // Same key, different version: this is NOT the request that produced
+        // that quote, so replaying it would hand back a price for a plan the
+        // customer has since edited. Refuse rather than guess which they meant.
+        if (prior.planDraftVersion !== parsed.data.version) {
+          res.status(409).json({
+            error:
+              "that request has already been used for a different version of this plan",
+            code: "idempotency_key_reused",
+            detail: {
+              quotedVersion: prior.planDraftVersion,
+              requestedVersion: parsed.data.version,
+            },
+          });
+          return;
+        }
+        if (prior.status !== "active" || prior.expiresAt.getTime() < now.getTime()) {
+          res.status(409).json({
+            error: "that quote is no longer valid — please review your plan again",
+            code: "quote_not_active",
+            detail: { status: prior.status, expiresAt: prior.expiresAt },
+          });
+          return;
+        }
+        res.status(200).json({ quote: prior, draft, replayed: true });
+        return;
+      }
+    }
+
     // A quote must price the draft the customer is actually looking at. A
     // stale version means they have edited since, so refuse rather than
     // pricing something they can no longer see.
@@ -390,53 +449,136 @@ router.post(
     }
 
     const totalPaise = priced.cycleTotalPaise + accompanimentPaise;
-    const quoteId = crypto.randomBytes(24).toString("hex");
-    const schedule = (draft.lineup ?? []).map((d) => ({
+
+    // Resolve the schedule to real slot rows BEFORE issuing anything. Resolution
+    // is capacity-blind on purpose (see resolveScheduleSlots) — a full slot
+    // resolves here and is refused by the conditional reservation below, which
+    // is the only ordering under which a quote cannot be issued holding less
+    // capacity than it promises.
+    const service = await resolveServiceability(
+      draft.deliverySchedule?.addressId ?? null,
+    );
+    if (!service.ok || !service.zone) {
+      res.status(422).json({
+        error: service.message,
+        code: service.failure,
+        recovery: service.recovery,
+      });
+      return;
+    }
+    const lineup = draft.lineup ?? [];
+    const { slotIds, unresolved } = await resolveScheduleSlots(lineup, service.zone);
+    if (unresolved.length > 0 || slotIds.length !== lineup.length) {
+      // A day the kitchen no longer publishes. Refusing is the point: issuing
+      // anyway would sell a delivery with nothing behind it.
+      res.status(409).json({
+        error: "Some of your delivery times are no longer available.",
+        code: "capacity_unavailable",
+        detail: { unresolved },
+      });
+      return;
+    }
+    // Two days resolving to one slot would reserve ONE unit and sell TWO
+    // deliveries — `reserveSlotsForQuote` is idempotent per (quote, slot), so
+    // the second day would silently ride the first day's reservation. Save-time
+    // validation already forbids sharing a slot; this is the same invariant
+    // checked where the capacity is actually taken, because on this path an
+    // assumption that "cannot happen" has been wrong once already.
+    if (new Set(slotIds).size !== slotIds.length) {
+      res.status(409).json({
+        error: "Each delivery day needs its own date and time window.",
+        code: "duplicate_delivery_slot",
+      });
+      return;
+    }
+
+    const schedule = lineup.map((d, i) => ({
       deliveryDate: d.deliveryDate,
       deliveryWindow: d.deliveryWindow ?? "",
-      slotId: null,
+      slotId: slotIds[i] ?? null,
     }));
-
-    // Supersede any previous quote (releasing its capacity) before issuing a
-    // new one, so a draft never holds capacity through two quotes at once.
-    await supersedeActiveQuotes(draft.id);
-
-    const slotIds = await slotIdsForSchedule(draft);
+    const quoteId = crypto.randomBytes(24).toString("hex");
     const userId = draft.userId;
 
-    const issued = await db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(planDraftQuotesTable)
-        .values({
-          id: quoteId,
-          planDraftId: draft.id,
-          planDraftVersion: draft.version,
-          status: "active",
-          subtotalPaise: priced.preTaxPaise,
-          deliveryFeePaise: 0,
-          taxPaise: priced.gstPaise,
-          totalPaise,
-          lineItems,
-          schedule,
-          expiresAt: new Date(Date.now() + QUOTE_TTL_MS),
-        })
-        .returning();
+    // Supersede-then-insert-then-reserve in ONE transaction. Split across
+    // transactions there is a window in which the draft holds no active quote
+    // and a concurrent request can issue a second one; the partial unique index
+    // on (plan_draft_id) where status='active' is the backstop, and a violation
+    // here means exactly that race, so it is answered as a conflict.
+    const issued = await db
+      .transaction(async (tx) => {
+        await supersedeActiveQuotesTx(tx, draft.id, "superseded", now);
 
-      const { failed } = await reserveSlotsForQuote(tx, quoteId, slotIds, userId);
-      if (failed.length > 0) {
-        // Someone took the last unit while we were quoting. Roll the whole
-        // thing back — a partially-reserved quote would promise deliveries the
-        // kitchen cannot make.
-        await releaseSlotsForQuote(tx, quoteId);
-        await tx
-          .delete(planDraftQuotesTable)
-          .where(eq(planDraftQuotesTable.id, quoteId));
-        return { conflict: failed };
-      }
-      return { quote: row };
-    });
+        const [row] = await tx
+          .insert(planDraftQuotesTable)
+          .values({
+            id: quoteId,
+            planDraftId: draft.id,
+            planDraftVersion: draft.version,
+            status: "active",
+            subtotalPaise: priced.preTaxPaise,
+            deliveryFeePaise: 0,
+            taxPaise: priced.gstPaise,
+            totalPaise,
+            lineItems,
+            schedule,
+            idempotencyKey: idempotencyKey ?? null,
+            expiresAt: new Date(now.getTime() + QUOTE_TTL_MS),
+          })
+          .returning();
 
-    if ("conflict" in issued && issued.conflict) {
+        const { failed } = await reserveSlotsForQuote(tx, quoteId, slotIds, userId);
+        if (failed.length > 0) {
+          // Someone took the last unit while we were quoting. Throwing rolls
+          // back the insert AND every increment this transaction made — a
+          // partially-reserved quote would promise deliveries the kitchen
+          // cannot make, and unwinding by hand is how you leak half of one.
+          throw new CapacityConflict(failed);
+        }
+
+        // Move the draft to `quoted` in the SAME transaction, and deliberately
+        // WITHOUT bumping its version.
+        //
+        // The usual CAS bump is wrong here: a quote is bound to the draft
+        // version it priced, so incrementing the version as a side effect of
+        // issuing would make every quote report itself out-of-date the instant
+        // it existed — the customer would be told to re-check a plan they had
+        // just confirmed. The version still guards the write; it is the status
+        // that changes, not the configuration, and nothing the quote priced has
+        // moved.
+        const [moved] = await tx
+          .update(planDraftsTable)
+          .set({
+            status: "quoted",
+            expiresAt: new Date(now.getTime() + PLAN_DRAFT_TTL_MS),
+          })
+          .where(
+            and(
+              eq(planDraftsTable.id, draft.id),
+              eq(planDraftsTable.version, draft.version),
+            ),
+          )
+          .returning();
+        if (!moved) throw new StaleDraft();
+
+        return { quote: row ?? null, draft: moved };
+      })
+      .catch((err: unknown) => {
+        if (err instanceof CapacityConflict) return { conflict: err.slotIds };
+        if (err instanceof StaleDraft) return { stale: true as const };
+        if (isUniqueViolation(err)) return { conflict: [] as number[] };
+        throw err;
+      });
+
+    if ("stale" in issued) {
+      res.status(409).json({
+        error: "draft was modified elsewhere",
+        code: "stale_version",
+      });
+      return;
+    }
+
+    if ("conflict" in issued) {
       res.status(409).json({
         error: "Some of your delivery times were just taken.",
         code: "capacity_unavailable",
@@ -445,36 +587,30 @@ router.post(
       return;
     }
 
-    const updated = await casUpdateDraft(draft.id, draft.version, {
-      status: "quoted",
-    });
-
     res.status(201).json({
-      quote: "quote" in issued ? issued.quote : null,
-      draft: updated ?? draft,
+      quote: issued.quote,
+      draft: issued.draft,
+      replayed: false,
     });
   },
 );
 
-/** The slot ids behind a draft's scheduled days, resolved from the live slot
- *  table by (date, window) so a client can never name a slot directly. */
-async function slotIdsForSchedule(draft: PlanDraft): Promise<number[]> {
-  const service = await resolveServiceability(
-    draft.deliverySchedule?.addressId ?? null,
-  );
-  if (!service.ok || !service.zone) return [];
-  const dates = await eligibleDates(service.zone);
-  const byKey = new Map(
-    dates.flatMap((d) =>
-      d.windows.map((w) => [`${d.deliveryDate}:${w.deliveryWindow}`, w.slotId] as const),
-    ),
-  );
-  const ids: number[] = [];
-  for (const day of draft.lineup ?? []) {
-    const id = byKey.get(`${day.deliveryDate}:${day.deliveryWindow ?? ""}`);
-    if (id != null) ids.push(id);
+/** Thrown inside the issue transaction when the draft moved under us. */
+class StaleDraft extends Error {}
+
+/** Thrown inside the issue transaction to roll it back wholesale. */
+class CapacityConflict extends Error {
+  constructor(readonly slotIds: number[]) {
+    super("capacity_unavailable");
   }
-  return ids;
+}
+
+/** Postgres 23505. The active-quote and idempotency indexes both surface a
+ *  concurrent issue attempt this way. */
+function isUniqueViolation(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  const causeCode = (err as { cause?: { code?: unknown } } | null)?.cause?.code;
+  return code === "23505" || causeCode === "23505";
 }
 
 export default router;

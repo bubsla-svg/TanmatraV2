@@ -4,6 +4,7 @@ import {
   varchar,
   integer,
   timestamp,
+  index,
   uniqueIndex,
   date,
 } from "drizzle-orm/pg-core";
@@ -35,6 +36,27 @@ export const deliverySlotsTable = pgTable(
   ],
 );
 
+/**
+ * A reservation's lifecycle (A2.3a). Explicit, because "how many times has this
+ * reservation given its capacity back?" must be answerable — a plain DELETE
+ * cannot distinguish *released* from *never existed*, and cannot stop a
+ * reservation that an order now legitimately holds from being released by a
+ * sweeper that arrives late.
+ *
+ * Transitions are one-way and guarded (see `releaseSlotsForQuote` /
+ * `consumeSlotsForQuote`): the capacity decrement happens ONLY when the guarded
+ * `active → released` UPDATE actually claims the row, so N concurrent releasers
+ * decrement exactly once between them.
+ */
+export type SlotReservationStatus =
+  /** Holding one unit of the parent slot's capacity. */
+  | "active"
+  /** Settled into an order/subscription (A2.4). Terminal, and deliberately
+   *  NOT releasable — the capacity is still held, it just changed owner. */
+  | "consumed"
+  /** Gave its unit back exactly once. Terminal. */
+  | "released";
+
 // Reservations are 1:1 with the thing holding the slot. We enforce that
 // uniqueness with partial unique indexes so retried writes can't double-
 // reserve and inflate the parent slot's reservedCount.
@@ -53,6 +75,15 @@ export const slotReservationsTable = pgTable(
      *  if the customer never pays. */
     planDraftQuoteId: varchar("plan_draft_quote_id"),
     kind: varchar("kind", { length: 32 }).notNull().default("order"),
+    /** See SlotReservationStatus. Pre-A2.3a rows are `active`, which is what
+     *  they were: rows existed exactly while the capacity was held. */
+    status: varchar("status", { length: 16 })
+      .$type<SlotReservationStatus>()
+      .notNull()
+      .default("active"),
+    /** When the row left `active`. Null while held. Audit only — the guard is
+     *  the status transition, not this column. */
+    releasedAt: timestamp("released_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -69,6 +100,9 @@ export const slotReservationsTable = pgTable(
     uniqueIndex("uniq_slot_reservation_plan_draft_quote")
       .on(table.planDraftQuoteId, table.slotId)
       .where(sql`${table.planDraftQuoteId} is not null`),
+    // The release sweep scans by status; without this it seq-scans a table
+    // that only ever grows (rows are now retained, not deleted).
+    index("idx_slot_reservations_status").on(table.status),
   ],
 );
 
