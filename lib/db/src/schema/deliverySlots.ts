@@ -48,6 +48,10 @@ export const slotReservationsTable = pgTable(
     userId: varchar("user_id"),
     orderId: integer("order_id"),
     subscriptionId: integer("subscription_id"),
+    /** A pre-purchase PlanDraft quote holding capacity (A2.3). Bounded by the
+     *  quote's own expiry — unlike an order reservation, this one is released
+     *  if the customer never pays. */
+    planDraftQuoteId: varchar("plan_draft_quote_id"),
     kind: varchar("kind", { length: 32 }).notNull().default("order"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -60,6 +64,11 @@ export const slotReservationsTable = pgTable(
     uniqueIndex("uniq_slot_reservation_subscription")
       .on(table.subscriptionId)
       .where(sql`${table.subscriptionId} is not null`),
+    // One reservation per (quote, slot): a retried reserve call must not
+    // inflate the parent slot's reservedCount.
+    uniqueIndex("uniq_slot_reservation_plan_draft_quote")
+      .on(table.planDraftQuoteId, table.slotId)
+      .where(sql`${table.planDraftQuoteId} is not null`),
   ],
 );
 

@@ -431,3 +431,4 @@ jobs:
           ./src/routes/planDrafts.test.ts
           ./src/routes/planDraftLineup.test.ts
           ./src/routes/planDraftRateLimit.test.ts
+          ./src/routes/planDraftSchedule.test.ts
